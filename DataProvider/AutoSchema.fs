@@ -23,8 +23,10 @@ let rec tryParseAsComposite (s : Stream) =
                         | None ->
                             None
                 | None ->
+                    printfn "Failed to parse RHS %A" s
                     None
             | _ ->
+                printfn "Failed to parse LHS %A" s
                 None
         match work s with
         | Some (kinds, s) ->
@@ -153,6 +155,26 @@ and tryParseAsTriplet s =
     | None ->
         None
 
+and tryParseAsVector =
+    function
+    | ReLit "[" s ->
+        let rec work s =
+            match s with
+            | ReInt(_, ReLit "]" s)
+            | ReLit "]" s ->
+                Some s
+            | ReInt(n, ReLit "," s) ->
+                work s
+            | _ ->
+                None
+        match work s with
+        | Some s ->
+            Some(ValueType.IntVector, s)
+        | None ->
+            None
+    | _ ->
+        None
+
 and tryParseAsInt =
     function
     | ReInt(n, s) -> Some(ValueType.Integer, s)
@@ -200,6 +222,7 @@ and tryGetParser s =
         tryParseAsSet
         tryParseAsTriplet
         tryParseAsPair
+        tryParseAsVector
         tryParseAsDate
         tryParseAsTime
         tryParseAsFloat
@@ -213,91 +236,51 @@ and tryParse s =
     tryGetParser s
     |> Option.bind (fun f -> f s)
 
-let tryGetTopType =
-    function
+let getTopType types s =
+    match s with
     | ReId(n, s) ->
-        match tryParse s with
-        | Some (kind, s) ->
-            Some((n, kind), s)
+        match Map.tryFind n types with
+        | Some kind ->
+            let (ParserFun f) = makeParser kind
+            try
+                let x, s = f s
+                (n, kind), s
+            with
+            | _ ->
+                match tryParse s with
+                | Some (kind2, s) ->
+                    match tryUnify(kind, kind2) with
+                    | Choice1Of2 kind -> 
+                        (n, kind), s
+                    | Choice2Of2 msg ->
+                        failwith "Unification failure: %s" msg
+                | None ->
+                    parseError("Failed to extend seen structure", s)
         | None ->
-            None
+            match tryParse s with
+            | Some (kind, s) ->
+                (n, kind), s
+            | None ->
+                parseError("Failed to guess unseen structure", s)
     | _ ->
-        None
+        parseError("No structure identifier found", s)
 
 let getTopTypes s =
-    let rec work s =
-        match tryGetTopType s with
-        | Some((n, k), s) ->
-            let xs, s = work s 
-            (n, k) :: xs, s
-        | None ->
-            [], s
-    work s
-
-exception UnificationFailure of string
-
-let mkFailedUnification kind1 kind2 msg =
-    sprintf "Failed to unify %A and %A (%s)" kind1 kind2 msg
-
-let rec tryUnify =
-    function
-    | kind1, kind2 when kind1 = kind2 ->
-        Choice1Of2(kind1)
-    | ValueType.Integer, ValueType.Float
-    | ValueType.Float, ValueType.Integer ->
-        Choice1Of2(ValueType.Float)
-    | ValueType.Composite kinds1, ValueType.Composite kinds2 ->
-        let unifyInternally kinds initial =
-            kinds
-            |> List.fold (fun map (kw, kind) ->
-                match Map.tryFind kw map with
-                | Some kind2 ->
-                    match tryUnify(kind, kind2) with
-                    | Choice1Of2 kind ->
-                        Map.add kw kind map
-                    | Choice2Of2 msg ->
-                        raise(UnificationFailure(
-                                mkFailedUnification kind kind2 msg))
-                | None ->
-                    Map.add kw kind map
-                ) initial
+    let rec work types s =
         try
-            let unified =
-                Map.empty
-                |> unifyInternally kinds1
-                |> unifyInternally kinds2
-                |> Seq.map (fun kvp -> (kvp.Key, kvp.Value))
-                |> List.ofSeq
-            Choice1Of2(ValueType.Composite unified)
+            let (n, k), s = getTopType types s
+            let types = Map.add n k types
+            printfn "FOUND %s: %A" n k
+            let xs, s = work types s 
+            (n, k) :: xs, s
         with
-        | :? UnificationFailure as e ->
-            Choice2Of2(e.Data0)
-    | ValueType.Mapping kind1, ValueType.Mapping kind2 ->
-        match tryUnify(kind1, kind2) with
-        | Choice1Of2 kind ->
-            Choice1Of2(ValueType.Mapping kind)
-        | Choice2Of2 msg ->
-            Choice2Of2 (mkFailedUnification kind1 kind2 msg)
-    | ValueType.Set kind1, ValueType.Set kind2 ->
-        match tryUnify(kind1, kind2) with
-        | Choice1Of2 kind ->
-            Choice1Of2(ValueType.Set kind)
-        | Choice2Of2 msg ->
-            Choice2Of2 (mkFailedUnification kind1 kind2 msg)
-    | ValueType.Pair(kindA1, kindA2) as p1, (ValueType.Pair(kindB1, kindB2) as p2) ->
-        match tryUnify(kindA1, kindB1), tryUnify(kindA2, kindB2) with
-        | Choice1Of2 kind1, Choice1Of2 kind2 ->
-            Choice1Of2(ValueType.Pair(kind1, kind2))
-        | Choice2Of2 msg, _
-        | _, Choice2Of2 msg ->
-            Choice2Of2 (mkFailedUnification p1 p2 msg)
-    | ValueType.Triplet(kindA1, kindA2, kindA3) as p1, (ValueType.Triplet(kindB1, kindB2, kindB3) as p2) ->
-        match tryUnify(kindA1, kindB1), tryUnify(kindA2, kindB2), tryUnify(kindA3, kindB3) with
-        | Choice1Of2 kind1, Choice1Of2 kind2, Choice1Of2 kind3 ->
-            Choice1Of2(ValueType.Triplet(kind1, kind2, kind3))
-        | Choice2Of2 msg, _, _
-        | _, Choice2Of2 msg, _
-        | _, _, Choice2Of2 msg ->
-            Choice2Of2 (mkFailedUnification p1 p2 msg)
-    | kind1, kind2 ->
-        Choice2Of2 (mkFailedUnification kind1 kind2 "Incompatible value types")
+        | :? ParseError as e ->
+            printParseError e
+            |> String.concat "\n"
+            |> printfn "%s"
+            [], s
+        | e ->
+            printfn "FAILED: %s" e.Message
+            [], s
+    work Map.empty s
+

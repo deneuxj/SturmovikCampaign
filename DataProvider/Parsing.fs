@@ -5,7 +5,7 @@ open System.Text.RegularExpressions
 open SturmovikMission.DataProvider.Ast
 
 let reInt = Regex(@"\G\s*([+-]?\d+)")
-let reId = Regex(@"\G\s*([a-zA-Z0-9]+)")
+let reId = Regex(@"\G\s*([a-zA-Z0-9_]+)")
 let reString = Regex("\G\\s*\"([^\"]*)\"")
 let reFloat = Regex(@"\G\s*([+-]?\d+[.]\d+)")
 let reTime = Regex(@"\G\s*(\d+):(\d+):(\d+)")
@@ -206,7 +206,10 @@ let rec makeParser (format : ValueType) : ParserFun =
                 function
                 | ReInt(n, s) ->
                     let xs, s = parse s
-                    n :: xs, s
+                    match s with
+                    | ReLit "," s
+                    | s ->
+                        n :: xs, s
                 | ReLit "]" s ->
                     [], s
                 | s ->
