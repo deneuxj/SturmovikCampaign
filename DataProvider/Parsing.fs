@@ -12,6 +12,18 @@ let reTime = Regex(@"\G\s*(\d+):(\d+):(\d+)")
 let reDate = Regex(@"\G\s*(\d+)\.(\d+)\.(\d+)")
 
 type Stream = SubString of Data : string * Offset : int
+with
+    static member FromFile(path) =
+        let lines = System.IO.File.ReadAllLines(path)
+        let lines =
+            lines
+            |> Array.map (fun line ->
+                if line.StartsWith("#") then
+                    ""
+                else
+                    line.TrimEnd())
+        let data = String.concat "\n" lines
+        SubString(data, 0)
 
 let (|ReInt|_|) (SubString(data, offset)) =
     let m = reInt.Match(data, offset)
