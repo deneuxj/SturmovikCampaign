@@ -236,22 +236,34 @@ and tryParse s =
     tryGetParser s
     |> Option.bind (fun f -> f s)
 
-let getTopType types s =
+let rec getTopType types s =
     match s with
+    | ReId("Group", s) ->
+        // Try to parse as a composite, then lift its content
+        match tryParseAsComposite s with
+        | Some (ValueType.Composite comps, s) ->
+            let composites =
+                comps
+                |> List.filter (function (_, ValueType.Composite _) -> true | _ -> false)
+            composites, s
+        | Some _ ->
+            failwith "tryParseAsComposite returned a non-composite"
+        | None ->
+            parseError("Failed to parse Group", s)
     | ReId(n, s) ->
         match Map.tryFind n types with
         | Some kind ->
             let (ParserFun f) = makeParser kind
             try
                 let x, s = f s
-                (n, kind), s
+                [(n, kind)], s
             with
             | _ ->
                 match tryParse s with
                 | Some (kind2, s) ->
                     match tryUnify(kind, kind2) with
                     | Choice1Of2 kind -> 
-                        (n, kind), s
+                        [(n, kind)], s
                     | Choice2Of2 msg ->
                         failwith "Unification failure: %s" msg
                 | None ->
@@ -259,7 +271,7 @@ let getTopType types s =
         | None ->
             match tryParse s with
             | Some (kind, s) ->
-                (n, kind), s
+                [(n, kind)], s
             | None ->
                 parseError("Failed to guess unseen structure", s)
     | _ ->
@@ -268,11 +280,14 @@ let getTopType types s =
 let getTopTypes s =
     let rec work types s =
         try
-            let (n, k), s = getTopType types s
-            let types = Map.add n k types
-            printfn "FOUND %s: %A" n k
+            let newTypes, s = getTopType types s
+            let types =
+                newTypes
+                |> List.fold (fun types (kw, kind) -> Map.add kw kind types) types
+            for (n, k) in newTypes do
+                printfn "FOUND %s: %A" n k
             let xs, s = work types s 
-            (n, k) :: xs, s
+            newTypes @ xs, s
         with
         | :? ParseError as e ->
             printParseError e
@@ -283,4 +298,3 @@ let getTopTypes s =
             printfn "FAILED: %s" e.Message
             [], s
     work Map.empty s
-
