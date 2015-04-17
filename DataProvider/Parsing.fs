@@ -4,12 +4,14 @@ open System.Text.RegularExpressions
 
 open SturmovikMission.DataProvider.Ast
 
-let reInt = Regex(@"\G\s*([+-]?\d+)")
-let reId = Regex(@"\G\s*([a-zA-Z0-9_]+)")
-let reString = Regex("\G\\s*\"([^\"]*)\"")
-let reFloat = Regex(@"\G\s*([+-]?\d+[.]\d+)")
-let reTime = Regex(@"\G\s*(\d+):(\d+):(\d+)")
-let reDate = Regex(@"\G\s*(\d+)\.(\d+)\.(\d+)")
+let regex pat =
+    Regex(pat, RegexOptions.Compiled)
+
+let reInt = regex(@"\G\s*([+-]?\d+)\s*[^.\d]")
+let reId = regex(@"\G\s*([a-zA-Z0-9_]+)")
+let reString = regex("\G\\s*\"([^\"]*)\"")
+let reFloat = regex(@"\G\s*([+-]?\d+[.]\d+)")
+let reDate = regex(@"\G\s*(\d+)\.(\d+)\.(\d+)")
 
 type Stream = SubString of Data : string * Offset : int
 with
@@ -27,8 +29,9 @@ with
 
 let (|ReInt|_|) (SubString(data, offset)) =
     let m = reInt.Match(data, offset)
+    let g = m.Groups.[1]
     if m.Success then
-        Some (System.Int32.Parse m.Value, SubString(data, m.Index + m.Length))
+        Some (System.Int32.Parse g.Value, SubString(data, g.Index + g.Length))
     else
         None
 
@@ -65,16 +68,6 @@ let (|ReFloat|_|) (SubString(data, offset)) =
     else
         None
 
-let (|ReTime|_|) (SubString(data, offset)) =
-    let m = reTime.Match(data, offset)
-    if m.Success then
-        let hour = System.Int32.Parse m.Groups.[1].Value
-        let minute = System.Int32.Parse m.Groups.[2].Value
-        let second = System.Int32.Parse m.Groups.[3].Value
-        Some (Value.Time(hour, minute, second), SubString(data, m.Index + m.Length))
-    else
-        None
-
 let (|ReDate|_|) (SubString(data, offset)) =
     let m = reDate.Match(data, offset)
     if m.Success then
@@ -93,14 +86,20 @@ exception ParseError of string * Stream
 let parseError (txt, s) =
     raise(ParseError(txt, s))
 
+let getContext (s : Stream) =
+    let (SubString(txt, offset)) = s
+    let start = max 0 (offset - 20)
+    let fin = min (offset + 20) txt.Length
+    txt.[start..fin].Replace("\r\n", "\n").Replace("\n", "\\n")
+
 let printParseError (e : ParseError) =
-    let msg, (SubString(txt, offset)) = e.Data0, e.Data1
+    let msg, (SubString(txt, offset) as s) = e.Data0, e.Data1
     let prefix = txt.[0..offset]
     let lines = prefix.Split('\n')
     let lineno = lines.Length
     [
         sprintf "Parse error: %s" msg
-        sprintf "(%d): '%s...'" lineno (lines.[lines.Length - 1]) 
+        sprintf "(%d): '%s...'" lineno (getContext s)
     ]
 
 let rec makeParser (format : ValueType) : ParserFun =
@@ -191,10 +190,6 @@ let rec makeParser (format : ValueType) : ParserFun =
                     parseError("Not :", s)
             | _ ->
                 parseError("Not :", s)
-    | ValueType.Time ->
-        function
-        | ReTime(t, s) -> (t, s)
-        | _ -> failwith "Not a time"
     | ValueType.Date ->
         function
         | ReDate(d, s) -> (d, s)

@@ -11,7 +11,6 @@ type ValueType =
     | IntVector // [1, 2, 3]
     | Pair of ValueType * ValueType
     | Triplet of ValueType * ValueType * ValueType
-    | Time
     | Date
 
 
@@ -25,7 +24,6 @@ type Value =
     | IntVector of int list
     | Pair of Value * Value
     | Triplet of Value * Value * Value
-    | Time of int * int * int
     | Date of int * int * int
 
 
@@ -49,8 +47,6 @@ let rec dump (value : Value) : string =
         |> String.concat ""
     | Date (day, month, year) ->
         sprintf "%d.%d.%d" day month year
-    | Time (hour, minute, second) ->
-        sprintf "%d:%d:%d" hour minute second
     | Pair (x1, x2) ->
         sprintf "%s : %s" (dump x1) (dump x2)
     | Triplet (x1, x2, x3) ->

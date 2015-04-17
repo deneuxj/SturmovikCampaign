@@ -8,7 +8,6 @@ module ShortCuts =
     let Str = ValueType.String
     let Set = ValueType.Set
     let Vec = ValueType.IntVector
-    let Time = ValueType.Time
     let Date = ValueType.Date
     let Composite = ValueType.Composite
     let Mapping = ValueType.Mapping
@@ -25,7 +24,7 @@ let optionsType =
         ("LCAuthor", Int)
         ("PlayerConfig", Str)
         ("MultiplayerPlaneConfig", Str)
-        ("Time", Time)
+        ("Time", Triplet(Int, Int, Int))
         ("Date", Date)
         ("HMap", Str)
         ("Textures", Str)

@@ -3,6 +3,20 @@
 open SturmovikMission.DataProvider.Ast
 open SturmovikMission.DataProvider.Parsing
 
+#if VERBOSE_TRY_PARSE
+let wrap desc f x =
+    printfn "TRY %s" desc
+    match f x with
+    | Some _ as v ->
+        printfn "OK"
+        v
+    | v ->
+        printfn "KO"
+        v
+#else
+let inline wrap _ f x = f x
+#endif
+
 let rec tryParseAsComposite (s : Stream) =
     match s with
     | ReLit "{" s ->
@@ -23,10 +37,10 @@ let rec tryParseAsComposite (s : Stream) =
                         | None ->
                             None
                 | None ->
-                    printfn "Failed to parse RHS %A" s
+//                    printfn "Failed to parse RHS %s" (getContext s)
                     None
             | _ ->
-                printfn "Failed to parse LHS %A" s
+//                printfn "Failed to parse LHS %s" (getContext s)
                 None
         match work s with
         | Some (kinds, s) ->
@@ -145,14 +159,19 @@ and tryParseAsTriplet s =
                     | Some (kind3, s) ->
                         Some(ValueType.Triplet(kind, kind2, kind3), s)
                     | None ->
+//                        printfn "Could not identify 3rd ground type: %s" (getContext s)
                         None
                 | _ ->
+//                    printfn "Could not 2nd colon: %s" (getContext s)
                     None
             | None ->
+//                printfn "Could not identify 2nd ground type: %s" (getContext s)
                 None
         | _ ->
+//            printfn "Could not 1st colon: %s" (getContext s)
             None
     | None ->
+//        printfn "Could not identify 1st ground type: %s" (getContext s)
         None
 
 and tryParseAsVector =
@@ -190,11 +209,6 @@ and tryParseAsFloat =
     | ReFloat(n, s) -> Some(ValueType.Float, s)
     | _ -> None
 
-and tryParseAsTime =
-    function
-    | ReTime(n, s) -> Some(ValueType.Time, s)
-    | _ -> None
-
 and tryParseAsDate =
     function
     | ReDate(n, s) -> Some(ValueType.Date, s)
@@ -202,11 +216,10 @@ and tryParseAsDate =
 
 and tryGetGroundParser s =
     let funs = [
-        tryParseAsDate
-        tryParseAsTime
-        tryParseAsFloat
-        tryParseAsInt
-        tryParseAsString
+        wrap "INT" tryParseAsInt
+        wrap "DATE" tryParseAsDate
+        wrap "FLOAT" tryParseAsFloat
+        wrap "STR" tryParseAsString
     ]
     funs
     |> Seq.tryPick (fun f -> f s |> Option.map (fun _ -> f))
@@ -217,17 +230,16 @@ and tryParseGround s =
 
 and tryGetParser s =
     let funs = [
-        tryParseAsComposite
-        tryParseAsMapping
-        tryParseAsSet
-        tryParseAsTriplet
-        tryParseAsPair
-        tryParseAsVector
-        tryParseAsDate
-        tryParseAsTime
-        tryParseAsFloat
-        tryParseAsInt
-        tryParseAsString
+        wrap "TRIP" tryParseAsTriplet
+        wrap "PAIR" tryParseAsPair
+        wrap "STR" tryParseAsString
+        wrap "DATE" tryParseAsDate
+        wrap "INT" tryParseAsInt
+        wrap "FLOAT" tryParseAsFloat
+        wrap "VEC" tryParseAsVector
+        wrap "SET" tryParseAsSet
+        wrap "MAP" tryParseAsMapping
+        wrap "COMP" tryParseAsComposite
     ]
     funs
     |> Seq.tryPick (fun f -> f s |> Option.map (fun _ -> f))
@@ -269,7 +281,7 @@ let rec getTopType types s =
                 | None ->
                     parseError("Failed to extend seen structure", s)
         | None ->
-            match tryParse s with
+            match (wrap "COMP" tryParseAsComposite) s with
             | Some (kind, s) ->
                 [(n, kind)], s
             | None ->
