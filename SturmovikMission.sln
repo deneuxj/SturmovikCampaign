@@ -7,6 +7,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SturmovikMission", "Sturmov
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "DataProvider", "DataProvider\DataProvider.fsproj", "{7071E404-C087-45BF-8E7D-6DF3A1F9403D}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestDataProvider", "TestDataProvider\TestDataProvider.fsproj", "{1BA071D0-F97A-4891-B124-5D5E03A00CEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{7071E404-C087-45BF-8E7D-6DF3A1F9403D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7071E404-C087-45BF-8E7D-6DF3A1F9403D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7071E404-C087-45BF-8E7D-6DF3A1F9403D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BA071D0-F97A-4891-B124-5D5E03A00CEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BA071D0-F97A-4891-B124-5D5E03A00CEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BA071D0-F97A-4891-B124-5D5E03A00CEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BA071D0-F97A-4891-B124-5D5E03A00CEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
