@@ -250,6 +250,8 @@ and tryParse s =
 
 let rec getTopType types s =
     match s with
+    | EOF s ->
+        [], s
     | ReId("Group", s) ->
         // Try to parse as a composite, then lift its content
         match tryParseAsComposite s with
@@ -289,24 +291,30 @@ let rec getTopType types s =
     | _ ->
         parseError("No structure identifier found", s)
 
-let getTopTypes s =
+let getTopTypes s : Map<string, ValueType> * Stream =
     let rec work types s =
-        try
-            let newTypes, s = getTopType types s
+        match s with
+        | EOF s ->
+            types, s
+        | _ ->
+            let newTypes, s =
+                try
+                    getTopType types s
+                with
+                | :? ParseError as e ->
+                    printParseError e
+                    |> String.concat "\n"
+                    |> printfn "%s"
+                    [], s
+                | e ->
+                    printfn "FAILED: %s" e.Message
+                    [], s
             let types =
                 newTypes
                 |> List.fold (fun types (kw, kind) -> Map.add kw kind types) types
-            for (n, k) in newTypes do
-                printfn "FOUND %s: %A" n k
-            let xs, s = work types s 
-            newTypes @ xs, s
-        with
-        | :? ParseError as e ->
-            printParseError e
-            |> String.concat "\n"
-            |> printfn "%s"
-            [], s
-        | e ->
-            printfn "FAILED: %s" e.Message
-            [], s
+//            for (n, k) in newTypes do
+//                printfn "FOUND %s: %A" n k
+            let types, s = work types s 
+            types, s
+
     work Map.empty s

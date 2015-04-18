@@ -12,6 +12,7 @@ let reId = regex(@"\G\s*([a-zA-Z0-9_]+)")
 let reString = regex("\G\\s*\"([^\"]*)\"")
 let reFloat = regex(@"\G\s*([+-]?\d+[.]\d+)")
 let reDate = regex(@"\G\s*(\d+)\.(\d+)\.(\d+)")
+let reWs = regex(@"\G\s*")
 
 type Stream = SubString of Data : string * Offset : int
 with
@@ -26,6 +27,13 @@ with
                     line.TrimEnd())
         let data = String.concat "\n" lines
         SubString(data, 0)
+
+let (|EOF|_|) (SubString(data, offset)) =
+    let m = reWs.Match(data, offset)
+    if m.Index + m.Length >= data.Length then
+        Some(SubString(data, data.Length))
+    else
+        None
 
 let (|ReInt|_|) (SubString(data, offset)) =
     let m = reInt.Match(data, offset)
@@ -50,8 +58,7 @@ let (|ReString|_|) (SubString(data, offset)) =
         None
 
 let (|ReLit|_|) (lit : string) (SubString(data, offset)) =
-    let r = Regex(@"\G\s*")
-    let m = r.Match(data, offset)
+    let m = reWs.Match(data, offset)
     let i0 = m.Index + m.Length
     let rec matches i =
         if i >= lit.Length then
