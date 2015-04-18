@@ -1,2 +1,5 @@
 syntax: regexp
 .*.suo
+.*/bin/Debug/.*
+.*/obj/Debug/.*
+syntax: glob
