@@ -1,12 +1,28 @@
 ﻿module SturmovikMission.DataProvider.Ast
 
 
+type MinMultiplicity = Zero | MinOne
+
+type MaxMultiplicity = MaxOne | Multiple
+
+let least =
+    function
+    | Zero, _
+    | _, Zero -> Zero
+    | MinOne, MinOne -> MinOne
+
+let most =
+    function
+    | Multiple, _
+    | _, Multiple -> Multiple
+    | MaxOne, MaxOne -> MaxOne
+
 type ValueType =
     | Boolean
     | Integer
     | String
     | Float
-    | Composite of Map<string, ValueType>
+    | Composite of Map<string, ValueType * MinMultiplicity * MaxMultiplicity>
     | Mapping of ValueType // { 1 = XXX1; 2 = XXX2 }
     | Set of ValueType // { entries }
     | IntVector // [1, 2, 3]
@@ -100,44 +116,9 @@ let rec tryUnify =
         Choice1Of2(ValueType.Float)
     | ValueType.Composite comp, ValueType.Mapping kind
     | ValueType.Mapping kind, ValueType.Composite comp ->
-        let unified =
-            comp
-            |> Map.fold (fun m k v ->
-                match m, tryUnify(v, kind) with
-                | Choice2Of2 _ as err, _ ->
-                    err
-                | Choice1Of2 m, Choice1Of2 kind ->
-                    Map.add k kind m
-                    |> Choice1Of2
-                | Choice1Of2 m, Choice2Of2 msg ->
-                    Choice2Of2(mkFailedUnification v kind msg)) (Choice1Of2 Map.empty)
-        match unified with
-        | Choice1Of2 m -> Choice1Of2(ValueType.Composite m)
-        | Choice2Of2 msg -> Choice2Of2 msg
+        tryUnifyMappingAndComposite kind comp
     | ValueType.Composite kinds1, ValueType.Composite kinds2 ->
-        let unifyInternally kinds initial =
-            kinds
-            |> Map.fold (fun map kw kind ->
-                match Map.tryFind kw map with
-                | Some kind2 ->
-                    match tryUnify(kind, kind2) with
-                    | Choice1Of2 kind ->
-                        Map.add kw kind map
-                    | Choice2Of2 msg ->
-                        raise(UnificationFailure(
-                                mkFailedUnification kind kind2 msg))
-                | None ->
-                    Map.add kw kind map
-                ) initial
-        try
-            let unified =
-                Map.empty
-                |> unifyInternally kinds1
-                |> unifyInternally kinds2
-            Choice1Of2(ValueType.Composite unified)
-        with
-        | :? UnificationFailure as e ->
-            Choice2Of2(e.Data0)
+        tryUnifyComposites kinds1 kinds2
     | ValueType.Mapping kind1, ValueType.Mapping kind2 ->
         match tryUnify(kind1, kind2) with
         | Choice1Of2 kind ->
@@ -168,7 +149,50 @@ let rec tryUnify =
     | kind1, kind2 ->
         Choice2Of2 (mkFailedUnification kind1 kind2 "Incompatible value types")
 
-let tryUnifyMap n kind oldKinds =
+and tryUnifyMappingAndComposite kind comp =
+    let unified =
+        comp
+        |> Map.fold (fun m k (v, multMin, multMax) ->
+            match m, tryUnify(v, kind) with
+            | Choice2Of2 _ as err, _ ->
+                err
+            | Choice1Of2 m, Choice1Of2 kind ->
+                Map.add k (kind, multMin, multMax) m
+                |> Choice1Of2
+            | Choice1Of2 m, Choice2Of2 msg ->
+                Choice2Of2(mkFailedUnification v kind msg)) (Choice1Of2 Map.empty)
+    match unified with
+    | Choice1Of2 m -> Choice1Of2(ValueType.Composite m)
+    | Choice2Of2 msg -> Choice2Of2 msg
+
+and tryUnifyComposites kinds1 kinds2 =
+    let inOne = kinds1 |> Seq.map (fun kvp -> kvp.Key) |> Set.ofSeq
+    let inTwo = kinds2 |> Seq.map (fun kvp -> kvp.Key) |> Set.ofSeq 
+    let merged = ref Map.empty
+    for label1 in Set.difference inOne inTwo do
+        let (kind, _, maxMult) = kinds1.[label1]
+        merged := Map.add label1 (kind, Zero, maxMult) !merged
+    for label2 in Set.difference inTwo inOne do
+        let (kind, _, maxMult) = kinds2.[label2]
+        merged := Map.add label2 (kind, Zero, maxMult) !merged
+    let rec work labels =
+        match labels with
+        | [] ->
+            Choice1Of2(ValueType.Composite !merged)
+        | label :: rest ->
+            let (kind1, minMult1, maxMult1) = kinds1.[label]
+            let (kind2, minMult2, maxMult2) = kinds2.[label]
+            match tryUnify(kind1, kind2) with
+            | Choice1Of2 kind ->
+                let minMult = least(minMult1, minMult2)
+                let maxMult = most(maxMult1, maxMult2)
+                merged := Map.add label (kind, minMult, maxMult) !merged
+                work rest
+            | Choice2Of2 msg ->
+                Choice2Of2(mkFailedUnification kind1 kind2 msg)
+    work (Set.intersect inOne inTwo |> List.ofSeq)
+
+let tryUnifyMap (n : string) kind oldKinds =
     match Map.tryFind n oldKinds with
     | Some oldKind ->
         match tryUnify(oldKind, kind) with
@@ -181,5 +205,21 @@ let tryUnifyMap n kind oldKinds =
 
 let unifyMap n kind oldKinds =
     match tryUnifyMap n kind oldKinds with
+    | Choice1Of2 d -> d
+    | Choice2Of2 msg -> raise(UnificationFailure(msg))
+
+let tryUnifyMultMap (n : string) (kind, minMult, maxMult) oldKinds =
+    match Map.tryFind n oldKinds with
+    | Some (oldKind, oldMin, oldMax) ->
+        match tryUnify(oldKind, kind) with
+        | Choice1Of2 kind ->
+            Choice1Of2(Map.add n (kind, least(minMult, oldMin), most(maxMult, oldMax)) oldKinds)
+        | Choice2Of2 msg ->
+            Choice2Of2(mkFailedUnification oldKind kind msg)
+    | None ->
+        Choice1Of2(Map.add n (kind, MinOne, MaxOne) oldKinds)
+
+let unifyMultMap n kind oldKinds =
+    match tryUnifyMultMap n kind oldKinds with
     | Choice1Of2 d -> d
     | Choice2Of2 msg -> raise(UnificationFailure(msg))

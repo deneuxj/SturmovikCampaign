@@ -150,7 +150,7 @@ let rec makeParser (format : ValueType) : ParserFun =
             match s with
             | ReId(kw, ((ReLit "{" _) as s)) ->
                 match typeMap.TryFind kw with
-                | Some valueType ->
+                | Some (valueType, _, _) ->
                     let (ParserFun f) = makeParser valueType
                     let (v, s) = f s
                     let xs, s = parse s 
@@ -159,7 +159,7 @@ let rec makeParser (format : ValueType) : ParserFun =
                     parseError(sprintf "Not a known key: %s" kw, s)
             | ReId(kw, ReLit "=" s) ->
                 match typeMap.TryFind kw with
-                | Some valueType ->
+                | Some (valueType, _, _) ->
                     let (ParserFun f) = makeParser valueType
                     let (v, s) = f s
                     match s with

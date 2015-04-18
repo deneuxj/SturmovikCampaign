@@ -27,7 +27,7 @@ let rec tryParseAsComposite (s : Stream) =
             | ReId(n, ((ReLit "{" _) as s)) ->
                 match tryParse s with
                 | Some (kind, s) ->
-                    let subTypes = unifyMap n kind subTypes
+                    let subTypes = unifyMultMap n (kind, MinOne, MaxOne) subTypes
                     work subTypes s
                 | None ->
 //                    printfn "Failed to parse RHS %s" (getContext s)
@@ -35,7 +35,7 @@ let rec tryParseAsComposite (s : Stream) =
             | ReId(n, ReLit "=" s) ->
                 match tryParse s with
                 | Some (kind, s) ->
-                    let subTypes = unifyMap n kind subTypes
+                    let subTypes = unifyMultMap n (kind, MinOne, MaxOne) subTypes
                     match s with
                     | ReLit ";" s ->
                         work subTypes s
