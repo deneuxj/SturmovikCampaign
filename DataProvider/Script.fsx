@@ -2,7 +2,6 @@
 // for more guidance on F# programming.
 #load "Ast.fs"
 #load "Parsing.fs"
-#load "MissionData.fs"
 #load "AutoSchema.fs"
 
 open SturmovikMission.DataProvider

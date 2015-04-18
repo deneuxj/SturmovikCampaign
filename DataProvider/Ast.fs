@@ -5,7 +5,7 @@ type ValueType =
     | Integer
     | String
     | Float
-    | Composite of (string * ValueType) list
+    | Composite of Map<string, ValueType>
     | Mapping of ValueType // { 1 = XXX1; 2 = XXX2 }
     | Set of ValueType // { entries }
     | IntVector // [1, 2, 3]
@@ -92,7 +92,7 @@ let rec tryUnify =
     | ValueType.Composite kinds1, ValueType.Composite kinds2 ->
         let unifyInternally kinds initial =
             kinds
-            |> List.fold (fun map (kw, kind) ->
+            |> Map.fold (fun map kw kind ->
                 match Map.tryFind kw map with
                 | Some kind2 ->
                     match tryUnify(kind, kind2) with
@@ -109,8 +109,6 @@ let rec tryUnify =
                 Map.empty
                 |> unifyInternally kinds1
                 |> unifyInternally kinds2
-                |> Seq.map (fun kvp -> (kvp.Key, kvp.Value))
-                |> List.ofSeq
             Choice1Of2(ValueType.Composite unified)
         with
         | :? UnificationFailure as e ->
@@ -144,3 +142,19 @@ let rec tryUnify =
             Choice2Of2 (mkFailedUnification p1 p2 msg)
     | kind1, kind2 ->
         Choice2Of2 (mkFailedUnification kind1 kind2 "Incompatible value types")
+
+let tryUnifyMap n kind oldKinds =
+    match Map.tryFind n oldKinds with
+    | Some oldKind ->
+        match tryUnify(oldKind, kind) with
+        | Choice1Of2 kind ->
+            Choice1Of2(Map.add n kind oldKinds)
+        | Choice2Of2 msg ->
+            Choice2Of2(mkFailedUnification oldKind kind msg)
+    | None ->
+        Choice1Of2(Map.add n kind oldKinds)
+
+let unifyMap n kind oldKinds =
+    match tryUnifyMap n kind oldKinds with
+    | Choice1Of2 d -> d
+    | Choice2Of2 msg -> raise(UnificationFailure(msg))

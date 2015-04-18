@@ -132,20 +132,29 @@ let rec makeParser (format : ValueType) : ParserFun =
         | ReFloat (x, s) -> (Value.Float x, s)
         | s -> parseError("Not a float", s)
     | ValueType.Composite content ->
-        let typeMap = Map.ofList content
+        let typeMap = content
         let rec parse (s : Stream) =
             match s with
-            | ReId(kw, (ReLit "{" _ as s))
+            | ReId(kw, ((ReLit "{" _) as s)) ->
+                match typeMap.TryFind kw with
+                | Some valueType ->
+                    let (ParserFun f) = makeParser valueType
+                    let (v, s) = f s
+                    let xs, s = parse s 
+                    (kw, v) :: xs, s
+                | None ->
+                    parseError(sprintf "Not a known key: %s" kw, s)
             | ReId(kw, ReLit "=" s) ->
                 match typeMap.TryFind kw with
                 | Some valueType ->
                     let (ParserFun f) = makeParser valueType
                     let (v, s) = f s
                     match s with
-                    | ReLit ";" s
-                    | s ->
+                    | ReLit ";" s ->
                         let xs, s = parse s 
                         (kw, v) :: xs, s
+                    | _ ->
+                        parseError("Not ;", s)
                 | None ->
                     parseError(sprintf "Not a known key: %s" kw, s)
             | ReLit "}" s ->

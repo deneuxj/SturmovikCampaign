@@ -45,7 +45,6 @@
     <Compile Include="Ast.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="AutoSchema.fs" />
-    <Compile Include="MissionData.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
   <PropertyGroup>

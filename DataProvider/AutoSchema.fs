@@ -20,29 +20,34 @@ let inline wrap _ f x = f x
 let rec tryParseAsComposite (s : Stream) =
     match s with
     | ReLit "{" s ->
-        let rec work s =
+        let rec work subTypes s =
             match s with
             | ReLit "}" s ->
-                Some([], s)
-            | ReId(n, ((ReLit "{" _) as s))
+                Some(subTypes, s)
+            | ReId(n, ((ReLit "{" _) as s)) ->
+                match tryParse s with
+                | Some (kind, s) ->
+                    let subTypes = unifyMap n kind subTypes
+                    work subTypes s
+                | None ->
+//                    printfn "Failed to parse RHS %s" (getContext s)
+                    None
             | ReId(n, ReLit "=" s) ->
                 match tryParse s with
                 | Some (kind, s) ->
+                    let subTypes = unifyMap n kind subTypes
                     match s with
-                    | ReLit ";" s
-                    | s ->
-                        match work s with
-                        | Some (kinds, s) ->
-                            Some((n, kind) :: kinds, s)
-                        | None ->
-                            None
+                    | ReLit ";" s ->
+                        work subTypes s
+                    | _ ->
+                        None
                 | None ->
 //                    printfn "Failed to parse RHS %s" (getContext s)
                     None
             | _ ->
 //                printfn "Failed to parse LHS %s" (getContext s)
                 None
-        match work s with
+        match work Map.empty s with
         | Some (kinds, s) ->
             Some(ValueType.Composite kinds, s)
         | None ->
@@ -61,13 +66,14 @@ and tryParseAsMapping (s : Stream) =
                 match tryParseValue s with
                 | Some (kind, s) ->
                     match s with
-                    | ReLit ";" s
-                    | s ->
+                    | ReLit ";" s ->
                         match work tryParseValue s with
                         | Some (s) ->
                             Some(s)
                         | None ->
                             None
+                    | _ ->
+                        None
                 | None ->
                     None
             | _ ->
@@ -238,7 +244,7 @@ and tryGetParser s =
         wrap "FLOAT" tryParseAsFloat
         wrap "VEC" tryParseAsVector
         wrap "SET" tryParseAsSet
-        wrap "MAP" tryParseAsMapping
+//        wrap "MAP" tryParseAsMapping
         wrap "COMP" tryParseAsComposite
     ]
     funs
@@ -248,44 +254,57 @@ and tryParse s =
     tryGetParser s
     |> Option.bind (fun f -> f s)
 
+let rec parseGroup types s =
+    match s with
+    | ReId("Group", ReLit "{" s) ->
+        let rec work types s =
+            match s with
+            | ReLit "}" s ->
+                types, s
+            | ReId("Name", ReLit "=" (ReString(_, ReLit ";" s)))
+            | ReId("Index", ReLit "=" (ReInt(_, ReLit ";" s)))
+            | ReId("Desc", ReLit "=" (ReString(_, ReLit ";" s))) ->
+                work types s
+            | ReId("Group", _) ->
+                let types, s = parseGroup types s
+                work types s
+            | ReId(n, ((ReLit "{" _) as s)) ->
+                match tryParseAsComposite s with
+                | Some (kind, s) ->
+                    let types = unifyMap n kind types
+                    work types s
+                | None ->
+                    parseError("Expected group or composite", s)
+            | s ->
+                parseError("In Group, unexpected LHS", s)
+        work types s
+    | s ->
+        parseError("Expected 'Group'", s)
+
 let rec getTopType types s =
     match s with
     | EOF s ->
-        [], s
-    | ReId("Group", s) ->
-        // Try to parse as a composite, then lift its content
-        match tryParseAsComposite s with
-        | Some (ValueType.Composite comps, s) ->
-            let composites =
-                comps
-                |> List.filter (function (_, ValueType.Composite _) -> true | _ -> false)
-            composites, s
-        | Some _ ->
-            failwith "tryParseAsComposite returned a non-composite"
-        | None ->
-            parseError("Failed to parse Group", s)
+        types, s
+    | ReId("Group", _) ->
+        parseGroup types s
     | ReId(n, s) ->
         match Map.tryFind n types with
         | Some kind ->
             let (ParserFun f) = makeParser kind
             try
                 let x, s = f s
-                [(n, kind)], s
+                types, s
             with
             | _ ->
                 match tryParse s with
                 | Some (kind2, s) ->
-                    match tryUnify(kind, kind2) with
-                    | Choice1Of2 kind -> 
-                        [(n, kind)], s
-                    | Choice2Of2 msg ->
-                        failwith "Unification failure: %s" msg
+                    unifyMap n kind2 types, s
                 | None ->
                     parseError("Failed to extend seen structure", s)
         | None ->
             match (wrap "COMP" tryParseAsComposite) s with
             | Some (kind, s) ->
-                [(n, kind)], s
+                Map.add n kind types, s
             | None ->
                 parseError("Failed to guess unseen structure", s)
     | _ ->
@@ -297,7 +316,7 @@ let getTopTypes s : Map<string, ValueType> * Stream =
         | EOF s ->
             types, s
         | _ ->
-            let newTypes, s =
+            let types, s =
                 try
                     getTopType types s
                 with
@@ -305,16 +324,10 @@ let getTopTypes s : Map<string, ValueType> * Stream =
                     printParseError e
                     |> String.concat "\n"
                     |> printfn "%s"
-                    [], s
+                    raise e
                 | e ->
                     printfn "FAILED: %s" e.Message
-                    [], s
-            let types =
-                newTypes
-                |> List.fold (fun types (kw, kind) -> Map.add kw kind types) types
-//            for (n, k) in newTypes do
-//                printfn "FOUND %s: %A" n k
-            let types, s = work types s 
-            types, s
+                    raise e
+            work types s
 
     work Map.empty s
