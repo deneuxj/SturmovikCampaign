@@ -10,4 +10,9 @@ let dir = @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmissi
 let conquest = @"data\Conquest\StalingradConquest.Mission"
 let path = System.IO.Path.Combine(dir, conquest)
 
-AutoSchema.getTopTypes (Parsing.Stream.FromFile(path))
+let kinds, _ = AutoSchema.getTopTypes (Parsing.Stream.FromFile(path))
+match Map.tryFind "Block" kinds with
+| Some kind ->
+    printfn "%A" kind
+| None ->
+    printfn "Not found"

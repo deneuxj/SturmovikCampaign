@@ -244,7 +244,7 @@ and tryGetParser s =
         wrap "FLOAT" tryParseAsFloat
         wrap "VEC" tryParseAsVector
         wrap "SET" tryParseAsSet
-//        wrap "MAP" tryParseAsMapping
+        wrap "MAP" tryParseAsMapping
         wrap "COMP" tryParseAsComposite
     ]
     funs
