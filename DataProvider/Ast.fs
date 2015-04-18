@@ -2,6 +2,7 @@
 
 
 type ValueType =
+    | Boolean
     | Integer
     | String
     | Float
@@ -15,6 +16,7 @@ type ValueType =
 
 
 type Value =
+    | Boolean of bool
     | Integer of int
     | String of string
     | Float of float
@@ -29,6 +31,7 @@ type Value =
 
 let rec dump (value : Value) : string =
     match value with
+    | Boolean b -> if b then "1" else "0"
     | Integer i -> sprintf "%d" i
     | String s -> sprintf "\"%s\"" s
     | Float f -> sprintf "%f" f
@@ -86,9 +89,31 @@ let rec tryUnify =
     function
     | kind1, kind2 when kind1 = kind2 ->
         Choice1Of2(kind1)
+    | ValueType.Boolean, ValueType.Integer
+    | ValueType.Integer, ValueType.Boolean ->
+        Choice1Of2(ValueType.Integer)
+    | ValueType.Boolean, ValueType.Float
+    | ValueType.Float, ValueType.Boolean ->
+        Choice1Of2(ValueType.Float)
     | ValueType.Integer, ValueType.Float
     | ValueType.Float, ValueType.Integer ->
         Choice1Of2(ValueType.Float)
+    | ValueType.Composite comp, ValueType.Mapping kind
+    | ValueType.Mapping kind, ValueType.Composite comp ->
+        let unified =
+            comp
+            |> Map.fold (fun m k v ->
+                match m, tryUnify(v, kind) with
+                | Choice2Of2 _ as err, _ ->
+                    err
+                | Choice1Of2 m, Choice1Of2 kind ->
+                    Map.add k kind m
+                    |> Choice1Of2
+                | Choice1Of2 m, Choice2Of2 msg ->
+                    Choice2Of2(mkFailedUnification v kind msg)) (Choice1Of2 Map.empty)
+        match unified with
+        | Choice1Of2 m -> Choice1Of2(ValueType.Composite m)
+        | Choice2Of2 msg -> Choice2Of2 msg
     | ValueType.Composite kinds1, ValueType.Composite kinds2 ->
         let unifyInternally kinds initial =
             kinds

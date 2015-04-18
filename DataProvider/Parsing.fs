@@ -7,6 +7,7 @@ open SturmovikMission.DataProvider.Ast
 let regex pat =
     Regex(pat, RegexOptions.Compiled)
 
+let reBool = regex(@"\G\s*(0|1)[^.\d]")
 let reInt = regex(@"\G\s*([+-]?\d+)\s*[^.\d]")
 let reId = regex(@"\G\s*([a-zA-Z0-9_]+)")
 let reString = regex("\G\\s*\"([^\"]*)\"")
@@ -32,6 +33,14 @@ let (|EOF|_|) (SubString(data, offset)) =
     let m = reWs.Match(data, offset)
     if m.Index + m.Length >= data.Length then
         Some(SubString(data, data.Length))
+    else
+        None
+
+let (|ReBool|_|) (SubString(data, offset)) =
+    let m = reBool.Match(data, offset)
+    let g = m.Groups.[1]
+    if m.Success then
+        Some (g.Value = "1", SubString(data, g.Index + g.Length))
     else
         None
 
@@ -119,6 +128,10 @@ let printParseError (e : ParseError) =
 
 let rec makeParser (format : ValueType) : ParserFun =
     match format with
+    | ValueType.Boolean ->
+        function
+        | ReBool (x, s) -> (Value.Boolean x, s)
+        | s -> parseError("Not a Boolean", s)
     | ValueType.Integer ->
         function
         | ReInt (x, s) -> (Value.Integer x, s)

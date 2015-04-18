@@ -200,6 +200,11 @@ and tryParseAsVector =
     | _ ->
         None
 
+and tryParseAsBool =
+    function
+    | ReBool(n, s) -> Some(ValueType.Boolean, s)
+    | _ -> None
+
 and tryParseAsInt =
     function
     | ReInt(n, s) -> Some(ValueType.Integer, s)
@@ -222,6 +227,7 @@ and tryParseAsDate =
 
 and tryGetGroundParser s =
     let funs = [
+        wrap "BOOL" tryParseAsBool
         wrap "INT" tryParseAsInt
         wrap "DATE" tryParseAsDate
         wrap "FLOAT" tryParseAsFloat
@@ -240,6 +246,7 @@ and tryGetParser s =
         wrap "PAIR" tryParseAsPair
         wrap "STR" tryParseAsString
         wrap "DATE" tryParseAsDate
+        wrap "BOOL" tryParseAsBool
         wrap "INT" tryParseAsInt
         wrap "FLOAT" tryParseAsFloat
         wrap "VEC" tryParseAsVector
@@ -324,6 +331,9 @@ let getTopTypes s : Map<string, ValueType> * Stream =
                     printParseError e
                     |> String.concat "\n"
                     |> printfn "%s"
+                    raise e
+                | :? UnificationFailure as e ->
+                    printfn "Unification failure: %s" e.Data0
                     raise e
                 | e ->
                     printfn "FAILED: %s" e.Message
