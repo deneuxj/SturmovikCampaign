@@ -49,10 +49,18 @@ let (|ReString|_|) (SubString(data, offset)) =
     else
         None
 
-let (|ReLit|_|) lit (SubString(data, offset)) =
+let (|ReLit|_|) (lit : string) (SubString(data, offset)) =
     let r = Regex(@"\G\s*")
     let m = r.Match(data, offset)
-    if data.[m.Index + m.Length..].StartsWith(lit) then
+    let i0 = m.Index + m.Length
+    let rec matches i =
+        if i >= lit.Length then
+            true
+        elif i0 + i >= data.Length then
+            false
+        else
+            data.[i0 + i] = lit.[i] && matches (i + 1) 
+    if matches 0 then
         Some (SubString(data, m.Index + m.Length + lit.Length))
     else
         None
