@@ -1,6 +1,7 @@
 ﻿module SturmovikMission.DataProvider.AutoSchema
 
 open SturmovikMission.DataProvider.Ast
+open SturmovikMission.DataProvider.Unification
 open SturmovikMission.DataProvider.Parsing
 
 #if VERBOSE_TRY_PARSE

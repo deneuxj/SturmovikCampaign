@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ast.fs" />
+    <Compile Include="Unification.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="AutoSchema.fs" />
     <None Include="Script.fsx" />
