@@ -96,6 +96,26 @@ let rec dump (value : Value) : string =
         }
         |> String.concat ""
 
+
+type Data =
+    | Leaf of string * Value
+    | Group of GroupData
+
+and GroupData =
+    { Name : string
+      Index : int
+      Description : string
+      Data : Data list
+    }
+
+
+type Mission =
+    { Version : int
+      Content : Data list
+    }
+
+
+
 exception UnificationFailure of string
 
 let mkFailedUnification kind1 kind2 msg =
