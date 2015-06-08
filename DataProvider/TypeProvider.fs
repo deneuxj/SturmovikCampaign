@@ -1,5 +1,7 @@
 ﻿module SturmovikMission.DataProvider.TypeProvider
 
+#nowarn "25"
+
 open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
 open Microsoft.FSharp.Quotations
@@ -114,7 +116,7 @@ let mkProvidedTypeBuilder()=
                 ptyp
             | Ast.ValueType.Pair (typ1, typ2) ->
                 let ptyp =
-                    new ProvidedTypeDefinition("Pair", Some (typeof<Ast.Value>))
+                    new ProvidedTypeDefinition(newName "Pair", Some (typeof<Ast.Value>))
                 let unwrap this =
                     <@@
                         match (%%this : obj) :?> Ast.Value with
@@ -135,7 +137,7 @@ let mkProvidedTypeBuilder()=
                 ptyp
             | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
                 let ptyp =
-                    new ProvidedTypeDefinition("Triplet", Some (typeof<Ast.Value>))
+                    new ProvidedTypeDefinition(newName "Triplet", Some (typeof<Ast.Value>))
                 let unwrap this =
                     <@@
                         match (%%this : obj) :?> Ast.Value with
@@ -291,7 +293,7 @@ let mkProvidedTypeBuilder()=
     and getProvidedType typ =
         cached cache (buildProvidedTypeNonCached) typ
 
-    getProvidedType
+    getProvidedType, cache
 
 
 [<TypeProvider>]
@@ -300,7 +302,6 @@ type MissionTypes(config: TypeProviderConfig) as this =
 
     let asm = System.Reflection.Assembly.GetExecutingAssembly()
     let ns = "SturmovikMission"
-    let getProvidedType = mkProvidedTypeBuilder()
 
     let provider = ProvidedTypeDefinition(asm, ns, "Provider", Some(typeof<obj>))
     let sampleParam = ProvidedStaticParameter("sample", typeof<string>)
@@ -310,12 +311,13 @@ type MissionTypes(config: TypeProviderConfig) as this =
         let sample = sample :?> string
         if not(System.IO.File.Exists(sample)) then
             failwithf "Cannot open sample file '%s' for reading" sample
+        let getProvidedType, cache = mkProvidedTypeBuilder()
         let types, _ = AutoSchema.getTopTypes(Parsing.Stream.FromFile(sample))
+        for t in types do
+            ignore <| getProvidedType t.Value
         let types =
-            types
-            |> Map.map (fun name typ -> getProvidedType typ)
-            |> Map.toSeq
-            |> Seq.map snd
+            cache
+            |> Seq.map (fun kvp -> kvp.Value)
             |> List.ofSeq
         let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
         ty.AddMembers(types)
