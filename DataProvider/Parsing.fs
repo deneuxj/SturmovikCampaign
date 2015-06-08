@@ -1,5 +1,6 @@
 ﻿module SturmovikMission.DataProvider.Parsing
 
+open System
 open System.Text.RegularExpressions
 
 open SturmovikMission.DataProvider.Ast
@@ -18,7 +19,7 @@ let reWs = regex(@"\G\s*")
 type Stream = SubString of Data : string * Offset : int
 with
     static member FromFile(path) =
-        let lines = System.IO.File.ReadAllLines(path)
+        let lines = IO.File.ReadAllLines(path)
         let lines =
             lines
             |> Array.map (fun line ->
@@ -48,7 +49,7 @@ let (|ReInt|_|) (SubString(data, offset)) =
     let m = reInt.Match(data, offset)
     let g = m.Groups.[1]
     if m.Success then
-        Some (System.Int32.Parse g.Value, SubString(data, g.Index + g.Length))
+        Some (Int32.Parse g.Value, SubString(data, g.Index + g.Length))
     else
         None
 
@@ -85,9 +86,11 @@ let (|ReFloat|_|) (SubString(data, offset)) =
     let m = reFloat.Match(data, offset)
     if m.Success then
         try
-            Some (System.Double.Parse m.Value, SubString(data, m.Index + m.Length))
+            Some (
+                Double.Parse(m.Value, Globalization.CultureInfo.InvariantCulture),
+                SubString(data, m.Index + m.Length))
         with
-        | :? System.FormatException ->
+        | :? FormatException ->
             failwithf "Not a float: %s" m.Value
     else
         None
@@ -95,9 +98,9 @@ let (|ReFloat|_|) (SubString(data, offset)) =
 let (|ReDate|_|) (SubString(data, offset)) =
     let m = reDate.Match(data, offset)
     if m.Success then
-        let day = System.Int32.Parse m.Groups.[1].Value
-        let month = System.Int32.Parse m.Groups.[2].Value
-        let year = System.Int32.Parse m.Groups.[3].Value
+        let day = Int32.Parse m.Groups.[1].Value
+        let month = Int32.Parse m.Groups.[2].Value
+        let year = Int32.Parse m.Groups.[3].Value
         Some (Value.Date(day, month, year), SubString(data, m.Index + m.Length))
     else
         None
