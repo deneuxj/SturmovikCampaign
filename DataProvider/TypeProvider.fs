@@ -17,7 +17,9 @@ let cached (cache : IDictionary<'a, 'b>) f x =
         y
 
 let getNameStore getValidNames =
-    let store = ref <| Set []
+    let reserved =
+        [ "Boolean"; "Float"; "Integer"; "String"; "VectorOfIntefers"; "Date" ]
+    let store = ref <| Set reserved
     let isValid name =
         Set.contains name !store
         |> not
@@ -31,17 +33,17 @@ let getNameStore getValidNames =
 let mkProvidedTypeBuilder()=
     let newName =
         fun baseName ->
-            Seq.initInfinite (fun i -> sprintf "%s_%d" baseName i)
+            Seq.initInfinite (fun i -> if i = 0 then baseName else sprintf "%s_%d" baseName (i + 1))
         |> getNameStore
 
-    let cache = new Dictionary<Ast.ValueType, ProvidedTypeDefinition>(HashIdentity.Structural)
+    let cache = new Dictionary<string option * Ast.ValueType, ProvidedTypeDefinition>(HashIdentity.Structural)
 
-    let rec buildProvidedTypeNonCached (typ : Ast.ValueType) =
+    let rec buildProvidedType (name : string option, typ : Ast.ValueType) =
         let rec work (typ : Ast.ValueType) =
             match typ with
             | Ast.ValueType.Boolean ->
                 let ptyp =
-                    new ProvidedTypeDefinition("Boolean", Some (typeof<Ast.Value>))
+                    new ProvidedTypeDefinition(defaultArg name "Boolean", Some (typeof<Ast.Value>))
                 let asBool this =
                     <@@
                         match (%%this : obj) :?> Ast.Value with
@@ -56,7 +58,7 @@ let mkProvidedTypeBuilder()=
                 ptyp
             | Ast.ValueType.Float ->
                 let ptyp =
-                    new ProvidedTypeDefinition("Float", Some (typeof<Ast.Value>))
+                    new ProvidedTypeDefinition(defaultArg name "Float", Some (typeof<Ast.Value>))
                 let asFloat this =
                     <@@
                         match (%%this : obj) :?> Ast.Value with
@@ -115,8 +117,14 @@ let mkProvidedTypeBuilder()=
                 ptyp.AddMember(value)
                 ptyp
             | Ast.ValueType.Pair (typ1, typ2) ->
+                let ptyp1 = getProvidedType(None, typ1)
+                let ptyp2 = getProvidedType(None, typ2)
                 let ptyp =
-                    new ProvidedTypeDefinition(newName "Pair", Some (typeof<Ast.Value>))
+                    let name =
+                        sprintf "PairOf%sAnd%s" ptyp1.Name ptyp2.Name
+                        |> defaultArg name
+                        |> newName
+                    new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
                 let unwrap this =
                     <@@
                         match (%%this : obj) :?> Ast.Value with
@@ -124,8 +132,6 @@ let mkProvidedTypeBuilder()=
                         | _ -> failwith "Underlying type is not Pair"
                     @@>
                 let value =
-                    let ptyp1 = getProvidedType typ1
-                    let ptyp2 = getProvidedType typ2
                     let propTyp =
                         typeof<_*_>
                             .GetGenericTypeDefinition()
@@ -136,8 +142,15 @@ let mkProvidedTypeBuilder()=
                 ptyp.AddMember(value)
                 ptyp
             | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
+                let ptyp1 = getProvidedType(None, typ1)
+                let ptyp2 = getProvidedType(None, typ2)
+                let ptyp3 = getProvidedType(None, typ3)
                 let ptyp =
-                    new ProvidedTypeDefinition(newName "Triplet", Some (typeof<Ast.Value>))
+                    let name =
+                        sprintf "TripletOf%sAnd%sAnd%s" ptyp1.Name ptyp2.Name ptyp3.Name
+                        |> defaultArg name
+                        |> newName
+                    new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
                 let unwrap this =
                     <@@
                         match (%%this : obj) :?> Ast.Value with
@@ -145,9 +158,6 @@ let mkProvidedTypeBuilder()=
                         | _ -> failwith "Underlying type is not Triplet"
                     @@>
                 let value =
-                    let ptyp1 = getProvidedType typ1
-                    let ptyp2 = getProvidedType typ2
-                    let ptyp3 = getProvidedType typ3
                     let propTyp =
                         typeof<_*_*_>
                             .GetGenericTypeDefinition()
@@ -159,7 +169,7 @@ let mkProvidedTypeBuilder()=
                 ptyp
             | Ast.ValueType.Date ->
                 let ptyp =
-                    new ProvidedTypeDefinition("Date", Some (typeof<Ast.Value>))
+                    new ProvidedTypeDefinition(defaultArg name "Date", Some (typeof<Ast.Value>))
                 let year =
                     new ProvidedProperty("Year", typeof<int>)
                 let month =
@@ -201,7 +211,7 @@ let mkProvidedTypeBuilder()=
                 ptyp
             | Ast.ValueType.Composite fields ->
                 let ptyp =
-                    new ProvidedTypeDefinition(newName "Composite", Some (typeof<Ast.Value>))
+                    new ProvidedTypeDefinition(defaultArg name "Composite" |> newName, Some (typeof<Ast.Value>))
                 let asList this =
                     <@@
                         match (%%this : obj) with
@@ -217,7 +227,13 @@ let mkProvidedTypeBuilder()=
                     |> Map.map (
                         fun fieldName (def, minMult, maxMult) ->
                             let fieldType =
-                                getProvidedType def
+                                let subName =
+                                    match def with
+                                    | Ast.ValueType.Set _
+                                    | Ast.ValueType.Mapping _
+                                    | Ast.ValueType.Composite _ -> Some fieldName
+                                    | _ -> None
+                                getProvidedType(subName, def)
                             match (minMult, maxMult) with
                             | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
                                 let prop = new ProvidedProperty(fieldName, fieldType)
@@ -265,33 +281,57 @@ let mkProvidedTypeBuilder()=
                 ptyp.AddMembers(members)
                 ptyp
             | Ast.ValueType.Mapping itemTyp ->
-                let ptyp1 = getProvidedType itemTyp
+                let ptyp1 = getProvidedType(None, itemTyp)
                 let ptyp =
-                    new ProvidedTypeDefinition(newName "Mapping", Some (typeof<Ast.Value>))
+                    new ProvidedTypeDefinition(defaultArg name "Mapping" |> newName, Some (typeof<Ast.Value>))
                 let content =
-                    new ProvidedField(
+                    new ProvidedProperty(
                         "Content",
                         typeof<Map<_,_>>
                             .GetGenericTypeDefinition()
-                            .MakeGenericType(typeof<int>, ptyp1))
+                            .MakeGenericType(typeof<string>, ptyp1))
+                let unwrap this =
+                    <@@
+                        match (%%this : obj) :?> Ast.Value with
+                        | Ast.Value.Mapping items -> items
+                        | _ -> failwith "Underlying type is not Triplet"
+                    @@>
+                content.GetterCode <-
+                    fun [this] ->
+                        let e = unwrap this
+                        <@@
+                            Map.ofList %%e
+                        @@>
                 ptyp.AddMember(content)
                 ptyp
             | Ast.ValueType.Set itemTyp ->
-                let ptyp1 = getProvidedType itemTyp
+                let ptyp1 = getProvidedType(None, itemTyp)
                 let ptyp =
-                    new ProvidedTypeDefinition(newName "Set", Some (typeof<Ast.Value>))
+                    new ProvidedTypeDefinition(defaultArg name "Set" |> newName, Some (typeof<Ast.Value>))
                 let content =
-                    new ProvidedField(
+                    new ProvidedProperty(
                         "Content",
                         typeof<Set<_>>
                             .GetGenericTypeDefinition()
                             .MakeGenericType(ptyp1))
+                let unwrap this =
+                    <@@
+                        match (%%this : obj) :?> Ast.Value with
+                        | Ast.Value.Set items -> items
+                        | _ -> failwith "Underlying type is not Triplet"
+                    @@>
+                content.GetterCode <-
+                    fun [this] ->
+                        let e = unwrap this
+                        <@@
+                            Set.ofList %%e
+                        @@>
                 ptyp.AddMember(content)
                 ptyp
         work typ
 
-    and getProvidedType typ =
-        cached cache (buildProvidedTypeNonCached) typ
+    and getProvidedType (name, typ) : ProvidedTypeDefinition =
+        cached cache (buildProvidedType) (name, typ)
 
     getProvidedType, cache
 
@@ -314,7 +354,7 @@ type MissionTypes(config: TypeProviderConfig) as this =
         let getProvidedType, cache = mkProvidedTypeBuilder()
         let types, _ = AutoSchema.getTopTypes(Parsing.Stream.FromFile(sample))
         for t in types do
-            ignore <| getProvidedType t.Value
+            ignore <| getProvidedType(Some t.Key, t.Value)
         let types =
             cache
             |> Seq.map (fun kvp -> kvp.Value)
