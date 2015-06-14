@@ -42,8 +42,49 @@ type Value =
     | IntVector of int list
     | Pair of Value * Value
     | Triplet of Value * Value * Value
-    | Date of int * int * int
-
+    | Date of int * int * int // Day, month, year
+with
+    member this.GetBool() =
+        match this with
+        | Boolean b -> b
+        | _ -> invalidOp "Not a Boolean"
+    member this.GetInteger() =
+        match this with
+        | Integer n -> n
+        | _ -> invalidOp "Not an Integer"
+    member this.GetString() =
+        match this with
+        | String s -> s
+        | _ -> invalidOp "Not a String"
+    member this.GetFloat() =
+        match this with
+        | Float x -> x
+        | _ -> invalidOp "Not a Float"
+    member this.GetIntVector() =
+        match this with
+        | IntVector xs -> xs
+        | _ -> invalidOp "Not an IntVector"
+    member this.GetDate() =
+        match this with
+        | Date (d, m, y) -> (d, m, y)
+        | _ -> invalidOp "Not a Date"
+    member this.GetItems() =
+        match this with
+        | Composite items -> items
+        | Mapping items -> items
+        | _ -> invalidOp "Not a Composite or Mapping"
+    member this.GetSet() =
+        match this with
+        | Set items -> items
+        | _ -> invalidOp "Not a Set"
+    member this.GetPair() =
+        match this with
+        | Pair(x1, x2) -> x1, x2
+        | _ -> invalidOp "Not a Pair"
+    member this.GetTriplet() =
+        match this with
+        | Triplet(x1, x2, x3) -> x1, x2, x3
+        | _ -> invalidOp "Not a Triplet"
 
 let rec dump (value : Value) : string =
     match value with

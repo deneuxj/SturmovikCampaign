@@ -4,6 +4,7 @@ open System
 open System.Text.RegularExpressions
 
 open SturmovikMission.DataProvider.Ast
+open Microsoft.FSharp.Quotations
 
 let regex pat =
     Regex(pat, RegexOptions.Compiled)
@@ -107,6 +108,10 @@ let (|ReDate|_|) (SubString(data, offset)) =
 
 type ParserFun =
     ParserFun of (Stream -> Value * Stream)
+with
+    member this.Run(s) =
+        let (ParserFun p) = this
+        p s
 
 exception ParseError of string * Stream
 
@@ -129,24 +134,68 @@ let printParseError (e : ParseError) =
         sprintf "(%d): '%s...'" lineno (getContext s)
     ]
 
-let rec makeParser (format : ValueType) : ParserFun =
+let parseBool =
+    function
+    | ReBool (x, s) -> (Value.Boolean x, s)
+    | s -> parseError("Not a Boolean", s)
+
+let parseInteger =
+    function
+    | ReInt (x, s) -> (Value.Integer x, s)
+    | s -> parseError("Not an integer", s)
+
+let parseString =
+    function
+    | ReString (x, s) -> (Value.String x, s)
+    | s -> parseError("Not a string", s)
+
+let parseFloat =
+    function
+    | ReFloat (x, s) -> (Value.Float x, s)
+    | s -> parseError("Not a float", s)
+
+let parseDate =
+    function
+    | ReDate(d, s) -> (d, s)
+    | _ -> failwith "Not a date"
+
+let parseIntVector =
+    function
+    | ReLit "[" s ->
+        let rec parse =
+            function
+            | ReInt(n, s) ->
+                let xs, s = parse s
+                match s with
+                | ReLit "," s
+                | s ->
+                    n :: xs, s
+            | ReLit "]" s ->
+                [], s
+            | s ->
+                parseError("Not an int or ]", s)
+        let xs, s = parse s
+        Value.IntVector xs, s
+    | s ->
+        parseError("Not [", s)
+
+let rec parsePair (itemType1, itemType2) s =
+    let (ParserFun f1) = makeParser itemType1
+    let (ParserFun f2) = makeParser itemType2
+    let x1, s = f1 s
+    match s with
+    | ReLit ":" s ->
+        let x2, s = f2 s
+        (Value.Pair(x1, x2), s)
+    | _ ->
+        parseError("Not :", s)
+
+and makeParser (format : ValueType) : ParserFun =
     match format with
-    | ValueType.Boolean ->
-        function
-        | ReBool (x, s) -> (Value.Boolean x, s)
-        | s -> parseError("Not a Boolean", s)
-    | ValueType.Integer ->
-        function
-        | ReInt (x, s) -> (Value.Integer x, s)
-        | s -> parseError("Not an integer", s)
-    | ValueType.String ->
-        function
-        | ReString (x, s) -> (Value.String x, s)
-        | s -> parseError("Not a string", s)
-    | ValueType.Float ->
-        function
-        | ReFloat (x, s) -> (Value.Float x, s)
-        | s -> parseError("Not a float", s)
+    | ValueType.Boolean -> parseBool
+    | ValueType.Integer -> parseInteger
+    | ValueType.String -> parseString
+    | ValueType.Float -> parseFloat
     | ValueType.Composite content ->
         let typeMap = content
         let rec parse (s : Stream) =
@@ -202,17 +251,7 @@ let rec makeParser (format : ValueType) : ParserFun =
             let vs, s = parse s
             (Mapping vs, s)
         | s -> parseError("Not {", s)
-    | ValueType.Pair(itemType1, itemType2) ->
-        let (ParserFun f1) = makeParser itemType1
-        let (ParserFun f2) = makeParser itemType2
-        fun (s : Stream) ->
-            let x1, s = f1 s
-            match s with
-            | ReLit ":" s ->
-                let x2, s = f2 s
-                (Value.Pair(x1, x2), s)
-            | _ ->
-                parseError("Not :", s)
+    | ValueType.Pair(itemType1, itemType2) -> parsePair (itemType1, itemType2)
     | ValueType.Triplet(itemType1, itemType2, itemType3) ->
         let (ParserFun f1) = makeParser itemType1
         let (ParserFun f2) = makeParser itemType2
@@ -230,29 +269,8 @@ let rec makeParser (format : ValueType) : ParserFun =
                     parseError("Not :", s)
             | _ ->
                 parseError("Not :", s)
-    | ValueType.Date ->
-        function
-        | ReDate(d, s) -> (d, s)
-        | _ -> failwith "Not a date"
-    | ValueType.IntVector ->
-        function
-        | ReLit "[" s ->
-            let rec parse =
-                function
-                | ReInt(n, s) ->
-                    let xs, s = parse s
-                    match s with
-                    | ReLit "," s
-                    | s ->
-                        n :: xs, s
-                | ReLit "]" s ->
-                    [], s
-                | s ->
-                    parseError("Not an int or ]", s)
-            let xs, s = parse s
-            Value.IntVector xs, s
-        | s ->
-            parseError("Not [", s)
+    | ValueType.Date -> parseDate
+    | ValueType.IntVector -> parseIntVector
     | ValueType.Set itemType ->
         let (ParserFun f) = makeParser itemType
         function
@@ -273,3 +291,32 @@ let rec makeParser (format : ValueType) : ParserFun =
         | s ->
             parseError("Not {", s)
     |> ParserFun
+
+
+let rec makeParserExpr typ =
+    match typ with
+    | ValueType.Boolean ->
+        fun s -> <@ parseBool %s @>
+    | ValueType.Pair (typ1, typ2) ->
+        let parser1 = makeParserExpr typ1
+        let parser2 = makeParserExpr typ2
+        fun s ->
+            let step1 = parser1 s
+            let s = <@ snd %step1 @>
+            let x1 = <@ fst %step1 @>
+            let s =
+                <@
+                    match %s with
+                    | ReLit ":" s -> s
+                    | _ -> parseError("Not :", %s)
+                @>
+            let step2 = parser2 s
+            let s = <@ snd %step2 @>
+            let x2 = <@ fst %step2 @>
+            <@ Value.Pair(%x1, %x2), %s @>
+
+
+let makeParserRawExpr typ =
+    let parser = makeParserExpr typ
+    fun (s : Expr) ->
+        (parser (Expr.Cast(s))).Raw
