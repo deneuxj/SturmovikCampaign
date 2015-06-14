@@ -42,15 +42,6 @@ let mkProvidedTypeBuilder()=
 
     let cache = new Dictionary<string option * Ast.ValueType, ProvidedTypeDefinition>(HashIdentity.Structural)
 
-    let newParserMethod (ptyp : ProvidedTypeDefinition) =
-        let x =
-            new ProvidedMethod(
-                "Parse",
-                [ ProvidedParameter("s", typeof<Parsing.Stream>) ],
-                Microsoft.FSharp.Reflection.FSharpType.MakeTupleType([|ptyp; typeof<Parsing.Stream>|]))
-        x.IsStaticMethod <- true
-        x
-
     let rec buildProvidedType (name : string option, typ : Ast.ValueType) =
         match typ with
         | Ast.ValueType.Boolean ->
@@ -61,10 +52,6 @@ let mkProvidedTypeBuilder()=
             value.GetterCode <-
                 fun [this] -> <@@ (%%this : Ast.Value).GetBool() @@>
             ptyp.AddMember(value)
-            let parseM = newParserMethod ptyp
-            parseM.InvokeCode <-
-                fun [s] -> <@@ Parsing.parseBool %%s @@>
-            ptyp.AddMember(parseM)
             ptyp
         | Ast.ValueType.Float ->
             let ptyp =
@@ -74,10 +61,6 @@ let mkProvidedTypeBuilder()=
             value.GetterCode <-
                 fun [this] -> <@@ (%%this : Ast.Value).GetFloat() @@>
             ptyp.AddMember(value)
-            let parseM = newParserMethod ptyp
-            parseM.InvokeCode <-
-                fun [s] -> <@@ Parsing.parseFloat %%s @@>
-            ptyp.AddMember(parseM)
             ptyp
         | Ast.ValueType.Integer ->
             let ptyp =
@@ -87,10 +70,6 @@ let mkProvidedTypeBuilder()=
             value.GetterCode <-
                 fun [this] -> <@@ (%%this : Ast.Value).GetInteger() @@>
             ptyp.AddMember(value)
-            let parseM = newParserMethod ptyp
-            parseM.InvokeCode <-
-                fun [s] -> <@@ Parsing.parseInteger %%s @@>
-            ptyp.AddMember(parseM)
             ptyp
         | Ast.ValueType.String ->
             let ptyp =
@@ -100,10 +79,6 @@ let mkProvidedTypeBuilder()=
             value.GetterCode <-
                 fun [this] -> <@@ (%%this : Ast.Value).GetString() @@>
             ptyp.AddMember(value)
-            let parseM = newParserMethod ptyp
-            parseM.InvokeCode <-
-                fun [s] -> <@@ Parsing.parseString %%s @@>
-            ptyp.AddMember(parseM)
             ptyp
         | Ast.ValueType.IntVector ->
             let ptyp =
@@ -113,10 +88,6 @@ let mkProvidedTypeBuilder()=
             value.GetterCode <-
                 fun [this] -> <@@ (%%this : Ast.Value).GetIntVector() @@>
             ptyp.AddMember(value)
-            let parseM = newParserMethod ptyp
-            parseM.InvokeCode <-
-                fun [s] -> <@@ Parsing.parseIntVector %%s @@>
-            ptyp.AddMember(parseM)
             ptyp
         | Ast.ValueType.Pair (typ1, typ2) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -137,15 +108,6 @@ let mkProvidedTypeBuilder()=
             value.GetterCode <-
                 fun [this] -> unwrap this
             ptyp.AddMember(value)
-            let parseM = newParserMethod ptyp
-            parseM.InvokeCode <-                
-                let parser = Parsing.makeParser typ
-                let f s = parser.Run(s)
-                fun [s] ->
-                    <@@
-                        f %%s
-                    @@>
-            ptyp.AddMember(parseM)
             ptyp
         | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -198,10 +160,6 @@ let mkProvidedTypeBuilder()=
                 | _ ->
                     failwith "Unexpected signature of getter for Date"
             ptyp.AddMembers([year; month; day])
-            let parseM = newParserMethod ptyp
-            parseM.InvokeCode <-
-                fun [s] -> <@@ Parsing.parseDate %%s @@>
-            ptyp.AddMember(parseM)
             ptyp
         | Ast.ValueType.Composite fields ->
             let ptyp =
@@ -354,9 +312,6 @@ type MissionTypes(config: TypeProviderConfig) as this =
             |> List.ofSeq
         let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
         ty.AddMembers(types)
-        //let parserType = new ProvidedTypeDefinition("Parser", Some(typeof<Parsing.ParserFun>))
-        //ty.AddMember(parserType)
-        ty.AddMember(typeof<Parsing.ParserFun>)
         ty
     )
 

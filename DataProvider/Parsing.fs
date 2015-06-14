@@ -291,32 +291,3 @@ and makeParser (format : ValueType) : ParserFun =
         | s ->
             parseError("Not {", s)
     |> ParserFun
-
-
-let rec makeParserExpr typ =
-    match typ with
-    | ValueType.Boolean ->
-        fun s -> <@ parseBool %s @>
-    | ValueType.Pair (typ1, typ2) ->
-        let parser1 = makeParserExpr typ1
-        let parser2 = makeParserExpr typ2
-        fun s ->
-            let step1 = parser1 s
-            let s = <@ snd %step1 @>
-            let x1 = <@ fst %step1 @>
-            let s =
-                <@
-                    match %s with
-                    | ReLit ":" s -> s
-                    | _ -> parseError("Not :", %s)
-                @>
-            let step2 = parser2 s
-            let s = <@ snd %step2 @>
-            let x2 = <@ fst %step2 @>
-            <@ Value.Pair(%x1, %x2), %s @>
-
-
-let makeParserRawExpr typ =
-    let parser = makeParserExpr typ
-    fun (s : Expr) ->
-        (parser (Expr.Cast(s))).Raw
