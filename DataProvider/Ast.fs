@@ -2,9 +2,19 @@
 
 
 type MinMultiplicity = Zero | MinOne
+with
+    member this.ToExpr() =
+        match this with
+        | Zero -> <@ Zero @>
+        | MinOne -> <@ MinOne @>
 
 type MaxMultiplicity = MaxOne | Multiple
-
+with
+    member this.ToExpr() =
+        match this with
+        | MaxOne -> <@ MaxOne @>
+        | Multiple -> <@ Multiple @>
+            
 let least =
     function
     | Zero, _
@@ -29,7 +39,28 @@ type ValueType =
     | Pair of ValueType * ValueType
     | Triplet of ValueType * ValueType * ValueType
     | Date
-
+with
+    member this.ToExpr() =
+        match this with
+        | Boolean -> <@ Boolean @>
+        | Integer -> <@ Integer @>
+        | String -> <@ String @>
+        | Float  -> <@ Float @>
+        | Date -> <@ Date @>
+        | IntVector -> <@ IntVector @>            
+        | Mapping vt -> <@ Mapping %(vt.ToExpr()) @>
+        | Set vt -> <@ Set %(vt.ToExpr()) @>
+        | Pair (p1, p2) -> <@ Pair(%(p1.ToExpr()), %(p2.ToExpr())) @>
+        | Triplet (p1, p2, p3) -> <@ Triplet(%(p1.ToExpr()), %(p2.ToExpr()), %(p3.ToExpr())) @>
+        | Composite defs ->
+            let defs =
+                defs
+                |> Map.toList
+                |> List.fold (
+                    fun e (name, (t, m, M)) ->
+                        let item = <@ name, (%(t.ToExpr()), %(m.ToExpr()), %(M.ToExpr())) @>
+                        <@ Map.add (fst %item) (snd %item) %e @>) <@ Map.empty @>                            
+            <@ Composite %defs @>
 
 type Value =
     | Boolean of bool

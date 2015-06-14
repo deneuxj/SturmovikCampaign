@@ -30,11 +30,38 @@ let getNameStore getValidNames =
         store := Set.add name !store
         name
 
-type PairParser(typ1, typ2) =
-    let parse = Parsing.parsePair (typ1, typ2)
-    member this.Run(s) = parse s
+let addConstructor (ptyp : ProvidedTypeDefinition) (args : (string * Type) list) (body : Expr list -> Expr) =
+    let args =
+        args
+        |> List.map (fun (n, t) -> ProvidedParameter(n, t))
+    let cnstr =
+        ProvidedConstructor(args)
+    cnstr.InvokeCode <- body
+    ptyp.AddMember(cnstr)
 
-let mkProvidedTypeBuilder()=
+let addProperty (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (body : Expr -> Expr) =
+    let prop = ProvidedProperty(name, typ)
+    prop.GetterCode <- fun [this] -> body this
+    ptyp.AddMember(prop)
+
+let addMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
+    let args =
+        args
+        |> List.map (fun (n, t) -> ProvidedParameter(n, t))
+    let m = ProvidedMethod(name, args, typ)
+    m.InvokeCode <- body
+    ptyp.AddMember(m)
+
+let addStaticMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
+    let args =
+        args
+        |> List.map (fun (n, t) -> ProvidedParameter(n, t))
+    let m = ProvidedMethod(name, args, typ)
+    m.IsStaticMethod <- true
+    m.InvokeCode <- body
+    ptyp.AddMember(m)
+
+let mkProvidedTypeBuilder() =
     let newName =
         fun baseName ->
             Seq.initInfinite (fun i -> if i = 0 then baseName else sprintf "%s_%d" baseName (i + 1))
@@ -43,6 +70,7 @@ let mkProvidedTypeBuilder()=
     let cache = new Dictionary<string option * Ast.ValueType, ProvidedTypeDefinition>(HashIdentity.Structural)
 
     let rec buildProvidedType (name : string option, typ : Ast.ValueType) =
+        let typExpr = typ.ToExpr()
         match typ with
         | Ast.ValueType.Boolean ->
             let ptyp =
@@ -98,16 +126,25 @@ let mkProvidedTypeBuilder()=
                     |> defaultArg name
                     |> newName
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
-            let unwrap this = <@@ (%%this : Ast.Value).GetPair() @@>
+            let unwrap this = <@ (%%this : Ast.Value) @>
             let value =
                 let propTyp =
-                    typeof<_*_>
-                        .GetGenericTypeDefinition()
+                    typedefof<_*_>
                         .MakeGenericType(ptyp1, ptyp2)
                 new ProvidedProperty("Value", propTyp)
             value.GetterCode <-
-                fun [this] -> unwrap this
+                fun [this] -> <@@ (%(unwrap this)).GetPair() @@>
             ptyp.AddMember(value)
+            addConstructor ptyp [("value", typeof<Ast.Value>)] (fun [v] -> <@@ (%%v : Ast.Value) @@>)
+            addStaticMethod
+                ptyp
+                ("Parse", typedefof<_ * _>.MakeGenericType(ptyp, typeof<Parsing.Stream>))
+                [("s", typeof<Parsing.Stream>)]
+                (fun [s] ->
+                    <@@
+                        let (Parsing.ParserFun parse) = Parsing.makeParser %typExpr
+                        parse (%%s : Parsing.Stream)
+                    @@>)
             ptyp
         | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -302,6 +339,7 @@ type MissionTypes(config: TypeProviderConfig) as this =
         let sample = sample :?> string
         if not(System.IO.File.Exists(sample)) then
             failwithf "Cannot open sample file '%s' for reading" sample
+        let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
         let getProvidedType, cache = mkProvidedTypeBuilder()
         let types, _ = AutoSchema.getTopTypes(Parsing.Stream.FromFile(sample))
         for t in types do
@@ -310,7 +348,6 @@ type MissionTypes(config: TypeProviderConfig) as this =
             cache
             |> Seq.map (fun kvp -> kvp.Value)
             |> List.ofSeq
-        let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
         ty.AddMembers(types)
         ty
     )
