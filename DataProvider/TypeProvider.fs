@@ -1,6 +1,6 @@
 ﻿module SturmovikMission.DataProvider.TypeProvider
 
-#nowarn "25"
+#nowarn "25" // Incomplete pattern matches, occurs a lot due to "fun [this] -> <@@ ... @@>"
 
 open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
@@ -61,6 +61,17 @@ let addStaticMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) 
     m.InvokeCode <- body
     ptyp.AddMember(m)
 
+let addParseMethod (ptyp : ProvidedTypeDefinition) (typExpr : Expr<Ast.ValueType>) =
+    addStaticMethod
+        ptyp
+        ("Parse", typedefof<_ * _>.MakeGenericType(ptyp, typeof<Parsing.Stream>))
+        [("s", typeof<Parsing.Stream>)]
+        (fun [s] ->
+            <@@
+                let (Parsing.ParserFun parse) = Parsing.makeParser %typExpr
+                parse (%%s : Parsing.Stream)
+            @@>)
+    
 let mkProvidedTypeBuilder() =
     let newName =
         fun baseName ->
@@ -75,47 +86,32 @@ let mkProvidedTypeBuilder() =
         | Ast.ValueType.Boolean ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Boolean", Some (typeof<Ast.Value>))
-            let value =
-                new ProvidedProperty("Value", typeof<bool>)
-            value.GetterCode <-
-                fun [this] -> <@@ (%%this : Ast.Value).GetBool() @@>
-            ptyp.AddMember(value)
+            addProperty ptyp ("Value", typeof<bool>) (fun this -> <@@ (%%this : Ast.Value).GetBool() @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Float ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Float", Some (typeof<Ast.Value>))
-            let value =
-                new ProvidedProperty("Value", typeof<float>)
-            value.GetterCode <-
-                fun [this] -> <@@ (%%this : Ast.Value).GetFloat() @@>
-            ptyp.AddMember(value)
+            addProperty ptyp ("Value", typeof<float>) (fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Integer ->
             let ptyp =
                 new ProvidedTypeDefinition("Integer", Some (typeof<Ast.Value>))
-            let value =
-                new ProvidedProperty("Value", typeof<int>)
-            value.GetterCode <-
-                fun [this] -> <@@ (%%this : Ast.Value).GetInteger() @@>
-            ptyp.AddMember(value)
+            addProperty ptyp ("Value", typeof<int>) (fun this -> <@@ (%%this : Ast.Value).GetInteger() @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.String ->
             let ptyp =
                 new ProvidedTypeDefinition("String", Some (typeof<Ast.Value>))
-            let value =
-                new ProvidedProperty("Value", typeof<string>)
-            value.GetterCode <-
-                fun [this] -> <@@ (%%this : Ast.Value).GetString() @@>
-            ptyp.AddMember(value)
+            addProperty ptyp ("Value", typeof<string>) (fun this -> <@@ (%%this : Ast.Value).GetString() @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.IntVector ->
             let ptyp =
                 new ProvidedTypeDefinition("VectorOfIntegers", Some (typeof<Ast.Value>))
-            let value =
-                new ProvidedProperty("Value", typeof<int list>)
-            value.GetterCode <-
-                fun [this] -> <@@ (%%this : Ast.Value).GetIntVector() @@>
-            ptyp.AddMember(value)
+            addProperty ptyp ("Value", typeof<int list>) (fun this -> <@@ (%%this : Ast.Value).GetIntVector() @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Pair (typ1, typ2) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -126,25 +122,9 @@ let mkProvidedTypeBuilder() =
                     |> defaultArg name
                     |> newName
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
-            let unwrap this = <@ (%%this : Ast.Value) @>
-            let value =
-                let propTyp =
-                    typedefof<_*_>
-                        .MakeGenericType(ptyp1, ptyp2)
-                new ProvidedProperty("Value", propTyp)
-            value.GetterCode <-
-                fun [this] -> <@@ (%(unwrap this)).GetPair() @@>
-            ptyp.AddMember(value)
-            addConstructor ptyp [("value", typeof<Ast.Value>)] (fun [v] -> <@@ (%%v : Ast.Value) @@>)
-            addStaticMethod
-                ptyp
-                ("Parse", typedefof<_ * _>.MakeGenericType(ptyp, typeof<Parsing.Stream>))
-                [("s", typeof<Parsing.Stream>)]
-                (fun [s] ->
-                    <@@
-                        let (Parsing.ParserFun parse) = Parsing.makeParser %typExpr
-                        parse (%%s : Parsing.Stream)
-                    @@>)
+            let propTyp = typedefof<_*_>.MakeGenericType(ptyp1, ptyp2)
+            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetPair() @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -156,61 +136,28 @@ let mkProvidedTypeBuilder() =
                     |> defaultArg name
                     |> newName
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
-            let value =
-                let propTyp =
-                    typeof<_*_*_>
-                        .GetGenericTypeDefinition()
-                        .MakeGenericType(ptyp1, ptyp2, ptyp3)
-                new ProvidedProperty("Value", propTyp)
-            value.GetterCode <-
-                fun [this] -> <@@ (%%this : Ast.Value).GetTriplet() @@>
-            ptyp.AddMember(value)
+            let propTyp = typedefof<_*_*_>.MakeGenericType(ptyp1, ptyp2, ptyp3)
+            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetTriplet() @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Date ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Date", Some (typeof<Ast.Value>))
-            let year =
-                new ProvidedProperty("Year", typeof<int>)
-            let month =
-                new ProvidedProperty("Month", typeof<int>)
-            let day =
-                new ProvidedProperty("Day", typeof<int>)
-            year.GetterCode <-
-                function
-                | [this] ->
-                    let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                    <@@ let _, _, year = (%%e : int * int * int) in year @@>
-                | _ ->
-                    failwith "Unexpected signature of getter for Date"
-            month.GetterCode <-
-                function
-                | [this] ->
-                    let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                    <@@ let _, month, _ = (%%e : int * int * int) in month @@>
-                | _ ->
-                    failwith "Unexpected signature of getter for Date"
-            day.GetterCode <-
-                function
-                | [this] ->
-                    let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                    <@@ let day, _, _ = (%%e : int * int * int) in day @@>
-                | _ ->
-                    failwith "Unexpected signature of getter for Date"
-            ptyp.AddMembers([year; month; day])
+            addProperty ptyp ("Year", typeof<int>) (fun this ->
+                let e = <@@ (%%this : Ast.Value).GetDate() @@>
+                <@@ let _, _, year = (%%e : int * int * int) in year @@>)
+            addProperty ptyp ("Month", typeof<int>) (fun this ->
+                let e = <@@ (%%this : Ast.Value).GetDate() @@>
+                <@@ let _, month, _ = (%%e : int * int * int) in month @@>)
+            addProperty ptyp ("Day", typeof<int>) (fun this ->
+                let e = <@@ (%%this : Ast.Value).GetDate() @@>
+                <@@ let day, _, _ = (%%e : int * int * int) in day @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Composite fields ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Composite" |> newName, Some (typeof<Ast.Value>))
-            let asList this =
-                <@@
-                    match (%%this : obj) with
-                    | :? Ast.Value as v ->
-                        match v with
-                        | Ast.Value.Composite content -> content
-                        | _ -> failwith "Erased type is a Value, but not a Composite"
-                    | _ ->
-                        failwith "Erased type is not a Value"
-                @@>
+            let asList this = <@ (%%this : Ast.Value).GetItems() @>
             let members =
                 fields
                 |> Map.map (
@@ -230,7 +177,7 @@ let mkProvidedTypeBuilder() =
                                 fun [this] ->
                                     let e = asList this
                                     <@@
-                                        match List.tryFind (fun (name, _) -> name = fieldName) %%e with
+                                        match List.tryFind (fun (name, _) -> name = fieldName) %e with
                                         | Some (_, value) -> value
                                         | None -> failwithf "Field '%s' is not set" fieldName
                                     @@>
@@ -245,7 +192,7 @@ let mkProvidedTypeBuilder() =
                                 fun [this] ->
                                     let e = asList this
                                     <@@
-                                        match List.tryFind (fun (name, _) -> name = fieldName) %%e with
+                                        match List.tryFind (fun (name, _) -> name = fieldName) %e with
                                         | Some (_, value) -> Some value
                                         | None -> None
                                     @@>
@@ -260,7 +207,7 @@ let mkProvidedTypeBuilder() =
                                 fun [this] ->
                                     let e = asList this
                                     <@@
-                                        List.filter (fun (name, _) -> name = fieldName) %%e
+                                        List.filter (fun (name, _) -> name = fieldName) %e
                                     @@>
                             prop
                     )
@@ -268,54 +215,23 @@ let mkProvidedTypeBuilder() =
                 |> List.sortBy fst
                 |> List.map snd
             ptyp.AddMembers(members)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Mapping itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Mapping" |> newName, Some (typeof<Ast.Value>))
-            let content =
-                new ProvidedProperty(
-                    "Content",
-                    typeof<Map<_,_>>
-                        .GetGenericTypeDefinition()
-                        .MakeGenericType(typeof<string>, ptyp1))
-            let unwrap this =
-                <@@
-                    match (%%this : obj) :?> Ast.Value with
-                    | Ast.Value.Mapping items -> items
-                    | _ -> failwith "Underlying type is not Mapping"
-                @@>
-            content.GetterCode <-
-                fun [this] ->
-                    let e = unwrap this
-                    <@@
-                        Map.ofList %%e
-                    @@>
-            ptyp.AddMember(content)
+            let propTyp = typedefof<Map<_,_>>.MakeGenericType(typeof<string>, ptyp1)
+            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetItems() |> Map.ofList @@>)
+            addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Set itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Set" |> newName, Some (typeof<Ast.Value>))
-            let content =
-                new ProvidedProperty(
-                    "Content",
-                    typeof<Set<_>>
-                        .GetGenericTypeDefinition()
-                        .MakeGenericType(ptyp1))
-            let unwrap this =
-                <@@
-                    match (%%this : obj) :?> Ast.Value with
-                    | Ast.Value.Set items -> items
-                    | _ -> failwith "Underlying type is not Set"
-                @@>
-            content.GetterCode <-
-                fun [this] ->
-                    let e = unwrap this
-                    <@@
-                        Set.ofList %%e
-                    @@>
-            ptyp.AddMember(content)
+            let propTyp = typedefof<Set<_>>.MakeGenericType(ptyp1)
+            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetSet() |> Set.ofList @@>)
+            addParseMethod ptyp typExpr
             ptyp
 
     and getProvidedType (name, typ) : ProvidedTypeDefinition =
