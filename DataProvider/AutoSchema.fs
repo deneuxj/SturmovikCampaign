@@ -62,15 +62,15 @@ and tryParseAsMapping (s : Stream) =
         let rec work tryParseValue s =
             match s with
             | ReLit "}" s ->
-                Some(s)
+                Some([], s)
             | ReId(n, ReLit "=" s) ->
                 match tryParseValue s with
                 | Some (kind, s) ->
                     match s with
                     | ReLit ";" s ->
                         match work tryParseValue s with
-                        | Some (s) ->
-                            Some(s)
+                        | Some (kinds, s) ->
+                            Some(kind :: kinds, s)
                         | None ->
                             None
                     | _ ->
@@ -84,13 +84,20 @@ and tryParseAsMapping (s : Stream) =
             match tryGetParser s2 with
             | Some f ->
                 match work f s with
-                | Some (s) ->
-                    match f s2 with
-                    | Some(kind, _) ->
-                        Some(ValueType.Mapping (kind), s)
-                    | None ->
-                        // tryGetParser lied to us! Can't parse s2.
-                        failwith "Inconsistency with tryGetParser"
+                | Some (kind :: kinds, s) ->
+                    let unified =
+                        kinds
+                        |> List.fold (fun unified kind ->
+                            match unified with
+                            | Choice2Of2 err as v -> v
+                            | Choice1Of2 unified ->
+                                Unification.tryUnify(unified, kind)) (Choice1Of2 kind)
+                    match unified with
+                    | Choice2Of2 _ -> None
+                    | Choice1Of2 unified -> Some(unified, s)
+                | Some ([], s2) ->
+                    // We got an empty mapping... No way to guess what kind is its content
+                    None
                 | None ->
                     None
             | None ->
@@ -106,7 +113,7 @@ and tryParseAsSet (s : Stream) =
         let rec work tryParseValue s =
             match s with
             | ReLit "}" s ->
-                Some(s)
+                Some([], s)
             | s ->
                 match tryParseValue s with
                 | Some (kind, s) ->
@@ -114,8 +121,8 @@ and tryParseAsSet (s : Stream) =
                     | ReLit ";" s
                     | s ->
                         match work tryParseValue s with
-                        | Some (s) ->
-                            Some(s)
+                        | Some (kinds, s) ->
+                            Some(kind :: kinds, s)
                         | None ->
                             None
                 | None ->
@@ -124,13 +131,20 @@ and tryParseAsSet (s : Stream) =
         match tryGetParser s with
         | Some f ->
             match work f s with
-            | Some (s2) ->
-                match f s with
-                | Some(kind, _) ->
-                    Some(ValueType.Set (kind), s2)
-                | None ->
-                    // tryGetParser lied to us! Can't parse s.
-                    failwith "Inconsistency with tryGetParser"
+            | Some (kind :: kinds, s2) ->
+                let unified =
+                    kinds
+                    |> List.fold (fun unified kind ->
+                        match unified with
+                        | Choice2Of2 err as v -> v
+                        | Choice1Of2 unified ->
+                            Unification.tryUnify(unified, kind)) (Choice1Of2 kind)
+                match unified with
+                | Choice2Of2 _ -> None
+                | Choice1Of2 unified -> Some(unified, s2)
+            | Some ([], s2) ->
+                // We got an empty set... No way to guess what kind is its content
+                None
             | None ->
                 None
         | None ->
