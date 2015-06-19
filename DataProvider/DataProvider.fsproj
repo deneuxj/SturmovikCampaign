@@ -22,7 +22,7 @@
     <DefineConstants>TRACE;DEBUG</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\DataProvider.XML</DocumentationFile>
-    <StartAction>Program</StartAction>
+    <StartAction>Project</StartAction>
     <StartProgram>C:\Program Files (x86)\Microsoft SDKs\F#\3.1\Framework\v4.0\Fsi.exe</StartProgram>
     <StartArguments>Script.fsx</StartArguments>
   </PropertyGroup>

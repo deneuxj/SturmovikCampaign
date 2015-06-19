@@ -21,19 +21,24 @@ let inline wrap _ f x = f x
 let rec tryParseAsComposite (s : Stream) =
     match s with
     | ReLit "{" s ->
+        printfn "Opening {"
         let rec work subTypes s =
             match s with
             | ReLit "}" s ->
+                printfn "SEEN: }"
                 Some(subTypes, s)
             | ReId(n, ((ReLit "{" _) as s)) ->
-                match tryParse s with
+                printfn "SEEN: %s {" n
+                match tryParseCurly s with
                 | Some (kind, s) ->
+                    printfn "NESTED: %A" kind
                     let subTypes = unifyMultMap n (kind, MinOne, MaxOne) subTypes
                     work subTypes s
                 | None ->
-//                    printfn "Failed to parse RHS %s" (getContext s)
+                    printfn "Failed to parse RHS %s" (getContext s)
                     None
             | ReId(n, ReLit "=" s) ->
+                printfn "SEEN: %s =" n
                 match tryParse s with
                 | Some (kind, s) ->
                     let subTypes = unifyMultMap n (kind, MinOne, MaxOne) subTypes
@@ -43,32 +48,34 @@ let rec tryParseAsComposite (s : Stream) =
                     | _ ->
                         None
                 | None ->
-//                    printfn "Failed to parse RHS %s" (getContext s)
+                    printfn "Failed to parse RHS %s" (getContext s)
                     None
             | _ ->
-//                printfn "Failed to parse LHS %s" (getContext s)
+                printfn "Failed to parse LHS %s" (getContext s)
                 None
         match work Map.empty s with
         | Some (kinds, s) ->
+            printfn "*** KINDS: %A" kinds
             Some(ValueType.Composite kinds, s)
         | None ->
             None
     | _ ->
+        printfn "Not { '%s'" (getContext s)
         None
 
 and tryParseAsMapping (s : Stream) =
     match s with
     | ReLit "{" s ->
-        let rec work tryParseValue s =
+        let rec work s =
             match s with
             | ReLit "}" s ->
                 Some([], s)
             | ReId(n, ReLit "=" s) ->
-                match tryParseValue s with
+                match tryParseGround s with
                 | Some (kind, s) ->
                     match s with
                     | ReLit ";" s ->
-                        match work tryParseValue s with
+                        match work s with
                         | Some (kinds, s) ->
                             Some(kind :: kinds, s)
                         | None ->
@@ -81,25 +88,21 @@ and tryParseAsMapping (s : Stream) =
                 None
         match s with
         | ReId(_, ReLit "=" s2) ->
-            match tryGetParser s2 with
-            | Some f ->
-                match work f s with
-                | Some (kind :: kinds, s) ->
-                    let unified =
-                        kinds
-                        |> List.fold (fun unified kind ->
-                            match unified with
-                            | Choice2Of2 err as v -> v
-                            | Choice1Of2 unified ->
-                                Unification.tryUnify(unified, kind)) (Choice1Of2 kind)
-                    match unified with
-                    | Choice2Of2 _ -> None
-                    | Choice1Of2 unified -> Some(unified, s)
-                | Some ([], s2) ->
-                    // We got an empty mapping... No way to guess what kind is its content
-                    None
-                | None ->
-                    None
+            match work s with
+            | Some (kind :: kinds, s) ->
+                let unified =
+                    kinds
+                    |> List.fold (fun unified kind ->
+                        match unified with
+                        | Choice2Of2 err as v -> v
+                        | Choice1Of2 unified ->
+                            Unification.tryUnify(unified, kind)) (Choice1Of2 kind)
+                match unified with
+                | Choice2Of2 _ -> None
+                | Choice1Of2 unified -> Some(ValueType.Mapping unified, s)
+            | Some ([], s2) ->
+                // We got an empty mapping... No way to guess what kind is its content
+                None
             | None ->
                 None
         | _ ->
@@ -110,17 +113,17 @@ and tryParseAsMapping (s : Stream) =
 and tryParseAsSet (s : Stream) =
     match s with
     | ReLit "{" s ->
-        let rec work tryParseValue s =
+        let rec work s =
             match s with
             | ReLit "}" s ->
                 Some([], s)
             | s ->
-                match tryParseValue s with
+                match tryParseGroundExt s with
                 | Some (kind, s) ->
                     match s with
                     | ReLit ";" s
                     | s ->
-                        match work tryParseValue s with
+                        match work s with
                         | Some (kinds, s) ->
                             Some(kind :: kinds, s)
                         | None ->
@@ -128,25 +131,21 @@ and tryParseAsSet (s : Stream) =
                 | None ->
                     None
 
-        match tryGetParser s with
-        | Some f ->
-            match work f s with
-            | Some (kind :: kinds, s2) ->
-                let unified =
-                    kinds
-                    |> List.fold (fun unified kind ->
-                        match unified with
-                        | Choice2Of2 err as v -> v
-                        | Choice1Of2 unified ->
-                            Unification.tryUnify(unified, kind)) (Choice1Of2 kind)
-                match unified with
-                | Choice2Of2 _ -> None
-                | Choice1Of2 unified -> Some(unified, s2)
-            | Some ([], s2) ->
-                // We got an empty set... No way to guess what kind is its content
-                None
-            | None ->
-                None
+        match work s with
+        | Some (kind :: kinds, s2) ->
+            let unified =
+                kinds
+                |> List.fold (fun unified kind ->
+                    match unified with
+                    | Choice2Of2 err as v -> v
+                    | Choice1Of2 unified ->
+                        Unification.tryUnify(unified, kind)) (Choice1Of2 kind)
+            match unified with
+            | Choice2Of2 _ -> None
+            | Choice1Of2 unified -> Some(ValueType.Set unified, s2)
+        | Some ([], s2) ->
+            // We got an empty set... No way to guess what kind is its content
+            None
         | None ->
             None
     | _ ->
@@ -240,23 +239,59 @@ and tryParseAsDate =
     | ReDate(n, s) -> Some(ValueType.Date, s)
     | _ -> None
 
-and tryGetGroundParser s =
-    let funs = [
+and groundParserFuns =
+    [
         wrap "BOOL" tryParseAsBool
         wrap "INT" tryParseAsInt
         wrap "DATE" tryParseAsDate
         wrap "FLOAT" tryParseAsFloat
         wrap "STR" tryParseAsString
     ]
-    funs
+
+and tryGetGroundParser s =
+    groundParserFuns
     |> Seq.tryPick (fun f -> f s |> Option.map (fun _ -> f))
 
 and tryParseGround s =
-    tryGetGroundParser s
-    |> Option.bind (fun f -> f s)
+    groundParserFuns
+    |> Seq.tryPick (fun f -> f s)
 
-and tryGetParser s =
-    let funs = [
+and groundExtParserFuns =
+    [
+        wrap "TRIP" tryParseAsTriplet
+        wrap "PAIR" tryParseAsPair
+        wrap "BOOL" tryParseAsBool
+        wrap "INT" tryParseAsInt
+        wrap "DATE" tryParseAsDate
+        wrap "FLOAT" tryParseAsFloat
+        wrap "STR" tryParseAsString
+    ]
+
+and tryGetGroundExtParser s =
+    groundExtParserFuns
+    |> Seq.tryPick (fun f -> f s |> Option.map (fun _ -> f))
+
+and tryParseGroundExt s =
+    groundExtParserFuns
+    |> Seq.tryPick (fun f -> f s)
+
+and curlyParserFuns =
+    [
+        wrap "SET" tryParseAsSet
+        wrap "MAP" tryParseAsMapping
+        wrap "COMP" tryParseAsComposite
+    ]
+
+and tryGetCurlyParser s =
+    curlyParserFuns
+    |> Seq.tryPick (fun f -> f s |> Option.map (fun _ -> f))
+
+and tryParseCurly s =
+    curlyParserFuns
+    |> Seq.tryPick (fun f -> f s)
+
+and allParserFuns =
+    [
         wrap "TRIP" tryParseAsTriplet
         wrap "PAIR" tryParseAsPair
         wrap "STR" tryParseAsString
@@ -269,12 +304,14 @@ and tryGetParser s =
         wrap "MAP" tryParseAsMapping
         wrap "COMP" tryParseAsComposite
     ]
-    funs
+
+and tryGetParser s =
+    allParserFuns
     |> Seq.tryPick (fun f -> f s |> Option.map (fun _ -> f))
  
 and tryParse s =
-    tryGetParser s
-    |> Option.bind (fun f -> f s)
+    allParserFuns
+    |> Seq.tryPick (fun f -> f s)
 
 let rec parseGroup types s =
     match s with

@@ -31,6 +31,9 @@ with
         let data = String.concat "\n" lines
         SubString(data, 0)
 
+    static member FromString(s) =
+        SubString(s, 0)
+
 let (|EOF|_|) (SubString(data, offset)) =
     let m = reWs.Match(data, offset)
     if m.Index + m.Length >= data.Length then
@@ -122,7 +125,8 @@ let getContext (s : Stream) =
     let (SubString(txt, offset)) = s
     let start = max 0 (offset - 20)
     let fin = min (offset + 20) txt.Length
-    txt.[start..fin].Replace("\r\n", "\n").Replace("\n", "\\n")
+    let ch = txt.[offset]
+    sprintf "%c in %s" ch (txt.[start..fin].Replace("\r\n", "  ").Replace("\n", " "))
 
 let printParseError (e : ParseError) =
     let msg, (SubString(txt, offset) as s) = e.Data0, e.Data1
