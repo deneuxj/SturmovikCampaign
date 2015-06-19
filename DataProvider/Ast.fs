@@ -68,7 +68,7 @@ type Value =
     | String of string
     | Float of float
     | Composite of (string * Value) list
-    | Mapping of (string * Value) list
+    | Mapping of (int * Value) list
     | Set of Value list
     | IntVector of int list
     | Pair of Value * Value
@@ -102,8 +102,11 @@ with
     member this.GetItems() =
         match this with
         | Composite items -> items
+        | _ -> invalidOp "Not a Composite"
+    member this.GetMapping() =
+        match this with
         | Mapping items -> items
-        | _ -> invalidOp "Not a Composite or Mapping"
+        | _ -> invalidOp "Not a Mapping"
     member this.GetSet() =
         match this with
         | Set items -> items
@@ -163,7 +166,7 @@ let rec dump (value : Value) : string =
         seq {
             yield sprintf "{\n"
             for (k, v) in content do
-                yield sprintf "%s = %s;\n" k (dump v)
+                yield sprintf "%d = %s;\n" k (dump v)
             yield "}\n"
         }
         |> String.concat ""

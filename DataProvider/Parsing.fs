@@ -123,10 +123,17 @@ let parseError (txt, s) =
 
 let getContext (s : Stream) =
     let (SubString(txt, offset)) = s
-    let start = max 0 (offset - 20)
-    let fin = min (offset + 20) txt.Length
-    let ch = txt.[offset]
-    sprintf "%c in %s" ch (txt.[start..fin].Replace("\r\n", "  ").Replace("\n", " "))
+    if txt.Length = 0 then
+        "Empty string"
+    else
+        let start = max 0 (offset - 20)
+        let fin = min (offset + 20) (txt.Length - 1)
+        let ch =
+            if offset >= 0 && offset < txt.Length then
+                txt.[offset]
+            else
+                '!'
+        sprintf "%c in %s" ch (txt.[start..fin].Replace("\r\n", "  ").Replace("\n", " "))
 
 let printParseError (e : ParseError) =
     let msg, (SubString(txt, offset) as s) = e.Data0, e.Data1
@@ -166,17 +173,16 @@ let parseDate =
 let parseIntVector =
     function
     | ReLit "[" s ->
-        let rec parse =
-            function
-            | ReInt(n, s) ->
-                let xs, s = parse s
-                match s with
-                | ReLit "," s
-                | s ->
-                    n :: xs, s
+        let rec parse s =
+            match s with
+            | ReInt(n, ReLit "]" s) ->
+                [n], s
             | ReLit "]" s ->
                 [], s
-            | s ->
+            | ReInt(n, ReLit "," s) ->
+                let xs, s = parse s
+                n :: xs, s
+            | _ ->
                 parseError("Not an int or ]", s)
         let xs, s = parse s
         Value.IntVector xs, s
@@ -238,14 +244,14 @@ and makeParser (format : ValueType) : ParserFun =
     | ValueType.Mapping itemType ->
         let rec parse (s : Stream) =
             match s with
-            | ReId(kw, ReLit "=" s) ->
+            | ReInt(n, ReLit "=" s) ->
                 let (ParserFun f) = makeParser itemType
                 let (v, s) = f s
                 match s with
                 | ReLit ";" s
                 | s ->
                     let xs, s = parse s 
-                    (kw, v) :: xs, s
+                    (n, v) :: xs, s
             | ReLit "}" s ->
                 [], s
             | _ ->

@@ -221,8 +221,8 @@ let mkProvidedTypeBuilder() =
             let ptyp1 = getProvidedType(None, itemTyp)
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Mapping" |> newName, Some (typeof<Ast.Value>))
-            let propTyp = typedefof<Map<_,_>>.MakeGenericType(typeof<string>, ptyp1)
-            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetItems() |> Map.ofList @@>)
+            let propTyp = typedefof<Map<_,_>>.MakeGenericType(typeof<int>, ptyp1)
+            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetMapping() |> Map.ofList @@>)
             addParseMethod ptyp typExpr
             ptyp
         | Ast.ValueType.Set itemTyp ->

@@ -11,7 +11,7 @@ type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturm
 
 let fromString s = Stream.SubString(s, 0)
 
-let x1, _ = T.PairOfBooleanAndBoolean.Parse(fromString "0: 1 ")
+let x1, _ = T.PairOfIntegerAndInteger.Parse(fromString "0: 1 ")
 let x2, _ =
     try
         """
@@ -72,8 +72,6 @@ let x2, _ =
         printParseError(e) |> String.concat "\n" |> printfn "%s"
         raise e
 
-//x2.WindLayers.Value.
-
 let x3, _ =
     try
         """{
@@ -102,4 +100,42 @@ let x3, _ =
         printParseError(e) |> String.concat "\n" |> printfn "%s"
         raise e
 
-x3.XPos.Value
+let x4, _ =
+    try
+        """
+{
+  Index = 1349;
+  Name = "Translator Subtitle";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 127899.280;
+  YPos = 143.615;
+  ZPos = 242019.378;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  SubtitleInfo
+  {
+    Duration = 30;
+    FontSize = 40;
+    HAlign = 1;
+    VAlign = 0;
+    RColor = 0;
+    GColor = 0;
+    BColor = 255;
+    LCText = 142;
+  }
+  
+  Coalitions = [0, 1, 2];
+}
+"""
+        |> Stream.FromString
+        |> T.MCU_TR_Subtitle.Parse
+    with
+    | :? ParseError as e ->
+        printParseError(e) |> String.concat "\n" |> printfn "%s"
+        raise e
+
+//x4.SubtitleInfo.Duration.Value

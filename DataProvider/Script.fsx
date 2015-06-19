@@ -84,3 +84,50 @@ open SturmovikMission.DataProvider.AutoSchema
 """
 |> Stream.FromString
 |> tryParseAsComposite
+
+"""{
+  Name = "Block";
+  Index = 631;
+  LinkTrId = 0;
+  XPos = 121038.275;
+  YPos = 19.198;
+  ZPos = 247318.272;
+  XOri = 0.00;
+  YOri = 10.04;
+  ZOri = 0.00;
+  Model = "graphics\blocks\sklad_01.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\sklad_01.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+    13 = 1;
+    14 = 1;
+    15 = 1;
+    16 = 1;
+    17 = 1;
+    18 = 1;
+    19 = 1;
+    20 = 1;
+  }
+}
+"""
+|> Stream.FromString
+|> tryParseAsComposite

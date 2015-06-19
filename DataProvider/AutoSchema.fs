@@ -21,24 +21,19 @@ let inline wrap _ f x = f x
 let rec tryParseAsComposite (s : Stream) =
     match s with
     | ReLit "{" s ->
-        printfn "Opening {"
         let rec work subTypes s =
             match s with
             | ReLit "}" s ->
-                printfn "SEEN: }"
                 Some(subTypes, s)
             | ReId(n, ((ReLit "{" _) as s)) ->
-                printfn "SEEN: %s {" n
                 match tryParseCurly s with
                 | Some (kind, s) ->
-                    printfn "NESTED: %A" kind
                     let subTypes = unifyMultMap n (kind, MinOne, MaxOne) subTypes
                     work subTypes s
                 | None ->
-                    printfn "Failed to parse RHS %s" (getContext s)
+//                    printfn "Failed to parse RHS %s" (getContext s)
                     None
             | ReId(n, ReLit "=" s) ->
-                printfn "SEEN: %s =" n
                 match tryParse s with
                 | Some (kind, s) ->
                     let subTypes = unifyMultMap n (kind, MinOne, MaxOne) subTypes
@@ -48,19 +43,17 @@ let rec tryParseAsComposite (s : Stream) =
                     | _ ->
                         None
                 | None ->
-                    printfn "Failed to parse RHS %s" (getContext s)
+//                    printfn "Failed to parse RHS %s" (getContext s)
                     None
             | _ ->
-                printfn "Failed to parse LHS %s" (getContext s)
+//                printfn "Failed to parse LHS %s" (getContext s)
                 None
         match work Map.empty s with
         | Some (kinds, s) ->
-            printfn "*** KINDS: %A" kinds
             Some(ValueType.Composite kinds, s)
         | None ->
             None
     | _ ->
-        printfn "Not { '%s'" (getContext s)
         None
 
 and tryParseAsMapping (s : Stream) =
@@ -70,7 +63,7 @@ and tryParseAsMapping (s : Stream) =
             match s with
             | ReLit "}" s ->
                 Some([], s)
-            | ReId(n, ReLit "=" s) ->
+            | ReInt(_, ReLit "=" s) ->
                 match tryParseGround s with
                 | Some (kind, s) ->
                     match s with
@@ -87,7 +80,7 @@ and tryParseAsMapping (s : Stream) =
             | _ ->
                 None
         match s with
-        | ReId(_, ReLit "=" s2) ->
+        | ReInt(_, ReLit "=" s2) ->
             match work s with
             | Some (kind :: kinds, s) ->
                 let unified =
