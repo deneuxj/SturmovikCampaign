@@ -3,15 +3,17 @@
 
 #load "scripts/load-references.fsx"
 
+open System.Collections.Generic
 open SturmovikMissionTypes
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Ast
 
 type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission" >
+let parsersCache = new Dictionary<ValueType, ParserFun>(HashIdentity.Structural)
 
 let fromString s = Stream.SubString(s, 0)
 
-let x1, _ = T.PairOfIntegerAndInteger.Parse(fromString "0: 1 ")
+let x1, _ = T.PairOfIntegerAndInteger.Parse(parsersCache, fromString "0: 1 ")
 let x2, _ =
     try
         """
@@ -66,7 +68,7 @@ let x2, _ =
       }
     } """
         |> fromString
-        |> T.Options.Parse
+        |> fun x -> T.Options.Parse(parsersCache, x)
     with
     | :? ParseError as e ->
         printParseError(e) |> String.concat "\n" |> printfn "%s"
@@ -94,7 +96,7 @@ let x3, _ =
   DeleteAfterDeath = 1;
 }"""
         |> fromString
-        |> T.Block.Parse
+        |> fun x -> T.Block.Parse(parsersCache, x)
     with
     | :? ParseError as e ->
         printParseError(e) |> String.concat "\n" |> printfn "%s"
@@ -132,7 +134,7 @@ let x4, _ =
 }
 """
         |> Stream.FromString
-        |> T.MCU_TR_Subtitle.Parse
+        |> fun x -> T.MCU_TR_Subtitle.Parse(parsersCache, x)
     with
     | :? ParseError as e ->
         printParseError(e) |> String.concat "\n" |> printfn "%s"
