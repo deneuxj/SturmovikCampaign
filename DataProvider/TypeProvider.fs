@@ -61,61 +61,7 @@ let addStaticMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) 
     m.InvokeCode <- body
     ptyp.AddMember(m)
 
-let parsersCacheName = "ParsersCache"
-
-let getParsersCache (top : ProvidedTypeDefinition) : Expr<Dictionary<Ast.ValueType, Parsing.ParserFun>> =
-    // Does not work, F# 3.1.2 complains that FieldGet(None, ...) is not a supported expression.
-    let fi = top.GetField(parsersCacheName)
-    let setParsersCache : Expr<unit> =
-        Expr.FieldSet(fi,
-            <@@ new Dictionary<Ast.ValueType, Parsing.ParserFun>(HashIdentity.Structural)@@>)
-        |> Expr.Cast
     
-    let fg : Expr<Dictionary<Ast.ValueType, Parsing.ParserFun>> =
-        Expr.FieldGet(fi)
-        |> Expr.Cast
-    <@
-        if %fg = null then
-            %setParsersCache
-        %fg
-    @>
-
-let parseUsingCache (cache : Dictionary<Ast.ValueType, Parsing.ParserFun>) (typ : Ast.ValueType) (s : Parsing.Stream) =
-    let (Parsing.ParserFun parse) =
-        match cache.TryGetValue(typ) with
-        | true, parser -> parser
-        | false, _ ->
-            let func = Parsing.makeParser typ
-            cache.Add(typ, func)
-            func            
-    parse s
-    
-let addParseMethod (top : ProvidedTypeDefinition) (ptyp : ProvidedTypeDefinition) (typExpr : Expr<Ast.ValueType>) =
-    addStaticMethod
-        ptyp
-        ("Parse", typedefof<_ * _>.MakeGenericType(ptyp, typeof<Parsing.Stream>))
-        [("s", typeof<Parsing.Stream>)]
-        (fun [s] ->
-            <@@                
-                let valueType = %typExpr
-                let s = (%%s : Parsing.Stream)
-                let parser = Parsing.makeParser valueType
-                parser.Run(s)
-            @@>)
-    // Work-around: let the caller provide the cache explicitly.
-    addStaticMethod
-        ptyp
-        ("Parse", typedefof<_ * _>.MakeGenericType(ptyp, typeof<Parsing.Stream>))
-        [("cache", typeof<Dictionary<Ast.ValueType, Parsing.ParserFun>>)
-         ("s", typeof<Parsing.Stream>)]
-        (fun [cache; s] ->
-            <@@
-                let cache = (%%cache : Dictionary<Ast.ValueType, Parsing.ParserFun>)
-                let valueType = %typExpr
-                let s = (%%s : Parsing.Stream)
-                parseUsingCache cache valueType s
-            @@>)
-
 let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
     let newName =
         fun baseName ->
@@ -131,31 +77,26 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Boolean", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<bool>) (fun this -> <@@ (%%this : Ast.Value).GetBool() @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.Float ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Float", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<float>) (fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.Integer ->
             let ptyp =
                 new ProvidedTypeDefinition("Integer", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<int>) (fun this -> <@@ (%%this : Ast.Value).GetInteger() @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.String ->
             let ptyp =
                 new ProvidedTypeDefinition("String", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<string>) (fun this -> <@@ (%%this : Ast.Value).GetString() @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.IntVector ->
             let ptyp =
                 new ProvidedTypeDefinition("VectorOfIntegers", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<int list>) (fun this -> <@@ (%%this : Ast.Value).GetIntVector() @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.Pair (typ1, typ2) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -168,7 +109,6 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             let propTyp = typedefof<_*_>.MakeGenericType(ptyp1, ptyp2)
             addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetPair() @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -182,7 +122,6 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             let propTyp = typedefof<_*_*_>.MakeGenericType(ptyp1, ptyp2, ptyp3)
             addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetTriplet() @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.Date ->
             let ptyp =
@@ -196,7 +135,6 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
             addProperty ptyp ("Day", typeof<int>) (fun this ->
                 let e = <@@ (%%this : Ast.Value).GetDate() @@>
                 <@@ let day, _, _ = (%%e : int * int * int) in day @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.Composite fields ->
             let ptyp =
@@ -259,7 +197,6 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                 |> List.sortBy fst
                 |> List.map snd
             ptyp.AddMembers(members)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.Mapping itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
@@ -267,7 +204,6 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                 new ProvidedTypeDefinition(defaultArg name "Mapping" |> newName, Some (typeof<Ast.Value>))
             let propTyp = typedefof<Map<_,_>>.MakeGenericType(typeof<int>, ptyp1)
             addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetMapping() |> Map.ofList @@>)
-            addParseMethod top ptyp typExpr
             ptyp
         | Ast.ValueType.Set itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
@@ -275,13 +211,41 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                 new ProvidedTypeDefinition(defaultArg name "Set" |> newName, Some (typeof<Ast.Value>))
             let propTyp = typedefof<Set<_>>.MakeGenericType(ptyp1)
             addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetSet() |> Set.ofList @@>)
-            addParseMethod top ptyp typExpr
             ptyp
 
     and getProvidedType (name, typ) : ProvidedTypeDefinition =
         cached cache (buildProvidedType) (name, typ)
 
     getProvidedType, cache
+
+
+let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
+    let parser = ProvidedTypeDefinition("Parser", Some typeof<IDictionary<Ast.ValueType, Parsing.ParserFun>>)
+    let valueTypeExprs =
+        namedValueTypes
+        |> List.map (fun (_, x, _) -> x)
+        |> List.fold (fun expr valueType ->
+            let valueTypeExpr = valueType.ToExpr()
+            <@ %valueTypeExpr :: %expr @>
+            ) <@ [] @>
+    addConstructor parser [] (fun [] ->
+        <@@
+            %valueTypeExprs
+            |> List.map(fun valueType -> (valueType, Parsing.makeParser valueType))
+            |> dict
+        @@>)
+    for name, valueType, ptyp in namedValueTypes do
+        let vtExpr = valueType.ToExpr()
+        let retType =
+            typedefof<_*_>.MakeGenericType(ptyp, typeof<Parsing.Stream>)
+        addMethod parser (sprintf "Parse_%s" name, retType) [("s", typeof<Parsing.Stream>)] (fun [this; s] ->
+            <@@
+                let parsers = (%%this : IDictionary<Ast.ValueType, Parsing.ParserFun>)
+                let parser = parsers.[%vtExpr]
+                parser.Run(%%s : Parsing.Stream)
+            @@>
+        )
+    parser
 
 
 [<TypeProvider>]
@@ -300,15 +264,6 @@ type MissionTypes(config: TypeProviderConfig) as this =
         if not(System.IO.File.Exists(sample)) then
             failwithf "Cannot open sample file '%s' for reading" sample
         let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
-        // The global variable that caches the parser for each type
-        // Does not work: If a user of the type provider attempts to set that field,
-        // fsi from F# 3.1.2 throws an internal error.
-        let fi = new ProvidedField(parsersCacheName, typeof<Dictionary<Ast.ValueType, Parsing.ParserFun>>)
-        fi.AddXmlDoc
-            """<brief>Does not work with F# 3.1.2</brief>
-            """        
-        fi.SetFieldAttributes(Reflection.FieldAttributes.Static ||| Reflection.FieldAttributes.Public)
-        ty.AddMember(fi)
         // The types corresponding to the ValueTypes extracted from the sample file
         let getProvidedType, cache = mkProvidedTypeBuilder(ty)
         let types, _ = AutoSchema.getTopTypes(Parsing.Stream.FromFile(sample))
@@ -319,6 +274,16 @@ type MissionTypes(config: TypeProviderConfig) as this =
             |> Seq.map (fun kvp -> kvp.Value)
             |> List.ofSeq
         ty.AddMembers(types)
+        // The type of the parser.
+        let namedTypes =
+            cache
+            |> Seq.choose (fun kvp ->
+                match fst kvp.Key with
+                | Some name -> Some (name, snd kvp.Key, kvp.Value)
+                | None -> None)
+            |> List.ofSeq
+        let parserType = buildParserType namedTypes
+        ty.AddMember(parserType)
         ty
     )
 

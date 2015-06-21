@@ -9,11 +9,8 @@ open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Ast
 
 type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission" >
-let parsersCache = new Dictionary<ValueType, ParserFun>(HashIdentity.Structural)
+let parser = T.Parser()
 
-let fromString s = Stream.SubString(s, 0)
-
-let x1, _ = T.PairOfIntegerAndInteger.Parse(parsersCache, fromString "0: 1 ")
 let x2, _ =
     try
         """
@@ -67,8 +64,8 @@ let x2, _ =
         202 : 2;
       }
     } """
-        |> fromString
-        |> fun x -> T.Options.Parse(parsersCache, x)
+        |> Stream.FromString
+        |> parser.Parse_Options
     with
     | :? ParseError as e ->
         printParseError(e) |> String.concat "\n" |> printfn "%s"
@@ -95,8 +92,8 @@ let x3, _ =
   DamageThreshold = 1;
   DeleteAfterDeath = 1;
 }"""
-        |> fromString
-        |> fun x -> T.Block.Parse(parsersCache, x)
+        |> Stream.FromString
+        |> parser.Parse_Block
     with
     | :? ParseError as e ->
         printParseError(e) |> String.concat "\n" |> printfn "%s"
@@ -134,7 +131,7 @@ let x4, _ =
 }
 """
         |> Stream.FromString
-        |> fun x -> T.MCU_TR_Subtitle.Parse(parsersCache, x)
+        |> parser.Parse_MCU_TR_Subtitle
     with
     | :? ParseError as e ->
         printParseError(e) |> String.concat "\n" |> printfn "%s"

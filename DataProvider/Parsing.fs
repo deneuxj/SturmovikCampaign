@@ -301,3 +301,44 @@ and makeParser (format : ValueType) : ParserFun =
         | s ->
             parseError("Not {", s)
     |> ParserFun
+
+
+let parseFile (getParser : string -> ParserFun) (s : Stream) =
+    let defaultGroup = 
+        { Name = ""; Index = 0; Description = ""; Data = [] }
+
+    let rec parseGroup s data =
+        match s with
+        | ReLit "}" s ->
+            data, s
+        | ReId("Name", ReLit "=" (ReString(name, ReLit ";" s))) ->
+            parseGroup s { data with Name = name }
+        | ReId("Index", ReLit "=" (ReInt(index, ReLit ";" s))) ->
+            parseGroup s { data with Index = index }
+        | ReId("Desc", ReLit "=" (ReString(desc, ReLit ";" s))) ->
+            parseGroup s { data with Description = desc }
+        | ReId("Group", _) ->
+            let subData, s = parseGroup s defaultGroup
+            { data with Data = (Group subData) :: data.Data }, s
+        | ReId(name, ((ReLit "{" _) as s)) ->
+            let parser = getParser name
+            let subData, s = parser.Run(s)
+            { data with Data = (Leaf(name, subData)) :: data.Data }, s
+        | s ->
+            parseError("In Group, unexpected LHS", s)
+
+    let rec work (s : Stream) data =
+        match s with
+        | ReId("Group", s) ->
+            let group, s = parseGroup s defaultGroup
+            work s (Group group :: data)
+        | ReId(name, ((ReLit "{" _) as s)) ->
+            let parser = getParser name
+            let subData, s = parser.Run(s)
+            work s (Leaf(name, subData) :: data)
+        | EOF _ ->
+            data
+        | s ->
+            parseError("Expected keyword", s)
+
+    work s []
