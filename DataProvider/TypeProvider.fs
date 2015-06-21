@@ -18,7 +18,7 @@ let cached (cache : IDictionary<'a, 'b>) f x =
 
 let getNameStore getValidNames =
     let reserved =
-        [ "Boolean"; "Float"; "Integer"; "String"; "VectorOfIntefers"; "Date" ]
+        [ "Boolean"; "Float"; "Integer"; "String"; "VectorOfIntegers"; "Date" ]
     let store = ref <| Set reserved
     let isValid name =
         Set.contains name !store
