@@ -119,6 +119,76 @@ with
         match this with
         | Triplet(x1, x2, x3) -> x1, x2, x3
         | _ -> invalidOp "Not a Triplet"
+    member this.SetItem(name, value) =
+        match this with
+        | Composite items ->
+            let content =
+                items
+                |> List.filter(fun (name2, _) -> name2 <> name)
+            Composite ((name, value) :: content)
+        | _ -> invalidOp "Not a Composite"
+    member this.SetItem(name, value : Value option) =
+        match this with
+        | Composite items ->
+            let content =
+                items
+                |> List.filter(fun (name2, _) -> name2 <> name)
+            match value with
+            | None ->
+                Composite content
+            | Some value ->
+                Composite ((name, value) :: content)
+        | _ -> invalidOp "Not a Composite"
+    member this.AddItems(name, values : Value list) =
+        match this with
+        | Composite items ->
+            let values =
+                values
+                |> List.map (fun x -> (name, x))
+            Composite (values @ items)
+        | _ -> invalidOp "Not a Composite"
+    member this.ClearItems(name) =
+        match this with
+        | Composite items ->
+            let content =
+                items
+                |> List.filter(fun (name2, _) -> name2 <> name)
+            Composite content
+        | _ -> invalidOp "Not a Composite"
+    member this.SetItem(key : int, value) =
+        match this with
+        | Mapping items ->
+            let content =
+                items
+                |> List.filter(fun (key2, _) -> key2 <> key)
+            Mapping ((key, value) :: content)
+        | _ -> invalidOp "Not a Mapping"
+    member this.RemoveItem(key : int) =
+        match this with
+        | Mapping items ->
+            let content =
+                items
+                |> List.filter(fun (key2, _) -> key2 <> key)
+            Mapping content
+        | IntVector items ->
+            items
+            |> List.filter((<>) key)
+            |> IntVector
+        | _ -> invalidOp "Not a Mapping or IntVector"
+    member this.AddItem(key : int) =
+        match this with
+        | IntVector items ->
+            let content =
+                items
+                |> List.filter((<>) key)
+            IntVector (key :: content)
+        | _ -> invalidOp "Not anIntVector"
+    member this.Clear() =
+        match this with
+        | Mapping _ -> Mapping []
+        | Set _ -> Set []
+        | IntVector _ -> IntVector []
+        | _ -> invalidOp "Not a Mapping, Set or IntVector"
 
 let rec dump (value : Value) : string =
     match value with

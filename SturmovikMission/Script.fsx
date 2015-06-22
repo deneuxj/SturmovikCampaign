@@ -9,6 +9,10 @@ open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Ast
 
 type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission" >
+
+let pair = T.PairOfIntegerAndInteger((T.Integer(1), T.Integer(2)))
+pair.Value
+
 let parser = T.Parser()
 
 let x2, _ =
@@ -99,6 +103,8 @@ let x3, _ =
         printParseError(e) |> String.concat "\n" |> printfn "%s"
         raise e
 
+x3.SetDamaged(T.Damaged().SetItem(1, T.Boolean(true)) |> Some)
+
 let x4, _ =
     try
         """
@@ -137,4 +143,4 @@ let x4, _ =
         printParseError(e) |> String.concat "\n" |> printfn "%s"
         raise e
 
-//x4.SubtitleInfo.Duration.Value
+x4.SetEnabled(T.Boolean(true)).Enabled.Value

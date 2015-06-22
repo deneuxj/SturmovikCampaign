@@ -77,26 +77,31 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Boolean", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<bool>) (fun this -> <@@ (%%this : Ast.Value).GetBool() @@>)
+            addConstructor ptyp [("Value", typeof<bool>)] (fun [value] -> <@@ Ast.Value.Boolean (%%value : bool) @@>)
             ptyp
         | Ast.ValueType.Float ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Float", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<float>) (fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>)
+            addConstructor ptyp [("Value", typeof<float>)] (fun [value] -> <@@ Ast.Value.Float (%%value : float) @@>)
             ptyp
         | Ast.ValueType.Integer ->
             let ptyp =
                 new ProvidedTypeDefinition("Integer", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<int>) (fun this -> <@@ (%%this : Ast.Value).GetInteger() @@>)
+            addConstructor ptyp [("Value", typeof<int>)] (fun [value] -> <@@ Ast.Value.Integer (%%value : int) @@>)
             ptyp
         | Ast.ValueType.String ->
             let ptyp =
                 new ProvidedTypeDefinition("String", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<string>) (fun this -> <@@ (%%this : Ast.Value).GetString() @@>)
+            addConstructor ptyp [("Value", typeof<string>)] (fun [value] -> <@@ Ast.Value.String (%%value : string) @@>)
             ptyp
         | Ast.ValueType.IntVector ->
             let ptyp =
                 new ProvidedTypeDefinition("VectorOfIntegers", Some (typeof<Ast.Value>))
             addProperty ptyp ("Value", typeof<int list>) (fun this -> <@@ (%%this : Ast.Value).GetIntVector() @@>)
+            addConstructor ptyp [("Value", typeof<int list>)] (fun [value] -> <@@ Ast.Value.IntVector (%%value : int list) @@>)
             ptyp
         | Ast.ValueType.Pair (typ1, typ2) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -109,6 +114,7 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             let propTyp = typedefof<_*_>.MakeGenericType(ptyp1, ptyp2)
             addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetPair() @@>)
+            addConstructor ptyp [("Value", propTyp)] (fun [value] -> <@@ Ast.Value.Pair (%%value : Ast.Value * Ast.Value) @@>)
             ptyp
         | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -122,6 +128,7 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             let propTyp = typedefof<_*_*_>.MakeGenericType(ptyp1, ptyp2, ptyp3)
             addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetTriplet() @@>)
+            addConstructor ptyp [("Value", propTyp)] (fun [value] -> <@@ Ast.Value.Triplet (%%value : Ast.Value * Ast.Value * Ast.Value) @@>)
             ptyp
         | Ast.ValueType.Date ->
             let ptyp =
@@ -135,12 +142,14 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
             addProperty ptyp ("Day", typeof<int>) (fun this ->
                 let e = <@@ (%%this : Ast.Value).GetDate() @@>
                 <@@ let day, _, _ = (%%e : int * int * int) in day @@>)
+            addConstructor ptyp [("Day", typeof<int>); ("Month", typeof<int>); ("Year", typeof<int>)] (fun [day; month; year] ->
+                <@@ Ast.Value.Date((%%day : int), (%%month : int), (%%year : int)) @@>)
             ptyp
         | Ast.ValueType.Composite fields ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Composite" |> newName, Some (typeof<Ast.Value>))
             let asList this = <@ (%%this : Ast.Value).GetItems() @>
-            let members =
+            let getters =
                 fields
                 |> Map.map (
                     fun fieldName (def, minMult, maxMult) ->
@@ -196,19 +205,85 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                 |> Map.toList
                 |> List.sortBy fst
                 |> List.map snd
-            ptyp.AddMembers(members)
+            ptyp.AddMembers(getters)
+            // setters, using fluent interfaces
+            for kvp in fields do
+                let fieldName = kvp.Key
+                let (def, minMult, maxMult) = kvp.Value
+                let fieldType =
+                    let subName =
+                        match def with
+                        | Ast.ValueType.Set _
+                        | Ast.ValueType.Mapping _
+                        | Ast.ValueType.Composite _ -> Some fieldName
+                        | _ -> None
+                    getProvidedType(subName, def)
+                match (minMult, maxMult) with
+                | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
+                    addMethod
+                        ptyp
+                        ((sprintf "Set%s" fieldName), ptyp)
+                        [("value", upcast fieldType)]
+                        (fun [this; value] ->
+                            <@@
+                                let this = (%%this : Ast.Value)
+                                this.SetItem(fieldName, (%%value : Ast.Value))
+                            @@>)
+                | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
+                    let optTyp =
+                        typedefof<option<_>>
+                            .MakeGenericType(fieldType)
+                    addMethod
+                        ptyp
+                        ((sprintf "Set%s" fieldName), ptyp)
+                        [("value", optTyp)]
+                        (fun [this; value] ->
+                            <@@
+                                let this = (%%this : Ast.Value)
+                                this.SetItem(fieldName, (%%value : Ast.Value option))
+                            @@>)
+                | _, Ast.MaxMultiplicity.Multiple ->
+                    let listTyp =
+                        typedefof<List<_>>
+                            .MakeGenericType(fieldType)
+                    addMethod
+                        ptyp
+                        ((sprintf "Set%s" fieldName), ptyp)
+                        [("value", listTyp)]
+                        (fun [this; value] ->
+                            <@@
+                                let this = (%%this : Ast.Value)
+                                this.ClearItems(fieldName).AddItems(fieldName, (%%value : Ast.Value list))
+                            @@>)
             ptyp
         | Ast.ValueType.Mapping itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Mapping" |> newName, Some (typeof<Ast.Value>))
+            addConstructor ptyp [] (fun [] -> <@@ Ast.Value.Mapping [] @@>)
             let propTyp = typedefof<Map<_,_>>.MakeGenericType(typeof<int>, ptyp1)
             addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetMapping() |> Map.ofList @@>)
+            addMethod ptyp ("SetItem", ptyp) [("Key", typeof<int>); ("Value", upcast ptyp1)] (fun [this; key; value] ->
+                <@@
+                    let this = (%%this : Ast.Value)
+                    this.SetItem((%%key : int), (%%value : Ast.Value))
+                @@>)
+            addMethod ptyp ("RemoveItem", ptyp) (["Key", typeof<int>]) (fun [this; key] ->
+                <@@
+                    let this = (%%this : Ast.Value)
+                    this.RemoveItem(%%key : int)
+                @@>)
+            addMethod ptyp ("Clear", ptyp) [] (fun [this] ->
+                <@@
+                    let this = (%%this : Ast.Value)
+                    this.Clear()
+                @@>)
             ptyp
         | Ast.ValueType.Set itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Set" |> newName, Some (typeof<Ast.Value>))
+            addConstructor ptyp [] (fun [] -> <@@ Ast.Value.Set [] @@>)
             let propTyp = typedefof<Set<_>>.MakeGenericType(ptyp1)
             addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetSet() |> Set.ofList @@>)
             ptyp
