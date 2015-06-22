@@ -317,19 +317,19 @@ let parseFile (getParser : string -> ParserFun) (s : Stream) =
             parseGroup s { data with Index = index }
         | ReId("Desc", ReLit "=" (ReString(desc, ReLit ";" s))) ->
             parseGroup s { data with Description = desc }
-        | ReId("Group", _) ->
+        | ReId("Group", (ReLit "{" s)) ->
             let subData, s = parseGroup s defaultGroup
-            { data with Data = (Group subData) :: data.Data }, s
+            parseGroup s { data with Data = (Group subData) :: data.Data }
         | ReId(name, ((ReLit "{" _) as s)) ->
             let parser = getParser name
             let subData, s = parser.Run(s)
-            { data with Data = (Leaf(name, subData)) :: data.Data }, s
+            parseGroup s { data with Data = (Leaf(name, subData)) :: data.Data }
         | s ->
             parseError("In Group, unexpected LHS", s)
 
     let rec work (s : Stream) data =
         match s with
-        | ReId("Group", s) ->
+        | ReId("Group", (ReLit "{" s)) ->
             let group, s = parseGroup s defaultGroup
             work s (Group group :: data)
         | ReId(name, ((ReLit "{" _) as s)) ->

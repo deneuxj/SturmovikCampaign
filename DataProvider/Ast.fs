@@ -253,11 +253,13 @@ and GroupData =
       Data : Data list
     }
 
-
-type Mission =
-    { Version : int
-      Content : Data list
-    }
-
+type Data with
+    member this.GetLeaves() =
+        match this with
+        | Leaf(name, value) -> [(name, value)]
+        | Group group ->
+            group.Data
+            |> List.map (fun data -> data.GetLeaves())
+            |> List.concat
 
 

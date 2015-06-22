@@ -10,6 +10,17 @@ open SturmovikMission.DataProvider.Ast
 
 type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission" >
 
+let groupData =
+    try
+        T.GroupData(Stream.FromFile @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission")
+    with
+    | :? ParseError as e ->
+        printParseError(e) |> String.concat "\n" |> printfn "%s"
+        raise e
+
+groupData.ListOfMCU_Timer
+groupData.ListOfAirfield
+
 let pair = T.PairOfIntegerAndInteger((T.Integer(1), T.Integer(2)))
 pair.Value
 

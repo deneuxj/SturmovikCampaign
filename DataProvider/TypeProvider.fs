@@ -303,12 +303,14 @@ let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefi
             let valueTypeExpr = valueType.ToExpr()
             <@ %valueTypeExpr :: %expr @>
             ) <@ [] @>
+    // Default constructor: Populate the cache of parsers.
     addConstructor parser [] (fun [] ->
         <@@
             %valueTypeExprs
             |> List.map(fun valueType -> (valueType, Parsing.makeParser valueType))
             |> dict
         @@>)
+    // Parse methods for all top types.
     for name, valueType, ptyp in namedValueTypes do
         let vtExpr = valueType.ToExpr()
         let retType =
@@ -320,6 +322,41 @@ let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefi
                 parser.Run(%%s : Parsing.Stream)
             @@>
         )
+    parser
+
+
+let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
+    let parser = ProvidedTypeDefinition("GroupData", Some typeof<Ast.Data list>)
+    let valueTypeOfName =
+        namedValueTypes
+        |> List.fold (fun expr (name, valueType, _) ->
+            <@
+                Map.add name %(valueType.ToExpr()) %expr
+            @>
+            ) <@ Map.empty @>
+    // Constructor: Parse a group or mission file
+    addConstructor parser [("s", typeof<Parsing.Stream>)] (fun [s] ->
+        <@@
+            let parsers =
+                %valueTypeOfName
+                |> Map.map (fun name valueType -> Parsing.makeParser valueType)
+            let getParser name = parsers.[name]
+            let s = (%%s : Parsing.Stream)
+            Parsing.parseFile getParser s
+        @@>)
+    // Getters: list of objects of each type
+    for (name, valueType, ptyp) in namedValueTypes do
+        addProperty parser ((sprintf "ListOf%s" name), typedefof<_ list>.MakeGenericType(ptyp)) (fun this ->
+            <@@
+                let this = (%%this : Ast.Data list)
+                let ret =
+                    this
+                    |> List.map (fun data -> data.GetLeaves())
+                    |> List.concat
+                    |> List.choose (function (name2, value) -> if name2 = name then Some value else None)
+                ret
+            @@>)
+    // Return result
     parser
 
 
@@ -359,6 +396,10 @@ type MissionTypes(config: TypeProviderConfig) as this =
             |> List.ofSeq
         let parserType = buildParserType namedTypes
         ty.AddMember(parserType)
+        // The type of the file parser.
+        let parserType = buildGroupParserType namedTypes
+        ty.AddMember(parserType)
+        // Result
         ty
     )
 
