@@ -15,7 +15,7 @@ Options
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\lagg3s29.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\pe2s87.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\yak1s69.txt";
-  Time = 8:0:0;
+  Time = 8:15:10;
   Date = 19.11.1942;
   HMap = "graphics\LANDSCAPE_Stalin_w\height.hini";
   Textures = "graphics\LANDSCAPE_Stalin_w\textures.tini";
@@ -31,14 +31,14 @@ Options
   PrecType = 0;
   CloudConfig = "00_clear_00\sky.ini";
   SeaState = 0;
-  Turbulence = 0;
+  Turbulence = 0.1;
   TempPressLevel = 0;
   Temperature = -15;
   Pressure = 760;
   WindLayers
   {
     0 :     0 :     0;
-    500 :     0 :     0;
+    500 :     2 :     2;
     1000 :     0 :     0;
     2000 :     0 :     0;
     5000 :     0 :     0;
@@ -28294,7 +28294,7 @@ Airfield
   DamageThreshold = 1;
   DeleteAfterDeath = 1;
   Callsign = 0;
-  Callnum = 0;
+  Callnum = 10;
   Planes
   {
     Plane

@@ -8,10 +8,9 @@ open SturmovikMissionTypes
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Ast
 
-type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission", @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m1.Mission" >
-//type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission", @"" >
+type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Sample.Mission", @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m2.Mission" >
 
-T.m1.LoadingError
+T.m2.misc_3_7
 
 (*
 let groupData =
