@@ -163,6 +163,7 @@ let parseString =
 let parseFloat =
     function
     | ReFloat (x, s) -> (Value.Float x, s)
+    | ReInt (x, s) -> (Value.Float(float x), s)
     | s -> parseError("Not a float", s)
 
 let parseDate =
@@ -333,7 +334,11 @@ let parseFile (getParser : string -> ParserFun) (s : Stream) =
             let group, s = parseGroup s defaultGroup
             work s (Group group :: data)
         | ReId(name, ((ReLit "{" _) as s)) ->
-            let parser = getParser name
+            let parser =
+                try
+                    getParser name
+                with
+                | e -> failwithf "Failed to get parser for %s. Error was '%s'" name e.Message
             let subData, s = parser.Run(s)
             work s (Leaf(name, subData) :: data)
         | EOF _ ->
