@@ -5,6 +5,7 @@
       @"..\ProvidedTypes.fs"
       @"..\DebugProvidedTypes.fs"
       @"..\Ast.fs"
+      @"..\Mcu.fs"
       @"..\Unification.fs"
       @"..\Parsing.fs"
       @"..\AutoSchema.fs"

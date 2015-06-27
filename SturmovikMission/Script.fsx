@@ -115,6 +115,14 @@ let x3, _ =
         raise e
 
 x3.SetDamaged(T.Damaged().SetItem(1, T.Boolean(true)) |> Some)
+let blck = x3.AsHasEntity()
+blck.Ori
+blck.Pos
+blck.Name
+blck.Index
+blck.AsString()
+|> Stream.FromString
+|> parser.Parse_Block
 
 let x4, _ =
     try
@@ -155,3 +163,7 @@ let x4, _ =
         raise e
 
 x4.SetEnabled(T.Boolean(true)).Enabled.Value
+let cmd = x4.AsCommand()
+cmd.AsString()
+|> Stream.FromString
+|> parser.Parse_MCU_TR_Subtitle

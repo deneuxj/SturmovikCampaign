@@ -255,6 +255,47 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                                 let this = (%%this : Ast.Value)
                                 this.ClearItems(fieldName).AddItems(fieldName, (%%value : Ast.Value list))
                             @@>)
+            // Create Mcu instances
+            match Mcu.tryMkAsCommand typ with
+            | Some _ ->
+                addMethod
+                    ptyp
+                    ("AsCommand", typeof<Mcu.McuCommand>)
+                    []
+                    (fun [this] ->
+                        <@@
+                            match Mcu.tryMkAsCommand %typExpr with
+                            | Some f -> f (%%this : Ast.Value)
+                            | None -> failwith "Unexpected error: could not build AsCommand"
+                        @@>)
+            | None -> ()
+            match Mcu.tryMkAsEntity typ with
+            | Some _ ->
+                addMethod
+                    ptyp
+                    ("AsEntity", typeof<Mcu.McuEntity>)
+                    []
+                    (fun [this] ->
+                        <@@
+                            match Mcu.tryMkAsEntity %typExpr with
+                            | Some f -> f (%%this : Ast.Value)
+                            | None -> failwith "Unexpected error: could not build AsEntity"
+                        @@>)
+            | None -> ()
+            match Mcu.tryMkAsHasEntity typ with
+            | Some _ ->
+                addMethod
+                    ptyp
+                    ("AsHasEntity", typeof<Mcu.HasEntity>)
+                    []
+                    (fun [this] ->
+                        <@@
+                            match Mcu.tryMkAsHasEntity %typExpr with
+                            | Some f -> f (%%this : Ast.Value)
+                            | None -> failwith "Unexpected error: could not build AsHasEntity"
+                        @@>)
+            | None -> ()
+
             ptyp
         | Ast.ValueType.Mapping itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
