@@ -189,6 +189,37 @@ with
         | Set _ -> Set []
         | IntVector _ -> IntVector []
         | _ -> invalidOp "Not a Mapping, Set or IntVector"
+    
+    member this.ToExpr() =
+        match this with
+        | Boolean x -> <@ Boolean x @>
+        | Integer x -> <@ Integer x @>
+        | Float x -> <@ Float x @>
+        | String x -> <@ String x @>
+        | Date(x, y, z) -> <@ Date(x, y, z) @>
+        | IntVector x ->
+            x
+            |> List.rev
+            |> List.fold (fun expr n -> <@ n :: %expr @>) <@ [] @>
+            |> fun xs -> <@ IntVector %xs @>
+        | Mapping x ->
+            x
+            |> List.fold (fun expr (n, value) -> <@ (n, %(value.ToExpr())) :: %expr @>) <@ [] @>
+            |> fun xs -> <@ Mapping %xs @>
+        | Set x ->
+            x
+            |> List.fold (fun expr value -> <@ %(value.ToExpr()) :: %expr @>) <@ [] @>
+            |> fun xs -> <@ Set %xs @>
+        | Pair(x1, x2) ->
+            <@ Pair(%x1.ToExpr(), %x2.ToExpr()) @>
+        | Triplet(x1, x2, x3) ->
+            <@ Triplet(%x1.ToExpr(), %x2.ToExpr(), %x3.ToExpr()) @>
+        | Composite fields ->
+            fields
+            |> List.rev
+            |> List.fold (fun expr (name, value) -> <@ (name, %value.ToExpr()) :: %expr @>) <@ [] @>
+            |> fun xs -> <@ Composite %xs @>
+            
 
 let rec dump (value : Value) : string =
     match value with

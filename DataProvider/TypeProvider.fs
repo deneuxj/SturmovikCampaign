@@ -7,6 +7,7 @@ open Microsoft.FSharp.Core.CompilerServices
 open Microsoft.FSharp.Quotations
 open System.Collections.Generic
 open System
+open System.IO
 
 let cached (cache : IDictionary<'a, 'b>) f x =
     match cache.TryGetValue(x) with
@@ -43,6 +44,18 @@ let addProperty (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (bod
     let prop = ProvidedProperty(name, typ)
     prop.GetterCode <- fun [this] -> body this
     ptyp.AddMember(prop)
+
+let addStaticProperty (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (body : Expr) =
+    let prop = ProvidedProperty(name, typ)
+    prop.IsStatic <- true
+    prop.GetterCode <- fun [] -> body
+    ptyp.AddMember(prop)
+
+let newStaticProperty (name : string, typ : Type) (body : Expr) =
+    let prop = ProvidedProperty(name, typ)
+    prop.IsStatic <- true
+    prop.GetterCode <- fun [] -> body
+    prop
 
 let addMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
     let args =
@@ -401,6 +414,83 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
     parser
 
 
+let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) (files : string) =
+    let parsers =
+        namedValueTypes
+        |> List.map (fun (name, typ, _) -> (name, Parsing.makeParser typ))
+        |> Map.ofList
+    let getParser name = parsers.[name]
+    let types =
+        namedValueTypes
+        |> List.map (fun (name, _, ptyp) -> (name, ptyp))
+        |> Map.ofList
+    let typExprs =
+        namedValueTypes
+        |> List.map (fun (name, typ, _) -> (name, typ.ToExpr()))
+        |> Map.ofList
+    let newName =
+        let rand = new Random(0)
+        fun baseName ->
+            Seq.initInfinite (fun i ->
+                if i = 0 then
+                    baseName
+                elif i < 10 then
+                    sprintf "%s_%d" baseName (i + 1)
+                else
+                    sprintf "%s_R%d" baseName (rand.Next())
+                )
+        |> getNameStore
+    let importFile filename =
+        let name = Path.GetFileNameWithoutExtension(filename)
+        let lib = new ProvidedTypeDefinition(name, Some typeof<obj>)
+        fun () ->
+            let staticMembers =
+                try
+                    let s = Parsing.Stream.FromFile filename
+                    let data = Parsing.parseFile getParser s
+                    let rec work (data : Ast.Data) : ((string * Type) * Quotations.Expr) seq =
+                        seq {
+                            match data with
+                            | Ast.Data.Leaf(typename, value) ->
+                                match value with
+                                | Ast.Value.Composite fields ->
+                                    let name =
+                                        fields
+                                        |> Seq.tryPick (function ("Name", Ast.Value.String n) -> Some n | _ -> None)
+                                        |> fun x -> defaultArg x "Unnamed"
+                                        |> newName
+                                    match Map.tryFind typename types with
+                                    | Some ptyp ->
+                                        let valueExpr = value.ToExpr()
+                                        yield (name, upcast ptyp), <@@ %valueExpr @@>
+                                    | None ->
+                                        ()
+                                | _ ->
+                                    ()
+                            | Ast.Data.Group groupData ->
+                                yield!
+                                    groupData.Data
+                                    |> Seq.map work
+                                    |> Seq.concat
+                        }
+                    data
+                    |> List.map work
+                    |> Seq.concat
+                    |> List.ofSeq
+                with
+                | e ->
+                    let msg = e.Message
+                    [(("LoadingError", typeof<string>), <@@ msg @@>) ]
+            staticMembers
+            |> List.map (fun (prop, expr) -> newStaticProperty prop expr)
+        |> lib.AddMembersDelayed
+        lib
+
+    files.Split(';')
+    |> Array.map importFile
+    |> List.ofArray
+
+
 [<TypeProvider>]
 type MissionTypes(config: TypeProviderConfig) as this =
     inherit TypeProviderForNamespaces()
@@ -410,10 +500,13 @@ type MissionTypes(config: TypeProviderConfig) as this =
 
     let provider = ProvidedTypeDefinition(asm, ns, "Provider", Some(typeof<obj>))
     let sampleParam = ProvidedStaticParameter("sample", typeof<string>)
-    do sampleParam.AddXmlDoc("<brief>Name of a mission file from which the structure of missions is infered</brief>")
-
-    do provider.DefineStaticParameters([sampleParam], fun typeName [| sample |] ->
+    do sampleParam.AddXmlDoc("<summary>Name of a mission file from which the structure of missions is infered</summary>")
+    let libraryParam = ProvidedStaticParameter("library", typeof<string>)
+    do libraryParam.AddXmlDoc("<summary>List of mission or group files from which to read data, separated by semi-colons</summary>")
+    
+    do provider.DefineStaticParameters([sampleParam; libraryParam], fun typeName [| sample; libs |] ->
         let sample = sample :?> string
+        let libs = libs :?> string
         if not(System.IO.File.Exists(sample)) then
             failwithf "Cannot open sample file '%s' for reading" sample
         let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
@@ -440,6 +533,9 @@ type MissionTypes(config: TypeProviderConfig) as this =
         // The type of the file parser.
         let parserType = buildGroupParserType namedTypes
         ty.AddMember(parserType)
+        // The libraries
+        let plibs = buildLibraries namedTypes libs
+        ty.AddMembers(plibs)
         // Result
         ty
     )

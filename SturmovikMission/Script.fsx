@@ -8,7 +8,9 @@ open SturmovikMissionTypes
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Ast
 
-type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission" >
+type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission", @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission;C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m1.Mission" >
+
+T.m1.LoadingError
 
 let groupData =
     try
@@ -25,6 +27,16 @@ let pair = T.PairOfIntegerAndInteger((T.Integer(1), T.Integer(2)))
 pair.Value
 
 let parser = T.Parser()
+
+T.StalingradConquest.``1x start ground attack``.AsCommand().AsString()
+|> Stream.FromString
+|> parser.Parse_MCU_Counter
+
+T.StalingradConquest.``1x_R1080621138``.SetCounter(T.Integer(10)).AsCommand().AsString()
+|> Stream.FromString
+|> parser.Parse_MCU_Counter
+
+T.StalingradConquest.``Airfield flak_9``.AsHasEntity().LinkTrId
 
 let x2, _ =
     try
