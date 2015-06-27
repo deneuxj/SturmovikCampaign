@@ -478,9 +478,14 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                     |> Seq.concat
                     |> List.ofSeq
                 with
+                | :? Parsing.ParseError as e ->
+                    let msg =
+                        Parsing.printParseError e
+                        |> String.concat "\n"
+                    [ (("LoadingError", typeof<string>), <@@ msg @@>) ]
                 | e ->
                     let msg = e.Message
-                    [(("LoadingError", typeof<string>), <@@ msg @@>) ]
+                    [ (("LoadingError", typeof<string>), <@@ msg @@>) ]
             staticMembers
             |> List.map (fun (prop, expr) -> newStaticProperty prop expr)
         |> lib.AddMembersDelayed

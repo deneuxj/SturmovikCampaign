@@ -8,10 +8,12 @@ open SturmovikMissionTypes
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Ast
 
-type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission", @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission;C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m1.Mission" >
+type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission", @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m1.Mission" >
+//type T = Provider< @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission", @"" >
 
 T.m1.LoadingError
 
+(*
 let groupData =
     try
         T.GroupData(Stream.FromFile @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission")
@@ -55,7 +57,7 @@ let x2, _ =
       MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\lagg3s29.txt";
       MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\pe2s87.txt";
       MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\yak1s69.txt";
-      Time = 8:0:0;
+      Time = 8:15:30;
       Date = 19.11.1942;
       HMap = "graphics\LANDSCAPE_Stalin_w\height.hini";
       Textures = "graphics\LANDSCAPE_Stalin_w\textures.tini";
@@ -71,13 +73,13 @@ let x2, _ =
       PrecType = 0;
       CloudConfig = "00_clear_00\sky.ini";
       SeaState = 0;
-      Turbulence = 0;
+      Turbulence = 0.2;
       TempPressLevel = 0;
       Temperature = -15;
       Pressure = 760;
       WindLayers
       {
-        0 :     0 :     0;
+        0 :     5 :     5;
         500 :     0 :     0;
         1000 :     0 :     0;
         2000 :     0 :     0;
@@ -179,3 +181,4 @@ let cmd = x4.AsCommand()
 cmd.AsString()
 |> Stream.FromString
 |> parser.Parse_MCU_TR_Subtitle
+*)
