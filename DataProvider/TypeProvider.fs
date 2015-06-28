@@ -370,9 +370,11 @@ let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefi
         ))
     parser
 
+type DataListSource =
+    | Instance of this: (Expr -> Expr<Ast.Data list>)
+    | Static of code: Expr<Ast.Data list>
 
-let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
-    let parser = ProvidedTypeDefinition("GroupData", Some typeof<Ast.Data list>)
+let buildAsMcuList (dataListSource : DataListSource) (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
     let valueTypeOfName =
         namedValueTypes
         |> List.fold (fun expr (name, valueType, _) ->
@@ -386,32 +388,9 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
         |> List.fold (fun expr name ->
             <@ name :: %expr @>) <@ [] @>
 
-    // Constructor: Parse a group or mission file
-    parser.AddMember(newConstructor [("s", typeof<Parsing.Stream>)] (fun [s] ->
+    let mkBody (dataList : Expr<Ast.Data list>) =
         <@@
-            let parsers =
-                %valueTypeOfName
-                |> Map.map (fun name valueType -> Parsing.makeParser valueType)
-            let getParser name = parsers.[name]
-            let s = (%%s : Parsing.Stream)
-            Parsing.parseFile getParser s
-        @@>))
-    // Getters: list of objects of each type
-    for (name, valueType, ptyp) in namedValueTypes do
-        parser.AddMember(newProperty ((sprintf "ListOf%s" name), typedefof<_ list>.MakeGenericType(ptyp)) (fun this ->
-            <@@
-                let this = (%%this : Ast.Data list)
-                let ret =
-                    this
-                    |> List.map (fun data -> data.GetLeaves())
-                    |> List.concat
-                    |> List.choose (function (name2, value) -> if name2 = name then Some value else None)
-                ret
-            @@>))
-    // Get the flattened list of objects as instances of McuBase and its subtypes, when appropriate
-    parser.AddMember(newProperty ("AsMcuList", typeof<Mcu.McuBase list>) (fun this ->
-        <@@
-            let this = (%%this : Ast.Data list)
+            let this = %dataList
             let valueTypeOfName = %valueTypeOfName
             let mcuMakerOfName =
                 %names
@@ -432,7 +411,55 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
                     None
             )
         @@>
-    ))
+
+    match dataListSource with
+    | Static expr ->
+        newStaticProperty ("AsMcuList", typeof<Mcu.McuBase list>) (mkBody expr)
+    | Instance getDataList ->
+        newProperty ("AsMcuList", typeof<Mcu.McuBase list>) (fun this ->
+            let dataList : Expr<Ast.Data list> = getDataList this
+            mkBody dataList
+        )
+
+let buildGroupParserType (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
+    let parser = ProvidedTypeDefinition("GroupData", Some typeof<Ast.Data list>)
+    let valueTypeOfName =
+        namedValueTypes
+        |> List.fold (fun expr (name, valueType, _) ->
+            <@
+                Map.add name %(valueType.ToExpr()) %expr
+            @>
+            ) <@ Map.empty @>
+    let names =
+        namedValueTypes
+        |> List.map (fun (name, _, _) -> name)
+        |> List.fold (fun expr name ->
+            <@ name :: %expr @>) <@ [] @>
+
+    // Constructor: Parse a group or mission file
+    parser.AddMemberDelayed(fun() -> newConstructor [("s", typeof<Parsing.Stream>)] (fun [s] ->
+        <@@
+            let parsers =
+                %valueTypeOfName
+                |> Map.map (fun name valueType -> Parsing.makeParser valueType)
+            let getParser name = parsers.[name]
+            let s = (%%s : Parsing.Stream)
+            Parsing.parseFile getParser s
+        @@>))
+    // Getters: list of objects of each type
+    for (name, valueType, ptyp) in namedValueTypes do
+        parser.AddMemberDelayed(fun() -> newProperty ((sprintf "ListOf%s" name), typedefof<_ list>.MakeGenericType(ptyp)) (fun this ->            
+            <@@
+                let this = (%%this : Ast.Data list)
+                let ret =
+                    this
+                    |> List.map (fun data -> data.GetLeaves())
+                    |> List.concat
+                    |> List.choose (function (name2, value) -> if name2 = name then Some value else None)
+                ret
+            @@>))
+    // Get the flattened list of objects as instances of McuBase and its subtypes, when appropriate
+    parser.AddMemberDelayed(fun() -> buildAsMcuList (Instance(fun this -> <@ (%%this : Ast.Data list) @>)) namedValueTypes)
     // Return result
     parser
 
@@ -508,6 +535,28 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
             staticMembers
             |> List.map (fun (prop, expr) -> newStaticProperty prop expr)
         |> lib.AddMembersDelayed
+        // Get the flattened list of objects as instances of McuBase and its subtypes, when appropriate
+        lib.AddMemberDelayed(fun() ->
+            let valueTypeOfName =
+                namedValueTypes
+                |> List.fold (fun expr (name, valueType, _) ->
+                    <@
+                        Map.add name %(valueType.ToExpr()) %expr
+                    @>
+                    ) <@ Map.empty @>
+            let prop =
+                buildAsMcuList (DataListSource.Static
+                    <@
+                        let parsers =
+                            %valueTypeOfName
+                            |> Map.map (fun name valueType -> Parsing.makeParser valueType)
+                        let getParser name = parsers.[name]
+                        let s = Parsing.Stream.FromFile filename
+                        let data = Parsing.parseFile getParser s
+                        data
+                    @>) namedValueTypes
+            prop
+        )
         lib
 
     files.Split(';')

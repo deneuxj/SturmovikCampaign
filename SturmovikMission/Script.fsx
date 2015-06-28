@@ -10,12 +10,14 @@ open SturmovikMission.DataProvider.Ast
 
 type T = Provider< @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\Sample.Mission", @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m2.Mission" >
 
+T.m2.AsMcuList
+
+(*
 T.m2.misc_3_7
 T.Integer(2)
 T.m2.``Approach beacon``
 T.m2.``Activate car VIP``.Random.Value
 T.m2.Airfield.AsHasEntity().AsString()
-
 
 let groupData =
     try
@@ -29,7 +31,6 @@ groupData.ListOfMCU_Timer
 groupData.ListOfAirfield
 groupData.AsMcuList |> List.head |> fun x -> x.AsString()
 
-(*
 let pair = T.PairOfIntegerAndInteger((T.Integer(1), T.Integer(2)))
 pair.Value
 
