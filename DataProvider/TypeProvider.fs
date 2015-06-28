@@ -57,23 +57,29 @@ let newStaticProperty (name : string, typ : Type) (body : Expr) =
     prop.GetterCode <- fun [] -> body
     prop
 
-let addMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
+let newMethod (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
     let args =
         args
         |> List.map (fun (n, t) -> ProvidedParameter(n, t))
     let m = ProvidedMethod(name, args, typ)
     m.InvokeCode <- body
+    m
+
+let addMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
+    let m = newMethod (name, typ) args body
     ptyp.AddMember(m)
 
 let addStaticMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
-    let args =
-        args
-        |> List.map (fun (n, t) -> ProvidedParameter(n, t))
-    let m = ProvidedMethod(name, args, typ)
+    let m = newMethod (name, typ) args body
     m.IsStaticMethod <- true
-    m.InvokeCode <- body
     ptyp.AddMember(m)
 
+let getNameOfField(fieldName : string, def) =
+    match def with
+    | Ast.ValueType.Set _
+    | Ast.ValueType.Mapping _
+    | Ast.ValueType.Composite _ -> Some fieldName
+    | _ -> None
     
 let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
     let newName =
@@ -162,17 +168,12 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Composite" |> newName, Some (typeof<Ast.Value>))
             let asList this = <@ (%%this : Ast.Value).GetItems() @>
-            let getters =
+            let getters() =
                 fields
                 |> Map.map (
                     fun fieldName (def, minMult, maxMult) ->
                         let fieldType =
-                            let subName =
-                                match def with
-                                | Ast.ValueType.Set _
-                                | Ast.ValueType.Mapping _
-                                | Ast.ValueType.Composite _ -> Some fieldName
-                                | _ -> None
+                            let subName = getNameOfField(fieldName, def)
                             getProvidedType(subName, def)
                         match (minMult, maxMult) with
                         | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
@@ -217,98 +218,99 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                     )
                 |> Map.toList
                 |> List.sortBy fst
-                |> List.map snd
-            ptyp.AddMembers(getters)
+                |> List.map snd                
+            ptyp.AddMembersDelayed(getters)
             // setters, using fluent interfaces
-            for kvp in fields do
-                let fieldName = kvp.Key
-                let (def, minMult, maxMult) = kvp.Value
-                let fieldType =
-                    let subName =
-                        match def with
-                        | Ast.ValueType.Set _
-                        | Ast.ValueType.Mapping _
-                        | Ast.ValueType.Composite _ -> Some fieldName
-                        | _ -> None
-                    getProvidedType(subName, def)
-                match (minMult, maxMult) with
-                | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
-                    addMethod
-                        ptyp
-                        ((sprintf "Set%s" fieldName), ptyp)
-                        [("value", upcast fieldType)]
-                        (fun [this; value] ->
-                            <@@
-                                let this = (%%this : Ast.Value)
-                                this.SetItem(fieldName, (%%value : Ast.Value))
-                            @@>)
-                | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
-                    let optTyp =
-                        typedefof<option<_>>
-                            .MakeGenericType(fieldType)
-                    addMethod
-                        ptyp
-                        ((sprintf "Set%s" fieldName), ptyp)
-                        [("value", optTyp)]
-                        (fun [this; value] ->
-                            <@@
-                                let this = (%%this : Ast.Value)
-                                this.SetItem(fieldName, (%%value : Ast.Value option))
-                            @@>)
-                | _, Ast.MaxMultiplicity.Multiple ->
-                    let listTyp =
-                        typedefof<List<_>>
-                            .MakeGenericType(fieldType)
-                    addMethod
-                        ptyp
-                        ((sprintf "Set%s" fieldName), ptyp)
-                        [("value", listTyp)]
-                        (fun [this; value] ->
-                            <@@
-                                let this = (%%this : Ast.Value)
-                                this.ClearItems(fieldName).AddItems(fieldName, (%%value : Ast.Value list))
-                            @@>)
+            let setters() =
+                fields
+                |> Seq.map(fun kvp ->
+                    let fieldName = kvp.Key
+                    let (def, minMult, maxMult) = kvp.Value
+                    let fieldType =
+                        let subName =
+                            match def with
+                            | Ast.ValueType.Set _
+                            | Ast.ValueType.Mapping _
+                            | Ast.ValueType.Composite _ -> Some fieldName
+                            | _ -> None
+                        getProvidedType(subName, def)
+                    match (minMult, maxMult) with
+                    | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
+                        newMethod
+                            ((sprintf "Set%s" fieldName), ptyp)
+                            [("value", upcast fieldType)]
+                            (fun [this; value] ->
+                                <@@
+                                    let this = (%%this : Ast.Value)
+                                    this.SetItem(fieldName, (%%value : Ast.Value))
+                                @@>)
+                    | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
+                        let optTyp =
+                            typedefof<option<_>>
+                                .MakeGenericType(fieldType)
+                        newMethod
+                            ((sprintf "Set%s" fieldName), ptyp)
+                            [("value", optTyp)]
+                            (fun [this; value] ->
+                                <@@
+                                    let this = (%%this : Ast.Value)
+                                    this.SetItem(fieldName, (%%value : Ast.Value option))
+                                @@>)
+                    | _, Ast.MaxMultiplicity.Multiple ->
+                        let listTyp =
+                            typedefof<List<_>>
+                                .MakeGenericType(fieldType)
+                        newMethod
+                            ((sprintf "Set%s" fieldName), ptyp)
+                            [("value", listTyp)]
+                            (fun [this; value] ->
+                                <@@
+                                    let this = (%%this : Ast.Value)
+                                    this.ClearItems(fieldName).AddItems(fieldName, (%%value : Ast.Value list))
+                                @@>))
+                |> List.ofSeq
+            ptyp.AddMembersDelayed(setters)
             // Create Mcu instances
-            match Mcu.tryMkAsCommand typ with
-            | Some _ ->
-                addMethod
-                    ptyp
-                    ("AsCommand", typeof<Mcu.McuCommand>)
-                    []
-                    (fun [this] ->
-                        <@@
-                            match Mcu.tryMkAsCommand %typExpr with
-                            | Some f -> f (%%this : Ast.Value)
-                            | None -> failwith "Unexpected error: could not build AsCommand"
-                        @@>)
-            | None -> ()
-            match Mcu.tryMkAsEntity typ with
-            | Some _ ->
-                addMethod
-                    ptyp
-                    ("AsEntity", typeof<Mcu.McuEntity>)
-                    []
-                    (fun [this] ->
-                        <@@
-                            match Mcu.tryMkAsEntity %typExpr with
-                            | Some f -> f (%%this : Ast.Value)
-                            | None -> failwith "Unexpected error: could not build AsEntity"
-                        @@>)
-            | None -> ()
-            match Mcu.tryMkAsHasEntity typ with
-            | Some _ ->
-                addMethod
-                    ptyp
-                    ("AsHasEntity", typeof<Mcu.HasEntity>)
-                    []
-                    (fun [this] ->
-                        <@@
-                            match Mcu.tryMkAsHasEntity %typExpr with
-                            | Some f -> f (%%this : Ast.Value)
-                            | None -> failwith "Unexpected error: could not build AsHasEntity"
-                        @@>)
-            | None -> ()
-
+            let asMcu() =
+                [
+                    match Mcu.tryMkAsCommand typ with
+                    | Some _ ->
+                        yield newMethod
+                            ("AsCommand", typeof<Mcu.McuCommand>)
+                            []
+                            (fun [this] ->
+                                <@@
+                                    match Mcu.tryMkAsCommand %typExpr with
+                                    | Some f -> f (%%this : Ast.Value)
+                                    | None -> failwith "Unexpected error: could not build AsCommand"
+                                @@>)
+                    | None -> ()
+                    match Mcu.tryMkAsEntity typ with
+                    | Some _ ->
+                        yield newMethod
+                            ("AsEntity", typeof<Mcu.McuEntity>)
+                            []
+                            (fun [this] ->
+                                <@@
+                                    match Mcu.tryMkAsEntity %typExpr with
+                                    | Some f -> f (%%this : Ast.Value)
+                                    | None -> failwith "Unexpected error: could not build AsEntity"
+                                @@>)
+                    | None -> ()
+                    match Mcu.tryMkAsHasEntity typ with
+                    | Some _ ->
+                        yield newMethod
+                            ("AsHasEntity", typeof<Mcu.HasEntity>)
+                            []
+                            (fun [this] ->
+                                <@@
+                                    match Mcu.tryMkAsHasEntity %typExpr with
+                                    | Some f -> f (%%this : Ast.Value)
+                                    | None -> failwith "Unexpected error: could not build AsHasEntity"
+                                @@>)
+                    | None -> ()
+                ]
+            ptyp.AddMembersDelayed(asMcu)
             ptyp
         | Ast.ValueType.Mapping itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
@@ -509,17 +511,19 @@ type MissionTypes(config: TypeProviderConfig) as this =
     let libraryParam = ProvidedStaticParameter("library", typeof<string>)
     do libraryParam.AddXmlDoc("<summary>List of mission or group files from which to read data, separated by semi-colons</summary>")
     
-    do provider.DefineStaticParameters([sampleParam; libraryParam], fun typeName [| sample; libs |] ->
-        let sample = sample :?> string
-        let libs = libs :?> string
-        if not(System.IO.File.Exists(sample)) then
-            failwithf "Cannot open sample file '%s' for reading" sample
+    let buildProvider(typeName : string, sample : string, libs : string) =
         let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
         // The types corresponding to the ValueTypes extracted from the sample file
         let getProvidedType, cache = mkProvidedTypeBuilder(ty)
         let types, _ = AutoSchema.getTopTypes(Parsing.Stream.FromFile(sample))
         for t in types do
             ignore <| getProvidedType(Some t.Key, t.Value)
+            match t.Value with
+            | Ast.Composite fields ->
+                for kvp in fields do
+                    let subT, _, _ = kvp.Value
+                    let subName = getNameOfField(kvp.Key, subT)
+                    ignore <| getProvidedType(subName, subT)
         let types =
             cache
             |> Seq.map (fun kvp -> kvp.Value)
@@ -543,6 +547,15 @@ type MissionTypes(config: TypeProviderConfig) as this =
         ty.AddMembers(plibs)
         // Result
         ty
+
+    let cache = new Dictionary<(string * string * string), ProvidedTypeDefinition>(HashIdentity.Structural)
+    let getProvider = cached cache buildProvider
+    do provider.DefineStaticParameters([sampleParam; libraryParam], fun typeName [| sample; libs |] ->
+        let sample = sample :?> string
+        let libs = libs :?> string
+        if not(System.IO.File.Exists(sample)) then
+            failwithf "Cannot open sample file '%s' for reading" sample
+        getProvider(typeName, sample, libs)
     )
 
     do this.AddNamespace(ns, [provider])
