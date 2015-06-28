@@ -8,7 +8,7 @@ open SturmovikMissionTypes
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Ast
 
-type T = Provider< @"Sample.Mission", @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m2.Mission" >
+type T = Provider< @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\Sample.Mission", @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m2.Mission" >
 
 T.m2.misc_3_7
 T.Integer(2)
@@ -19,7 +19,7 @@ T.m2.Airfield.AsHasEntity().AsString()
 
 let groupData =
     try
-        T.GroupData(Stream.FromFile @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission")
+        T.GroupData(Stream.FromFile @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\TheDayHellFrozeOver\m2.Mission")
     with
     | :? ParseError as e ->
         printParseError(e) |> String.concat "\n" |> printfn "%s"

@@ -390,13 +390,11 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
                 Map.add name %(valueType.ToExpr()) %expr
             @>
             ) <@ Map.empty @>
-    let mcuMakerOfName =
+    let names =
         namedValueTypes
-        |> List.map (fun (name, valueType, _) -> (name, let e = Expr.Value(Mcu.tryMakeMcu valueType) in <@ (%%e : (Ast.Value -> Mcu.McuBase) option) @>))
-        |> List.fold (fun expr (name, f) ->
-            <@
-                Map.add name %f %expr
-            @> ) <@ Map.empty @>
+        |> List.map (fun (name, _, _) -> name)
+        |> List.fold (fun expr name ->
+            <@ name :: %expr @>) <@ [] @>
 
     // Constructor: Parse a group or mission file
     addConstructor parser [("s", typeof<Parsing.Stream>)] (fun [s] ->
@@ -425,7 +423,13 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
         <@@
             let this = (%%this : Ast.Data list)
             let valueTypeOfName = %valueTypeOfName
-            let mcuMakerOfName = %mcuMakerOfName
+            let mcuMakerOfName =
+                %names
+                |> List.map (fun name ->
+                    let valueType = valueTypeOfName.[name]
+                    (name, Mcu.tryMakeMcu valueType)
+                )
+                |> Map.ofList
             this
             |> List.map (fun data -> data.GetLeaves())
             |> List.concat
