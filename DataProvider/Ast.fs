@@ -1,5 +1,8 @@
 ﻿module SturmovikMission.DataProvider.Ast
 
+open System.Collections.Generic
+open Cached
+
 
 type MinMultiplicity = Zero | MinOne
 with
@@ -39,28 +42,36 @@ type ValueType =
     | Pair of ValueType * ValueType
     | Triplet of ValueType * ValueType * ValueType
     | Date
-with
-    member this.ToExpr() =
-        match this with
-        | Boolean -> <@ Boolean @>
-        | Integer -> <@ Integer @>
-        | String -> <@ String @>
-        | Float  -> <@ Float @>
-        | Date -> <@ Date @>
-        | IntVector -> <@ IntVector @>            
-        | Mapping vt -> <@ Mapping %(vt.ToExpr()) @>
-        | Set vt -> <@ Set %(vt.ToExpr()) @>
-        | Pair (p1, p2) -> <@ Pair(%(p1.ToExpr()), %(p2.ToExpr())) @>
-        | Triplet (p1, p2, p3) -> <@ Triplet(%(p1.ToExpr()), %(p2.ToExpr()), %(p3.ToExpr())) @>
-        | Composite defs ->
-            let defs =
-                defs
-                |> Map.toList
-                |> List.fold (
-                    fun e (name, (t, m, M)) ->
-                        let item = <@ name, (%(t.ToExpr()), %(m.ToExpr()), %(M.ToExpr())) @>
-                        <@ Map.add (fst %item) (snd %item) %e @>) <@ Map.empty @>                            
-            <@ Composite %defs @>
+
+let private valueTypeToExprCache = new Dictionary<ValueType, Quotations.Expr<ValueType>>(HashIdentity.Structural)
+
+let rec buildExprFromValueType expr =
+    match expr with
+    | Boolean -> <@ Boolean @>
+    | Integer -> <@ Integer @>
+    | String -> <@ String @>
+    | Float  -> <@ Float @>
+    | Date -> <@ Date @>
+    | IntVector -> <@ IntVector @>            
+    | Mapping vt -> <@ Mapping %(getExprOfValueType vt) @>
+    | Set vt -> <@ Set %(getExprOfValueType vt) @>
+    | Pair (p1, p2) -> <@ Pair(%(getExprOfValueType p1), %(getExprOfValueType p2)) @>
+    | Triplet (p1, p2, p3) -> <@ Triplet(%(getExprOfValueType p1), %(getExprOfValueType p2), %(getExprOfValueType p3)) @>
+    | Composite defs ->
+        let defs =
+            defs
+            |> Map.toList
+            |> List.fold (
+                fun e (name, (t, m, M)) ->
+                    let item = <@ name, (%(getExprOfValueType t), %(m.ToExpr()), %(M.ToExpr())) @>
+                    <@ Map.add (fst %item) (snd %item) %e @>) <@ Map.empty @>                            
+        <@ Composite %defs @>
+
+and getExprOfValueType expr =
+    cached valueTypeToExprCache buildExprFromValueType expr
+
+type ValueType
+    with member this.ToExpr() = getExprOfValueType this
 
 type Value =
     | Boolean of bool

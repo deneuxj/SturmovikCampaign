@@ -4,6 +4,7 @@
 #load @"..\ProvidedTypes.fsi"
       @"..\ProvidedTypes.fs"
       @"..\DebugProvidedTypes.fs"
+      @"..\Cached.fs"
       @"..\Ast.fs"
       @"..\Mcu.fs"
       @"..\Unification.fs"

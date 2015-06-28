@@ -8,14 +8,7 @@ open Microsoft.FSharp.Quotations
 open System.Collections.Generic
 open System
 open System.IO
-
-let cached (cache : IDictionary<'a, 'b>) f x =
-    match cache.TryGetValue(x) with
-    | true, y -> y
-    | false, _ ->
-        let y = f x
-        cache.Add(x, y)
-        y
+open SturmovikMission.DataProvider.Cached
 
 let getNameStore getValidNames =
     let reserved =
