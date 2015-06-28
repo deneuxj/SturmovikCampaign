@@ -553,6 +553,14 @@ type MissionTypes(config: TypeProviderConfig) as this =
     do provider.DefineStaticParameters([sampleParam; libraryParam], fun typeName [| sample; libs |] ->
         let sample = sample :?> string
         let libs = libs :?> string
+        let sample =
+            if Path.IsPathRooted(sample) then
+                sample
+            else
+                let dllLocation =
+                    System.Reflection.Assembly.GetExecutingAssembly().Location
+                    |> Path.GetDirectoryName
+                Path.Combine(dllLocation, sample)
         if not(System.IO.File.Exists(sample)) then
             failwithf "Cannot open sample file '%s' for reading" sample
         getProvider(typeName, sample, libs)
