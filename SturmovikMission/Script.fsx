@@ -19,7 +19,7 @@ T.m2.Airfield.AsHasEntity().AsString()
 
 let groupData =
     try
-        T.GroupData(Stream.FromFile @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\TheDayHellFrozeOver\m2.Mission")
+        T.GroupData(Stream.FromFile @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\Conquest\StalingradConquest.Mission")
     with
     | :? ParseError as e ->
         printParseError(e) |> String.concat "\n" |> printfn "%s"
@@ -27,7 +27,7 @@ let groupData =
 
 groupData.ListOfMCU_Timer
 groupData.ListOfAirfield
-groupData.AsMcuList
+groupData.AsMcuList |> List.head |> fun x -> x.AsString()
 
 (*
 let pair = T.PairOfIntegerAndInteger((T.Integer(1), T.Integer(2)))
