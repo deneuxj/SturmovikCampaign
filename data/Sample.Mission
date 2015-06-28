@@ -7,7 +7,7 @@ Options
   LCAuthor = 2;
   PlayerConfig = "LuaScripts\WorldObjects\Planes\yak1s69.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\he111h6.txt";
-  Time = 12:30:0;
+  Time = 12:30:2;
   Date = 19.11.1942;
   HMap = "graphics\landscape\height.hini";
   Textures = "graphics\landscape\textures.tini";
@@ -48,7 +48,7 @@ Plane
 {
   Name = "Plane";
   Index = 2;
-  LinkTrId = 4;
+  LinkTrId = 3;
   XPos = 26960.820;
   YPos = 110.165;
   ZPos = 23575.941;
@@ -84,7 +84,7 @@ Plane
 Plane
 {
   Name = "Plane";
-  Index = 3;
+  Index = 4;
   LinkTrId = 5;
   XPos = 26237.836;
   YPos = 118.509;
@@ -120,7 +120,7 @@ Plane
 
 MCU_TR_Entity
 {
-  Index = 4;
+  Index = 3;
   Name = "Plane entity";
   Desc = "";
   Targets = [];
@@ -151,18 +151,18 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 3;
+  MisObjID = 4;
   OnEvents
   {
     OnEvent
     {
       Type = 12;
-      TarId = 15;
+      TarId = 8;
     }
     OnEvent
     {
       Type = 5;
-      TarId = 32;
+      TarId = 9;
     }
   }
   OnReports
@@ -170,14 +170,14 @@ MCU_TR_Entity
     OnReport
     {
       Type = 3;
-      CmdId = 19;
-      TarId = 6;
+      CmdId = 11;
+      TarId = 10;
     }
     OnReport
     {
       Type = 4;
-      CmdId = 15;
-      TarId = 19;
+      CmdId = 8;
+      TarId = 11;
     }
   }
 }
@@ -186,7 +186,7 @@ MCU_TR_Entity
 
 MCU_CMD_AttackTarget
 {
-  Index = 6;
+  Index = 10;
   Name = "command Attack";
   Desc = "";
   Targets = [];
@@ -205,7 +205,7 @@ MCU_CMD_AttackTarget
 
 MCU_CMD_AttackArea
 {
-  Index = 7;
+  Index = 13;
   Name = "command AttackArea";
   Desc = "";
   Targets = [];
@@ -228,7 +228,7 @@ MCU_CMD_AttackArea
 
 MCU_CMD_Behaviour
 {
-  Index = 8;
+  Index = 14;
   Name = "command Behaviour";
   Desc = "";
   Targets = [];
@@ -255,7 +255,7 @@ MCU_CMD_Behaviour
 
 MCU_CMD_Cover
 {
-  Index = 9;
+  Index = 15;
   Name = "command Cover";
   Desc = "";
   Targets = [];
@@ -274,7 +274,7 @@ MCU_CMD_Cover
 
 MCU_CMD_Damage
 {
-  Index = 10;
+  Index = 16;
   Name = "command Damage";
   Desc = "";
   Targets = [];
@@ -293,7 +293,7 @@ MCU_CMD_Damage
 
 MCU_CMD_Effect
 {
-  Index = 11;
+  Index = 17;
   Name = "Command Effect";
   Desc = "";
   Targets = [];
@@ -311,7 +311,7 @@ MCU_CMD_Effect
 
 MCU_CMD_Flare
 {
-  Index = 12;
+  Index = 18;
   Name = "command Flare";
   Desc = "";
   Targets = [];
@@ -329,7 +329,7 @@ MCU_CMD_Flare
 
 MCU_CMD_ForceComplete
 {
-  Index = 13;
+  Index = 19;
   Name = "command Force Complete";
   Desc = "";
   Targets = [];
@@ -347,7 +347,7 @@ MCU_CMD_ForceComplete
 
 MCU_CMD_Formation
 {
-  Index = 14;
+  Index = 20;
   Name = "Command Formation";
   Desc = "";
   Targets = [];
@@ -366,7 +366,7 @@ FormationDensity = 0;
 
 MCU_CMD_Land
 {
-  Index = 15;
+  Index = 8;
   Name = "command Land";
   Desc = "";
   Targets = [];
@@ -384,7 +384,7 @@ MCU_CMD_Land
 
 MCU_CMD_TakeOff
 {
-  Index = 19;
+  Index = 11;
   Name = "command Take off";
   Desc = "";
   Targets = [];
@@ -401,7 +401,7 @@ MCU_CMD_TakeOff
 
 MCU_TR_ComplexTrigger
 {
-  Index = 20;
+  Index = 23;
   Name = "Translator Complex Trigger";
   Desc = "";
   Targets = [];
@@ -448,12 +448,12 @@ MCU_TR_ComplexTrigger
     OnEvent
     {
       Type = 57;
-      TarId = 15;
+      TarId = 8;
     }
     OnEvent
     {
       Type = 66;
-      TarId = 13;
+      TarId = 19;
     }
   }
 }
@@ -462,8 +462,8 @@ MCU_TR_ComplexTrigger
 
 MCU_Icon
 {
-  Index = 21;
-  Targets = [24];
+  Index = 24;
+  Targets = [25];
   Objects = [];
   XPos = 26618.083;
   YPos = 120.482;
@@ -486,7 +486,7 @@ MCU_Icon
 
 MCU_Icon
 {
-  Index = 24;
+  Index = 25;
   Targets = [];
   Objects = [];
   XPos = 26603.434;
@@ -511,8 +511,8 @@ MCU_Icon
 Effect
 {
   Name = "Effect";
-  Index = 25;
-  LinkTrId = 26;
+  Index = 27;
+  LinkTrId = 28;
   XPos = 25510.443;
   YPos = 119.965;
   ZPos = 24023.312;
@@ -528,7 +528,7 @@ Effect
 
 MCU_TR_Entity
 {
-  Index = 26;
+  Index = 28;
   Name = "Effect entity";
   Desc = "";
   Targets = [];
@@ -540,14 +540,14 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 25;
+  MisObjID = 27;
 }
 
 
 
 MCU_TR_MissionObjective
 {
-  Index = 27;
+  Index = 30;
   Targets = [];
   Objects = [];
   XPos = 26843.275;
@@ -569,7 +569,7 @@ MCU_TR_MissionObjective
 
 MCU_TR_MissionBegin
 {
-  Index = 28;
+  Index = 31;
   Name = "Translator Mission Begin";
   Desc = "";
   Targets = [];
@@ -587,7 +587,7 @@ MCU_TR_MissionBegin
 
 MCU_TR_MissionEnd
 {
-  Index = 29;
+  Index = 32;
   Name = "Translator Mission End";
   Desc = "";
   Targets = [];
@@ -606,7 +606,7 @@ MCU_TR_MissionEnd
 
 MCU_TR_Subtitle
 {
-  Index = 31;
+  Index = 33;
   Name = "Translator Subtitle";
   Desc = "";
   Targets = [];
@@ -637,7 +637,7 @@ MCU_TR_Subtitle
 
 MCU_TR_Subtitle
 {
-  Index = 32;
+  Index = 9;
   Name = "Translator Subtitle";
   Desc = "";
   Targets = [];
@@ -668,7 +668,7 @@ MCU_TR_Subtitle
 
 MCU_TR_Subtitle
 {
-  Index = 33;
+  Index = 35;
   Name = "Translator Subtitle";
   Desc = "";
   Targets = [];
@@ -699,7 +699,7 @@ MCU_TR_Subtitle
 
 MCU_Activate
 {
-  Index = 34;
+  Index = 36;
   Name = "Trigger Activate";
   Desc = "";
   Targets = [];
@@ -716,7 +716,7 @@ MCU_Activate
 
 MCU_CheckZone
 {
-  Index = 35;
+  Index = 37;
   Name = "Trigger Check Zone";
   Desc = "";
   Targets = [];
@@ -736,7 +736,7 @@ MCU_CheckZone
 
 MCU_Counter
 {
-  Index = 36;
+  Index = 38;
   Name = "Trigger Counter";
   Desc = "";
   Targets = [];
@@ -755,7 +755,7 @@ MCU_Counter
 
 MCU_DateTime
 {
-  Index = 37;
+  Index = 39;
   Name = "Trigger Date Time";
   Desc = "";
   Targets = [];
@@ -777,7 +777,7 @@ MCU_DateTime
 
 MCU_DateTime
 {
-  Index = 38;
+  Index = 40;
   Name = "Trigger Date Time";
   Desc = "";
   Targets = [];
@@ -799,7 +799,7 @@ MCU_DateTime
 
 MCU_DateTime
 {
-  Index = 39;
+  Index = 41;
   Name = "Trigger Date Time";
   Desc = "";
   Targets = [];
@@ -821,7 +821,7 @@ MCU_DateTime
 
 MCU_Deactivate
 {
-  Index = 40;
+  Index = 42;
   Name = "Trigger Deactivate";
   Desc = "";
   Targets = [];
@@ -838,7 +838,7 @@ MCU_Deactivate
 
 MCU_Delete
 {
-  Index = 41;
+  Index = 43;
   Name = "Trigger Delete";
   Desc = "";
   Targets = [];
@@ -855,7 +855,7 @@ MCU_Delete
 
 MCU_Proximity
 {
-  Index = 42;
+  Index = 44;
   Name = "Trigger Proximity";
   Desc = "";
   Targets = [];
@@ -874,7 +874,7 @@ MCU_Proximity
 
 MCU_Spawner
 {
-  Index = 43;
+  Index = 45;
   Name = "Trigger Spawner";
   Desc = "";
   Targets = [];
@@ -892,7 +892,7 @@ MCU_Spawner
 
 MCU_Timer
 {
-  Index = 44;
+  Index = 46;
   Name = "Trigger Timer";
   Desc = "";
   Targets = [];
@@ -911,7 +911,7 @@ MCU_Timer
 
 MCU_Waypoint
 {
-  Index = 45;
+  Index = 47;
   Name = "Trigger Waypoint";
   Desc = "";
   Targets = [];
@@ -931,7 +931,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 46;
+  Index = 48;
   Name = "Trigger Waypoint";
   Desc = "";
   Targets = [];
@@ -951,7 +951,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 47;
+  Index = 49;
   Name = "Trigger Waypoint";
   Desc = "";
   Targets = [];
@@ -971,7 +971,7 @@ MCU_Waypoint
 
 MCU_CMD_Effect
 {
-  Index = 48;
+  Index = 50;
   Name = "Command Effect";
   Desc = "";
   Targets = [];
@@ -990,8 +990,8 @@ MCU_CMD_Effect
 Vehicle
 {
   Name = "Vehicle";
-  Index = 49;
-  LinkTrId = 50;
+  Index = 51;
+  LinkTrId = 52;
   XPos = 27885.987;
   YPos = 136.601;
   ZPos = 26451.319;
@@ -1020,7 +1020,7 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 50;
+  Index = 52;
   Name = "Vehicle entity";
   Desc = "";
   Targets = [];
@@ -1032,7 +1032,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 49;
+  MisObjID = 51;
 }
 
 
@@ -1040,8 +1040,8 @@ MCU_TR_Entity
 Vehicle
 {
   Name = "Vehicle";
-  Index = 51;
-  LinkTrId = 52;
+  Index = 54;
+  LinkTrId = 55;
   XPos = 27522.575;
   YPos = 138.204;
   ZPos = 26485.237;
@@ -1070,10 +1070,10 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 52;
+  Index = 55;
   Name = "Vehicle entity";
   Desc = "";
-  Targets = [54];
+  Targets = [57];
   Objects = [];
   XPos = 27522.575;
   YPos = 138.404;
@@ -1082,7 +1082,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 51;
+  MisObjID = 54;
 }
 
 
@@ -1090,8 +1090,8 @@ MCU_TR_Entity
 Vehicle
 {
   Name = "Vehicle";
-  Index = 53;
-  LinkTrId = 54;
+  Index = 58;
+  LinkTrId = 57;
   XPos = 27498.347;
   YPos = 138.204;
   ZPos = 26819.577;
@@ -1120,7 +1120,7 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 54;
+  Index = 57;
   Name = "Vehicle entity";
   Desc = "";
   Targets = [];
@@ -1132,7 +1132,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 53;
+  MisObjID = 58;
 }
 
 
@@ -1140,8 +1140,8 @@ MCU_TR_Entity
 Vehicle
 {
   Name = "Vehicle";
-  Index = 56;
-  LinkTrId = 57;
+  Index = 60;
+  LinkTrId = 61;
   XPos = 27236.690;
   YPos = 135.482;
   ZPos = 26499.774;
@@ -1170,10 +1170,10 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 57;
+  Index = 61;
   Name = "Vehicle entity";
   Desc = "";
-  Targets = [54];
+  Targets = [57];
   Objects = [];
   XPos = 27236.690;
   YPos = 135.682;
@@ -1182,7 +1182,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 56;
+  MisObjID = 60;
 }
 
 
@@ -1190,8 +1190,8 @@ MCU_TR_Entity
 Train
 {
   Name = "Train";
-  Index = 60;
-  LinkTrId = 61;
+  Index = 63;
+  LinkTrId = 64;
   XPos = 26500.173;
   YPos = 139.651;
   ZPos = 26901.950;
@@ -1218,7 +1218,7 @@ Train
 
 MCU_TR_Entity
 {
-  Index = 61;
+  Index = 64;
   Name = "Train entity";
   Desc = "";
   Targets = [];
@@ -1230,7 +1230,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 60;
+  MisObjID = 63;
 }
 
 
@@ -1238,8 +1238,8 @@ MCU_TR_Entity
 Train
 {
   Name = "Train";
-  Index = 62;
-  LinkTrId = 63;
+  Index = 66;
+  LinkTrId = 67;
   XPos = 26160.988;
   YPos = 146.583;
   ZPos = 26926.178;
@@ -1275,7 +1275,7 @@ Train
 
 MCU_TR_Entity
 {
-  Index = 63;
+  Index = 67;
   Name = "Train entity";
   Desc = "";
   Targets = [];
@@ -1287,7 +1287,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 62;
+  MisObjID = 66;
 }
 
 
@@ -1295,8 +1295,8 @@ MCU_TR_Entity
 Vehicle
 {
   Name = "Vehicle";
-  Index = 64;
-  LinkTrId = 65;
+  Index = 69;
+  LinkTrId = 70;
   XPos = 28167.027;
   YPos = 109.623;
   ZPos = 24978.286;
@@ -1325,7 +1325,7 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 65;
+  Index = 70;
   Name = "Vehicle entity";
   Desc = "";
   Targets = [];
@@ -1337,7 +1337,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 64;
+  MisObjID = 69;
 }
 
 
@@ -1345,8 +1345,8 @@ MCU_TR_Entity
 Block
 {
   Name = "Block";
-  Index = 66;
-  LinkTrId = 67;
+  Index = 72;
+  LinkTrId = 73;
   XPos = 25482.618;
   YPos = 148.719;
   ZPos = 26543.383;
@@ -1373,7 +1373,7 @@ Block
 
 MCU_TR_Entity
 {
-  Index = 67;
+  Index = 73;
   Name = "Block entity";
   Desc = "";
   Targets = [];
@@ -1385,7 +1385,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 66;
+  MisObjID = 72;
 }
 
 
@@ -1393,8 +1393,8 @@ MCU_TR_Entity
 Block
 {
   Name = "Block";
-  Index = 68;
-  LinkTrId = 70;
+  Index = 75;
+  LinkTrId = 76;
   XPos = 25622.848;
   YPos = 146.594;
   ZPos = 26127.550;
@@ -1420,7 +1420,7 @@ Block
 
 MCU_TR_Entity
 {
-  Index = 70;
+  Index = 76;
   Name = "Block entity";
   Desc = "";
   Targets = [];
@@ -1432,7 +1432,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 68;
+  MisObjID = 75;
 }
 
 
@@ -1440,8 +1440,8 @@ MCU_TR_Entity
 Airfield
 {
   Name = "Airfield";
-  Index = 71;
-  LinkTrId = 72;
+  Index = 78;
+  LinkTrId = 79;
   XPos = 25965.593;
   YPos = 145.751;
   ZPos = 26469.021;
@@ -1616,7 +1616,7 @@ Airfield
 
 MCU_TR_Entity
 {
-  Index = 72;
+  Index = 79;
   Name = "Airfield entity";
   Desc = "";
   Targets = [];
@@ -1628,18 +1628,18 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 71;
+  MisObjID = 78;
   OnEvents
   {
     OnEvent
     {
       Type = 12;
-      TarId = 29;
+      TarId = 32;
     }
     OnEvent
     {
       Type = 13;
-      TarId = 19;
+      TarId = 11;
     }
   }
 }
@@ -1649,8 +1649,8 @@ MCU_TR_Entity
 Bridge
 {
   Name = "Bridge";
-  Index = 73;
-  LinkTrId = 74;
+  Index = 81;
+  LinkTrId = 82;
   XPos = 26709.323;
   YPos = 144.844;
   ZPos = 27844.980;
@@ -1676,7 +1676,7 @@ Bridge
 
 MCU_TR_Entity
 {
-  Index = 74;
+  Index = 82;
   Name = "Bridge entity";
   Desc = "";
   Targets = [];
@@ -1688,7 +1688,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 73;
+  MisObjID = 81;
 }
 
 
@@ -1696,8 +1696,8 @@ MCU_TR_Entity
 Ground
 {
   Name = "Ground";
-  Index = 75;
-  LinkTrId = 76;
+  Index = 84;
+  LinkTrId = 85;
   XPos = 25859.527;
   YPos = 149.785;
   ZPos = 27812.979;
@@ -1714,7 +1714,7 @@ Ground
 
 MCU_TR_Entity
 {
-  Index = 76;
+  Index = 85;
   Name = "Ground entity";
   Desc = "";
   Targets = [];
@@ -1726,7 +1726,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 75;
+  MisObjID = 84;
 }
 
 
@@ -1734,8 +1734,8 @@ MCU_TR_Entity
 Flag
 {
   Name = "Flag";
-  Index = 77;
-  LinkTrId = 78;
+  Index = 87;
+  LinkTrId = 88;
   XPos = 25365.295;
   YPos = 139.623;
   ZPos = 25615.599;
@@ -1759,7 +1759,7 @@ Flag
 
 MCU_TR_Entity
 {
-  Index = 78;
+  Index = 88;
   Name = "Flag entity";
   Desc = "";
   Targets = [];
@@ -1771,14 +1771,14 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 77;
+  MisObjID = 87;
 }
 
 
 
 MCU_CMD_Formation
 {
-  Index = 79;
+  Index = 90;
   Name = "Command Formation";
   Desc = "";
   Targets = [];
@@ -1797,7 +1797,7 @@ FormationDensity = 1;
 
 MCU_CMD_Formation
 {
-  Index = 80;
+  Index = 91;
   Name = "Command Formation";
   Desc = "";
   Targets = [];
@@ -1816,7 +1816,7 @@ FormationDensity = 2;
 
 MCU_CMD_Formation
 {
-  Index = 81;
+  Index = 92;
   Name = "Command Formation";
   Desc = "";
   Targets = [];
@@ -1836,8 +1836,8 @@ FormationDensity = 0;
 Plane
 {
   Name = "Plane";
-  Index = 82;
-  LinkTrId = 83;
+  Index = 93;
+  LinkTrId = 94;
   XPos = 27136.117;
   YPos = 110.165;
   ZPos = 23322.955;
@@ -1872,10 +1872,10 @@ Plane
 
 MCU_TR_Entity
 {
-  Index = 83;
+  Index = 94;
   Name = "Plane entity";
   Desc = "";
-  Targets = [4];
+  Targets = [3];
   Objects = [];
   XPos = 27136.117;
   YPos = 110.365;
@@ -1884,7 +1884,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 82;
+  MisObjID = 93;
 }
 
 
@@ -1892,8 +1892,8 @@ MCU_TR_Entity
 Plane
 {
   Name = "Plane";
-  Index = 85;
-  LinkTrId = 86;
+  Index = 96;
+  LinkTrId = 97;
   XPos = 26752.108;
   YPos = 108.031;
   ZPos = 23283.844;
@@ -1928,10 +1928,10 @@ Plane
 
 MCU_TR_Entity
 {
-  Index = 86;
+  Index = 97;
   Name = "Plane entity";
   Desc = "";
-  Targets = [4];
+  Targets = [3];
   Objects = [];
   XPos = 26752.108;
   YPos = 108.231;
@@ -1940,14 +1940,14 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 85;
+  MisObjID = 96;
 }
 
 
 
 MCU_TR_CameraOperator
 {
-  Index = 88;
+  Index = 99;
   Name = "Translator Camera Operator";
   Desc = "";
   Targets = [];
@@ -1971,7 +1971,7 @@ MCU_TR_CameraOperator
     OnEvent
     {
       Type = 19;
-      TarId = 29;
+      TarId = 32;
     }
   }
 }
@@ -1980,7 +1980,7 @@ MCU_TR_CameraOperator
 
 MCU_TR_CameraOperator
 {
-  Index = 89;
+  Index = 100;
   Name = "Translator Camera Operator";
   Desc = "";
   Targets = [];
