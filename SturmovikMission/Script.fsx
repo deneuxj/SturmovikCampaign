@@ -16,7 +16,7 @@ T.m2.``Approach beacon``
 T.m2.``Activate car VIP``.Random.Value
 T.m2.Airfield.AsHasEntity().AsString()
 
-(*
+
 let groupData =
     try
         T.GroupData(Stream.FromFile @"C:\users\johann\documents\visual studio 2013\projects\sturmovikmission\data\Conquest\StalingradConquest.Mission")
@@ -27,7 +27,9 @@ let groupData =
 
 groupData.ListOfMCU_Timer
 groupData.ListOfAirfield
+groupData.AsMcuList
 
+(*
 let pair = T.PairOfIntegerAndInteger((T.Integer(1), T.Integer(2)))
 pair.Value
 

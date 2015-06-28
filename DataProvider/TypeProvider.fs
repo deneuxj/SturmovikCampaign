@@ -390,6 +390,14 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
                 Map.add name %(valueType.ToExpr()) %expr
             @>
             ) <@ Map.empty @>
+    let mcuMakerOfName =
+        namedValueTypes
+        |> List.map (fun (name, valueType, _) -> (name, let e = Expr.Value(Mcu.tryMakeMcu valueType) in <@ (%%e : (Ast.Value -> Mcu.McuBase) option) @>))
+        |> List.fold (fun expr (name, f) ->
+            <@
+                Map.add name %f %expr
+            @> ) <@ Map.empty @>
+
     // Constructor: Parse a group or mission file
     addConstructor parser [("s", typeof<Parsing.Stream>)] (fun [s] ->
         <@@
@@ -412,6 +420,25 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
                     |> List.choose (function (name2, value) -> if name2 = name then Some value else None)
                 ret
             @@>)
+    // Get the flattened list of objects as instances of McuBase and its subtypes, when appropriate
+    addProperty parser ("AsMcuList", typeof<Mcu.McuBase list>) (fun this ->
+        <@@
+            let this = (%%this : Ast.Data list)
+            let valueTypeOfName = %valueTypeOfName
+            let mcuMakerOfName = %mcuMakerOfName
+            this
+            |> List.map (fun data -> data.GetLeaves())
+            |> List.concat
+            |> List.choose (fun (name, value) ->
+                match Map.tryFind name mcuMakerOfName with
+                | Some(Some(make)) ->
+                    make value
+                    |> Some
+                | _ -> // Cannot build an Mcu from that valueType
+                    None
+            )
+        @@>
+    )
     // Return result
     parser
 
@@ -425,10 +452,6 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
     let types =
         namedValueTypes
         |> List.map (fun (name, _, ptyp) -> (name, ptyp))
-        |> Map.ofList
-    let typExprs =
-        namedValueTypes
-        |> List.map (fun (name, typ, _) -> (name, typ.ToExpr()))
         |> Map.ofList
     let newName =
         let rand = new Random(0)
