@@ -10,6 +10,10 @@ open System
 open System.IO
 open SturmovikMission.DataProvider.Cached
 
+/// <summary>
+/// Build a function that provides new names that do not collide with earlier names.
+/// </summary>
+/// <param name="getValidNames">Function that produces a sequence of name candidates.</param>
 let getNameStore getValidNames =
     let reserved =
         [ "Boolean"; "Float"; "Integer"; "String"; "VectorOfIntegers"; "Date" ]
@@ -24,6 +28,11 @@ let getNameStore getValidNames =
         store := Set.add name !store
         name
 
+/// <summary>
+/// Build a ProvidedConstructor.
+/// </summary>
+/// <param name="args">Argument names and types.</param>
+/// <param name="body">The code to execute in the constructor.</param>
 let newConstructor (args : (string * Type) list) (body : Expr list -> Expr) =
     let args =
         args
@@ -33,17 +42,31 @@ let newConstructor (args : (string * Type) list) (body : Expr list -> Expr) =
     cnstr.InvokeCode <- body
     cnstr
 
+/// <summary>
+/// Build a ProvidedProperty.
+/// </summary>
+/// <param name="name">Name of the property.</param>
+/// <param name="typ">Type of the property.</param>
+/// <param name="body">Code of the property.</param>
 let newProperty (name : string, typ : Type) (body : Expr -> Expr) =
     let prop = ProvidedProperty(name, typ)
     prop.GetterCode <- fun [this] -> body this
     prop
 
+/// Build a static ProvidedProperty.
 let newStaticProperty (name : string, typ : Type) (body : Expr) =
     let prop = ProvidedProperty(name, typ)
     prop.IsStatic <- true
     prop.GetterCode <- fun [] -> body
     prop
 
+/// <summary>
+/// Build a ProvidedMethod.
+/// </summary>
+/// <param name="name">Name of the method.</param>
+/// <param name="typ">Type of returned value.</param>
+/// <param name="args">Arguments to the method with their respective types.</param>
+/// <param name="body">Body of the method.</param>
 let newMethod (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
     let args =
         args
@@ -51,19 +74,28 @@ let newMethod (name : string, typ : Type) (args : (string * Type) list) (body : 
     let m = ProvidedMethod(name, args, typ)
     m.InvokeCode <- body
     m
-
+/// Build a static ProvidedMethod.
 let newStaticMethod (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
     let m = newMethod (name, typ) args body
     m.IsStaticMethod <- true
     m
 
-let getNameOfField(fieldName : string, def) =
+/// <summary>
+/// Get some name suitable for the type of a field (in a composite) of type composite, set or mapping, or None for other fields.
+/// </summary>
+/// <param name="fieldName">Name of the field.</param>
+/// <param name="def">ValueType of the field.</param>
+let private getNameOfField(fieldName : string, def) =
     match def with
     | Ast.ValueType.Set _
     | Ast.ValueType.Mapping _
     | Ast.ValueType.Composite _ -> Some fieldName
     | _ -> None
-    
+
+/// <summary>
+/// Build the function that builds ProvidedTypeDefinitions for ValueTypes encountered in the sample mission file.
+/// </summary>
+/// <param name="top">Definition of the top type in the type provider.</param>
 let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
     let newName =
         fun baseName ->
@@ -332,7 +364,10 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
 
     getProvidedType, cache
 
-
+/// <summary>
+/// Build the definition of the provided type that offers parsing of values.
+/// </summary>
+/// <param name="namedValueTypes">List of types, ValueTypes and their provided type definition.</param>
 let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
     let parser = ProvidedTypeDefinition("Parser", Some typeof<IDictionary<Ast.ValueType, Parsing.ParserFun>>)
     let valueTypeExprs =
@@ -363,10 +398,16 @@ let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefi
         ))
     parser
 
+/// Type controlling the kind of provided property returned by buildAsMcuList: instance-bound or static.
 type DataListSource =
     | Instance of this: (Expr -> Expr<Ast.Data list>)
     | Static of code: Expr<Ast.Data list>
 
+/// <summary>
+/// Build the provided property that returns a list of objects implementing McuBase and its subtypes.
+/// </summary>
+/// <param name="dataListSource">Specifies where the data is retrieved from: From 'this' for an instance-bound property, from an expression for a static property.</param>
+/// <param name="namedValueTypes">List of ValueTypes with their name and their provided type definition.</param>
 let buildAsMcuList (dataListSource : DataListSource) (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
     let valueTypeOfName =
         namedValueTypes
@@ -414,6 +455,10 @@ let buildAsMcuList (dataListSource : DataListSource) (namedValueTypes : (string 
             mkBody dataList
         )
 
+/// <summary>
+/// Build the provided type definition of the type that offers parsing of mission files.
+/// </summary>
+/// <param name="namedValueTypes">ValueTypes with their name and provided type definition.</param>
 let buildGroupParserType (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
     let parser = ProvidedTypeDefinition("GroupData", Some typeof<Ast.Data list>)
     let valueTypeOfName =
@@ -456,7 +501,11 @@ let buildGroupParserType (namedValueTypes : (string * Ast.ValueType * ProvidedTy
     // Return result
     parser
 
-
+/// <summary>
+/// Build definitions of provided types which expose the content of mission files using static properties.
+/// </summary>
+/// <param name="namedValueTypes">ValueTypes with their names and provided type definitions.</param>
+/// <param name="files">Semi-colon-separated list of mission file names.</param>
 let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) (files : string) =
     let parsers =
         namedValueTypes
@@ -518,6 +567,7 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                     |> Seq.take 1000  // To avoid performance issues with Ast.Value.ToExpr. Should not be a limitation in practice.
                     |> List.ofSeq
                 with
+                // If something went wrong, the property is a string describing the error that occurred.
                 | :? Parsing.ParseError as e ->
                     let msg =
                         Parsing.printParseError e
@@ -559,6 +609,7 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
 
 
 [<TypeProvider>]
+/// Entry point of the type provider.
 type MissionTypes(config: TypeProviderConfig) as this =
     inherit TypeProviderForNamespaces()
 
