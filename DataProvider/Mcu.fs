@@ -2,6 +2,11 @@
 
 open SturmovikMission.DataProvider.Ast
 
+type Vec3 =
+    abstract X : float with get, set
+    abstract Y : float with get, set
+    abstract Z : float with get, set
+
 /// <summary>
 /// Base interface for all MCUs.
 /// A subset of the properties of objects is made accessible. These are the
@@ -12,8 +17,8 @@ open SturmovikMission.DataProvider.Ast
 type McuBase =
     abstract Index : int with get, set
     abstract Name : string with get, set
-    abstract Pos : (float * float * float) with get, set
-    abstract Ori : (float * float * float) with get, set
+    abstract Pos : Vec3
+    abstract Ori : Vec3
     /// <summary>
     /// Build a string using the syntax of mission files that specifies all the
     /// fields of this instance (not only those in McuBase and its subtypes).
@@ -139,37 +144,29 @@ let setField (name : string, value) fields =
     fields
     |> List.map (function (name2, _) when name2 = name -> (name, value) | x -> x)
 
+let private mkVector(nx, ny, nz) state =
+    {
+        new Vec3 with
+            member this.X
+                with get() = !state |> getFloatField nx
+                and set(x) = state := !state |> setField(nx, Value.Float x)
+            member this.Y
+                with get() = !state |> getFloatField ny
+                and set(x) = state := !state |> setField(ny, Value.Float x)
+            member this.Z
+                with get() = !state |> getFloatField nz
+                and set(x) = state := !state |> setField(nz, Value.Float x)
+    }
+
 let private mkAsBase (state : (string * Value) list ref) =
     {                
         new McuBase with
             member this.AsString() =
                 dump (Composite !state)
                         
-            member this.Ori
-                with get() =
-                    let x = !state |> getFloatField "XOri"
-                    let y = !state |> getFloatField "YOri"
-                    let z = !state |> getFloatField "ZOri"
-                    (x, y, z)
-                and set(x, y, z) =
-                    state :=
-                        !state
-                        |> setField ("XOri", Value.Float x)
-                        |> setField ("YOri", Value.Float y)
-                        |> setField ("ZOri", Value.Float z)
+            member this.Ori = mkVector ("XOri", "YOri", "ZOri") state
 
-            member this.Pos
-                with get() =
-                    let x = !state |> getFloatField "XPos"
-                    let y = !state |> getFloatField "YPos"
-                    let z = !state |> getFloatField "ZPos"
-                    (x, y, z)
-                and set(x, y, z) =
-                    state :=
-                        !state
-                        |> setField ("XPos", Value.Float x)
-                        |> setField ("YPos", Value.Float y)
-                        |> setField ("ZPos", Value.Float z)
+            member this.Pos = mkVector ("XPos", "YPos", "ZPos") state
 
             member this.Index
                 with get() =
@@ -203,12 +200,8 @@ let private mkAsCommand (state : (string * Value) list ref) =
                 
         interface McuBase with
             member this.AsString() = baseImpl.AsString()                        
-            member this.Ori
-                with get() = baseImpl.Ori
-                and set(x, y, z) = baseImpl.Ori <- (x, y, z)
-            member this.Pos
-                with get() = baseImpl.Pos
-                and set(x, y, z) = baseImpl.Pos <- (x, y, z)
+            member this.Ori = baseImpl.Ori
+            member this.Pos = baseImpl.Pos
             member this.Index
                 with get() = baseImpl.Index
                 and set idx = baseImpl.Index <- idx
@@ -289,12 +282,8 @@ let private mkAsEntity (state : (string * Value) list ref) =
         
         interface McuBase with
             member this.AsString() = baseImpl.AsString()                        
-            member this.Ori
-                with get() = baseImpl.Ori
-                and set(x, y, z) = baseImpl.Ori <- (x, y, z)
-            member this.Pos
-                with get() = baseImpl.Pos
-                and set(x, y, z) = baseImpl.Pos <- (x, y, z)
+            member this.Ori = baseImpl.Ori
+            member this.Pos = baseImpl.Pos
             member this.Index
                 with get() = baseImpl.Index
                 and set idx = baseImpl.Index <- idx
@@ -358,12 +347,8 @@ let private mkAsHasEntity (state : (string * Value) list ref) =
                 
         interface McuBase with
             member this.AsString() = baseImpl.AsString()                        
-            member this.Ori
-                with get() = baseImpl.Ori
-                and set(x, y, z) = baseImpl.Ori <- (x, y, z)
-            member this.Pos
-                with get() = baseImpl.Pos
-                and set(x, y, z) = baseImpl.Pos <- (x, y, z)
+            member this.Ori = baseImpl.Ori
+            member this.Pos = baseImpl.Pos
             member this.Index
                 with get() = baseImpl.Index
                 and set idx = baseImpl.Index <- idx

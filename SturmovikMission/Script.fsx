@@ -23,7 +23,11 @@ let rabbit =
 
 rabbit.OnEvents <- [ { Type = 2; TarId = 123 }; { Type = 3; TarId = 456 } ]
 
+rabbit.Name <- "Rabbit"
+rabbit.Pos.Z <- -1.0
+rabbit.Pos.Z
 rabbit.AsString()
+
 
 (*
 T.m2.misc_3_7
