@@ -249,7 +249,13 @@ let private mkAsEntity (state : (string * Value) list ref) =
                 with get() =
                     let events =
                         !state
-                        |> getSetField "OnEvents"
+                        |> List.choose (function
+                            | ("OnEvents", Ast.Value.Composite subFields) ->
+                                subFields
+                                |> List.choose(function ("OnEvent", event) -> Some event | _ -> None)
+                                |> Some
+                            | _ -> None)
+                        |> List.concat
                     events
                     |> List.map (function
                         | Value.Composite ev ->
@@ -261,9 +267,9 @@ let private mkAsEntity (state : (string * Value) list ref) =
                     let evs =
                         xs
                         |> List.map (fun ev ->
-                            Value.Composite [ ("Type", Value.Integer ev.Type); ("TarId", Value.Integer ev.TarId) ]
+                            ("OnEvent", Value.Composite [ ("Type", Value.Integer ev.Type); ("TarId", Value.Integer ev.TarId) ])
                             )
-                        |> Value.Set
+                        |> Value.Composite
                     state :=
                         !state |> setField ("OnEvents", evs)
 
@@ -302,23 +308,30 @@ let tryMkAsEntity (typ : ValueType) =
     match typ with
     | ValueType.Composite fields ->
         let required =
-            [ ("MisObjID", ValueType.IntVector)
+            [ ("MisObjID", ValueType.Integer)
               ("Objects", ValueType.IntVector)
               ("Targets", ValueType.IntVector) ] @ requiredForBase
+        let hasRequired =
+            required
+            |> List.forall (hasField fields)
         let hasEvents =
             fields
             |> Seq.exists (fun kvp ->
                 match kvp.Key, kvp.Value with
                 | "OnEvents", (ValueType.Composite fields, _, _) ->
-                    [ ("Type", ValueType.Integer)
-                      ("TarId", ValueType.Integer) ]
-                    |> List.forall (hasField fields)
+                    match Map.tryFind "OnEvent" fields with
+                    | Some(ValueType.Composite(subFields), _, _) ->
+                        [ ("Type", ValueType.Integer)
+                          ("TarId", ValueType.Integer) ]
+                        |> List.forall (hasField subFields)
+                    | None
+                    | _ ->
+                        false
                 | _ -> false
             )
         let hasItAll =
             hasEvents &&
-            required
-            |> List.forall (hasField fields)
+            hasRequired
         if hasItAll then
             function
             | Value.Composite fields ->                
@@ -394,9 +407,9 @@ let upcastTryMaker (f : ValueType -> (Value -> #McuBase) option) =
 
 let makers =
     [
-        upcastTryMaker tryMkAsCommand
         upcastTryMaker tryMkAsEntity
         upcastTryMaker tryMkAsHasEntity
+        upcastTryMaker tryMkAsCommand
     ]
 
 let tryMakeMcu valueType =

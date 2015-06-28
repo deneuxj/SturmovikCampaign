@@ -7,10 +7,23 @@ open System.Collections.Generic
 open SturmovikMissionTypes
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Ast
+open SturmovikMission.DataProvider.Mcu
 
 type T = Provider< @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\Sample.Mission", @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\TheDayHellFrozeOver\m2.Mission" >
 
-T.m2.AsMcuList
+let mcus = T.m2.AsMcuList
+mcus
+|> List.exists (function :? McuEntity -> true | _ -> false)
+
+let rabbit =
+    mcus
+    |> List.filter (function :? McuEntity -> true | _ -> false)
+    |> List.head
+    |> function :? McuEntity as ent -> ent
+
+rabbit.OnEvents <- [ { Type = 2; TarId = 123 }; { Type = 3; TarId = 456 } ]
+
+rabbit.AsString()
 
 (*
 T.m2.misc_3_7
