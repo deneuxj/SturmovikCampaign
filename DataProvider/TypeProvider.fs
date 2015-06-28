@@ -31,25 +31,19 @@ let getNameStore getValidNames =
         store := Set.add name !store
         name
 
-let addConstructor (ptyp : ProvidedTypeDefinition) (args : (string * Type) list) (body : Expr list -> Expr) =
+let newConstructor (args : (string * Type) list) (body : Expr list -> Expr) =
     let args =
         args
         |> List.map (fun (n, t) -> ProvidedParameter(n, t))
     let cnstr =
         ProvidedConstructor(args)
     cnstr.InvokeCode <- body
-    ptyp.AddMember(cnstr)
+    cnstr
 
-let addProperty (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (body : Expr -> Expr) =
+let newProperty (name : string, typ : Type) (body : Expr -> Expr) =
     let prop = ProvidedProperty(name, typ)
     prop.GetterCode <- fun [this] -> body this
-    ptyp.AddMember(prop)
-
-let addStaticProperty (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (body : Expr) =
-    let prop = ProvidedProperty(name, typ)
-    prop.IsStatic <- true
-    prop.GetterCode <- fun [] -> body
-    ptyp.AddMember(prop)
+    prop
 
 let newStaticProperty (name : string, typ : Type) (body : Expr) =
     let prop = ProvidedProperty(name, typ)
@@ -65,14 +59,10 @@ let newMethod (name : string, typ : Type) (args : (string * Type) list) (body : 
     m.InvokeCode <- body
     m
 
-let addMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
-    let m = newMethod (name, typ) args body
-    ptyp.AddMember(m)
-
-let addStaticMethod (ptyp : ProvidedTypeDefinition) (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
+let newStaticMethod (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
     let m = newMethod (name, typ) args body
     m.IsStaticMethod <- true
-    ptyp.AddMember(m)
+    m
 
 let getNameOfField(fieldName : string, def) =
     match def with
@@ -95,32 +85,32 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
         | Ast.ValueType.Boolean ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Boolean", Some (typeof<Ast.Value>))
-            addProperty ptyp ("Value", typeof<bool>) (fun this -> <@@ (%%this : Ast.Value).GetBool() @@>)
-            addConstructor ptyp [("Value", typeof<bool>)] (fun [value] -> <@@ Ast.Value.Boolean (%%value : bool) @@>)
+            ptyp.AddMember(newProperty ("Value", typeof<bool>) (fun this -> <@@ (%%this : Ast.Value).GetBool() @@>))
+            ptyp.AddMember(newConstructor [("Value", typeof<bool>)] (fun [value] -> <@@ Ast.Value.Boolean (%%value : bool) @@>))
             ptyp
         | Ast.ValueType.Float ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Float", Some (typeof<Ast.Value>))
-            addProperty ptyp ("Value", typeof<float>) (fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>)
-            addConstructor ptyp [("Value", typeof<float>)] (fun [value] -> <@@ Ast.Value.Float (%%value : float) @@>)
+            ptyp.AddMember(newProperty ("Value", typeof<float>) (fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>))
+            ptyp.AddMember(newConstructor [("Value", typeof<float>)] (fun [value] -> <@@ Ast.Value.Float (%%value : float) @@>))
             ptyp
         | Ast.ValueType.Integer ->
             let ptyp =
                 new ProvidedTypeDefinition("Integer", Some (typeof<Ast.Value>))
-            addProperty ptyp ("Value", typeof<int>) (fun this -> <@@ (%%this : Ast.Value).GetInteger() @@>)
-            addConstructor ptyp [("Value", typeof<int>)] (fun [value] -> <@@ Ast.Value.Integer (%%value : int) @@>)
+            ptyp.AddMember(newProperty ("Value", typeof<int>) (fun this -> <@@ (%%this : Ast.Value).GetInteger() @@>))
+            ptyp.AddMember(newConstructor [("Value", typeof<int>)] (fun [value] -> <@@ Ast.Value.Integer (%%value : int) @@>))
             ptyp
         | Ast.ValueType.String ->
             let ptyp =
                 new ProvidedTypeDefinition("String", Some (typeof<Ast.Value>))
-            addProperty ptyp ("Value", typeof<string>) (fun this -> <@@ (%%this : Ast.Value).GetString() @@>)
-            addConstructor ptyp [("Value", typeof<string>)] (fun [value] -> <@@ Ast.Value.String (%%value : string) @@>)
+            ptyp.AddMember(newProperty ("Value", typeof<string>) (fun this -> <@@ (%%this : Ast.Value).GetString() @@>))
+            ptyp.AddMember(newConstructor [("Value", typeof<string>)] (fun [value] -> <@@ Ast.Value.String (%%value : string) @@>))
             ptyp
         | Ast.ValueType.IntVector ->
             let ptyp =
                 new ProvidedTypeDefinition("VectorOfIntegers", Some (typeof<Ast.Value>))
-            addProperty ptyp ("Value", typeof<int list>) (fun this -> <@@ (%%this : Ast.Value).GetIntVector() @@>)
-            addConstructor ptyp [("Value", typeof<int list>)] (fun [value] -> <@@ Ast.Value.IntVector (%%value : int list) @@>)
+            ptyp.AddMember(newProperty ("Value", typeof<int list>) (fun this -> <@@ (%%this : Ast.Value).GetIntVector() @@>))
+            ptyp.AddMember(newConstructor [("Value", typeof<int list>)] (fun [value] -> <@@ Ast.Value.IntVector (%%value : int list) @@>))
             ptyp
         | Ast.ValueType.Pair (typ1, typ2) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -132,8 +122,8 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                     |> newName
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             let propTyp = typedefof<_*_>.MakeGenericType(ptyp1, ptyp2)
-            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetPair() @@>)
-            addConstructor ptyp [("Value", propTyp)] (fun [value] -> <@@ Ast.Value.Pair (%%value : Ast.Value * Ast.Value) @@>)
+            ptyp.AddMember(newProperty ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetPair() @@>))
+            ptyp.AddMember(newConstructor [("Value", propTyp)] (fun [value] -> <@@ Ast.Value.Pair (%%value : Ast.Value * Ast.Value) @@>))
             ptyp
         | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
             let ptyp1 = getProvidedType(None, typ1)
@@ -146,23 +136,23 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                     |> newName
                 new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             let propTyp = typedefof<_*_*_>.MakeGenericType(ptyp1, ptyp2, ptyp3)
-            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetTriplet() @@>)
-            addConstructor ptyp [("Value", propTyp)] (fun [value] -> <@@ Ast.Value.Triplet (%%value : Ast.Value * Ast.Value * Ast.Value) @@>)
+            ptyp.AddMember(newProperty ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetTriplet() @@>))
+            ptyp.AddMember(newConstructor [("Value", propTyp)] (fun [value] -> <@@ Ast.Value.Triplet (%%value : Ast.Value * Ast.Value * Ast.Value) @@>))
             ptyp
         | Ast.ValueType.Date ->
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Date", Some (typeof<Ast.Value>))
-            addProperty ptyp ("Year", typeof<int>) (fun this ->
+            ptyp.AddMember(newProperty ("Year", typeof<int>) (fun this ->
                 let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                <@@ let _, _, year = (%%e : int * int * int) in year @@>)
-            addProperty ptyp ("Month", typeof<int>) (fun this ->
+                <@@ let _, _, year = (%%e : int * int * int) in year @@>))
+            ptyp.AddMember(newProperty ("Month", typeof<int>) (fun this ->
                 let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                <@@ let _, month, _ = (%%e : int * int * int) in month @@>)
-            addProperty ptyp ("Day", typeof<int>) (fun this ->
+                <@@ let _, month, _ = (%%e : int * int * int) in month @@>))
+            ptyp.AddMember(newProperty ("Day", typeof<int>) (fun this ->
                 let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                <@@ let day, _, _ = (%%e : int * int * int) in day @@>)
-            addConstructor ptyp [("Day", typeof<int>); ("Month", typeof<int>); ("Year", typeof<int>)] (fun [day; month; year] ->
-                <@@ Ast.Value.Date((%%day : int), (%%month : int), (%%year : int)) @@>)
+                <@@ let day, _, _ = (%%e : int * int * int) in day @@>))
+            ptyp.AddMember(newConstructor [("Day", typeof<int>); ("Month", typeof<int>); ("Year", typeof<int>)] (fun [day; month; year] ->
+                <@@ Ast.Value.Date((%%day : int), (%%month : int), (%%year : int)) @@>))
             ptyp
         | Ast.ValueType.Composite fields ->
             let ptyp =
@@ -316,32 +306,32 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
             let ptyp1 = getProvidedType(None, itemTyp)
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Mapping" |> newName, Some (typeof<Ast.Value>))
-            addConstructor ptyp [] (fun [] -> <@@ Ast.Value.Mapping [] @@>)
+            ptyp.AddMember(newConstructor [] (fun [] -> <@@ Ast.Value.Mapping [] @@>))
             let propTyp = typedefof<Map<_,_>>.MakeGenericType(typeof<int>, ptyp1)
-            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetMapping() |> Map.ofList @@>)
-            addMethod ptyp ("SetItem", ptyp) [("Key", typeof<int>); ("Value", upcast ptyp1)] (fun [this; key; value] ->
+            ptyp.AddMember(newProperty ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetMapping() |> Map.ofList @@>))
+            ptyp.AddMember(newMethod ("SetItem", ptyp) [("Key", typeof<int>); ("Value", upcast ptyp1)] (fun [this; key; value] ->
                 <@@
                     let this = (%%this : Ast.Value)
                     this.SetItem((%%key : int), (%%value : Ast.Value))
-                @@>)
-            addMethod ptyp ("RemoveItem", ptyp) (["Key", typeof<int>]) (fun [this; key] ->
+                @@>))
+            ptyp.AddMember(newMethod ("RemoveItem", ptyp) (["Key", typeof<int>]) (fun [this; key] ->
                 <@@
                     let this = (%%this : Ast.Value)
                     this.RemoveItem(%%key : int)
-                @@>)
-            addMethod ptyp ("Clear", ptyp) [] (fun [this] ->
+                @@>))
+            ptyp.AddMember(newMethod ("Clear", ptyp) [] (fun [this] ->
                 <@@
                     let this = (%%this : Ast.Value)
                     this.Clear()
-                @@>)
+                @@>))
             ptyp
         | Ast.ValueType.Set itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Set" |> newName, Some (typeof<Ast.Value>))
-            addConstructor ptyp [] (fun [] -> <@@ Ast.Value.Set [] @@>)
+            ptyp.AddMember(newConstructor [] (fun [] -> <@@ Ast.Value.Set [] @@>))
             let propTyp = typedefof<Set<_>>.MakeGenericType(ptyp1)
-            addProperty ptyp ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetSet() |> Set.ofList @@>)
+            ptyp.AddMember(newProperty ("Value", propTyp) (fun this -> <@@ (%%this : Ast.Value).GetSet() |> Set.ofList @@>))
             ptyp
 
     and getProvidedType (name, typ) : ProvidedTypeDefinition =
@@ -360,24 +350,24 @@ let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefi
             <@ %valueTypeExpr :: %expr @>
             ) <@ [] @>
     // Default constructor: Populate the cache of parsers.
-    addConstructor parser [] (fun [] ->
+    parser.AddMember(newConstructor [] (fun [] ->
         <@@
             %valueTypeExprs
             |> List.map(fun valueType -> (valueType, Parsing.makeParser valueType))
             |> dict
-        @@>)
+        @@>))
     // Parse methods for all top types.
     for name, valueType, ptyp in namedValueTypes do
         let vtExpr = valueType.ToExpr()
         let retType =
             typedefof<_*_>.MakeGenericType(ptyp, typeof<Parsing.Stream>)
-        addMethod parser (sprintf "Parse_%s" name, retType) [("s", typeof<Parsing.Stream>)] (fun [this; s] ->
+        parser.AddMember(newMethod (sprintf "Parse_%s" name, retType) [("s", typeof<Parsing.Stream>)] (fun [this; s] ->
             <@@
                 let parsers = (%%this : IDictionary<Ast.ValueType, Parsing.ParserFun>)
                 let parser = parsers.[%vtExpr]
                 parser.Run(%%s : Parsing.Stream)
             @@>
-        )
+        ))
     parser
 
 
@@ -397,7 +387,7 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
             <@ name :: %expr @>) <@ [] @>
 
     // Constructor: Parse a group or mission file
-    addConstructor parser [("s", typeof<Parsing.Stream>)] (fun [s] ->
+    parser.AddMember(newConstructor [("s", typeof<Parsing.Stream>)] (fun [s] ->
         <@@
             let parsers =
                 %valueTypeOfName
@@ -405,10 +395,10 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
             let getParser name = parsers.[name]
             let s = (%%s : Parsing.Stream)
             Parsing.parseFile getParser s
-        @@>)
+        @@>))
     // Getters: list of objects of each type
     for (name, valueType, ptyp) in namedValueTypes do
-        addProperty parser ((sprintf "ListOf%s" name), typedefof<_ list>.MakeGenericType(ptyp)) (fun this ->
+        parser.AddMember(newProperty ((sprintf "ListOf%s" name), typedefof<_ list>.MakeGenericType(ptyp)) (fun this ->
             <@@
                 let this = (%%this : Ast.Data list)
                 let ret =
@@ -417,9 +407,9 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
                     |> List.concat
                     |> List.choose (function (name2, value) -> if name2 = name then Some value else None)
                 ret
-            @@>)
+            @@>))
     // Get the flattened list of objects as instances of McuBase and its subtypes, when appropriate
-    addProperty parser ("AsMcuList", typeof<Mcu.McuBase list>) (fun this ->
+    parser.AddMember(newProperty ("AsMcuList", typeof<Mcu.McuBase list>) (fun this ->
         <@@
             let this = (%%this : Ast.Data list)
             let valueTypeOfName = %valueTypeOfName
@@ -442,7 +432,7 @@ let buildGroupParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTyp
                     None
             )
         @@>
-    )
+    ))
     // Return result
     parser
 
