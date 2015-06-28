@@ -379,3 +379,26 @@ let tryMkAsHasEntity (typ : ValueType) =
             None
     | _ ->
         None
+
+
+let upcastMaker (f : Ast.Value -> #McuBase) : (Ast.Value -> McuBase) =
+    fun value ->
+        upcast(f value)
+
+let upcastMaybeMaker f =
+    f |> Option.map upcastMaker
+
+let upcastTryMaker (f : ValueType -> (Value -> #McuBase) option) =
+    fun valueType ->
+        upcastMaybeMaker(f valueType)
+
+let makers =
+    [
+        upcastTryMaker tryMkAsCommand
+        upcastTryMaker tryMkAsEntity
+        upcastTryMaker tryMkAsHasEntity
+    ]
+
+let tryMakeMcu valueType =
+    makers
+    |> List.tryPick (fun f -> f valueType)
