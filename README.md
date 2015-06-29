@@ -163,7 +163,3 @@ TarId = 456;
 }
 }
 ```
-
-## Who do I talk to? ##
-
-* johann.deneux@gmail.com
