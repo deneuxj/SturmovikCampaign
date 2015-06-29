@@ -9,9 +9,13 @@ Nearing usability, but not yet used.
 ## Code Architecture ##
 
 All the interesting code is in project DataProvider, whose files can be grouped in four layers:
+
 * Support code: ProvidedTypes.fsi, ProvidedTypes.fs, Cached.fs
+
 * Parsing that produces a dynamically typed AST: Ast.fs, Parsing.fs, Unification.fs, AutoSchema.fs
+
 * Type provider on top of the parsing modules: TypeProvider.fs
+
 * Utilities to facilitate manipulation of parsed data: Mcu.fs, McuFactory.fs, NumericalIdentifiers.fs
 
 In the list above, layers mentioned early are used by layers mentioned later
