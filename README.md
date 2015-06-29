@@ -122,7 +122,15 @@ let timers = groupData.ListOfMCU_Timer |> List.map...
 groupData.ListOfAirfield |> List.iter...
 ```
 
-Working with data with segregated types might be impractical, especially in a statically-typed language such as F#. There is a family of interfaces that provide access to most objects (commands, blocks, buildings, vehicles, planes...) in a mission. These interfaces are found in module SturmovikMission.DataProvider.Mcu. Instances can be created from dynamically typed instances of Ast.Value using SturmovikMission.DataProvider.McuFactory, or from the provided types. The example below illustrates the second alternative.
+Working with data with segregated types might be impractical, especially in a statically-typed language such as F#. There is a family of interfaces that provide access to most objects (commands, blocks, buildings, vehicles, planes...) in a mission. These interfaces are found in module SturmovikMission.DataProvider.Mcu. Instances can be created from dynamically typed instances of Ast.Value using SturmovikMission.DataProvider.McuFactory, or from the provided types. The two examples below illustrates the second alternative.
+
+First, from GroupData:
+```
+#!fsharp
+groupData.AsMcuList |> List.head |> fun x -> x.AsString()
+```
+
+Secondly, from an imported mission:
 
 ```
 #!fsharp
