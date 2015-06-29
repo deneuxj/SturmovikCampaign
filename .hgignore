@@ -2,4 +2,7 @@ syntax: regexp
 .*.suo
 .*/bin/Debug/.*
 .*/obj/Debug/.*
+devenv.*[.]vspx
 syntax: glob
+packages/FSharp.TypeProviders.StarterPack.1.1.3.65/
+devenv.psess
