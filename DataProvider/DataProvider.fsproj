@@ -53,6 +53,7 @@
     <Compile Include="Ast.fs" />
     <Compile Include="Mcu.fs" />
     <Compile Include="McuFactory.fs" />
+    <Compile Include="NumericalIdentifiers.fs" />
     <Compile Include="Unification.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="AutoSchema.fs" />
