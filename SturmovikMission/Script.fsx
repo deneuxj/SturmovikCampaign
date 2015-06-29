@@ -17,18 +17,15 @@ mcus
 
 let rabbit =
     mcus
-    |> List.filter (function :? McuEntity -> true | _ -> false)
-    |> List.head
-    |> function :? McuEntity as ent -> ent
+    |> List.pick (function :? McuEntity as ent -> Some ent | _ -> None)
 
 rabbit.OnEvents <- [ { Type = 2; TarId = 123 }; { Type = 3; TarId = 456 } ]
-
 rabbit.Name <- "Rabbit"
 rabbit.Pos.Z <- -1.0
 rabbit.Pos.Z
 rabbit.Ori.X <- 0.1
 rabbit.Ori.X
-rabbit.AsString()
+printfn "%s" (rabbit.AsString())
 
 
 (*
