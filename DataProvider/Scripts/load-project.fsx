@@ -8,7 +8,7 @@
       @"..\Ast.fs"
       @"..\Mcu.fs"
       @"..\McuFactory.fs"
-      @"..\Numericaldentifiers.fs"
+      @"..\NumericalIdentifiers.fs"
       @"..\Unification.fs"
       @"..\Parsing.fs"
       @"..\AutoSchema.fs"
