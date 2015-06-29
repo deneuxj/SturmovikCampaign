@@ -20,6 +20,7 @@ let rabbit =
     |> List.pick (function :? McuEntity as ent -> Some ent | _ -> None)
 
 rabbit.OnEvents <- [ { Type = 2; TarId = 123 }; { Type = 3; TarId = 456 } ]
+rabbit.OnReports <- [ { Type = 1; TarId = 2; CmdId = 3 } ]
 rabbit.Name <- "Rabbit"
 rabbit.Pos.Z <- -1.0
 rabbit.Pos.Z

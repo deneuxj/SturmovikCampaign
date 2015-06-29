@@ -56,8 +56,12 @@ let getSetField  (name : string) fields =
     |> Seq.pick (function (name2, Value.Set s) when name = name2 -> Some s | _ -> None)
 
 let setField (name : string, value) fields =
-    fields
-    |> List.map (function (name2, _) when name2 = name -> (name, value) | x -> x)
+    let rec work xs =
+        match xs with
+        | [] -> [(name, value)]
+        | (name2, _) :: rest when name2 = name -> (name, value) :: rest
+        | x :: rest -> x :: work rest
+    work fields
 
 let private mkVector(nx, ny, nz) state =
     {
@@ -247,6 +251,35 @@ let private mkAsEntity (state : (string * Value) list ref) iconLC subtitleLC =
                         |> Value.Composite
                     state :=
                         !state |> setField ("OnEvents", evs)
+
+            member this.OnReports
+                with get() =
+                    let events =
+                        !state
+                        |> List.choose (function
+                            | ("OnReports", Value.Composite subFields) ->
+                                subFields
+                                |> List.choose(function ("OnReport", event) -> Some event | _ -> None)
+                                |> Some
+                            | _ -> None)
+                        |> List.concat
+                    events
+                    |> List.map (function
+                        | Value.Composite ev ->
+                            let typ = ev |> getIntField "Type"
+                            let target = ev |> getIntField "TarId"
+                            let cmd = ev |> getIntField "CmdId"
+                            { Type = typ; TarId = target; CmdId = cmd }
+                        | _ -> failwith "Report connection is not a Composite")
+                and set(xs) =
+                    let evs =
+                        xs
+                        |> List.map (fun ev ->
+                            ("OnReport", Value.Composite [ ("Type", Value.Integer ev.Type); ("TarId", Value.Integer ev.TarId); ("CmdId", Value.Integer ev.CmdId) ])
+                            )
+                        |> Value.Composite
+                    state :=
+                        !state |> setField ("OnReports", evs)
 
             member this.MisObjID
                 with get() =

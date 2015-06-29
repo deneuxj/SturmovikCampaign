@@ -100,12 +100,21 @@ type EventConnection =
       TarId : int }
 
 /// <summary>
+/// Connection of a command completion report from an entity to a target command.
+/// </summary>
+type ReportConnection =
+    { Type : int
+      CmdId : int
+      TarId : int }
+
+/// <summary>
 /// Interface of entities, i.e. active parts of vehicles and other 3d objects.
 /// </summary>
 type McuEntity =
     inherit McuCommand
     abstract MisObjID : int with get, set
     abstract OnEvents : EventConnection list with get, set
+    abstract OnReports : ReportConnection list with get, set
 
 /// <summary>
 /// Interface of things that have entities: ground vehicles, planes, artillery, buildings, bridges...
