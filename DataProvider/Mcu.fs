@@ -2,10 +2,26 @@
 
 open SturmovikMission.DataProvider.Ast
 
+/// <summary>
+/// 3d vector type used for positions and orientations.
+/// </summary>
 type Vec3 =
     abstract X : float with get, set
     abstract Y : float with get, set
     abstract Z : float with get, set
+
+/// <summary>
+/// Localization data for icons.
+/// </summary>
+type IconLCData =
+    abstract LCName : int with get, set
+    abstract LCDesc : int with get, set
+
+/// <summary>
+/// Localization data for subtitles.
+/// </summary>
+type SubtitleLCData =
+    abstract LCText : int with get, set
 
 /// <summary>
 /// Base interface for all MCUs.
@@ -19,6 +35,8 @@ type McuBase =
     abstract Name : string with get, set
     abstract Pos : Vec3
     abstract Ori : Vec3
+    abstract IconLC : IconLCData option
+    abstract SubtitleLC : SubtitleLCData option
     /// <summary>
     /// Build a string using the syntax of mission files that specifies all the
     /// fields of this instance (not only those in McuBase and its subtypes).
@@ -79,6 +97,22 @@ let substId (getNewId : int -> int) (mcu : McuBase) =
     | :? HasEntity as veh ->
         veh.LinkTrId <- getNewId veh.LinkTrId
     | _ -> ()
+
+/// <summary>
+/// Substitute occurrences of numerical ids of localization strings in an MCU
+/// </summary>
+/// <param name="getNewId">Function that provides the new id given an old id.</param>
+/// <param name="mcu">The MCU whose localization string ids are changed. Instance is mutated.</param>
+let substLCId (getNewId : int -> int) (mcu : McuBase) =
+    match mcu.IconLC with
+    | Some op ->
+        op.LCDesc <- getNewId op.LCDesc
+        op.LCName <- getNewId op.LCName
+    | None -> ()
+    match mcu.SubtitleLC with
+    | Some op ->
+        op.LCText <- getNewId op.LCText
+    | None -> ()
 
 /// <summary>
 /// Add an object link to a command.
@@ -158,7 +192,67 @@ let private mkVector(nx, ny, nz) state =
                 and set(x) = state := !state |> setField(nz, Value.Float x)
     }
 
-let private mkAsBase (state : (string * Value) list ref) =
+let private mkIconLCData state =
+    {
+        new IconLCData with
+            member this.LCDesc
+                with get() =
+                    !state |> getIntField "LCDesc"
+                and set(x) =
+                    state := !state |> setField("LCDesc", Value.Integer x)
+            member this.LCName
+                with get() =
+                    !state |> getIntField "LCName"
+                and set(x) =
+                    state := !state |> setField("LCName", Value.Integer x)
+    }
+
+let private hasIconLCData (fields) =
+    [ ("LCDesc", ValueType.Integer)
+      ("LCName", ValueType.Integer)
+    ]
+    |> List.forall (hasField fields)
+
+let private mkSubtitleData state = 
+    { new SubtitleLCData with
+          
+          member this.LCText 
+              with get () = 
+                  !state
+                  |> List.pick (function 
+                         | ("SubtitleInfo", Value.Composite fields) -> Some fields
+                         | _ -> None)
+                  |> getIntField "LCText"
+              and set (x) = 
+                  state := !state |> List.map (function 
+                                         | ("SubtitleInfo" as k, Value.Composite fields) -> 
+                                             (k, 
+                                              fields
+                                              |> setField ("LCText", Value.Integer x)
+                                              |> Value.Composite)
+                                         | x -> x) }
+
+let private hasSubtitleLCData (fields) = 
+    match Map.tryFind "SubtitleInfo" fields with
+    | Some(ValueType.Composite subFields, _, _) ->
+        hasField subFields ("LCText", ValueType.Integer)
+    | Some _
+    | None -> false
+
+let private mkLCData typeFields state =
+    let iconLC =
+        if hasIconLCData typeFields then
+            Some(mkIconLCData state)
+        else
+            None
+    let subtitleLC =
+        if hasSubtitleLCData typeFields then
+            Some(mkSubtitleData state)
+        else
+            None
+    iconLC, subtitleLC
+
+let private mkAsBase (state : (string * Value) list ref) iconImpl subtitleImpl =
     {                
         new McuBase with
             member this.AsString() =
@@ -180,10 +274,13 @@ let private mkAsBase (state : (string * Value) list ref) =
                 and set name =
                     state := !state |> setField ("Name", Value.String name)
 
+            member this.IconLC = iconImpl
+
+            member this.SubtitleLC = subtitleImpl
     }
 
-let private mkAsCommand (state : (string * Value) list ref) =
-    let baseImpl = mkAsBase state
+let private mkAsCommand (state : (string * Value) list ref) iconImpl subtitleImpl =
+    let baseImpl = mkAsBase state iconImpl subtitleImpl
     {
         new McuCommand with
             member this.Objects
@@ -208,6 +305,8 @@ let private mkAsCommand (state : (string * Value) list ref) =
             member this.Name
                 with get() = baseImpl.Name
                 and set name = baseImpl.Name <- name
+            member this.IconLC = baseImpl.IconLC
+            member this.SubtitleLC = baseImpl.SubtitleLC
     }
 
 
@@ -221,10 +320,12 @@ let tryMkAsCommand (typ : ValueType) =
             required
             |> List.forall (hasField fields)
         if hasItAll then
+            let typeFields = fields
             function
             | Value.Composite fields ->                
                 let state = ref fields
-                mkAsCommand state
+                let iconLC, subtitleLC = mkLCData typeFields state
+                mkAsCommand state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
@@ -233,8 +334,8 @@ let tryMkAsCommand (typ : ValueType) =
         None
 
 
-let private mkAsEntity (state : (string * Value) list ref) =
-    let cmd = mkAsCommand state
+let private mkAsEntity (state : (string * Value) list ref) iconLC subtitleLC =
+    let cmd = mkAsCommand state iconLC subtitleLC
     let baseImpl : McuBase = upcast cmd
     {
         new McuEntity with
@@ -290,6 +391,8 @@ let private mkAsEntity (state : (string * Value) list ref) =
             member this.Name
                 with get() = baseImpl.Name
                 and set name = baseImpl.Name <- name
+            member this.IconLC = iconLC
+            member this.SubtitleLC = subtitleLC
     }
 
 
@@ -322,10 +425,12 @@ let tryMkAsEntity (typ : ValueType) =
             hasEvents &&
             hasRequired
         if hasItAll then
+            let typeFields = fields
             function
             | Value.Composite fields ->                
                 let state = ref fields
-                mkAsEntity state
+                let iconLC, subtitleLC = mkLCData typeFields state
+                mkAsEntity state iconLC subtitleLC
             | _ ->
                 invalidArg "value" "Not a composite"
             |> Some
@@ -335,8 +440,8 @@ let tryMkAsEntity (typ : ValueType) =
         None
 
 
-let private mkAsHasEntity (state : (string * Value) list ref) =
-    let baseImpl = mkAsBase state
+let private mkAsHasEntity (state : (string * Value) list ref) iconLC subtitleLC =
+    let baseImpl = mkAsBase state iconLC subtitleLC
     {
         new HasEntity with
             member this.LinkTrId
@@ -355,6 +460,8 @@ let private mkAsHasEntity (state : (string * Value) list ref) =
             member this.Name
                 with get() = baseImpl.Name
                 and set name = baseImpl.Name <- name
+            member this.IconLC = iconLC
+            member this.SubtitleLC = subtitleLC
     }
 
 
@@ -367,10 +474,12 @@ let tryMkAsHasEntity (typ : ValueType) =
             required
             |> List.forall (hasField fields)
         if hasItAll then
+            let typeFields = fields
             function
-            | Value.Composite fields ->                
+            | Value.Composite fields ->
                 let state = ref fields
-                mkAsHasEntity state
+                let iconLC, subtitleLC = mkLCData typeFields state
+                mkAsHasEntity state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
