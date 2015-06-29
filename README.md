@@ -26,9 +26,11 @@ Build with Visual Studio 2013. Dependencies managed with nuget (FSharp.TypeProvi
 
 ## How do I use this to build missions? ##
 
-You can use the parsing layer with the manipulation layer, following these steps:
+You can use the parsing layer with the manipulation layer directly, or through a type provider.
 
-Extract data schema from a sample file, and build the parser for the mission or group files you will be working with.
+### Using direct access to the Abstract Syntax Tree ###
+
+First, you will need to extract data schema from a sample file, and then build the parser for the mission or group files you will be working with.
 
 ```
 #!fsharp
@@ -52,6 +54,8 @@ let s = Ast.dump value
 ```
 
 Instances of Ast.Value are dynamically typed, which means that of you attempt to use a field that does not exist or has the wrong type, you will discover your error first when you run your mission-building code (if you are lucky). To help with this issue, a type provider is available to convey compile and edit-time type safety.
+
+### Using the type provider ###
 
 The type provider accepts two string arguments: the path to a sample mission file, and a list of paths to mission files separated by semi-colons ";". The second argument can be the empty string. The first argument can be a relative path, in which case it will be relative to DataProvider.dll. If you plan to use FSI, you will unfortunately have to use an absolute path, as FSI copies DaraProvider.dll to a temporary directory, moving it away from the sample mission file you intended to use.
 
