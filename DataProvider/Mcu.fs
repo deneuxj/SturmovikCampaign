@@ -69,6 +69,30 @@ type McuCommand =
     abstract Targets : int list with get, set
 
 /// <summary>
+/// Event codes, to be used in EventConnection.Type
+/// </summary>
+type EventTypes =
+    | OnPilotKilled = 0
+    | OnPilotWounded = 1
+    | OnPlaneCrashed = 2
+    | OnPlaneCriticalDamage = 3
+    | OnPlaneDestroyed = 4
+    | OnPlaneLanded = 5
+    | OnPlaneTookOff = 6
+    | OnPlaneBingoFuel = 7
+    | OnPlaneBingoMainMG = 8
+    | OnPlaneBingoBombs = 9
+    | OnPlaneBingoTurrets = 10
+    | OnPlaneGunnersKilled = 11
+    | OnDamaged = 12
+    | OnKilled = 13
+    | OnMovedTo = 15
+    | OnPlaneSpawned = 20
+    | OnOutOfPlanes = 21
+    | OnPlaneAdded = 22
+    | OnSpottingStarted = 74
+
+/// <summary>
 /// Connection of an event from an entity to a target command.
 /// </summary>
 type EventConnection =
