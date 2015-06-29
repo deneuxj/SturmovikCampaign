@@ -7,6 +7,7 @@
       @"..\Cached.fs"
       @"..\Ast.fs"
       @"..\Mcu.fs"
+      @"..\McuFactory.fs"
       @"..\Unification.fs"
       @"..\Parsing.fs"
       @"..\AutoSchema.fs"
