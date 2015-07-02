@@ -581,7 +581,6 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                     data
                     |> List.map work
                     |> Seq.concat
-                    |> Seq.take 1000  // To avoid performance issues with Ast.Value.ToExpr. Should not be a limitation in practice.
                     |> List.ofSeq
                 with
                 // If something went wrong, the property is a string describing the error that occurred.
