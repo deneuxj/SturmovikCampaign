@@ -24,7 +24,7 @@
     <DocumentationFile>bin\Debug\DataProvider.XML</DocumentationFile>
     <StartAction>Program</StartAction>
     <StartProgram>C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\devenv.exe</StartProgram>
-    <StartArguments>Script.fsx</StartArguments>
+    <StartArguments>vluki-rescue.fsx</StartArguments>
     <StartWorkingDirectory>C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\SturmovikMission\</StartWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -35,6 +35,10 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\DataProvider.XML</DocumentationFile>
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\devenv.exe</StartProgram>
+    <StartArguments>Script.fsx</StartArguments>
+    <StartWorkingDirectory>C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\SturmovikMission\</StartWorkingDirectory>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
