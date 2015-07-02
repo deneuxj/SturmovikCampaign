@@ -26,6 +26,7 @@ open System.Collections.Generic
 open System
 open System.IO
 open SturmovikMission.DataProvider.Cached
+open SturmovikMission.DataProvider.FileWithTime
 
 /// <summary>
 /// Build a function that provides new names that do not collide with earlier names.
@@ -523,7 +524,7 @@ let buildGroupParserType (namedValueTypes : (string * Ast.ValueType * ProvidedTy
 /// </summary>
 /// <param name="namedValueTypes">ValueTypes with their names and provided type definitions.</param>
 /// <param name="files">Semi-colon-separated list of mission file names.</param>
-let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) (files : string) =
+let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) (files : string[]) =
     let parsers =
         namedValueTypes
         |> List.map (fun (name, typ, _) -> (name, Parsing.makeParser typ))
@@ -619,7 +620,7 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
         )
         lib
 
-    files.Split(';')
+    files
     |> Array.map importFile
     |> List.ofArray
 
@@ -638,7 +639,7 @@ type MissionTypes(config: TypeProviderConfig) as this =
     let libraryParam = ProvidedStaticParameter("library", typeof<string>)
     do libraryParam.AddXmlDoc("<summary>List of mission or group files from which to read data, separated by semi-colons</summary>")
     
-    let buildProvider(typeName : string, sample : string, libs : string) =
+    let buildProvider(typeName : string, sample : string, libs : string[]) =
         let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
         // The types corresponding to the ValueTypes extracted from the sample file
         let getProvidedType, cache = mkProvidedTypeBuilder(ty)
@@ -672,14 +673,22 @@ type MissionTypes(config: TypeProviderConfig) as this =
         // The libraries
         let plibs = buildLibraries namedTypes libs
         ty.AddMembers(plibs)
+        // File modification times
+        let modifs =
+            [
+                yield FileWithTime.File.FromFile sample
+                for lib in libs do
+                    yield FileWithTime.File.FromFile lib
+            ]
         // Result
-        ty
+        ty, modifs
 
-    let cache = new Dictionary<(string * string * string), ProvidedTypeDefinition>(HashIdentity.Structural)
+    let cache = new Dictionary<(string * string * string[]), ProvidedTypeDefinition * (FileWithTime.File list)>(HashIdentity.Structural)
     let getProvider = cached cache buildProvider
     do provider.DefineStaticParameters([sampleParam; libraryParam], fun typeName [| sample; libs |] ->
         let sample = sample :?> string
         let libs = libs :?> string
+        let libs = libs.Split(';')
         let sample =
             if Path.IsPathRooted(sample) then
                 sample
@@ -690,7 +699,20 @@ type MissionTypes(config: TypeProviderConfig) as this =
                 Path.Combine(dllLocation, sample)
         if not(System.IO.File.Exists(sample)) then
             failwithf "Cannot open sample file '%s' for reading" sample
-        getProvider(typeName, sample, libs)
+        let ty, modifs = getProvider(typeName, sample, libs)
+        let modifs2 =
+            [
+                yield FileWithTime.File.FromFile sample
+                for lib in libs do
+                    yield FileWithTime.File.FromFile lib
+            ]
+        if modifs <> modifs2 then
+            cache.Remove((typeName, sample, libs)) |> ignore
+            this.Invalidate()
+            let ty, _ = getProvider(typeName, sample, libs)
+            ty
+        else
+            ty
     )
 
     do this.AddNamespace(ns, [provider])

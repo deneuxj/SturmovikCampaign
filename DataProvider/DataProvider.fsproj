@@ -54,6 +54,7 @@
     <Compile Include="ProvidedTypes.fs" />
     <Compile Include="DebugProvidedTypes.fs" />
     <Compile Include="Cached.fs" />
+    <Compile Include="FileWithTime.fs" />
     <Compile Include="Ast.fs" />
     <Compile Include="Mcu.fs" />
     <Compile Include="McuFactory.fs" />

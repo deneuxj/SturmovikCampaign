@@ -96,8 +96,8 @@ MCU_TR_Entity
 Vehicle
 {
   Name = "Panzer gr1";
-  Index = 4;
-  LinkTrId = 5;
+  Index = 5;
+  LinkTrId = 6;
   XPos = 24159.486;
   YPos = 132.013;
   ZPos = 42058.215;
@@ -126,7 +126,7 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 5;
+  Index = 6;
   Name = "Vehicle entity";
   Desc = "";
   Targets = [3];
@@ -138,7 +138,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 4;
+  MisObjID = 5;
 }
 
 
@@ -146,8 +146,8 @@ MCU_TR_Entity
 Vehicle
 {
   Name = "Panzer gr1";
-  Index = 7;
-  LinkTrId = 8;
+  Index = 8;
+  LinkTrId = 9;
   XPos = 24100.799;
   YPos = 131.119;
   ZPos = 42034.224;
@@ -176,7 +176,7 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 8;
+  Index = 9;
   Name = "Vehicle entity";
   Desc = "";
   Targets = [3];
@@ -188,17 +188,17 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 7;
+  MisObjID = 8;
 }
 
 
 
 MCU_Waypoint
 {
-  Index = 16;
+  Index = 11;
   Name = "wp0";
   Desc = "";
-  Targets = [18,25];
+  Targets = [12,13];
   Objects = [3];
   XPos = 24096.462;
   YPos = 133.718;
@@ -215,10 +215,10 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 18;
+  Index = 12;
   Name = "wp1";
   Desc = "";
-  Targets = [19,26];
+  Targets = [15,16];
   Objects = [3];
   XPos = 23836.590;
   YPos = 133.718;
@@ -235,10 +235,10 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 19;
+  Index = 15;
   Name = "wp road0";
   Desc = "";
-  Targets = [20];
+  Targets = [18];
   Objects = [3];
   XPos = 28989.155;
   YPos = 133.718;
@@ -255,10 +255,10 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 20;
+  Index = 18;
   Name = "wp road1";
   Desc = "";
-  Targets = [21];
+  Targets = [20];
   Objects = [3];
   XPos = 31957.229;
   YPos = 133.718;
@@ -275,7 +275,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 21;
+  Index = 20;
   Name = "wp road2";
   Desc = "";
   Targets = [22];
@@ -298,7 +298,7 @@ MCU_Waypoint
   Index = 22;
   Name = "wp road3";
   Desc = "";
-  Targets = [23];
+  Targets = [24];
   Objects = [3];
   XPos = 46153.998;
   YPos = 133.718;
@@ -315,7 +315,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 23;
+  Index = 24;
   Name = "wp road4";
   Desc = "";
   Targets = [];
@@ -335,10 +335,10 @@ MCU_Waypoint
 
 MCU_TR_MissionBegin
 {
-  Index = 24;
+  Index = 26;
   Name = "Translator Mission Begin";
   Desc = "";
-  Targets = [16];
+  Targets = [11];
   Objects = [];
   XPos = 23291.770;
   YPos = 130.108;
@@ -353,7 +353,7 @@ MCU_TR_MissionBegin
 
 MCU_CMD_Formation
 {
-  Index = 25;
+  Index = 13;
   Name = "off-road column";
   Desc = "";
   Targets = [];
@@ -372,8 +372,8 @@ FormationDensity = 0;
 
 MCU_CMD_Formation
 {
-  Index = 26;
-  Name = "off-road column";
+  Index = 16;
+  Name = "on-road column";
   Desc = "";
   Targets = [];
   Objects = [3];
@@ -391,7 +391,7 @@ FormationDensity = 0;
 
 MCU_Proximity
 {
-  Index = 28;
+  Index = 29;
   Name = "proximity";
   Desc = "";
   Targets = [];
