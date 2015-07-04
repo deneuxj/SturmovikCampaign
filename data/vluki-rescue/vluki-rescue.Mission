@@ -45,15 +45,15 @@ Options
 
 Vehicle
 {
-  Name = "Panzer gr1";
+  Name = "Panzer leader";
   Index = 2;
   LinkTrId = 3;
-  XPos = 24130.949;
-  YPos = 131.015;
-  ZPos = 42046.763;
-  XOri = 1.04;
+  XPos = 24264.896;
+  YPos = 126.358;
+  ZPos = 41856.064;
+  XOri = 358.21;
   YOri = 111.97;
-  ZOri = 358.85;
+  ZOri = 358.84;
   Script = "LuaScripts\WorldObjects\vehicles\pziii-l.txt";
   Model = "graphics\vehicles\pziii-l\pziii-l.mgm";
   Desc = "";
@@ -81,13 +81,13 @@ MCU_TR_Entity
   Desc = "";
   Targets = [];
   Objects = [];
-  XPos = 24130.949;
-  YPos = 131.215;
-  ZPos = 42046.763;
+  XPos = 24264.896;
+  YPos = 126.558;
+  ZPos = 41856.064;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Enabled = 1;
+  Enabled = 0;
   MisObjID = 2;
 }
 
@@ -95,15 +95,15 @@ MCU_TR_Entity
 
 Vehicle
 {
-  Name = "Panzer gr1";
+  Name = "Panzer left";
   Index = 5;
   LinkTrId = 6;
-  XPos = 24159.486;
-  YPos = 132.013;
-  ZPos = 42058.215;
-  XOri = 1.84;
+  XPos = 24293.433;
+  YPos = 125.611;
+  ZPos = 41867.516;
+  XOri = 359.68;
   YOri = 111.97;
-  ZOri = 2.72;
+  ZOri = 359.46;
   Script = "LuaScripts\WorldObjects\vehicles\pziii-l.txt";
   Model = "graphics\vehicles\pziii-l\pziii-l.mgm";
   Desc = "";
@@ -131,13 +131,13 @@ MCU_TR_Entity
   Desc = "";
   Targets = [3];
   Objects = [];
-  XPos = 24159.486;
-  YPos = 132.213;
-  ZPos = 42058.215;
+  XPos = 24293.433;
+  YPos = 125.811;
+  ZPos = 41867.516;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Enabled = 1;
+  Enabled = 0;
   MisObjID = 5;
 }
 
@@ -145,15 +145,15 @@ MCU_TR_Entity
 
 Vehicle
 {
-  Name = "Panzer gr1";
+  Name = "Panzer right";
   Index = 8;
   LinkTrId = 9;
-  XPos = 24100.799;
-  YPos = 131.119;
-  ZPos = 42034.224;
-  XOri = 357.75;
+  XPos = 24234.746;
+  YPos = 127.380;
+  ZPos = 41843.525;
+  XOri = 358.21;
   YOri = 111.97;
-  ZOri = 357.40;
+  ZOri = 0.20;
   Script = "LuaScripts\WorldObjects\vehicles\pziii-l.txt";
   Model = "graphics\vehicles\pziii-l\pziii-l.mgm";
   Desc = "";
@@ -181,13 +181,13 @@ MCU_TR_Entity
   Desc = "";
   Targets = [3];
   Objects = [];
-  XPos = 24100.799;
-  YPos = 131.319;
-  ZPos = 42034.224;
+  XPos = 24234.746;
+  YPos = 127.580;
+  ZPos = 41843.525;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Enabled = 1;
+  Enabled = 0;
   MisObjID = 8;
 }
 
@@ -200,9 +200,9 @@ MCU_Waypoint
   Desc = "";
   Targets = [12,13];
   Objects = [3];
-  XPos = 24096.462;
+  XPos = 24095.987;
   YPos = 133.718;
-  ZPos = 42185.803;
+  ZPos = 42128.880;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -333,24 +333,6 @@ MCU_Waypoint
 
 
 
-MCU_TR_MissionBegin
-{
-  Index = 26;
-  Name = "Translator Mission Begin";
-  Desc = "";
-  Targets = [11];
-  Objects = [];
-  XPos = 23291.770;
-  YPos = 130.108;
-  ZPos = 42267.043;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-  Enabled = 1;
-}
-
-
-
 MCU_CMD_Formation
 {
   Index = 13;
@@ -391,19 +373,149 @@ FormationDensity = 0;
 
 MCU_Proximity
 {
-  Index = 29;
+  Index = 28;
   Name = "proximity";
   Desc = "";
   Targets = [];
   Objects = [];
-  XPos = 24229.842;
+  XPos = 24315.404;
   YPos = 131.612;
-  ZPos = 42031.298;
+  ZPos = 41760.498;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
   Distance = 100;
   Closer = 1;
+}
+
+
+
+MCU_CMD_Formation
+{
+  Index = 29;
+  Name = "stop";
+  Desc = "";
+  Targets = [];
+  Objects = [3];
+  XPos = 23953.766;
+  YPos = 133.829;
+  ZPos = 42101.690;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+FormationType = 9;
+FormationDensity = 0;
+}
+
+
+
+MCU_CMD_Formation
+{
+  Index = 30;
+  Name = "continue";
+  Desc = "";
+  Targets = [];
+  Objects = [3];
+  XPos = 23963.025;
+  YPos = 133.829;
+  ZPos = 41982.640;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+FormationType = 11;
+FormationDensity = 0;
+}
+
+
+
+MCU_Timer
+{
+  Index = 31;
+  Name = "activate group";
+  Desc = "";
+  Targets = [32,33];
+  Objects = [];
+  XPos = 24149.375;
+  YPos = 127.229;
+  ZPos = 41866.764;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Time = 0;
+  Random = 100;
+}
+
+
+
+MCU_Activate
+{
+  Index = 32;
+  Name = "";
+  Desc = "";
+  Targets = [];
+  Objects = [3];
+  XPos = 24148.493;
+  YPos = 132.863;
+  ZPos = 41969.086;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+}
+
+
+
+MCU_Timer
+{
+  Index = 33;
+  Name = "1s";
+  Desc = "";
+  Targets = [11];
+  Objects = [];
+  XPos = 24092.922;
+  YPos = 127.229;
+  ZPos = 41866.764;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Time = 1;
+  Random = 100;
+}
+
+
+
+MCU_TR_MissionBegin
+{
+  Index = 36;
+  Name = "mission begin";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 24391.478;
+  YPos = 131.074;
+  ZPos = 41761.793;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+}
+
+
+
+MCU_Timer
+{
+  Index = 37;
+  Name = "timer";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 24470.487;
+  YPos = 131.108;
+  ZPos = 41766.007;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Time = 0;
+  Random = 100;
 }
 
 
