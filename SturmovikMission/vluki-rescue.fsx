@@ -96,13 +96,18 @@ type TankPlatoon = {
 with
     static member Create(numGroups : int) =
         let groups =
-            List.init numGroups (fun _ -> TankGroup.Create())
-        let consecutive = Seq.pairwise groups
-        // When group i reaches wp0, activate group i+1
-        for (group1, group2) in consecutive do
+            Array.init numGroups (fun _ -> TankGroup.Create())
+        let pairs =
+            seq {
+                for i in 0..(numGroups - 1) do
+                    for j in 0..(i - 1) do
+                        yield groups.[i], groups.[j]
+            }
+        // When group i reaches wp0, activate group i + 1
+        for (group1, group2) in Seq.pairwise groups do
             addTargetLink group1.StartWaypoint group2.Activate.Index        
-        // If group i+1 gets too close to group i, stop group i+1
-        // Create a proximity trigger for each consecutive pair of groups.
+        // If group j gets too close to group i, stop group j
+        // Create a proximity trigger for each pair of groups.
         let proximities =
             groups
             |> Seq.pairwise
@@ -118,7 +123,7 @@ with
         let getNewId = itemIds.GetIdMapper()
         for p in proximities do substId getNewId p
         // Connect triggers to the leader of each group and to the stop command
-        for p, (gr1, gr2) in Seq.zip proximities consecutive do
+        for p, (gr1, gr2) in Seq.zip proximities pairs do
             addObjectLink p gr1.LeadEntity.Index
             addObjectLink p gr2.LeadEntity.Index
             addTargetLink p gr2.Stop.Index
@@ -140,7 +145,7 @@ with
         let getNewId = itemIds.GetIdMapper()
         for p in further do substId getNewId p
         // Connect triggers to the leader of each group and to the continue command
-        for p, (gr1, gr2) in Seq.zip further consecutive do
+        for p, (gr1, gr2) in Seq.zip further pairs do
             addObjectLink p gr1.LeadEntity.Index
             addObjectLink p gr2.LeadEntity.Index
             addTargetLink p gr2.Continue.Index
@@ -148,16 +153,16 @@ with
         for closer, further in Seq.zip proximities further do
             addTargetLink closer further.Index
         // The closer triggers are triggered by reaching wp0
-        for closer, (gr1, _) in Seq.zip proximities consecutive do
+        for closer, (gr1, _) in Seq.zip proximities pairs do
             addTargetLink gr1.StartWaypoint closer.Index
         // A timer that gets everybody moving by activating the first group
         let timer = Vluki.timer.SetTime(T.Float(1.0)).AsCommand()
         let getNewId = itemIds.GetIdMapper()
         substId getNewId timer
-        addTargetLink timer (List.head groups).Activate.Index
+        addTargetLink timer (groups.[0]).Activate.Index
         // Result
         { StartAll = timer
-          Groups = groups
+          Groups = List.ofArray groups
           Glue = (List.map (fun x -> upcast x) proximities) @ (List.map (fun x -> upcast x) further)
         }
     member this.AsString() =
