@@ -198,7 +198,7 @@ MCU_Waypoint
   Index = 11;
   Name = "wp0";
   Desc = "";
-  Targets = [12,13];
+  Targets = [13,38];
   Objects = [3];
   XPos = 24095.987;
   YPos = 133.718;
@@ -516,6 +516,146 @@ MCU_Timer
   ZOri = 0.00;
   Time = 0;
   Random = 100;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 38;
+  Name = "Trigger Waypoint";
+  Desc = "";
+  Targets = [39];
+  Objects = [3];
+  XPos = 24065.582;
+  YPos = 133.718;
+  ZPos = 42287.967;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 30;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 39;
+  Name = "Trigger Waypoint";
+  Desc = "";
+  Targets = [40];
+  Objects = [3];
+  XPos = 24031.621;
+  YPos = 133.718;
+  ZPos = 42420.414;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 30;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 40;
+  Name = "Trigger Waypoint";
+  Desc = "";
+  Targets = [41];
+  Objects = [3];
+  XPos = 24023.131;
+  YPos = 133.718;
+  ZPos = 42513.807;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 30;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 41;
+  Name = "Trigger Waypoint";
+  Desc = "";
+  Targets = [42];
+  Objects = [3];
+  XPos = 23962.301;
+  YPos = 133.718;
+  ZPos = 42622.446;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 30;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 42;
+  Name = "Trigger Waypoint";
+  Desc = "";
+  Targets = [43];
+  Objects = [3];
+  XPos = 23931.920;
+  YPos = 133.718;
+  ZPos = 42712.968;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 30;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 43;
+  Name = "Trigger Waypoint";
+  Desc = "";
+  Targets = [44];
+  Objects = [3];
+  XPos = 23933.780;
+  YPos = 133.718;
+  ZPos = 42783.029;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 30;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 44;
+  Name = "Trigger Waypoint";
+  Desc = "";
+  Targets = [12];
+  Objects = [3];
+  XPos = 23892.859;
+  YPos = 133.718;
+  ZPos = 42881.611;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 30;
+  Priority = 1;
 }
 
 
