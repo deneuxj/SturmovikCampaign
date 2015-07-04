@@ -680,6 +680,9 @@ type MissionTypes(config: TypeProviderConfig) as this =
         // The libraries
         let plibs = buildLibraries namedTypes libs
         ty.AddMembers(plibs)
+        // Resolution folder
+        let resFolder = newStaticProperty ("ResolutionFolder", typeof<string>) (Expr.Value(config.ResolutionFolder))
+        ty.AddMember(resFolder)
         // File modification times
         let modifs =
             [
@@ -690,22 +693,22 @@ type MissionTypes(config: TypeProviderConfig) as this =
         // Result
         ty, modifs
 
+    // Cache the top provided type definitions.
     let cache = new Dictionary<(string * string * string[]), ProvidedTypeDefinition * (FileWithTime.File list)>(HashIdentity.Structural)
     let getProvider = cached cache buildProvider
     do provider.DefineStaticParameters([sampleParam; libraryParam], fun typeName [| sample; libs |] ->
-        let sample = sample :?> string
-        let libs = libs :?> string
-        let libs = libs.Split(';')
-        let sample =
-            if Path.IsPathRooted(sample) then
-                sample
+        let resolve path =
+            if Path.IsPathRooted(path) then
+                path
             else
-                let dllLocation =
-                    System.Reflection.Assembly.GetExecutingAssembly().Location
-                    |> Path.GetDirectoryName
-                Path.Combine(dllLocation, sample)
+                Path.Combine(config.ResolutionFolder, path)
+        let sample = sample :?> string |> resolve
+        let libs = libs :?> string
+        let libs = libs.Split(';') |> Array.map resolve
+
         if not(System.IO.File.Exists(sample)) then
             failwithf "Cannot open sample file '%s' for reading" sample
+        // Check if modifications were made to input files
         let ty, modifs = getProvider(typeName, sample, libs)
         let modifs2 =
             [
@@ -713,6 +716,7 @@ type MissionTypes(config: TypeProviderConfig) as this =
                 for lib in libs do
                     yield FileWithTime.File.FromFile lib
             ]
+        // If so, remove the entry from the cache, invalidate the top provided and build it again.
         if modifs <> modifs2 then
             cache.Remove((typeName, sample, libs)) |> ignore
             this.Invalidate()

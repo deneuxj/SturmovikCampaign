@@ -58,7 +58,8 @@ Instances of Ast.Value are dynamically typed, which means that of you attempt to
 
 ### Using the type provider ###
 
-The type provider accepts two string arguments: the path to a sample mission file, and a list of paths to mission files separated by semi-colons ";". The second argument can be the empty string. The first argument can be a relative path, in which case it will be relative to DataProvider.dll. If you plan to use FSI, you will unfortunately have to use an absolute path, as FSI copies DaraProvider.dll to a temporary directory, moving it away from the sample mission file you intended to use.
+The type provider accepts two string arguments: the path to a sample mission file, and a list of paths to mission files separated by semi-colons ";". The second argument can be the empty string.
+The first argument can be a relative path, in which case it will be relative to the resolution folder, i.e. the folder containing your project or script.
 
 ```
 #!fsharp

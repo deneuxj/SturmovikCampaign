@@ -5,7 +5,11 @@
 // Learn more about F# at http://fsharp.net. See the 'F# Tutorial' project
 // for more guidance on F# programming.
 
-#load "scripts/load-references.fsx"
+//#load "scripts/load-references.fsx"
+#r @"..\DataProvider\bin\Debug\DataProvider.dll"
+#r @"System.Core.dll"
+#r @"System.dll"
+#r @"System.Numerics.dll"
 
 open System.Collections.Generic
 open SturmovikMissionTypes
@@ -14,7 +18,14 @@ open SturmovikMission.DataProvider.Ast
 open SturmovikMission.DataProvider.Mcu
 open SturmovikMission.DataProvider.NumericalIdentifiers
 
-type T = Provider< @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\Sample.Mission", @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\vluki-rescue\vluki-rescue.Mission" >
+type T = Provider< @"..\data\Sample.Mission", @"..\data\vluki-rescue\vluki-rescue.Mission" >
+
+// Relative paths are relative to the resolution folder, i.e. the location of this script.
+let resolve path =
+    if System.IO.Path.IsPathRooted path then
+        path
+    else
+        System.IO.Path.Combine(T.ResolutionFolder, path)
 
 // Id store for MCUs, entities, objects...
 let itemIds = IdStore()
@@ -28,7 +39,7 @@ for id in 0..2 do lcOptionsMapper(id) |> ignore
 type Vluki = T.``vluki-rescue``
 
 // Shorthand for the mission data read at runtime
-let vluki = T.GroupData(Stream.FromFile @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\vluki-rescue\vluki-rescue.Mission")
+let vluki = T.GroupData(Stream.FromFile (resolve @"..\data\vluki-rescue\vluki-rescue.Mission"))
 
 // Get an Mcu from a list by its index.
 // The mcu list must not have had its indices substituted.
@@ -178,7 +189,7 @@ with
         |> String.concat("\n")
 
 let platoon = TankPlatoon.Create(5)
-using (System.IO.File.CreateText(@"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\vluki-rescue\out.group")) (fun w ->
+using (System.IO.File.CreateText(resolve @"..\data\vluki-rescue\out.group")) (fun w ->
     let s = platoon.AsString()
     w.Write(s)
 )
