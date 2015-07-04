@@ -26,44 +26,6 @@ type Vluki = T.``vluki-rescue``
 // Shorthand for the mission data read at runtime
 let vluki = T.GroupData(Stream.FromFile @"C:\Users\johann\Documents\Visual Studio 2013\Projects\sturmovikmission\data\vluki-rescue\vluki-rescue.Mission")
 
-// Given a member in a graph of connected entities, objects and commands, return the graph.
-let getGroup (isExcluded : McuBase -> bool) (root : McuBase) (all : McuBase list) =
-    let visited = HashSet<McuBase>()
-    let rec work (working : McuBase list) =
-        match working with
-        | [] -> ()
-        | item :: rest ->
-            if not(isExcluded(item) || visited.Contains(item)) then
-                visited.Add(item) |> ignore
-                // In the comments below, "an" refers the thing in all, "the" refers to "item" from working.
-                let dependents =
-                    all
-                    |> List.filter(function
-                        | :? HasEntity as owner ->
-                            // Retain an owner of the entity
-                            owner.LinkTrId = item.Index
-                        | :? McuEntity as entity ->
-                            // Retain an entity of the object
-                            entity.MisObjID = item.Index
-                            // Retain a wing of the entity
-                            || entity.Targets |> List.exists ((=) item.Index)
-                            // Retain an entity that targets the command through an event
-                            || entity.OnEvents |> List.exists (fun ev -> ev.TarId = item.Index)
-                            // retain an entity that targets the command through a command report
-                            || entity.OnReports |> List.exists (fun rep -> rep.TarId = item.Index)
-                        | :? McuCommand as cmd ->
-                            // retain a command that has the entity
-                            cmd.Objects |> List.exists ((=) item.Index)
-                            // retain a command that targets the entity or the command
-                            || cmd.Targets |> List.exists ((=) item.Index)
-                        | _ -> false
-                    )
-                work (dependents @ rest)
-            else
-                work rest
-    work [root]
-    visited
-
 // Get an Mcu from a list by its index.
 // The mcu list must not have had its indices substituted.
 let getByIndex (idx : T.Integer) (mcus : McuBase list) =
