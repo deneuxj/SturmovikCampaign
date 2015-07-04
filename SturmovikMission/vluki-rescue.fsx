@@ -1,4 +1,8 @@
-﻿// Learn more about F# at http://fsharp.net. See the 'F# Tutorial' project
+﻿// Copyright (C) 2015 Johann Deneux
+// This file is licensed under its own terms, and unlike other files in SturmovikMission, it is not covered by COPYING.txt
+// Permission is granted to copy, modify and distribute this file and modifications.
+
+// Learn more about F# at http://fsharp.net. See the 'F# Tutorial' project
 // for more guidance on F# programming.
 
 #load "scripts/load-references.fsx"
