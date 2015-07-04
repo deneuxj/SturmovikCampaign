@@ -306,42 +306,46 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
             // Create Mcu instances
             let asMcu() =
                 [
-                    match McuFactory.tryMkAsCommand typ with
-                    | Some _ ->
-                        yield newMethod
-                            ("AsCommand", typeof<Mcu.McuCommand>)
-                            []
-                            (fun [this] ->
-                                <@@
-                                    match McuFactory.tryMkAsCommand %typExpr with
-                                    | Some f -> f (%%this : Ast.Value)
-                                    | None -> failwith "Unexpected error: could not build AsCommand"
-                                @@>)
-                    | None -> ()
-                    match McuFactory.tryMkAsEntity typ with
-                    | Some _ ->
-                        yield newMethod
-                            ("AsEntity", typeof<Mcu.McuEntity>)
-                            []
-                            (fun [this] ->
-                                <@@
-                                    match McuFactory.tryMkAsEntity %typExpr with
-                                    | Some f -> f (%%this : Ast.Value)
-                                    | None -> failwith "Unexpected error: could not build AsEntity"
-                                @@>)
-                    | None -> ()
-                    match McuFactory.tryMkAsHasEntity typ with
-                    | Some _ ->
-                        yield newMethod
-                            ("AsHasEntity", typeof<Mcu.HasEntity>)
-                            []
-                            (fun [this] ->
-                                <@@
-                                    match McuFactory.tryMkAsHasEntity %typExpr with
-                                    | Some f -> f (%%this : Ast.Value)
-                                    | None -> failwith "Unexpected error: could not build AsHasEntity"
-                                @@>)
-                    | None -> ()
+                    match name with
+                    | Some name ->
+                        match McuFactory.tryMkAsCommand(name, typ) with
+                        | Some _ ->
+                            yield newMethod
+                                ("AsCommand", typeof<Mcu.McuCommand>)
+                                []
+                                (fun [this] ->
+                                    <@@
+                                        match McuFactory.tryMkAsCommand(name, %typExpr) with
+                                        | Some f -> f (%%this : Ast.Value)
+                                        | None -> failwith "Unexpected error: could not build AsCommand"
+                                    @@>)
+                        | None -> ()
+                        match McuFactory.tryMkAsEntity(name, typ) with
+                        | Some _ ->
+                            yield newMethod
+                                ("AsEntity", typeof<Mcu.McuEntity>)
+                                []
+                                (fun [this] ->
+                                    <@@
+                                        match McuFactory.tryMkAsEntity(name, %typExpr) with
+                                        | Some f -> f (%%this : Ast.Value)
+                                        | None -> failwith "Unexpected error: could not build AsEntity"
+                                    @@>)
+                        | None -> ()
+                        match McuFactory.tryMkAsHasEntity(name, typ) with
+                        | Some _ ->
+                            yield newMethod
+                                ("AsHasEntity", typeof<Mcu.HasEntity>)
+                                []
+                                (fun [this] ->
+                                    <@@
+                                        match McuFactory.tryMkAsHasEntity(name, %typExpr) with
+                                        | Some f -> f (%%this : Ast.Value)
+                                        | None -> failwith "Unexpected error: could not build AsHasEntity"
+                                    @@>)
+                        | None -> ()
+                    | None ->
+                        ()
                 ]
             ptyp.AddMembersDelayed(asMcu)
             ptyp
@@ -448,7 +452,7 @@ let buildAsMcuList (dataListSource : DataListSource) (namedValueTypes : (string 
                 %names
                 |> List.map (fun name ->
                     let valueType = valueTypeOfName.[name]
-                    (name, McuFactory.tryMakeMcu valueType)
+                    (name, McuFactory.tryMakeMcu(name, valueType))
                 )
                 |> Map.ofList
             this
@@ -537,6 +541,8 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
     let newName =
         let rand = new Random(0)
         fun baseName ->
+            let baseName =
+                if String.IsNullOrEmpty baseName then "Unnamed" else baseName
             Seq.initInfinite (fun i ->
                 if i = 0 then
                     baseName

@@ -137,11 +137,11 @@ let private mkLCData typeFields state =
             None
     iconLC, subtitleLC
 
-let private mkAsBase (state : (string * Value) list ref) iconImpl subtitleImpl =
+let private mkAsBase (typeName : string) (state : (string * Value) list ref) iconImpl subtitleImpl =
     {                
         new McuBase with
             member this.AsString() =
-                dump (Composite !state)
+                sprintf "%s %s" typeName (dump (Composite !state))
                         
             member this.Ori = mkVector ("XOri", "YOri", "ZOri") state
 
@@ -164,8 +164,8 @@ let private mkAsBase (state : (string * Value) list ref) iconImpl subtitleImpl =
             member this.SubtitleLC = subtitleImpl
     }
 
-let private mkAsCommand (state : (string * Value) list ref) iconImpl subtitleImpl =
-    let baseImpl = mkAsBase state iconImpl subtitleImpl
+let private mkAsCommand (typeName : string) (state : (string * Value) list ref) iconImpl subtitleImpl =
+    let baseImpl = mkAsBase typeName state iconImpl subtitleImpl
     {
         new McuCommand with
             member this.Objects
@@ -195,7 +195,7 @@ let private mkAsCommand (state : (string * Value) list ref) iconImpl subtitleImp
     }
 
 
-let tryMkAsCommand (typ : ValueType) =
+let tryMkAsCommand (typeName : string, typ : ValueType) =
     match typ with
     | ValueType.Composite fields ->
         let required =
@@ -210,7 +210,7 @@ let tryMkAsCommand (typ : ValueType) =
             | Value.Composite fields ->                
                 let state = ref fields
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsCommand state iconLC subtitleLC
+                mkAsCommand typeName state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
@@ -219,8 +219,8 @@ let tryMkAsCommand (typ : ValueType) =
         None
 
 
-let private mkAsEntity (state : (string * Value) list ref) iconLC subtitleLC =
-    let cmd = mkAsCommand state iconLC subtitleLC
+let private mkAsEntity typeName (state : (string * Value) list ref) iconLC subtitleLC =
+    let cmd = mkAsCommand typeName state iconLC subtitleLC
     let baseImpl : McuBase = upcast cmd
     {
         new McuEntity with
@@ -310,7 +310,7 @@ let private mkAsEntity (state : (string * Value) list ref) iconLC subtitleLC =
     }
 
 
-let tryMkAsEntity (typ : ValueType) =
+let tryMkAsEntity (typeName : string, typ : ValueType) =
     match typ with
     | ValueType.Composite fields ->
         let required =
@@ -344,7 +344,7 @@ let tryMkAsEntity (typ : ValueType) =
             | Value.Composite fields ->                
                 let state = ref fields
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsEntity state iconLC subtitleLC
+                mkAsEntity typeName state iconLC subtitleLC
             | _ ->
                 invalidArg "value" "Not a composite"
             |> Some
@@ -354,8 +354,8 @@ let tryMkAsEntity (typ : ValueType) =
         None
 
 
-let private mkAsHasEntity (state : (string * Value) list ref) iconLC subtitleLC =
-    let baseImpl = mkAsBase state iconLC subtitleLC
+let private mkAsHasEntity typeName (state : (string * Value) list ref) iconLC subtitleLC =
+    let baseImpl = mkAsBase typeName state iconLC subtitleLC
     {
         new HasEntity with
             member this.LinkTrId
@@ -379,7 +379,7 @@ let private mkAsHasEntity (state : (string * Value) list ref) iconLC subtitleLC 
     }
 
 
-let tryMkAsHasEntity (typ : ValueType) =
+let tryMkAsHasEntity (typeName : string, typ : ValueType) =
     match typ with
     | ValueType.Composite fields ->
         let required =
@@ -393,7 +393,7 @@ let tryMkAsHasEntity (typ : ValueType) =
             | Value.Composite fields ->
                 let state = ref fields
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsHasEntity state iconLC subtitleLC
+                mkAsHasEntity typeName state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
@@ -409,9 +409,9 @@ let upcastMaker (f : Value -> #McuBase) : (Value -> McuBase) =
 let upcastMaybeMaker f =
     f |> Option.map upcastMaker
 
-let upcastTryMaker (f : ValueType -> (Value -> #McuBase) option) =
-    fun valueType ->
-        upcastMaybeMaker(f valueType)
+let upcastTryMaker (f : string * ValueType -> (Value -> #McuBase) option) =
+    fun namedValueType ->
+        upcastMaybeMaker(f namedValueType)
 
 let makers =
     [
