@@ -1,10 +1,11 @@
 # README #
 
 A set of F# libraries to parse and manipulate mission files in IL-2: Battle of Stalingrad.
+Unless specified otherwise, these libraries and their source code are licensed under the GNU Lesser Public License, see COPYING.txt and COPYING.LESSER.txt
 
 ## Current status ##
 
-Nearing usability, but not yet used.
+Rough edges, but usable. Names of functions are likely to change.
 
 ## Code Architecture ##
 
