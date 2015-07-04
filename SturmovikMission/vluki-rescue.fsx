@@ -116,7 +116,7 @@ with
             seq {
                 for i in 0..(numGroups - 1) do
                     for j in 0..(i - 1) do
-                        yield groups.[i], groups.[j]
+                        yield groups.[j], groups.[i]
             }
         // When group i reaches wp0, activate group i + 1
         for (group1, group2) in Seq.pairwise groups do
@@ -124,8 +124,7 @@ with
         // If group j gets too close to group i, stop group j
         // Create a proximity trigger for each pair of groups.
         let proximities =
-            groups
-            |> Seq.pairwise
+            pairs
             |> Seq.mapi (fun i _ ->
                 Vluki.proximity
                     .SetName(T.String("Too close"))
@@ -146,8 +145,7 @@ with
             addTargetLink gr2.Activate p.Index
         // Similarly, a "further" proximity trigger to get tanks rolling again
         let further =
-            groups
-            |> Seq.pairwise
+            pairs
             |> Seq.mapi (fun i _ ->
                 Vluki.proximity
                     .SetName(T.String("Far enough"))
