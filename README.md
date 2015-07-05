@@ -5,7 +5,7 @@ Unless specified otherwise, these libraries and their source code are licensed u
 
 ## Current status ##
 
-Rough edges, but usable. Names of functions are likely to change.
+Rough edges, but mostly feature-complete.
 
 ## Code Architecture ##
 
@@ -129,14 +129,14 @@ Working with data with segregated types might be impractical, especially in a st
 First, from GroupData:
 ```
 #!fsharp
-groupData.AsMcuList |> List.head |> fun x -> x.AsString()
+groupData.CreateMcuList() |> List.head |> fun x -> x.AsString()
 ```
 
 Secondly, from an imported mission:
 
 ```
 #!fsharp
-let mcus = T.m2.AsMcuList
+let mcus = T.m2.CreateMcuList()
 let rabbit =
     mcus
     |> List.pick (function :? McuEntity as ent -> Some ent | _ -> None)

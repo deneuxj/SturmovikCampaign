@@ -58,7 +58,7 @@ type McuBase =
     abstract SubtitleLC : SubtitleLCData option
     /// <summary>
     /// Build a string using the syntax of mission files that specifies all the
-    /// fields of this instance (not only those in McuBase and its subtypes).
+    /// fields of this instance.
     /// </summary>
     abstract AsString : unit -> string
 

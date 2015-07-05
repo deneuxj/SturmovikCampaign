@@ -70,7 +70,7 @@ type TankGroup = {
 with
     static member Create() =
         // Make instances of McuBase and its subtypes
-        let all = vluki.AsMcuList
+        let all = vluki.CreateMcuList()
         // Extract the leader's entity, which is used to get the rest of the group.
         let leadEntity = getEntityByIndex (Vluki.``Panzer leader``.LinkTrId) all
         let group =
@@ -131,7 +131,7 @@ with
                     .SetCloser(T.Boolean(true))
                     .SetDistance(T.Integer(200))
                     .SetIndex(T.Integer(i))
-                    .AsCommand())
+                    .CreateMcuCommand())
             |> List.ofSeq
         // Give individual ids to each trigger
         let getNewId = itemIds.GetIdMapper()
@@ -152,7 +152,7 @@ with
                     .SetCloser(T.Boolean(false))
                     .SetDistance(T.Integer(250))
                     .SetIndex(T.Integer(i))
-                    .AsCommand())
+                    .CreateMcuCommand())
             |> List.ofSeq
         // Give individual ids to each trigger
         let getNewId = itemIds.GetIdMapper()
@@ -169,7 +169,7 @@ with
         for closer, (gr1, _) in Seq.zip proximities pairs do
             addTargetLink gr1.StartWaypoint closer.Index
         // A timer that gets everybody moving by activating the first group
-        let timer = Vluki.timer.SetTime(T.Float(1.0)).AsCommand()
+        let timer = Vluki.timer.SetTime(T.Float(1.0)).CreateMcuCommand()
         let getNewId = itemIds.GetIdMapper()
         substId getNewId timer
         addTargetLink timer (groups.[0]).Activate.Index

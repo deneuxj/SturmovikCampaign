@@ -93,6 +93,7 @@ let newMethod (name : string, typ : Type) (args : (string * Type) list) (body : 
     let m = ProvidedMethod(name, args, typ)
     m.InvokeCode <- body
     m
+
 /// Build a static ProvidedMethod.
 let newStaticMethod (name : string, typ : Type) (args : (string * Type) list) (body : Expr list -> Expr) =
     let m = newMethod (name, typ) args body
@@ -312,7 +313,7 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                         match McuFactory.tryMkAsCommand(name, typ) with
                         | Some _ ->
                             yield newMethod
-                                ("AsCommand", typeof<Mcu.McuCommand>)
+                                ("CreateMcuCommand", typeof<Mcu.McuCommand>)
                                 []
                                 (fun [this] ->
                                     <@@
@@ -324,7 +325,7 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                         match McuFactory.tryMkAsEntity(name, typ) with
                         | Some _ ->
                             yield newMethod
-                                ("AsEntity", typeof<Mcu.McuEntity>)
+                                ("CreateEntity", typeof<Mcu.McuEntity>)
                                 []
                                 (fun [this] ->
                                     <@@
@@ -336,7 +337,7 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                         match McuFactory.tryMkAsHasEntity(name, typ) with
                         | Some _ ->
                             yield newMethod
-                                ("AsHasEntity", typeof<Mcu.HasEntity>)
+                                ("CreateHasEntity", typeof<Mcu.HasEntity>)
                                 []
                                 (fun [this] ->
                                     <@@
@@ -471,9 +472,9 @@ let buildAsMcuList (dataListSource : DataListSource) (namedValueTypes : (string 
 
     match dataListSource with
     | Static expr ->
-        newStaticProperty ("AsMcuList", typeof<Mcu.McuBase list>) (mkBody expr)
+        newStaticMethod ("CreateMcuList", typeof<Mcu.McuBase list>) [] (fun [] -> mkBody expr)
     | Instance getDataList ->
-        newProperty ("AsMcuList", typeof<Mcu.McuBase list>) (fun this ->
+        newMethod ("CreateMcuList", typeof<Mcu.McuBase list>) [] (fun [this] ->
             let dataList : Expr<Ast.Data list> = getDataList this
             mkBody dataList
         )
