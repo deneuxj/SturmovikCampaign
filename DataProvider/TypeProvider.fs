@@ -100,6 +100,11 @@ let newStaticMethod (name : string, typ : Type) (args : (string * Type) list) (b
     m.IsStaticMethod <- true
     m
 
+/// Add documentation to a provided method, constructor, property or type definition.
+let inline addXmlDoc< ^T when ^T: (member AddXmlDoc : string -> unit)> (doc : string) (thing : ^T) : ^T =
+    ( ^T : (member AddXmlDoc : string -> unit) (thing, doc))
+    thing
+
 /// <summary>
 /// Get some name suitable for the type of a field (in a composite) of type composite, set or mapping, or None for other fields.
 /// </summary>
@@ -302,7 +307,8 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                                 <@@
                                     let this = (%%this : Ast.Value)
                                     this.ClearItems(fieldName).AddItems(fieldName, (%%value : Ast.Value list))
-                                @@>))
+                                @@>)
+                    |> addXmlDoc (sprintf """<summary>Create a copy of this, with the value of field '%s' changed to <paramref name="value" />.</summary>""" fieldName))
                 |> List.ofSeq
             ptyp.AddMembersDelayed(setters)
             // Create Mcu instances
@@ -312,39 +318,45 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
                     | Some name ->
                         match McuFactory.tryMkAsCommand(name, typ) with
                         | Some _ ->
-                            yield newMethod
-                                ("CreateMcuCommand", typeof<Mcu.McuCommand>)
-                                []
-                                (fun [this] ->
-                                    <@@
-                                        match McuFactory.tryMkAsCommand(name, %typExpr) with
-                                        | Some f -> f (%%this : Ast.Value)
-                                        | None -> failwith "Unexpected error: could not build AsCommand"
-                                    @@>)
+                            yield
+                                newMethod
+                                    ("CreateMcuCommand", typeof<Mcu.McuCommand>)
+                                    []
+                                    (fun [this] ->
+                                        <@@
+                                            match McuFactory.tryMkAsCommand(name, %typExpr) with
+                                            | Some f -> f (%%this : Ast.Value)
+                                            | None -> failwith "Unexpected error: could not build AsCommand"
+                                        @@>)
+                                |> addXmlDoc """<summary>Create a new mutable instance of an MCU command.</summary>"""
                         | None -> ()
                         match McuFactory.tryMkAsEntity(name, typ) with
                         | Some _ ->
-                            yield newMethod
-                                ("CreateEntity", typeof<Mcu.McuEntity>)
-                                []
-                                (fun [this] ->
-                                    <@@
-                                        match McuFactory.tryMkAsEntity(name, %typExpr) with
-                                        | Some f -> f (%%this : Ast.Value)
-                                        | None -> failwith "Unexpected error: could not build AsEntity"
-                                    @@>)
+                            yield
+                                newMethod
+                                    ("CreateEntity", typeof<Mcu.McuEntity>)
+                                    []
+                                    (fun [this] ->
+                                        <@@
+                                            match McuFactory.tryMkAsEntity(name, %typExpr) with
+                                            | Some f -> f (%%this : Ast.Value)
+                                            | None -> failwith "Unexpected error: could not build AsEntity"
+                                        @@>)
+                                |> addXmlDoc """<summary>Create a new mutable instance of an entity.</summary>"""
                         | None -> ()
                         match McuFactory.tryMkAsHasEntity(name, typ) with
                         | Some _ ->
-                            yield newMethod
-                                ("CreateHasEntity", typeof<Mcu.HasEntity>)
-                                []
-                                (fun [this] ->
-                                    <@@
-                                        match McuFactory.tryMkAsHasEntity(name, %typExpr) with
-                                        | Some f -> f (%%this : Ast.Value)
-                                        | None -> failwith "Unexpected error: could not build AsHasEntity"
-                                    @@>)
+                            yield
+                                newMethod
+                                    ("CreateHasEntity", typeof<Mcu.HasEntity>)
+                                    []
+                                    (fun [this] ->
+                                        <@@
+                                            match McuFactory.tryMkAsHasEntity(name, %typExpr) with
+                                            | Some f -> f (%%this : Ast.Value)
+                                            | None -> failwith "Unexpected error: could not build AsHasEntity"
+                                        @@>)
+                                |> addXmlDoc """<summary>Create a new mutable instance of a plane, vehicle, building...</summary>"""
                         | None -> ()
                     | None ->
                         ()
@@ -393,7 +405,9 @@ let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
 /// </summary>
 /// <param name="namedValueTypes">List of types, ValueTypes and their provided type definition.</param>
 let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
-    let parser = ProvidedTypeDefinition("Parser", Some typeof<IDictionary<Ast.ValueType, Parsing.ParserFun>>)
+    let parser =
+        ProvidedTypeDefinition("Parser", Some typeof<IDictionary<Ast.ValueType, Parsing.ParserFun>>)
+        |> addXmlDoc """<summary>Parser for the types found in the sample mission.</summary>"""
     let valueTypeExprs =
         namedValueTypes
         |> List.map (fun (_, x, _) -> x)
@@ -402,24 +416,32 @@ let buildParserType(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefi
             <@ %valueTypeExpr :: %expr @>
             ) <@ [] @>
     // Default constructor: Populate the cache of parsers.
-    parser.AddMember(newConstructor [] (fun [] ->
-        <@@
-            %valueTypeExprs
-            |> List.map(fun valueType -> (valueType, Parsing.makeParser valueType))
-            |> dict
-        @@>))
+    parser.AddMember(
+        newConstructor [] (fun [] ->
+            <@@
+                %valueTypeExprs
+                |> List.map(fun valueType -> (valueType, Parsing.makeParser valueType))
+                |> dict
+            @@>)
+        |> addXmlDoc """<summary>Build a new parser.</summary>""")
     // Parse methods for all top types.
     for name, valueType, ptyp in namedValueTypes do
         let vtExpr = valueType.ToExpr()
         let retType =
             typedefof<_*_>.MakeGenericType(ptyp, typeof<Parsing.Stream>)
-        parser.AddMember(newMethod (sprintf "Parse_%s" name, retType) [("s", typeof<Parsing.Stream>)] (fun [this; s] ->
-            <@@
-                let parsers = (%%this : IDictionary<Ast.ValueType, Parsing.ParserFun>)
-                let parser = parsers.[%vtExpr]
-                parser.Run(%%s : Parsing.Stream)
-            @@>
-        ))
+        parser.AddMember(
+            newMethod (sprintf "Parse_%s" name, retType) [("s", typeof<Parsing.Stream>)] (fun [this; s] ->
+                <@@
+                    let parsers = (%%this : IDictionary<Ast.ValueType, Parsing.ParserFun>)
+                    let parser = parsers.[%vtExpr]
+                    parser.Run(%%s : Parsing.Stream)
+                @@>)
+            |> addXmlDoc (sprintf """
+<summary>Parse an instance of %s</summary>
+<param name="s">Stream from which the instance is parsed</param>
+<return>A pair of the stream after the parsed section and the data resulting from parsing.</return>
+<exception cref="Parsing.ParseError">Parsing failed.</exception>
+""" name))
     parser
 
 /// Type controlling the kind of provided property returned by buildAsMcuList: instance-bound or static.
@@ -484,7 +506,9 @@ let buildAsMcuList (dataListSource : DataListSource) (namedValueTypes : (string 
 /// </summary>
 /// <param name="namedValueTypes">ValueTypes with their name and provided type definition.</param>
 let buildGroupParserType (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
-    let parser = ProvidedTypeDefinition("GroupData", Some typeof<Ast.Data list>)
+    let parser =
+        ProvidedTypeDefinition("GroupData", Some typeof<Ast.Data list>)
+        |> addXmlDoc """Extraction of data from a mission or group file."""
     let valueTypeOfName =
         namedValueTypes
         |> List.fold (fun expr (name, valueType, _) ->
@@ -499,29 +523,38 @@ let buildGroupParserType (namedValueTypes : (string * Ast.ValueType * ProvidedTy
             <@ name :: %expr @>) <@ [] @>
 
     // Constructor: Parse a group or mission file
-    parser.AddMemberDelayed(fun() -> newConstructor [("s", typeof<Parsing.Stream>)] (fun [s] ->
-        <@@
-            let parsers =
-                %valueTypeOfName
-                |> Map.map (fun name valueType -> Parsing.makeParser valueType)
-            let getParser name = parsers.[name]
-            let s = (%%s : Parsing.Stream)
-            Parsing.parseFile getParser s
-        @@>))
+    parser.AddMemberDelayed(fun() ->
+        newConstructor [("s", typeof<Parsing.Stream>)] (fun [s] ->
+            <@@
+                let parsers =
+                    %valueTypeOfName
+                    |> Map.map (fun name valueType -> Parsing.makeParser valueType)
+                let getParser name = parsers.[name]
+                let s = (%%s : Parsing.Stream)
+                Parsing.parseFile getParser s
+            @@>)
+        |> addXmlDoc """
+            <summary>Parse a mission or group file and store the extracted data.</summary>
+            <param name="s">The stream that is parsed</param>
+            <exception cref="Parsing.ParseError">Failed to parse the mission or group</exception>""")
     // Getters: list of objects of each type
     for (name, valueType, ptyp) in namedValueTypes do
-        parser.AddMemberDelayed(fun() -> newProperty ((sprintf "ListOf%s" name), typedefof<_ list>.MakeGenericType(ptyp)) (fun this ->            
-            <@@
-                let this = (%%this : Ast.Data list)
-                let ret =
-                    this
-                    |> List.map (fun data -> data.GetLeaves())
-                    |> List.concat
-                    |> List.choose (function (name2, value) -> if name2 = name then Some value else None)
-                ret
-            @@>))
+        parser.AddMemberDelayed(fun() ->
+            newProperty ((sprintf "ListOf%s" name), typedefof<_ list>.MakeGenericType(ptyp)) (fun this ->            
+                <@@
+                    let this = (%%this : Ast.Data list)
+                    let ret =
+                        this
+                        |> List.map (fun data -> data.GetLeaves())
+                        |> List.concat
+                        |> List.choose (function (name2, value) -> if name2 = name then Some value else None)
+                    ret
+                @@>)
+            |> addXmlDoc (sprintf """<summary>Build a list of immutable instances of %s</summary>""" name))
     // Get the flattened list of objects as instances of McuBase and its subtypes, when appropriate
-    parser.AddMemberDelayed(fun() -> buildAsMcuList (Instance(fun this -> <@ (%%this : Ast.Data list) @>)) namedValueTypes)
+    parser.AddMemberDelayed(fun() ->
+        buildAsMcuList (Instance(fun this -> <@ (%%this : Ast.Data list) @>)) namedValueTypes
+        |> addXmlDoc """<summary>Build a list of mutable instances of McuBase from the extracted data.</summary>""")
     // Return result
     parser
 
@@ -562,7 +595,7 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                 try
                     let s = Parsing.Stream.FromFile filename
                     let data = Parsing.parseFile getParser s
-                    let rec work (data : Ast.Data) : ((string * Type) * Quotations.Expr) seq =
+                    let rec work (data : Ast.Data) : ((string * Type) * Quotations.Expr * string option) seq =
                         seq {
                             match data with
                             | Ast.Data.Leaf(typename, value) ->
@@ -573,10 +606,13 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                                         |> Seq.tryPick (function ("Name", Ast.Value.String n) -> Some n | _ -> None)
                                         |> fun x -> defaultArg x "Unnamed"
                                         |> newName
+                                    let desc =
+                                        fields
+                                        |> Seq.tryPick (function ("Desc", Ast.Value.String s) -> Some s | _ -> None)
                                     match Map.tryFind typename types with
                                     | Some ptyp ->
                                         let valueExpr = value.ToExpr()
-                                        yield (name, upcast ptyp), <@@ %valueExpr @@>
+                                        yield (name, upcast ptyp), <@@ %valueExpr @@>, desc
                                     | None ->
                                         ()
                                 | _ ->
@@ -597,12 +633,16 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                     let msg =
                         Parsing.printParseError e
                         |> String.concat "\n"
-                    [ (("LoadingError", typeof<string>), <@@ msg @@>) ]
+                    [ (("LoadingError", typeof<string>), <@@ msg @@>, Some msg) ]
                 | e ->
                     let msg = e.Message
-                    [ (("LoadingError", typeof<string>), <@@ msg @@>) ]
+                    [ (("LoadingError", typeof<string>), <@@ msg @@>, Some msg) ]
             staticMembers
-            |> List.map (fun (prop, expr) -> newStaticProperty prop expr)
+            |> List.map (fun (prop, expr, doc) ->
+                let p = newStaticProperty prop expr
+                match doc with
+                | Some doc -> addXmlDoc (sprintf "<summary>%s</summary>" doc) p
+                | None -> p)
         |> lib.AddMembersDelayed
         // Get the flattened list of objects as instances of McuBase and its subtypes, when appropriate
         lib.AddMemberDelayed(fun() ->
@@ -624,6 +664,7 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                         let data = Parsing.parseFile getParser s
                         data
                     @>) namedValueTypes
+                |> addXmlDoc (sprintf """<summary>Build a list of mutable instances of McuBase from the content of %s</summary>""" filename)
             prop
         )
         lib
@@ -642,10 +683,19 @@ type MissionTypes(config: TypeProviderConfig) as this =
     let ns = "SturmovikMissionTypes"
 
     let provider = ProvidedTypeDefinition(asm, ns, "Provider", Some(typeof<obj>))
+    do provider.AddXmlDoc("""
+    <summary>
+    Exposes typed data from "IL2 Sturmovik: Battle of Stalingrad" mission files.
+    </summary>
+    <param name="sample">
+    Name of a mission file from which the structure of missions is infered.
+    </param>
+    <param name="library">
+    List of mission or group files from which to read data, separated by semi-colons.
+    </param>
+    """)
     let sampleParam = ProvidedStaticParameter("sample", typeof<string>)
-    do sampleParam.AddXmlDoc("<summary>Name of a mission file from which the structure of missions is infered</summary>")
     let libraryParam = ProvidedStaticParameter("library", typeof<string>)
-    do libraryParam.AddXmlDoc("<summary>List of mission or group files from which to read data, separated by semi-colons</summary>")
     
     let buildProvider(typeName : string, sample : string, libs : string[]) =
         let ty = new ProvidedTypeDefinition(asm, ns, typeName, Some(typeof<obj>))
@@ -683,6 +733,11 @@ type MissionTypes(config: TypeProviderConfig) as this =
         ty.AddMembers(plibs)
         // Resolution folder
         let resFolder = newStaticProperty ("ResolutionFolder", typeof<string>) (Expr.Value(config.ResolutionFolder))
+        resFolder.AddXmlDoc("""
+        <summary>
+        Location of the resolution folder, the folder used to root relative paths provided in the type provider's constructor.
+        </summary>
+        """)
         ty.AddMember(resFolder)
         // File modification times
         let modifs =

@@ -35,8 +35,11 @@ let reFloat = regex(@"\G\s*([+-]?\d+[.]\d+)")
 let reDate = regex(@"\G\s*(\d+)\.(\d+)\.(\d+)")
 let reWs = regex(@"\G\s*")
 
+/// State of a stream passed to parsers.
+/// Contains the entire data from the file or string to be parsed and a position in that data.
 type Stream = SubString of Data : string * Offset : int
 with
+    /// Create a stream from a file.
     static member FromFile(path) =
         let lines = IO.File.ReadAllLines(path)
         let lines =
@@ -48,7 +51,7 @@ with
                     line.TrimEnd())
         let data = String.concat "\n" lines
         SubString(data, 0)
-
+    /// Create a stream from a string.
     static member FromString(s) =
         SubString(s, 0)
 
@@ -134,11 +137,13 @@ with
         let (ParserFun p) = this
         p s
 
+/// Exception thrown when parsing fails. The embedded data includes a description of the error and the position where parsing failed.
 exception ParseError of string * Stream
 
 let parseError (txt, s) =
     raise(ParseError(txt, s))
 
+/// Extract a human-readable description of the position of a stream.
 let getContext (s : Stream) =
     let (SubString(txt, offset)) = s
     if txt.Length = 0 then
@@ -153,6 +158,7 @@ let getContext (s : Stream) =
                 '!'
         sprintf "%c in %s" ch (txt.[start..fin].Replace("\r\n", "  ").Replace("\n", " "))
 
+/// Produce human-readable lines of text describing a parse error.
 let printParseError (e : ParseError) =
     let msg, (SubString(txt, offset) as s) = e.Data0, e.Data1
     let prefix = txt.[0..offset]
