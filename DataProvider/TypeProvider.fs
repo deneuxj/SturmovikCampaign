@@ -573,21 +573,21 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
         namedValueTypes
         |> List.map (fun (name, _, ptyp) -> (name, ptyp))
         |> Map.ofList
-    let newName =
-        let rand = new Random(0)
-        fun baseName ->
-            let baseName =
-                if String.IsNullOrEmpty baseName then "Unnamed" else baseName
-            Seq.initInfinite (fun i ->
-                if i = 0 then
-                    baseName
-                elif i < 10 then
-                    sprintf "%s_%d" baseName (i + 1)
-                else
-                    sprintf "%s_R%d" baseName (rand.Next())
-                )
-        |> getNameStore
     let importFile filename =
+        let newName =
+            let rand = new Random(0)
+            fun baseName ->
+                let baseName =
+                    if String.IsNullOrEmpty baseName then "Unnamed" else baseName
+                Seq.initInfinite (fun i ->
+                    if i = 0 then
+                        baseName
+                    elif i < 10 then
+                        sprintf "%s_%d" baseName (i + 1)
+                    else
+                        sprintf "%s_R%d" baseName (rand.Next())
+                    )
+            |> getNameStore
         let name = Path.GetFileNameWithoutExtension(filename)
         let lib = new ProvidedTypeDefinition(name, Some typeof<obj>)
         fun () ->
