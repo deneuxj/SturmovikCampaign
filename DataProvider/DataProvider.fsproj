@@ -57,6 +57,7 @@
     <Compile Include="FileWithTime.fs" />
     <Compile Include="Ast.fs" />
     <Compile Include="Mcu.fs" />
+    <Compile Include="McuUtil.fs" />
     <Compile Include="McuFactory.fs" />
     <Compile Include="NumericalIdentifiers.fs" />
     <Compile Include="Unification.fs" />
