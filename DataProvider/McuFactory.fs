@@ -64,6 +64,104 @@ let setField (name : string, value) fields =
         | x :: rest -> x :: work rest
     work fields
 
+let tryGetId =
+    function
+    | Ast.Value.Composite fields ->
+        fields
+        |> List.tryPick (function ("Index", Ast.Value.Integer n) -> Some n | _ -> None)
+    | _ ->
+        None
+
+let tryGetTargets =
+    function
+    | Ast.Value.Composite fields ->
+        fields
+        |> List.tryPick (function ("Targets", Ast.Value.IntVector ns) -> Some ns | _ -> None)
+    | _ ->
+        None
+
+let tryGetObjects =
+    function
+    | Ast.Value.Composite fields ->
+        fields
+        |> List.tryPick (function ("Objects", Ast.Value.IntVector ns) -> Some ns | _ -> None)
+    | _ ->
+        None
+
+let tryGetEntity =
+    function
+    | Ast.Value.Composite fields ->
+        fields
+        |> List.tryPick (function ("LinkTrId", Ast.Value.Integer n) -> Some n | _ -> None)
+    | _ ->
+        None
+
+let tryGetOwner =
+    function
+    | Ast.Value.Composite fields ->
+        fields
+        |> List.tryPick (function ("MisObjID", Ast.Value.Integer n) -> Some n | _ -> None)
+    | _ ->
+        None
+
+let tryGetEvents =
+    function
+    | Ast.Value.Composite fields ->
+        let events =
+            fields
+            |> List.choose (function
+                | ("OnEvents", Value.Composite subFields) ->
+                    subFields
+                    |> List.choose(function ("OnEvent", event) -> Some event | _ -> None)
+                    |> Some
+                | _ -> None)
+            |> List.concat
+        events
+        |> List.choose (function
+            | Value.Composite ev ->
+                let typ = ev |> getIntField "Type"
+                let target = ev |> getIntField "TarId"
+                Some (typ, target)
+            | _ -> None)
+        |> Some
+    | _ ->
+        None
+
+let tryGetReports =
+    function
+    | Ast.Value.Composite fields ->
+        let events =
+            fields
+            |> List.choose (function
+                | ("OnReports", Value.Composite subFields) ->
+                    subFields
+                    |> List.choose(function ("OnReport", event) -> Some event | _ -> None)
+                    |> Some
+                | _ -> None)
+            |> List.concat
+        events
+        |> List.choose (function
+            | Value.Composite ev ->
+                let typ = ev |> getIntField "Type"
+                let target = ev |> getIntField "TarId"
+                let cmd = ev |> getIntField "CmdId"
+                Some (typ, target)
+            | _ ->
+                None)
+        |> Some
+    | _ ->
+        None
+
+let tryGetName =
+    function
+    | Ast.Value.Composite fields ->
+        fields
+        |> List.tryPick (function
+            | ("Name", Value.String n) -> Some n
+            | _ -> None)
+    | _ ->
+        None
+
 let private mkVector(nx, ny, nz) state =
     {
         new Vec3 with

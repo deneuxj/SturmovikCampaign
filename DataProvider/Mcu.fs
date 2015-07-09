@@ -94,6 +94,29 @@ type EventTypes =
     | OnPlaneAdded = 22
     | OnSpottingStarted = 74
 
+let getEventTypeName =
+    function
+    | EventTypes.OnPilotKilled -> "OnPilotKilled"
+    | EventTypes.OnPilotWounded -> "OnPilotWounded"
+    | EventTypes.OnPlaneCrashed -> "OnPlaneCrashed"
+    | EventTypes.OnPlaneCriticalDamage -> "OnPlaneCriticalDamage"
+    | EventTypes.OnPlaneDestroyed -> "OnPlaneDestroyed"
+    | EventTypes.OnPlaneLanded -> "OnPlaneLanded"
+    | EventTypes.OnPlaneTookOff -> "OnPlaneTookOff"
+    | EventTypes.OnPlaneBingoFuel -> "OnPlaneBingoFuel"
+    | EventTypes.OnPlaneBingoMainMG -> "OnPlaneBingoMainMG"
+    | EventTypes.OnPlaneBingoBombs -> "OnPlaneBingoBombs"
+    | EventTypes.OnPlaneBingoTurrets -> "OnPlaneBingoTurrets"
+    | EventTypes.OnPlaneGunnersKilled -> "OnPlaneGunnersKilled"
+    | EventTypes.OnDamaged -> "OnDamaged"
+    | EventTypes.OnKilled -> "OnKilled"
+    | EventTypes.OnMovedTo -> "OnMovedTo"
+    | EventTypes.OnPlaneSpawned -> "OnPlaneSpawned"
+    | EventTypes.OnOutOfPlanes -> "OnOutOfPlanes"
+    | EventTypes.OnPlaneAdded -> "OnPlaneAdded"
+    | EventTypes.OnSpottingStarted -> "OnSpottingStarted"
+    | x -> sprintf "Event%d" (int x)
+
 /// <summary>
 /// Connection of an event from an entity to a target command.
 /// </summary>

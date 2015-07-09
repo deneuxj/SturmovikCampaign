@@ -47,6 +47,12 @@ let getNameStore getValidNames =
         store := Set.add name !store
         name
 
+/// Build a function that provides names of the form "name", "name_1", "name_2"...
+let mkNewName() =
+    fun baseName ->
+        Seq.initInfinite (fun i -> if i = 0 then baseName else sprintf "%s_%d" baseName (i + 1))
+    |> getNameStore
+
 /// <summary>
 /// Build a ProvidedConstructor.
 /// </summary>
@@ -122,10 +128,7 @@ let private getNameOfField(fieldName : string, def) =
 /// </summary>
 /// <param name="top">Definition of the top type in the type provider.</param>
 let mkProvidedTypeBuilder(top : ProvidedTypeDefinition) =
-    let newName =
-        fun baseName ->
-            Seq.initInfinite (fun i -> if i = 0 then baseName else sprintf "%s_%d" baseName (i + 1))
-        |> getNameStore
+    let newName = mkNewName()
 
     let cache = new Dictionary<string option * Ast.ValueType, ProvidedTypeDefinition>(HashIdentity.Structural)
 
@@ -558,6 +561,129 @@ let buildGroupParserType (namedValueTypes : (string * Ast.ValueType * ProvidedTy
     // Return result
     parser
 
+let buildNavigators (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) (files : string[]) =
+    let parsers =
+        namedValueTypes
+        |> List.map (fun (name, typ, _) -> (name, Parsing.makeParser typ))
+        |> Map.ofList
+    let getParser name = parsers.[name]
+
+    let mkNodeNavigator name  (data : Ast.Data list) =
+        let valueTypeOf =
+            namedValueTypes
+            |> List.map (fun (n, vt, _) -> (n, vt))
+            |> dict
+        
+        let flat = 
+            data
+            |> List.map (fun d -> d.GetLeaves())
+            |> List.concat
+
+        let valuesByIndex =
+            flat
+            |> List.choose (fun (typeName, v) ->
+                match McuFactory.tryGetId v with
+                | Some id -> Some(id, (typeName, v))
+                | None -> None
+            )
+            |> dict
+
+        let getValue x = valuesByIndex.[x]
+
+        let singleton x = [x]
+
+        let rec mkRelation relation (namedChildren : (string * Ast.Value) list) =
+            let ptyp = new ProvidedTypeDefinition(relation, None)
+            let innerTypes() =
+                let newName = mkNewName()
+                [
+                    for typeName, v in namedChildren do
+                        match McuFactory.tryGetName v with
+                        | Some name ->
+                            yield mkValue (newName name) v
+                        | None ->
+                            ()                        
+                ]
+            ptyp.AddMembersDelayed(innerTypes)
+            ptyp
+
+        and mkValue name v =
+            let ptyp = new ProvidedTypeDefinition(name, None)
+            let targets() =
+                match McuFactory.tryGetTargets v with
+                | Some targets ->
+                    targets
+                    |> List.map getValue
+                    |> mkRelation "Targets"
+                    |> singleton
+                | None ->
+                    []
+            ptyp.AddMembersDelayed(targets)
+            let objects() =
+                match McuFactory.tryGetObjects v with
+                | Some objects ->
+                    objects
+                    |> List.map getValue
+                    |> mkRelation "Objects"
+                    |> singleton
+                | None ->
+                    []
+            ptyp.AddMembersDelayed(objects)
+            let events() =
+                match McuFactory.tryGetEvents v with
+                | Some pairs ->
+                    pairs
+                    |> Seq.groupBy fst
+                    |> Seq.map (fun (key, targets) ->
+                        let eventName = Mcu.getEventTypeName (enum key)
+                        targets
+                        |> Seq.map (snd >> getValue)
+                        |> List.ofSeq
+                        |> mkRelation eventName)
+                    |> List.ofSeq
+                | None ->
+                    []
+            ptyp.AddMembersDelayed(events)
+            let entity() =
+                match McuFactory.tryGetEntity v with
+                | Some entity ->
+                    entity
+                    |> getValue
+                    |> singleton
+                    |> mkRelation "Entity"
+                    |> singleton
+                | None ->
+                    []
+            ptyp.AddMembersDelayed(entity)
+            let owner() =
+                match McuFactory.tryGetOwner v with
+                | Some owner ->
+                    owner
+                    |> getValue
+                    |> singleton
+                    |> mkRelation "Owner"
+                    |> singleton
+                | None ->
+                    []
+            ptyp.AddMembersDelayed(owner)
+            ptyp
+
+        mkRelation (sprintf "GraphOf_%s" name) flat
+
+    files
+    |> Array.choose (fun filename ->
+        let name = Path.GetFileNameWithoutExtension(filename)
+        let s = Parsing.Stream.FromFile filename
+        try
+            let data = Parsing.parseFile getParser s
+            mkNodeNavigator name data
+            |> Some
+        with
+        | :? Parsing.ParseError ->
+            // Swallow the error. We'll get it again in buildLibraries.
+            None)
+    |> List.ofArray
+
 /// <summary>
 /// Build definitions of provided types which expose the content of mission files using static properties.
 /// </summary>
@@ -667,6 +793,9 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                 |> addXmlDoc (sprintf """<summary>Build a list of mutable instances of McuBase from the content of %s</summary>""" filename)
             prop
         )
+        // Graph navigation
+        lib.AddMemberDelayed(fun () -> failwith "TODO"
+        )
         lib
 
     files
@@ -731,6 +860,9 @@ type MissionTypes(config: TypeProviderConfig) as this =
         // The libraries
         let plibs = buildLibraries namedTypes libs
         ty.AddMembers(plibs)
+        // Lazy navigation types
+        let pnavs = buildNavigators namedTypes libs
+        ty.AddMembers(pnavs)
         // Resolution folder
         let resFolder = newStaticProperty ("ResolutionFolder", typeof<string>) (Expr.Value(config.ResolutionFolder))
         resFolder.AddXmlDoc("""
