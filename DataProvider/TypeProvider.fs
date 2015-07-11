@@ -561,18 +561,29 @@ let buildGroupParserType (namedValueTypes : (string * Ast.ValueType * ProvidedTy
     // Return result
     parser
 
+/// <summary>
+/// Build the provided type definition of the type that exposes the graph of the content of each library file.
+/// </summary>
+/// <param name="namedValueTypes">ValueTypes with their name and provided type definition.</param>
+/// <param name="files">names of library files.</param>
 let buildNavigators (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) (files : string[]) =
     let parsers =
         namedValueTypes
         |> List.map (fun (name, typ, _) -> (name, Parsing.makeParser typ))
-        |> Map.ofList
+        |> dict
     let getParser name = parsers.[name]
 
+    let types =
+        namedValueTypes
+        |> List.map (fun (name, _, ptyp) -> (name, ptyp))
+        |> dict
+
+    let valueTypeOf =
+        namedValueTypes
+        |> List.map (fun (n, vt, _) -> (n, vt))
+        |> dict
+
     let mkNodeNavigator name  (data : Ast.Data list) =
-        let valueTypeOf =
-            namedValueTypes
-            |> List.map (fun (n, vt, _) -> (n, vt))
-            |> dict
         
         let flat = 
             data
@@ -600,33 +611,39 @@ let buildNavigators (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDef
                     for typeName, v in namedChildren do
                         match McuFactory.tryGetName v with
                         | Some name ->
-                            yield mkValue (newName name) v
+                            yield mkValue (newName name) (typeName, v)
                         | None ->
                             ()                        
                 ]
             ptyp.AddMembersDelayed(innerTypes)
             ptyp
 
-        and mkValue name v =
+        and mkValue name (typeName, v) =
             let ptyp = new ProvidedTypeDefinition(name, None)
+            // Expose the value
+            let vptyp = types.[typeName]
+            let vexpr = v.ToExpr()
+            let prop = newStaticProperty("Value", vptyp) <@@ %vexpr @@>
+            ptyp.AddMember(prop)
+            // The values that can be reached from this value, grouped by the type of relationship.
             let targets() =
                 match McuFactory.tryGetTargets v with
-                | Some targets ->
+                | Some (_::_ as targets) ->
                     targets
                     |> List.map getValue
                     |> mkRelation "Targets"
                     |> singleton
-                | None ->
+                | _ ->
                     []
             ptyp.AddMembersDelayed(targets)
             let objects() =
                 match McuFactory.tryGetObjects v with
-                | Some objects ->
+                | Some (_::_ as objects) ->
                     objects
                     |> List.map getValue
                     |> mkRelation "Objects"
                     |> singleton
-                | None ->
+                | _ ->
                     []
             ptyp.AddMembersDelayed(objects)
             let events() =
@@ -643,14 +660,27 @@ let buildNavigators (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDef
                     |> List.ofSeq
                 | None ->
                     []
-            ptyp.AddMembersDelayed(events)
+            let reports() =
+                match McuFactory.tryGetReports v with
+                | Some pairs ->
+                    pairs
+                    |> Seq.groupBy fst
+                    |> Seq.map (fun (key, targets) ->
+                        let eventName = Mcu.getReportTypeName (enum key)
+                        targets
+                        |> Seq.map (snd >> getValue)
+                        |> List.ofSeq
+                        |> mkRelation eventName)
+                    |> List.ofSeq
+                | None ->
+                    []
+            ptyp.AddMembersDelayed(reports)
             let entity() =
                 match McuFactory.tryGetEntity v with
                 | Some entity ->
                     entity
                     |> getValue
-                    |> singleton
-                    |> mkRelation "Entity"
+                    |> mkValue "Entity"
                     |> singleton
                 | None ->
                     []
@@ -660,15 +690,14 @@ let buildNavigators (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDef
                 | Some owner ->
                     owner
                     |> getValue
-                    |> singleton
-                    |> mkRelation "Owner"
+                    |> mkValue "Owner"
                     |> singleton
                 | None ->
                     []
             ptyp.AddMembersDelayed(owner)
             ptyp
 
-        mkRelation (sprintf "GraphOf_%s" name) flat
+        mkRelation (sprintf "+--%s" name) flat
 
     files
     |> Array.choose (fun filename ->

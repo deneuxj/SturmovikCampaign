@@ -94,6 +94,9 @@ type EventTypes =
     | OnPlaneAdded = 22
     | OnSpottingStarted = 74
 
+/// <summary>
+/// Get the name of an event type as a string.
+/// </summary>
 let getEventTypeName =
     function
     | EventTypes.OnPilotKilled -> "OnPilotKilled"
@@ -123,6 +126,28 @@ let getEventTypeName =
 type EventConnection =
     { Type : int
       TarId : int }
+
+/// <summary>
+/// Report codes, to be used in ReportConnection.Type
+/// </summary>
+type ReportTypes =
+    | OnSpawned = 0
+    | OnTargetAttacked = 1
+    | OnAreaAttacked = 2
+    | OnTookOff = 3
+    | OnLanded = 4
+
+/// <summary>
+/// Get the name of a report type as a string.
+/// </summary>
+let getReportTypeName =
+    function
+    | ReportTypes.OnSpawned -> "OnSpawned"
+    | ReportTypes.OnTargetAttacked -> "OnTargetAttacked"
+    | ReportTypes.OnAreaAttacked -> "OnAreaAttacked"
+    | ReportTypes.OnTookOff -> "OnTookOff"
+    | ReportTypes.OnLanded -> "OnLanded"
+    | x -> sprintf "Report%d" (int x)
 
 /// <summary>
 /// Connection of a command completion report from an entity to a target command.
