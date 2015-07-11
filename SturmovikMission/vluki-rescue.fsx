@@ -20,7 +20,7 @@ open SturmovikMission.DataProvider.NumericalIdentifiers
 
 type T = Provider< @"..\data\Sample.Mission", @"..\data\vluki-rescue\vluki-rescue.Mission" >
 
-T.``+--vluki-rescue``.``Panzer right``.Entity.Targets.``Vehicle entity``.Entity.Value
+
 
 // Relative paths are relative to the resolution folder, i.e. the location of this script.
 let resolve path =
