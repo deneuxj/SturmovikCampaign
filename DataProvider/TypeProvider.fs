@@ -822,9 +822,6 @@ let buildLibraries(namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefin
                 |> addXmlDoc (sprintf """<summary>Build a list of mutable instances of McuBase from the content of %s</summary>""" filename)
             prop
         )
-        // Graph navigation
-        lib.AddMemberDelayed(fun () -> failwith "TODO"
-        )
         lib
 
     files
