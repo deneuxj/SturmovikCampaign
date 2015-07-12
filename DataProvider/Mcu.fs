@@ -192,6 +192,7 @@ let substId (getNewId : int -> int) (mcu : McuBase) =
     | :? McuEntity as ent ->
         ent.MisObjID <- getNewId ent.MisObjID
         ent.OnEvents <- ent.OnEvents |> List.map (fun ev -> { ev with TarId = getNewId ev.TarId })
+        ent.OnReports <- ent.OnReports |> List.map (fun rep -> { rep with TarId = getNewId rep.TarId; CmdId = getNewId rep.CmdId })
     | _ -> ()
     match mcu with
     | :? HasEntity as veh ->
