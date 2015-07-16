@@ -5,9 +5,10 @@ open System
 
 /// Get an Mcu from a list by its index.
 /// The mcu list must not have had its indices substituted.
-let getByIndex (idx : int) (mcus : McuBase list) =
+let getByIndex (idx : int) (mcus : #McuBase list) : McuBase =
     mcus
     |> List.find (fun x -> x.Index = idx)
+    |> fun x -> upcast x
 
 /// Get an entity by its index.
 let getEntityByIndex idx mcus =
