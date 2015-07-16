@@ -374,7 +374,7 @@ let private mkAsEntity typeName (state : (string * Value) list ref) iconLC subti
                     let evs =
                         xs
                         |> List.map (fun ev ->
-                            ("OnReport", Value.Composite [ ("Type", Value.Integer ev.Type); ("TarId", Value.Integer ev.TarId); ("CmdId", Value.Integer ev.CmdId) ])
+                            ("OnReport", Value.Composite [ ("Type", Value.Integer ev.Type); ("CmdId", Value.Integer ev.CmdId); ("TarId", Value.Integer ev.TarId) ])
                             )
                         |> Value.Composite
                     state :=
