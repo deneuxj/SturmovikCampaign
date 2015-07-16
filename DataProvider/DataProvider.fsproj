@@ -65,7 +65,6 @@
     <Compile Include="AutoSchema.fs" />
     <Compile Include="TypeProvider.fs" />
     <Compile Include="AssemblyInfo.fs" />
-    <None Include="Script.fsx" />
     <None Include="packages.config" />
     <None Include="Scripts\load-references.fsx" />
     <None Include="Scripts\load-project.fsx" />
