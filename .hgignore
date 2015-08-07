@@ -1,0 +1,10 @@
+syntax: regexp
+.*.suo
+.*/bin/Debug/.*
+.*/obj/Debug/.*
+devenv.*[.]vspx
+syntax: glob
+*.userprefs
+.nuget/
+packages/
+devenv.psess
