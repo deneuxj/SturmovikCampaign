@@ -93,6 +93,23 @@ type EventTypes =
     | OnOutOfPlanes = 21
     | OnPlaneAdded = 22
     | OnSpottingStarted = 74
+    | OnObjectSpawned = 57
+    | OnObjectEntered = 58
+    | OnObjectEnteredAlive = 59 
+    | OnObjectLeft = 60
+    | OnObjectLeftAlive = 61 
+    | OnObjectFinished = 62 
+    | OnObjectFinishedAlive = 63
+    | OnObjectStationaryAndAlive = 64 
+    | OnObjectFinishedStationaryAndAlive = 65
+    | OnObjectTookOff = 66
+    | OnObjectDamaged = 67
+    | OnObjectCriticallyDamaged = 68
+    | OnObjectRepaired = 69
+    | OnObjectKilled = 70
+    | OnObjectDroppedBombs = 71
+    | OnObjectFiredRockets = 72
+    | OnObjectFiredFlare = 73
 
 /// <summary>
 /// Get the name of an event type as a string.
@@ -118,6 +135,23 @@ let getEventTypeName =
     | EventTypes.OnOutOfPlanes -> "OnOutOfPlanes"
     | EventTypes.OnPlaneAdded -> "OnPlaneAdded"
     | EventTypes.OnSpottingStarted -> "OnSpottingStarted"
+    | EventTypes.OnObjectSpawned -> "OnObjectSpawned"
+    | EventTypes.OnObjectEntered -> "OnObjectEntered"
+    | EventTypes.OnObjectEnteredAlive -> "OnObjectEnteredAlive" 
+    | EventTypes.OnObjectLeft -> "OnObjectLeft"
+    | EventTypes.OnObjectLeftAlive -> "OnObjectLeftAlive" 
+    | EventTypes.OnObjectFinished -> "OnObjectFinished" 
+    | EventTypes.OnObjectFinishedAlive -> "OnObjectFinishedAlive"
+    | EventTypes.OnObjectStationaryAndAlive -> "OnObjectStationaryAndAlive" 
+    | EventTypes.OnObjectFinishedStationaryAndAlive -> "OnObjectFinishedStationaryAndAlive"
+    | EventTypes.OnObjectTookOff -> "OnObjectTookOff"
+    | EventTypes.OnObjectDamaged -> "OnObjectDamaged"
+    | EventTypes.OnObjectCriticallyDamaged -> "OnObjectCriticallyDamaged"
+    | EventTypes.OnObjectRepaired -> "OnObjectRepaired"
+    | EventTypes.OnObjectKilled -> "OnObjectKilled"
+    | EventTypes.OnObjectDroppedBombs -> "OnObjectDroppedBombs"
+    | EventTypes.OnObjectFiredRockets -> "OnObjectFiredRockets"
+    | EventTypes.OnObjectFiredFlare -> "OnObjectFiredFlare"
     | x -> sprintf "Event%d" (int x)
 
 /// <summary>
@@ -126,6 +160,13 @@ let getEventTypeName =
 type EventConnection =
     { Type : int
       TarId : int }
+
+/// <summary>
+/// Interface of complex triggers.
+/// </summary>
+type McuComplex =
+    inherit McuBase
+    abstract OnEvents : EventConnection list with get, set
 
 /// <summary>
 /// Report codes, to be used in ReportConnection.Type
@@ -167,7 +208,7 @@ type McuEntity =
     abstract OnReports : ReportConnection list with get, set
 
 /// <summary>
-/// Interface of things that have entities: ground vehicles, planes, artillery, buildings, bridges...
+/// Interface of things that can have entities: ground vehicles, planes, artillery, buildings, bridges...
 /// </summary>
 type HasEntity =
     inherit McuBase
@@ -197,6 +238,10 @@ let substId (getNewId : int -> int) (mcu : McuBase) =
     match mcu with
     | :? HasEntity as veh ->
         veh.LinkTrId <- getNewId veh.LinkTrId
+    | _ -> ()
+    match mcu with
+    | :? McuComplex as complex ->
+        complex.OnEvents <- complex.OnEvents |> List.map (fun ev -> { ev with TarId = getNewId ev.TarId })
     | _ -> ()
 
 /// <summary>
@@ -248,7 +293,7 @@ let connectEntity (veh : HasEntity) (ent : McuEntity) =
 /// Nodes that depend solely on excluded nodes are not included in the result.
 /// </param>
 /// <param name="root">
-/// A node which is part of the graph. All nodes that are linked to it and that are not excluded
+/// A node which is part of the graph. All nodes that point to it through links and that are not excluded
 /// will be included in the result.
 /// </param>
 /// <param name="all">
@@ -263,7 +308,7 @@ let getGroup (isExcluded : McuBase -> bool) (root : McuBase) (all : McuBase list
         | item :: rest ->
             if not(isExcluded(item) || visited.Contains(item)) then
                 visited.Add(item) |> ignore
-                // In the comments below, "an" refers the thing in all, "the" refers to "item" from working.
+                // In the comments below, "an" refers to the thing in all, "the" refers to "item" from working.
                 let dependents =
                     all
                     |> List.filter(function
@@ -284,6 +329,9 @@ let getGroup (isExcluded : McuBase -> bool) (root : McuBase) (all : McuBase list
                             cmd.Objects |> List.exists ((=) item.Index)
                             // retain a command that targets the entity or the command
                             || cmd.Targets |> List.exists ((=) item.Index)
+                        | :? McuComplex as complex ->
+                            // Retain a complex trigger that targets the command through an event
+                            complex.OnEvents |> List.exists (fun ev -> ev.TarId = item.Index)
                         | _ -> false
                     )
                 work (dependents @ rest)

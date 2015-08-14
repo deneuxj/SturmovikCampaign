@@ -28,6 +28,12 @@ let getCommandByIndex idx mcus =
     |> getByIndex idx
     :?> McuCommand
 
+/// Get a complex trigger by its index.
+let getComplexTrigger idx mcus =
+    mcus
+    |> getByIndex idx
+    :?> McuComplex
+
 /// <summary>A group of Mcus.</summary>
 /// <remark>Not to be mistaken with groups in missions, with which this type has nothing to do.</remark>
 type IMcuGroup =

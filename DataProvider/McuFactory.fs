@@ -263,6 +263,65 @@ let private mkAsBase (typeName : string) (state : (string * Value) list ref) ico
             member this.SubtitleLC = subtitleImpl
     }
 
+let private mkAsComplex (typeName : string) (state : (string * Value) list ref) =
+    let baseImpl = mkAsBase typeName state None None
+    {
+        new McuComplex with
+            member this.OnEvents
+                with get() =
+                    let events =
+                        !state
+                        |> List.choose (function
+                            | ("OnEvents", Value.Composite subFields) ->
+                                subFields
+                                |> List.choose(function ("OnEvent", event) -> Some event | _ -> None)
+                                |> Some
+                            | _ -> None)
+                        |> List.concat
+                    events
+                    |> List.map (function
+                        | Value.Composite ev ->
+                            let typ = ev |> getIntField "Type"
+                            let target = ev |> getIntField "TarId"
+                            { Type = typ; TarId = target }
+                        | _ -> failwith "Event connection is not a Composite")
+                and set(xs) =
+                    let evs =
+                        xs
+                        |> List.map (fun ev ->
+                            ("OnEvent", Value.Composite [ ("Type", Value.Integer ev.Type); ("TarId", Value.Integer ev.TarId) ])
+                            )
+                        |> Value.Composite
+                    state :=
+                        !state |> setField ("OnEvents", evs)
+            
+        interface McuBase with
+            member this.AsString() = baseImpl.AsString()                        
+            member this.Ori = baseImpl.Ori
+            member this.Pos = baseImpl.Pos
+            member this.Index
+                with get() = baseImpl.Index
+                and set idx = baseImpl.Index <- idx
+            member this.Name
+                with get() = baseImpl.Name
+                and set name = baseImpl.Name <- name
+            member this.IconLC = baseImpl.IconLC
+            member this.SubtitleLC = baseImpl.SubtitleLC
+    }
+
+let tryMkAsComplex (typeName : string, typ : ValueType) =
+    match typeName, typ with
+    | "MCU_TR_ComplexTrigger", ValueType.Composite fields ->
+        let typeFields = fields
+        function
+        | Value.Composite fields ->                
+            let state = ref fields
+            mkAsComplex typeName state
+        | _ -> invalidArg "value" "Not a composite"
+        |> Some
+    | _ ->
+        None
+
 let private mkAsCommand (typeName : string) (state : (string * Value) list ref) iconImpl subtitleImpl =
     let baseImpl = mkAsBase typeName state iconImpl subtitleImpl
     {
@@ -514,6 +573,7 @@ let upcastTryMaker (f : string * ValueType -> (Value -> #McuBase) option) =
 
 let makers =
     [
+        upcastTryMaker tryMkAsComplex
         upcastTryMaker tryMkAsEntity
         upcastTryMaker tryMkAsHasEntity
         upcastTryMaker tryMkAsCommand
