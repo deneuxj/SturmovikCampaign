@@ -237,7 +237,8 @@ let substId (getNewId : int -> int) (mcu : McuBase) =
     | _ -> ()
     match mcu with
     | :? HasEntity as veh ->
-        veh.LinkTrId <- getNewId veh.LinkTrId
+        if veh.LinkTrId <> 0 then
+            veh.LinkTrId <- getNewId veh.LinkTrId
     | _ -> ()
     match mcu with
     | :? McuComplex as complex ->
