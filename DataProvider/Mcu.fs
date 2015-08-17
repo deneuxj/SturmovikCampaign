@@ -287,22 +287,25 @@ let connectEntity (veh : HasEntity) (ent : McuEntity) =
     ent.MisObjID <- veh.Index
 
 /// <summary>
-/// Given a member in a graph of connected entities, objects and commands, return the nodes in the graph.
+/// Given members in a graph of connected entities, objects and commands, return the nodes in the graph.
 /// </summary>
 /// <param name="isExcluded">
 /// Predicate that decides whether a node should be included in the result.
 /// Nodes that depend solely on excluded nodes are not included in the result.
 /// </param>
-/// <param name="root">
-/// A node which is part of the graph. All nodes that point to it through links and that are not excluded
+/// <param name="roots">
+/// Nodes which are part of the graph. All nodes that point to them through links and that are not excluded
 /// will be included in the result.
 /// </param>
 /// <param name="all">
 /// The list of nodes that are considered for inclusion. The implementation has quadratic
 /// complexity in the size of this argument.
 /// </param>
-let getGroup (isExcluded : McuBase -> bool) (root : McuBase) (all : McuBase list) =
-    let visited = HashSet<McuBase>()
+/// <param name="visited">
+/// Incoming sequence of nodes that have already been visited. Useful when chaining calls.
+/// </param>
+let getGroupMulti (isExcluded : McuBase -> bool) (roots : McuBase list) (all : McuBase list) (visited : McuBase seq) =
+    let visited = new HashSet<McuBase>(visited)
     let rec work (working : McuBase list) =
         match working with
         | [] -> ()
@@ -338,5 +341,10 @@ let getGroup (isExcluded : McuBase -> bool) (root : McuBase) (all : McuBase list
                 work (dependents @ rest)
             else
                 work rest
-    work [root]
+    work roots
     visited
+
+/// Deprecated. Use getGroupMulti instead.
+[<System.Obsolete("Use getGroupMulti instead")>]
+let getGroup (isExcluded : McuBase -> bool) (root : McuBase) (all : McuBase list) =
+    getGroupMulti isExcluded [root] all (HashSet<McuBase>())
