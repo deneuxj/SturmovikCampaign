@@ -5,6 +5,7 @@
       @"..\ProvidedTypes.fs"
       @"..\DebugProvidedTypes.fs"
       @"..\Cached.fs"
+      @"..\CachedTest.fs"
       @"..\FileWithTime.fs"
       @"..\Ast.fs"
       @"..\Mcu.fs"
