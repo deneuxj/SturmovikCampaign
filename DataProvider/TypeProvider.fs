@@ -438,6 +438,16 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                         ()
                 ]
             ptyp.AddMembersDelayed(asMcu)
+            // Dump to text
+            match name with
+            | Some name ->
+                let meth = pdb.NewMethod("AsString", typeof<string>, [], fun [this] ->
+                    <@@
+                        name + Ast.dump (%%this : Ast.Value)
+                    @@>)
+                ptyp.AddMember(meth)
+            | None ->
+                ()
             ptyp
         | Ast.ValueType.Mapping itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
