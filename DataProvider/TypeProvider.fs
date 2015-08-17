@@ -89,35 +89,47 @@ type IProvidedDataBuilder =
 /// There are three alternatives, two of which excplicitly specify what to do (FailWith and AsProvided),
 /// and the third lets the implementation guess according to the entry assembly (FromAssembly).
 type InvokeCodeImplementation =
-    | FailWith
-    | AsProvided
-    | FromAssembly
+    | FailWith = 0
+    | AsProvided = 1
+    | FromAssembly = 2
 
 let mkProvidedDataBuilder (invokeImpl : InvokeCodeImplementation) =
     let bodyGate =
         match invokeImpl with
-        | FailWith ->
+        | InvokeCodeImplementation.FailWith ->
             fun _ -> <@@ failwith "Bodies replaced by shells" @@>
-        | AsProvided ->
+        | InvokeCodeImplementation.AsProvided ->
             id
-        | FromAssembly ->
+        | InvokeCodeImplementation.FromAssembly ->
+            // Dirty method that guesses the correct thing to do from the entry assembly and process.
             let asm = System.Reflection.Assembly.GetEntryAssembly()
             if asm = null then
-                fun _ -> <@@ failwith "Bodies replaced by shells" @@>
-            else
+                let proc = System.Diagnostics.Process.GetCurrentProcess()
+                match proc.ProcessName with
+                | "Fsi" -> // Fsi running in an unmanaged process (such as Visual Studio)
+                    id // Use the provided code.
+                | _ -> // Some unmanaged process (such as Visual Studio)
+                    fun _ -> <@@ failwith "Bodies replaced by shells" @@> // Replace by empty shells
+            else // Some managed process (such as the F# compiler)
                 id
 
     let funcGate =
         match invokeImpl with
-        | FailWith ->
+        | InvokeCodeImplementation.FailWith ->
             fun _ -> fun _ -> <@@ failwith "Bodies replaced by shells" @@>
-        | AsProvided ->
+        | InvokeCodeImplementation.AsProvided ->
             id
-        | FromAssembly ->
+        | InvokeCodeImplementation.FromAssembly ->
+            // Dirty method that guesses the correct thing to do from the entry assembly and process.
             let asm = System.Reflection.Assembly.GetEntryAssembly()
             if asm = null then
-                fun _ -> fun _ -> <@@ failwith "Bodies replaced by shells" @@>
-            else
+                let proc = System.Diagnostics.Process.GetCurrentProcess()
+                match proc.ProcessName with
+                | "Fsi" -> // Fsi running in an unmanaged process (such as Visual Studio)
+                    id // Use the provided code.
+                | _ -> // Some unmanaged process (such as Visual Studio)
+                    fun _ -> fun _ -> <@@ failwith "Bodies replaced by shells" @@> // Replace by empty shells
+            else // Some managed process (such as the F# compiler)
                 id
             
     let newConstructor (args : (string * Type) list) (body : Expr list -> Expr) =
