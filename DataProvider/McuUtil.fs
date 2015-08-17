@@ -3,8 +3,37 @@
 open SturmovikMission.DataProvider.Mcu
 open System
 
+/// Get an Mcu from a list by its name.
+let getByName (name : string) (mcus : #McuBase list) : McuBase =
+    mcus
+    |> List.find (fun x -> x.Name = name)
+    |> fun x -> upcast x
+
+/// Get an entity by its name.
+let getEntityByName name mcus =
+    mcus
+    |> getByName name
+    :?> McuEntity
+
+/// Get an entity owner by its name.
+let getHasEntityByName name mcus =
+    mcus
+    |> getByName name
+    :?> HasEntity
+
+/// Get a command by its name.
+let getCommandByName name mcus =
+    mcus
+    |> getByName name
+    :?> McuCommand
+
+/// Get a complex trigger by its name.
+let getComplexTriggerByName name mcus =
+    mcus
+    |> getByName name
+    :?> McuComplex
+
 /// Get an Mcu from a list by its index.
-/// The mcu list must not have had its indices substituted.
 let getByIndex (idx : int) (mcus : #McuBase list) : McuBase =
     mcus
     |> List.find (fun x -> x.Index = idx)
@@ -29,7 +58,7 @@ let getCommandByIndex idx mcus =
     :?> McuCommand
 
 /// Get a complex trigger by its index.
-let getComplexTrigger idx mcus =
+let getComplexTriggerByIndex idx mcus =
     mcus
     |> getByIndex idx
     :?> McuComplex
