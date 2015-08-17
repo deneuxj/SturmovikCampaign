@@ -68,6 +68,7 @@ let getComplexTriggerByIndex idx mcus =
 type IMcuGroup =
     abstract SubGroups : IMcuGroup list
     abstract Content : McuBase list
+    abstract LcStrings : (int * string) list
 
 /// Recursively yield the content of an IMcuGroup
 let rec deepContentOf (gr : IMcuGroup) =
@@ -82,6 +83,7 @@ let groupFromList mcus =
     { new IMcuGroup with
         member this.Content = mcus
         member this.SubGroups = []
+        member this.LcStrings = []
     }
 
 /// Get the string representation of the content of a group and its subgroups.
@@ -89,6 +91,19 @@ let rec asString (gr : IMcuGroup) : string =
     let subStrings = gr.SubGroups |> List.map asString
     let content = gr.Content |> List.map (fun mcu -> mcu.AsString())
     String.concat "\n" (List.append subStrings content)
+
+/// <summary>
+/// Return all the LcStrings from a group and its subgroups, sorted by numerical identifier.
+/// </summary>
+let deepLcStrings (gr : IMcuGroup) : (int * string) list =
+    let rec work (gr : IMcuGroup) : (int * string) list =
+        let subs =
+            gr.SubGroups
+            |> List.map work
+            |> List.concat
+        gr.LcStrings @ subs
+    work gr
+    |> List.sortBy fst
 
 // Vector math
 /// Create a new Vec3.

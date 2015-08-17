@@ -12,6 +12,7 @@
       @"..\McuUtil.fs"
       @"..\McuFactory.fs"
       @"..\NumericalIdentifiers.fs"
+      @"..\Localization.fs"
       @"..\Unification.fs"
       @"..\Parsing.fs"
       @"..\AutoSchema.fs"

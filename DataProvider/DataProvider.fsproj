@@ -70,6 +70,7 @@
     <Compile Include="McuUtil.fs" />
     <Compile Include="McuFactory.fs" />
     <Compile Include="NumericalIdentifiers.fs" />
+    <Compile Include="Localization.fs" />
     <Compile Include="Unification.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="AutoSchema.fs" />
