@@ -51,7 +51,6 @@ type SubtitleLCData =
 /// </summary>
 type McuBase =
     abstract Index : int with get, set
-    abstract Name : string with get, set
     abstract Pos : Vec3
     abstract Ori : Vec3
     abstract IconLC : IconLCData option
@@ -63,10 +62,18 @@ type McuBase =
     abstract AsString : unit -> string
 
 /// <summary>
+/// Interface of icons.
+/// </summary>
+type McuIcon =
+    inherit McuBase
+    abstract Targets : int list with get, set
+
+/// <summary>
 /// Interface of commands (timers, proximity triggers...)
 /// </summary>
 type McuCommand =
     inherit McuBase
+    abstract Name : string with get, set
     abstract Objects : int list with get, set
     abstract Targets : int list with get, set
 
@@ -166,6 +173,7 @@ type EventConnection =
 /// </summary>
 type McuComplex =
     inherit McuBase
+    abstract Name : string with get, set
     abstract OnEvents : EventConnection list with get, set
 
 /// <summary>
@@ -203,6 +211,7 @@ type ReportConnection =
 /// </summary>
 type McuEntity =
     inherit McuCommand
+    abstract Name : string with get, set
     abstract MisObjID : int with get, set
     abstract OnEvents : EventConnection list with get, set
     abstract OnReports : ReportConnection list with get, set
@@ -216,6 +225,8 @@ type HasEntity =
     /// Get or set the link to the entity. Set to 0 it lacks an entity.
     /// </summary>
     abstract LinkTrId : int with get, set
+    abstract Name : string with get, set
+
 
 /// <summary>
 /// Substitute occurrences of numerical ids in an MCU.
@@ -224,6 +235,10 @@ type HasEntity =
 /// <param name="mcu">The MCU whose ids are changed. Instance is mutated.</param>
 let substId (getNewId : int -> int) (mcu : McuBase) =
     mcu.Index <- getNewId mcu.Index
+    match mcu with
+    | :? McuIcon as icon ->
+        icon.Targets <- icon.Targets |> List.map getNewId
+    | _ -> ()
     match mcu with
     | :? McuCommand as cmd ->
         cmd.Objects <- cmd.Objects |> List.map getNewId

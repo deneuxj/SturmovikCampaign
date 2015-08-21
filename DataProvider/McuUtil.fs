@@ -3,35 +3,29 @@
 open SturmovikMission.DataProvider.Mcu
 open System
 
-/// Get an Mcu from a list by its name.
-let getByName (name : string) (mcus : #McuBase list) : McuBase =
-    mcus
-    |> List.find (fun x -> x.Name = name)
-    |> fun x -> upcast x
-
 /// Get an entity by its name.
-let getEntityByName name mcus =
+let getEntityByName (name : string) (mcus : #McuBase list) =
     mcus
-    |> getByName name
-    :?> McuEntity
+    |> Seq.choose (fun x -> match x :> McuBase with :? McuEntity as entity -> Some entity | _ -> None)
+    |> Seq.find (fun x -> x.Name = name)
 
-/// Get an entity owner by its name.
-let getHasEntityByName name mcus =
+/// Get an entity holder by its name.
+let getHasEntityByName (name : string) (mcus : #McuBase list) =
     mcus
-    |> getByName name
-    :?> HasEntity
+    |> Seq.choose (fun x -> match x :> McuBase with :? HasEntity as vehicle -> Some vehicle | _ -> None)
+    |> Seq.find (fun x -> x.Name = name)
 
 /// Get a command by its name.
-let getCommandByName name mcus =
+let getCommandByName (name : string) (mcus : #McuBase list) =
     mcus
-    |> getByName name
-    :?> McuCommand
+    |> Seq.choose (fun x -> match x :> McuBase with :? McuCommand as cmd -> Some cmd | _ -> None)
+    |> Seq.find (fun x -> x.Name = name)
 
 /// Get a complex trigger by its name.
-let getComplexTriggerByName name mcus =
+let getComplexTriggerByName (name : string) (mcus : #McuBase list) =
     mcus
-    |> getByName name
-    :?> McuComplex
+    |> Seq.choose (fun x -> match x :> McuBase with :? McuComplex as complex -> Some complex | _ -> None)
+    |> Seq.find (fun x -> x.Name = name)
 
 /// Get an Mcu from a list by its index.
 let getByIndex (idx : int) (mcus : #McuBase list) : McuBase =
@@ -50,6 +44,12 @@ let getHasEntityByIndex idx mcus =
     mcus
     |> getByIndex idx
     :?> HasEntity
+
+/// Get an icon by its index.
+let getIconByIndex idx mcus =
+    mcus
+    |> getByIndex idx
+    :?> McuIcon
 
 /// Get a command by its index.
 let getCommandByIndex idx mcus =

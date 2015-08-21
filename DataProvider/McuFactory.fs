@@ -27,8 +27,7 @@ let private hasField (fields) (fieldName : string, fieldTyp : ValueType) =
     | None -> false
 
 let private requiredForBase =
-    [ ("Index", ValueType.Integer)
-      ("Name", ValueType.String)
+    [ ("Index", ValueType.Integer)      
       ("XPos", ValueType.Float)
       ("YPos", ValueType.Float)
       ("ZPos", ValueType.Float)
@@ -252,16 +251,31 @@ let private mkAsBase (typeName : string) (state : (string * Value) list ref) ico
                 and set idx =
                     state := !state |> setField ("Index", Value.Integer idx)
 
-            member this.Name
-                with get() =
-                    !state |> getStringField "Name"
-                and set name =
-                    state := !state |> setField ("Name", Value.String name)
-
             member this.IconLC = iconImpl
 
             member this.SubtitleLC = subtitleImpl
     }
+
+let tryMkAsBase (typeName : string, typ : ValueType) =
+    match typ with
+    | ValueType.Composite fields ->
+        let required = requiredForBase
+        let hasItAll =
+            required
+            |> List.forall (hasField fields)
+        if hasItAll then
+            let typeFields = fields
+            function
+            | Value.Composite fields ->                
+                let state = ref fields
+                let iconLC, subtitleLC = mkLCData typeFields state
+                mkAsBase typeName state iconLC subtitleLC
+            | _ -> invalidArg "value" "Not a composite"
+            |> Some
+        else
+            None
+    | _ ->
+        None
 
 let private mkAsComplex (typeName : string) (state : (string * Value) list ref) =
     let baseImpl = mkAsBase typeName state None None
@@ -294,6 +308,11 @@ let private mkAsComplex (typeName : string) (state : (string * Value) list ref) 
                         |> Value.Composite
                     state :=
                         !state |> setField ("OnEvents", evs)
+            member this.Name
+                with get() =
+                    !state |> getStringField "Name"
+                and set name =
+                    state := !state |> setField ("Name", Value.String name)
             
         interface McuBase with
             member this.AsString() = baseImpl.AsString()                        
@@ -302,9 +321,6 @@ let private mkAsComplex (typeName : string) (state : (string * Value) list ref) 
             member this.Index
                 with get() = baseImpl.Index
                 and set idx = baseImpl.Index <- idx
-            member this.Name
-                with get() = baseImpl.Name
-                and set name = baseImpl.Name <- name
             member this.IconLC = baseImpl.IconLC
             member this.SubtitleLC = baseImpl.SubtitleLC
     }
@@ -322,6 +338,52 @@ let tryMkAsComplex (typeName : string, typ : ValueType) =
     | _ ->
         None
 
+
+let private mkAsIcon (typeName : string) (state : (string * Value) list ref) iconImpl subtitleImpl =
+    let baseImpl = mkAsBase typeName state iconImpl subtitleImpl
+    {
+        new McuIcon with
+            member this.Targets
+                with get() =
+                    !state |> getIntVecField "Targets"
+                and set xs =
+                    state := !state |> setField ("Targets", Value.IntVector xs)
+                
+        interface McuBase with
+            member this.AsString() = baseImpl.AsString()                        
+            member this.Ori = baseImpl.Ori
+            member this.Pos = baseImpl.Pos
+            member this.Index
+                with get() = baseImpl.Index
+                and set idx = baseImpl.Index <- idx
+            member this.IconLC = baseImpl.IconLC
+            member this.SubtitleLC = baseImpl.SubtitleLC
+    }
+
+
+let tryMkAsIcon (typeName : string, typ : ValueType) =
+    match typ with
+    | ValueType.Composite fields ->
+        let required =
+            [ ("Targets", ValueType.IntVector) ] @ requiredForBase
+        let hasItAll =
+            required
+            |> List.forall (hasField fields)
+        if hasItAll then
+            let typeFields = fields
+            function
+            | Value.Composite fields ->                
+                let state = ref fields
+                let iconLC, subtitleLC = mkLCData typeFields state
+                mkAsIcon typeName state iconLC subtitleLC
+            | _ -> invalidArg "value" "Not a composite"
+            |> Some
+        else
+            None
+    | _ ->
+        None
+
+
 let private mkAsCommand (typeName : string) (state : (string * Value) list ref) iconImpl subtitleImpl =
     let baseImpl = mkAsBase typeName state iconImpl subtitleImpl
     {
@@ -337,6 +399,13 @@ let private mkAsCommand (typeName : string) (state : (string * Value) list ref) 
                     !state |> getIntVecField "Targets"
                 and set xs =
                     state := !state |> setField ("Targets", Value.IntVector xs)
+
+            member this.Name
+                with get() =
+                    !state |> getStringField "Name"
+                and set name =
+                    state := !state |> setField ("Name", Value.String name)
+
                 
         interface McuBase with
             member this.AsString() = baseImpl.AsString()                        
@@ -345,9 +414,6 @@ let private mkAsCommand (typeName : string) (state : (string * Value) list ref) 
             member this.Index
                 with get() = baseImpl.Index
                 and set idx = baseImpl.Index <- idx
-            member this.Name
-                with get() = baseImpl.Name
-                and set name = baseImpl.Name <- name
             member this.IconLC = baseImpl.IconLC
             member this.SubtitleLC = baseImpl.SubtitleLC
     }
@@ -358,7 +424,8 @@ let tryMkAsCommand (typeName : string, typ : ValueType) =
     | ValueType.Composite fields ->
         let required =
             [ ("Objects", ValueType.IntVector)
-              ("Targets", ValueType.IntVector) ] @ requiredForBase
+              ("Targets", ValueType.IntVector)
+              ("Name", ValueType.String) ] @ requiredForBase
         let hasItAll =
             required
             |> List.forall (hasField fields)
@@ -410,6 +477,13 @@ let private mkAsEntity typeName (state : (string * Value) list ref) iconLC subti
                     state :=
                         !state |> setField ("OnEvents", evs)
 
+            member this.Name
+                with get() =
+                    !state |> getStringField "Name"
+                and set name =
+                    state := !state |> setField ("Name", Value.String name)
+
+
             member this.OnReports
                 with get() =
                     let events =
@@ -452,6 +526,9 @@ let private mkAsEntity typeName (state : (string * Value) list ref) iconLC subti
             member this.Targets
                 with get() = cmd.Targets
                 and set(x) = cmd.Targets <- x
+            member this.Name
+                with get() = cmd.Name
+                and set name = cmd.Name <- name
         
         interface McuBase with
             member this.AsString() = baseImpl.AsString()                        
@@ -460,9 +537,6 @@ let private mkAsEntity typeName (state : (string * Value) list ref) iconLC subti
             member this.Index
                 with get() = baseImpl.Index
                 and set idx = baseImpl.Index <- idx
-            member this.Name
-                with get() = baseImpl.Name
-                and set name = baseImpl.Name <- name
             member this.IconLC = iconLC
             member this.SubtitleLC = subtitleLC
     }
@@ -474,7 +548,8 @@ let tryMkAsEntity (typeName : string, typ : ValueType) =
         let required =
             [ ("MisObjID", ValueType.Integer)
               ("Objects", ValueType.IntVector)
-              ("Targets", ValueType.IntVector) ] @ requiredForBase
+              ("Targets", ValueType.IntVector)
+              ("Name", ValueType.String) ] @ requiredForBase
         let hasRequired =
             required
             |> List.forall (hasField fields)
@@ -521,6 +596,12 @@ let private mkAsHasEntity typeName (state : (string * Value) list ref) iconLC su
                     !state |> getIntField "LinkTrId"
                 and set idx =
                     state := !state |> setField ("LinkTrId", Value.Integer idx)
+
+            member this.Name
+                with get() =
+                    !state |> getStringField "Name"
+                and set name =
+                    state := !state |> setField ("Name", Value.String name)
                 
         interface McuBase with
             member this.AsString() = baseImpl.AsString()                        
@@ -529,9 +610,6 @@ let private mkAsHasEntity typeName (state : (string * Value) list ref) iconLC su
             member this.Index
                 with get() = baseImpl.Index
                 and set idx = baseImpl.Index <- idx
-            member this.Name
-                with get() = baseImpl.Name
-                and set name = baseImpl.Name <- name
             member this.IconLC = iconLC
             member this.SubtitleLC = subtitleLC
     }
@@ -541,7 +619,8 @@ let tryMkAsHasEntity (typeName : string, typ : ValueType) =
     match typ with
     | ValueType.Composite fields ->
         let required =
-            [ ("LinkTrId", ValueType.Integer) ] @ requiredForBase
+            [ ("LinkTrId", ValueType.Integer)
+              ("Name", ValueType.String) ] @ requiredForBase
         let hasItAll =
             required
             |> List.forall (hasField fields)
@@ -577,6 +656,8 @@ let makers =
         upcastTryMaker tryMkAsEntity
         upcastTryMaker tryMkAsHasEntity
         upcastTryMaker tryMkAsCommand
+        upcastTryMaker tryMkAsIcon
+        upcastTryMaker tryMkAsBase
     ]
 
 let tryMakeMcu valueType =
