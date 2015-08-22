@@ -190,6 +190,19 @@ let parseFloat =
     | ReInt (x, s) -> (Value.Float(float x), s)
     | s -> parseError("Not a float", s)
 
+let parseFloatPair s =
+    let x, s = parseFloat s
+    match s with
+    | ReLit "," s ->
+        let y, s = parseFloat s
+        match x, y with
+        | Value.Float x, Value.Float y ->
+            (Value.FloatPair(x, y), s)
+        | _ ->
+            failwith "parseFloat did not return a float."
+    | s ->
+        parseError("Not a ','", s)
+
 let parseDate =
     function
     | ReDate(d, s) -> (d, s)
@@ -231,6 +244,7 @@ and makeParser (format : ValueType) : ParserFun =
     | ValueType.Integer -> parseInteger
     | ValueType.String -> parseString
     | ValueType.Float -> parseFloat
+    | ValueType.FloatPair -> parseFloatPair
     | ValueType.Composite content ->
         let typeMap = content
         let rec parse (s : Stream) =

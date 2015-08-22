@@ -245,6 +245,25 @@ and tryParseAsFloat =
     | ReFloat(n, s) -> Some(ValueType.Float, s)
     | _ -> None
 
+and tryParseAsFloatPair s =
+    let tryParseAsFloatOrInt s =
+        match tryParseAsFloat s with
+        | Some (_, s) -> Some s
+        | None ->
+            match tryParseAsInt s with
+            | Some (_, s) -> Some s
+            | None -> None
+    match tryParseAsFloatOrInt s with
+    | Some s ->
+        match s with
+        | ReLit "," s ->
+            match tryParseAsFloatOrInt s with
+            | Some s ->
+                Some(ValueType.FloatPair, s)
+            | _ -> None
+        | _ -> None
+    | _ -> None
+
 and tryParseAsDate =
     function
     | ReDate(n, s) -> Some(ValueType.Date, s)
@@ -253,6 +272,7 @@ and tryParseAsDate =
 and groundParserFuns =
     [
         wrap "BOOL" tryParseAsBool
+        wrap "FLOAT_PAIR" tryParseAsFloatPair
         wrap "INT" tryParseAsInt
         wrap "DATE" tryParseAsDate
         wrap "FLOAT" tryParseAsFloat
@@ -272,6 +292,7 @@ and groundExtParserFuns =
         wrap "TRIP" tryParseAsTriplet
         wrap "PAIR" tryParseAsPair
         wrap "BOOL" tryParseAsBool
+        wrap "FLOAT_PAIR" tryParseAsFloatPair
         wrap "INT" tryParseAsInt
         wrap "DATE" tryParseAsDate
         wrap "FLOAT" tryParseAsFloat
@@ -308,6 +329,7 @@ and allParserFuns =
         wrap "STR" tryParseAsString
         wrap "DATE" tryParseAsDate
         wrap "BOOL" tryParseAsBool
+        wrap "FLOAT_PAIR" tryParseAsFloatPair
         wrap "INT" tryParseAsInt
         wrap "FLOAT" tryParseAsFloat
         wrap "VEC" tryParseAsVector

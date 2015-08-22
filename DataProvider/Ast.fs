@@ -60,6 +60,7 @@ type ValueType =
     | Pair of ValueType * ValueType
     | Triplet of ValueType * ValueType * ValueType
     | Date
+    | FloatPair
 
 let private valueTypeToExprCache = new Dictionary<ValueType, Quotations.Expr<ValueType>>(HashIdentity.Structural)
 
@@ -70,11 +71,12 @@ let rec buildExprFromValueType expr =
     | String -> <@ String @>
     | Float  -> <@ Float @>
     | Date -> <@ Date @>
-    | IntVector -> <@ IntVector @>            
+    | IntVector -> <@ IntVector @>
     | Mapping vt -> <@ Mapping %(getExprOfValueType vt) @>
     | Set vt -> <@ Set %(getExprOfValueType vt) @>
     | Pair (p1, p2) -> <@ Pair(%(getExprOfValueType p1), %(getExprOfValueType p2)) @>
     | Triplet (p1, p2, p3) -> <@ Triplet(%(getExprOfValueType p1), %(getExprOfValueType p2), %(getExprOfValueType p3)) @>
+    | FloatPair -> <@ FloatPair @>
     | Composite defs ->
         let defs =
             defs
@@ -96,6 +98,7 @@ type Value =
     | Integer of int
     | String of string
     | Float of float
+    | FloatPair of float * float
     | Composite of (string * Value) list
     | Mapping of (int * Value) list
     | Set of Value list
@@ -120,6 +123,10 @@ with
         match this with
         | Float x -> x
         | _ -> invalidOp "Not a Float"
+    member this.GetFloatPair() =
+        match this with
+        | FloatPair(x, y) -> x, y
+        | _ -> invalidOp "Not a FloatPair"
     member this.GetIntVector() =
         match this with
         | IntVector xs -> xs
@@ -224,6 +231,7 @@ with
         | Boolean x -> <@ Boolean x @>
         | Integer x -> <@ Integer x @>
         | Float x -> <@ Float x @>
+        | FloatPair(x, y) -> <@ FloatPair(x, y) @>
         | String x -> <@ String x @>
         | Date(x, y, z) -> <@ Date(x, y, z) @>
         | IntVector x ->
@@ -256,6 +264,7 @@ let rec dump (value : Value) : string =
     | Integer i -> sprintf "%d" i
     | String s -> sprintf "\"%s\"" s
     | Float f -> sprintf "%f" f
+    | FloatPair(x, y) -> sprintf "%f, %f" x y
     | Composite content ->
         seq {
             yield sprintf "{\n"

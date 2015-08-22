@@ -214,6 +214,12 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             ptyp.AddMember(pdb.NewProperty("Value", typeof<float>, fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>))
             ptyp.AddMember(pdb.NewConstructor([("Value", typeof<float>)], fun [value] -> <@@ Ast.Value.Float (%%value : float) @@>))
             ptyp
+        | Ast.ValueType.FloatPair ->
+            let ptyp =
+                new ProvidedTypeDefinition(defaultArg name "FloatPair", Some (typeof<Ast.Value>))
+            ptyp.AddMember(pdb.NewProperty("Value", typeof<float * float>, fun this -> <@@ (%%this : Ast.Value).GetFloatPair() @@>))
+            ptyp.AddMember(pdb.NewConstructor([("Value", typeof<float * float>)], fun [value] -> <@@ let x, y = (%%value : float * float) in Ast.Value.FloatPair(x, y) @@>))
+            ptyp
         | Ast.ValueType.Integer ->
             let ptyp =
                 new ProvidedTypeDefinition("Integer", Some (typeof<Ast.Value>))
