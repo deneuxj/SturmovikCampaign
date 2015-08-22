@@ -21,7 +21,7 @@ Options
   CloudHeight = 200;
   PrecLevel = 2;
   PrecType = 2;
-  CloudConfig = "00_clear_03\sky.ini";
+  CloudConfig = "winter\00_clear_00\sky.ini";
   SeaState = 0;
   Turbulence = 0.2;
   TempPressLevel = 10;
@@ -278,14 +278,14 @@ MCU_CMD_Damage
   Name = "command Damage";
   Desc = "";
   Targets = [];
-  Objects = [];
+  Objects = [5];
   XPos = 26106.887;
   YPos = 123.791;
   ZPos = 24326.991;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Damage = 0;
+  Damage = 2;
   Type = 1;
 }
 
@@ -730,6 +730,8 @@ MCU_CheckZone
   Zone = 100;
   Cylinder = 1;
   Closer = 1;
+  PlaneCoalitions = [1, 2];
+  VehicleCoalitions = [0, 2];
 }
 
 
@@ -2000,6 +2002,52 @@ MCU_TR_CameraOperator
   CameraType = 0;
   Config = "";
   Coalitions = [1];
+}
+
+
+
+MCU_CMD_Damage
+{
+  Index = 101;
+  Name = "command Damage";
+  Desc = "";
+  Targets = [];
+  Objects = [5];
+  XPos = 26043.075;
+  YPos = 123.791;
+  ZPos = 24327.937;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Damage = 1;
+  Type = 0;
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 102;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 23991.051;
+  YPos = 146.463;
+  ZPos = 25305.671;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 201;
+  Boundary
+  {
+    22991.1, 24305.7;
+    24246.7, 24262.7;
+    24991.1, 25305.7;
+    22991.1, 26305.7;
+    22549.2, 25295.4;
+  }
 }
 
 
