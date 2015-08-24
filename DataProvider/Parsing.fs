@@ -360,7 +360,12 @@ let parseFile (getParser : string -> ParserFun) (s : Stream) =
             let subData, s = parseGroup s defaultGroup
             parseGroup s { data with Data = (Group subData) :: data.Data }
         | ReId(name, ((ReLit "{" _) as s)) ->
-            let parser = getParser name
+            let parser =
+                try
+                    getParser name
+                with
+                | exc ->
+                    failwithf "Failed to get parser for %s" name
             let subData, s = parser.Run(s)
             parseGroup s { data with Data = (Leaf(name, subData)) :: data.Data }
         | s ->
