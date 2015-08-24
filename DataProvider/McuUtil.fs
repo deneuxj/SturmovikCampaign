@@ -94,25 +94,30 @@ let moveEntitiesAfterOwners (mcus : McuBase list) : McuBase list =
     // Owners seen so far
     let owners = HashSet<int>()
 
-    [
-        for mcu in mcus do
-            match mcu with
-            | :? McuEntity as entity ->
-                if owners.Contains(entity.MisObjID) then
-                    yield upcast entity
-                else
-                    entities.Add(entity.Index, entity)
-            | :? HasEntity as owner ->
-                match entities.TryGetValue(owner.LinkTrId) with
-                | true, entity ->
-                    yield upcast owner
-                    yield upcast entity
-                | false, _ ->
-                    yield upcast owner
-                    owners.Add(owner.Index) |> ignore
-            | _ ->
-                yield mcu
-    ]
+    try
+        [
+            for mcu in mcus do
+                match mcu with
+                | :? McuEntity as entity ->
+                    if owners.Contains(entity.MisObjID) then
+                        yield upcast entity
+                    else
+                        entities.Add(entity.Index, entity)
+                | :? HasEntity as owner ->
+                    match entities.TryGetValue(owner.LinkTrId) with
+                    | true, entity ->
+                        entities.Remove(owner.LinkTrId) |> ignore
+                        yield upcast owner
+                        yield upcast entity
+                    | false, _ ->
+                        yield upcast owner
+                        owners.Add(owner.Index) |> ignore
+                | _ ->
+                    yield mcu
+        ]
+    finally
+        if entities.Count > 0 then
+            failwith "Entities left without owners"
 
 /// Get the string representation of the content of a group and its subgroups.
 let asString (gr : IMcuGroup) : string =
