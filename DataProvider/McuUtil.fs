@@ -2,6 +2,7 @@
 
 open SturmovikMission.DataProvider.Mcu
 open System
+open System.Collections.Generic
 
 /// Get an entity by its name.
 let getEntityByName (name : string) (mcus : #McuBase list) =
@@ -86,11 +87,43 @@ let groupFromList mcus =
         member this.LcStrings = []
     }
 
+/// The IL2 mission editor requires entities to come after their owners.
+let moveEntitiesAfterOwners (mcus : McuBase list) : McuBase list =
+    // Keep track of entities that come before their owner
+    let entities = Dictionary<int, McuEntity>()
+    // Owners seen so far
+    let owners = HashSet<int>()
+
+    [
+        for mcu in mcus do
+            match mcu with
+            | :? McuEntity as entity ->
+                if owners.Contains(entity.MisObjID) then
+                    yield upcast entity
+                else
+                    entities.Add(entity.Index, entity)
+            | :? HasEntity as owner ->
+                match entities.TryGetValue(owner.LinkTrId) with
+                | true, entity ->
+                    yield upcast owner
+                    yield upcast entity
+                | false, _ ->
+                    yield upcast owner
+                    owners.Add(owner.Index) |> ignore
+            | _ ->
+                yield mcu
+    ]
+
 /// Get the string representation of the content of a group and its subgroups.
-let rec asString (gr : IMcuGroup) : string =
-    let subStrings = gr.SubGroups |> List.map asString
-    let content = gr.Content |> List.map (fun mcu -> mcu.AsString())
-    String.concat "\n" (List.append subStrings content)
+let asString (gr : IMcuGroup) : string =
+    let content =
+        deepContentOf gr
+        |> List.sortBy (fun mcu -> mcu.Index)
+        |> moveEntitiesAfterOwners
+    let strings =
+        content
+        |> List.map (fun mcu -> mcu.AsString())    
+    String.concat "\n" strings
 
 /// <summary>
 /// Return all the LcStrings from a group and its subgroups, sorted by numerical identifier.
