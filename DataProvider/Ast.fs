@@ -271,6 +271,7 @@ let rec dump (value : Value) : string =
             for (k, v) in content do
                 match v with
                 | Set _
+                | Mapping _
                 | Composite _ ->
                     yield sprintf "%s\n%s" k (dump v)
                 | _ ->
