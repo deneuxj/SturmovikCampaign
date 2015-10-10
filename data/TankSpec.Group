@@ -1,0 +1,308 @@
+Vehicle
+{
+  Name = "Vehicle";
+  Index = 2;
+  LinkTrId = 3;
+  XPos = 31477.699;
+  YPos = 130.995;
+  ZPos = 23957.348;
+  XOri = 0.82;
+  YOri = 33.37;
+  ZOri = 2.50;
+  Script = "LuaScripts\WorldObjects\vehicles\t34-76stz.txt";
+  Model = "graphics\vehicles\t34-76stz\t34-76stz.mgm";
+  Desc = "";
+  Country = 101;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+MCU_TR_Entity
+{
+  Index = 3;
+  Name = "Vehicle entity";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 31477.699;
+  YPos = 131.195;
+  ZPos = 23957.348;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  MisObjID = 2;
+}
+
+MCU_Waypoint
+{
+  Index = 5;
+  Name = "Start";
+  Desc = "";
+  Targets = [6];
+  Objects = [3];
+  XPos = 31443.050;
+  YPos = 161.880;
+  ZPos = 24349.701;
+  XOri = 0.00;
+  YOri = 103.09;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 6;
+  Name = "CombatZone";
+  Desc = "";
+  Targets = [8];
+  Objects = [3];
+  XPos = 31972.934;
+  YPos = 161.880;
+  ZPos = 28967.544;
+  XOri = 0.00;
+  YOri = 66.92;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 8;
+  Name = "Spread";
+  Desc = "";
+  Targets = [10];
+  Objects = [3];
+  XPos = 32219.306;
+  YPos = 161.880;
+  ZPos = 29354.605;
+  XOri = 0.00;
+  YOri = 41.75;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 10;
+  Name = "Tighten";
+  Desc = "";
+  Targets = [12];
+  Objects = [3];
+  XPos = 32894.646;
+  YPos = 161.880;
+  ZPos = 29991.967;
+  XOri = 0.00;
+  YOri = 65.37;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 12;
+  Name = "OnRoad";
+  Desc = "";
+  Targets = [14];
+  Objects = [3];
+  XPos = 33263.794;
+  YPos = 161.880;
+  ZPos = 30164.220;
+  XOri = 0.00;
+  YOri = 353.23;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 14;
+  Name = "Destination";
+  Desc = "";
+  Targets = [];
+  Objects = [3];
+  XPos = 33934.245;
+  YPos = 161.880;
+  ZPos = 29955.145;
+  XOri = 0.00;
+  YOri = 335.35;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+Vehicle
+{
+  Name = "Vehicle";
+  Index = 16;
+  LinkTrId = 17;
+  XPos = 35927.853;
+  YPos = 138.284;
+  ZPos = 31197.159;
+  XOri = 0.00;
+  YOri = 287.14;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\pziii-l.txt";
+  Model = "graphics\vehicles\pziii-l\pziii-l.mgm";
+  Desc = "";
+  Country = 201;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+MCU_TR_Entity
+{
+  Index = 17;
+  Name = "Vehicle entity";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 35927.853;
+  YPos = 138.484;
+  ZPos = 31197.159;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  MisObjID = 16;
+}
+
+MCU_Waypoint
+{
+  Index = 19;
+  Name = "Start";
+  Desc = "";
+  Targets = [20];
+  Objects = [17];
+  XPos = 35923.391;
+  YPos = 138.293;
+  ZPos = 31013.840;
+  XOri = 0.00;
+  YOri = 201.71;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 20;
+  Name = "CombatZone";
+  Desc = "";
+  Targets = [22];
+  Objects = [17];
+  XPos = 33450.868;
+  YPos = 138.293;
+  ZPos = 30121.445;
+  XOri = 0.00;
+  YOri = 201.71;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 22;
+  Name = "Spread";
+  Desc = "";
+  Targets = [24];
+  Objects = [17];
+  XPos = 33124.877;
+  YPos = 138.293;
+  ZPos = 29886.806;
+  XOri = 0.00;
+  YOri = 201.71;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 24;
+  Name = "Tighten";
+  Desc = "";
+  Targets = [26];
+  Objects = [17];
+  XPos = 32393.471;
+  YPos = 138.293;
+  ZPos = 29199.831;
+  XOri = 0.00;
+  YOri = 201.71;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 26;
+  Name = "OnRoad";
+  Desc = "";
+  Targets = [28];
+  Objects = [17];
+  XPos = 32072.519;
+  YPos = 138.293;
+  ZPos = 28705.416;
+  XOri = 0.00;
+  YOri = 286.44;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
+MCU_Waypoint
+{
+  Index = 28;
+  Name = "Destination";
+  Desc = "";
+  Targets = [];
+  Objects = [17];
+  XPos = 31835.593;
+  YPos = 138.293;
+  ZPos = 27573.837;
+  XOri = 0.00;
+  YOri = 257.22;
+  ZOri = 0.00;
+  Area = 20;
+  Speed = 50;
+  Priority = 1;
+}
+
