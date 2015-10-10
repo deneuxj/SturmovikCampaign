@@ -870,6 +870,8 @@ MCU_Proximity
   ZOri = 0.00;
   Distance = 50;
   Closer = 1;
+  PlaneCoalitions = [0, 1, 2];
+  VehicleCoalitions = [0, 1, 2];
 }
 
 
