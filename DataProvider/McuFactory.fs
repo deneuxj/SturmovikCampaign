@@ -602,9 +602,21 @@ let private mkAsHasEntity typeName (state : (string * Value) list ref) iconLC su
                     !state |> getStringField "Name"
                 and set name =
                     state := !state |> setField ("Name", Value.String name)
-                
+
+            member this.Script
+                with get() =
+                    !state |> getStringField "Script"
+                and set script =
+                    state := !state |> setField ("Script", Value.String script)
+
+            member this.Model
+                with get() =
+                    !state |> getStringField "Model"
+                and set model =
+                    state := !state |> setField ("Model", Value.String model)
+
         interface McuBase with
-            member this.AsString() = baseImpl.AsString()                        
+            member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori
             member this.Pos = baseImpl.Pos
             member this.Index

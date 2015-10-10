@@ -226,7 +226,8 @@ type HasEntity =
     /// </summary>
     abstract LinkTrId : int with get, set
     abstract Name : string with get, set
-
+    abstract Model : string with get, set
+    abstract Script : string with get, set
 
 /// <summary>
 /// Substitute occurrences of numerical ids in an MCU.
