@@ -615,6 +615,12 @@ let private mkAsHasEntity typeName (state : (string * Value) list ref) iconLC su
                 and set model =
                     state := !state |> setField ("Model", Value.String model)
 
+            member this.Country
+                with get() =
+                    !state |> getIntField "Country"
+                and set country =
+                    state := !state |> setField ("Country", Value.Integer country)
+
         interface McuBase with
             member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori

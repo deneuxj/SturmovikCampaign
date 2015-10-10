@@ -228,6 +228,7 @@ type HasEntity =
     abstract Name : string with get, set
     abstract Model : string with get, set
     abstract Script : string with get, set
+    abstract Country : int with get, set
 
 /// <summary>
 /// Substitute occurrences of numerical ids in an MCU.
