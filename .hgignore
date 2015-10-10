@@ -3,8 +3,12 @@ syntax: regexp
 .*/bin/Debug/.*
 .*/obj/Debug/.*
 devenv.*[.]vspx
+CreateTankColumn/bin/
 syntax: glob
 *.userprefs
 .nuget/
 packages/
 devenv.psess
+CreateTankColumn/obj/
+DataProvider/bin/
+DataProvider/obj/
