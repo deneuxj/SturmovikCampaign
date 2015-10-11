@@ -69,7 +69,7 @@ type McuIcon =
     abstract Targets : int list with get, set
 
 /// <summary>
-/// Interface of commands (timers, proximity triggers...)
+/// Interface of commands (timers, counters...).
 /// </summary>
 type McuCommand =
     inherit McuBase
@@ -77,6 +77,14 @@ type McuCommand =
     abstract Objects : int list with get, set
     abstract Targets : int list with get, set
 
+/// <summary>
+/// Interface of proximity and check zone triggers.
+/// </summary>
+type McuProximity =
+    inherit McuCommand
+    abstract PlaneCoalitions : int list with get, set
+    abstract VehicleCoalitions : int list with get, set
+    
 /// <summary>
 /// Event codes, to be used in EventConnection.Type
 /// </summary>

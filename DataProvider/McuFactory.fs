@@ -432,13 +432,70 @@ let tryMkAsCommand (typeName : string, typ : ValueType) =
         if hasItAll then
             let typeFields = fields
             function
-            | Value.Composite fields ->                
+            | Value.Composite fields ->
                 let state = ref fields
                 let iconLC, subtitleLC = mkLCData typeFields state
                 mkAsCommand typeName state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
+            None
+    | _ ->
+        None
+
+
+let tryMkAsProximity (typeName : string, typ : ValueType) =
+    match typeName with
+    | "MCU_Proximity"
+    | "MCU_CheckZone" ->
+        match typ with
+        | ValueType.Composite typeFields ->
+            match tryMkAsCommand(typeName, typ) with
+            | Some _ ->
+                function
+                | Value.Composite fields as value ->
+                    let state = ref fields
+                    let iconLC, subtitleLC = mkLCData typeFields state
+                    let baseImpl = mkAsCommand typeName state iconLC subtitleLC
+                    {
+                        new McuProximity with
+                            member this.PlaneCoalitions
+                                with get() =
+                                    !state |> getIntVecField "PlaneCoalitions"
+                                and set(coalitions) =
+                                    state := !state |> setField("PlaneCoalitions", IntVector coalitions)
+
+                            member this.VehicleCoalitions
+                                with get() =
+                                    !state |> getIntVecField "VehicleCoalitions"
+                                and set(coalitions) =
+                                    state := !state |> setField("VehicleCoalitions", IntVector coalitions)
+
+                        interface McuCommand with
+                            member this.AsString() = baseImpl.AsString()                        
+                            member this.Ori = baseImpl.Ori
+                            member this.Pos = baseImpl.Pos
+                            member this.Index
+                                with get() = baseImpl.Index
+                                and set idx = baseImpl.Index <- idx
+                            member this.IconLC = baseImpl.IconLC
+                            member this.SubtitleLC = baseImpl.SubtitleLC
+                            member this.Objects
+                                with get() = baseImpl.Objects
+                                and set xs = baseImpl.Objects <- xs
+                            member this.Targets
+                                with get() = baseImpl.Targets
+                                and set xs = baseImpl.Targets <- xs
+                            member this.Name
+                                with get() = baseImpl.Name
+                                and set name = baseImpl.Name <- name
+                    }
+                | _ ->
+                    invalidArg "value" "Not a composite"
+                |> Some
+            | None ->
+                None
+        | _ ->
             None
     | _ ->
         None
@@ -673,6 +730,7 @@ let makers =
         upcastTryMaker tryMkAsComplex
         upcastTryMaker tryMkAsEntity
         upcastTryMaker tryMkAsHasEntity
+        upcastTryMaker tryMkAsProximity
         upcastTryMaker tryMkAsCommand
         upcastTryMaker tryMkAsIcon
         upcastTryMaker tryMkAsBase
