@@ -529,7 +529,7 @@ with
             ] // Note: init is not included because it is already part of the first platoon.
         }
 
-let version = "0.1"
+let version = "0.2"
 
 type CliOptions =
     { unitSize : int
