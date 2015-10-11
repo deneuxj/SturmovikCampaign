@@ -157,6 +157,13 @@ with
             aa.Model <- @"graphics\vehicles\gaz\gaz-aa-m4-aa.mgm"
             aa.Script <- @"LuaScripts\WorldObjects\vehicles\gaz-aa-m4-aa.txt"
             aa.Country <- russia
+            match getCommandByIndex T.TankPlatoon.EnemyProximity.Index.Value content with
+            | :? McuProximity as proxi ->
+                let axis = 2
+                proxi.PlaneCoalitions <- [axis]
+            | _ ->
+                failwith "Command EnemyProximity is not a proximity trigger"
+
         // Fresh new ids.
         let getLcId = subst content
         // Translate and rotate content of platoon
@@ -501,6 +508,11 @@ with
                     // Result
                     yield! traffic
             ]
+        // Move the API nodes somewhere near the handle, but not all on top of eachother.
+        let logicCenter = newVec3(handle.XPos.Value + 250.0, handle.YPos.Value, handle.ZPos.Value + 200.0)
+        for idx, v in Seq.zip (Seq.initInfinite id) [ init.Pos; shutdown.Pos; someSuccess.Pos; allFailure.Pos ] do
+            vecCopy logicCenter v
+            v.Z <- v.Z + (float idx) * 50.0
         // Result
         { Platoons = List.ofArray platoons
           Init = init
