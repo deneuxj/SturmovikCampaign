@@ -1,4 +1,6 @@
-﻿module AssemblyInfo
+﻿// CreateTankColumn, Copyright (C) 2015 Johann Deneux
+// Licensed under the GNU Public License, see COPYING.txt
+module AssemblyInfo
 
 open System.Reflection
 open System.Runtime.CompilerServices

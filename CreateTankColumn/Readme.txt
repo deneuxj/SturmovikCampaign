@@ -1,4 +1,7 @@
-﻿This is a command-line tool to create tank columns for the game IL-2 Sturmovik: Battle of Stalingrad.
+﻿CreateTankColumn, Copyright (C) 2015 Johann Deneux
+Licensed under the GNU Public License, see COPYING.txt.
+
+This is a command-line tool to create tank columns for the game IL-2 Sturmovik: Battle of Stalingrad.
 
 Tank Column Specification
 -------------------------

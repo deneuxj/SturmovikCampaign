@@ -1,5 +1,5 @@
-﻿// Learn more about F# at http://fsharp.net
-// See the 'F# Tutorial' project for more help.
+﻿// CreateTankColumn, Copyright (C) 2015 Johann Deneux
+// Licensed under the GNU Public License, see COPYING.txt
 
 open System.IO
 
