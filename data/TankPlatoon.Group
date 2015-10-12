@@ -290,7 +290,7 @@ MCU_Timer
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Time = 30;
+  Time = 25;
   Random = 100;
 }
 
@@ -1158,7 +1158,7 @@ MCU_Proximity
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Distance = 1000;
+  Distance = 750;
   Closer = 1;
   PlaneCoalitions = [1];
 }
