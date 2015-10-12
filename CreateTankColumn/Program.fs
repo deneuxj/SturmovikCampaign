@@ -651,8 +651,12 @@ let main argv =
                     |> List.map McuUtil.asString
                     |> String.concat "\n"
                 )
+                0
             with
-            | e -> eprintfn "Failed to write result to file '%s' because '%s'" opts.outputFilename e.Message
+            | e ->
+                eprintfn "Failed to write result to file '%s' because '%s'" opts.outputFilename e.Message
+                1
         with
-        | e -> eprintfn "Failed to create columns because '%s'" e.Message
-        0
+        | e ->
+            eprintfn "Failed to create columns because '%s'" e.Message
+            1
