@@ -1,8 +1,8 @@
 Vehicle
 {
   Name = "Pzr leader";
-  Index = 2;
-  LinkTrId = 3;
+  Index = 142;
+  LinkTrId = 143;
   XPos = 46731.607;
   YPos = 17.795;
   ZPos = -2772.693;
@@ -20,7 +20,7 @@ Vehicle
   AILevel = 2;
   DamageReport = 25;
   DamageThreshold = 1;
-  DeleteAfterDeath = 0;
+  DeleteAfterDeath = 1;
   CoopStart = 0;
   Spotter = -1;
   BeaconChannel = 0;
@@ -29,7 +29,7 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 3;
+  Index = 143;
   Name = "Pzr entity";
   Desc = "";
   Targets = [];
@@ -41,18 +41,13 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 0;
-  MisObjID = 2;
+  MisObjID = 142;
   OnEvents
   {
     OnEvent
     {
       Type = 12;
-      TarId = 5;
-    }
-    OnEvent
-    {
-      Type = 12;
-      TarId = 6;
+      TarId = 145;
     }
   }
 }
@@ -60,8 +55,8 @@ MCU_TR_Entity
 Vehicle
 {
   Name = "Pzr Right";
-  Index = 7;
-  LinkTrId = 8;
+  Index = 147;
+  LinkTrId = 148;
   XPos = 46709.359;
   YPos = 17.795;
   ZPos = -2734.451;
@@ -88,10 +83,10 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 8;
+  Index = 148;
   Name = "Pzr entity";
   Desc = "";
-  Targets = [3];
+  Targets = [143];
   Objects = [];
   XPos = 46709.359;
   YPos = 17.995;
@@ -100,18 +95,13 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 0;
-  MisObjID = 7;
+  MisObjID = 147;
   OnEvents
   {
     OnEvent
     {
       Type = 12;
-      TarId = 10;
-    }
-    OnEvent
-    {
-      Type = 12;
-      TarId = 11;
+      TarId = 150;
     }
   }
 }
@@ -119,8 +109,8 @@ MCU_TR_Entity
 Vehicle
 {
   Name = "AA Escort";
-  Index = 12;
-  LinkTrId = 13;
+  Index = 152;
+  LinkTrId = 153;
   XPos = 46675.739;
   YPos = 17.795;
   ZPos = -2754.707;
@@ -147,10 +137,10 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 13;
+  Index = 153;
   Name = "Vehicle entity";
   Desc = "";
-  Targets = [3];
+  Targets = [143];
   Objects = [];
   XPos = 46675.739;
   YPos = 17.995;
@@ -159,29 +149,24 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 0;
-  MisObjID = 12;
+  MisObjID = 152;
   OnEvents
   {
     OnEvent
     {
       Type = 12;
-      TarId = 15;
-    }
-    OnEvent
-    {
-      Type = 12;
-      TarId = 16;
+      TarId = 155;
     }
   }
 }
 
 MCU_Activate
 {
-  Index = 17;
+  Index = 157;
   Name = "ActivatePlatoon";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46734.037;
   YPos = 78.892;
   ZPos = -2702.914;
@@ -192,10 +177,10 @@ MCU_Activate
 
 MCU_Timer
 {
-  Index = 18;
+  Index = 158;
   Name = "Init";
   Desc = "";
-  Targets = [17,19,20];
+  Targets = [157,159,160];
   Objects = [];
   XPos = 46733.153;
   YPos = 78.325;
@@ -209,10 +194,10 @@ MCU_Timer
 
 MCU_Timer
 {
-  Index = 19;
+  Index = 159;
   Name = "StartMoving";
   Desc = "";
-  Targets = [22,23];
+  Targets = [162,163];
   Objects = [];
   XPos = 46756.558;
   YPos = 78.325;
@@ -226,11 +211,11 @@ MCU_Timer
 
 MCU_CMD_Formation
 {
-  Index = 22;
+  Index = 162;
   Name = "OnRoad";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46757.672;
   YPos = 77.699;
   ZPos = -2703.684;
@@ -243,11 +228,11 @@ FormationDensity = 0;
 
 MCU_CMD_Formation
 {
-  Index = 25;
+  Index = 165;
   Name = "OffRoad";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46781.478;
   YPos = 77.699;
   ZPos = -2702.435;
@@ -260,11 +245,11 @@ FormationDensity = 0;
 
 MCU_CMD_Formation
 {
-  Index = 26;
+  Index = 166;
   Name = "PanicStop";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46738.498;
   YPos = 76.800;
   ZPos = -2813.668;
@@ -277,10 +262,10 @@ FormationDensity = 0;
 
 MCU_Timer
 {
-  Index = 27;
+  Index = 167;
   Name = "StartDefense";
   Desc = "";
-  Targets = [28,29,30,31,32];
+  Targets = [168,169,170,171,172];
   Objects = [];
   XPos = 46738.887;
   YPos = 76.138;
@@ -294,10 +279,10 @@ MCU_Timer
 
 MCU_Timer
 {
-  Index = 28;
+  Index = 168;
   Name = "DefenseLength";
   Desc = "";
-  Targets = [34,35,36];
+  Targets = [174,175,176];
   Objects = [];
   XPos = 46766.083;
   YPos = 76.138;
@@ -311,11 +296,11 @@ MCU_Timer
 
 MCU_CMD_Formation
 {
-  Index = 34;
+  Index = 174;
   Name = "Continue";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46766.919;
   YPos = 76.800;
   ZPos = -2811.439;
@@ -328,10 +313,10 @@ FormationDensity = 0;
 
 MCU_Deactivate
 {
-  Index = 29;
+  Index = 169;
   Name = "Trigger Deactivate";
   Desc = "";
-  Targets = [27];
+  Targets = [167];
   Objects = [];
   XPos = 46738.188;
   YPos = 75.879;
@@ -343,10 +328,10 @@ MCU_Deactivate
 
 MCU_Activate
 {
-  Index = 35;
+  Index = 175;
   Name = "Trigger Activate";
   Desc = "";
-  Targets = [27];
+  Targets = [167];
   Objects = [];
   XPos = 46766.051;
   YPos = 75.075;
@@ -358,10 +343,10 @@ MCU_Activate
 
 MCU_Timer
 {
-  Index = 40;
+  Index = 180;
   Name = "CombatZoneReached";
   Desc = "";
-  Targets = [25,29,41];
+  Targets = [165,169,181];
   Objects = [];
   XPos = 46781.097;
   YPos = 78.108;
@@ -375,7 +360,7 @@ MCU_Timer
 
 MCU_Timer
 {
-  Index = 42;
+  Index = 182;
   Name = "ATimer";
   Desc = "";
   Targets = [];
@@ -392,7 +377,7 @@ MCU_Timer
 
 MCU_Counter
 {
-  Index = 43;
+  Index = 183;
   Name = "ACounter";
   Desc = "";
   Targets = [];
@@ -409,7 +394,7 @@ MCU_Counter
 
 MCU_Activate
 {
-  Index = 44;
+  Index = 184;
   Name = "AnActivate";
   Desc = "";
   Targets = [];
@@ -424,7 +409,7 @@ MCU_Activate
 
 MCU_Deactivate
 {
-  Index = 45;
+  Index = 185;
   Name = "ADeactivate";
   Desc = "";
   Targets = [];
@@ -439,7 +424,7 @@ MCU_Deactivate
 
 MCU_Timer
 {
-  Index = 20;
+  Index = 160;
   Name = "DelayNext";
   Desc = "";
   Targets = [];
@@ -456,10 +441,10 @@ MCU_Timer
 
 MCU_Deactivate
 {
-  Index = 47;
+  Index = 187;
   Name = "DeactivateNext";
   Desc = "";
-  Targets = [20];
+  Targets = [160];
   Objects = [];
   XPos = 46755.904;
   YPos = 78.315;
@@ -471,10 +456,10 @@ MCU_Deactivate
 
 MCU_Counter
 {
-  Index = 5;
+  Index = 145;
   Name = "1x killed";
   Desc = "";
-  Targets = [49];
+  Targets = [189];
   Objects = [];
   XPos = 46748.564;
   YPos = 78.136;
@@ -488,14 +473,14 @@ MCU_Counter
 
 MCU_Counter
 {
-  Index = 10;
+  Index = 150;
   Name = "1x killed";
   Desc = "";
-  Targets = [49];
+  Targets = [273];
   Objects = [];
-  XPos = 46713.133;
+  XPos = 46696.475;
   YPos = 78.136;
-  ZPos = -2714.776;
+  ZPos = -2724.628;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -505,10 +490,10 @@ MCU_Counter
 
 MCU_Counter
 {
-  Index = 15;
+  Index = 155;
   Name = "1x killed";
   Desc = "";
-  Targets = [49];
+  Targets = [272];
   Objects = [];
   XPos = 46660.093;
   YPos = 78.136;
@@ -522,10 +507,10 @@ MCU_Counter
 
 MCU_Counter
 {
-  Index = 49;
+  Index = 189;
   Name = "AllKilledInternal";
   Desc = "";
-  Targets = [53,54];
+  Targets = [193,194];
   Objects = [];
   XPos = 46681.758;
   YPos = 80.675;
@@ -539,11 +524,11 @@ MCU_Counter
 
 MCU_Deactivate
 {
-  Index = 55;
+  Index = 195;
   Name = "DeactivatePlatoon";
   Desc = "";
   Targets = [];
-  Objects = [3,8,13];
+  Objects = [143,148,153];
   XPos = 46723.663;
   YPos = 79.375;
   ZPos = -2702.826;
@@ -554,10 +539,10 @@ MCU_Deactivate
 
 MCU_Timer
 {
-  Index = 56;
+  Index = 196;
   Name = "Shutdown";
   Desc = "";
-  Targets = [55,54,57,58,59];
+  Targets = [195,194];
   Objects = [];
   XPos = 46722.584;
   YPos = 78.325;
@@ -571,11 +556,11 @@ MCU_Timer
 
 MCU_CMD_Flare
 {
-  Index = 60;
+  Index = 200;
   Name = "FlareHelp";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46753.132;
   YPos = 78.563;
   ZPos = -2836.709;
@@ -587,11 +572,11 @@ MCU_CMD_Flare
 
 MCU_CMD_Flare
 {
-  Index = 61;
+  Index = 201;
   Name = "FlareVictory";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46794.108;
   YPos = 78.436;
   ZPos = -2725.670;
@@ -603,7 +588,7 @@ MCU_CMD_Flare
 
 MCU_CMD_AttackArea
 {
-  Index = 62;
+  Index = 202;
   Name = "AnAttackArea";
   Desc = "";
   Targets = [];
@@ -624,7 +609,7 @@ MCU_CMD_AttackArea
 
 MCU_Proximity
 {
-  Index = 63;
+  Index = 203;
   Name = "AProximity";
   Desc = "";
   Targets = [];
@@ -641,10 +626,10 @@ MCU_Proximity
 
 MCU_Timer
 {
-  Index = 64;
+  Index = 204;
   Name = "TrafficStop";
   Desc = "";
-  Targets = [65,41,66,67];
+  Targets = [205,181,206,207];
   Objects = [];
   XPos = 46669.068;
   YPos = 78.435;
@@ -658,11 +643,11 @@ MCU_Timer
 
 MCU_CMD_Formation
 {
-  Index = 68;
+  Index = 208;
   Name = "Stop";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46669.093;
   YPos = 76.800;
   ZPos = -2822.609;
@@ -675,10 +660,10 @@ FormationDensity = 0;
 
 MCU_Timer
 {
-  Index = 69;
+  Index = 209;
   Name = "TrafficResume";
   Desc = "";
-  Targets = [70,71,72];
+  Targets = [210,211,212];
   Objects = [];
   XPos = 46693.579;
   YPos = 78.435;
@@ -692,11 +677,11 @@ MCU_Timer
 
 MCU_CMD_Formation
 {
-  Index = 70;
+  Index = 210;
   Name = "ContinueTraffic";
   Desc = "";
   Targets = [];
-  Objects = [3];
+  Objects = [143];
   XPos = 46693.605;
   YPos = 76.800;
   ZPos = -2821.792;
@@ -709,10 +694,10 @@ FormationDensity = 0;
 
 MCU_Deactivate
 {
-  Index = 65;
+  Index = 205;
   Name = "";
   Desc = "";
-  Targets = [27];
+  Targets = [167];
   Objects = [];
   XPos = 46711.934;
   YPos = 76.985;
@@ -724,10 +709,10 @@ MCU_Deactivate
 
 MCU_Deactivate
 {
-  Index = 30;
+  Index = 170;
   Name = "";
   Desc = "";
-  Targets = [64];
+  Targets = [204];
   Objects = [];
   XPos = 46711.700;
   YPos = 76.985;
@@ -739,10 +724,10 @@ MCU_Deactivate
 
 MCU_Activate
 {
-  Index = 71;
+  Index = 211;
   Name = "";
   Desc = "";
-  Targets = [27];
+  Targets = [167];
   Objects = [];
   XPos = 46710.964;
   YPos = 77.287;
@@ -754,10 +739,10 @@ MCU_Activate
 
 MCU_Activate
 {
-  Index = 36;
+  Index = 176;
   Name = "";
   Desc = "";
-  Targets = [64];
+  Targets = [204];
   Objects = [];
   XPos = 46712.252;
   YPos = 77.287;
@@ -769,10 +754,10 @@ MCU_Activate
 
 MCU_Deactivate
 {
-  Index = 41;
+  Index = 181;
   Name = "";
   Desc = "";
-  Targets = [64];
+  Targets = [204];
   Objects = [];
   XPos = 46669.184;
   YPos = 78.334;
@@ -784,10 +769,10 @@ MCU_Deactivate
 
 MCU_Activate
 {
-  Index = 72;
+  Index = 212;
   Name = "";
   Desc = "";
-  Targets = [64];
+  Targets = [204];
   Objects = [];
   XPos = 46682.095;
   YPos = 78.370;
@@ -799,10 +784,10 @@ MCU_Activate
 
 MCU_Activate
 {
-  Index = 66;
+  Index = 206;
   Name = "";
   Desc = "";
-  Targets = [69];
+  Targets = [209];
   Objects = [];
   XPos = 46681.982;
   YPos = 78.370;
@@ -814,10 +799,10 @@ MCU_Activate
 
 MCU_Deactivate
 {
-  Index = 81;
+  Index = 221;
   Name = "InitiallyDisabled";
   Desc = "";
-  Targets = [69];
+  Targets = [209];
   Objects = [];
   XPos = 46700.871;
   YPos = 77.823;
@@ -829,10 +814,10 @@ MCU_Deactivate
 
 MCU_TR_MissionBegin
 {
-  Index = 82;
+  Index = 222;
   Name = "";
   Desc = "";
-  Targets = [81];
+  Targets = [221];
   Objects = [];
   XPos = 46707.396;
   YPos = 77.934;
@@ -845,11 +830,11 @@ MCU_TR_MissionBegin
 
 MCU_Proximity
 {
-  Index = 83;
+  Index = 223;
   Name = "TooClose";
   Desc = "";
-  Targets = [84,85,86];
-  Objects = [87,88];
+  Targets = [224,225,226];
+  Objects = [227,228];
   XPos = 46401.434;
   YPos = 82.127;
   ZPos = -2757.742;
@@ -863,8 +848,8 @@ MCU_Proximity
 Vehicle
 {
   Name = "Vehicle1";
-  Index = 89;
-  LinkTrId = 87;
+  Index = 229;
+  LinkTrId = 227;
   XPos = 46298.381;
   YPos = 17.795;
   ZPos = -2848.275;
@@ -891,7 +876,7 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 87;
+  Index = 227;
   Name = "Vehicle entity";
   Desc = "";
   Targets = [];
@@ -903,14 +888,14 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 89;
+  MisObjID = 229;
 }
 
 Vehicle
 {
   Name = "Vehicle2";
-  Index = 91;
-  LinkTrId = 88;
+  Index = 231;
+  LinkTrId = 228;
   XPos = 46296.455;
   YPos = 17.795;
   ZPos = -2687.435;
@@ -937,7 +922,7 @@ Vehicle
 
 MCU_TR_Entity
 {
-  Index = 88;
+  Index = 228;
   Name = "Vehicle entity";
   Desc = "";
   Targets = [];
@@ -949,16 +934,16 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 91;
+  MisObjID = 231;
 }
 
 MCU_Proximity
 {
-  Index = 84;
+  Index = 224;
   Name = "FarEnough";
   Desc = "";
-  Targets = [94,95];
-  Objects = [87,88];
+  Targets = [234,235];
+  Objects = [227,228];
   XPos = 46487.151;
   YPos = 82.127;
   ZPos = -2755.816;
@@ -971,10 +956,10 @@ MCU_Proximity
 
 MCU_Deactivate
 {
-  Index = 85;
+  Index = 225;
   Name = "DeactivateTooClose";
   Desc = "";
-  Targets = [83];
+  Targets = [223];
   Objects = [];
   XPos = 46401.296;
   YPos = 85.142;
@@ -986,10 +971,10 @@ MCU_Deactivate
 
 MCU_Deactivate
 {
-  Index = 94;
+  Index = 234;
   Name = "";
   Desc = "";
-  Targets = [84];
+  Targets = [224];
   Objects = [];
   XPos = 46486.983;
   YPos = 85.142;
@@ -1001,10 +986,10 @@ MCU_Deactivate
 
 MCU_Activate
 {
-  Index = 95;
+  Index = 235;
   Name = "";
   Desc = "";
-  Targets = [83];
+  Targets = [223];
   Objects = [];
   XPos = 46447.870;
   YPos = 82.082;
@@ -1016,10 +1001,10 @@ MCU_Activate
 
 MCU_Activate
 {
-  Index = 86;
+  Index = 226;
   Name = "";
   Desc = "";
-  Targets = [84];
+  Targets = [224];
   Objects = [];
   XPos = 46450.410;
   YPos = 79.862;
@@ -1031,10 +1016,10 @@ MCU_Activate
 
 MCU_Timer
 {
-  Index = 31;
+  Index = 171;
   Name = "10s";
   Desc = "";
-  Targets = [60,146,147];
+  Targets = [200,241,242];
   Objects = [];
   XPos = 46746.577;
   YPos = 76.121;
@@ -1048,10 +1033,10 @@ MCU_Timer
 
 MCU_Timer
 {
-  Index = 32;
+  Index = 172;
   Name = "3s";
   Desc = "";
-  Targets = [26];
+  Targets = [166];
   Objects = [];
   XPos = 46738.921;
   YPos = 17.795;
@@ -1065,10 +1050,10 @@ MCU_Timer
 
 MCU_Timer
 {
-  Index = 67;
+  Index = 207;
   Name = "3s";
   Desc = "";
-  Targets = [68];
+  Targets = [208];
   Objects = [];
   XPos = 46668.754;
   YPos = 17.795;
@@ -1082,10 +1067,10 @@ MCU_Timer
 
 MCU_Timer
 {
-  Index = 210;
+  Index = 245;
   Name = "FormOnRoad";
   Desc = "";
-  Targets = [35,22,36];
+  Targets = [175,162,176];
   Objects = [];
   XPos = 46796.610;
   YPos = 17.795;
@@ -1099,10 +1084,10 @@ MCU_Timer
 
 MCU_Counter
 {
-  Index = 53;
+  Index = 193;
   Name = "AllKilled";
   Desc = "";
-  Targets = [212];
+  Targets = [247];
   Objects = [];
   XPos = 46673.917;
   YPos = 17.795;
@@ -1116,7 +1101,7 @@ MCU_Counter
 
 MCU_TR_Subtitle
 {
-  Index = 212;
+  Index = 247;
   Name = "DebugAllKilled";
   Desc = "";
   Targets = [];
@@ -1137,7 +1122,7 @@ MCU_TR_Subtitle
     RColor = 255;
     GColor = 255;
     BColor = 0;
-    LCText = 9;
+    LCText = 4;
   }
   
   Coalitions = [0, 1, 2];
@@ -1145,10 +1130,10 @@ MCU_TR_Subtitle
 
 MCU_Timer
 {
-  Index = 224;
+  Index = 249;
   Name = "ProximityShutdown";
   Desc = "";
-  Targets = [94,85];
+  Targets = [234,225];
   Objects = [];
   XPos = 46448.449;
   YPos = 17.795;
@@ -1162,11 +1147,11 @@ MCU_Timer
 
 MCU_Proximity
 {
-  Index = 23;
+  Index = 163;
   Name = "EnemyProximity";
   Desc = "";
-  Targets = [27];
-  Objects = [3];
+  Targets = [167];
+  Objects = [143];
   XPos = 46768.090;
   YPos = 17.795;
   ZPos = -2770.266;
@@ -1180,10 +1165,10 @@ MCU_Proximity
 
 MCU_Deactivate
 {
-  Index = 54;
+  Index = 194;
   Name = "";
   Desc = "";
-  Targets = [23];
+  Targets = [163];
   Objects = [];
   XPos = 46764.290;
   YPos = 17.795;
@@ -1195,10 +1180,10 @@ MCU_Deactivate
 
 MCU_Deactivate
 {
-  Index = 227;
+  Index = 252;
   Name = "";
   Desc = "";
-  Targets = [60];
+  Targets = [200];
   Objects = [];
   XPos = 46759.852;
   YPos = 17.795;
@@ -1210,10 +1195,10 @@ MCU_Deactivate
 
 MCU_Timer
 {
-  Index = 146;
+  Index = 241;
   Name = "1s";
   Desc = "";
-  Targets = [227];
+  Targets = [252];
   Objects = [];
   XPos = 46755.974;
   YPos = 17.795;
@@ -1227,10 +1212,10 @@ MCU_Timer
 
 MCU_Timer
 {
-  Index = 147;
+  Index = 242;
   Name = "5min";
   Desc = "";
-  Targets = [230];
+  Targets = [255];
   Objects = [];
   XPos = 46749.586;
   YPos = 17.795;
@@ -1244,10 +1229,10 @@ MCU_Timer
 
 MCU_Activate
 {
-  Index = 230;
+  Index = 255;
   Name = "";
   Desc = "";
-  Targets = [60];
+  Targets = [200];
   Objects = [];
   XPos = 46751.319;
   YPos = 17.795;
@@ -1257,198 +1242,37 @@ MCU_Activate
   ZOri = 0.00;
 }
 
-MCU_Proximity
+MCU_Timer
 {
-  Index = 16;
-  Name = "RemoveObstacleProx";
+  Index = 272;
+  Name = "1s";
   Desc = "";
-  Targets = [233,59];
-  Objects = [13];
-  XPos = 46665.836;
+  Targets = [189];
+  Objects = [];
+  XPos = 46652.648;
   YPos = 17.795;
-  ZPos = -2775.035;
+  ZPos = -2737.931;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Distance = 8;
-  Closer = 1;
-  VehicleCoalitions = [0, 1, 2];
-}
-
-MCU_Delete
-{
-  Index = 234;
-  Name = "Trigger Delete";
-  Desc = "";
-  Targets = [];
-  Objects = [13];
-  XPos = 46675.252;
-  YPos = 17.795;
-  ZPos = -2775.311;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
+  Time = 1;
+  Random = 100;
 }
 
 MCU_Timer
 {
-  Index = 233;
-  Name = "0s";
+  Index = 273;
+  Name = "2s";
   Desc = "";
-  Targets = [234];
+  Targets = [189];
   Objects = [];
-  XPos = 46669.990;
+  XPos = 46696.178;
   YPos = 17.795;
-  ZPos = -2780.851;
+  ZPos = -2713.091;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Time = 0;
+  Time = 2;
   Random = 100;
-}
-
-MCU_Deactivate
-{
-  Index = 59;
-  Name = "";
-  Desc = "";
-  Targets = [16];
-  Objects = [];
-  XPos = 46660.019;
-  YPos = 17.795;
-  ZPos = -2782.051;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-}
-
-MCU_Proximity
-{
-  Index = 11;
-  Name = "RemoveObstacleProx";
-  Desc = "";
-  Targets = [238,57];
-  Objects = [8];
-  XPos = 46705.138;
-  YPos = 17.795;
-  ZPos = -2745.811;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-  Distance = 8;
-  Closer = 1;
-  VehicleCoalitions = [0, 1, 2];
-}
-
-MCU_Delete
-{
-  Index = 239;
-  Name = "Trigger Delete";
-  Desc = "";
-  Targets = [];
-  Objects = [8];
-  XPos = 46714.554;
-  YPos = 17.795;
-  ZPos = -2746.087;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-}
-
-MCU_Timer
-{
-  Index = 238;
-  Name = "0s";
-  Desc = "";
-  Targets = [239];
-  Objects = [];
-  XPos = 46709.292;
-  YPos = 17.795;
-  ZPos = -2751.627;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-  Time = 0;
-  Random = 100;
-}
-
-MCU_Deactivate
-{
-  Index = 57;
-  Name = "";
-  Desc = "";
-  Targets = [11];
-  Objects = [];
-  XPos = 46699.321;
-  YPos = 17.795;
-  ZPos = -2752.827;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-}
-
-MCU_Proximity
-{
-  Index = 6;
-  Name = "RemoveObstacleProx";
-  Desc = "";
-  Targets = [243,58];
-  Objects = [3];
-  XPos = 46727.387;
-  YPos = 17.795;
-  ZPos = -2785.302;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-  Distance = 8;
-  Closer = 1;
-  VehicleCoalitions = [0, 1, 2];
-}
-
-MCU_Delete
-{
-  Index = 244;
-  Name = "Trigger Delete";
-  Desc = "";
-  Targets = [];
-  Objects = [3];
-  XPos = 46736.803;
-  YPos = 17.795;
-  ZPos = -2785.578;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-}
-
-MCU_Timer
-{
-  Index = 243;
-  Name = "0s";
-  Desc = "";
-  Targets = [244];
-  Objects = [];
-  XPos = 46731.541;
-  YPos = 17.795;
-  ZPos = -2791.118;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
-  Time = 0;
-  Random = 100;
-}
-
-MCU_Deactivate
-{
-  Index = 58;
-  Name = "";
-  Desc = "";
-  Targets = [6];
-  Objects = [];
-  XPos = 46721.570;
-  YPos = 17.795;
-  ZPos = -2792.318;
-  XOri = 0.00;
-  YOri = 0.00;
-  ZOri = 0.00;
 }
 
