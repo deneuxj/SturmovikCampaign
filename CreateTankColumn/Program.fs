@@ -529,7 +529,6 @@ with
             ] // Note: init is not included because it is already part of the first platoon.
         }
 
-let version = "0.2"
 
 type CliOptions =
     { unitSize : int
@@ -596,7 +595,7 @@ CreateTankColumn [-u <unit size>] [-n <number of platoons>]
                 work rest { res with outputFilename = path }
             | "-v" :: rest
             | "--version" :: rest ->
-                printfn "CreateTankColumn %s" version
+                printfn "CreateTankColumn %s" AssemblyInfo.version
                 work rest res
             | [] ->
                 Some res

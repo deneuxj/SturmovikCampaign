@@ -1,4 +1,8 @@
-﻿Version 0.2:
+﻿Version 0.3:
+- Removed logic that deleted wrecks. It was intended to avoid accidental pile ups of vehicles against wrecks, but it introduced more problems that it solved (wrong vehicle deleted, corruption of the allKilled counter).
+- Reduced enemy plane proximity trigger radius for panic stop to 750m.
+
+Version 0.2:
 - Fixed bug where enemy proximity trigger was triggering on allied planes when the handle was a Russian vehicle.
 
 Version 0.1:
