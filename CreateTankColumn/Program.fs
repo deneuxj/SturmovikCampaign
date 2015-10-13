@@ -323,7 +323,7 @@ with
           TrafficStop = trafficStop
           TrafficResume = trafficResume
           Waypoints = waypoints
-          LcStrings = Localization.transfer false getLcId (Path.Combine(T.ResolutionFolder, @"..\data\TankPlatoon.eng"))
+          LcStrings = []
         }
 
 

@@ -1,4 +1,7 @@
-﻿Version 0.3:
+﻿Version 0.3.1:
+- Bug fix: Application attempted to read a file that was only present at the expected location on the developer's PC.
+
+Version 0.3:
 - Removed logic that deleted wrecks. It was intended to avoid accidental pile ups of vehicles against wrecks, but it introduced more problems that it solved (wrong vehicle deleted, corruption of the allKilled counter).
 - Reduced enemy plane proximity trigger radius for panic stop to 750m.
 

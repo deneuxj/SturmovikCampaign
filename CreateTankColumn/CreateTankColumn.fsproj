@@ -26,7 +26,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\CreateTankColumn.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <StartArguments>-u 3 -n 3 -f ..\..\..\data\TankSpec.Group -o Output.Group</StartArguments>
+    <StartArguments>-u 3 -n 3 -f TankSpec.Group -o Output.Group</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
