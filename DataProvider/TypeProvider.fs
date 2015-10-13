@@ -850,10 +850,22 @@ let buildLibraries (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast
         let name = Path.GetFileNameWithoutExtension(filename)
         let lib = new ProvidedTypeDefinition(name, Some typeof<obj>)
         fun () ->
-            let staticMembers =
+            let data =
                 try
                     let s = Parsing.Stream.FromFile filename
-                    let data = Parsing.parseFile getParser s
+                    Parsing.parseFile getParser s
+                    |> Choice1Of2
+                with
+                | :? Parsing.ParseError as e ->
+                    Parsing.printParseError e
+                    |> String.concat "\n"
+                    |> Choice2Of2
+                | e ->
+                    e.Message
+                    |> Choice2Of2
+            let staticMembers =
+                match data with
+                | Choice1Of2 data ->
                     let rec work (data : Ast.Data) : ((string * Type) * Quotations.Expr * string option) seq =
                         seq {
                             match data with
@@ -886,46 +898,29 @@ let buildLibraries (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast
                     |> List.map work
                     |> Seq.concat
                     |> List.ofSeq
-                with
+                | Choice2Of2 msg ->
                 // If something went wrong, the property is a string describing the error that occurred.
-                | :? Parsing.ParseError as e ->
-                    let msg =
-                        Parsing.printParseError e
-                        |> String.concat "\n"
                     [ (("LoadingError", typeof<string>), <@@ msg @@>, Some msg) ]
-                | e ->
-                    let msg = e.Message
-                    [ (("LoadingError", typeof<string>), <@@ msg @@>, Some msg) ]
-            staticMembers
-            |> List.map (fun (prop, expr, doc) ->
-                let p = pdb.NewStaticProperty(fst prop, snd prop, expr)
-                match doc with
-                | Some doc -> addXmlDoc (sprintf "<summary>%s</summary>" doc) p
-                | None -> p)
+            let staticProperties : Reflection.MemberInfo list =
+                staticMembers
+                |> List.map (fun (prop, expr, doc) ->
+                    let p = pdb.NewStaticProperty(fst prop, snd prop, expr)
+                    let p =
+                        match doc with
+                        | Some doc -> addXmlDoc (sprintf "<summary>%s</summary>" doc) p
+                        | None -> p
+                    upcast p)
+            match data with
+            | Choice1Of2 data ->
+                let mcuBuildMethod =
+                    buildAsMcuList pdb (DataListSource.Static
+                        (data |> List.rev |> List.fold (fun expr data -> <@ %data.ToExpr() :: %expr @>) <@ [] @>))
+                        namedValueTypes
+                    |> addXmlDoc (sprintf """<summary>Build a list of mutable instances of McuBase from the content of %s</summary>""" filename)
+                (mcuBuildMethod :> Reflection.MemberInfo) :: staticProperties
+            | Choice2Of2 _ ->
+                staticProperties
         |> lib.AddMembersDelayed
-        // Get the flattened list of objects as instances of McuBase and its subtypes, when appropriate
-        lib.AddMemberDelayed(fun() ->
-            let valueTypeOfName =
-                namedValueTypes
-                |> List.fold (fun expr (name, valueType, _) ->
-                    <@
-                        Map.add name %(valueType.ToExpr()) %expr
-                    @>
-                    ) <@ Map.empty @>
-            let prop =
-                buildAsMcuList pdb (DataListSource.Static
-                    <@
-                        let parsers =
-                            %valueTypeOfName
-                            |> Map.map (fun name valueType -> Parsing.makeParser valueType)
-                        let getParser name = parsers.[name]
-                        let s = Parsing.Stream.FromFile filename
-                        let data = Parsing.parseFile getParser s
-                        data
-                    @>) namedValueTypes
-                |> addXmlDoc (sprintf """<summary>Build a list of mutable instances of McuBase from the content of %s</summary>""" filename)
-            prop
-        )
         lib
 
     files

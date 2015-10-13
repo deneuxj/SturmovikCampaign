@@ -332,4 +332,20 @@ type Data with
             |> List.map (fun data -> data.GetLeaves())
             |> List.concat
 
+    member this.ToExpr() =
+        match this with
+        | Leaf(name, value) ->
+            let e = value.ToExpr()
+            <@ Leaf(name, %e) @>
+        | Group(data) ->
+            let subs =
+                data.Data
+                |> List.rev
+                |> List.fold(fun expr data -> <@ %(data.ToExpr()) :: %expr @>) <@ [] @>
+            <@ Group
+                { Name = data.Name
+                  Index = data.Index
+                  Description = data.Description
+                  Data = %subs
+                } @>
 
