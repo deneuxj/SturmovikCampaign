@@ -8,6 +8,7 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.Mcu
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.DataProvider.NumericalIdentifiers
+open System.Text.RegularExpressions
 
 type T = SturmovikMissionTypes.Provider< @"..\data\Sample.Mission", @"..\data\TankPlatoon.Group" >
 
@@ -67,6 +68,39 @@ let conv (xs : #McuBase seq) : McuBase seq =
     |> Seq.map (fun x -> upcast x)
 
 
+let tryGetRussianBaseEquivalent =
+    function
+    | "horch830" -> Some ("gaz", "gaz-m")
+    | "opel-blitz" -> Some ("zis", "zis5")
+    | "pziii-l" -> Some ("t34-76stz", "t34-76stz")
+    | "pziv-g" -> Some ("t70", "t70")
+    | "sdkfz10-flak38" -> Some ("gaz", "gaz-aa-m4-aa")
+    | "sdkfz251-1c" -> Some ("ba64", "ba64")
+    | "sdkfz251-szf" -> Some ("zis", "bm13")
+    | "stug37l24" -> Some ("kv1-42", "kv1-42")
+    | "stug40l43" -> Some ("kv1-42", "kv1-42")
+    | _ -> None
+
+let getRussianScriptEquivalent script =
+    let re = Regex(@"LuaScripts\\WorldObjects\\vehicles\\(.*)\.txt")
+    let m = re.Match(script)
+    if m.Success then
+        match tryGetRussianBaseEquivalent m.Groups.[1].Value with
+        | Some (_, ru) -> sprintf @"LuaScripts\WorldObjects\vehicles\%s.txt" ru
+        | None -> script
+    else
+        script
+
+let getRussianModelEquivalent model =
+    let re = Regex(@"graphics\\vehicles\\(.*)\\(.*)\.mgm")
+    let m = re.Match(model)
+    if m.Success then
+        match tryGetRussianBaseEquivalent m.Groups.[1].Value with
+        | Some (sub, ru) -> sprintf @"graphics\vehicles\%s\%s.mgm" sub ru
+        | None -> model
+    else
+        model
+
 let random = new System.Random(1)
 
 /// A group of tanks advancing towards an objective.
@@ -117,47 +151,49 @@ with
     /// <param name="rank">The rank of this platoon in the unit: 0 for the first one, 1 for the next...
     /// This is used to set the delay at the spread point before continuing, so that the unit advances simultaneously.
     /// </param>
-    static member Create(subst : McuBase seq -> int -> int, unitSize : int, handle : HasEntity, context : McuBase list, rank : int) =
+    static member Create(subst : McuBase seq -> int -> int, template : string option, unitSize : int, handle : HasEntity, context : McuBase list, rank : int) =
         // Util
-        let mcus = T.TankPlatoon.CreateMcuList()
+        let mcus =
+            match template with
+            | Some path ->
+                let s = Parsing.Stream.FromFile path
+                let data = T.GroupData(s)
+                data.CreateMcuList()
+            | None ->
+                T.TankPlatoon.CreateMcuList()
         let acc = mkAccessors mcus
         // Points of reference: leader in the template, corresponding point of instantiation (handle)
         let leader =
-            let model = getHasEntityByIndex T.TankPlatoon.``Pzr leader``.Index.Value mcus
+            let model = getHasEntityByName "Pzr leader" mcus
             acc.GetEntity model
         let center = newVec3(leader.Pos.X, leader.Pos.Y, leader.Pos.Z)
         let angle = handle.Ori.Y - (acc.GetOwner leader).Ori.Y
         // Content of the group
-        let initNext = getCommandByIndex T.TankPlatoon.DelayNext.Index.Value mcus
-        let allKilled = getCommandByIndex T.TankPlatoon.AllKilled.Index.Value mcus
-        let debugAllKilled = getCommandByIndex T.TankPlatoon.DebugAllKilled.Index.Value mcus
+        let initNext = getCommandByName "DelayNext" mcus
+        let allKilled = getCommandByName "AllKilled" mcus
+        let debugAllKilled = getCommandByName "DebugAllKilled" mcus
         let content = getGroupMulti (fun _ -> false) [ leader; initNext; allKilled; debugAllKilled ] mcus Seq.empty |> List.ofSeq
-        let init = getCommandByIndex T.TankPlatoon.Init.Index.Value content
-        let disableInitNext = getCommandByIndex T.TankPlatoon.DeactivateNext.Index.Value content
-        let combatZoneReached = getCommandByIndex T.TankPlatoon.CombatZoneReached.Index.Value content
-        let startMoving = getCommandByIndex T.TankPlatoon.StartMoving.Index.Value content
-        let shutdown = getCommandByIndex T.TankPlatoon.Shutdown.Index.Value content
-        let flareVictory = getCommandByIndex T.TankPlatoon.FlareVictory.Index.Value content
-        let startDefense = getCommandByIndex T.TankPlatoon.StartDefense.Index.Value content
-        let trafficResume = getCommandByIndex T.TankPlatoon.TrafficResume.Index.Value content
-        let trafficStop = getCommandByIndex T.TankPlatoon.TrafficStop.Index.Value content
-        let formOnRoad = getCommandByIndex T.TankPlatoon.FormOnRoad.Index.Value content
+        let init = getCommandByName "Init" content
+        let disableInitNext = getCommandByName "DeactivateNext" content
+        let combatZoneReached = getCommandByName "CombatZoneReached" content
+        let startMoving = getCommandByName "StartMoving" content
+        let shutdown = getCommandByName "Shutdown" content
+        let flareVictory = getCommandByName "FlareVictory" content
+        let startDefense = getCommandByName "StartDefense" content
+        let trafficResume = getCommandByName "TrafficResume" content
+        let trafficStop = getCommandByName "TrafficStop" content
+        let formOnRoad = getCommandByName "FormOnRoad" content
         // Change vehicle types and country if the handle is a Russian vehicle
         let russia = 101
         if handle.Country = russia then
-            let tanks =
-                [ T.TankPlatoon.``Pzr leader``; T.TankPlatoon.``Pzr Right`` ]
-                |> List.map (fun veh -> veh.Index.Value)
-                |> List.map (fun idx -> getHasEntityByIndex idx content)
-            for tank in tanks do
-                tank.Model <- @"graphics\vehicles\t34-76stz\t34-76stz.mgm"
-                tank.Script <- @"LuaScripts\WorldObjects\vehicles\t34-76stz.txt"
-                tank.Country <- russia
-            let aa = getHasEntityByIndex T.TankPlatoon.``AA Escort``.Index.Value content
-            aa.Model <- @"graphics\vehicles\gaz\gaz-aa-m4-aa.mgm"
-            aa.Script <- @"LuaScripts\WorldObjects\vehicles\gaz-aa-m4-aa.txt"
-            aa.Country <- russia
-            match getCommandByIndex T.TankPlatoon.EnemyProximity.Index.Value content with
+            let vehicles =
+                content
+                |> List.choose (function :? HasEntity as ent -> Some ent | _ -> None)
+            for vehicle in vehicles do
+                vehicle.Model <- getRussianModelEquivalent vehicle.Model
+                vehicle.Script <- getRussianScriptEquivalent vehicle.Script
+                vehicle.Country <- russia
+            match getCommandByName "EnemyProximity" content with
             | :? McuProximity as proxi ->
                 let axis = 2
                 proxi.PlaneCoalitions <- [axis]
@@ -353,12 +389,12 @@ with
     // reinforcements is a list of number of platoons whose spawning is conditioned by the arrival of reinforcements.
     // Those platoons are included in numCopies, and they are spawned last.
     // The first position in the list is the number of platoons after one reinforcement, the second position is for the second reinforcement, and so on.
-    static member Create(subst, unitSize: int, numCopies : int, reinforcements : int list, handle : T.Vehicle, getContext : unit -> McuBase list) =
+    static member Create(subst, template, unitSize: int, numCopies : int, reinforcements : int list, handle : T.Vehicle, getContext : unit -> McuBase list) =
         let platoons =
             Array.init numCopies (fun n ->
                 let context = getContext()
                 let handle = getHasEntityByIndex handle.Index.Value context
-                Platoon.Create(subst, unitSize, handle, context, n % unitSize)
+                Platoon.Create(subst, template, unitSize, handle, context, n % unitSize)
             )
         // Chain the platoons into a column.
         let pairs =
@@ -470,9 +506,19 @@ with
                     let firstPlatoon = platoons.[m]
                     let secondPlatoon = platoons.[n]
                     let traffic, vehicle1, vehicle2, diff =
-                        let context = T.TankPlatoon.CreateMcuList()
-                        let veh1 = getEntityByIndex T.TankPlatoon.Vehicle1.LinkTrId.Value context
-                        let veh2 = getEntityByIndex T.TankPlatoon.Vehicle2.LinkTrId.Value context
+                        let context =
+                            match template with
+                            | Some path ->
+                                let s = Parsing.Stream.FromFile path
+                                T.GroupData(s).CreateMcuList()
+                            | None ->
+                                T.TankPlatoon.CreateMcuList()
+                        let veh1 =
+                            let model = getHasEntityByName "Vehicle1" context
+                            getEntityByIndex model.LinkTrId context
+                        let veh2 =
+                            let model = getHasEntityByName "Vehicle2" context
+                            getEntityByIndex model.LinkTrId context
                         let traffic = getGroupMulti (fun _ -> false) [ veh1; veh2 ] context Seq.empty
                         // Remove place-holder vehicles, they will be replaced by the platoon leaders.
                         traffic.Remove(veh1) |> ignore
@@ -485,9 +531,9 @@ with
                         pos2.Z <- pos2.Z + 100.0
                         vecCopy pos2 mcu.Pos
                     // Grab interesting MCUs
-                    let tooClose = getCommandByIndex T.TankPlatoon.TooClose.Index.Value traffic
-                    let farEnough = getCommandByIndex T.TankPlatoon.FarEnough.Index.Value traffic
-                    let turnOff = getCommandByIndex T.TankPlatoon.ProximityShutdown.Index.Value traffic
+                    let tooClose = getCommandByName "TooClose" traffic
+                    let farEnough = getCommandByName "FarEnough" traffic
+                    let turnOff = getCommandByName "ProximityShutdown" traffic
                     // Fresh ids
                     subst traffic |> ignore
                     // Replace place-holder vehicles by platoon leaders.
@@ -535,6 +581,7 @@ type CliOptions =
       numPlatoons : int
       specGroup : string option
       outputFilename : string
+      templateGroup : string option
     }
 with
     static member Default =
@@ -542,14 +589,18 @@ with
           numPlatoons = 6
           specGroup = None
           outputFilename = "GeneratedTankColumn"
+          templateGroup = None
         }
     
     static member Parse(argv) =
         let usage = """
 CreateTankColumn [-u <unit size>] [-n <number of platoons>]
+                 [-t <path to template group>]
                  -f <path to specification group> -o <output file name>
     <unit size> must be larger than 0 (default : 2)
     <number of platoons> must be larger than 0 (default : 6)
+    <path to template group> is the path to a .Group file that contains a
+                             template of the vehicles and their logic
     <path to specification group> is the path to a .Group file that specifies
                                   the country of the platoons and their
                                   waypoints
@@ -579,6 +630,12 @@ CreateTankColumn [-u <unit size>] [-n <number of platoons>]
                         None
                 | false, _ ->
                     eprintfn "Number of platoons must be a number (%s)" n
+                    None
+            | "-t" :: path :: rest ->
+                if System.IO.File.Exists(path) then
+                    work rest { res with templateGroup = Some path }
+                else
+                    eprintfn "Cannot read template file '%s'" path
                     None
             | "-f" :: path :: rest ->
                 if System.IO.File.Exists(path) then
@@ -641,7 +698,7 @@ let main argv =
             let columns = 
                 [
                     for vehicle in data.ListOfVehicle do
-                        yield Column.Create(subst, opts.unitSize, opts.numPlatoons, [], vehicle, data.CreateMcuList)
+                        yield Column.Create(subst, opts.templateGroup, opts.unitSize, opts.numPlatoons, [], vehicle, data.CreateMcuList)
                 ]
             try
                 use file = System.IO.File.CreateText(opts.outputFilename + ".Group")

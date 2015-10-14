@@ -7,7 +7,7 @@ open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
 [<LiteralAttribute>]
-let version = "0.3.1.0"
+let version = "0.4.0.0"
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information

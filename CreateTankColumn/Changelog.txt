@@ -1,4 +1,7 @@
-﻿Version 0.3.1:
+﻿Version 0.4:
+- Added ability to customize platoons.
+
+Version 0.3.1:
 - Bug fix: Application attempted to read a file that was only present at the expected location on the developer's PC.
 
 Version 0.3:

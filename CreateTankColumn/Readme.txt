@@ -47,3 +47,16 @@ When a platoon reaches the destination, it fires a yellow flare.
 When a platoon approaches another platoon on the road, it stops until the other platoon moves ahead or is destroyed.
 
 When a platoon in a unit reaches the first spread point after the combat zone entry, it waits for the other platoons in the unit before proceeding.
+
+Customizing platoons
+--------------------
+
+To change the types of vehicles, or change their numbers, add to or modify their behaviour, modify the file TankPlatoon.Group.
+There are limitations to what you can and can't do:
+- Do not rename existing nodes that have names.
+- Do not remove existing nodes that have a name.
+- Changing links between existing nodes may brake the behaviour of the generated platoons.
+- All vehicles should be German ground vehicles. This means their country should be Axis/Germany, and the vehicle models and scripts should be German ones.
+- If you change the number of vehicles, remember to update the count value of the InternalAllKilled counter.
+
+It's hard describing exactly what can be done, and what will give broken results. Simply try it and look at the result in the mission editor.
