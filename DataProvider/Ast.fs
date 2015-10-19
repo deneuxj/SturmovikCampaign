@@ -342,10 +342,13 @@ type Data with
                 data.Data
                 |> List.rev
                 |> List.fold(fun expr data -> <@ %(data.ToExpr()) :: %expr @>) <@ [] @>
+            let name = data.Name
+            let index = data.Index
+            let desc = data.Description            
             <@ Group
-                { Name = data.Name
-                  Index = data.Index
-                  Description = data.Description
+                { Name = name
+                  Index = index
+                  Description = desc
                   Data = %subs
                 } @>
 
