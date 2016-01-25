@@ -4,6 +4,9 @@ syntax: regexp
 .*/obj/Debug/.*
 devenv.*[.]vspx
 CreateTankColumn/bin/
+data/My[.].*
+data/DamagedBlock[.].*
+DataProvider/SturmovikMission[.]DataProvider[.].*[.]nupkg
 syntax: glob
 *.userprefs
 .nuget/
@@ -12,3 +15,8 @@ devenv.psess
 CreateTankColumn/obj/
 DataProvider/bin/
 DataProvider/obj/
+DataProvider.Tests/bin/
+DataProvider/Scripts/load-project-release.fsx
+DataProvider/Scripts/load-references-release.fsx
+data/vluki-rescue/
+DataProvider.Tests/obj/
