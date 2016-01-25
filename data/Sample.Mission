@@ -7,6 +7,7 @@ Options
   LCAuthor = 2;
   PlayerConfig = "LuaScripts\WorldObjects\Planes\yak1s69.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\he111h6.txt";
+  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Vehicles\_pziii-l.txt";
   Time = 12:30:2;
   Date = 19.11.1942;
   HMap = "graphics\landscape\height.hini";
@@ -560,9 +561,9 @@ MCU_TR_MissionObjective
   LCName = 7;
   LCDesc = 8;
   TaskType = 0;
-  Coalition = 0;
+  Coalition = 2;
   Success = 1;
-  IconType = 0;
+  IconType = 901;
 }
 
 
@@ -2044,12 +2045,124 @@ MCU_TR_InfluenceArea
   Country = 201;
   Boundary
   {
-    22991.1, 24305.7;
-    24246.7, 24262.7;
-    24991.1, 25305.7;
-    22991.1, 26305.7;
-    22549.2, 25295.4;
+    22991, 24305;
+    24246, 24262;
+    24991, 25305;
+    22991, 26305;
+    22549, 25295;
   }
+}
+
+
+
+MCU_TR_ServerInput
+{
+  Index = 103;
+  Name = "Translator Server Input";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 25377.076;
+  YPos = 114.318;
+  ZPos = 22768.326;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+}
+
+
+
+Airfield
+{
+  Name = "Airfield";
+  Index = 104;
+  LinkTrId = 105;
+  XPos = 24753.409;
+  YPos = 149.094;
+  ZPos = 26266.402;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\airfields\fakevehiclefield.mgm";
+  Script = "LuaScripts\WorldObjects\Airfields\fakevehiclefield.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Callsign = 0;
+  Callnum = 0;
+  Planes
+  {
+    Vehicle
+    {
+      SetIndex = 3;
+      Number = 10;
+      AILevel = 2;
+      Engageable = 1;
+      Vulnerable = 1;
+      LimitAmmo = 1;
+      Renewable = 1;
+      RenewTime = 1800;
+      Model = "graphics\vehicles\_pziii-l\_pziii-l.mgm";
+      Script = "LuaScripts\WorldObjects\Vehicles\_pziii-l.txt";
+      Name = "asddew";
+      BeaconChannel = 0;
+      Spotter = -1;
+    }
+  }
+  ReturnPlanes = 0;
+  Hydrodrome = 0;
+  RepairFriendlies = 0;
+  RearmFriendlies = 0;
+  RefuelFriendlies = 0;
+  RepairTime = 0;
+  RearmTime = 0;
+  RefuelTime = 0;
+  MaintenanceRadius = 1000;
+}
+
+
+
+MCU_TR_Entity
+{
+  Index = 105;
+  Name = "Airfield entity";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 24753.409;
+  YPos = 149.294;
+  ZPos = 26266.402;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  MisObjID = 104;
+}
+
+
+
+MCU_TR_MissionObjective
+{
+  Index = 107;
+  Targets = [];
+  Objects = [];
+  XPos = 26744.505;
+  YPos = 117.837;
+  ZPos = 25277.391;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  LCName = 12;
+  LCDesc = 13;
+  TaskType = 9;
+  Coalition = 2;
+  Success = 0;
+  IconType = 901;
 }
 
 
