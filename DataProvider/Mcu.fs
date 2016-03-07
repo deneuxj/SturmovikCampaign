@@ -60,6 +60,7 @@ type McuBase =
     /// fields of this instance.
     /// </summary>
     abstract AsString : unit -> string
+    abstract Path : (string * int) list with get, set
 
 /// <summary>
 /// Interface of icons.
@@ -245,6 +246,9 @@ type HasEntity =
 /// <param name="mcu">The MCU whose ids are changed. Instance is mutated.</param>
 let substId (getNewId : int -> int) (mcu : McuBase) =
     mcu.Index <- getNewId mcu.Index
+    mcu.Path <-
+        mcu.Path
+        |> List.map (fun (name, idx) -> (name, getNewId idx))
     match mcu with
     | :? McuIcon as icon ->
         icon.Targets <- icon.Targets |> List.map getNewId

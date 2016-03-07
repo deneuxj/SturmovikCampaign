@@ -17,6 +17,10 @@
 
 namespace SturmovikMission
 
+module Constants =
+    [<Literal>]
+    let version = "1.4.0.0"
+
 open System.Reflection
 open System.Resources;
 open System.Runtime.CompilerServices
@@ -32,8 +36,8 @@ open System.Runtime.InteropServices
 [<assembly: AssemblyCulture("")>]
 [<assembly: NeutralResourcesLanguage("en")>]
 
-[<assembly: AssemblyVersion("1.3.1.0")>]
-[<assembly: AssemblyFileVersion("1.3.1.0")>]
+[<assembly: AssemblyVersion(Constants.version)>]
+[<assembly: AssemblyFileVersion(Constants.version)>]
 //[<assembly: AssemblyInformationalVersion("???")>]
 
 [<assembly: ComVisible(false)>]

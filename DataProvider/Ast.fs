@@ -332,6 +332,23 @@ type Data with
             |> List.map (fun data -> data.GetLeaves())
             |> List.concat
 
+    /// <summary>
+    /// Return the leaves with their path (from the leaf to the root).
+    /// </summary>
+    /// <param name="path">
+    /// Path from the group that contains that node to the root.
+    /// One item in the path is composed of the name and the index of the corresponding group node.
+    /// </param>
+    member this.GetLeavesWithPath(path : (string * int) list) =
+        match this with
+        | Leaf(name, value) -> [(path, name, value)]
+        | Group group ->
+            group.Data
+            |> List.map (fun data -> data.GetLeavesWithPath((group.Name, group.Index) :: path))
+            |> List.concat
+
+    member this.GetLeavesWithPath() = this.GetLeavesWithPath([])
+
     member this.ToExpr() =
         match this with
         | Leaf(name, value) ->
@@ -344,7 +361,7 @@ type Data with
                 |> List.fold(fun expr data -> <@ %(data.ToExpr()) :: %expr @>) <@ [] @>
             let name = data.Name
             let index = data.Index
-            let desc = data.Description            
+            let desc = data.Description
             <@ Group
                 { Name = name
                   Index = index

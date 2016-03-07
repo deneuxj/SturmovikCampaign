@@ -27,7 +27,7 @@ let private hasField (fields) (fieldName : string, fieldTyp : ValueType) =
     | None -> false
 
 let private requiredForBase =
-    [ ("Index", ValueType.Integer)      
+    [ ("Index", ValueType.Integer)
       ("XPos", ValueType.Float)
       ("YPos", ValueType.Float)
       ("ZPos", ValueType.Float)
@@ -235,7 +235,7 @@ let private mkLCData typeFields state =
             None
     iconLC, subtitleLC
 
-let private mkAsBase (typeName : string) (state : (string * Value) list ref) iconImpl subtitleImpl =
+let private mkAsBase (typeName : string) (path : (string * int) list ref) (state : (string * Value) list ref) iconImpl subtitleImpl =
     {                
         new McuBase with
             member this.AsString() =
@@ -254,6 +254,12 @@ let private mkAsBase (typeName : string) (state : (string * Value) list ref) ico
             member this.IconLC = iconImpl
 
             member this.SubtitleLC = subtitleImpl
+
+            member this.Path
+                with get() =
+                    !path
+                and set(path2) =
+                    path := path2
     }
 
 let tryMkAsBase (typeName : string, typ : ValueType) =
@@ -266,10 +272,11 @@ let tryMkAsBase (typeName : string, typ : ValueType) =
         if hasItAll then
             let typeFields = fields
             function
-            | Value.Composite fields ->                
+            | Value.Composite fields, path ->
                 let state = ref fields
+                let path = ref path
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsBase typeName state iconLC subtitleLC
+                mkAsBase typeName path state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
@@ -277,8 +284,8 @@ let tryMkAsBase (typeName : string, typ : ValueType) =
     | _ ->
         None
 
-let private mkAsComplex (typeName : string) (state : (string * Value) list ref) =
-    let baseImpl = mkAsBase typeName state None None
+let private mkAsComplex path (typeName : string) (state : (string * Value) list ref) =
+    let baseImpl = mkAsBase typeName path state None None
     {
         new McuComplex with
             member this.OnEvents
@@ -315,7 +322,7 @@ let private mkAsComplex (typeName : string) (state : (string * Value) list ref) 
                     state := !state |> setField ("Name", Value.String name)
             
         interface McuBase with
-            member this.AsString() = baseImpl.AsString()                        
+            member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori
             member this.Pos = baseImpl.Pos
             member this.Index
@@ -323,6 +330,9 @@ let private mkAsComplex (typeName : string) (state : (string * Value) list ref) 
                 and set idx = baseImpl.Index <- idx
             member this.IconLC = baseImpl.IconLC
             member this.SubtitleLC = baseImpl.SubtitleLC
+            member this.Path
+                with get() = baseImpl.Path
+                and set(p) = baseImpl.Path <- p
     }
 
 let tryMkAsComplex (typeName : string, typ : ValueType) =
@@ -330,17 +340,18 @@ let tryMkAsComplex (typeName : string, typ : ValueType) =
     | "MCU_TR_ComplexTrigger", ValueType.Composite fields ->
         let typeFields = fields
         function
-        | Value.Composite fields ->                
+        | Value.Composite fields, path ->
             let state = ref fields
-            mkAsComplex typeName state
+            let path = ref path
+            mkAsComplex path typeName state
         | _ -> invalidArg "value" "Not a composite"
         |> Some
     | _ ->
         None
 
 
-let private mkAsIcon (typeName : string) (state : (string * Value) list ref) iconImpl subtitleImpl =
-    let baseImpl = mkAsBase typeName state iconImpl subtitleImpl
+let private mkAsIcon (typeName : string) path (state : (string * Value) list ref) iconImpl subtitleImpl =
+    let baseImpl = mkAsBase typeName path state iconImpl subtitleImpl
     {
         new McuIcon with
             member this.Targets
@@ -350,7 +361,7 @@ let private mkAsIcon (typeName : string) (state : (string * Value) list ref) ico
                     state := !state |> setField ("Targets", Value.IntVector xs)
                 
         interface McuBase with
-            member this.AsString() = baseImpl.AsString()                        
+            member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori
             member this.Pos = baseImpl.Pos
             member this.Index
@@ -358,6 +369,9 @@ let private mkAsIcon (typeName : string) (state : (string * Value) list ref) ico
                 and set idx = baseImpl.Index <- idx
             member this.IconLC = baseImpl.IconLC
             member this.SubtitleLC = baseImpl.SubtitleLC
+            member this.Path
+                with get() = baseImpl.Path
+                and set(p) = baseImpl.Path <- p
     }
 
 
@@ -372,10 +386,11 @@ let tryMkAsIcon (typeName : string, typ : ValueType) =
         if hasItAll then
             let typeFields = fields
             function
-            | Value.Composite fields ->                
+            | Value.Composite fields, path ->
                 let state = ref fields
+                let path = ref path
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsIcon typeName state iconLC subtitleLC
+                mkAsIcon typeName path state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
@@ -384,8 +399,8 @@ let tryMkAsIcon (typeName : string, typ : ValueType) =
         None
 
 
-let private mkAsCommand (typeName : string) (state : (string * Value) list ref) iconImpl subtitleImpl =
-    let baseImpl = mkAsBase typeName state iconImpl subtitleImpl
+let private mkAsCommand (typeName : string) path (state : (string * Value) list ref) iconImpl subtitleImpl =
+    let baseImpl = mkAsBase typeName path state iconImpl subtitleImpl
     {
         new McuCommand with
             member this.Objects
@@ -408,7 +423,7 @@ let private mkAsCommand (typeName : string) (state : (string * Value) list ref) 
 
                 
         interface McuBase with
-            member this.AsString() = baseImpl.AsString()                        
+            member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori
             member this.Pos = baseImpl.Pos
             member this.Index
@@ -416,6 +431,9 @@ let private mkAsCommand (typeName : string) (state : (string * Value) list ref) 
                 and set idx = baseImpl.Index <- idx
             member this.IconLC = baseImpl.IconLC
             member this.SubtitleLC = baseImpl.SubtitleLC
+            member this.Path
+                with get() = baseImpl.Path
+                and set(p) = baseImpl.Path <- p
     }
 
 
@@ -432,10 +450,11 @@ let tryMkAsCommand (typeName : string, typ : ValueType) =
         if hasItAll then
             let typeFields = fields
             function
-            | Value.Composite fields ->
+            | Value.Composite fields, path ->
                 let state = ref fields
+                let path = ref path
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsCommand typeName state iconLC subtitleLC
+                mkAsCommand typeName path state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
@@ -450,13 +469,14 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
     | "MCU_CheckZone" ->
         match typ with
         | ValueType.Composite typeFields ->
-            match tryMkAsCommand(typeName, typ) with
+            match tryMkAsCommand (typeName, typ) with
             | Some _ ->
                 function
-                | Value.Composite fields as value ->
+                | Value.Composite fields as value, path ->
                     let state = ref fields
+                    let path = ref path
                     let iconLC, subtitleLC = mkLCData typeFields state
-                    let baseImpl = mkAsCommand typeName state iconLC subtitleLC
+                    let baseImpl = mkAsCommand typeName path state iconLC subtitleLC
                     {
                         new McuProximity with
                             member this.PlaneCoalitions
@@ -489,6 +509,9 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
                             member this.Name
                                 with get() = baseImpl.Name
                                 and set name = baseImpl.Name <- name
+                            member this.Path
+                                with get() = baseImpl.Path
+                                and set(p) = baseImpl.Path <- p
                     }
                 | _ ->
                     invalidArg "value" "Not a composite"
@@ -501,8 +524,8 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
         None
 
 
-let private mkAsEntity typeName (state : (string * Value) list ref) iconLC subtitleLC =
-    let cmd = mkAsCommand typeName state iconLC subtitleLC
+let private mkAsEntity typeName path (state : (string * Value) list ref) iconLC subtitleLC =
+    let cmd = mkAsCommand typeName path state iconLC subtitleLC
     let baseImpl : McuBase = upcast cmd
     {
         new McuEntity with
@@ -588,7 +611,7 @@ let private mkAsEntity typeName (state : (string * Value) list ref) iconLC subti
                 and set name = cmd.Name <- name
         
         interface McuBase with
-            member this.AsString() = baseImpl.AsString()                        
+            member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori
             member this.Pos = baseImpl.Pos
             member this.Index
@@ -596,6 +619,9 @@ let private mkAsEntity typeName (state : (string * Value) list ref) iconLC subti
                 and set idx = baseImpl.Index <- idx
             member this.IconLC = iconLC
             member this.SubtitleLC = subtitleLC
+            member this.Path
+                with get() = baseImpl.Path
+                and set(p) = baseImpl.Path <- p
     }
 
 
@@ -631,10 +657,11 @@ let tryMkAsEntity (typeName : string, typ : ValueType) =
         if hasItAll then
             let typeFields = fields
             function
-            | Value.Composite fields ->                
+            | Value.Composite fields, path ->
                 let state = ref fields
+                let path = ref path
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsEntity typeName state iconLC subtitleLC
+                mkAsEntity typeName path state iconLC subtitleLC
             | _ ->
                 invalidArg "value" "Not a composite"
             |> Some
@@ -644,8 +671,8 @@ let tryMkAsEntity (typeName : string, typ : ValueType) =
         None
 
 
-let private mkAsHasEntity typeName (state : (string * Value) list ref) iconLC subtitleLC =
-    let baseImpl = mkAsBase typeName state iconLC subtitleLC
+let private mkAsHasEntity typeName path (state : (string * Value) list ref) iconLC subtitleLC =
+    let baseImpl = mkAsBase typeName path state iconLC subtitleLC
     {
         new HasEntity with
             member this.LinkTrId
@@ -687,6 +714,9 @@ let private mkAsHasEntity typeName (state : (string * Value) list ref) iconLC su
                 and set idx = baseImpl.Index <- idx
             member this.IconLC = iconLC
             member this.SubtitleLC = subtitleLC
+            member this.Path
+                with get() = baseImpl.Path
+                and set(p) = baseImpl.Path <- p
     }
 
 
@@ -702,10 +732,11 @@ let tryMkAsHasEntity (typeName : string, typ : ValueType) =
         if hasItAll then
             let typeFields = fields
             function
-            | Value.Composite fields ->
+            | Value.Composite fields, path ->
                 let state = ref fields
+                let path = ref path
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsHasEntity typeName state iconLC subtitleLC
+                mkAsHasEntity typeName path state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
@@ -714,14 +745,14 @@ let tryMkAsHasEntity (typeName : string, typ : ValueType) =
         None
 
 
-let upcastMaker (f : Value -> #McuBase) : (Value -> McuBase) =
+let upcastMaker (f : Value * (string * int) list -> #McuBase) : (Value * (string * int) list -> McuBase) =
     fun value ->
         upcast(f value)
 
 let upcastMaybeMaker f =
     f |> Option.map upcastMaker
 
-let upcastTryMaker (f : string * ValueType -> (Value -> #McuBase) option) =
+let upcastTryMaker (f :  string * ValueType -> (Value * (string * int) list -> #McuBase) option) =
     fun namedValueType ->
         upcastMaybeMaker(f namedValueType)
 

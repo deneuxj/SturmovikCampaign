@@ -405,7 +405,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                                     fun [this] ->
                                         <@@
                                             match McuFactory.tryMkAsComplex(name, %typExpr) with
-                                            | Some f -> f (%%this : Ast.Value)
+                                            | Some f -> f((%%this : Ast.Value), [])
                                             | None -> failwith "Unexpected error: could not build AsComplex"
                                         @@>)
                                 |> addXmlDoc """<summary>Create a new mutable instance of a complex trigger.</summary>"""
@@ -420,7 +420,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                                     fun [this] ->
                                         <@@
                                             match McuFactory.tryMkAsCommand(name, %typExpr) with
-                                            | Some f -> f (%%this : Ast.Value)
+                                            | Some f -> f((%%this : Ast.Value), [])
                                             | None -> failwith "Unexpected error: could not build AsCommand"
                                         @@>)
                                 |> addXmlDoc """<summary>Create a new mutable instance of an MCU command.</summary>"""
@@ -435,7 +435,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                                     fun [this] ->
                                         <@@
                                             match McuFactory.tryMkAsEntity(name, %typExpr) with
-                                            | Some f -> f (%%this : Ast.Value)
+                                            | Some f -> f((%%this : Ast.Value), [])
                                             | None -> failwith "Unexpected error: could not build AsEntity"
                                         @@>)
                                 |> addXmlDoc """<summary>Create a new mutable instance of an entity.</summary>"""
@@ -450,7 +450,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                                     fun [this] ->
                                         <@@
                                             match McuFactory.tryMkAsHasEntity(name, %typExpr) with
-                                            | Some f -> f (%%this : Ast.Value)
+                                            | Some f -> f((%%this : Ast.Value), [])
                                             | None -> failwith "Unexpected error: could not build AsHasEntity"
                                         @@>)
                                 |> addXmlDoc """<summary>Create a new mutable instance of a plane, vehicle, building...</summary>"""
@@ -587,12 +587,12 @@ let buildAsMcuList (pdb : IProvidedDataBuilder) (dataListSource : DataListSource
                 )
                 |> Map.ofList
             this
-            |> List.map (fun data -> data.GetLeaves())
+            |> List.map (fun data -> data.GetLeavesWithPath())
             |> List.concat
-            |> List.choose (fun (name, value) ->
+            |> List.choose (fun (path, name, value) ->
                 match Map.tryFind name mcuMakerOfName with
                 | Some(Some(make)) ->
-                    make value
+                    make(value, path)
                     |> Some
                 | _ -> // Cannot build an Mcu from that valueType
                     None

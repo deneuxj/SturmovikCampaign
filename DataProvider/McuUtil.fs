@@ -4,6 +4,18 @@ open SturmovikMission.DataProvider.Mcu
 open System
 open System.Collections.Generic
 
+/// Get an entity by its name and path prefix.
+let tryGetByPathAndName (name : string) (prefix : string list) (mcus : #McuBase list) =
+    let prefixesMatch prefix path =
+        Seq.forall2 (=) prefix (Seq.map fst path)
+    mcus
+    |> Seq.map (fun mcu -> mcu :> McuBase)
+    |> Seq.tryFind (function
+                    | :? McuCommand as cmd -> cmd.Name = name && prefixesMatch prefix cmd.Path
+                    | :? McuComplex as cpx -> cpx.Name = name && prefixesMatch prefix cpx.Path
+                    | :? HasEntity as ent -> ent.Name = name && prefixesMatch prefix ent.Path
+                    | _ -> false)
+
 /// Get an entity by its name.
 let getEntityByName (name : string) (mcus : #McuBase list) =
     mcus
@@ -127,7 +139,7 @@ let asString (gr : IMcuGroup) : string =
         |> moveEntitiesAfterOwners
     let strings =
         content
-        |> List.map (fun mcu -> mcu.AsString())    
+        |> List.map (fun mcu -> mcu.AsString())
     String.concat "\n" strings
 
 /// <summary>
