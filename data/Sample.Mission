@@ -171,14 +171,14 @@ MCU_TR_Entity
     OnReport
     {
       Type = 3;
-      CmdId = 11;
-      TarId = 10;
+      CmdId = 10;
+      TarId = 11;
     }
     OnReport
     {
       Type = 4;
       CmdId = 8;
-      TarId = 11;
+      TarId = 10;
     }
   }
 }
@@ -187,7 +187,7 @@ MCU_TR_Entity
 
 MCU_CMD_AttackTarget
 {
-  Index = 10;
+  Index = 11;
   Name = "command Attack";
   Desc = "";
   Targets = [];
@@ -385,7 +385,7 @@ MCU_CMD_Land
 
 MCU_CMD_TakeOff
 {
-  Index = 11;
+  Index = 10;
   Name = "command Take off";
   Desc = "";
   Targets = [];
@@ -1491,6 +1491,9 @@ Airfield
       Script = "LuaScripts\WorldObjects\Planes\he111h6.txt";
       Name = "dfgdfg";
       Skin = "";
+      AvMods = "";
+      AvSkins = "";
+      AvPayloads = "";
       Callsign = 7;
       Callnum = 4;
     }
@@ -1515,6 +1518,9 @@ Airfield
       Script = "LuaScripts\WorldObjects\Planes\he111h6.txt";
       Name = "dfgdfg";
       Skin = "";
+      AvMods = "";
+      AvSkins = "";
+      AvPayloads = "";
       Callsign = 7;
       Callnum = 4;
     }
@@ -1539,6 +1545,9 @@ Airfield
       Script = "LuaScripts\WorldObjects\Planes\he111h6.txt";
       Name = "dfgdfg";
       Skin = "";
+      AvMods = "";
+      AvSkins = "";
+      AvPayloads = "";
       Callsign = 7;
       Callnum = 4;
     }
@@ -1644,7 +1653,7 @@ MCU_TR_Entity
     OnEvent
     {
       Type = 13;
-      TarId = 11;
+      TarId = 10;
     }
   }
 }
@@ -2111,6 +2120,9 @@ Airfield
       Name = "asddew";
       BeaconChannel = 0;
       Spotter = -1;
+      AvMods = "";
+      AvSkins = "";
+      AvPayloads = "";
     }
   }
   ReturnPlanes = 0;
@@ -2163,6 +2175,41 @@ MCU_TR_MissionObjective
   Coalition = 2;
   Success = 0;
   IconType = 901;
+}
+
+
+
+MCU_TR_Media
+{
+  Index = 108;
+  Name = "Translator Media";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 25211.852;
+  YPos = 149.834;
+  ZPos = 27460.458;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Config = "multiplayer\internationale-ru.mp3";
+  TotalTime = 10;
+  ExpandTime = 1;
+  FadeTime = 1;
+  Opacity = 25;
+  RColor = 255;
+  GColor = 255;
+  BColor = 255;
+  MediaType = 5;
+  OnEvents
+  {
+    OnEvent
+    {
+      Type = 18;
+      TarId = 45;
+    }
+  }
 }
 
 
