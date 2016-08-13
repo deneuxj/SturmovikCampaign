@@ -1,4 +1,4 @@
-﻿//    Copyright 2015 Johann Deneux
+﻿//    Copyright 2016 Johann Deneux
 //
 //    This file is part of SturmovikMission.
 //
@@ -19,7 +19,7 @@ namespace SturmovikMission
 
 module Constants =
     [<Literal>]
-    let version = "1.4.0.0"
+    let version = "2.0.0.0"
 
 open System.Reflection
 open System.Resources;
@@ -31,7 +31,7 @@ open System.Runtime.InteropServices
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("")>]
 [<assembly: AssemblyProduct("SturmovikMission")>]
-[<assembly: AssemblyCopyright("Copyright (c) 2015 Johann Deneux")>]
+[<assembly: AssemblyCopyright("Copyright (c) 2016 Johann Deneux")>]
 [<assembly: AssemblyTrademark("")>]
 [<assembly: AssemblyCulture("")>]
 [<assembly: NeutralResourcesLanguage("en")>]

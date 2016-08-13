@@ -4,41 +4,23 @@ open SturmovikMission.DataProvider.Mcu
 open System
 open System.Collections.Generic
 
-/// Get an entity by its name and path prefix.
-let tryGetByPathAndName (name : string) (prefix : string list) (mcus : #McuBase list) =
+/// Get Mcus in a group
+let filterByPath (prefix : string list) (mcus : #McuBase list) =
     let prefixesMatch prefix path =
         Seq.forall2 (=) prefix (Seq.map fst path)
     mcus
     |> Seq.map (fun mcu -> mcu :> McuBase)
-    |> Seq.tryFind (function
-                    | :? McuCommand as cmd -> cmd.Name = name && prefixesMatch prefix cmd.Path
-                    | :? McuComplex as cpx -> cpx.Name = name && prefixesMatch prefix cpx.Path
-                    | :? HasEntity as ent -> ent.Name = name && prefixesMatch prefix ent.Path
+    |> Seq.filter (fun mcu -> prefixesMatch prefix mcu.Path)
+
+/// Get Mcus by their name
+let filterByName (name : string) (mcus : #McuBase list) =
+    mcus
+    |> Seq.map (fun mcu -> mcu :> McuBase)
+    |> Seq.filter (function
+                    | :? McuCommand as cmd -> cmd.Name = name
+                    | :? McuComplex as cpx -> cpx.Name = name
+                    | :? HasEntity as ent -> ent.Name = name
                     | _ -> false)
-
-/// Get an entity by its name.
-let getEntityByName (name : string) (mcus : #McuBase list) =
-    mcus
-    |> Seq.choose (fun x -> match x :> McuBase with :? McuEntity as entity -> Some entity | _ -> None)
-    |> Seq.find (fun x -> x.Name = name)
-
-/// Get an entity holder by its name.
-let getHasEntityByName (name : string) (mcus : #McuBase list) =
-    mcus
-    |> Seq.choose (fun x -> match x :> McuBase with :? HasEntity as vehicle -> Some vehicle | _ -> None)
-    |> Seq.find (fun x -> x.Name = name)
-
-/// Get a command by its name.
-let getCommandByName (name : string) (mcus : #McuBase list) =
-    mcus
-    |> Seq.choose (fun x -> match x :> McuBase with :? McuCommand as cmd -> Some cmd | _ -> None)
-    |> Seq.find (fun x -> x.Name = name)
-
-/// Get a complex trigger by its name.
-let getComplexTriggerByName (name : string) (mcus : #McuBase list) =
-    mcus
-    |> Seq.choose (fun x -> match x :> McuBase with :? McuComplex as complex -> Some complex | _ -> None)
-    |> Seq.find (fun x -> x.Name = name)
 
 /// Get an Mcu from a list by its index.
 let getByIndex (idx : int) (mcus : #McuBase list) : McuBase =
