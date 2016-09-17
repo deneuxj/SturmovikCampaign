@@ -17,7 +17,7 @@ let filterByName (name : string) (mcus : #McuBase list) =
     mcus
     |> Seq.map (fun mcu -> mcu :> McuBase)
     |> Seq.filter (function
-                    | :? McuCommand as cmd -> cmd.Name = name
+                    | :? McuTrigger as cmd -> cmd.Name = name
                     | :? McuComplex as cpx -> cpx.Name = name
                     | :? HasEntity as ent -> ent.Name = name
                     | _ -> false)
@@ -50,7 +50,7 @@ let getIconByIndex idx mcus =
 let getCommandByIndex idx mcus =
     mcus
     |> getByIndex idx
-    :?> McuCommand
+    :?> McuTrigger
 
 /// Get a complex trigger by its index.
 let getComplexTriggerByIndex idx mcus =

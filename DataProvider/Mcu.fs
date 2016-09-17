@@ -70,9 +70,9 @@ type McuIcon =
     abstract Targets : int list with get, set
 
 /// <summary>
-/// Interface of commands (timers, counters...).
+/// Interface of triggers (timers, counters...).
 /// </summary>
-type McuCommand =
+type McuTrigger =
     inherit McuBase
     abstract Name : string with get, set
     abstract Objects : int list with get, set
@@ -82,7 +82,7 @@ type McuCommand =
 /// Interface of proximity and check zone triggers.
 /// </summary>
 type McuProximity =
-    inherit McuCommand
+    inherit McuTrigger
     abstract PlaneCoalitions : int list with get, set
     abstract VehicleCoalitions : int list with get, set
     
@@ -219,7 +219,7 @@ type ReportConnection =
 /// Interface of entities, i.e. active parts of vehicles and other 3d objects.
 /// </summary>
 type McuEntity =
-    inherit McuCommand
+    inherit McuTrigger
     abstract Name : string with get, set
     abstract MisObjID : int with get, set
     abstract OnEvents : EventConnection list with get, set
@@ -254,7 +254,7 @@ let substId (getNewId : int -> int) (mcu : McuBase) =
         icon.Targets <- icon.Targets |> List.map getNewId
     | _ -> ()
     match mcu with
-    | :? McuCommand as cmd ->
+    | :? McuTrigger as cmd ->
         cmd.Objects <- cmd.Objects |> List.map getNewId
         cmd.Targets <- cmd.Targets |> List.map getNewId
     | _ -> ()
@@ -295,7 +295,7 @@ let substLCId (getNewId : int -> int) (mcu : McuBase) =
 /// </summary>
 /// <param name="mcu">The command, which is mutated.</param>
 /// <param name="objekt">The id of the object.</param>
-let addObjectLink (mcu : McuCommand) (objekt : int) =
+let addObjectLink (mcu : McuTrigger) (objekt : int) =
     mcu.Objects <- objekt :: mcu.Objects
 
 /// <summary>
@@ -303,7 +303,7 @@ let addObjectLink (mcu : McuCommand) (objekt : int) =
 /// </summary>
 /// <param name="mcu">The command, which is mutated.</param>
 /// <param name="target">The id of the target.</param>
-let addTargetLink (mcu : McuCommand) (target : int) =
+let addTargetLink (mcu : McuTrigger) (target : int) =
     mcu.Targets <- target :: mcu.Targets
 
 /// <summary>

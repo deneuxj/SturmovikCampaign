@@ -415,7 +415,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                             yield
                                 pdb.NewMethod(
                                     "CreateMcuCommand",
-                                    typeof<Mcu.McuCommand>,
+                                    typeof<Mcu.McuTrigger>,
                                     [],
                                     fun [this] ->
                                         <@@

@@ -402,7 +402,7 @@ let tryMkAsIcon (typeName : string, typ : ValueType) =
 let private mkAsCommand (typeName : string) path (state : (string * Value) list ref) iconImpl subtitleImpl =
     let baseImpl = mkAsBase typeName path state iconImpl subtitleImpl
     {
-        new McuCommand with
+        new McuTrigger with
             member this.Objects
                 with get() =
                     !state |> getIntVecField "Objects"
@@ -491,7 +491,7 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
                                 and set(coalitions) =
                                     state := !state |> setField("VehicleCoalitions", IntVector coalitions)
 
-                        interface McuCommand with
+                        interface McuTrigger with
                             member this.AsString() = baseImpl.AsString()                        
                             member this.Ori = baseImpl.Ori
                             member this.Pos = baseImpl.Pos
@@ -599,7 +599,7 @@ let private mkAsEntity typeName path (state : (string * Value) list ref) iconLC 
                 and set(idx) =
                     state := !state |> setField("MisObjID", Value.Integer idx)
 
-        interface McuCommand with
+        interface McuTrigger with
             member this.Objects
                 with get() = cmd.Objects
                 and set(x) = cmd.Objects <- x
