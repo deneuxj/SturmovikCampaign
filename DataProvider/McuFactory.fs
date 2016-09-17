@@ -399,7 +399,7 @@ let tryMkAsIcon (typeName : string, typ : ValueType) =
         None
 
 
-let private mkAsCommand (typeName : string) path (state : (string * Value) list ref) iconImpl subtitleImpl =
+let private mkAsTrigger (typeName : string) path (state : (string * Value) list ref) iconImpl subtitleImpl =
     let baseImpl = mkAsBase typeName path state iconImpl subtitleImpl
     {
         new McuTrigger with
@@ -437,7 +437,7 @@ let private mkAsCommand (typeName : string) path (state : (string * Value) list 
     }
 
 
-let tryMkAsCommand (typeName : string, typ : ValueType) =
+let tryMkAsTrigger (typeName : string, typ : ValueType) =
     match typ with
     | ValueType.Composite fields ->
         let required =
@@ -454,7 +454,7 @@ let tryMkAsCommand (typeName : string, typ : ValueType) =
                 let state = ref fields
                 let path = ref path
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsCommand typeName path state iconLC subtitleLC
+                mkAsTrigger typeName path state iconLC subtitleLC
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else
@@ -469,14 +469,14 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
     | "MCU_CheckZone" ->
         match typ with
         | ValueType.Composite typeFields ->
-            match tryMkAsCommand (typeName, typ) with
+            match tryMkAsTrigger (typeName, typ) with
             | Some _ ->
                 function
                 | Value.Composite fields as value, path ->
                     let state = ref fields
                     let path = ref path
                     let iconLC, subtitleLC = mkLCData typeFields state
-                    let baseImpl = mkAsCommand typeName path state iconLC subtitleLC
+                    let baseImpl = mkAsTrigger typeName path state iconLC subtitleLC
                     {
                         new McuProximity with
                             member this.PlaneCoalitions
@@ -492,7 +492,7 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
                                     state := !state |> setField("VehicleCoalitions", IntVector coalitions)
 
                         interface McuTrigger with
-                            member this.AsString() = baseImpl.AsString()                        
+                            member this.AsString() = baseImpl.AsString()
                             member this.Ori = baseImpl.Ori
                             member this.Pos = baseImpl.Pos
                             member this.Index
@@ -525,7 +525,7 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
 
 
 let private mkAsEntity typeName path (state : (string * Value) list ref) iconLC subtitleLC =
-    let cmd = mkAsCommand typeName path state iconLC subtitleLC
+    let cmd = mkAsTrigger typeName path state iconLC subtitleLC
     let baseImpl : McuBase = upcast cmd
     {
         new McuEntity with
@@ -762,7 +762,7 @@ let makers =
         upcastTryMaker tryMkAsEntity
         upcastTryMaker tryMkAsHasEntity
         upcastTryMaker tryMkAsProximity
-        upcastTryMaker tryMkAsCommand
+        upcastTryMaker tryMkAsTrigger
         upcastTryMaker tryMkAsIcon
         upcastTryMaker tryMkAsBase
     ]

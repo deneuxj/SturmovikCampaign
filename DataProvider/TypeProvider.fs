@@ -410,7 +410,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                                         @@>)
                                 |> addXmlDoc """<summary>Create a new mutable instance of a complex trigger.</summary>"""
                         | None -> ()
-                        match McuFactory.tryMkAsCommand(name, typ) with
+                        match McuFactory.tryMkAsTrigger(name, typ) with
                         | Some _ ->
                             yield
                                 pdb.NewMethod(
@@ -419,7 +419,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                                     [],
                                     fun [this] ->
                                         <@@
-                                            match McuFactory.tryMkAsCommand(name, %typExpr) with
+                                            match McuFactory.tryMkAsTrigger(name, %typExpr) with
                                             | Some f -> f((%%this : Ast.Value), [])
                                             | None -> failwith "Unexpected error: could not build AsCommand"
                                         @@>)
