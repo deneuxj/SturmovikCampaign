@@ -85,7 +85,25 @@ type McuProximity =
     inherit McuTrigger
     abstract PlaneCoalitions : int list with get, set
     abstract VehicleCoalitions : int list with get, set
-    
+
+/// <summary>
+/// Interface of waypoint triggers.
+/// </summary>
+type McuWaypoint =
+    inherit McuTrigger
+    /// <summary>
+    /// Radius in m.
+    /// </summary>
+    abstract Radius : int with get, set
+    /// <summary>
+    /// 0 -> Low, 1 -> Medium, 2 -> High
+    /// </summary>
+    abstract Priority : int with get, set
+    /// <summary>
+    /// Speed in km/h.
+    /// </summary>
+    abstract Speed : int with get, set
+
 /// <summary>
 /// Event codes, to be used in EventConnection.Type
 /// </summary>
