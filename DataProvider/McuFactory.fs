@@ -737,7 +737,7 @@ let tryMkAsEntity (typeName : string, typ : ValueType) =
         None
 
 
-let private mkAsHasEntity typeName path (state : (string * Value) list ref) iconLC subtitleLC =
+let private mkAsHasEntity typeName path (state : (string * Value) list ref) iconLC subtitleLC formation =
     let baseImpl = mkAsBase typeName path state iconLC subtitleLC
     {
         new HasEntity with
@@ -771,6 +771,8 @@ let private mkAsHasEntity typeName path (state : (string * Value) list ref) icon
                 and set country =
                     state := !state |> setField ("Country", Value.Integer country)
 
+            member this.NumberInFormation = formation
+
         interface McuBase with
             member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori
@@ -802,7 +804,18 @@ let tryMkAsHasEntity (typeName : string, typ : ValueType) =
                 let state = ref fields
                 let path = ref path
                 let iconLC, subtitleLC = mkLCData typeFields state
-                mkAsHasEntity typeName path state iconLC subtitleLC
+                let formation =
+                    if hasField typeFields ("NumberInFormation", ValueType.Integer) then
+                        { new NumberInFormationData with
+                            member this.Number
+                                with get() =
+                                    !state |> getIntField "NumberInFormation"
+                                and set number =
+                                    state := !state |> setField ("NumberInFormation", Value.Integer number)
+                        } |> Some
+                    else
+                        None
+                mkAsHasEntity typeName path state iconLC subtitleLC formation
             | _ -> invalidArg "value" "Not a composite"
             |> Some
         else

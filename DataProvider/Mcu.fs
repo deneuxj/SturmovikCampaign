@@ -244,6 +244,13 @@ type McuEntity =
     abstract OnReports : ReportConnection list with get, set
 
 /// <summary>
+/// Provide access to the position in formation for instances of HasEntity that can be in formations:
+/// ground vehicles, planes... but not buildings, bridges.
+/// </summary>
+type NumberInFormationData =
+    abstract Number : int with get, set
+
+/// <summary>
 /// Interface of things that can have entities: ground vehicles, planes, artillery, buildings, bridges...
 /// </summary>
 type HasEntity =
@@ -256,6 +263,7 @@ type HasEntity =
     abstract Model : string with get, set
     abstract Script : string with get, set
     abstract Country : int with get, set
+    abstract NumberInFormation : NumberInFormationData option
 
 /// <summary>
 /// Substitute occurrences of numerical ids in an MCU.
