@@ -2,7 +2,7 @@
 
 open SturmovikMission.DataProvider
 open Types
-open Data
+open VirtualConvoy
 
 let getSomePath() =
     let db = T.GroupData(Parsing.Stream.FromFile "Strategy.Mission").CreateMcuList()

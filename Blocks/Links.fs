@@ -1,8 +1,8 @@
-﻿module SturmovikMission.Blocks.Relations
+﻿module SturmovikMission.Blocks.Links
 
 open SturmovikMission.DataProvider
 
-type Relations =
+type Links =
     { Columns : (Mcu.McuEntity * Mcu.McuEntity * int) list
       Objects : (Mcu.McuTrigger * Mcu.McuBase) list
       Targets : (Mcu.McuTrigger * Mcu.McuBase) list

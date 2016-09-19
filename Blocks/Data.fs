@@ -1,55 +1,22 @@
-﻿module SturmovikMission.Blocks.Data
+﻿/// Instances and predicates involved in the creation of virtual convoys.
+module SturmovikMission.Blocks.VirtualConvoy
 
 open Types
-open Relations
+open Links
+open Predicates
 open SturmovikMission.DataProvider
 
+// Types for each instance type.
+// Those are typically typed ints, but could be typed strings, or any other type suitable for a dictionary key.
 type ConvoyInstance = ConvoyInstance of int
 type WhileEnemyCloseInstance = WhileEnemyCloseInstance of int
 type ActiveWaypointInstance = ActiveWaypointInstance of int
 type TruckInConvoyInstance = TruckInConvoyInstance of convoy: int * pos: int
 type TimerInstance = TimerInstance of int
 
-let get set key =
-    set
-    |> Set.filter (fst >> ((=) key))
-    |> Set.minElement
-    |> snd
-
-let filter3 set (key1, key2, key3) =
-    set
-    |> Set.filter (fun (x, y, z) ->
-        match key1 with
-        | None -> true
-        | Some k -> k = x
-        &&
-        match key2 with
-        | None -> true
-        | Some k -> k = y
-        &&
-        match key3 with
-        | None -> true
-        | Some k -> k = z)
-
-let tryGet set key =
-    let candidates =
-        set
-        |> Set.filter (fst >> ((=) key))
-    if Set.isEmpty candidates then
-        None
-    else
-        candidates
-        |> Set.minElement
-        |> snd
-        |> Some
-
-let star binaryRel start =
-    let rec work current res =
-        match tryGet binaryRel current with
-        | Some next -> work next (Set.add next res)
-        | None -> res
-    work start (Set.singleton start)
-
+/// <summary>
+/// Type used in the arguments of VirtualConvoy.Create. Denotes one vertex of the path of the virtual convoy.
+/// </summary>
 type PathVertex =
     { Pos : Mcu.Vec3
       Ori : Mcu.Vec3
@@ -58,6 +25,12 @@ type PathVertex =
       Priority : int
     }
 
+/// <summary>
+/// A virtual convoy, i.e. a convoy that does not actually exist until an enemy approaches its
+/// expected position. The intent is to provide the illusion of a mission filled with large numbers
+/// of planes and vehicles, while keeping CPU utilization of the server to a low level.
+/// See Proto.txt.
+/// </summary>
 type VirtualConvoy =
     { ConvoySet : Map<ConvoyInstance, Convoy>
       TruckInConvoy : Set<ConvoyInstance * int * TruckInConvoyInstance>
@@ -97,6 +70,12 @@ with
                     yield kvp.Value.All
             ]
 
+    /// <summary>
+    /// Create the instances and relations of a virtual convoy.
+    /// </summary>
+    /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
+    /// <param name="path">Path followed by the convoy.</param>
+    /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
     static member Create(store : NumericalIdentifiers.IdStore, path : PathVertex list, convoySize : int) =
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
@@ -188,7 +167,10 @@ with
           MissionStart = missionStart
         }
 
-    member this.CreateRelations() =
+    /// <summary>
+    /// Create the links between the MCUs in the virtual convoy.
+    /// </summary>
+    member this.CreateLinks() =
         let columns =
             [
                 for convoy, position, truck in this.TruckInConvoy do

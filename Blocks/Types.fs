@@ -1,9 +1,11 @@
-﻿module SturmovikMission.Blocks.Types
+﻿/// Types of groups of which virtual convoys are composed.
+module SturmovikMission.Blocks.Types
 
 open SturmovikMission.DataProvider
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission">
 
+// Utility functions. Should go into SturmovikMission.DataProvider.McuUtil.
 let getTriggerByName group name =
     McuUtil.filterByName name group
     |> Seq.choose (function :? Mcu.McuTrigger as trigger -> Some trigger | _ -> None)
@@ -19,6 +21,7 @@ let getWaypointByName group name =
     |> Seq.choose (function :? Mcu.McuWaypoint as waypoint -> Some waypoint | _ -> None)
     |> Seq.head
 
+// The types. See Proto.txt.
 type Convoy =
     { LeadCarEntity : Mcu.McuEntity
       LeadCarDamaged : Mcu.McuTrigger

@@ -2,7 +2,7 @@
 // See the 'F# Tutorial' project for more help.
 
 open SturmovikMission.Blocks
-open SturmovikMission.Blocks.Data
+open SturmovikMission.Blocks.VirtualConvoy
 open SturmovikMission.DataProvider
 
 [<EntryPoint>]
@@ -25,7 +25,7 @@ let main argv =
 
     let store = NumericalIdentifiers.IdStore()
     let virtualConvoy = VirtualConvoy.Create(store, path, 3)
-    let rel = virtualConvoy.CreateRelations()
+    let rel = virtualConvoy.CreateLinks()
     let mcus = McuUtil.deepContentOf virtualConvoy
     rel.Apply(mcus)
     IO.writeGroupFile "VirtualConvoy.group" mcus
