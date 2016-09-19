@@ -23,7 +23,7 @@ In the list above, layers mentioned early are used by layers mentioned later
 
 ## How do I get set up? ##
 
-Build with Visual Studio 2013. Dependencies managed with nuget (FSharp.TypeProviders.StarterPack).
+Build with Visual Studio 2015. Dependencies managed with nuget (FSharp.TypeProviders.StarterPack).
 
 ## How do I use this to build missions? ##
 
