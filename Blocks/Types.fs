@@ -50,6 +50,7 @@ with
             let pos2 = McuUtil.rotate center rot mcu.Pos
             let pos2 = McuUtil.translate pos2 diff
             McuUtil.vecCopy pos2 mcu.Pos
+        McuUtil.vecCopy ori leadCar.Ori
         // Result
         { LeadCarEntity = Seq.head <| McuUtil.filterByName T.Blocks.``LeadCar entity`` group :?> Mcu.McuEntity
           LeadCarDamaged = getByName T.Blocks.LeadCarDamaged
@@ -90,6 +91,7 @@ with
             let pos2 = McuUtil.rotate center rot mcu.Pos
             let pos2 = McuUtil.translate pos2 diff
             McuUtil.vecCopy pos2 mcu.Pos
+        McuUtil.vecCopy ori truck.Ori
         // Result
         { Entity = Seq.head <| McuUtil.filterByName T.Blocks.``Truck entity`` group :?> Mcu.McuEntity
           Damaged = getByName T.Blocks.TruckDamaged
@@ -186,7 +188,7 @@ type Timer =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, time : float) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
@@ -198,6 +200,9 @@ with
         let start = getByName T.Blocks.Start
         let stop = getByName T.Blocks.Stop
         let elapsed = getByName T.Blocks.Elapsed
+        // Timer value
+        let timer = getByName T.Blocks.Timer :?> Mcu.McuTimer
+        timer.Time <- int time
         // Position of all nodes
         let diff = McuUtil.vecMinus pos elapsed.Pos
         let diff = McuUtil.translate diff (McuUtil.newVec3(100.0, 0.0, -100.0))

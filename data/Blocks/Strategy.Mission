@@ -45,11 +45,11 @@ Options
 Group
 {
   Name = "Zones";
-  Index = 34;
+  Index = 2;
   Desc = "";
   MCU_TR_InfluenceArea
   {
-    Index = 2;
+    Index = 3;
     Name = "Vjazma";
     Desc = "";
     Targets = [];
@@ -75,7 +75,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3;
+    Index = 4;
     Name = "Sychevka";
     Desc = "";
     Targets = [];
@@ -100,7 +100,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 4;
+    Index = 5;
     Name = "Rzhev";
     Desc = "";
     Targets = [];
@@ -127,7 +127,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 5;
+    Index = 6;
     Name = "Torzhok";
     Desc = "";
     Targets = [];
@@ -153,7 +153,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 6;
+    Index = 7;
     Name = "Kalinin";
     Desc = "";
     Targets = [];
@@ -180,7 +180,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 7;
+    Index = 8;
     Name = "Staritsa";
     Desc = "";
     Targets = [];
@@ -206,7 +206,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8;
+    Index = 9;
     Name = "Kimry";
     Desc = "";
     Targets = [];
@@ -234,7 +234,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 9;
+    Index = 10;
     Name = "Konakovo";
     Desc = "";
     Targets = [];
@@ -259,7 +259,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 10;
+    Index = 11;
     Name = "Novo-Zavidovskiy";
     Desc = "";
     Targets = [];
@@ -285,7 +285,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 11;
+    Index = 12;
     Name = "Klin";
     Desc = "";
     Targets = [];
@@ -311,7 +311,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 12;
+    Index = 13;
     Name = "Solnechnogorsk";
     Desc = "";
     Targets = [];
@@ -336,7 +336,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 13;
+    Index = 14;
     Name = "Istra";
     Desc = "";
     Targets = [];
@@ -362,7 +362,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 14;
+    Index = 15;
     Name = "Kubinka";
     Desc = "";
     Targets = [];
@@ -388,7 +388,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 15;
+    Index = 16;
     Name = "Mozhaisk";
     Desc = "";
     Targets = [];
@@ -414,7 +414,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 16;
+    Index = 17;
     Name = "Gzhatsk";
     Desc = "";
     Targets = [];
@@ -441,7 +441,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 17;
+    Index = 18;
     Name = "Pogoreloe Gorodische";
     Desc = "";
     Targets = [];
@@ -466,7 +466,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 18;
+    Index = 19;
     Name = "Shahovskaya";
     Desc = "";
     Targets = [];
@@ -492,7 +492,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 19;
+    Index = 20;
     Name = "Schekino";
     Desc = "";
     Targets = [];
@@ -517,7 +517,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 20;
+    Index = 21;
     Name = "Moscow North";
     Desc = "";
     Targets = [];
@@ -542,7 +542,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 21;
+    Index = 22;
     Name = "Moscow South";
     Desc = "";
     Targets = [];
@@ -569,7 +569,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 22;
+    Index = 23;
     Name = "Maloyaroslavec";
     Desc = "";
     Targets = [];
@@ -595,7 +595,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 23;
+    Index = 24;
     Name = "Naro-Fominsk";
     Desc = "";
     Targets = [];
@@ -621,7 +621,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 24;
+    Index = 25;
     Name = "IvanKino";
     Desc = "";
     Targets = [];
@@ -648,7 +648,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 25;
+    Index = 26;
     Name = "Dmitrov";
     Desc = "";
     Targets = [];
@@ -674,7 +674,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 26;
+    Index = 27;
     Name = "Kryukovo";
     Desc = "";
     Targets = [];
@@ -701,7 +701,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 27;
+    Index = 28;
     Name = "Moscow";
     Desc = "";
     Targets = [];
@@ -727,7 +727,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 28;
+    Index = 29;
     Name = "Moscow West";
     Desc = "";
     Targets = [];
@@ -753,7 +753,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 29;
+    Index = 30;
     Name = "Balabonovo";
     Desc = "";
     Targets = [];
@@ -778,7 +778,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 30;
+    Index = 31;
     Name = "Slyadnevo";
     Desc = "";
     Targets = [];
@@ -804,7 +804,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 31;
+    Index = 32;
     Name = "Mjatlevo";
     Desc = "";
     Targets = [];
@@ -830,7 +830,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 32;
+    Index = 33;
     Name = "Temkino";
     Desc = "";
     Targets = [];
@@ -855,7 +855,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 33;
+    Index = 34;
     Name = "Volokolamsk";
     Desc = "";
     Targets = [];
@@ -886,14 +886,14 @@ Group
 Group
 {
   Name = "Roads";
-  Index = 45;
+  Index = 35;
   Desc = "";
   MCU_Waypoint
   {
-    Index = 35;
+    Index = 36;
     Name = "Start";
     Desc = "";
-    Targets = [36];
+    Targets = [37];
     Objects = [];
     XPos = 269334.989;
     YPos = 94.077;
@@ -902,17 +902,17 @@ Group
     YOri = 105.04;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 36;
+    Index = 37;
     Name = "Trigger Waypoint";
     Desc = "";
-    Targets = [37];
+    Targets = [39];
     Objects = [];
     XPos = 265915.744;
     YPos = 94.077;
@@ -921,17 +921,17 @@ Group
     YOri = 112.92;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 37;
+    Index = 39;
     Name = "BeforeBridge";
     Desc = "";
-    Targets = [38];
+    Targets = [41];
     Objects = [];
     XPos = 264899.275;
     YPos = 94.077;
@@ -940,17 +940,17 @@ Group
     YOri = 110.16;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 38;
+    Index = 41;
     Name = "AfterBridge";
     Desc = "";
-    Targets = [39];
+    Targets = [43];
     Objects = [];
     XPos = 264652.270;
     YPos = 94.077;
@@ -959,17 +959,17 @@ Group
     YOri = 107.00;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 39;
+    Index = 43;
     Name = "Trigger Waypoint";
     Desc = "";
-    Targets = [40];
+    Targets = [45];
     Objects = [];
     XPos = 262372.877;
     YPos = 94.077;
@@ -978,14 +978,14 @@ Group
     YOri = 111.31;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 40;
+    Index = 45;
     Name = "End";
     Desc = "";
     Targets = [];
@@ -997,17 +997,17 @@ Group
     YOri = 121.66;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 41;
+    Index = 47;
     Name = "Start";
     Desc = "";
-    Targets = [42];
+    Targets = [48];
     Objects = [];
     XPos = 258927.258;
     YPos = 94.077;
@@ -1016,102 +1016,7 @@ Group
     YOri = 75.91;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 42;
-    Name = "Trigger Waypoint";
-    Desc = "";
-    Targets = [43];
-    Objects = [];
-    XPos = 258042.605;
-    YPos = 94.077;
-    ZPos = 118607.175;
-    XOri = 0.00;
-    YOri = 103.91;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 43;
-    Name = "Trigger Waypoint";
-    Desc = "";
-    Targets = [44];
-    Objects = [];
-    XPos = 255903.431;
-    YPos = 94.077;
-    ZPos = 127734.587;
-    XOri = 0.00;
-    YOri = 103.53;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 44;
-    Name = "End";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 254411.081;
-    YPos = 94.077;
-    ZPos = 134178.297;
-    XOri = 0.00;
-    YOri = 103.68;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 46;
-    Name = "Start";
-    Desc = "";
-    Targets = [47];
-    Objects = [];
-    XPos = 251696.251;
-    YPos = 86.309;
-    ZPos = 140788.724;
-    XOri = 0.00;
-    YOri = 125.49;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 47;
-    Name = "Trigger Waypoint";
-    Desc = "";
-    Targets = [48];
-    Objects = [];
-    XPos = 244953.327;
-    YPos = 86.309;
-    ZPos = 150127.182;
-    XOri = 0.00;
-    YOri = 116.82;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
@@ -1121,35 +1026,16 @@ Group
     Index = 48;
     Name = "Trigger Waypoint";
     Desc = "";
-    Targets = [49];
-    Objects = [];
-    XPos = 240337.475;
-    YPos = 86.309;
-    ZPos = 159914.114;
-    XOri = 0.00;
-    YOri = 119.23;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 49;
-    Name = "Trigger Waypoint";
-    Desc = "";
     Targets = [50];
     Objects = [];
-    XPos = 232960.347;
-    YPos = 86.309;
-    ZPos = 171128.517;
+    XPos = 258042.605;
+    YPos = 94.077;
+    ZPos = 118607.175;
     XOri = 0.00;
-    YOri = 114.46;
+    YOri = 103.91;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
@@ -1157,37 +1043,18 @@ Group
   MCU_Waypoint
   {
     Index = 50;
-    Name = "BeforeBridge";
-    Desc = "";
-    Targets = [51];
-    Objects = [];
-    XPos = 227123.605;
-    YPos = 86.309;
-    ZPos = 174328.063;
-    XOri = 0.00;
-    YOri = 155.11;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 51;
-    Name = "AfterBridge";
+    Name = "Trigger Waypoint";
     Desc = "";
     Targets = [52];
     Objects = [];
-    XPos = 224461.822;
-    YPos = 86.309;
-    ZPos = 175513.667;
+    XPos = 255903.431;
+    YPos = 94.077;
+    ZPos = 127734.587;
     XOri = 0.00;
-    YOri = 156.78;
+    YOri = 103.53;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
@@ -1199,6 +1066,139 @@ Group
     Desc = "";
     Targets = [];
     Objects = [];
+    XPos = 254411.081;
+    YPos = 94.077;
+    ZPos = 134178.297;
+    XOri = 0.00;
+    YOri = 103.68;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 50;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 54;
+    Name = "Start";
+    Desc = "";
+    Targets = [55];
+    Objects = [];
+    XPos = 251696.251;
+    YPos = 86.309;
+    ZPos = 140788.724;
+    XOri = 0.00;
+    YOri = 125.49;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 50;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 55;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [57];
+    Objects = [];
+    XPos = 244953.327;
+    YPos = 86.309;
+    ZPos = 150127.182;
+    XOri = 0.00;
+    YOri = 116.82;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 50;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 57;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [59];
+    Objects = [];
+    XPos = 240337.475;
+    YPos = 86.309;
+    ZPos = 159914.114;
+    XOri = 0.00;
+    YOri = 119.23;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 50;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 59;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [61];
+    Objects = [];
+    XPos = 232960.347;
+    YPos = 86.309;
+    ZPos = 171128.517;
+    XOri = 0.00;
+    YOri = 114.46;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 50;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 61;
+    Name = "BeforeBridge";
+    Desc = "";
+    Targets = [63];
+    Objects = [];
+    XPos = 227123.605;
+    YPos = 86.309;
+    ZPos = 174328.063;
+    XOri = 0.00;
+    YOri = 155.11;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 50;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 63;
+    Name = "AfterBridge";
+    Desc = "";
+    Targets = [65];
+    Objects = [];
+    XPos = 224461.822;
+    YPos = 86.309;
+    ZPos = 175513.667;
+    XOri = 0.00;
+    YOri = 156.78;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 50;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 65;
+    Name = "End";
+    Desc = "";
+    Targets = [];
+    Objects = [];
     XPos = 222392.799;
     YPos = 86.309;
     ZPos = 173354.737;
@@ -1206,17 +1206,17 @@ Group
     YOri = 255.76;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 53;
+    Index = 67;
     Name = "Start";
     Desc = "";
-    Targets = [54];
+    Targets = [68];
     Objects = [];
     XPos = 222372.087;
     YPos = 77.654;
@@ -1225,17 +1225,17 @@ Group
     YOri = 77.16;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 54;
+    Index = 68;
     Name = "Trigger Waypoint";
     Desc = "";
-    Targets = [55];
+    Targets = [70];
     Objects = [];
     XPos = 220558.219;
     YPos = 77.654;
@@ -1244,17 +1244,17 @@ Group
     YOri = 158.17;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 55;
+    Index = 70;
     Name = "BeforeBridge";
     Desc = "";
-    Targets = [56];
+    Targets = [72];
     Objects = [];
     XPos = 215312.096;
     YPos = 77.654;
@@ -1263,17 +1263,17 @@ Group
     YOri = 152.65;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 56;
+    Index = 72;
     Name = "AfterBridge";
     Desc = "";
-    Targets = [57];
+    Targets = [74];
     Objects = [];
     XPos = 214859.860;
     YPos = 77.654;
@@ -1282,17 +1282,17 @@ Group
     YOri = 136.22;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 57;
+    Index = 74;
     Name = "BeforeBridge";
     Desc = "";
-    Targets = [58];
+    Targets = [76];
     Objects = [];
     XPos = 202944.161;
     YPos = 77.654;
@@ -1301,17 +1301,17 @@ Group
     YOri = 149.14;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 58;
+    Index = 76;
     Name = "AfterBridge";
     Desc = "";
-    Targets = [59];
+    Targets = [78];
     Objects = [];
     XPos = 202279.547;
     YPos = 77.654;
@@ -1320,17 +1320,17 @@ Group
     YOri = 163.31;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 59;
+    Index = 78;
     Name = "BeforeBridge";
     Desc = "";
-    Targets = [60];
+    Targets = [80];
     Objects = [];
     XPos = 202039.585;
     YPos = 77.654;
@@ -1339,17 +1339,17 @@ Group
     YOri = 138.79;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 60;
+    Index = 80;
     Name = "AfterBridge";
     Desc = "";
-    Targets = [61];
+    Targets = [82];
     Objects = [];
     XPos = 201773.725;
     YPos = 77.654;
@@ -1358,14 +1358,14 @@ Group
     YOri = 148.84;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
 
   MCU_Waypoint
   {
-    Index = 61;
+    Index = 82;
     Name = "End";
     Desc = "";
     Targets = [];
@@ -1377,7 +1377,7 @@ Group
     YOri = 148.08;
     ZOri = 0.00;
     Area = 20;
-    Speed = 100;
+    Speed = 50;
     Priority = 1;
   }
   
@@ -1389,14 +1389,14 @@ Group
 Group
 {
   Name = "Trains";
-  Index = 77;
+  Index = 84;
   Desc = "";
   MCU_Waypoint
   {
-    Index = 62;
+    Index = 85;
     Name = "Start";
     Desc = "";
-    Targets = [63];
+    Targets = [86];
     Objects = [];
     XPos = 272505.710;
     YPos = 121.373;
@@ -1412,10 +1412,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 63;
+    Index = 86;
     Name = "Trigger Waypoint";
     Desc = "";
-    Targets = [64];
+    Targets = [88];
     Objects = [];
     XPos = 274620.162;
     YPos = 121.373;
@@ -1431,10 +1431,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 64;
+    Index = 88;
     Name = "BeforeBridge";
     Desc = "";
-    Targets = [65];
+    Targets = [90];
     Objects = [];
     XPos = 275300.603;
     YPos = 121.373;
@@ -1450,10 +1450,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 65;
+    Index = 90;
     Name = "AfterBridge";
     Desc = "";
-    Targets = [66];
+    Targets = [92];
     Objects = [];
     XPos = 275417.933;
     YPos = 121.373;
@@ -1469,10 +1469,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 66;
+    Index = 92;
     Name = "Trigger Waypoint";
     Desc = "";
-    Targets = [67];
+    Targets = [94];
     Objects = [];
     XPos = 276854.101;
     YPos = 121.373;
@@ -1488,7 +1488,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 67;
+    Index = 94;
     Name = "End";
     Desc = "";
     Targets = [];
@@ -1507,10 +1507,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 68;
+    Index = 96;
     Name = "Start";
     Desc = "";
-    Targets = [69];
+    Targets = [97];
     Objects = [];
     XPos = 280676.624;
     YPos = 78.728;
@@ -1526,10 +1526,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 69;
+    Index = 97;
     Name = "";
     Desc = "";
-    Targets = [70];
+    Targets = [99];
     Objects = [];
     XPos = 275727.114;
     YPos = 78.728;
@@ -1545,10 +1545,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 70;
+    Index = 99;
     Name = "";
     Desc = "";
-    Targets = [71];
+    Targets = [101];
     Objects = [];
     XPos = 270212.135;
     YPos = 78.728;
@@ -1564,10 +1564,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 71;
+    Index = 101;
     Name = "";
     Desc = "";
-    Targets = [72];
+    Targets = [103];
     Objects = [];
     XPos = 264788.765;
     YPos = 78.728;
@@ -1583,10 +1583,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 72;
+    Index = 103;
     Name = "BeforeBridge";
     Desc = "";
-    Targets = [73];
+    Targets = [105];
     Objects = [];
     XPos = 262386.023;
     YPos = 78.728;
@@ -1602,10 +1602,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 73;
+    Index = 105;
     Name = "AfterBridge";
     Desc = "";
-    Targets = [74];
+    Targets = [107];
     Objects = [];
     XPos = 261885.236;
     YPos = 78.728;
@@ -1621,10 +1621,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 74;
+    Index = 107;
     Name = "";
     Desc = "";
-    Targets = [75];
+    Targets = [109];
     Objects = [];
     XPos = 256330.569;
     YPos = 78.728;
@@ -1640,10 +1640,10 @@ Group
 
   MCU_Waypoint
   {
-    Index = 75;
+    Index = 109;
     Name = "";
     Desc = "";
-    Targets = [76];
+    Targets = [111];
     Objects = [];
     XPos = 254970.491;
     YPos = 78.728;
@@ -1659,7 +1659,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 76;
+    Index = 111;
     Name = "End";
     Desc = "";
     Targets = [];
@@ -1683,12 +1683,12 @@ Group
 Group
 {
   Name = "Airfields";
-  Index = 81;
+  Index = 113;
   Desc = "";
   Airfield
   {
     Name = "Airfield";
-    Index = 78;
+    Index = 114;
     LinkTrId = 0;
     XPos = 270946.158;
     YPos = 116.136;
@@ -1721,7 +1721,7 @@ Group
   Airfield
   {
     Name = "Airfield";
-    Index = 79;
+    Index = 115;
     LinkTrId = 0;
     XPos = 249603.230;
     YPos = 88.843;
@@ -1754,7 +1754,7 @@ Group
   Airfield
   {
     Name = "Airfield";
-    Index = 80;
+    Index = 116;
     LinkTrId = 0;
     XPos = 249195.263;
     YPos = 90.746;

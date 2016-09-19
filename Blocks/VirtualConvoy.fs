@@ -112,7 +112,12 @@ with
         let timerSet =
             seq {
                 for i, (curr, next) in Seq.zip (Seq.initInfinite id) (Seq.pairwise path) do
-                    yield (TimerInstance i, Timer.Create(store, curr.Pos))
+                    let expectedTime =
+                        let vec =
+                            McuUtil.vecMinus next.Pos curr.Pos
+                        let distance = sqrt(vec.X * vec.X + vec.Y * vec.Y + vec.Z * vec.Z)
+                        3.6 * distance / float next.Speed
+                    yield (TimerInstance i, Timer.Create(store, curr.Pos, 1.1 * expectedTime))
             }
             |> Map.ofSeq
 
@@ -195,6 +200,8 @@ with
                 for curr, next in this.Path do
                     let convoy = get this.ConvoyAtWaypoint curr
                     let convoy2 = get this.ConvoyAtWaypoint next
+                    yield this.ConvoySet.[convoy].LeadCarDamaged, this.ConvoySet.[convoy2].DeleteLeadCar :> Mcu.McuBase
+                    yield this.ConvoySet.[convoy].DeleteLeadCar, this.ConvoySet.[convoy2].DeleteLeadCar :> Mcu.McuBase
                     for _, pos, truck in filter3 this.TruckInConvoy (Some convoy, None, None) do
                         for _, _, truck2 in filter3 this.TruckInConvoy (Some convoy2, Some pos, None) do
                             yield this.TruckInConvoySet.[truck].Damaged, this.TruckInConvoySet.[truck2].Delete :> Mcu.McuBase

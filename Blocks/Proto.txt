@@ -59,6 +59,10 @@ target += for (convoy, wec) in convoy_of_enemy_close -> (wec.Sleep, convoy.Deact
 // Convoy <-> Timer
 //nothing
 
+// Convoy <-> Convoy
+target += for (current, next) in path -> (convoy_at_waypoint(current).LeadCarDamaged, convoy_at_waypoint(next).DeleteLeadCar)
+target += for (current, next) in path -> (convoy_at_waypoint(current).DeleteLeadCar, convoy_at_waypoint(next).DeleteLeadCar)
+
 // TruckInConvoy <-> TruckInConvoy
 target += for (curr, next) in path
           for (position, truck) in truck_in_convoy(convoy_at_waypoint(curr), _, _)
