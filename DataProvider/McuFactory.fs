@@ -589,6 +589,59 @@ let tryMkAsWaypoint (typeName : string, typ : ValueType) =
     | _ ->
         None
 
+let tryMkAsTimer (typeName : string, typ : ValueType) =
+    match typeName with
+    | "MCU_Timer" ->
+        match typ with
+        | ValueType.Composite typeFields ->
+            match tryMkAsTrigger (typeName, typ) with
+            | Some _ ->
+                function
+                | Value.Composite fields as value, path ->
+                    let state = ref fields
+                    let path = ref path
+                    let iconLC, subtitleLC = mkLCData typeFields state
+                    let baseImpl = mkAsTrigger typeName path state iconLC subtitleLC
+                    {
+                        new McuTimer with
+                            member this.Time
+                                with get() =
+                                    !state |> getIntField "Time"
+                                and set(time) =
+                                    state := !state |> setField("Time", Integer time)
+
+                        interface McuTrigger with
+                            member this.AsString() = baseImpl.AsString()
+                            member this.Ori = baseImpl.Ori
+                            member this.Pos = baseImpl.Pos
+                            member this.Index
+                                with get() = baseImpl.Index
+                                and set idx = baseImpl.Index <- idx
+                            member this.IconLC = baseImpl.IconLC
+                            member this.SubtitleLC = baseImpl.SubtitleLC
+                            member this.Objects
+                                with get() = baseImpl.Objects
+                                and set xs = baseImpl.Objects <- xs
+                            member this.Targets
+                                with get() = baseImpl.Targets
+                                and set xs = baseImpl.Targets <- xs
+                            member this.Name
+                                with get() = baseImpl.Name
+                                and set name = baseImpl.Name <- name
+                            member this.Path
+                                with get() = baseImpl.Path
+                                and set(p) = baseImpl.Path <- p
+                    }
+                | _ ->
+                    invalidArg "value" "Not a composite"
+                |> Some
+            | None ->
+                None
+        | _ ->
+            None
+    | _ ->
+        None
+
 
 let private mkAsEntity typeName path (state : (string * Value) list ref) iconLC subtitleLC =
     let cmd = mkAsTrigger typeName path state iconLC subtitleLC
@@ -840,6 +893,7 @@ let makers =
         upcastTryMaker tryMkAsComplex
         upcastTryMaker tryMkAsEntity
         upcastTryMaker tryMkAsHasEntity
+        upcastTryMaker tryMkAsTimer
         upcastTryMaker tryMkAsWaypoint
         upcastTryMaker tryMkAsProximity
         upcastTryMaker tryMkAsTrigger

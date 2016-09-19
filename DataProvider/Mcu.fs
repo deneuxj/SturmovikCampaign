@@ -105,6 +105,13 @@ type McuWaypoint =
     abstract Speed : int with get, set
 
 /// <summary>
+/// Interface of timer triggers.
+/// </summary>
+type McuTimer =
+    inherit McuTrigger
+    abstract Time : int with get, set
+
+/// <summary>
 /// Event codes, to be used in EventConnection.Type
 /// </summary>
 type EventTypes =
