@@ -1,7 +1,8 @@
 ﻿// Learn more about F# at http://fsharp.org
 // See the 'F# Tutorial' project for more help.
 
-open Data
+open SturmovikMission.Blocks
+open SturmovikMission.Blocks.Data
 open SturmovikMission.DataProvider
 
 [<EntryPoint>]

@@ -1,4 +1,4 @@
-﻿module Types
+﻿module SturmovikMission.Blocks.Types
 
 open SturmovikMission.DataProvider
 

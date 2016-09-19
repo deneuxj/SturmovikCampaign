@@ -1,4 +1,4 @@
-﻿namespace generator.AssemblyInfo
+﻿namespace SturmovikMission.Blocks.AssemblyInfo
 
 open System.Reflection
 open System.Runtime.CompilerServices

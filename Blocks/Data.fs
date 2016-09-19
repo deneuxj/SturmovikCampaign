@@ -1,4 +1,4 @@
-﻿module Data
+﻿module SturmovikMission.Blocks.Data
 
 open Types
 open Relations

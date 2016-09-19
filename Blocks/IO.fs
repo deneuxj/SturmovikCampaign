@@ -1,4 +1,4 @@
-﻿module IO
+﻿module SturmovikMission.Blocks.IO
 
 open System
 open System.IO

@@ -1,4 +1,4 @@
-﻿module Strategy
+﻿module SturmovikMission.Blocks.Strategy
 
 open SturmovikMission.DataProvider
 open Types

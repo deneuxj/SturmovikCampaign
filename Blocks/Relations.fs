@@ -1,4 +1,4 @@
-﻿module Relations
+﻿module SturmovikMission.Blocks.Relations
 
 open SturmovikMission.DataProvider
 
