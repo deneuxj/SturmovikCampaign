@@ -59,7 +59,7 @@
     <Compile Include="Links.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Predicates.fs" />
-    <Compile Include="Data.fs" />
+    <Compile Include="VirtualConvoy.fs" />
     <Compile Include="Strategy.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
