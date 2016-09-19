@@ -217,6 +217,7 @@ with
                 for curr, next in this.Path do
                     let curr2 = this.ActiveWaypointSet.[curr]
                     let next2 = this.ActiveWaypointSet.[next]
+                    yield curr2.Waypoint :> Mcu.McuTrigger, next2.Waypoint :> Mcu.McuBase
                     for _, _, timer in filter3 this.TimerBetweenWaypoints (Some curr, Some next, None) do
                         let timer = this.TimerSet.[timer]
                         yield timer.Elapsed, next2.Activate :> Mcu.McuBase
