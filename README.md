@@ -33,23 +33,20 @@ You can use the parsing layer with the manipulation layer directly, or through a
 
 First, you will need to extract data schema from a sample file, and then build the parser for the mission or group files you will be working with.
 
-```
-#!fsharp
+```fsharp
 let types, _ = AutoSchema.getTopTypes (Parsing.Stream.FromFile "Sample.mission")
 let parsers = types |> Map.map (fun name typ -> Parsing.makeParser typ)
 ```
 
 Parse data from a mission file:
 
-```
-#!fsharp
+```fsharp
 let data = Parsing.parseFile (fun name -> parsers.[name]) (Parsing.Stream.FromFile "MyMission.mission"
 ```
 
 At this point, you have mission data represented in trees of type Ast.Value, which are immutable. You can combine them in any way you see fit, producing new trees. Every tree can be dumped as a string that conforms to the mission file format:
 
-```
-#!fsharp
+```fsharp
 let value : Ast.Value = ...
 let s = Ast.dump value
 ```
@@ -61,15 +58,13 @@ Instances of Ast.Value are dynamically typed, which means that of you attempt to
 The type provider accepts two string arguments: the path to a sample mission file, and a list of paths to mission files separated by semi-colons ";". The second argument can be the empty string.
 The first argument can be a relative path, in which case it will be relative to the resolution folder, i.e. the folder containing your project or script.
 
-```
-#!fsharp
+```fsharp
 type T = Provider< @"C:\Users\...\Sample.Mission", @"C:\Users\...\m2.Mission" >
 ```
 
 At this point, T.Parser is a type that can be used to parse bits of mission files and strings. For instance, the code below creates an airfield tower as an instance of T.Block.
 
-```
-#!fsharp
+```fsharp
 let parser = T.Parser()
 let x3, _ =
     try
@@ -103,15 +98,13 @@ let x3, _ =
 You can also import a mission into the type T. In the type alias example above, a mission "m2.mission" is imported. Be careful with that feature, and keep it to small files, as it can make your editing experience in Visual Studio rather sluggish. A limitation is that you may not import two missions with the same name, as the name is used for the type name.
 
 For example, assuming I have an object name "Approach beacon" in "m2.mission":
-```
-#!fsharp
+```fsharp
 let beacon = T.m2.``Approach beacon``
 ```
 
 Reading in an entire file is done with T.GroupData. The data it reads can be sorted by their type, and accessed in lists, one list per type:
 
-```
-#!fsharp
+```fsharp
 let groupData =
     try
         T.GroupData(Stream.FromFile @"C:\Users\...\StalingradConquest.Mission")
@@ -127,15 +120,13 @@ groupData.ListOfAirfield |> List.iter...
 Working with data with segregated types might be impractical, especially in a statically-typed language such as F#. There is a family of interfaces that provide access to most objects (commands, blocks, buildings, vehicles, planes...) in a mission. These interfaces are found in module SturmovikMission.DataProvider.Mcu. Instances can be created from dynamically typed instances of Ast.Value using SturmovikMission.DataProvider.McuFactory, or from the provided types. The two examples below illustrates the second alternative.
 
 First, from GroupData:
-```
-#!fsharp
+```fsharp
 groupData.CreateMcuList() |> List.head |> fun x -> x.AsString()
 ```
 
 Secondly, from an imported mission:
 
-```
-#!fsharp
+```fsharp
 let mcus = T.m2.CreateMcuList()
 let rabbit =
     mcus
@@ -151,7 +142,6 @@ printfn "%s" (rabbit.AsString())
 This produced the output below:
 
 ```
-#!verbatim
 {
 Index = 1759;
 Name = "Rabbit";
