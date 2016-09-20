@@ -25,6 +25,7 @@ Convoy convoy_at_waypoint(ActiveWaypoint)
 WhileEnemyClose enemy_close_at_waypoint(ActiveWaypoint)
 predicate path(ActiveWaypoint, ActiveWaypoint)
 predicate path_start(ActiveWaypoint)
+predicate path_end(ActiveWaypoint)
 Timer timer_between_waypoints(ActiveWaypoint, ActiveWaypoint)
 
 type WhileEnemyClose {
@@ -43,6 +44,15 @@ type Timer {
 	trigger Stop
 	trigger Elapsed
 }
+
+type VirtualConvoy {
+	trigger Start // 1x counter
+	trigger Destroyed // This is a non-wraping counter set to (num of trucks in convoy) + 1
+	trigger Arrived // 1x counter
+}
+VirtualConvoy result(VirtualConvoy)
+
+predicate vehicle_kill_counter(Counter)
 
 // Convoy <-> TruckInConvoy
 columns += for (convoy, position, truck) in truck_in_convoy -> (truck.Entity, convoy.LeadCarEntity, position)
@@ -75,7 +85,8 @@ target += for (curr, next) in path
 target += for (curr, next) in path -> (curr.Waypoint, next.Waypoint)
 
 // ActiveWaypoint
-start += for (wp) in path_start -> (wp.Activate)
+target += for (wp) in path_start
+          for out in result -> (out.Start, wp.Activate)
 
 // ActiveWaypoint <-> WhileEnemyClose
 target += for (wp, convoy) in convoy_at_waypoint -> (wp.Activate, while_enemy_close_of_convoy(convoy).StartMonitoring)
@@ -90,3 +101,12 @@ target += for (curr, next) in path -> (curr.Activate, timer_between_waypoints(cu
 target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).WakeUp, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Deactivate)
 target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).Sleep, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Activate)
 
+// ... <-> Result
+target += for (_, convoy) in convoy_at_waypoint
+          for out in result -> (convoy.LeadCarDamaged, out.Destroyed)
+target += for (convoy, _, truck) in truck_in_convoy
+          for out in result -> (truck.Damaged, out.Destroyed)
+target += for wp in path_end
+          for out in result -> (wp.Waypoint, out.Arrived)
+target += for wp in path_end
+          for out in result -> (wp.Activate, out.Arrived)
