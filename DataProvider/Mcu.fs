@@ -112,6 +112,14 @@ type McuTimer =
     abstract Time : int with get, set
 
 /// <summary>
+/// Interface of counters.
+/// </summary>
+type McuCounter =
+    inherit McuTrigger
+    abstract Count : int with get, set
+    abstract WrapAround : bool with get, set
+
+/// <summary>
 /// Event codes, to be used in EventConnection.Type
 /// </summary>
 type EventTypes =

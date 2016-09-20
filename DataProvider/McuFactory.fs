@@ -35,6 +35,10 @@ let private requiredForBase =
       ("YOri", ValueType.Float)
       ("ZOri", ValueType.Float) ]
 
+let getBoolField (name : string) fields =
+    fields
+    |> Seq.pick (function (name2, Value.Boolean b) when name = name2 -> Some b | _ -> None)
+
 let getIntField (name : string) fields =
     fields
     |> Seq.pick (function (name2, Value.Integer n) when name = name2 -> Some n | _ -> None)
@@ -643,6 +647,65 @@ let tryMkAsTimer (typeName : string, typ : ValueType) =
         None
 
 
+let tryMkAsCounter (typeName : string, typ : ValueType) =
+    match typeName with
+    | "MCU_Counter" ->
+        match typ with
+        | ValueType.Composite typeFields ->
+            match tryMkAsTrigger (typeName, typ) with
+            | Some _ ->
+                function
+                | Value.Composite fields as value, path ->
+                    let state = ref fields
+                    let path = ref path
+                    let iconLC, subtitleLC = mkLCData typeFields state
+                    let baseImpl = mkAsTrigger typeName path state iconLC subtitleLC
+                    {
+                        new McuCounter with
+                            member this.Count
+                                with get() =
+                                    !state |> getIntField "Counter"
+                                and set(count) =
+                                    state := !state |> setField("Counter", Integer count)
+                            member this.WrapAround
+                                with get() =
+                                    !state |> getBoolField "Dropcount"
+                                and set(x) =
+                                    state := !state |> setField("Dropcount", Boolean x)
+
+                        interface McuTrigger with
+                            member this.AsString() = baseImpl.AsString()
+                            member this.Ori = baseImpl.Ori
+                            member this.Pos = baseImpl.Pos
+                            member this.Index
+                                with get() = baseImpl.Index
+                                and set idx = baseImpl.Index <- idx
+                            member this.IconLC = baseImpl.IconLC
+                            member this.SubtitleLC = baseImpl.SubtitleLC
+                            member this.Objects
+                                with get() = baseImpl.Objects
+                                and set xs = baseImpl.Objects <- xs
+                            member this.Targets
+                                with get() = baseImpl.Targets
+                                and set xs = baseImpl.Targets <- xs
+                            member this.Name
+                                with get() = baseImpl.Name
+                                and set name = baseImpl.Name <- name
+                            member this.Path
+                                with get() = baseImpl.Path
+                                and set(p) = baseImpl.Path <- p
+                    }
+                | _ ->
+                    invalidArg "value" "Not a composite"
+                |> Some
+            | None ->
+                None
+        | _ ->
+            None
+    | _ ->
+        None
+
+
 let private mkAsEntity typeName path (state : (string * Value) list ref) iconLC subtitleLC =
     let cmd = mkAsTrigger typeName path state iconLC subtitleLC
     let baseImpl : McuBase = upcast cmd
@@ -895,6 +958,7 @@ let makers =
         upcastTryMaker tryMkAsHasEntity
         upcastTryMaker tryMkAsTimer
         upcastTryMaker tryMkAsWaypoint
+        upcastTryMaker tryMkAsCounter
         upcastTryMaker tryMkAsProximity
         upcastTryMaker tryMkAsTrigger
         upcastTryMaker tryMkAsIcon
