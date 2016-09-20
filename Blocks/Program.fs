@@ -7,22 +7,7 @@ open SturmovikMission.DataProvider
 
 [<EntryPoint>]
 let main argv = 
-    let path =
-        [ { Pos = McuUtil.newVec3(0.0, 0.0, 0.0)
-            Ori = McuUtil.newVec3(1.0, 0.0, 0.0)
-            Speed = 100
-            Priority = 0
-            Radius = 50
-          }
-          { Pos = McuUtil.newVec3(50.0, 0.0, 0.0)
-            Ori = McuUtil.newVec3(1.0, 0.0, 0.0)
-            Speed = 100
-            Priority = 0
-            Radius = 50
-          }
-        ]
     let path = Strategy.getSomePath()
-
     let store = NumericalIdentifiers.IdStore()
     let virtualConvoy = VirtualConvoy.Create(store, path, 3)
     let rel = virtualConvoy.CreateLinks()

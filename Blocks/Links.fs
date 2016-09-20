@@ -20,7 +20,7 @@ with
             | true, (:? Mcu.HasEntity as vehicle) ->
                 match vehicle.NumberInFormation with
                 | Some formation -> formation.Number <- position
-                | None -> failwithf "Entity '%s' (%d)cannot be in a column" vehicle.Name vehicle.Index
+                | None -> failwithf "Entity '%s' (%d) cannot be in a column" vehicle.Name vehicle.Index
             | true, _ ->
                 failwithf "Node with id %d is not a vehicle or building with entity" follower.MisObjID
             | false, _ ->
