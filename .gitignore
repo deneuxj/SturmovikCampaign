@@ -6,5 +6,4 @@ devenv*.vspx
 *.userprefs
 .nuget/
 packages/
-DataProvider/Scripts/load-project-release.fsx
-DataProvider/Scripts/load-references-release.fsx
+DataProvider/Scripts/*.fsx
