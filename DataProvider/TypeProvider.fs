@@ -199,266 +199,88 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
 
     let cache = new Dictionary<string option * Ast.ValueType, ProvidedTypeDefinition>(HashIdentity.Structural)
 
+    let asList this = <@ (%%this : Ast.Value).GetItems() @>
+
+    // Builders for the ground types
+
+    let buildBoolean (name : string option, typ : Ast.ValueType) =
+        let ptyp =
+            new ProvidedTypeDefinition(defaultArg name "Boolean", Some (typeof<Ast.Value>))
+        ptyp.AddMember(pdb.NewProperty("Value", typeof<bool>, fun this -> <@@ (%%this : Ast.Value).GetBool() @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Value", typeof<bool>)], fun [value] -> <@@ Ast.Value.Boolean (%%value : bool) @@>))
+        ptyp
+
+    let buildFloat (name : string option, typ : Ast.ValueType) =
+        let ptyp =
+            new ProvidedTypeDefinition(defaultArg name "Float", Some (typeof<Ast.Value>))
+        ptyp.AddMember(pdb.NewProperty("Value", typeof<float>, fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Value", typeof<float>)], fun [value] -> <@@ Ast.Value.Float (%%value : float) @@>))
+        ptyp
+
+    let buildFloatPair (name : string option, typ : Ast.ValueType) =
+        let ptyp =
+            new ProvidedTypeDefinition(defaultArg name "FloatPair", Some (typeof<Ast.Value>))
+        ptyp.AddMember(pdb.NewProperty("Value", typeof<float * float>, fun this -> <@@ (%%this : Ast.Value).GetFloatPair() @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Value", typeof<float * float>)], fun [value] -> <@@ let x, y = (%%value : float * float) in Ast.Value.FloatPair(x, y) @@>))
+        ptyp
+
+    let buildInteger (name : string option, typ : Ast.ValueType) =
+        let ptyp =
+            new ProvidedTypeDefinition("Integer", Some (typeof<Ast.Value>))
+        ptyp.AddMember(pdb.NewProperty("Value", typeof<int>, fun this -> <@@ (%%this : Ast.Value).GetInteger() @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Value", typeof<int>)], fun [value] -> <@@ Ast.Value.Integer (%%value : int) @@>))
+        ptyp
+
+    let buildString (name : string option, typ : Ast.ValueType) =
+        let ptyp =
+            new ProvidedTypeDefinition("String", Some (typeof<Ast.Value>))
+        ptyp.AddMember(pdb.NewProperty("Value", typeof<string>, fun this -> <@@ (%%this : Ast.Value).GetString() @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Value", typeof<string>)], fun [value] -> <@@ Ast.Value.String (%%value : string) @@>))
+        ptyp
+
+    let buildIntVector (name : string option, typ : Ast.ValueType) =
+        let ptyp =
+            new ProvidedTypeDefinition("VectorOfIntegers", Some (typeof<Ast.Value>))
+        ptyp.AddMember(pdb.NewProperty("Value", typeof<int list>, fun this -> <@@ (%%this : Ast.Value).GetIntVector() @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Value", typeof<int list>)], fun [value] -> <@@ Ast.Value.IntVector (%%value : int list) @@>))
+        ptyp
+
+    let buildDate (name : string option, typ : Ast.ValueType) =
+        let ptyp =
+            new ProvidedTypeDefinition(defaultArg name "Date", Some (typeof<Ast.Value>))
+        ptyp.AddMember(pdb.NewProperty("Year", typeof<int>, fun this ->
+            let e = <@@ (%%this : Ast.Value).GetDate() @@>
+            <@@ let _, _, year = (%%e : int * int * int) in year @@>))
+        ptyp.AddMember(pdb.NewProperty("Month", typeof<int>, fun this ->
+            let e = <@@ (%%this : Ast.Value).GetDate() @@>
+            <@@ let _, month, _ = (%%e : int * int * int) in month @@>))
+        ptyp.AddMember(pdb.NewProperty("Day", typeof<int>, fun this ->
+            let e = <@@ (%%this : Ast.Value).GetDate() @@>
+            <@@ let day, _, _ = (%%e : int * int * int) in day @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Day", typeof<int>); ("Month", typeof<int>); ("Year", typeof<int>)], fun [day; month; year] ->
+            <@@ Ast.Value.Date((%%day : int), (%%month : int), (%%year : int)) @@>))
+        ptyp
+
+    // Build any kind of type, ground or complex.
+
     let rec buildProvidedType (name : string option, typ : Ast.ValueType) =
-        let typExpr = typ.ToExpr()
         match typ with
-        | Ast.ValueType.Boolean ->
-            let ptyp =
-                new ProvidedTypeDefinition(defaultArg name "Boolean", Some (typeof<Ast.Value>))
-            ptyp.AddMember(pdb.NewProperty("Value", typeof<bool>, fun this -> <@@ (%%this : Ast.Value).GetBool() @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Value", typeof<bool>)], fun [value] -> <@@ Ast.Value.Boolean (%%value : bool) @@>))
-            ptyp
-        | Ast.ValueType.Float ->
-            let ptyp =
-                new ProvidedTypeDefinition(defaultArg name "Float", Some (typeof<Ast.Value>))
-            ptyp.AddMember(pdb.NewProperty("Value", typeof<float>, fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Value", typeof<float>)], fun [value] -> <@@ Ast.Value.Float (%%value : float) @@>))
-            ptyp
-        | Ast.ValueType.FloatPair ->
-            let ptyp =
-                new ProvidedTypeDefinition(defaultArg name "FloatPair", Some (typeof<Ast.Value>))
-            ptyp.AddMember(pdb.NewProperty("Value", typeof<float * float>, fun this -> <@@ (%%this : Ast.Value).GetFloatPair() @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Value", typeof<float * float>)], fun [value] -> <@@ let x, y = (%%value : float * float) in Ast.Value.FloatPair(x, y) @@>))
-            ptyp
-        | Ast.ValueType.Integer ->
-            let ptyp =
-                new ProvidedTypeDefinition("Integer", Some (typeof<Ast.Value>))
-            ptyp.AddMember(pdb.NewProperty("Value", typeof<int>, fun this -> <@@ (%%this : Ast.Value).GetInteger() @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Value", typeof<int>)], fun [value] -> <@@ Ast.Value.Integer (%%value : int) @@>))
-            ptyp
-        | Ast.ValueType.String ->
-            let ptyp =
-                new ProvidedTypeDefinition("String", Some (typeof<Ast.Value>))
-            ptyp.AddMember(pdb.NewProperty("Value", typeof<string>, fun this -> <@@ (%%this : Ast.Value).GetString() @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Value", typeof<string>)], fun [value] -> <@@ Ast.Value.String (%%value : string) @@>))
-            ptyp
-        | Ast.ValueType.IntVector ->
-            let ptyp =
-                new ProvidedTypeDefinition("VectorOfIntegers", Some (typeof<Ast.Value>))
-            ptyp.AddMember(pdb.NewProperty("Value", typeof<int list>, fun this -> <@@ (%%this : Ast.Value).GetIntVector() @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Value", typeof<int list>)], fun [value] -> <@@ Ast.Value.IntVector (%%value : int list) @@>))
-            ptyp
-        | Ast.ValueType.Pair (typ1, typ2) ->
-            let ptyp1 = getProvidedType(None, typ1)
-            let ptyp2 = getProvidedType(None, typ2)
-            let ptyp =
-                let name =
-                    sprintf "PairOf%sAnd%s" ptyp1.Name ptyp2.Name
-                    |> defaultArg name
-                    |> newName
-                new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
-            let propTyp = typedefof<_*_>.MakeGenericType(ptyp1, ptyp2)
-            ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetPair() @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Value", propTyp)], fun [value] -> <@@ Ast.Value.Pair (%%value : Ast.Value * Ast.Value) @@>))
-            ptyp
-        | Ast.ValueType.Triplet (typ1, typ2, typ3) ->
-            let ptyp1 = getProvidedType(None, typ1)
-            let ptyp2 = getProvidedType(None, typ2)
-            let ptyp3 = getProvidedType(None, typ3)
-            let ptyp =
-                let name =
-                    sprintf "TripletOf%sAnd%sAnd%s" ptyp1.Name ptyp2.Name ptyp3.Name
-                    |> defaultArg name
-                    |> newName
-                new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
-            let propTyp = typedefof<_*_*_>.MakeGenericType(ptyp1, ptyp2, ptyp3)
-            ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetTriplet() @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Value", propTyp)], fun [value] -> <@@ Ast.Value.Triplet (%%value : Ast.Value * Ast.Value * Ast.Value) @@>))
-            ptyp
-        | Ast.ValueType.Date ->
-            let ptyp =
-                new ProvidedTypeDefinition(defaultArg name "Date", Some (typeof<Ast.Value>))
-            ptyp.AddMember(pdb.NewProperty("Year", typeof<int>, fun this ->
-                let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                <@@ let _, _, year = (%%e : int * int * int) in year @@>))
-            ptyp.AddMember(pdb.NewProperty("Month", typeof<int>, fun this ->
-                let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                <@@ let _, month, _ = (%%e : int * int * int) in month @@>))
-            ptyp.AddMember(pdb.NewProperty("Day", typeof<int>, fun this ->
-                let e = <@@ (%%this : Ast.Value).GetDate() @@>
-                <@@ let day, _, _ = (%%e : int * int * int) in day @@>))
-            ptyp.AddMember(pdb.NewConstructor([("Day", typeof<int>); ("Month", typeof<int>); ("Year", typeof<int>)], fun [day; month; year] ->
-                <@@ Ast.Value.Date((%%day : int), (%%month : int), (%%year : int)) @@>))
-            ptyp
+        | Ast.ValueType.Boolean -> buildBoolean(name, typ)
+        | Ast.ValueType.Float -> buildFloat(name, typ)
+        | Ast.ValueType.FloatPair -> buildFloatPair(name, typ)
+        | Ast.ValueType.Integer -> buildInteger(name, typ)
+        | Ast.ValueType.String -> buildString(name, typ)
+        | Ast.ValueType.IntVector -> buildIntVector(name, typ)
+        | Ast.ValueType.Date -> buildDate(name, typ)
+        | Ast.ValueType.Pair (typ1, typ2) -> buildPair(name, typ1, typ2)
+        | Ast.ValueType.Triplet (typ1, typ2, typ3) -> buildTriple(name, typ1, typ2, typ3)
         | Ast.ValueType.Composite fields ->
+            let typExpr = typ.ToExpr()
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Composite" |> newName, Some (typeof<Ast.Value>))
-            let asList this = <@ (%%this : Ast.Value).GetItems() @>
-            let getters() =
-                fields
-                |> Map.map (
-                    fun fieldName (def, minMult, maxMult) ->
-                        let fieldType =
-                            let subName = getNameOfField(fieldName, def)
-                            getProvidedType(subName, def)
-                        match (minMult, maxMult) with
-                        | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
-                            let prop = new ProvidedProperty(fieldName, fieldType)
-                            prop.GetterCode <-
-                                fun [this] ->
-                                    let e = asList this
-                                    <@@
-                                        match List.tryFind (fun (name, _) -> name = fieldName) %e with
-                                        | Some (_, value) -> value
-                                        | None -> failwithf "Field '%s' is not set" fieldName
-                                    @@>
-                            prop
-                        | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
-                            let optTyp =
-                                typeof<option<_>>
-                                    .GetGenericTypeDefinition()
-                                    .MakeGenericType(fieldType)
-                            let prop = new ProvidedProperty(fieldName, optTyp)
-                            prop.GetterCode <-
-                                fun [this] ->
-                                    let e = asList this
-                                    <@@
-                                        match List.tryFind (fun (name, _) -> name = fieldName) %e with
-                                        | Some (_, value) -> Some value
-                                        | None -> None
-                                    @@>
-                            prop                                    
-                        | _, Ast.MaxMultiplicity.Multiple ->
-                            let listTyp =
-                                typeof<List<_>>
-                                    .GetGenericTypeDefinition()
-                                    .MakeGenericType(fieldType)
-                            let prop = new ProvidedProperty(fieldName, listTyp)
-                            prop.GetterCode <-
-                                fun [this] ->
-                                    let e = asList this
-                                    <@@
-                                        List.filter (fun (name, _) -> name = fieldName) %e
-                                    @@>
-                            prop
-                    )
-                |> Map.toList
-                |> List.sortBy fst
-                |> List.map snd                
-            ptyp.AddMembersDelayed(getters)
-            // setters, using fluent interfaces
-            let setters() =
-                fields
-                |> Seq.map(fun kvp ->
-                    let fieldName = kvp.Key
-                    let (def, minMult, maxMult) = kvp.Value
-                    let fieldType =
-                        let subName =
-                            match def with
-                            | Ast.ValueType.Set _
-                            | Ast.ValueType.Mapping _
-                            | Ast.ValueType.Composite _ -> Some fieldName
-                            | _ -> None
-                        getProvidedType(subName, def)
-                    match (minMult, maxMult) with
-                    | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
-                        pdb.NewMethod(
-                            sprintf "Set%s" fieldName,
-                            ptyp,
-                            [("value", upcast fieldType)],
-                            fun [this; value] ->
-                                <@@
-                                    let this = (%%this : Ast.Value)
-                                    this.SetItem(fieldName, (%%value : Ast.Value))
-                                @@>)
-                    | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
-                        let optTyp =
-                            typedefof<option<_>>
-                                .MakeGenericType(fieldType)
-                        pdb.NewMethod(
-                            sprintf "Set%s" fieldName,
-                            ptyp,
-                            [("value", optTyp)],
-                            fun [this; value] ->
-                                <@@
-                                    let this = (%%this : Ast.Value)
-                                    this.SetItem(fieldName, (%%value : Ast.Value option))
-                                @@>)
-                    | _, Ast.MaxMultiplicity.Multiple ->
-                        let listTyp =
-                            typedefof<List<_>>
-                                .MakeGenericType(fieldType)
-                        pdb.NewMethod(
-                            sprintf "Set%s" fieldName,
-                            ptyp,
-                            [("value", listTyp)],
-                            fun [this; value] ->
-                                <@@
-                                    let this = (%%this : Ast.Value)
-                                    this.ClearItems(fieldName).AddItems(fieldName, (%%value : Ast.Value list))
-                                @@>)
-                    |> addXmlDoc (sprintf """<summary>Create a copy of this, with the value of field '%s' changed to <paramref name="value" />.</summary>""" fieldName))
-                |> List.ofSeq
-            ptyp.AddMembersDelayed(setters)
-            // Create Mcu instances
-            let asMcu() =
-                [
-                    match name with
-                    | Some name ->
-                        match McuFactory.tryMkAsComplex(name, typ) with
-                        | Some _ ->
-                            yield
-                                pdb.NewMethod(
-                                    "CreateMcuComplex",
-                                    typeof<Mcu.McuComplex>,
-                                    [],
-                                    fun [this] ->
-                                        <@@
-                                            match McuFactory.tryMkAsComplex(name, %typExpr) with
-                                            | Some f -> f((%%this : Ast.Value), [])
-                                            | None -> failwith "Unexpected error: could not build AsComplex"
-                                        @@>)
-                                |> addXmlDoc """<summary>Create a new mutable instance of a complex trigger.</summary>"""
-                        | None -> ()
-                        match McuFactory.tryMkAsTrigger(name, typ) with
-                        | Some _ ->
-                            yield
-                                pdb.NewMethod(
-                                    "CreateMcuCommand",
-                                    typeof<Mcu.McuTrigger>,
-                                    [],
-                                    fun [this] ->
-                                        <@@
-                                            match McuFactory.tryMkAsTrigger(name, %typExpr) with
-                                            | Some f -> f((%%this : Ast.Value), [])
-                                            | None -> failwith "Unexpected error: could not build AsCommand"
-                                        @@>)
-                                |> addXmlDoc """<summary>Create a new mutable instance of an MCU command.</summary>"""
-                        | None -> ()
-                        match McuFactory.tryMkAsEntity(name, typ) with
-                        | Some _ ->
-                            yield
-                                pdb.NewMethod(
-                                    "CreateEntity",
-                                    typeof<Mcu.McuEntity>,
-                                    [],
-                                    fun [this] ->
-                                        <@@
-                                            match McuFactory.tryMkAsEntity(name, %typExpr) with
-                                            | Some f -> f((%%this : Ast.Value), [])
-                                            | None -> failwith "Unexpected error: could not build AsEntity"
-                                        @@>)
-                                |> addXmlDoc """<summary>Create a new mutable instance of an entity.</summary>"""
-                        | None -> ()
-                        match McuFactory.tryMkAsHasEntity(name, typ) with
-                        | Some _ ->
-                            yield
-                                pdb.NewMethod(
-                                    "CreateHasEntity",
-                                    typeof<Mcu.HasEntity>,
-                                    [],
-                                    fun [this] ->
-                                        <@@
-                                            match McuFactory.tryMkAsHasEntity(name, %typExpr) with
-                                            | Some f -> f((%%this : Ast.Value), [])
-                                            | None -> failwith "Unexpected error: could not build AsHasEntity"
-                                        @@>)
-                                |> addXmlDoc """<summary>Create a new mutable instance of a plane, vehicle, building...</summary>"""
-                        | None -> ()
-                    | None ->
-                        ()
-                ]
-            ptyp.AddMembersDelayed(asMcu)
+            ptyp.AddMembersDelayed(getters fields)
+            ptyp.AddMembersDelayed(setters (fields, ptyp))
+            ptyp.AddMembersDelayed(asMcu (name, typ, typExpr))
             // Dump to text
             match name with
             | Some name ->
@@ -501,6 +323,211 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             let propTyp = typedefof<Set<_>>.MakeGenericType(ptyp1)
             ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetSet() |> Set.ofList @@>))
             ptyp
+
+    and buildPair (name : string option, typ1 : Ast.ValueType, typ2 : Ast.ValueType) =
+        let ptyp1 = getProvidedType(None, typ1)
+        let ptyp2 = getProvidedType(None, typ2)
+        let ptyp =
+            let name =
+                sprintf "PairOf%sAnd%s" ptyp1.Name ptyp2.Name
+                |> defaultArg name
+                |> newName
+            new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
+        let propTyp = typedefof<_*_>.MakeGenericType(ptyp1, ptyp2)
+        ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetPair() @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Value", propTyp)], fun [value] -> <@@ Ast.Value.Pair (%%value : Ast.Value * Ast.Value) @@>))
+        ptyp
+
+    and buildTriple (name : string option, typ1 : Ast.ValueType, typ2 : Ast.ValueType, typ3 : Ast.ValueType) =
+        let ptyp1 = getProvidedType(None, typ1)
+        let ptyp2 = getProvidedType(None, typ2)
+        let ptyp3 = getProvidedType(None, typ3)
+        let ptyp =
+            let name =
+                sprintf "TripletOf%sAnd%sAnd%s" ptyp1.Name ptyp2.Name ptyp3.Name
+                |> defaultArg name
+                |> newName
+            new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
+        let propTyp = typedefof<_*_*_>.MakeGenericType(ptyp1, ptyp2, ptyp3)
+        ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetTriplet() @@>))
+        ptyp.AddMember(pdb.NewConstructor([("Value", propTyp)], fun [value] -> <@@ Ast.Value.Triplet (%%value : Ast.Value * Ast.Value * Ast.Value) @@>))
+        ptyp
+
+    // Build the getters in composite types
+    and getters fields () =
+        fields
+        |> Map.map (
+            fun fieldName (def, minMult, maxMult) ->
+                let fieldType =
+                    let subName = getNameOfField(fieldName, def)
+                    getProvidedType(subName, def)
+                match (minMult, maxMult) with
+                | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
+                    let prop = new ProvidedProperty(fieldName, fieldType)
+                    prop.GetterCode <-
+                        fun [this] ->
+                            let e = asList this
+                            <@@
+                                match List.tryFind (fun (name, _) -> name = fieldName) %e with
+                                | Some (_, value) -> value
+                                | None -> failwithf "Field '%s' is not set" fieldName
+                            @@>
+                    prop
+                | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
+                    let optTyp =
+                        typeof<option<_>>
+                            .GetGenericTypeDefinition()
+                            .MakeGenericType(fieldType)
+                    let prop = new ProvidedProperty(fieldName, optTyp)
+                    prop.GetterCode <-
+                        fun [this] ->
+                            let e = asList this
+                            <@@
+                                match List.tryFind (fun (name, _) -> name = fieldName) %e with
+                                | Some (_, value) -> Some value
+                                | None -> None
+                            @@>
+                    prop
+                | _, Ast.MaxMultiplicity.Multiple ->
+                    let listTyp =
+                        typeof<List<_>>
+                            .GetGenericTypeDefinition()
+                            .MakeGenericType(fieldType)
+                    let prop = new ProvidedProperty(fieldName, listTyp)
+                    prop.GetterCode <-
+                        fun [this] ->
+                            let e = asList this
+                            <@@
+                                List.filter (fun (name, _) -> name = fieldName) %e
+                            @@>
+                    prop
+            )
+        |> Map.toList
+        |> List.sortBy fst
+        |> List.map snd
+
+    // setters in composites, using fluent interfaces
+    and setters (fields, ptyp) () =
+        fields
+        |> Seq.map(fun kvp ->
+            let fieldName = kvp.Key
+            let (def, minMult, maxMult) = kvp.Value
+            let fieldType =
+                let subName =
+                    match def with
+                    | Ast.ValueType.Set _
+                    | Ast.ValueType.Mapping _
+                    | Ast.ValueType.Composite _ -> Some fieldName
+                    | _ -> None
+                getProvidedType(subName, def)
+            match (minMult, maxMult) with
+            | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
+                pdb.NewMethod(
+                    sprintf "Set%s" fieldName,
+                    ptyp,
+                    [("value", upcast fieldType)],
+                    fun [this; value] ->
+                        <@@
+                            let this = (%%this : Ast.Value)
+                            this.SetItem(fieldName, (%%value : Ast.Value))
+                        @@>)
+            | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
+                let optTyp =
+                    typedefof<option<_>>
+                        .MakeGenericType(fieldType)
+                pdb.NewMethod(
+                    sprintf "Set%s" fieldName,
+                    ptyp,
+                    [("value", optTyp)],
+                    fun [this; value] ->
+                        <@@
+                            let this = (%%this : Ast.Value)
+                            this.SetItem(fieldName, (%%value : Ast.Value option))
+                        @@>)
+            | _, Ast.MaxMultiplicity.Multiple ->
+                let listTyp =
+                    typedefof<List<_>>
+                        .MakeGenericType(fieldType)
+                pdb.NewMethod(
+                    sprintf "Set%s" fieldName,
+                    ptyp,
+                    [("value", listTyp)],
+                    fun [this; value] ->
+                        <@@
+                            let this = (%%this : Ast.Value)
+                            this.ClearItems(fieldName).AddItems(fieldName, (%%value : Ast.Value list))
+                        @@>)
+            |> addXmlDoc (sprintf """<summary>Create a copy of this, with the value of field '%s' changed to <paramref name="value" />.</summary>""" fieldName))
+        |> List.ofSeq
+
+    // Methods to build mutable MCU instances
+    and asMcu (name, typ, typExpr) () =
+        [
+            match name with
+            | Some name ->
+                match McuFactory.tryMkAsComplex(name, typ) with
+                | Some _ ->
+                    yield
+                        pdb.NewMethod(
+                            "CreateMcuComplex",
+                            typeof<Mcu.McuComplex>,
+                            [],
+                            fun [this] ->
+                                <@@
+                                    match McuFactory.tryMkAsComplex(name, %typExpr) with
+                                    | Some f -> f((%%this : Ast.Value), [])
+                                    | None -> failwith "Unexpected error: could not build AsComplex"
+                                @@>)
+                        |> addXmlDoc """<summary>Create a new mutable instance of a complex trigger.</summary>"""
+                | None -> ()
+                match McuFactory.tryMkAsTrigger(name, typ) with
+                | Some _ ->
+                    yield
+                        pdb.NewMethod(
+                            "CreateMcuCommand",
+                            typeof<Mcu.McuTrigger>,
+                            [],
+                            fun [this] ->
+                                <@@
+                                    match McuFactory.tryMkAsTrigger(name, %typExpr) with
+                                    | Some f -> f((%%this : Ast.Value), [])
+                                    | None -> failwith "Unexpected error: could not build AsCommand"
+                                @@>)
+                        |> addXmlDoc """<summary>Create a new mutable instance of an MCU command.</summary>"""
+                | None -> ()
+                match McuFactory.tryMkAsEntity(name, typ) with
+                | Some _ ->
+                    yield
+                        pdb.NewMethod(
+                            "CreateEntity",
+                            typeof<Mcu.McuEntity>,
+                            [],
+                            fun [this] ->
+                                <@@
+                                    match McuFactory.tryMkAsEntity(name, %typExpr) with
+                                    | Some f -> f((%%this : Ast.Value), [])
+                                    | None -> failwith "Unexpected error: could not build AsEntity"
+                                @@>)
+                        |> addXmlDoc """<summary>Create a new mutable instance of an entity.</summary>"""
+                | None -> ()
+                match McuFactory.tryMkAsHasEntity(name, typ) with
+                | Some _ ->
+                    yield
+                        pdb.NewMethod(
+                            "CreateHasEntity",
+                            typeof<Mcu.HasEntity>,
+                            [],
+                            fun [this] ->
+                                <@@
+                                    match McuFactory.tryMkAsHasEntity(name, %typExpr) with
+                                    | Some f -> f((%%this : Ast.Value), [])
+                                    | None -> failwith "Unexpected error: could not build AsHasEntity"
+                                @@>)
+                        |> addXmlDoc """<summary>Create a new mutable instance of a plane, vehicle, building...</summary>"""
+                | None -> ()
+            | None ->
+                ()
+        ]
 
     and getProvidedType (name, typ) : ProvidedTypeDefinition =
         cached cache (buildProvidedType) (name, typ)
