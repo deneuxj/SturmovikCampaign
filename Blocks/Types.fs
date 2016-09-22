@@ -5,6 +5,15 @@ open SturmovikMission.DataProvider
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission">
 
+// Utility functions to create MCU programmatically.
+let newTimer idx =
+    T.MCU_Timer(T.String "", T.Integer idx, T.String "", T.VectorOfIntegers[], T.Integer 100, T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
+        .CreateMcu() :?> Mcu.McuTimer
+
+let newCounter idx =
+    T.MCU_Counter(T.Integer 1, T.String "", T.Boolean false, T.Integer idx, T.String "", T.VectorOfIntegers[], T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
+        .CreateMcu() :?> Mcu.McuCounter
+
 // Utility functions. Should go into SturmovikMission.DataProvider.McuUtil.
 let getTriggerByName group name =
     McuUtil.filterByName name group
@@ -213,5 +222,36 @@ with
         { Start = start
           Stop = stop
           Elapsed = elapsed
+          All = McuUtil.groupFromList group
+        }
+
+type VirtualConvoy =
+    { Start : Mcu.McuTrigger
+      Destroyed : Mcu.McuTrigger
+      Arrived : Mcu.McuTrigger
+      All : McuUtil.IMcuGroup
+    }
+with
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, numTrucks : int) =
+        // Create all nodes
+        let start = newCounter 1
+        let destroyed = newCounter 2
+        McuUtil.vecCopy (McuUtil.newVec3(0.0, 0.0, 50.0)) destroyed.Pos
+        destroyed.Count <- numTrucks + 1
+        let arrived = newCounter 3
+        McuUtil.vecCopy (McuUtil.newVec3(0.0, 0.0, 100.0)) arrived.Pos
+        let group : Mcu.McuBase list = [ start; destroyed; arrived ]
+        // Position
+        for mcu in group do
+            let pos2 = McuUtil.translate mcu.Pos pos
+            McuUtil.vecCopy pos2 mcu.Pos
+        // Instantiate
+        let subst = Mcu.substId <| store.GetIdMapper()
+        for mcu in group do
+            subst mcu
+        // Result
+        { Start = start
+          Destroyed = destroyed
+          Arrived = arrived
           All = McuUtil.groupFromList group
         }

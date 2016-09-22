@@ -43,6 +43,7 @@ type VirtualConvoy =
       EnemyCloseAtWaypoint : Set<ActiveWaypointInstance * WhileEnemyCloseInstance>
       Path : Set<ActiveWaypointInstance * ActiveWaypointInstance>
       PathStart : Set<ActiveWaypointInstance>
+      PathEnd : Set<ActiveWaypointInstance>
       TimerBetweenWaypoints : Set<ActiveWaypointInstance * ActiveWaypointInstance * TimerInstance>
 
       WhileEnemyCloseSet : Map<WhileEnemyCloseInstance, WhileEnemyClose>
@@ -50,11 +51,11 @@ type VirtualConvoy =
 
       TimerSet : Map<TimerInstance, Timer>
 
-      MissionStart : Mcu.McuTrigger
+      Api : Types.VirtualConvoy
     }
 with
     interface McuUtil.IMcuGroup with
-        member this.Content = [ this.MissionStart ]
+        member this.Content = []
         member this.LcStrings = []
         member this.SubGroups =
             [
@@ -68,6 +69,7 @@ with
                     yield kvp.Value.All
                 for kvp in this.TimerSet do
                     yield kvp.Value.All
+                yield this.Api.All
             ]
 
     /// <summary>
@@ -146,6 +148,7 @@ with
             |> Seq.pairwise
             |> Set.ofSeq
         let pathStart = Set [ ActiveWaypointInstance 0 ]
+        let pathEnd = Set [ ActiveWaypointInstance (List.length path - 1) ]
         let timerBetweenWaypoints =
             path2
             |> Seq.map (fun (ActiveWaypointInstance i as curr, next) -> (curr, next, TimerInstance i))
@@ -156,6 +159,13 @@ with
             |> Map.toSeq
             |> Seq.map snd
             |> Set.ofSeq
+        let apiPos =
+            path
+            |> List.fold (fun sum vertex -> McuUtil.translate sum vertex.Pos) (McuUtil.newVec3(0.0, 0.0, 0.0))
+        let apiPos =
+            let n = List.length path |> float
+            McuUtil.newVec3(apiPos.X / n, apiPos.Y / n, apiPos.Z / n)
+        let api = Types.VirtualConvoy.Create(store, apiPos, convoySize)
         { ConvoySet = convoySet
           TruckInConvoy = truckInConvoy
           WhileEnemyCloseOfConvoy = whileEnemyCloseOfConvoy
@@ -165,11 +175,12 @@ with
           EnemyCloseAtWaypoint = enemyCloseAtWaypoint
           Path = path2
           PathStart = pathStart
+          PathEnd = pathEnd
           TimerBetweenWaypoints = timerBetweenWaypoints
           WhileEnemyCloseSet = whileEnemyCloseSet
           ConvoyOfEnemyClose = convoyOfEnemyClose
           TimerSet = timerSet
-          MissionStart = missionStart
+          Api = api
         }
 
     /// <summary>
@@ -206,8 +217,6 @@ with
                         for _, _, truck2 in filter3 this.TruckInConvoy (Some convoy2, Some pos, None) do
                             yield this.TruckInConvoySet.[truck].Damaged, this.TruckInConvoySet.[truck2].Delete :> Mcu.McuBase
                             yield this.TruckInConvoySet.[truck].Delete, this.TruckInConvoySet.[truck2].Delete :> Mcu.McuBase
-                for wp in this.PathStart do
-                    yield this.MissionStart, this.ActiveWaypointSet.[wp].Activate :> Mcu.McuBase
                 for wp, convoy in this.ConvoyAtWaypoint do
                     let wec = get this.WhileEnemyCloseOfConvoy convoy
                     let wec = this.WhileEnemyCloseSet.[wec]
@@ -231,6 +240,15 @@ with
                         let afterWec = this.WhileEnemyCloseSet.[afterWec]
                         yield currWec.WakeUp, afterWec.Deactivate :> Mcu.McuBase
                         yield currWec.Sleep, afterWec.Activate :> Mcu.McuBase
+                for wp in this.PathStart do
+                    yield this.Api.Start, this.ActiveWaypointSet.[wp].Activate :> Mcu.McuBase
+                for convoy, _, truck in this.TruckInConvoy do
+                    yield this.TruckInConvoySet.[truck].Damaged, this.Api.Destroyed :> Mcu.McuBase
+                for wp in this.PathEnd do
+                    let finish = this.ActiveWaypointSet.[wp]
+                    yield finish.Waypoint :> Mcu.McuTrigger, this.Api.Arrived :> Mcu.McuBase
+                    yield finish.Activate, this.Api.Arrived :> Mcu.McuBase
+
             ]
         { Columns = columns
           Objects = objectLinks
