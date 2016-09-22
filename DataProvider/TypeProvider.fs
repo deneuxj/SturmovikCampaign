@@ -465,65 +465,20 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
         [
             match name with
             | Some name ->
-                match McuFactory.tryMkAsComplex(name, typ) with
+                match McuFactory.tryMakeMcu(name, typ) with
                 | Some _ ->
                     yield
                         pdb.NewMethod(
-                            "CreateMcuComplex",
-                            typeof<Mcu.McuComplex>,
+                            "CreateMcu",
+                            typeof<Mcu.McuBase>,
                             [],
                             fun [this] ->
                                 <@@
-                                    match McuFactory.tryMkAsComplex(name, %typExpr) with
+                                    match McuFactory.tryMakeMcu(name, %typExpr) with
                                     | Some f -> f((%%this : Ast.Value), [])
-                                    | None -> failwith "Unexpected error: could not build AsComplex"
+                                    | None -> failwith "Unexpected error: could not build MCU"
                                 @@>)
-                        |> addXmlDoc """<summary>Create a new mutable instance of a complex trigger.</summary>"""
-                | None -> ()
-                match McuFactory.tryMkAsTrigger(name, typ) with
-                | Some _ ->
-                    yield
-                        pdb.NewMethod(
-                            "CreateMcuCommand",
-                            typeof<Mcu.McuTrigger>,
-                            [],
-                            fun [this] ->
-                                <@@
-                                    match McuFactory.tryMkAsTrigger(name, %typExpr) with
-                                    | Some f -> f((%%this : Ast.Value), [])
-                                    | None -> failwith "Unexpected error: could not build AsCommand"
-                                @@>)
-                        |> addXmlDoc """<summary>Create a new mutable instance of an MCU command.</summary>"""
-                | None -> ()
-                match McuFactory.tryMkAsEntity(name, typ) with
-                | Some _ ->
-                    yield
-                        pdb.NewMethod(
-                            "CreateEntity",
-                            typeof<Mcu.McuEntity>,
-                            [],
-                            fun [this] ->
-                                <@@
-                                    match McuFactory.tryMkAsEntity(name, %typExpr) with
-                                    | Some f -> f((%%this : Ast.Value), [])
-                                    | None -> failwith "Unexpected error: could not build AsEntity"
-                                @@>)
-                        |> addXmlDoc """<summary>Create a new mutable instance of an entity.</summary>"""
-                | None -> ()
-                match McuFactory.tryMkAsHasEntity(name, typ) with
-                | Some _ ->
-                    yield
-                        pdb.NewMethod(
-                            "CreateHasEntity",
-                            typeof<Mcu.HasEntity>,
-                            [],
-                            fun [this] ->
-                                <@@
-                                    match McuFactory.tryMkAsHasEntity(name, %typExpr) with
-                                    | Some f -> f((%%this : Ast.Value), [])
-                                    | None -> failwith "Unexpected error: could not build AsHasEntity"
-                                @@>)
-                        |> addXmlDoc """<summary>Create a new mutable instance of a plane, vehicle, building...</summary>"""
+                        |> addXmlDoc """<summary>Create a new mutable instance of an MCU.</summary>"""
                 | None -> ()
             | None ->
                 ()
