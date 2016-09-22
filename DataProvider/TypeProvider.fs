@@ -281,6 +281,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             ptyp.AddMembersDelayed(getters fields)
             ptyp.AddMembersDelayed(setters (fields, ptyp))
             ptyp.AddMembersDelayed(asMcu (name, typ, typExpr))
+            ptyp.AddMemberDelayed(construct (fields, ptyp))
             // Dump to text
             match name with
             | Some name ->
@@ -483,6 +484,49 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             | None ->
                 ()
         ]
+
+    // Constructor. Its arguments are built similarly to the setters
+    and construct (fields, ptyp) () =
+        let args =
+            fields
+            |> Seq.map(fun kvp ->
+                let fieldName = kvp.Key
+                let (def, minMult, maxMult) = kvp.Value
+                let fieldType =
+                    let subName =
+                        match def with
+                        | Ast.ValueType.Set _
+                        | Ast.ValueType.Mapping _
+                        | Ast.ValueType.Composite _ -> Some fieldName
+                        | _ -> None
+                    getProvidedType(subName, def)
+                match (minMult, maxMult) with
+                | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
+                    (fieldName, fieldType :> Type)
+                | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
+                    let optTyp =
+                        typeof<option<_>>
+                            .GetGenericTypeDefinition()
+                            .MakeGenericType(fieldType)
+                    (fieldName, optTyp)
+                | _, Ast.MaxMultiplicity.Multiple ->
+                    let listTyp =
+                        typedefof<List<_>>
+                            .MakeGenericType(fieldType)
+                    (fieldName, listTyp))
+            |> List.ofSeq
+        let argNames =
+            fields
+            |> Seq.map (fun kvp -> kvp.Key)
+            |> Seq.fold (fun expr name -> <@ name :: %expr@>) <@ [] @>
+        let body (args : Expr list) =
+            let args =
+                args
+                |> List.fold (fun expr arg -> <@ (%%arg : Ast.Value) :: %expr @>) <@ [] @>
+            <@@
+                Ast.Value.Composite(List.zip %argNames %args)
+            @@>
+        pdb.NewConstructor(args, body)
 
     and getProvidedType (name, typ) : ProvidedTypeDefinition =
         cached cache (buildProvidedType) (name, typ)
