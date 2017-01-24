@@ -19,7 +19,7 @@ namespace SturmovikMission
 
 module Constants =
     [<Literal>]
-    let version = "2.0.0.0"
+    let version = "2.0.1.0"
 
 open System.Reflection
 open System.Resources;
@@ -31,7 +31,7 @@ open System.Runtime.InteropServices
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("")>]
 [<assembly: AssemblyProduct("SturmovikMission")>]
-[<assembly: AssemblyCopyright("Copyright (c) 2016 Johann Deneux")>]
+[<assembly: AssemblyCopyright("Copyright (c) 2016,2017 Johann Deneux")>]
 [<assembly: AssemblyTrademark("")>]
 [<assembly: AssemblyCulture("")>]
 [<assembly: NeutralResourcesLanguage("en")>]
