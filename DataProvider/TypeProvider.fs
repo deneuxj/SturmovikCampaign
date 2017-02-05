@@ -185,7 +185,7 @@ let inline addXmlDoc< ^T when ^T: (member AddXmlDoc : string -> unit)> (doc : st
 /// <param name="def">ValueType of the field.</param>
 let private getNameOfField(fieldName : string, def) =
     match def with
-    | Ast.ValueType.Set _
+    | Ast.ValueType.List _
     | Ast.ValueType.Mapping _
     | Ast.ValueType.Composite _ -> Some fieldName
     | _ -> None
@@ -316,13 +316,13 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                     this.Clear()
                 @@>))
             ptyp
-        | Ast.ValueType.Set itemTyp ->
+        | Ast.ValueType.List itemTyp ->
             let ptyp1 = getProvidedType(None, itemTyp)
             let ptyp =
-                new ProvidedTypeDefinition(defaultArg name "Set" |> newName, Some (typeof<Ast.Value>))
-            ptyp.AddMember(pdb.NewConstructor([], fun [] -> <@@ Ast.Value.Set [] @@>))
-            let propTyp = typedefof<Set<_>>.MakeGenericType(ptyp1)
-            ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetSet() |> Set.ofList @@>))
+                new ProvidedTypeDefinition(defaultArg name "List" |> newName, Some (typeof<Ast.Value>))
+            ptyp.AddMember(pdb.NewConstructor([], fun [] -> <@@ Ast.Value.List [] @@>))
+            let propTyp = typedefof<_ list>.MakeGenericType(ptyp1)
+            ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetList() @@>))
             ptyp
 
     and buildPair (name : string option, typ1 : Ast.ValueType, typ2 : Ast.ValueType) =
@@ -416,7 +416,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             let fieldType =
                 let subName =
                     match def with
-                    | Ast.ValueType.Set _
+                    | Ast.ValueType.List _
                     | Ast.ValueType.Mapping _
                     | Ast.ValueType.Composite _ -> Some fieldName
                     | _ -> None
@@ -495,7 +495,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                 let fieldType =
                     let subName =
                         match def with
-                        | Ast.ValueType.Set _
+                        | Ast.ValueType.List _
                         | Ast.ValueType.Mapping _
                         | Ast.ValueType.Composite _ -> Some fieldName
                         | _ -> None

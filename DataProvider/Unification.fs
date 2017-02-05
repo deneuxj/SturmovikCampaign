@@ -48,10 +48,10 @@ let rec tryUnify =
             Choice1Of2(ValueType.Mapping kind)
         | Choice2Of2 msg ->
             Choice2Of2 (mkFailedUnification kind1 kind2 msg)
-    | ValueType.Set kind1, ValueType.Set kind2 ->
+    | ValueType.List kind1, ValueType.List kind2 ->
         match tryUnify(kind1, kind2) with
         | Choice1Of2 kind ->
-            Choice1Of2(ValueType.Set kind)
+            Choice1Of2(ValueType.List kind)
         | Choice2Of2 msg ->
             Choice2Of2 (mkFailedUnification kind1 kind2 msg)
     | ValueType.Pair(kindA1, kindA2) as p1, (ValueType.Pair(kindB1, kindB2) as p2) ->

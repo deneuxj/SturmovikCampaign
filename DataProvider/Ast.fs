@@ -55,7 +55,7 @@ type ValueType =
     | Float
     | Composite of Map<string, ValueType * MinMultiplicity * MaxMultiplicity>
     | Mapping of ValueType // { 1 = XXX1; 2 = XXX2 }
-    | Set of ValueType // { entries }
+    | List of ValueType // { entries }
     | IntVector // [1, 2, 3]
     | Pair of ValueType * ValueType
     | Triplet of ValueType * ValueType * ValueType
@@ -73,7 +73,7 @@ let rec buildExprFromValueType expr =
     | Date -> <@ Date @>
     | IntVector -> <@ IntVector @>
     | Mapping vt -> <@ Mapping %(getExprOfValueType vt) @>
-    | Set vt -> <@ Set %(getExprOfValueType vt) @>
+    | List vt -> <@ List %(getExprOfValueType vt) @>
     | Pair (p1, p2) -> <@ Pair(%(getExprOfValueType p1), %(getExprOfValueType p2)) @>
     | Triplet (p1, p2, p3) -> <@ Triplet(%(getExprOfValueType p1), %(getExprOfValueType p2), %(getExprOfValueType p3)) @>
     | FloatPair -> <@ FloatPair @>
@@ -101,7 +101,7 @@ type Value =
     | FloatPair of float * float
     | Composite of (string * Value) list
     | Mapping of (int * Value) list
-    | Set of Value list
+    | List of Value list
     | IntVector of int list
     | Pair of Value * Value
     | Triplet of Value * Value * Value
@@ -143,9 +143,9 @@ with
         match this with
         | Mapping items -> items
         | _ -> invalidOp "Not a Mapping"
-    member this.GetSet() =
+    member this.GetList() =
         match this with
-        | Set items -> items
+        | List items -> items
         | _ -> invalidOp "Not a Set"
     member this.GetPair() =
         match this with
@@ -222,7 +222,7 @@ with
     member this.Clear() =
         match this with
         | Mapping _ -> Mapping []
-        | Set _ -> Set []
+        | List _ -> List []
         | IntVector _ -> IntVector []
         | _ -> invalidOp "Not a Mapping, Set or IntVector"
     
@@ -243,10 +243,10 @@ with
             x
             |> List.fold (fun expr (n, value) -> <@ (n, %(value.ToExpr())) :: %expr @>) <@ [] @>
             |> fun xs -> <@ Mapping %xs @>
-        | Set x ->
+        | List x ->
             x
             |> List.fold (fun expr value -> <@ %(value.ToExpr()) :: %expr @>) <@ [] @>
-            |> fun xs -> <@ Set %xs @>
+            |> fun xs -> <@ List %xs @>
         | Pair(x1, x2) ->
             <@ Pair(%x1.ToExpr(), %x2.ToExpr()) @>
         | Triplet(x1, x2, x3) ->
@@ -270,7 +270,7 @@ let rec dump (value : Value) : string =
             yield sprintf "{\n"
             for (k, v) in content do
                 match v with
-                | Set _
+                | List _
                 | Mapping _
                 | Composite _ ->
                     yield sprintf "%s\n%s" k (dump v)
@@ -293,7 +293,7 @@ let rec dump (value : Value) : string =
             }
             |> String.concat ", "
         sprintf "[%s]" content
-    | Set xs ->
+    | List xs ->
         seq {
             yield "{\n"
             for x in xs do

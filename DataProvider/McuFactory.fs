@@ -55,9 +55,9 @@ let getStringField (name : string) fields =
     fields
     |> Seq.pick (function (name2, Value.String s) when name = name2 -> Some s | _ -> None)
 
-let getSetField  (name : string) fields =
+let getListField  (name : string) fields =
     fields
-    |> Seq.pick (function (name2, Value.Set s) when name = name2 -> Some s | _ -> None)
+    |> Seq.pick (function (name2, Value.List s) when name = name2 -> Some s | _ -> None)
 
 let setField (name : string, value) fields =
     let rec work xs =

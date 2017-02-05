@@ -320,7 +320,7 @@ and makeParser (format : ValueType) : ParserFun =
                 parseError("Not :", s)
     | ValueType.Date -> parseDate
     | ValueType.IntVector -> parseIntVector
-    | ValueType.Set itemType ->
+    | ValueType.List itemType ->
         let (ParserFun f) = makeParser itemType
         function
         | ReLit "{" s ->
@@ -336,7 +336,7 @@ and makeParser (format : ValueType) : ParserFun =
                         let xs, s = parse s
                         x :: xs, s
             let xs, s = parse s
-            (Set xs, s)
+            (List xs, s)
         | s ->
             parseError("Not {", s)
     |> ParserFun

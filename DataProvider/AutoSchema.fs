@@ -121,7 +121,7 @@ and tryParseAsMapping (s : Stream) =
     | _ ->
         None
 
-and tryParseAsSet (s : Stream) =
+and tryParseAsList (s : Stream) =
     match s with
     | ReLit "{" s ->
         let rec work s =
@@ -153,7 +153,7 @@ and tryParseAsSet (s : Stream) =
                         Unification.tryUnify(unified, kind)) (Choice1Of2 kind)
             match unified with
             | Choice2Of2 _ -> None
-            | Choice1Of2 unified -> Some(ValueType.Set unified, s2)
+            | Choice1Of2 unified -> Some(ValueType.List unified, s2)
         | Some ([], s2) ->
             // We got an empty set... No way to guess what kind is its content
             None
@@ -309,7 +309,7 @@ and tryParseGroundExt s =
 
 and curlyParserFuns =
     [
-        wrap "SET" tryParseAsSet
+        wrap "LIST" tryParseAsList
         wrap "MAP" tryParseAsMapping
         wrap "COMP" tryParseAsComposite
     ]
@@ -333,7 +333,7 @@ and allParserFuns =
         wrap "INT" tryParseAsInt
         wrap "FLOAT" tryParseAsFloat
         wrap "VEC" tryParseAsVector
-        wrap "SET" tryParseAsSet
+        wrap "LIST" tryParseAsList
         wrap "MAP" tryParseAsMapping
         wrap "COMP" tryParseAsComposite
     ]
