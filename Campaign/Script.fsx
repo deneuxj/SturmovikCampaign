@@ -7,8 +7,14 @@ open SturmovikMission.DataProvider.Parsing
 
 let s = Stream.FromFile @"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.mission"
 let data = T.GroupData(s)
-let areas = Area.ExtractAreas(data.ListOfMCU_TR_InfluenceArea)
-let paths = Path.ExtractPaths(data.ListOfMCU_Waypoint, areas)
+let areas = Area.ExtractAreas(data.GetGroup("Zones").ListOfMCU_TR_InfluenceArea)
+let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, areas)
+let rail = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, areas)
+let defenses = data.GetGroup("Defenses")
+let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AAA")
+let spawnsAAA = SpawnArea.ExtractCentralSpawnAreas(aaas, areas)
+let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AT")
+let spawnsAT = SpawnArea.ExtractFrontLineSpawnAreas(ats, areas, roads)
 
 // Define your library scripting code here
 

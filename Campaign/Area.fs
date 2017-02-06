@@ -2,9 +2,30 @@
 
 open System.Numerics
 
+type T = SturmovikMissionTypes.Provider<"C:\Users\johann\Documents\SturmovikMission-git\data\Sample.mission", "C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.Mission">
+
 module Vectors =
     type Vector2
     with
+        static member inline FromPos(pos : ^T) =
+            let x = (^T : (member XPos : T.Float) pos).Value
+            let y = (^T : (member ZPos : T.Float) pos).Value
+            Vector2(float32 x, float32 y)
+
+        static member FromPair((x, y) : float * float) =
+            Vector2(float32 x, float32 y)
+
+        static member FromPair(p : T.FloatPair) =
+            Vector2.FromPair(p.Value)
+
+        static member inline FromYOri(ori : ^T) =
+            let angle = (^T : (member YOri : T.Float) ori).Value
+            let alpha = System.Math.PI * angle / 180.0
+            Vector2(float32 <| cos alpha, float32 <| sin alpha)
+
+        static member Cross(u : Vector2, v : Vector2) =
+            u.X * v.Y - u.Y * v.X
+
         member this.IsInConvexPolygon(poly : Vector2 list) =
             match poly with
             | [] -> false
@@ -15,13 +36,33 @@ module Vectors =
                 |> List.forall(fun (v1, v2) ->
                     let v = v2 - v1
                     let w = this - v1
-                    let c = v.X * w.Y - v.Y * w.X
+                    let c = Vector2.Cross(v, w)
                     c >= 0.0f
                 )
 
-open Vectors
+        member this.DistanceFromSegment(v1 : Vector2, v2 : Vector2) =
+            let w = v2 - v1
+            let wl = w.Length()
+            let v = this - v1
+            if wl <= 1000.0f * System.Single.Epsilon then
+                v.Length()
+            else
+                let w = w / wl
+                let dot = Vector2.Dot(v, w)
+                if dot < 0.0f then
+                    v.Length()
+                elif dot > wl then
+                    (this - v2).Length()
+                else
+                    abs(Vector2.Cross(v, w))
 
-type T = SturmovikMissionTypes.Provider<"C:\Users\johann\Documents\SturmovikMission-git\data\Sample.mission", "C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.Mission">
+        member this.DistanceFromPath(path : Vector2 seq) =
+            path
+            |> Seq.pairwise
+            |> Seq.map (fun (v1, v2) -> this.DistanceFromSegment(v1, v2))
+            |> Seq.min
+
+open Vectors
 
 type CoallitionId = Axis | Allies
 
@@ -39,15 +80,8 @@ with
               Boundary = area.Boundary.Value |> List.map(fun coord -> Vector2(coord.Value |> fst |> float32, coord.Value |> snd |> float32))
               Neighbours = []
             }
-        let excluded =
-            Set [
-                "AAA"
-                "AT"
-                "ARTY"
-            ]
         let withBoundaries =
             areas
-            |> List.filter (fun area -> not(excluded.Contains(area.Name.Value)))
             |> List.map extractOne
         let cellRadius = 1000.0f
         let cellRadius2 = cellRadius * cellRadius
@@ -146,13 +180,13 @@ with
                         failwithf "Failed to build path because node '%d' has too many successors" current.Index.Value
             let path = work start []
             let startArea =
-                match areas |> List.tryFind (fun area -> Vector2(float32 start.XPos.Value, float32 start.ZPos.Value).IsInConvexPolygon(area.Boundary)) with
+                match areas |> List.tryFind (fun area -> Vector2.FromPos(start).IsInConvexPolygon(area.Boundary)) with
                 | None -> failwithf "Failed to build path because start node '%d' is not in an area" start.Index.Value
                 | Some x -> x
             let endArea =
                 match path with
                 | finish :: reversed ->
-                    match areas |> List.tryFind (fun area -> Vector2(float32 finish.XPos.Value, float32 finish.ZPos.Value).IsInConvexPolygon(area.Boundary)) with
+                    match areas |> List.tryFind (fun area -> Vector2.FromPos(finish).IsInConvexPolygon(area.Boundary)) with
                     | None -> failwithf "Failed to build path because end node '%d' is not in an area" start.Index.Value
                     | Some x -> x
                 | _ ->
@@ -160,7 +194,7 @@ with
             let locations =
                 path
                 |> List.rev
-                |> List.map (fun wp -> Vector2(float32 wp.XPos.Value, float32 wp.ZPos.Value))
+                |> List.map (fun wp -> Vector2.FromPos wp)
             { StartId = startArea.AreaId
               EndId = endArea.AreaId
               Locations = locations
@@ -170,6 +204,72 @@ with
                 if wp.Name.Value = "Start" then
                     yield buildPath wp
         ]
+
+
+type SpawnAreaId = SpawnAreaId of int
+
+type SpawnAreaHome =
+    | Central of AreaId
+    | FrontLine of AreaId * AreaId
+
+type SpawnArea = {
+    SpawnAreaId : SpawnAreaId
+    Home : SpawnAreaHome
+    Rotation : float32
+    Position : Vector2
+    Boundary : Vector2 list
+}
+with
+    static member ExtractCentralSpawnAreas(spawns : T.MCU_TR_InfluenceArea list, areas : Area list) =
+        [
+            for spawn in spawns do
+                let pos = Vector2.FromPos(spawn)
+                match areas |> List.tryFind(fun area -> pos.IsInConvexPolygon(area.Boundary)) with
+                | Some area ->
+                    yield {
+                        SpawnAreaId = SpawnAreaId spawn.Index.Value
+                        Home = Central area.AreaId
+                        Rotation = float32 spawn.YOri.Value
+                        Position = pos
+                        Boundary = spawn.Boundary.Value |> List.map(Vector2.FromPair)
+                    }
+                | None ->
+                    failwithf "Spawn area '%s' is not located in any area" spawn.Name.Value
+        ]
+
+    static member ExtractFrontLineSpawnAreas(spawns : T.MCU_TR_InfluenceArea list, areas : Area list, paths : Path list) =
+        [
+            for spawn in spawns do
+                let pos = Vector2.FromPos(spawn)
+                match areas |> List.tryFind(fun area -> pos.IsInConvexPolygon(area.Boundary)) with
+                | Some area ->
+                    let outgoing =
+                        paths
+                        |> List.filter (fun path -> path.StartId = area.AreaId)
+                        |> List.map (fun path -> path, path.EndId)
+                    let incoming =
+                        paths
+                        |> List.filter (fun path -> path.EndId = area.AreaId)
+                        |> List.map (fun path -> path, path.StartId)
+                    let toNeighbours = outgoing @ incoming
+                    let other =
+                        try
+                            toNeighbours
+                            |> List.minBy(fun (path, id) -> pos.DistanceFromPath(path.Locations))
+                        with
+                        | _ -> failwithf "Failed to find closest path to spawn area '%d'" spawn.Index.Value
+                        |> snd
+                    yield {
+                        SpawnAreaId = SpawnAreaId spawn.Index.Value
+                        Home = FrontLine(area.AreaId, other)
+                        Rotation = float32 spawn.YOri.Value
+                        Position = pos
+                        Boundary = spawn.Boundary.Value |> List.map(Vector2.FromPair)
+                    }
+                | None ->
+                    failwithf "Spawn area '%s' is not located in any area" spawn.Name.Value
+        ]
+
 
 type AreaCapacity = {
     HomeId : AreaId
