@@ -8,6 +8,7 @@ open SturmovikMission.DataProvider.Parsing
 let s = Stream.FromFile @"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.mission"
 let data = T.GroupData(s)
 let areas = Area.ExtractAreas(data.ListOfMCU_TR_InfluenceArea)
+let paths = Path.ExtractPaths(data.ListOfMCU_Waypoint, areas)
 
 // Define your library scripting code here
 

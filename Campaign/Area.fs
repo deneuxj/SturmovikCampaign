@@ -2,7 +2,26 @@
 
 open System.Numerics
 
-type T = SturmovikMissionTypes.Provider<"..\data\Sample.Mission", "..\data\Blocks\StrategySmall1.Mission">
+module Vectors =
+    type Vector2
+    with
+        member this.IsInConvexPolygon(poly : Vector2 list) =
+            match poly with
+            | [] -> false
+            | first :: _ ->
+                let cycled = poly @ [first]
+                cycled
+                |> List.pairwise
+                |> List.forall(fun (v1, v2) ->
+                    let v = v2 - v1
+                    let w = this - v1
+                    let c = v.X * w.Y - v.Y * w.X
+                    c >= 0.0f
+                )
+
+open Vectors
+
+type T = SturmovikMissionTypes.Provider<"C:\Users\johann\Documents\SturmovikMission-git\data\Sample.mission", "C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.Mission">
 
 type CoallitionId = Axis | Allies
 
@@ -99,6 +118,58 @@ with
         withBoundaries
         |> List.map setNeighbours
 
+
+type Path = {
+    StartId : AreaId
+    EndId : AreaId
+    Locations : Vector2 list
+}
+with
+    static member ExtractPaths(waypoints : T.MCU_Waypoint list, areas : Area list) =
+        let waypointsById =
+            waypoints
+            |> List.map (fun wp -> wp.Index.Value, wp)
+            |> dict
+        let buildPath(start : T.MCU_Waypoint) =
+            let rec work (current : T.MCU_Waypoint) path =
+                match current.Name.Value with
+                | "End" -> current :: path
+                | _ ->
+                    match current.Targets.Value with
+                    | [next] ->
+                        match waypointsById.TryGetValue(next) with
+                        | true, next -> work next (current :: path)
+                        | false, _ -> failwithf "Failed building path because there is no waypoints with id '%d'" next
+                    | [] ->
+                        failwithf "Failed to build path because node '%d' has no successor" current.Index.Value
+                    | _ :: _ ->
+                        failwithf "Failed to build path because node '%d' has too many successors" current.Index.Value
+            let path = work start []
+            let startArea =
+                match areas |> List.tryFind (fun area -> Vector2(float32 start.XPos.Value, float32 start.ZPos.Value).IsInConvexPolygon(area.Boundary)) with
+                | None -> failwithf "Failed to build path because start node '%d' is not in an area" start.Index.Value
+                | Some x -> x
+            let endArea =
+                match path with
+                | finish :: reversed ->
+                    match areas |> List.tryFind (fun area -> Vector2(float32 finish.XPos.Value, float32 finish.ZPos.Value).IsInConvexPolygon(area.Boundary)) with
+                    | None -> failwithf "Failed to build path because end node '%d' is not in an area" start.Index.Value
+                    | Some x -> x
+                | _ ->
+                    failwith "Failed to build path because it has no end node"
+            let locations =
+                path
+                |> List.rev
+                |> List.map (fun wp -> Vector2(float32 wp.XPos.Value, float32 wp.ZPos.Value))
+            { StartId = startArea.AreaId
+              EndId = endArea.AreaId
+              Locations = locations
+            }
+        [
+            for wp in waypoints do
+                if wp.Name.Value = "Start" then
+                    yield buildPath wp
+        ]
 
 type AreaCapacity = {
     HomeId : AreaId
