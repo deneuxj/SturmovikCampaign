@@ -270,3 +270,114 @@ with
                     failwithf "Spawn area '%s' is not located in any area" spawn.Name.Value
         ]
 
+type StaticGroup = {
+    Model : string
+    Script : string
+}
+
+type OrientedPosition = {
+    Pos : Vector2
+    Rotation : float32
+}
+
+type AirfieldId = AirfieldId of string
+
+module PlaneTypes =
+    let (|Fighter|Attacker|Bomber|Other|) (s : string) =
+        if s.Contains("bf109") then
+            Fighter
+        elif s.Contains("bf110") then
+            Attacker
+        elif s.Contains("ju88") then
+            Bomber
+        else
+            Other
+
+open PlaneTypes
+
+type Airfield = {
+    AirfieldId : AirfieldId
+    Pos : Vector2
+    Rotation : float32
+    ParkedFighters : OrientedPosition list
+    ParkedAttackers : OrientedPosition list
+    ParkedBombers : OrientedPosition list
+    Storage : (StaticGroup * OrientedPosition) list
+}
+with
+    static member AddParkedFighter(airfields : Airfield list, airfield : AirfieldId, pos : OrientedPosition) =
+        airfields
+        |> List.map (fun af ->
+            if af.AirfieldId = airfield then
+                { af with ParkedFighters = pos :: af.ParkedFighters
+                }
+            else
+                af
+        )
+
+    static member AddParkedAttacker(airfields : Airfield list, airfield : AirfieldId, pos : OrientedPosition) =
+        airfields
+        |> List.map (fun af ->
+            if af.AirfieldId = airfield then
+                { af with ParkedAttackers = pos :: af.ParkedAttackers
+                }
+            else
+                af
+        )
+
+    static member AddParkedBomber(airfields : Airfield list, airfield : AirfieldId, pos : OrientedPosition) =
+        airfields
+        |> List.map (fun af ->
+            if af.AirfieldId = airfield then
+                { af with ParkedBombers = pos :: af.ParkedBombers
+                }
+            else
+                af
+        )
+
+    static member AddStorage(airfields : Airfield list, airfield : AirfieldId, storage : StaticGroup * OrientedPosition) =
+        airfields
+        |> List.map (fun af ->
+            if af.AirfieldId = airfield then
+                { af with Storage = storage :: af.Storage
+                }
+            else
+                af
+        )
+
+    static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane list, storage : T.Block list) =
+        let airfields =
+            spawns
+            |> List.map(fun spawn ->
+                { AirfieldId = AirfieldId spawn.Name.Value
+                  Pos = Vector2.FromPos(spawn)
+                  Rotation = float32 spawn.YOri.Value
+                  ParkedFighters = []
+                  ParkedAttackers = []
+                  ParkedBombers = []
+                  Storage = []
+                }
+            )
+        let airfields =
+            parkedPlanes
+            |> List.fold (fun (airfields : Airfield list) plane ->
+                let pos = Vector2.FromPos plane
+                let home =
+                    airfields
+                    |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
+                match plane.Model.Value with
+                | Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = float32 plane.YOri.Value })
+                | Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = float32 plane.YOri.Value })
+                | Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = float32 plane.YOri.Value })
+                | Other -> airfields
+            ) airfields
+        let airfields =
+            storage
+            |> List.fold (fun (airfields : Airfield list) group ->
+                let pos = Vector2.FromPos group
+                let home =
+                    airfields
+                    |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
+                Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.Model.Value; Script = group.Script.Value }, { Pos = pos; Rotation = float32 group.YOri.Value}))
+            ) airfields
+        airfields

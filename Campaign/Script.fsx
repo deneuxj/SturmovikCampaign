@@ -15,6 +15,10 @@ let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn
 let spawnsAAA = SpawnArea.ExtractCentralSpawnAreas(aaas, areas)
 let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AT")
 let spawnsAT = SpawnArea.ExtractFrontLineSpawnAreas(ats, areas, roads)
+let afs = data.GetGroup("Airfield spawns").ListOfAirfield
+let planes = data.GetGroup("Parked planes").ListOfPlane
+let storages = data.GetGroup("Airfield storage").ListOfBlock
+let airfields = Airfield.ExtractAirfields(afs, planes, storages)
 
 // Define your library scripting code here
 
