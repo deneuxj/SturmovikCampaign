@@ -670,6 +670,28 @@ let buildGroupParserType (pdb : IProvidedDataBuilder) (namedValueTypes : (string
             <summary>Parse a mission or group file and store the extracted data.</summary>
             <param name="s">The stream that is parsed</param>
             <exception cref="Parsing.ParseError">Failed to parse the mission or group</exception>""")
+    // Constructor: From a list of AST nodes
+    parser.AddMemberDelayed(fun () ->
+        pdb.NewConstructor([("nodes", typeof<Ast.Data list>)], fun [nodes] ->
+            <@@
+                (%%nodes : Ast.Data list)
+            @@>)
+        |> addXmlDoc """
+            <summary>Provide access to parsed data.</summary>
+            <param name="nodes">The result of parsing a group or mission file</param>""")
+    // Get data from a subgroup
+    parser.AddMemberDelayed(fun () ->
+        pdb.NewMethod("GetGroup", parser, [("name", typeof<string>)], fun [this; name] ->
+            <@@
+                let nodes = (%%this : Ast.Data list)
+                nodes
+                |> List.map (fun node -> node.FindByPath [(%%name : string)])
+                |> List.concat
+            @@>
+        )
+        |> addXmlDoc """
+            <summary>Get data from a subgroup</summary>
+            <param name="name">Name of the subgroup</param>""")
     // Getters: list of objects of each type
     for (name, valueType, ptyp) in namedValueTypes do
         parser.AddMemberDelayed(fun() ->

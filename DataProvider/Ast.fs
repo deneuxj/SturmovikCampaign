@@ -349,6 +349,20 @@ type Data with
 
     member this.GetLeavesWithPath() = this.GetLeavesWithPath([])
 
+    member this.FindByPath(path : string list) =
+        match path with
+        | [] -> [this]
+        | current :: rest ->
+            match this with
+            | Leaf _ -> []
+            | Group group ->
+                if group.Name = current then
+                    group.Data
+                    |> List.map (fun node -> node.FindByPath(rest))
+                    |> List.concat
+                else
+                    []
+
     member this.ToExpr() =
         match this with
         | Leaf(name, value) ->
