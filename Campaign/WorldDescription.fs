@@ -1,4 +1,4 @@
-﻿namespace Campaign
+﻿namespace Campaign.WorldDescription
 
 open System.Numerics
 
@@ -66,22 +66,35 @@ open Vectors
 
 type CoallitionId = Axis | Allies
 
-type AreaId = AreaId of string
+type OrientedPosition = {
+    Pos : Vector2
+    Rotation : float32
+}
 
-type Area = {
-    AreaId : AreaId
+type StaticGroup = {
+    Model : string
+    Script : string
+    Pos : OrientedPosition
+}
+
+type RegionId = RegionId of string
+
+type Region = {
+    RegionId : RegionId
     Boundary : Vector2 list
-    Neighbours : AreaId list
+    Neighbours : RegionId list
+    Storage : StaticGroup list
 }
 with
-    static member ExtractAreas(areas : T.MCU_TR_InfluenceArea list) =
-        let extractOne (area : T.MCU_TR_InfluenceArea) =
-            { AreaId = AreaId area.Name.Value
-              Boundary = area.Boundary.Value |> List.map(fun coord -> Vector2(coord.Value |> fst |> float32, coord.Value |> snd |> float32))
+    static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list) =
+        let extractOne (region : T.MCU_TR_InfluenceArea) =
+            { RegionId = RegionId region.Name.Value
+              Boundary = region.Boundary.Value |> List.map(fun coord -> Vector2.FromPair(coord))
               Neighbours = []
+              Storage = []
             }
         let withBoundaries =
-            areas
+            regions
             |> List.map extractOne
         let cellRadius = 1000.0f
         let cellRadius2 = cellRadius * cellRadius
@@ -104,11 +117,11 @@ with
             ]
         let located =
             withBoundaries
-            |> List.map (fun area ->
-                area.Boundary
+            |> List.map (fun region ->
+                region.Boundary
                 |> List.mapi(fun i v ->
                     nearestCenters v
-                    |> List.map (fun center -> center, (area.AreaId, i, v))
+                    |> List.map (fun center -> center, (region.RegionId, i, v))
                 )
             )
             |> List.concat
@@ -120,46 +133,59 @@ with
             located
             |> Seq.map (fun kvp ->
                 [
-                    for area1, i1, v1 in kvp.Value do
-                        for area2, i2, v2 in kvp.Value do
-                            if area1 <> area2 && (v1 - v2).LengthSquared() < cellRadius2 then
-                                yield (area1, i1), area2
+                    for region1, i1, v1 in kvp.Value do
+                        for region2, i2, v2 in kvp.Value do
+                            if region1 <> region2 && (v1 - v2).LengthSquared() < cellRadius2 then
+                                yield (region1, i1), region2
                 ]
             )
             |> List.concat
             |> Seq.groupBy fst
             |> Seq.map (fun (key, items) -> key, items |> Seq.map snd |> Set.ofSeq)
             |> dict
-        let getNeighbours(areaId, i) =
-            match neighbours.TryGetValue((areaId, i)) with
+        let getNeighbours(regionId, i) =
+            match neighbours.TryGetValue((regionId, i)) with
             | true, items -> items
             | false, _ -> Set.empty
-        let setNeighbours (area : Area) =
-            let indices = (area.Boundary |> List.mapi(fun i _ -> i)) @ [0]
+        let setNeighbours (region : Region) =
+            let indices = (region.Boundary |> List.mapi(fun i _ -> i)) @ [0]
             let ngh =
                 indices
                 |> Seq.pairwise
                 |> Seq.map (fun (i, j) ->
-                    let s1 = getNeighbours(area.AreaId, i)
-                    let s2 = getNeighbours(area.AreaId, j)
+                    let s1 = getNeighbours(region.RegionId, i)
+                    let s2 = getNeighbours(region.RegionId, j)
                     Set.intersect s1 s2
                     |> List.ofSeq
                 )
                 |> List.concat
                 |> Seq.distinct
                 |> List.ofSeq
-            { area with Neighbours = ngh }
+            { region with Neighbours = ngh }
         withBoundaries
         |> List.map setNeighbours
 
+    member this.AddStorage(blocks : T.Block list) =
+        let storage =
+            blocks
+            |> List.filter (fun block -> Vector2.FromPos(block).IsInConvexPolygon(this.Boundary))
+            |> List.map (fun block ->
+                { Model = block.Model.Value
+                  Script = block.Script.Value
+                  Pos = { Pos = Vector2.FromPos block
+                          Rotation = float32 block.YOri.Value }
+                }
+            )
+        { this with Storage = this.Storage @ storage
+        }
 
 type Path = {
-    StartId : AreaId
-    EndId : AreaId
+    StartId : RegionId
+    EndId : RegionId
     Locations : Vector2 list
 }
 with
-    static member ExtractPaths(waypoints : T.MCU_Waypoint list, areas : Area list) =
+    static member ExtractPaths(waypoints : T.MCU_Waypoint list, regions : Region list) =
         let waypointsById =
             waypoints
             |> List.map (fun wp -> wp.Index.Value, wp)
@@ -179,15 +205,15 @@ with
                     | _ :: _ ->
                         failwithf "Failed to build path because node '%d' has too many successors" current.Index.Value
             let path = work start []
-            let startArea =
-                match areas |> List.tryFind (fun area -> Vector2.FromPos(start).IsInConvexPolygon(area.Boundary)) with
-                | None -> failwithf "Failed to build path because start node '%d' is not in an area" start.Index.Value
+            let startRegion =
+                match regions |> List.tryFind (fun area -> Vector2.FromPos(start).IsInConvexPolygon(area.Boundary)) with
+                | None -> failwithf "Failed to build path because start node '%d' is not in a region" start.Index.Value
                 | Some x -> x
-            let endArea =
+            let endRegion =
                 match path with
                 | finish :: reversed ->
-                    match areas |> List.tryFind (fun area -> Vector2.FromPos(finish).IsInConvexPolygon(area.Boundary)) with
-                    | None -> failwithf "Failed to build path because end node '%d' is not in an area" start.Index.Value
+                    match regions |> List.tryFind (fun area -> Vector2.FromPos(finish).IsInConvexPolygon(area.Boundary)) with
+                    | None -> failwithf "Failed to build path because end node '%d' is not in a region" start.Index.Value
                     | Some x -> x
                 | _ ->
                     failwith "Failed to build path because it has no end node"
@@ -195,8 +221,8 @@ with
                 path
                 |> List.rev
                 |> List.map (fun wp -> Vector2.FromPos wp)
-            { StartId = startArea.AreaId
-              EndId = endArea.AreaId
+            { StartId = startRegion.RegionId
+              EndId = endRegion.RegionId
               Locations = locations
             }
         [
@@ -206,50 +232,50 @@ with
         ]
 
 
-type SpawnAreaId = SpawnAreaId of int
+type DefenseAreaId = DefenseAreaId of int
 
-type SpawnAreaHome =
-    | Central of AreaId
-    | FrontLine of AreaId * AreaId
+type DefenseAreaHome =
+    | Central of RegionId
+    | FrontLine of RegionId * RegionId
 
-type SpawnArea = {
-    SpawnAreaId : SpawnAreaId
-    Home : SpawnAreaHome
+type DefenseArea = {
+    DefenseAreaId : DefenseAreaId
+    Home : DefenseAreaHome
     Rotation : float32
     Position : Vector2
     Boundary : Vector2 list
 }
 with
-    static member ExtractCentralSpawnAreas(spawns : T.MCU_TR_InfluenceArea list, areas : Area list) =
+    static member ExtractCentralDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
         [
-            for spawn in spawns do
-                let pos = Vector2.FromPos(spawn)
-                match areas |> List.tryFind(fun area -> pos.IsInConvexPolygon(area.Boundary)) with
-                | Some area ->
+            for area in areas do
+                let pos = Vector2.FromPos(area)
+                match regions |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary)) with
+                | Some region ->
                     yield {
-                        SpawnAreaId = SpawnAreaId spawn.Index.Value
-                        Home = Central area.AreaId
-                        Rotation = float32 spawn.YOri.Value
+                        DefenseAreaId = DefenseAreaId area.Index.Value
+                        Home = Central region.RegionId
+                        Rotation = float32 area.YOri.Value
                         Position = pos
-                        Boundary = spawn.Boundary.Value |> List.map(Vector2.FromPair)
+                        Boundary = area.Boundary.Value |> List.map(Vector2.FromPair)
                     }
                 | None ->
-                    failwithf "Spawn area '%s' is not located in any area" spawn.Name.Value
+                    failwithf "Defense area '%s' is not located in any region" area.Name.Value
         ]
 
-    static member ExtractFrontLineSpawnAreas(spawns : T.MCU_TR_InfluenceArea list, areas : Area list, paths : Path list) =
+    static member ExtractFrontLineDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list, paths : Path list) =
         [
-            for spawn in spawns do
-                let pos = Vector2.FromPos(spawn)
-                match areas |> List.tryFind(fun area -> pos.IsInConvexPolygon(area.Boundary)) with
-                | Some area ->
+            for area in areas do
+                let pos = Vector2.FromPos(area)
+                match regions |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary)) with
+                | Some region ->
                     let outgoing =
                         paths
-                        |> List.filter (fun path -> path.StartId = area.AreaId)
+                        |> List.filter (fun path -> path.StartId = region.RegionId)
                         |> List.map (fun path -> path, path.EndId)
                     let incoming =
                         paths
-                        |> List.filter (fun path -> path.EndId = area.AreaId)
+                        |> List.filter (fun path -> path.EndId = region.RegionId)
                         |> List.map (fun path -> path, path.StartId)
                     let toNeighbours = outgoing @ incoming
                     let other =
@@ -257,28 +283,19 @@ with
                             toNeighbours
                             |> List.minBy(fun (path, id) -> pos.DistanceFromPath(path.Locations))
                         with
-                        | _ -> failwithf "Failed to find closest path to spawn area '%d'" spawn.Index.Value
+                        | _ -> failwithf "Failed to find closest path to defense area '%d'" area.Index.Value
                         |> snd
                     yield {
-                        SpawnAreaId = SpawnAreaId spawn.Index.Value
-                        Home = FrontLine(area.AreaId, other)
-                        Rotation = float32 spawn.YOri.Value
+                        DefenseAreaId = DefenseAreaId area.Index.Value
+                        Home = FrontLine(region.RegionId, other)
+                        Rotation = float32 area.YOri.Value
                         Position = pos
-                        Boundary = spawn.Boundary.Value |> List.map(Vector2.FromPair)
+                        Boundary = area.Boundary.Value |> List.map(Vector2.FromPair)
                     }
                 | None ->
-                    failwithf "Spawn area '%s' is not located in any area" spawn.Name.Value
+                    failwithf "Defense area '%s' is not located in any region" area.Name.Value
         ]
 
-type StaticGroup = {
-    Model : string
-    Script : string
-}
-
-type OrientedPosition = {
-    Pos : Vector2
-    Rotation : float32
-}
 
 type AirfieldId = AirfieldId of string
 
@@ -302,7 +319,7 @@ type Airfield = {
     ParkedFighters : OrientedPosition list
     ParkedAttackers : OrientedPosition list
     ParkedBombers : OrientedPosition list
-    Storage : (StaticGroup * OrientedPosition) list
+    Storage : StaticGroup list
 }
 with
     static member AddParkedFighter(airfields : Airfield list, airfield : AirfieldId, pos : OrientedPosition) =
@@ -335,7 +352,7 @@ with
                 af
         )
 
-    static member AddStorage(airfields : Airfield list, airfield : AirfieldId, storage : StaticGroup * OrientedPosition) =
+    static member AddStorage(airfields : Airfield list, airfield : AirfieldId, storage : StaticGroup) =
         airfields
         |> List.map (fun af ->
             if af.AirfieldId = airfield then
@@ -378,6 +395,6 @@ with
                 let home =
                     airfields
                     |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
-                Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.Model.Value; Script = group.Script.Value }, { Pos = pos; Rotation = float32 group.YOri.Value}))
+                Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.Model.Value; Script = group.Script.Value; Pos = { Pos = pos; Rotation = float32 group.YOri.Value } }))
             ) airfields
         airfields

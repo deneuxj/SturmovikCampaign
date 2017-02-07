@@ -51,7 +51,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Area.fs" />
+    <Compile Include="WorldDescription.fs" />
     <None Include="Script.fsx" />
     <None Include="..\data\Sample.Mission">
       <Link>Sample.Mission</Link>
