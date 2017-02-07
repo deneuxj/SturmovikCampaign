@@ -51,7 +51,9 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Vector.fs" />
     <Compile Include="WorldDescription.fs" />
+    <Compile Include="WorldState.fs" />
     <None Include="Script.fsx" />
     <None Include="..\data\Sample.Mission">
       <Link>Sample.Mission</Link>
@@ -76,6 +78,11 @@
       <HintPath>..\Blocks\packages\System.Numerics.Vectors.4.3.0\lib\portable-net45+win8+wp8+wpa81\System.Numerics.Vectors.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <ProjectReference Include="..\..\plog\ploggy\ploggy.csproj">
+      <Name>ploggy</Name>
+      <Project>{c23498b3-892d-4f98-a8e4-00fbc6b97ed0}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\DataProvider\DataProvider.fsproj">
       <Name>DataProvider</Name>
       <Project>{7071e404-c087-45bf-8e7d-6df3a1f9403d}</Project>

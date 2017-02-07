@@ -4,3 +4,4 @@
 #load "../AssemblyInfo.fs"
       "../Vector.fs"
       "../WorldDescription.fs"
+      "../WorldState.fs"

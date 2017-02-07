@@ -6,7 +6,7 @@ type T = SturmovikMissionTypes.Provider<"C:\Users\johann\Documents\SturmovikMiss
 
 open Vector
 
-type CoallitionId = Axis | Allies
+type CoalitionId = Axis | Allies
 
 type OrientedPosition = {
     Pos : Vector2
@@ -253,6 +253,19 @@ module PlaneTypes =
             Other
 
 open PlaneTypes
+
+type PlaneModel =
+    | Bf109e7
+    | Bf109f2
+    | Mc202
+    | Bf110e
+    | Ju88a4
+    | Ju52
+    | I16
+    | IL2M41
+    | Mig3
+    | P40
+    | Pe2s35
 
 type Airfield = {
     AirfieldId : AirfieldId
