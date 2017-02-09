@@ -2,7 +2,7 @@
 
 open System.Numerics
 
-type T = SturmovikMissionTypes.Provider<"C:\Users\johann\Documents\SturmovikMission-git\data\Sample.mission", "C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.Mission">
+type T = SturmovikMissionTypes.Provider<"C:\Users\johann\Documents\SturmovikMission-git\data\Sample.mission", "">
 
 type Vector2
 with
