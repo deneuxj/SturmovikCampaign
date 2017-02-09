@@ -26,6 +26,7 @@ type Region = {
     Boundary : Vector2 list
     Neighbours : RegionId list
     Storage : StaticGroup list
+    Production : StaticGroup list
 }
 with
     static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list) =
@@ -34,6 +35,7 @@ with
               Boundary = region.Boundary.Value |> List.map(fun coord -> Vector2.FromPair(coord))
               Neighbours = []
               Storage = []
+              Production = []
             }
         let withBoundaries =
             regions
@@ -107,19 +109,25 @@ with
         withBoundaries
         |> List.map setNeighbours
 
+    member private this.GetStaticBlocks(blocks : T.Block list) =
+        blocks
+        |> List.filter (fun block -> Vector2.FromPos(block).IsInConvexPolygon(this.Boundary))
+        |> List.map (fun block ->
+            { Model = block.Model.Value
+              Script = block.Script.Value
+              Pos = { Pos = Vector2.FromPos block
+                      Rotation = float32 block.YOri.Value }
+            }
+        )
+
     member this.AddStorage(blocks : T.Block list) =
-        let storage =
-            blocks
-            |> List.filter (fun block -> Vector2.FromPos(block).IsInConvexPolygon(this.Boundary))
-            |> List.map (fun block ->
-                { Model = block.Model.Value
-                  Script = block.Script.Value
-                  Pos = { Pos = Vector2.FromPos block
-                          Rotation = float32 block.YOri.Value }
-                }
-            )
+        let storage = this.GetStaticBlocks(blocks)
         { this with Storage = this.Storage @ storage
         }
+
+    member this.AddProduction(blocks : T.Block list) =
+        let factories = this.GetStaticBlocks(blocks)
+        { this with Production = this.Production @ factories }
 
 type Path = {
     StartId : RegionId
@@ -179,6 +187,11 @@ type DefenseAreaId = DefenseAreaId of int
 type DefenseAreaHome =
     | Central of RegionId
     | FrontLine of RegionId * RegionId
+with
+    member this.Home =
+        match this with
+        | Central home
+        | FrontLine(home, _) -> home
 
 type DefenseArea = {
     DefenseAreaId : DefenseAreaId
@@ -353,3 +366,38 @@ with
                 Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.Model.Value; Script = group.Script.Value; Pos = { Pos = pos; Rotation = float32 group.YOri.Value } }))
             ) airfields
         airfields
+
+
+open SturmovikMission.DataProvider.Parsing
+
+type World = {
+    Regions : Region list
+    AntiAirDefenses : DefenseArea list
+    AntiTankDefenses : DefenseArea list
+    Airfields : Airfield list
+}
+with
+    static member Create(strategyFile) =
+        let s = Stream.FromFile strategyFile
+        let data = T.GroupData(s)
+        let regions =
+            let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
+            let ammoStorages = data.GetGroup("Ammo").ListOfBlock
+            regions
+            |> List.map (fun area -> area.AddStorage ammoStorages)
+        let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
+        let rail = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
+        let defenses = data.GetGroup("Defenses")
+        let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AAA")
+        let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
+        let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AT")
+        let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(ats, regions, roads)
+        let afs = data.GetGroup("Airfield spawns").ListOfAirfield
+        let planes = data.GetGroup("Parked planes").ListOfPlane
+        let afStorages = data.GetGroup("Airfield storage").ListOfBlock
+        let airfields = Airfield.ExtractAirfields(afs, planes, afStorages)
+        { Regions = regions
+          AntiAirDefenses = antiAirDefenses
+          AntiTankDefenses = antiTankDefenses
+          Airfields = airfields
+        }
