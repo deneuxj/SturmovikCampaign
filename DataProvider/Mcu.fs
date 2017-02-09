@@ -266,6 +266,13 @@ type NumberInFormationData =
     abstract Number : int with get, set
 
 /// <summary>
+/// Known country values.
+/// </summary>
+type CountryValue =
+    | Russia = 201
+    | Germany = 101
+
+/// <summary>
 /// Interface of things that can have entities: ground vehicles, planes, artillery, buildings, bridges...
 /// </summary>
 type HasEntity =
@@ -277,7 +284,7 @@ type HasEntity =
     abstract Name : string with get, set
     abstract Model : string with get, set
     abstract Script : string with get, set
-    abstract Country : int with get, set
+    abstract Country : CountryValue with get, set
     abstract NumberInFormation : NumberInFormationData option
 
 /// <summary>

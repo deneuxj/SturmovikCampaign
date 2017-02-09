@@ -883,9 +883,9 @@ let private mkAsHasEntity typeName path (state : (string * Value) list ref) icon
 
             member this.Country
                 with get() =
-                    !state |> getIntField "Country"
+                    !state |> getIntField "Country" |> enum
                 and set country =
-                    state := !state |> setField ("Country", Value.Integer country)
+                    state := !state |> setField ("Country", Value.Integer (int country))
 
             member this.NumberInFormation = formation
 
