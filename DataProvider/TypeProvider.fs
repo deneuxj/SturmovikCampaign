@@ -901,7 +901,7 @@ type MissionTypes(config: TypeProviderConfig) as this =
                 Path.Combine(config.ResolutionFolder, path)
         let sample = sample :?> string |> resolve
         let libs = libs :?> string
-        let libs = libs.Split(';') |> Array.map resolve
+        let libs = libs.Split(';') |> Array.filter(fun lib -> not(System.String.IsNullOrWhiteSpace(lib))) |> Array.map resolve
         let invokeCodeImpl = invokeCodeImpl :?> InvokeCodeImplementation
 
         if not(System.IO.File.Exists(sample)) then
