@@ -79,6 +79,7 @@ Group
     WMMask = 1;
     AiRTBDecision = 0;
     DeleteAfterDeath = 1;
+    Spotter = -1;
     Fuel = 1;
   }
   
@@ -141,6 +142,7 @@ Group
     WMMask = 1;
     AiRTBDecision = 0;
     DeleteAfterDeath = 1;
+    Spotter = -1;
     Fuel = 1;
   }
   
@@ -203,6 +205,7 @@ Group
     WMMask = 1;
     AiRTBDecision = 0;
     DeleteAfterDeath = 1;
+    Spotter = -1;
     Fuel = 1;
   }
   
@@ -1727,6 +1730,324 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "At defense line";
+  Index = 161;
+  Desc = "";
+  Vehicle
+  {
+    Name = "AT leader";
+    Index = 141;
+    LinkTrId = 143;
+    XPos = 16395.054;
+    YPos = 106.604;
+    ZPos = 26584.564;
+    XOri = 1.91;
+    YOri = 0.00;
+    ZOri = 358.94;
+    Script = "LuaScripts\WorldObjects\vehicles\zis3gun.txt";
+    Model = "graphics\artillery\zis3gun\zis3gun.mgm";
+    Desc = "";
+    Country = 101;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 0;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 143;
+    Name = "AT leader entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 16395.054;
+    YPos = 106.804;
+    ZPos = 26584.564;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 141;
+  }
+  
+
+  Vehicle
+  {
+    Name = "AT";
+    Index = 144;
+    LinkTrId = 147;
+    XPos = 16375.423;
+    YPos = 106.604;
+    ZPos = 26603.615;
+    XOri = 1.91;
+    YOri = 0.00;
+    ZOri = 358.94;
+    Script = "LuaScripts\WorldObjects\vehicles\zis3gun.txt";
+    Model = "graphics\artillery\zis3gun\zis3gun.mgm";
+    Desc = "";
+    Country = 101;
+    NumberInFormation = 1;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 0;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 147;
+    Name = "AT entity";
+    Desc = "";
+    Targets = [143];
+    Objects = [];
+    XPos = 16375.423;
+    YPos = 106.804;
+    ZPos = 26603.615;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 144;
+  }
+  
+
+  MCU_CMD_AttackArea
+  {
+    Index = 148;
+    Name = "command AttackArea";
+    Desc = "";
+    Targets = [];
+    Objects = [143];
+    XPos = 17380.339;
+    YPos = 106.285;
+    ZPos = 26586.119;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    AttackGround = 0;
+    AttackAir = 0;
+    AttackGTargets = 1;
+    AttackArea = 1000;
+    Time = 59940;
+    Priority = 2;
+  }
+  
+
+  Vehicle
+  {
+    Name = "MG";
+    Index = 149;
+    LinkTrId = 150;
+    XPos = 16353.071;
+    YPos = 106.604;
+    ZPos = 26583.718;
+    XOri = 2.24;
+    YOri = 0.00;
+    ZOri = 357.53;
+    Script = "LuaScripts\WorldObjects\vehicles\maksim4-aa.txt";
+    Model = "graphics\artillery\maksim4-aa\maksim4-aa.mgm";
+    Desc = "";
+    Country = 101;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 0;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 150;
+    Name = "MG entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 16353.071;
+    YPos = 106.804;
+    ZPos = 26583.718;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 149;
+  }
+  
+
+  MCU_CMD_AttackArea
+  {
+    Index = 151;
+    Name = "AA fire";
+    Desc = "";
+    Targets = [];
+    Objects = [150];
+    XPos = 16353.068;
+    YPos = 108.995;
+    ZPos = 26582.927;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    AttackGround = 0;
+    AttackAir = 1;
+    AttackGTargets = 0;
+    AttackArea = 1000;
+    Time = 59940;
+    Priority = 1;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 152;
+    Name = "Trigger Activate";
+    Desc = "";
+    Targets = [];
+    Objects = [143,150];
+    XPos = 16368.799;
+    YPos = 107.394;
+    ZPos = 26644.469;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 153;
+    Name = "SHOW";
+    Desc = "";
+    Targets = [152,154];
+    Objects = [];
+    XPos = 16368.612;
+    YPos = 107.599;
+    ZPos = 26653.378;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 154;
+    Name = "1s";
+    Desc = "";
+    Targets = [151,148];
+    Objects = [];
+    XPos = 16364.357;
+    YPos = 107.567;
+    ZPos = 26648.610;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 155;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [];
+    Objects = [143,150];
+    XPos = 16377.876;
+    YPos = 107.389;
+    ZPos = 26644.306;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 156;
+    Name = "HIDE";
+    Desc = "";
+    Targets = [157,160];
+    Objects = [];
+    XPos = 16374.617;
+    YPos = 107.594;
+    ZPos = 26653.392;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 157;
+    Name = "1s";
+    Desc = "";
+    Targets = [155];
+    Objects = [];
+    XPos = 16377.833;
+    YPos = 107.567;
+    ZPos = 26649.097;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1;
+    Random = 100;
+  }
+  
+
+  MCU_CMD_ForceComplete
+  {
+    Index = 160;
+    Name = "sleep";
+    Desc = "";
+    Targets = [];
+    Objects = [143,150];
+    XPos = 16377.746;
+    YPos = 108.453;
+    ZPos = 26574.828;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Priority = 2;
   }
   
 
