@@ -282,6 +282,7 @@ type PlaneModel =
 
 type Airfield = {
     AirfieldId : AirfieldId
+    Region : RegionId
     Pos : Vector2
     Rotation : float32
     ParkedFighters : OrientedPosition list
@@ -330,12 +331,20 @@ with
                 af
         )
 
-    static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane list, storage : T.Block list) =
+    static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane list, storage : T.Block list, regions : Region list) =
         let airfields =
             spawns
             |> List.map(fun spawn ->
+                let pos = Vector2.FromPos(spawn)
+                let region =
+                    try
+                        regions
+                        |> List.find(fun region -> pos.IsInConvexPolygon(region.Boundary))
+                    with
+                    | _ -> failwithf "Airfield '%s' is not in any region" spawn.Name.Value
                 { AirfieldId = AirfieldId spawn.Name.Value
-                  Pos = Vector2.FromPos(spawn)
+                  Region = region.RegionId
+                  Pos = pos
                   Rotation = float32 spawn.YOri.Value
                   ParkedFighters = []
                   ParkedAttackers = []
@@ -395,7 +404,7 @@ with
         let afs = data.GetGroup("Airfield spawns").ListOfAirfield
         let planes = data.GetGroup("Parked planes").ListOfPlane
         let afStorages = data.GetGroup("Airfield storage").ListOfBlock
-        let airfields = Airfield.ExtractAirfields(afs, planes, afStorages)
+        let airfields = Airfield.ExtractAirfields(afs, planes, afStorages, regions)
         { Regions = regions
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
