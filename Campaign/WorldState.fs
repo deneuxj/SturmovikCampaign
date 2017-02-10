@@ -25,11 +25,22 @@ type AirfieldState = {
     BombWeight : float32
     NumRockets : int
 }
+with
+    static member RocketWeight = 20.0f
 
+type WorldState = {
+    Regions : RegionState list
+    DefenseAreas : DefenseAreaState list
+    Airfields : AirfieldState list
+}
 
 module Functions =
     open SturmovikMission.DataProvider.Parsing
     open SturmovikMission.DataProvider.Mcu
+
+    let getShellsPerBuilding (model : string) = 1.0f
+    let antiAirCanonsByArea = 5
+    let antiTankCanonsByArea = 5
 
     let mkInitialState(description : World, strategyFile : string) =
         let data = T.GroupData(Stream.FromFile strategyFile)
@@ -62,7 +73,7 @@ module Functions =
                 let shellCount =
                     match owner with
                     | None -> 0.0f
-                    | Some _ -> desc.Storage |> Seq.sumBy (fun _ -> 1.0f)
+                    | Some _ -> desc.Storage |> Seq.sumBy (fun storage -> getShellsPerBuilding storage.Model)
                 { RegionId = desc.RegionId
                   Owner = owner
                   StorageHealth = desc.Storage |> List.map (fun _ -> 1.0f)
@@ -112,10 +123,10 @@ module Functions =
             }
         let antiAirDefenses =
             description.AntiAirDefenses
-            |> List.map (fromDefenseArea 5)
+            |> List.map (fromDefenseArea antiAirCanonsByArea)
         let antiTankDefenses =
             description.AntiTankDefenses
-            |> List.map (fromDefenseArea 5)
+            |> List.map (fromDefenseArea antiTankCanonsByArea)
         let getDefenseArea =
             let m =
                 description.AntiAirDefenses @ description.AntiTankDefenses
@@ -152,4 +163,31 @@ module Functions =
                 state
         let antiAirDefenses = antiAirDefenses |> List.map adjustNumUnits
         let antiTankDefenses = antiTankDefenses |> List.map adjustNumUnits
-        failwith "TODO: AirfieldStates"
+        let mkAirfield (airfield : Airfield) =
+            let owner =
+                getOwner airfield.Region
+            let numPlanes =
+                match owner with
+                | None -> Map.empty
+                | Some Allies -> [ (I16, 20); (IL2M41, 10); (Mig3, 20); (P40, 10); (Pe2s35, 10) ] |> Map.ofList
+                | Some Axis -> [ (Bf109e7, 20); (Bf110e, 10); (Bf109f2, 20); (Mc202, 10); (Ju88a4, 10); (Ju52, 3) ] |> Map.ofList
+            let storage =
+                match owner with
+                | None -> 0.0f
+                | Some _ -> airfield.Storage |> Seq.sumBy (fun _ -> 10000.0f)
+            let bombWeight, rockets =
+                match owner with
+                | Some Allies -> 0.8f * storage, 0.2f * storage
+                | Some Axis -> storage, 0.0f
+                | None -> 0.0f, 0.0f
+            { AirfieldId = airfield.AirfieldId
+              NumPlanes = numPlanes
+              StorageHealth = airfield.Storage |> List.map (fun _ -> 1.0f)
+              BombWeight = bombWeight
+              NumRockets = int(ceil(rockets / AirfieldState.RocketWeight))
+            }
+        let airfields = description.Airfields |> List.map mkAirfield
+        { Airfields = airfields
+          Regions = regions
+          DefenseAreas = antiAirDefenses @ antiTankDefenses
+        }
