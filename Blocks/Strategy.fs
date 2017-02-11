@@ -1,8 +1,9 @@
 ﻿module SturmovikMission.Blocks.Strategy
 
 open SturmovikMission.DataProvider
-open Types
-open VirtualConvoy
+open SturmovikMission.Blocks.VirtualConvoy.Factory
+
+type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "">
 
 let getSomePath() =
     let db = T.GroupData(Parsing.Stream.FromFile "Strategy.Mission").CreateMcuList()

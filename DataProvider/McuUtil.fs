@@ -22,6 +22,24 @@ let filterByName (name : string) (mcus : #McuBase list) =
                     | :? HasEntity as ent -> ent.Name = name
                     | _ -> false)
 
+/// Get a trigger by its name.
+let getTriggerByName group name =
+    filterByName name group
+    |> Seq.choose (function :? Mcu.McuTrigger as trigger -> Some trigger | _ -> None)
+    |> Seq.head
+
+/// Get a vehicle by its name.
+let getVehicleByName group name =
+    filterByName name group
+    |> Seq.choose (function :? Mcu.HasEntity as vehicle -> Some vehicle | _ -> None)
+    |> Seq.head
+
+/// Get a waypoint by its name.
+let getWaypointByName group name =
+    filterByName name group
+    |> Seq.choose (function :? Mcu.McuWaypoint as waypoint -> Some waypoint | _ -> None)
+    |> Seq.head
+
 /// Get an Mcu from a list by its index.
 let getByIndex (idx : int) (mcus : #McuBase list) : McuBase =
     mcus

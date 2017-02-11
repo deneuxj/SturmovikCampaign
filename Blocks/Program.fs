@@ -2,7 +2,7 @@
 // See the 'F# Tutorial' project for more help.
 
 open SturmovikMission.Blocks
-open SturmovikMission.Blocks.VirtualConvoy
+open SturmovikMission.Blocks.VirtualConvoy.Factory
 open SturmovikMission.DataProvider
 
 [<EntryPoint>]

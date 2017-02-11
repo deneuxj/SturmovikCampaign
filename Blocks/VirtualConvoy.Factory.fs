@@ -1,10 +1,11 @@
-﻿/// Instances and predicates involved in the creation of virtual convoys.
-module SturmovikMission.Blocks.VirtualConvoy
+﻿/// Put together instances and predicates of virtual convoys.
+module SturmovikMission.Blocks.VirtualConvoy.Factory
 
-open Types
-open Links
-open Predicates
+open SturmovikMission.Blocks.VirtualConvoy.Types
+open SturmovikMission.Blocks.Links
+open SturmovikMission.Blocks.Predicates
 open SturmovikMission.DataProvider
+open SturmovikMission.DataProvider.McuUtil
 
 // Types for each instance type.
 // Those are typically typed ints, but could be typed strings, or any other type suitable for a dictionary key.
@@ -51,7 +52,7 @@ type VirtualConvoy =
 
       TimerSet : Map<TimerInstance, Timer>
 
-      Api : Types.VirtualConvoy
+      Api : ConvoyControl
     }
 with
     interface McuUtil.IMcuGroup with
@@ -165,7 +166,7 @@ with
         let apiPos =
             let n = List.length path |> float
             McuUtil.newVec3(apiPos.X / n, apiPos.Y / n, apiPos.Z / n)
-        let api = Types.VirtualConvoy.Create(store, apiPos, convoySize)
+        let api = ConvoyControl.Create(store, apiPos, convoySize)
         { ConvoySet = convoySet
           TruckInConvoy = truckInConvoy
           WhileEnemyCloseOfConvoy = whileEnemyCloseOfConvoy

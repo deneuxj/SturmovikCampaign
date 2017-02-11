@@ -57,13 +57,13 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="IO.fs" />
     <Compile Include="Links.fs" />
-    <Compile Include="Types.fs" />
     <Compile Include="Predicates.fs" />
-    <Compile Include="VirtualConvoy.fs" />
+    <Content Include="Proto-VirtualConvoy.txt" />
+    <Compile Include="VirtualConvoy.Types.fs" />
+    <Compile Include="VirtualConvoy.Factory.fs" />
     <Compile Include="Strategy.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
-    <Content Include="Proto.txt" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

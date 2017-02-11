@@ -1,7 +1,8 @@
 ﻿/// Types of groups of which virtual convoys are composed.
-module SturmovikMission.Blocks.Types
+module SturmovikMission.Blocks.VirtualConvoy.Types
 
 open SturmovikMission.DataProvider
+open SturmovikMission.DataProvider.McuUtil
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission">
 
@@ -14,23 +15,7 @@ let newCounter idx =
     T.MCU_Counter(T.Integer 1, T.String "", T.Boolean false, T.Integer idx, T.String "", T.VectorOfIntegers[], T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
         .CreateMcu() :?> Mcu.McuCounter
 
-// Utility functions. Should go into SturmovikMission.DataProvider.McuUtil.
-let getTriggerByName group name =
-    McuUtil.filterByName name group
-    |> Seq.choose (function :? Mcu.McuTrigger as trigger -> Some trigger | _ -> None)
-    |> Seq.head
-
-let getVehicleByName group name =
-    McuUtil.filterByName name group
-    |> Seq.choose (function :? Mcu.HasEntity as vehicle -> Some vehicle | _ -> None)
-    |> Seq.head
-
-let getWaypointByName group name =
-    McuUtil.filterByName name group
-    |> Seq.choose (function :? Mcu.McuWaypoint as waypoint -> Some waypoint | _ -> None)
-    |> Seq.head
-
-// The types. See Proto.txt.
+// The types. See Proto-VirtualConvoy.txt.
 type Convoy =
     { LeadCarEntity : Mcu.McuEntity
       LeadCarDamaged : Mcu.McuTrigger
@@ -225,7 +210,7 @@ with
           All = McuUtil.groupFromList group
         }
 
-type VirtualConvoy =
+type ConvoyControl =
     { Start : Mcu.McuTrigger
       Destroyed : Mcu.McuTrigger
       Arrived : Mcu.McuTrigger
