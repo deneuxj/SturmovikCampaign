@@ -79,12 +79,20 @@ type McuTrigger =
     abstract Targets : int list with get, set
 
 /// <summary>
+/// Numerical values of coalitions.
+/// </summary>
+type CoalitionValue =
+    | Neutral = 0
+    | Axis = 1
+    | Allies = 2
+
+/// <summary>
 /// Interface of proximity and check zone triggers.
 /// </summary>
 type McuProximity =
     inherit McuTrigger
-    abstract PlaneCoalitions : int list with get, set
-    abstract VehicleCoalitions : int list with get, set
+    abstract PlaneCoalitions : CoalitionValue list with get, set
+    abstract VehicleCoalitions : CoalitionValue list with get, set
 
 /// <summary>
 /// Interface of waypoint triggers.

@@ -59,6 +59,7 @@
     <Compile Include="Links.fs" />
     <Compile Include="Predicates.fs" />
     <Content Include="Proto-VirtualConvoy.txt" />
+    <Compile Include="Vehicles.fs" />
     <Compile Include="VirtualConvoy.Types.fs" />
     <Compile Include="VirtualConvoy.Factory.fs" />
     <Compile Include="Strategy.fs" />
@@ -74,6 +75,10 @@
     </None>
     <None Include="..\data\Blocks\Strategy.Mission">
       <Link>Strategy.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\data\Blocks\Vehicles.Mission">
+      <Link>Vehicles.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

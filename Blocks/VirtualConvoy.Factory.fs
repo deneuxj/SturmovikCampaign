@@ -79,7 +79,7 @@ with
     /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, path : PathVertex list, convoySize : int) =
+    static member Create(store : NumericalIdentifiers.IdStore, path : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
         let palette = McuUtil.filterByPath ["Palette"] db |> List.ofSeq
@@ -90,20 +90,20 @@ with
         let convoySet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
-                    yield (ConvoyInstance i, Convoy.Create(store, vertex.Pos, vertex.Ori))
+                    yield (ConvoyInstance i, Convoy.Create(store, vertex.Pos, vertex.Ori, country))
             }
             |> Map.ofSeq
         let truckInConvoySet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
                     for pos in 1..convoySize do
-                        yield (TruckInConvoyInstance(i, pos), TruckInConvoy.Create(store, vertex.Pos, vertex.Ori, pos))
+                        yield (TruckInConvoyInstance(i, pos), TruckInConvoy.Create(store, vertex.Pos, vertex.Ori, pos, country))
             }
             |> Map
         let whileEnemyCloseSet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
-                    yield (WhileEnemyCloseInstance i, WhileEnemyClose.Create(store, vertex.Pos))
+                    yield (WhileEnemyCloseInstance i, WhileEnemyClose.Create(store, vertex.Pos, coalition))
             }
             |> Map.ofSeq
         let activeWaypointSet =

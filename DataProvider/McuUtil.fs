@@ -195,3 +195,19 @@ let vecCopy (src : Vec3) (dst : Vec3) =
     dst.X  <- src.X
     dst.Y <- src.Y
     dst.Z <- src.Z
+
+/// Swap axis and allies coalitions.
+let swapCoalition =
+    function
+    | CoalitionValue.Allies -> CoalitionValue.Axis
+    | CoalitionValue.Axis -> CoalitionValue.Allies
+    | other -> other
+
+type Mcu.McuProximity with
+    /// Set the plane and vehicle coalitions relatively to a given coalition.
+    /// If the instatiated owner and the template owner are the same, do nothing.
+    /// If they are enemies, swap the coalitions.
+    member this.SetRelativeCoalitions(instantiatedOwner, templateOwner) =
+        if instantiatedOwner <> templateOwner then
+            this.PlaneCoalitions <- this.PlaneCoalitions |> List.map swapCoalition
+            this.VehicleCoalitions <- this.VehicleCoalitions |> List.map swapCoalition

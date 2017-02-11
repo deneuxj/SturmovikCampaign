@@ -3,6 +3,7 @@ module SturmovikMission.Blocks.VirtualConvoy.Types
 
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
+open SturmovikMission.Blocks.Vehicles
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission">
 
@@ -26,7 +27,7 @@ type Convoy =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
@@ -36,6 +37,16 @@ with
         // Get key nodes
         let getByName = getTriggerByName group
         let leadCar = getVehicleByName group T.Blocks.LeadCar
+        leadCar.Country <- country
+        match country with
+        | Mcu.CountryValue.Germany ->
+            leadCar.Model <- germanCar.Model
+            leadCar.Script <- germanCar.Script
+        | Mcu.CountryValue.Russia ->
+            leadCar.Model <- russianCar.Model
+            leadCar.Script <- russianCar.Script
+        | _ ->
+            ()
         let center = McuUtil.newVec3(leadCar.Pos.X, leadCar.Pos.Y, leadCar.Pos.Z)
         // Rotate and translate
         let rot = ori.Y - leadCar.Ori.Y
@@ -62,7 +73,7 @@ type TruckInConvoy =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3, inFormation : int) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3, inFormation : int, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
@@ -72,6 +83,16 @@ with
         // Get key nodes
         let getByName = getTriggerByName group
         let truck = getVehicleByName group T.Blocks.Truck
+        truck.Country <- country
+        match country with
+        | Mcu.CountryValue.Germany ->
+            truck.Model <- germanTruck.Model
+            truck.Script <- germanTruck.Script
+        | Mcu.CountryValue.Russia ->
+            truck.Model <- russianTruck.Model
+            truck.Script <- russianTruck.Script
+        | _ ->
+            ()
         let center = McuUtil.newVec3(0.0, 0.0, 0.0)
         McuUtil.vecCopy truck.Pos center
         // Rotation
@@ -142,7 +163,7 @@ type WhileEnemyClose =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, coalition : Mcu.CoalitionValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
@@ -157,7 +178,8 @@ with
         let activate = getByName T.Blocks.Activate
         let wakeup = getByName T.Blocks.WakeUp
         let sleep = getByName T.Blocks.Sleep
-        let proximity = getByName T.Blocks.EnemyClose
+        let proximity = getByName T.Blocks.EnemyClose :?> Mcu.McuProximity
+        proximity.SetRelativeCoalitions(coalition, Mcu.CoalitionValue.Allies)
         // Position of all nodes
         let diff = McuUtil.vecMinus pos proximity.Pos
         let diff = McuUtil.translate diff (McuUtil.newVec3(100.0, 0.0, 100.0))

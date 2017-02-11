@@ -485,15 +485,15 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
                         new McuProximity with
                             member this.PlaneCoalitions
                                 with get() =
-                                    !state |> getIntVecField "PlaneCoalitions"
+                                    !state |> getIntVecField "PlaneCoalitions" |> List.map enum
                                 and set(coalitions) =
-                                    state := !state |> setField("PlaneCoalitions", IntVector coalitions)
+                                    state := !state |> setField("PlaneCoalitions", coalitions |> List.map int |> IntVector)
 
                             member this.VehicleCoalitions
                                 with get() =
-                                    !state |> getIntVecField "VehicleCoalitions"
+                                    !state |> getIntVecField "VehicleCoalitions" |> List.map enum
                                 and set(coalitions) =
-                                    state := !state |> setField("VehicleCoalitions", IntVector coalitions)
+                                    state := !state |> setField("VehicleCoalitions", coalitions |> List.map int |> IntVector)
 
                         interface McuTrigger with
                             member this.AsString() = baseImpl.AsString()
