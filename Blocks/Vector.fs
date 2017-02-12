@@ -2,28 +2,41 @@
 
 open System.Numerics
 
-type T = SturmovikMissionTypes.Provider<"C:\Users\johann\Documents\SturmovikMission-git\data\Sample.mission", "">
-
 type Vector2
 with
     static member inline FromPos(pos : ^T) =
-        let x = (^T : (member XPos : T.Float) pos).Value
-        let y = (^T : (member ZPos : T.Float) pos).Value
+        let x = (^T : (member XPos : ^F) pos)
+        let y = (^T : (member ZPos : ^F) pos)
+        let x = (^F : (member Value : float) x)
+        let y = (^F : (member Value : float) y)
         Vector2(float32 x, float32 y)
 
     static member FromPair((x, y) : float * float) =
         Vector2(float32 x, float32 y)
 
-    static member FromPair(p : T.FloatPair) =
-        Vector2.FromPair(p.Value)
+    static member inline FromPair(p : ^T) =
+        let value = (^T : (member Value : float * float) p)
+        Vector2.FromPair(value)
 
     static member inline FromYOri(ori : ^T) =
-        let angle = (^T : (member YOri : T.Float) ori).Value
+        let angle = (^T : (member YOri : ^F) ori)
+        let angle = (^F : (member Value : float) angle)
         let alpha = System.Math.PI * angle / 180.0
         Vector2(float32 <| cos alpha, float32 <| sin alpha)
 
     static member Cross(u : Vector2, v : Vector2) =
         u.X * v.Y - u.Y * v.X
+
+    member this.Rotate(degrees : float32) =
+        let angle = float32 (System.Math.PI * float degrees / 180.0)
+        let cos = cos angle
+        let sin = sin angle
+        let x = this.X
+        let y = this.Y
+        Vector2(
+            x * cos - y * sin,
+            y * cos + x * sin
+        )
 
     member this.IsInConvexPolygon(poly : Vector2 list) =
         match poly with
