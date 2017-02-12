@@ -1,0 +1,21 @@
+﻿type LeadAntiTankCanon {
+	entity Canon
+	trigger Hide
+	trigger Show
+}
+
+type AntiTankCanon {
+	entity Canon
+}
+AntiTankCanon canon_in_group(LeadAntiTankCanon, int)
+
+type WhileEnemyClose from VirtualConvoy
+LeadAntiTankCanon lead_of_enemy_close(WhileEnemyClose)
+
+// LeadAntiTankCanon <-> AntiTankCanon
+columns += for (lead, pos, canon) in canon_in_group -> (canon.Canon, lead.Canon, pos)
+
+// LeadAntiTankCanon <-> WhileEnemyClose
+object += for (lead, wec) in lead_of_enemy_close -> (wec.Proximity, lead.Canon)
+target += for (lead, wec) in lead_of_enemy_close -> (wec.WakeUp, lead.Canon)
+target += for (lead, wec) in lead_of_enemy_close -> (wec.Sleep, lead.Canon)

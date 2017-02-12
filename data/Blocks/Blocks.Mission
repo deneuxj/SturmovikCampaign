@@ -1739,13 +1739,13 @@ Group
 
 Group
 {
-  Name = "At defense line";
-  Index = 161;
+  Name = "AntiTank";
+  Index = 141;
   Desc = "";
   Vehicle
   {
     Name = "AT leader";
-    Index = 141;
+    Index = 142;
     LinkTrId = 143;
     XPos = 16395.054;
     YPos = 106.604;
@@ -1786,55 +1786,7 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 141;
-  }
-  
-
-  Vehicle
-  {
-    Name = "AT";
-    Index = 144;
-    LinkTrId = 147;
-    XPos = 16375.423;
-    YPos = 106.604;
-    ZPos = 26603.615;
-    XOri = 1.91;
-    YOri = 0.00;
-    ZOri = 358.94;
-    Script = "LuaScripts\WorldObjects\vehicles\zis3gun.txt";
-    Model = "graphics\artillery\zis3gun\zis3gun.mgm";
-    Desc = "";
-    Country = 101;
-    NumberInFormation = 1;
-    Vulnerable = 1;
-    Engageable = 1;
-    LimitAmmo = 0;
-    AILevel = 2;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-    CoopStart = 0;
-    Spotter = -1;
-    BeaconChannel = 0;
-    Callsign = 0;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 147;
-    Name = "AT entity";
-    Desc = "";
-    Targets = [143];
-    Objects = [];
-    XPos = 16375.423;
-    YPos = 106.804;
-    ZPos = 26603.615;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 144;
+    MisObjID = 142;
   }
   
 
@@ -1910,7 +1862,7 @@ Group
 
   MCU_CMD_AttackArea
   {
-    Index = 151;
+    Index = 152;
     Name = "AA fire";
     Desc = "";
     Targets = [];
@@ -1932,7 +1884,7 @@ Group
 
   MCU_Activate
   {
-    Index = 152;
+    Index = 153;
     Name = "Trigger Activate";
     Desc = "";
     Targets = [];
@@ -1948,10 +1900,10 @@ Group
 
   MCU_Timer
   {
-    Index = 153;
+    Index = 154;
     Name = "SHOW";
     Desc = "";
-    Targets = [152,154];
+    Targets = [153,155];
     Objects = [];
     XPos = 16368.612;
     YPos = 107.599;
@@ -1966,10 +1918,10 @@ Group
 
   MCU_Timer
   {
-    Index = 154;
+    Index = 155;
     Name = "1s";
     Desc = "";
-    Targets = [151,148];
+    Targets = [152,148];
     Objects = [];
     XPos = 16364.357;
     YPos = 107.567;
@@ -1984,7 +1936,7 @@ Group
 
   MCU_Deactivate
   {
-    Index = 155;
+    Index = 157;
     Name = "Trigger Deactivate";
     Desc = "";
     Targets = [];
@@ -2000,10 +1952,10 @@ Group
 
   MCU_Timer
   {
-    Index = 156;
+    Index = 158;
     Name = "HIDE";
     Desc = "";
-    Targets = [157,160];
+    Targets = [159,160];
     Objects = [];
     XPos = 16374.617;
     YPos = 107.594;
@@ -2018,10 +1970,10 @@ Group
 
   MCU_Timer
   {
-    Index = 157;
+    Index = 159;
     Name = "1s";
     Desc = "";
-    Targets = [155];
+    Targets = [157];
     Objects = [];
     XPos = 16377.833;
     YPos = 107.567;

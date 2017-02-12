@@ -39,3 +39,14 @@ let germanTruck =
       Model = truck.Model.Value
     }
 
+let russianAntiTankCanon =
+    let canon = data.[T.Vehicles.AntiTankRUS]
+    { Script = canon.Script.Value
+      Model = canon.Script.Value
+    }
+
+let germanAntiTankCanon =
+    let canon = data.[T.Vehicles.AntiTankGER]
+    { Script = canon.Script.Value
+      Model = canon.Script.Value
+    }

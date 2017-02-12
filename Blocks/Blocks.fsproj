@@ -59,10 +59,12 @@
     <Compile Include="IO.fs" />
     <Compile Include="Links.fs" />
     <Compile Include="Predicates.fs" />
-    <Content Include="Proto-VirtualConvoy.txt" />
     <Compile Include="Vehicles.fs" />
+    <Content Include="Proto-VirtualConvoy.txt" />
     <Compile Include="VirtualConvoy.Types.fs" />
     <Compile Include="VirtualConvoy.Factory.fs" />
+    <Content Include="Proto-AntiTank.txt" />
+    <Compile Include="AntiTank.Types.fs" />
     <Compile Include="Strategy.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
