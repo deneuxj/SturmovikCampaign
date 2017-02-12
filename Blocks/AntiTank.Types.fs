@@ -40,6 +40,7 @@ type AntiTank = {
     Canon : Mcu.McuEntity
     Show : Mcu.McuTrigger
     Hide : Mcu.McuTrigger
+    Start : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
 }
 with
@@ -54,6 +55,7 @@ with
         let mg = getVehicleByName db "MG"
         let show = getTriggerByName db "SHOW"
         let hide = getTriggerByName db "HIDE"
+        let start = getTriggerByName db "START"
         // Set country and positions
         lead.Country <- country
         match country with
@@ -76,6 +78,7 @@ with
         { Canon = McuUtil.getEntityByIndex lead.LinkTrId db
           Show = show
           Hide = hide
+          Start = start
           All = McuUtil.groupFromList db
         }
 

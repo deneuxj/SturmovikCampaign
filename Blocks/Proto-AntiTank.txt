@@ -2,6 +2,7 @@
 	entity Canon
 	trigger Hide
 	trigger Show
+	trigger Start
 }
 
 type AntiTankCanon {
@@ -17,5 +18,6 @@ columns += for (lead, pos, canon) in canon_in_group -> (canon.Canon, lead.Canon,
 
 // LeadAntiTankCanon <-> WhileEnemyClose
 object += for (lead, wec) in lead_of_enemy_close -> (wec.Proximity, lead.Canon)
-target += for (lead, wec) in lead_of_enemy_close -> (wec.WakeUp, lead.Canon)
-target += for (lead, wec) in lead_of_enemy_close -> (wec.Sleep, lead.Canon)
+target += for (lead, wec) in lead_of_enemy_close -> (wec.WakeUp, lead.Show)
+target += for (lead, wec) in lead_of_enemy_close -> (wec.Sleep, lead.Hide)
+target += for (lead, wec) in lead_of_enemy_close -> (lead.Start, wec.StartMonitoring)

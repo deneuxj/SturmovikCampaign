@@ -65,6 +65,7 @@
     <Compile Include="VirtualConvoy.Factory.fs" />
     <Content Include="Proto-AntiTank.txt" />
     <Compile Include="AntiTank.Types.fs" />
+    <Compile Include="AntiTank.Type.Factory.fs" />
     <Compile Include="Strategy.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
