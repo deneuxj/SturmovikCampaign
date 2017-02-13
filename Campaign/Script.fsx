@@ -1,25 +1,20 @@
 ﻿// Learn more about F# at http://fsharp.org. See the 'F# Tutorial' project
 // for more guidance on F# programming.
 
-#load "Scripts/load-project-debug.fsx"
-open Campaign.WorldDescription
-open SturmovikMission.DataProvider.Parsing
+#r "../DataProvider/bin/Debug/DataProvider.dll"
+#r "../Blocks/bin/Debug/SturmovikMission.Blocks.exe"
+#r "../Campaign/bin/Debug/Campaign.dll"
 
-let s = Stream.FromFile @"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.mission"
-let data = T.GroupData(s)
-let regions =
-    let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
-    let ammoStorages = data.GetGroup("Ammo").ListOfBlock
-    regions
-    |> List.map (fun area -> area.AddStorage ammoStorages)
-let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
-let rail = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
-let defenses = data.GetGroup("Defenses")
-let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AAA")
-let spawnsAAA = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
-let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AT")
-let spawnsAT = DefenseArea.ExtractFrontLineDefenseAreas(ats, regions, roads)
-let afs = data.GetGroup("Airfield spawns").ListOfAirfield
-let planes = data.GetGroup("Parked planes").ListOfPlane
-let afStorages = data.GetGroup("Airfield storage").ListOfBlock
-let airfields = Airfield.ExtractAirfields(afs, planes, afStorages)
+open Campaign.WorldDescription
+open Campaign.WorldState
+open Campaign.MissionGeneration
+open System.IO
+
+File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.mission", "StrategySmall1.mission")
+File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\Blocks.mission", "Blocks.mission")
+File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\Vehicles.mission", "Vehicles.mission")
+
+let strategyFile = @"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.mission"
+let world = World.Create(strategyFile)
+let state = WorldState.Create(world, strategyFile)
+writeGroupFile world state @"C:\Users\johann\Documents\campaign.group"

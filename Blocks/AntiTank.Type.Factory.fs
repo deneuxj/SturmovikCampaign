@@ -1,5 +1,6 @@
 ﻿module SturmovikMission.Blocks.AntiTank.Factory
 
+open System.Numerics
 open SturmovikMission.Blocks.VirtualConvoy.Factory
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.AntiTank.Types
@@ -31,21 +32,28 @@ with
                 yield this.Api.All
             ]
 
-    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : T.MCU_TR_InfluenceArea, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+        let center =
+            let n = max 1 (List.length boundary)
+            let k = 1.0f / float32 n
+            let sum =
+                boundary
+                |> Seq.sum
+            k * sum
         let leadAntiTankCanonSet =
             seq {
-                yield LeadCanonInstance 1, AntiTank.Create(random, store, boundary, country)
+                yield LeadCanonInstance 1, AntiTank.Create(random, store, boundary, yori, country)
             }
             |> Map.ofSeq
         let antiTankCanonSet =
             seq {
                 for i in 1 .. groupSize do
-                    yield AntiTankCanonInstance(1, i), AntiTankCanon.Create(random, store, boundary, country)
+                    yield AntiTankCanonInstance(1, i), AntiTankCanon.Create(random, store, boundary, yori, country)
             }
             |> Map.ofSeq
         let enemyCloseSet =
             seq {
-                yield WhileEnemyCloseInstance 1, WhileEnemyClose.Create(store, McuUtil.newVec3(boundary.XPos.Value, boundary.YPos.Value, boundary.ZPos.Value), coalition)
+                yield WhileEnemyCloseInstance 1, WhileEnemyClose.Create(store, McuUtil.newVec3(float center.X, 0.0, float center.Y), coalition)
             }
             |> Map.ofSeq
         let canonInGroup =

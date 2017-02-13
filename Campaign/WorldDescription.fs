@@ -196,8 +196,7 @@ with
 type DefenseArea = {
     DefenseAreaId : DefenseAreaId
     Home : DefenseAreaHome
-    Rotation : float32
-    Position : Vector2
+    Position : OrientedPosition
     Boundary : Vector2 list
 }
 with
@@ -210,8 +209,7 @@ with
                     yield {
                         DefenseAreaId = DefenseAreaId area.Index.Value
                         Home = Central region.RegionId
-                        Rotation = float32 area.YOri.Value
-                        Position = pos
+                        Position = { Pos = pos; Rotation = float32 area.YOri.Value }
                         Boundary = area.Boundary.Value |> List.map(Vector2.FromPair)
                     }
                 | None ->
@@ -243,8 +241,7 @@ with
                     yield {
                         DefenseAreaId = DefenseAreaId area.Index.Value
                         Home = FrontLine(region.RegionId, other)
-                        Rotation = float32 area.YOri.Value
-                        Position = pos
+                        Position = { Pos = pos; Rotation = float32 area.YOri.Value } 
                         Boundary = area.Boundary.Value |> List.map(Vector2.FromPair)
                     }
                 | None ->

@@ -191,3 +191,7 @@ module Functions =
           Regions = regions
           DefenseAreas = antiAirDefenses @ antiTankDefenses
         }
+
+
+type WorldState with
+    static member Create(world : World, strategyFile : string) = Functions.mkInitialState(world, strategyFile)

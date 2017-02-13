@@ -53,6 +53,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="WorldDescription.fs" />
     <Compile Include="WorldState.fs" />
+    <Compile Include="MissionGeneration.fs" />
     <None Include="Script.fsx" />
     <None Include="..\data\Sample.Mission">
       <Link>Sample.Mission</Link>
@@ -80,6 +81,11 @@
     <ProjectReference Include="..\..\plog\ploggy\ploggy.csproj">
       <Name>ploggy</Name>
       <Project>{c23498b3-892d-4f98-a8e4-00fbc6b97ed0}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Blocks\Blocks.fsproj">
+      <Name>Blocks</Name>
+      <Project>{6f0be45c-721f-49fb-bfda-73eb7a6d07ba}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\DataProvider\DataProvider.fsproj">

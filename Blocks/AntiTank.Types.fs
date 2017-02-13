@@ -7,22 +7,20 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 
+let blockMission = "Blocks.Mission"
+//let blockMission = @"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\Blocks.Mission"
 
-let getRandomPositionInArea(random : System.Random, area : T.MCU_TR_InfluenceArea) =    
-    let forward = Vector2.FromYOri(area)
+let getRandomPositionInArea(random : System.Random, area : Vector2 list, forward : Vector2) =
     let right = forward.Rotate(90.0f)
-    let vertices =
-        area.Boundary.Value
-        |> List.map Vector2.FromPair
     let xs =
-        vertices
+        area
         |> List.map (fun v -> Vector2.Dot(v, forward))
     let xmin = List.min xs
     let xmax = List.max xs
     let xL = xmax - xmin
     let x0 = xmin
     let ys =
-        vertices
+        area
         |> List.map (fun v -> Vector2.Dot(v, right))
     let ymin = List.min ys
     let ymax = List.max ys
@@ -33,7 +31,7 @@ let getRandomPositionInArea(random : System.Random, area : T.MCU_TR_InfluenceAre
         let y = y0 + float32 (random.NextDouble()) * yL
         Vector2(x, y)
     )
-    |> Seq.find(fun v -> v.IsInConvexPolygon(vertices))
+    |> Seq.find(fun v -> v.IsInConvexPolygon(area))
 
 
 type AntiTank = {
@@ -44,10 +42,10 @@ type AntiTank = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : T.MCU_TR_InfluenceArea, country : Mcu.CountryValue) =
+    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32 , country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").GetGroup("AntiTank").CreateMcuList()
+        let db = T.GroupData(Parsing.Stream.FromFile blockMission).GetGroup("AntiTank").CreateMcuList()
         for mcu in db do
             subst mcu
         // Get key nodes
@@ -67,13 +65,16 @@ with
             lead.Script <- russianAntiTankCanon.Script
         | _ ->
             ()
-        let pos = getRandomPositionInArea(random, boundary)
+        let forward = Vector2.UnitX.Rotate(yori)
+        let pos = getRandomPositionInArea(random, boundary, forward)
         lead.Pos.X <- float pos.X
         lead.Pos.Z <- float pos.Y
+        lead.Ori.Y <- float yori
         mg.Country <- country
-        let pos = getRandomPositionInArea(random, boundary)
+        let pos = getRandomPositionInArea(random, boundary, forward)
         mg.Pos.X <- float pos.X
         mg.Pos.Z <- float pos.Y
+        mg.Ori.Y <- float yori
         // Result
         { Canon = McuUtil.getEntityByIndex lead.LinkTrId db
           Show = show
@@ -88,10 +89,10 @@ type AntiTankCanon = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : T.MCU_TR_InfluenceArea, country : Mcu.CountryValue) =
+    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").GetGroup("AntiTank").CreateMcuList()
+        let db = T.GroupData(Parsing.Stream.FromFile blockMission).GetGroup("AntiTank").CreateMcuList()
         for mcu in db do
             subst mcu
         // Get key nodes
@@ -107,9 +108,11 @@ with
             canon.Script <- russianAntiTankCanon.Script
         | _ ->
             ()
-        let pos = getRandomPositionInArea(random, boundary)
+        let forward = Vector2.UnitX.Rotate(yori)
+        let pos = getRandomPositionInArea(random, boundary, forward)
         canon.Pos.X <- float pos.X
         canon.Pos.Z <- float pos.Y
+        canon.Ori.Y <- float yori
         // Result
         let entity = McuUtil.getEntityByIndex canon.LinkTrId db
         { Canon = entity
