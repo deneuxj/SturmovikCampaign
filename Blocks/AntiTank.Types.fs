@@ -29,7 +29,7 @@ let getRandomPositionInArea(random : System.Random, area : Vector2 list, forward
     Seq.initInfinite (fun _ ->
         let x = x0 + float32 (random.NextDouble()) * xL
         let y = y0 + float32 (random.NextDouble()) * yL
-        Vector2(x, y)
+        x * forward + y * right
     )
     |> Seq.find(fun v -> v.IsInConvexPolygon(area))
 
