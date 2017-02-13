@@ -298,6 +298,11 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             let ptyp =
                 new ProvidedTypeDefinition(defaultArg name "Mapping" |> newName, Some (typeof<Ast.Value>))
             ptyp.AddMember(pdb.NewConstructor([], fun [] -> <@@ Ast.Value.Mapping [] @@>))
+            ptyp.AddMember(pdb.NewConstructor([("map", typedefof<Map<_, _>>.MakeGenericType(typeof<int>, ptyp1))], fun [m] ->
+                <@@
+                    let m = (%%m : Map<int, Ast.Value>)
+                    Ast.Value.Mapping(Map.toList m)
+                @@>))
             let propTyp = typedefof<Map<_,_>>.MakeGenericType(typeof<int>, ptyp1)
             ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetMapping() |> Map.ofList @@>))
             ptyp.AddMember(pdb.NewMethod("SetItem", ptyp, [("Key", typeof<int>); ("Value", upcast ptyp1)], fun [this; key; value] ->
