@@ -65,7 +65,8 @@ with
             lead.Script <- russianAntiTankCanon.Script
         | _ ->
             ()
-        let forward = Vector2.UnitX.Rotate(yori)
+        let angle = float32 System.Math.PI * (yori / 180.0f)
+        let forward = Vector2(cos angle, sin angle)
         let pos = getRandomPositionInArea(random, boundary, forward)
         lead.Pos.X <- float pos.X
         lead.Pos.Z <- float pos.Y
