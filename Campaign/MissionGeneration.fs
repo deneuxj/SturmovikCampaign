@@ -100,17 +100,18 @@ with
             [
                 for area in world.AntiTankDefenses do
                     let state = getAreaState area.DefenseAreaId
-                    let owner = getOwner area.Home.Home
-                    let country, coalition =
-                        match owner with
-                        | None -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Neutral
-                        | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
-                        | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                    let group = AntiTankGroup.Create(random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
-                    let links = group.CreateLinks()
-                    let mcus = McuUtil.deepContentOf group
-                    links.Apply(mcus)
-                    yield! mcus
+                    if state.NumUnits > 0 then
+                        let owner = getOwner area.Home.Home
+                        let country, coalition =
+                            match owner with
+                            | None -> failwithf "No owner found for group of anti-tank defenses '%A'" area.DefenseAreaId
+                            | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
+                            | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
+                        let group = AntiTankGroup.Create(random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                        let links = group.CreateLinks()
+                        let mcus = McuUtil.deepContentOf group
+                        links.Apply(mcus)
+                        yield! mcus
             ]
         { All = all
         }
@@ -151,48 +152,45 @@ with
             [
                 for region in world.Regions do
                     let state = getState region.RegionId
-                    match state.Owner with
-                    | None -> ()
-                    | Some owner ->
-                        let getCycled vertices =
-                            match vertices with
-                            | [] -> []
-                            | x :: _ -> vertices @ [x]
-                        let boundary = getCycled region.Boundary
-                        for (u1, u2) in Seq.pairwise boundary do
-                            let sharedEdges =
-                                seq {
-                                    for next in region.Neighbours do
-                                        let nextRegion = getRegion next
-                                        let boundary2 = getCycled nextRegion.Boundary
-                                        let radius2 = 1000.0f * 1000.0f
-                                        let haveShared =
-                                            boundary2
-                                            |> Seq.pairwise
-                                            |> Seq.exists (fun (v1, v2) ->
-                                                (u2 - v1).LengthSquared() < radius2 &&
-                                                (u1 - v2).LengthSquared() < radius2
-                                            )
-                                        if haveShared then
-                                            yield {
-                                                Kind = InnerBorder(region.RegionId, next)
-                                                Edge = (u1, u2)
-                                            }
-                                }
-                            if Seq.isEmpty sharedEdges then
-                                yield {
-                                    Kind = OuterBorder
-                                    Edge = (u1, u2)
-                                }
-                            else
-                                yield Seq.head sharedEdges
+                    let getCycled vertices =
+                        match vertices with
+                        | [] -> []
+                        | x :: _ -> vertices @ [x]
+                    let boundary = getCycled region.Boundary
+                    for (u1, u2) in Seq.pairwise boundary do
+                        let sharedEdges =
+                            seq {
+                                for next in region.Neighbours do
+                                    let nextRegion = getRegion next
+                                    let boundary2 = getCycled nextRegion.Boundary
+                                    let radius2 = 1000.0f * 1000.0f
+                                    let haveShared =
+                                        boundary2
+                                        |> Seq.pairwise
+                                        |> Seq.exists (fun (v1, v2) ->
+                                            (u2 - v1).LengthSquared() < radius2 &&
+                                            (u1 - v2).LengthSquared() < radius2
+                                        )
+                                    if haveShared then
+                                        yield {
+                                            Kind = InnerBorder(region.RegionId, next)
+                                            Edge = (u1, u2)
+                                        }
+                            }
+                        if Seq.isEmpty sharedEdges then
+                            yield {
+                                Kind = OuterBorder
+                                Edge = (u1, u2)
+                            }
+                        else
+                            yield Seq.head sharedEdges
             ]
         let defaultIcon =
             let lcDesc = 1
             let lcName = 2
             T.MCU_Icon(
                 T.Integer(0),
-                T.VectorOfIntegers[],
+                T.VectorOfIntegers[1;2],
                 T.Boolean true,
                 T.Integer(0),
                 T.Integer(0),

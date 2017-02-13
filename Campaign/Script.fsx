@@ -10,11 +10,17 @@ open Campaign.WorldState
 open Campaign.MissionGeneration
 open System.IO
 
-File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.mission", "StrategySmall1.mission")
-File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\Blocks.mission", "Blocks.mission")
-File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\Vehicles.mission", "Vehicles.mission")
+try
+    File.Delete("StrategySmall1.mission")
+    File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.mission", "StrategySmall1.mission")
+    File.Delete("Blocks.mission")
+    File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\Blocks.mission", "Blocks.mission")
+    File.Delete("Vehicles.mission")
+    File.Copy(@"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\Vehicles.mission", "Vehicles.mission")
+with
+    | exc -> printfn "Error copying files: '%s'" exc.Message
 
-let strategyFile = @"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\StrategySmall1.mission"
+let strategyFile = "StrategySmall1.mission"
 let world = World.Create(strategyFile)
 let state = WorldState.Create(world, strategyFile)
-writeGroupFile world state @"C:\Users\johann\Documents\campaign.group"
+writeGroupFile world state @"C:\Users\johann\Documents\AutoMoscow\campaign.group"
