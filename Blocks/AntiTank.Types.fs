@@ -7,9 +7,6 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 
-let blockMission = "Blocks.Mission"
-//let blockMission = @"C:\Users\johann\Documents\SturmovikMission-git\data\Blocks\Blocks.Mission"
-
 let getRandomPositionInArea(random : System.Random, area : Vector2 list, forward : Vector2) =
     let right = forward.Rotate(90.0f)
     let xs =
@@ -33,6 +30,8 @@ let getRandomPositionInArea(random : System.Random, area : Vector2 list, forward
     )
     |> Seq.find(fun v -> v.IsInConvexPolygon(area))
 
+let private blockMission = "Blocks.Mission"
+let private blocksData = T.GroupData(Parsing.Stream.FromFile blockMission)
 
 type AntiTank = {
     Canon : Mcu.McuEntity
@@ -45,7 +44,8 @@ with
     static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32 , country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile blockMission).GetGroup("AntiTank").CreateMcuList()
+        let db = blocksData.GetGroup("AntiTank")
+        let db = db.CreateMcuList()
         for mcu in db do
             subst mcu
         // Get key nodes
@@ -92,7 +92,7 @@ with
     static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile blockMission).GetGroup("AntiTank").CreateMcuList()
+        let db = blocksData.GetGroup("AntiTank").CreateMcuList()
         for mcu in db do
             subst mcu
         // Get key nodes
