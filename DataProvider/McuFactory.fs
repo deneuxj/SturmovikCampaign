@@ -51,6 +51,13 @@ let getIntVecField (name : string) fields =
     fields
     |> Seq.pick (function (name2, Value.IntVector xs) when name = name2 -> Some xs | _ -> None)
 
+let getOptIntVecField (name : string) fields =
+    fields
+    |> Seq.tryPick (function (name2, Value.IntVector xs) when name = name2 -> Some xs | _ -> None)
+    |> function
+        | None -> []
+        | Some x -> x
+
 let getStringField (name : string) fields =
     fields
     |> Seq.pick (function (name2, Value.String s) when name = name2 -> Some s | _ -> None)
@@ -64,6 +71,21 @@ let setField (name : string, value) fields =
         match xs with
         | [] -> [(name, value)]
         | (name2, _) :: rest when name2 = name -> (name, value) :: rest
+        | x :: rest -> x :: work rest
+    work fields
+
+let setOptIntVecField (name : string, value) fields =
+    let rec work xs =
+        match xs with
+        | [] ->
+            match value with
+            | [] -> []
+            | _ :: _ -> [(name, IntVector value)]
+        | (name2, _) :: rest when name2 = name ->
+            match value with
+            | [] -> rest
+            | _ :: _ ->
+                (name, IntVector value) :: rest
         | x :: rest -> x :: work rest
     work fields
 
@@ -485,15 +507,15 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
                         new McuProximity with
                             member this.PlaneCoalitions
                                 with get() =
-                                    !state |> getIntVecField "PlaneCoalitions" |> List.map enum
+                                    !state |> getOptIntVecField "PlaneCoalitions" |> List.map enum
                                 and set(coalitions) =
-                                    state := !state |> setField("PlaneCoalitions", coalitions |> List.map int |> IntVector)
+                                    state := !state |> setOptIntVecField("PlaneCoalitions", coalitions |> List.map int)
 
                             member this.VehicleCoalitions
                                 with get() =
-                                    !state |> getIntVecField "VehicleCoalitions" |> List.map enum
+                                    !state |> getOptIntVecField "VehicleCoalitions" |> List.map enum
                                 and set(coalitions) =
-                                    state := !state |> setField("VehicleCoalitions", coalitions |> List.map int |> IntVector)
+                                    state := !state |> setOptIntVecField("VehicleCoalitions", coalitions |> List.map int)
 
                         interface McuTrigger with
                             member this.AsString() = baseImpl.AsString()
