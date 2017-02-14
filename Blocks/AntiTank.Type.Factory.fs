@@ -1,6 +1,7 @@
 ﻿module SturmovikMission.Blocks.AntiTank.Factory
 
 open System.Numerics
+open SturmovikMission.Blocks
 open SturmovikMission.Blocks.VirtualConvoy.Factory
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.AntiTank.Types
@@ -99,3 +100,48 @@ with
           Objects = objectLinks
           Targets = targetLinks
         }
+
+
+type AntiAirGroup = {
+    Underlying : AntiTankGroup
+}
+with
+    interface McuUtil.IMcuGroup with
+        member x.Content = (x.Underlying :> McuUtil.IMcuGroup).Content
+        member x.LcStrings = (x.Underlying :> McuUtil.IMcuGroup).LcStrings
+        member x.SubGroups = (x.Underlying :> McuUtil.IMcuGroup).SubGroups
+
+    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+        let ret = { Underlying = AntiTankGroup.Create(random, store, boundary, yori, groupSize, country, coalition) }
+        ret.Mutate(random)
+        ret
+
+    member private this.Mutate(random : System.Random) =
+        let mutateVehicle(vehicle : Mcu.HasEntity) =
+            let spec =
+                match vehicle.Country with
+                | Mcu.CountryValue.Russia ->
+                    if random.Next() % 2 = 1 then
+                        Vehicles.russianAntiAirCanon
+                    else
+                        Vehicles.russianFlak
+                | _ ->
+                    if random.Next() % 2 = 1 then
+                        Vehicles.germanAntiAirCanon
+                    else
+                        Vehicles.germanFlak
+            vehicle.Script <- spec.Script
+            vehicle.Model <- spec.Model
+        for kvp in this.Underlying.AntiTankCanonSet do
+            let members = McuUtil.deepContentOf kvp.Value.All
+            let vehicle = 
+                McuUtil.getHasEntityByIndex kvp.Value.Canon.MisObjID members
+            mutateVehicle vehicle
+        for kvp in this.Underlying.LeadAntiTankCanonSet do
+            let members = McuUtil.deepContentOf kvp.Value.All
+            let vehicle = 
+                McuUtil.getHasEntityByIndex kvp.Value.Canon.MisObjID members
+            mutateVehicle vehicle
+            
+    member this.CreateLinks() =
+        this.Underlying.CreateLinks()

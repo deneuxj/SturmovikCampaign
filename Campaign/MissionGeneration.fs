@@ -112,6 +112,20 @@ with
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)
                         yield! mcus
+                for area in world.AntiAirDefenses do
+                    let state = getAreaState area.DefenseAreaId
+                    if state.NumUnits > 0 then
+                        let owner = getOwner area.Home.Home
+                        let country, coalition =
+                            match owner with
+                            | None -> failwithf "No owner found for group of anti-air defenses '%A'" area.DefenseAreaId
+                            | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
+                            | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
+                        let group = AntiAirGroup.Create(random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                        let links = group.CreateLinks()
+                        let mcus = McuUtil.deepContentOf group
+                        links.Apply(mcus)
+                        yield! mcus
             ]
         { All = all
         }
