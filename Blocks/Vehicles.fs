@@ -42,35 +42,35 @@ let germanTruck =
 let russianAntiTankCanon =
     let canon = data.[T.Vehicles.AntiTankRUS]
     { Script = canon.Script.Value
-      Model = canon.Script.Value
+      Model = canon.Model.Value
     }
 
 let germanAntiTankCanon =
     let canon = data.[T.Vehicles.AntiTankGER]
     { Script = canon.Script.Value
-      Model = canon.Script.Value
+      Model = canon.Model.Value
     }
 
 let russianAntiAirCanon =
     let canon = data.[T.Vehicles.AntiAirRUS]
     { Script = canon.Script.Value
-      Model = canon.Script.Value
+      Model = canon.Model.Value
     }
 
 let germanAntiAirCanon =
     let canon = data.[T.Vehicles.AntiAirGER]
     { Script = canon.Script.Value
-      Model = canon.Script.Value
+      Model = canon.Model.Value
     }
 
 let russianFlak =
     let canon = data.[T.Vehicles.FlakRUS]
     { Script = canon.Script.Value
-      Model = canon.Script.Value
+      Model = canon.Model.Value
     }
 
 let germanFlak =
     let canon = data.[T.Vehicles.FlakGER]
     { Script = canon.Script.Value
-      Model = canon.Script.Value
+      Model = canon.Model.Value
     }
