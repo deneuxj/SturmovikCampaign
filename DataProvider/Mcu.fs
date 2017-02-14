@@ -83,8 +83,8 @@ type McuTrigger =
 /// </summary>
 type CoalitionValue =
     | Neutral = 0
-    | Axis = 1
-    | Allies = 2
+    | Allies = 1
+    | Axis = 2
 
 /// <summary>
 /// Interface of proximity and check zone triggers.
@@ -277,8 +277,8 @@ type NumberInFormationData =
 /// Known country values.
 /// </summary>
 type CountryValue =
-    | Russia = 201
-    | Germany = 101
+    | Russia = 101
+    | Germany = 201
 
 /// <summary>
 /// Interface of things that can have entities: ground vehicles, planes, artillery, buildings, bridges...
