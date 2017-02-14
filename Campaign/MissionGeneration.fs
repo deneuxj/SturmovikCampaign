@@ -208,35 +208,90 @@ with
                 T.Float(0.0),
                 T.Float(0.0)
             )
-        let mkIcon(v : Vector2) =
+        let mkIcon(lineType : int) (red, green, blue) (v : Vector2) =
             defaultIcon
                 .SetXPos(T.Float(float v.X))
                 .SetZPos(T.Float(float v.Y))
+                .SetLineType(T.Integer lineType)
+                .SetRColor(T.Integer red)
+                .SetGColor(T.Integer green)
+                .SetBColor(T.Integer blue)
                 .CreateMcu()
                 :?> Mcu.McuIcon
+        let mkSegmentIcons mkIcon (segment : Vector2 * Vector2) =
+            seq {
+                let icon1 : Mcu.McuIcon = mkIcon(fst segment)
+                let icon2 = mkIcon(snd segment)
+                icon2.Index <- 2
+                icon1.Targets <- icon2.Index :: icon1.Targets
+                let subst = Mcu.substId <| store.GetIdMapper()
+                let substLc = Mcu.substLCId <| store.GetIdMapper()
+                subst icon1
+                subst icon2
+                substLc icon1
+                substLc icon2
+                yield icon1
+                yield icon2
+            }            
         let outerIcons =
             [
+                let mkSegment = mkSegmentIcons (mkIcon 1 (0, 0, 0))
                 for segment in segments do
                     match segment.Kind with
                     | OuterBorder ->
-                        let icon1 = mkIcon(fst segment.Edge)
-                        let icon2 = mkIcon(snd segment.Edge)
-                        icon2.Index <- 2
-                        icon1.Targets <- icon2.Index :: icon1.Targets
-                        let subst = Mcu.substId <| store.GetIdMapper()
-                        let substLc = Mcu.substLCId <| store.GetIdMapper()
-                        subst icon1
-                        subst icon2
-                        substLc icon1
-                        substLc icon2
-                        yield icon1
-                        yield icon2
+                        yield! mkSegment segment.Edge
                     | InnerBorder _ ->
                         ()
             ]
+        let frontLineIcons =
+            [
+                let mkSegment = mkSegmentIcons (mkIcon 13 (255, 255, 255))
+                for segment in segments do
+                    match segment.Kind with
+                    | OuterBorder -> ()
+                    | InnerBorder(home, other) ->
+                        let homeState = getState home
+                        let otherState = getState other
+                        match homeState, otherState with
+                        | { Owner = Some Allies }, { Owner = Some Axis } ->
+                            yield! mkSegment segment.Edge
+                        | _ ->
+                            ()
+            ]
+        let germanBorderLineIcons =
+            [
+                let mkSegment = mkSegmentIcons (mkIcon 1 (86, 105, 135))
+                for segment in segments do
+                    match segment.Kind with
+                    | OuterBorder -> ()
+                    | InnerBorder(home, other) ->
+                        let homeState = getState home
+                        let otherState = getState other
+                        match homeState, otherState with
+                        | { Owner = Some Axis }, { Owner = None } ->
+                            yield! mkSegment segment.Edge
+                        | _ ->
+                            ()
+            ]
+        let russianBorderLineIcons =
+            [
+                let mkSegment = mkSegmentIcons (mkIcon 1 (240, 0, 0))
+                for segment in segments do
+                    match segment.Kind with
+                    | OuterBorder -> ()
+                    | InnerBorder(home, other) ->
+                        let homeState = getState home
+                        let otherState = getState other
+                        match homeState, otherState with
+                        | { Owner = Some Allies }, { Owner = None } ->
+                            yield! mkSegment segment.Edge
+                        | _ ->
+                            ()
+            ]
+        let allIcons = List.concat [outerIcons; frontLineIcons; germanBorderLineIcons; russianBorderLineIcons]
         let lcStrings =
             [
-                for icon in outerIcons do
+                for icon in allIcons do
                     match icon.IconLC with
                     | Some data ->
                         yield (data.LCDesc, "")
@@ -244,7 +299,7 @@ with
                     | None ->
                         ()
             ]
-        { All = outerIcons |> List.map (fun x -> upcast x)
+        { All = allIcons |> List.map (fun x -> upcast x)
           LcStrings = lcStrings
         }
 
