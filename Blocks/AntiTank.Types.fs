@@ -67,11 +67,19 @@ with
             ()
         let angle = float32 System.Math.PI * (yori / 180.0f)
         let forward = Vector2(cos angle, sin angle)
-        let pos = getRandomPositionInArea(random, boundary, forward)
-        lead.Pos.X <- float pos.X
-        lead.Pos.Z <- float pos.Y
-        lead.Ori.Y <- float yori
+        let newPos = getRandomPositionInArea(random, boundary, forward)
+        let refPos = Vector2(float32 lead.Pos.X, float32 lead.Pos.Z)
+        let translation = newPos - refPos
+        for mcu in db do
+            // rotate around old position of leader, then translate to new position
+            let pos = Vector2(float32 mcu.Pos.X, float32 mcu.Pos.Z)
+            let v = pos - refPos
+            let final = v.Rotate(yori) + refPos + translation
+            mcu.Pos.X <- float final.X
+            mcu.Pos.Z <- float final.Y
+            mcu.Ori.Y <- mcu.Ori.Y + float yori
         mg.Country <- country
+        // Move the machine gun to a random position
         let pos = getRandomPositionInArea(random, boundary, forward)
         mg.Pos.X <- float pos.X
         mg.Pos.Z <- float pos.Y
