@@ -30,7 +30,6 @@ with
                 yield! this.LeadCanonSet |> Seq.map (fun kvp -> kvp.Value.All)
                 yield! this.CanonSet |> Seq.map (fun kvp -> kvp.Value.All)
                 yield! this.EnemyCloseSet |> Seq.map (fun kvp -> kvp.Value.All)
-                yield this.Api.All
             ]
 
     static member Create(specialty : DefenseSpecialty, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
