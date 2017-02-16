@@ -6,6 +6,7 @@ open SturmovikMission.Blocks.Links
 open SturmovikMission.Blocks.Predicates
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
+open SturmovikMission.Blocks.BlocksMissionData
 
 // Types for each instance type.
 // Those are typically typed ints, but could be typed strings, or any other type suitable for a dictionary key.

@@ -60,12 +60,13 @@
     <Compile Include="Links.fs" />
     <Compile Include="Predicates.fs" />
     <Compile Include="Vehicles.fs" />
+    <Compile Include="BlocksMissionData.fs" />
     <Content Include="Proto-VirtualConvoy.txt" />
     <Compile Include="VirtualConvoy.Types.fs" />
     <Compile Include="VirtualConvoy.Factory.fs" />
-    <Content Include="Proto-AntiTank.txt" />
-    <Compile Include="AntiTank.Types.fs" />
-    <Compile Include="AntiTank.Type.Factory.fs" />
+    <Content Include="Proto-StaticDefenses.txt" />
+    <Compile Include="StaticDefenses.Types.fs" />
+    <Compile Include="StaticDefenses.Type.Factory.fs" />
     <Compile Include="Strategy.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />

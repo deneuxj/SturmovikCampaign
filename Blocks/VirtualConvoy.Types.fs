@@ -4,17 +4,7 @@ module SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
-
-type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission">
-
-// Utility functions to create MCU programmatically.
-let newTimer idx =
-    T.MCU_Timer(T.String "", T.Integer idx, T.String "", T.VectorOfIntegers[], T.Integer 100, T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
-        .CreateMcu() :?> Mcu.McuTimer
-
-let newCounter idx =
-    T.MCU_Counter(T.Integer 1, T.String "", T.Boolean false, T.Integer idx, T.String "", T.VectorOfIntegers[], T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
-        .CreateMcu() :?> Mcu.McuCounter
+open SturmovikMission.Blocks.BlocksMissionData
 
 // The types. See Proto-VirtualConvoy.txt.
 type Convoy =

@@ -4,7 +4,8 @@ open SturmovikMission.DataProvider
 open Vector
 open Campaign.WorldDescription
 open Campaign.WorldState
-open SturmovikMission.Blocks.AntiTank.Factory
+open SturmovikMission.Blocks.StaticDefenses.Factory
+open SturmovikMission.Blocks.StaticDefenses.Types
 open System.Numerics
 open System.IO
 
@@ -107,7 +108,7 @@ with
                             | None -> failwithf "No owner found for group of anti-tank defenses '%A'" area.DefenseAreaId
                             | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                             | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                        let group = AntiTankGroup.Create(random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                        let group = StaticDefenseGroup.Create(AntiTank, random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)
@@ -121,7 +122,7 @@ with
                             | None -> failwithf "No owner found for group of anti-air defenses '%A'" area.DefenseAreaId
                             | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                             | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                        let group = AntiAirGroup.Create(random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                        let group = StaticDefenseGroup.Create(AntiAir, random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)
