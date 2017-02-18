@@ -169,7 +169,9 @@ with
         let wakeup = getByName T.Blocks.WakeUp
         let sleep = getByName T.Blocks.Sleep
         let proximity = getByName T.Blocks.EnemyClose :?> Mcu.McuProximity
+        let enemyEnters = getByName T.Blocks.EnemyEnters :?> Mcu.McuProximity
         proximity.SetRelativeCoalitions(coalition, Mcu.CoalitionValue.Allies)
+        enemyEnters.SetRelativeCoalitions(coalition, Mcu.CoalitionValue.Allies)
         // Position of all nodes
         let diff = McuUtil.vecMinus pos proximity.Pos
         let diff = McuUtil.translate diff (McuUtil.newVec3(100.0, 0.0, 100.0))
