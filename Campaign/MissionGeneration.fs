@@ -9,6 +9,8 @@ open SturmovikMission.Blocks.StaticDefenses.Types
 open System.Numerics
 open System.IO
 open SturmovikMission.Blocks.BlocksMissionData
+open System.Collections.Generic
+open SturmovikMission.DataProvider.Cached
 
 type Buildings = {
     All : Mcu.McuBase list
@@ -154,6 +156,41 @@ with
         member x.SubGroups = []
 
     static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState) =
+        let dist2 =
+            let dist = 1000.0f
+            dist * dist
+        let getRepresentant =
+            let equivClasses =
+                let allVecs =
+                    world.Regions
+                    |> Seq.map (fun region -> region.Boundary)
+                    |> List.concat
+                let singletons =
+                    allVecs
+                    |> List.map (fun v -> [v])
+                allVecs
+                |> Seq.fold (fun equivClasses v ->
+                    let near, far =
+                        equivClasses
+                        |> List.partition (fun points ->
+                            points
+                            |> List.exists (fun v2 -> (v - v2).LengthSquared() < dist2)
+                        )
+                    List.concat near :: far
+                ) singletons
+            let m =
+                equivClasses
+                |> Seq.map (fun cl ->
+                    match cl with
+                    | lead :: rest ->
+                        cl
+                        |> List.map (fun v -> v, lead)
+                    | [] ->
+                        []
+                )
+                |> Seq.concat
+                |> dict
+            fun v -> m.[v]
         let getState =
             let m =
                 state.Regions
@@ -181,13 +218,12 @@ with
                                 for next in region.Neighbours do
                                     let nextRegion = getRegion next
                                     let boundary2 = getCycled nextRegion.Boundary
-                                    let radius2 = 1000.0f * 1000.0f
                                     let haveShared =
                                         boundary2
                                         |> Seq.pairwise
                                         |> Seq.exists (fun (v1, v2) ->
-                                            (u2 - v1).LengthSquared() < radius2 &&
-                                            (u1 - v2).LengthSquared() < radius2
+                                            (u2 - v1).LengthSquared() < dist2 &&
+                                            (u1 - v2).LengthSquared() < dist2
                                         )
                                     if haveShared then
                                         yield {
@@ -227,85 +263,96 @@ with
                 T.Float(0.0)
             )
         let mkIcon(lineType : int) (red, green, blue) (v : Vector2) =
-            defaultIcon
-                .SetXPos(T.Float(float v.X))
-                .SetZPos(T.Float(float v.Y))
-                .SetLineType(T.Integer lineType)
-                .SetRColor(T.Integer red)
-                .SetGColor(T.Integer green)
-                .SetBColor(T.Integer blue)
-                .CreateMcu()
-                :?> Mcu.McuIcon
+            let subst = Mcu.substId <| store.GetIdMapper()
+            let substLc = Mcu.substLCId <| store.GetIdMapper()
+            let mcu =
+                defaultIcon
+                    .SetXPos(T.Float(float v.X))
+                    .SetZPos(T.Float(float v.Y))
+                    .SetLineType(T.Integer lineType)
+                    .SetRColor(T.Integer red)
+                    .SetGColor(T.Integer green)
+                    .SetBColor(T.Integer blue)
+                    .CreateMcu()
+                    :?> Mcu.McuIcon
+            subst mcu
+            substLc mcu
+            mcu
         let mkSegmentIcons mkIcon (segment : Vector2 * Vector2) =
-            seq {
-                let icon1 : Mcu.McuIcon = mkIcon(fst segment)
-                let icon2 = mkIcon(snd segment)
-                icon2.Index <- 2
-                icon1.Targets <- icon2.Index :: icon1.Targets
-                let subst = Mcu.substId <| store.GetIdMapper()
-                let substLc = Mcu.substLCId <| store.GetIdMapper()
-                subst icon1
-                subst icon2
-                substLc icon1
-                substLc icon2
-                yield icon1
-                yield icon2
-            }            
+            let icon1 : Mcu.McuIcon = mkIcon(fst segment)
+            let icon2 = mkIcon(snd segment)
+            icon1.Targets <- icon2.Index :: icon1.Targets
         let outerIcons =
-            [
-                let mkSegment = mkSegmentIcons (mkIcon 1 (0, 0, 0))
-                for segment in segments do
-                    match segment.Kind with
-                    | OuterBorder ->
-                        yield! mkSegment segment.Edge
-                    | InnerBorder _ ->
-                        ()
-            ]
+            let cache = Dictionary<_,_>()
+            let getIcon v =
+                mkIcon 1 (0, 0, 0) v
+            let getIcon = getRepresentant >> (cached cache getIcon)
+            let mkSegment = mkSegmentIcons getIcon
+            for segment in segments do
+                match segment.Kind with
+                | OuterBorder ->
+                    mkSegment segment.Edge
+                | InnerBorder _ ->
+                    ()
+            cache.Values
+            |> List.ofSeq
         let frontLineIcons =
-            [
-                let mkSegment = mkSegmentIcons (mkIcon 13 (255, 255, 255))
-                for segment in segments do
-                    match segment.Kind with
-                    | OuterBorder -> ()
-                    | InnerBorder(home, other) ->
-                        let homeState = getState home
-                        let otherState = getState other
-                        match homeState, otherState with
-                        | { Owner = Some Allies }, { Owner = Some Axis } ->
-                            yield! mkSegment segment.Edge
-                        | _ ->
-                            ()
-            ]
+            let cache = Dictionary<_,_>()
+            let getIcon v =
+                mkIcon 13 (255, 255, 255) v
+            let getIcon = getRepresentant >> (cached cache getIcon)
+            let mkSegment = mkSegmentIcons getIcon
+            for segment in segments do
+                match segment.Kind with
+                | OuterBorder -> ()
+                | InnerBorder(home, other) ->
+                    let homeState = getState home
+                    let otherState = getState other
+                    match homeState, otherState with
+                    | { Owner = Some Allies }, { Owner = Some Axis } ->
+                        mkSegment segment.Edge
+                    | _ ->
+                        ()
+            cache.Values
+            |> List.ofSeq
         let germanBorderLineIcons =
-            [
-                let mkSegment = mkSegmentIcons (mkIcon 1 (86, 105, 135))
-                for segment in segments do
-                    match segment.Kind with
-                    | OuterBorder -> ()
-                    | InnerBorder(home, other) ->
-                        let homeState = getState home
-                        let otherState = getState other
-                        match homeState, otherState with
-                        | { Owner = Some Axis }, { Owner = None } ->
-                            yield! mkSegment segment.Edge
-                        | _ ->
-                            ()
-            ]
+            let cache = Dictionary<_,_>()
+            let getIcon v =
+                mkIcon 1 (86, 105, 135) v
+            let getIcon = getRepresentant >> (cached cache getIcon)
+            let mkSegment = mkSegmentIcons getIcon
+            for segment in segments do
+                match segment.Kind with
+                | OuterBorder -> ()
+                | InnerBorder(home, other) ->
+                    let homeState = getState home
+                    let otherState = getState other
+                    match homeState, otherState with
+                    | { Owner = Some Axis }, { Owner = None } ->
+                        mkSegment segment.Edge
+                    | _ ->
+                        ()
+            cache.Values
+            |> List.ofSeq
         let russianBorderLineIcons =
-            [
-                let mkSegment = mkSegmentIcons (mkIcon 1 (240, 0, 0))
-                for segment in segments do
-                    match segment.Kind with
-                    | OuterBorder -> ()
-                    | InnerBorder(home, other) ->
-                        let homeState = getState home
-                        let otherState = getState other
-                        match homeState, otherState with
-                        | { Owner = Some Allies }, { Owner = None } ->
-                            yield! mkSegment segment.Edge
-                        | _ ->
-                            ()
-            ]
+            let cache = Dictionary<_,_>()
+            let getIcon v =
+                mkIcon 1 (240, 0, 0) v
+            let getIcon = getRepresentant >> (cached cache getIcon)
+            let mkSegment = mkSegmentIcons getIcon
+            for segment in segments do
+                match segment.Kind with
+                | OuterBorder -> ()
+                | InnerBorder(home, other) ->
+                    let homeState = getState home
+                    let otherState = getState other
+                    match homeState, otherState with
+                    | { Owner = Some Allies }, { Owner = None } ->
+                        mkSegment segment.Edge
+                    | _ ->
+                        ()
+            cache.Values
+            |> List.ofSeq
         let allIcons = List.concat [outerIcons; frontLineIcons; germanBorderLineIcons; russianBorderLineIcons]
         let lcStrings =
             [
