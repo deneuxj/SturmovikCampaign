@@ -71,9 +71,12 @@ module Functions =
             |> List.map (fun desc ->
                 let owner = getOwner desc.RegionId
                 let shellCount =
-                    match owner with
-                    | None -> 0.0f
-                    | Some _ -> desc.Storage |> Seq.sumBy (fun storage -> getShellsPerBuilding storage.Model)
+                    match desc.Production with
+                    | [] -> 0.0f // Initially, regions without factories are unsupplied
+                    | _ ->
+                        match owner with
+                        | None -> 0.0f
+                        | Some _ -> desc.Storage |> Seq.sumBy (fun storage -> getShellsPerBuilding storage.Model)
                 { RegionId = desc.RegionId
                   Owner = owner
                   StorageHealth = desc.Storage |> List.map (fun _ -> 1.0f)
