@@ -84,7 +84,7 @@ with
         member x.LcStrings = []
         member x.SubGroups = []
 
-    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, world : World, state : WorldState) =
+    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, missionBegin : Mcu.McuTrigger, world : World, state : WorldState) =
         let getAreaState =
             let m =
                 state.DefenseAreas
@@ -112,6 +112,7 @@ with
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)
+                        Mcu.addTargetLink missionBegin group.Api.Start.Index
                         yield! mcus
                 for area in world.AntiAirDefenses do
                     let state = getAreaState area.DefenseAreaId
@@ -126,6 +127,7 @@ with
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)
+                        Mcu.addTargetLink missionBegin group.Api.Start.Index
                         yield! mcus
             ]
         { All = all
@@ -323,11 +325,26 @@ let writeGroupFile (world : World) (state : WorldState) (filename : string) =
     let random = System.Random(0)
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
-    let antiTankDefenses = ArtilleryGroup.Create(random, store, world, state)
+    let getId = store.GetIdMapper()
+    let missionBegin =
+        T.MCU_TR_MissionBegin(
+            T.String "",
+            T.Boolean true,
+            T.Integer(getId 1),
+            T.String "Mission begin",
+            T.VectorOfIntegers[],
+            T.VectorOfIntegers[],
+            T.Float 0.0,
+            T.Float 0.0,
+            T.Float 0.0,
+            T.Float 0.0,
+            T.Float 0.0,
+            T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
+    let antiTankDefenses = ArtilleryGroup.Create(random, store, missionBegin, world, state)
     let icons = MapIcons.Create(store, lcStore, world, state)
     use file = File.CreateText(filename)
     let mcus =
-        antiTankDefenses.All @ icons.All
+        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All
     let groupStr =
         mcus
         |> McuUtil.moveEntitiesAfterOwners
