@@ -15,3 +15,35 @@ let newTimer idx =
 let newCounter idx =
     T.MCU_Counter(T.Integer 1, T.String "", T.Boolean false, T.Integer idx, T.String "", T.VectorOfIntegers[], T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
         .CreateMcu() :?> Mcu.McuCounter
+
+let newEntity idx =
+    T.MCU_TR_Entity(
+        T.String "",
+        T.Boolean true,
+        T.Integer idx,
+        T.Integer -1,
+        T.String "",
+        T.VectorOfIntegers [],
+        T.VectorOfIntegers [],
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0
+    ).CreateMcu() :?> Mcu.McuEntity
+
+let newMissionBegin idx =
+    T.MCU_TR_MissionBegin(
+        T.String "",
+        T.Boolean true,
+        T.Integer idx,
+        T.String "",
+        T.VectorOfIntegers[],
+        T.VectorOfIntegers[],
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
