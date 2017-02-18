@@ -494,7 +494,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
     and construct (fields, ptyp) () =
         let args =
             fields
-            |> Seq.map(fun kvp ->
+            |> Seq.choose(fun kvp ->
                 let fieldName = kvp.Key
                 let (def, minMult, maxMult) = kvp.Value
                 let fieldType =
@@ -507,22 +507,15 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                     getProvidedType(subName, def)
                 match (minMult, maxMult) with
                 | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
-                    (fieldName, fieldType :> Type)
+                    Some (fieldName, fieldType :> Type)
                 | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
-                    let optTyp =
-                        typeof<option<_>>
-                            .GetGenericTypeDefinition()
-                            .MakeGenericType(fieldType)
-                    (fieldName, optTyp)
+                    None
                 | _, Ast.MaxMultiplicity.Multiple ->
-                    let listTyp =
-                        typedefof<List<_>>
-                            .MakeGenericType(fieldType)
-                    (fieldName, listTyp))
+                    None)
             |> List.ofSeq
         let argNames =
-            fields
-            |> Seq.map (fun kvp -> kvp.Key)
+            args
+            |> Seq.map fst
             |> Seq.fold (fun expr name -> <@ name :: %expr@>) <@ [] @>
         let body (args : Expr list) =
             let args =
