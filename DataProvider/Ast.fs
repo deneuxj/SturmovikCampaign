@@ -266,6 +266,12 @@ let rec dump (value : Value) : string =
     | Float f -> sprintf "%f" f
     | FloatPair(x, y) -> sprintf "%f, %f" x y
     | Composite content ->
+        let content =
+            content
+            |> List.sortBy (function
+                | _, Mapping _ -> 2
+                | _ -> 1
+            )
         seq {
             yield sprintf "{\n"
             for (k, v) in content do
