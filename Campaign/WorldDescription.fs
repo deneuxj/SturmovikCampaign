@@ -127,7 +127,8 @@ with
 
     member this.AddProduction(blocks : T.Block list) =
         let factories = this.GetStaticBlocks(blocks)
-        { this with Production = this.Production @ factories }
+        { this with Production = this.Production @ factories
+        }
 
 type Path = {
     StartId : RegionId
@@ -389,8 +390,12 @@ with
         let regions =
             let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
             let ammoStorages = data.GetGroup("Ammo").ListOfBlock
+            let factories =
+                data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock
+                |> List.filter(fun block -> block.LinkTrId.Value >= 1)
             regions
             |> List.map (fun area -> area.AddStorage ammoStorages)
+            |> List.map (fun area -> area.AddProduction factories)
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
         let rail = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
         let defenses = data.GetGroup("Defenses")
