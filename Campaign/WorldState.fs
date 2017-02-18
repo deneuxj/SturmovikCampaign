@@ -1,6 +1,7 @@
 ﻿namespace Campaign.WorldState
 
 open Campaign.WorldDescription
+open SturmovikMission.Blocks.BlocksMissionData
 
 type RegionState = {
     RegionId : RegionId

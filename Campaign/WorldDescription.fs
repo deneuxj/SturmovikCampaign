@@ -2,9 +2,8 @@
 
 open System.Numerics
 
-type T = SturmovikMissionTypes.Provider<"C:\Users\johann\Documents\SturmovikMission-git\data\Sample.mission", "">
-
 open Vector
+open SturmovikMission.Blocks.BlocksMissionData
 
 type CoalitionId = Axis | Allies
 
@@ -411,4 +410,4 @@ with
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
-        }
+        }, data.ListOfBlock

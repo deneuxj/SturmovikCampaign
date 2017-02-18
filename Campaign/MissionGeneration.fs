@@ -8,6 +8,7 @@ open SturmovikMission.Blocks.StaticDefenses.Factory
 open SturmovikMission.Blocks.StaticDefenses.Types
 open System.Numerics
 open System.IO
+open SturmovikMission.Blocks.BlocksMissionData
 
 type Buildings = {
     All : Mcu.McuBase list
@@ -321,30 +322,104 @@ with
         }
 
 
-let writeGroupFile (world : World) (state : WorldState) (filename : string) =
+let createBlocks (random : System.Random) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (blocks : T.Block list) =
+    let tryGetRegionAt(v : Vector2) =
+        world.Regions
+        |> List.tryFind (fun region ->
+            v.IsInConvexPolygon(region.Boundary)
+        )
+    let getState =
+        let m =
+            state.Regions
+            |> Seq.map (fun region -> region.RegionId, region)
+            |> dict
+        fun x -> m.[x]
+    let getHealth (region : Region) (regionState : RegionState) (v : Vector2) =
+        let airfields =
+            world.Airfields
+            |> List.filter (fun af -> af.Region = region.RegionId)
+        let afStates =
+            state.Airfields
+            |> List.filter (fun s -> airfields |> List.exists (fun af -> af.AirfieldId = s.AirfieldId))
+        let afStorageWithHealth =
+            let blocks =
+                airfields
+                |> List.map (fun af -> af.Storage)
+                |> List.concat
+            let healths =
+                afStates
+                |> List.map (fun af -> af.StorageHealth)
+                |> List.concat
+            Seq.zip blocks healths
+        let dist, health =
+            try
+                Seq.zip (region.Storage @ region.Production) (regionState.StorageHealth @ regionState.ProductionHealth)
+                |> Seq.append afStorageWithHealth
+                |> Seq.map (fun (block, health) -> (block.Pos.Pos - v).LengthSquared(), health)
+                |> Seq.minBy fst
+            with
+            | _ -> 10.0f, 1.0f
+        if dist < 1.0f then
+            Some health
+        else
+            None
+    [
+        for block in blocks do
+            let v = Vector2.FromPos(block)
+            let subst = Mcu.substId <| store.GetIdMapper()
+            match tryGetRegionAt v with
+            | None ->
+                ()
+            | Some region ->
+                let state = getState region.RegionId
+                let health = getHealth region state v
+                match health with
+                | None ->
+                    // No strategic value, create without entity.
+                    let mcu =
+                        block.CreateMcu()
+                    subst mcu
+                    yield mcu
+                | Some health ->
+                    // Has health and strategic value, create with an entity.
+                    let health = float health
+                    let damagedBlock =
+                        block.SetDamaged(
+                            T.Damaged(
+                                Seq.init 128 (fun i -> i, T.Float(if random.NextDouble() < health then 0.0 else 1.0))
+                                |> Map.ofSeq
+                            )
+                        ).SetIndex(T.Integer 1).SetLinkTrId(T.Integer 2).CreateMcu() :?> Mcu.HasEntity
+                    match state.Owner with
+                    | Some Allies ->
+                        damagedBlock.Country <- Mcu.CountryValue.Russia
+                    | Some Axis ->
+                        damagedBlock.Country <- Mcu.CountryValue.Germany
+                    | _ ->
+                        ()
+                    let entity = newEntity(2)
+                    entity.MisObjID <- 1
+                    let damagedBlock = damagedBlock :> Mcu.McuBase
+                    let entity = entity :> Mcu.McuBase
+                    subst damagedBlock
+                    subst entity
+                    yield damagedBlock
+                    yield entity
+    ]
+
+
+let writeGroupFile (blocks : T.Block list) (world : World) (state : WorldState) (filename : string) =
     let random = System.Random(0)
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
     let getId = store.GetIdMapper()
-    let missionBegin =
-        T.MCU_TR_MissionBegin(
-            T.String "",
-            T.Boolean true,
-            T.Integer(getId 1),
-            T.String "Mission begin",
-            T.VectorOfIntegers[],
-            T.VectorOfIntegers[],
-            T.Float 0.0,
-            T.Float 0.0,
-            T.Float 0.0,
-            T.Float 0.0,
-            T.Float 0.0,
-            T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
+    let missionBegin = newMissionBegin (getId 1)
     let antiTankDefenses = ArtilleryGroup.Create(random, store, missionBegin, world, state)
     let icons = MapIcons.Create(store, lcStore, world, state)
+    let blocks = createBlocks random store world state blocks
     use file = File.CreateText(filename)
     let mcus =
-        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All
+        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks
     let groupStr =
         mcus
         |> McuUtil.moveEntitiesAfterOwners
