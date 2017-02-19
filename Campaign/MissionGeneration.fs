@@ -4,6 +4,7 @@ open SturmovikMission.DataProvider
 open Vector
 open Campaign.WorldDescription
 open Campaign.WorldState
+open Campaign.Weather
 open SturmovikMission.Blocks.StaticDefenses.Factory
 open SturmovikMission.Blocks.StaticDefenses.Types
 open System.Numerics
@@ -455,10 +456,12 @@ let createBlocks (random : System.Random) (store : NumericalIdentifiers.IdStore)
     ]
 
 
-let writeGroupFile (blocks : T.Block list) (world : World) (state : WorldState) (filename : string) =
+let writeGroupFile (options : T.Options) (blocks : T.Block list) (world : World) (state : WorldState) (filename : string) =
     let random = System.Random(0)
+    let weather = Weather.getWeather random state.Date
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
+    lcStore.SetNextId 3
     let getId = store.GetIdMapper()
     let missionBegin = newMissionBegin (getId 1)
     let antiTankDefenses = ArtilleryGroup.Create(random, store, missionBegin, world, state)
@@ -472,4 +475,9 @@ let writeGroupFile (blocks : T.Block list) (world : World) (state : WorldState) 
         |> McuUtil.moveEntitiesAfterOwners
         |> Seq.map (fun mcu -> mcu.AsString())
         |> String.concat "\n"
+    let options =
+        Weather.setOptions weather state.Date options
+    file.Write("# Mission File Version = 1.0;\n")
+    file.Write(options.AsString() + "\n")
     file.Write(groupStr)
+    file.Write("# end of file")

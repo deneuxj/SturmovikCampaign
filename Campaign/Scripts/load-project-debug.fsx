@@ -4,4 +4,5 @@
 #load "../AssemblyInfo.fs"
       "../WorldDescription.fs"
       "../WorldState.fs"
+      "../Weather.fs"
       "../MissionGeneration.fs"

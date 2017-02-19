@@ -33,6 +33,7 @@ type WorldState = {
     Regions : RegionState list
     DefenseAreas : DefenseAreaState list
     Airfields : AirfieldState list
+    Date : System.DateTime
 }
 
 module Functions =
@@ -83,9 +84,9 @@ module Functions =
                   StorageHealth = desc.Storage |> List.map (fun _ -> 1.0f)
                   ProductionHealth = desc.Production |> List.map (fun _ -> 1.0f)
                   ShellCount = shellCount
-                  NumHeavyTanks = 0
-                  NumMediumTanks = 0
-                  NumLightArmor = 0
+                  NumHeavyTanks = 2
+                  NumMediumTanks = 5
+                  NumLightArmor = 10
                 }
             )
         let frontLine =
@@ -194,6 +195,7 @@ module Functions =
         { Airfields = airfields
           Regions = regions
           DefenseAreas = antiAirDefenses @ antiTankDefenses
+          Date = description.StartDate
         }
 
 

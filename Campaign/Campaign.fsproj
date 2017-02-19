@@ -53,6 +53,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="WorldDescription.fs" />
     <Compile Include="WorldState.fs" />
+    <Compile Include="Weather.fs" />
     <Compile Include="MissionGeneration.fs" />
     <None Include="Script.fsx" />
     <None Include="..\data\Sample.Mission">
@@ -67,12 +68,15 @@
     <None Include="Scripts\load-project-debug.fsx" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="FSharp.Data.TypeProviders" />
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.Linq" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Numerics.Vectors">
       <HintPath>..\Blocks\packages\System.Numerics.Vectors.4.3.0\lib\portable-net45+win8+wp8+wpa81\System.Numerics.Vectors.dll</HintPath>

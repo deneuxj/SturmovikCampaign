@@ -381,6 +381,7 @@ type World = {
     AntiAirDefenses : DefenseArea list
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
+    StartDate : System.DateTime
 }
 with
     static member Create(strategyFile) =
@@ -406,8 +407,13 @@ with
         let planes = data.GetGroup("Parked planes").ListOfPlane
         let afStorages = data.GetGroup("Airfield storage").ListOfBlock
         let airfields = Airfield.ExtractAirfields(afs, planes, afStorages, regions)
+        let date =
+            let options = List.head data.ListOfOptions
+            let h, m, s = options.Time.Value
+            System.DateTime(options.Date.Year, options.Date.Month, options.Date.Day, h.Value, m.Value, s.Value)
         { Regions = regions
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
-        }, data.ListOfBlock
+          StartDate = date
+        }, data.ListOfBlock, List.head data.ListOfOptions
