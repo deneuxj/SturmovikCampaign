@@ -328,6 +328,8 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             ptyp.AddMember(pdb.NewConstructor([], fun [] -> <@@ Ast.Value.List [] @@>))
             let propTyp = typedefof<_ list>.MakeGenericType(ptyp1)
             ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetList() @@>))
+            // constructor with value
+            ptyp.AddMember(pdb.NewConstructor(["items", propTyp], fun [items] -> <@@ Ast.Value.List (%%items : Ast.Value list)@@>))
             ptyp
 
     and buildPair (name : string option, typ1 : Ast.ValueType, typ2 : Ast.ValueType) =
