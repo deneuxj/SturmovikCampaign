@@ -678,7 +678,7 @@ let buildAsMcuList (pdb : IProvidedDataBuilder) (dataListSource : DataListSource
 /// Build the provided type definition of the type that offers parsing of mission files.
 /// </summary>
 /// <param name="namedValueTypes">ValueTypes with their name and provided type definition.</param>
-let buildGroupParserType (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
+let buildGroupParserType (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) (topComplexTypes : (string * Ast.ValueType * ProvidedTypeDefinition) list) =
     let parser =
         ProvidedTypeDefinition("GroupData", Some typeof<Ast.Data list>)
         |> addXmlDoc """Extraction of data from a mission or group file."""
@@ -689,12 +689,6 @@ let buildGroupParserType (pdb : IProvidedDataBuilder) (namedValueTypes : (string
                 Map.add name %(valueType.ToExpr()) %expr
             @>
             ) <@ Map.empty @>
-    let names =
-        namedValueTypes
-        |> List.map (fun (name, _, _) -> name)
-        |> List.fold (fun expr name ->
-            <@ name :: %expr @>) <@ [] @>
-
     // Constructor: Parse a group or mission file
     parser.AddMemberDelayed(fun() ->
         pdb.NewConstructor([("s", typeof<Parsing.Stream>)], fun [s] ->
@@ -733,7 +727,7 @@ let buildGroupParserType (pdb : IProvidedDataBuilder) (namedValueTypes : (string
             <summary>Get data from a subgroup</summary>
             <param name="name">Name of the subgroup</param>""")
     // Getters: list of objects of each type
-    for (name, valueType, ptyp) in namedValueTypes do
+    for (name, valueType, ptyp) in topComplexTypes do
         parser.AddMemberDelayed(fun() ->
             pdb.NewProperty(sprintf "ListOf%s" name, typedefof<_ list>.MakeGenericType(ptyp), fun this ->
                 <@@
@@ -765,10 +759,6 @@ let buildLibraries (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast
         |> List.map (fun (name, typ, _) -> (name, Parsing.makeParser typ))
         |> Map.ofList
     let getParser name = parsers.[name]
-    let types =
-        namedValueTypes
-        |> List.map (fun (name, _, ptyp) -> (name, ptyp))
-        |> Map.ofList
     let importFile filename =
         let newName =
             let rand = new Random(0)
@@ -908,7 +898,17 @@ type MissionTypes(config: TypeProviderConfig) as this =
         let parserType = buildParserType pdb namedTypes
         ty.AddMember(parserType)
         // The type of the file parser.
-        let parserType = buildGroupParserType pdb namedTypes
+        let topComplexTypes =
+            cache
+            |> Seq.choose (fun kvp ->
+                let typId = kvp.Key
+                match typId with
+                | { Kind = Ast.ValueType.Composite _; Parents = [] } ->
+                    Some(typId.Name, typId.Kind, kvp.Value)
+                | _ ->
+                    None)
+            |> List.ofSeq
+        let parserType = buildGroupParserType pdb namedTypes topComplexTypes
         ty.AddMember(parserType)
         // The libraries
         let plibs = buildLibraries pdb namedTypes libs
