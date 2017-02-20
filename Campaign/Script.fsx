@@ -23,4 +23,4 @@ with
 let strategyFile = "StrategySmall1.mission"
 let world, blocks, options = World.Create(strategyFile)
 let state = WorldState.Create(world, strategyFile)
-writeGroupFile options blocks world state @"C:\Users\johann\Documents\AutoMoscow\AutoGenMission.Mission"
+writeMissionFile options blocks world state @"C:\Users\johann\Documents\AutoMoscow\AutoGenMission.Mission"

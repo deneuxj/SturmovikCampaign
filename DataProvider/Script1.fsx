@@ -44,3 +44,11 @@ let parser = Parsing.makeParser vt
 let v, _ = parser.Run (Parsing.Stream.FromString s)
 
 Ast.dump v
+
+#I "bin\Debug"
+#r "DataProvider.dll"
+type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission">
+T.Date(1978, 1, 24)
+let parser2 = T.Parser()
+let af, _ = parser2.Parse_Airfield(Parsing.Stream.FromString "")
+af.SetPlanes(T.Airfield.Planes().SetPlane([]))
