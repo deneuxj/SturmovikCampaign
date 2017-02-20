@@ -329,7 +329,7 @@ with
                 af
         )
 
-    static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane_2 list, storage : T.Block list, regions : Region list) =
+    static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane list, storage : T.Block list, regions : Region list) =
         let airfields =
             spawns
             |> List.map(fun spawn ->

@@ -29,28 +29,6 @@ open System.IO
 open SturmovikMission.DataProvider.Cached
 open SturmovikMission.DataProvider.FileWithTime
 
-/// <summary>
-/// Build a function that provides new names that do not collide with earlier names.
-/// </summary>
-/// <param name="getValidNames">Function that produces a sequence of name candidates.</param>
-let getNameStore getValidNames =
-    let reserved = Ast.groundValueTypeNames
-    let store = ref <| Set reserved
-    let isValid name =
-        Set.contains name !store
-        |> not
-    fun baseName ->
-        let name =
-            getValidNames baseName
-            |> Seq.find isValid
-        store := Set.add name !store
-        name
-
-/// Build a function that provides names of the form "name", "name_1", "name_2"...
-let mkNewName() =
-    fun baseName ->
-        Seq.initInfinite (fun i -> if i = 0 then baseName else sprintf "%s_%d" baseName (i + 1))
-    |> getNameStore
 
 type IProvidedDataBuilder =
     /// <summary>
@@ -203,8 +181,6 @@ type TypeIdentification = {
 /// </summary>
 /// <param name="top">Definition of the top type in the type provider.</param>
 let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefinition) =
-    let newName = mkNewName()
-
     let cache = new Dictionary<TypeIdentification, ProvidedTypeDefinition>(HashIdentity.Structural)
 
     let asList this = <@ (%%this : Ast.Value).GetItems() @>
@@ -280,7 +256,11 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
         | Ast.ValueType.Date -> () // Ground type, do nothing
         | _ ->
             // Complex type, add it
-            ptyp.AddMember(subpTyp)
+            match ptyp.GetMember(subpTyp.Name) with
+            | [||] ->
+                ptyp.AddMember(subpTyp)
+            | _ ->
+                failwithf "Cannot add provided type for '%s' in '%s', there is already a member by that name." subpTyp.Name ptyp.Name
 
     // Build any kind of type, ground or complex.
     let rec buildProvidedType (typId : TypeIdentification) =
@@ -298,7 +278,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
         | Ast.ValueType.Composite fields ->
             let typExpr = typId.Kind.ToExpr()
             let ptyp =
-                new ProvidedTypeDefinition(newName name, Some (typeof<Ast.Value>))
+                new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             let parents = name :: typId.Parents
             // Add types of complex fields as nested types
             for field in fields do
@@ -326,7 +306,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             let subName = sprintf "%s_ValueType" name
             let ptyp1 = getProvidedType { Name = subName; Kind = itemTyp; Parents = name :: typId.Parents }
             let ptyp =
-                new ProvidedTypeDefinition(newName name, Some (typeof<Ast.Value>))
+                new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             addComplexNestedType(ptyp, ptyp1, itemTyp)
             // Default constructor
             ptyp.AddMember(pdb.NewConstructor([], fun [] -> <@@ Ast.Value.Mapping [] @@>))
@@ -363,7 +343,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             let subName = sprintf "%s_ValueType" name
             let ptyp1 = getProvidedType { Name = subName; Kind = itemTyp; Parents = name :: typId.Parents }
             let ptyp =
-                new ProvidedTypeDefinition(newName name, Some (typeof<Ast.Value>))
+                new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
             addComplexNestedType(ptyp, ptyp1, itemTyp)
             // Default constructor
             ptyp.AddMember(pdb.NewConstructor([], fun [] -> <@@ Ast.Value.List [] @@>))
@@ -383,7 +363,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             let subName = sprintf "%s_ValueType2" typId.Name
             getProvidedType { Name = subName; Kind = typ2; Parents = typId.Name :: typId.Parents }
         let ptyp =
-            new ProvidedTypeDefinition(newName typId.Name, Some (typeof<Ast.Value>))
+            new ProvidedTypeDefinition(typId.Name, Some (typeof<Ast.Value>))
         addComplexNestedType(ptyp, ptyp1, typ1)
         addComplexNestedType(ptyp, ptyp2, typ2)
         // Value getter
@@ -406,7 +386,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             let subName = sprintf "%s_ValueType3" name
             getProvidedType { Name = subName; Kind = typ3; Parents = name :: typId.Parents }
         let ptyp =
-            new ProvidedTypeDefinition(newName name, Some (typeof<Ast.Value>))
+            new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
         addComplexNestedType(ptyp, ptyp1, typ1)
         addComplexNestedType(ptyp, ptyp2, typ2)
         addComplexNestedType(ptyp, ptyp3, typ3)
@@ -440,8 +420,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                             @@>)
                 | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
                     let optTyp =
-                        typeof<option<_>>
-                            .GetGenericTypeDefinition()
+                        typedefof<_ option>
                             .MakeGenericType(fieldType)
                     pdb.NewMethod(
                         sprintf "Get%s" fieldName,
@@ -456,8 +435,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                             @@>)
                 | _, Ast.MaxMultiplicity.Multiple ->
                     let listTyp =
-                        typeof<List<_>>
-                            .GetGenericTypeDefinition()
+                        typedefof<_ list>
                             .MakeGenericType(fieldType)
                     pdb.NewMethod(
                         sprintf "Get%s" fieldName,
@@ -494,7 +472,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                         @@>)
             | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
                 let optTyp =
-                    typedefof<option<_>>
+                    typedefof<_ option>
                         .MakeGenericType(fieldType)
                 pdb.NewMethod(
                     sprintf "Set%s" fieldName,
@@ -507,7 +485,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                         @@>)
             | _, Ast.MaxMultiplicity.Multiple ->
                 let listTyp =
-                    typedefof<List<_>>
+                    typedefof<_ list>
                         .MakeGenericType(fieldType)
                 pdb.NewMethod(
                     sprintf "Set%s" fieldName,
@@ -763,20 +741,6 @@ let buildLibraries (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast
         |> Map.ofList
     let getParser name = parsers.[name]
     let importFile filename =
-        let newName =
-            let rand = new Random(0)
-            fun baseName ->
-                let baseName =
-                    if String.IsNullOrEmpty baseName then "Unnamed" else baseName
-                Seq.initInfinite (fun i ->
-                    if i = 0 then
-                        baseName
-                    elif i < 10 then
-                        sprintf "%s_%d" baseName (i + 1)
-                    else
-                        sprintf "%s_R%d" baseName (rand.Next())
-                    )
-            |> getNameStore
         let name = Path.GetFileNameWithoutExtension(filename)
         let lib = new ProvidedTypeDefinition(name, Some typeof<obj>)
         fun () ->
@@ -806,13 +770,13 @@ let buildLibraries (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast
                                         fields
                                         |> Seq.tryPick (function ("Name", Ast.Value.String n) -> Some n | _ -> None)
                                     match name with
-                                    | Some name ->
+                                    | Some name when name.Length > 0->
                                         let desc =
                                             fields
                                             |> Seq.tryPick (function ("Desc", Ast.Value.String s) -> Some s | _ -> None)
                                         let valueExpr = <@ name @>
-                                        yield (newName name, typeof<string>), <@@ %valueExpr @@>, desc
-                                    | None ->
+                                        yield (name, typeof<string>), <@@ %valueExpr @@>, desc
+                                    | _ ->
                                         ()
                                 | _ ->
                                     ()
@@ -825,6 +789,7 @@ let buildLibraries (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast
                     data
                     |> List.map work
                     |> Seq.concat
+                    |> Seq.distinctBy (fun ((name, _), _, _) -> name)
                     |> List.ofSeq
                 | Choice2Of2 msg ->
                 // If something went wrong, the property is a string describing the error that occurred.

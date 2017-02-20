@@ -59,7 +59,7 @@ with
                             let damaged =
                                 block.GetDamaged().Value
                                 |> Map.map(fun _ _ -> T.Float 0.0)
-                                |> fun x -> T.Block.Damaged_2(x)
+                                |> fun x -> T.Block.Damaged(x)
                             block.SetDamaged(damaged)
                         else
                             block
@@ -433,7 +433,7 @@ let createBlocks (random : System.Random) (store : NumericalIdentifiers.IdStore)
                     let health = float health
                     let damagedBlock =
                         block.SetDamaged(
-                            T.Block.Damaged_2(
+                            T.Block.Damaged(
                                 Seq.init 128 (fun i -> i, T.Float(if random.NextDouble() < health then 0.0 else 1.0))
                                 |> Map.ofSeq
                             )

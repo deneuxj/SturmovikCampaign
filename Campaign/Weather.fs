@@ -172,7 +172,7 @@ let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Optio
         )
     options
         .SetDate(T.Date(t.Day, t.Month, t.Year))
-        .SetTime(T.Options.Time_2((T.Integer t.Hour, T.Integer t.Minute, T.Integer t.Second)))
+        .SetTime(T.Options.Time((T.Integer t.Hour, T.Integer t.Minute, T.Integer t.Second)))
         .SetCloudLevel(T.Integer(int(floor(weather.CloudHeight))))
         .SetCloudHeight(T.Integer(int(floor(weather.CloudThickness))))
         .SetPrecType(T.Integer precType)
