@@ -136,7 +136,7 @@ let tryUnifyMultMap (n : string) (kind, minMult, maxMult) oldKinds =
     | Some (oldKind, oldMin, oldMax) ->
         match tryUnify(oldKind, kind) with
         | Choice1Of2 kind ->
-            Choice1Of2(Map.add n (kind, least(minMult, oldMin), most(maxMult, oldMax)) oldKinds)
+            Choice1Of2(Map.add n (kind, least(minMult, oldMin), MaxMultiplicity.Multiple) oldKinds)
         | Choice2Of2 msg ->
             Choice2Of2(mkFailedUnification oldKind kind msg)
     | None ->
