@@ -8,6 +8,7 @@ Options
   PlayerConfig = "LuaScripts\WorldObjects\Planes\yak1s69.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\he111h6.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Vehicles\_pziii-l.txt";
+  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Vehicles\_t34-76stz.txt";
   Time = 12:30:2;
   Date = 19.11.1942;
   HMap = "graphics\landscape\height.hini";
@@ -2131,6 +2132,25 @@ Airfield
       Name = "asddew";
       BeaconChannel = 0;
       Spotter = -1;
+      AvMods = "";
+      AvSkins = "";
+      AvPayloads = "";
+    }
+    Vehicle
+    {
+      SetIndex = 3;
+      Number = 10;
+      AILevel = 4;
+      Engageable = 1;
+      Vulnerable = 1;
+      LimitAmmo = 1;
+      Renewable = 1;
+      RenewTime = 1800;
+      Model = "graphics\vehicles\_t34-76stz\_t34-76stz.mgm";
+      Script = "LuaScripts\WorldObjects\Vehicles\_t34-76stz.txt";
+      Name = "asddew";
+      BeaconChannel = 1;
+      Spotter = 500;
       AvMods = "";
       AvSkins = "";
       AvPayloads = "";
