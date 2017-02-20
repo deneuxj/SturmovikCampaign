@@ -1474,7 +1474,7 @@ type ProvidedTypeDefinition(container:TypeContainer,className : string, baseType
 
     member __.DeclaringTypeImpl
         with set x = 
-            match container with TypeContainer.TypeToBeDecided -> () | _ -> failwith (sprintf "container type for '%s' was already set to '%s'" this.FullName x.FullName); 
+            match container with TypeContainer.TypeToBeDecided -> () | _ -> failwith (sprintf "container type for '%s' was already set to '%s'" this.FullName (try x.FullName with _ -> x.Name));
             container <- TypeContainer.Type  x
 
     // Implement overloads
