@@ -535,7 +535,8 @@ let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : Worl
         |> Seq.map (fun mcu -> mcu.AsString())
         |> String.concat "\n"
     let options =
-        Weather.setOptions weather state.Date options
+        (Weather.setOptions weather state.Date options)
+            .SetMissionType(T.Integer 2) // deathmatch
     file.Write("# Mission File Version = 1.0;\n")
     file.Write(options.AsString() + "\n")
     file.Write(groupStr)
