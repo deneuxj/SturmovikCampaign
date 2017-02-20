@@ -115,6 +115,12 @@ and tryUnifyComposites kinds1 kinds2 =
                 Choice2Of2(mkFailedUnification kind1 kind2 msg)
     work (Set.intersect inOne inTwo |> List.ofSeq)
 
+/// <summary>
+/// Try to unify a top-level type.
+/// </summary>
+/// <param name="n">Name of the type</param>
+/// <param name="kind">ValueType of the type</param>
+/// <param name="oldKinds">Previously known types</param>
 let tryUnifyMap (n : string) kind oldKinds =
     match Map.tryFind n oldKinds with
     | Some oldKind ->
@@ -131,12 +137,20 @@ let unifyMap n kind oldKinds =
     | Choice1Of2 d -> d
     | Choice2Of2 msg -> raise(UnificationFailure(msg))
 
+/// <summary>
+/// Try to unify a possibly multiply occuring field in a composite.
+/// </summary>
+/// <param name="n">Name of the field</param>
+/// <param name="kind">ValueType of the present occurence of the field</param>
+/// <param name="minMult">Minimum multiplicity of the field</param>
+/// <param name="maxMult">Maximum multiplicity of the field</param>
+/// <param name="oldKinds">Map of previously known fields, possibly including the field under consideration and its multiplicity.</param>
 let tryUnifyMultMap (n : string) (kind, minMult, maxMult) oldKinds =
     match Map.tryFind n oldKinds with
     | Some (oldKind, oldMin, oldMax) ->
         match tryUnify(oldKind, kind) with
         | Choice1Of2 kind ->
-            Choice1Of2(Map.add n (kind, least(minMult, oldMin), MaxMultiplicity.Multiple) oldKinds)
+            Choice1Of2(Map.add n (kind, MinOne, Multiple) oldKinds)
         | Choice2Of2 msg ->
             Choice2Of2(mkFailedUnification oldKind kind msg)
     | None ->
