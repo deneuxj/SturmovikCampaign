@@ -843,14 +843,21 @@ type MissionTypes(config: TypeProviderConfig) as this =
         // The types corresponding to the ValueTypes extracted from the sample file
         let getProvidedType, cache = mkProvidedTypeBuilder pdb ty
         let types, _ = AutoSchema.getTopTypes(Parsing.Stream.FromFile(sample))
-        for t in types do
-            ignore <| getProvidedType(Some t.Key, t.Value)
-            match t.Value with
+        // Recursively add types encountered in fields of composites
+        let rec addCompositeFields (vtype : Ast.ValueType) =
+            match vtype with
             | Ast.Composite fields ->
                 for kvp in fields do
                     let subT, _, _ = kvp.Value
                     let subName = getNameOfField(kvp.Key, subT)
                     ignore <| getProvidedType(subName, subT)
+                    addCompositeFields subT
+            | _ ->
+                ()
+        // Add top types
+        for t in types do
+            ignore <| getProvidedType(Some t.Key, t.Value)
+            addCompositeFields t.Value
         let types =
             cache
             |> Seq.map (fun kvp -> kvp.Value)
