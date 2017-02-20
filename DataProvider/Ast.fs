@@ -256,7 +256,13 @@ with
             |> List.rev
             |> List.fold (fun expr (name, value) -> <@ (name, %value.ToExpr()) :: %expr @>) <@ [] @>
             |> fun xs -> <@ Composite %xs @>
-            
+
+
+let groundValueTypes =
+    [ ValueType.Boolean; ValueType.Date; ValueType.Float; ValueType.FloatPair; ValueType.IntVector; ValueType.Integer; ValueType.String ]
+
+let groundValueTypeNames =
+    [ "Boolean"; "Date"; "Float"; "FloatPair"; "IntVector"; "Integer"; "String" ]
 
 let rec dump (value : Value) : string =
     match value with
