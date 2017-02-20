@@ -8,6 +8,7 @@
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.MissionGeneration
+open Campaign.AutoOrder
 open System.IO
 
 try
@@ -23,4 +24,11 @@ with
 let strategyFile = "StrategySmall1.mission"
 let world, blocks, options = World.Create(strategyFile)
 let state = WorldState.Create(world, strategyFile)
-writeMissionFile options blocks world state @"C:\Users\johann\Documents\AutoMoscow\AutoGenMission.Mission"
+let axisConvoyOrders =
+    createConvoyOrders (Some Axis) world state
+    |> prioritizeConvoys 2 world state
+let alliesConvoyOrders =
+    createConvoyOrders (Some Allies) world state
+    |> prioritizeConvoys 2 world state
+let allConvoyOrders = axisConvoyOrders @ alliesConvoyOrders
+writeMissionFile options blocks world state allConvoyOrders @"C:\Users\johann\Documents\AutoMoscow\AutoGenMission.Mission"

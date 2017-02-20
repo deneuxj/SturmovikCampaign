@@ -380,6 +380,8 @@ open SturmovikMission.DataProvider.Parsing
 
 type World = {
     Regions : Region list
+    Roads : Path list
+    Rails : Path list
     AntiAirDefenses : DefenseArea list
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
@@ -399,7 +401,7 @@ with
             |> List.map (fun area -> area.AddStorage ammoStorages)
             |> List.map (fun area -> area.AddProduction factories)
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
-        let rail = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
+        let rails = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
         let defenses = data.GetGroup("Defenses")
         let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value = "AAA")
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
@@ -418,4 +420,6 @@ with
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
           StartDate = date
+          Roads = roads
+          Rails = rails
         }, data.ListOfBlock, List.head data.ListOfOptions

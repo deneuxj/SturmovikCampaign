@@ -5,4 +5,6 @@
       "../WorldDescription.fs"
       "../WorldState.fs"
       "../Weather.fs"
+      "../Orders.fs"
+      "../AutoOrder.fs"
       "../MissionGeneration.fs"

@@ -66,7 +66,7 @@ with
     static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3, inFormation : int, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
+        let db = blocksData.CreateMcuList()
         let group = McuUtil.filterByPath ["TruckInConvoy" ; "Convoy"] db |> List.ofSeq
         for mcu in group do
             subst mcu
@@ -115,7 +115,7 @@ with
     static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3, speed : int, priority : int) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
+        let db = blocksData.CreateMcuList()
         let group = McuUtil.filterByPath ["ActiveWaypoint" ; "Convoy"] db |> List.ofSeq
         for mcu in group do
             subst mcu
@@ -156,7 +156,7 @@ with
     static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, coalition : Mcu.CoalitionValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
+        let db = blocksData.CreateMcuList()
         let group = McuUtil.filterByPath ["WhileEnemyClose"] db |> List.ofSeq
         for mcu in group do
             subst mcu
@@ -199,7 +199,7 @@ with
     static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, time : float) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
+        let db = blocksData.CreateMcuList()
         let group = McuUtil.filterByPath ["Timer"] db |> List.ofSeq
         for mcu in group do
             subst mcu

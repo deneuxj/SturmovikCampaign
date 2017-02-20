@@ -1,18 +1,24 @@
 ﻿module Campaign.MissionGeneration
 
+open System.Numerics
+open System.IO
+open System.Collections.Generic
+
 open SturmovikMission.DataProvider
+open SturmovikMission.DataProvider.Cached
+
+open SturmovikMission.Blocks.VirtualConvoy.Factory
+open SturmovikMission.Blocks.VirtualConvoy.Types
+open SturmovikMission.Blocks.StaticDefenses.Factory
+open SturmovikMission.Blocks.StaticDefenses.Types
+open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks
 open Vector
+
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Weather
-open SturmovikMission.Blocks.StaticDefenses.Factory
-open SturmovikMission.Blocks.StaticDefenses.Types
-open System.Numerics
-open System.IO
-open SturmovikMission.Blocks.BlocksMissionData
-open System.Collections.Generic
-open SturmovikMission.DataProvider.Cached
-open SturmovikMission.Blocks
+open Campaign.Orders
 
 type Buildings = {
     All : Mcu.McuBase list
@@ -514,7 +520,65 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
     ]
 
 
-let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : World) (state : WorldState) (filename : string) =
+let createConvoys (missionLengthMinutes : int) (startInterval : int) (convoyLength : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (convoys : ConvoyOrder list) =
+    let getOwner =
+        let m =
+            state.Regions
+            |> Seq.map(fun region -> region.RegionId, region.Owner)
+            |> dict
+        fun x -> m.[x]
+    [
+        for convoy in convoys do
+            let path =
+                world.Roads
+                |> List.tryFind(fun road ->
+                    road.StartId = convoy.Start && road.EndId = convoy.Destination || road.StartId = convoy.Destination && road.EndId = convoy.Start)
+            match path with
+            | Some path ->
+                let vertices =
+                    if path.StartId = convoy.Start then
+                        path.Locations
+                    else
+                        path.Locations |> List.rev
+                let pathVertices =
+                    vertices
+                    |> List.map (fun v ->
+                        { Pos = McuUtil.newVec3(float v.X, 0.0, float v.Y)
+                          Ori = McuUtil.newVec3(float 1.0, 0.0, 0.0)
+                          Radius = 10000
+                          Speed = 50
+                          Priority = 1
+                        }
+                    )
+                let country, coalition =
+                    match getOwner convoy.Start with
+                    | None -> failwithf "Convoy starting from a neutral region '%A'" convoy.Start
+                    | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
+                    | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
+                let virtualConvoys =
+                    [
+                        for i in 1 .. startInterval .. missionLengthMinutes do
+                            let virtualConvoy = VirtualConvoy.Create(store, pathVertices, convoyLength, country, coalition)
+                            let links = virtualConvoy.CreateLinks()
+                            links.Apply(McuUtil.deepContentOf virtualConvoy)
+                            yield virtualConvoy
+                    ]
+                let timers =
+                    [
+                        for conv1, conv2 in Seq.pairwise virtualConvoys do
+                            let getId = store.GetIdMapper()
+                            let timer = newTimer (getId 1)
+                            Mcu.addTargetLink conv1.Api.Start (timer.Index)
+                            Mcu.addTargetLink timer conv2.Api.Start.Index
+                            yield timer
+                    ]
+                yield virtualConvoys, timers
+            | None ->
+                ()
+    ]
+    
+
+let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : World) (state : WorldState) (orders : ConvoyOrder list) (filename : string) =
     let random = System.Random(0)
     let weather = Weather.getWeather random state.Date
     let store = NumericalIdentifiers.IdStore()
@@ -526,9 +590,29 @@ let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : Worl
     let icons = MapIcons.Create(store, lcStore, world, state)
     let blocks = createBlocks random store world state blocks
     let spawns = createAirfieldSpawns store world state
+    let convoysAndTimers = createConvoys 240 60 8 store world state orders
+    for convoys, _ in convoysAndTimers do
+        match convoys with
+        | first :: _ ->
+            Mcu.addTargetLink missionBegin first.Api.Start.Index
+        | [] ->
+            ()
+    let convoys =
+        convoysAndTimers
+        |> Seq.map fst
+        |> Seq.concat
+        |> Seq.map McuUtil.deepContentOf
+        |> Seq.concat
+        |> List.ofSeq
+    let interConvoyTimers =
+        convoysAndTimers
+        |> Seq.map snd
+        |> Seq.concat
+        |> Seq.map (fun x -> x :> Mcu.McuBase)
+        |> List.ofSeq
     use file = File.CreateText(filename)
     let mcus =
-        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks @ spawns
+        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks @ spawns @ convoys @ interConvoyTimers
     let groupStr =
         mcus
         |> McuUtil.moveEntitiesAfterOwners

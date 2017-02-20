@@ -13,6 +13,8 @@ type RegionState = {
     NumMediumTanks : int
     NumLightArmor : int
 }
+with
+    static member ShellWeight = 5.0f
 
 type DefenseAreaState = {
     DefenseAreaId : DefenseAreaId
@@ -40,7 +42,8 @@ module Functions =
     open SturmovikMission.DataProvider.Parsing
     open SturmovikMission.DataProvider.Mcu
 
-    let getShellsPerBuilding (model : string) = 1.0f
+    let getWeightCapacityPerBuilding (model : string) = 5000.0f
+    let getShellsPerBuilding (model : string) = (getWeightCapacityPerBuilding model) / RegionState.ShellWeight
     let antiAirCanonsByArea = 5
     let antiTankCanonsByArea = 5
 
@@ -182,9 +185,12 @@ module Functions =
                 else
                     Map.empty
             let storage =
-                match owner with
-                | None -> 0.0f
-                | Some _ -> airfield.Storage |> Seq.sumBy (fun _ -> 10000.0f)
+                if hasFactories then
+                    match owner with
+                    | None -> 0.0f
+                    | Some _ -> airfield.Storage |> Seq.sumBy (fun gr -> getWeightCapacityPerBuilding gr.Model)
+                else
+                    0.0f
             let bombWeight, rockets =
                 match owner with
                 | Some Allies -> 0.8f * storage, 0.2f * storage

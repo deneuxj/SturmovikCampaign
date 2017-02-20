@@ -54,6 +54,8 @@
     <Compile Include="WorldDescription.fs" />
     <Compile Include="WorldState.fs" />
     <Compile Include="Weather.fs" />
+    <Compile Include="Orders.fs" />
+    <Compile Include="AutoOrder.fs" />
     <Compile Include="MissionGeneration.fs" />
     <None Include="Script.fsx" />
     <None Include="..\data\Sample.Mission">
