@@ -5,8 +5,8 @@ open System.Numerics
 type Vector2
 with
     static member inline FromPos(pos : ^T) =
-        let x = (^T : (member XPos : ^F) pos)
-        let y = (^T : (member ZPos : ^F) pos)
+        let x = (^T : (member GetXPos : unit -> ^F) pos)
+        let y = (^T : (member GetZPos : unit -> ^F) pos)
         let x = (^F : (member Value : float) x)
         let y = (^F : (member Value : float) y)
         Vector2(float32 x, float32 y)

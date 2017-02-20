@@ -307,13 +307,13 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                 let subpTyp = getProvidedType { Name = fieldName; Kind = fieldKind; Parents = parents }
                 addComplexNestedType(ptyp, subpTyp, fieldKind)
             // Constructor
-            ptyp.AddMemberDelayed(construct parents (fields, ptyp))
+            ptyp.AddMemberDelayed(fun() -> construct parents (fields, ptyp))
             // Getters
-            ptyp.AddMembersDelayed(getters parents fields)
+            ptyp.AddMembersDelayed(fun() -> getters parents fields)
             // Setters
-            ptyp.AddMembersDelayed(setters parents (fields, ptyp))
+            ptyp.AddMembersDelayed(fun() -> setters parents (fields, ptyp))
             // Create as MCU
-            ptyp.AddMembersDelayed(asMcu (name, typId.Kind, typExpr))
+            ptyp.AddMembersDelayed(fun() -> asMcu (name, typId.Kind, typExpr))
             // Dump to text
             let meth = pdb.NewMethod("AsString", typeof<string>, [], fun [this] ->
                 <@@
@@ -419,7 +419,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
         ptyp
 
     // Build the getters in composite types
-    and getters parents fields () =
+    and getters parents fields =
         fields
         |> Map.map (
             fun fieldName (def, minMult, maxMult) ->
@@ -427,51 +427,54 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                     getProvidedType { Name = fieldName; Kind = def; Parents = parents }
                 match (minMult, maxMult) with
                 | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
-                    let prop = new ProvidedProperty(fieldName, fieldType)
-                    prop.GetterCode <-
+                    pdb.NewMethod(
+                        sprintf "Get%s" fieldName,
+                        fieldType,
+                        [],
                         fun [this] ->
                             let e = asList this
                             <@@
                                 match List.tryFind (fun (name, _) -> name = fieldName) %e with
                                 | Some (_, value) -> value
                                 | None -> failwithf "Field '%s' is not set" fieldName
-                            @@>
-                    prop
+                            @@>)
                 | Ast.MinMultiplicity.Zero, Ast.MaxOne ->
                     let optTyp =
                         typeof<option<_>>
                             .GetGenericTypeDefinition()
                             .MakeGenericType(fieldType)
-                    let prop = new ProvidedProperty(fieldName, optTyp)
-                    prop.GetterCode <-
+                    pdb.NewMethod(
+                        sprintf "Get%s" fieldName,
+                        optTyp,
+                        [],
                         fun [this] ->
                             let e = asList this
                             <@@
                                 match List.tryFind (fun (name, _) -> name = fieldName) %e with
                                 | Some (_, value) -> Some value
                                 | None -> None
-                            @@>
-                    prop
+                            @@>)
                 | _, Ast.MaxMultiplicity.Multiple ->
                     let listTyp =
                         typeof<List<_>>
                             .GetGenericTypeDefinition()
                             .MakeGenericType(fieldType)
-                    let prop = new ProvidedProperty(fieldName, listTyp)
-                    prop.GetterCode <-
+                    pdb.NewMethod(
+                        sprintf "Get%s" fieldName,
+                        listTyp,
+                        [],
                         fun [this] ->
                             let e = asList this
                             <@@
                                 List.filter (fun (name, _) -> name = fieldName) %e
-                            @@>
-                    prop
+                            @@>)
             )
         |> Map.toList
         |> List.sortBy fst
         |> List.map snd
 
     // setters in composites, using fluent interfaces
-    and setters parents (fields, ptyp) () =
+    and setters parents (fields, ptyp) =
         fields
         |> Seq.map(fun kvp ->
             let fieldName = kvp.Key
@@ -519,7 +522,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
         |> List.ofSeq
 
     // Methods to build mutable MCU instances
-    and asMcu (name, typ, typExpr) () =
+    and asMcu (name, typ, typExpr) =
         [
             match McuFactory.tryMakeMcu(name, typ) with
             | Some _ ->
@@ -539,7 +542,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
         ]
 
     // Constructor. Its arguments are built similarly to the setters
-    and construct parents (fields, ptyp) () =
+    and construct parents (fields, ptyp) =
         let args =
             fields
             |> Seq.choose(fun kvp ->

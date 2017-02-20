@@ -48,13 +48,13 @@ module Functions =
         let data = T.GroupData(Stream.FromFile strategyFile)
         let ownedByRussia =
             data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
-            |> Seq.filter (fun region -> region.Country.Value = int CountryValue.Russia)
-            |> Seq.map (fun region -> RegionId(region.Name.Value))
+            |> Seq.filter (fun region -> region.GetCountry().Value = int CountryValue.Russia)
+            |> Seq.map (fun region -> RegionId(region.GetName().Value))
             |> Set.ofSeq
         let ownedByGermany =
             data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
-            |> Seq.filter (fun region -> region.Country.Value = int CountryValue.Germany)
-            |> Seq.map (fun region -> RegionId(region.Name.Value))
+            |> Seq.filter (fun region -> region.GetCountry().Value = int CountryValue.Germany)
+            |> Seq.map (fun region -> RegionId(region.GetName().Value))
             |> Set.ofSeq
         let getOwner x =
             match ownedByRussia.Contains(x), ownedByGermany.Contains(x) with

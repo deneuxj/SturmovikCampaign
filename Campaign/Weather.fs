@@ -165,14 +165,14 @@ let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Optio
     let windLayers =
         let windDir = int weather.Wind.Direction
         let windSpeed = int weather.Wind.Speed
-        options.WindLayers.Value
+        options.GetWindLayers().Value
         |> List.map(fun trip ->
             let alt, dir, speed = trip.Value
-            T.TripletOfIntegerAndIntegerAndInteger(alt, T.Integer windDir, T.Integer windSpeed)
+            T.Options.WindLayers.WindLayers_ValueType(alt, T.Integer windDir, T.Integer windSpeed)
         )
     options
         .SetDate(T.Date(t.Day, t.Month, t.Year))
-        .SetTime(T.TripletOfIntegerAndIntegerAndInteger(T.Integer t.Hour, T.Integer t.Minute, T.Integer t.Second))
+        .SetTime(T.Options.Time_2((T.Integer t.Hour, T.Integer t.Minute, T.Integer t.Second)))
         .SetCloudLevel(T.Integer(int(floor(weather.CloudHeight))))
         .SetCloudHeight(T.Integer(int(floor(weather.CloudThickness))))
         .SetPrecType(T.Integer precType)
@@ -180,4 +180,4 @@ let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Optio
         .SetCloudConfig(T.String cloudConfig)
         .SetTurbulence(T.Float weather.Turbulence)
         .SetTemperature(T.Integer(int(floor(weather.Temperature))))
-        .SetWindLayers(T.WindLayers(windLayers))
+        .SetWindLayers(T.Options.WindLayers(windLayers))

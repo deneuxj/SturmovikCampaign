@@ -44,8 +44,8 @@ with
                 }
                 |> dict
             fun (block : T.Block) ->
-                let x = float32 block.XPos.Value
-                let y = float32 block.ZPos.Value
+                let x = float32(block.GetXPos().Value)
+                let y = float32(block.GetZPos().Value)
                 match m.TryGetValue((x, y)) with
                 | false, _ -> None
                 | true, x -> Some x
@@ -57,15 +57,15 @@ with
                     let block =
                         if health < 0.9f then
                             let damaged =
-                                block.Damaged.Value
+                                block.GetDamaged().Value
                                 |> Map.map(fun _ _ -> T.Float 0.0)
-                                |> fun x -> T.Damaged(x)
+                                |> fun x -> T.Block.Damaged_2(x)
                             block.SetDamaged(damaged)
                         else
                             block
                     let owner =
                         match owner with
-                        | None -> block.Country
+                        | None -> block.GetCountry()
                         | Some(Allies) -> T.Integer(int Mcu.CountryValue.Russia)
                         | Some(Axis) -> T.Integer(int Mcu.CountryValue.Germany)
                     block.SetCountry(owner)
@@ -433,7 +433,7 @@ let createBlocks (random : System.Random) (store : NumericalIdentifiers.IdStore)
                     let health = float health
                     let damagedBlock =
                         block.SetDamaged(
-                            T.Damaged(
+                            T.Block.Damaged_2(
                                 Seq.init 128 (fun i -> i, T.Float(if random.NextDouble() < health then 0.0 else 1.0))
                                 |> Map.ofSeq
                             )

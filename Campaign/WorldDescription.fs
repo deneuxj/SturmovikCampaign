@@ -30,8 +30,8 @@ type Region = {
 with
     static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list) =
         let extractOne (region : T.MCU_TR_InfluenceArea) =
-            { RegionId = RegionId region.Name.Value
-              Boundary = region.Boundary.Value |> List.map(fun coord -> Vector2.FromPair(coord))
+            { RegionId = RegionId(region.GetName().Value)
+              Boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
               Neighbours = []
               Storage = []
               Production = []
@@ -112,10 +112,10 @@ with
         blocks
         |> List.filter (fun block -> Vector2.FromPos(block).IsInConvexPolygon(this.Boundary))
         |> List.map (fun block ->
-            { Model = block.Model.Value
-              Script = block.Script.Value
+            { Model = block.GetModel().Value
+              Script = block.GetScript().Value
               Pos = { Pos = Vector2.FromPos block
-                      Rotation = float32 block.YOri.Value }
+                      Rotation = float32(block.GetYOri().Value) }
             }
         )
 
@@ -138,32 +138,32 @@ with
     static member ExtractPaths(waypoints : T.MCU_Waypoint list, regions : Region list) =
         let waypointsById =
             waypoints
-            |> List.map (fun wp -> wp.Index.Value, wp)
+            |> List.map (fun wp -> wp.GetIndex().Value, wp)
             |> dict
         let buildPath(start : T.MCU_Waypoint) =
             let rec work (current : T.MCU_Waypoint) path =
-                match current.Name.Value with
+                match current.GetName().Value with
                 | "End" -> current :: path
                 | _ ->
-                    match current.Targets.Value with
+                    match current.GetTargets().Value with
                     | [next] ->
                         match waypointsById.TryGetValue(next) with
                         | true, next -> work next (current :: path)
                         | false, _ -> failwithf "Failed building path because there is no waypoints with id '%d'" next
                     | [] ->
-                        failwithf "Failed to build path because node '%d' has no successor" current.Index.Value
+                        failwithf "Failed to build path because node '%d' has no successor" (current.GetIndex().Value)
                     | _ :: _ ->
-                        failwithf "Failed to build path because node '%d' has too many successors" current.Index.Value
+                        failwithf "Failed to build path because node '%d' has too many successors" (current.GetIndex().Value)
             let path = work start []
             let startRegion =
                 match regions |> List.tryFind (fun area -> Vector2.FromPos(start).IsInConvexPolygon(area.Boundary)) with
-                | None -> failwithf "Failed to build path because start node '%d' is not in a region" start.Index.Value
+                | None -> failwithf "Failed to build path because start node '%d' is not in a region" (start.GetIndex().Value)
                 | Some x -> x
             let endRegion =
                 match path with
                 | finish :: reversed ->
                     match regions |> List.tryFind (fun area -> Vector2.FromPos(finish).IsInConvexPolygon(area.Boundary)) with
-                    | None -> failwithf "Failed to build path because end node '%d' is not in a region" start.Index.Value
+                    | None -> failwithf "Failed to build path because end node '%d' is not in a region" (start.GetIndex().Value)
                     | Some x -> x
                 | _ ->
                     failwith "Failed to build path because it has no end node"
@@ -177,7 +177,7 @@ with
             }
         [
             for wp in waypoints do
-                if wp.Name.Value = "Start" then
+                if wp.GetName().Value = "Start" then
                     yield buildPath wp
         ]
 
@@ -207,13 +207,13 @@ with
                 match regions |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary)) with
                 | Some region ->
                     yield {
-                        DefenseAreaId = DefenseAreaId area.Index.Value
+                        DefenseAreaId = DefenseAreaId(area.GetIndex().Value)
                         Home = Central region.RegionId
-                        Position = { Pos = pos; Rotation = float32 area.YOri.Value }
-                        Boundary = area.Boundary.Value |> List.map(Vector2.FromPair)
+                        Position = { Pos = pos; Rotation = float32(area.GetYOri().Value) }
+                        Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                     }
                 | None ->
-                    failwithf "Defense area '%s' is not located in any region" area.Name.Value
+                    failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
         ]
 
     static member ExtractFrontLineDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list, paths : Path list) =
@@ -236,16 +236,16 @@ with
                             toNeighbours
                             |> List.minBy(fun (path, id) -> pos.DistanceFromPath(path.Locations))
                         with
-                        | _ -> failwithf "Failed to find closest path to defense area '%d'" area.Index.Value
+                        | _ -> failwithf "Failed to find closest path to defense area '%d'" (area.GetIndex().Value)
                         |> snd
                     yield {
-                        DefenseAreaId = DefenseAreaId area.Index.Value
+                        DefenseAreaId = DefenseAreaId(area.GetIndex().Value)
                         Home = FrontLine(region.RegionId, other)
-                        Position = { Pos = pos; Rotation = float32 area.YOri.Value } 
-                        Boundary = area.Boundary.Value |> List.map(Vector2.FromPair)
+                        Position = { Pos = pos; Rotation = float32(area.GetYOri().Value) } 
+                        Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                     }
                 | None ->
-                    failwithf "Defense area '%s' is not located in any region" area.Name.Value
+                    failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
         ]
 
 
@@ -286,6 +286,7 @@ type Airfield = {
     ParkedAttackers : OrientedPosition list
     ParkedBombers : OrientedPosition list
     Storage : StaticGroup list
+    Spawn : T.Airfield
 }
 with
     static member AddParkedFighter(airfields : Airfield list, airfield : AirfieldId, pos : OrientedPosition) =
@@ -328,7 +329,7 @@ with
                 af
         )
 
-    static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane list, storage : T.Block list, regions : Region list) =
+    static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane_2 list, storage : T.Block list, regions : Region list) =
         let airfields =
             spawns
             |> List.map(fun spawn ->
@@ -338,15 +339,16 @@ with
                         regions
                         |> List.find(fun region -> pos.IsInConvexPolygon(region.Boundary))
                     with
-                    | _ -> failwithf "Airfield '%s' is not in any region" spawn.Name.Value
-                { AirfieldId = AirfieldId spawn.Name.Value
+                    | _ -> failwithf "Airfield '%s' is not in any region" (spawn.GetName().Value)
+                { AirfieldId = AirfieldId(spawn.GetName().Value)
                   Region = region.RegionId
                   Pos = pos
-                  Rotation = float32 spawn.YOri.Value
+                  Rotation = float32(spawn.GetYOri().Value)
                   ParkedFighters = []
                   ParkedAttackers = []
                   ParkedBombers = []
                   Storage = []
+                  Spawn = spawn
                 }
             )
         let airfields =
@@ -356,10 +358,10 @@ with
                 let home =
                     airfields
                     |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
-                match plane.Model.Value with
-                | Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = float32 plane.YOri.Value })
-                | Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = float32 plane.YOri.Value })
-                | Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = float32 plane.YOri.Value })
+                match plane.GetModel().Value with
+                | Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
+                | Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
+                | Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
                 | Other -> airfields
             ) airfields
         let airfields =
@@ -369,7 +371,7 @@ with
                 let home =
                     airfields
                     |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
-                Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.Model.Value; Script = group.Script.Value; Pos = { Pos = pos; Rotation = float32 group.YOri.Value } }))
+                Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.GetModel().Value; Script = group.GetScript().Value; Pos = { Pos = pos; Rotation = float32(group.GetYOri().Value) } }))
             ) airfields
         airfields
 
@@ -392,16 +394,16 @@ with
             let ammoStorages = data.GetGroup("Ammo").ListOfBlock
             let factories =
                 data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock
-                |> List.filter(fun block -> block.LinkTrId.Value >= 1)
+                |> List.filter(fun block -> block.GetLinkTrId().Value >= 1)
             regions
             |> List.map (fun area -> area.AddStorage ammoStorages)
             |> List.map (fun area -> area.AddProduction factories)
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
         let rail = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
         let defenses = data.GetGroup("Defenses")
-        let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AAA")
+        let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value = "AAA")
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
-        let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.Name.Value = "AT")
+        let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value = "AT")
         let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(ats, regions, roads)
         let afs = data.GetGroup("Airfield spawns").ListOfAirfield
         let planes = data.GetGroup("Parked planes").ListOfPlane
@@ -409,8 +411,8 @@ with
         let airfields = Airfield.ExtractAirfields(afs, planes, afStorages, regions)
         let date =
             let options = List.head data.ListOfOptions
-            let h, m, s = options.Time.Value
-            System.DateTime(options.Date.Year, options.Date.Month, options.Date.Day, h.Value, m.Value, s.Value)
+            let h, m, s = options.GetTime().Value
+            System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
         { Regions = regions
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
