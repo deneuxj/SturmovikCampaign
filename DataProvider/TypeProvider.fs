@@ -34,8 +34,7 @@ open SturmovikMission.DataProvider.FileWithTime
 /// </summary>
 /// <param name="getValidNames">Function that produces a sequence of name candidates.</param>
 let getNameStore getValidNames =
-    let reserved =
-        [ "Boolean"; "Float"; "Integer"; "String"; "VectorOfIntegers"; "Date" ]
+    let reserved = Ast.groundValueTypeNames
     let store = ref <| Set reserved
     let isValid name =
         Set.contains name !store
@@ -191,63 +190,72 @@ let private getNameOfField(fieldName : string, def) =
     | _ -> None
 
 /// <summary>
+/// Type of keys using in caching provided type definitions.
+/// </summary>
+type TypeIdentification = {
+    Name : string
+    Kind : Ast.ValueType
+    Parents : string list
+}
+
+/// <summary>
 /// Build the function that builds ProvidedTypeDefinitions for ValueTypes encountered in the sample mission file.
 /// </summary>
 /// <param name="top">Definition of the top type in the type provider.</param>
 let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefinition) =
     let newName = mkNewName()
 
-    let cache = new Dictionary<string option * Ast.ValueType, ProvidedTypeDefinition>(HashIdentity.Structural)
+    let cache = new Dictionary<TypeIdentification, ProvidedTypeDefinition>(HashIdentity.Structural)
 
     let asList this = <@ (%%this : Ast.Value).GetItems() @>
 
     // Builders for the ground types
 
-    let buildBoolean (name : string option, typ : Ast.ValueType) =
+    let ptypBoolean =
         let ptyp =
-            new ProvidedTypeDefinition(defaultArg name "Boolean", Some (typeof<Ast.Value>))
+            new ProvidedTypeDefinition("Boolean", Some (typeof<Ast.Value>))
         ptyp.AddMember(pdb.NewProperty("Value", typeof<bool>, fun this -> <@@ (%%this : Ast.Value).GetBool() @@>))
         ptyp.AddMember(pdb.NewConstructor([("Value", typeof<bool>)], fun [value] -> <@@ Ast.Value.Boolean (%%value : bool) @@>))
         ptyp
 
-    let buildFloat (name : string option, typ : Ast.ValueType) =
+    let ptypFloat =
         let ptyp =
-            new ProvidedTypeDefinition(defaultArg name "Float", Some (typeof<Ast.Value>))
+            new ProvidedTypeDefinition("Float", Some (typeof<Ast.Value>))
         ptyp.AddMember(pdb.NewProperty("Value", typeof<float>, fun this -> <@@ (%%this : Ast.Value).GetFloat() @@>))
         ptyp.AddMember(pdb.NewConstructor([("Value", typeof<float>)], fun [value] -> <@@ Ast.Value.Float (%%value : float) @@>))
         ptyp
 
-    let buildFloatPair (name : string option, typ : Ast.ValueType) =
+    let ptypFloatPair =
         let ptyp =
-            new ProvidedTypeDefinition(defaultArg name "FloatPair", Some (typeof<Ast.Value>))
+            new ProvidedTypeDefinition("FloatPair", Some (typeof<Ast.Value>))
         ptyp.AddMember(pdb.NewProperty("Value", typeof<float * float>, fun this -> <@@ (%%this : Ast.Value).GetFloatPair() @@>))
         ptyp.AddMember(pdb.NewConstructor([("Value", typeof<float * float>)], fun [value] -> <@@ let x, y = (%%value : float * float) in Ast.Value.FloatPair(x, y) @@>))
         ptyp
 
-    let buildInteger (name : string option, typ : Ast.ValueType) =
+    let ptypInteger =
         let ptyp =
             new ProvidedTypeDefinition("Integer", Some (typeof<Ast.Value>))
         ptyp.AddMember(pdb.NewProperty("Value", typeof<int>, fun this -> <@@ (%%this : Ast.Value).GetInteger() @@>))
         ptyp.AddMember(pdb.NewConstructor([("Value", typeof<int>)], fun [value] -> <@@ Ast.Value.Integer (%%value : int) @@>))
         ptyp
 
-    let buildString (name : string option, typ : Ast.ValueType) =
+    let ptypString =
         let ptyp =
             new ProvidedTypeDefinition("String", Some (typeof<Ast.Value>))
         ptyp.AddMember(pdb.NewProperty("Value", typeof<string>, fun this -> <@@ (%%this : Ast.Value).GetString() @@>))
         ptyp.AddMember(pdb.NewConstructor([("Value", typeof<string>)], fun [value] -> <@@ Ast.Value.String (%%value : string) @@>))
         ptyp
 
-    let buildIntVector (name : string option, typ : Ast.ValueType) =
+    let ptypIntVector =
         let ptyp =
             new ProvidedTypeDefinition("VectorOfIntegers", Some (typeof<Ast.Value>))
         ptyp.AddMember(pdb.NewProperty("Value", typeof<int list>, fun this -> <@@ (%%this : Ast.Value).GetIntVector() @@>))
         ptyp.AddMember(pdb.NewConstructor([("Value", typeof<int list>)], fun [value] -> <@@ Ast.Value.IntVector (%%value : int list) @@>))
         ptyp
 
-    let buildDate (name : string option, typ : Ast.ValueType) =
+    let ptypDate =
         let ptyp =
-            new ProvidedTypeDefinition(defaultArg name "Date", Some (typeof<Ast.Value>))
+            new ProvidedTypeDefinition("Date", Some (typeof<Ast.Value>))
         ptyp.AddMember(pdb.NewProperty("Year", typeof<int>, fun this ->
             let e = <@@ (%%this : Ast.Value).GetDate() @@>
             <@@ let _, _, year = (%%e : int * int * int) in year @@>))
@@ -261,114 +269,162 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             <@@ Ast.Value.Date((%%day : int), (%%month : int), (%%year : int)) @@>))
         ptyp
 
-    // Build any kind of type, ground or complex.
+    let addComplexNestedType(ptyp : ProvidedTypeDefinition, subpTyp : ProvidedTypeDefinition, kind : Ast.ValueType) =
+        match kind with
+        | Ast.ValueType.Boolean
+        | Ast.ValueType.Float
+        | Ast.ValueType.FloatPair
+        | Ast.ValueType.Integer
+        | Ast.ValueType.String
+        | Ast.ValueType.IntVector
+        | Ast.ValueType.Date -> () // Ground type, do nothing
+        | _ ->
+            // Complex type, add it
+            ptyp.AddMember(subpTyp)
 
-    let rec buildProvidedType (name : string option, typ : Ast.ValueType) =
-        match typ with
-        | Ast.ValueType.Boolean -> buildBoolean(name, typ)
-        | Ast.ValueType.Float -> buildFloat(name, typ)
-        | Ast.ValueType.FloatPair -> buildFloatPair(name, typ)
-        | Ast.ValueType.Integer -> buildInteger(name, typ)
-        | Ast.ValueType.String -> buildString(name, typ)
-        | Ast.ValueType.IntVector -> buildIntVector(name, typ)
-        | Ast.ValueType.Date -> buildDate(name, typ)
-        | Ast.ValueType.Pair (typ1, typ2) -> buildPair(name, typ1, typ2)
-        | Ast.ValueType.Triplet (typ1, typ2, typ3) -> buildTriple(name, typ1, typ2, typ3)
+    // Build any kind of type, ground or complex.
+    let rec buildProvidedType (typId : TypeIdentification) =
+        let name = typId.Name
+        match typId.Kind with
+        | Ast.ValueType.Boolean -> ptypBoolean
+        | Ast.ValueType.Float -> ptypFloat
+        | Ast.ValueType.FloatPair -> ptypFloatPair
+        | Ast.ValueType.Integer -> ptypInteger
+        | Ast.ValueType.String -> ptypString
+        | Ast.ValueType.IntVector -> ptypIntVector
+        | Ast.ValueType.Date -> ptypDate
+        | Ast.ValueType.Pair (typ1, typ2) -> buildPair(typId, typ1, typ2)
+        | Ast.ValueType.Triplet (typ1, typ2, typ3) -> buildTriple(typId, typ1, typ2, typ3)
         | Ast.ValueType.Composite fields ->
-            let typExpr = typ.ToExpr()
+            let typExpr = typId.Kind.ToExpr()
             let ptyp =
-                new ProvidedTypeDefinition(defaultArg name "Composite" |> newName, Some (typeof<Ast.Value>))
-            ptyp.AddMembersDelayed(getters fields)
-            ptyp.AddMembersDelayed(setters (fields, ptyp))
-            ptyp.AddMembersDelayed(asMcu (name, typ, typExpr))
-            ptyp.AddMemberDelayed(construct (fields, ptyp))
+                new ProvidedTypeDefinition(newName name, Some (typeof<Ast.Value>))
+            let parents = name :: typId.Parents
+            // Add types of complex fields as nested types
+            for field in fields do
+                let fieldName = field.Key
+                let fieldKind, _, _ = field.Value
+                let subpTyp = getProvidedType { Name = fieldName; Kind = fieldKind; Parents = parents }
+                addComplexNestedType(ptyp, subpTyp, fieldKind)
+            // Constructor
+            ptyp.AddMemberDelayed(construct parents (fields, ptyp))
+            // Getters
+            ptyp.AddMembersDelayed(getters parents fields)
+            // Setters
+            ptyp.AddMembersDelayed(setters parents (fields, ptyp))
+            // Create as MCU
+            ptyp.AddMembersDelayed(asMcu (name, typId.Kind, typExpr))
             // Dump to text
-            match name with
-            | Some name ->
-                let meth = pdb.NewMethod("AsString", typeof<string>, [], fun [this] ->
-                    <@@
-                        name + Ast.dump (%%this : Ast.Value)
-                    @@>)
-                ptyp.AddMember(meth)
-            | None ->
-                ()
+            let meth = pdb.NewMethod("AsString", typeof<string>, [], fun [this] ->
+                <@@
+                    name + Ast.dump (%%this : Ast.Value)
+                @@>)
+            ptyp.AddMember(meth)
+            // Result
             ptyp
         | Ast.ValueType.Mapping itemTyp ->
-            let ptyp1 = getProvidedType(None, itemTyp)
+            let subName = sprintf "%s_ValueType" name
+            let ptyp1 = getProvidedType { Name = subName; Kind = itemTyp; Parents = name :: typId.Parents }
             let ptyp =
-                new ProvidedTypeDefinition(defaultArg name "Mapping" |> newName, Some (typeof<Ast.Value>))
+                new ProvidedTypeDefinition(newName name, Some (typeof<Ast.Value>))
+            addComplexNestedType(ptyp, ptyp1, itemTyp)
+            // Default constructor
             ptyp.AddMember(pdb.NewConstructor([], fun [] -> <@@ Ast.Value.Mapping [] @@>))
+            // Constructor from map
             ptyp.AddMember(pdb.NewConstructor([("map", typedefof<Map<_, _>>.MakeGenericType(typeof<int>, ptyp1))], fun [m] ->
                 <@@
                     let m = (%%m : Map<int, Ast.Value>)
                     Ast.Value.Mapping(Map.toList m)
                 @@>))
+            // Value getter
             let propTyp = typedefof<Map<_,_>>.MakeGenericType(typeof<int>, ptyp1)
             ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetMapping() |> Map.ofList @@>))
+            // Set item in the map
             ptyp.AddMember(pdb.NewMethod("SetItem", ptyp, [("Key", typeof<int>); ("Value", upcast ptyp1)], fun [this; key; value] ->
                 <@@
                     let this = (%%this : Ast.Value)
                     this.SetItem((%%key : int), (%%value : Ast.Value))
                 @@>))
+            // Remove item from the map
             ptyp.AddMember(pdb.NewMethod("RemoveItem", ptyp, ["Key", typeof<int>], fun [this; key] ->
                 <@@
                     let this = (%%this : Ast.Value)
                     this.RemoveItem(%%key : int)
                 @@>))
+            // Clear map
             ptyp.AddMember(pdb.NewMethod("Clear", ptyp, [], fun [this] ->
                 <@@
                     let this = (%%this : Ast.Value)
                     this.Clear()
                 @@>))
+            // Result
             ptyp
         | Ast.ValueType.List itemTyp ->
-            let ptyp1 = getProvidedType(None, itemTyp)
+            let subName = sprintf "%s_ValueType" name
+            let ptyp1 = getProvidedType { Name = subName; Kind = itemTyp; Parents = name :: typId.Parents }
             let ptyp =
-                new ProvidedTypeDefinition(defaultArg name "List" |> newName, Some (typeof<Ast.Value>))
+                new ProvidedTypeDefinition(newName name, Some (typeof<Ast.Value>))
+            addComplexNestedType(ptyp, ptyp1, itemTyp)
+            // Default constructor
             ptyp.AddMember(pdb.NewConstructor([], fun [] -> <@@ Ast.Value.List [] @@>))
+            // Value getter
             let propTyp = typedefof<_ list>.MakeGenericType(ptyp1)
             ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetList() @@>))
             // constructor with value
             ptyp.AddMember(pdb.NewConstructor(["items", propTyp], fun [items] -> <@@ Ast.Value.List (%%items : Ast.Value list)@@>))
+            // Result
             ptyp
 
-    and buildPair (name : string option, typ1 : Ast.ValueType, typ2 : Ast.ValueType) =
-        let ptyp1 = getProvidedType(None, typ1)
-        let ptyp2 = getProvidedType(None, typ2)
+    and buildPair (typId : TypeIdentification, typ1 : Ast.ValueType, typ2 : Ast.ValueType) =
+        let ptyp1 =
+            let subName = sprintf "%s_ValueType1" typId.Name
+            getProvidedType { Name = subName; Kind = typ1; Parents = typId.Name :: typId.Parents }
+        let ptyp2 =
+            let subName = sprintf "%s_ValueType2" typId.Name
+            getProvidedType { Name = subName; Kind = typ2; Parents = typId.Name :: typId.Parents }
         let ptyp =
-            let name =
-                sprintf "PairOf%sAnd%s" ptyp1.Name ptyp2.Name
-                |> defaultArg name
-                |> newName
-            new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
+            new ProvidedTypeDefinition(newName typId.Name, Some (typeof<Ast.Value>))
+        addComplexNestedType(ptyp, ptyp1, typ1)
+        addComplexNestedType(ptyp, ptyp2, typ2)
+        // Value getter
         let propTyp = typedefof<_*_>.MakeGenericType(ptyp1, ptyp2)
         ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetPair() @@>))
+        // Constructor
         ptyp.AddMember(pdb.NewConstructor([("Value", propTyp)], fun [value] -> <@@ Ast.Value.Pair (%%value : Ast.Value * Ast.Value) @@>))
+        // Result
         ptyp
 
-    and buildTriple (name : string option, typ1 : Ast.ValueType, typ2 : Ast.ValueType, typ3 : Ast.ValueType) =
-        let ptyp1 = getProvidedType(None, typ1)
-        let ptyp2 = getProvidedType(None, typ2)
-        let ptyp3 = getProvidedType(None, typ3)
+    and buildTriple (typId : TypeIdentification, typ1 : Ast.ValueType, typ2 : Ast.ValueType, typ3 : Ast.ValueType) =
+        let name = typId.Name
+        let ptyp1 =
+            let subName = sprintf "%s_ValueType1" name
+            getProvidedType { Name = subName; Kind = typ1; Parents = name :: typId.Parents }
+        let ptyp2 =
+            let subName = sprintf "%s_ValueType2" name
+            getProvidedType { Name = subName; Kind = typ2; Parents = name :: typId.Parents }
+        let ptyp3 =
+            let subName = sprintf "%s_ValueType3" name
+            getProvidedType { Name = subName; Kind = typ3; Parents = name :: typId.Parents }
         let ptyp =
-            let name =
-                sprintf "TripletOf%sAnd%sAnd%s" ptyp1.Name ptyp2.Name ptyp3.Name
-                |> defaultArg name
-                |> newName
-            new ProvidedTypeDefinition(name, Some (typeof<Ast.Value>))
+            new ProvidedTypeDefinition(newName name, Some (typeof<Ast.Value>))
+        addComplexNestedType(ptyp, ptyp1, typ1)
+        addComplexNestedType(ptyp, ptyp2, typ2)
+        addComplexNestedType(ptyp, ptyp3, typ3)
         let propTyp = typedefof<_*_*_>.MakeGenericType(ptyp1, ptyp2, ptyp3)
+        // Value getter
         ptyp.AddMember(pdb.NewProperty("Value", propTyp, fun this -> <@@ (%%this : Ast.Value).GetTriplet() @@>))
+        // Constructor
         ptyp.AddMember(pdb.NewConstructor([("Value", propTyp)], fun [value] -> <@@ Ast.Value.Triplet (%%value : Ast.Value * Ast.Value * Ast.Value) @@>))
+        // Result
         ptyp
 
     // Build the getters in composite types
-    and getters fields () =
+    and getters parents fields () =
         fields
         |> Map.map (
             fun fieldName (def, minMult, maxMult) ->
                 let fieldType =
-                    let subName = getNameOfField(fieldName, def)
-                    getProvidedType(subName, def)
+                    getProvidedType { Name = fieldName; Kind = def; Parents = parents }
                 match (minMult, maxMult) with
                 | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
                     let prop = new ProvidedProperty(fieldName, fieldType)
@@ -415,19 +471,13 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
         |> List.map snd
 
     // setters in composites, using fluent interfaces
-    and setters (fields, ptyp) () =
+    and setters parents (fields, ptyp) () =
         fields
         |> Seq.map(fun kvp ->
             let fieldName = kvp.Key
             let (def, minMult, maxMult) = kvp.Value
             let fieldType =
-                let subName =
-                    match def with
-                    | Ast.ValueType.List _
-                    | Ast.ValueType.Mapping _
-                    | Ast.ValueType.Composite _ -> Some fieldName
-                    | _ -> None
-                getProvidedType(subName, def)
+                getProvidedType { Name = fieldName; Kind = def; Parents = parents }
             match (minMult, maxMult) with
             | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
                 pdb.NewMethod(
@@ -471,42 +521,32 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
     // Methods to build mutable MCU instances
     and asMcu (name, typ, typExpr) () =
         [
-            match name with
-            | Some name ->
-                match McuFactory.tryMakeMcu(name, typ) with
-                | Some _ ->
-                    yield
-                        pdb.NewMethod(
-                            "CreateMcu",
-                            typeof<Mcu.McuBase>,
-                            [],
-                            fun [this] ->
-                                <@@
-                                    match McuFactory.tryMakeMcu(name, %typExpr) with
-                                    | Some f -> f((%%this : Ast.Value), [])
-                                    | None -> failwith "Unexpected error: could not build MCU"
-                                @@>)
-                        |> addXmlDoc """<summary>Create a new mutable instance of an MCU.</summary>"""
-                | None -> ()
-            | None ->
-                ()
+            match McuFactory.tryMakeMcu(name, typ) with
+            | Some _ ->
+                yield
+                    pdb.NewMethod(
+                        "CreateMcu",
+                        typeof<Mcu.McuBase>,
+                        [],
+                        fun [this] ->
+                            <@@
+                                match McuFactory.tryMakeMcu(name, %typExpr) with
+                                | Some f -> f((%%this : Ast.Value), [])
+                                | None -> failwith "Unexpected error: could not build MCU"
+                            @@>)
+                    |> addXmlDoc """<summary>Create a new mutable instance of an MCU.</summary>"""
+            | None -> ()
         ]
 
     // Constructor. Its arguments are built similarly to the setters
-    and construct (fields, ptyp) () =
+    and construct parents (fields, ptyp) () =
         let args =
             fields
             |> Seq.choose(fun kvp ->
                 let fieldName = kvp.Key
                 let (def, minMult, maxMult) = kvp.Value
                 let fieldType =
-                    let subName =
-                        match def with
-                        | Ast.ValueType.List _
-                        | Ast.ValueType.Mapping _
-                        | Ast.ValueType.Composite _ -> Some fieldName
-                        | _ -> None
-                    getProvidedType(subName, def)
+                    getProvidedType { Name = fieldName; Kind = def; Parents = parents }
                 match (minMult, maxMult) with
                 | Ast.MinMultiplicity.MinOne, Ast.MaxMultiplicity.MaxOne ->
                     Some (fieldName, fieldType :> Type)
@@ -528,8 +568,8 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
             @@>
         pdb.NewConstructor(args, body)
 
-    and getProvidedType (name, typ) : ProvidedTypeDefinition =
-        cached cache (buildProvidedType) (name, typ)
+    and getProvidedType typId : ProvidedTypeDefinition =
+        cached cache buildProvidedType typId
 
     getProvidedType, cache
 
@@ -843,33 +883,20 @@ type MissionTypes(config: TypeProviderConfig) as this =
         // The types corresponding to the ValueTypes extracted from the sample file
         let getProvidedType, cache = mkProvidedTypeBuilder pdb ty
         let types, _ = AutoSchema.getTopTypes(Parsing.Stream.FromFile(sample))
-        // Recursively add types encountered in fields of composites
-        let rec addCompositeFields (vtype : Ast.ValueType) =
-            match vtype with
-            | Ast.Composite fields ->
-                for kvp in fields do
-                    let subT, _, _ = kvp.Value
-                    let subName = getNameOfField(kvp.Key, subT)
-                    ignore <| getProvidedType(subName, subT)
-                    addCompositeFields subT
-            | _ ->
-                ()
         // Add top types
         for t in types do
-            ignore <| getProvidedType(Some t.Key, t.Value)
-            addCompositeFields t.Value
-        let types =
-            cache
-            |> Seq.map (fun kvp -> kvp.Value)
-            |> List.ofSeq
-        ty.AddMembers(types)
+            let typeDef = getProvidedType { Name = t.Key; Kind = t.Value; Parents = [] }
+            ty.AddMember(typeDef)
+        // Add ground types
+        for kind, name in Seq.zip Ast.groundValueTypes Ast.groundValueTypeNames do
+            let typeDef = getProvidedType { Name = name; Kind = kind; Parents = [] }
+            ty.AddMember(typeDef)
         // The type of the parser.
         let namedTypes =
             cache
-            |> Seq.choose (fun kvp ->
-                match fst kvp.Key with
-                | Some name -> Some (name, snd kvp.Key, kvp.Value)
-                | None -> None)
+            |> Seq.map (fun kvp ->
+                let typId = kvp.Key
+                (typId.Name, typId.Kind, kvp.Value))
             |> List.ofSeq
         let parserType = buildParserType pdb namedTypes
         ty.AddMember(parserType)
