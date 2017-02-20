@@ -12,6 +12,7 @@ open System.IO
 open SturmovikMission.Blocks.BlocksMissionData
 open System.Collections.Generic
 open SturmovikMission.DataProvider.Cached
+open SturmovikMission.Blocks
 
 type Buildings = {
     All : Mcu.McuBase list
@@ -456,7 +457,64 @@ let createBlocks (random : System.Random) (store : NumericalIdentifiers.IdStore)
     ]
 
 
-let writeGroupFile (options : T.Options) (blocks : T.Block list) (world : World) (state : WorldState) (filename : string) =
+let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) =
+    let getOwner =
+        let m =
+            state.Regions
+            |> Seq.map(fun region -> region.RegionId, region.Owner)
+            |> dict
+        fun x -> m.[x]
+    let getPlaneModel x =
+        match x with
+        | Bf109e7 -> Vehicles.germanFighter1
+        | Bf109f2 -> Vehicles.germanFighter2
+        | Mc202 -> Vehicles.germanFighter3
+        | Bf110e -> Vehicles.germanAttacker1
+        | Ju88a4 -> Vehicles.germanBomber1
+        | Ju52 -> Vehicles.germanBomber2
+        | I16 -> Vehicles.russianFighter1
+        | Mig3 -> Vehicles.russianFighter2
+        | P40 -> Vehicles.russianFighter3
+        | IL2M41 -> Vehicles.russianAttacker1
+        | Pe2s35 -> Vehicles.russianBomber1
+    [
+        for airfield, state in Seq.zip world.Airfields state.Airfields do
+            let subst = Mcu.substId <| store.GetIdMapper()
+            match getOwner airfield.Region with
+            | None -> ()
+            | Some coalition ->
+                let af =
+                    match coalition with
+                    | Axis ->
+                        airfield.Spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
+                    | Allies ->
+                        airfield.Spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
+                let planeSpecs : T.Airfield.Planes.Plane list =
+                    state.NumPlanes
+                    |> Map.map (fun plane number ->
+                        let model = getPlaneModel plane
+                        newAirfieldPlane("", "", 0, 0, "", "", number)
+                            .SetScript(T.String model.Script)
+                            .SetModel(T.String model.Model)
+                    )
+                    |> Map.toSeq
+                    |> Seq.map snd
+                    |> List.ofSeq
+                let planes =
+                    T.Airfield.Planes()
+                        .SetPlane(planeSpecs)
+                let af = af.SetPlanes(planes).SetIndex(T.Integer 1).SetLinkTrId(T.Integer 2)
+                let entity = newEntity 2
+                entity.MisObjID <- 1
+                let mcu = af.CreateMcu()
+                subst mcu
+                subst entity
+                yield mcu
+                yield entity :> Mcu.McuBase
+    ]
+
+
+let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : World) (state : WorldState) (filename : string) =
     let random = System.Random(0)
     let weather = Weather.getWeather random state.Date
     let store = NumericalIdentifiers.IdStore()
@@ -467,9 +525,10 @@ let writeGroupFile (options : T.Options) (blocks : T.Block list) (world : World)
     let antiTankDefenses = ArtilleryGroup.Create(random, store, missionBegin, world, state)
     let icons = MapIcons.Create(store, lcStore, world, state)
     let blocks = createBlocks random store world state blocks
+    let spawns = createAirfieldSpawns store world state
     use file = File.CreateText(filename)
     let mcus =
-        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks
+        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks @ spawns
     let groupStr =
         mcus
         |> McuUtil.moveEntitiesAfterOwners

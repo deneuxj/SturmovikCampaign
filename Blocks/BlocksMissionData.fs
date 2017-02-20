@@ -47,3 +47,32 @@ let newMissionBegin idx =
         T.Float 0.0,
         T.Float 0.0,
         T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
+
+let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, number) =
+    T.Airfield.Planes.Plane(
+        T.Integer 2,
+        T.Boolean false,
+        T.Integer 0,
+        T.String modFilter,
+        T.String payloadFilter,
+        T.String skinFilter,
+        T.Integer 0,
+        T.Integer 0,
+        T.Boolean true,
+        T.Float 1.0,
+        T.Boolean true,
+        T.String "",
+        T.String name,
+        T.Integer number,
+        T.Integer payload,
+        T.Integer 0,
+        T.Boolean true,
+        T.Integer 60,
+        T.String "",
+        T.Integer 0,
+        T.String "",
+        T.Integer -1,
+        T.Integer 0,
+        T.Boolean true,
+        T.Integer mods
+    )

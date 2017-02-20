@@ -169,13 +169,18 @@ module Functions =
         let antiAirDefenses = antiAirDefenses |> List.map adjustNumUnits
         let antiTankDefenses = antiTankDefenses |> List.map adjustNumUnits
         let mkAirfield (airfield : Airfield) =
+            let hasFactories =
+                not <| List.isEmpty (getRegion airfield.Region).Production
             let owner =
                 getOwner airfield.Region
             let numPlanes =
-                match owner with
-                | None -> Map.empty
-                | Some Allies -> [ (I16, 20); (IL2M41, 10); (Mig3, 20); (P40, 10); (Pe2s35, 10) ] |> Map.ofList
-                | Some Axis -> [ (Bf109e7, 20); (Bf110e, 10); (Bf109f2, 20); (Mc202, 10); (Ju88a4, 10); (Ju52, 3) ] |> Map.ofList
+                if hasFactories then
+                    match owner with
+                    | None -> Map.empty
+                    | Some Allies -> [ (I16, 20); (IL2M41, 10); (Mig3, 20); (P40, 10); (Pe2s35, 10) ] |> Map.ofList
+                    | Some Axis -> [ (Bf109e7, 20); (Bf110e, 10); (Bf109f2, 20); (Mc202, 10); (Ju88a4, 10); (Ju52, 3) ] |> Map.ofList
+                else
+                    Map.empty
             let storage =
                 match owner with
                 | None -> 0.0f

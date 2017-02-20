@@ -572,7 +572,7 @@ Vehicle
 Vehicle
 {
   Name = "AntiAirRUS";
-  Index = 20;
+  Index = 19;
   LinkTrId = 0;
   XPos = 29031.172;
   YPos = 108.584;
@@ -596,6 +596,538 @@ Vehicle
   Spotter = -1;
   BeaconChannel = 0;
   Callsign = 0;
+}
+
+
+
+Plane
+{
+  Name = "fighter1GER";
+  Index = 20;
+  LinkTrId = 0;
+  XPos = 29087.598;
+  YPos = 110.139;
+  ZPos = 20049.186;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.30;
+  Script = "LuaScripts\WorldObjects\Planes\bf109e7.txt";
+  Model = "graphics\planes\bf109e7\bf109e7.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter2GER";
+  Index = 21;
+  LinkTrId = 0;
+  XPos = 29087.279;
+  YPos = 110.114;
+  ZPos = 20066.610;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.80;
+  Script = "LuaScripts\WorldObjects\Planes\bf109f2.txt";
+  Model = "graphics\planes\bf109f2\bf109f2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "attacker1GER";
+  Index = 22;
+  LinkTrId = 0;
+  XPos = 29087.200;
+  YPos = 110.494;
+  ZPos = 20102.334;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 10.60;
+  Script = "LuaScripts\WorldObjects\Planes\bf110e2.txt";
+  Model = "graphics\planes\bf110e2\bf110e2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bomber1GER";
+  Index = 23;
+  LinkTrId = 0;
+  XPos = 29086.567;
+  YPos = 110.884;
+  ZPos = 20144.886;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.40;
+  Script = "LuaScripts\WorldObjects\Planes\ju88a4.txt";
+  Model = "graphics\planes\ju88a4\ju88a4.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter3GER";
+  Index = 24;
+  LinkTrId = 0;
+  XPos = 29086.726;
+  YPos = 110.074;
+  ZPos = 20083.463;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 13.90;
+  Script = "LuaScripts\WorldObjects\Planes\mc202s8.txt";
+  Model = "graphics\planes\mc202s8\mc202s8.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter1RUS";
+  Index = 25;
+  LinkTrId = 0;
+  XPos = 29068.586;
+  YPos = 109.979;
+  ZPos = 20048.375;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 15.30;
+  Script = "LuaScripts\WorldObjects\Planes\i16t24.txt";
+  Model = "graphics\planes\i16t24\i16t24.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter2RUS";
+  Index = 26;
+  LinkTrId = 0;
+  XPos = 29068.108;
+  YPos = 110.064;
+  ZPos = 20065.243;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 15.00;
+  Script = "LuaScripts\WorldObjects\Planes\mig3s24.txt";
+  Model = "graphics\planes\mig3s24\mig3s24.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "attacker1RUS";
+  Index = 27;
+  LinkTrId = 0;
+  XPos = 29069.700;
+  YPos = 110.314;
+  ZPos = 20102.558;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.70;
+  Script = "LuaScripts\WorldObjects\Planes\il2m41.txt";
+  Model = "graphics\planes\il2m41\il2m41.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bomber1RUS";
+  Index = 28;
+  LinkTrId = 0;
+  XPos = 29068.586;
+  YPos = 110.684;
+  ZPos = 20145.681;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.50;
+  Script = "LuaScripts\WorldObjects\Planes\pe2s35.txt";
+  Model = "graphics\planes\pe2s35\pe2s35.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter3RUS";
+  Index = 29;
+  LinkTrId = 0;
+  XPos = 29068.824;
+  YPos = 110.424;
+  ZPos = 20082.269;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 13.90;
+  Script = "LuaScripts\WorldObjects\Planes\p40e1.txt";
+  Model = "graphics\planes\p40e1\p40e1.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "attacker2GER";
+  Index = 30;
+  LinkTrId = 0;
+  XPos = 29086.010;
+  YPos = 110.554;
+  ZPos = 20122.528;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.00;
+  Script = "LuaScripts\WorldObjects\Planes\ju87d3.txt";
+  Model = "graphics\planes\ju87d3\ju87d3.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "attacker2RUS";
+  Index = 31;
+  LinkTrId = 0;
+  XPos = 29069.302;
+  YPos = 108.584;
+  ZPos = 20123.245;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Planes\il2m41.txt";
+  Model = "graphics\planes\il2m41\il2m41.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bomber2GER";
+  Index = 32;
+  LinkTrId = 0;
+  XPos = 29086.476;
+  YPos = 110.884;
+  ZPos = 20170.190;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.40;
+  Script = "LuaScripts\WorldObjects\Planes\ju88a4.txt";
+  Model = "graphics\planes\ju88a4\ju88a4.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bomber2RUS";
+  Index = 33;
+  LinkTrId = 0;
+  XPos = 29068.654;
+  YPos = 110.684;
+  ZPos = 20170.747;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.50;
+  Script = "LuaScripts\WorldObjects\Planes\pe2s35.txt";
+  Model = "graphics\planes\pe2s35\pe2s35.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
 }
 
 
