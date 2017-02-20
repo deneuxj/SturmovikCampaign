@@ -62,6 +62,22 @@ type ValueType =
     | Date
     | FloatPair
 
+let groundValueTypes =
+    [ ValueType.Boolean; ValueType.Date; ValueType.Float; ValueType.FloatPair; ValueType.IntVector; ValueType.Integer; ValueType.String ]
+
+let groundValueTypeNames =
+    [ "Boolean"; "Date"; "Float"; "FloatPair"; "IntVector"; "Integer"; "String" ]
+
+let isGroundType x =
+    match x with
+    | Boolean | Integer | String | Float | IntVector | Date | FloatPair -> true
+    | _ -> false
+
+let (|NameOfGroundType|_|) x =
+    Seq.zip groundValueTypes groundValueTypeNames
+    |> Seq.tryFind(fun (t, n) -> x = t)
+    |> Option.map snd
+
 let private valueTypeToExprCache = new Dictionary<ValueType, Quotations.Expr<ValueType>>(HashIdentity.Structural)
 
 let rec buildExprFromValueType expr =
@@ -257,12 +273,6 @@ with
             |> List.fold (fun expr (name, value) -> <@ (name, %value.ToExpr()) :: %expr @>) <@ [] @>
             |> fun xs -> <@ Composite %xs @>
 
-
-let groundValueTypes =
-    [ ValueType.Boolean; ValueType.Date; ValueType.Float; ValueType.FloatPair; ValueType.IntVector; ValueType.Integer; ValueType.String ]
-
-let groundValueTypeNames =
-    [ "Boolean"; "Date"; "Float"; "FloatPair"; "IntVector"; "Integer"; "String" ]
 
 let rec dump (value : Value) : string =
     match value with

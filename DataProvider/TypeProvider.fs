@@ -894,9 +894,16 @@ type MissionTypes(config: TypeProviderConfig) as this =
         // The type of the parser.
         let namedTypes =
             cache
-            |> Seq.map (fun kvp ->
+            |> Seq.choose (fun kvp ->
                 let typId = kvp.Key
-                (typId.Name, typId.Kind, kvp.Value))
+                match typId.Kind with
+                | Ast.NameOfGroundType(name) ->
+                    if name = typId.Name then
+                        Some(typId.Name, typId.Kind, kvp.Value)
+                    else
+                        None
+                | _ ->
+                    Some(typId.Name, typId.Kind, kvp.Value))
             |> List.ofSeq
         let parserType = buildParserType pdb namedTypes
         ty.AddMember(parserType)
