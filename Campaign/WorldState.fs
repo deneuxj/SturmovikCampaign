@@ -44,6 +44,7 @@ module Functions =
 
     let getWeightCapacityPerBuilding (model : string) = 5000.0f
     let getShellsPerBuilding (model : string) = (getWeightCapacityPerBuilding model) / RegionState.ShellWeight
+    let getDurabilityForBuilding (model : string) = 15000
     let antiAirCanonsByArea = 5
     let antiTankCanonsByArea = 5
 

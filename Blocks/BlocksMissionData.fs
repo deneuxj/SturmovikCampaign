@@ -76,3 +76,25 @@ let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, 
         T.Boolean true,
         T.Integer mods
     )
+
+module CommonMethods =
+    let inline createMcu(x : ^T) =
+        (^T : (member CreateMcu : unit -> Mcu.McuBase) x)
+
+    let inline setDamaged (damaged : ^D) (x : ^T) =
+        (^T : (member SetDamaged : ^D -> ^T) x, damaged)
+
+    let inline setDurability (durability : ^D) (x : ^T) =
+        (^T : (member SetDurability : ^D -> ^T) x, durability)
+
+    let inline setIndex (index : ^D) (x : ^T) =
+        (^T : (member SetIndex : ^D -> ^T) x, index)
+
+    let inline getModel(x : ^T) : ^R =
+        (^T : (member GetModel : unit -> ^R) x)
+
+    let inline valueOf(v : ^V) : ^R =
+        (^V : (member Value : ^R) v)
+
+    let inline setLinkTrId (index : ^D) (x : ^T) =
+        (^T : (member SetLinkTrId : ^D -> ^T) x, index)

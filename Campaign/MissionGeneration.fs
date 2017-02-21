@@ -376,8 +376,9 @@ with
           LcStrings = lcStrings
         }
 
+open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 
-let createBlocks (random : System.Random) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (blocks : T.Block list) =
+let inline createBlocksGen mkDamaged (random : System.Random) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (blocks : ^T list) =
     let tryGetRegionAt(v : Vector2) =
         world.Regions
         |> List.tryFind (fun region ->
@@ -432,19 +433,23 @@ let createBlocks (random : System.Random) (store : NumericalIdentifiers.IdStore)
                 | None ->
                     // No strategic value, create without entity.
                     let mcu =
-                        block.CreateMcu()
+                        createMcu block
                     subst mcu
                     yield mcu
                 | Some health ->
                     // Has health and strategic value, create with an entity.
                     let health = float health
                     let damagedBlock =
-                        block.SetDamaged(
-                            T.Block.Damaged(
+                        block
+                        |> setDamaged (
+                            mkDamaged (
                                 Seq.init 128 (fun i -> i, T.Float(if random.NextDouble() < health then 0.0 else 1.0))
-                                |> Map.ofSeq
-                            )
-                        ).SetIndex(T.Integer 1).SetLinkTrId(T.Integer 2).CreateMcu() :?> Mcu.HasEntity
+                                |> Map.ofSeq))
+                        |> setDurability (T.Integer(Functions.getDurabilityForBuilding(block |> getModel |> valueOf)))
+                        |> setIndex (T.Integer 1)
+                        |> setLinkTrId (T.Integer 2)
+                        |> createMcu
+                        :?> Mcu.HasEntity
                     match state.Owner with
                     | Some Allies ->
                         damagedBlock.Country <- Mcu.CountryValue.Russia
@@ -462,6 +467,9 @@ let createBlocks (random : System.Random) (store : NumericalIdentifiers.IdStore)
                     yield entity
     ]
 
+let createBlocks random store world state (blocks : T.Block list) = createBlocksGen T.Block.Damaged random store world state blocks
+
+let createBridges random store world state (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged random store world state blocks
 
 let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) =
     let getOwner =
@@ -589,7 +597,7 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
     ]
 
 
-let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
+let writeMissionFile (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
     let random = System.Random(0)
     let weather = Weather.getWeather random state.Date
     let store = NumericalIdentifiers.IdStore()
@@ -600,6 +608,7 @@ let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : Worl
     let antiTankDefenses = ArtilleryGroup.Create(random, store, missionBegin, world, state)
     let icons = MapIcons.Create(store, lcStore, world, state)
     let blocks = createBlocks random store world state blocks
+    let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state
     let convoysAndTimers = createConvoys 240 60 store world state orders
     for convoys, _ in convoysAndTimers do
@@ -623,7 +632,7 @@ let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : Worl
         |> List.ofSeq
     use file = File.CreateText(filename)
     let mcus =
-        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks @ spawns @ convoys @ interConvoyTimers
+        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks @ bridges @ spawns @ convoys @ interConvoyTimers
     let groupStr =
         mcus
         |> McuUtil.moveEntitiesAfterOwners

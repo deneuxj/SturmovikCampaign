@@ -422,4 +422,4 @@ with
           StartDate = date
           Roads = roads
           Rails = rails
-        }, data.ListOfBlock, List.head data.ListOfOptions
+        }, data.ListOfBlock, data.ListOfBridge, List.head data.ListOfOptions
