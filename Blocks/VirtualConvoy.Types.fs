@@ -210,7 +210,7 @@ with
         let elapsed = getByName T.Blocks.Elapsed
         // Timer value
         let timer = getByName T.Blocks.Timer :?> Mcu.McuTimer
-        timer.Time <- int time
+        timer.Time <- time
         // Position of all nodes
         let diff = McuUtil.vecMinus pos elapsed.Pos
         let diff = McuUtil.translate diff (McuUtil.newVec3(100.0, 0.0, -100.0))

@@ -1131,4 +1131,98 @@ Plane
 }
 
 
+
+Train
+{
+  Name = "TrainRUS";
+  Index = 34;
+  LinkTrId = 0;
+  XPos = 29109.818;
+  YPos = 108.584;
+  ZPos = 20051.498;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Trains\e.txt";
+  Model = "graphics\trains\e\e.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+  Carriages
+  {
+    "LuaScripts\WorldObjects\Trains\et.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-61k.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-61k.txt";
+  }
+  
+}
+
+
+
+Train
+{
+  Name = "TrainGER";
+  Index = 35;
+  LinkTrId = 0;
+  XPos = 29131.566;
+  YPos = 108.584;
+  ZPos = 20051.934;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Trains\g8.txt";
+  Model = "graphics\trains\g8\g8.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+  Carriages
+  {
+    "LuaScripts\WorldObjects\Trains\g8t.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-61k.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-61k.txt";
+  }
+  
+}
+
+
 # end of file

@@ -7,6 +7,7 @@ open SturmovikMission.Blocks.Predicates
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks.Vehicles
 
 // Types for each instance type.
 // Those are typically typed ints, but could be typed strings, or any other type suitable for a dictionary key.
@@ -81,13 +82,6 @@ with
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
     static member Create(store : NumericalIdentifiers.IdStore, path : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
-        let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
-        let palette = McuUtil.filterByPath ["Palette"] db |> List.ofSeq
-        for mcu in palette do
-            subst mcu
-
-        let missionStart = getTriggerByName palette T.Blocks.``Translator Mission Begin``
         let convoySet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
@@ -184,6 +178,31 @@ with
           TimerSet = timerSet
           Api = api
         }
+
+
+    static member CreateTrain(store : NumericalIdentifiers.IdStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+        let convoy = VirtualConvoy.Create(store, path, 0, country, coalition)
+        // Mutate car to train
+        for kvp in convoy.ConvoySet do
+            let vehicle = getHasEntityByIndex kvp.Value.LeadCarEntity.MisObjID (McuUtil.deepContentOf kvp.Value.All)
+            match country with
+            | Mcu.CountryValue.Russia ->
+                vehicle.Script <- russianTrain.Script
+                vehicle.Model <- russianTrain.Model
+            | Mcu.CountryValue.Germany 
+            | _ ->
+                vehicle.Script  <- germanTrain.Script
+                vehicle.Model <- germanTrain.Model
+        // Move train from off-road to on-track
+        for instWp, instConvoy in convoy.ConvoyAtWaypoint do
+            let wp = convoy.ActiveWaypointSet.[instWp]
+            let convoy = convoy.ConvoySet.[instConvoy]
+            let vehicle = getHasEntityByIndex convoy.LeadCarEntity.MisObjID (McuUtil.deepContentOf convoy.All)
+            McuUtil.vecCopy wp.Waypoint.Pos vehicle.Pos
+            McuUtil.vecCopy wp.Waypoint.Pos convoy.LeadCarEntity.Pos
+            McuUtil.vecCopy wp.Waypoint.Ori vehicle.Ori
+            McuUtil.vecCopy wp.Waypoint.Ori convoy.LeadCarEntity.Ori
+        convoy
 
     /// <summary>
     /// Create the links between the MCUs in the virtual convoy.

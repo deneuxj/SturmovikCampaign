@@ -23,6 +23,11 @@ let private planes =
     |> List.map (fun vehicle -> vehicle.GetName().Value, vehicle)
     |> dict
 
+let private trains =
+    data.ListOfTrain
+    |> List.map (fun vehicle -> vehicle.GetName().Value, vehicle)
+    |> dict
+
 let russianCar =
     let truck = vehicles.[T.Vehicles.CarRUS]
     { Script = truck.GetScript().Value
@@ -81,6 +86,18 @@ let germanFlak =
     let canon = vehicles.[T.Vehicles.FlakGER]
     { Script = canon.GetScript().Value
       Model = canon.GetModel().Value
+    }
+
+let russianTrain =
+    let train = trains.[T.Vehicles.TrainRUS]
+    { Script = train.GetScript().Value
+      Model = train.GetModel().Value
+    }
+
+let germanTrain =
+    let train = trains.[T.Vehicles.TrainGER]
+    { Script = train.GetScript().Value
+      Model = train.GetModel().Value
     }
 
 let russianFighter1 =

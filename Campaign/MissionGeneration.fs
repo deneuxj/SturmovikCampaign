@@ -520,7 +520,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
     ]
 
 
-let createConvoys (missionLengthMinutes : int) (startInterval : int) (convoyLength : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (convoys : ConvoyOrder list) =
+let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
     let getOwner =
         let m =
             state.Regions
@@ -528,9 +528,14 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (convoyLeng
             |> dict
         fun x -> m.[x]
     [
-        for convoy in convoys do
+        for order in orders do
+            let convoy = order.Convoy
+            let paths =
+                match order.Means with
+                | ByRail -> world.Rails
+                | ByRoad -> world.Roads
             let path =
-                world.Roads
+                paths
                 |> List.tryFind(fun road ->
                     road.StartId = convoy.Start && road.EndId = convoy.Destination || road.StartId = convoy.Destination && road.EndId = convoy.Start)
             match path with
@@ -542,9 +547,9 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (convoyLeng
                         path.Locations |> List.rev
                 let pathVertices =
                     vertices
-                    |> List.map (fun v ->
+                    |> List.map (fun (v, yori) ->
                         { Pos = McuUtil.newVec3(float v.X, 0.0, float v.Y)
-                          Ori = McuUtil.newVec3(float 1.0, 0.0, 0.0)
+                          Ori = McuUtil.newVec3(0.0, float yori, 0.0)
                           Radius = 10000
                           Speed = 50
                           Priority = 1
@@ -558,7 +563,12 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (convoyLeng
                 let virtualConvoys =
                     [
                         for i in 1 .. startInterval .. missionLengthMinutes do
-                            let virtualConvoy = VirtualConvoy.Create(store, pathVertices, convoyLength, country, coalition)
+                            let virtualConvoy =
+                                match order.Means with
+                                | ByRoad ->
+                                    VirtualConvoy.Create(store, pathVertices, convoy.Size, country, coalition)
+                                | ByRail ->
+                                    VirtualConvoy.CreateTrain(store, pathVertices, country, coalition)
                             let links = virtualConvoy.CreateLinks()
                             links.Apply(McuUtil.deepContentOf virtualConvoy)
                             yield virtualConvoy
@@ -568,6 +578,7 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (convoyLeng
                         for conv1, conv2 in Seq.pairwise virtualConvoys do
                             let getId = store.GetIdMapper()
                             let timer = newTimer (getId 1)
+                            timer.Time <- float startInterval * 60.0
                             Mcu.addTargetLink conv1.Api.Start (timer.Index)
                             Mcu.addTargetLink timer conv2.Api.Start.Index
                             yield timer
@@ -576,9 +587,9 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (convoyLeng
             | None ->
                 ()
     ]
-    
 
-let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : World) (state : WorldState) (orders : ConvoyOrder list) (filename : string) =
+
+let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
     let random = System.Random(0)
     let weather = Weather.getWeather random state.Date
     let store = NumericalIdentifiers.IdStore()
@@ -590,7 +601,7 @@ let writeMissionFile (options : T.Options) (blocks : T.Block list) (world : Worl
     let icons = MapIcons.Create(store, lcStore, world, state)
     let blocks = createBlocks random store world state blocks
     let spawns = createAirfieldSpawns store world state
-    let convoysAndTimers = createConvoys 240 60 8 store world state orders
+    let convoysAndTimers = createConvoys 240 60 store world state orders
     for convoys, _ in convoysAndTimers do
         match convoys with
         | first :: _ ->

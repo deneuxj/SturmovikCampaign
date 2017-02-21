@@ -4,7 +4,7 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
 
-let createConvoyOrders coalition (world : World) (state : WorldState) =
+let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId option, world : World, state : WorldState) =
     let getRegion =
         let m =
             world.Regions
@@ -18,7 +18,7 @@ let createConvoyOrders coalition (world : World) (state : WorldState) =
             |> dict
         fun x -> m.[x]
     let areConnectedByRoad(start, destination) =
-        world.Roads
+        getPaths world
         |> List.exists (fun path ->
             path.StartId = start && path.EndId = destination || path.StartId = destination && path.EndId = start
         )
@@ -62,7 +62,7 @@ let createConvoyOrders coalition (world : World) (state : WorldState) =
                 for ngh in region.Neighbours do
                     match Map.tryFind ngh distances with
                     | Some other when other > level && areConnectedByRoad(region.RegionId, ngh)->
-                        yield { Start = region.RegionId ; Destination = ngh }
+                        yield { Start = region.RegionId ; Destination = ngh ; Size = 8 }
                     | _ ->
                         ()
             | _ ->
@@ -70,7 +70,21 @@ let createConvoyOrders coalition (world : World) (state : WorldState) =
     ]
 
 
-let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (convoys : ConvoyOrder list) =
+let createRoadConvoyOrders =
+    createConvoyOrders (fun world -> world.Roads)
+    >> List.map (fun convoy -> { Means = ByRoad; Convoy = convoy })
+
+
+let createRailConvoyOrders =
+    createConvoyOrders (fun world -> world.Rails)
+    >> List.map (fun convoy -> { Means = ByRail; Convoy = convoy })
+
+
+let createAllConvoyOrders x =
+    createRoadConvoyOrders x @ createRailConvoyOrders x
+
+
+let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
     let getState =
         let m =
             state.Regions
@@ -114,31 +128,25 @@ let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (c
             |> dict
         fun x -> m.[x]
     let sorted =
-        convoys
+        orders
         // Remove convoys that start from poorly filled regions
-        |> List.filter (fun convoy ->
-            let filledUp = (getStorageContent convoy.Start) / (getStorageCapacity convoy.Start)
+        |> List.filter (fun order ->
+            let filledUp = (getStorageContent order.Convoy.Start) / (getStorageCapacity order.Convoy.Start)
             filledUp > 0.5f)
         // Sort by supply capacity
-        |> List.sortBy (fun convoy ->
-            let receiveCapacity = (getStorageCapacity convoy.Destination) - (getStorageContent convoy.Destination)
-            let sendCapacity = getStorageContent convoy.Start
+        |> List.sortBy (fun order ->
+            let receiveCapacity = (getStorageCapacity order.Convoy.Destination) - (getStorageContent order.Convoy.Destination)
+            let sendCapacity =
+                getStorageContent order.Convoy.Start
+                |> min order.Capacity
             -1.0f * (min sendCapacity receiveCapacity))
-        // At most one convoy from each region
-        |> List.fold (fun (starts, ok) convoy ->
-            if Set.contains convoy.Start starts then
+        // At most one convoy of each type from each region
+        |> List.fold (fun (starts, ok) order ->
+            let source = (order.Means, order.Convoy.Start)
+            if Set.contains source starts then
                 (starts, ok)
             else
-                (Set.add convoy.Start starts, convoy :: ok)
-        ) (Set.empty, [])
-        |> snd
-        |> List.rev
-        // At most one convoy to each region
-        |> List.fold (fun (destinations, ok) convoy ->
-            if Set.contains convoy.Destination destinations then
-                (destinations, ok)
-            else
-                (Set.add convoy.Destination destinations, convoy :: ok)
+                (Set.add source starts, order :: ok)
         ) (Set.empty, [])
         |> snd
         |> List.rev

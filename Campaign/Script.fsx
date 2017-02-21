@@ -25,10 +25,10 @@ let strategyFile = "StrategySmall1.mission"
 let world, blocks, options = World.Create(strategyFile)
 let state = WorldState.Create(world, strategyFile)
 let axisConvoyOrders =
-    createConvoyOrders (Some Axis) world state
-    |> prioritizeConvoys 2 world state
+    createAllConvoyOrders(Some Axis, world, state)
+    |> prioritizeConvoys 4 world state
 let alliesConvoyOrders =
-    createConvoyOrders (Some Allies) world state
-    |> prioritizeConvoys 2 world state
+    createAllConvoyOrders (Some Allies, world, state)
+    |> prioritizeConvoys 4 world state
 let allConvoyOrders = axisConvoyOrders @ alliesConvoyOrders
 writeMissionFile options blocks world state allConvoyOrders @"C:\Users\johann\Documents\AutoMoscow\AutoGenMission.Mission"

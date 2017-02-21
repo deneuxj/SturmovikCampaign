@@ -132,7 +132,7 @@ with
 type Path = {
     StartId : RegionId
     EndId : RegionId
-    Locations : Vector2 list
+    Locations : (Vector2 * float32) list
 }
 with
     static member ExtractPaths(waypoints : T.MCU_Waypoint list, regions : Region list) =
@@ -170,7 +170,7 @@ with
             let locations =
                 path
                 |> List.rev
-                |> List.map (fun wp -> Vector2.FromPos wp)
+                |> List.map (fun wp -> Vector2.FromPos wp, float32(wp.GetYOri().Value))
             { StartId = startRegion.RegionId
               EndId = endRegion.RegionId
               Locations = locations
@@ -234,7 +234,7 @@ with
                     let other =
                         try
                             toNeighbours
-                            |> List.minBy(fun (path, id) -> pos.DistanceFromPath(path.Locations))
+                            |> List.minBy(fun (path, id) -> pos.DistanceFromPath(path.Locations |> List.map fst))
                         with
                         | _ -> failwithf "Failed to find closest path to defense area '%d'" (area.GetIndex().Value)
                         |> snd
