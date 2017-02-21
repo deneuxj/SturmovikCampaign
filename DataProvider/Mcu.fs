@@ -117,7 +117,8 @@ type McuWaypoint =
 /// </summary>
 type McuTimer =
     inherit McuTrigger
-    abstract Time : int with get, set
+    /// Time in seconds
+    abstract Time : float with get, set
 
 /// <summary>
 /// Interface of counters.

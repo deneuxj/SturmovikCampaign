@@ -632,9 +632,9 @@ let tryMkAsTimer (typeName : string, typ : ValueType) =
                         new McuTimer with
                             member this.Time
                                 with get() =
-                                    !state |> getIntField "Time"
+                                    !state |> getFloatField "Time"
                                 and set(time) =
-                                    state := !state |> setField("Time", Integer time)
+                                    state := !state |> setField("Time", Float time)
 
                         interface McuTrigger with
                             member this.AsString() = baseImpl.AsString()
