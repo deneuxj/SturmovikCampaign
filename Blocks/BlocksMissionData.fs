@@ -77,6 +77,38 @@ let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, 
         T.Integer mods
     )
 
+let newBlock idx country model script =
+    T.Block(
+        T.Integer country,
+        T.Integer 50,
+        T.Boolean true,
+        T.Block.Damaged(),
+        T.Boolean true,
+        T.String "",
+        T.Integer 7000,
+        T.Integer idx,
+        T.Integer -1,
+        T.String "",
+        T.String "",
+        T.String "",
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0
+    ).SetModel(T.String model).SetScript(T.String script)
+
+let newBlockWithEntityMcu (store : NumericalIdentifiers.IdStore) country model script =
+    let block = (newBlock 1 country model script).SetLinkTrId(T.Integer 2)
+    let entity = newEntity 2
+    entity.MisObjID <- 1
+    let subst = Mcu.substId <| store.GetIdMapper()
+    let block = block.CreateMcu()
+    subst block
+    subst entity
+    block, entity
+
 module CommonMethods =
     let inline createMcu(x : ^T) =
         (^T : (member CreateMcu : unit -> Mcu.McuBase) x)
