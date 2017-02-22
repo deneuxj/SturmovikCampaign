@@ -1225,4 +1225,295 @@ Train
 }
 
 
+
+Block
+{
+  Name = "staFighter1GER";
+  Index = 36;
+  LinkTrId = 0;
+  XPos = 29087.051;
+  YPos = 108.584;
+  ZPos = 20275.383;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_bf109e7.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bf109e7.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staFighter2GER";
+  Index = 37;
+  LinkTrId = 0;
+  XPos = 29086.194;
+  YPos = 108.584;
+  ZPos = 20300.663;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_bf109.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bf109.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staAttackerGER";
+  Index = 38;
+  LinkTrId = 0;
+  XPos = 29086.423;
+  YPos = 108.584;
+  ZPos = 20340.675;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_bf110e2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bf110e2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staBomberGER";
+  Index = 39;
+  LinkTrId = 0;
+  XPos = 29085.551;
+  YPos = 108.584;
+  ZPos = 20369.003;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_ju88.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_ju88.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Plane
+{
+  Name = "transportGER";
+  Index = 40;
+  LinkTrId = 0;
+  XPos = 29086.840;
+  YPos = 110.934;
+  ZPos = 20205.248;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.70;
+  Script = "LuaScripts\WorldObjects\Planes\ju523mg4e.txt";
+  Model = "graphics\planes\ju523mg4e\ju523mg4e.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Block
+{
+  Name = "staFighter1RUS";
+  Index = 41;
+  LinkTrId = 0;
+  XPos = 29070.303;
+  YPos = 108.584;
+  ZPos = 20275.419;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_i16.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_i16.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staFighter2RUS";
+  Index = 42;
+  LinkTrId = 0;
+  XPos = 29070.303;
+  YPos = 108.584;
+  ZPos = 20299.662;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_mig3.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_mig3.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staAttackerRUS";
+  Index = 44;
+  LinkTrId = 0;
+  XPos = 29069.008;
+  YPos = 108.584;
+  ZPos = 20341.480;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_il2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_il2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staBomberRUS";
+  Index = 46;
+  LinkTrId = 0;
+  XPos = 29067.246;
+  YPos = 108.584;
+  ZPos = 20368.912;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_pe2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_pe2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staFighter3RUS";
+  Index = 48;
+  LinkTrId = 0;
+  XPos = 29069.547;
+  YPos = 108.584;
+  ZPos = 20319.128;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_mig3.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_mig3.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staFighter3GER";
+  Index = 49;
+  LinkTrId = 0;
+  XPos = 29086.063;
+  YPos = 108.584;
+  ZPos = 20317.467;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_bf109.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bf109.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staTransportGER";
+  Index = 50;
+  LinkTrId = 0;
+  XPos = 29086.468;
+  YPos = 108.584;
+  ZPos = 20400.255;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_ju52.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_ju52.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
 # end of file

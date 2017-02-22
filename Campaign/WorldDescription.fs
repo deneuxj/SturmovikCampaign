@@ -291,12 +291,28 @@ with
         | Mc202 -> Vehicles.germanFighter3
         | Bf110e -> Vehicles.germanAttacker1
         | Ju88a4 -> Vehicles.germanBomber1
-        | Ju52 -> Vehicles.germanBomber2
+        | Ju52 -> Vehicles.germanTransport
         | I16 -> Vehicles.russianFighter1
         | IL2M41 -> Vehicles.russianAttacker1
         | Mig3 -> Vehicles.russianFighter2
         | P40 -> Vehicles.russianFighter3
         | Pe2s35 -> Vehicles.russianBomber1
+    
+    member this.StaticScriptModel =
+        match this with
+        | Bf109e7 -> Vehicles.germanStaFighter1
+        | Bf109f2 -> Vehicles.germanStaFighter2
+        | Mc202 -> Vehicles.germanStaFighter3
+        | Bf110e -> Vehicles.germanStaAttacker
+        | Ju88a4 -> Vehicles.germanStaBomber
+        | Ju52 -> Vehicles.germanStaTransport
+        | I16 -> Vehicles.russianStaFighter1
+        | IL2M41 -> Vehicles.russianStaAttacker
+        | Mig3 -> Vehicles.russianStaFighter2
+        | P40 -> Vehicles.russianStaFighter3
+        | Pe2s35 -> Vehicles.russianStaBomber
+
+
 
 type Airfield = {
     AirfieldId : AirfieldId

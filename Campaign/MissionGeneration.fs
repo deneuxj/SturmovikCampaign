@@ -534,7 +534,7 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
 
 let createParkedPlanes store (world : World) (state : WorldState) =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
-        let modelScript = model.ScriptModel
+        let modelScript = model.StaticScriptModel
         let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script
         let p = McuUtil.newVec3(float pos.Pos.X, 0.0, float pos.Pos.Y)
         let ori = McuUtil.newVec3(0.0, float pos.Rotation, 0.0)
