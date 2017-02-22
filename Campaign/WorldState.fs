@@ -2,6 +2,7 @@
 
 open Campaign.WorldDescription
 open SturmovikMission.Blocks.BlocksMissionData
+open Campaign.Util
 
 type RegionState = {
     RegionId : RegionId
@@ -37,6 +38,23 @@ type WorldState = {
     Airfields : AirfieldState list
     Date : System.DateTime
 }
+
+type WorldStateFastAccess = {
+    GetRegion : RegionId -> RegionState
+    GetDefenseArea : DefenseAreaId -> DefenseAreaState
+    GetAirfield : AirfieldId -> AirfieldState
+}
+with
+    static member Create(state : WorldState) =
+        { GetRegion = mkGetStuffFast state.Regions (fun r -> r.RegionId)
+          GetDefenseArea = mkGetStuffFast state.DefenseAreas (fun area -> area.DefenseAreaId)
+          GetAirfield = mkGetStuffFast state.Airfields (fun af -> af.AirfieldId)
+        }
+
+type WorldState
+with
+    member this.FastAccess = WorldStateFastAccess.Create(this)
+
 
 module Functions =
     open SturmovikMission.DataProvider.Parsing
@@ -178,11 +196,16 @@ module Functions =
             let owner =
                 getOwner airfield.Region
             let numPlanes =
+                let numFighters = List.length airfield.ParkedFighters
+                let numF1, numF2 = 2 * numFighters / 5, numFighters / 5
+                let numAttackers = List.length airfield.ParkedAttackers
+                let numBombers = List.length airfield.ParkedBombers
+                let numJu52 = if numBombers > 5 then 2 else 0
                 if hasFactories then
                     match owner with
                     | None -> Map.empty
-                    | Some Allies -> [ (I16, 20); (IL2M41, 10); (Mig3, 20); (P40, 10); (Pe2s35, 10) ] |> Map.ofList
-                    | Some Axis -> [ (Bf109e7, 20); (Bf110e, 10); (Bf109f2, 20); (Mc202, 10); (Ju88a4, 10); (Ju52, 3) ] |> Map.ofList
+                    | Some Allies -> [ (I16, numF1); (IL2M41, numAttackers); (Mig3, numF1); (P40, numF2); (Pe2s35, numBombers) ] |> Map.ofList
+                    | Some Axis -> [ (Bf109e7, numF1); (Bf110e, numAttackers); (Bf109f2, numF1); (Mc202, numF2); (Ju88a4, numBombers - numJu52); (Ju52, numJu52) ] |> Map.ofList
                 else
                     Map.empty
             let storage =

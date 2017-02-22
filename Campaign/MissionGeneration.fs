@@ -532,9 +532,56 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
     ]
 
 
-let writeMissionFile (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
-    let random = System.Random(0)
-    let weather = Weather.getWeather random state.Date
+let createParkedPlanes store (world : World) (state : WorldState) =
+    let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
+        let modelScript = model.ScriptModel
+        let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script
+        let p = McuUtil.newVec3(float pos.Pos.X, 0.0, float pos.Pos.Y)
+        let ori = McuUtil.newVec3(0.0, float pos.Rotation, 0.0)
+        McuUtil.vecCopy p block.Pos
+        McuUtil.vecCopy p entity.Pos
+        McuUtil.vecCopy ori block.Ori
+        McuUtil.vecCopy ori entity.Ori
+        [block; upcast entity]
+
+    let wg = world.FastAccess
+    let sg = state.FastAccess
+
+    [
+        for afs in state.Airfields do
+            let af = wg.GetAirfield afs.AirfieldId
+            let reg = sg.GetRegion af.Region
+            match reg.Owner with
+            | Some coalition ->
+                let country = coalition.ToCountry
+                let fighterPlaces = ref af.ParkedFighters
+                let attackerPlaces = ref af.ParkedAttackers
+                let bomberPlaces = ref af.ParkedBombers
+                for (model, qty) in afs.NumPlanes |> Map.toSeq do
+                    let parking =
+                        match model with
+                        | Bf109e7 | Bf109f2 | Mc202 | I16 | Mig3 | P40 -> fighterPlaces
+                        | Bf110e | IL2M41 -> attackerPlaces
+                        | Ju88a4 | Ju52 | Pe2s35 -> bomberPlaces
+                    let positions =
+                        List.truncate qty parking.Value
+                    parking :=
+                        try
+                            List.skip qty parking.Value
+                        with
+                        | _ -> []
+                    yield!
+                        positions
+                        |> List.map(fun pos -> mkParkedPlane(model, pos, int country))
+            | None ->
+                ()
+    ]
+    |> List.concat
+
+
+let writeMissionFile (random : System.Random) (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
+    let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
+    let weather = Weather.getWeather random (state.Date + daysOffset)
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
     lcStore.SetNextId 3
@@ -565,9 +612,10 @@ let writeMissionFile (options : T.Options) (blocks : T.Block list) (bridges : T.
         |> Seq.concat
         |> Seq.map (fun x -> x :> Mcu.McuBase)
         |> List.ofSeq
+    let parkedPlanes = createParkedPlanes store world state
     use file = File.CreateText(filename)
     let mcus =
-        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks @ bridges @ spawns @ convoys @ interConvoyTimers
+        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks @ bridges @ spawns @ convoys @ interConvoyTimers @ parkedPlanes
     let groupStr =
         mcus
         |> McuUtil.moveEntitiesAfterOwners

@@ -4,8 +4,14 @@ open System.Numerics
 
 open Vector
 open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.DataProvider
 
 type CoalitionId = Axis | Allies
+with
+    member this.ToCountry =
+        match this with
+        | Axis -> Mcu.CountryValue.Germany
+        | Allies -> Mcu.CountryValue.Russia
 
 type OrientedPosition = {
     Pos : Vector2
@@ -263,6 +269,7 @@ module PlaneTypes =
             Other
 
 open PlaneTypes
+open SturmovikMission.Blocks
 
 type PlaneModel =
     | Bf109e7
@@ -276,6 +283,20 @@ type PlaneModel =
     | Mig3
     | P40
     | Pe2s35
+with
+    member this.ScriptModel =
+        match this with
+        | Bf109e7 -> Vehicles.germanFighter1
+        | Bf109f2 -> Vehicles.germanFighter2
+        | Mc202 -> Vehicles.germanFighter3
+        | Bf110e -> Vehicles.germanAttacker1
+        | Ju88a4 -> Vehicles.germanBomber1
+        | Ju52 -> Vehicles.germanBomber2
+        | I16 -> Vehicles.russianFighter1
+        | IL2M41 -> Vehicles.russianAttacker1
+        | Mig3 -> Vehicles.russianFighter2
+        | P40 -> Vehicles.russianFighter3
+        | Pe2s35 -> Vehicles.russianBomber1
 
 type Airfield = {
     AirfieldId : AirfieldId
@@ -386,6 +407,7 @@ type World = {
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
     StartDate : System.DateTime
+    WeatherDaysOffset : float
 }
 with
     static member Create(strategyFile) =
@@ -422,4 +444,26 @@ with
           StartDate = date
           Roads = roads
           Rails = rails
+          WeatherDaysOffset = 0.0
         }, data.ListOfBlock, data.ListOfBridge, List.head data.ListOfOptions
+
+
+open Campaign.Util
+
+type WorldFastAccess = {
+    GetRegion : RegionId -> Region
+    GetAntiAirDefenses : DefenseAreaId -> DefenseArea
+    GetAntiTankDefenses : DefenseAreaId -> DefenseArea
+    GetAirfield : AirfieldId -> Airfield
+}
+with
+    static member Create(world : World) =
+        { GetRegion = mkGetStuffFast world.Regions (fun r -> r.RegionId)
+          GetAntiAirDefenses = mkGetStuffFast world.AntiAirDefenses (fun r -> r.DefenseAreaId)
+          GetAntiTankDefenses = mkGetStuffFast world.AntiTankDefenses (fun r -> r.DefenseAreaId)
+          GetAirfield = mkGetStuffFast world.Airfields (fun af -> af.AirfieldId)
+        }
+
+type World
+with
+    member this.FastAccess = WorldFastAccess.Create(this)
