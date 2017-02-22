@@ -3,7 +3,7 @@ module SturmovikMission.Blocks.Vehicles
 
 open SturmovikMission.DataProvider
 
-type T = SturmovikMissionTypes.Provider<"../data/Blocks/Vehicles.mission", "../data/Blocks/Vehicles.mission">
+type T = SturmovikMissionTypes.Provider<"../data/Sample.mission", "../data/Blocks/Vehicles.mission">
 
 type VehicleTypeData = {
     Script : string
@@ -104,6 +104,12 @@ let germanTrain =
     { Script = train.GetScript().Value
       Model = train.GetModel().Value
     }
+
+let mkRussianTrainMcu() =
+    trains.[T.Vehicles.TrainRUS].CreateMcu() :?> Mcu.HasEntity
+
+let mkGermanTrainMcu() =
+    trains.[T.Vehicles.TrainGER].CreateMcu() :?> Mcu.HasEntity
 
 let russianFighter1 =
     let fighter = planes.[T.Vehicles.fighter1RUS]

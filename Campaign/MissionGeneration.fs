@@ -485,14 +485,14 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
             | Some path ->
                 let vertices, kdir =
                     if path.StartId = convoy.Start then
-                        path.Locations, 1.0
+                        path.Locations, float
                     else
-                        path.Locations |> List.rev, -1.0
+                        path.Locations |> List.rev, fun yori -> float (if yori < 180.0f then yori + 180.0f else yori - 180.0f)
                 let pathVertices =
                     vertices
                     |> List.map (fun (v, yori) ->
                         { Pos = McuUtil.newVec3(float v.X, 0.0, float v.Y)
-                          Ori = McuUtil.newVec3(0.0, kdir * float yori, 0.0)
+                          Ori = McuUtil.newVec3(0.0, kdir yori, 0.0)
                           Radius = 10000
                           Speed = 50
                           Priority = 1

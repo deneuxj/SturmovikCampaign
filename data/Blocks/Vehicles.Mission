@@ -1146,7 +1146,7 @@ Train
   Script = "LuaScripts\WorldObjects\Trains\e.txt";
   Model = "graphics\trains\e\e.mgm";
   Desc = "";
-  Country = 0;
+  Country = 101;
   Vulnerable = 1;
   Engageable = 1;
   LimitAmmo = 1;
@@ -1193,7 +1193,7 @@ Train
   Script = "LuaScripts\WorldObjects\Trains\g8.txt";
   Model = "graphics\trains\g8\g8.mgm";
   Desc = "";
-  Country = 0;
+  Country = 201;
   Vulnerable = 1;
   Engageable = 1;
   LimitAmmo = 1;
@@ -1405,7 +1405,7 @@ Block
 Block
 {
   Name = "staAttackerRUS";
-  Index = 44;
+  Index = 43;
   LinkTrId = 0;
   XPos = 29069.008;
   YPos = 108.584;
@@ -1428,7 +1428,7 @@ Block
 Block
 {
   Name = "staBomberRUS";
-  Index = 46;
+  Index = 44;
   LinkTrId = 0;
   XPos = 29067.246;
   YPos = 108.584;
@@ -1451,7 +1451,7 @@ Block
 Block
 {
   Name = "staFighter3RUS";
-  Index = 48;
+  Index = 45;
   LinkTrId = 0;
   XPos = 29069.547;
   YPos = 108.584;
@@ -1474,7 +1474,7 @@ Block
 Block
 {
   Name = "staFighter3GER";
-  Index = 49;
+  Index = 46;
   LinkTrId = 0;
   XPos = 29086.063;
   YPos = 108.584;
@@ -1497,7 +1497,7 @@ Block
 Block
 {
   Name = "staTransportGER";
-  Index = 50;
+  Index = 47;
   LinkTrId = 0;
   XPos = 29086.468;
   YPos = 108.584;

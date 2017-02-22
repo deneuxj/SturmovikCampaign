@@ -183,16 +183,31 @@ with
     static member CreateTrain(store : NumericalIdentifiers.IdStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let convoy = VirtualConvoy.Create(store, path, 0, country, coalition)
         // Mutate car to train
-        for kvp in convoy.ConvoySet do
-            let vehicle = getHasEntityByIndex kvp.Value.LeadCarEntity.MisObjID (McuUtil.deepContentOf kvp.Value.All)
-            match country with
-            | Mcu.CountryValue.Russia ->
-                vehicle.Script <- russianTrain.Script
-                vehicle.Model <- russianTrain.Model
-            | Mcu.CountryValue.Germany 
-            | _ ->
-                vehicle.Script  <- germanTrain.Script
-                vehicle.Model <- germanTrain.Model
+        let convoySet =
+            convoy.ConvoySet
+            |> Map.map (fun key value ->
+                let vehicle = getHasEntityByIndex value.LeadCarEntity.MisObjID (McuUtil.deepContentOf value.All)
+                let train =
+                    match country with
+                    | Mcu.CountryValue.Russia -> mkRussianTrainMcu()
+                    | Mcu.CountryValue.Germany 
+                    | _ -> mkGermanTrainMcu()
+                train.Index <- vehicle.Index
+                train.LinkTrId <- vehicle.LinkTrId
+                { value with
+                    All =
+                        { new McuUtil.IMcuGroup with
+                              member x.Content =
+                                McuUtil.deepContentOf value.All
+                                |> List.map (function
+                                    | :? Mcu.HasEntity as vehicle when vehicle.LinkTrId = value.LeadCarEntity.Index -> upcast train
+                                    | x -> x
+                                )
+                              member x.LcStrings = x.LcStrings
+                              member x.SubGroups = []
+                        }
+                })
+        let convoy = { convoy with ConvoySet = convoySet }
         // Move train from off-road to on-track
         for instWp, instConvoy in convoy.ConvoyAtWaypoint do
             let wp = convoy.ActiveWaypointSet.[instWp]
