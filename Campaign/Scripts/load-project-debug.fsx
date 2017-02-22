@@ -2,6 +2,7 @@
 #I __SOURCE_DIRECTORY__
 #load "load-references-debug.fsx"
 #load "../AssemblyInfo.fs"
+      "../Util.fs"
       "../WorldDescription.fs"
       "../WorldState.fs"
       "../Weather.fs"
