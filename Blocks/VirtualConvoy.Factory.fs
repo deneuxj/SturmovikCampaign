@@ -18,7 +18,7 @@ type WhileEnemyCloseInstance = WhileEnemyCloseInstance of int
 type ActiveWaypointInstance = ActiveWaypointInstance of int
 type TruckInConvoyInstance = TruckInConvoyInstance of convoy: int * pos: int
 type TimerInstance = TimerInstance of int
-type AtDestinationInstance = AtDestinationInstance of TruckInConvoyInstance * ActiveWaypointInstance
+type AtDestinationInstance = AtDestinationInstance of TruckInConvoyInstance
 
 /// <summary>
 /// Type used in the arguments of VirtualConvoy.Create. Denotes one vertex of the path of the virtual convoy.
@@ -177,7 +177,7 @@ with
                     for convoy2, _, truck in truckInConvoy do
                         if convoy = convoy2 then
                             let pos = Vector2.FromMcu(activeWaypointSet.[wp].Waypoint.Pos) + Vector2(100.0f, 0.0f)
-                            yield(AtDestinationInstance(truck, wp), AtDestination.Create(store, lcStore, pos))
+                            yield(AtDestinationInstance(truck), AtDestination.Create(store, lcStore, pos))
             }
             |> Map.ofSeq
 
@@ -305,10 +305,10 @@ with
                     yield finish.Waypoint :> Mcu.McuTrigger, this.Api.Arrived :> Mcu.McuBase
                     yield finish.Activate, this.Api.Arrived :> Mcu.McuBase
                 for kvp in this.AtDestinationSet do
-                    let (AtDestinationInstance(truck, wp)) = kvp.Key
+                    let (AtDestinationInstance(truck)) = kvp.Key
                     let truck = this.TruckInConvoySet.[truck]
-                    let wp = this.ActiveWaypointSet.[wp]
-                    yield upcast wp.Waypoint, upcast kvp.Value.LeaderArrived
+                    let api = this.Api                    
+                    yield api.Arrived, upcast kvp.Value.LeaderArrived
                     yield truck.Damaged, upcast kvp.Value.Destroyed
             ]
         { Columns = columns
