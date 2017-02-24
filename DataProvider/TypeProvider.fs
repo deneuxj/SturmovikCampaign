@@ -423,7 +423,7 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                         typedefof<_ option>
                             .MakeGenericType(fieldType)
                     pdb.NewMethod(
-                        sprintf "Get%s" fieldName,
+                        sprintf "TryGet%s" fieldName,
                         optTyp,
                         [],
                         fun [this] ->
@@ -438,13 +438,14 @@ let mkProvidedTypeBuilder (pdb : IProvidedDataBuilder) (top : ProvidedTypeDefini
                         typedefof<_ list>
                             .MakeGenericType(fieldType)
                     pdb.NewMethod(
-                        sprintf "Get%s" fieldName,
+                        sprintf "Get%ss" fieldName,
                         listTyp,
                         [],
                         fun [this] ->
                             let e = asList this
                             <@@
                                 List.filter (fun (name, _) -> name = fieldName) %e
+                                |> List.map snd
                             @@>)
             )
         |> Map.toList
