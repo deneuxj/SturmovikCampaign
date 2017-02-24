@@ -49,7 +49,8 @@ type AtDestination {
 	trigger LeaderArrived
 	trigger Destroyed
 }
-predicate at_destination(AtDestination, TruckInConvoy)
+predicate at_destination_convoy(AtDestination, TruckInConvoy)
+predicate at_destination_convoy(AtDestination, Convoy)
 
 type VirtualConvoy {
 	trigger Start // 1x counter
@@ -117,5 +118,7 @@ target += for wp in path_end
           for out in result -> (wp.Activate, out.Arrived)
 
 // AtDestination
-target += for (atd, truck, result) in at_destination -> (result.Arrived, atd.LeaderArrived)
-                                                     -> (truck.Damaged, atd.Destroyed)
+target += for (atd, truck) in at_destination -> (result.Arrived, atd.LeaderArrived)
+                                             -> (truck.Damaged, atd.Destroyed)
+target += for (atd, convoy) in at_destination_convoy -> (result.Arrived, atd.LeaderArrived)
+                                                     -> (convoy.LeadCarDamaged, atd.Destroyed)

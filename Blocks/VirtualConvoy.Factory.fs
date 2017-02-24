@@ -18,7 +18,9 @@ type WhileEnemyCloseInstance = WhileEnemyCloseInstance of int
 type ActiveWaypointInstance = ActiveWaypointInstance of int
 type TruckInConvoyInstance = TruckInConvoyInstance of convoy: int * pos: int
 type TimerInstance = TimerInstance of int
-type AtDestinationInstance = AtDestinationInstance of TruckInConvoyInstance
+type AtDestinationInstance =
+    | TruckAtDestinationInstance of TruckInConvoyInstance
+    | LeadCarAtDestinationInstance of ConvoyInstance
 
 /// <summary>
 /// Type used in the arguments of VirtualConvoy.Create. Denotes one vertex of the path of the virtual convoy.
@@ -174,10 +176,12 @@ with
             seq {
                 for wp in pathEnd do
                     let convoy = get convoyAtWaypoint wp
+                    let pos = Vector2.FromMcu(convoySet.[convoy].LeadCarEntity.Pos) + Vector2(100.0f, 0.0f)
+                    yield(LeadCarAtDestinationInstance(convoy), AtDestination.Create(store, lcStore, pos))
                     for convoy2, _, truck in truckInConvoy do
                         if convoy = convoy2 then
                             let pos = Vector2.FromMcu(activeWaypointSet.[wp].Waypoint.Pos) + Vector2(100.0f, 0.0f)
-                            yield(AtDestinationInstance(truck), AtDestination.Create(store, lcStore, pos))
+                            yield(TruckAtDestinationInstance(truck), AtDestination.Create(store, lcStore, pos))
             }
             |> Map.ofSeq
 
@@ -305,11 +309,16 @@ with
                     yield finish.Waypoint :> Mcu.McuTrigger, this.Api.Arrived :> Mcu.McuBase
                     yield finish.Activate, this.Api.Arrived :> Mcu.McuBase
                 for kvp in this.AtDestinationSet do
-                    let (AtDestinationInstance(truck)) = kvp.Key
-                    let truck = this.TruckInConvoySet.[truck]
                     let api = this.Api                    
-                    yield api.Arrived, upcast kvp.Value.LeaderArrived
-                    yield truck.Damaged, upcast kvp.Value.Destroyed
+                    match kvp.Key with
+                    | TruckAtDestinationInstance(truck) ->
+                        let truck = this.TruckInConvoySet.[truck]
+                        yield api.Arrived, upcast kvp.Value.LeaderArrived
+                        yield truck.Damaged, upcast kvp.Value.Destroyed
+                    | LeadCarAtDestinationInstance(convoy) ->
+                        let car = this.ConvoySet.[convoy]
+                        yield api.Arrived, upcast kvp.Value.LeaderArrived
+                        yield car.LeadCarDamaged, upcast kvp.Value.Destroyed
             ]
         { Columns = columns
           Objects = objectLinks
