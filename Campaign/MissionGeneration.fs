@@ -616,14 +616,6 @@ let writeMissionFile (random : System.Random) author missionName briefing (optio
         createParkedPlanes store world state
         |> McuUtil.groupFromList
     let missionBegin = McuUtil.groupFromList [missionBegin]
-    let allGroups =
-        [ missionBegin
-          upcast antiTankDefenses
-          upcast icons
-          McuUtil.groupFromList blocks
-          McuUtil.groupFromList bridges
-          McuUtil.groupFromList spawns
-          parkedPlanes ] @ convoys @ interConvoyTimers
     let options =
         (Weather.setOptions weather state.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
@@ -632,9 +624,18 @@ let writeMissionFile (random : System.Random) author missionName briefing (optio
               member x.Content = []
               member x.LcStrings =
                 [ (0, missionName)
-                  (1, author)
-                  (2, briefing)
+                  (1, briefing)
+                  (2, author)
                 ]
               member x.SubGroups = []
         }
+    let allGroups =
+        [ optionStrings
+          missionBegin
+          upcast antiTankDefenses
+          upcast icons
+          McuUtil.groupFromList blocks
+          McuUtil.groupFromList bridges
+          McuUtil.groupFromList spawns
+          parkedPlanes ] @ convoys @ interConvoyTimers
     writeMissionFiles "eng" filename options allGroups
