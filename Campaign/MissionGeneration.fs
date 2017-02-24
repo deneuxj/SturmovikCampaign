@@ -13,6 +13,7 @@ open SturmovikMission.Blocks.StaticDefenses.Factory
 open SturmovikMission.Blocks.StaticDefenses.Types
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks
+open SturmovikMission.Blocks.IO
 open Vector
 
 open Campaign.WorldDescription
@@ -463,7 +464,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
     ]
 
 
-let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
+let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : NumericalIdentifiers.IdStore) lcStore  (world : World) (state : WorldState) (orders : ResupplyOrder list) =
     let getOwner =
         let m =
             state.Regions
@@ -509,9 +510,9 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
                             let virtualConvoy =
                                 match order.Means with
                                 | ByRoad ->
-                                    VirtualConvoy.Create(store, pathVertices, convoy.Size, country, coalition)
+                                    VirtualConvoy.Create(store, lcStore, pathVertices, convoy.Size, country, coalition)
                                 | ByRail ->
-                                    VirtualConvoy.CreateTrain(store, pathVertices, country, coalition)
+                                    VirtualConvoy.CreateTrain(store, lcStore, pathVertices, country, coalition)
                             let links = virtualConvoy.CreateLinks()
                             links.Apply(McuUtil.deepContentOf virtualConvoy)
                             yield virtualConvoy
@@ -579,7 +580,7 @@ let createParkedPlanes store (world : World) (state : WorldState) =
     |> List.concat
 
 
-let writeMissionFile (random : System.Random) (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
+let writeMissionFile (random : System.Random) author missionName briefing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
     let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
     let weather = Weather.getWeather random (state.Date + daysOffset)
     let store = NumericalIdentifiers.IdStore()
@@ -592,39 +593,48 @@ let writeMissionFile (random : System.Random) (options : T.Options) (blocks : T.
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state
-    let convoysAndTimers = createConvoys 240 60 store world state orders
+    let convoysAndTimers = createConvoys 240 60 store lcStore world state orders
     for convoys, _ in convoysAndTimers do
         match convoys with
         | first :: _ ->
             Mcu.addTargetLink missionBegin first.Api.Start.Index
         | [] ->
             ()
-    let convoys =
+    let convoys : McuUtil.IMcuGroup list =
         convoysAndTimers
         |> Seq.map fst
         |> Seq.concat
-        |> Seq.map McuUtil.deepContentOf
-        |> Seq.concat
+        |> Seq.map (fun x -> x :> McuUtil.IMcuGroup)
         |> List.ofSeq
     let interConvoyTimers =
         convoysAndTimers
         |> Seq.map snd
         |> Seq.concat
-        |> Seq.map (fun x -> x :> Mcu.McuBase)
+        |> Seq.map (fun x -> McuUtil.groupFromList [x])
         |> List.ofSeq
-    let parkedPlanes = createParkedPlanes store world state
-    use file = File.CreateText(filename)
-    let mcus =
-        missionBegin :> Mcu.McuBase :: antiTankDefenses.All @ icons.All @ blocks @ bridges @ spawns @ convoys @ interConvoyTimers @ parkedPlanes
-    let groupStr =
-        mcus
-        |> McuUtil.moveEntitiesAfterOwners
-        |> Seq.map (fun mcu -> mcu.AsString())
-        |> String.concat "\n"
+    let parkedPlanes =
+        createParkedPlanes store world state
+        |> McuUtil.groupFromList
+    let missionBegin = McuUtil.groupFromList [missionBegin]
+    let allGroups =
+        [ missionBegin
+          upcast antiTankDefenses
+          upcast icons
+          McuUtil.groupFromList blocks
+          McuUtil.groupFromList bridges
+          McuUtil.groupFromList spawns
+          parkedPlanes ] @ convoys @ interConvoyTimers
     let options =
         (Weather.setOptions weather state.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
-    file.Write("# Mission File Version = 1.0;\n")
-    file.Write(options.AsString() + "\n")
-    file.Write(groupStr)
-    file.Write("# end of file")
+    let optionStrings =
+        { new McuUtil.IMcuGroup with
+              member x.Content = []
+              member x.LcStrings =
+                [ (0, missionName)
+                  (1, author)
+                  (2, briefing)
+                ]
+              member x.SubGroups = []
+        }
+    writeMissionFiles "eng" filename options allGroups
