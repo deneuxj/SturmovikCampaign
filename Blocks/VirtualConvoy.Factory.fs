@@ -8,6 +8,8 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.Vehicles
+open System.Numerics
+open Vector
 
 // Types for each instance type.
 // Those are typically typed ints, but could be typed strings, or any other type suitable for a dictionary key.
@@ -16,6 +18,7 @@ type WhileEnemyCloseInstance = WhileEnemyCloseInstance of int
 type ActiveWaypointInstance = ActiveWaypointInstance of int
 type TruckInConvoyInstance = TruckInConvoyInstance of convoy: int * pos: int
 type TimerInstance = TimerInstance of int
+type AtDestinationInstance = AtDestinationInstance of TruckInConvoyInstance * ActiveWaypointInstance
 
 /// <summary>
 /// Type used in the arguments of VirtualConvoy.Create. Denotes one vertex of the path of the virtual convoy.
@@ -54,6 +57,8 @@ type VirtualConvoy =
 
       TimerSet : Map<TimerInstance, Timer>
 
+      AtDestinationSet : Map<AtDestinationInstance, AtDestination>
+
       Api : ConvoyControl
     }
 with
@@ -72,6 +77,8 @@ with
                     yield kvp.Value.All
                 for kvp in this.TimerSet do
                     yield kvp.Value.All
+                for kvp in this.AtDestinationSet do
+                    yield kvp.Value.All
                 yield this.Api.All
             ]
 
@@ -81,7 +88,7 @@ with
     /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, path : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let convoySet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
@@ -162,6 +169,18 @@ with
             let n = List.length path |> float
             McuUtil.newVec3(apiPos.X / n, apiPos.Y / n, apiPos.Z / n)
         let api = ConvoyControl.Create(store, apiPos, convoySize)
+
+        let atDestinationSet =
+            seq {
+                for wp in pathEnd do
+                    let convoy = get convoyAtWaypoint wp
+                    for convoy2, _, truck in truckInConvoy do
+                        if convoy = convoy2 then
+                            let pos = Vector2.FromMcu(activeWaypointSet.[wp].Waypoint.Pos) + Vector2(100.0f, 0.0f)
+                            yield(AtDestinationInstance(truck, wp), AtDestination.Create(store, lcStore, pos))
+            }
+            |> Map.ofSeq
+
         { ConvoySet = convoySet
           TruckInConvoy = truckInConvoy
           WhileEnemyCloseOfConvoy = whileEnemyCloseOfConvoy
@@ -177,11 +196,12 @@ with
           ConvoyOfEnemyClose = convoyOfEnemyClose
           TimerSet = timerSet
           Api = api
+          AtDestinationSet = atDestinationSet
         }
 
 
-    static member CreateTrain(store : NumericalIdentifiers.IdStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
-        let convoy = VirtualConvoy.Create(store, path, 0, country, coalition)
+    static member CreateTrain(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+        let convoy = VirtualConvoy.Create(store, lcStore, path, 0, country, coalition)
         // Mutate car to train
         let convoySet =
             convoy.ConvoySet
@@ -203,7 +223,7 @@ with
                                     | :? Mcu.HasEntity as vehicle when vehicle.LinkTrId = value.LeadCarEntity.Index -> upcast train
                                     | x -> x
                                 )
-                              member x.LcStrings = x.LcStrings
+                              member x.LcStrings = value.All.LcStrings
                               member x.SubGroups = []
                         }
                 })
@@ -284,7 +304,12 @@ with
                     let finish = this.ActiveWaypointSet.[wp]
                     yield finish.Waypoint :> Mcu.McuTrigger, this.Api.Arrived :> Mcu.McuBase
                     yield finish.Activate, this.Api.Arrived :> Mcu.McuBase
-
+                for kvp in this.AtDestinationSet do
+                    let (AtDestinationInstance(truck, wp)) = kvp.Key
+                    let truck = this.TruckInConvoySet.[truck]
+                    let wp = this.ActiveWaypointSet.[wp]
+                    yield upcast wp.Waypoint, upcast kvp.Value.LeaderArrived
+                    yield truck.Damaged, upcast kvp.Value.Destroyed
             ]
         { Columns = columns
           Objects = objectLinks

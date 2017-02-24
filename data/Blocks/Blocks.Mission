@@ -1548,4 +1548,104 @@ Group
 }
 
 
+
+Group
+{
+  Name = "Vehicle arrived";
+  Index = 127;
+  Desc = "";
+  MCU_TR_MissionObjective
+  {
+    Index = 122;
+    Targets = [];
+    Objects = [];
+    XPos = 16691.834;
+    YPos = 97.373;
+    ZPos = 28878.771;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    LCName = 3;
+    LCDesc = 4;
+    TaskType = 1;
+    Coalition = 0;
+    Success = 1;
+    IconType = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 123;
+    Name = "IsAlive";
+    Desc = "";
+    Targets = [122];
+    Objects = [];
+    XPos = 16660.583;
+    YPos = 98.018;
+    ZPos = 28878.170;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 124;
+    Name = "LeaderArrived";
+    Desc = "";
+    Targets = [123];
+    Objects = [];
+    XPos = 16629.691;
+    YPos = 98.505;
+    ZPos = 28877.870;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 125;
+    Name = "Destroyed";
+    Desc = "";
+    Targets = [126];
+    Objects = [];
+    XPos = 16659.383;
+    YPos = 98.559;
+    ZPos = 28787.892;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 126;
+    Name = "";
+    Desc = "";
+    Targets = [123];
+    Objects = [];
+    XPos = 16659.388;
+    YPos = 98.685;
+    ZPos = 28833.862;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+}
+
+
 # end of file

@@ -45,14 +45,19 @@ type Timer {
 	trigger Elapsed
 }
 
+type AtDestination {
+	trigger LeaderArrived
+	trigger Destroyed
+}
+predicate at_destination(AtDestination, TruckInConvoy, ActiveWaypoint)
+
 type VirtualConvoy {
 	trigger Start // 1x counter
 	trigger Destroyed // This is a non-wraping counter set to (num of trucks in convoy) + 1
 	trigger Arrived // 1x counter
 }
-VirtualConvoy result(VirtualConvoy)
+predicate result(VirtualConvoy)
 
-predicate vehicle_kill_counter(Counter)
 
 // Convoy <-> TruckInConvoy
 columns += for (convoy, position, truck) in truck_in_convoy -> (truck.Entity, convoy.LeadCarEntity, position)
@@ -101,7 +106,7 @@ target += for (curr, next) in path -> (curr.Activate, timer_between_waypoints(cu
 target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).WakeUp, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Deactivate)
 target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).Sleep, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Activate)
 
-// ... <-> Result
+// ... <-> VirtualConvoy
 target += for (_, convoy) in convoy_at_waypoint
           for out in result -> (convoy.LeadCarDamaged, out.Destroyed)
 target += for (convoy, _, truck) in truck_in_convoy
@@ -110,3 +115,7 @@ target += for wp in path_end
           for out in result -> (wp.Waypoint, out.Arrived)
 target += for wp in path_end
           for out in result -> (wp.Activate, out.Arrived)
+
+// AtDestination
+target += for (atd, truck, wp) in at_destination -> (wp.Waypoint, atd.LeaderArrived)
+                                                 -> (truck.Damaged, atd.Destroyed)

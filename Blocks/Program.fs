@@ -9,7 +9,9 @@ open SturmovikMission.DataProvider
 let main argv = 
     let path = Strategy.getSomePath()
     let store = NumericalIdentifiers.IdStore()
-    let virtualConvoy = VirtualConvoy.Create(store, path, 3, Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies)
+    let lcStore = NumericalIdentifiers.IdStore()
+    lcStore.SetNextId 3
+    let virtualConvoy = VirtualConvoy.Create(store, lcStore, path, 3, Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies)
     let rel = virtualConvoy.CreateLinks()
     let mcus = McuUtil.deepContentOf virtualConvoy
     rel.Apply(mcus)

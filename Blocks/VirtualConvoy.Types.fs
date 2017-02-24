@@ -5,6 +5,8 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.BlocksMissionData
+open System.Numerics
+open Vector
 
 // The types. See Proto-VirtualConvoy.txt.
 type Convoy =
@@ -253,4 +255,45 @@ with
           Destroyed = destroyed
           Arrived = arrived
           All = McuUtil.groupFromList group
+        }
+
+type AtDestination = {
+    LeaderArrived : Mcu.McuTrigger
+    Destroyed : Mcu.McuTrigger
+    All : McuUtil.IMcuGroup
+}
+with
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2) =
+        // Instantiate
+        let subst = Mcu.substId <| store.GetIdMapper()
+        let lcSubst = Mcu.substLCId <| lcStore.GetIdMapper()
+        let group = blocksData.GetGroup("Vehicle arrived").CreateMcuList()
+        for mcu in group do
+            subst mcu
+            lcSubst mcu
+        // Get key nodes
+        let getByName = getTriggerByName group
+        let leaderArrived = getByName T.Blocks.LeaderArrived
+        let destroyed = getByName T.Blocks.Destroyed
+        let objectiveName =
+            group
+            |> Seq.pick (fun mcu ->
+                match mcu.IconLC with
+                | Some data -> Some data.LCName
+                | None -> None)
+        // Position of all nodes
+        let refPoint = Vector2(float32 leaderArrived.Pos.X, float32 leaderArrived.Pos.Z)
+        let dv = pos - refPoint
+        for mcu in group do
+            (Vector2.FromMcu(mcu.Pos) + dv).AssignTo(mcu.Pos)
+        // Result
+        { LeaderArrived = leaderArrived
+          Destroyed = destroyed
+          All =
+            { new McuUtil.IMcuGroup with
+                  member x.Content = group
+                  member x.LcStrings = [ objectiveName, "Convoy arrived" ]
+                  member x.SubGroups = []
+                  
+            }
         }
