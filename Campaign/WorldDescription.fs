@@ -323,7 +323,7 @@ type Airfield = {
     ParkedAttackers : OrientedPosition list
     ParkedBombers : OrientedPosition list
     Storage : StaticGroup list
-    Spawn : T.Airfield
+    Spawn : T.Airfield list
 }
 with
     static member AddParkedFighter(airfields : Airfield list, airfield : AirfieldId, pos : OrientedPosition) =
@@ -369,7 +369,10 @@ with
     static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane list, storage : T.Block list, regions : Region list) =
         let airfields =
             spawns
-            |> List.map(fun spawn ->
+            |> List.groupBy (fun spawn -> spawn.GetName().Value)
+            |> List.map (fun (name, spawns) -> spawns)
+            |> List.map(fun spawns ->
+                let spawn = spawns.Head
                 let pos = Vector2.FromPos(spawn)
                 let region =
                     try
@@ -385,7 +388,7 @@ with
                   ParkedAttackers = []
                   ParkedBombers = []
                   Storage = []
-                  Spawn = spawn
+                  Spawn = spawns
                 }
             )
         let airfields =

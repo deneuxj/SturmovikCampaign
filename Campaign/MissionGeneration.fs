@@ -407,7 +407,7 @@ let createBlocks random store world state (blocks : T.Block list) = createBlocks
 
 let createBridges random store world state (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged random store world state blocks
 
-let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) =
+let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (windDirection : Vector2) =
     let getOwner =
         let m =
             state.Regions
@@ -434,11 +434,34 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
             | None -> ()
             | Some coalition ->
                 let af =
+                    let spawn =
+                        airfield.Spawn
+                        |> List.maxBy(fun spawn ->
+                            let chart = spawn.TryGetChart()
+                            match chart with
+                            | None -> 0.0f
+                            | Some chart ->
+                                let points = chart.GetPoints()
+                                let direction =
+                                    points
+                                    |> List.pairwise
+                                    |> List.pick(fun (p1, p2) ->
+                                        if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
+                                            let ex = Vector2.FromYOri(spawn)
+                                            let ey = -ex.Rotate(90.0f)
+                                            let mkVec(p : T.Airfield.Chart.Point) =
+                                                (float32 <| p.GetX().Value) * ex + (float32 <| p.GetY().Value) * ey
+                                            Some(mkVec(p2) - mkVec(p1))
+                                        else
+                                            None)
+                                let len = direction.Length()
+                                let direction = direction / len
+                                Vector2.Dot(direction, windDirection))
                     match coalition with
                     | Axis ->
-                        airfield.Spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
+                        spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
                     | Allies ->
-                        airfield.Spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
+                        spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
                 let planeSpecs : T.Airfield.Planes.Plane list =
                     state.NumPlanes
                     |> Map.map (fun plane number ->
@@ -592,7 +615,7 @@ let writeMissionFile (random : System.Random) author missionName briefing (optio
     let icons = MapIcons.Create(store, lcStore, world, state)
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
-    let spawns = createAirfieldSpawns store world state
+    let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
     let convoysAndTimers = createConvoys 240 60 store lcStore world state orders
     for convoys, _ in convoysAndTimers do
         match convoys with
