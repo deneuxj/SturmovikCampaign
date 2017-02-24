@@ -20,7 +20,7 @@ with
         Vector2.FromPair(value)
 
     static member inline FromYOri(ori : ^T) =
-        let angle = (^T : (member YOri : ^F) ori)
+        let angle = (^T : (member GetYOri : unit -> ^F) ori)
         let angle = (^F : (member Value : float) angle)
         let alpha = System.Math.PI * angle / 180.0
         Vector2(float32 <| cos alpha, float32 <| sin alpha)
