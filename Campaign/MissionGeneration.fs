@@ -414,19 +414,6 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
             |> Seq.map(fun region -> region.RegionId, region.Owner)
             |> dict
         fun x -> m.[x]
-    let getPlaneModel x =
-        match x with
-        | Bf109e7 -> Vehicles.germanFighter1
-        | Bf109f2 -> Vehicles.germanFighter2
-        | Mc202 -> Vehicles.germanFighter3
-        | Bf110e -> Vehicles.germanAttacker1
-        | Ju88a4 -> Vehicles.germanBomber1
-        | Ju52 -> Vehicles.germanBomber2
-        | I16 -> Vehicles.russianFighter1
-        | Mig3 -> Vehicles.russianFighter2
-        | P40 -> Vehicles.russianFighter3
-        | IL2M41 -> Vehicles.russianAttacker1
-        | Pe2s35 -> Vehicles.russianBomber1
     [
         for airfield, state in Seq.zip world.Airfields state.Airfields do
             let subst = Mcu.substId <| store.GetIdMapper()
@@ -465,7 +452,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
                 let planeSpecs : T.Airfield.Planes.Plane list =
                     state.NumPlanes
                     |> Map.map (fun plane number ->
-                        let model = getPlaneModel plane
+                        let model = plane.ScriptModel
                         newAirfieldPlane("", "", 0, 0, "", "", number)
                             .SetScript(T.String model.Script)
                             .SetModel(T.String model.Model)
