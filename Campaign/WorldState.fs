@@ -62,9 +62,22 @@ module Functions =
     open System.Numerics
     open Vector
 
+    let (|Contains|_|) suffix (s : string) =
+        if s.Contains(suffix) then
+            Some()
+        else
+            None
     let getWeightCapacityPerBuilding (model : string) = 5000.0f
     let getShellsPerBuilding (model : string) = (getWeightCapacityPerBuilding model) / RegionState.ShellWeight
-    let getDurabilityForBuilding (model : string) = 15000
+    let getDurabilityForBuilding (model : string) =
+        match model with
+        | Contains "arf_net" -> 1000
+        | Contains "arf_dugout" -> 15000
+        | Contains "arf_barak" -> 10000
+        | Contains "arf_hangar" -> 10000
+        | Contains "industrial" -> 10000
+        | Contains "static_" -> 2500
+        | _ -> 10000
     let getAntiAirCanonsForArea (area : DefenseArea) =
         let refArea = 1.0e6f
         let area = Vector2.ConvexPolygonArea(area.Boundary)
