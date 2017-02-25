@@ -206,7 +206,7 @@ with
 
     static member CreateTrain(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let convoy = VirtualConvoy.Create(store, lcStore, path, 0, country, coalition)
-        // Mutate car to train
+        // Mutate car to train, remove on-road formation MCU
         let convoySet =
             convoy.ConvoySet
             |> Map.map (fun key value ->
@@ -223,9 +223,10 @@ with
                         { new McuUtil.IMcuGroup with
                               member x.Content =
                                 McuUtil.deepContentOf value.All
-                                |> List.map (function
-                                    | :? Mcu.HasEntity as vehicle when vehicle.LinkTrId = value.LeadCarEntity.Index -> upcast train
-                                    | x -> x
+                                |> List.choose (function
+                                    | :? Mcu.HasEntity as vehicle when vehicle.LinkTrId = value.LeadCarEntity.Index -> Some(upcast train)
+                                    | :? Mcu.McuTrigger as trigger when trigger.Name = T.Blocks.OnRoad -> None
+                                    | x -> Some x
                                 )
                               member x.LcStrings = value.All.LcStrings
                               member x.SubGroups = []
