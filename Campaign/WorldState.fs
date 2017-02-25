@@ -225,7 +225,7 @@ module Functions =
                 let numF1, numF2 = 2 * numFighters / 5, numFighters / 5
                 let numAttackers = List.length airfield.ParkedAttackers
                 let numBombers = List.length airfield.ParkedBombers
-                let numJu52 = if numBombers > 5 then 2 else 0
+                let numJu52 = if numBombers >= 5 then 2 else 0
                 if hasFactories then
                     match owner with
                     | None -> Map.empty
