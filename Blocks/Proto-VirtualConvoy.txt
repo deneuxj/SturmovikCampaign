@@ -124,5 +124,5 @@ target += for wp in path_end
 // AtDestination
 target += for (atd, truck) in at_destination -> (result.Arrived, atd.LeaderArrived)
                                              -> (truck.Damaged, atd.Destroyed)
-target += for (atd, convoy) in at_destination_convoy -> (result.Arrived, atd.LeaderArrived)
-                                                     -> (convoy.LeadCarDamaged, atd.Destroyed)
+target += for (atd, convoy) in at_destination_convoy -> (result.Delete, atd.LeaderArrived)
+                                                     -> (convoy.DeleteLeadCar, atd.Destroyed)

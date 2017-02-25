@@ -316,11 +316,11 @@ with
                     | TruckAtDestinationInstance(truck) ->
                         let truck = this.TruckInConvoySet.[truck]
                         yield api.Arrived, upcast kvp.Value.LeaderArrived
-                        yield truck.Damaged, upcast kvp.Value.Destroyed
+                        yield truck.Delete, upcast kvp.Value.Destroyed
                     | LeadCarAtDestinationInstance(convoy) ->
                         let car = this.ConvoySet.[convoy]
                         yield api.Arrived, upcast kvp.Value.LeaderArrived
-                        yield car.LeadCarDamaged, upcast kvp.Value.Destroyed
+                        yield car.DeleteLeadCar, upcast kvp.Value.Destroyed
                 for wp, convoy in this.ConvoyAtWaypoint do
                     let wec = get this.WhileEnemyCloseOfConvoy convoy
                     let wec = this.WhileEnemyCloseSet.[wec]
