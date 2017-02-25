@@ -65,7 +65,7 @@ columns += for (convoy, position, truck) in truck_in_convoy -> (truck.Entity, co
 
 // Convoy <-> ActiveWaypoint
 object += for (wp, convoy) in convoy_at_waypoint for wp2 in path*(wp) -> (convoy.LeadCarEntity, wp2.Waypoint)
-target += for (wp, convoy) in convoy_at_waypoint for wp2 in path*(wp) -> (convoy.TriggerGates, wp2.Gate)
+target += for (wp, convoy) in convoy_at_waypoint for wp2 in path(wp) -> (convoy.TriggerGates, wp2.Gate)
 
 // Convoy <-> WhileEnemyClose
 object += for (convoy, wec) in convoy_of_enemy_close -> (wec.Proximity, convoy.LeadCarEntity)

@@ -264,8 +264,11 @@ with
         let targetLinks =
             [
                 for wp, convoy in this.ConvoyAtWaypoint do
-                    for wp2 in star this.Path wp do
+                    match tryGet this.Path wp with
+                    | Some wp2 ->
                         yield this.ConvoySet.[convoy].TriggerGates, this.ActiveWaypointSet.[wp].Gate :> Mcu.McuBase
+                    | None ->
+                        ()
                 for wec, convoy in this.ConvoyOfEnemyClose do
                     yield this.WhileEnemyCloseSet.[wec].WakeUp, this.ConvoySet.[convoy].ActivateGroup :> Mcu.McuBase
                     yield this.WhileEnemyCloseSet.[wec].Sleep, this.ConvoySet.[convoy].DeactivateGroup :> Mcu.McuBase
