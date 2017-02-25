@@ -266,7 +266,7 @@ with
                 for wp, convoy in this.ConvoyAtWaypoint do
                     match tryGet this.Path wp with
                     | Some wp2 ->
-                        yield this.ConvoySet.[convoy].TriggerGates, this.ActiveWaypointSet.[wp].Gate :> Mcu.McuBase
+                        yield this.ConvoySet.[convoy].TriggerGates, this.ActiveWaypointSet.[wp2].Gate :> Mcu.McuBase
                     | None ->
                         ()
                 for wec, convoy in this.ConvoyOfEnemyClose do
