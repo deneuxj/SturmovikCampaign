@@ -281,9 +281,10 @@ with
                 for wp, convoy in this.ConvoyAtWaypoint do
                     let wec = get this.WhileEnemyCloseOfConvoy convoy
                     let wec = this.WhileEnemyCloseSet.[wec]
-                    let wp = this.ActiveWaypointSet.[wp]
-                    yield wp.Activate, wec.StartMonitoring :> Mcu.McuBase
-                    yield wp.Deactivate, wec.StopMonitoring :> Mcu.McuBase
+                    let wpData = this.ActiveWaypointSet.[wp]
+                    if not(this.PathEnd.Contains(wp)) then
+                        yield wpData.Activate, wec.StartMonitoring :> Mcu.McuBase
+                    yield wpData.Deactivate, wec.StopMonitoring :> Mcu.McuBase
                 for curr, next in this.Path do
                     let curr2 = this.ActiveWaypointSet.[curr]
                     let next2 = this.ActiveWaypointSet.[next]
@@ -310,7 +311,7 @@ with
                     yield finish.Waypoint :> Mcu.McuTrigger, this.Api.Arrived :> Mcu.McuBase
                     yield finish.Activate, this.Api.Arrived :> Mcu.McuBase
                 for kvp in this.AtDestinationSet do
-                    let api = this.Api                    
+                    let api = this.Api
                     match kvp.Key with
                     | TruckAtDestinationInstance(truck) ->
                         let truck = this.TruckInConvoySet.[truck]
@@ -320,6 +321,11 @@ with
                         let car = this.ConvoySet.[convoy]
                         yield api.Arrived, upcast kvp.Value.LeaderArrived
                         yield car.LeadCarDamaged, upcast kvp.Value.Destroyed
+                for wp, convoy in this.ConvoyAtWaypoint do
+                    let wec = get this.WhileEnemyCloseOfConvoy convoy
+                    let wec = this.WhileEnemyCloseSet.[wec]
+                    let api = this.Api
+                    yield api.Arrived, wec.StopMonitoring :> Mcu.McuBase
             ]
         { Columns = columns
           Objects = objectLinks
