@@ -1207,7 +1207,7 @@ Train
   Carriages
   {
     "LuaScripts\WorldObjects\Trains\g8t.txt";
-    "LuaScripts\WorldObjects\Trains\platformaa-61k.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-flak38.txt";
     "LuaScripts\WorldObjects\Trains\pass.txt";
     "LuaScripts\WorldObjects\Trains\pass.txt";
     "LuaScripts\WorldObjects\Trains\pass.txt";
@@ -1219,7 +1219,7 @@ Train
     "LuaScripts\WorldObjects\Trains\tankb.txt";
     "LuaScripts\WorldObjects\Trains\tankb.txt";
     "LuaScripts\WorldObjects\Trains\tankb.txt";
-    "LuaScripts\WorldObjects\Trains\platformaa-61k.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-flak38.txt";
   }
   
 }
