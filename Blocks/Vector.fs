@@ -53,6 +53,17 @@ with
                 c >= 0.0f
             )
 
+    static member ConvexPolygonArea(poly : Vector2 list) =
+        match poly with
+        | [] -> 0.0f
+        | p0 :: rest ->
+            rest
+            |> Seq.pairwise
+            |> Seq.sumBy (fun (p1, p2) ->
+                let v1 = p1 - p0
+                let v2 = p2 - p0
+                0.5f * abs(Vector2.Cross(v1, v2)))
+
     member this.DistanceFromSegment(v1 : Vector2, v2 : Vector2) =
         let w = v2 - v1
         let wl = w.Length()

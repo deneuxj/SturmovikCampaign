@@ -59,12 +59,24 @@ with
 module Functions =
     open SturmovikMission.DataProvider.Parsing
     open SturmovikMission.DataProvider.Mcu
+    open System.Numerics
+    open Vector
 
     let getWeightCapacityPerBuilding (model : string) = 5000.0f
     let getShellsPerBuilding (model : string) = (getWeightCapacityPerBuilding model) / RegionState.ShellWeight
     let getDurabilityForBuilding (model : string) = 15000
-    let antiAirCanonsByArea = 5
-    let antiTankCanonsByArea = 5
+    let getAntiAirCanonsForArea (area : DefenseArea) =
+        let refArea = 1.0e6f
+        let area = Vector2.ConvexPolygonArea(area.Boundary)
+        min (5.0f * area / refArea) 2.0f
+        |> ceil
+        |> int
+    let getAntiTankCanonsForArea (area : DefenseArea) =
+        let refArea = 130.0e3f
+        let area = Vector2.ConvexPolygonArea(area.Boundary)
+        min (5.0f * area / refArea) 2.0f
+        |> ceil
+        |> int        
 
     let mkInitialState(description : World, strategyFile : string) =
         let data = T.GroupData(Stream.FromFile strategyFile)
@@ -132,17 +144,17 @@ module Functions =
                             yield (region.RegionId, enemy.RegionId)
             }
             |> Set.ofSeq
-        let fromDefenseArea (baseNumUnits : int) (area : DefenseArea) =
+        let fromDefenseArea (baseNumUnits : DefenseArea -> int) (area : DefenseArea) =
             let owner = getOwner area.Home.Home
             let numUnits =
                 match owner with
                 | None -> 0
                 | Some _ ->
                     match area.Home with
-                    | Central _ -> baseNumUnits
+                    | Central _ -> baseNumUnits area
                     | FrontLine(home, other) ->
                         if frontLine.Contains((home, other)) then
-                            baseNumUnits
+                            baseNumUnits area
                         else
                             0
             { DefenseAreaId = area.DefenseAreaId
@@ -150,10 +162,10 @@ module Functions =
             }
         let antiAirDefenses =
             description.AntiAirDefenses
-            |> List.map (fromDefenseArea antiAirCanonsByArea)
+            |> List.map (fromDefenseArea getAntiAirCanonsForArea)
         let antiTankDefenses =
             description.AntiTankDefenses
-            |> List.map (fromDefenseArea antiTankCanonsByArea)
+            |> List.map (fromDefenseArea getAntiTankCanonsForArea)
         let getDefenseArea =
             let m =
                 description.AntiAirDefenses @ description.AntiTankDefenses
