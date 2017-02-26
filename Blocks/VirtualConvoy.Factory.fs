@@ -176,7 +176,7 @@ with
             seq {
                 for wp in pathEnd do
                     let convoy = get convoyAtWaypoint wp
-                    let pos = Vector2.FromMcu(convoySet.[convoy].LeadCarEntity.Pos) + Vector2(100.0f, 0.0f)
+                    let pos = Vector2.FromMcu(activeWaypointSet.[wp].Waypoint.Pos) + Vector2(0.0f, 100.0f)
                     yield(LeadCarAtDestinationInstance(convoy), AtDestination.Create(store, lcStore, pos))
                     for convoy2, _, truck in truckInConvoy do
                         if convoy = convoy2 then
