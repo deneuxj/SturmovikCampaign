@@ -8,16 +8,21 @@ open SturmovikMission.DataProvider
 
 type CoalitionId = Axis | Allies
 with
+    /// <summary>
+    /// Convert to a numerical value suitable for use in mission files.
+    /// </summary>
     member this.ToCountry =
         match this with
         | Axis -> Mcu.CountryValue.Germany
         | Allies -> Mcu.CountryValue.Russia
 
+/// A position on the map and a rotation around the vertical axis.
 type OrientedPosition = {
     Pos : Vector2
     Rotation : float32
 }
 
+/// A group of buildings or some other static objects.
 type StaticGroup = {
     Model : string
     Script : string
@@ -26,11 +31,15 @@ type StaticGroup = {
 
 type RegionId = RegionId of string
 
+/// All items in a region are under the control of the owner of the region.
+/// Regions are built from influence areas in the group "Regions" in the strategy mission file.
 type Region = {
     RegionId : RegionId
     Boundary : Vector2 list
     Neighbours : RegionId list
+    /// Storage controls the amount of static anti-air and anti-tank units deployed in a region.
     Storage : StaticGroup list
+    /// Regions with factories get new planes, vehicles and ammo (stored in region storage and in airfield storage).
     Production : StaticGroup list
 }
 with
@@ -135,9 +144,11 @@ with
         { this with Production = this.Production @ factories
         }
 
+/// Paths link regions to their neighbours. Road and rail convoys travel along those. Those are extracted from waypoints in groups Roads and Trains respectively in the strategy mission.
 type Path = {
     StartId : RegionId
     EndId : RegionId
+    /// Ordered list of path vertices, composed of a location and an orientation. The orientation is important for properly orienting trains and vehicle columns.
     Locations : (Vector2 * float32) list
 }
 with
@@ -190,6 +201,7 @@ with
 
 type DefenseAreaId = DefenseAreaId of int
 
+/// A defense area can be tied to the region itself, or the border with another region.
 type DefenseAreaHome =
     | Central of RegionId
     | FrontLine of RegionId * RegionId
@@ -199,9 +211,12 @@ with
         | Central home
         | FrontLine(home, _) -> home
 
+/// Defense areas contain static anti-air and anti-tank defenses. Defense areas are extracted from influence areas in group Defenses in the strategy mission.
+/// Influence areas for anti-air are named "AAA" and "AT" for anti-tank.
 type DefenseArea = {
     DefenseAreaId : DefenseAreaId
     Home : DefenseAreaHome
+    /// The orientation is relevant for AT tank canons, so that they can aim at incoming tanks.
     Position : OrientedPosition
     Boundary : Vector2 list
 }
