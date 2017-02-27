@@ -21,7 +21,7 @@ try
 with
     | exc -> printfn "Error copying files: '%s'" exc.Message
 
-let random = System.Random()
+let random = System.Random(0)
 let strategyFile = "StrategySmall1.mission"
 let world0, blocks, bridges, options = World.Create(strategyFile)
 let world = { world0 with WeatherDaysOffset = 15.0 * (random.NextDouble() - 0.5)}
@@ -33,7 +33,7 @@ let alliesConvoyOrders =
     createAllConvoyOrders (Some Allies, world, state)
     |> prioritizeConvoys 4 world state
 let allConvoyOrders = axisConvoyOrders @ alliesConvoyOrders
-let missionName = "AutoGenMission"
+let missionName = "AutoGenMission2"
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
 let outputDir = @"C:\Users\johann\Documents\AutoMoscow"
