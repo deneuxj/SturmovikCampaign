@@ -37,7 +37,7 @@ let missionName = "AutoGenMission2"
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
 let outputDir = @"C:\Users\johann\Documents\AutoMoscow"
-writeMissionFile random author missionName briefing options blocks bridges world state allConvoyOrders (Path.Combine(outputDir, missionName + ".Mission"))
+writeMissionFile random author missionName briefing 120 60 options blocks bridges world state allConvoyOrders (Path.Combine(outputDir, missionName + ".Mission"))
 
 let serverDataDir = @"E:\dserver\data"
 let serverBinDir = @"E:\dserver\bin"

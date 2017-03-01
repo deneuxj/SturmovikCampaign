@@ -590,7 +590,7 @@ let createParkedPlanes store (world : World) (state : WorldState) =
     |> List.concat
 
 
-let writeMissionFile (random : System.Random) author missionName briefing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
+let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
     let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
     let weather = Weather.getWeather random (state.Date + daysOffset)
     let store = NumericalIdentifiers.IdStore()
@@ -603,7 +603,7 @@ let writeMissionFile (random : System.Random) author missionName briefing (optio
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
-    let convoysAndTimers = createConvoys 240 60 store lcStore world state orders
+    let convoysAndTimers = createConvoys missionLength convoySpacing store lcStore world state orders
     for convoys, _ in convoysAndTimers do
         match convoys with
         | first :: _ ->
