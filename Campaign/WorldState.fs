@@ -1,8 +1,28 @@
 ﻿namespace Campaign.WorldState
 
-open Campaign.WorldDescription
 open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks.Vehicles
+
+open Campaign.WorldDescription
 open Campaign.Util
+
+type GroundAttackVehicle =
+    | HeavyTank
+    | MediumTank
+    | LightArmor
+with
+    member this.GetModel(coalition) =
+        match coalition with
+        | Axis ->
+            match this with
+            | HeavyTank -> germanHeavyTank
+            | MediumTank -> germanMediumTank
+            | LightArmor -> germanMobileAA
+        | Allies ->
+            match this with
+            | HeavyTank -> russianHeavyTank
+            | MediumTank -> russianMediumTank
+            | LightArmor -> russianMobileAA
 
 type RegionState = {
     RegionId : RegionId
@@ -10,9 +30,7 @@ type RegionState = {
     StorageHealth : float32 list
     ProductionHealth : float32 list
     ShellCount : float32
-    NumHeavyTanks : int
-    NumMediumTanks : int
-    NumLightArmor : int
+    NumVehicles : Map<GroundAttackVehicle, int>
 }
 with
     static member ShellWeight = 5.0f
@@ -131,9 +149,7 @@ module Functions =
                   StorageHealth = desc.Storage |> List.map (fun _ -> 1.0f)
                   ProductionHealth = desc.Production |> List.map (fun _ -> 1.0f)
                   ShellCount = shellCount
-                  NumHeavyTanks = 2
-                  NumMediumTanks = 5
-                  NumLightArmor = 10
+                  NumVehicles = [(HeavyTank, 2); (MediumTank, 5); (LightArmor, 10)] |> Map.ofList
                 }
             )
         let frontLine =
