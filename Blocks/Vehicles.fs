@@ -93,6 +93,42 @@ let germanFlak =
       Model = canon.GetModel().Value
     }
 
+let russianHeavyTank =
+    let tank = vehicles.[T.Vehicles.HeavyTankRUS]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let germanHeavyTank =
+    let tank = vehicles.[T.Vehicles.HeavyTankGER]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let russianMediumTank =
+    let tank = vehicles.[T.Vehicles.MediumTankRUS]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let germanMediumTank =
+    let tank = vehicles.[T.Vehicles.MediumTankGER]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let russianMobileAA =
+    let tank = vehicles.[T.Vehicles.MobileAntiAirRUS]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let germanMobileAA =
+    let tank = vehicles.[T.Vehicles.MobileAntiAirGER]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
 let russianTrain =
     let train = trains.[T.Vehicles.TrainRUS]
     { Script = train.GetScript().Value
