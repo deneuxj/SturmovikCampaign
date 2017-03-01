@@ -1,6 +1,7 @@
 ﻿module Campaign.Orders
 
 open Campaign.WorldDescription
+open Campaign.WorldState
 
 type ConvoyOrder = {
     Start : RegionId
@@ -21,3 +22,9 @@ with
         match this.Means with
         | ByRoad -> float32 this.Convoy.Size * 1000.0f
         | ByRail -> 20000.0f
+
+type GroundInvasionOrder = {
+    Start : RegionId
+    Destination : RegionId
+    Composition : Map<GroundAttackVehicle, int>
+}
