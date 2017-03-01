@@ -1,6 +1,7 @@
 ﻿module SturmovikMission.Blocks.BlocksMissionData
 
 open SturmovikMission.DataProvider
+open System.Numerics
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission">
 
@@ -15,6 +16,23 @@ let newTimer idx =
 let newCounter idx =
     T.MCU_Counter(T.Integer 1, T.String "", T.Boolean false, T.Integer idx, T.String "", T.VectorOfIntegers[], T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
         .CreateMcu() :?> Mcu.McuCounter
+
+let newWaypoint idx (pos : Vector2) (yori : float32) (radius : int) (speed : int) (priority : int) =
+    T.MCU_Waypoint(
+        T.Integer radius,
+        T.String "",
+        T.Integer idx,
+        T.String "",
+        T.VectorOfIntegers[],
+        T.Integer priority,
+        T.Integer speed,
+        T.VectorOfIntegers[],
+        T.Float 0.0,
+        T.Float(float pos.X),
+        T.Float(float yori),
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float(float pos.Y)).CreateMcu() :?> Mcu.McuWaypoint
 
 let newEntity idx =
     T.MCU_TR_Entity(
