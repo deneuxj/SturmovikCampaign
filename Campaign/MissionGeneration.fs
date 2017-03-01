@@ -543,6 +543,52 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
     ]
 
 
+let createColumns store lcStore (world : World) (state : WorldState) (orders : GroundInvasionOrder list) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+    [
+        for order in orders do
+            let regState = sg.GetRegion(order.Start)
+            let coalition = regState.Owner
+            match coalition with
+            | Some coalition ->
+                let path =
+                    world.Roads
+                    |> Seq.tryPick (fun path -> path.MatchesEndpoints(order.Start, order.Destination))
+                match path with
+                | Some path ->
+                    let travel, invasion =
+                        path
+                        |> List.partition (fun (v, _) -> v.IsInConvexPolygon (wg.GetRegion(order.Start).Boundary))
+                    let toVertex(v, yori) =
+                        { Pos = v
+                          Ori = yori
+                          Speed = 40
+                          Radius = 100
+                          Priority = 1
+                        }
+                    let travel =
+                        travel
+                        |> List.map toVertex
+                    let invasion =
+                        invasion
+                        |> List.map (fun x -> { toVertex(x) with Priority = 0 })
+                    let columnContent =
+                        order.Composition
+                        |> Map.toSeq
+                        |> Seq.map (fun (vehicleType, count) ->
+                            List.init count (fun _ -> vehicleType.GetModel(coalition)))
+                        |> List.concat
+                    let column = VirtualConvoy.CreateColumn(store, lcStore, travel, invasion, columnContent, coalition.ToCountry, coalition.ToCoalition)
+                    let links = column.CreateLinks()
+                    links.Apply(McuUtil.deepContentOf column)
+                    yield column
+                | None -> ()
+            | None ->
+                ()
+    ]
+
+
 let createParkedPlanes store (world : World) (state : WorldState) =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
         let modelScript = model.StaticScriptModel
@@ -590,7 +636,7 @@ let createParkedPlanes store (world : World) (state : WorldState) =
     |> List.concat
 
 
-let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (orders : ResupplyOrder list) (filename : string) =
+let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (resupplies : ResupplyOrder list) (invasions : GroundInvasionOrder list) (filename : string) =
     let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
     let weather = Weather.getWeather random (state.Date + daysOffset)
     let store = NumericalIdentifiers.IdStore()
@@ -603,7 +649,15 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
-    let convoysAndTimers = createConvoys missionLength convoySpacing store lcStore world state orders
+    let convoysAndTimers = createConvoys missionLength convoySpacing store lcStore world state resupplies
+    let columns =
+        invasions
+        |> createColumns store lcStore world state
+    for column in columns do
+        Mcu.addTargetLink missionBegin column.Api.Start.Index
+    let columns =
+        columns
+        |> List.map (fun x -> x :> McuUtil.IMcuGroup)
     for convoys, _ in convoysAndTimers do
         match convoys with
         | first :: _ ->
@@ -647,5 +701,5 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList spawns
-          parkedPlanes ] @ convoys @ interConvoyTimers
+          parkedPlanes ] @ convoys @ columns @ interConvoyTimers
     writeMissionFiles "eng" filename options allGroups
