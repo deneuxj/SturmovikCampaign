@@ -266,6 +266,7 @@ type McuEntity =
     abstract MisObjID : int with get, set
     abstract OnEvents : EventConnection list with get, set
     abstract OnReports : ReportConnection list with get, set
+    abstract Enabled : bool with get, set
 
 /// <summary>
 /// Provide access to the position in formation for instances of HasEntity that can be in formations:

@@ -803,6 +803,12 @@ let private mkAsEntity typeName path (state : (string * Value) list ref) iconLC 
                 and set(idx) =
                     state := !state |> setField("MisObjID", Value.Integer idx)
 
+            member this.Enabled
+                with get() =
+                    !state |> getBoolField "Enabled"
+                and set(x) =
+                    state := !state |> setField("Enabled", Value.Boolean x)
+
         interface McuTrigger with
             member this.Objects
                 with get() = cmd.Objects
