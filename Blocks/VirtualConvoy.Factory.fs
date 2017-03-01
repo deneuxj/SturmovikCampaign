@@ -71,7 +71,11 @@ type VirtualConvoy =
     }
 with
     interface McuUtil.IMcuGroup with
-        member this.Content = []
+        member this.Content =
+            [
+                for kvp in this.SimpleWaypointSet do
+                    yield upcast kvp.Value
+            ]
         member this.LcStrings = []
         member this.SubGroups =
             [
@@ -284,6 +288,7 @@ with
             let vehicle = getByIndex truck.Entity.MisObjID (McuUtil.deepContentOf truck.All) :?> Mcu.HasEntity
             vehicle.Model <- model.Model
             vehicle.Script <- model.Script
+        convoy
 
 
     /// <summary>
