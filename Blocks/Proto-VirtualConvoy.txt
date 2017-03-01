@@ -52,10 +52,18 @@ type AtDestination {
 predicate at_destination_convoy(AtDestination, TruckInConvoy)
 predicate at_destination_convoy(AtDestination, Convoy)
 
+type SimpleWaypoint {
+	trigger Waypoint
+}
+predicate invasion_path(SimpleWaypoint, SimpleWaypoint)
+predicate invasion_start(SimpleWaypoint)
+predicate invasion_end(SimpleWaypoint)
+
 type VirtualConvoy {
 	trigger Start // 1x counter
 	trigger Destroyed // This is a non-wraping counter set to (num of trucks in convoy) + 1
-	trigger Arrived // 1x counter
+	trigger Arrived // 1x counter, means "enters enemy territory" for a column
+	trigger Captured // 1x counter, means "arrived at destination in enemy territory" for a column, not used for a supply convoy.
 }
 predicate result(VirtualConvoy)
 
@@ -66,6 +74,15 @@ columns += for (convoy, position, truck) in truck_in_convoy -> (truck.Entity, co
 // Convoy <-> ActiveWaypoint
 object += for (wp, convoy) in convoy_at_waypoint for wp2 in path*(wp) -> (convoy.LeadCarEntity, wp2.Waypoint)
 target += for (wp, convoy) in convoy_at_waypoint for wp2 in path(wp) -> (convoy.TriggerGates, wp2.Gate)
+
+// Convoy <-> SimpleWaypoint
+object += for (_, convoy) in convoy_at_waypoint for start in invasion_start for wp2 in invasion_path*(start) -> (convoy.LeadCarEntity, wp2.Waypoint)
+
+// ActiveWaypoint <-> SimpleWaypoint
+target += for end in path_end for start in invasion_start -> (end.Waypoint, start.Waypoint)
+
+// SimpleWaypoint <-> SimpleWaypoint
+target += for (curr, next) in invasion_path -> (curr.Waypoint, next.Waypoint)
 
 // Convoy <-> WhileEnemyClose
 object += for (convoy, wec) in convoy_of_enemy_close -> (wec.Proximity, convoy.LeadCarEntity)
@@ -115,6 +132,15 @@ target += for (convoy, _, truck) in truck_in_convoy
 target += for wp in path_end
           for out in result -> (wp.Waypoint, out.Arrived)
                             -> (wp.Activate, out.Arrived)
+target += for end in path_end
+          for (prev, _) in path
+		  for convoy in convoy_at_waypoint(prev) -> (wp.Waypoint, convoy.DeactivateGroup)
+		                                         -> (wp.Activate, convoy.DeactivateGroup)
+target += for end in path_end
+		  for convoy in convoy_at_waypoint(end) -> (wp.Waypoint, convoy.ActivateGroup)
+		                                        -> (wp.Activate, convoy.ActivateGroup)
+target += for wp in invasion_end
+		  for out in result -> (wp.Waypoint, out.Captured)
 target += for wp in path_end
           for convoy in convoy_at_waypoint(wp)
 		  for wec, convoy2 in convoy_of_enemy_close

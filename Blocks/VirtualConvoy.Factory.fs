@@ -21,13 +21,14 @@ type TimerInstance = TimerInstance of int
 type AtDestinationInstance =
     | TruckAtDestinationInstance of TruckInConvoyInstance
     | LeadCarAtDestinationInstance of ConvoyInstance
+type SimpleWaypointInstance = SimpleWaypointInstance of int
 
 /// <summary>
 /// Type used in the arguments of VirtualConvoy.Create. Denotes one vertex of the path of the virtual convoy.
 /// </summary>
 type PathVertex =
-    { Pos : Mcu.Vec3
-      Ori : Mcu.Vec3
+    { Pos : Vector2
+      Ori : float32
       Radius : int
       Speed : int
       Priority : int
@@ -58,6 +59,11 @@ type VirtualConvoy =
       ConvoyOfEnemyClose : Set<WhileEnemyCloseInstance * ConvoyInstance>
 
       TimerSet : Map<TimerInstance, Timer>
+
+      SimpleWaypointSet : Map<SimpleWaypointInstance, Mcu.McuWaypoint>
+      InvasionPath : Set<SimpleWaypointInstance * SimpleWaypointInstance>
+      InvasionStart : Set<SimpleWaypointInstance>
+      InvasionEnd : Set<SimpleWaypointInstance>
 
       AtDestinationSet : Map<AtDestinationInstance, AtDestination>
 
@@ -90,7 +96,7 @@ with
     /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, invasion : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let convoySet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
@@ -116,13 +122,22 @@ with
                     yield (ActiveWaypointInstance i, ActiveWaypoint.Create(store, vertex.Pos, vertex.Ori, vertex.Speed, vertex.Priority))
             }
             |> Map.ofSeq
+        let simpleWaypointSet =
+            seq {
+                let subst = Mcu.substId <| store.GetIdMapper()
+                for i, vertex in Seq.indexed invasion do
+                    let mcu = newWaypoint i vertex.Pos vertex.Ori vertex.Radius vertex.Speed vertex.Priority
+                    subst mcu
+                    yield (SimpleWaypointInstance i, mcu)
+            }
+            |> Map.ofSeq
         let timerSet =
             seq {
                 for i, (curr, next) in Seq.zip (Seq.initInfinite id) (Seq.pairwise path) do
                     let expectedTime =
                         let vec =
-                            McuUtil.vecMinus next.Pos curr.Pos
-                        let distance = sqrt(vec.X * vec.X + vec.Y * vec.Y + vec.Z * vec.Z)
+                            next.Pos - curr.Pos
+                        let distance = float(vec.Length())
                         3.6 * distance / float next.Speed
                     yield (TimerInstance i, Timer.Create(store, curr.Pos, 1.1 * expectedTime))
             }
@@ -154,6 +169,19 @@ with
             |> Set.ofSeq
         let pathStart = Set [ ActiveWaypointInstance 0 ]
         let pathEnd = Set [ ActiveWaypointInstance (List.length path - 1) ]
+        let invasion2 =
+            invasion
+            |> Seq.mapi(fun i _ -> SimpleWaypointInstance i)
+            |> Seq.pairwise
+            |> Set.ofSeq
+        let invasionStart =
+            match invasion with
+            | [] -> Set.empty
+            | _ -> Set [SimpleWaypointInstance 0]
+        let invasionEnd =
+            match invasion with
+            | [] -> Set.empty
+            | _ -> Set [SimpleWaypointInstance (List.length invasion - 1)]
         let timerBetweenWaypoints =
             path2
             |> Seq.map (fun (ActiveWaypointInstance i as curr, next) -> (curr, next, TimerInstance i))
@@ -166,10 +194,10 @@ with
             |> Set.ofSeq
         let apiPos =
             path
-            |> List.fold (fun sum vertex -> McuUtil.translate sum vertex.Pos) (McuUtil.newVec3(0.0, 0.0, 0.0))
+            |> List.fold (fun sum vertex -> sum + vertex.Pos) Vector2.Zero
         let apiPos =
-            let n = List.length path |> float
-            McuUtil.newVec3(apiPos.X / n, apiPos.Y / n, apiPos.Z / n)
+            let n = List.length path
+            apiPos / float32 n
         let api = ConvoyControl.Create(store, apiPos, convoySize)
 
         let atDestinationSet =
@@ -195,6 +223,10 @@ with
           Path = path2
           PathStart = pathStart
           PathEnd = pathEnd
+          SimpleWaypointSet = simpleWaypointSet
+          InvasionPath = invasion2
+          InvasionStart = invasionStart
+          InvasionEnd = invasionEnd
           TimerBetweenWaypoints = timerBetweenWaypoints
           WhileEnemyCloseSet = whileEnemyCloseSet
           ConvoyOfEnemyClose = convoyOfEnemyClose
@@ -205,7 +237,7 @@ with
 
 
     static member CreateTrain(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
-        let convoy = VirtualConvoy.Create(store, lcStore, path, 0, country, coalition)
+        let convoy = VirtualConvoy.Create(store, lcStore, path, [], 0, country, coalition)
         // Mutate car to train, remove on-road formation MCU
         let convoySet =
             convoy.ConvoySet
@@ -244,6 +276,16 @@ with
             McuUtil.vecCopy wp.Waypoint.Ori convoy.LeadCarEntity.Ori
         convoy
 
+
+    static member CreateColumn(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, invasionPath : PathVertex list, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+        let numTrucks = List.length columnContent
+        let convoy = VirtualConvoy.Create(store, lcStore, path, invasionPath, numTrucks, country, coalition)
+        for truck, model in Seq.zip (convoy.TruckInConvoySet |> Map.toSeq |> Seq.map snd) columnContent do
+            let vehicle = getByIndex truck.Entity.MisObjID (McuUtil.deepContentOf truck.All) :?> Mcu.HasEntity
+            vehicle.Model <- model.Model
+            vehicle.Script <- model.Script
+
+
     /// <summary>
     /// Create the links between the MCUs in the virtual convoy.
     /// </summary>
@@ -260,6 +302,10 @@ with
                         yield this.ActiveWaypointSet.[wp2].Waypoint :> Mcu.McuTrigger, this.ConvoySet.[convoy].LeadCarEntity :> Mcu.McuBase 
                 for wec, convoy in this.ConvoyOfEnemyClose do
                     yield this.WhileEnemyCloseSet.[wec].Proximity, this.ConvoySet.[convoy].LeadCarEntity :> Mcu.McuBase
+                for start in this.InvasionStart do
+                    for wp in star this.InvasionPath start do
+                        for _, convoy in this.ConvoyAtWaypoint do
+                            yield this.SimpleWaypointSet.[wp] :> Mcu.McuTrigger, this.ConvoySet.[convoy].LeadCarEntity :> Mcu.McuBase
             ]
         let targetLinks =
             [
@@ -307,6 +353,9 @@ with
                         yield currWec.Sleep, afterWec.Activate :> Mcu.McuBase
                 for wp in this.PathStart do
                     yield this.Api.Start, this.ActiveWaypointSet.[wp].Activate :> Mcu.McuBase
+                for wp in this.PathEnd do
+                    for start in this.InvasionStart do
+                        yield this.ActiveWaypointSet.[wp].Waypoint :> Mcu.McuTrigger, this.SimpleWaypointSet.[start] :> Mcu.McuBase
                 for convoy, _, truck in this.TruckInConvoy do
                     yield this.TruckInConvoySet.[truck].Damaged, this.Api.Destroyed :> Mcu.McuBase
                 for wp in this.PathEnd do
@@ -329,6 +378,28 @@ with
                     let wec = this.WhileEnemyCloseSet.[wec]
                     let api = this.Api
                     yield api.Arrived, wec.StopMonitoring :> Mcu.McuBase
+                for wp1, wp2 in this.InvasionPath do
+                    yield this.SimpleWaypointSet.[wp1] :> Mcu.McuTrigger, this.SimpleWaypointSet.[wp2] :> Mcu.McuBase
+                for finish in this.PathEnd do
+                    for prev, _ in this.Path do
+                        match tryGet this.ConvoyAtWaypoint prev with
+                        | Some convoy ->
+                            let wp = this.ActiveWaypointSet.[prev]
+                            let convoy = this.ConvoySet.[convoy]
+                            yield upcast wp.Waypoint, upcast convoy.DeactivateGroup
+                            yield wp.Activate, upcast convoy.DeactivateGroup
+                        | None -> ()
+                    match tryGet this.ConvoyAtWaypoint finish with
+                    | Some convoy ->
+                        let wp = this.ActiveWaypointSet.[finish]
+                        let convoy = this.ConvoySet.[convoy]
+                        yield upcast wp.Waypoint, upcast convoy.ActivateGroup
+                        yield wp.Activate, upcast convoy.ActivateGroup
+                    | None ->
+                        ()
+                for finish in this.InvasionEnd do
+                    let wp = this.SimpleWaypointSet.[finish]
+                    yield upcast wp, upcast this.Api.Captured
             ]
         { Columns = columns
           Objects = objectLinks

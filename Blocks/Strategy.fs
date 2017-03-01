@@ -2,6 +2,8 @@
 
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.VirtualConvoy.Factory
+open System.Numerics
+open Vector
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "">
 
@@ -35,8 +37,8 @@ let getSomePath() =
             work start []
             |> List.rev
             |> List.map (fun wp ->
-                { Pos = wp.Pos
-                  Ori = wp.Ori
+                { Pos = Vector2.FromMcu(wp.Pos)
+                  Ori = float32 wp.Ori.Y
                   Speed = wp.Speed
                   Priority = wp.Priority
                   Radius = wp.Radius

@@ -19,7 +19,7 @@ type Convoy =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3, country : Mcu.CountryValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
@@ -39,15 +39,15 @@ with
             leadCar.Script <- russianCar.Script
         | _ ->
             ()
-        let center = McuUtil.newVec3(leadCar.Pos.X, leadCar.Pos.Y, leadCar.Pos.Z)
+        let center = Vector2.FromMcu(leadCar.Pos)
         // Rotate and translate
-        let rot = ori.Y - leadCar.Ori.Y
-        let diff = McuUtil.vecMinus pos center
+        let rot = ori - float32 leadCar.Ori.Y
+        let diff = pos - center
         for mcu in group do
-            let pos2 = McuUtil.rotate center rot mcu.Pos
-            let pos2 = McuUtil.translate pos2 diff
-            McuUtil.vecCopy pos2 mcu.Pos
-        McuUtil.vecCopy ori leadCar.Ori
+            let pos2 = (Vector2.FromMcu(mcu.Pos) - center).Rotate(rot) + center
+            let pos2 = pos2 + diff
+            pos2.AssignTo(mcu.Pos)
+        leadCar.Ori.Y <- float ori 
         // Result
         { LeadCarEntity = Seq.head <| McuUtil.filterByName T.Blocks.``LeadCar entity`` group :?> Mcu.McuEntity
           LeadCarDamaged = getByName T.Blocks.LeadCarDamaged
@@ -65,7 +65,7 @@ type TruckInConvoy =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3, inFormation : int, country : Mcu.CountryValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, inFormation : int, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
@@ -85,20 +85,19 @@ with
             truck.Script <- russianTruck.Script
         | _ ->
             ()
-        let center = McuUtil.newVec3(0.0, 0.0, 0.0)
-        McuUtil.vecCopy truck.Pos center
+        let center = Vector2.FromMcu(truck.Pos)
         // Rotation
-        let rot = ori.Y - truck.Ori.Y
+        let rot = ori - float32 truck.Ori.Y
         // Actual position is to the right of the leader
-        let offset = McuUtil.newVec3(0.0, 0.0, (float inFormation) * 20.0)
-        let offset = McuUtil.rotate (McuUtil.newVec3(0.0, 0.0, 0.0)) ori.Y offset
-        let pos2 = McuUtil.translate pos offset
-        let diff = McuUtil.vecMinus pos2 truck.Pos
+        let offset = Vector2.UnitY * (float32 inFormation) * 20.0f
+        let offset = offset.Rotate(ori)
+        let pos2 = pos + offset
+        let diff = pos2 - Vector2.FromMcu(truck.Pos)
         for mcu in group do
-            let pos2 = McuUtil.rotate center rot mcu.Pos
-            let pos2 = McuUtil.translate pos2 diff
-            McuUtil.vecCopy pos2 mcu.Pos
-        McuUtil.vecCopy ori truck.Ori
+            let pos2 = (Vector2.FromMcu(mcu.Pos) - center).Rotate(rot) + center
+            let pos2 = pos2 + diff
+            pos2.AssignTo(mcu.Pos)
+        truck.Ori.Y <- float ori 
         // Result
         { Entity = Seq.head <| McuUtil.filterByName T.Blocks.``Truck entity`` group :?> Mcu.McuEntity
           Damaged = getByName T.Blocks.TruckDamaged
@@ -114,7 +113,7 @@ type ActiveWaypoint =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, ori : Mcu.Vec3, speed : int, priority : int) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, speed : int, priority : int) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
@@ -128,14 +127,14 @@ with
         let deactivate = getByName T.Blocks.DeactivateGate
         let gate = getByName T.Blocks.Gate
         // Orientation of waypoint
-        McuUtil.vecCopy ori waypoint.Ori
+        waypoint.Ori.Y <- float ori 
         waypoint.Speed <- speed
         waypoint.Priority <- priority
         // Position of all nodes
-        let diff = McuUtil.vecMinus pos waypoint.Pos
+        let diff = pos - Vector2.FromMcu(waypoint.Pos)
         for mcu in group do
-            let pos2 = McuUtil.translate diff mcu.Pos
-            McuUtil.vecCopy pos2 mcu.Pos
+            let pos2 = diff + Vector2.FromMcu(mcu.Pos)
+            pos2.AssignTo(mcu.Pos)
         // Result
         { Waypoint = waypoint
           Activate = activate
@@ -155,7 +154,7 @@ type WhileEnemyClose =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, coalition : Mcu.CoalitionValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, coalition : Mcu.CoalitionValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
@@ -175,11 +174,11 @@ with
         proximity.SetRelativeCoalitions(coalition, Mcu.CoalitionValue.Allies)
         enemyEnters.SetRelativeCoalitions(coalition, Mcu.CoalitionValue.Allies)
         // Position of all nodes
-        let diff = McuUtil.vecMinus pos proximity.Pos
-        let diff = McuUtil.translate diff (McuUtil.newVec3(100.0, 0.0, 100.0))
+        let diff = pos - Vector2.FromMcu(proximity.Pos)
+        let diff = diff + Vector2(100.0f, 100.0f)
         for mcu in group do
-            let pos2 = McuUtil.translate diff mcu.Pos
-            McuUtil.vecCopy pos2 mcu.Pos
+            let pos2 = diff + Vector2.FromMcu(mcu.Pos)
+            pos2.AssignTo(mcu.Pos)
         // Result
         { StartMonitoring = start
           StopMonitoring = stop
@@ -198,7 +197,7 @@ type Timer =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, time : float) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, time : float) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
@@ -214,11 +213,11 @@ with
         let timer = getByName T.Blocks.Timer :?> Mcu.McuTimer
         timer.Time <- time
         // Position of all nodes
-        let diff = McuUtil.vecMinus pos elapsed.Pos
-        let diff = McuUtil.translate diff (McuUtil.newVec3(100.0, 0.0, -100.0))
+        let diff = pos - Vector2.FromMcu(elapsed.Pos)
+        let diff = diff + Vector2(100.0f, -100.0f)
         for mcu in group do
-            let pos2 = McuUtil.translate diff mcu.Pos
-            McuUtil.vecCopy pos2 mcu.Pos
+            let pos2 = diff + Vector2.FromMcu(mcu.Pos)
+            pos2.AssignTo(mcu.Pos)
         // Result
         { Start = start
           Stop = stop
@@ -230,22 +229,25 @@ type ConvoyControl =
     { Start : Mcu.McuTrigger
       Destroyed : Mcu.McuTrigger
       Arrived : Mcu.McuTrigger
+      Captured : Mcu.McuTrigger
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Mcu.Vec3, numTrucks : int) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, numTrucks : int) =
         // Create all nodes
         let start = newCounter 1
         let destroyed = newCounter 2
-        McuUtil.vecCopy (McuUtil.newVec3(0.0, 0.0, 50.0)) destroyed.Pos
+        Vector2(0.0f, 50.0f).AssignTo(destroyed.Pos)
         destroyed.Count <- numTrucks + 1
         let arrived = newCounter 3
-        McuUtil.vecCopy (McuUtil.newVec3(0.0, 0.0, 100.0)) arrived.Pos
-        let group : Mcu.McuBase list = [ start; destroyed; arrived ]
+        Vector2(0.0f, 100.0f).AssignTo(arrived.Pos)
+        let captured = newCounter 4
+        Vector2(0.0f, 150.0f).AssignTo(captured.Pos)
+        let group : Mcu.McuBase list = [ start; destroyed; arrived; captured ]
         // Position
         for mcu in group do
-            let pos2 = McuUtil.translate mcu.Pos pos
-            McuUtil.vecCopy pos2 mcu.Pos
+            let pos2 = Vector2.FromMcu(mcu.Pos) + pos
+            pos2.AssignTo(mcu.Pos)
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         for mcu in group do
@@ -254,6 +256,7 @@ with
         { Start = start
           Destroyed = destroyed
           Arrived = arrived
+          Captured = captured
           All = McuUtil.groupFromList group
         }
 

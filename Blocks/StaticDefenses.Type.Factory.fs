@@ -53,7 +53,7 @@ with
             |> Map.ofSeq
         let enemyCloseSet =
             seq {
-                yield WhileEnemyCloseInstance 1, WhileEnemyClose.Create(store, McuUtil.newVec3(float center.X, 0.0, float center.Y), coalition)
+                yield WhileEnemyCloseInstance 1, WhileEnemyClose.Create(store, center, coalition)
             }
             |> Map.ofSeq
         let canonInGroup =

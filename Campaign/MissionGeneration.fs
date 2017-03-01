@@ -496,14 +496,14 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
             | Some path ->
                 let vertices, kdir =
                     if path.StartId = convoy.Start then
-                        path.Locations, float
+                        path.Locations, float32
                     else
-                        path.Locations |> List.rev, fun yori -> float (if yori < 180.0f then yori + 180.0f else yori - 180.0f)
+                        path.Locations |> List.rev, fun yori -> (if yori < 180.0f then yori + 180.0f else yori - 180.0f)
                 let pathVertices =
                     vertices
                     |> List.map (fun (v, yori) ->
-                        { Pos = McuUtil.newVec3(float v.X, 0.0, float v.Y)
-                          Ori = McuUtil.newVec3(0.0, kdir yori, 0.0)
+                        { Pos = v
+                          Ori = kdir yori
                           Radius = 10000
                           Speed = 50
                           Priority = 1
@@ -520,7 +520,7 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
                             let virtualConvoy =
                                 match order.Means with
                                 | ByRoad ->
-                                    VirtualConvoy.Create(store, lcStore, pathVertices, convoy.Size, country, coalition)
+                                    VirtualConvoy.Create(store, lcStore, pathVertices, [], convoy.Size, country, coalition)
                                 | ByRail ->
                                     VirtualConvoy.CreateTrain(store, lcStore, pathVertices, country, coalition)
                             let links = virtualConvoy.CreateLinks()
