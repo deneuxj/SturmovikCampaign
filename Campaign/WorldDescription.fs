@@ -9,12 +9,20 @@ open SturmovikMission.DataProvider
 type CoalitionId = Axis | Allies
 with
     /// <summary>
-    /// Convert to a numerical value suitable for use in mission files.
+    /// Convert to a numerical country value suitable for use in mission files.
     /// </summary>
     member this.ToCountry =
         match this with
         | Axis -> Mcu.CountryValue.Germany
         | Allies -> Mcu.CountryValue.Russia
+
+    /// <summary>
+    /// Convert to a numerical coalition value suitable for use in mission files.
+    /// </summary>
+    member this.ToCoalition =
+        match this with
+        | Axis -> Mcu.CoalitionValue.Axis
+        | Allies -> Mcu.CoalitionValue.Allies
 
 /// A position on the map and a rotation around the vertical axis.
 type OrientedPosition = {
@@ -197,6 +205,17 @@ with
                 if wp.GetName().Value = "Start" then
                     yield buildPath wp
         ]
+
+    member this.MatchesEndpoints(start, finish) =
+        if this.StartId = start && this.EndId = finish then
+            Some this.Locations
+        elif this.StartId = finish && this.EndId = start then
+            this.Locations
+            |> List.rev
+            |> List.map (fun (pos, yori) -> pos, -yori)
+            |> Some
+        else
+            None
 
 
 type DefenseAreaId = DefenseAreaId of int
