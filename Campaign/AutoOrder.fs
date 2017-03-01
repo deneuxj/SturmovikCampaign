@@ -3,6 +3,7 @@
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
+open Vector
 
 let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId option, world : World, state : WorldState) =
     let getRegion =
@@ -152,3 +153,29 @@ let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (o
         |> List.rev
     sorted
     |> List.take (min maxConvoys (List.length sorted))
+
+
+let createColumns (coalition : CoalitionId option, world : World, state : WorldState) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+    [
+        for region in world.Regions do
+            let regState = sg.GetRegion region.RegionId
+            if regState.Owner = coalition then
+                let target =
+                    region.Neighbours
+                    |> Seq.tryFind(fun ngh ->
+                        let nghState = sg.GetRegion ngh
+                        nghState.Owner <> coalition
+                    )
+                match target with
+                | Some target ->
+                    let composition = regState.NumVehicles
+                    yield {
+                        Start = region.RegionId
+                        Destination = target
+                        Composition = composition
+                    }
+                | None ->
+                    ()
+    ]
