@@ -4,6 +4,7 @@
 #r "../DataProvider/bin/Debug/DataProvider.dll"
 #r "../Blocks/bin/Debug/SturmovikMission.Blocks.exe"
 #r "../Campaign/bin/Debug/Campaign.dll"
+#r "System.Numerics.Vectors"
 
 open Campaign.WorldDescription
 open Campaign.WorldState
@@ -33,11 +34,14 @@ let alliesConvoyOrders =
     createAllConvoyOrders (Some Allies, world, state)
     |> prioritizeConvoys 4 world state
 let allConvoyOrders = axisConvoyOrders @ alliesConvoyOrders
+let axisInvasionOrders = createColumns(Some Axis, world, state)
+let alliesInvasionOrders = createColumns(Some Allies, world, state)
+let allInvasionOrders = axisInvasionOrders @ alliesInvasionOrders
 let missionName = "AutoGenMission2"
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
 let outputDir = @"C:\Users\johann\Documents\AutoMoscow"
-writeMissionFile random author missionName briefing 120 60 options blocks bridges world state allConvoyOrders (Path.Combine(outputDir, missionName + ".Mission"))
+writeMissionFile random author missionName briefing 120 60 options blocks bridges world state allConvoyOrders allInvasionOrders (Path.Combine(outputDir, missionName + ".Mission"))
 
 let serverDataDir = @"E:\dserver\data"
 let serverBinDir = @"E:\dserver\bin"
