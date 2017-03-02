@@ -369,6 +369,15 @@ with
                     let finish = this.ActiveWaypointSet.[wp]
                     yield finish.Waypoint :> Mcu.McuTrigger, this.Api.Arrived :> Mcu.McuBase
                     yield finish.Activate, this.Api.Arrived :> Mcu.McuBase
+                for border in this.PathEnd do
+                    for enter in this.InvasionStart do
+                        match tryGet this.ConvoyAtWaypoint border with
+                        | Some convoy ->
+                            let convoy = this.ConvoySet.[convoy]
+                            let enter = this.SimpleWaypointSet.[enter]
+                            yield convoy.TriggerGates, upcast enter
+                        | None ->
+                            ()
                 for kvp in this.AtDestinationSet do
                     let api = this.Api
                     match kvp.Key with

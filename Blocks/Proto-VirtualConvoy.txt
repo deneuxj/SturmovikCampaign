@@ -77,6 +77,7 @@ target += for (wp, convoy) in convoy_at_waypoint for wp2 in path(wp) -> (convoy.
 
 // Convoy <-> SimpleWaypoint
 object += for (_, convoy) in convoy_at_waypoint for start in invasion_start for wp2 in invasion_path*(start) -> (convoy.LeadCarEntity, wp2.Waypoint)
+target += for start in invasion_start for end in path_end for convoy in convoy_at_waypoint -> (convoy.TriggerGates, start.Waypoint)
 
 // ActiveWaypoint <-> SimpleWaypoint
 target += for end in path_end for start in invasion_start -> (end.Waypoint, start.Waypoint)
