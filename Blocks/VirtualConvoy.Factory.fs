@@ -282,10 +282,12 @@ with
 
 
     static member CreateColumn(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, invasionPath : PathVertex list, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
-        let numTrucks = List.length columnContent
-        let convoy = VirtualConvoy.Create(store, lcStore, path, invasionPath, numTrucks, country, coalition)
-        for truck, model in Seq.zip (convoy.TruckInConvoySet |> Map.toSeq |> Seq.map snd) columnContent do
+        let columnContent = Array.ofList columnContent
+        let convoy = VirtualConvoy.Create(store, lcStore, path, invasionPath, columnContent.Length, country, coalition)
+        for instance, truck in convoy.TruckInConvoySet |> Map.toSeq do
             let vehicle = getByIndex truck.Entity.MisObjID (McuUtil.deepContentOf truck.All) :?> Mcu.HasEntity
+            let (TruckInConvoyInstance(_, pos)) = instance
+            let model = columnContent.[pos - 1]
             vehicle.Model <- model.Model
             vehicle.Script <- model.Script
         convoy
