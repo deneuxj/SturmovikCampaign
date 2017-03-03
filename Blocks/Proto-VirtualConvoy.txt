@@ -69,79 +69,105 @@ predicate result(VirtualConvoy)
 
 
 // Convoy <-> TruckInConvoy
+//  Add trucks to columns
 columns += for (convoy, position, truck) in truck_in_convoy -> (truck.Entity, convoy.LeadCarEntity, position)
 
 // Convoy <-> ActiveWaypoint
+//  Connect lead car to waypoints
 object += for (wp, convoy) in convoy_at_waypoint for wp2 in path*(wp) -> (convoy.LeadCarEntity, wp2.Waypoint)
+//  Trigger movement to next active waypoint
 target += for (wp, convoy) in convoy_at_waypoint for wp2 in path(wp) -> (convoy.TriggerGates, wp2.Gate)
 
 // Convoy <-> SimpleWaypoint
-object += for (_, convoy) in convoy_at_waypoint for start in invasion_start for wp2 in invasion_path*(start) -> (convoy.LeadCarEntity, wp2.Waypoint)
-target += for start in invasion_start for end in path_end for convoy in convoy_at_waypoint -> (convoy.TriggerGates, start.Waypoint)
+//  Connect convoy at last active waypoint to invasion waypoints
+object += for end in path_end for convoy in convoy_at_waypoint(end) for start in invasion_start for wp2 in invasion_path*(start) -> (convoy.LeadCarEntity, wp2.Waypoint)
+//  First invasion waypoint triggered when last active waypoint reached (virtually or physically)
+target += for start in invasion_start for end in path_end for convoy in convoy_at_waypoint(end) -> (convoy.TriggerGates, start.Waypoint)
 
 // ActiveWaypoint <-> SimpleWaypoint
+//  TODO: remove, not needed.
 target += for end in path_end for start in invasion_start -> (end.Waypoint, start.Waypoint)
 
 // SimpleWaypoint <-> SimpleWaypoint
+//  Each waypoint in invasion path leads to next waypoint
 target += for (curr, next) in invasion_path -> (curr.Waypoint, next.Waypoint)
 
 // Convoy <-> WhileEnemyClose
+//  Check zone connected to its convoy leader
 object += for (convoy, wec) in convoy_of_enemy_close -> (wec.Proximity, convoy.LeadCarEntity)
+//  Activate convoy when enemy close
 target += for (convoy, wec) in convoy_of_enemy_close -> (wec.WakeUp, convoy.ActivateGroup)
+//  Deactivate convoy when enemy gone
 target += for (convoy, wec) in convoy_of_enemy_close -> (wec.Sleep, convoy.DeactivateGroup)
 
-// Convoy <-> Timer
-//nothing
-
 // Convoy <-> Convoy
+//  When leader damaged, delete copy at following waypoint
 target += for (current, next) in path -> (convoy_at_waypoint(current).LeadCarDamaged, convoy_at_waypoint(next).DeleteLeadCar)
+//  When leader deleted at some waypoint, delete at following waypoint too.
 target += for (current, next) in path -> (convoy_at_waypoint(current).DeleteLeadCar, convoy_at_waypoint(next).DeleteLeadCar)
 
 // TruckInConvoy <-> TruckInConvoy
+//  When truck damaged, delete copy at following waypoint.
 target += for (curr, next) in path
           for (position, truck) in truck_in_convoy(convoy_at_waypoint(curr), _, _)
           for truck2 in truck_in_convoy(convoy_at_waypoint(next), position, _) -> (truck.Damaged, truck2.Delete)
+//  When truck deleted, delete copy at following waypoint.
 target += for (curr, next) in path
           for (position, truck) in truck_in_convoy(convoy_at_waypoint(curr), _, _)
           for truck2 in truck_in_convoy(convoy_at_waypoint(next), position, _) -> (truck.Delete, truck2.Delete)
 
 // ActiveWaypoint <-> ActiveWaypoint
+//  When active waypoint physically reached, lead to next waypoint.
 target += for (curr, next) in path -> (curr.Waypoint, next.Waypoint)
 
 // ActiveWaypoint
+//  Activate first waypoint upon API start
 target += for (wp) in path_start
           for out in result -> (out.Start, wp.Activate)
 
 // ActiveWaypoint <-> WhileEnemyClose
+//  Start monitoring when waypoint becomes active (except for the last waypoint)
 target += for (wp, convoy) in convoy_at_waypoint unless wp in path_end -> (wp.Activate, while_enemy_close_of_convoy(convoy).StartMonitoring)
+//  Stop monitoring when waypoint becomes inactive
 target += for (wp, convoy) in convoy_at_waypoint -> (wp.Deactivate, while_enemy_close_of_convoy(convoy).StopMonitoring)
 
 // ActiveWaypoint <-> Timer
+//  Activate next waypoint when virtual travel time elapsed, and deactivate current waypoint.
 target += for (curr, next) in path -> (timer_between_waypoints(curr, next).Elapsed, next.Activate)
-target += for (curr, next) in path -> (timer_between_waypoints(curr, next).Elapsed, curr.Deactivate)
-target += for (curr, next) in path -> (curr.Activate, timer_between_waypoints(curr, next).Start)
+                                   -> (timer_between_waypoints(curr, next).Elapsed, curr.Deactivate)
+                                   -> (curr.Activate, timer_between_waypoints(curr, next).Start)
 
 // WhileEnemyClose <-> WhileEnemyClose
+//  Prevent showing convoys at following waypoints while convoy at current waypoint is shown.
 target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).WakeUp, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Deactivate)
 target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).Sleep, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Activate)
 
 // ... <-> VirtualConvoy
+//  Increase destroyed counter when lead car damaged
 target += for (_, convoy) in convoy_at_waypoint
           for out in result -> (convoy.LeadCarDamaged, out.Destroyed)
+// Increase destroyed counter when truck damaged
 target += for (convoy, _, truck) in truck_in_convoy
           for out in result -> (truck.Damaged, out.Destroyed)
+// Notify of arrival when last waypoint reached (virtually or physically)
 target += for wp in path_end
           for out in result -> (wp.Waypoint, out.Arrived)
                             -> (wp.Activate, out.Arrived)
+// Hide non-last convoy when last travel waypoint reached (virtually or physically)
 target += for end in path_end
           for (prev, _) in path
-		  for convoy in convoy_at_waypoint(prev) -> (wp.Waypoint, convoy.DeactivateGroup)
-		                                         -> (wp.Activate, convoy.DeactivateGroup)
+		  for convoy in convoy_at_waypoint(prev) -> (end.Waypoint, convoy.DeactivateGroup)
+		                                         -> (end.Activate, convoy.DeactivateGroup)
+// Show last convoy when last travel waypoint reached (physically or virtually)
+// FIXME: do that only when there is an invasion path.
 target += for end in path_end
 		  for convoy in convoy_at_waypoint(end) -> (wp.Waypoint, convoy.ActivateGroup)
 		                                        -> (wp.Activate, convoy.ActivateGroup)
+// Notify of objective capture when last invasion waypoint reached
 target += for wp in invasion_end
 		  for out in result -> (wp.Waypoint, out.Captured)
+//  Stop monitoring at last travel waypoint when convoy arrives (last travel waypoint reached, physically or virtually)
+//  FIXME: is this necessary? Maybe avoid starting monitoring. Or maybe do not event include monitor for last travel waypoint.
 target += for wp in path_end
           for convoy in convoy_at_waypoint(wp)
 		  for wec, convoy2 in convoy_of_enemy_close
@@ -149,7 +175,9 @@ target += for wp in path_end
 		  for out in result -> (out.Arrived, wec.StopMonitoring)
 
 // AtDestination
+//  Log arrival of truck WHEN LEADER ARRIVES, unless truck destroyed
 target += for (atd, truck) in at_destination -> (result.Arrived, atd.LeaderArrived)
                                              -> (truck.Damaged, atd.Destroyed)
+//  Log arrival of leader, unless it has been damaged.
 target += for (atd, convoy) in at_destination_convoy -> (result.Delete, atd.LeaderArrived)
                                                      -> (convoy.DeleteLeadCar, atd.Destroyed)
