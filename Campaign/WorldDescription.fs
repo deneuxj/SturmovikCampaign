@@ -212,7 +212,7 @@ with
         elif this.StartId = finish && this.EndId = start then
             this.Locations
             |> List.rev
-            |> List.map (fun (pos, yori) -> pos, -yori)
+            |> List.map (fun (pos, yori) -> pos, if yori < 180.0f then yori + 180.0f else yori - 180.0f)
             |> Some
         else
             None
