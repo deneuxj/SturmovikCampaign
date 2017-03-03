@@ -170,7 +170,33 @@ let createColumns (coalition : CoalitionId option, world : World, state : WorldS
                     )
                 match target with
                 | Some target ->
-                    let composition = regState.NumVehicles
+                    let total_vehicles =
+                        regState.NumVehicles
+                        |> Map.toSeq
+                        |> Seq.sumBy snd
+                    let factor =
+                        if total_vehicles > 15 then
+                            15.0f / float32 total_vehicles
+                        else
+                            1.0f
+                    let rec adjust(acc, items) =
+                        match items with
+                        | [] -> []
+                        | (veh, num) :: rest ->
+                            let adjusted = factor * float32 num
+                            let waste = adjusted - floor adjusted
+                            let adjusted, acc =
+                                if acc + waste < 1.0f then
+                                    floor adjusted, acc + waste
+                                else
+                                    ceil adjusted, acc + waste - 1.0f
+                            (veh, int adjusted) :: adjust(acc, rest)
+                    let composition =
+                        regState.NumVehicles
+                        |> Map.toList
+                        |> fun items -> adjust(0.0f, items)
+                        |> Map.ofList
+                    assert((composition |> Map.toSeq |> Seq.sumBy snd) <= 15)
                     yield {
                         Start = region.RegionId
                         Destination = target
