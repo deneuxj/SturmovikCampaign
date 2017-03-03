@@ -439,15 +439,15 @@ with
                             yield wp.Activate, upcast convoy.DeactivateGroup
                         | None -> ()
                     // Show last convoy when last travel waypoint reached (physically or virtually)
-                    // FIXME: do that only when there is an invasion path.
-                    match tryGet this.ConvoyAtWaypoint finish with
-                    | Some convoy ->
-                        let wp = this.ActiveWaypointSet.[finish]
-                        let convoy = this.ConvoySet.[convoy]
-                        yield upcast wp.Waypoint, upcast convoy.ActivateGroup
-                        yield wp.Activate, upcast convoy.ActivateGroup
-                    | None ->
-                        ()
+                    if not this.InvasionStart.IsEmpty then
+                        match tryGet this.ConvoyAtWaypoint finish with
+                        | Some convoy ->
+                            let wp = this.ActiveWaypointSet.[finish]
+                            let convoy = this.ConvoySet.[convoy]
+                            yield upcast wp.Waypoint, upcast convoy.ActivateGroup
+                            yield wp.Activate, upcast convoy.ActivateGroup
+                        | None ->
+                            ()
                 // Notify of objective capture when last invasion waypoint reached
                 for finish in this.InvasionEnd do
                     let wp = this.SimpleWaypointSet.[finish]
