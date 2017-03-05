@@ -53,7 +53,20 @@ with
             |> Map.ofSeq
         let enemyCloseSet =
             seq {
-                yield WhileEnemyCloseInstance 1, WhileEnemyClose.Create(store, center, coalition)
+                // Show when any plane (enemy or friendly) flies by, or when an enemy ground vehicle is near.
+                let wec = WhileEnemyClose.Create(store, center, coalition)
+                let otherCoalition =
+                    match coalition with
+                    | Mcu.CoalitionValue.Allies -> Mcu.CoalitionValue.Axis
+                    | Mcu.CoalitionValue.Axis -> Mcu.CoalitionValue.Allies
+                    | _ -> failwithf "Unexpected coalition value %A" coalition
+                for mcu in McuUtil.deepContentOf wec.All do
+                    match mcu with
+                    | :? Mcu.McuProximity as prox ->
+                        //prox.PlaneCoalitions <- [Mcu.CoalitionValue.Allies; Mcu.CoalitionValue.Axis]
+                        prox.VehicleCoalitions <- [otherCoalition]
+                    | _ -> ()
+                yield WhileEnemyCloseInstance 1, wec
             }
             |> Map.ofSeq
         let canonInGroup =
@@ -63,7 +76,7 @@ with
             }
             |> Set.ofSeq
         let leadOfEnemyClose =
-            [ WhileEnemyCloseInstance 1, LeadCanonInstance 1]
+            [ WhileEnemyCloseInstance 1, LeadCanonInstance 1 ]
             |> Set.ofList
         let api =
             leadAntiTankCanonSet.[LeadCanonInstance 1]
