@@ -17,12 +17,12 @@ with
             match this with
             | HeavyTank -> germanHeavyTank
             | MediumTank -> germanMediumTank
-            | LightArmor -> germanMobileAA
+            | LightArmor -> germanLightArmor
         | Allies ->
             match this with
             | HeavyTank -> russianHeavyTank
             | MediumTank -> russianMediumTank
-            | LightArmor -> russianMobileAA
+            | LightArmor -> russianLightArmor
 
 type RegionState = {
     RegionId : RegionId

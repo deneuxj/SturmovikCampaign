@@ -129,6 +129,18 @@ let germanMobileAA =
       Model = tank.GetModel().Value
     }
 
+let russianLightArmor =
+    let tank = vehicles.[T.Vehicles.LightArmorRUS]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let germanLightArmor =
+    let tank = vehicles.[T.Vehicles.LightArmorGER]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
 let russianTrain =
     let train = trains.[T.Vehicles.TrainRUS]
     { Script = train.GetScript().Value

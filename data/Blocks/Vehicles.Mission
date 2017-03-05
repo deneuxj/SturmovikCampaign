@@ -1516,4 +1516,66 @@ Block
 }
 
 
+
+Vehicle
+{
+  Name = "LightArmorRUS";
+  Index = 48;
+  LinkTrId = 0;
+  XPos = 29031.250;
+  YPos = 108.584;
+  ZPos = 20133.070;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\ba10m.txt";
+  Model = "graphics\vehicles\ba10m\ba10m.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Vehicle
+{
+  Name = "LightArmorGER";
+  Index = 49;
+  LinkTrId = 0;
+  XPos = 29046.821;
+  YPos = 108.584;
+  ZPos = 20132.711;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\sdkfz251-1c.txt";
+  Model = "graphics\vehicles\sdkfz251\sdkfz251-1c.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
 # end of file
