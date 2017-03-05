@@ -107,10 +107,55 @@ module Functions =
         let area = Vector2.ConvexPolygonArea(area.Boundary)
         min (5.0f * area / refArea) 2.0f
         |> ceil
-        |> int        
+        |> int
 
-    let mkInitialState(description : World, strategyFile : string) =
+    /// Compute the number of regions from a region to the neaest region with factories.
+    let computeRegionDistances (getPaths : World -> Path list) (getOwner : RegionId -> CoalitionId option) (coalition : CoalitionId, world : World) =
+        let areConnectedByRoad(start, destination) =
+            getPaths world
+            |> List.exists (fun path ->
+                path.StartId = start && path.EndId = destination || path.StartId = destination && path.EndId = start
+            )
+        let wg = WorldFastAccess.Create(world)
+        let rec work (distances : Map<RegionId, int>) (working : RegionId list) =
+            match working with
+            | [] -> distances
+            | current :: rest ->
+                let distance = distances.[current]
+                let region = wg.GetRegion current
+                let nghs =
+                    region.Neighbours
+                    |> Seq.filter (fun ngh -> Some coalition = getOwner ngh) // It belongs to the coalition
+                    |> Seq.filter (fun ngh -> areConnectedByRoad(region.RegionId, ngh))
+                    |> List.ofSeq
+                let distances, working =
+                    nghs
+                    |> Seq.fold (fun (distances, working) ngh ->
+                        match Map.tryFind ngh distances with
+                        | Some oldDist when oldDist > distance + 1 ->
+                            (Map.add ngh (distance + 1) distances, ngh :: working)
+                        | Some _ -> (distances, working)
+                        | None ->
+                            (Map.add ngh (distance + 1) distances, ngh :: working)
+                    ) (distances, rest)
+                work distances working
+        let sources =
+            world.Regions
+            |> Seq.filter (fun region -> not <| List.isEmpty region.Production)
+            |> Seq.filter (fun region -> Some coalition = getOwner region.RegionId)
+            |> Seq.map (fun region -> region.RegionId)
+            |> List.ofSeq
+        let distances0 =
+            sources
+            |> Seq.map (fun region -> region, 0)
+            |> Map.ofSeq
+        let distances = work distances0 sources
+        distances
+
+
+    let mkInitialState(world : World, strategyFile : string) =
         let data = T.GroupData(Stream.FromFile strategyFile)
+        let wg = WorldFastAccess.Create(world)
         let ownedByRussia =
             data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
             |> Seq.filter (fun region -> region.GetCountry().Value = int CountryValue.Russia)
@@ -126,30 +171,54 @@ module Functions =
             | true, _ -> Some Allies
             | _, true -> Some Axis
             | false, false -> None
-        let getRegion =
-            let m =
-                description.Regions
-                |> List.map (fun region -> region.RegionId, region)
-                |> dict
-            fun x ->
-                m.[x]
+        let getRegion = wg.GetRegion
+        let computeTransportationCost coalition =
+            let byRoad = computeRegionDistances (fun world -> world.Roads) getOwner (coalition, world)
+            let byRail = computeRegionDistances (fun world -> world.Rails) getOwner (coalition, world)
+            byRoad
+            |> Map.map (fun region hops ->
+                let roadCost = System.Math.Pow(2.0, float hops)
+                match Map.tryFind region byRail with
+                | Some hops ->
+                    let railCost = System.Math.Pow(1.1, float hops)
+                    min roadCost railCost
+                | None ->
+                    roadCost)
+        let getTransportationCosts =
+            let axisTransportationCosts = computeTransportationCost Axis
+            let alliesTransportationCosts = computeTransportationCost Allies
+            function
+            | Axis -> axisTransportationCosts
+            | Allies -> alliesTransportationCosts
         let regions =
-            description.Regions
-            |> List.map (fun desc ->
-                let owner = getOwner desc.RegionId
-                let shellCount =
-                    match desc.Production with
-                    | [] -> 0.0f // Initially, regions without factories are unsupplied
-                    | _ ->
-                        match owner with
-                        | None -> 0.0f
-                        | Some _ -> desc.Storage |> Seq.sumBy (fun storage -> getShellsPerBuilding storage.Model)
-                { RegionId = desc.RegionId
+            world.Regions
+            |> List.map (fun region ->
+                let owner = getOwner region.RegionId
+                let shellCount, vehicles =
+                    match owner with
+                    | None -> 0.0f, Map.empty
+                    | Some owner ->
+                        let transportationCosts = getTransportationCosts owner
+                        match Map.tryFind region.RegionId transportationCosts with
+                        | None ->
+                            0.0f, Map.empty
+                        | Some costs ->
+                            let costs = float32 costs
+                            let ammo =
+                                region.Storage
+                                |> Seq.sumBy (fun storage -> getShellsPerBuilding storage.Model / costs)
+                            let scale (n : int) =
+                                int(ceil(float32 n / costs))
+                            let vehicles =
+                                [(HeavyTank, scale 2); (MediumTank, scale 5); (LightArmor, scale 10)]
+                                |> Map.ofList
+                            ammo, vehicles
+                { RegionId = region.RegionId
                   Owner = owner
-                  StorageHealth = desc.Storage |> List.map (fun _ -> 1.0f)
-                  ProductionHealth = desc.Production |> List.map (fun _ -> 1.0f)
+                  StorageHealth = region.Storage |> List.map (fun _ -> 1.0f)
+                  ProductionHealth = region.Production |> List.map (fun _ -> 1.0f)
                   ShellCount = shellCount
-                  NumVehicles = [(HeavyTank, 2); (MediumTank, 5); (LightArmor, 10)] |> Map.ofList
+                  NumVehicles = vehicles
                 }
             )
         let frontLine =
@@ -190,14 +259,14 @@ module Functions =
               NumUnits = numUnits
             }
         let antiAirDefenses =
-            description.AntiAirDefenses
+            world.AntiAirDefenses
             |> List.map (fromDefenseArea getAntiAirCanonsForArea)
         let antiTankDefenses =
-            description.AntiTankDefenses
+            world.AntiTankDefenses
             |> List.map (fromDefenseArea getAntiTankCanonsForArea)
         let getDefenseArea =
             let m =
-                description.AntiAirDefenses @ description.AntiTankDefenses
+                world.AntiAirDefenses @ world.AntiTankDefenses
                 |> Seq.map (fun area -> area.DefenseAreaId, area)
                 |> dict
             fun x -> m.[x]
@@ -267,11 +336,11 @@ module Functions =
               BombWeight = bombWeight
               NumRockets = int(ceil(rockets / AirfieldState.RocketWeight))
             }
-        let airfields = description.Airfields |> List.map mkAirfield
+        let airfields = world.Airfields |> List.map mkAirfield
         { Airfields = airfields
           Regions = regions
           DefenseAreas = antiAirDefenses @ antiTankDefenses
-          Date = description.StartDate
+          Date = world.StartDate
         }
 
 

@@ -5,7 +5,7 @@ open Campaign.WorldState
 open Campaign.Orders
 open Vector
 
-let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId option, world : World, state : WorldState) =
+let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId, world : World, state : WorldState) =
     let getRegion =
         let m =
             world.Regions
@@ -18,44 +18,12 @@ let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId 
             |> List.map (fun state -> state.RegionId, state.Owner)
             |> dict
         fun x -> m.[x]
+    let distances = Functions.computeRegionDistances getPaths getOwner (coalition, world)
     let areConnectedByRoad(start, destination) =
         getPaths world
         |> List.exists (fun path ->
             path.StartId = start && path.EndId = destination || path.StartId = destination && path.EndId = start
         )
-    let rec work (distances : Map<RegionId, int>) (working : RegionId list) =
-        match working with
-        | [] -> distances
-        | current :: rest ->
-            let distance = distances.[current]
-            let region = getRegion current
-            let nghs =
-                region.Neighbours
-                |> Seq.filter (fun ngh -> coalition = getOwner ngh) // It belongs to the coalition
-                |> Seq.filter (fun ngh -> areConnectedByRoad(region.RegionId, ngh))
-                |> List.ofSeq
-            let distances, working =
-                nghs
-                |> Seq.fold (fun (distances, working) ngh ->
-                    match Map.tryFind ngh distances with
-                    | Some oldDist when oldDist > distance + 1 ->
-                        (Map.add ngh (distance + 1) distances, ngh :: working)
-                    | Some _ -> (distances, working)
-                    | None ->
-                        (Map.add ngh (distance + 1) distances, ngh :: working)
-                ) (distances, rest)
-            work distances working
-    let sources =
-        world.Regions
-        |> Seq.filter (fun region -> not <| List.isEmpty region.Production)
-        |> Seq.filter (fun region -> coalition = getOwner region.RegionId)
-        |> Seq.map (fun region -> region.RegionId)
-        |> List.ofSeq
-    let distances0 =
-        sources
-        |> Seq.map (fun region -> region, 0)
-        |> Map.ofSeq
-    let distances = work distances0 sources
     [
         for region in world.Regions do
             match Map.tryFind region.RegionId distances with
