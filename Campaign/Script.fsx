@@ -34,8 +34,14 @@ let alliesConvoyOrders =
     createAllConvoyOrders(Allies, world, state)
     |> prioritizeConvoys 4 world state
 let allConvoyOrders = axisConvoyOrders @ alliesConvoyOrders
-let axisInvasionOrders = createColumns(Some Axis, world, state)
-let alliesInvasionOrders = createColumns(Some Allies, world, state)
+let axisInvasionOrders =
+    createColumns(Some Axis, world, state)
+    |> prioritizeColumns(world, state)
+    |> List.truncate 1
+let alliesInvasionOrders =
+    createColumns(Some Allies, world, state)
+    |> prioritizeColumns(world, state)
+    |> List.truncate 1
 let allInvasionOrders =
     axisInvasionOrders @ alliesInvasionOrders
 //    |> List.filter (fun order -> order.Start = RegionId "Pogoreloe Gorodische" || order.Start = RegionId "Shahovskaya")

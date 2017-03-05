@@ -173,3 +173,54 @@ let createColumns (coalition : CoalitionId option, world : World, state : WorldS
                 | None ->
                     ()
     ]
+
+
+let prioritizeColumns(world : World, state : WorldState) (orders : GroundInvasionOrder list) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+    let successProbability(order : GroundInvasionOrder) =
+        let defenseArea =
+            world.AntiTankDefenses
+            |> List.tryFind (fun area -> area.Home = FrontLine(order.Destination, order.Start))
+        match defenseArea with
+        | Some defenseArea ->
+            let defenses = sg.GetDefenseArea(defenseArea.DefenseAreaId)
+            let valueOfVehicles =
+                Map.toSeq
+                >> Seq.sumBy (fun (vehicle, number) ->
+                    let k =
+                        match vehicle with
+                        | HeavyTank -> 3.0
+                        | MediumTank -> 2.0
+                        | LightArmor -> 1.0
+                    k * float number)
+
+            let attackValue =
+                order.Composition
+                |> valueOfVehicles
+            let staticDefenseValue =
+                float defenses.NumUnits
+            let mobileDefenseValue =
+                sg.GetRegion(order.Destination).NumVehicles
+                |> valueOfVehicles
+            let defenseValue = staticDefenseValue + mobileDefenseValue
+            let ratio = defenseValue / (0.1 + attackValue)
+            System.Math.Exp(-ratio)
+        | None ->
+            0.5
+    let getRegionDistances =
+        let distanceOwnedByAxis =
+            Functions.computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Axis, world)
+        let distanceOwnedByAllies =
+            Functions.computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Allies, world)
+        function
+        | Some Axis -> distanceOwnedByAxis
+        | Some Allies -> distanceOwnedByAllies
+        | None -> failwith "Start of attacking column has no owner"
+    let targetValue(order : GroundInvasionOrder) =
+        let distances = getRegionDistances (sg.GetRegion(order.Start).Owner |> Option.map (fun x -> x.Other))
+        match Map.tryFind order.Destination distances with
+        | Some dist -> 1.0 / float(1 + dist)
+        | None -> 0.0
+    orders
+    |> List.sortByDescending (fun order -> successProbability order * targetValue order)
