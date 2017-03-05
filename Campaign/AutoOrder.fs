@@ -123,7 +123,7 @@ let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (o
     |> List.take (min maxConvoys (List.length sorted))
 
 
-let createColumns (coalition : CoalitionId option, world : World, state : WorldState) =
+let createColumnMovementOrders criterion (coalition : CoalitionId option, world : World, state : WorldState) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     [
@@ -134,7 +134,7 @@ let createColumns (coalition : CoalitionId option, world : World, state : WorldS
                     region.Neighbours
                     |> Seq.tryFind(fun ngh ->
                         let nghState = sg.GetRegion ngh
-                        nghState.Owner <> coalition
+                        criterion(nghState.Owner, coalition)
                     )
                 match target with
                 | Some target ->
@@ -175,39 +175,49 @@ let createColumns (coalition : CoalitionId option, world : World, state : WorldS
     ]
 
 
-let prioritizeColumns(world : World, state : WorldState) (orders : GroundInvasionOrder list) =
-    let wg = WorldFastAccess.Create world
-    let sg = WorldStateFastAccess.Create state
-    let successProbability(order : GroundInvasionOrder) =
-        let defenseArea =
-            world.AntiTankDefenses
-            |> List.tryFind (fun area -> area.Home = FrontLine(order.Destination, order.Start))
-        match defenseArea with
-        | Some defenseArea ->
-            let defenses = sg.GetDefenseArea(defenseArea.DefenseAreaId)
-            let valueOfVehicles =
-                Map.toSeq
-                >> Seq.sumBy (fun (vehicle, number) ->
-                    let k =
-                        match vehicle with
-                        | HeavyTank -> 3.0
-                        | MediumTank -> 2.0
-                        | LightArmor -> 1.0
-                    k * float number)
+let createGroundInvasionOrders =
+    createColumnMovementOrders (fun (a, b) -> a <> b)
 
-            let attackValue =
-                order.Composition
-                |> valueOfVehicles
-            let staticDefenseValue =
-                float defenses.NumUnits
-            let mobileDefenseValue =
-                sg.GetRegion(order.Destination).NumVehicles
-                |> valueOfVehicles
-            let defenseValue = staticDefenseValue + mobileDefenseValue
-            let ratio = defenseValue / (0.1 + attackValue)
-            System.Math.Exp(-ratio)
-        | None ->
-            0.5
+
+let createReinforcementOrders =
+    createColumnMovementOrders (fun (a, b) -> a = b)
+
+
+let getInvasionSuccessProbablity(world, state) (order : ColumnMovement) =
+    let sg = WorldStateFastAccess.Create state
+    let defenseArea =
+        world.AntiTankDefenses
+        |> List.tryFind (fun area -> area.Home = FrontLine(order.Destination, order.Start))
+    match defenseArea with
+    | Some defenseArea ->
+        let defenses = sg.GetDefenseArea(defenseArea.DefenseAreaId)
+        let valueOfVehicles =
+            Map.toSeq
+            >> Seq.sumBy (fun (vehicle, number) ->
+                let k =
+                    match vehicle with
+                    | HeavyTank -> 3.0
+                    | MediumTank -> 2.0
+                    | LightArmor -> 1.0
+                k * float number)
+
+        let attackValue =
+            order.Composition
+            |> valueOfVehicles
+        let staticDefenseValue =
+            float defenses.NumUnits
+        let mobileDefenseValue =
+            sg.GetRegion(order.Destination).NumVehicles
+            |> valueOfVehicles
+        let defenseValue = staticDefenseValue + mobileDefenseValue
+        let ratio = defenseValue / (0.1 + attackValue)
+        System.Math.Exp(-ratio)
+    | None ->
+        0.5
+
+
+let getInvasionValue (world, state) =
+    let sg = WorldStateFastAccess.Create state
     let getRegionDistances =
         let distanceOwnedByAxis =
             Functions.computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Axis, world)
@@ -217,10 +227,50 @@ let prioritizeColumns(world : World, state : WorldState) (orders : GroundInvasio
         | Some Axis -> distanceOwnedByAxis
         | Some Allies -> distanceOwnedByAllies
         | None -> failwith "Start of attacking column has no owner"
-    let targetValue(order : GroundInvasionOrder) =
+    fun order ->
         let distances = getRegionDistances (sg.GetRegion(order.Start).Owner |> Option.map (fun x -> x.Other))
         match Map.tryFind order.Destination distances with
         | Some dist -> 1.0 / float(1 + dist)
         | None -> 0.0
+
+
+let prioritizeGroundInvasionOrders(world : World, state : WorldState) (orders : ColumnMovement list) =
+    let targetValue = getInvasionValue(world, state)
+    let successProbability = getInvasionSuccessProbablity(world, state)
     orders
-    |> List.sortByDescending (fun order -> successProbability order * targetValue order)
+    |> List.map (fun order -> order, successProbability order, targetValue order)
+    |> List.sortByDescending (fun (order, probability, gain) -> probability * gain)
+
+
+let prioritizeReinforcementOrders(world : World, state : WorldState) (reinforcements, invasions) =
+    let invasions =
+        invasions
+        |> Seq.groupBy (fun (invasion, _, _) -> invasion.Start)
+        |> dict
+    let importanceOfReinforcement reinforcement =
+        match invasions.TryGetValue reinforcement.Start with
+        | true, invasions ->
+            invasions
+            |> Seq.map (fun (invasion, probability, value) -> value / probability)
+            |> Seq.max
+        | false, _ ->
+            0.0
+    reinforcements
+    |> List.sortByDescending importanceOfReinforcement
+
+
+let filterIncompatible(reinforcements, invasions) =
+    let safeInvasions =
+        invasions
+        |> List.filter (fun (invasion, probability, value) ->
+            let hasAltReinforcement =
+                reinforcements
+                |> List.exists (fun reinforcement -> reinforcement.Start = invasion.Start)
+            not hasAltReinforcement || probability > 0.5)
+    let compatibleReinforcements =
+        reinforcements
+        |> List.filter (fun reinforcement ->
+            safeInvasions
+            |> List.exists (fun (invasion, _, _) -> invasion.Start = reinforcement.Start)
+            |> not)
+    compatibleReinforcements, safeInvasions

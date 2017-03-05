@@ -34,22 +34,39 @@ let alliesConvoyOrders =
     createAllConvoyOrders(Allies, world, state)
     |> prioritizeConvoys 4 world state
 let allConvoyOrders = axisConvoyOrders @ alliesConvoyOrders
+let axisInvasionOrderCandidates =
+    createGroundInvasionOrders(Some Axis, world, state)
+    |> prioritizeGroundInvasionOrders(world, state)
+    |> List.truncate 3
+let alliesInvasionOrderCandidates =
+    createGroundInvasionOrders(Some Allies, world, state)
+    |> prioritizeGroundInvasionOrders(world, state)
+    |> List.truncate 3
+let axisReinforcementOrderCandidates =
+    createReinforcementOrders(Some Axis, world, state)
+let alliesReinforcementOrderCandidates =
+    createReinforcementOrders(Some Allies, world, state)
+let axisNeededReinforcementOrders, safeAxisInvasionOrders = filterIncompatible(axisReinforcementOrderCandidates, axisInvasionOrderCandidates)
+let alliesNeededReinforcementOrders, safeAlliesInvasionOrders = filterIncompatible(alliesReinforcementOrderCandidates, alliesInvasionOrderCandidates)
 let axisInvasionOrders =
-    createColumns(Some Axis, world, state)
-    |> prioritizeColumns(world, state)
+    safeAxisInvasionOrders
     |> List.truncate 1
+    |> List.map (fun (order, _, _) -> order)
 let alliesInvasionOrders =
-    createColumns(Some Allies, world, state)
-    |> prioritizeColumns(world, state)
+    safeAlliesInvasionOrders
     |> List.truncate 1
+    |> List.map (fun (order, _, _) -> order)
+let axisReinforcementOrders = axisNeededReinforcementOrders |> List.truncate 1
+let alliesReinforcementOrders = alliesNeededReinforcementOrders |> List.truncate 1
 let allInvasionOrders =
     axisInvasionOrders @ alliesInvasionOrders
-//    |> List.filter (fun order -> order.Start = RegionId "Pogoreloe Gorodische" || order.Start = RegionId "Shahovskaya")
+let allReinforcementOrders =
+    axisReinforcementOrders @ alliesReinforcementOrders
 let missionName = "AutoGenMission2"
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
 let outputDir = @"C:\Users\johann\Documents\AutoMoscow"
-writeMissionFile random author missionName briefing 120 60 options blocks bridges world state allConvoyOrders allInvasionOrders (Path.Combine(outputDir, missionName + ".Mission"))
+writeMissionFile random author missionName briefing 120 60 options blocks bridges world state allConvoyOrders allInvasionOrders allReinforcementOrders (Path.Combine(outputDir, missionName + ".Mission"))
 
 let serverDataDir = @"E:\dserver\data"
 let serverBinDir = @"E:\dserver\bin"

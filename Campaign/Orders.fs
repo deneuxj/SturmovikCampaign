@@ -23,7 +23,7 @@ with
         | ByRoad -> float32 this.Convoy.Size * 1000.0f
         | ByRail -> 20000.0f
 
-type GroundInvasionOrder = {
+type ColumnMovement = {
     Start : RegionId
     Destination : RegionId
     Composition : Map<GroundAttackVehicle, int>

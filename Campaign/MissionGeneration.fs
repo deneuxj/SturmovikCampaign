@@ -543,7 +543,7 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
     ]
 
 
-let createColumns store lcStore (world : World) (state : WorldState) (orders : GroundInvasionOrder list) =
+let createColumns store lcStore (world : World) (state : WorldState) (orders : ColumnMovement list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     [
@@ -558,8 +558,12 @@ let createColumns store lcStore (world : World) (state : WorldState) (orders : G
                 match path with
                 | Some path ->
                     let travel, invasion =
-                        path
-                        |> List.partition (fun (v, _) -> v.IsInConvexPolygon (wg.GetRegion(order.Start).Boundary))
+                        match sg.GetRegion(order.Destination).Owner with
+                        | Some owner when owner = coalition ->
+                            path, []
+                        | _ ->
+                            path
+                            |> List.partition (fun (v, _) -> v.IsInConvexPolygon (wg.GetRegion(order.Start).Boundary))
                     let toVertex(v, yori) =
                         { Pos = v
                           Ori = yori
@@ -636,7 +640,7 @@ let createParkedPlanes store (world : World) (state : WorldState) =
     |> List.concat
 
 
-let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (resupplies : ResupplyOrder list) (invasions : GroundInvasionOrder list) (filename : string) =
+let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (resupplies : ResupplyOrder list) (invasions : ColumnMovement list) (reinforcements : ColumnMovement list) (filename : string) =
     let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
     let weather = Weather.getWeather random (state.Date + daysOffset)
     let store = NumericalIdentifiers.IdStore()
@@ -657,6 +661,14 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
         Mcu.addTargetLink missionBegin column.Api.Start.Index
     let columns =
         columns
+        |> List.map (fun x -> x :> McuUtil.IMcuGroup)
+    let reinforcements =
+        reinforcements
+        |> createColumns store lcStore world state
+    for reinforcement in reinforcements do
+        Mcu.addTargetLink missionBegin reinforcement.Api.Start.Index
+    let reinforcements =
+        reinforcements
         |> List.map (fun x -> x :> McuUtil.IMcuGroup)
     for convoys, _ in convoysAndTimers do
         match convoys with
@@ -701,5 +713,5 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList spawns
-          parkedPlanes ] @ convoys @ columns @ interConvoyTimers
+          parkedPlanes ] @ convoys @ columns @ reinforcements @ interConvoyTimers
     writeMissionFiles "eng" filename options allGroups
