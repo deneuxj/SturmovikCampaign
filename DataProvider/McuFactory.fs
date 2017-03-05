@@ -503,6 +503,11 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
                     let path = ref path
                     let iconLC, subtitleLC = mkLCData typeFields state
                     let baseImpl = mkAsTrigger typeName path state iconLC subtitleLC
+                    let distanceFieldName =
+                        match typeName with
+                        | "MCU_Proximity" -> "Distance"
+                        | "MCU_CheckZone"
+                        | _ -> "Zone"
                     {
                         new McuProximity with
                             member this.PlaneCoalitions
@@ -516,6 +521,12 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
                                     !state |> getOptIntVecField "VehicleCoalitions" |> List.map enum
                                 and set(coalitions) =
                                     state := !state |> setOptIntVecField("VehicleCoalitions", coalitions |> List.map int)
+
+                            member this.Distance
+                                with get() =
+                                    !state |> getIntField distanceFieldName
+                                and set(x) =
+                                    state := !state |> setField(distanceFieldName, Value.Integer x)
 
                         interface McuTrigger with
                             member this.AsString() = baseImpl.AsString()

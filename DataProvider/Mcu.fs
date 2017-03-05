@@ -93,6 +93,7 @@ type McuProximity =
     inherit McuTrigger
     abstract PlaneCoalitions : CoalitionValue list with get, set
     abstract VehicleCoalitions : CoalitionValue list with get, set
+    abstract Distance : int with get, set
 
 /// <summary>
 /// Interface of waypoint triggers.
