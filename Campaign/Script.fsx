@@ -28,15 +28,17 @@ let world0, blocks, bridges, options = World.Create(strategyFile)
 let world = { world0 with WeatherDaysOffset = 15.0 * (random.NextDouble() - 0.5)}
 let state = WorldState.Create(world, strategyFile)
 let axisConvoyOrders =
-    createAllConvoyOrders(Some Axis, world, state)
+    createAllConvoyOrders(Axis, world, state)
     |> prioritizeConvoys 4 world state
 let alliesConvoyOrders =
-    createAllConvoyOrders (Some Allies, world, state)
+    createAllConvoyOrders(Allies, world, state)
     |> prioritizeConvoys 4 world state
 let allConvoyOrders = axisConvoyOrders @ alliesConvoyOrders
 let axisInvasionOrders = createColumns(Some Axis, world, state)
 let alliesInvasionOrders = createColumns(Some Allies, world, state)
-let allInvasionOrders = axisInvasionOrders @ alliesInvasionOrders
+let allInvasionOrders =
+    axisInvasionOrders @ alliesInvasionOrders
+//    |> List.filter (fun order -> order.Start = RegionId "Pogoreloe Gorodische" || order.Start = RegionId "Shahovskaya")
 let missionName = "AutoGenMission2"
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
