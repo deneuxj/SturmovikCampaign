@@ -27,46 +27,27 @@ let strategyFile = "StrategySmall1.mission"
 let world0, blocks, bridges, options = World.Create(strategyFile)
 let world = { world0 with WeatherDaysOffset = 15.0 * (random.NextDouble() - 0.5)}
 let state = WorldState.Create(world, strategyFile)
-let axisConvoyOrders =
-    createAllConvoyOrders(Axis, world, state)
-    |> prioritizeConvoys 4 world state
-let alliesConvoyOrders =
-    createAllConvoyOrders(Allies, world, state)
-    |> prioritizeConvoys 4 world state
-let allConvoyOrders = axisConvoyOrders @ alliesConvoyOrders
-let axisInvasionOrderCandidates =
-    createGroundInvasionOrders(Some Axis, world, state)
-    |> prioritizeGroundInvasionOrders(world, state)
-    |> List.truncate 3
-let alliesInvasionOrderCandidates =
-    createGroundInvasionOrders(Some Allies, world, state)
-    |> prioritizeGroundInvasionOrders(world, state)
-    |> List.truncate 3
-let axisReinforcementOrderCandidates =
-    createReinforcementOrders(Some Axis, world, state)
-let alliesReinforcementOrderCandidates =
-    createReinforcementOrders(Some Allies, world, state)
-let axisNeededReinforcementOrders, safeAxisInvasionOrders = filterIncompatible(axisReinforcementOrderCandidates, axisInvasionOrderCandidates)
-let alliesNeededReinforcementOrders, safeAlliesInvasionOrders = filterIncompatible(alliesReinforcementOrderCandidates, alliesInvasionOrderCandidates)
-let axisInvasionOrders =
-    safeAxisInvasionOrders
-    |> List.truncate 1
-    |> List.map (fun (order, _, _) -> order)
-let alliesInvasionOrders =
-    safeAlliesInvasionOrders
-    |> List.truncate 1
-    |> List.map (fun (order, _, _) -> order)
-let axisReinforcementOrders = axisNeededReinforcementOrders |> List.truncate 1
-let alliesReinforcementOrders = alliesNeededReinforcementOrders |> List.truncate 1
-let allInvasionOrders =
-    axisInvasionOrders @ alliesInvasionOrders
-let allReinforcementOrders =
-    axisReinforcementOrders @ alliesReinforcementOrders
+let mkOrders coalition =
+    let convoyOrders =
+        createAllConvoyOrders(coalition, world, state)
+        |> prioritizeConvoys 4 world state
+    let invasions =
+        createGroundInvasionOrders(Some coalition, world, state)
+        |> prioritizeGroundInvasionOrders(world, state)
+        |> List.truncate 3
+    let reinforcements =
+        prioritizedReinforcementOrders(world, state) coalition invasions
+    let reinforcements, invasions = filterIncompatible(reinforcements, invasions)
+    convoyOrders, reinforcements |> List.truncate 1, invasions |> List.truncate 1 |> List.map (fun (x, _, _) -> x)
+
+let axisConvoys, axisReinforcements, axisInvasions = mkOrders Axis
+let alliesConvoys, alliesReinforcements, alliesInvasions = mkOrders Allies
+
 let missionName = "AutoGenMission2"
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
 let outputDir = @"C:\Users\johann\Documents\AutoMoscow"
-writeMissionFile random author missionName briefing 120 60 options blocks bridges world state allConvoyOrders allInvasionOrders allReinforcementOrders (Path.Combine(outputDir, missionName + ".Mission"))
+writeMissionFile random author missionName briefing 120 60 options blocks bridges world state (axisConvoys @ alliesConvoys) (axisInvasions @ alliesInvasions) (axisReinforcements @ alliesReinforcements) (Path.Combine(outputDir, missionName + ".Mission"))
 
 let serverDataDir = @"E:\dserver\data"
 let serverBinDir = @"E:\dserver\bin"

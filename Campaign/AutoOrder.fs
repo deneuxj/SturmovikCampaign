@@ -179,8 +179,15 @@ let createGroundInvasionOrders =
     createColumnMovementOrders (fun (a, b) -> a <> b)
 
 
-let createReinforcementOrders =
-    createColumnMovementOrders (fun (a, b) -> a = b)
+let valueOfVehicles =
+    Map.toSeq
+    >> Seq.sumBy (fun (vehicle, number) ->
+        let k =
+            match vehicle with
+            | HeavyTank -> 3.0
+            | MediumTank -> 2.0
+            | LightArmor -> 1.0
+        k * float number)
 
 
 let getInvasionSuccessProbablity(world, state) (order : ColumnMovement) =
@@ -191,15 +198,6 @@ let getInvasionSuccessProbablity(world, state) (order : ColumnMovement) =
     match defenseArea with
     | Some defenseArea ->
         let defenses = sg.GetDefenseArea(defenseArea.DefenseAreaId)
-        let valueOfVehicles =
-            Map.toSeq
-            >> Seq.sumBy (fun (vehicle, number) ->
-                let k =
-                    match vehicle with
-                    | HeavyTank -> 3.0
-                    | MediumTank -> 2.0
-                    | LightArmor -> 1.0
-                k * float number)
 
         let attackValue =
             order.Composition
@@ -242,21 +240,70 @@ let prioritizeGroundInvasionOrders(world : World, state : WorldState) (orders : 
     |> List.sortByDescending (fun (order, probability, gain) -> probability * gain)
 
 
-let prioritizeReinforcementOrders(world : World, state : WorldState) (reinforcements, invasions) =
+let prioritizedReinforcementOrders(world : World, state : WorldState) coalition invasions =
     let invasions =
         invasions
         |> Seq.groupBy (fun (invasion, _, _) -> invasion.Start)
         |> dict
-    let importanceOfReinforcement reinforcement =
-        match invasions.TryGetValue reinforcement.Start with
+    let reinforcementNeed region =
+        // invasions starting in region
+        match invasions.TryGetValue region with
         | true, invasions ->
             invasions
-            |> Seq.map (fun (invasion, probability, value) -> value / probability)
+            |> Seq.map (fun (invasion, probability, value) -> (1.0 - probability) * valueOfVehicles invasion.Composition)
             |> Seq.max
         | false, _ ->
             0.0
-    reinforcements
-    |> List.sortByDescending importanceOfReinforcement
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+    let rec propagate reinforcementValues working =
+        match working with
+        | [] -> reinforcementValues
+        | (region, value) :: rest ->
+            let addAndMoveOn() =
+                let newWorking =
+                    wg.GetRegion(region).Neighbours
+                    |> List.filter(fun r -> sg.GetRegion(r).Owner = Some coalition)
+                    |> List.map (fun r -> r, 0.5 * value)
+                propagate (Map.add region value reinforcementValues) (rest @ newWorking)
+            match Map.tryFind region reinforcementValues with
+            | Some oldValue ->
+                if oldValue < value then
+                    addAndMoveOn()
+                else
+                    propagate reinforcementValues rest
+            | None ->
+                addAndMoveOn()
+    let reinforcementValues =
+        world.Regions
+        |> List.filter (fun r -> sg.GetRegion(r.RegionId).Owner = Some coalition)
+        |> List.map (fun r -> r.RegionId, reinforcementNeed r.RegionId)
+        |> propagate Map.empty
+    [
+        for region in world.Regions do
+            if sg.GetRegion(region.RegionId).Owner = Some coalition then
+                for ngh in region.Neighbours do
+                    if sg.GetRegion(ngh).Owner = Some coalition then
+                        let excessSource =
+                            valueOfVehicles(sg.GetRegion(region.RegionId).NumVehicles)
+                        let excessDestination =
+                            valueOfVehicles(sg.GetRegion(ngh).NumVehicles) - reinforcementValues.[ngh]
+                        yield (region.RegionId, ngh, excessSource - excessDestination)
+    ]
+    |> List.sortByDescending (fun (src, dest, transit) -> transit)
+    |> List.map (fun (src, dest, transit) ->
+        let vehicles = sg.GetRegion(src).NumVehicles
+        let k =
+            transit / valueOfVehicles vehicles
+            |> min 1.0
+        let composition =
+            vehicles
+            |> Map.map (fun veh num -> int(ceil(k * float num)))
+        { Start = src
+          Destination = dest
+          Composition = composition
+        }
+    )
 
 
 let filterIncompatible(reinforcements, invasions) =
