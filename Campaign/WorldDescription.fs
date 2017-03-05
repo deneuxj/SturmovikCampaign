@@ -24,6 +24,14 @@ with
         | Axis -> Mcu.CoalitionValue.Axis
         | Allies -> Mcu.CoalitionValue.Allies
 
+    /// <summary>
+    /// Return the opposite coalition.
+    /// </summary>
+    member this.Other =
+        match this with
+        | Axis -> Allies
+        | Allies -> Axis
+
 /// A position on the map and a rotation around the vertical axis.
 type OrientedPosition = {
     Pos : Vector2
