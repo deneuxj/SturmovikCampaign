@@ -700,7 +700,7 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     lcStore.SetNextId 3
     let getId = store.GetIdMapper()
     let missionBegin = newMissionBegin (getId 1)
-    let antiTankDefenses = ArtilleryGroup.Create(random, store, missionBegin, world, state)
+    let staticDefenses = ArtilleryGroup.Create(random, store, missionBegin, world, state)
     let icons = MapIcons.Create(store, lcStore, world, state)
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
@@ -760,7 +760,7 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     let allGroups =
         [ optionStrings
           missionBegin
-          upcast antiTankDefenses
+          upcast staticDefenses
           upcast icons
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
