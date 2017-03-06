@@ -158,7 +158,7 @@ with
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
-        let group = McuUtil.filterByPath ["WhileEnemyClose"] db |> List.ofSeq
+        let group = McuUtil.filterByPath ["WhileEnemyCloseAlt"] db |> List.ofSeq
         for mcu in group do
             subst mcu
         // Get key nodes
