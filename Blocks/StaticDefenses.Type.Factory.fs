@@ -11,17 +11,14 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
 
-type LeadCanonInstance = LeadCanonInstance of int
-type CanonInstance = CanonInstance of lead: int * rank: int
+type CanonInstance = CanonInstance of int
 
 type StaticDefenseGroup = {
-    LeadCanonSet : Map<LeadCanonInstance, LeadCanon>
     CanonSet : Map<CanonInstance, Canon>
-    EnemyCloseSet : Map<WhileEnemyCloseInstance, WhileEnemyClose>
-    CanonInGroup : Set<LeadCanonInstance * int * CanonInstance>
-    LeadOfEnemyClose : Set<WhileEnemyCloseInstance * LeadCanonInstance>
+    EnemyClose : WhileEnemyClose
+    CheckZoneOverride : Mcu.McuTrigger
     Decorations : Mcu.McuBase list
-    Api : LeadCanon
+    Api : Api
 }
 with
     interface McuUtil.IMcuGroup with
@@ -29,9 +26,18 @@ with
         member this.LcStrings = []
         member this.SubGroups =
             [
-                yield! this.LeadCanonSet |> Seq.map (fun kvp -> kvp.Value.All)
                 yield! this.CanonSet |> Seq.map (fun kvp -> kvp.Value.All)
-                yield! this.EnemyCloseSet |> Seq.map (fun kvp -> kvp.Value.All)
+                yield this.Api.All
+                let overriden =
+                    this.EnemyClose.All
+                    |> McuUtil.deepContentOf
+                    |> List.map (
+                        function
+                        | :? Mcu.McuProximity as mcu when mcu.Name = "EnemyClose" -> this.CheckZoneOverride :> Mcu.McuBase
+                        | mcu -> mcu
+                    )
+                yield McuUtil.groupFromList overriden
+//                yield this.EnemyClose.All
             ]
 
     static member Create(specialty : DefenseSpecialty, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
@@ -42,15 +48,10 @@ with
                 boundary
                 |> Seq.sum
             k * sum
-        let leadAntiTankCanonSet =
-            seq {
-                yield LeadCanonInstance 1, LeadCanon.Create(specialty, random, store, boundary, yori, country)
-            }
-            |> Map.ofSeq
         let antiTankCanonSet =
             seq {
                 for i in 1 .. groupSize do
-                    yield CanonInstance(1, i), Canon.Create(specialty, random, store, boundary, yori, country)
+                    yield CanonInstance(i), Canon.Create(specialty, random, store, boundary, yori, country)
             }
             |> Map.ofSeq
         let positions =
@@ -69,76 +70,58 @@ with
                     let subst = Mcu.substId <| store.GetIdMapper()
                     subst mcu
                     mcu
-                for lead in leadAntiTankCanonSet do
-                    let pos = lead.Value.Canon.Pos
-                    let ori = lead.Value.Canon.Ori
-                    yield newBlock pos ori
                 for canon in antiTankCanonSet do
                     yield newBlock canon.Value.Canon.Pos canon.Value.Canon.Ori
             ]
-        let enemyCloseSet =
-            seq {
-                // For ATs, show when an enemy ground vehicle is near, reduce scanning range.
-                let wec = WhileEnemyClose.Create(store, center, coalition)
-                match specialty with
-                | AntiTank ->
-                    let otherCoalition =
-                        match coalition with
-                        | Mcu.CoalitionValue.Allies -> Mcu.CoalitionValue.Axis
-                        | Mcu.CoalitionValue.Axis -> Mcu.CoalitionValue.Allies
-                        | _ -> failwithf "Unexpected coalition value %A" coalition
-                    for mcu in McuUtil.deepContentOf wec.All do
-                        match mcu with
-                        | :? Mcu.McuProximity as prox ->
-                            prox.VehicleCoalitions <- [otherCoalition]
-                            prox.Distance <- 2000
-                        | _ -> ()
-                | _ ->
-                    ()
-                yield WhileEnemyCloseInstance 1, wec
-            }
-            |> Map.ofSeq
-        let canonInGroup =
-            seq {
-                for i in 1 .. groupSize do
-                    yield LeadCanonInstance 1, i, CanonInstance(1, i)
-            }
-            |> Set.ofSeq
-        let leadOfEnemyClose =
-            [ WhileEnemyCloseInstance 1, LeadCanonInstance 1 ]
-            |> Set.ofList
-        let api =
-            leadAntiTankCanonSet.[LeadCanonInstance 1]
-        { LeadCanonSet = leadAntiTankCanonSet
-          CanonSet = antiTankCanonSet
-          EnemyCloseSet = enemyCloseSet
-          CanonInGroup = canonInGroup
-          LeadOfEnemyClose = leadOfEnemyClose
+        let enemyClose =
+            // For ATs, show when an enemy ground vehicle is near, reduce scanning range.
+            let wec = WhileEnemyClose.Create(store, center, coalition)
+            match specialty with
+            | AntiTank ->
+                let otherCoalition =
+                    match coalition with
+                    | Mcu.CoalitionValue.Allies -> Mcu.CoalitionValue.Axis
+                    | Mcu.CoalitionValue.Axis -> Mcu.CoalitionValue.Allies
+                    | _ -> failwithf "Unexpected coalition value %A" coalition
+                for mcu in McuUtil.deepContentOf wec.All do
+                    match mcu with
+                    | :? Mcu.McuProximity as prox ->
+                        prox.VehicleCoalitions <- [otherCoalition]
+                        prox.Distance <- 2000
+                    | _ -> ()
+            | _ ->
+                ()
+            wec
+        // Replace proximity trigger by checkzone. Canons don't move.
+        let proximity =
+            enemyClose.Proximity :?> Mcu.McuProximity
+        let checkZone = newCheckZone proximity.Index proximity.Distance
+        checkZone.PlaneCoalitions <- proximity.PlaneCoalitions
+        checkZone.VehicleCoalitions <- proximity.VehicleCoalitions
+        checkZone.Objects <- proximity.Objects
+        checkZone.Targets <- proximity.Targets
+        McuUtil.vecCopy proximity.Pos checkZone.Pos
+        let api = Api.Create(store, center)
+        // Result
+        { CanonSet = antiTankCanonSet
+          EnemyClose = enemyClose
           Decorations = positions
+          CheckZoneOverride = checkZone
           Api = api
         }
 
     member this.CreateLinks() =
-        let columns =
-            [
-                for lead, rank, canon in this.CanonInGroup do
-                    yield this.CanonSet.[canon].Canon, this.LeadCanonSet.[lead].Canon, rank
-            ]
-        let objectLinks =
-            [
-                for wec, lead in this.LeadOfEnemyClose do
-                    yield this.EnemyCloseSet.[wec].Proximity, this.LeadCanonSet.[lead].Canon :> Mcu.McuBase
-            ]
         let targetLinks =
             [
-                for wec, lead in this.LeadOfEnemyClose do
-                    let wec = this.EnemyCloseSet.[wec]
-                    let lead = this.LeadCanonSet.[lead]
-                    yield wec.WakeUp, lead.Show :> Mcu.McuBase
-                    yield wec.Sleep, lead.Hide :> Mcu.McuBase
-                    yield lead.Start, wec.StartMonitoring :> Mcu.McuBase
+                let wec = this.EnemyClose
+                for canon in this.CanonSet do
+                    let canon = canon.Value
+                    yield wec.WakeUp, canon.Show :> Mcu.McuBase
+                    yield wec.Sleep, canon.Hide :> Mcu.McuBase
+                yield this.Api.Start, upcast wec.StartMonitoring
+                yield this.Api.Stop, upcast wec.StopMonitoring
             ]
-        { Columns = columns
-          Objects = objectLinks
+        { Columns = []
+          Objects = []
           Targets = targetLinks
         }

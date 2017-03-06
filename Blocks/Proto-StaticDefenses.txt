@@ -1,23 +1,25 @@
-﻿type LeadCanon {
+﻿type Canon {
 	entity Canon
 	trigger Hide
 	trigger Show
 	trigger Start
 }
 
-type Canon {
-	entity Canon
+type Api {
+	trigger Start
+	trigger Stop
 }
-Canon canon_in_group(LeadCanon, int)
+the_api(Api)
 
 type WhileEnemyClose from VirtualConvoy
-LeadCanon lead_of_enemy_close(WhileEnemyClose)
+the_enemy_close(WhileEnemyClose, Canon)
 
-// LeadCanon <-> Canon
-columns += for (lead, pos, canon) in canon_in_group -> (canon.Canon, lead.Canon, pos)
+// Canon <-> WhileEnemyClose
+target += for wec in the_enemy_close
+          for canon in Canons -> (wec.WakeUp, canon.Show)
+                              -> (wec.Sleep, canon.Hide)
 
-// LeadCanon <-> WhileEnemyClose
-object += for (lead, wec) in lead_of_enemy_close -> (wec.Proximity, lead.Canon)
-target += for (lead, wec) in lead_of_enemy_close -> (wec.WakeUp, lead.Show)
-target += for (lead, wec) in lead_of_enemy_close -> (wec.Sleep, lead.Hide)
-target += for (lead, wec) in lead_of_enemy_close -> (lead.Start, wec.StartMonitoring)
+// Api <-> WhileEnemyClose
+target += for wec in the_enemy_close
+          for api in the_api -> (api.Start, wec.StartMonitoring)
+		                     -> (api.Stop, wec.StopMonitoring)

@@ -72,11 +72,10 @@ with
             | _ ->
                 ()
 
-type LeadCanon = {
+type Canon = {
     Canon : Mcu.McuEntity
     Show : Mcu.McuTrigger
     Hide : Mcu.McuTrigger
-    Start : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
 }
 with
@@ -88,79 +87,47 @@ with
         for mcu in db do
             subst mcu
         // Get key nodes
-        let lead = getVehicleByName db T.Blocks.``AT leader``
-        let mg =
-            try
-                getVehicleByName db "MG"
-                |> Some
-            with
-            | _ -> None
+        let canon = getVehicleByName db "CANON"
         let show = getTriggerByName db "SHOW"
         let hide = getTriggerByName db "HIDE"
-        let start = getTriggerByName db "START"
         // Set country and positions
-        lead.Country <- country
-        specialty.SetModel(lead, random)
+        canon.Country <- country
+        specialty.SetModel(canon, random)
         let angle = float32 System.Math.PI * (yori / 180.0f)
         let forward = Vector2(cos angle, sin angle)
         let newPos = getRandomPositionInArea(random, boundary, forward)
-        let refPos = Vector2(float32 lead.Pos.X, float32 lead.Pos.Z)
+        let refPos = Vector2.FromMcu(canon.Pos)
         let translation = newPos - refPos
         for mcu in db do
-            // rotate around old position of leader, then translate to new position
-            let pos = Vector2(float32 mcu.Pos.X, float32 mcu.Pos.Z)
+            // rotate around old position of canon, then translate to new position
+            let pos = Vector2.FromMcu(mcu.Pos)
             let v = pos - refPos
             let final = v.Rotate(yori) + refPos + translation
-            mcu.Pos.X <- float final.X
-            mcu.Pos.Z <- float final.Y
+            final.AssignTo(mcu.Pos)
             mcu.Ori.Y <- mcu.Ori.Y + float yori
-        // Adjust machinegun, if any.
-        match mg with
-        | Some mg ->
-            let entity = McuUtil.getEntityByIndex mg.LinkTrId db
-            mg.Country <- country
-            // Move the machine gun to a random position
-            let pos = getRandomPositionInArea(random, boundary, forward)
-            mg.Pos.X <- float pos.X
-            mg.Pos.Z <- float pos.Y
-            mg.Ori.Y <- float yori
-            McuUtil.vecCopy mg.Pos entity.Pos
-        | None ->
-            ()
         // Result
-        { Canon = McuUtil.getEntityByIndex lead.LinkTrId db
+        { Canon = McuUtil.getEntityByIndex canon.LinkTrId db
           Show = show
           Hide = hide
-          Start = start
           All = McuUtil.groupFromList db
         }
 
 
-type Canon = {
-    Canon : Mcu.McuEntity
+type Api = {
+    Start : Mcu.McuTrigger
+    Stop : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(specialty : DefenseSpecialty, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, country : Mcu.CountryValue) =
-        // Instantiate
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2) =
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = blocksData.GetGroup(specialty.GroupName).CreateMcuList()
-        for mcu in db do
-            subst mcu
-        // Get key nodes
-        let canon = getVehicleByName db T.Blocks.``AT leader``
-        // Set country and positions
-        canon.Country <- country
-        specialty.SetModel(canon, random)
-        let forward = Vector2.UnitX.Rotate(yori)
-        let pos = getRandomPositionInArea(random, boundary, forward)
-        canon.Pos.X <- float pos.X
-        canon.Pos.Z <- float pos.Y
-        canon.Ori.Y <- float yori
-        let entity = McuUtil.getEntityByIndex canon.LinkTrId db
-        McuUtil.vecCopy canon.Pos entity.Pos
-        McuUtil.vecCopy canon.Ori entity.Ori
-        // Result
-        { Canon = entity
-          All = McuUtil.groupFromList [canon ; entity]
+        let start = newTimer 1
+        let stop = newTimer 2
+        subst start
+        subst stop
+        pos.AssignTo(start.Pos)
+        (pos + Vector2(100.0f, 0.0f)).AssignTo(stop.Pos)
+        { Start = start
+          Stop = stop
+          All = McuUtil.groupFromList [ start; stop ]
         }
