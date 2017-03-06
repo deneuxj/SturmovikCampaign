@@ -302,7 +302,8 @@ module Functions =
         let antiTankDefenses = antiTankDefenses |> List.map adjustNumUnits
         let mkAirfield (airfield : Airfield) =
             let hasFactories =
-                not <| List.isEmpty (getRegion airfield.Region).Production
+                true
+                //not <| List.isEmpty (getRegion airfield.Region).Production
             let owner =
                 getOwner airfield.Region
             let numPlanes =
