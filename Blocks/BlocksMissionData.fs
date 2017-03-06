@@ -3,7 +3,7 @@
 open SturmovikMission.DataProvider
 open System.Numerics
 
-type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission">
+type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission;../data/Blocks/Vehicles.mission">
 
 let blockMission = "Blocks.Mission"
 let blocksData = T.GroupData(Parsing.Stream.FromFile blockMission)

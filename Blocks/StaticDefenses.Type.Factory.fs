@@ -9,6 +9,7 @@ open SturmovikMission.Blocks.Links
 open SturmovikMission.Blocks.Predicates
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
+open SturmovikMission.Blocks.BlocksMissionData
 
 type LeadCanonInstance = LeadCanonInstance of int
 type CanonInstance = CanonInstance of lead: int * rank: int
@@ -19,11 +20,12 @@ type StaticDefenseGroup = {
     EnemyCloseSet : Map<WhileEnemyCloseInstance, WhileEnemyClose>
     CanonInGroup : Set<LeadCanonInstance * int * CanonInstance>
     LeadOfEnemyClose : Set<WhileEnemyCloseInstance * LeadCanonInstance>
+    Decorations : Mcu.McuBase list
     Api : LeadCanon
 }
 with
     interface McuUtil.IMcuGroup with
-        member this.Content = []
+        member this.Content = this.Decorations
         member this.LcStrings = []
         member this.SubGroups =
             [
@@ -51,21 +53,48 @@ with
                     yield CanonInstance(1, i), Canon.Create(specialty, random, store, boundary, yori, country)
             }
             |> Map.ofSeq
+        let positions =
+            [
+                let model =
+                    match specialty with
+                    | AntiAir -> Vehicles.antiAirPosition
+                    | AntiTank -> Vehicles.antiTankPosition
+                let newBlock (pos : Mcu.Vec3) (ori : Mcu.Vec3) =
+                    let block = newBlock 1 (int country) model.Model model.Script
+                    let mcu =
+                        block
+                            .SetXPos(T.Float pos.X).SetYPos(T.Float pos.Y).SetZPos(T.Float pos.Z)
+                            .SetXOri(T.Float ori.X).SetYOri(T.Float ori.Y).SetZOri(T.Float ori.Z)
+                            .CreateMcu()
+                    let subst = Mcu.substId <| store.GetIdMapper()
+                    subst mcu
+                    mcu
+                for lead in leadAntiTankCanonSet do
+                    let pos = lead.Value.Canon.Pos
+                    let ori = lead.Value.Canon.Ori
+                    yield newBlock pos ori
+                for canon in antiTankCanonSet do
+                    yield newBlock canon.Value.Canon.Pos canon.Value.Canon.Ori
+            ]
         let enemyCloseSet =
             seq {
-                // Show when any plane (enemy or friendly) flies by, or when an enemy ground vehicle is near.
+                // For ATs, show when an enemy ground vehicle is near, reduce scanning range.
                 let wec = WhileEnemyClose.Create(store, center, coalition)
-                let otherCoalition =
-                    match coalition with
-                    | Mcu.CoalitionValue.Allies -> Mcu.CoalitionValue.Axis
-                    | Mcu.CoalitionValue.Axis -> Mcu.CoalitionValue.Allies
-                    | _ -> failwithf "Unexpected coalition value %A" coalition
-                for mcu in McuUtil.deepContentOf wec.All do
-                    match mcu with
-                    | :? Mcu.McuProximity as prox ->
-                        //prox.PlaneCoalitions <- [Mcu.CoalitionValue.Allies; Mcu.CoalitionValue.Axis]
-                        prox.VehicleCoalitions <- [otherCoalition]
-                    | _ -> ()
+                match specialty with
+                | AntiTank ->
+                    let otherCoalition =
+                        match coalition with
+                        | Mcu.CoalitionValue.Allies -> Mcu.CoalitionValue.Axis
+                        | Mcu.CoalitionValue.Axis -> Mcu.CoalitionValue.Allies
+                        | _ -> failwithf "Unexpected coalition value %A" coalition
+                    for mcu in McuUtil.deepContentOf wec.All do
+                        match mcu with
+                        | :? Mcu.McuProximity as prox ->
+                            prox.VehicleCoalitions <- [otherCoalition]
+                            prox.Distance <- 2000
+                        | _ -> ()
+                | _ ->
+                    ()
                 yield WhileEnemyCloseInstance 1, wec
             }
             |> Map.ofSeq
@@ -85,6 +114,7 @@ with
           EnemyCloseSet = enemyCloseSet
           CanonInGroup = canonInGroup
           LeadOfEnemyClose = leadOfEnemyClose
+          Decorations = positions
           Api = api
         }
 

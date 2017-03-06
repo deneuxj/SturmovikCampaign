@@ -1578,4 +1578,50 @@ Vehicle
 }
 
 
+
+Block
+{
+  Name = "AntiTankPosition";
+  Index = 52;
+  LinkTrId = 0;
+  XPos = 29108.284;
+  YPos = 108.584;
+  ZPos = 20543.068;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\art_position_at.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\art_position_at.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "AntiAirPosition";
+  Index = 53;
+  LinkTrId = 0;
+  XPos = 29092.732;
+  YPos = 108.584;
+  ZPos = 20543.566;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\art_position_medium.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\art_position_medium.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
 # end of file

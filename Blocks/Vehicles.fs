@@ -2,8 +2,7 @@
 module SturmovikMission.Blocks.Vehicles
 
 open SturmovikMission.DataProvider
-
-type T = SturmovikMissionTypes.Provider<"../data/Sample.mission", "../data/Blocks/Vehicles.mission">
+open BlocksMissionData
 
 type VehicleTypeData = {
     Script : string
@@ -311,6 +310,18 @@ let germanStaBomber =
 
 let germanStaTransport =
     let block = statics.[T.Vehicles.staTransportGER]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let antiTankPosition =
+    let block = statics.[T.Vehicles.AntiTankPosition]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let antiAirPosition =
+    let block = statics.[T.Vehicles.AntiAirPosition]
     { Script = block.GetScript().Value
       Model = block.GetModel().Value
     }

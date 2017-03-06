@@ -117,12 +117,14 @@ with
         // Adjust machinegun, if any.
         match mg with
         | Some mg ->
+            let entity = McuUtil.getEntityByIndex mg.LinkTrId db
             mg.Country <- country
             // Move the machine gun to a random position
             let pos = getRandomPositionInArea(random, boundary, forward)
             mg.Pos.X <- float pos.X
             mg.Pos.Z <- float pos.Y
             mg.Ori.Y <- float yori
+            McuUtil.vecCopy mg.Pos entity.Pos
         | None ->
             ()
         // Result
@@ -155,8 +157,10 @@ with
         canon.Pos.X <- float pos.X
         canon.Pos.Z <- float pos.Y
         canon.Ori.Y <- float yori
-        // Result
         let entity = McuUtil.getEntityByIndex canon.LinkTrId db
+        McuUtil.vecCopy canon.Pos entity.Pos
+        McuUtil.vecCopy canon.Ori entity.Ori
+        // Result
         { Canon = entity
           All = McuUtil.groupFromList [canon ; entity]
         }
