@@ -65,3 +65,4 @@ p.UseShellExecute <- true
 let proc = Process.Start(p)
 proc.WaitForExit()
 swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".Mission")))
+printfn "Resaver exited with code %d" proc.ExitCode
