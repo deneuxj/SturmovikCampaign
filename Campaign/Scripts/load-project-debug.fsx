@@ -8,4 +8,5 @@
       "../Weather.fs"
       "../Orders.fs"
       "../AutoOrder.fs"
+      "../ResultExtraction.fs"
       "../MissionGeneration.fs"
