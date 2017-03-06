@@ -2244,4 +2244,43 @@ MCU_TR_Media
 }
 
 
+
+MCU_CheckZone
+{
+  Index = 109;
+  Name = "Trigger Check Zone";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 28051.300;
+  YPos = 162.688;
+  ZPos = 29069.232;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Zone = 1;
+  Cylinder = 1;
+  Closer = 1;
+}
+
+
+
+MCU_Proximity
+{
+  Index = 110;
+  Name = "Trigger Proximity";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 27738.094;
+  YPos = 161.024;
+  ZPos = 29063.091;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Distance = 1;
+  Closer = 1;
+}
+
+
 # end of file
