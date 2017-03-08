@@ -10,6 +10,7 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.MissionGeneration
 open Campaign.AutoOrder
+open Campaign.Orders
 open System.IO
 
 try
@@ -39,9 +40,25 @@ let mkOrders coalition =
         prioritizedReinforcementOrders(world, state) coalition invasions
     let reinforcements, invasions = filterIncompatible(reinforcements, invasions)
     convoyOrders, reinforcements |> List.truncate 1, invasions |> List.truncate 1 |> List.map (fun (x, _, _) -> x)
-
-let axisConvoys, axisReinforcements, axisInvasions = mkOrders Axis
-let alliesConvoys, alliesReinforcements, alliesInvasions = mkOrders Allies
+let adjustIndexes(convoys : ResupplyOrder list, reinforcements : ColumnMovement list, invasions : ColumnMovement list) =
+    let convoys =
+        convoys
+        |> List.mapi (fun i order -> { order with Index = i + 1 })
+    let n = List.length convoys
+    let reinforcements =
+        reinforcements
+        |> List.mapi (fun i order -> { order with Index = i + 1 + n })
+    let n = n + List.length reinforcements
+    let invasions =
+        invasions
+        |> List.mapi (fun i order -> { order with Index = i + 1 + n })
+    convoys, reinforcements, invasions
+let axisConvoys, axisReinforcements, axisInvasions =
+    mkOrders Axis
+    |> adjustIndexes
+let alliesConvoys, alliesReinforcements, alliesInvasions =
+    mkOrders Allies
+    |> adjustIndexes
 
 let missionName = "AutoGenMission2"
 let author = "coconut"

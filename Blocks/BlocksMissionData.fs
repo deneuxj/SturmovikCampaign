@@ -136,6 +136,9 @@ let newBlockWithEntityMcu (store : NumericalIdentifiers.IdStore) country model s
     subst entity
     block, entity
 
+let newObjective idx lcDesc lcName =
+    T.MCU_TR_MissionObjective(T.Integer 0, T.Boolean true, T.Integer 0, T.Integer idx, T.Integer lcDesc, T.Integer lcName, T.VectorOfIntegers[], T.Boolean true, T.VectorOfIntegers[], T.Integer 0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
+
 module CommonMethods =
     let inline createMcu(x : ^T) =
         (^T : (member CreateMcu : unit -> Mcu.McuBase) x)

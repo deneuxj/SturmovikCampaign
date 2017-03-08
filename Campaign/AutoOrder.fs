@@ -41,12 +41,12 @@ let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId,
 
 let createRoadConvoyOrders =
     createConvoyOrders (fun world -> world.Roads)
-    >> List.map (fun convoy -> { Means = ByRoad; Convoy = convoy })
+    >> List.mapi (fun i convoy -> { Index = i + 1; Means = ByRoad; Convoy = convoy })
 
 
 let createRailConvoyOrders =
     createConvoyOrders (fun world -> world.Rails)
-    >> List.map (fun convoy -> { Means = ByRail; Convoy = convoy })
+    >> List.mapi (fun i convoy -> { Index = i + 1; Means = ByRail; Convoy = convoy })
 
 
 let createAllConvoyOrders x =
@@ -126,7 +126,7 @@ let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (o
 let createColumnMovementOrders criterion (coalition : CoalitionId option, world : World, state : WorldState) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
-    [
+    seq {
         for region in world.Regions do
             let regState = sg.GetRegion region.RegionId
             if regState.Owner = coalition then
@@ -166,13 +166,16 @@ let createColumnMovementOrders criterion (coalition : CoalitionId option, world 
                         |> Map.ofList
                     assert((composition |> Map.toSeq |> Seq.sumBy snd) <= 15)
                     yield {
+                        Index = 0 // Set later to a unique value
                         Start = region.RegionId
                         Destination = target
                         Composition = composition
                     }
                 | None ->
                     ()
-    ]
+    }
+    |> Seq.mapi (fun i order -> { order with Index = i + 1 })
+    |> List.ofSeq
 
 
 let createGroundInvasionOrders =
@@ -291,7 +294,7 @@ let prioritizedReinforcementOrders(world : World, state : WorldState) coalition 
                         yield (region.RegionId, ngh, excessSource - excessDestination)
     ]
     |> List.sortByDescending (fun (src, dest, transit) -> transit)
-    |> List.map (fun (src, dest, transit) ->
+    |> List.mapi (fun i (src, dest, transit) ->
         let vehicles = sg.GetRegion(src).NumVehicles
         let k =
             transit / valueOfVehicles vehicles
@@ -299,7 +302,8 @@ let prioritizedReinforcementOrders(world : World, state : WorldState) coalition 
         let composition =
             vehicles
             |> Map.map (fun veh num -> int(ceil(k * float num)))
-        { Start = src
+        { Index = i + 1
+          Start = src
           Destination = dest
           Composition = composition
         }

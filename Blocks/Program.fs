@@ -11,7 +11,7 @@ let main argv =
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
     lcStore.SetNextId 3
-    let virtualConvoy = VirtualConvoy.Create(store, lcStore, path, [], 3, Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies)
+    let virtualConvoy = VirtualConvoy.Create(store, lcStore, path, [], 3, Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies, 1, 1)
     let rel = virtualConvoy.CreateLinks()
     let mcus = McuUtil.deepContentOf virtualConvoy
     rel.Apply(mcus)

@@ -14,6 +14,7 @@ type ResupplyMeans =
     | ByRail
 
 type ResupplyOrder = {
+    Index : int
     Means : ResupplyMeans
     Convoy : ConvoyOrder
 }
@@ -24,6 +25,7 @@ with
         | ByRail -> 20000.0f
 
 type ColumnMovement = {
+    Index : int
     Start : RegionId
     Destination : RegionId
     Composition : Map<GroundAttackVehicle, int>

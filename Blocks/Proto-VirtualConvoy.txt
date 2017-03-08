@@ -176,8 +176,8 @@ target += for wp in path_end
 
 // AtDestination
 //  Log arrival of truck WHEN LEADER ARRIVES, unless truck destroyed
-target += for (atd, truck) in at_destination -> (result.Arrived, atd.LeaderArrived)
+target += for (atd, truck) in at_destination -> if invasion_end is empty then (result.Arrived, atd.LeaderArrived) else (result.Captured, atd.LeaderArrived)
                                              -> (truck.Damaged, atd.Destroyed)
 //  Log arrival of leader, unless it has been damaged.
-target += for (atd, convoy) in at_destination_convoy -> (result.Delete, atd.LeaderArrived)
+target += for (atd, convoy) in at_destination_convoy -> if invasion_end is empty then (result.Arrived, atd.LeaderArrived) else (result.Captured, atd.LeaderArrived)
                                                      -> (convoy.DeleteLeadCar, atd.Destroyed)

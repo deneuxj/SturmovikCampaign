@@ -520,9 +520,9 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
                             let virtualConvoy =
                                 match order.Means with
                                 | ByRoad ->
-                                    VirtualConvoy.Create(store, lcStore, pathVertices, [], convoy.Size, country, coalition)
+                                    VirtualConvoy.Create(store, lcStore, pathVertices, [], convoy.Size, country, coalition, order.Index, VirtualConvoy.CoverTransportColumn)
                                 | ByRail ->
-                                    VirtualConvoy.CreateTrain(store, lcStore, pathVertices, country, coalition)
+                                    VirtualConvoy.CreateTrain(store, lcStore, pathVertices, country, coalition, order.Index, VirtualConvoy.CoverTrain)
                             let links = virtualConvoy.CreateLinks()
                             links.Apply(McuUtil.deepContentOf virtualConvoy)
                             yield virtualConvoy
@@ -628,7 +628,7 @@ let createColumns store lcStore (world : World) (state : WorldState) (missionBeg
                             |> Seq.map (fun (vehicleType, count) ->
                                 List.init count (fun _ -> vehicleType.GetModel(coalition)))
                             |> List.concat
-                        let column = VirtualConvoy.CreateColumn(store, lcStore, travel, invasion, columnContent, coalition.ToCountry, coalition.ToCoalition)
+                        let column = VirtualConvoy.CreateColumn(store, lcStore, travel, invasion, columnContent, coalition.ToCountry, coalition.ToCoalition, order.Index, VirtualConvoy.CoverArmouredColumn)
                         let links = column.CreateLinks()
                         links.Apply(McuUtil.deepContentOf column)
                         Mcu.addTargetLink prevStart.Value column.Api.Start.Index
