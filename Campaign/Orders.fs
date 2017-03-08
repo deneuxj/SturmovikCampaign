@@ -3,9 +3,11 @@
 open Campaign.WorldDescription
 open Campaign.WorldState
 
+/// A truck convoy or a train, in movement.
 type ConvoyOrder = {
     Start : RegionId
     Destination : RegionId
+    /// For a truck convoy: Number of trucks.
     Size : int
 }
 
@@ -19,11 +21,15 @@ type ResupplyOrder = {
     Convoy : ConvoyOrder
 }
 with
+    static member TruckCapacity = 1000.0f
+    static member TrainCapacity = 20000.0f
+
     member this.Capacity =
         match this.Means with
-        | ByRoad -> float32 this.Convoy.Size * 1000.0f
-        | ByRail -> 20000.0f
+        | ByRoad -> float32 this.Convoy.Size * ResupplyOrder.TruckCapacity
+        | ByRail -> ResupplyOrder.TrainCapacity
 
+/// A column of armored vehicles in movement.
 type ColumnMovement = {
     Index : int
     Start : RegionId

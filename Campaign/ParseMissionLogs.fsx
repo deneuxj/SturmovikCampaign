@@ -50,4 +50,4 @@ let world = { world0 with WeatherDaysOffset = 15.0 * (random.NextDouble() - 0.5)
 let state = WorldState.Create(world, strategyFile)
 
 let resups = extractResupplies world state entries
-let buildingDamages = extractBuildingDamages world state entries
+let staticDamages = extractStaticDamages world state entries
