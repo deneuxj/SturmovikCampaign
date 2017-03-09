@@ -5,6 +5,7 @@
 #r "../Blocks/bin/Debug/SturmovikMission.Blocks.dll"
 #r "../Campaign/bin/Debug/Campaign.dll"
 #r "System.Numerics.Vectors"
+#r "../Blocks/packages/FsPickler.3.2.0/lib/net45/FsPickler.dll"
 
 open Campaign.WorldDescription
 open Campaign.WorldState
@@ -53,18 +54,35 @@ let adjustIndexes(convoys : ResupplyOrder list, reinforcements : ColumnMovement 
         invasions
         |> List.mapi (fun i order -> { order with Index = i + 1 + n })
     convoys, reinforcements, invasions
-let axisConvoys, axisReinforcements, axisInvasions =
-    mkOrders Axis
-    |> adjustIndexes
-let alliesConvoys, alliesReinforcements, alliesInvasions =
-    mkOrders Allies
-    |> adjustIndexes
+let mkAllOrders coalition =
+    let convoys, reinforcements, invasions =
+        mkOrders coalition
+        |> adjustIndexes
+    { Resupply = convoys
+      Reinforcements = reinforcements
+      Invasions = invasions
+    }
+let allAxisOrders = mkAllOrders Axis
+let allAlliesOrders = mkAllOrders Allies
 
 let missionName = "AutoGenMission2"
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
 let outputDir = @"C:\Users\johann\Documents\AutoMoscow"
-writeMissionFile random author missionName briefing 120 60 options blocks bridges world state (axisConvoys @ alliesConvoys) (axisInvasions @ alliesInvasions) (axisReinforcements @ alliesReinforcements) (Path.Combine(outputDir, missionName + ".Mission"))
+
+open MBrace.FsPickler
+let serializer = FsPickler.CreateXmlSerializer(indent = true)
+do
+    use worldFile = File.CreateText(Path.Combine(outputDir, "world.xml"))
+    serializer.Serialize(worldFile, world)
+    use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
+    serializer.Serialize(stateFile, world)
+    use axisOrderFiles = File.CreateText(Path.Combine(outputDir, "axisOrders.xml"))
+    serializer.Serialize(axisOrderFiles, allAxisOrders)
+    use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
+    serializer.Serialize(alliesOrderFiles, allAlliesOrders)
+
+writeMissionFile random author missionName briefing 120 60 options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(outputDir, missionName + ".Mission"))
 
 let serverDataDir = @"E:\dserver\data"
 let serverBinDir = @"E:\dserver\bin"

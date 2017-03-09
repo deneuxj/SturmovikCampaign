@@ -692,7 +692,7 @@ let createParkedPlanes store (world : World) (state : WorldState) =
     |> List.concat
 
 
-let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (resupplies : ResupplyOrder list) (invasions : ColumnMovement list) (reinforcements : ColumnMovement list) (filename : string) =
+let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
     let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
     let weather = Weather.getWeather random (state.Date + daysOffset)
     let store = NumericalIdentifiers.IdStore()
@@ -705,9 +705,9 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
-    let convoysAndTimers = createConvoys missionLength convoySpacing store lcStore world state resupplies
+    let convoysAndTimers = createConvoys missionLength convoySpacing store lcStore world state (axisOrders.Resupply @ alliesOrders.Resupply)
     let columns =
-        invasions
+        axisOrders.Invasions @ alliesOrders.Invasions
         |> createColumns store lcStore world state missionBegin (float convoySpacing)
     for column in columns do
         Mcu.addTargetLink missionBegin column.Api.Start.Index
@@ -715,7 +715,7 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
         columns
         |> List.map (fun x -> x :> McuUtil.IMcuGroup)
     let reinforcements =
-        reinforcements
+        axisOrders.Reinforcements @ alliesOrders.Reinforcements
         |> createColumns store lcStore world state missionBegin (float convoySpacing)
     for reinforcement in reinforcements do
         Mcu.addTargetLink missionBegin reinforcement.Api.Start.Index

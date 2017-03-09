@@ -36,3 +36,10 @@ type ColumnMovement = {
     Destination : RegionId
     Composition : Map<GroundAttackVehicle, int>
 }
+
+/// Groups all orders for a faction.
+type OrderPackage = {
+    Resupply : ResupplyOrder list
+    Reinforcements : ColumnMovement list
+    Invasions : ColumnMovement list
+}
