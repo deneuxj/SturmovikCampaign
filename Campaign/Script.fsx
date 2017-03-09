@@ -2,7 +2,7 @@
 // for more guidance on F# programming.
 
 #r "../DataProvider/bin/Debug/DataProvider.dll"
-#r "../Blocks/bin/Debug/SturmovikMission.Blocks.exe"
+#r "../Blocks/bin/Debug/SturmovikMission.Blocks.dll"
 #r "../Campaign/bin/Debug/Campaign.dll"
 #r "System.Numerics.Vectors"
 
