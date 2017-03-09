@@ -59,6 +59,7 @@
     <Compile Include="AutoOrder.fs" />
     <Compile Include="ResultExtraction.fs" />
     <Compile Include="MissionGeneration.fs" />
+    <None Include="Configuration.fsx" />
     <None Include="GenerateMission.fsx" />
     <None Include="ParseMissionLogs.fsx" />
     <None Include="..\data\Sample.Mission">

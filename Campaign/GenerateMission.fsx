@@ -7,6 +7,8 @@
 #r "System.Numerics.Vectors"
 #r "../Blocks/packages/FsPickler.3.2.0/lib/net45/FsPickler.dll"
 
+#load "Configuration.fsx" 
+
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.MissionGeneration
@@ -24,23 +26,28 @@ try
 with
     | exc -> printfn "Error copying files: '%s'" exc.Message
 
-let random = System.Random(0)
-let strategyFile = "StrategySmall1.mission"
-let world0, blocks, bridges, options = World.Create(strategyFile)
-let world = { world0 with WeatherDaysOffset = 15.0 * (random.NextDouble() - 0.5)}
-let state = WorldState.Create(world, strategyFile)
+let random =
+    match Configuration.Seed with
+    | Some n ->
+        System.Random(n)
+    | None ->
+        System.Random()
+
+let world0, blocks, bridges, options = World.Create(Configuration.StrategyFile)
+let world = { world0 with WeatherDaysOffset = (float Configuration.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
+let state = WorldState.Create(world, Configuration.StrategyFile)
 let mkOrders coalition =
     let convoyOrders =
         createAllConvoyOrders(coalition, world, state)
-        |> prioritizeConvoys 4 world state
+        |> prioritizeConvoys Configuration.MaxConvoys world state
     let invasions =
         createGroundInvasionOrders(Some coalition, world, state)
         |> prioritizeGroundInvasionOrders(world, state)
-        |> List.truncate 3
+        |> List.truncate Configuration.MaxInvasionsInPlanning
     let reinforcements =
         prioritizedReinforcementOrders(world, state) coalition invasions
     let reinforcements, invasions = filterIncompatible(reinforcements, invasions)
-    convoyOrders, reinforcements |> List.truncate 1, invasions |> List.truncate 1 |> List.map (fun (x, _, _) -> x)
+    convoyOrders, reinforcements |> List.truncate Configuration.MaxReinforcements, invasions |> List.truncate Configuration.MaxInvasions |> List.map (fun (x, _, _) -> x)
 let adjustIndexes(convoys : ResupplyOrder list, reinforcements : ColumnMovement list, invasions : ColumnMovement list) =
     let convoys =
         convoys
@@ -65,14 +72,13 @@ let mkAllOrders coalition =
 let allAxisOrders = mkAllOrders Axis
 let allAlliesOrders = mkAllOrders Allies
 
-let missionName = "AutoGenMission2"
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
-let outputDir = @"C:\Users\johann\Documents\AutoMoscow"
 
 open MBrace.FsPickler
 let serializer = FsPickler.CreateXmlSerializer(indent = true)
 do
+    let outputDir = Configuration.OutputDir
     use worldFile = File.CreateText(Path.Combine(outputDir, "world.xml"))
     serializer.Serialize(worldFile, world)
     use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
@@ -82,20 +88,19 @@ do
     use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
     serializer.Serialize(alliesOrderFiles, allAlliesOrders)
 
-writeMissionFile random author missionName briefing 120 60 options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(outputDir, missionName + ".Mission"))
+let missionName = Configuration.MissionName
+writeMissionFile random author Configuration.MissionName briefing Configuration.MissionLength Configuration.ConvoyInterval options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(Configuration.OutputDir, missionName + ".Mission"))
 
-let serverDataDir = @"E:\dserver\data"
-let serverBinDir = @"E:\dserver\bin"
-let mpDir = Path.Combine(serverDataDir, "Multiplayer")
+let mpDir = Path.Combine(Configuration.ServerDataDir, "Multiplayer")
 let swallow f = try f() with | _ -> ()
 swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".Mission")))
 swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".eng")))
 swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".msnbin")))
-File.Copy(Path.Combine(outputDir, missionName + ".Mission"), Path.Combine(mpDir, missionName + ".Mission"))
-File.Copy(Path.Combine(outputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + ".eng"))
+File.Copy(Path.Combine(Configuration.OutputDir, missionName + ".Mission"), Path.Combine(mpDir, missionName + ".Mission"))
+File.Copy(Path.Combine(Configuration.OutputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + ".eng"))
 open System.Diagnostics
-let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d %s -f %s" serverDataDir (Path.Combine(mpDir, missionName + ".Mission")))
-p.WorkingDirectory <- Path.Combine(serverBinDir, "resaver")
+let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d %s -f %s" Configuration.ServerDataDir (Path.Combine(mpDir, missionName + ".Mission")))
+p.WorkingDirectory <- Path.Combine(Configuration.ServerBinDir, "resaver")
 p.UseShellExecute <- true
 let proc = Process.Start(p)
 proc.WaitForExit()
