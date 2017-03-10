@@ -18,7 +18,7 @@ let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId,
             |> List.map (fun state -> state.RegionId, state.Owner)
             |> dict
         fun x -> m.[x]
-    let distances = Functions.computeRegionDistances getPaths getOwner (coalition, world)
+    let distances = computeRegionDistances getPaths getOwner (coalition, world)
     let areConnectedByRoad(start, destination) =
         getPaths world
         |> List.exists (fun path ->
@@ -75,11 +75,11 @@ let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (o
                         |> Seq.filter (fun af -> (getAirfield af.AirfieldId).Region = region.RegionId)
                         |> Seq.sumBy (fun af ->
                             Seq.zip (getAirfield af.AirfieldId).Storage af.StorageHealth
-                            |> Seq.sumBy (fun (building, health) -> health * Functions.getWeightCapacityPerBuilding building.Model))
+                            |> Seq.sumBy (fun (building, health) -> health * getWeightCapacityPerBuilding building.Model))
                     let regionStorage =
                         let state = getState region.RegionId
                         Seq.zip region.Storage state.StorageHealth
-                        |> Seq.sumBy (fun (building, health) -> health * Functions.getWeightCapacityPerBuilding building.Model)
+                        |> Seq.sumBy (fun (building, health) -> health * getWeightCapacityPerBuilding building.Model)
                     yield region.RegionId, regionStorage + afStorage
             }
             |> dict
@@ -221,9 +221,9 @@ let getInvasionValue (world, state) =
     let sg = WorldStateFastAccess.Create state
     let getRegionDistances =
         let distanceOwnedByAxis =
-            Functions.computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Axis, world)
+            computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Axis, world)
         let distanceOwnedByAllies =
-            Functions.computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Allies, world)
+            computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Allies, world)
         function
         | Some Axis -> distanceOwnedByAxis
         | Some Allies -> distanceOwnedByAllies

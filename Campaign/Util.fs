@@ -13,3 +13,10 @@ let mkGetStuffFast data mkKey =
             |> Seq.map (fun x -> mkKey x, x)
             |> dict
     fun x -> m.Value.[x]
+
+/// Active pattern checking if a string contains a given substring.
+let (|Contains|_|) substring (s : string) =
+    if s.Contains(substring) then
+        Some()
+    else
+        None

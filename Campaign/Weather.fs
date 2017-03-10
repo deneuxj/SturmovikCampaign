@@ -1,4 +1,6 @@
-﻿module Campaign.Weather
+﻿/// Random weather generation
+/// It follows a pattern based on cyclical atmospheric pressure, humidity and temperature.
+module Campaign.Weather
 
 open SturmovikMission.Blocks.BlocksMissionData
 
@@ -107,6 +109,7 @@ let getWeather random (t : System.DateTime) =
         k * h
     let windDirection =
         getWindDirection random t
+    // Wind speed depends on medium term pressure variation, turbulence depends on short term pressure variation.
     let windSpeed, turbulence =
         let hurricanePressureVariation =
             25.0 / (24.0 * 3600.0)
@@ -136,6 +139,7 @@ let getWeather random (t : System.DateTime) =
       Pressure = pressure
     }
 
+/// Build an options mission section, based on an existing one.
 let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Options) =
     let precType =
         if weather.Temperature < 0.0 then

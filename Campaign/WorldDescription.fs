@@ -296,9 +296,10 @@ with
                     failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
         ]
 
-
+/// Airfield identifier, uses the name of the fakefield.
 type AirfieldId = AirfieldId of string
 
+/// Identifies the kind of plane that can be parked at some location.
 module PlaneTypes =
     let (|Fighter|Attacker|Bomber|Other|) (s : string) =
         if s.Contains("bf109") then
@@ -313,6 +314,7 @@ module PlaneTypes =
 open PlaneTypes
 open SturmovikMission.Blocks
 
+/// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
     | Bf109e7
     | Bf109f2
@@ -355,7 +357,7 @@ with
         | Pe2s35 -> Vehicles.russianStaBomber
 
 
-
+/// Description of an airfield: Its position, the planes that can be parked there, the ammo storage facilities.
 type Airfield = {
     AirfieldId : AirfieldId
     Region : RegionId
@@ -365,7 +367,7 @@ type Airfield = {
     ParkedAttackers : OrientedPosition list
     ParkedBombers : OrientedPosition list
     Storage : StaticGroup list
-    Spawn : T.Airfield list
+    Spawn : T.Airfield list // Multiple spawn points. Only one is used in each mission, depending on wind direction.
 }
 with
     static member AddParkedFighter(airfields : Airfield list, airfield : AirfieldId, pos : OrientedPosition) =
@@ -460,6 +462,7 @@ with
 
 open SturmovikMission.DataProvider.Parsing
 
+/// Packages all description data.
 type World = {
     Regions : Region list
     Roads : Path list
@@ -467,7 +470,9 @@ type World = {
     AntiAirDefenses : DefenseArea list
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
+    /// Date of the first mission.
     StartDate : System.DateTime
+    /// Weather offset: affects how late or early the weather pattern is.
     WeatherDaysOffset : float
 }
 with
@@ -511,6 +516,7 @@ with
 
 open Campaign.Util
 
+/// Provides fast accesst to world description data by index.
 type WorldFastAccess = {
     GetRegion : RegionId -> Region
     GetAntiAirDefenses : DefenseAreaId -> DefenseArea
