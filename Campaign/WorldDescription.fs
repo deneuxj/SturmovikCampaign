@@ -1,10 +1,22 @@
-﻿namespace Campaign.WorldDescription
+﻿module Campaign.WorldDescription
 
 open System.Numerics
 
 open Vector
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
+
+[<Measure>]
+/// Production output (energy)
+type E
+
+[<Measure>]
+/// Mass
+type M
+
+[<Measure>]
+/// Time
+type H
 
 type CoalitionId = Axis | Allies
 with
@@ -356,6 +368,19 @@ with
         | P40 -> Vehicles.russianStaFighter3
         | Pe2s35 -> Vehicles.russianStaBomber
 
+    member this.Cost =
+        match this with
+        | Bf109e7 -> 300.0f<E>
+        | Bf109f2 -> 500.0f<E>
+        | Mc202 -> 400.0f<E>
+        | Bf110e -> 750.0f<E>
+        | Ju88a4 -> 1000.0f<E>
+        | Ju52 -> 1000.0f<E>
+        | I16 -> 300.0f<E>
+        | IL2M41 -> 600.0f<E>
+        | Mig3 -> 500.0f<E>
+        | P40 -> 300.0f<E>
+        | Pe2s35 -> 750.0f<E>
 
 /// Description of an airfield: Its position, the planes that can be parked there, the ammo storage facilities.
 type Airfield = {
@@ -534,3 +559,30 @@ with
 type World
 with
     member this.FastAccess = WorldFastAccess.Create(this)
+
+let shellWeight = 5.0f<M>
+
+let shellCost = 1.0f<E>
+
+let shellsPerCanon = 20.0f
+
+let rocketWeight = 20.0f<M>
+
+let getWeightCapacityPerBuilding (model : string) = 5000.0f<M>
+
+let getShellsPerBuilding (model : string) = (getWeightCapacityPerBuilding model) / shellWeight
+
+let getDurabilityForBuilding (model : string) =
+    match model with
+    | Contains "arf_net" -> 1000
+    | Contains "arf_dugout" -> 15000
+    | Contains "arf_barak" -> 10000
+    | Contains "arf_hangar" -> 10000
+    | Contains "industrial" -> 10000
+    | Contains "static_" -> 2500
+    | _ -> 10000
+
+let getProductionPerBuilding (model : string) =
+    match model with
+    | Contains "industrial" -> 5.0f<E/H>
+    | _ -> 1.0f<E/H>

@@ -53,7 +53,7 @@ let createAllConvoyOrders x =
     createRoadConvoyOrders x @ createRailConvoyOrders x
 
 
-let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
+let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
     let getState =
         let m =
             state.Regions
@@ -91,8 +91,8 @@ let prioritizeConvoys (maxConvoys : int) (world : World) (state : WorldState) (o
                     let afStorage =
                         state.Airfields
                         |> Seq.filter (fun af -> (getAirfield af.AirfieldId).Region = region.RegionId)
-                        |> Seq.sumBy (fun af -> af.BombWeight + (float32 af.NumRockets) * AirfieldState.RocketWeight)
-                    yield region.RegionId, region.ShellCount * RegionState.ShellWeight + afStorage
+                        |> Seq.sumBy (fun af -> af.BombWeight + (float32 af.NumRockets) * rocketWeight)
+                    yield region.RegionId, region.ShellCount * shellWeight + afStorage
             }
             |> dict
         fun x -> m.[x]

@@ -26,17 +26,32 @@ with
             | MediumTank -> russianMediumTank
             | LightArmor -> russianLightArmor
 
+    static member LightArmorCost = 100.0f<E>
+    static member MediumTankCost = 200.0f<E>
+    static member HeavyTankCost = 500.0f<E>
+
+/// How much various production goals have accumulated.
+type ProductionAssignment = {
+    Shells : float32<E>
+    Planes : Map<PlaneModel, float32<E>>
+    Vehicles : Map<GroundAttackVehicle, float32<E>>
+}
+
 /// State of a region.
 type RegionState = {
     RegionId : RegionId
     Owner : CoalitionId option
     StorageHealth : float32 list
     ProductionHealth : float32 list
+    Products : ProductionAssignment
     ShellCount : float32
     NumVehicles : Map<GroundAttackVehicle, int>
 }
 with
-    static member ShellWeight = 5.0f
+    member this.GetNumVehicles(vehicle : GroundAttackVehicle) =
+        this.NumVehicles
+        |> Map.tryFind vehicle
+        |> fun x -> defaultArg x 0
 
 /// State of a defense area withín a region.
 type DefenseAreaState = {
@@ -49,11 +64,9 @@ type AirfieldState = {
     AirfieldId : AirfieldId
     NumPlanes : Map<PlaneModel, int>
     StorageHealth : float32 list
-    BombWeight : float32
+    BombWeight : float32<M>
     NumRockets : int
 }
-with
-    static member RocketWeight = 20.0f
 
 /// Packages all state data.
 type WorldState = {
@@ -86,20 +99,6 @@ open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu
 open System.Numerics
 open Vector
-
-let getWeightCapacityPerBuilding (model : string) = 5000.0f
-
-let getShellsPerBuilding (model : string) = (getWeightCapacityPerBuilding model) / RegionState.ShellWeight
-
-let getDurabilityForBuilding (model : string) =
-    match model with
-    | Contains "arf_net" -> 1000
-    | Contains "arf_dugout" -> 15000
-    | Contains "arf_barak" -> 10000
-    | Contains "arf_hangar" -> 10000
-    | Contains "industrial" -> 10000
-    | Contains "static_" -> 2500
-    | _ -> 10000
 
 /// Maximum number of anti-air canons in an area. Depends on the area's size.
 let getAntiAirCanonsForArea (area : DefenseArea) =
@@ -232,6 +231,7 @@ let mkInitialState(world : World, strategyFile : string) =
               Owner = owner
               StorageHealth = region.Storage |> List.map (fun _ -> 1.0f)
               ProductionHealth = region.Production |> List.map (fun _ -> 1.0f)
+              Products = { Shells = 0.0f<E>; Vehicles = Map.empty; Planes = Map.empty }
               ShellCount = shellCount
               NumVehicles = vehicles
             }
@@ -341,20 +341,20 @@ let mkInitialState(world : World, strategyFile : string) =
         let storage =
             if hasFactories then
                 match owner with
-                | None -> 0.0f
+                | None -> 0.0f<M>
                 | Some _ -> airfield.Storage |> Seq.sumBy (fun gr -> getWeightCapacityPerBuilding gr.Model)
             else
-                0.0f
+                0.0f<M>
         let bombWeight, rockets =
             match owner with
             | Some Allies -> 0.8f * storage, 0.2f * storage
-            | Some Axis -> storage, 0.0f
-            | None -> 0.0f, 0.0f
+            | Some Axis -> storage, 0.0f<M>
+            | None -> 0.0f<M>, 0.0f<M>
         { AirfieldId = airfield.AirfieldId
           NumPlanes = numPlanes
           StorageHealth = airfield.Storage |> List.map (fun _ -> 1.0f)
           BombWeight = bombWeight
-          NumRockets = int(ceil(rockets / AirfieldState.RocketWeight))
+          NumRockets = int(ceil(rockets / rocketWeight))
         }
     let airfields = world.Airfields |> List.map mkAirfield
     { Airfields = airfields

@@ -15,7 +15,7 @@ open Campaign.Orders
 /// A region received truck convoys or trains.
 type Resupplied = {
     Region : RegionId
-    Weight : float32
+    Weight : float32<M>
 }
 
 let extractResupplies (world : World) (state : WorldState) (entries : LogEntry seq) =
@@ -36,7 +36,7 @@ let extractResupplies (world : World) (state : WorldState) (entries : LogEntry s
                         match objective.IconType with
                         | x when x = VirtualConvoy.CoverTrain -> ResupplyOrder.TrainCapacity
                         | x when x = VirtualConvoy.CoverTransportColumn -> ResupplyOrder.TruckCapacity
-                        | _ -> 0.0f
+                        | _ -> 0.0f<M>
                     yield (region.RegionId, objective.Coalition), { Region = region.RegionId; Weight = weight }
                 | None -> ()
             | _ ->

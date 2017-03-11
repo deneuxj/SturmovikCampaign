@@ -57,8 +57,9 @@
     <Compile Include="Weather.fs" />
     <Compile Include="Orders.fs" />
     <Compile Include="AutoOrder.fs" />
-    <Compile Include="ResultExtraction.fs" />
     <Compile Include="MissionGeneration.fs" />
+    <Compile Include="ResultExtraction.fs" />
+    <Compile Include="NewWorldState.fs" />
     <None Include="Configuration.fsx" />
     <None Include="GenerateMission.fsx" />
     <None Include="ParseMissionLogs.fsx" />
