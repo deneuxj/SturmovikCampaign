@@ -570,6 +570,8 @@ let rocketWeight = 20.0f<M>
 
 let getWeightCapacityPerBuilding (model : string) = 5000.0f<M>
 
+let getEnergyHealthPerBuilding (model : string) = getWeightCapacityPerBuilding model * 1.0f<E/M>
+
 let getShellsPerBuilding (model : string) = (getWeightCapacityPerBuilding model) / shellWeight
 
 let getDurabilityForBuilding (model : string) =

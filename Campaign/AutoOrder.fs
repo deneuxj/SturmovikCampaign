@@ -107,7 +107,7 @@ let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (stat
             let receiveCapacity = (getStorageCapacity order.Convoy.Destination) - (getStorageContent order.Convoy.Destination)
             let sendCapacity =
                 getStorageContent order.Convoy.Start
-                |> min order.Capacity
+                |> min (shellWeight * order.Capacity / shellCost)
             -1.0f * (min sendCapacity receiveCapacity))
         // At most one convoy of each type from each region
         |> List.fold (fun (starts, ok) order ->

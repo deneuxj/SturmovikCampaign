@@ -15,7 +15,7 @@ open Campaign.Orders
 /// A region received truck convoys or trains.
 type Resupplied = {
     Region : RegionId
-    Weight : float32<M>
+    Energy : float32<E>
 }
 
 let extractResupplies (world : World) (state : WorldState) (entries : LogEntry seq) =
@@ -32,19 +32,19 @@ let extractResupplies (world : World) (state : WorldState) (entries : LogEntry s
                 let pos = Vector2(objective.Position.X, objective.Position.Z)
                 match tryFindContainingRegion pos with
                 | Some region ->
-                    let weight =
+                    let energy =
                         match objective.IconType with
                         | x when x = VirtualConvoy.CoverTrain -> ResupplyOrder.TrainCapacity
                         | x when x = VirtualConvoy.CoverTransportColumn -> ResupplyOrder.TruckCapacity
-                        | _ -> 0.0f<M>
-                    yield (region.RegionId, objective.Coalition), { Region = region.RegionId; Weight = weight }
+                        | _ -> 0.0f<E>
+                    yield (region.RegionId, objective.Coalition), { Region = region.RegionId; Energy = energy }
                 | None -> ()
             | _ ->
                 ()
     }
     |> Seq.groupBy fst
-    |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun (_, sup) -> sup.Weight))
-    |> Seq.map (fun ((region, _), amount) -> { Region = region; Weight = amount })
+    |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun (_, sup) -> sup.Energy))
+    |> Seq.map (fun ((region, _), amount) -> { Region = region; Energy = amount })
 
 type DamagedObject =
     | Production of RegionId * int
