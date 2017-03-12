@@ -36,10 +36,11 @@ let random =
 let world0, blocks, bridges, options = World.Create(Configuration.StrategyFile)
 let world = { world0 with WeatherDaysOffset = (float Configuration.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
 let state = WorldState.Create(world, Configuration.StrategyFile)
+let dt = 60.0f<H> * float32 Configuration.MissionLength
 let mkOrders coalition =
     let convoyOrders =
         createAllConvoyOrders(coalition, world, state)
-        |> prioritizeConvoys Configuration.MaxConvoys world state
+        |> prioritizeConvoys Configuration.MaxConvoys dt world state
     let invasions =
         createGroundInvasionOrders(Some coalition, world, state)
         |> prioritizeGroundInvasionOrders(world, state)
