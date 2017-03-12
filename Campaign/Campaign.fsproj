@@ -63,6 +63,7 @@
     <None Include="Configuration.fsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Init.fsx" />
     <None Include="GenerateMission.fsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

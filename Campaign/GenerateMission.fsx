@@ -14,6 +14,7 @@ open Campaign.WorldState
 open Campaign.MissionGeneration
 open Campaign.AutoOrder
 open Campaign.Orders
+open SturmovikMission.Blocks.BlocksMissionData
 open System.IO
 
 try
@@ -33,9 +34,23 @@ let random =
     | None ->
         System.Random()
 
-let world0, blocks, bridges, options = World.Create(Configuration.StrategyFile)
-let world = { world0 with WeatherDaysOffset = (float Configuration.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
-let state = WorldState.Create(world, Configuration.StrategyFile)
+open MBrace.FsPickler
+let serializer = FsPickler.CreateXmlSerializer(indent = true)
+let world, blocks, bridges, options, state =
+    try
+        use worldFile = File.OpenText(Path.Combine(Configuration.OutputDir, "world.xml"))
+        use stateFile = File.OpenText(Path.Combine(Configuration.OutputDir, "state.xml"))
+        use blocksFile = File.OpenText(Path.Combine(Configuration.OutputDir, "blocks.xml"))
+        use bridgesFile = File.OpenText(Path.Combine(Configuration.OutputDir, "bridges.xml"))
+        use optionsFile = File.OpenText(Path.Combine(Configuration.OutputDir, "options.xml"))
+        serializer.Deserialize<World>(worldFile),
+        serializer.Deserialize<T.Block list>(blocksFile),
+        serializer.Deserialize<T.Bridge list>(bridgesFile),
+        serializer.Deserialize<T.Options>(optionsFile),
+        serializer.Deserialize<WorldState>(stateFile)
+    with
+    | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+
 let dt = 60.0f<H> * float32 Configuration.MissionLength
 let mkOrders coalition =
     let convoyOrders =
@@ -76,14 +91,8 @@ let allAlliesOrders = mkAllOrders Allies
 let author = "coconut"
 let briefing = "Work in progress<br><br>Test of dynamically generated missions<br><br>"
 
-open MBrace.FsPickler
-let serializer = FsPickler.CreateXmlSerializer(indent = true)
 do
     let outputDir = Configuration.OutputDir
-    use worldFile = File.CreateText(Path.Combine(outputDir, "world.xml"))
-    serializer.Serialize(worldFile, world)
-    use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
-    serializer.Serialize(stateFile, world)
     use axisOrderFiles = File.CreateText(Path.Combine(outputDir, "axisOrders.xml"))
     serializer.Serialize(axisOrderFiles, allAxisOrders)
     use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
