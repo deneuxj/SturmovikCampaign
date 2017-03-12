@@ -538,6 +538,10 @@ with
           WeatherDaysOffset = 0.0
         }, data.ListOfBlock, data.ListOfBridge, List.head data.ListOfOptions
 
+    member this.GetClosestAirfield(pos : Vector2) =
+        this.Airfields
+        |> List.minBy(fun af -> (af.Pos - pos).LengthSquared())
+
 
 open Campaign.Util
 

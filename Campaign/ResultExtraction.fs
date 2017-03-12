@@ -12,6 +12,22 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
 
+/// Match the object type strings in log events with plane models.
+let (|PlaneObjectType|_|) (s : string) =
+    match s.ToLower() with
+    | "i-16 type 24" -> Some PlaneModel.I16
+    | "il-2 mod.1941" -> Some PlaneModel.IL2M41
+    | "ju 52 3mg4e" -> Some PlaneModel.Ju52
+    | "mc.202 ser.viii" -> Some PlaneModel.Mc202
+    | "p-40e-1" -> Some PlaneModel.P40
+    | "pe-2 ser.35" -> Some PlaneModel.Pe2s35
+    | "bf 109 e-7" -> Some PlaneModel.Bf109e7
+    | "bf 109 f-2" -> Some PlaneModel.Bf109f2
+    | "mig-3 ser.24" -> Some PlaneModel.Mig3
+    | "bf 110 e-2" -> Some PlaneModel.Bf110e
+    | "ju 88 a-4" -> Some PlaneModel.Ju88a4
+    | _ -> None
+
 /// A region received truck convoys or trains.
 type Resupplied = {
     Region : RegionId
@@ -46,6 +62,62 @@ let extractResupplies (world : World) (state : WorldState) (entries : LogEntry s
     |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun (_, sup) -> sup.Energy))
     |> Seq.map (fun ((region, _), amount) -> { Region = region; Energy = amount })
 
+/// A plane took off, possibly took some damage and then landed/crashed near or at an airfield
+type TookOff = {
+    Airfield : AirfieldId
+    Plane : PlaneModel
+}
+
+type Landed = {
+    Airfield : AirfieldId
+    Plane : PlaneModel
+    Health : float32
+}
+with
+    static member MaxDistanceFromAirfield = 5000.0f
+
+let extractTakeOffs (world : World) (entries : LogEntry seq) =
+    seq {
+        let planeIds = ref Map.empty
+        let damages = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                match spawned.ObjectType with
+                | PlaneObjectType model ->
+                    planeIds := Map.add spawned.ObjectId model !planeIds
+                    damages := Map.add spawned.ObjectId 0.0f !damages
+                | _ -> ()
+            | :? DamageEntry as damage ->
+                let oldDamage =
+                    match Map.tryFind damage.TargetId !damages with
+                    | Some x -> x
+                    | None -> 0.0f
+                let newDamage = oldDamage + damage.Damage
+                damages := Map.add damage.TargetId newDamage !damages
+            | :? TakeOffEntry as takeOff ->
+                let pos = Vector2(takeOff.Position.X, takeOff.Position.Z)
+                let af = world.GetClosestAirfield(pos)
+                match Map.tryFind takeOff.VehicleId !planeIds with
+                | Some plane -> yield Choice1Of2({ Airfield = af.AirfieldId; Plane = plane } : TookOff)
+                | None -> ()
+            | :? LandingEntry as landing ->
+                let pos = Vector2(landing.Position.X, landing.Position.Z)
+                let af = world.GetClosestAirfield(pos)
+                let dist = (af.Pos - pos).Length()
+                if dist < Landed.MaxDistanceFromAirfield then
+                    match Map.tryFind landing.VehicleId !planeIds with
+                    | Some plane ->
+                        let health =
+                            match Map.tryFind landing.VehicleId !damages with
+                            | Some x -> max 0.0f (1.0f - x)
+                            | None -> 1.0f
+                        yield Choice2Of2({ Airfield = af.AirfieldId; Plane = plane; Health = health })
+                    | None -> ()
+            | _ -> ()
+    }
+
+/// Something got bombed or strafed
 type DamagedObject =
     | Production of RegionId * int
     | Storage of RegionId * int
@@ -102,20 +174,6 @@ let (|StaticPlaneType|_|) (s : string) =
         else
             None)
 
-let (|PlaneObjectType|_|) (s : string) =
-    match s.ToLower() with
-    | "i-16 type 24" -> Some PlaneModel.I16
-    | "il-2 mod.1941" -> Some PlaneModel.IL2M41
-    | "ju 52 3mg4e" -> Some PlaneModel.Ju52
-    | "mc.202 ser.viii" -> Some PlaneModel.Mc202
-    | "p-40e-1" -> Some PlaneModel.P40
-    | "pe-2 ser.35" -> Some PlaneModel.Pe2s35
-    | "bf 109 e-7" -> Some PlaneModel.Bf109e7
-    | "bf 109 f-2" -> Some PlaneModel.Bf109f2
-    | "mig-3 ser.24" -> Some PlaneModel.Mig3
-    | "bf 110 e-2" -> Some PlaneModel.Bf110e
-    | "ju 88 a-4" -> Some PlaneModel.Ju88a4
-    | _ -> None
 
 let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntry seq) =
     let wg = WorldFastAccess.Create(world)

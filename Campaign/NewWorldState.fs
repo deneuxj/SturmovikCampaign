@@ -5,15 +5,6 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.ResultExtraction
 
-/// Compute the total production capacity of a coalition.
-let computeProduction (coalition : CoalitionId) (wg : WorldFastAccess) (state : WorldState) =
-    state.Regions
-    |> Seq.map (fun s -> wg.GetRegion s.RegionId, s)
-    |> Seq.filter (fun (_, s) -> s.Owner = Some coalition)
-    |> Seq.sumBy (fun (region, regState) ->
-        Seq.zip region.Production regState.ProductionHealth
-        |> Seq.sumBy (fun (prod, health) -> health * getProductionPerBuilding prod.Model))
-
 /// What to produce in each category of production, and how much does each category need
 type ProductionPriorities = {
     Vehicle : GroundAttackVehicle
@@ -156,7 +147,97 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
     }
 
 
-let computeNewState (dt : float32<H>) (world : World) (state : WorldState) (supplies : Resupplied list) (damages : Damage list) =
+/// Compute the total production capacity of a coalition.
+let computeProduction (coalition : CoalitionId) (region : Region) (regState : RegionState) =
+    Seq.zip region.Production regState.ProductionHealth
+    |> Seq.sumBy (fun (prod, health) -> health * getProductionPerBuilding prod.Model)
+
+/// Add production units according to production priorities
+let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
+    let wg = WorldFastAccess.Create world
+    let work (state : WorldState) (coalition : CoalitionId) =
+        let priorities = computeProductionPriorities coalition world state
+        let vehiclePrio, planePrio, energyPrio =
+            let total =
+                priorities.PriorityPlane + priorities.PriorityShells + priorities.PriorityVehicle
+                |> max 0.1f<E>
+            priorities.PriorityVehicle / total, priorities.PriorityPlane / total, priorities.PriorityVehicle / total
+        let regions =
+            [
+                for region, regState in Seq.zip world.Regions state.Regions do
+                    if regState.Owner = Some coalition then
+                        let energy = dt * computeProduction coalition region regState
+                        let shells = regState.Products.Supplies + energyPrio * energy
+                        let planes =
+                            let oldValue =
+                                match Map.tryFind priorities.Plane regState.Products.Planes with
+                                | Some x -> x
+                                | None -> 0.0f<E>
+                            let newValue = oldValue + planePrio * energy
+                            Map.add priorities.Plane newValue regState.Products.Planes
+                        let vehicles =
+                            let oldValue =
+                                match Map.tryFind priorities.Vehicle regState.Products.Vehicles with
+                                | Some x -> x
+                                | None -> 0.0f<E>
+                            let newValue = oldValue + vehiclePrio * energy
+                            Map.add priorities.Vehicle newValue regState.Products.Vehicles
+                        let assignment = { regState.Products with Supplies = shells; Planes = planes; Vehicles = vehicles }
+                        yield { regState with Products = assignment }
+                    else
+                        yield regState
+            ]
+        { state with Regions = regions }
+    [ Axis; Allies ]
+    |> List.fold work state
+
+/// Create new plane and vehicle instances if enough energy has been accumulated and convert supplies to local Resupplied events.
+let convertProduction (world : World) (state : WorldState) =
+    let afStates =
+        state.Airfields
+        |> Seq.map (fun af -> af.AirfieldId, af)
+        |> Map.ofSeq
+        |> ref
+    let regions =
+        state.Regions
+        |> Seq.map (fun region -> region.RegionId, region)
+        |> Map.ofSeq
+        |> ref
+    let resupplied = ref []
+    for region, regState in Seq.zip world.Regions state.Regions do
+        let newPlanes, remainingPlanes =
+            regState.Products.Planes
+            |> Map.toSeq
+            |> Seq.fold (fun (newPlanes, remainingPlanes) (plane, energy) ->
+                let numNewPlanes = floor(energy / plane.Cost)
+                let energyLeft = energy - numNewPlanes * energy
+                (plane, int numNewPlanes) :: newPlanes, Map.add plane energy remainingPlanes
+            ) ([], Map.empty)
+        let newVehicles, remainingVehicles =
+            regState.Products.Vehicles
+            |> Map.toSeq
+            |> Seq.fold (fun (newVehicles, remainingVehicles) (vehicle, energy) ->
+                let numNewVehicles = floor(energy / vehicle.Cost)
+                let energyLeft = energy - numNewVehicles * energy
+                (vehicle, int numNewVehicles) :: newVehicles, Map.add vehicle energy remainingVehicles
+            ) ([], Map.empty)
+        let supplySpaceAvailable =
+            Seq.zip region.Storage regState.StorageHealth
+            |> Seq.sumBy (fun (sto, health) -> health * getEnergyHealthPerBuilding sto.Model)
+            |> fun x -> x - regState.ShellCount * shellCost
+            |> max 0.0f<E>
+        let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
+        resupplied := { Region = region.RegionId; Energy = transferedEnergy} :: !resupplied
+        let suppliesLeft = regState.Products.Supplies - transferedEnergy
+        let assignment = { regState.Products with Planes = remainingPlanes; Vehicles = remainingVehicles; Supplies = suppliesLeft }
+        regions := Map.add regState.RegionId { regState with Products = assignment } !regions
+    { state with
+        Airfields = state.Airfields |> List.map (fun af -> afStates.Value.[af.AirfieldId])
+        Regions = state.Regions |> List.map (fun region -> regions.Value.[region.RegionId]) },
+    resupplied.Value
+
+/// Apply damages due to attacks, use supplies to repair damages and replenish storage
+let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (supplies : Resupplied list) (damages : Damage list) =
     let wg = WorldFastAccess.Create world
     let damages =
         let data =
@@ -197,4 +278,60 @@ let computeNewState (dt : float32<H>) (world : World) (state : WorldState) (supp
                 // TODO: canon losses
                 yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth}
         ]
-    ()
+    let regionsAfterSupplies =
+        [
+            for regState in regionsAfterDamages do
+                let region = wg.GetRegion regState.RegionId
+                let energy =
+                    match Map.tryFind region.RegionId supplies with
+                    | Some e -> e
+                    | None -> 0.0f<E>
+                let computeHealing(healths, buildings, energy) =
+                    let energyPerBuilding =
+                        buildings
+                        |> List.map (fun (x : StaticGroup) -> getEnergyHealthPerBuilding x.Model)
+                    let prodHealing, energy =
+                        List.zip healths energyPerBuilding
+                        |> List.fold (fun (healings, available) (health, healthCost : float32<E>) ->
+                            let spend =
+                                min ((1.0f - health) * healthCost) available
+                            (spend / healthCost) :: healings, available - spend
+                        ) ([], energy)
+                    let prodHealing = List.rev prodHealing
+                    let prodHealth =
+                        List.zip healths prodHealing
+                        |> List.map (fun (health, healing) -> health + healing)
+                    prodHealth, energy
+                let prodHealth, energy =
+                    computeHealing(
+                        regState.ProductionHealth,
+                        region.Production,
+                        energy)
+                let storeHealth, energy =
+                    computeHealing(
+                        regState.StorageHealth,
+                        region.Storage,
+                        energy)
+                let shellCount = regState.ShellCount + energy / shellCost
+                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; ShellCount = shellCount }
+        ]
+    { state with Regions = regionsAfterSupplies }
+
+
+let eveningStop = 18
+let morningStart = 8
+
+let newState (dt : float32<H>) (world : World) (state : WorldState) supplies damages =
+    let state = applyProduction dt world state
+    let state, extra = convertProduction world state
+    let state = applyRepairsAndDamages dt world state (supplies @ extra) damages
+    let h = floor(float32 dt)
+    let mins = 60.0f * (float32 dt) - h
+    let newDate =
+        let x = state.Date + System.TimeSpan(int h, int mins, 0)
+        let extra =
+            if x.Hour >= eveningStop then
+                morningStart - eveningStop + 24
+            else 0
+        x + System.TimeSpan(extra, 0, 0)
+    { state with Date = newDate }

@@ -30,9 +30,15 @@ with
     static member MediumTankCost = 200.0f<E>
     static member HeavyTankCost = 500.0f<E>
 
+    member this.Cost =
+        match this with
+        | HeavyTank -> GroundAttackVehicle.HeavyTankCost
+        | MediumTank -> GroundAttackVehicle.MediumTankCost
+        | LightArmor -> GroundAttackVehicle.LightArmorCost
+
 /// How much various production goals have accumulated.
 type ProductionAssignment = {
-    Shells : float32<E>
+    Supplies : float32<E>
     Planes : Map<PlaneModel, float32<E>>
     Vehicles : Map<GroundAttackVehicle, float32<E>>
 }
@@ -231,7 +237,7 @@ let mkInitialState(world : World, strategyFile : string) =
               Owner = owner
               StorageHealth = region.Storage |> List.map (fun _ -> 1.0f)
               ProductionHealth = region.Production |> List.map (fun _ -> 1.0f)
-              Products = { Shells = 0.0f<E>; Vehicles = Map.empty; Planes = Map.empty }
+              Products = { Supplies = 0.0f<E>; Vehicles = Map.empty; Planes = Map.empty }
               ShellCount = shellCount
               NumVehicles = vehicles
             }
