@@ -57,7 +57,13 @@ let entries =
     |> Seq.skipWhile (
         function
         | :? MissionStartEntry as entry ->
-            entry.MissionTime < state.Date
+            entry.MissionTime = state.Date
+        | _ -> true
+    )
+    |> Seq.takeWhile (
+        function
+        | :? MissionStartEntry as entry ->
+            entry.MissionTime = state.Date
         | _ -> true
     )
     |> Seq.cache
@@ -76,5 +82,7 @@ let dt = 60.0f<H> * float32 Configuration.MissionLength
 let state2 = newState dt world state resups staticDamages takeOffs landings
 
 do
+    let backupName = sprintf "state-%s.xml" (state.Date.ToShortTimeString())
+    File.Copy(Path.Combine(outputDir, "state.xml"), Path.Combine(outputDir, backupName))
     use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
     serializer.Serialize(stateFile, state)
