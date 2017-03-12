@@ -453,7 +453,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
                     state.NumPlanes
                     |> Map.map (fun plane number ->
                         let model = plane.ScriptModel
-                        newAirfieldPlane("", "", 0, 0, "", "", number)
+                        newAirfieldPlane("", "", 0, 0, "", "", int number)
                             .SetScript(T.String model.Script)
                             .SetModel(T.String model.Model)
                     )
@@ -677,10 +677,10 @@ let createParkedPlanes store (world : World) (state : WorldState) =
                         | Bf110e | IL2M41 -> attackerPlaces
                         | Ju88a4 | Ju52 | Pe2s35 -> bomberPlaces
                     let positions =
-                        List.truncate qty parking.Value
+                        List.truncate (int qty) parking.Value
                     parking :=
                         try
-                            List.skip qty parking.Value
+                            List.skip (int qty) parking.Value
                         with
                         | _ -> []
                     yield!

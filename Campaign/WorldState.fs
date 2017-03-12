@@ -68,7 +68,7 @@ type DefenseAreaState = {
 /// State of an airfield.
 type AirfieldState = {
     AirfieldId : AirfieldId
-    NumPlanes : Map<PlaneModel, int>
+    NumPlanes : Map<PlaneModel, float32> // float because we are talking airplane damages into account. Two half-damaged planes make one usable one.
     StorageHealth : float32 list
     BombWeight : float32<M>
     NumRockets : int
@@ -332,11 +332,11 @@ let mkInitialState(world : World, strategyFile : string) =
         let owner =
             getOwner airfield.Region
         let numPlanes =
-            let numFighters = List.length airfield.ParkedFighters
-            let numF1, numF2 = 2 * numFighters / 5, numFighters / 5
-            let numAttackers = List.length airfield.ParkedAttackers
-            let numBombers = List.length airfield.ParkedBombers
-            let numJu52 = if numBombers >= 5 then 2 else 0
+            let numFighters = List.length airfield.ParkedFighters |> float32
+            let numF1, numF2 = 2.0f * numFighters / 5.0f, numFighters / 5.0f
+            let numAttackers = List.length airfield.ParkedAttackers |> float32
+            let numBombers = List.length airfield.ParkedBombers |> float32
+            let numJu52 = if numBombers >= 5.0f then 2.0f else 0.0f
             if hasFactories then
                 match owner with
                 | None -> Map.empty

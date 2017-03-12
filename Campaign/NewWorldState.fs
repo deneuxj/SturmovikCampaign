@@ -317,14 +317,48 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
         ]
     { state with Regions = regionsAfterSupplies }
 
+/// Update airfield planes according to departures and arrivals
+let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings : Landed list) =
+    let airfields =
+        state.Airfields
+        |> Seq.map (fun af -> af.AirfieldId, af)
+        |> Map.ofSeq
+    let airfieldsAfterTakeOffs =
+        takeOffs
+        |> List.fold (fun airfields takeOff ->
+            let af = Map.find takeOff.Airfield airfields
+            let oldPlaneValue =
+                Map.tryFind takeOff.Plane af.NumPlanes
+                |> fun x -> defaultArg x 0.0f
+            let newPlanes =
+                Map.add takeOff.Plane (oldPlaneValue - 1.0f) af.NumPlanes
+            Map.add takeOff.Airfield { af with NumPlanes = newPlanes } airfields
+        ) airfields
+    let airfieldsAfterLandings =
+        landings
+        |> List.fold (fun airfields landing ->
+            let af = Map.find landing.Airfield airfields
+            let oldPlaneValue =
+                Map.tryFind landing.Plane af.NumPlanes
+                |> fun x -> defaultArg x 0.0f
+            let newPlanes =
+                Map.add landing.Plane (oldPlaneValue + landing.Health) af.NumPlanes
+            Map.add landing.Airfield { af with NumPlanes = newPlanes} airfields
+        ) airfieldsAfterTakeOffs
+    let airfields =
+        state.Airfields
+        |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
+    { state with Airfields = airfields }
+
 
 let eveningStop = 18
 let morningStart = 8
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) supplies damages =
+let newState (dt : float32<H>) (world : World) (state : WorldState) supplies damages tookOff landed =
     let state = applyProduction dt world state
     let state, extra = convertProduction world state
     let state = applyRepairsAndDamages dt world state (supplies @ extra) damages
+    let state = applyPlaneTransfers state tookOff landed
     let h = floor(float32 dt)
     let mins = 60.0f * (float32 dt) - h
     let newDate =
