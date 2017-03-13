@@ -1,8 +1,12 @@
-﻿#r "../DataProvider/bin/Debug/DataProvider.dll"
-#r "../Blocks/bin/Debug/SturmovikMission.Blocks.dll"
-#r "../Campaign/bin/Debug/Campaign.dll"
+﻿// Create the world description data and the initial state
+
+#I "../Campaign/bin/Debug"
+
+#r "DataProvider.dll"
+#r "SturmovikMission.Blocks.dll"
+#r "Campaign.dll"
 #r "System.Numerics.Vectors"
-#r "../Blocks/packages/FsPickler.3.2.0/lib/net45/FsPickler.dll"
+#r "FsPickler.dll"
 
 #load "Configuration.fsx" 
 
@@ -28,7 +32,7 @@ let random =
     | None ->
         System.Random()
 
-let world0, blocks, bridges, options = World.Create(Configuration.StrategyFile)
+let world0, (blocks : T.Block list), (bridges : T.Bridge list), (options : T.Options) = World.Create(Configuration.StrategyFile)
 let world = { world0 with WeatherDaysOffset = (float Configuration.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
 let state = WorldState.Create(world, Configuration.StrategyFile)
 

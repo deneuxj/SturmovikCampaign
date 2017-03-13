@@ -1,11 +1,11 @@
-﻿// Learn more about F# at http://fsharp.org. See the 'F# Tutorial' project
-// for more guidance on F# programming.
+﻿// Generate a mission given a world state
+#I "../Campaign/bin/Debug"
 
-#r "../DataProvider/bin/Debug/DataProvider.dll"
-#r "../Blocks/bin/Debug/SturmovikMission.Blocks.dll"
-#r "../Campaign/bin/Debug/Campaign.dll"
+#r "DataProvider.dll"
+#r "SturmovikMission.Blocks.dll"
+#r "Campaign.dll"
 #r "System.Numerics.Vectors"
-#r "../Blocks/packages/FsPickler.3.2.0/lib/net45/FsPickler.dll"
+#r "FsPickler.dll"
 
 #load "Configuration.fsx" 
 

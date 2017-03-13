@@ -1,9 +1,12 @@
-﻿#r "../../plog/ploggy/bin/Debug/ploggy.dll"
-#r "../DataProvider/bin/Debug/DataProvider.dll"
-#r "../Campaign/bin/Debug/Campaign.dll"
-#r "../../plog/packages/NLog.4.0.1/lib/net45/NLog.dll"
-#r "../Blocks/packages/FsPickler.3.2.0/lib/net45/FsPickler.dll"
-#r "../Blocks/packages/System.Numerics.Vectors.4.3.0/lib/net46/System.Numerics.Vectors.dll"
+﻿// Parse the mission log and produce a new world state.
+
+#I "../Campaign/bin/Debug"
+#r "ploggy.dll"
+#r "Campaign.dll"
+#r "DataProvider.dll"
+#r "NLog.dll"
+#r "FsPickler.dll"
+#r "System.Numerics.Vectors.dll"
 
 #load "Configuration.fsx" 
 
