@@ -61,6 +61,7 @@ let entries =
         | :? MissionEndEntry -> true
         | _ -> false
     )
+    |> Seq.sortBy (fun x -> x.Timestamp)
     |> Seq.skipWhile (
         function
         | :? MissionStartEntry as entry ->
