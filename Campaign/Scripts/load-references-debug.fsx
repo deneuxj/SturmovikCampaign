@@ -11,6 +11,6 @@
 #r "System.Data.Linq.dll"
 #r "../../Blocks/packages/FsPickler.3.2.0/lib/net45/FsPickler.dll"
 #r "../../Blocks/packages/FsPickler.Json.3.2.0/lib/net45/FsPickler.Json.dll"
-#r "../../Blocks/packages/Newtonsoft.Json.6.0.5/lib/net45/Newtonsoft.Json.dll"
 #r "System.Runtime.Serialization.dll"
 #r "System.Xml.dll"
+#r "../../Blocks/packages/Newtonsoft.Json.9.0.1/lib/net45/Newtonsoft.Json.dll"
