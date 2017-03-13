@@ -143,6 +143,8 @@ with
           All = McuUtil.groupFromList group
         }
 
+let private randomDelaySource = System.Random(0)
+
 type WhileEnemyClose =
     { StartMonitoring : Mcu.McuTrigger
       StopMonitoring : Mcu.McuTrigger
@@ -171,6 +173,10 @@ with
         let sleep = getByName T.Blocks.Sleep
         let proximity = getByName T.Blocks.EnemyClose :?> Mcu.McuProximity
         let enemyEnters = getByName T.Blocks.EnemyEnters :?> Mcu.McuProximity
+        let randomDelay = getByName T.Blocks.RandomDelay :?> Mcu.McuTimer
+        // Set random delay to some random value 0-60s
+        randomDelay.Time <- randomDelaySource.NextDouble() * 60.0
+        // Correct coalition fields
         proximity.SetRelativeCoalitions(coalition, Mcu.CoalitionValue.Allies)
         enemyEnters.SetRelativeCoalitions(coalition, Mcu.CoalitionValue.Allies)
         // Position of all nodes
