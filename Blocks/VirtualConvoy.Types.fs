@@ -314,11 +314,13 @@ with
                 .SetIconType(T.Integer iconType)
                 .SetTaskType(T.Integer objectiveTaskType)
                 .CreateMcu()
+        McuUtil.vecCopy objective.Pos objective2.Pos 
         // Result
         let group =
             group
             |> List.map (fun mcu ->
-                if mcu.Index = objective2.Index then
+                if mcu.Index = objective.Index then
+                    assert(objective2.Index = objective.Index)
                     objective2
                 else
                     mcu)
