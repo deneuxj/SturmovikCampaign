@@ -34,33 +34,34 @@ type Resupplied = {
     Energy : float32<E>
 }
 
-let extractResupplies (world : World) (state : WorldState) (entries : LogEntry seq) =
+let extractResupplies (world : World) (state : WorldState) (orders : ResupplyOrder list) (entries : LogEntry seq) =
     let wg = WorldFastAccess.Create(world)
     let sg = WorldStateFastAccess.Create(state)
-    let tryFindContainingRegion (pos : Vector2) =
-        world.Regions
-        |> List.tryFind(fun r ->
-            pos.IsInConvexPolygon(r.Boundary))
+    let tryGetOrder =
+        let m =
+            orders
+            |> Seq.map (fun order -> order.Index, order)
+            |> Map.ofSeq
+        fun x -> Map.tryFind x m
     seq {
         for entry in entries do
             match entry with
             | :? MissionObjectiveEntry as objective ->
-                let pos = Vector2(objective.Position.X, objective.Position.Z)
-                match tryFindContainingRegion pos with
-                | Some region ->
+                match tryGetOrder (int objective.ObjectiveType) with
+                | Some order ->
                     let energy =
                         match objective.IconType with
                         | x when x = VirtualConvoy.CoverTrain -> ResupplyOrder.TrainCapacity
                         | x when x = VirtualConvoy.CoverTransportColumn -> ResupplyOrder.TruckCapacity
                         | _ -> 0.0f<E>
-                    yield (region.RegionId, objective.Coalition), { Region = region.RegionId; Energy = energy }
+                    yield { Region = order.Convoy.Destination; Energy = energy }
                 | None -> ()
             | _ ->
                 ()
     }
-    |> Seq.groupBy fst
-    |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun (_, sup) -> sup.Energy))
-    |> Seq.map (fun ((region, _), amount) -> { Region = region; Energy = amount })
+    |> Seq.groupBy (fun order -> order.Region)
+    |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun sup -> sup.Energy))
+    |> Seq.map (fun (region, amount) -> { Region = region; Energy = amount })
 
 /// A plane took off, possibly took some damage and then landed/crashed near or at an airfield
 type TookOff = {

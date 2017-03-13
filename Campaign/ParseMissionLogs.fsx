@@ -11,6 +11,7 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.ResultExtraction
 open Campaign.NewWorldState
+open Campaign.Orders
 
 open System.IO
 open ploggy
@@ -21,12 +22,16 @@ let missionLogsDir = Path.Combine(serverDataDir, "logs")
 
 open MBrace.FsPickler
 let serializer = FsPickler.CreateXmlSerializer(indent = true)
-let world, state =
+let world, state, axisOrders, alliesOrders =
     try
         use worldFile = File.OpenText(Path.Combine(Configuration.OutputDir, "world.xml"))
         use stateFile = File.OpenText(Path.Combine(Configuration.OutputDir, "state.xml"))
+        use axisOrdersFile = File.OpenText(Path.Combine(Configuration.OutputDir, "axisOrders.xml"))
+        use alliesOrdersFile = File.OpenText(Path.Combine(Configuration.OutputDir, "alliesOrders.xml"))
         serializer.Deserialize<World>(worldFile),
-        serializer.Deserialize<WorldState>(stateFile)
+        serializer.Deserialize<WorldState>(stateFile),
+        serializer.Deserialize<OrderPackage>(axisOrdersFile),
+        serializer.Deserialize<OrderPackage>(alliesOrdersFile)
     with
     | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
 
@@ -69,7 +74,10 @@ let entries =
     |> Seq.cache
 
 
-let resups = extractResupplies world state entries |> List.ofSeq
+let resups =
+    let resupsAxis = extractResupplies world state axisOrders.Resupply entries |> List.ofSeq
+    let resupsAllies = extractResupplies world state alliesOrders.Resupply entries |> List.ofSeq
+    resupsAxis @ resupsAllies
 let staticDamages = extractStaticDamages world state entries |> List.ofSeq
 let takeOffs, landings =
     let both =
