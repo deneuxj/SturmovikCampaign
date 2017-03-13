@@ -98,7 +98,7 @@ with
     static member CoverTransportColumn = 21
     
     /// Icon type suitable for friendly trains
-    static member CoverTrain = 28
+    static member CoverTrain = 558
 
     /// Icon type suitable for friendly armoured columns
     static member CoverArmouredColumn = 22
