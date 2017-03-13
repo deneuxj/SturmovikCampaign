@@ -1,12 +1,11 @@
 ﻿// Parse the mission log and produce a new world state.
 
-#I "../Campaign/bin/Debug"
-#r "ploggy.dll"
+#I @"..\Campaign\bin\Debug"
+
 #r "Campaign.dll"
-#r "DataProvider.dll"
 #r "NLog.dll"
 #r "FsPickler.dll"
-#r "System.Numerics.Vectors.dll"
+#r "ploggy.dll"
 
 #load "Configuration.fsx" 
 
@@ -93,7 +92,10 @@ let dt = 60.0f<H> * float32 Configuration.MissionLength
 let state2 = newState dt world state resups staticDamages takeOffs landings
 
 do
-    let backupName = sprintf "state-%s-%s.xml" (state.Date.ToShortDateString()) (state.Date.ToShortTimeString())
+    let outputDir = Configuration.OutputDir
+    let backupName =
+        sprintf "state-%s-%s.xml" (state.Date.ToShortDateString()) (state.Date.ToShortTimeString())
+        |> fun x -> x.Replace(":", "-")
     File.Copy(Path.Combine(outputDir, "state.xml"), Path.Combine(outputDir, backupName))
     use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
     serializer.Serialize(stateFile, state2)
