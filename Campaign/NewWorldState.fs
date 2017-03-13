@@ -166,6 +166,12 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
             [
                 for region, regState in Seq.zip world.Regions state.Regions do
                     if regState.Owner = Some coalition then
+                        // Redistribute plane production resources if this region has no airfield to receive the newly produced planes.
+                        let vehiclePrio, planePrio, energyPrio =
+                            if world.Airfields |> List.exists (fun af -> af.Region = region.RegionId) then
+                                vehiclePrio, planePrio, energyPrio
+                            else
+                                vehiclePrio + 0.5f * planePrio, 0.0f, energyPrio + 0.5f * planePrio
                         let energy = dt * computeProduction coalition region regState
                         let shells = regState.Products.Supplies + energyPrio * energy
                         let planes =
@@ -205,32 +211,70 @@ let convertProduction (world : World) (state : WorldState) =
         |> ref
     let resupplied = ref []
     for region, regState in Seq.zip world.Regions state.Regions do
+        // Freshly produced planes
+        let af =
+            world.Airfields
+            |> List.tryFind (fun af -> af.Region = region.RegionId)
         let newPlanes, remainingPlanes =
-            regState.Products.Planes
-            |> Map.toSeq
-            |> Seq.fold (fun (newPlanes, remainingPlanes) (plane, energy) ->
-                let numNewPlanes = floor(energy / plane.Cost)
-                let energyLeft = energy - numNewPlanes * energy
-                (plane, int numNewPlanes) :: newPlanes, Map.add plane energy remainingPlanes
-            ) ([], Map.empty)
+            match af with
+            | Some af ->
+                regState.Products.Planes
+                |> Map.toSeq
+                |> Seq.fold (fun (newPlanes, remainingPlanes) (plane, energy) ->
+                    let numNewPlanes = floor(energy / plane.Cost)
+                    let energyLeft = energy - numNewPlanes * plane.Cost
+                    (plane, int numNewPlanes) :: newPlanes, Map.add plane energyLeft remainingPlanes
+                ) ([], Map.empty)
+            | None ->
+                [], regState.Products.Planes
+        // Freshly produced vehicles
         let newVehicles, remainingVehicles =
             regState.Products.Vehicles
             |> Map.toSeq
             |> Seq.fold (fun (newVehicles, remainingVehicles) (vehicle, energy) ->
                 let numNewVehicles = floor(energy / vehicle.Cost)
-                let energyLeft = energy - numNewVehicles * energy
-                (vehicle, int numNewVehicles) :: newVehicles, Map.add vehicle energy remainingVehicles
+                let energyLeft = energy - numNewVehicles * vehicle.Cost
+                (vehicle, int numNewVehicles) :: newVehicles, Map.add vehicle energyLeft remainingVehicles
             ) ([], Map.empty)
+        // Supplies -> storage
         let supplySpaceAvailable =
             Seq.zip region.Storage regState.StorageHealth
             |> Seq.sumBy (fun (sto, health) -> health * getEnergyHealthPerBuilding sto.Model)
             |> fun x -> x - regState.ShellCount * shellCost
             |> max 0.0f<E>
         let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
-        resupplied := { Region = region.RegionId; Energy = transferedEnergy} :: !resupplied
+        resupplied := { Region = region.RegionId; Energy = transferedEnergy } :: !resupplied
+        // Remove produced things from ongoing production
         let suppliesLeft = regState.Products.Supplies - transferedEnergy
         let assignment = { regState.Products with Planes = remainingPlanes; Vehicles = remainingVehicles; Supplies = suppliesLeft }
-        regions := Map.add regState.RegionId { regState with Products = assignment } !regions
+        // Add produced vehicles to region
+        let numVehicles =
+            newVehicles
+            |> List.fold (fun numVehicles (vehicle, qty) ->
+                let newNum =
+                    match Map.tryFind vehicle numVehicles with
+                    | Some x -> x + qty
+                    | None -> qty
+                Map.add vehicle newNum numVehicles
+            ) regState.NumVehicles
+        regions := Map.add regState.RegionId { regState with Products = assignment; NumVehicles = numVehicles } !regions
+        // Add produced planes to airfield, if there is one.
+        match af with
+        | Some af ->
+            let afState = afStates.Value.[af.AirfieldId]
+            let numPlanes =
+                newPlanes
+                |> List.fold (fun numPlanes (plane, qty) ->
+                    let newNum =
+                        match Map.tryFind plane numPlanes with
+                        | Some x -> x + float32 qty
+                        | None -> float32 qty
+                    Map.add plane newNum numPlanes
+                ) afState.NumPlanes
+            let afState = { afState with NumPlanes = numPlanes }
+            afStates := Map.add af.AirfieldId afState !afStates
+        | None -> ()
+    // Result
     { state with
         Airfields = state.Airfields |> List.map (fun af -> afStates.Value.[af.AirfieldId])
         Regions = state.Regions |> List.map (fun region -> regions.Value.[region.RegionId]) },

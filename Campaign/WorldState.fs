@@ -26,9 +26,9 @@ with
             | MediumTank -> russianMediumTank
             | LightArmor -> russianLightArmor
 
-    static member LightArmorCost = 100.0f<E>
-    static member MediumTankCost = 200.0f<E>
-    static member HeavyTankCost = 500.0f<E>
+    static member LightArmorCost = 50000.0f<E>
+    static member MediumTankCost = 100000.0f<E>
+    static member HeavyTankCost = 250000.0f<E>
 
     member this.Cost =
         match this with
@@ -230,7 +230,7 @@ let mkInitialState(world : World, strategyFile : string) =
                         let scale (n : int) =
                             int(ceil(float32 n / costs))
                         let vehicles =
-                            [(HeavyTank, scale 2); (MediumTank, scale 5); (LightArmor, scale 10)]
+                            [(HeavyTank, scale 3); (MediumTank, scale 9); (LightArmor, scale 3)]
                             |> Map.ofList
                         ammo, vehicles
             { RegionId = region.RegionId
@@ -327,8 +327,8 @@ let mkInitialState(world : World, strategyFile : string) =
     // Airfields with factories have ammo and plane.
     let mkAirfield (airfield : Airfield) =
         let hasFactories =
-            true // For now, put planes everywhere. This makes it easier to test the mission, flight times are shorter.
-            //not <| List.isEmpty (getRegion airfield.Region).Production
+            //true // For now, put planes everywhere. This makes it easier to test the mission, flight times are shorter.
+            not <| List.isEmpty (getRegion airfield.Region).Production
         let owner =
             getOwner airfield.Region
         let numPlanes =

@@ -326,6 +326,8 @@ module PlaneTypes =
 open PlaneTypes
 open SturmovikMission.Blocks
 
+let private basePlaneCost = 50000.0f<E>
+
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
     | Bf109e7
@@ -370,17 +372,17 @@ with
 
     member this.Cost =
         match this with
-        | Bf109e7 -> 300.0f<E>
-        | Bf109f2 -> 500.0f<E>
-        | Mc202 -> 400.0f<E>
-        | Bf110e -> 750.0f<E>
-        | Ju88a4 -> 1000.0f<E>
-        | Ju52 -> 1000.0f<E>
-        | I16 -> 300.0f<E>
-        | IL2M41 -> 600.0f<E>
-        | Mig3 -> 500.0f<E>
-        | P40 -> 300.0f<E>
-        | Pe2s35 -> 750.0f<E>
+        | Bf109e7 -> basePlaneCost
+        | Bf109f2 -> (5.0f / 3.0f) * basePlaneCost
+        | Mc202 -> 1.33f * basePlaneCost
+        | Bf110e -> (7.5f / 3.0f) * basePlaneCost
+        | Ju88a4 -> (10.0f / 3.0f) * basePlaneCost
+        | Ju52 -> (8.0f / 3.0f) * basePlaneCost
+        | I16 -> basePlaneCost
+        | IL2M41 -> 2.0f * basePlaneCost
+        | Mig3 -> (5.0f / 3.0f) * basePlaneCost
+        | P40 -> basePlaneCost
+        | Pe2s35 -> (7.5f / 3.0f) * basePlaneCost
 
 /// Description of an airfield: Its position, the planes that can be parked there, the ammo storage facilities.
 type Airfield = {
