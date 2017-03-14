@@ -4,8 +4,9 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
 open Vector
+open Util
 
-let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId, world : World, state : WorldState) =
+let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let getRegion =
         let m =
             world.Regions
@@ -39,18 +40,18 @@ let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId,
     ]
 
 
-let createRoadConvoyOrders =
-    createConvoyOrders (fun world -> world.Roads)
-    >> List.mapi (fun i convoy -> { Index = i + 1; Means = ByRoad; Convoy = convoy })
+let createRoadConvoyOrders coalition =
+    createConvoyOrders (fun world -> world.Roads) coalition
+    >> List.mapi (fun i convoy -> { Index = i + 1; Coalition = coalition; Means = ByRoad; Convoy = convoy })
 
 
-let createRailConvoyOrders =
-    createConvoyOrders (fun world -> world.Rails)
-    >> List.mapi (fun i convoy -> { Index = i + 1; Means = ByRail; Convoy = convoy })
+let createRailConvoyOrders coalition =
+    createConvoyOrders (fun world -> world.Rails) coalition
+    >> List.mapi (fun i convoy -> { Index = i + 1; Coalition = coalition; Means = ByRail; Convoy = convoy })
 
 
-let createAllConvoyOrders x =
-    createRoadConvoyOrders x @ createRailConvoyOrders x
+let createAllConvoyOrders coalition x =
+    createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x
 
 
 let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
@@ -123,13 +124,13 @@ let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (stat
     |> List.take (min maxConvoys (List.length sorted))
 
 
-let createColumnMovementOrders criterion (coalition : CoalitionId option, world : World, state : WorldState) =
+let createColumnMovementOrders criterion (coalition : CoalitionId, world : World, state : WorldState) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     seq {
         for region in world.Regions do
             let regState = sg.GetRegion region.RegionId
-            if regState.Owner = coalition then
+            if regState.Owner = Some coalition then
                 let target =
                     region.Neighbours
                     |> Seq.tryFind(fun ngh ->
@@ -165,8 +166,10 @@ let createColumnMovementOrders criterion (coalition : CoalitionId option, world 
                         |> fun items -> adjust(0.0f, items)
                         |> Map.ofList
                     assert((composition |> Map.toSeq |> Seq.sumBy snd) <= 15)
+                    let composition = expandMap composition
                     yield {
                         Index = 0 // Set later to a unique value
+                        Coalition = coalition
                         Start = region.RegionId
                         Destination = target
                         Composition = composition
@@ -179,18 +182,26 @@ let createColumnMovementOrders criterion (coalition : CoalitionId option, world 
 
 
 let createGroundInvasionOrders =
-    createColumnMovementOrders (fun (a, b) -> a <> b)
+    createColumnMovementOrders (fun (a, b) -> match a with Some a -> a <> b | None -> false)
 
 
 let valueOfVehicles =
-    Map.toSeq
-    >> Seq.sumBy (fun (vehicle, number) ->
-        let k =
-            match vehicle with
-            | HeavyTank -> 3.0
-            | MediumTank -> 2.0
-            | LightArmor -> 1.0
-        k * float number)
+    Seq.sumBy (
+        function
+        | HeavyTank -> 3.0
+        | MediumTank -> 2.0
+        | LightArmor -> 1.0)
+
+let valueOfVehicles2 =
+    Map.map (fun k num ->
+        (float num) *
+        match k with
+        | HeavyTank -> 3.0
+        | MediumTank -> 2.0
+        | LightArmor -> 1.0
+    )
+    >> Map.toSeq
+    >> Seq.sumBy snd
 
 
 let getInvasionSuccessProbablity(world, state) (order : ColumnMovement) =
@@ -209,7 +220,7 @@ let getInvasionSuccessProbablity(world, state) (order : ColumnMovement) =
             float defenses.NumUnits
         let mobileDefenseValue =
             sg.GetRegion(order.Destination).NumVehicles
-            |> valueOfVehicles
+            |> valueOfVehicles2
         let defenseValue = staticDefenseValue + mobileDefenseValue
         let ratio = defenseValue / (0.1 + attackValue)
         System.Math.Exp(-ratio)
@@ -288,21 +299,23 @@ let prioritizedReinforcementOrders(world : World, state : WorldState) coalition 
                 for ngh in region.Neighbours do
                     if sg.GetRegion(ngh).Owner = Some coalition then
                         let excessSource =
-                            valueOfVehicles(sg.GetRegion(region.RegionId).NumVehicles)
+                            valueOfVehicles2(sg.GetRegion(region.RegionId).NumVehicles)
                         let excessDestination =
-                            valueOfVehicles(sg.GetRegion(ngh).NumVehicles) - reinforcementValues.[ngh]
+                            valueOfVehicles2(sg.GetRegion(ngh).NumVehicles) - reinforcementValues.[ngh]
                         yield (region.RegionId, ngh, excessSource - excessDestination)
     ]
     |> List.sortByDescending (fun (src, dest, transit) -> transit)
     |> List.mapi (fun i (src, dest, transit) ->
         let vehicles = sg.GetRegion(src).NumVehicles
         let k =
-            transit / valueOfVehicles vehicles
+            transit / valueOfVehicles2 vehicles
             |> min 1.0
         let composition =
             vehicles
             |> Map.map (fun veh num -> int(ceil(k * float num)))
+            |> expandMap
         { Index = i + 1
+          Coalition = coalition
           Start = src
           Destination = dest
           Composition = composition

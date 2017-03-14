@@ -52,6 +52,11 @@ type AtDestination {
 predicate at_destination_convoy(AtDestination, TruckInConvoy)
 predicate at_destination_convoy(AtDestination, Convoy)
 
+type Spawned {
+	trigger Spawned
+}
+predicate the_spawned(Spawned)
+
 type SimpleWaypoint {
 	trigger Waypoint
 }
@@ -181,3 +186,7 @@ target += for (atd, truck) in at_destination -> if invasion_end is empty then (r
 //  Log arrival of leader, unless it has been damaged.
 target += for (atd, convoy) in at_destination_convoy -> if invasion_end is empty then (result.Arrived, atd.LeaderArrived) else (result.Captured, atd.LeaderArrived)
                                                      -> (convoy.DeleteLeadCar, atd.Destroyed)
+
+//  Log start of convoy
+target += for api in result
+          for spawn in the_spawned -> api.Start, spawn.Spawned

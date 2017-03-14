@@ -6,6 +6,8 @@
 #r "NLog.dll"
 #r "FsPickler.dll"
 #r "ploggy.dll"
+#r "System.Numerics.Vectors.dll"
+#r "DataProvider.dll"
 
 #load "Configuration.fsx" 
 
@@ -76,7 +78,10 @@ let entries =
     )
     |> Seq.cache
 
-
+let shipments =
+    let shipmentAxis = extractSuppliesShipped state axisOrders.Resupply entries |> List.ofSeq
+    let shipmentAllies = extractSuppliesShipped state alliesOrders.Resupply entries |> List.ofSeq
+    shipmentAxis @ shipmentAllies
 let resups =
     let resupsAxis = extractResupplies world state axisOrders.Resupply entries |> List.ofSeq
     let resupsAllies = extractResupplies world state alliesOrders.Resupply entries |> List.ofSeq
@@ -88,9 +93,12 @@ let takeOffs, landings =
         |> List.ofSeq
     both |> List.choose (function Choice1Of2 x -> Some x | _ -> None),
     both |> List.choose (function Choice2Of2 x -> Some x | _ -> None)
-
+let movements = axisOrders.Reinforcements @ axisOrders.Invasions @ alliesOrders.Reinforcements @ alliesOrders.Invasions
+let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
+let columnArrivals = extractColumnArrivals world state movements entries |> List.ofSeq
 let dt = 60.0f<H> * float32 Configuration.MissionLength
-let state2 = newState dt world state resups staticDamages takeOffs landings
+
+let state2 = newState dt world state movements shipments resups staticDamages takeOffs landings columnDepartures columnArrivals
 
 do
     let outputDir = Configuration.OutputDir

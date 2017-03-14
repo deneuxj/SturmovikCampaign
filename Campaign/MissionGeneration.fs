@@ -474,7 +474,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
     ]
 
 
-let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : NumericalIdentifiers.IdStore) lcStore  (world : World) (state : WorldState) (orders : ResupplyOrder list) =
+let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
     let getOwner =
         let m =
             state.Regions
@@ -518,11 +518,12 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
                     [
                         for i in 1 .. startInterval .. missionLengthMinutes do
                             let virtualConvoy =
+                                let convoyName = order.MissionLogEventName
                                 match order.Means with
                                 | ByRoad ->
-                                    VirtualConvoy.Create(store, lcStore, pathVertices, [], convoy.Size, country, coalition, order.Index, VirtualConvoy.CoverTransportColumn)
+                                    VirtualConvoy.Create(store, pathVertices, [], convoy.Size, country, coalition, convoyName, 0)
                                 | ByRail ->
-                                    VirtualConvoy.CreateTrain(store, lcStore, pathVertices, country, coalition, order.Index, VirtualConvoy.CoverTrain)
+                                    VirtualConvoy.CreateTrain(store, pathVertices, country, coalition, convoyName)
                             let links = virtualConvoy.CreateLinks()
                             links.Apply(McuUtil.deepContentOf virtualConvoy)
                             yield virtualConvoy
@@ -543,50 +544,12 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
     ]
 
 
-let splitCompositions numVehicles =
-    let removeVehicles comp1 comp2 =
-        comp1
-        |> Map.map (fun veh num ->
-            match Map.tryFind veh comp2 with
-            | Some n -> num - n
-            | None -> num)
-    let rec adjust factor (acc, items) =
-        match items with
-        | [] -> []
-        | (veh, num) :: rest ->
-            let adjusted = factor * float32 num
-            let waste = adjusted - floor adjusted
-            let adjusted, acc =
-                if acc + waste < 1.0f then
-                    floor adjusted, acc + waste
-                else
-                    ceil adjusted, acc + waste - 1.0f
-            (veh, int adjusted) :: adjust factor (acc, rest)
-    let rec work remaining =
-        seq {
-            let total_vehicles =
-                remaining
-                |> Map.toSeq
-                |> Seq.sumBy snd
-            if total_vehicles > 0 then
-                let factor =
-                    if total_vehicles > 15 then
-                        15.0f / float32 total_vehicles
-                    else
-                        1.0f
-                let composition =
-                    remaining
-                    |> Map.toList
-                    |> fun items -> adjust factor (0.0f, items)
-                    |> Map.ofList
-                yield composition
-                yield! work (removeVehicles remaining composition)
-        }
-    work numVehicles
-    |> List.ofSeq
+let splitCompositions vehicles =
+    Array.chunkBySize 15 vehicles
+    |> List.ofArray
 
 
-let createColumns store lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval (orders : ColumnMovement list) =
+let createColumns store (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval (orders : ColumnMovement list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     [
@@ -621,20 +584,20 @@ let createColumns store lcStore (world : World) (state : WorldState) (missionBeg
                         invasion
                         |> List.map (fun x -> { toVertex(x) with Priority = 0 })
                     let prevStart = ref missionBegin
+                    let rankOffset = ref 0
                     for composition in splitCompositions order.Composition do
                         let columnContent =
                             composition
-                            |> Map.toSeq
-                            |> Seq.map (fun (vehicleType, count) ->
-                                List.init count (fun _ -> vehicleType.GetModel(coalition)))
-                            |> List.concat
-                        let column = VirtualConvoy.CreateColumn(store, lcStore, travel, invasion, columnContent, coalition.ToCountry, coalition.ToCoalition, order.Index, VirtualConvoy.CoverArmouredColumn)
+                            |> List.ofArray
+                            |> List.map (fun vehicleType -> vehicleType.GetModel(coalition))
+                        let columnName = order.MissionLogEventName
+                        let column = VirtualConvoy.CreateColumn(store, travel, invasion, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                         let links = column.CreateLinks()
                         links.Apply(McuUtil.deepContentOf column)
                         Mcu.addTargetLink prevStart.Value column.Api.Start.Index
                         yield column
                         let beforeNext = newTimer 1
-                        let subst = Mcu.substId <| lcStore.GetIdMapper()
+                        let subst = Mcu.substId <| store.GetIdMapper()
                         subst beforeNext
                         beforeNext.Time <- interval
                         Mcu.addTargetLink column.Api.Start beforeNext.Index
@@ -705,10 +668,10 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
-    let convoysAndTimers = createConvoys missionLength convoySpacing store lcStore world state (axisOrders.Resupply @ alliesOrders.Resupply)
+    let convoysAndTimers = createConvoys missionLength convoySpacing store world state (axisOrders.Resupply @ alliesOrders.Resupply)
     let columns =
         axisOrders.Invasions @ alliesOrders.Invasions
-        |> createColumns store lcStore world state missionBegin (float convoySpacing)
+        |> createColumns store world state missionBegin (float convoySpacing)
     for column in columns do
         Mcu.addTargetLink missionBegin column.Api.Start.Index
     let columns =
@@ -716,7 +679,7 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
         |> List.map (fun x -> x :> McuUtil.IMcuGroup)
     let reinforcements =
         axisOrders.Reinforcements @ alliesOrders.Reinforcements
-        |> createColumns store lcStore world state missionBegin (float convoySpacing)
+        |> createColumns store world state missionBegin (float convoySpacing)
     for reinforcement in reinforcements do
         Mcu.addTargetLink missionBegin reinforcement.Api.Start.Index
     let reinforcements =

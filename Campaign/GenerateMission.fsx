@@ -54,10 +54,10 @@ let world, blocks, bridges, options, state =
 let dt = 60.0f<H> * float32 Configuration.MissionLength
 let mkOrders coalition =
     let convoyOrders =
-        createAllConvoyOrders(coalition, world, state)
+        createAllConvoyOrders coalition (world, state)
         |> prioritizeConvoys Configuration.MaxConvoys dt world state
     let invasions =
-        createGroundInvasionOrders(Some coalition, world, state)
+        createGroundInvasionOrders(coalition, world, state)
         |> prioritizeGroundInvasionOrders(world, state)
         |> List.truncate Configuration.MaxInvasionsInPlanning
     let reinforcements =

@@ -65,7 +65,9 @@ type VirtualConvoy =
       InvasionStart : Set<SimpleWaypointInstance>
       InvasionEnd : Set<SimpleWaypointInstance>
 
-      AtDestinationSet : Map<AtDestinationInstance, AtDestination>
+      AtDestinationSet : Map<AtDestinationInstance, EventReporting>
+
+      DepartureReporting : EventReporting
 
       Api : ConvoyControl
     }
@@ -94,22 +96,13 @@ with
                 yield this.Api.All
             ]
 
-    /// Icon type suitable for friendly transport columns
-    static member CoverTransportColumn = 21
-    
-    /// Icon type suitable for friendly trains
-    static member CoverTrain = 558
-
-    /// Icon type suitable for friendly armoured columns
-    static member CoverArmouredColumn = 22
-
     /// <summary>
     /// Create the instances and relations of a virtual convoy.
     /// </summary>
     /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, invasion : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, objectiveTaskType, objectiveIconType) =
+    static member Create(store : NumericalIdentifiers.IdStore, path : PathVertex list, invasion : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
         if convoySize > 15 then
             invalidArg "convoySize" "Maximum convoy size is 15"
         let convoySet =
@@ -217,23 +210,27 @@ with
 
         let atDestinationSet =
             seq {
-                if invasionEnd.IsEmpty then
-                    for wp in pathEnd do
-                        let convoy = get convoyAtWaypoint wp
-                        let pos = Vector2.FromMcu(activeWaypointSet.[wp].Waypoint.Pos) + Vector2(0.0f, 100.0f)
-                        yield(LeadCarAtDestinationInstance(convoy), AtDestination.Create(store, lcStore, pos, coalition, objectiveTaskType, objectiveIconType))
-                        for convoy2, _, truck in truckInConvoy do
-                            if convoy = convoy2 then
-                                let pos = Vector2.FromMcu(activeWaypointSet.[wp].Waypoint.Pos) + Vector2(100.0f, 0.0f)
-                                yield(TruckAtDestinationInstance(truck), AtDestination.Create(store, lcStore, pos, coalition, objectiveTaskType, objectiveIconType))
-                else
-                    for iwp in invasionEnd do
-                        for wp in pathEnd do
-                            let convoy = get convoyAtWaypoint wp
-                            let pos = Vector2.FromMcu(simpleWaypointSet.[iwp].Pos) + Vector2(0.0f, 100.0f)
-                            yield(LeadCarAtDestinationInstance(convoy), AtDestination.Create(store, lcStore, pos, coalition, objectiveTaskType, objectiveIconType))
+                for wp in pathEnd do
+                    let convoy = get convoyAtWaypoint wp
+                    let pos =
+                        if invasionEnd.IsEmpty then
+                            Vector2.FromMcu(activeWaypointSet.[wp].Waypoint.Pos) + Vector2(0.0f, 100.0f)
+                        else
+                            let iwp = invasionEnd.MinimumElement
+                            Vector2.FromMcu(simpleWaypointSet.[iwp].Pos) + Vector2(0.0f, 100.0f)
+                    let name = sprintf "%s-A-%d" convoyName 0
+                    yield(LeadCarAtDestinationInstance(convoy), EventReporting.Create(store, pos, name))
+                    for convoy2, rank, truck in truckInConvoy do
+                        if convoy = convoy2 then
+                            let name = sprintf "%s-A-%d" convoyName (rank + rankOffset)
+                            yield(TruckAtDestinationInstance(truck), EventReporting.Create(store, pos, name))
             }
             |> Map.ofSeq
+
+        let departure =
+            let name =
+                sprintf "%s-D-%d" convoyName rankOffset
+            EventReporting.Create(store, apiPos + Vector2(-100.0f, -100.0f), name)
 
         { ConvoySet = convoySet
           TruckInConvoy = truckInConvoy
@@ -255,11 +252,12 @@ with
           TimerSet = timerSet
           Api = api
           AtDestinationSet = atDestinationSet
+          DepartureReporting = departure
         }
 
 
-    static member CreateTrain(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, objectiveTaskType, objectiveIconType) =
-        let convoy = VirtualConvoy.Create(store, lcStore, path, [], 0, country, coalition, objectiveTaskType, objectiveIconType)
+    static member CreateTrain(store : NumericalIdentifiers.IdStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName) =
+        let convoy = VirtualConvoy.Create(store, path, [], 0, country, coalition, eventName, 0)
         // Mutate car to train, remove on-road formation MCU
         let convoySet =
             convoy.ConvoySet
@@ -299,9 +297,10 @@ with
         convoy
 
 
-    static member CreateColumn(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, invasionPath : PathVertex list, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, objectiveTaskType, objectiveIconType) =
+    /// <param name="rankOffset">Long columns are split into groups (by the caller); this is the rank of the first vehicle in the original column</param>
+    static member CreateColumn(store : NumericalIdentifiers.IdStore, path : PathVertex list, invasionPath : PathVertex list, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName, rankOffset) =
         let columnContent = Array.ofList columnContent
-        let convoy = VirtualConvoy.Create(store, lcStore, path, invasionPath, columnContent.Length, country, coalition, objectiveTaskType, objectiveIconType)
+        let convoy = VirtualConvoy.Create(store, path, invasionPath, columnContent.Length, country, coalition, eventName, rankOffset)
         for instance, truck in convoy.TruckInConvoySet |> Map.toSeq do
             let vehicle = getByIndex truck.Entity.MisObjID (McuUtil.deepContentOf truck.All) :?> Mcu.HasEntity
             let (TruckInConvoyInstance(_, pos)) = instance
@@ -428,18 +427,18 @@ with
                         //  Log arrival of truck WHEN LEADER ARRIVES, unless truck destroyed
                         let truck = this.TruckInConvoySet.[truck]
                         if this.InvasionEnd.IsEmpty then
-                            yield api.Arrived, upcast kvp.Value.LeaderArrived
+                            yield api.Arrived, upcast kvp.Value.Trigger
                         else
-                            yield api.Captured, upcast kvp.Value.LeaderArrived
-                        yield truck.Delete, upcast kvp.Value.Destroyed
+                            yield api.Captured, upcast kvp.Value.Trigger
+                        yield truck.Delete, upcast kvp.Value.Disable
                     | LeadCarAtDestinationInstance(convoy) ->
                         //  Log arrival of leader, unless it has been damaged.
                         let car = this.ConvoySet.[convoy]
                         if this.InvasionEnd.IsEmpty then
-                            yield api.Arrived, upcast kvp.Value.LeaderArrived
+                            yield api.Arrived, upcast kvp.Value.Trigger
                         else
-                            yield api.Captured, upcast kvp.Value.LeaderArrived
-                        yield car.DeleteLeadCar, upcast kvp.Value.Destroyed
+                            yield api.Captured, upcast kvp.Value.Trigger
+                        yield car.DeleteLeadCar, upcast kvp.Value.Disable
                 //  Stop monitoring at last travel waypoint when convoy arrives (last travel waypoint reached, physically or virtually)
                 //  FIXME: is this necessary? Maybe avoid starting monitoring. Or maybe do not event include monitor for last travel waypoint.
                 //  NOTE: we actually deactivate all WECs when the convoy arrives. OK, but differs from the spec.
@@ -476,6 +475,9 @@ with
                 for finish in this.InvasionEnd do
                     let wp = this.SimpleWaypointSet.[finish]
                     yield upcast wp, upcast this.Api.Captured
+
+                // Notify when the convoy starts
+                yield this.Api.Start, upcast this.DepartureReporting.Trigger
             ]
         { Columns = columns
           Objects = objectLinks

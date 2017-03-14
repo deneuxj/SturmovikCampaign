@@ -4,6 +4,7 @@ module Campaign.NewWorldState
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.ResultExtraction
+open Orders
 
 /// What to produce in each category of production, and how much does each category need
 type ProductionPriorities = {
@@ -281,7 +282,7 @@ let convertProduction (world : World) (state : WorldState) =
     resupplied.Value
 
 /// Apply damages due to attacks, use supplies to repair damages and replenish storage
-let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (supplies : Resupplied list) (damages : Damage list) =
+let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (supplies : Resupplied list) (damages : Damage list) =
     let wg = WorldFastAccess.Create world
     let damages =
         let data =
@@ -295,9 +296,27 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
             |> Seq.groupBy (fun sup -> sup.Region)
             |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> sup.Energy))
         Map.ofSeq data
-    let regionsAfterDamages =
+    let shipped =
+        let data =
+            shipped
+            |> Seq.groupBy (fun sup -> sup.Sender)
+            |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> sup.Energy))
+        Map.ofSeq data
+    let regionsAfterShipping =
         [
             for regState in state.Regions do
+                let newStored =
+                    match Map.tryFind regState.RegionId shipped with
+                    | Some sent ->
+                        regState.ShellCount - sent / shellCost
+                    | None ->
+                        regState.ShellCount
+                yield { regState with ShellCount = newStored }
+
+        ]
+    let regionsAfterDamages =
+        [
+            for regState in regionsAfterShipping do
                 let region = wg.GetRegion regState.RegionId
                 let prodHealth =
                     regState.ProductionHealth
@@ -394,15 +413,114 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
         |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
     { state with Airfields = airfields }
 
+/// Change owner of region when a column reaches its destination in enemy territory
+let applyConquests (state : WorldState) (movements : ColumnMovement list) (arrivals : ColumnArrived list) =
+    let movements =
+        movements
+        |> Seq.map (fun movement -> movement.Index, movement)
+        |> Map.ofSeq
+    let sg = WorldStateFastAccess.Create state
+    let flippedRegions =
+        arrivals
+        |> Seq.choose (fun arrived -> Map.tryFind arrived.Order movements |> Option.map (fun order -> order, arrived))
+        |> Seq.distinctBy (fun (order, _) -> order.Destination)
+        |> Seq.filter (fun (order, arrived) ->
+            sg.GetRegion(order.Destination).Owner <> Some arrived.Coalition)
+        |> Seq.map (fun (order, arrived) -> order.Destination, arrived.Coalition)
+        |> Map.ofSeq
+    let regions =
+        state.Regions
+        |> List.map (fun regState ->
+            match Map.tryFind regState.RegionId flippedRegions with
+            | Some newOwner ->
+                { regState with
+                    Owner = Some newOwner
+                    NumVehicles = Map.empty // TODO: would be fun to implement captured tanks.
+                }
+            | None ->
+                regState
+        )
+    { state with Regions = regions }
+
+/// Move vehicles from start regions to destinations. Must be called after applyConquests.
+// FIXME: vehicles that started but did not reach destination are lost. They should only be lost if they were destroyed. Otherwise, they should be returned to the starting region (if it hasn't been conquered meanwhile)
+// FIXME: vehicles that were destroyed on their way to a region that was conquered in the same turn are not lost.
+let applyVehicleTransfers (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) (arrivals : ColumnArrived list) =
+    let movements =
+        movements
+        |> Seq.map (fun movement -> movement.Index, movement)
+        |> Map.ofSeq
+    let sg = WorldStateFastAccess.Create state
+    let departed =
+        departures
+        |> List.choose (fun departure -> Map.tryFind departure.Order movements |> Option.map (fun movement -> movement, departure))
+        |> List.filter (fun (movement, _) -> sg.GetRegion(movement.Destination).Owner = Some movement.Coalition)
+        |> List.fold (fun regionMap (movement, departure) ->
+            let numVehicles : Map<GroundAttackVehicle, int> =
+                match Map.tryFind movement.Start regionMap with
+                | Some m -> m
+                | None -> Map.empty
+            let numVehicles =
+                departure.Vehicles
+                |> Map.fold (fun (numVehicles : Map<GroundAttackVehicle, int>) vehicle num ->
+                    let num2 =
+                        match Map.tryFind vehicle numVehicles with
+                        | Some n -> n - num
+                        | None -> -num
+                    Map.add vehicle num numVehicles
+                ) numVehicles
+            Map.add movement.Start numVehicles regionMap
+        ) Map.empty
+    let arrived =
+        arrivals
+        |> List.choose (fun arrival -> Map.tryFind arrival.Order movements |> Option.map (fun movement -> movement, arrival))
+        |> List.fold (fun regionMap (movement, arrival) ->
+            let numVehicles : Map<GroundAttackVehicle, int> =
+                match Map.tryFind movement.Destination regionMap with
+                | Some m -> m
+                | None -> Map.empty
+            let numVehicles =
+                movement.Composition
+                |> Array.fold (fun (numVehicles : Map<GroundAttackVehicle, int>) vehicle ->
+                    let num =
+                        match Map.tryFind vehicle numVehicles with
+                        | Some n -> n + 1
+                        | None -> +1
+                    Map.add vehicle num numVehicles
+                ) numVehicles
+            Map.add movement.Start numVehicles regionMap
+        ) departed
+    let regions =
+        state.Regions
+        |> List.map (fun region ->
+            match Map.tryFind region.RegionId arrived with
+            | None -> region
+            | Some diff ->
+                let numVehicles =
+                    diff
+                    |> Map.fold (fun numVehicles vehicle diff ->
+                        let newQty =
+                            match Map.tryFind vehicle numVehicles with
+                            | Some n -> n + diff
+                            | None -> diff
+                            |> max 0
+                        Map.add vehicle newQty numVehicles
+                    ) region.NumVehicles
+                { region with NumVehicles = numVehicles }
+        )
+    { state with Regions = regions }
+
 
 let eveningStop = 18
 let morningStart = 8
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) supplies damages tookOff landed =
+let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures columnArrivals =
     let state = applyProduction dt world state
     let state, extra = convertProduction world state
-    let state = applyRepairsAndDamages dt world state (supplies @ extra) damages
+    let state = applyRepairsAndDamages dt world state convoyDepartures (supplies @ extra) damages
     let state = applyPlaneTransfers state tookOff landed
+    let state = applyConquests state movements columnArrivals
+    let state = applyVehicleTransfers state movements columnDepartures columnArrivals
     let h = floor(float32 dt)
     let mins = 60.0f * (float32 dt) - h
     let newDate =

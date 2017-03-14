@@ -28,6 +28,42 @@ let (|PlaneObjectType|_|) (s : string) =
     | "ju 88 a-4" -> Some PlaneModel.Ju88a4
     | _ -> None
 
+/// A region shipped supplies
+type SuppliesShipped = {
+    Sender : RegionId
+    Energy : float32<E>
+}
+
+let extractSuppliesShipped (state : WorldState) (orders : ResupplyOrder list) (entries : LogEntry seq) =
+    let tryGetOrder(eventName) =
+        orders
+        |> Seq.tryFind (fun order -> order.MatchesMissionLogDepartureEventName(eventName))
+    seq {
+        let idxToName = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
+            | :? KillEntry as event when event.AttackerId = -1 ->
+                match Map.tryFind event.TargetId !idxToName with
+                | Some eventName ->
+                    match tryGetOrder eventName with
+                    | Some order ->
+                        let energy =
+                            match order.Means with
+                            | ByRail -> ResupplyOrder.TrainCapacity
+                            | ByRoad -> ResupplyOrder.TruckCapacity
+                        yield { Sender = order.Convoy.Start; Energy = energy }
+                    | None -> ()
+                | None ->
+                    ()
+            | _ ->
+                ()
+    }
+    |> Seq.groupBy (fun shipped -> shipped.Sender)
+    |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun sup -> sup.Energy))
+    |> Seq.map (fun (region, amount) -> { Sender = region; Energy = amount })
+
 /// A region received truck convoys or trains.
 type Resupplied = {
     Region : RegionId
@@ -37,31 +73,106 @@ type Resupplied = {
 let extractResupplies (world : World) (state : WorldState) (orders : ResupplyOrder list) (entries : LogEntry seq) =
     let wg = WorldFastAccess.Create(world)
     let sg = WorldStateFastAccess.Create(state)
-    let tryGetOrder =
-        let m =
-            orders
-            |> Seq.map (fun order -> order.Index, order)
-            |> Map.ofSeq
-        fun x -> Map.tryFind x m
+    let tryGetOrder(eventName) =
+        orders
+        |> Seq.tryFind (fun order -> order.MatchesMissionLogArrivalEventName(eventName))
     seq {
+        let idxToName = ref Map.empty
         for entry in entries do
             match entry with
-            | :? MissionObjectiveEntry as objective ->
-                match tryGetOrder (int objective.ObjectiveType) with
-                | Some order ->
-                    let energy =
-                        match objective.IconType with
-                        | x when x = VirtualConvoy.CoverTrain -> ResupplyOrder.TrainCapacity
-                        | x when x = VirtualConvoy.CoverTransportColumn -> ResupplyOrder.TruckCapacity
-                        | _ -> 0.0f<E>
-                    yield { Region = order.Convoy.Destination; Energy = energy }
-                | None -> ()
+            | :? ObjectSpawnedEntry as spawned ->
+                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
+            | :? KillEntry as event when event.AttackerId = -1 ->
+                match Map.tryFind event.TargetId !idxToName with
+                | Some eventName ->
+                    match tryGetOrder eventName with
+                    | Some order ->
+                        let energy =
+                            match order.Means with
+                            | ByRail -> ResupplyOrder.TrainCapacity
+                            | ByRoad -> ResupplyOrder.TruckCapacity
+                        yield { Region = order.Convoy.Destination; Energy = energy }
+                    | None -> ()
+                | None ->
+                    ()
             | _ ->
                 ()
     }
-    |> Seq.groupBy (fun order -> order.Region)
+    |> Seq.groupBy (fun resup -> resup.Region)
     |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun sup -> sup.Energy))
     |> Seq.map (fun (region, amount) -> { Region = region; Energy = amount })
+
+/// A tank column left its home region
+type ColumnLeft = {
+    Order : int
+    Coalition : CoalitionId
+    Vehicles : Map<GroundAttackVehicle, int>
+}
+
+let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry seq) =
+    let tryGetRank(eventName) =
+        orders
+        |> Seq.tryPick (fun order -> order.MatchesMissionLogDepartureEventName(eventName) |> Option.map (fun rankOffset -> order, rankOffset))
+    seq {
+        let idxToName = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
+            | :? KillEntry as event when event.AttackerId = -1 ->
+                match Map.tryFind event.TargetId !idxToName with
+                | Some eventName ->
+                    match tryGetRank eventName with
+                    | Some(order, rankOffset) ->
+                        let vehicles =
+                            try
+                                order.Composition
+                                |> Seq.skip (rankOffset - 1)
+                            with
+                            | _ -> order.Composition |> Seq.ofArray
+                            |> Seq.truncate ColumnMovement.MaxColumnSize
+                            |> Util.compactSeq
+                        yield { Order = order.Index; Coalition = order.Coalition; Vehicles = vehicles }
+                    | None -> ()
+                | None ->
+                    ()
+            | _ ->
+                ()
+    }
+
+/// A tank in column reached its destination.
+type ColumnArrived = {
+    Order : int
+    Coalition : CoalitionId
+    Vehicle : GroundAttackVehicle
+}
+
+let extractColumnArrivals (world : World) (state : WorldState) (orders : ColumnMovement list) (entries : LogEntry seq) =
+    let wg = WorldFastAccess.Create(world)
+    let sg = WorldStateFastAccess.Create(state)
+    let tryGetOrder(eventName) =
+        orders
+        |> Seq.tryPick (fun order -> order.MatchesMissionLogArrivalEventName(eventName) |> Option.map (fun rank -> order, rank))
+    seq {
+        let idxToName = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
+            | :? KillEntry as event when event.AttackerId = -1 ->
+                match Map.tryFind event.TargetId !idxToName with
+                | Some eventName ->
+                    match tryGetOrder eventName with
+                    | Some(order, rank) ->
+                        let vehicle = order.Composition.[rank]
+                        yield { Order = order.Index; Coalition = order.Coalition; Vehicle = vehicle }
+                    | None -> ()
+                | None ->
+                    ()
+            | _ ->
+                ()
+    }
+
 
 /// A plane took off, possibly took some damage and then landed/crashed near or at an airfield
 type TookOff = {

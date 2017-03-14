@@ -266,70 +266,44 @@ with
           All = McuUtil.groupFromList group
         }
 
-type AtDestination = {
-    LeaderArrived : Mcu.McuTrigger
-    Destroyed : Mcu.McuTrigger
+type EventReporting = {
+    Trigger : Mcu.McuTrigger
+    Disable : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
 }
 with
     /// <summary>
     /// Create a group that reports a given event, e.g. arrival of a convoy at destination.
-    /// This event can later be retrieved from the mission log, which includes the position, coalition, success,
-    /// objective id (primary, secondary n) and the icon type.
+    /// This event can later be retrieved from the mission log. The mechanism that is used is destruction of a fake block, which can be identified by its name and/or position
     /// </summary>
     /// <param name="pos">Position of the node.</param>
-    /// <param name="objectiveTaskType">Objective task: 0 means primary, 1 to 15 are secondary.</param>
-    /// <param name="iconType">The type of icon. Not actually used by the game, can be used for own purposes.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, coalition : Mcu.CoalitionValue, objectiveTaskType : int, iconType : int) =
-        if objectiveTaskType < 0 || objectiveTaskType > 15 then
-            invalidArg "objectiveId" "Must be between 0 and 15 inclusive"
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, eventName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let lcSubst = Mcu.substLCId <| lcStore.GetIdMapper()
-        let group = blocksData.GetGroup("Vehicle arrived").CreateMcuList()
+        let group = blocksData.GetGroup("EventLogging").CreateMcuList()
         for mcu in group do
             subst mcu
-            lcSubst mcu
         // Get key nodes
+        let notifier = getVehicleByName group T.Blocks.Notification
+        let entity = getEntityByIndex notifier.LinkTrId group 
         let getByName = getTriggerByName group
-        let leaderArrived = getByName T.Blocks.LeaderArrived
-        let destroyed = getByName T.Blocks.Destroyed
-        let isAlive = getByName T.Blocks.IsAlive
-        let objective = getByIndex isAlive.Targets.Head group
-        let lcData = objective.IconLC
-        let lcDesc, lcName =
-            match lcData with
-            | Some data -> data.LCDesc, data.LCName
-            | None -> failwith "Mission LC data in objective node"
+        let leaderArrived = getByName T.Blocks.Trigger
+        let destroyed = getByName T.Blocks.Disable
+        let isAlive = getByName T.Blocks.IsEnabled
         // Position of all nodes
-        let refPoint = Vector2(float32 leaderArrived.Pos.X, float32 leaderArrived.Pos.Z)
+        let refPoint = Vector2(float32 notifier.Pos.X, float32 notifier.Pos.Z)
         let dv = pos - refPoint
         for mcu in group do
             (Vector2.FromMcu(mcu.Pos) + dv).AssignTo(mcu.Pos)
-        // Replace objective node by a new objective node with the fields set to the desired values
-        let objective2 =
-            let x =
-                newObjective objective.Index lcDesc lcName
-            x.SetCoalition(T.Integer(int(coalition)))
-                .SetIconType(T.Integer iconType)
-                .SetTaskType(T.Integer objectiveTaskType)
-                .CreateMcu()
-        McuUtil.vecCopy objective.Pos objective2.Pos 
         // Result
-        let group =
-            group
-            |> List.map (fun mcu ->
-                if mcu.Index = objective.Index then
-                    assert(objective2.Index = objective.Index)
-                    objective2
-                else
-                    mcu)
-        { LeaderArrived = leaderArrived
-          Destroyed = destroyed
+        entity.Name <- eventName
+        notifier.Name <- eventName
+        { Trigger = leaderArrived
+          Disable = destroyed
           All =
             { new McuUtil.IMcuGroup with
                   member x.Content = group
-                  member x.LcStrings = [ (lcDesc, ""); (lcName, "") ]
+                  member x.LcStrings = []
                   member x.SubGroups = []
             }
         }

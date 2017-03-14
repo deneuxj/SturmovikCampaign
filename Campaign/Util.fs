@@ -20,3 +20,20 @@ let (|Contains|_|) substring (s : string) =
         Some()
     else
         None
+
+/// Expand a mapping from kinds to quantity to an array of kinds
+let expandMap (m : Map<_, int>) =
+    m
+    |> Map.toSeq
+    |> Seq.choose (fun (x, num) -> if num > 0 then Some(Array.create num x) else None)
+    |> Array.concat
+
+/// Count occurences of items in a sequence
+let compactSeq (items : _ seq) =
+    items
+    |> Seq.fold (fun m item ->
+        match Map.tryFind item m with
+        | Some n -> n + 1
+        | None -> 1
+        |> fun n -> Map.add item n m
+    ) Map.empty
