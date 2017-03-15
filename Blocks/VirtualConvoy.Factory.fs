@@ -97,6 +97,8 @@ with
                 yield this.DepartureReporting.All
             ]
 
+    static member MaxConvoySize = 15
+
     /// <summary>
     /// Create the instances and relations of a virtual convoy.
     /// </summary>
@@ -104,8 +106,8 @@ with
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
     static member Create(store : NumericalIdentifiers.IdStore, path : PathVertex list, invasion : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
-        if convoySize > 15 then
-            invalidArg "convoySize" "Maximum convoy size is 15"
+        if convoySize > VirtualConvoy.MaxConvoySize then
+            invalidArg "convoySize" "Maximum convoy size exceeded"
         let convoySet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
