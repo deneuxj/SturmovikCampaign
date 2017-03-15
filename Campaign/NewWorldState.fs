@@ -413,48 +413,132 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
         |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
     { state with Airfields = airfields }
 
-/// Change owner of region when a column reaches its destination in enemy territory
-let applyConquests (state : WorldState) (movements : ColumnMovement list) (arrivals : ColumnArrived list) =
+/// Simulate a battle between two enemy columns that arrived at the same region
+/// This is also used for column movements, which are seen as degenerate battles with an empty attacker side.
+type BattleParticipants = {
+    Defenders : ColumnArrived list
+    Attackers : ColumnArrived list
+}
+with
+    member this.RunBattle(random : System.Random) =
+        match this.Defenders, this.Attackers with
+        | [], _ -> this.Attackers
+        | _, [] -> this.Defenders
+        | _ ->
+            let attackers =
+                this.Attackers
+                |> List.map (fun arrived -> arrived.Vehicle, float32 arrived.Vehicle.Cost)
+            let defenders =
+                this.Defenders
+                |> List.map (fun arrived -> arrived.Vehicle, float32 arrived.Vehicle.Cost)
+            let fire attackers defenders =
+                let numDefenders = List.length defenders
+                let targets =
+                    attackers
+                    |> List.map (fun _ -> random.Next(0, numDefenders - 1))
+                    |> Util.compactSeq
+                defenders
+                |> Seq.mapi (fun i (v, health) ->
+                    match Map.tryFind i targets with
+                    | Some n -> (v, health - float32 n)
+                    | None -> (v, health)
+                )
+                |> Seq.filter (fun (_, health) -> health > 0.0f)
+                |> List.ofSeq
+            let rec round attackers defenders =
+                let defenders2 = fire attackers defenders
+                let attackers2 = fire defenders attackers
+                match defenders2, attackers2 with
+                | [], _ :: _ -> (this.Attackers, attackers2)
+                | _ :: _, [] -> (this.Defenders, defenders2)
+                | _, _ -> round attackers2 defenders2
+            let victors, survivors = round attackers defenders
+            let counts =
+                survivors
+                |> Seq.groupBy fst
+                |> Seq.map (fun (vehicle, healths) -> vehicle, healths |> Seq.sumBy snd)
+                |> Map.ofSeq
+            victors
+            |> List.fold (fun (filtered, counts) arrived ->
+                match Map.tryFind arrived.Vehicle counts with
+                | None -> (filtered, counts)
+                | Some h when h < 1.0f -> (filtered, Map.remove arrived.Vehicle counts)
+                | Some h -> (arrived :: filtered, Map.add arrived.Vehicle (h - 1.0f) counts)
+            ) ([], counts)
+            |> fst
+
+/// Group arrivals by destination and build the battle participants.
+/// Note: we generate battles without attackers when a column moves into an uncontested region, including a region already under the column owner's control.
+let buildBattles (state : WorldState) (movements : ColumnMovement list) (arrivals : ColumnArrived list) =
+    let sg = WorldStateFastAccess.Create state
     let movements =
         movements
-        |> Seq.map (fun movement -> movement.Index, movement)
+        |> Seq.map (fun movement -> movement.OrderId, movement)
         |> Map.ofSeq
-    let sg = WorldStateFastAccess.Create state
-    let flippedRegions =
+    let byDestination =
         arrivals
-        |> Seq.choose (fun arrived -> Map.tryFind arrived.Order movements |> Option.map (fun order -> order, arrived))
-        |> Seq.distinctBy (fun (order, _) -> order.Destination)
-        |> Seq.filter (fun (order, arrived) ->
-            sg.GetRegion(order.Destination).Owner <> Some arrived.Coalition)
-        |> Seq.map (fun (order, arrived) -> order.Destination, arrived.Coalition)
-        |> Map.ofSeq
-    let regions =
-        state.Regions
-        |> List.map (fun regState ->
-            match Map.tryFind regState.RegionId flippedRegions with
-            | Some newOwner ->
-                { regState with
-                    Owner = Some newOwner
-                    NumVehicles = Map.empty // TODO: would be fun to implement captured tanks.
-                }
+        |> Seq.groupBy (fun arrival -> movements.[arrival.OrderId].Destination)
+    byDestination
+    |> Seq.map (fun (region, columns) ->
+        let regState = sg.GetRegion(region)
+        let defenders, attackers =
+            columns
+            |> List.ofSeq
+            |> List.partition (fun arrived -> regState.Owner = Some (movements.[arrived.OrderId].OrderId.Coalition))
+        let homeDefense =
+            match regState.Owner with
+            | Some coalition ->
+                regState.NumVehicles
+                |> Util.expandMap
+                |> Seq.map (fun vehicle -> { OrderId = { Index = -1; Coalition = coalition }; Vehicle = vehicle })
+                |> List.ofSeq
             | None ->
-                regState
-        )
+                []
+        region,
+        { Defenders = defenders @ homeDefense
+          Attackers = attackers
+        }
+    )
+    |> List.ofSeq
+    
+/// Run each battle, update vehicles in targetted regions and flip them if attackers are victorious
+let applyConquests (state : WorldState) (battles : (RegionId * BattleParticipants) list) =
+    let battles = battles |> Map.ofList
+    let random = System.Random()
+    let regions =
+        [
+            for region in state.Regions do
+                match Map.tryFind region.RegionId battles with
+                | Some battle ->
+                    let survivors = battle.RunBattle(random)
+                    match survivors with
+                    | [] ->
+                        yield { region with NumVehicles = Map.empty }
+                    | survivor :: _ ->
+                        let numVehicles =
+                            survivors
+                            |> Seq.map (fun arrived -> arrived.Vehicle)
+                            |> Util.compactSeq
+                        let newOwner =
+                            survivor.OrderId.Coalition
+                        yield { region with Owner = Some newOwner; NumVehicles = numVehicles }
+                | None ->
+                    yield region
+        ]
     { state with Regions = regions }
 
 /// Move vehicles from start regions to destinations. Must be called after applyConquests.
 // FIXME: vehicles that started but did not reach destination are lost. They should only be lost if they were destroyed. Otherwise, they should be returned to the starting region (if it hasn't been conquered meanwhile)
-// FIXME: vehicles that were destroyed on their way to a region that was conquered in the same turn are not lost.
-let applyVehicleTransfers (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) (arrivals : ColumnArrived list) =
+let applyVehicleTransfers (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) =
     let movements =
         movements
-        |> Seq.map (fun movement -> movement.Index, movement)
+        |> Seq.map (fun movement -> movement.OrderId, movement)
         |> Map.ofSeq
     let sg = WorldStateFastAccess.Create state
     let departed =
         departures
-        |> List.choose (fun departure -> Map.tryFind departure.Order movements |> Option.map (fun movement -> movement, departure))
-        |> List.filter (fun (movement, _) -> sg.GetRegion(movement.Destination).Owner = Some movement.Coalition)
+        |> List.choose (fun departure -> Map.tryFind departure.OrderId movements |> Option.map (fun movement -> movement, departure))
+        |> List.filter (fun (movement, _) -> sg.GetRegion(movement.Destination).Owner = Some movement.OrderId.Coalition)
         |> List.fold (fun regionMap (movement, departure) ->
             let numVehicles : Map<GroundAttackVehicle, int> =
                 match Map.tryFind movement.Start regionMap with
@@ -471,29 +555,10 @@ let applyVehicleTransfers (state : WorldState) (movements : ColumnMovement list)
                 ) numVehicles
             Map.add movement.Start numVehicles regionMap
         ) Map.empty
-    let arrived =
-        arrivals
-        |> List.choose (fun arrival -> Map.tryFind arrival.Order movements |> Option.map (fun movement -> movement, arrival))
-        |> List.fold (fun regionMap (movement, arrival) ->
-            let numVehicles : Map<GroundAttackVehicle, int> =
-                match Map.tryFind movement.Destination regionMap with
-                | Some m -> m
-                | None -> Map.empty
-            let numVehicles =
-                movement.Composition
-                |> Array.fold (fun (numVehicles : Map<GroundAttackVehicle, int>) vehicle ->
-                    let num =
-                        match Map.tryFind vehicle numVehicles with
-                        | Some n -> n + 1
-                        | None -> +1
-                    Map.add vehicle num numVehicles
-                ) numVehicles
-            Map.add movement.Start numVehicles regionMap
-        ) departed
     let regions =
         state.Regions
         |> List.map (fun region ->
-            match Map.tryFind region.RegionId arrived with
+            match Map.tryFind region.RegionId departed with
             | None -> region
             | Some diff ->
                 let numVehicles =
@@ -519,8 +584,9 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) movements co
     let state, extra = convertProduction world state
     let state = applyRepairsAndDamages dt world state convoyDepartures (supplies @ extra) damages
     let state = applyPlaneTransfers state tookOff landed
-    let state = applyConquests state movements columnArrivals
-    let state = applyVehicleTransfers state movements columnDepartures columnArrivals
+    let battles = buildBattles state movements columnArrivals
+    let state = applyConquests state battles
+    let state = applyVehicleTransfers state movements columnDepartures
     let h = floor(float32 dt)
     let mins = 60.0f * (float32 dt) - h
     let newDate =

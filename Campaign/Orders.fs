@@ -15,9 +15,13 @@ type ResupplyMeans =
     | ByRoad
     | ByRail
 
-type ResupplyOrder = {
+type OrderId = {
     Index : int
     Coalition : CoalitionId
+}
+
+type ResupplyOrder = {
+    OrderId : OrderId
     Means : ResupplyMeans
     Convoy : ConvoyOrder
 }
@@ -35,7 +39,7 @@ with
             match this.Means with
             | ByRoad -> "R"
             | ByRail -> "T"
-        sprintf "CNV-%s-%d-%d" meansLetter (int this.Coalition.ToCoalition) this.Index
+        sprintf "CNV-%s-%d-%d" meansLetter (int this.OrderId.Coalition.ToCoalition) this.OrderId.Index
 
     member this.MatchesMissionLogArrivalEventName(name : string) =
         name.StartsWith(this.MissionLogEventName + "-A-")
@@ -45,15 +49,14 @@ with
 
 /// A column of armored vehicles in movement.
 type ColumnMovement = {
-    Index : int
-    Coalition : CoalitionId
+    OrderId : OrderId
     Start : RegionId
     Destination : RegionId
     Composition : GroundAttackVehicle[]
 }
 with
     member this.MissionLogEventName =
-        sprintf "COL-%d-%d" (int this.Coalition.ToCoalition) this.Index
+        sprintf "COL-%d-%d" (int this.OrderId.Coalition.ToCoalition) this.OrderId.Index
 
     member this.MatchesMissionLogArrivalEventName(name : string) =
         if name.StartsWith(this.MissionLogEventName + "-A-") then
@@ -84,7 +87,7 @@ with
             None
 
     // The maximum number of vehicles following the leader in a column.
-    static member MaxColumnSize = 15
+    static member MaxColumnSize = SturmovikMission.Blocks.VirtualConvoy.Factory.VirtualConvoy.MaxConvoySize
 
 
 /// Groups all orders for a faction.

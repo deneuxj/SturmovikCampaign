@@ -42,12 +42,12 @@ let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId)
 
 let createRoadConvoyOrders coalition =
     createConvoyOrders (fun world -> world.Roads) coalition
-    >> List.mapi (fun i convoy -> { Index = i + 1; Coalition = coalition; Means = ByRoad; Convoy = convoy })
+    >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
 
 
 let createRailConvoyOrders coalition =
     createConvoyOrders (fun world -> world.Rails) coalition
-    >> List.mapi (fun i convoy -> { Index = i + 1; Coalition = coalition; Means = ByRail; Convoy = convoy })
+    >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
 
 let createAllConvoyOrders coalition x =
@@ -168,8 +168,10 @@ let createColumnMovementOrders criterion (coalition : CoalitionId, world : World
                     assert((composition |> Map.toSeq |> Seq.sumBy snd) <= 15)
                     let composition = expandMap composition
                     yield {
-                        Index = 0 // Set later to a unique value
-                        Coalition = coalition
+                        OrderId = {
+                                    Index = 0 // Set later to a unique value
+                                    Coalition = coalition
+                        }
                         Start = region.RegionId
                         Destination = target
                         Composition = composition
@@ -177,7 +179,7 @@ let createColumnMovementOrders criterion (coalition : CoalitionId, world : World
                 | None ->
                     ()
     }
-    |> Seq.mapi (fun i order -> { order with Index = i + 1 })
+    |> Seq.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
     |> List.ofSeq
 
 
@@ -314,8 +316,10 @@ let prioritizedReinforcementOrders(world : World, state : WorldState) coalition 
             vehicles
             |> Map.map (fun veh num -> int(ceil(k * float num)))
             |> expandMap
-        { Index = i + 1
-          Coalition = coalition
+        { OrderId = {
+                        Index = i + 1
+                        Coalition = coalition
+          }
           Start = src
           Destination = dest
           Composition = composition

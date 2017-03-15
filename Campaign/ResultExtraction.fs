@@ -104,8 +104,7 @@ let extractResupplies (world : World) (state : WorldState) (orders : ResupplyOrd
 
 /// A tank column left its home region
 type ColumnLeft = {
-    Order : int
-    Coalition : CoalitionId
+    OrderId : OrderId
     Vehicles : Map<GroundAttackVehicle, int>
 }
 
@@ -132,7 +131,7 @@ let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry s
                             | _ -> order.Composition |> Seq.ofArray
                             |> Seq.truncate ColumnMovement.MaxColumnSize
                             |> Util.compactSeq
-                        yield { Order = order.Index; Coalition = order.Coalition; Vehicles = vehicles }
+                        yield { OrderId = order.OrderId; Vehicles = vehicles }
                     | None -> ()
                 | None ->
                     ()
@@ -142,8 +141,7 @@ let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry s
 
 /// A tank in column reached its destination.
 type ColumnArrived = {
-    Order : int
-    Coalition : CoalitionId
+    OrderId : OrderId
     Vehicle : GroundAttackVehicle
 }
 
@@ -163,9 +161,10 @@ let extractColumnArrivals (world : World) (state : WorldState) (orders : ColumnM
                 match Map.tryFind event.TargetId !idxToName with
                 | Some eventName ->
                     match tryGetOrder eventName with
-                    | Some(order, rank) ->
-                        let vehicle = order.Composition.[rank]
-                        yield { Order = order.Index; Coalition = order.Coalition; Vehicle = vehicle }
+                    | Some(order, rank) when rank > 0 ->
+                        let vehicle = order.Composition.[rank - 1]
+                        yield { OrderId = order.OrderId; Vehicle = vehicle }
+                    | _
                     | None -> ()
                 | None ->
                     ()
