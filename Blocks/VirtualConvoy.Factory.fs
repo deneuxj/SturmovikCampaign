@@ -94,6 +94,7 @@ with
                 for kvp in this.AtDestinationSet do
                     yield kvp.Value.All
                 yield this.Api.All
+                yield this.DepartureReporting.All
             ]
 
     /// <summary>
