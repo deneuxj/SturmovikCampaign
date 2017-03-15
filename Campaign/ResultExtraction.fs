@@ -52,7 +52,7 @@ let extractSuppliesShipped (state : WorldState) (orders : ResupplyOrder list) (e
                         let energy =
                             match order.Means with
                             | ByRail -> ResupplyOrder.TrainCapacity
-                            | ByRoad -> ResupplyOrder.TruckCapacity
+                            | ByRoad -> ResupplyOrder.TruckCapacity * float32 order.Convoy.Size
                         yield { Sender = order.Convoy.Start; Energy = energy }
                     | None -> ()
                 | None ->
@@ -90,7 +90,7 @@ let extractResupplies (world : World) (state : WorldState) (orders : ResupplyOrd
                         let energy =
                             match order.Means with
                             | ByRail -> ResupplyOrder.TrainCapacity
-                            | ByRoad -> ResupplyOrder.TruckCapacity
+                            | ByRoad -> ResupplyOrder.TruckCapacity // FIXME: Lead car does not transport supplies, it should be excluded from the report.
                         yield { Region = order.Convoy.Destination; Energy = energy }
                     | None -> ()
                 | None ->

@@ -51,7 +51,7 @@ let world, blocks, bridges, options, state =
     with
     | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
 
-let dt = 60.0f<H> * float32 Configuration.MissionLength
+let dt = (1.0f<H>/60.0f) * float32 Configuration.MissionLength
 let mkOrders coalition =
     let convoyOrders =
         createAllConvoyOrders coalition (world, state)
@@ -67,15 +67,15 @@ let mkOrders coalition =
 let adjustIndexes(convoys : ResupplyOrder list, reinforcements : ColumnMovement list, invasions : ColumnMovement list) =
     let convoys =
         convoys
-        |> List.mapi (fun i order -> { order with Index = i + 1 })
+        |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
     let n = List.length convoys
     let reinforcements =
         reinforcements
-        |> List.mapi (fun i order -> { order with Index = i + 1 + n })
+        |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 + n } })
     let n = n + List.length reinforcements
     let invasions =
         invasions
-        |> List.mapi (fun i order -> { order with Index = i + 1 + n })
+        |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 + n } })
     convoys, reinforcements, invasions
 let mkAllOrders coalition =
     let convoys, reinforcements, invasions =

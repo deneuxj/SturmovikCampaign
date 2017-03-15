@@ -96,7 +96,7 @@ let takeOffs, landings =
 let movements = axisOrders.Reinforcements @ axisOrders.Invasions @ alliesOrders.Reinforcements @ alliesOrders.Invasions
 let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
 let columnArrivals = extractColumnArrivals world state movements entries |> List.ofSeq
-let dt = 60.0f<H> * float32 Configuration.MissionLength
+let dt = (1.0f<H>/60.0f) * float32 Configuration.MissionLength
 
 let state2 = newState dt world state movements shipments resups staticDamages takeOffs landings columnDepartures columnArrivals
 

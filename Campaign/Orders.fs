@@ -73,10 +73,10 @@ with
             None
 
     member this.MatchesMissionLogDepartureEventName(name : string) =
-        if name.StartsWith(this.MissionLogEventName + "D:") then
+        if name.StartsWith(this.MissionLogEventName + "-D-") then
             // Return the rank offset
             // When a large column has been split into smaller groups, this makes it possible to identify the group which has departed.
-            match name.LastIndexOf(":") with
+            match name.LastIndexOf("-") with
             | n when n >= 0 ->
                 match System.Int32.TryParse(name.Substring(n + 1)) with
                 | true, x -> Some x
