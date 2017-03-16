@@ -588,7 +588,7 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) movements co
     let state = applyConquests state battles
     let state = applyVehicleTransfers state movements columnDepartures
     let h = floor(float32 dt)
-    let mins = 60.0f * (float32 dt) - h
+    let mins = 60.0f * ((float32 dt) - h)
     let newDate =
         let x = state.Date + System.TimeSpan(int h, int mins, 0)
         let extra =
