@@ -26,9 +26,9 @@ with
             | MediumTank -> russianMediumTank
             | LightArmor -> russianLightArmor
 
-    static member LightArmorCost = 50000.0f<E>
-    static member MediumTankCost = 100000.0f<E>
-    static member HeavyTankCost = 250000.0f<E>
+    static member LightArmorCost = 10.0f<E>
+    static member MediumTankCost = 20.0f<E>
+    static member HeavyTankCost = 50.0f<E>
 
     member this.Cost =
         match this with

@@ -326,7 +326,7 @@ module PlaneTypes =
 open PlaneTypes
 open SturmovikMission.Blocks
 
-let private basePlaneCost = 50000.0f<E>
+let private basePlaneCost = 20.0f<E>
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
