@@ -259,47 +259,6 @@ with
         }
 
 
-    static member CreateTrain(store : NumericalIdentifiers.IdStore, path : PathVertex list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName) =
-        let convoy = VirtualConvoy.Create(store, path, [], 0, country, coalition, eventName, 0)
-        // Mutate car to train, remove on-road formation MCU
-        let convoySet =
-            convoy.ConvoySet
-            |> Map.map (fun key value ->
-                let vehicle = getHasEntityByIndex value.LeadCarEntity.MisObjID (McuUtil.deepContentOf value.All)
-                let train =
-                    match country with
-                    | Mcu.CountryValue.Russia -> mkRussianTrainMcu()
-                    | Mcu.CountryValue.Germany 
-                    | _ -> mkGermanTrainMcu()
-                train.Index <- vehicle.Index
-                train.LinkTrId <- vehicle.LinkTrId
-                { value with
-                    All =
-                        { new McuUtil.IMcuGroup with
-                              member x.Content =
-                                McuUtil.deepContentOf value.All
-                                |> List.choose (function
-                                    | :? Mcu.HasEntity as vehicle when vehicle.LinkTrId = value.LeadCarEntity.Index -> Some(upcast train)
-                                    | :? Mcu.McuTrigger as trigger when trigger.Name = T.Blocks.OnRoad -> None
-                                    | x -> Some x
-                                )
-                              member x.LcStrings = value.All.LcStrings
-                              member x.SubGroups = []
-                        }
-                })
-        let convoy = { convoy with ConvoySet = convoySet }
-        // Move train from off-road to on-track
-        for instWp, instConvoy in convoy.ConvoyAtWaypoint do
-            let wp = convoy.ActiveWaypointSet.[instWp]
-            let convoy = convoy.ConvoySet.[instConvoy]
-            let vehicle = getHasEntityByIndex convoy.LeadCarEntity.MisObjID (McuUtil.deepContentOf convoy.All)
-            McuUtil.vecCopy wp.Waypoint.Pos vehicle.Pos
-            McuUtil.vecCopy wp.Waypoint.Pos convoy.LeadCarEntity.Pos
-            McuUtil.vecCopy wp.Waypoint.Ori vehicle.Ori
-            McuUtil.vecCopy wp.Waypoint.Ori convoy.LeadCarEntity.Ori
-        convoy
-
-
     /// <param name="rankOffset">Long columns are split into groups (by the caller); this is the rank of the first vehicle in the original column</param>
     static member CreateColumn(store : NumericalIdentifiers.IdStore, path : PathVertex list, invasionPath : PathVertex list, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName, rankOffset) =
         let columnContent = Array.ofList columnContent

@@ -1,0 +1,21 @@
+﻿type Train {
+	Trigger Start
+	Trigger Arrived
+	Trigger Killed
+}
+
+predicate the_train(Train)
+
+type EventReporting {
+	Trigger Trigger
+	Trigger Disable
+}
+
+EventReporting started(Train)
+EventReporting arrived(Train)
+
+targets += for train in the_train
+           let report = started(train) -> train.Start, report.Trigger
+
+targets += for train in the_train
+           let report = arrived(train) -> train.Arrived, report.Trigger

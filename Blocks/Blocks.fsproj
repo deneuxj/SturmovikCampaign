@@ -67,6 +67,8 @@
     <Content Include="Proto-StaticDefenses.txt" />
     <Compile Include="StaticDefenses.Types.fs" />
     <Compile Include="StaticDefenses.Type.Factory.fs" />
+    <Content Include="ProtoTrain.txt" />
+    <Compile Include="Train.fs" />
     <Compile Include="Strategy.fs" />
     <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">

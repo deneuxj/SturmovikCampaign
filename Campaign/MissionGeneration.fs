@@ -11,6 +11,7 @@ open SturmovikMission.Blocks.VirtualConvoy.Factory
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.StaticDefenses.Factory
 open SturmovikMission.Blocks.StaticDefenses.Types
+open SturmovikMission.Blocks.Train
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks
 open SturmovikMission.Blocks.IO
@@ -522,10 +523,21 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
                                 match order.Means with
                                 | ByRoad ->
                                     VirtualConvoy.Create(store, pathVertices, [], convoy.Size, country, coalition, convoyName, 0)
+                                    |> Choice1Of2
                                 | ByRail ->
-                                    VirtualConvoy.CreateTrain(store, pathVertices, country, coalition, convoyName)
-                            let links = virtualConvoy.CreateLinks()
-                            links.Apply(McuUtil.deepContentOf virtualConvoy)
+                                    let startV = pathVertices.Head
+                                    let endV = pathVertices |> List.last
+                                    TrainWithNotification.Create(store, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
+                                    |> Choice2Of2
+                            let links =
+                                match virtualConvoy with
+                                | Choice1Of2 x -> x.CreateLinks()
+                                | Choice2Of2 x -> x.CreateLinks()
+                            let mcuGroup =
+                                match virtualConvoy with
+                                | Choice1Of2 x -> x :> McuUtil.IMcuGroup
+                                | Choice2Of2 x -> x :> McuUtil.IMcuGroup
+                            links.Apply(McuUtil.deepContentOf mcuGroup)
                             yield virtualConvoy
                     ]
                 let timers =
@@ -534,8 +546,16 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
                             let getId = store.GetIdMapper()
                             let timer = newTimer (getId 1)
                             timer.Time <- float startInterval * 60.0
-                            Mcu.addTargetLink conv1.Api.Start (timer.Index)
-                            Mcu.addTargetLink timer conv2.Api.Start.Index
+                            let start1 =
+                                match conv1 with
+                                | Choice1Of2 x -> x.Api.Start
+                                | Choice2Of2 x -> x.TheTrain.Start
+                            let start2 =
+                                match conv2 with
+                                | Choice1Of2 x -> x.Api.Start
+                                | Choice2Of2 x -> x.TheTrain.Start
+                            Mcu.addTargetLink start1 (timer.Index)
+                            Mcu.addTargetLink timer start2.Index
                             yield timer
                     ]
                 yield virtualConvoys, timers
@@ -688,14 +708,21 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     for convoys, _ in convoysAndTimers do
         match convoys with
         | first :: _ ->
-            Mcu.addTargetLink missionBegin first.Api.Start.Index
+            let firstStart =
+                match first with
+                | Choice1Of2 x -> x.Api.Start
+                | Choice2Of2 x -> x.TheTrain.Start
+            Mcu.addTargetLink missionBegin firstStart.Index
         | [] ->
             ()
     let convoys : McuUtil.IMcuGroup list =
         convoysAndTimers
         |> Seq.map fst
         |> Seq.concat
-        |> Seq.map (fun x -> x :> McuUtil.IMcuGroup)
+        |> Seq.map (
+            function
+            | Choice1Of2 x -> x :> McuUtil.IMcuGroup
+            | Choice2Of2 x -> x :> McuUtil.IMcuGroup)
         |> List.ofSeq
     let interConvoyTimers =
         convoysAndTimers
