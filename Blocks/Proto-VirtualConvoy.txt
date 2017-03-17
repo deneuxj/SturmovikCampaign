@@ -72,6 +72,11 @@ type VirtualConvoy {
 }
 predicate result(VirtualConvoy)
 
+type Icon {
+	trigger Show
+	trigger Hide
+}
+Icon icon_of_convoy(VirtualConvoy)
 
 // Convoy <-> TruckInConvoy
 //  Add trucks to columns
@@ -190,3 +195,9 @@ target += for (atd, convoy) in at_destination_convoy -> if invasion_end is empty
 //  Log start of convoy
 target += for api in result
           for spawn in the_spawned -> api.Start, spawn.Spawned
+
+// Icon
+target += for (convoy, icon) in icon_of_convoy -> (convoy.Start, icon.Show)
+                                               -> (convoy.Destroyed, icon.Hide)
+											   -> (convoy.Arrived, icon.Hide) when invasion_end empty
+											      (convoy.Captured, icon.Hide) otherwise

@@ -401,25 +401,25 @@ let private mkAsIcon (typeName : string) path (state : (string * Value) list ref
                 and set (v: int): unit = 
                     state := !state |> setField("BColor", Value.Integer v)
             member x.Coalitions
-                with get (): int list = 
-                    !state |> getIntVecField "Coalitions"
-                and set (v: int list): unit = 
-                    state := !state |> setOptIntVecField("Coalitions", v)
+                with get (): CoalitionValue list = 
+                    !state |> getIntVecField "Coalitions" |> List.map enum
+                and set (v: CoalitionValue list): unit = 
+                    state := !state |> setOptIntVecField("Coalitions", v |> List.map int)
             member x.Green
                 with get (): int = 
                     !state |> getIntField "GColor"
                 and set (v: int): unit = 
                     state := !state |> setField("GColor", Value.Integer v)
             member x.IconId
-                with get (): int = 
-                    !state |> getIntField "IconId"
-                and set (v: int): unit = 
-                    state := !state |> setField("IconId", Value.Integer v)
+                with get (): IconIdValue = 
+                    !state |> getIntField "IconId" |> enum
+                and set (v: IconIdValue): unit = 
+                    state := !state |> setField("IconId", Value.Integer(int v))
             member x.LineType
-                with get (): int = 
-                    !state |> getIntField "LineType"
-                and set (v: int): unit = 
-                    state := !state |> setField("LineType", Value.Integer v)
+                with get (): LineTypeValue = 
+                    !state |> getIntField "LineType" |> enum
+                and set (v: LineTypeValue): unit = 
+                    state := !state |> setField("LineType", Value.Integer(int v))
             member x.Red
                 with get (): int = 
                     !state |> getIntField "RColor"

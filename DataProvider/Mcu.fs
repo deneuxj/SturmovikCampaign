@@ -63,17 +63,70 @@ type McuBase =
     abstract Path : (string * int) list with get, set
 
 /// <summary>
+/// Numerical values of coalitions.
+/// </summary>
+type CoalitionValue =
+    | Neutral = 0
+    | Allies = 1
+    | Axis = 2
+
+/// <summary>
+/// Numerical values of line types between connected icons.
+/// </summary>
+type LineTypeValue =
+    | Normal = 0
+    | Bold = 1
+    | Border = 2
+    | ZoneType1 = 3
+    | ZoneType2 = 4
+    | ZoneType3 = 5
+    | ZoneType4 = 6
+    | SectorType1 = 7
+    | SectorType2 = 8
+    | SectorType3 = 9
+    | SectorType4 = 10
+    | Attack = 11
+    | Defence = 12
+    | PositionType0 = 13
+    | PositionType1 = 14
+    | PositionType2 = 15
+    | PositionType3 = 16
+    | PositionType4 = 17
+    | PositionType5 = 18
+    | PositionType6 = 19
+    | PositionType7 = 20
+    | PositionType8 = 21
+    | PositionType9 = 22
+
+/// <summary>
+/// Numerical values of icon types.
+/// </summary>
+type IconIdValue =
+    | None = 0
+    | OffensivePatrol = 201
+    | AttackTransportColumn = 501
+    | AttackArmorColumn = 502
+    | AttackAntiAirPosition = 504
+    | AttackBuildings = 507
+    | AttackTrains = 508
+    | CoverTransportColumn = 551
+    | CoverArmorColumn = 552
+    | CoverAntiAirPosition = 554
+    | CoverBuildings = 557
+    | CoverTrains = 558
+
+/// <summary>
 /// Interface of icons.
 /// </summary>
 type McuIcon =
     inherit McuBase
     abstract Targets : int list with get, set
-    abstract IconId : int with get, set
+    abstract IconId : IconIdValue with get, set
     abstract Red : int with get, set
     abstract Green : int with get, set
     abstract Blue : int with get, set
-    abstract LineType : int with get, set
-    abstract Coalitions : int list with get, set
+    abstract LineType : LineTypeValue with get, set
+    abstract Coalitions : CoalitionValue list with get, set
 
 /// <summary>
 /// Interface of triggers (timers, counters...).
@@ -83,14 +136,6 @@ type McuTrigger =
     abstract Name : string with get, set
     abstract Objects : int list with get, set
     abstract Targets : int list with get, set
-
-/// <summary>
-/// Numerical values of coalitions.
-/// </summary>
-type CoalitionValue =
-    | Neutral = 0
-    | Allies = 1
-    | Axis = 2
 
 /// <summary>
 /// Interface of proximity and check zone triggers.

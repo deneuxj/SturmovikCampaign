@@ -2588,4 +2588,68 @@ Group
 }
 
 
+
+Group
+{
+  Name = "Icon";
+  Index = 221;
+  Desc = "";
+  MCU_Icon
+  {
+    Index = 218;
+    Targets = [];
+    Objects = [];
+    XPos = 16784.091;
+    YPos = 70.762;
+    ZPos = 31111.658;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 0;
+    LCName = 3;
+    LCDesc = 4;
+    IconId = 508;
+    RColor = 255;
+    GColor = 255;
+    BColor = 255;
+    LineType = 0;
+    Coalitions = [1, 2];
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 219;
+    Name = "Show";
+    Desc = "";
+    Targets = [218];
+    Objects = [];
+    XPos = 16928.066;
+    YPos = 70.676;
+    ZPos = 30919.692;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 220;
+    Name = "Hide";
+    Desc = "";
+    Targets = [218];
+    Objects = [];
+    XPos = 16618.058;
+    YPos = 94.269;
+    ZPos = 30925.578;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+}
+
+
 # end of file

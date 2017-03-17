@@ -68,7 +68,8 @@ type VirtualConvoy =
       AtDestinationSet : Map<AtDestinationInstance, EventReporting>
 
       DepartureReporting : EventReporting
-
+      IconCover : IconDisplay
+      IconAttack : IconDisplay
       Api : ConvoyControl
     }
 with
@@ -95,6 +96,8 @@ with
                     yield kvp.Value.All
                 yield this.Api.All
                 yield this.DepartureReporting.All
+                yield this.IconAttack.All
+                yield this.IconCover.All
             ]
 
     static member MaxConvoySize = 15
@@ -105,7 +108,7 @@ with
     /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, path : PathVertex list, invasion : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, invasion : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
         if convoySize > VirtualConvoy.MaxConvoySize then
             invalidArg "convoySize" "Maximum convoy size exceeded"
         let convoySet =
@@ -235,6 +238,17 @@ with
                 sprintf "%s-D-%d" convoyName rankOffset
             EventReporting.Create(store, apiPos + Vector2(-100.0f, -100.0f), name)
 
+        let iconPos =
+            match invasion with
+            | [] ->
+                let len = List.length path
+                let vertex = List.item (len / 2) path
+                vertex.Pos
+            | entry :: _ ->
+                entry.Pos
+
+        let coverIcon, attackIcon = IconDisplay.CreatePair(store, lcStore, iconPos, "", coalition, Mcu.IconIdValue.CoverTransportColumn)
+
         { ConvoySet = convoySet
           TruckInConvoy = truckInConvoy
           WhileEnemyCloseOfConvoy = whileEnemyCloseOfConvoy
@@ -256,13 +270,17 @@ with
           Api = api
           AtDestinationSet = atDestinationSet
           DepartureReporting = departure
+          IconCover = coverIcon
+          IconAttack = attackIcon
         }
 
 
     /// <param name="rankOffset">Long columns are split into groups (by the caller); this is the rank of the first vehicle in the original column</param>
-    static member CreateColumn(store : NumericalIdentifiers.IdStore, path : PathVertex list, invasionPath : PathVertex list, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName, rankOffset) =
+    static member CreateColumn(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, invasionPath : PathVertex list, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName, rankOffset) =
         let columnContent = Array.ofList columnContent
-        let convoy = VirtualConvoy.Create(store, path, invasionPath, columnContent.Length, country, coalition, eventName, rankOffset)
+        let convoy = VirtualConvoy.Create(store, lcStore, path, invasionPath, columnContent.Length, country, coalition, eventName, rankOffset)
+        convoy.IconCover.Icon.IconId <- Mcu.IconIdValue.CoverArmorColumn
+        convoy.IconAttack.Icon.IconId <- Mcu.IconIdValue.AttackArmorColumn
         for instance, truck in convoy.TruckInConvoySet |> Map.toSeq do
             let vehicle = getByIndex truck.Entity.MisObjID (McuUtil.deepContentOf truck.All) :?> Mcu.HasEntity
             let (TruckInConvoyInstance(_, pos)) = instance
@@ -440,6 +458,18 @@ with
 
                 // Notify when the convoy starts
                 yield this.Api.Start, upcast this.DepartureReporting.Trigger
+
+                // Icon
+                yield this.Api.Start, upcast this.IconAttack.Show
+                yield this.Api.Start, upcast this.IconCover.Show
+                yield this.Api.Destroyed, upcast this.IconAttack.Hide
+                yield this.Api.Destroyed, upcast this.IconCover.Hide
+                if this.InvasionEnd.IsEmpty then
+                    yield this.Api.Arrived, upcast this.IconAttack.Hide
+                    yield this.Api.Arrived, upcast this.IconCover.Hide
+                else
+                    yield this.Api.Captured, upcast this.IconAttack.Hide
+                    yield this.Api.Captured, upcast this.IconCover.Hide
             ]
         { Columns = columns
           Objects = objectLinks

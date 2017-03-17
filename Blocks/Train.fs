@@ -13,10 +13,12 @@ type Train = {
     Start : Mcu.McuTrigger
     Arrived : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
+    IconCover : IconDisplay
+    IconAttack : IconDisplay
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, yori : float32, destinationPos : Vector2, country : Mcu.CountryValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, pos : Vector2, yori : float32, destinationPos : Vector2, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("Train").CreateMcuList()
@@ -45,6 +47,15 @@ with
         McuUtil.vecCopy train.Pos train2.Pos
         // Position waypoint
         destinationPos.AssignTo destWp.Pos
+        // Icons
+        let iconPos =
+            0.5f * (pos + destinationPos)
+        let coalition =
+            match country with
+            | Mcu.CountryValue.Germany -> Mcu.CoalitionValue.Axis
+            | Mcu.CountryValue.Russia -> Mcu.CoalitionValue.Allies
+            | _ -> invalidArg "country" "Must be Germany or Russia"
+        let iconCover, iconAttack = IconDisplay.CreatePair(store, lcStore, iconPos, "", coalition, Mcu.IconIdValue.CoverTrains)
         // result
         let group : Mcu.McuBase list =
             group
@@ -56,7 +67,13 @@ with
         { Start = start
           Arrived = arrived
           Killed = killed
-          All = McuUtil.groupFromList group
+          IconCover = iconCover
+          IconAttack = iconAttack
+          All = { new McuUtil.IMcuGroup with
+                      member x.Content = group
+                      member x.LcStrings = []
+                      member x.SubGroups = [ iconCover.All; iconAttack.All ]
+          }
         }
 
 
@@ -76,8 +93,8 @@ with
                 yield this.Arrived.All
             ]
 
-    static member Create(store, pos, yori, destinationPos, country, eventName) =
-        let train = Train.Create(store, pos, yori, destinationPos, country)
+    static member Create(store, lcStore, pos, yori, destinationPos, country, eventName) =
+        let train = Train.Create(store, lcStore, pos, yori, destinationPos, country)
         let startEventName = sprintf "%s-D-0" eventName
         let started = EventReporting.Create(store, pos + Vector2(0.0f, 100.0f), startEventName)
         let arrivedEventName = sprintf "%s-A-0" eventName
@@ -92,6 +109,12 @@ with
             [
                 yield this.TheTrain.Start, this.Started.Trigger :> Mcu.McuBase
                 yield this.TheTrain.Arrived, upcast this.Arrived.Trigger
+                yield this.TheTrain.Start, upcast this.TheTrain.IconAttack.Show
+                yield this.TheTrain.Start, upcast this.TheTrain.IconCover.Show
+                yield this.TheTrain.Killed, upcast this.TheTrain.IconAttack.Hide
+                yield this.TheTrain.Killed, upcast this.TheTrain.IconCover.Hide
+                yield this.TheTrain.Arrived, upcast this.TheTrain.IconAttack.Hide
+                yield this.TheTrain.Arrived, upcast this.TheTrain.IconCover.Hide
             ]
         { Links.Columns = []
           Links.Objects = []

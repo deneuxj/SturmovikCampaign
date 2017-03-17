@@ -475,7 +475,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
     ]
 
 
-let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
+let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : NumericalIdentifiers.IdStore) lcStore (world : World) (state : WorldState) (orders : ResupplyOrder list) =
     let getOwner =
         let m =
             state.Regions
@@ -522,12 +522,12 @@ let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : Nu
                                 let convoyName = order.MissionLogEventName
                                 match order.Means with
                                 | ByRoad ->
-                                    VirtualConvoy.Create(store, pathVertices, [], convoy.Size, country, coalition, convoyName, 0)
+                                    VirtualConvoy.Create(store, lcStore, pathVertices, [], convoy.Size, country, coalition, convoyName, 0)
                                     |> Choice1Of2
                                 | ByRail ->
                                     let startV = pathVertices.Head
                                     let endV = pathVertices |> List.last
-                                    TrainWithNotification.Create(store, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
+                                    TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
                                     |> Choice2Of2
                             let links =
                                 match virtualConvoy with
@@ -569,7 +569,7 @@ let splitCompositions vehicles =
     |> List.ofArray
 
 
-let createColumns store (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval (orders : ColumnMovement list) =
+let createColumns store lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval (orders : ColumnMovement list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     [
@@ -611,7 +611,7 @@ let createColumns store (world : World) (state : WorldState) (missionBegin : Mcu
                             |> List.ofArray
                             |> List.map (fun vehicleType -> vehicleType.GetModel(coalition))
                         let columnName = order.MissionLogEventName
-                        let column = VirtualConvoy.CreateColumn(store, travel, invasion, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                        let column = VirtualConvoy.CreateColumn(store, lcStore, travel, invasion, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                         let links = column.CreateLinks()
                         links.Apply(McuUtil.deepContentOf column)
                         Mcu.addTargetLink prevStart.Value column.Api.Start.Index
@@ -688,10 +688,10 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
-    let convoysAndTimers = createConvoys missionLength convoySpacing store world state (axisOrders.Resupply @ alliesOrders.Resupply)
+    let convoysAndTimers = createConvoys missionLength convoySpacing store lcStore world state (axisOrders.Resupply @ alliesOrders.Resupply)
     let columns =
         axisOrders.Invasions @ alliesOrders.Invasions
-        |> createColumns store world state missionBegin (float convoySpacing)
+        |> createColumns store lcStore world state missionBegin (float convoySpacing)
     for column in columns do
         Mcu.addTargetLink missionBegin column.Api.Start.Index
     let columns =
@@ -699,7 +699,7 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
         |> List.map (fun x -> x :> McuUtil.IMcuGroup)
     let reinforcements =
         axisOrders.Reinforcements @ alliesOrders.Reinforcements
-        |> createColumns store world state missionBegin (float convoySpacing)
+        |> createColumns store lcStore world state missionBegin (float convoySpacing)
     for reinforcement in reinforcements do
         Mcu.addTargetLink missionBegin reinforcement.Api.Start.Index
     let reinforcements =
