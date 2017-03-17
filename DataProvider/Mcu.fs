@@ -68,6 +68,12 @@ type McuBase =
 type McuIcon =
     inherit McuBase
     abstract Targets : int list with get, set
+    abstract IconId : int with get, set
+    abstract Red : int with get, set
+    abstract Green : int with get, set
+    abstract Blue : int with get, set
+    abstract LineType : int with get, set
+    abstract Coalitions : int list with get, set
 
 /// <summary>
 /// Interface of triggers (timers, counters...).

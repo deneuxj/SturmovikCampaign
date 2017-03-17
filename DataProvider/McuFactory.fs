@@ -222,6 +222,16 @@ let private hasIconLCData (fields) =
     ]
     |> List.forall (hasField fields)
 
+
+let private hasIconData fields =
+    [ ("BColor", ValueType.Integer)
+      ("RColor", ValueType.Integer)
+      ("GColor", ValueType.Integer)
+      ("IconId", ValueType.Integer)
+      ("LineType", ValueType.Integer)
+    ]
+    |> List.forall (hasField fields)
+
 let private mkSubtitleData state = 
     { new SubtitleLCData with
           
@@ -385,6 +395,36 @@ let private mkAsIcon (typeName : string) path (state : (string * Value) list ref
                     !state |> getIntVecField "Targets"
                 and set xs =
                     state := !state |> setField ("Targets", Value.IntVector xs)
+            member x.Blue
+                with get (): int = 
+                    !state |> getIntField "BColor"
+                and set (v: int): unit = 
+                    state := !state |> setField("BColor", Value.Integer v)
+            member x.Coalitions
+                with get (): int list = 
+                    !state |> getIntVecField "Coalitions"
+                and set (v: int list): unit = 
+                    state := !state |> setOptIntVecField("Coalitions", v)
+            member x.Green
+                with get (): int = 
+                    !state |> getIntField "GColor"
+                and set (v: int): unit = 
+                    state := !state |> setField("GColor", Value.Integer v)
+            member x.IconId
+                with get (): int = 
+                    !state |> getIntField "IconId"
+                and set (v: int): unit = 
+                    state := !state |> setField("IconId", Value.Integer v)
+            member x.LineType
+                with get (): int = 
+                    !state |> getIntField "LineType"
+                and set (v: int): unit = 
+                    state := !state |> setField("LineType", Value.Integer v)
+            member x.Red
+                with get (): int = 
+                    !state |> getIntField "RColor"
+                and set (v: int): unit = 
+                    state := !state |> setField("RColor", Value.Integer v)
                 
         interface McuBase with
             member this.AsString() = baseImpl.AsString()
@@ -405,7 +445,13 @@ let tryMkAsIcon (typeName : string, typ : ValueType) =
     match typ with
     | ValueType.Composite fields ->
         let required =
-            [ ("Targets", ValueType.IntVector) ] @ requiredForBase
+            [ ("Targets", ValueType.IntVector)
+              ("BColor", ValueType.Integer)
+              ("RColor", ValueType.Integer)
+              ("GColor", ValueType.Integer)
+              ("IconId", ValueType.Integer)
+              ("LineType", ValueType.Integer)
+            ] @ requiredForBase
         let hasItAll =
             required
             |> List.forall (hasField fields)
