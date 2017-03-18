@@ -322,7 +322,7 @@ module PlaneTypes =
 open PlaneTypes
 open SturmovikMission.Blocks
 
-let private basePlaneCost = 20.0f<E>
+let private basePlaneCost = 1000.0f<E>
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
@@ -563,9 +563,9 @@ with
     member this.FastAccess = WorldFastAccess.Create(this)
 
 
-let canonCost = 20.0f<E>
+let canonCost = 50.0f<E>
 
-let getSupplyCapacityPerBuilding (model : string) = 5000.0f<E>
+let getSupplyCapacityPerBuilding (model : string) = 100.0f<E>
 
 let getEnergyHealthPerBuilding (model : string) = getSupplyCapacityPerBuilding model
 
@@ -581,5 +581,5 @@ let getDurabilityForBuilding (model : string) =
 
 let getProductionPerBuilding (model : string) =
     match model with
-    | Contains "industrial" -> 5.0f<E/H>
+    | Contains "industrial" -> 50.0f<E/H>
     | _ -> 1.0f<E/H>

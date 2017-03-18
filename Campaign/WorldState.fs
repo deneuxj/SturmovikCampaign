@@ -26,9 +26,9 @@ with
             | MediumTank -> russianMediumTank
             | LightArmor -> russianLightArmor
 
-    static member LightArmorCost = 10.0f<E>
-    static member MediumTankCost = 20.0f<E>
-    static member HeavyTankCost = 50.0f<E>
+    static member LightArmorCost = canonCost * 3.0f
+    static member MediumTankCost = GroundAttackVehicle.LightArmorCost * 2.0f
+    static member HeavyTankCost = GroundAttackVehicle.LightArmorCost * 5.0f
 
     member this.Cost =
         match this with
@@ -59,7 +59,7 @@ with
         |> Map.tryFind vehicle
         |> fun x -> defaultArg x 0
 
-/// State of a defense area withín a region.
+/// State of a defense area within a region.
 type DefenseAreaState = {
     DefenseAreaId : DefenseAreaId
     NumUnits : int
@@ -110,7 +110,7 @@ open Vector
 
 /// Maximum number of anti-air canons in an area. Depends on the area's size.
 let getAntiAirCanonsForArea (area : DefenseArea) =
-    let refArea = 1.0e6f
+    let refArea = 500000.0f
     let area = Vector2.ConvexPolygonArea(area.Boundary)
     max (5.0f * area / refArea) 2.0f
     |> ceil
