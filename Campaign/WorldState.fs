@@ -112,7 +112,7 @@ open Vector
 let getAntiAirCanonsForArea (area : DefenseArea) =
     let refArea = 1.0e6f
     let area = Vector2.ConvexPolygonArea(area.Boundary)
-    min (5.0f * area / refArea) 2.0f
+    max (5.0f * area / refArea) 2.0f
     |> ceil
     |> int
 
@@ -120,7 +120,7 @@ let getAntiAirCanonsForArea (area : DefenseArea) =
 let getAntiTankCanonsForArea (area : DefenseArea) =
     let refArea = 130.0e3f
     let area = Vector2.ConvexPolygonArea(area.Boundary)
-    min (5.0f * area / refArea) 2.0f
+    max (5.0f * area / refArea) 2.0f
     |> ceil
     |> int
 
