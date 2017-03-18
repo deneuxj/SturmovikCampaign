@@ -586,6 +586,7 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) movements co
     let battles = buildBattles state movements columnArrivals
     let state = applyConquests state battles
     let state = applyVehicleTransfers state movements columnDepartures
+    let state = updateNumCanons world state
     let h = floor(float32 dt)
     let mins = 60.0f * ((float32 dt) - h)
     let newDate =

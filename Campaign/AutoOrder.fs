@@ -206,14 +206,14 @@ let valueOfVehicles2 =
     >> Seq.sumBy snd
 
 
-let getInvasionSuccessProbablity(world, state) (order : ColumnMovement) =
+let getInvasionSuccessProbablity(world : World, state : WorldState) (order : ColumnMovement) =
     let sg = WorldStateFastAccess.Create state
     let defenseArea =
         world.AntiTankDefenses
         |> List.tryFind (fun area -> area.Home = FrontLine(order.Destination, order.Start))
     match defenseArea with
     | Some defenseArea ->
-        let defenses = sg.GetDefenseArea(defenseArea.DefenseAreaId)
+        let defenses = sg.GetAntiTankDefenses(defenseArea.DefenseAreaId)
 
         let attackValue =
             order.Composition

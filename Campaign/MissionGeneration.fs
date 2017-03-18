@@ -35,7 +35,7 @@ with
     static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, missionBegin : Mcu.McuTrigger, world : World, state : WorldState) =
         let getAreaState =
             let m =
-                state.DefenseAreas
+                state.AntiAirDefenses @ state.AntiTankDefenses
                 |> Seq.map (fun area -> area.DefenseAreaId, area)
                 |> dict
             fun x -> m.[x]

@@ -76,7 +76,8 @@ type AirfieldState = {
 /// Packages all state data.
 type WorldState = {
     Regions : RegionState list
-    DefenseAreas : DefenseAreaState list
+    AntiAirDefenses : DefenseAreaState list
+    AntiTankDefenses : DefenseAreaState list
     Airfields : AirfieldState list
     Date : System.DateTime
 }
@@ -84,13 +85,15 @@ type WorldState = {
 /// Provide fast access to state data using indexes.
 type WorldStateFastAccess = {
     GetRegion : RegionId -> RegionState
-    GetDefenseArea : DefenseAreaId -> DefenseAreaState
+    GetAntiAirDefenses : DefenseAreaId -> DefenseAreaState
+    GetAntiTankDefenses : DefenseAreaId -> DefenseAreaState
     GetAirfield : AirfieldId -> AirfieldState
 }
 with
     static member Create(state : WorldState) =
         { GetRegion = mkGetStuffFast state.Regions (fun r -> r.RegionId)
-          GetDefenseArea = mkGetStuffFast state.DefenseAreas (fun area -> area.DefenseAreaId)
+          GetAntiAirDefenses = mkGetStuffFast state.AntiAirDefenses (fun area -> area.DefenseAreaId)
+          GetAntiTankDefenses = mkGetStuffFast state.AntiTankDefenses (fun area -> area.DefenseAreaId)
           GetAirfield = mkGetStuffFast state.Airfields (fun af -> af.AirfieldId)
         }
 
@@ -171,7 +174,7 @@ let computeRegionDistances (getPaths : World -> Path list) (getOwner : RegionId 
 /// <param name="inFrontLine">indicate whether a ground defense area needs to be equipped with anti-tank canons</param>
 /// <param name="baseNumUnits">get the number of units that will fit in a certain area</param>
 /// <param name="area">the description of the defense area</param>
-let setNumUnitsAsIfFullySupplied getOwner inFrontLine (baseNumUnits : DefenseArea -> int) (area : DefenseArea) =
+let setNumUnitsAsIfFullySupplied (getOwner : RegionId -> CoalitionId Option) inFrontLine (baseNumUnits : DefenseArea -> int) (area : DefenseArea, areaState : DefenseAreaState) =
     let owner = getOwner area.Home.Home
     let numUnits =
         match owner with
@@ -184,8 +187,85 @@ let setNumUnitsAsIfFullySupplied getOwner inFrontLine (baseNumUnits : DefenseAre
                     baseNumUnits area
                 else
                     0
-    { DefenseAreaId = area.DefenseAreaId
-      NumUnits = numUnits
+    { areaState with
+        NumUnits = numUnits
+    }
+
+let getNumCanonsPerRegion (areas : (DefenseArea * DefenseAreaState) seq) =
+    areas
+    |> Seq.groupBy (fun (desc, state) -> desc.Home.Home)
+    |> Seq.map (fun (region, areas) -> region, areas |> Seq.map snd |> Seq.sumBy (fun area -> area.NumUnits))
+
+/// Compute set of pairs of regions that are neighbours and are controlled by different coalitions.
+let computeFrontLine (world : World) (regions : RegionState list) =
+    let wg = WorldFastAccess.Create world
+    let stateOfRegion =
+        let m =
+            regions
+            |> List.map(fun state -> state.RegionId, state)
+            |> dict
+        fun x -> m.[x]
+    seq {
+        for region in regions do
+            match region.Owner with
+            | None -> ()
+            | Some owner ->
+                let neighbours = (wg.GetRegion region.RegionId).Neighbours
+                let enemies =
+                    neighbours
+                    |> List.map stateOfRegion
+                    |> List.filter (fun region -> region.Owner.IsSome && region.Owner.Value <> owner)
+                for enemy in enemies do
+                    yield (region.RegionId, enemy.RegionId)
+    }
+    |> Set.ofSeq
+
+/// Set number of canons in each defense area
+let updateNumCanons (world : World) (state : WorldState) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+    let frontLine = computeFrontLine world state.Regions
+    let updateArea getCanonsForArea =
+        setNumUnitsAsIfFullySupplied
+            (fun region -> sg.GetRegion(region).Owner)
+            (fun x -> Set.contains x frontLine)
+            getCanonsForArea
+    // Number of anti-air canons in each anti-air defense area, assuming unlimited supplies
+    let antiAir =
+        List.zip world.AntiAirDefenses state.AntiAirDefenses
+        |> List.map (updateArea getAntiAirCanonsForArea)
+    // Number of anti-tank canons in each anti-tank defense area, assuming unlimited supplies
+    let antiTank =
+        List.zip world.AntiTankDefenses state.AntiTankDefenses
+        |> List.map (updateArea getAntiTankCanonsForArea)
+    // Total amount of anti-air and anti-tank canons in each region
+    let canonsPerRegion =
+        let m1 =
+            Seq.zip world.AntiAirDefenses antiAir
+            |> getNumCanonsPerRegion
+            |> dict
+        let m2 =
+            Seq.zip world.AntiTankDefenses antiTank
+            |> getNumCanonsPerRegion
+            |> dict
+        fun x -> m1.[x] + m2.[x]
+    // Correct number of defensive units depending on actual shell count.
+    let adjustNumCanons (area : DefenseArea, state : DefenseAreaState) =
+        let region = area.Home.Home
+        let totalUnits =
+            canonsPerRegion(region)
+        let supportedUnits =
+            int(ceil(sg.GetRegion(region).Supplies / canonCost))
+        if totalUnits > supportedUnits then
+            let factor = float32 supportedUnits / float32 totalUnits
+            { state with
+                NumUnits = int(ceil(factor * float32 state.NumUnits))
+            }
+        else
+            state
+    { state with
+        AntiTankDefenses = List.zip world.AntiTankDefenses antiTank |> List.map adjustNumCanons
+        AntiAirDefenses = List.zip world.AntiAirDefenses antiAir |> List.map adjustNumCanons
     }
 
 /// Build the initial state
@@ -265,75 +345,6 @@ let mkInitialState(world : World, strategyFile : string) =
               NumVehicles = vehicles
             }
         )
-    // Pairs of regions that are neighbours of eachother and belong to different coalitions.
-    let frontLine =
-        let stateOfRegion =
-            let m =
-                regions
-                |> List.map(fun state -> state.RegionId, state)
-                |> dict
-            fun x -> m.[x]
-        seq {
-            for region in regions do
-                match region.Owner with
-                | None -> ()
-                | Some owner ->
-                    let neighbours = (getRegion region.RegionId).Neighbours
-                    let enemies =
-                        neighbours
-                        |> List.map stateOfRegion
-                        |> List.filter (fun region -> region.Owner.IsSome && region.Owner.Value <> owner)
-                    for enemy in enemies do
-                        yield (region.RegionId, enemy.RegionId)
-        }
-        |> Set.ofSeq
-    // Maximum number of defensive units, i.e. the number if shell storage level was infinite.
-    let fromDefenseArea (baseNumUnits : DefenseArea -> int) (area : DefenseArea) =
-        let owner = getOwner area.Home.Home
-        setNumUnitsAsIfFullySupplied getOwner (fun x -> Set.contains x frontLine) baseNumUnits area
-    let antiAirDefenses =
-        world.AntiAirDefenses
-        |> List.map (fromDefenseArea getAntiAirCanonsForArea)
-    let antiTankDefenses =
-        world.AntiTankDefenses
-        |> List.map (fromDefenseArea getAntiTankCanonsForArea)
-    let getDefenseArea =
-        let m =
-            world.AntiAirDefenses @ world.AntiTankDefenses
-            |> Seq.map (fun area -> area.DefenseAreaId, area)
-            |> dict
-        fun x -> m.[x]
-    let unitsPerRegion =
-        let m =
-            antiAirDefenses @ antiTankDefenses
-            |> Seq.groupBy (fun defense ->
-                getDefenseArea(defense.DefenseAreaId).Home.Home
-            )
-            |> Seq.map (fun (key, states) -> key, states |> Seq.sumBy (fun state -> state.NumUnits))
-            |> dict
-        fun x -> m.[x]
-    let getRegionState =
-        let m =
-            regions
-            |> List.map (fun state -> state.RegionId, state)
-            |> dict
-        fun x -> m.[x]
-    // Correct number of defensive units depending on actual shell count.
-    let adjustNumUnits (state : DefenseAreaState) =
-        let region = (getDefenseArea state.DefenseAreaId).Home.Home
-        let totalUnits =
-            unitsPerRegion(region)
-        let supportedUnits =
-            int(ceil(getRegionState(region).Supplies / canonCost))
-        if totalUnits > supportedUnits then
-            let factor = float32 supportedUnits / float32 totalUnits
-            { state with
-                NumUnits = int(ceil(factor * float32 state.NumUnits))
-            }
-        else
-            state
-    let antiAirDefenses = antiAirDefenses |> List.map adjustNumUnits
-    let antiTankDefenses = antiTankDefenses |> List.map adjustNumUnits
     // Airfields with factories have ammo and plane.
     let mkAirfield (airfield : Airfield) =
         let hasFactories =
@@ -369,10 +380,11 @@ let mkInitialState(world : World, strategyFile : string) =
     let airfields = world.Airfields |> List.map mkAirfield
     { Airfields = airfields
       Regions = regions
-      DefenseAreas = antiAirDefenses @ antiTankDefenses
+      AntiAirDefenses = world.AntiAirDefenses |> List.map (fun area -> { DefenseAreaId = area.DefenseAreaId; NumUnits = 0})
+      AntiTankDefenses = world.AntiTankDefenses |> List.map (fun area -> { DefenseAreaId = area.DefenseAreaId; NumUnits = 0})
       Date = world.StartDate
     }
-
+    |> updateNumCanons world
 
 type WorldState with
     static member Create(world : World, strategyFile : string) = mkInitialState(world, strategyFile)
