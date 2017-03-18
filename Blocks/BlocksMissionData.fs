@@ -93,7 +93,7 @@ let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, 
         T.Integer number,
         T.Integer payload,
         T.Integer 0,
-        T.Boolean true,
+        T.Boolean false,
         T.Integer 60,
         T.String "",
         T.Integer 0,
@@ -102,7 +102,7 @@ let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, 
         T.Integer 0,
         T.Boolean true,
         T.Integer mods
-    )
+    ).SetRenewable(T.Boolean false)
 
 let newBlock idx country model script =
     T.Block(
