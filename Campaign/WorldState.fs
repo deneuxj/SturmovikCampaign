@@ -50,7 +50,7 @@ type RegionState = {
     StorageHealth : float32 list
     ProductionHealth : float32 list
     Products : ProductionAssignment
-    ShellCount : float32
+    Supplies : float32<E>
     NumVehicles : Map<GroundAttackVehicle, int>
 }
 with
@@ -70,8 +70,7 @@ type AirfieldState = {
     AirfieldId : AirfieldId
     NumPlanes : Map<PlaneModel, float32> // float because we are talking airplane damages into account. Two half-damaged planes make one usable one.
     StorageHealth : float32 list
-    BombWeight : float32<M>
-    NumRockets : int
+    Supplies : float32<E>
 }
 
 /// Packages all state data.
@@ -165,6 +164,30 @@ let computeRegionDistances (getPaths : World -> Path list) (getOwner : RegionId 
     let distances = work distances0 sources
     distances
 
+/// <summary>
+/// Set the number of units in the state of a defense area, not taking into account supplies.
+/// </summary>
+/// <param name="getOwner">return the owner of a region</param>
+/// <param name="inFrontLine">indicate whether a ground defense area needs to be equipped with anti-tank canons</param>
+/// <param name="baseNumUnits">get the number of units that will fit in a certain area</param>
+/// <param name="area">the description of the defense area</param>
+let setNumUnitsAsIfFullySupplied getOwner inFrontLine (baseNumUnits : DefenseArea -> int) (area : DefenseArea) =
+    let owner = getOwner area.Home.Home
+    let numUnits =
+        match owner with
+        | None -> 0
+        | Some _ ->
+            match area.Home with
+            | Central _ -> baseNumUnits area
+            | FrontLine(home, other) ->
+                if inFrontLine(home, other) then
+                    baseNumUnits area
+                else
+                    0
+    { DefenseAreaId = area.DefenseAreaId
+      NumUnits = numUnits
+    }
+
 /// Build the initial state
 let mkInitialState(world : World, strategyFile : string) =
     let data = T.GroupData(Stream.FromFile strategyFile)
@@ -214,31 +237,31 @@ let mkInitialState(world : World, strategyFile : string) =
         |> List.map (fun region ->
             let owner = getOwner region.RegionId
             // Defense strength and number of ground attack vehicles depends on distance from closest factory.
-            let shellCount, vehicles =
+            let supplies, vehicles =
                 match owner with
-                | None -> 0.0f, Map.empty
+                | None -> 0.0f<E>, Map.empty
                 | Some owner ->
                     let transportationCosts = getTransportationCosts owner
                     match Map.tryFind region.RegionId transportationCosts with
                     | None ->
-                        0.0f, Map.empty
+                        0.0f<E>, Map.empty
                     | Some costs ->
                         let costs = float32 costs
-                        let ammo =
+                        let supplies =
                             region.Storage
-                            |> Seq.sumBy (fun storage -> getShellsPerBuilding storage.Model / costs)
+                            |> Seq.sumBy (fun storage -> getSupplyCapacityPerBuilding storage.Model / costs)
                         let scale (n : int) =
                             int(ceil(float32 n / costs))
                         let vehicles =
                             [(HeavyTank, scale 3); (MediumTank, scale 9); (LightArmor, scale 3)]
                             |> Map.ofList
-                        ammo, vehicles
+                        supplies, vehicles
             { RegionId = region.RegionId
               Owner = owner
               StorageHealth = region.Storage |> List.map (fun _ -> 1.0f)
               ProductionHealth = region.Production |> List.map (fun _ -> 1.0f)
               Products = { Supplies = 0.0f<E>; Vehicles = Map.empty; Planes = Map.empty }
-              ShellCount = shellCount
+              Supplies = supplies
               NumVehicles = vehicles
             }
         )
@@ -267,20 +290,7 @@ let mkInitialState(world : World, strategyFile : string) =
     // Maximum number of defensive units, i.e. the number if shell storage level was infinite.
     let fromDefenseArea (baseNumUnits : DefenseArea -> int) (area : DefenseArea) =
         let owner = getOwner area.Home.Home
-        let numUnits =
-            match owner with
-            | None -> 0
-            | Some _ ->
-                match area.Home with
-                | Central _ -> baseNumUnits area
-                | FrontLine(home, other) ->
-                    if frontLine.Contains((home, other)) then
-                        baseNumUnits area
-                    else
-                        0
-        { DefenseAreaId = area.DefenseAreaId
-          NumUnits = numUnits
-        }
+        setNumUnitsAsIfFullySupplied getOwner (fun x -> Set.contains x frontLine) baseNumUnits area
     let antiAirDefenses =
         world.AntiAirDefenses
         |> List.map (fromDefenseArea getAntiAirCanonsForArea)
@@ -313,10 +323,10 @@ let mkInitialState(world : World, strategyFile : string) =
         let region = (getDefenseArea state.DefenseAreaId).Home.Home
         let totalUnits =
             unitsPerRegion(region)
-        let shells =
-            int(ceil(getRegionState(region).ShellCount))
-        if totalUnits > shells then
-            let factor = float32 shells / float32 totalUnits
+        let supportedUnits =
+            int(ceil(getRegionState(region).Supplies / canonCost))
+        if totalUnits > supportedUnits then
+            let factor = float32 supportedUnits / float32 totalUnits
             { state with
                 NumUnits = int(ceil(factor * float32 state.NumUnits))
             }
@@ -344,23 +354,17 @@ let mkInitialState(world : World, strategyFile : string) =
                 | Some Axis -> [ (Bf109e7, numF1); (Bf110e, numAttackers); (Bf109f2, numF1); (Mc202, numF2); (Ju88a4, numBombers - numJu52); (Ju52, numJu52) ] |> Map.ofList
             else
                 Map.empty
-        let storage =
+        let supplies =
             if hasFactories then
                 match owner with
-                | None -> 0.0f<M>
-                | Some _ -> airfield.Storage |> Seq.sumBy (fun gr -> getWeightCapacityPerBuilding gr.Model)
+                | None -> 0.0f<E>
+                | Some _ -> airfield.Storage |> Seq.sumBy (fun gr -> getSupplyCapacityPerBuilding gr.Model)
             else
-                0.0f<M>
-        let bombWeight, rockets =
-            match owner with
-            | Some Allies -> 0.8f * storage, 0.2f * storage
-            | Some Axis -> storage, 0.0f<M>
-            | None -> 0.0f<M>, 0.0f<M>
+                0.0f<E>
         { AirfieldId = airfield.AirfieldId
           NumPlanes = numPlanes
           StorageHealth = airfield.Storage |> List.map (fun _ -> 1.0f)
-          BombWeight = bombWeight
-          NumRockets = int(ceil(rockets / rocketWeight))
+          Supplies = supplies
         }
     let airfields = world.Airfields |> List.map mkAirfield
     { Airfields = airfields

@@ -7,12 +7,8 @@ open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
 
 [<Measure>]
-/// Production output (energy)
+/// Cost (energy)
 type E
-
-[<Measure>]
-/// Mass
-type M
 
 [<Measure>]
 /// Time
@@ -566,19 +562,12 @@ type World
 with
     member this.FastAccess = WorldFastAccess.Create(this)
 
-let shellWeight = 5.0f<M>
 
-let shellCost = 1.0f<E>
+let canonCost = 20.0f<E>
 
-let shellsPerCanon = 20.0f
+let getSupplyCapacityPerBuilding (model : string) = 5000.0f<E>
 
-let rocketWeight = 20.0f<M>
-
-let getWeightCapacityPerBuilding (model : string) = 5000.0f<M>
-
-let getEnergyHealthPerBuilding (model : string) = getWeightCapacityPerBuilding model * 1.0f<E/M>
-
-let getShellsPerBuilding (model : string) = (getWeightCapacityPerBuilding model) / shellWeight
+let getEnergyHealthPerBuilding (model : string) = getSupplyCapacityPerBuilding model
 
 let getDurabilityForBuilding (model : string) =
     match model with

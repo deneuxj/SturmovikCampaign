@@ -76,11 +76,11 @@ let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (stat
                         |> Seq.filter (fun af -> (getAirfield af.AirfieldId).Region = region.RegionId)
                         |> Seq.sumBy (fun af ->
                             Seq.zip (getAirfield af.AirfieldId).Storage af.StorageHealth
-                            |> Seq.sumBy (fun (building, health) -> health * getWeightCapacityPerBuilding building.Model))
+                            |> Seq.sumBy (fun (building, health) -> health * getSupplyCapacityPerBuilding building.Model))
                     let regionStorage =
                         let state = getState region.RegionId
                         Seq.zip region.Storage state.StorageHealth
-                        |> Seq.sumBy (fun (building, health) -> health * getWeightCapacityPerBuilding building.Model)
+                        |> Seq.sumBy (fun (building, health) -> health * getSupplyCapacityPerBuilding building.Model)
                     yield region.RegionId, regionStorage + afStorage
             }
             |> dict
@@ -89,11 +89,11 @@ let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (stat
         let m =
             seq {
                 for region in state.Regions do
-                    let afStorage =
+                    let afSupplies =
                         state.Airfields
                         |> Seq.filter (fun af -> (getAirfield af.AirfieldId).Region = region.RegionId)
-                        |> Seq.sumBy (fun af -> af.BombWeight + (float32 af.NumRockets) * rocketWeight)
-                    yield region.RegionId, region.ShellCount * shellWeight + afStorage
+                        |> Seq.sumBy (fun af -> af.Supplies)
+                    yield region.RegionId, region.Supplies + afSupplies
             }
             |> dict
         fun x -> m.[x]
@@ -108,7 +108,7 @@ let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (stat
             let receiveCapacity = (getStorageCapacity order.Convoy.Destination) - (getStorageContent order.Convoy.Destination)
             let sendCapacity =
                 getStorageContent order.Convoy.Start
-                |> min (shellWeight * order.Capacity / shellCost)
+                |> min (order.Capacity)
             -1.0f * (min sendCapacity receiveCapacity))
         // At most one convoy of each type from each region
         |> List.fold (fun (starts, ok) order ->

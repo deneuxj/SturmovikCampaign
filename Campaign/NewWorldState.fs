@@ -27,12 +27,11 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
                 let capacity =
                     let region = wg.GetRegion state.RegionId
                     Seq.zip region.Storage state.StorageHealth
-                    |> Seq.sumBy (fun (sto, health) -> health * getShellsPerBuilding sto.Model)
-                capacity - state.ShellCount
-                |> max 0.0f
+                    |> Seq.sumBy (fun (sto, health) -> health * getSupplyCapacityPerBuilding sto.Model)
+                capacity - state.Supplies
+                |> max 0.0f<E>
             else
-                0.0f)
-        |> (*) shellCost
+                0.0f<E>)
     
     let vehicleToProduce, vehicleNeed =
         let numHeavy, numMedium, numLight, need =
@@ -241,7 +240,7 @@ let convertProduction (world : World) (state : WorldState) =
         let supplySpaceAvailable =
             Seq.zip region.Storage regState.StorageHealth
             |> Seq.sumBy (fun (sto, health) -> health * getEnergyHealthPerBuilding sto.Model)
-            |> fun x -> x - regState.ShellCount * shellCost
+            |> fun x -> x - regState.Supplies
             |> max 0.0f<E>
         let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
         resupplied := { Region = region.RegionId; Energy = transferedEnergy } :: !resupplied
@@ -308,10 +307,10 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 let newStored =
                     match Map.tryFind regState.RegionId shipped with
                     | Some sent ->
-                        regState.ShellCount - sent / shellCost
+                        regState.Supplies - sent
                     | None ->
-                        regState.ShellCount
-                yield { regState with ShellCount = newStored }
+                        regState.Supplies
+                yield { regState with Supplies = newStored }
 
         ]
     let regionsAfterDamages =
@@ -375,8 +374,8 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         regState.StorageHealth,
                         region.Storage,
                         energy)
-                let shellCount = regState.ShellCount + energy / shellCost
-                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; ShellCount = shellCount }
+                let supplies = regState.Supplies + energy
+                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies }
         ]
     { state with Regions = regionsAfterSupplies }
 
