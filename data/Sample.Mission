@@ -174,14 +174,14 @@ MCU_TR_Entity
     OnReport
     {
       Type = 3;
-      CmdId = 10;
-      TarId = 11;
+      CmdId = 11;
+      TarId = 10;
     }
     OnReport
     {
       Type = 4;
       CmdId = 8;
-      TarId = 10;
+      TarId = 11;
     }
   }
 }
@@ -190,7 +190,7 @@ MCU_TR_Entity
 
 MCU_CMD_AttackTarget
 {
-  Index = 11;
+  Index = 10;
   Name = "command Attack";
   Desc = "";
   Targets = [];
@@ -388,7 +388,7 @@ MCU_CMD_Land
 
 MCU_CMD_TakeOff
 {
-  Index = 10;
+  Index = 11;
   Name = "command Take off";
   Desc = "";
   Targets = [];
@@ -1663,7 +1663,7 @@ MCU_TR_Entity
     OnEvent
     {
       Type = 13;
-      TarId = 10;
+      TarId = 11;
     }
   }
 }
