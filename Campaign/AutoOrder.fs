@@ -184,7 +184,7 @@ let createColumnMovementOrders criterion (coalition : CoalitionId, world : World
 
 
 let createGroundInvasionOrders =
-    createColumnMovementOrders (fun (a, b) -> match a with Some a -> a <> b | None -> false)
+    createColumnMovementOrders (fun (a, b) -> match a with Some a -> a <> b | None -> true)
 
 
 let valueOfVehicles =
