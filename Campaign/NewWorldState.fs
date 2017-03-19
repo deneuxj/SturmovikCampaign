@@ -313,6 +313,34 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 yield { regState with Supplies = newStored }
 
         ]
+    let airfieldsAfterDamages =
+        [
+            for afState in state.Airfields do
+                let planes =
+                    afState.NumPlanes
+                    |> Map.map (fun plane qty ->
+                        match Map.tryFind (ParkedPlane(afState.AirfieldId, plane)) damages with
+                        | Some damages ->
+                            let totalDamages =
+                                damages
+                                |> Seq.sumBy (fun data -> data.Amount)
+                            qty - totalDamages
+                        | None ->
+                            qty)
+                let storeHealth =
+                    afState.StorageHealth
+                    |> List.mapi (fun idx health ->
+                        match Map.tryFind (Airfield(afState.AirfieldId, idx)) damages with
+                        | Some damages ->
+                            damages
+                            |> Seq.sumBy (fun data -> data.Amount)
+                            |> (-) health
+                        | None ->
+                            health)
+                yield { afState with
+                            NumPlanes = planes
+                            StorageHealth = storeHealth }
+        ]
     let regionsAfterDamages =
         [
             for regState in regionsAfterShipping do
@@ -337,9 +365,9 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                             |> (-) health
                         | None ->
                             health)
-                // TODO: canon losses
                 yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth}
         ]
+    // TODO distribute supplies among regions and airfields
     let regionsAfterSupplies =
         [
             for regState in regionsAfterDamages do
@@ -377,7 +405,9 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 let supplies = regState.Supplies + energy
                 yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies }
         ]
-    { state with Regions = regionsAfterSupplies }
+    { state with
+        Regions = regionsAfterSupplies
+        Airfields = airfieldsAfterDamages }
 
 /// Update airfield planes according to departures and arrivals
 let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings : Landed list) =
