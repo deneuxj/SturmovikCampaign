@@ -605,8 +605,8 @@ let applyVehicleTransfers (state : WorldState) (movements : ColumnMovement list)
     { state with Regions = regions }
 
 
-let eveningStop = 18
-let morningStart = 8
+let eveningStop = 19
+let morningStart = 7
 
 let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures columnArrivals =
     let state = applyProduction dt world state
