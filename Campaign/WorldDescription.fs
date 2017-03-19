@@ -380,6 +380,20 @@ with
         | P40 -> basePlaneCost
         | Pe2s35 -> (7.5f / 3.0f) * basePlaneCost
 
+    static member AllModels =
+        [ Bf109e7
+          Bf109f2
+          Mc202
+          Bf110e
+          Ju88a4
+          Ju52
+          I16
+          IL2M41
+          Mig3
+          P40
+          Pe2s35 ]
+
+
 /// Description of an airfield: Its position, the planes that can be parked there, the ammo storage facilities.
 type Airfield = {
     AirfieldId : AirfieldId
