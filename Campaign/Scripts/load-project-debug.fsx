@@ -11,3 +11,4 @@
       "../MissionGeneration.fs"
       "../ResultExtraction.fs"
       "../NewWorldState.fs"
+      "../Run.fs"

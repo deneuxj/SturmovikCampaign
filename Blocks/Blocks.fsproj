@@ -69,7 +69,6 @@
     <Compile Include="StaticDefenses.Type.Factory.fs" />
     <Content Include="ProtoTrain.txt" />
     <Compile Include="Train.fs" />
-    <Compile Include="Strategy.fs" />
     <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>
@@ -77,10 +76,6 @@
     </None>
     <None Include="..\data\Blocks\Blocks.Mission">
       <Link>Blocks.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="..\data\Blocks\Strategy.Mission">
-      <Link>Strategy.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="..\data\Blocks\Vehicles.Mission">
