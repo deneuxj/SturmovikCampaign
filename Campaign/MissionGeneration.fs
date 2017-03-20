@@ -474,101 +474,75 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
                 yield entity :> Mcu.McuBase
     ]
 
-
-let createConvoys (missionLengthMinutes : int) (startInterval : int) (store : NumericalIdentifiers.IdStore) lcStore (world : World) (state : WorldState) (orders : ResupplyOrder list) =
-    let getOwner =
-        let m =
-            state.Regions
-            |> Seq.map(fun region -> region.RegionId, region.Owner)
-            |> dict
-        fun x -> m.[x]
-    [
-        for order in orders do
-            let convoy = order.Convoy
-            let paths =
-                match order.Means with
-                | ByRail -> world.Rails
-                | ByRoad -> world.Roads
-            let path =
-                paths
-                |> List.tryFind(fun road ->
-                    road.StartId = convoy.Start && road.EndId = convoy.Destination || road.StartId = convoy.Destination && road.EndId = convoy.Start)
-            match path with
-            | Some path ->
-                let vertices, kdir =
-                    if path.StartId = convoy.Start then
-                        path.Locations, float32
-                    else
-                        path.Locations |> List.rev, fun yori -> (if yori < 180.0f then yori + 180.0f else yori - 180.0f)
-                let pathVertices =
-                    vertices
-                    |> List.map (fun (v, yori) ->
-                        { Pos = v
-                          Ori = kdir yori
-                          Radius = 10000
-                          Speed = 50
-                          Priority = 1
-                        }
-                    )
-                let country, coalition =
-                    match getOwner convoy.Start with
-                    | None -> failwithf "Convoy starting from a neutral region '%A'" convoy.Start
-                    | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                    | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
-                let virtualConvoys =
-                    [
-                        for i in 1 .. startInterval .. missionLengthMinutes do
-                            let virtualConvoy =
-                                let convoyName = order.MissionLogEventName
-                                match order.Means with
-                                | ByRoad ->
-                                    VirtualConvoy.Create(store, lcStore, pathVertices, [], convoy.Size, country, coalition, convoyName, 0)
-                                    |> Choice1Of2
-                                | ByRail ->
-                                    let startV = pathVertices.Head
-                                    let endV = pathVertices |> List.last
-                                    TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
-                                    |> Choice2Of2
-                            let links =
-                                match virtualConvoy with
-                                | Choice1Of2 x -> x.CreateLinks()
-                                | Choice2Of2 x -> x.CreateLinks()
-                            let mcuGroup =
-                                match virtualConvoy with
-                                | Choice1Of2 x -> x :> McuUtil.IMcuGroup
-                                | Choice2Of2 x -> x :> McuUtil.IMcuGroup
-                            links.Apply(McuUtil.deepContentOf mcuGroup)
-                            yield virtualConvoy
-                    ]
-                let timers =
-                    [
-                        for conv1, conv2 in Seq.pairwise virtualConvoys do
-                            let getId = store.GetIdMapper()
-                            let timer = newTimer (getId 1)
-                            timer.Time <- float startInterval * 60.0
-                            let start1 =
-                                match conv1 with
-                                | Choice1Of2 x -> x.Api.Start
-                                | Choice2Of2 x -> x.TheTrain.Start
-                            let start2 =
-                                match conv2 with
-                                | Choice1Of2 x -> x.Api.Start
-                                | Choice2Of2 x -> x.TheTrain.Start
-                            Mcu.addTargetLink start1 (timer.Index)
-                            Mcu.addTargetLink timer start2.Index
-                            yield timer
-                    ]
-                yield virtualConvoys, timers
-            | None ->
-                ()
-    ]
+/// Convoys are created according to resupply orders. A given number of convoys start at mission start, then new convoys start whenever a convoy arrives or gets destroyed.
+let createConvoys store lcStore (world : World) (state : WorldState) (orders : ResupplyOrder list) =
+    let sg = WorldStateFastAccess.Create state
+    let convoys =
+        [
+            for order in orders do
+                let convoy = order.Convoy
+                let paths =
+                    match order.Means with
+                    | ByRail -> world.Rails
+                    | ByRoad -> world.Roads
+                let path =
+                    paths
+                    |> List.tryPick(fun road -> road.MatchesEndpoints(convoy.Start, convoy.Destination))
+                    |> Option.map (fun path -> path.Value)
+                match path with
+                | Some path ->
+                    let pathVertices =
+                        path
+                        |> List.map (fun (v, yori) ->
+                            { Pos = v
+                              Ori = yori
+                              Radius = 10000
+                              Speed = 50
+                              Priority = 1
+                            }
+                        )
+                    let country, coalition =
+                        match sg.GetRegion(convoy.Start).Owner with
+                        | None -> failwithf "Convoy starting from a neutral region '%A'" convoy.Start
+                        | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
+                        | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
+                    let virtualConvoy =
+                        let convoyName = order.MissionLogEventName
+                        match order.Means with
+                        | ByRoad ->
+                            VirtualConvoy.Create(store, lcStore, pathVertices, [], convoy.Size, country, coalition, convoyName, 0)
+                            |> Choice1Of2
+                        | ByRail ->
+                            let startV = pathVertices.Head
+                            let endV = pathVertices |> List.last
+                            TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
+                            |> Choice2Of2
+                    let links =
+                        match virtualConvoy with
+                        | Choice1Of2 x -> x.CreateLinks()
+                        | Choice2Of2 x -> x.CreateLinks()
+                    let mcuGroup =
+                        match virtualConvoy with
+                        | Choice1Of2 x -> x :> McuUtil.IMcuGroup
+                        | Choice2Of2 x -> x :> McuUtil.IMcuGroup
+                    links.Apply(McuUtil.deepContentOf mcuGroup)
+                    yield pathVertices.Head.Pos, virtualConvoy
+                | None ->
+                    ()
+        ]
+    let nodes =
+        let positions =
+            convoys
+            |> List.map fst
+        PriorityList.NodeList.Create(store, positions)
+    nodes, convoys |> List.map snd
 
 
 let splitCompositions vehicles =
-    Array.chunkBySize 15 vehicles
+    Array.chunkBySize ColumnMovement.MaxColumnSize vehicles
     |> List.ofArray
 
-
+/// Large columns are split to fit in the maximum size of columns, and each group starts separated by a given interval.
 let createColumns store lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval (orders : ColumnMovement list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
@@ -676,7 +650,7 @@ let createParkedPlanes store (world : World) (state : WorldState) =
     |> List.concat
 
 
-let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
+let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
     let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
     let weather = Weather.getWeather random (state.Date + daysOffset)
     let store = NumericalIdentifiers.IdStore()
@@ -689,7 +663,30 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
-    let convoysAndTimers = createConvoys missionLength convoySpacing store lcStore world state (axisOrders.Resupply @ alliesOrders.Resupply)
+    let mkConvoyNodes orders =
+        let convoyPrioNodes, convoys = createConvoys store lcStore world state orders
+        for node, convoy in List.zip convoyPrioNodes.Nodes convoys do
+            let start, destroyed, arrived =
+                match convoy with
+                | Choice1Of2 trucks ->
+                    trucks.Api.Start, trucks.Api.Destroyed, trucks.Api.Arrived
+                | Choice2Of2 train ->
+                    train.TheTrain.Start, train.TheTrain.Killed, train.TheTrain.Arrived
+            Mcu.addTargetLink node.Do start.Index
+            Mcu.addTargetLink destroyed convoyPrioNodes.Try.Index
+            Mcu.addTargetLink arrived convoyPrioNodes.Try.Index
+        for i, node in Seq.indexed convoyPrioNodes.Nodes do
+            if i < maxSimultaneousConvoys then
+                Mcu.addTargetLink missionBegin node.Do.Index
+            else
+                Mcu.addTargetLink missionBegin node.Enable.Index
+        let convoys : McuUtil.IMcuGroup list =
+            convoys
+            |> List.map (
+                function
+                | Choice1Of2 x -> x :> McuUtil.IMcuGroup
+                | Choice2Of2 x -> x :> McuUtil.IMcuGroup)
+        convoyPrioNodes.All, convoys
     let columns =
         axisOrders.Invasions @ alliesOrders.Invasions
         |> createColumns store lcStore world state missionBegin (float convoySpacing)
@@ -706,34 +703,11 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
     let reinforcements =
         reinforcements
         |> List.map (fun x -> x :> McuUtil.IMcuGroup)
-    for convoys, _ in convoysAndTimers do
-        match convoys with
-        | first :: _ ->
-            let firstStart =
-                match first with
-                | Choice1Of2 x -> x.Api.Start
-                | Choice2Of2 x -> x.TheTrain.Start
-            Mcu.addTargetLink missionBegin firstStart.Index
-        | [] ->
-            ()
-    let convoys : McuUtil.IMcuGroup list =
-        convoysAndTimers
-        |> Seq.map fst
-        |> Seq.concat
-        |> Seq.map (
-            function
-            | Choice1Of2 x -> x :> McuUtil.IMcuGroup
-            | Choice2Of2 x -> x :> McuUtil.IMcuGroup)
-        |> List.ofSeq
-    let interConvoyTimers =
-        convoysAndTimers
-        |> Seq.map snd
-        |> Seq.concat
-        |> Seq.map (fun x -> McuUtil.groupFromList [x])
-        |> List.ofSeq
     let parkedPlanes =
         createParkedPlanes store world state
         |> McuUtil.groupFromList
+    let axisPrio, axisConvoys = mkConvoyNodes axisOrders.Resupply
+    let alliesPrio, alliesConvoys = mkConvoyNodes alliesOrders.Resupply
     let missionBegin = McuUtil.groupFromList [missionBegin]
     let options =
         (Weather.setOptions weather state.Date options)
@@ -756,5 +730,7 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList spawns
-          parkedPlanes ] @ convoys @ columns @ reinforcements @ interConvoyTimers
+          parkedPlanes
+          axisPrio
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ reinforcements
     writeMissionFiles "eng" filename options allGroups

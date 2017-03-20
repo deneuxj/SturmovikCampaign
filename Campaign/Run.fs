@@ -11,6 +11,7 @@ type Configuration = {
     MissionName : string
     MissionLength : int
     ConvoyInterval : int
+    MaxSimultaneousConvoys : int
     OutputDir : string
     ServerDataDir : string
     ServerBinDir : string
@@ -126,7 +127,8 @@ module MissionFileGeneration =
         let mkOrders coalition =
             let convoyOrders =
                 createAllConvoyOrders coalition (world, state)
-                |> prioritizeConvoys config.MaxConvoys dt world state
+                |> prioritizeConvoys world state
+                |> List.truncate config.MaxConvoys
             let invasions =
                 createGroundInvasionOrders(coalition, world, state)
                 |> prioritizeGroundInvasionOrders(world, state)
@@ -170,7 +172,7 @@ module MissionFileGeneration =
             serializer.Serialize(alliesOrderFiles, allAlliesOrders)
 
         let missionName = config.MissionName
-        writeMissionFile random author config.MissionName briefing config.MissionLength config.ConvoyInterval options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
+        writeMissionFile random author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
 
         let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer")
         let swallow f = try f() with | _ -> ()
