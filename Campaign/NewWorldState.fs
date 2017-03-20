@@ -280,6 +280,24 @@ let convertProduction (world : World) (state : WorldState) =
         Regions = state.Regions |> List.map (fun region -> regions.Value.[region.RegionId]) },
     resupplied.Value
 
+/// Consume supplies to heal buildings
+let computeHealing(healths, buildings, energy) =
+    let energyPerBuilding =
+        buildings
+        |> List.map (fun (x : StaticGroup) -> getEnergyHealthPerBuilding x.Model)
+    let prodHealing, energy =
+        List.zip healths energyPerBuilding
+        |> List.fold (fun (healings, available) (health, healthCost : float32<E>) ->
+            let spend =
+                min ((1.0f - health) * healthCost) available
+            (spend / healthCost) :: healings, available - spend
+        ) ([], energy)
+    let prodHealing = List.rev prodHealing
+    let prodHealth =
+        List.zip healths prodHealing
+        |> List.map (fun (health, healing) -> health + healing |> max 0.0f |> min 1.0f)
+    prodHealth, energy
+
 /// Apply damages due to attacks, use supplies to repair damages and replenish storage
 let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (supplies : Resupplied list) (damages : Damage list) =
     let wg = WorldFastAccess.Create world
@@ -367,7 +385,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                             health)
                 yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth}
         ]
-    // TODO distribute supplies among regions and airfields
+    // Repair and resupply regions
     let regionsAfterSupplies =
         [
             for regState in regionsAfterDamages do
@@ -376,22 +394,6 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     match Map.tryFind region.RegionId supplies with
                     | Some e -> e
                     | None -> 0.0f<E>
-                let computeHealing(healths, buildings, energy) =
-                    let energyPerBuilding =
-                        buildings
-                        |> List.map (fun (x : StaticGroup) -> getEnergyHealthPerBuilding x.Model)
-                    let prodHealing, energy =
-                        List.zip healths energyPerBuilding
-                        |> List.fold (fun (healings, available) (health, healthCost : float32<E>) ->
-                            let spend =
-                                min ((1.0f - health) * healthCost) available
-                            (spend / healthCost) :: healings, available - spend
-                        ) ([], energy)
-                    let prodHealing = List.rev prodHealing
-                    let prodHealth =
-                        List.zip healths prodHealing
-                        |> List.map (fun (health, healing) -> health + healing)
-                    prodHealth, energy
                 let prodHealth, energy =
                     computeHealing(
                         regState.ProductionHealth,
@@ -402,12 +404,40 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         regState.StorageHealth,
                         region.Storage,
                         energy)
-                let supplies = regState.Supplies + energy
-                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies }
+                let storeCapacity =
+                    List.zip region.Storage regState.StorageHealth
+                    |> List.sumBy (fun (building, health) -> health * getEnergyHealthPerBuilding building.Model)
+                // Consume energy to fill supplies
+                // FIXME: we should only consume what's needed, i.e. no supplies for anti-tank defenses if there are no enemy regions nearby.
+                let toSupplies =
+                    storeCapacity - regState.Supplies
+                    |> min energy
+                    |> max 0.0f<E>
+                let supplies = regState.Supplies + toSupplies
+                let energy = energy - toSupplies
+                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies }, energy
         ]
+    let regionEnergies =
+        regionsAfterSupplies
+        |> Seq.map (fun (reg, energy) -> reg.RegionId, energy)
+        |> Map.ofSeq
+    // Use what's left for airfields
+    let airfieldsAfterResupplies =
+        let x, _ =
+            airfieldsAfterDamages
+            |> List.fold (fun (airfields, regionEnergies) afState ->
+                let af = wg.GetAirfield(afState.AirfieldId)
+                let energy =
+                    Map.tryFind af.Region regionEnergies
+                    |> fun x -> defaultArg x 0.0f<E>
+                let storeHealth, energy =
+                    computeHealing(afState.StorageHealth, af.Storage, energy)
+                { afState with StorageHealth = storeHealth } :: airfields, Map.add af.Region energy regionEnergies
+            ) ([], regionEnergies)
+        List.rev x
     { state with
-        Regions = regionsAfterSupplies
-        Airfields = airfieldsAfterDamages }
+        Regions = regionsAfterSupplies |> List.map fst
+        Airfields = airfieldsAfterResupplies }
 
 /// Update airfield planes according to departures and arrivals
 let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings : Landed list) =

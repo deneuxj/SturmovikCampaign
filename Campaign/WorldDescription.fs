@@ -14,6 +14,10 @@ type E
 /// Time
 type H
 
+[<Measure>]
+/// Mass
+type K
+
 type CoalitionId = Axis | Allies
 with
     /// <summary>
@@ -224,11 +228,12 @@ with
 
     member this.MatchesEndpoints(start, finish) =
         if this.StartId = start && this.EndId = finish then
-            Some this.Locations
+            Some(lazy this.Locations)
         elif this.StartId = finish && this.EndId = start then
-            this.Locations
-            |> List.rev
-            |> List.map (fun (pos, yori) -> pos, if yori < 180.0f then yori + 180.0f else yori - 180.0f)
+            lazy (
+                this.Locations
+                |> List.rev
+                |> List.map (fun (pos, yori) -> pos, if yori < 180.0f then yori + 180.0f else yori - 180.0f))
             |> Some
         else
             None
@@ -379,6 +384,20 @@ with
         | Mig3 -> (5.0f / 3.0f) * basePlaneCost
         | P40 -> basePlaneCost
         | Pe2s35 -> (7.5f / 3.0f) * basePlaneCost
+
+    member this.BombCapacity =
+        match this with
+        | Bf109e7 
+        | Bf109f2
+        | Mc202 -> 500.0f<K>
+        | Bf110e -> 1250.0f<K>
+        | Ju88a4 -> 2800.0f<K>
+        | Ju52 -> 0.0f<K>
+        | I16 -> 200.0f<K>
+        | IL2M41 -> 600.0f<K>
+        | Mig3 -> 200.0f<K>
+        | P40 -> 500.0f<K>
+        | Pe2s35 -> 1000.0f<K>
 
     static member AllModels =
         [ Bf109e7
@@ -578,6 +597,8 @@ with
 
 
 let canonCost = 50.0f<E>
+
+let bombCost = 100.0f<E> / 1000.0f<K>
 
 let getSupplyCapacityPerBuilding (model : string) = 100.0f<E>
 

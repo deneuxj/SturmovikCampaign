@@ -6,33 +6,76 @@ open Campaign.Orders
 open Vector
 open Util
 
-let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
-    let getRegion =
-        let m =
-            world.Regions
-            |> List.map (fun region -> region.RegionId, region)
-            |> dict
-        fun x -> m.[x]
-    let getOwner =
-        let m =
-            state.Regions
-            |> List.map (fun state -> state.RegionId, state.Owner)
-            |> dict
-        fun x -> m.[x]
+/// Compute the full-health storage capacity of each region, including airfields'
+let computeStorageCapacity (world : World) =
+    let afCapacity =
+        seq {
+            for af in world.Airfields do
+                let capacity =
+                    af.Storage
+                    |> Seq.sumBy (fun building -> getSupplyCapacityPerBuilding building.Model)
+                yield af.Region, capacity
+        }
+    let regCapacity =
+        seq {
+            for reg in world.Regions do
+                let capacity =
+                    reg.Storage
+                    |> Seq.sumBy (fun building -> getSupplyCapacityPerBuilding building.Model)
+                yield reg.RegionId, capacity
+        }
+    Seq.concat [ afCapacity; regCapacity ]
+    |> Seq.groupBy fst
+    |> Seq.map (fun (region, caps) -> region, caps |> Seq.sumBy snd)
+    |> Map.ofSeq
+
+/// Compute current storage of each region, including airfields'
+let computeStorage (world : World) (state : WorldState) =
+    let afStorage =
+        seq {
+            for af, afState in Seq.zip world.Airfields state.Airfields do
+                yield af.Region, afState.Supplies
+        }
+    let regStorage =
+        seq {
+            for regState in state.Regions do
+                yield regState.RegionId, regState.Supplies
+        }
+    Seq.concat [ afStorage; regStorage ]
+    |> Seq.groupBy fst
+    |> Seq.map (fun (region, caps) -> region, caps |> Seq.sumBy snd)
+    |> Map.ofSeq
+
+/// Create convoy orders from regions owned by a coalition to neighbour regions that are further away from factories.
+let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
+    let sg = WorldStateFastAccess.Create state
+    let getOwner = sg.GetRegion >> (fun x -> x.Owner)
     let distances = computeRegionDistances getPaths getOwner (coalition, world)
     let areConnectedByRoad(start, destination) =
         getPaths world
-        |> List.exists (fun path ->
-            path.StartId = start && path.EndId = destination || path.StartId = destination && path.EndId = start
-        )
+        |> List.exists (fun path -> path.MatchesEndpoints(start, destination).IsSome)
+    let capacities = computeStorageCapacity world
+    let storages = computeStorage world state
     [
         for region in world.Regions do
             match Map.tryFind region.RegionId distances with
             | Some level ->
                 for ngh in region.Neighbours do
                     match Map.tryFind ngh distances with
-                    | Some other when other > level && areConnectedByRoad(region.RegionId, ngh)->
-                        yield { Start = region.RegionId ; Destination = ngh ; Size = 8 }
+                    | Some other when other > level && areConnectedByRoad(region.RegionId, ngh) ->
+                        let transfer =
+                            let availableToSend =
+                                Map.tryFind region.RegionId storages
+                                |> fun x -> defaultArg x 0.0f<E>
+                            let availableToReceive =
+                                Map.tryFind ngh capacities
+                                |> fun x -> defaultArg x 0.0f<E>
+                            min availableToReceive availableToSend
+                        let size =
+                            ceil(transfer / vehicleCapacity)
+                            |> int
+                            |> min maxConvoySize
+                        yield { Start = region.RegionId ; Destination = ngh ; Size = size }
                     | _ ->
                         ()
             | _ ->
@@ -41,75 +84,89 @@ let createConvoyOrders (getPaths : World -> Path list) (coalition : CoalitionId)
 
 
 let createRoadConvoyOrders coalition =
-    createConvoyOrders (fun world -> world.Roads) coalition
+    createConvoyOrders (ColumnMovement.MaxColumnSize, ResupplyOrder.TruckCapacity) (fun world -> world.Roads) coalition
     >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
 
 
 let createRailConvoyOrders coalition =
-    createConvoyOrders (fun world -> world.Rails) coalition
+    createConvoyOrders (1, ResupplyOrder.TrainCapacity) (fun world -> world.Rails) coalition
     >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
 
 let createAllConvoyOrders coalition x =
     createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x
 
+let computeSupplyNeeds (world : World) (state : WorldState) =
+    let sg = WorldStateFastAccess.Create state
+    let wg = WorldFastAccess.Create world
+    // Bombs and repairs at airfields
+    let afNeeds =
+        seq {
+            for af, afs in Seq.zip world.Airfields state.Airfields do
+                let bombNeed =
+                    afs.NumPlanes
+                    |> Map.toSeq
+                    |> Seq.sumBy(fun (plane, qty) -> plane.BombCapacity * qty * bombCost)
+                let capacity =
+                    af.Storage
+                    |> Seq.sumBy (fun building -> getSupplyCapacityPerBuilding building.Model)
+                let supplyDiff = min bombNeed capacity
+                let repairs =
+                    Seq.zip af.Storage afs.StorageHealth
+                    |> Seq.sumBy (fun (building, health) -> (1.0f - health) * getEnergyHealthPerBuilding building.Model)
+                yield af.Region, supplyDiff + repairs
+        }
+    let frontLine = computeFrontLine world state.Regions
+    // Amounts of anti-tank and anti-air canons needed to have the region fully defended
+    let regionCanonNeeds =
+        seq {
+            for antiTank, antiTankState in Seq.zip world.AntiTankDefenses state.AntiTankDefenses do
+                match antiTank.Home with
+                | FrontLine(home, ngh) when frontLine.Contains(home, ngh)->
+                    yield home, float32(max 0 (getAntiTankCanonsForArea antiTank - antiTankState.NumUnits)) * canonCost
+                | _ ->
+                    ()
+            for antiAir, antiAirState in Seq.zip world.AntiAirDefenses state.AntiAirDefenses do
+                match antiAir.Home with
+                | Central(home) ->
+                    yield home, float32(max 0 (getAntiAirCanonsForArea antiAir - antiAirState.NumUnits)) * canonCost
+                | _ ->
+                    ()
+        }
+        |> Seq.groupBy fst
+        |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
+    // Costs for canons adjusted by storage capacity
+    let regionSaturatedCanonNeeds =
+        let capacities = computeStorageCapacity world
+        seq {
+            for region, costs in regionCanonNeeds do
+                let capacity =
+                    Map.tryFind region capacities
+                    |> fun x -> defaultArg x 0.0f<E>
+                let regState = sg.GetRegion(region)
+                let reg = wg.GetRegion(region)
+                let cost =
+                    min (capacity - regState.Supplies) costs
+                let repairs =
+                    List.zip reg.Production regState.ProductionHealth
+                    |> List.sumBy (fun (building, health) -> (1.0f - health) *  getEnergyHealthPerBuilding building.Model)
+                yield region, cost + repairs
+        }
+    Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]
+    |> Seq.groupBy fst
+    |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
+    |> Map.ofSeq
 
-let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
-    let getState =
-        let m =
-            state.Regions
-            |> Seq.map (fun state -> state.RegionId, state)
-            |> dict
-        fun x -> m.[x]
-    let getAirfield =
-        let m =
-            world.Airfields
-            |> Seq.map (fun af -> af.AirfieldId, af)
-            |> dict
-        fun x -> m.[x]
-    let getStorageCapacity =
-        let m =
-            seq {
-                for region in world.Regions do
-                    let afStorage =
-                        state.Airfields
-                        |> Seq.filter (fun af -> (getAirfield af.AirfieldId).Region = region.RegionId)
-                        |> Seq.sumBy (fun af ->
-                            Seq.zip (getAirfield af.AirfieldId).Storage af.StorageHealth
-                            |> Seq.sumBy (fun (building, health) -> health * getSupplyCapacityPerBuilding building.Model))
-                    let regionStorage =
-                        let state = getState region.RegionId
-                        Seq.zip region.Storage state.StorageHealth
-                        |> Seq.sumBy (fun (building, health) -> health * getSupplyCapacityPerBuilding building.Model)
-                    yield region.RegionId, regionStorage + afStorage
-            }
-            |> dict
-        fun x -> m.[x]
-    let getStorageContent =
-        let m =
-            seq {
-                for region in state.Regions do
-                    let afSupplies =
-                        state.Airfields
-                        |> Seq.filter (fun af -> (getAirfield af.AirfieldId).Region = region.RegionId)
-                        |> Seq.sumBy (fun af -> af.Supplies)
-                    yield region.RegionId, region.Supplies + afSupplies
-            }
-            |> dict
-        fun x -> m.[x]
+/// Prioritize convoys according to needs of destination
+let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrder list) =
+    let needs =
+        computeSupplyNeeds world state
     let sorted =
         orders
-        // Remove convoys that start from poorly filled regions
-        |> List.filter (fun order ->
-            let filledUp = (getStorageContent order.Convoy.Start) / (getStorageCapacity order.Convoy.Start)
-            filledUp > 0.5f)
-        // Sort by supply capacity
-        |> List.sortBy (fun order ->
-            let receiveCapacity = (getStorageCapacity order.Convoy.Destination) - (getStorageContent order.Convoy.Destination)
-            let sendCapacity =
-                getStorageContent order.Convoy.Start
-                |> min (order.Capacity)
-            -1.0f * (min sendCapacity receiveCapacity))
+        // Sort by supply needs
+        |> List.sortByDescending (fun order ->
+            Map.tryFind order.Convoy.Destination needs
+            |> fun x -> defaultArg x 0.0f<E>)
         // At most one convoy of each type from each region
         |> List.fold (fun (starts, ok) order ->
             let source = (order.Means, order.Convoy.Start)
@@ -121,7 +178,6 @@ let prioritizeConvoys (maxConvoys : int) (dt : float32<H>) (world : World) (stat
         |> snd
         |> List.rev
     sorted
-    |> List.take (min maxConvoys (List.length sorted))
 
 
 let createColumnMovementOrders criterion (coalition : CoalitionId, world : World, state : WorldState) =

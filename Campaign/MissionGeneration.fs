@@ -581,6 +581,7 @@ let createColumns store lcStore (world : World) (state : WorldState) (missionBeg
                 let path =
                     world.Roads
                     |> Seq.tryPick (fun path -> path.MatchesEndpoints(order.Start, order.Destination))
+                    |> Option.map (fun x -> x.Value)
                 match path with
                 | Some path ->
                     let travel, invasion =
