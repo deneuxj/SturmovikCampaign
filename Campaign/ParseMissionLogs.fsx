@@ -3,9 +3,13 @@
 #I @"bin\Debug"
 
 #r "Campaign.dll"
+#r "ploggy"
 
 #load "Configuration.fsx" 
 
 open Configuration
 
-Campaign.Run.MissionLogParsing.run config
+let data, states = Campaign.Run.MissionLogParsing.stage1 config
+let entries, shipped, resups, damages, tookOff, landed, columnLeft, columnArrived = data
+
+Campaign.Run.MissionLogParsing.stage2 config states

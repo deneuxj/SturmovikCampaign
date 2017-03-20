@@ -200,7 +200,7 @@ module MissionLogParsing =
     open ploggy
     open NLog
 
-    let run(config : Configuration) =
+    let stage1(config : Configuration) =
         let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
 
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -278,6 +278,9 @@ module MissionLogParsing =
 
         let state2 = newState dt world state movements shipments resups staticDamages takeOffs landings columnDepartures columnArrivals
 
+        (entries, shipments, resups, staticDamages, takeOffs, landings, columnDepartures, columnArrivals), (state, state2)
+
+    let stage2 config (state, state2) =
         let outputDir = config.OutputDir
 
         let backupFile name =
@@ -290,6 +293,7 @@ module MissionLogParsing =
             File.Copy(Path.Combine(outputDir, sprintf "%s.xml" name), backupDest)
     
         do
+            let serializer = FsPickler.CreateXmlSerializer(indent = true)
             backupFile "state"
             backupFile "axisOrders"
             backupFile "alliesOrders"
