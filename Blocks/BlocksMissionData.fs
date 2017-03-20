@@ -2,10 +2,13 @@
 
 open SturmovikMission.DataProvider
 open System.Numerics
+open System.IO
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission;../data/Blocks/Vehicles.mission">
 
-let blockMission = "Blocks.Mission"
+let blockMission =
+    let path = System.Reflection.Assembly.GetCallingAssembly().Location
+    Path.Combine(Path.GetDirectoryName(path), "Blocks.Mission")
 let blocksData = T.GroupData(Parsing.Stream.FromFile blockMission)
 
 // Utility functions to create MCU programmatically.

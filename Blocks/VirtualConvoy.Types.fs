@@ -22,7 +22,7 @@ with
     static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
-        let db = T.GroupData(Parsing.Stream.FromFile "Blocks.Mission").CreateMcuList()
+        let db = blocksData.CreateMcuList()
         let group = McuUtil.filterByPath ["Convoy"] db |> List.ofSeq
         for mcu in group do
             subst mcu

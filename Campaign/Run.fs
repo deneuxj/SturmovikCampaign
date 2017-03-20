@@ -34,7 +34,7 @@ module Init =
             | None ->
                 System.Random()
 
-        let world0, (blocks : T.Block list), (bridges : T.Bridge list), (options : T.Options) = World.Create(config.StrategyFile)
+        let world0, (blocks : T.Block list), (bridges : T.Bridge list), (options : T.Options) = World.Create(Path.Combine(config.ScriptPath, config.StrategyFile))
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
 
         let capacity =
@@ -71,7 +71,7 @@ module Init =
             let prod = Map.tryFind region.RegionId production |> fun x -> defaultArg x 0.0f<E/H>
             printfn "%20s | %6.1f - %3d | %4d - %5.1f | %4d - %5.1f" regionName prod (int cap) aa (100.0f * float32 aa / cap) at (100.0f * float32 at / cap)
 
-        let state = WorldState.Create(world, config.StrategyFile)
+        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile))
 
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let outputDir = config.OutputDir

@@ -3,6 +3,7 @@ module SturmovikMission.Blocks.Vehicles
 
 open SturmovikMission.DataProvider
 open BlocksMissionData
+open System.IO
 
 type VehicleTypeData = {
     Script : string
@@ -10,7 +11,8 @@ type VehicleTypeData = {
 }
 
 let private data =
-    T.GroupData(Parsing.Stream.FromFile "Vehicles.mission")
+    let path = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location)
+    T.GroupData(Parsing.Stream.FromFile(Path.Combine(path, "Vehicles.mission")))
 
 let private vehicles =
     data.ListOfVehicle
