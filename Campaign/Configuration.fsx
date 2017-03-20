@@ -20,7 +20,7 @@ let config =
         OutputDir = @"C:\Users\johann\Documents\AutoMoscow"
         ServerDataDir = @"E:\dserver\data"
         ServerBinDir = @"E:\dserver\bin"
-        ServerSdsFile = @"data\sds\dev.sds"
+        ServerSdsFile = @"sds\devserver.sds"
         ScriptPath = @"C:\Users\johann\Documents\SturmovikMission-git\Campaign\bin\Debug"
         Briefing = @"
 Let the battle begin!

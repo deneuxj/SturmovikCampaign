@@ -188,6 +188,7 @@ module MissionFileGeneration =
         proc.WaitForExit()
         swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".Mission")))
         printfn "Resaver exited with code %d" proc.ExitCode
+        proc.ExitCode
 
 module MissionLogParsing =
     open Campaign.WorldDescription

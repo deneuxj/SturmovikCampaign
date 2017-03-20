@@ -2,29 +2,33 @@
 
 #load "Configuration.fsx"
 
+#r "ploggy"
+
 open System.Diagnostics
 open System.IO
+open Configuration
 
-let runScript script =
-    let scriptPath = Path.Combine(Configuration.ScriptPath, script)
-    let p = ProcessStartInfo(Configuration.FsiPath, sprintf "%s" scriptPath)
-    p.WorkingDirectory <- System.Environment.CurrentDirectory
-    p.UseShellExecute <- false
-    Process.Start(p)
 
-let restartServer(runningProc : Process option) =
+let killServer(runningProc : Process option) =
     let procToKill = runningProc |> Option.filter (fun proc -> not proc.HasExited)
     let procsToKill =
         match procToKill with
         | None ->
             let procs =
                 Process.GetProcessesByName("DServer")
-                |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)) = Path.GetFullPath(Configuration.ServerBinDir))
+            let procs =
+                try
+                    procs
+                    |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)) = Path.GetFullPath(config.ServerBinDir))
+                with
+                | exc ->
+                    printfn "Failed to filter processes: '%s" exc.Message
+                    procs
             // Kill all DServers started from that instance directory (should be one or zero).
             if procs.Length = 0 then
                 printfn "No DServer running, none to kill."
             elif procs.Length > 1 then
-                printfn "Multiple DServer instances running under %s" Configuration.ServerBinDir
+                printfn "Multiple DServer instances running under %s" config.ServerBinDir
             procs
         | Some running ->
             [| running |]
@@ -36,10 +40,13 @@ let restartServer(runningProc : Process option) =
         | e ->
             printfn "Failed to kill DServer.exe: %s" e.Message
 
+let startServer() =
     // Start DServer with given SDS file.
     try
-        let exePath = Path.Combine(Configuration.ServerBinDir, "game", "DServer.exe")
-        let si = ProcessStartInfo(exePath, Configuration.ServerSdsFile)
+        let exePath = Path.Combine(config.ServerBinDir, "game", "DServer.exe")
+        let sdsPath = Path.Combine(config.ServerDataDir, config.ServerSdsFile)
+        printfn "Will start server '%s' with arg '%s'" exePath sdsPath
+        let si = ProcessStartInfo(exePath, sdsPath)
         si.WorkingDirectory <- Path.GetDirectoryName(exePath)
         si.UseShellExecute <- false
         let proc = Process.Start(si)
@@ -52,23 +59,28 @@ let restartServer(runningProc : Process option) =
 
 let rec loop serverProc =
     async {
-        let proc = runScript "GenerateMission.fsx"
-        proc.WaitForExit()
-        if proc.ExitCode = 0 then
-            let serverProc = restartServer serverProc
+        printfn "Preparing to kill server..."
+        killServer serverProc
+        printfn "Server killed. Preparing to generate mission..."
+        let exitStatus = Campaign.Run.MissionFileGeneration.run config
+        //let exitStatus = 0
+        if exitStatus = 0 then
+            printfn "Mission generated, preparing to restart server..."
+            let serverProc = startServer()
             match serverProc with
             | Some serverProc ->
-                do! Async.Sleep(Configuration.MissionLength * 60000)
-                let proc = runScript "ParseMissionLog.fsx"
-                proc.WaitForExit()
-                if proc.ExitCode = 0 then
-                    return! loop (Some serverProc)
-                else
-                    printfn "Failed to extract results from mission log"
+                printfn "Server restarted, waiting for mission end..."
+                do! Async.Sleep(config.MissionLength * 60000)
+                printfn "Mission time elapsed, preparing to extract results and update state.."
+                Campaign.Run.MissionLogParsing.stage1 config
+                |> snd
+                |> Campaign.Run.MissionLogParsing.stage2 config
+                printfn "Results extracted and state updated"
+                return! loop (Some serverProc)
             | None ->
                 printfn "Failed to restart server"
         else
-            printfn "Failed to generate mission"
+            printfn "Mission not generated"
     }
 
 loop None
