@@ -160,7 +160,7 @@ module MissionFileGeneration =
         let allAlliesOrders = mkAllOrders Allies
 
         let author = "coconut"
-        let briefing = config.Briefing.Replace(@"\r\n", @"\n").Replace(@"\n", "<br>")
+        let briefing = config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
 
         do
             let outputDir = config.OutputDir
