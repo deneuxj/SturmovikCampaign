@@ -3,11 +3,12 @@
 #load "Configuration.fsx"
 
 #r "ploggy"
+#r "FsPickler"
 
 open System.Diagnostics
 open System.IO
 open Configuration
-
+open MBrace.FsPickler
 
 let killServer(runningProc : Process option) =
     let procToKill = runningProc |> Option.filter (fun proc -> not proc.HasExited)
@@ -57,31 +58,93 @@ let startServer() =
         printfn "Failed to start DServer.exe: %s" e.Message
         None
 
-let rec loop serverProc =
-    async {
-        printfn "Preparing to kill server..."
-        killServer serverProc
-        printfn "Server killed. Preparing to generate mission..."
-        let exitStatus = Campaign.Run.MissionFileGeneration.run config
-        //let exitStatus = 0
-        if exitStatus = 0 then
-            printfn "Mission generated, preparing to restart server..."
-            let serverProc = startServer()
-            match serverProc with
-            | Some serverProc ->
-                printfn "Server restarted, waiting for mission end..."
-                do! Async.Sleep(config.MissionLength * 60000)
-                printfn "Mission time elapsed, preparing to extract results and update state.."
+type ExecutionState =
+    | KillServer
+    | GenerateMission
+    | StartServer
+    | WaitForMissionEnd of System.DateTime
+    | ExtractResults
+    | Failed of string * ExecutionState
+with
+    member this.GetAsync(serverProc : Process option) =
+        match this with
+        | KillServer ->
+            async {
+                killServer serverProc
+                return None, GenerateMission
+            }
+        | GenerateMission ->
+            async {
+                let exitStatus = Campaign.Run.MissionFileGeneration.run config
+                if exitStatus <> 0 then
+                    return None, Failed(sprintf "Resaver failed, exit status %d" exitStatus, this)
+                else
+                    return None, StartServer
+            }
+        | StartServer ->
+            async {
+                let serverProc = startServer()
+                match serverProc with
+                | None ->
+                    return None, Failed("Failed to start server", this)
+                | Some _ ->
+                    let expectedMissionEnd = System.DateTime.Now + System.TimeSpan(600000000L * int64 config.MissionLength)
+                    return serverProc, WaitForMissionEnd expectedMissionEnd
+            }
+        | WaitForMissionEnd time ->
+            let rec work() =
+                async {
+                    if System.DateTime.Now >= time then
+                        return serverProc, ExtractResults
+                    else
+                        do! Async.Sleep 60000
+                        return! work()
+                }
+            work()
+        | ExtractResults ->
+            async {
                 Campaign.Run.MissionLogParsing.stage1 config
                 |> snd
                 |> Campaign.Run.MissionLogParsing.stage2 config
-                printfn "Results extracted and state updated"
-                return! loop (Some serverProc)
-            | None ->
-                printfn "Failed to restart server"
-        else
-            printfn "Mission not generated"
-    }
+                return serverProc, KillServer
+            }
+        | Failed(msg, state) ->
+            async {
+                return serverProc, this
+            }
 
-loop None
-|> Async.RunSynchronously
+    member this.Save() =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let statusFile = Path.Combine(config.OutputDir, "loopState.xml")
+        if File.Exists(statusFile) then
+            File.Delete(statusFile)
+        use s = File.CreateText(statusFile)
+        serializer.Serialize(s, this)
+
+    static member Restore() =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let statusFile = Path.Combine(config.OutputDir, "loopState.xml")
+        if File.Exists(statusFile) then
+            use s = File.OpenText(statusFile)
+            serializer.Deserialize<ExecutionState>(s)
+        else
+            StartServer
+
+let loop() =
+    let rec work (status : ExecutionState) (serverProc : Process option) =
+        async {
+            match status with
+            | Failed(msg, status) ->
+                printfn "Execution aborted due to failure: %s" msg
+                status.Save()
+            | _ ->
+                let action = status.GetAsync(serverProc)
+                let! res = action
+                let serverProc, status = res
+                status.Save()
+                return! work status serverProc
+        }
+    let status = ExecutionState.Restore()
+    Async.RunSynchronously(work status None)
+
+loop()
