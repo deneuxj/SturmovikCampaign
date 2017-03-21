@@ -200,6 +200,7 @@ module MissionLogParsing =
     open System.IO
     open ploggy
     open NLog
+    open System.Text.RegularExpressions
 
     let stage1(config : Configuration) =
         let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
@@ -224,8 +225,22 @@ module MissionLogParsing =
             Plogger.Init()
 
         let entries =
+            let missionHasPassed30Min (entry : LogEntry) =
+                entry.Timestamp > System.TimeSpan(0, 30, 0)
             seq {
-                for file in Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt") do
+                let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
+                let r = Regex(@"(missionReport\(.*\))\[([0-9]+)\]\.txt")
+                let ordered =
+                    unordered
+                    |> Seq.choose(fun path ->
+                        let m = r.Match(Path.GetFileName(path))
+                        if not m.Success then
+                            None
+                        else
+                            Some(path, (m.Groups.[1].ToString(), System.Int32.Parse(m.Groups.[2].ToString()))))
+                    |> Seq.sortBy snd
+                    |> Seq.map fst
+                for file in ordered do
                     for line in File.ReadAllLines(file) do
                         yield LogEntry.Parse(line)
             }
@@ -242,21 +257,41 @@ module MissionLogParsing =
                 | :? MissionEndEntry -> true
                 | _ -> false
             )
-            |> Seq.sortBy (fun x -> x.Timestamp)
-            |> Seq.skipWhile (
-                function
-                | :? MissionStartEntry as entry ->
-                    entry.MissionTime <> state.Date
-                | _ -> true
-            )
-            |> Seq.takeWhile (
-                function
-                | :? MissionStartEntry as entry ->
-                    entry.MissionTime = state.Date
-                | _ -> true
-            )
-            |> Seq.cache
+            |> Seq.fold (fun (previous, current) entry ->  // Keep the latest mission reports with the proper mission start date
+                match current, entry with
+                | _, (:? MissionStartEntry as start) ->
+                    // Move current to previous if it's non empty and has lasted long enough (30 minutes)
+                    let previous =
+                        match current with
+                        | [] -> previous
+                        | (last : LogEntry) :: _ ->
+                            if missionHasPassed30Min last then
+                                current
+                            else
+                                previous
+                    let expectedMissionFile = sprintf "Multiplayer/%s.msnbin" config.MissionName
+                    if start.MissionTime = state.Date && start.MissionFile = expectedMissionFile then
+                        previous, [entry] // Start new list
+                    else
+                        previous, [] // Start new skip
+                | [], _ ->
+                    previous, [] // Skip, looking for next mission start that has the right time
+                | _ :: _, _ ->
+                    previous, entry :: current // Recording, update current
+            ) ([], [])
+            |> function (previous, []) -> previous | (_, current) -> current // current if it's non empty, previous otherwise
+            |> fun current -> // Check if current is long enough
+                match current with
+                | last :: _ ->
+                    if missionHasPassed30Min last then
+                        current
+                    else
+                        []
+                | [] -> []
+            |> List.rev
 
+        if List.isEmpty entries then
+            failwith "No entries found suitable for result extraction"
         let shipments =
             let shipmentAxis = extractSuppliesShipped state axisOrders.Resupply entries |> List.ofSeq
             let shipmentAllies = extractSuppliesShipped state alliesOrders.Resupply entries |> List.ofSeq
