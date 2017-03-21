@@ -146,15 +146,19 @@ let loop() =
     let rec work (status : ExecutionState) (serverProc : Process option) =
         async {
             match status with
-            | Failed(msg, status) ->
+            | Failed(msg, _) ->
                 printfn "Execution aborted due to failure: %s" msg
                 status.Save()
             | _ ->
                 let action = status.GetAsync(serverProc)
-                let! res = action
-                let serverProc, status = res
-                status.Save()
-                return! work status serverProc
+                try
+                    let! res = action
+                    let serverProc, status = res
+                    status.Save()
+                    return! work status serverProc
+                with
+                | exc ->
+                    return! work (Failed(exc.Message, status)) None
         }
     let status = ExecutionState.Restore()
     // If the saved state was waiting, check if we got back before the expected end time and the server is running
