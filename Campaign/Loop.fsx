@@ -10,21 +10,25 @@ open System.IO
 open Configuration
 open MBrace.FsPickler
 
+let findRunningServers() =
+        let procs =
+            Process.GetProcessesByName("DServer")
+        let procs =
+            try
+                procs
+                |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)) = Path.GetFullPath(config.ServerBinDir))
+            with
+            | exc ->
+                printfn "Failed to filter processes: '%s" exc.Message
+                procs
+        procs
+    
 let killServer(runningProc : Process option) =
     let procToKill = runningProc |> Option.filter (fun proc -> not proc.HasExited)
     let procsToKill =
         match procToKill with
         | None ->
-            let procs =
-                Process.GetProcessesByName("DServer")
-            let procs =
-                try
-                    procs
-                    |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)) = Path.GetFullPath(config.ServerBinDir))
-                with
-                | exc ->
-                    printfn "Failed to filter processes: '%s" exc.Message
-                    procs
+            let procs = findRunningServers()
             // Kill all DServers started from that instance directory (should be one or zero).
             if procs.Length = 0 then
                 printfn "No DServer running, none to kill."
@@ -70,11 +74,13 @@ with
         match this with
         | KillServer ->
             async {
+                printfn "Kill server..."
                 killServer serverProc
                 return None, GenerateMission
             }
         | GenerateMission ->
             async {
+                printfn "Generate mission..."
                 let exitStatus = Campaign.Run.MissionFileGeneration.run config
                 if exitStatus <> 0 then
                     return None, Failed(sprintf "Resaver failed, exit status %d" exitStatus, this)
@@ -83,26 +89,31 @@ with
             }
         | StartServer ->
             async {
+                printfn "Start server..."
                 let serverProc = startServer()
                 match serverProc with
                 | None ->
                     return None, Failed("Failed to start server", this)
                 | Some _ ->
-                    let expectedMissionEnd = System.DateTime.Now + System.TimeSpan(600000000L * int64 config.MissionLength)
+                    let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
                     return serverProc, WaitForMissionEnd expectedMissionEnd
             }
         | WaitForMissionEnd time ->
             let rec work() =
                 async {
-                    if System.DateTime.Now >= time then
+                    if System.DateTime.UtcNow >= time then
                         return serverProc, ExtractResults
                     else
                         do! Async.Sleep 60000
                         return! work()
                 }
-            work()
+            async {
+                printfn "Wait..."
+                return! work()
+            }
         | ExtractResults ->
             async {
+                printfn "Extract results..."
                 Campaign.Run.MissionLogParsing.stage1 config
                 |> snd
                 |> Campaign.Run.MissionLogParsing.stage2 config
@@ -110,6 +121,7 @@ with
             }
         | Failed(msg, state) ->
             async {
+                printfn "Failed!"
                 return serverProc, this
             }
 
@@ -145,6 +157,23 @@ let loop() =
                 return! work status serverProc
         }
     let status = ExecutionState.Restore()
+    // If the saved state was waiting, check if we got back before the expected end time and the server is running
+    let status =
+        match status with
+        | WaitForMissionEnd time ->
+            if System.DateTime.UtcNow < time then
+                if findRunningServers().Length > 0 then
+                    printfn "Resume waiting"
+                    status // deadline not passed, and server running -> resume waiting
+                else
+                    printfn "Restart server"
+                    StartServer // deadline not passed, no server running -> restart the server
+            else
+                printfn "Extract results"
+                ExtractResults // deadline passed -> extract results
+        | _ ->
+            printfn "Resume"
+            status
     Async.RunSynchronously(work status None)
 
 loop()
