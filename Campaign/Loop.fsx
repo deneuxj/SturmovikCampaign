@@ -161,6 +161,17 @@ let loop() =
                     return! work (Failed(exc.Message, status)) None
         }
     let status = ExecutionState.Restore()
+    // If the status was failed, plan to retry the operation that failed.
+    let status =
+        match status with
+        | Failed(msg, ExtractResults) ->
+            printfn "Previously failed to extract results, will restart the server"
+            StartServer
+        | Failed(msg, status) ->
+            printfn "Retry after failure '%s'" msg
+            status
+        | _ ->
+            status
     // If the saved state was waiting, check if we got back before the expected end time and the server is running
     let status =
         match status with
