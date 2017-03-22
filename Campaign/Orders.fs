@@ -26,8 +26,8 @@ type ResupplyOrder = {
     Convoy : ConvoyOrder
 }
 with
-    static member TruckCapacity = 1000.0f<E>
-    static member TrainCapacity = 20000.0f<E>
+    static member TruckCapacity = 100.0f<E>
+    static member TrainCapacity = 2000.0f<E>
 
     member this.Capacity =
         match this.Means with
