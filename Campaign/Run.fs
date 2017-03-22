@@ -321,8 +321,9 @@ module MissionLogParsing =
 
         let backupFile name =
             let backupName =
-                sprintf "%s-%s-%s.xml" name (state.Date.ToShortDateString()) (state.Date.ToShortTimeString())
-                |> fun x -> x.Replace(":", "-")
+                let dateString =
+                    state.Date.ToString("yyyy-MM-dd_HH-mm-ss")
+                sprintf "%s_%s.xml" name dateString
             let backupDest = Path.Combine(outputDir, backupName)
             if File.Exists backupDest then
                 File.Delete(backupDest)
