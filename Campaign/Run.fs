@@ -27,7 +27,7 @@ module Init =
     open System.IO
     open MBrace.FsPickler
 
-    let run(config : Configuration) =
+    let createWorld(config : Configuration) =
         let random =
             match config.Seed with
             | Some n ->
@@ -72,20 +72,27 @@ module Init =
             let prod = Map.tryFind region.RegionId production |> fun x -> defaultArg x 0.0f<E/H>
             printfn "%20s | %6.1f - %3d | %4d - %5.1f | %4d - %5.1f" regionName prod (int cap) aa (100.0f * float32 aa / cap) at (100.0f * float32 at / cap)
 
-        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile))
-
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let outputDir = config.OutputDir
         use worldFile = File.CreateText(Path.Combine(outputDir, "world.xml"))
         serializer.Serialize(worldFile, world)
-        use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
-        serializer.Serialize(stateFile, state)
         use blocksFile = File.CreateText(Path.Combine(outputDir, "blocks.xml"))
         serializer.Serialize(blocksFile, blocks)
         use bridgesFile = File.CreateText(Path.Combine(outputDir, "bridges.xml"))
         serializer.Serialize(bridgesFile, bridges)
         use optionsFile = File.CreateText(Path.Combine(outputDir, "options.xml"))
         serializer.Serialize(optionsFile, options)
+
+    let createState(config : Configuration) =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
+        let world = serializer.Deserialize<World>(worldFile)
+
+        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile))
+
+        let outputDir = config.OutputDir
+        use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
+        serializer.Serialize(stateFile, state)
 
 
 module MissionFileGeneration =

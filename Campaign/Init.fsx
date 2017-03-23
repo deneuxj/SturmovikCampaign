@@ -7,4 +7,5 @@
 
 open Configuration
 
-Campaign.Run.Init.run config
+Campaign.Run.Init.createWorld config
+Campaign.Run.Init.createState config
