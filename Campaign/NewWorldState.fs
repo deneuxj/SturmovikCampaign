@@ -4,7 +4,8 @@ module Campaign.NewWorldState
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.ResultExtraction
-open Orders
+open Campaign.Util
+open Campaign.Orders
 
 /// What to produce in each category of production, and how much does each category need
 type ProductionPriorities = {
@@ -32,7 +33,8 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
                 |> max 0.0f<E>
             else
                 0.0f<E>)
-    
+    assert(shellNeed >= 0.0f<E>)
+
     let vehicleToProduce, vehicleNeed =
         let numHeavy, numMedium, numLight, need =
             let perRegion = GroundAttackVehicle.MediumTankCost * 10.0f
@@ -60,6 +62,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
             else
                 MediumTank
         vehicle, need
+    assert(vehicleNeed >= 0.0f<E>)
 
     let planeNeed(af : Airfield, state : AirfieldState) =
         let bomberCapacity =
@@ -139,6 +142,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
             match coalition with
             | Axis -> Bf109e7, 0.0f<E>
             | Allies -> I16, 0.0f<E>
+    assert(planeNeed >= 0.0f<E>)
     { Vehicle = vehicleToProduce
       PriorityVehicle = vehicleNeed
       Plane = plane
@@ -147,10 +151,10 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
     }
 
 
-/// Compute the total production capacity of a coalition.
-let computeProduction (coalition : CoalitionId) (region : Region) (regState : RegionState) =
-    Seq.zip region.Production regState.ProductionHealth
-    |> Seq.sumBy (fun (prod, health) -> health * getProductionPerBuilding prod.Model)
+/// Compute the total production capacity of a region
+let computeProduction (region : Region) (regState : RegionState) =
+    List.zip region.Production regState.ProductionHealth
+    |> List.sumBy (fun (prod, health) -> health * getProductionPerBuilding prod.Model)
 
 /// Add production units according to production priorities
 let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
@@ -160,8 +164,10 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
         let vehiclePrio, planePrio, energyPrio =
             let total =
                 priorities.PriorityPlane + priorities.PriorityShells + priorities.PriorityVehicle
-                |> max 0.1f<E>
-            priorities.PriorityVehicle / total, priorities.PriorityPlane / total, priorities.PriorityVehicle / total
+            if total <= 0.0f<E> then
+                0.0f, 0.0f, 0.0f
+            else
+                priorities.PriorityVehicle / total, priorities.PriorityPlane / total, priorities.PriorityVehicle / total
         let regions =
             [
                 for region, regState in Seq.zip world.Regions state.Regions do
@@ -172,23 +178,23 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
                                 vehiclePrio, planePrio, energyPrio
                             else
                                 vehiclePrio + 0.5f * planePrio, 0.0f, energyPrio + 0.5f * planePrio
-                        let energy = dt * computeProduction coalition region regState
-                        let shells = regState.Products.Supplies + energyPrio * energy
+                        let energy = dt * computeProduction region regState
+                        let supplies = regState.Products.Supplies + energyPrio * energy
                         let planes =
                             let oldValue =
-                                match Map.tryFind priorities.Plane regState.Products.Planes with
-                                | Some x -> x
-                                | None -> 0.0f<E>
+                                Map.tryFind priorities.Plane regState.Products.Planes
+                                |> Option.defaultVal 0.0f<E>
+                            assert(planePrio >= 0.0f)
+                            assert(planePrio <= 1.0f)
                             let newValue = oldValue + planePrio * energy
                             Map.add priorities.Plane newValue regState.Products.Planes
                         let vehicles =
                             let oldValue =
-                                match Map.tryFind priorities.Vehicle regState.Products.Vehicles with
-                                | Some x -> x
-                                | None -> 0.0f<E>
+                                Map.tryFind priorities.Vehicle regState.Products.Vehicles
+                                |> Option.defaultVal 0.0f<E>
                             let newValue = oldValue + vehiclePrio * energy
                             Map.add priorities.Vehicle newValue regState.Products.Vehicles
-                        let assignment = { regState.Products with Supplies = shells; Planes = planes; Vehicles = vehicles }
+                        let assignment = { regState.Products with Supplies = supplies; Planes = planes; Vehicles = vehicles }
                         yield { regState with Products = assignment }
                     else
                         yield regState
@@ -221,6 +227,7 @@ let convertProduction (world : World) (state : WorldState) =
                 regState.Products.Planes
                 |> Map.toSeq
                 |> Seq.fold (fun (newPlanes, remainingPlanes) (plane, energy) ->
+                    assert(energy >= 0.0f<E>)
                     let numNewPlanes = floor(energy / plane.Cost)
                     let energyLeft = energy - numNewPlanes * plane.Cost
                     (plane, int numNewPlanes) :: newPlanes, Map.add plane energyLeft remainingPlanes
@@ -232,6 +239,7 @@ let convertProduction (world : World) (state : WorldState) =
             regState.Products.Vehicles
             |> Map.toSeq
             |> Seq.fold (fun (newVehicles, remainingVehicles) (vehicle, energy) ->
+                assert(energy >= 0.0f<E>)
                 let numNewVehicles = floor(energy / vehicle.Cost)
                 let energyLeft = energy - numNewVehicles * vehicle.Cost
                 (vehicle, int numNewVehicles) :: newVehicles, Map.add vehicle energyLeft remainingVehicles
