@@ -37,7 +37,6 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
 
     let vehicleToProduce, vehicleNeed =
         let numHeavy, numMedium, numLight, need =
-            let perRegion = GroundAttackVehicle.MediumTankCost * 10.0f
             state.Regions
             |> Seq.filter (fun state -> state.Owner = Some coalition) // Regions we control
             |> Seq.filter (fun state -> // Regions at the front
@@ -50,7 +49,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
                 let numLight = state.GetNumVehicles LightArmor
                 let desiredValue = 3.0f * GroundAttackVehicle.HeavyTankCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.LightArmorCost
                 let availableValue = float32 numHeavy * GroundAttackVehicle.HeavyTankCost + float32 numMedium * GroundAttackVehicle.MediumTankCost + float32 numLight * GroundAttackVehicle.LightArmorCost
-                numHeavy, numMedium, numLight, desiredValue - availableValue)
+                numHeavy, numMedium, numLight, max 0.0f<E> (desiredValue - availableValue))
             |> Seq.fold (fun (t1, t2, t3, t4) (n1, n2, n3, n4) -> (t1 + n1, t2 + n2, t3 + n3, t4 + n4)) (0, 0, 0, 0.0f<E>)
         let vehicle =
             if numMedium = 0 then
