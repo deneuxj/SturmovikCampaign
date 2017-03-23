@@ -46,56 +46,6 @@ let computeStorage (world : World) (state : WorldState) =
     |> Seq.map (fun (region, caps) -> region, caps |> Seq.sumBy snd)
     |> Map.ofSeq
 
-/// Create convoy orders from regions owned by a coalition to neighbour regions that are further away from factories.
-let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
-    let sg = WorldStateFastAccess.Create state
-    let getOwner = sg.GetRegion >> (fun x -> x.Owner)
-    let distances = computeRegionDistances getPaths getOwner (coalition, world)
-    let areConnectedByRoad(start, destination) =
-        getPaths world
-        |> List.exists (fun path -> path.MatchesEndpoints(start, destination).IsSome)
-    let capacities = computeStorageCapacity world
-    let storages = computeStorage world state
-    [
-        for region in world.Regions do
-            match Map.tryFind region.RegionId distances with
-            | Some level ->
-                for ngh in region.Neighbours do
-                    match Map.tryFind ngh distances with
-                    | Some other when other > level && areConnectedByRoad(region.RegionId, ngh) ->
-                        let transfer =
-                            let availableToSend =
-                                Map.tryFind region.RegionId storages
-                                |> fun x -> defaultArg x 0.0f<E>
-                            let availableToReceive =
-                                Map.tryFind ngh capacities
-                                |> fun x -> defaultArg x 0.0f<E>
-                            min availableToReceive availableToSend
-                        let size =
-                            ceil(transfer / vehicleCapacity)
-                            |> int
-                            |> min maxConvoySize
-                        yield { Start = region.RegionId ; Destination = ngh ; Size = size }
-                    | _ ->
-                        ()
-            | _ ->
-                ()
-    ]
-
-
-let createRoadConvoyOrders coalition =
-    createConvoyOrders (ColumnMovement.MaxColumnSize, ResupplyOrder.TruckCapacity) (fun world -> world.Roads) coalition
-    >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
-
-
-let createRailConvoyOrders coalition =
-    createConvoyOrders (1, ResupplyOrder.TrainCapacity) (fun world -> world.Rails) coalition
-    >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
-
-
-let createAllConvoyOrders coalition x =
-    createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x
-
 let computeSupplyNeeds (world : World) (state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
@@ -142,7 +92,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
             for region, costs in regionCanonNeeds do
                 let capacity =
                     Map.tryFind region capacities
-                    |> fun x -> defaultArg x 0.0f<E>
+                    |> Option.defaultVal 0.0f<E>
                 let regState = sg.GetRegion(region)
                 let reg = wg.GetRegion(region)
                 let cost =
@@ -156,6 +106,65 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
     |> Seq.groupBy fst
     |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
     |> Map.ofSeq
+
+/// Create convoy orders from regions owned by a coalition to neighbour regions that are further away from factories.
+let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
+    let sg = WorldStateFastAccess.Create state
+    let getOwner = sg.GetRegion >> (fun x -> x.Owner)
+    let distances = computeRegionDistances getPaths getOwner (coalition, world)
+    let areConnectedByRoad(start, destination) =
+        getPaths world
+        |> List.exists (fun path -> path.MatchesEndpoints(start, destination).IsSome)
+    let capacities = computeStorageCapacity world
+    let storages = computeStorage world state
+    let needs = computeSupplyNeeds world state
+    let tryFind x y = Map.tryFind x y |> Option.defaultVal 0.0f<E>
+    [
+        for region in world.Regions do
+            match Map.tryFind region.RegionId distances with
+            | Some level ->
+                for ngh in region.Neighbours do
+                    match Map.tryFind ngh distances with
+                    | Some other when other > level && areConnectedByRoad(region.RegionId, ngh) ->
+                        let transfer =
+                            let availableToSend = tryFind region.RegionId storages
+                            let senderNeeds = tryFind region.RegionId needs
+                            let willingToSend =
+                                availableToSend - senderNeeds
+                                |> max 0.0f<E>
+                            let alreadyAtReceiver = tryFind ngh storages
+                            let availableToReceive = tryFind ngh capacities
+                            let receiverNeeds = tryFind ngh needs
+                            let requested =
+                                (min receiverNeeds availableToReceive) - alreadyAtReceiver
+                                |> max 0.0f<E>
+                            min willingToSend requested
+                        if transfer > 0.0f<E> then
+                            let size =
+                                ceil(transfer / vehicleCapacity)
+                                |> int
+                                |> min maxConvoySize
+                            yield { Start = region.RegionId ; Destination = ngh ; Size = size }
+                    | _ ->
+                        ()
+            | _ ->
+                ()
+    ]
+
+
+let createRoadConvoyOrders coalition =
+    createConvoyOrders (ColumnMovement.MaxColumnSize, ResupplyOrder.TruckCapacity) (fun world -> world.Roads) coalition
+    >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
+
+
+let createRailConvoyOrders coalition =
+    createConvoyOrders (1, ResupplyOrder.TrainCapacity) (fun world -> world.Rails) coalition
+    >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
+
+
+let createAllConvoyOrders coalition x =
+    createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x
+
 
 /// Prioritize convoys according to needs of destination
 let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrder list) =
