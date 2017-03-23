@@ -26,7 +26,7 @@ with
             | MediumTank -> russianMediumTank
             | LightArmor -> russianLightArmor
 
-    static member LightArmorCost = canonCost * 3.0f
+    static member LightArmorCost = 600.0f<E>
     static member MediumTankCost = GroundAttackVehicle.LightArmorCost * 2.0f
     static member HeavyTankCost = GroundAttackVehicle.LightArmorCost * 5.0f
 

@@ -327,7 +327,7 @@ module PlaneTypes =
 open PlaneTypes
 open SturmovikMission.Blocks
 
-let private basePlaneCost = 1000.0f<E>
+let private basePlaneCost = 3000.0f<E>
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
@@ -616,5 +616,5 @@ let getDurabilityForBuilding (model : string) =
 
 let getProductionPerBuilding (model : string) =
     match model with
-    | Contains "industrial" -> 50.0f<E/H>
-    | _ -> 1.0f<E/H>
+    | Contains "industrial" -> 25.0f<E/H>
+    | _ -> 0.1f<E/H>
