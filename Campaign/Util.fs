@@ -54,3 +54,7 @@ let compactSeq (items : _ seq) =
         | None -> 1
         |> fun n -> Map.add item n m
     ) Map.empty
+
+/// Extensions to Option module
+module Option =
+    let defaultVal x y = defaultArg y x
