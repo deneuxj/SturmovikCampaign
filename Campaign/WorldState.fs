@@ -57,7 +57,15 @@ with
     member this.GetNumVehicles(vehicle : GroundAttackVehicle) =
         this.NumVehicles
         |> Map.tryFind vehicle
-        |> fun x -> defaultArg x 0
+        |> Option.defaultVal 0
+
+    member this.StorageCapacity(region : WorldDescription.Region) =
+        List.zip region.Storage this.StorageHealth
+        |> List.sumBy (fun (sto, health) -> health * WorldDescription.getSupplyCapacityPerBuilding sto.Model)
+
+    member this.ProductionCapacity(region : WorldDescription.Region) =
+        List.zip region.Production this.ProductionHealth
+        |> List.sumBy (fun (prod, health) -> health * WorldDescription.getProductionPerBuilding prod.Model)
 
 /// State of a defense area within a region.
 type DefenseAreaState = {
@@ -72,6 +80,10 @@ type AirfieldState = {
     StorageHealth : float32 list
     Supplies : float32<E>
 }
+with
+    member this.StorageCapacity(af : WorldDescription.Airfield) =
+        List.zip af.Storage this.StorageHealth
+        |> List.sumBy (fun (sto, health) -> health * WorldDescription.getSupplyCapacityPerBuilding(sto.Model))
 
 /// Packages all state data.
 type WorldState = {
