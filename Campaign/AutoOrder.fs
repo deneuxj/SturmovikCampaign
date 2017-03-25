@@ -207,7 +207,6 @@ let createGroundInvasionOrders (coalition : CoalitionId, world : World, state : 
                 for target in targets do
                     let composition =
                         regState.NumVehicles
-                    assert((composition |> Map.toSeq |> Seq.sumBy snd) <= 15)
                     let composition = expandMap composition
                     yield {
                         OrderId = {
