@@ -1582,7 +1582,7 @@ Vehicle
 Block
 {
   Name = "AntiTankPosition";
-  Index = 52;
+  Index = 50;
   LinkTrId = 0;
   XPos = 29108.284;
   YPos = 108.584;
@@ -1605,7 +1605,7 @@ Block
 Block
 {
   Name = "AntiAirPosition";
-  Index = 53;
+  Index = 51;
   LinkTrId = 0;
   XPos = 29092.732;
   YPos = 108.584;
@@ -1621,6 +1621,68 @@ Block
   DamageReport = 50;
   DamageThreshold = 1;
   DeleteAfterDeath = 1;
+}
+
+
+
+Vehicle
+{
+  Name = "SearchLightGER";
+  Index = 52;
+  LinkTrId = 0;
+  XPos = 29046.089;
+  YPos = 108.584;
+  ZPos = 20144.091;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\searchlightger.txt";
+  Model = "graphics\artillery\searchlightger\searchlightger.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Vehicle
+{
+  Name = "SearchLightRUS";
+  Index = 53;
+  LinkTrId = 0;
+  XPos = 29031.046;
+  YPos = 108.584;
+  ZPos = 20143.662;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\searchlightsu.txt";
+  Model = "graphics\artillery\searchlightsu\searchlightsu.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
 }
 
 

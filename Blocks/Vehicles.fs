@@ -142,6 +142,18 @@ let germanLightArmor =
       Model = tank.GetModel().Value
     }
 
+let russianSearchLight =
+    let light = vehicles.[T.Vehicles.SearchLightRUS]
+    { Script = light.GetScript().Value
+      Model = light.GetModel().Value
+    }
+
+let germanSearchLight =
+    let light = vehicles.[T.Vehicles.SearchLightGER]
+    { Script = light.GetScript().Value
+      Model = light.GetModel().Value
+    }
+
 let russianTrain =
     let train = trains.[T.Vehicles.TrainRUS]
     { Script = train.GetScript().Value

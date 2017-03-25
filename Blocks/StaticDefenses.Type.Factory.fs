@@ -40,7 +40,7 @@ with
 //                yield this.EnemyClose.All
             ]
 
-    static member Create(specialty : DefenseSpecialty, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+    static member Create(specialty : DefenseSpecialty, includeSearchLights : bool, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let center =
             let n = max 1 (List.length boundary)
             let k = 1.0f / float32 n
@@ -101,8 +101,21 @@ with
         checkZone.Objects <- proximity.Objects
         checkZone.Targets <- proximity.Targets
         McuUtil.vecCopy proximity.Pos checkZone.Pos
-        let api = Api.Create(store, center)
+        // Replace a few canons by searchlights during dark hours
+        if includeSearchLights then
+            let numSearchLights = max 1 (groupSize / 10)
+            for kvp in antiTankCanonSet |> Seq.truncate numSearchLights do
+                let canon = kvp.Value
+                let entity = canon.Canon
+                let vehicle = McuUtil.getHasEntityByIndex entity.MisObjID (McuUtil.deepContentOf canon.All)
+                let model =
+                    match country with
+                    | Mcu.CountryValue.Germany -> Vehicles.germanSearchLight
+                    | _ -> Vehicles.russianSearchLight
+                vehicle.Model <- model.Model
+                vehicle.Script <- model.Script
         // Result
+        let api = Api.Create(store, center)
         { CanonSet = antiTankCanonSet
           EnemyClose = enemyClose
           Decorations = positions
