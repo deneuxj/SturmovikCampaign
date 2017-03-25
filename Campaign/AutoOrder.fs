@@ -120,17 +120,18 @@ let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getP
     let needs = computeSupplyNeeds world state
     let tryFind x y = Map.tryFind x y |> Option.defaultVal 0.0f<E>
     [
-        for region in world.Regions do
+        for region, regState in List.zip world.Regions state.Regions do
             match Map.tryFind region.RegionId distances with
             | Some level ->
                 for ngh in region.Neighbours do
                     match Map.tryFind ngh distances with
                     | Some other when other > level && areConnectedByRoad(region.RegionId, ngh) ->
                         let transfer =
-                            let availableToSend = tryFind region.RegionId storages
+                            let availableToSend = regState.Supplies
                             let senderNeeds = tryFind region.RegionId needs
+                            let selfishNess = 0.5f
                             let willingToSend =
-                                availableToSend - senderNeeds
+                                availableToSend - selfishNess * senderNeeds
                                 |> max 0.0f<E>
                             let alreadyAtReceiver = tryFind ngh storages
                             let availableToReceive = tryFind ngh capacities

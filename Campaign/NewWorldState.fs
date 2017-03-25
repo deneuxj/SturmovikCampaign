@@ -325,8 +325,8 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         regState.Supplies - sent
                     | None ->
                         regState.Supplies
+                    |> max 0.0f<E>
                 yield { regState with Supplies = newStored }
-
         ]
     let applyDamage health =
         Option.map (fun damages ->
