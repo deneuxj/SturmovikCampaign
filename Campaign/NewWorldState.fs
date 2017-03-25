@@ -373,12 +373,17 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     |> List.mapi (fun idx health ->
                         Map.tryFind (Production(region.RegionId, idx)) damages
                         |> applyDamage health)
+                let capacityBeforeDamage = regState.StorageCapacity(region)
                 let storeHealth =
                     regState.StorageHealth
                     |> List.mapi (fun idx health ->
                         Map.tryFind (Storage(region.RegionId, idx)) damages
                         |> applyDamage health)
-                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth}
+                let regState = { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth }
+                let capacityAfterDamage = regState.StorageCapacity(region)
+                let factor = capacityAfterDamage / capacityBeforeDamage 
+                let regState = { regState with Supplies = factor * regState.Supplies }
+                yield regState
         ]
     // Repair and resupply regions
     let regionsAfterSupplies =
