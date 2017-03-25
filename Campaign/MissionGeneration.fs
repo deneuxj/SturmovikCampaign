@@ -590,13 +590,13 @@ let createColumns store lcStore (world : World) (state : WorldState) (missionBeg
                         let links = column.CreateLinks()
                         links.Apply(McuUtil.deepContentOf column)
                         Mcu.addTargetLink prevStart.Value column.Api.Start.Index
-                        yield column
                         let beforeNext = newTimer 1
                         let subst = Mcu.substId <| store.GetIdMapper()
                         subst beforeNext
                         beforeNext.Time <- interval
                         Mcu.addTargetLink column.Api.Start beforeNext.Index
                         prevStart := upcast beforeNext
+                        yield column, beforeNext :> Mcu.McuBase
                 | None -> ()
             | None ->
                 ()
@@ -687,22 +687,15 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
                 | Choice1Of2 x -> x :> McuUtil.IMcuGroup
                 | Choice2Of2 x -> x :> McuUtil.IMcuGroup)
         convoyPrioNodes.All, convoys
-    let columns =
-        axisOrders.Invasions @ alliesOrders.Invasions
-        |> createColumns store lcStore world state missionBegin (float convoySpacing)
-    for column in columns do
-        Mcu.addTargetLink missionBegin column.Api.Start.Index
-    let columns =
-        columns
-        |> List.map (fun x -> x :> McuUtil.IMcuGroup)
-    let reinforcements =
-        axisOrders.Reinforcements @ alliesOrders.Reinforcements
-        |> createColumns store lcStore world state missionBegin (float convoySpacing)
-    for reinforcement in reinforcements do
-        Mcu.addTargetLink missionBegin reinforcement.Api.Start.Index
-    let reinforcements =
-        reinforcements
-        |> List.map (fun x -> x :> McuUtil.IMcuGroup)
+    let mkColumns orders =
+        let maxColumnSplit = max 1 (missionLength / convoySpacing)
+        let columns =
+            orders
+            |> createColumns store lcStore world state missionBegin (60.0 * float convoySpacing)
+            |> List.map (fun (x, t) -> x :> McuUtil.IMcuGroup, t)
+        List.map fst columns, List.map snd columns
+    let columns, columnTimers = mkColumns (axisOrders.Invasions @ alliesOrders.Invasions)
+    let reinforcements, reinforcementTimers = mkColumns (axisOrders.Reinforcements @ alliesOrders.Reinforcements)
     let parkedPlanes =
         createParkedPlanes store world state
         |> McuUtil.groupFromList
@@ -730,6 +723,8 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList spawns
+          McuUtil.groupFromList columnTimers
+          McuUtil.groupFromList reinforcementTimers
           parkedPlanes
           axisPrio
           alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ reinforcements
