@@ -96,9 +96,9 @@ with
     static member Create(store, lcStore, pos, yori, destinationPos, country, eventName) =
         let train = Train.Create(store, lcStore, pos, yori, destinationPos, country)
         let startEventName = sprintf "%s-D-0" eventName
-        let started = EventReporting.Create(store, pos + Vector2(0.0f, 100.0f), startEventName)
+        let started = EventReporting.Create(store, country, pos + Vector2(0.0f, 100.0f), startEventName)
         let arrivedEventName = sprintf "%s-A-0" eventName
-        let arrived = EventReporting.Create(store, destinationPos + Vector2(0.0f, 100.0f), arrivedEventName)
+        let arrived = EventReporting.Create(store, country, destinationPos + Vector2(0.0f, 100.0f), arrivedEventName)
         { TheTrain = train
           Started = started
           Arrived = arrived

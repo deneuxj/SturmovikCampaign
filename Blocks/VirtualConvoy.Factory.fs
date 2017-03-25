@@ -225,18 +225,18 @@ with
                             let iwp = invasionEnd.MinimumElement
                             Vector2.FromMcu(simpleWaypointSet.[iwp].Pos) + Vector2(0.0f, 100.0f)
                     let name = sprintf "%s-A-%d" convoyName 0
-                    yield(LeadCarAtDestinationInstance(convoy), EventReporting.Create(store, pos, name))
+                    yield(LeadCarAtDestinationInstance(convoy), EventReporting.Create(store, country, pos, name))
                     for convoy2, rank, truck in truckInConvoy do
                         if convoy = convoy2 then
                             let name = sprintf "%s-A-%d" convoyName (rank + rankOffset)
-                            yield(TruckAtDestinationInstance(truck), EventReporting.Create(store, pos, name))
+                            yield(TruckAtDestinationInstance(truck), EventReporting.Create(store, country, pos, name))
             }
             |> Map.ofSeq
 
         let departure =
             let name =
                 sprintf "%s-D-%d" convoyName rankOffset
-            EventReporting.Create(store, apiPos + Vector2(-100.0f, -100.0f), name)
+            EventReporting.Create(store, country, apiPos + Vector2(-100.0f, -100.0f), name)
 
         let iconPos =
             match invasion with
