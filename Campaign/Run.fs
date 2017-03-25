@@ -392,7 +392,7 @@ module MissionLogParsing =
         let staticDamages = extractStaticDamages world state entries |> List.ofSeq
         let takeOffs, landings =
             let both =
-                extractTakeOffs world entries
+                extractTakeOffsAndLandings world state entries
                 |> List.ofSeq
             both |> List.choose (function Choice1Of2 x -> Some x | _ -> None),
             both |> List.choose (function Choice2Of2 x -> Some x | _ -> None)

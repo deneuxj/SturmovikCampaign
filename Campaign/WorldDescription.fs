@@ -399,6 +399,21 @@ with
         | P40 -> 500.0f<K>
         | Pe2s35 -> 1000.0f<K>
 
+    member this.Coalition =
+        match this with
+        | Bf109e7 
+        | Bf109f2
+        | Mc202
+        | Bf110e
+        | Ju88a4
+        | Ju52 -> Axis
+        | I16
+        | IL2M41
+        | Mig3
+        | P40
+        | Pe2s35 -> Allies
+
+
     static member AllModels =
         [ Bf109e7
           Bf109f2

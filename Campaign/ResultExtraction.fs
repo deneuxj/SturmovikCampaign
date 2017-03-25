@@ -187,7 +187,9 @@ type Landed = {
 with
     static member MaxDistanceFromAirfield = 5000.0f
 
-let extractTakeOffs (world : World) (entries : LogEntry seq) =
+let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : LogEntry seq) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
     seq {
         let planeIds = ref Map.empty
         let damages = ref Map.empty
@@ -223,6 +225,18 @@ let extractTakeOffs (world : World) (entries : LogEntry seq) =
                             match Map.tryFind landing.VehicleId !damages with
                             | Some x -> max 0.0f (1.0f - x)
                             | None -> 1.0f
+                        let repairedHealth =
+                            // Lightly damaged planes are repaired to full health.
+                            // The acceptable level of damage depends on who controls the airfield...
+                            let repairable =
+                                match plane.Coalition, sg.GetRegion(af.Region).Owner with
+                                | coalition, Some coalition2 when coalition = coalition2 -> 0.75f // Own airfield
+                                | captured, Some capturing -> 0.9f // Enemy airfield, fewer repair options available
+                                | _, None -> 1.0f // Neutral airfield, no repairs
+                            if health > repairable then
+                                1.0f
+                            else
+                                health
                         yield Choice2Of2({ Airfield = af.AirfieldId; Plane = plane; Health = health })
                     | None -> ()
             | _ -> ()
