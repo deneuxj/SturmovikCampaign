@@ -1,5 +1,7 @@
 ﻿module Campaign.Run
 
+open System.IO
+
 type Configuration = {
     StrategyFile : string
     Seed : int option
@@ -19,6 +21,16 @@ type Configuration = {
     ScriptPath : string
     Briefing : string
 }
+
+let backupFile (date : System.DateTime) outputDir name =
+    let backupName =
+        let dateString =
+            date.ToString("yyyy-MM-dd_HH-mm-ss")
+        sprintf "%s_%s.xml" name dateString
+    let backupDest = Path.Combine(outputDir, backupName)
+    if File.Exists backupDest then
+        File.Delete(backupDest)
+    File.Copy(Path.Combine(outputDir, sprintf "%s.xml" name), backupDest)
 
 module Init =
     open SturmovikMission.Blocks.BlocksMissionData
@@ -94,12 +106,41 @@ module Init =
         use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
         serializer.Serialize(stateFile, state)
 
+module WeatherComputation =
+    open MBrace.FsPickler
+    open System.IO
+    open Campaign.WorldDescription
+    open Campaign.WorldState
+
+    let run(config : Configuration) =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let world, state =
+            try
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
+                serializer.Deserialize<World>(worldFile),
+                serializer.Deserialize<WorldState>(stateFile)
+            with
+            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+        let random =
+            match config.Seed with
+            | Some n ->
+                System.Random(n)
+            | None ->
+                System.Random()
+        let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
+        let weather = Weather.getWeather random (state.Date + daysOffset)
+        backupFile state.Date config.OutputDir "weather"
+        use weatherFile = File.CreateText(Path.Combine(config.OutputDir, "weather.xml"))
+        serializer.Serialize(weatherFile, weather)
+
 module MissionFileGeneration =
     open Campaign.WorldDescription
     open Campaign.WorldState
     open Campaign.MissionGeneration
     open Campaign.AutoOrder
     open Campaign.Orders
+    open Campaign.Weather
     open SturmovikMission.Blocks.BlocksMissionData
     open System.IO
     open MBrace.FsPickler
@@ -128,6 +169,12 @@ module MissionFileGeneration =
                 serializer.Deserialize<WorldState>(stateFile)
             with
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+        let weather =
+            try
+                use weatherFile = File.OpenText(Path.Combine(config.OutputDir, "weather.xml"))
+                serializer.Deserialize<WeatherState>(weatherFile)
+            with
+            | e -> failwithf "Failed to read weather data. Reason was: '%s'" e.Message
 
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
         let mkOrders coalition =
@@ -179,8 +226,6 @@ module MissionFileGeneration =
             serializer.Serialize(axisOrderFiles, allAxisOrders)
             use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
             serializer.Serialize(alliesOrderFiles, allAlliesOrders)
-            use weatherFile = File.CreateText(Path.Combine(outputDir, "weather.xml"))
-            serializer.Serialize(weatherFile, weather)
 
         let missionName = config.MissionName
         writeMissionFile random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))

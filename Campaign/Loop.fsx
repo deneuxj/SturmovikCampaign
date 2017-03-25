@@ -64,6 +64,7 @@ let startServer() =
 
 type ExecutionState =
     | KillServer
+    | MakeWeather
     | GenerateMission
     | StartServer
     | WaitForMissionEnd of System.DateTime
@@ -76,6 +77,12 @@ with
             async {
                 printfn "Kill server..."
                 killServer serverProc
+                return None, GenerateMission
+            }
+        | MakeWeather ->
+            async {
+                printfn "Make weather..."
+                Campaign.Run.WeatherComputation.run config
                 return None, GenerateMission
             }
         | GenerateMission ->
