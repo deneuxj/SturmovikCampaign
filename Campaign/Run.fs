@@ -94,7 +94,6 @@ module Init =
         use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
         serializer.Serialize(stateFile, state)
 
-
 module MissionFileGeneration =
     open Campaign.WorldDescription
     open Campaign.WorldState
@@ -168,6 +167,9 @@ module MissionFileGeneration =
         let allAxisOrders = mkAllOrders Axis
         let allAlliesOrders = mkAllOrders Allies
 
+        let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
+        let weather = Weather.getWeather random (state.Date + daysOffset)
+
         let author = "coconut"
         let briefing = config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
 
@@ -177,9 +179,11 @@ module MissionFileGeneration =
             serializer.Serialize(axisOrderFiles, allAxisOrders)
             use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
             serializer.Serialize(alliesOrderFiles, allAlliesOrders)
+            use weatherFile = File.CreateText(Path.Combine(outputDir, "weather.xml"))
+            serializer.Serialize(weatherFile, weather)
 
         let missionName = config.MissionName
-        writeMissionFile random author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
+        writeMissionFile random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
 
         let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer")
         let swallow f = try f() with | _ -> ()

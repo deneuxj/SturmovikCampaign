@@ -652,9 +652,7 @@ let createParkedPlanes store (world : World) (state : WorldState) =
     |> List.concat
 
 
-let writeMissionFile (random : System.Random) author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
-    let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
-    let weather = Weather.getWeather random (state.Date + daysOffset)
+let writeMissionFile random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
     lcStore.SetNextId 3
