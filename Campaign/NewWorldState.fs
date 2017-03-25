@@ -13,7 +13,7 @@ type ProductionPriorities = {
     PriorityVehicle : float32<E>
     Plane : PlaneModel
     PriorityPlane : float32<E>
-    PriorityShells : float32<E>
+    PrioritySupplies : float32<E>
 }
 
 /// Decide what vehicles and planes to produce, and how important they are.
@@ -21,19 +21,18 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
 
-    let shellNeed =
+    let supplyNeed =
         state.Regions
         |> Seq.sumBy (fun state ->
             if state.Owner = Some coalition then
                 let capacity =
                     let region = wg.GetRegion state.RegionId
-                    Seq.zip region.Storage state.StorageHealth
-                    |> Seq.sumBy (fun (sto, health) -> health * getSupplyCapacityPerBuilding sto.Model)
+                    state.StorageCapacity(region)
                 capacity - state.Supplies
                 |> max 0.0f<E>
             else
                 0.0f<E>)
-    assert(shellNeed >= 0.0f<E>)
+    assert(supplyNeed >= 0.0f<E>)
 
     let vehicleToProduce, vehicleNeed =
         let numHeavy, numMedium, numLight, need =
@@ -146,14 +145,9 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
       PriorityVehicle = vehicleNeed
       Plane = plane
       PriorityPlane = planeNeed
-      PriorityShells = shellNeed
+      PrioritySupplies = supplyNeed
     }
 
-
-/// Compute the total production capacity of a region
-let computeProduction (region : Region) (regState : RegionState) =
-    List.zip region.Production regState.ProductionHealth
-    |> List.sumBy (fun (prod, health) -> health * getProductionPerBuilding prod.Model)
 
 /// Add production units according to production priorities
 let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
@@ -162,7 +156,7 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
         let priorities = computeProductionPriorities coalition world state
         let vehiclePrio, planePrio, energyPrio =
             let total =
-                priorities.PriorityPlane + priorities.PriorityShells + priorities.PriorityVehicle
+                priorities.PriorityPlane + priorities.PrioritySupplies + priorities.PriorityVehicle
             if total <= 0.0f<E> then
                 0.0f, 0.0f, 0.0f
             else
@@ -177,7 +171,7 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
                                 vehiclePrio, planePrio, energyPrio
                             else
                                 vehiclePrio + 0.5f * planePrio, 0.0f, energyPrio + 0.5f * planePrio
-                        let energy = dt * computeProduction region regState
+                        let energy = dt * regState.ProductionCapacity(region)
                         let supplies = regState.Products.Supplies + energyPrio * energy
                         let planes =
                             let oldValue =
@@ -244,11 +238,7 @@ let convertProduction (world : World) (state : WorldState) =
                 (vehicle, int numNewVehicles) :: newVehicles, Map.add vehicle energyLeft remainingVehicles
             ) ([], Map.empty)
         // Supplies -> storage
-        let supplySpaceAvailable =
-            Seq.zip region.Storage regState.StorageHealth
-            |> Seq.sumBy (fun (sto, health) -> health * getEnergyHealthPerBuilding sto.Model)
-            |> fun x -> x - regState.Supplies
-            |> max 0.0f<E>
+        let supplySpaceAvailable = max 0.0f<E> (regState.StorageCapacity(region) - regState.Supplies)
         let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
         resupplied := { Region = region.RegionId; Energy = transferedEnergy } :: !resupplied
         // Remove produced things from ongoing production
@@ -338,9 +328,17 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 yield { regState with Supplies = newStored }
 
         ]
+    let applyDamage health =
+        Option.map (fun damages ->
+            damages
+            |> Seq.sumBy (fun data -> data.Amount)
+            |> (-) health
+            |> max 0.0f)
+        >> Option.defaultVal health
     let airfieldsAfterDamages =
         [
             for afState in state.Airfields do
+                let af = wg.GetAirfield(afState.AirfieldId)
                 let planes =
                     afState.NumPlanes
                     |> Map.map (fun plane qty ->
@@ -352,19 +350,19 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                             qty - totalDamages
                         | None ->
                             qty)
+                let capacityBeforeDamages = afState.StorageCapacity(af)
                 let storeHealth =
                     afState.StorageHealth
                     |> List.mapi (fun idx health ->
-                        match Map.tryFind (Airfield(afState.AirfieldId, idx)) damages with
-                        | Some damages ->
-                            damages
-                            |> Seq.sumBy (fun data -> data.Amount)
-                            |> (-) health
-                        | None ->
-                            health)
-                yield { afState with
-                            NumPlanes = planes
-                            StorageHealth = storeHealth }
+                        Map.tryFind (Airfield(afState.AirfieldId, idx)) damages
+                        |> applyDamage health)
+                let afState = { afState with
+                                    NumPlanes = planes
+                                    StorageHealth = storeHealth }
+                let CapacityAfterDamages = afState.StorageCapacity(af)
+                let factor = CapacityAfterDamages / capacityBeforeDamages
+                let afState = { afState with Supplies = factor * afState.Supplies }
+                yield afState
         ]
     let regionsAfterDamages =
         [
@@ -373,23 +371,13 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 let prodHealth =
                     regState.ProductionHealth
                     |> List.mapi (fun idx health ->
-                        match Map.tryFind (Production(region.RegionId, idx)) damages with
-                        | Some damages ->
-                            damages
-                            |> Seq.sumBy (fun data -> data.Amount)
-                            |> (-) health
-                        | None ->
-                            health)
+                        Map.tryFind (Production(region.RegionId, idx)) damages
+                        |> applyDamage health)
                 let storeHealth =
                     regState.StorageHealth
                     |> List.mapi (fun idx health ->
-                        match Map.tryFind (Storage(region.RegionId, idx)) damages with
-                        | Some damages ->
-                            damages
-                            |> Seq.sumBy (fun data -> data.Amount)
-                            |> (-) health
-                        | None ->
-                            health)
+                        Map.tryFind (Storage(region.RegionId, idx)) damages
+                        |> applyDamage health)
                 yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth}
         ]
     // Repair and resupply regions
@@ -411,9 +399,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         regState.StorageHealth,
                         region.Storage,
                         energy)
-                let storeCapacity =
-                    List.zip region.Storage regState.StorageHealth
-                    |> List.sumBy (fun (building, health) -> health * getEnergyHealthPerBuilding building.Model)
+                let storeCapacity = regState.StorageCapacity(region)
                 // Consume energy to fill supplies
                 // FIXME: we should only consume what's needed, i.e. no supplies for anti-tank defenses if there are no enemy regions nearby.
                 let toSupplies =
