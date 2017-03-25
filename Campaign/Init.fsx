@@ -10,3 +10,4 @@ open Configuration
 Campaign.Run.Init.createWorld config
 Campaign.Run.Init.createState config
 Campaign.Run.WeatherComputation.run config
+Campaign.Run.OrderDecision.run config
