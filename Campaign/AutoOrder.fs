@@ -189,47 +189,24 @@ let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrd
     sorted
 
 
-let createColumnMovementOrders criterion (coalition : CoalitionId, world : World, state : WorldState) =
+let createGroundInvasionOrders (coalition : CoalitionId, world : World, state : WorldState) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     seq {
         for region in world.Regions do
             let regState = sg.GetRegion region.RegionId
             if regState.Owner = Some coalition then
-                let target =
+                let targets =
                     region.Neighbours
-                    |> Seq.tryFind(fun ngh ->
+                    |> Seq.filter(fun ngh ->
                         let nghState = sg.GetRegion ngh
-                        criterion(nghState.Owner, coalition)
+                        match nghState.Owner with
+                        | None -> true
+                        | Some other -> other <> coalition
                     )
-                match target with
-                | Some target ->
-                    let total_vehicles =
-                        regState.NumVehicles
-                        |> Map.toSeq
-                        |> Seq.sumBy snd
-                    let factor =
-                        if total_vehicles > 15 then
-                            15.0f / float32 total_vehicles
-                        else
-                            1.0f
-                    let rec adjust(acc, items) =
-                        match items with
-                        | [] -> []
-                        | (veh, num) :: rest ->
-                            let adjusted = factor * float32 num
-                            let waste = adjusted - floor adjusted
-                            let adjusted, acc =
-                                if acc + waste < 1.0f then
-                                    floor adjusted, acc + waste
-                                else
-                                    ceil adjusted, acc + waste - 1.0f
-                            (veh, int adjusted) :: adjust(acc, rest)
+                for target in targets do
                     let composition =
                         regState.NumVehicles
-                        |> Map.toList
-                        |> fun items -> adjust(0.0f, items)
-                        |> Map.ofList
                     assert((composition |> Map.toSeq |> Seq.sumBy snd) <= 15)
                     let composition = expandMap composition
                     yield {
@@ -241,16 +218,9 @@ let createColumnMovementOrders criterion (coalition : CoalitionId, world : World
                         Destination = target
                         Composition = composition
                     }
-                | None ->
-                    ()
     }
     |> Seq.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
     |> List.ofSeq
-
-
-let createGroundInvasionOrders =
-    createColumnMovementOrders (fun (a, b) -> match a with Some a -> a <> b | None -> true)
-
 
 let valueOfVehicles =
     Seq.sumBy (
