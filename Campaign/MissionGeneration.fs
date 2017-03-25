@@ -82,7 +82,7 @@ with
         }
 
 type SegmentType =
-    | OuterBorder
+    | OuterBorder of RegionId
     | InnerBorder of RegionId * RegionId
 
 type Segment = {
@@ -178,7 +178,7 @@ with
                             }
                         if Seq.isEmpty sharedEdges then
                             yield {
-                                Kind = OuterBorder
+                                Kind = OuterBorder region.RegionId
                                 Edge = (u1, u2)
                             }
                         else
@@ -227,20 +227,6 @@ with
             let icon1 : Mcu.McuIcon = mkIcon(fst segment)
             let icon2 = mkIcon(snd segment)
             icon1.Targets <- icon2.Index :: icon1.Targets
-        let outerIcons =
-            let cache = Dictionary<_,_>()
-            let getIcon v =
-                mkIcon 1 (0, 0, 0) v
-            let getIcon = getRepresentant >> (cached cache getIcon)
-            let mkSegment = mkSegmentIcons getIcon
-            for segment in segments do
-                match segment.Kind with
-                | OuterBorder ->
-                    mkSegment segment.Edge
-                | InnerBorder _ ->
-                    ()
-            cache.Values
-            |> List.ofSeq
         let frontLineIcons =
             let cache = Dictionary<_,_>()
             let getIcon v =
@@ -249,7 +235,7 @@ with
             let mkSegment = mkSegmentIcons getIcon
             for segment in segments do
                 match segment.Kind with
-                | OuterBorder -> ()
+                | OuterBorder _ -> ()
                 | InnerBorder(home, other) ->
                     let homeState = getState home
                     let otherState = getState other
@@ -260,45 +246,63 @@ with
                         ()
             cache.Values
             |> List.ofSeq
-        let germanBorderLineIcons =
-            let cache = Dictionary<_,_>()
-            let getIcon v =
-                mkIcon 1 (86, 105, 135) v
-            let getIcon = getRepresentant >> (cached cache getIcon)
-            let mkSegment = mkSegmentIcons getIcon
+        let otherLineIcons =
+            let mkSegment viewers color =
+                let cache = Dictionary<_,_>()
+                let mkIcon v =
+                    let icon = mkIcon 1 color v
+                    if not(List.isEmpty viewers) then
+                        icon.Coalitions <- viewers
+                    icon
+                let getIcon = getRepresentant >> (cached cache mkIcon)
+                cache, mkSegmentIcons getIcon
+            let mkEnemySegment coalition = mkSegment [coalition] (10, 0, 0)
+            let mkFriendlySegment coalition = mkSegment [coalition] (0, 0, 10)
+            let mkColoredSegment color = mkSegment [] color
+            let cache1, mkAxisSegmentByAllies = mkEnemySegment Mcu.CoalitionValue.Allies
+            let cache2, mkAlliesSegmentByAxis = mkEnemySegment Mcu.CoalitionValue.Axis
+            let cache3, mkAxisSegment = mkFriendlySegment Mcu.CoalitionValue.Axis
+            let cache4, mkAlliesSegment = mkFriendlySegment Mcu.CoalitionValue.Allies
+            let mkCoalitionSegment coalition =
+                match coalition with
+                | Axis -> fun (x, y) ->
+                    mkAxisSegment(x, y)
+                    mkAxisSegmentByAllies(x, y)
+                | Allies -> fun (x, y) ->
+                    mkAlliesSegment(x, y)
+                    mkAlliesSegmentByAxis(x, y)
+            let cache5, mkDarkSegment = mkColoredSegment (30, 0, 0)
             for segment in segments do
                 match segment.Kind with
-                | OuterBorder -> ()
+                | OuterBorder region ->
+                    let owner = (getState region).Owner
+                    match owner with
+                    // Outer border of non-neutral coalition rendered using the coalition's color.
+                    | Some coalition -> mkCoalitionSegment coalition segment.Edge
+                    // Outer border of neutral coalition not rendered at all.
+                    | None -> ()
                 | InnerBorder(home, other) ->
                     let homeState = getState home
                     let otherState = getState other
                     match homeState, otherState with
-                    | { Owner = Some Axis }, { Owner = None } ->
-                        mkSegment segment.Edge
+                    | { Owner = Some coalition }, { Owner = None } ->
+                        // Inner border of non-neutral with neutral rendered using coalition's color
+                        mkCoalitionSegment coalition segment.Edge
+                    | { Owner = Some coalition1 }, { Owner = Some coalition2 } when coalition1 = coalition2 ->
+                        // Internal border rendered as thin dark segment
+                        //mkDarkSegment segment.Edge
+                        ()
                     | _ ->
                         ()
-            cache.Values
-            |> List.ofSeq
-        let russianBorderLineIcons =
-            let cache = Dictionary<_,_>()
-            let getIcon v =
-                mkIcon 1 (240, 0, 0) v
-            let getIcon = getRepresentant >> (cached cache getIcon)
-            let mkSegment = mkSegmentIcons getIcon
-            for segment in segments do
-                match segment.Kind with
-                | OuterBorder -> ()
-                | InnerBorder(home, other) ->
-                    let homeState = getState home
-                    let otherState = getState other
-                    match homeState, otherState with
-                    | { Owner = Some Allies }, { Owner = None } ->
-                        mkSegment segment.Edge
-                    | _ ->
-                        ()
-            cache.Values
-            |> List.ofSeq
-        let allIcons = List.concat [outerIcons; frontLineIcons; germanBorderLineIcons; russianBorderLineIcons]
+            // Rewrite line type of icons for dark segments as thin dotted line
+            for icon in cache5.Values do
+                icon.LineType <- Mcu.LineTypeValue.Normal
+            // Extract and return all created icons from the caches
+            [
+                for cache in [ cache1; cache2; cache3; cache4; cache5 ] do
+                    yield! List.ofSeq cache.Values
+            ]
+        let allIcons = List.concat [frontLineIcons; otherLineIcons]
         let lcStrings =
             [
                 for icon in allIcons do
