@@ -114,7 +114,6 @@ with
     member this.FastAccess = WorldStateFastAccess.Create(this)
 
 
-
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu
 open System.Numerics
