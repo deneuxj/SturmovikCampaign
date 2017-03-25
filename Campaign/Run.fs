@@ -23,14 +23,16 @@ type Configuration = {
 }
 
 let backupFile (date : System.DateTime) outputDir name =
-    let backupName =
-        let dateString =
-            date.ToString("yyyy-MM-dd_HH-mm-ss")
-        sprintf "%s_%s.xml" name dateString
-    let backupDest = Path.Combine(outputDir, backupName)
-    if File.Exists backupDest then
-        File.Delete(backupDest)
-    File.Copy(Path.Combine(outputDir, sprintf "%s.xml" name), backupDest)
+    let inFile = Path.Combine(outputDir, sprintf "%s.xml" name)
+    if File.Exists inFile then
+        let backupName =
+            let dateString =
+                date.ToString("yyyy-MM-dd_HH-mm-ss")
+            sprintf "%s_%s.xml" name dateString
+        let backupDest = Path.Combine(outputDir, backupName)
+        if File.Exists backupDest then
+            File.Delete(backupDest)
+        File.Copy(inFile, backupDest)
 
 module Init =
     open SturmovikMission.Blocks.BlocksMissionData
