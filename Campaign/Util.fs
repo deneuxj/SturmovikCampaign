@@ -58,3 +58,11 @@ let compactSeq (items : _ seq) =
 /// Extensions to Option module
 module Option =
     let defaultVal x y = defaultArg y x
+
+/// Extensions to Array module
+module Array =
+    let shuffle (random : System.Random) xs =
+        xs
+        |> Array.map (fun xs -> random.NextDouble(), xs)
+        |> Array.sortBy fst
+        |> Array.map snd
