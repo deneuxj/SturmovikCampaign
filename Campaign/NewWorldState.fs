@@ -412,8 +412,10 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     |> min energy
                     |> max 0.0f<E>
                 let supplies = regState.Supplies + toSupplies
+                // Part of supplies in storage that exceed the storage capacity is lost
+                let waste = 0.2f * max 0.0f<E> (supplies - regState.StorageCapacity(region))
                 let energy = energy - toSupplies
-                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies }, energy
+                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies - waste }, energy
         ]
     let regionEnergies =
         regionsAfterSupplies
