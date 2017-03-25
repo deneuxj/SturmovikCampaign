@@ -369,15 +369,12 @@ let prioritizedReinforcementOrders(world : World, state : WorldState) coalition 
 let filterIncompatible(reinforcements, invasions) =
     let safeInvasions =
         invasions
-        |> List.filter (fun (invasion, probability, value) ->
-            let hasAltReinforcement =
-                reinforcements
-                |> List.exists (fun reinforcement -> reinforcement.Start = invasion.Start)
-            not hasAltReinforcement || probability > 0.5)
+        |> List.filter (fun (invasion, probability, value) -> probability >= 0.5)
+    let safeInvasionStarts =
+        safeInvasions
+        |> Seq.map (fun (invasion, _, _) -> invasion.Start)
+        |> Set.ofSeq
     let compatibleReinforcements =
         reinforcements
-        |> List.filter (fun reinforcement ->
-            safeInvasions
-            |> List.exists (fun (invasion, _, _) -> invasion.Start = reinforcement.Start)
-            |> not)
+        |> List.filter (fun reinforcement -> not(safeInvasionStarts.Contains(reinforcement.Start)))
     compatibleReinforcements, safeInvasions
