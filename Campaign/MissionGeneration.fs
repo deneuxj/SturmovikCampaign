@@ -543,7 +543,7 @@ let splitCompositions vehicles =
     |> List.ofArray
 
 /// Large columns are split to fit in the maximum size of columns, and each group starts separated by a given interval.
-let createColumns store lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval (orders : ColumnMovement list) =
+let createColumns store lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval maxColumnSplit (orders : ColumnMovement list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     [
@@ -580,7 +580,7 @@ let createColumns store lcStore (world : World) (state : WorldState) (missionBeg
                         |> List.map (fun x -> { toVertex(x) with Priority = 0 })
                     let prevStart = ref missionBegin
                     let rankOffset = ref 0
-                    for composition in splitCompositions order.Composition do
+                    for composition in splitCompositions order.Composition |> List.truncate maxColumnSplit do
                         let columnContent =
                             composition
                             |> List.ofArray
@@ -688,10 +688,10 @@ let writeMissionFile (random : System.Random) author missionName briefing missio
                 | Choice2Of2 x -> x :> McuUtil.IMcuGroup)
         convoyPrioNodes.All, convoys
     let mkColumns orders =
-        let maxColumnSplit = max 1 (missionLength / convoySpacing)
+        let maxColumnSplit = max 1 (missionLength / convoySpacing - 1)
         let columns =
             orders
-            |> createColumns store lcStore world state missionBegin (60.0 * float convoySpacing)
+            |> createColumns store lcStore world state missionBegin (60.0 * float convoySpacing) maxColumnSplit
             |> List.map (fun (x, t) -> x :> McuUtil.IMcuGroup, t)
         List.map fst columns, List.map snd columns
     let columns, columnTimers = mkColumns (axisOrders.Invasions @ alliesOrders.Invasions)
