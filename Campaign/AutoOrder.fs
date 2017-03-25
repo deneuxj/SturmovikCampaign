@@ -111,7 +111,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
 let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
-    let distances = computeRegionDistances getPaths getOwner (coalition, world)
+    let distances = computeRegionDistances true getPaths getOwner (coalition, world)
     let areConnectedByRoad(start, destination) =
         getPaths world
         |> List.exists (fun path -> path.MatchesEndpoints(start, destination).IsSome)
@@ -268,16 +268,17 @@ let getInvasionSuccessProbablity(world : World, state : WorldState) (order : Col
 let getInvasionValue (world, state) =
     let sg = WorldStateFastAccess.Create state
     let getRegionDistances =
-        let distanceOwnedByAxis =
-            computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Axis, world)
-        let distanceOwnedByAllies =
-            computeRegionDistances (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Allies, world)
-        function
-        | Some Axis -> distanceOwnedByAxis
-        | Some Allies -> distanceOwnedByAllies
-        | None -> failwith "Start of attacking column has no owner"
+        let distanceToAxisFactories =
+            computeRegionDistances false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Axis, world)
+        let distanceToAlliesFactories =
+            computeRegionDistances false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Allies, world)
+        fun attacker ->
+            match attacker with
+            | Some Axis -> distanceToAlliesFactories
+            | Some Allies -> distanceToAxisFactories
+            | None -> failwith "Start of attacking column has no owner"
     fun order ->
-        let distances = getRegionDistances (sg.GetRegion(order.Start).Owner |> Option.map (fun x -> x.Other))
+        let distances = getRegionDistances (sg.GetRegion(order.Start).Owner)
         match Map.tryFind order.Destination distances with
         | Some dist -> 1.0 / float(1 + dist)
         | None -> 0.0
@@ -289,6 +290,7 @@ let prioritizeGroundInvasionOrders(world : World, state : WorldState) (orders : 
     orders
     |> List.map (fun order -> order, successProbability order, targetValue order)
     |> List.sortByDescending (fun (order, probability, gain) -> probability * gain)
+    |> List.distinctBy(fun (order, _, _) -> order.Start)
 
 
 let prioritizedReinforcementOrders(world : World, state : WorldState) coalition invasions =

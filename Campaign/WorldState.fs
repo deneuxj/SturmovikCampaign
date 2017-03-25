@@ -125,12 +125,17 @@ let getAntiTankCanonsForArea (area : DefenseArea) =
     |> int
 
 /// Compute the number of regions from a region to the nearest region with factories.
-let computeRegionDistances (getPaths : World -> Path list) (getOwner : RegionId -> CoalitionId option) (coalition : CoalitionId, world : World) =
+let computeRegionDistances requirePathsInOwnedRegions (getPaths : World -> Path list) (getOwner : RegionId -> CoalitionId option) (coalition : CoalitionId, world : World) =
     let areConnectedByRoad(start, destination) =
         getPaths world
         |> List.exists (fun path ->
             path.StartId = start && path.EndId = destination || path.StartId = destination && path.EndId = start
         )
+    let filterInOwnedRegions =
+        if requirePathsInOwnedRegions then
+            Seq.filter (fun ngh -> Some coalition = getOwner ngh)
+        else
+            id
     let wg = WorldFastAccess.Create(world)
     let rec work (distances : Map<RegionId, int>) (working : RegionId list) =
         match working with
@@ -140,7 +145,7 @@ let computeRegionDistances (getPaths : World -> Path list) (getOwner : RegionId 
             let region = wg.GetRegion current
             let nghs =
                 region.Neighbours
-                |> Seq.filter (fun ngh -> Some coalition = getOwner ngh) // It belongs to the coalition
+                |> filterInOwnedRegions
                 |> Seq.filter (fun ngh -> areConnectedByRoad(region.RegionId, ngh))
                 |> List.ofSeq
             let distances, working =
@@ -295,8 +300,8 @@ let mkInitialState(world : World, strategyFile : string) =
 
     let getTransportationCosts =
         let computeTransportationCost coalition =
-            let byRoad = computeRegionDistances (fun world -> world.Roads) getOwner (coalition, world)
-            let byRail = computeRegionDistances (fun world -> world.Rails) getOwner (coalition, world)
+            let byRoad = computeRegionDistances true (fun world -> world.Roads) getOwner (coalition, world)
+            let byRail = computeRegionDistances true (fun world -> world.Rails) getOwner (coalition, world)
             byRoad
             |> Map.map (fun region hops ->
                 let roadCost = System.Math.Pow(2.0, float hops)
