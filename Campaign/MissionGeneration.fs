@@ -540,7 +540,6 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
 
 let splitCompositions random vehicles =
     vehicles
-    |> Array.shuffle random
     |> Array.chunkBySize ColumnMovement.MaxColumnSize
     |> List.ofArray
 
@@ -598,6 +597,7 @@ let createColumns random store lcStore (world : World) (state : WorldState) (mis
                         beforeNext.Time <- interval
                         Mcu.addTargetLink column.Api.Start beforeNext.Index
                         prevStart := upcast beforeNext
+                        rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
                         yield column, beforeNext :> Mcu.McuBase
                 | None -> ()
             | None ->

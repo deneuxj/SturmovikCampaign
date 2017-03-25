@@ -190,6 +190,7 @@ let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrd
 
 
 let createGroundInvasionOrders (coalition : CoalitionId, world : World, state : WorldState) =
+    let random = System.Random()
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     seq {
@@ -207,7 +208,9 @@ let createGroundInvasionOrders (coalition : CoalitionId, world : World, state : 
                 for target in targets do
                     let composition =
                         regState.NumVehicles
-                    let composition = expandMap composition
+                    let composition =
+                        expandMap composition
+                        |> Array.shuffle random
                     yield {
                         OrderId = {
                                     Index = 0 // Set later to a unique value
@@ -354,6 +357,7 @@ let prioritizedReinforcementOrders(world : World, state : WorldState) coalition 
             vehicles
             |> Map.map (fun veh num -> int(ceil(k * float num)))
             |> expandMap
+            |> Array.shuffle (System.Random())
         { OrderId = {
                         Index = i + 1
                         Coalition = coalition
