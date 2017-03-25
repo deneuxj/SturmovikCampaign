@@ -249,7 +249,6 @@ let getInvasionSuccessProbablity(world : World, state : WorldState) (order : Col
     match defenseArea with
     | Some defenseArea ->
         let defenses = sg.GetAntiTankDefenses(defenseArea.DefenseAreaId)
-
         let attackValue =
             order.Composition
             |> valueOfVehicles
@@ -259,8 +258,11 @@ let getInvasionSuccessProbablity(world : World, state : WorldState) (order : Col
             sg.GetRegion(order.Destination).NumVehicles
             |> valueOfVehicles2
         let defenseValue = staticDefenseValue + mobileDefenseValue
-        let ratio = defenseValue / (0.1 + attackValue)
-        System.Math.Exp(-ratio)
+        match attackValue with
+        | 0.0 -> 0.0
+        | attackValue ->
+            let ratio = defenseValue / attackValue
+            System.Math.Pow(2.0, -ratio)
     | None ->
         0.5
 
