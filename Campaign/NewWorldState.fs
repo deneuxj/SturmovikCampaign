@@ -584,18 +584,16 @@ let applyConquests (state : WorldState) (battles : (RegionId * BattleParticipant
         ]
     { state with Regions = regions }
 
-/// Move vehicles from start regions to destinations. Must be called after applyConquests.
+/// Subtract vehicles from regions of departure. Must be called before applyConquests.
 // FIXME: vehicles that started but did not reach destination are lost. They should only be lost if they were destroyed. Otherwise, they should be returned to the starting region (if it hasn't been conquered meanwhile)
-let applyVehicleTransfers (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) =
+let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) =
     let movements =
         movements
         |> Seq.map (fun movement -> movement.OrderId, movement)
         |> Map.ofSeq
-    let sg = WorldStateFastAccess.Create state
     let departed =
         departures
         |> List.choose (fun departure -> Map.tryFind departure.OrderId movements |> Option.map (fun movement -> movement, departure))
-        |> List.filter (fun (movement, _) -> sg.GetRegion(movement.Destination).Owner = Some movement.OrderId.Coalition)
         |> List.fold (fun regionMap (movement, departure) ->
             let numVehicles : Map<GroundAttackVehicle, int> =
                 Map.tryFind movement.Start regionMap
@@ -639,8 +637,8 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) movements co
     let state = applyRepairsAndDamages dt world state convoyDepartures (supplies @ extra) damages
     let state = applyPlaneTransfers state tookOff landed
     let battles = buildBattles state movements columnArrivals
+    let state = applyVehicleDepartures state movements columnDepartures
     let state = applyConquests state battles
-    let state = applyVehicleTransfers state movements columnDepartures
     let state = updateNumCanons world state
     let h = floor(float32 dt)
     let mins = 60.0f * ((float32 dt) - h)
