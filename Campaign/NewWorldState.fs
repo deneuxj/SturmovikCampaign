@@ -598,16 +598,13 @@ let applyVehicleTransfers (state : WorldState) (movements : ColumnMovement list)
         |> List.filter (fun (movement, _) -> sg.GetRegion(movement.Destination).Owner = Some movement.OrderId.Coalition)
         |> List.fold (fun regionMap (movement, departure) ->
             let numVehicles : Map<GroundAttackVehicle, int> =
-                match Map.tryFind movement.Start regionMap with
-                | Some m -> m
-                | None -> Map.empty
+                Map.tryFind movement.Start regionMap
+                |> Option.defaultVal Map.empty
             let numVehicles =
                 departure.Vehicles
                 |> Map.fold (fun (numVehicles : Map<GroundAttackVehicle, int>) vehicle num ->
-                    let num2 =
-                        match Map.tryFind vehicle numVehicles with
-                        | Some n -> n - num
-                        | None -> -num
+                    let num =
+                        num + (Map.tryFind vehicle numVehicles |> Option.defaultVal 0)
                     Map.add vehicle num numVehicles
                 ) numVehicles
             Map.add movement.Start numVehicles regionMap
@@ -617,14 +614,14 @@ let applyVehicleTransfers (state : WorldState) (movements : ColumnMovement list)
         |> List.map (fun region ->
             match Map.tryFind region.RegionId departed with
             | None -> region
-            | Some diff ->
+            | Some removed ->
                 let numVehicles =
-                    diff
-                    |> Map.fold (fun numVehicles vehicle diff ->
+                    removed
+                    |> Map.fold (fun numVehicles vehicle removed ->
                         let newQty =
                             match Map.tryFind vehicle numVehicles with
-                            | Some n -> n + diff
-                            | None -> diff
+                            | Some n -> n - removed
+                            | None -> 0
                             |> max 0
                         Map.add vehicle newQty numVehicles
                     ) region.NumVehicles
