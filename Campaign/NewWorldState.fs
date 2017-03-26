@@ -357,8 +357,14 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 let afState = { afState with
                                     NumPlanes = planes
                                     StorageHealth = storeHealth }
-                let CapacityAfterDamages = afState.StorageCapacity(af)
-                let factor = CapacityAfterDamages / capacityBeforeDamages
+                let capacityAfterDamages = afState.StorageCapacity(af)
+                let factor =
+                    if capacityAfterDamages = 0.0f<E> then
+                        0.0f
+                    elif capacityBeforeDamages = 0.0f<E> then
+                        0.0f
+                    else
+                        capacityAfterDamages / capacityBeforeDamages
                 let afState = { afState with Supplies = factor * afState.Supplies }
                 yield afState
         ]
@@ -371,15 +377,21 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     |> List.mapi (fun idx health ->
                         Map.tryFind (Production(region.RegionId, idx)) damages
                         |> applyDamage health)
-                let capacityBeforeDamage = regState.StorageCapacity(region)
+                let capacityBeforeDamages = regState.StorageCapacity(region)
                 let storeHealth =
                     regState.StorageHealth
                     |> List.mapi (fun idx health ->
                         Map.tryFind (Storage(region.RegionId, idx)) damages
                         |> applyDamage health)
                 let regState = { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth }
-                let capacityAfterDamage = regState.StorageCapacity(region)
-                let factor = capacityAfterDamage / capacityBeforeDamage 
+                let capacityAfterDamages = regState.StorageCapacity(region)
+                let factor =
+                    if capacityAfterDamages = 0.0f<E> then
+                        0.0f
+                    elif capacityBeforeDamages = 0.0f<E> then
+                        0.0f
+                    else
+                        capacityAfterDamages / capacityBeforeDamages
                 let regState = { regState with Supplies = factor * regState.Supplies }
                 yield regState
         ]
@@ -632,21 +644,21 @@ let eveningStop = 19
 let morningStart = 7
 
 let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures columnArrivals =
-    let state = applyProduction dt world state
-    let state, extra = convertProduction world state
-    let state = applyRepairsAndDamages dt world state convoyDepartures (supplies @ extra) damages
-    let state = applyPlaneTransfers state tookOff landed
-    let battles = buildBattles state movements columnArrivals
-    let state = applyVehicleDepartures state movements columnDepartures
-    let state = applyConquests state battles
-    let state = updateNumCanons world state
+    let state2 = applyProduction dt world state
+    let state3, extra = convertProduction world state2
+    let state4 = applyRepairsAndDamages dt world state3 convoyDepartures (supplies @ extra) damages
+    let state5 = applyPlaneTransfers state4 tookOff landed
+    let battles = buildBattles state5 movements columnArrivals
+    let state6 = applyVehicleDepartures state5 movements columnDepartures
+    let state7 = applyConquests state6 battles
+    let state8 = updateNumCanons world state7
     let h = floor(float32 dt)
     let mins = 60.0f * ((float32 dt) - h)
     let newDate =
-        let x = state.Date + System.TimeSpan(int h, int mins, 0)
+        let x = state8.Date + System.TimeSpan(int h, int mins, 0)
         let extra =
             if x.Hour >= eveningStop then
                 morningStart - eveningStop + 24
             else 0
         x + System.TimeSpan(extra, 0, 0)
-    { state with Date = newDate }
+    { state8 with Date = newDate }
