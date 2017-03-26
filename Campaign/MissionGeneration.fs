@@ -429,7 +429,8 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let includeSearchLights =
         state.Date.Hour <= 8 || state.Date.Hour + missionLength / 60 >= 18
     let staticDefenses = ArtilleryGroup.Create(random, store, includeSearchLights, missionBegin, world, state)
-    let icons = MapIcons.Create(store, lcStore, world, state)
+    let icons = MapIcons.CreateRegions(store, lcStore, world, state)
+    let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, world, state)
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
@@ -490,6 +491,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
           missionBegin
           upcast staticDefenses
           upcast icons
+          upcast icons2
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList spawns
