@@ -29,6 +29,29 @@ let computeStorageCapacity (world : World) =
     |> Seq.map (fun (region, caps) -> region, caps |> Seq.sumBy snd)
     |> Map.ofSeq
 
+/// Compute the actual storage capacity of each region, including airfields'
+let computeActualStorageCapacity (world : World) (state : WorldState) =
+    let afCapacity =
+        seq {
+            for af, afState in List.zip world.Airfields state.Airfields do
+                let capacity =
+                    List.zip af.Storage afState.StorageHealth
+                    |> Seq.sumBy (fun (building, health) -> health * getSupplyCapacityPerBuilding building.Model)
+                yield af.Region, capacity
+        }
+    let regCapacity =
+        seq {
+            for reg, regState in List.zip world.Regions state.Regions do
+                let capacity =
+                    List.zip reg.Storage regState.StorageHealth
+                    |> Seq.sumBy (fun (building, health) -> health * getSupplyCapacityPerBuilding building.Model)
+                yield reg.RegionId, capacity
+        }
+    Seq.concat [ afCapacity; regCapacity ]
+    |> Seq.groupBy fst
+    |> Seq.map (fun (region, caps) -> region, caps |> Seq.sumBy snd)
+    |> Map.ofSeq
+
 /// Compute current storage of each region, including airfields'
 let computeStorage (world : World) (state : WorldState) =
     let afStorage =
