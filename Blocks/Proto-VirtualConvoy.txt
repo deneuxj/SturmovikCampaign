@@ -171,8 +171,13 @@ target += for end in path_end
 // Show last convoy when last travel waypoint reached (physically or virtually)
 target += for _ in invasion_start
           for end in path_end
-		  for convoy in convoy_at_waypoint(end) -> (wp.Waypoint, convoy.ActivateGroup)
-		                                        -> (wp.Activate, convoy.ActivateGroup)
+		  for convoy in convoy_at_waypoint(end) -> (end.Waypoint, convoy.ActivateGroup)
+		                                        -> (end.Activate, convoy.ActivateGroup)
+// Hide convoy when invasion destination reached
+target += for dest in invasion_end
+          for end in path_end
+		  for convoy in convoy_at_waypoint(end) -> (dest.Waypoint, convoy.DeactivateGroup)
+
 // Notify of objective capture when last invasion waypoint reached
 target += for wp in invasion_end
 		  for out in result -> (wp.Waypoint, out.Captured)

@@ -451,6 +451,15 @@ with
                             yield wp.Activate, upcast convoy.ActivateGroup
                         | None ->
                             ()
+                    // Hide convoy when invasion destination reached
+                    for destination in this.InvasionEnd do
+                        match tryGet this.ConvoyAtWaypoint finish with
+                        | Some convoy ->
+                            let wp = this.SimpleWaypointSet.[destination]
+                            let convoy = this.ConvoySet.[convoy]
+                            yield upcast wp, upcast convoy.DeactivateGroup
+                        | None ->
+                            ()
                 // Notify of objective capture when last invasion waypoint reached
                 for finish in this.InvasionEnd do
                     let wp = this.SimpleWaypointSet.[finish]
