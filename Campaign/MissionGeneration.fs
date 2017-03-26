@@ -220,6 +220,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
                 let planeSpecs : T.Airfield.Planes.Plane list =
                     state.NumPlanes
+                    |> Map.filter (fun _ number -> number >= 1.0f)
                     |> Map.map (fun plane number ->
                         let model = plane.ScriptModel
                         newAirfieldPlane("", "", 0, 0, "", "", int number)
