@@ -66,3 +66,24 @@ module Array =
         |> Array.map (fun xs -> random.NextDouble(), xs)
         |> Array.sortBy fst
         |> Array.map snd
+
+/// Misc useful algorithms.
+module Algo =
+    /// <summary>
+    /// Assign values to nodes in a graph, starting from a set of roots
+    /// </summary>
+    /// <param name="getSuccessors">Returns the neighbours of a node that are potentially affected by a change of value of that node</param>
+    /// <param name="update">Given the old and new value of a predecessor, returns whether some updated value if any, None otherwise</param>
+    /// <param name="roots">The initial list of nodes with their values</param>
+    let propagate getSuccessors update roots =
+        let rec work (mapping, working) =
+            match working with
+            | [] -> mapping
+            | (node, value) :: rest ->
+                let affected =
+                    getSuccessors node
+                    |> List.choose (fun node -> update node (Map.tryFind node mapping) value |> Option.map (fun v -> node, v))
+                let mapping = Map.add node value mapping
+                let working = rest @ affected
+                work (mapping, working)
+        work (Map.empty, roots)

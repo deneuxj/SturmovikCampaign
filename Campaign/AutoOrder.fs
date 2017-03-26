@@ -46,6 +46,7 @@ let computeStorage (world : World) (state : WorldState) =
     |> Seq.map (fun (region, caps) -> region, caps |> Seq.sumBy snd)
     |> Map.ofSeq
 
+/// Compute the supply needs of each region.
 let computeSupplyNeeds (world : World) (state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
@@ -107,17 +108,54 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
     |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
     |> Map.ofSeq
 
+/// Forward the supply needs of regions at the frontline to regions at the back
+let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<RegionId, float32<E>>) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+    let inFront =
+        let frontLine = computeFrontLine world state.Regions
+        frontLine
+        |> Seq.map fst
+        |> Set.ofSeq
+    let distances = computeDistance true (fun world -> world.Roads) (fun r -> sg.GetRegion(r).Owner) inFront.Contains world
+    let getSuccessors (region : RegionId) =
+        let region = wg.GetRegion(region)
+        match Map.tryFind region.RegionId distances with
+        | Some lvl ->
+            region.Neighbours
+            |> List.filter (fun ngh ->
+                match Map.tryFind ngh distances with
+                | Some lvl2 -> lvl2 > lvl
+                | _ -> false)
+        | None ->
+            []
+    let update (region : RegionId) oldValue newValue =
+        match oldValue with
+        | None -> Some newValue
+        | Some oldValue ->
+            if newValue > oldValue then
+                Some newValue
+            else
+                None
+    let roots =
+        inFront
+        |> Seq.map (fun region -> Map.tryFind region needs |> Option.defaultVal 0.0f<E> |> fun value -> region, value)
+        |> List.ofSeq
+    Algo.propagate getSuccessors update roots
+
+
 /// Create convoy orders from regions owned by a coalition to neighbour regions that are further away from factories.
 let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
-    let distances = computeRegionDistances true getPaths getOwner (coalition, world)
+    let distances = computeDistanceFromFactories true getPaths getOwner world coalition
     let areConnectedByRoad(start, destination) =
         getPaths world
         |> List.exists (fun path -> path.MatchesEndpoints(start, destination).IsSome)
     let capacities = computeStorageCapacity world
     let storages = computeStorage world state
     let needs = computeSupplyNeeds world state
+    let forwardedNeeds = computeForwardedNeeds world state needs
     let tryFind x y = Map.tryFind x y |> Option.defaultVal 0.0f<E>
     [
         for region, regState in List.zip world.Regions state.Regions do
@@ -135,7 +173,7 @@ let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getP
                                 |> max 0.0f<E>
                             let alreadyAtReceiver = tryFind ngh storages
                             let availableToReceive = tryFind ngh capacities
-                            let receiverNeeds = tryFind ngh needs
+                            let receiverNeeds = tryFind ngh needs + tryFind ngh forwardedNeeds
                             let requested =
                                 (min receiverNeeds availableToReceive) - alreadyAtReceiver
                                 |> max 0.0f<E>
@@ -274,9 +312,9 @@ let getInvasionValue (world, state) =
     let sg = WorldStateFastAccess.Create state
     let getRegionDistances =
         let distanceToAxisFactories =
-            computeRegionDistances false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Axis, world)
+            computeDistanceFromFactories false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) world Axis
         let distanceToAlliesFactories =
-            computeRegionDistances false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (Allies, world)
+            computeDistanceFromFactories false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) world Allies
         fun attacker ->
             match attacker with
             | Some Axis -> distanceToAlliesFactories
