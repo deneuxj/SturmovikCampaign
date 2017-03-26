@@ -491,7 +491,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
           missionBegin
           upcast staticDefenses
           upcast icons
-          upcast icons2
+          //upcast icons2
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList spawns
