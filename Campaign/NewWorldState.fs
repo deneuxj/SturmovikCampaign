@@ -22,14 +22,12 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
     let sg = WorldStateFastAccess.Create state
 
     let supplyNeed =
+        let allNeeds = AutoOrder.computeSupplyNeeds world state
         state.Regions
         |> Seq.sumBy (fun state ->
             if state.Owner = Some coalition then
-                let capacity =
-                    let region = wg.GetRegion state.RegionId
-                    state.StorageCapacity(region)
-                capacity - state.Supplies
-                |> max 0.0f<E>
+                Map.tryFind state.RegionId allNeeds
+                |> Option.defaultVal 0.0f<E>
             else
                 0.0f<E>)
     assert(supplyNeed >= 0.0f<E>)
