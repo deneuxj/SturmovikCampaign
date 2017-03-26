@@ -46,11 +46,11 @@ let computeStorage (world : World) (state : WorldState) =
     |> Seq.map (fun (region, caps) -> region, caps |> Seq.sumBy snd)
     |> Map.ofSeq
 
-/// Compute the supply needs of each region.
+/// Compute the additional supply needs of each region. Can be negative if the region has more resources it needs for itself.
 let computeSupplyNeeds (world : World) (state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
-    // Bombs and repairs at airfields
+    // Bombs and repairs at airfields. Needs can be negative.
     let afNeeds =
         seq {
             for af, afs in Seq.zip world.Airfields state.Airfields do
@@ -58,35 +58,32 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     afs.NumPlanes
                     |> Map.toSeq
                     |> Seq.sumBy(fun (plane, qty) -> plane.BombCapacity * qty * bombCost)
-                let capacity =
-                    af.Storage
-                    |> Seq.sumBy (fun building -> getSupplyCapacityPerBuilding building.Model)
-                let supplyDiff = min bombNeed capacity
                 let repairs =
                     Seq.zip af.Storage afs.StorageHealth
                     |> Seq.sumBy (fun (building, health) -> (1.0f - health) * getEnergyHealthPerBuilding building.Model)
-                yield af.Region, supplyDiff + repairs
+                yield af.Region, bombNeed + repairs - afs.Supplies
         }
     let frontLine = computeFrontLine world state.Regions
-    // Amounts of anti-tank and anti-air canons needed to have the region fully defended
+    // Amounts of extra anti-tank and anti-air canons needed to have the region fully defended.
+    // Can be negative.
     let regionCanonNeeds =
         seq {
             for antiTank, antiTankState in Seq.zip world.AntiTankDefenses state.AntiTankDefenses do
                 match antiTank.Home with
                 | FrontLine(home, ngh) when frontLine.Contains(home, ngh)->
-                    yield home, float32(max 0 (getAntiTankCanonsForArea antiTank - antiTankState.NumUnits)) * canonCost
+                    yield home, float32(getAntiTankCanonsForArea antiTank - antiTankState.NumUnits) * canonCost
                 | _ ->
                     ()
             for antiAir, antiAirState in Seq.zip world.AntiAirDefenses state.AntiAirDefenses do
                 match antiAir.Home with
                 | Central(home) ->
-                    yield home, float32(max 0 (getAntiAirCanonsForArea antiAir - antiAirState.NumUnits)) * canonCost
+                    yield home, float32(getAntiAirCanonsForArea antiAir - antiAirState.NumUnits) * canonCost
                 | _ ->
                     ()
         }
         |> Seq.groupBy fst
         |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
-    // Costs for canons adjusted by storage capacity
+    // Costs for canons adjusted by storage capacity. Can be negative
     let regionSaturatedCanonNeeds =
         let capacities = computeStorageCapacity world
         seq {
@@ -165,19 +162,11 @@ let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getP
                     match Map.tryFind ngh distances with
                     | Some other when other > level && areConnectedByRoad(region.RegionId, ngh) ->
                         let transfer =
-                            let availableToSend = regState.Supplies
-                            let senderNeeds = tryFind region.RegionId needs
-                            let selfishNess = 0.5f
-                            let willingToSend =
-                                availableToSend - selfishNess * senderNeeds
-                                |> max 0.0f<E>
                             let alreadyAtReceiver = tryFind ngh storages
-                            let availableToReceive = tryFind ngh capacities
+                            let availableToReceive = tryFind ngh capacities - alreadyAtReceiver
                             let receiverNeeds = tryFind ngh needs + tryFind ngh forwardedNeeds
-                            let requested =
-                                (min receiverNeeds availableToReceive) - alreadyAtReceiver
-                                |> max 0.0f<E>
-                            min willingToSend requested
+                            let requested = min receiverNeeds availableToReceive
+                            min regState.Supplies requested
                         if transfer > 0.0f<E> then
                             let size =
                                 ceil(transfer / vehicleCapacity)
