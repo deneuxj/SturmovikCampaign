@@ -208,6 +208,7 @@ module MissionFileGeneration =
     open Campaign.AutoOrder
     open Campaign.Orders
     open Campaign.Weather
+    open Campaign.Util
     open SturmovikMission.Blocks.BlocksMissionData
     open System.IO
     open MBrace.FsPickler
@@ -258,7 +259,34 @@ module MissionFileGeneration =
         let weather = Weather.getWeather random (state.Date + daysOffset)
 
         let author = "coconut"
-        let briefing = config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
+        let weatherDescription =
+            let cover =
+                if weather.CloudDensity < 0.25 then
+                    "light"
+                elif weather.CloudDensity < 0.5 then
+                    "medium"
+                elif weather.CloudDensity < 0.75 then
+                    "heavy"
+                else
+                    "overcast"
+            let windDirection =
+                weather.Wind.Direction
+            let windOrigin =
+                let descs =
+                    [ 1.0, "south"
+                      3.0, "south-west"
+                      5.0, "west"
+                      7.0, "north-west"
+                      9.0, "north"
+                      11.0, "north-east"
+                      15.0, "east"
+                      15.0, "south-east" ]
+                descs
+                |> List.tryFind(fun (k, _) -> windDirection < k * 22.5)
+                |> Option.map snd
+                |> Option.defaultVal "south"
+            sprintf "<b>Weather<b><br>Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" cover weather.Wind.Speed windOrigin
+        let briefing = weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
 
         let missionName = config.MissionName
         writeMissionFile random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
