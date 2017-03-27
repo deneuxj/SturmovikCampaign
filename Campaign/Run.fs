@@ -54,13 +54,13 @@ module Init =
 
         let capacity =
             world.Regions
-            |> Seq.map (fun region -> region.RegionId, region.Storage |> Seq.sumBy (fun sto -> getSupplyCapacityPerBuilding sto.Model))
+            |> Seq.map (fun region -> region.RegionId, region.Storage |> Seq.sumBy (fun sto -> sto.Storage))
             |> Seq.map (fun (region, capacity) -> region, capacity / canonCost)
             |> Map.ofSeq
 
         let production =
             world.Regions
-            |> Seq.map (fun region -> region.RegionId, region.Production |> Seq.sumBy (fun sto -> getProductionPerBuilding sto.Model))
+            |> Seq.map (fun region -> region.RegionId, region.Production |> Seq.sumBy (fun prod -> prod.Production))
             |> Seq.map (fun (region, production) -> region, production)
             |> Map.ofSeq
 

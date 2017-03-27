@@ -61,11 +61,11 @@ with
 
     member this.StorageCapacity(region : WorldDescription.Region) =
         List.zip region.Storage this.StorageHealth
-        |> List.sumBy (fun (sto, health) -> health * WorldDescription.getSupplyCapacityPerBuilding sto.Model)
+        |> List.sumBy (fun (sto, health) -> health * sto.Storage)
 
     member this.ProductionCapacity(region : WorldDescription.Region) =
         List.zip region.Production this.ProductionHealth
-        |> List.sumBy (fun (prod, health) -> health * WorldDescription.getProductionPerBuilding prod.Model)
+        |> List.sumBy (fun (prod, health) -> health * prod.Production)
 
 /// State of a defense area within a region.
 type DefenseAreaState = {
@@ -83,7 +83,7 @@ type AirfieldState = {
 with
     member this.StorageCapacity(af : WorldDescription.Airfield) =
         List.zip af.Storage this.StorageHealth
-        |> List.sumBy (fun (sto, health) -> health * WorldDescription.getSupplyCapacityPerBuilding(sto.Model))
+        |> List.sumBy (fun (sto, health) -> health * sto.Storage)
 
 /// Packages all state data.
 type WorldState = {
@@ -367,7 +367,7 @@ let mkInitialState(world : World, strategyFile : string) =
                         let costs = float32 costs
                         let supplies =
                             region.Storage
-                            |> Seq.sumBy (fun storage -> getSupplyCapacityPerBuilding storage.Model / costs)
+                            |> Seq.sumBy (fun storage -> storage.Storage / costs)
                         let scale (n : int) =
                             int(ceil(float32 n / costs))
                         let vehicles =
@@ -407,7 +407,7 @@ let mkInitialState(world : World, strategyFile : string) =
             if hasFactories then
                 match owner with
                 | None -> 0.0f<E>
-                | Some _ -> airfield.Storage |> Seq.sumBy (fun gr -> getSupplyCapacityPerBuilding gr.Model)
+                | Some _ -> airfield.Storage |> Seq.sumBy (fun gr -> gr.Storage)
             else
                 0.0f<E>
         { AirfieldId = airfield.AirfieldId

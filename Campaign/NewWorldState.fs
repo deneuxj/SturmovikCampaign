@@ -279,7 +279,7 @@ let convertProduction (world : World) (state : WorldState) =
 let computeHealing(healths, buildings, energy) =
     let energyPerBuilding =
         buildings
-        |> List.map (fun (x : StaticGroup) -> getEnergyHealthPerBuilding x.Model)
+        |> List.map (fun (x : StaticGroup) -> x.RepairCost)
     let prodHealing, energy =
         List.zip healths energyPerBuilding
         |> List.fold (fun (healings, available) (health, healthCost : float32<E>) ->

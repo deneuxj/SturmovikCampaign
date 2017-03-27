@@ -150,7 +150,7 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                             mkDamaged (
                                 Seq.init 128 (fun i -> i, T.Float(if random.NextDouble() < health then 0.0 else 1.0))
                                 |> Map.ofSeq))
-                        |> setDurability (T.Integer(getDurabilityForBuilding(block |> getModel |> valueOf)))
+                        |> setDurability (StaticGroup.FromBlock(block).Durability |> T.Integer)
                         |> setIndex (T.Integer 1)
                         |> setLinkTrId (T.Integer 2)
                         |> createMcu

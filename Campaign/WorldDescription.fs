@@ -6,6 +6,9 @@ open Vector
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
 
+open Campaign.Util
+open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
+
 [<Measure>]
 /// Cost (energy)
 type E
@@ -56,6 +59,61 @@ type StaticGroup = {
     Script : string
     Pos : OrientedPosition
 }
+with
+    static member inline FromBlock(block : ^T) =
+        { Model = block |> getModel |> valueOf
+          Script = block |> getScript |> valueOf
+          Pos = { Pos = Vector2.FromPos block
+                  Rotation = block |> getYOri |> valueOf |> float32 }
+        }
+
+    /// List of sub-block numbers that represent objects with significant storage or production capabilities
+    member this.SubBlocks =
+        match this.Model with
+        | Contains @"graphics\blocks\arf_barak.mgm" -> [1]
+        | Contains @"graphics\blocks\arf_dugouts_2.mgm" -> [2..5]
+        | Contains @"graphics\blocks\arf_ammo_1.mgm" -> [2]
+        | Contains @"graphics\blocks\industrial_200x140_01.mgm" -> [0..12]
+        | Contains @"graphics\blocks\industrial_200x140_02.mgm" -> [0..19]
+        | Contains @"graphics\blocks\industrial_300x100_01.mgm" -> [0..13]
+        | Contains @"graphics\blocks\industrial_300x100_02.mgm" -> [0..15]
+        | Contains @"graphics\blocks\industrial_300x100_03.mgm" -> [0..9]
+        | Contains @"graphics\blocks\industrial_300x100_04.mgm" -> [0..7]
+        | Contains @"graphics\blocks\industrial_cornerl_01.mgm" -> [0..8]
+        | Contains @"graphics\blocks\industrial_cornerl_02.mgm" -> [0..9]
+        | Contains @"graphics\blocks\industrial_cornerr_01.mgm" -> [0..6]
+        | Contains @"graphics\blocks\industrial_cornerr_02.mgm" -> [0..10]
+        | _ -> []
+
+    member this.Production =
+        match this.Model with
+        | Contains "industrial_" -> 25.0f<E/H>
+        | _ -> 0.0f<E/H>
+
+    member this.Storage =
+        match this.Model with
+        | Contains @"graphics\blocks\arf_barak.mgm" -> 100.0f<E>
+        | Contains @"graphics\blocks\arf_dugouts_2.mgm" -> 400.0f<E>
+        | Contains @"graphics\blocks\arf_ammo_1.mgm" -> 100.0f<E>
+        | _ -> 0.0f<E>
+
+    member this.Durability =
+        match this.Model with
+        | Contains "arf_net" -> 1000
+        | Contains "arf_dugout" -> 15000
+        | Contains "arf_barak" -> 10000
+        | Contains "arf_hangar" -> 10000
+        | Contains "industrial" -> 10000
+        | Contains "static_" -> 2500
+        | _ -> 10000
+
+    member this.RepairCost =
+        match this.Model with
+        | Contains @"graphics\blocks\arf_barak.mgm" -> 1000.0f<E>
+        | Contains @"graphics\blocks\arf_dugouts_2.mgm" -> 4000.0f<E>
+        | Contains @"graphics\blocks\arf_ammo_1.mgm" -> 1000.0f<E>
+        | Contains @"industrial_" -> 7500.0f<E>
+        | _ -> 1000.0f<E>
 
 type RegionId = RegionId of string
 
@@ -151,16 +209,10 @@ with
         withBoundaries
         |> List.map setNeighbours
 
-    member private this.GetStaticBlocks(blocks : T.Block list) =
+    member private this.GetStaticBlocks(blocks : T.Block list) : StaticGroup list =
         blocks
         |> List.filter (fun block -> Vector2.FromPos(block).IsInConvexPolygon(this.Boundary))
-        |> List.map (fun block ->
-            { Model = block.GetModel().Value
-              Script = block.GetScript().Value
-              Pos = { Pos = Vector2.FromPos block
-                      Rotation = float32(block.GetYOri().Value) }
-            }
-        )
+        |> List.map StaticGroup.FromBlock
 
     member this.AddStorage(blocks : T.Block list) =
         let storage = this.GetStaticBlocks(blocks)
@@ -636,22 +688,3 @@ with
 let canonCost = 50.0f<E>
 
 let bombCost = 100.0f<E> / 1000.0f<K>
-
-let getSupplyCapacityPerBuilding (model : string) = 100.0f<E>
-
-let getEnergyHealthPerBuilding (model : string) = getSupplyCapacityPerBuilding model
-
-let getDurabilityForBuilding (model : string) =
-    match model with
-    | Contains "arf_net" -> 1000
-    | Contains "arf_dugout" -> 15000
-    | Contains "arf_barak" -> 10000
-    | Contains "arf_hangar" -> 10000
-    | Contains "industrial" -> 10000
-    | Contains "static_" -> 2500
-    | _ -> 10000
-
-let getProductionPerBuilding (model : string) =
-    match model with
-    | Contains "industrial" -> 25.0f<E/H>
-    | _ -> 0.1f<E/H>

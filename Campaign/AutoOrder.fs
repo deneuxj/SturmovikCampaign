@@ -13,7 +13,7 @@ let computeStorageCapacity (world : World) =
             for af in world.Airfields do
                 let capacity =
                     af.Storage
-                    |> Seq.sumBy (fun building -> getSupplyCapacityPerBuilding building.Model)
+                    |> Seq.sumBy (fun building -> building.Storage)
                 yield af.Region, capacity
         }
     let regCapacity =
@@ -21,7 +21,7 @@ let computeStorageCapacity (world : World) =
             for reg in world.Regions do
                 let capacity =
                     reg.Storage
-                    |> Seq.sumBy (fun building -> getSupplyCapacityPerBuilding building.Model)
+                    |> Seq.sumBy (fun building -> building.Storage)
                 yield reg.RegionId, capacity
         }
     Seq.concat [ afCapacity; regCapacity ]
@@ -36,7 +36,7 @@ let computeActualStorageCapacity (world : World) (state : WorldState) =
             for af, afState in List.zip world.Airfields state.Airfields do
                 let capacity =
                     List.zip af.Storage afState.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> health * getSupplyCapacityPerBuilding building.Model)
+                    |> Seq.sumBy (fun (building, health) -> health * building.Storage)
                 yield af.Region, capacity
         }
     let regCapacity =
@@ -44,7 +44,7 @@ let computeActualStorageCapacity (world : World) (state : WorldState) =
             for reg, regState in List.zip world.Regions state.Regions do
                 let capacity =
                     List.zip reg.Storage regState.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> health * getSupplyCapacityPerBuilding building.Model)
+                    |> Seq.sumBy (fun (building, health) -> health * building.Storage)
                 yield reg.RegionId, capacity
         }
     Seq.concat [ afCapacity; regCapacity ]
@@ -83,7 +83,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     |> Seq.sumBy(fun (plane, qty) -> plane.BombCapacity * qty * bombCost)
                 let repairs =
                     Seq.zip af.Storage afs.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> (1.0f - health) * getEnergyHealthPerBuilding building.Model)
+                    |> Seq.sumBy (fun (building, health) -> (1.0f - health) * building.RepairCost)
                 yield af.Region, bombNeed + repairs - afs.Supplies
         }
     let frontLine = computeFrontLine world state.Regions
@@ -120,7 +120,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     min (capacity - regState.Supplies) costs
                 let repairs =
                     List.zip reg.Production regState.ProductionHealth
-                    |> List.sumBy (fun (building, health) -> (1.0f - health) *  getEnergyHealthPerBuilding building.Model)
+                    |> List.sumBy (fun (building, health) -> (1.0f - health) *  building.RepairCost)
                 yield region, cost + repairs
         }
     Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]
