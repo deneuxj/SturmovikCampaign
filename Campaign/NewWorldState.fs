@@ -162,7 +162,7 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
         let regions =
             [
                 for region, regState in Seq.zip world.Regions state.Regions do
-                    if regState.Owner = Some coalition then
+                    if regState.Owner = Some coalition && not(List.isEmpty region.Production) then
                         // Redistribute plane production resources if this region has no airfield to receive the newly produced planes.
                         let vehiclePrio, planePrio, energyPrio =
                             if world.Airfields |> List.exists (fun af -> af.Region = region.RegionId) then
