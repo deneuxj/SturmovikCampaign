@@ -9,43 +9,21 @@ open Vector
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Util
+open SturmovikMission.Blocks.VirtualConvoy.Types
 
 /// Merge vertices of region boundaries that are close to each other.
-let getRepresentant (world : World) =
+let getRepresentative (world : World) =
     let dist2 =
         let dist = 1000.0f
         dist * dist
-    let equivClasses =
-        let allVecs =
-            world.Regions
-            |> Seq.map (fun region -> region.Boundary)
-            |> List.concat
-        let singletons =
-            allVecs
-            |> List.map (fun v -> [v])
-        allVecs
-        |> Seq.fold (fun equivClasses v ->
-            let near, far =
-                equivClasses
-                |> List.partition (fun points ->
-                    points
-                    |> List.exists (fun v2 -> (v - v2).LengthSquared() < dist2)
-                )
-            List.concat near :: far
-        ) singletons
-    let m =
-        equivClasses
-        |> Seq.map (fun cl ->
-            match cl with
-            | lead :: rest ->
-                cl
-                |> List.map (fun v -> v, lead)
-            | [] ->
-                []
-        )
-        |> Seq.concat
-        |> dict
-    fun v -> m.[v]
+    let areSimilar (v1 : Vector2) (v2 : Vector2) =
+        (v1 - v2).LengthSquared() < dist2
+    let allVecs =
+        world.Regions
+        |> Seq.map (fun region -> region.Boundary)
+        |> List.concat
+    let equivClasses = Algo.computePartition areSimilar allVecs
+    Algo.getEquivalent equivClasses
 
 /// Default icon from which all icons are cloned.
 let private defaultIcon =
@@ -176,7 +154,7 @@ with
             let cache = Dictionary<_,_>()
             let getIcon v =
                 mkIcon 13 (255, 255, 255) v
-            let getIcon = getRepresentant world >> (cached cache getIcon)
+            let getIcon = getRepresentative world >> (cached cache getIcon)
             let mkSegment = mkSegmentIcons getIcon
             for segment in segments do
                 match segment.Kind with
@@ -199,7 +177,7 @@ with
                     if not(List.isEmpty viewers) then
                         icon.Coalitions <- viewers
                     icon
-                let getIcon = getRepresentant world >> (cached cache mkIcon)
+                let getIcon = getRepresentative world >> (cached cache mkIcon)
                 cache, mkSegmentIcons getIcon
             let mkEnemySegment coalition = mkSegment [coalition] (10, 0, 0)
             let mkFriendlySegment coalition = mkSegment [coalition] (0, 0, 10)
@@ -347,3 +325,30 @@ with
         { All = allIcons |> List.map (fun x -> upcast x)
           LcStrings = lcStrings
         }
+
+/// Create icons for filled storage areas that appear when the storage area has been spotted by a plane.
+let createStorageIcons store lcStore (world : World) (state : WorldState) =
+    [
+        for region, regState in List.zip world.Regions state.Regions do
+            match regState.Owner with
+            | Some owner ->
+                if regState.Supplies > 0.5f * regState.StorageCapacity(region)  then
+                    let classes =
+                        region.Production
+                        |> Algo.computePartition (fun sto1 sto2 -> (sto1.Pos.Pos - sto2.Pos.Pos).Length() < 1000.0f)
+                    for group in classes do
+                        match group with
+                        | sto :: _ ->
+                            let icon = IconDisplay.Create(store, lcStore, sto.Pos.Pos, "", owner.Other.ToCoalition, Mcu.IconIdValue.AttackBuildings)
+                            let wec = WhileEnemyClose.Create(true, store, sto.Pos.Pos, owner.ToCoalition)
+                            match wec.Proximity with
+                            | :? Mcu.McuProximity as prox -> prox.Distance <- 2000
+                            | _ -> failwith "Proximity trigger is not of type McuProximity"
+                            Mcu.addTargetLink wec.WakeUp icon.Show.Index
+                            yield icon.All
+                            yield wec.All
+                        | [] ->
+                            ()
+            | None ->
+                ()
+    ]

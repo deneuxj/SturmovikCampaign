@@ -432,6 +432,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let staticDefenses = ArtilleryGroup.Create(random, store, lcStore, includeSearchLights, missionBegin, world, state)
     let icons = MapIcons.CreateRegions(store, lcStore, world, state)
     let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, world, state)
+    let spotting = createStorageIcons store lcStore world state
     let blocks = createBlocks random store world state blocks
     let bridges = createBridges random store world state bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
@@ -500,5 +501,5 @@ let writeMissionFile random weather author missionName briefing missionLength co
           McuUtil.groupFromList reinforcementTimers
           parkedPlanes
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ reinforcements
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ reinforcements @ spotting
     writeMissionFiles "eng" filename options allGroups
