@@ -264,13 +264,13 @@ with
 
     /// Create health bars for each region showing supply and damage levels.
     static member CreateSupplyLevels(store, lcStore, world, state) =
-        let length = 1000.0f
+        let length = 2000.0f
         let renderSupplyBar (pos : Vector2) health color supply =
             let mkIcon = mkIcon store lcStore
             let l0 = mkIcon (int Mcu.LineTypeValue.SectorType1) (64, 64, 64) pos
             let l1 = mkIcon (int Mcu.LineTypeValue.SectorType1) (64, 64, 64) (pos + length * Vector2.UnitY)
             let h0 = mkIcon (int Mcu.LineTypeValue.Bold) (0, 0, 128) (pos)
-            let h1 = mkIcon (int Mcu.LineTypeValue.Bold) (0, 0, 128) (pos + length * supply * Vector2.UnitY)
+            let h1 = mkIcon (int Mcu.LineTypeValue.Bold) (0, 0, 128) (pos + length * health * Vector2.UnitY)
             let s0 = mkIcon (int Mcu.LineTypeValue.Normal) color (pos + length * supply * Vector2.UnitY + Vector2(0.05f * length, 0.0f))
             let s1 = mkIcon (int Mcu.LineTypeValue.Normal) color (pos + length * supply * Vector2.UnitY - Vector2(0.05f * length, 0.0f))
             l0.Targets <- [l1.Index]
