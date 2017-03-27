@@ -87,3 +87,46 @@ module Algo =
                 let working = rest @ affected
                 work (mapping, working)
         work (Map.empty, roots)
+
+    /// <summary>
+    /// Partition a list according to a provided "similarity relation":
+    /// Two items are considered equivalent if two items are similar according to the transitive closure of the similarity relation
+    /// </summary>
+    /// <param name="items">The list to partition</param>
+    /// <param name="areSimilar">The similarity relation.</param>
+    let computePartition areSimilar items =
+        let singletons =
+            items
+            |> List.map (fun v -> [v])
+        let classes =
+            items
+            |> Seq.fold (fun equivClasses v ->
+                let near, far =
+                    equivClasses
+                    |> List.partition (fun points ->
+                        points
+                        |> List.exists (areSimilar v)
+                    )
+                List.concat near :: far
+            ) singletons
+        classes
+
+    /// <summary>
+    /// Given a partition, compute a function that returns some unique representative for each item in some of the equivalence classes.
+    /// </summary>
+    /// <param name="classes"></param>
+    let getEquivalent classes =
+        let m =
+            classes
+            |> Seq.map (fun cl ->
+                match cl with
+                | lead :: rest ->
+                    cl
+                    |> List.map (fun v -> v, lead)
+                | [] ->
+                    []
+            )
+            |> Seq.concat
+            |> dict
+        fun v -> m.[v]
+
