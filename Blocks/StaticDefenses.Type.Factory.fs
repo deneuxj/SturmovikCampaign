@@ -18,6 +18,7 @@ type StaticDefenseGroup = {
     EnemyClose : WhileEnemyClose
     CheckZoneOverride : Mcu.McuTrigger
     Decorations : Mcu.McuBase list
+    Icon : IconDisplay option
     Api : Api
 }
 with
@@ -40,7 +41,7 @@ with
 //                yield this.EnemyClose.All
             ]
 
-    static member Create(specialty : DefenseSpecialty, includeSearchLights : bool, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+    static member Create(specialty : DefenseSpecialty, includeSearchLights : bool, random : System.Random, store, lcStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let center =
             let n = max 1 (List.length boundary)
             let k = 1.0f / float32 n
@@ -78,11 +79,7 @@ with
             let wec = WhileEnemyClose.Create(true, store, center, coalition)
             match specialty with
             | AntiTank ->
-                let otherCoalition =
-                    match coalition with
-                    | Mcu.CoalitionValue.Allies -> Mcu.CoalitionValue.Axis
-                    | Mcu.CoalitionValue.Axis -> Mcu.CoalitionValue.Allies
-                    | _ -> failwithf "Unexpected coalition value %A" coalition
+                let otherCoalition = McuUtil.swapCoalition coalition
                 for mcu in McuUtil.deepContentOf wec.All do
                     match mcu with
                     | :? Mcu.McuProximity as prox ->
@@ -114,12 +111,20 @@ with
                     | _ -> Vehicles.russianSearchLight
                 vehicle.Model <- model.Model
                 vehicle.Script <- model.Script
+        // Icon
+        let icon =
+            if groupSize >= 3 then
+                IconDisplay.Create(store, lcStore, center, "", McuUtil.swapCoalition coalition, Mcu.IconIdValue.AttackAntiAirPosition)
+                |> Some
+            else
+                None
         // Result
         let api = Api.Create(store, center)
         { CanonSet = antiTankCanonSet
           EnemyClose = enemyClose
           Decorations = positions
           CheckZoneOverride = checkZone
+          Icon = icon
           Api = api
         }
 
@@ -133,6 +138,11 @@ with
                     yield wec.Sleep, canon.Hide :> Mcu.McuBase
                 yield this.Api.Start, upcast wec.StartMonitoring
                 yield this.Api.Stop, upcast wec.StopMonitoring
+                match this.Icon with
+                | Some icon ->
+                    yield wec.WakeUp, upcast icon.Show
+                | None ->
+                    ()
             ]
         { Columns = []
           Objects = []

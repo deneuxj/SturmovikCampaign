@@ -34,7 +34,7 @@ with
         member x.LcStrings = []
         member x.SubGroups = []
 
-    static member Create(random : System.Random, store : NumericalIdentifiers.IdStore, includeSearchLights, missionBegin : Mcu.McuTrigger, world : World, state : WorldState) =
+    static member Create(random : System.Random, store, lcStore, includeSearchLights, missionBegin : Mcu.McuTrigger, world : World, state : WorldState) =
         let getAreaState =
             let m =
                 state.AntiAirDefenses @ state.AntiTankDefenses
@@ -58,7 +58,7 @@ with
                             | None -> failwithf "No owner found for group of anti-tank defenses '%A'" area.DefenseAreaId
                             | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                             | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                        let group = StaticDefenseGroup.Create(AntiTank, false, random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                        let group = StaticDefenseGroup.Create(AntiTank, false, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)
@@ -73,7 +73,7 @@ with
                             | None -> failwithf "No owner found for group of anti-air defenses '%A'" area.DefenseAreaId
                             | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                             | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                        let group = StaticDefenseGroup.Create(AntiAir, includeSearchLights, random, store, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                        let group = StaticDefenseGroup.Create(AntiAir, includeSearchLights, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)
@@ -429,7 +429,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let missionBegin = newMissionBegin (getId 1)
     let includeSearchLights =
         state.Date.Hour <= 8 || state.Date.Hour + missionLength / 60 >= 18
-    let staticDefenses = ArtilleryGroup.Create(random, store, includeSearchLights, missionBegin, world, state)
+    let staticDefenses = ArtilleryGroup.Create(random, store, lcStore, includeSearchLights, missionBegin, world, state)
     let icons = MapIcons.CreateRegions(store, lcStore, world, state)
     let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, world, state)
     let blocks = createBlocks random store world state blocks
