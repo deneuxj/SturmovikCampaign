@@ -144,12 +144,16 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                 | Some health ->
                     // Has health and strategic value, create with an entity.
                     let health = float health
+                    let building = StaticGroup.FromBlock block
                     let damagedBlock =
                         block
                         |> setDamaged (
                             mkDamaged (
-                                Seq.init 128 (fun i -> i, T.Float(if random.NextDouble() < health then 0.0 else 1.0))
-                                |> Map.ofSeq))
+                                let subBlocks = building.SubBlocks
+                                let numSubs = List.length subBlocks |> float
+                                subBlocks
+                                |> List.mapi (fun i sub -> if float i / numSubs < health then (sub, T.Float 0.0) else (sub, T.Float 1.0))
+                                |> Map.ofList))
                         |> setDurability (StaticGroup.FromBlock(block).Durability |> T.Integer)
                         |> setIndex (T.Integer 1)
                         |> setLinkTrId (T.Integer 2)

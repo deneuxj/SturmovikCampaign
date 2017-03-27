@@ -68,21 +68,21 @@ with
         }
 
     /// List of sub-block numbers that represent objects with significant storage or production capabilities
-    member this.SubBlocks =
+    member this.SubBlocks = 
         match this.Model with
-        | Contains @"graphics\blocks\arf_barak.mgm" -> [1]
-        | Contains @"graphics\blocks\arf_dugouts_2.mgm" -> [2..5]
-        | Contains @"graphics\blocks\arf_ammo_1.mgm" -> [2]
-        | Contains @"graphics\blocks\industrial_200x140_01.mgm" -> [0..12]
-        | Contains @"graphics\blocks\industrial_200x140_02.mgm" -> [0..19]
-        | Contains @"graphics\blocks\industrial_300x100_01.mgm" -> [0..13]
-        | Contains @"graphics\blocks\industrial_300x100_02.mgm" -> [0..15]
-        | Contains @"graphics\blocks\industrial_300x100_03.mgm" -> [0..9]
-        | Contains @"graphics\blocks\industrial_300x100_04.mgm" -> [0..7]
-        | Contains @"graphics\blocks\industrial_cornerl_01.mgm" -> [0..8]
-        | Contains @"graphics\blocks\industrial_cornerl_02.mgm" -> [0..9]
-        | Contains @"graphics\blocks\industrial_cornerr_01.mgm" -> [0..6]
-        | Contains @"graphics\blocks\industrial_cornerr_02.mgm" -> [0..10]
+        | Contains "arf_barak" -> [1]
+        | Contains "arf_dugouts_2" -> [2..5]
+        | Contains "arf_ammo_1" -> [2]
+        | Contains "industrial_200x140_01" -> [0..12]
+        | Contains "industrial_200x140_02" -> [0..19]
+        | Contains "industrial_300x100_01" -> [0..13]
+        | Contains "industrial_300x100_02" -> [0..15]
+        | Contains "industrial_300x100_03" -> [0..9]
+        | Contains "industrial_300x100_04" -> [0..7]
+        | Contains "industrial_cornerl_01" -> [0..8]
+        | Contains "industrial_cornerl_02" -> [0..9]
+        | Contains "industrial_cornerr_01" -> [0..6]
+        | Contains "industrial_cornerr_02" -> [0..10]
         | _ -> []
 
     member this.Production =
@@ -92,9 +92,9 @@ with
 
     member this.Storage =
         match this.Model with
-        | Contains @"graphics\blocks\arf_barak.mgm" -> 100.0f<E>
-        | Contains @"graphics\blocks\arf_dugouts_2.mgm" -> 400.0f<E>
-        | Contains @"graphics\blocks\arf_ammo_1.mgm" -> 100.0f<E>
+        | Contains "arf_barak" -> 100.0f<E>
+        | Contains "arf_dugouts_2" -> 400.0f<E>
+        | Contains "arf_ammo_1" -> 100.0f<E>
         | _ -> 0.0f<E>
 
     member this.Durability =
@@ -109,10 +109,10 @@ with
 
     member this.RepairCost =
         match this.Model with
-        | Contains @"graphics\blocks\arf_barak.mgm" -> 1000.0f<E>
-        | Contains @"graphics\blocks\arf_dugouts_2.mgm" -> 4000.0f<E>
-        | Contains @"graphics\blocks\arf_ammo_1.mgm" -> 1000.0f<E>
-        | Contains @"industrial_" -> 7500.0f<E>
+        | Contains "arf_barak" -> 1000.0f<E>
+        | Contains "arf_dugouts_2" -> 4000.0f<E>
+        | Contains "arf_ammo_1" -> 1000.0f<E>
+        | Contains "industrial_" -> 7500.0f<E>
         | _ -> 1000.0f<E>
 
 type RegionId = RegionId of string

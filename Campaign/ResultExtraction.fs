@@ -312,12 +312,12 @@ let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntr
         for entry in entries do
             match entry with
             | :? ObjectSpawnedEntry as spawned ->
-                idMapper := Map.add spawned.ObjectId spawned.ObjectType !idMapper
+                idMapper := Map.add spawned.ObjectId (spawned.ObjectType, spawned.SubGroup) !idMapper
             | :? DamageEntry as damage ->
                 let damagePos = Vector2(damage.Position.X, damage.Position.Z)
                 match Map.tryFind damage.TargetId !idMapper with
-                | Some(IndustrialObjectType buildingType)
-                | Some(AirfieldObjectType buildingType) ->
+                | Some(IndustrialObjectType buildingType, subGroup)
+                | Some(AirfieldObjectType buildingType, subGroup) ->
                     // Damage to buildings: storage or production
                     match tryFindContainingRegion damagePos with
                     | Some region ->
@@ -328,28 +328,33 @@ let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntr
                             airfields
                             |> List.map (fun af ->
                                 af.Storage
-                                |> List.mapi (fun i sto -> Airfield(af.AirfieldId, i), sto.Pos))
+                                |> List.mapi (fun i sto -> Airfield(af.AirfieldId, i), sto))
                             |> List.concat
                         let matchingStorageBuildings =
                             region.Storage
-                            |> List.mapi (fun i sto -> Storage(region.RegionId, i), sto.Pos)
+                            |> List.mapi (fun i sto -> Storage(region.RegionId, i), sto)
                         let matchingProductionBuildings =
                             region.Production
-                            |> List.mapi (fun i pro -> Production(region.RegionId, i), pro.Pos)
+                            |> List.mapi (fun i pro -> Production(region.RegionId, i), pro)
                         let closest =
                             try
                                 matchingAirfieldBuildings @ matchingProductionBuildings @ matchingStorageBuildings
-                                |> Seq.map (fun (x, pos2) -> x, (pos2.Pos - damagePos).Length())
-                                |> Seq.filter (fun (_, dist) -> dist < 100.0f)
-                                |> Seq.minBy snd
+                                |> Seq.map (fun (x, building) -> x, (building.Pos.Pos - damagePos).Length(), building)
+                                |> Seq.filter (fun (_, dist, _) -> dist < 100.0f)
+                                |> Seq.minBy (fun (_, dist, _) -> dist)
                                 |> Some
                             with
                             | _ -> None
                         match closest with
-                        | Some(damaged, _) -> yield { Object = damaged; Data = { Amount = damage.Damage } }
+                        | Some(damaged, _, building) ->
+                            let significantSubBlocks = building.SubBlocks
+                            if  List.contains subGroup significantSubBlocks then
+                                let damageAmount =
+                                    damage.Damage / float32 (List.length significantSubBlocks)
+                                yield { Object = damaged; Data = { Amount = damage.Damage } }
                         | None -> () // No known building nearby
                     | None -> () // Outside of know regions
-                | Some(StaticPlaneType planeModel) ->
+                | Some(StaticPlaneType planeModel, _) ->
                     let closestAirfield =
                         world.Airfields
                         |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())
