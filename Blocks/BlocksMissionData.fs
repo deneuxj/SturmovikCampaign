@@ -158,6 +158,12 @@ module CommonMethods =
     let inline getModel(x : ^T) : ^R =
         (^T : (member GetModel : unit -> ^R) x)
 
+    let inline getScript(x : ^T) : ^R =
+        (^T : (member GetScript : unit -> ^R) x)
+
+    let inline getYOri(x : ^T) : ^R =
+        (^T : (member GetYOri : unit -> ^R) x)
+
     let inline valueOf(v : ^V) : ^R =
         (^V : (member Value : ^R) v)
 
