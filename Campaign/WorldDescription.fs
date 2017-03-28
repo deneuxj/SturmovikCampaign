@@ -122,6 +122,7 @@ type RegionId = RegionId of string
 /// Regions are built from influence areas in the group "Regions" in the strategy mission file.
 type Region = {
     RegionId : RegionId
+    Position : Vector2
     Boundary : Vector2 list
     Neighbours : RegionId list
     /// Storage controls the amount of static anti-air and anti-tank units deployed in a region.
@@ -133,6 +134,7 @@ with
     static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list) =
         let extractOne (region : T.MCU_TR_InfluenceArea) =
             { RegionId = RegionId(region.GetName().Value)
+              Position = Vector2.FromPos(region)
               Boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
               Neighbours = []
               Storage = []
@@ -224,27 +226,6 @@ with
         let factories = this.GetStaticBlocks(blocks)
         { this with Production = this.Production @ factories
         }
-
-    // To be replaced by a field retrieved from the influence area's position.
-    // For now, take the center of the axis-aligned bound box
-    member this.Position =
-        let minX =
-            this.Boundary
-            |> List.minBy (fun v -> v.X)
-            |> fun v -> v.X
-        let maxX =
-            this.Boundary
-            |> List.maxBy (fun v -> v.X)
-            |> fun v -> v.X
-        let minY =
-            this.Boundary
-            |> List.minBy (fun v -> v.Y)
-            |> fun v -> v.Y
-        let maxY =
-            this.Boundary
-            |> List.maxBy (fun v -> v.Y)
-            |> fun v -> v.Y
-        Vector2(0.5f * (minX + maxX), 0.5f * (minY + maxY))
 
 
 /// Paths link regions to their neighbours. Road and rail convoys travel along those. Those are extracted from waypoints in groups Roads and Trains respectively in the strategy mission.
