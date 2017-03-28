@@ -85,6 +85,13 @@ with
         List.zip af.Storage this.StorageHealth
         |> List.sumBy (fun (sto, health) -> health * sto.Storage)
 
+    /// Get total value of all planes at this airfield.
+    member this.TotalPlaneValue =
+        this.NumPlanes
+        |> Map.map (fun plane qty -> plane.Cost * qty)
+        |> Map.toSeq
+        |> Seq.sumBy snd
+
 /// Packages all state data.
 type WorldState = {
     Regions : RegionState list
@@ -113,6 +120,11 @@ type WorldState
 with
     member this.FastAccess = WorldStateFastAccess.Create(this)
 
+    member this.TotalPlaneValueOfCoalition(world : World, coalition : CoalitionId) =
+        let sg = this.FastAccess
+        List.zip world.Airfields this.Airfields
+        |> Seq.filter (fun (af, _) -> sg.GetRegion(af.Region).Owner = Some coalition)
+        |> Seq.sumBy (fun (_, afs) -> afs.TotalPlaneValue)
 
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu

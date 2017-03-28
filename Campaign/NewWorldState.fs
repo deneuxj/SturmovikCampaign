@@ -11,7 +11,7 @@ open Campaign.Orders
 type ProductionPriorities = {
     Vehicle : GroundAttackVehicle
     PriorityVehicle : float32<E>
-    Plane : PlaneModel
+    Plane : PlaneType
     PriorityPlane : float32<E>
     PrioritySupplies : float32<E>
 }
@@ -60,88 +60,55 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
         vehicle, need
     assert(vehicleNeed >= 0.0f<E>)
 
-    let planeNeed(af : Airfield, state : AirfieldState) =
-        let bomberCapacity =
-            af.ParkedBombers |> List.length |> float32
-        let attackerCapacity =
-            af.ParkedAttackers |> List.length |> float32
-        let fighterCapacity =
-            af.ParkedFighters |> List.length |> float32
-        let numPlanesOfType models =
-            models
-            |> List.choose (fun model -> Map.tryFind model state.NumPlanes)
-            |> List.sum
-            |> float32
-        let numBombers = numPlanesOfType [ PlaneModel.Ju88a4; Pe2s35 ]
-        let numTransports = numPlanesOfType [ PlaneModel.Ju52 ]
-        let numAttackPlanes = numPlanesOfType [ PlaneModel.Bf110e; IL2M41 ]
-        let numFighters = numPlanesOfType [ PlaneModel.Bf109e7; Bf109f2; Mc202; I16; Mig3; P40 ]
-        let fighterUsage =
-            if fighterCapacity > 0.0f then
-                numFighters / fighterCapacity
-            else
-                1.0f
-        let planeCost (plane : PlaneModel) =
-            let numPlanesNeeded =
-                match plane with
-                | Bf109e7
-                | Bf109f2
-                | Mc202
-                | I16
-                | Mig3
-                | P40 -> fighterCapacity - numFighters
-                | IL2M41
-                | Bf110e -> attackerCapacity - numAttackPlanes
-                | _ -> bomberCapacity - numBombers - numTransports
-            plane, plane.Cost * numPlanesNeeded
-        if fighterUsage < 0.5f then
+    let planeTypeToProduce, planeNeed =
+        let planeTypeShares =
             match coalition with
-            | Axis -> Bf109e7
-            | Allies -> P40
-        elif fighterUsage < 0.75f then
-            match coalition with
-            | Axis -> Mc202
-            | Allies -> I16
-        elif numAttackPlanes < attackerCapacity then
-            match coalition with
-            | Axis -> Bf110e
-            | Allies -> IL2M41
-        elif numBombers < bomberCapacity then
-            match coalition with
-            | Axis ->
-                if numBombers / bomberCapacity > 0.75f then
-                    Ju52
-                else
-                    Ju88a4
-            | Allies ->
-                Pe2s35
-        elif fighterUsage < 1.0f then
-            match coalition with
-            | Axis -> Bf109f2
-            | Allies -> Mig3
-        else
-            match coalition with
-            | Axis -> Bf109e7
-            | Allies -> I16
-        |> planeCost
-    let plane, planeNeed =
-        try
-            world.Airfields
-            |> Seq.map (fun af -> af, sg.GetAirfield af.AirfieldId)
-            |> Seq.filter (fun (af, afs) -> sg.GetRegion(af.Region).Owner = Some coalition)
-            |> Seq.map planeNeed
-            |> Seq.groupBy fst
-            |> Seq.map (fun (plane, needs) -> plane, needs |> Seq.sumBy snd)
-            |> Seq.maxBy snd
-        with
-        | _ ->
-            match coalition with
-            | Axis -> Bf109e7, 0.0f<E>
-            | Allies -> I16, 0.0f<E>
-    assert(planeNeed >= 0.0f<E>)
+            | Axis -> [ 0.4f; 0.3f; 0.2f; 0.1f ]
+            | Allies -> [ 0.4f; 0.4f; 0.3f; 0.0f ]
+            |> List.zip [ Fighter; Attacker; Bomber; Transport ]
+            |> Map.ofList
+        assert(planeTypeShares |> Seq.sumBy (fun kvp -> kvp.Value) = 1.0f)
+        let numPlanesPerType =
+            state.Airfields
+            |> Seq.filter (fun afs -> sg.GetRegion(wg.GetAirfield(afs.AirfieldId).Region).Owner = Some coalition) // Only our coalition
+            |> Seq.fold (fun perType afs ->
+                afs.NumPlanes
+                |> Map.toSeq
+                |> Seq.map (fun (plane, qty) -> plane.PlaneType, qty) // Replace exact plane model by plane type
+                |> Seq.groupBy fst
+                |> Seq.map (fun (typ, xs) -> typ, xs |> Seq.sumBy snd) // Total number of planes per type at that airfield
+                |> Seq.fold (fun perType (typ, qty) -> // Add to total number of planes per type for all regions
+                    let newQty =
+                        qty +
+                        (Map.tryFind typ perType |> Option.defaultVal 0.0f)
+                    Map.add typ newQty perType
+                ) perType
+            ) Map.empty
+        let total =
+            numPlanesPerType
+            |> Seq.sumBy (fun kvp -> kvp.Value)
+        let relNumPlanesPerType =
+            numPlanesPerType
+            |> Map.map (fun typ qty -> qty / total)
+        let mostNeeded =
+            planeTypeShares
+            |> Map.filter (fun _ qty -> qty > 0.0f)
+            |> Map.map (fun typ share ->
+                let actual = Map.tryFind typ relNumPlanesPerType |> Option.defaultVal 0.0f
+                actual / share)
+            |> Map.toSeq
+            |> Seq.minBy snd
+            |> fst
+        let valueTarget =
+            1.1f * state.TotalPlaneValueOfCoalition(world, coalition.Other)
+        let need =
+            valueTarget - state.TotalPlaneValueOfCoalition(world, coalition)
+            |> max 500.0f<E>
+        mostNeeded, need
+
     { Vehicle = vehicleToProduce
       PriorityVehicle = vehicleNeed
-      Plane = plane
+      Plane = planeTypeToProduce
       PriorityPlane = planeNeed
       PrioritySupplies = supplyNeed
     }
@@ -172,13 +139,21 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
                         let energy = dt * regState.ProductionCapacity(region)
                         let supplies = regState.Products.Supplies + energyPrio * energy
                         let planes =
+                            let planeModel =
+                                regState.Products.Planes
+                                |> Map.filter (fun plane _ -> plane.PlaneType = priorities.Plane)
+                                |> Map.toSeq
+                                |> Seq.sortBy snd
+                                |> Seq.tryLast
+                                |> Option.map fst
+                                |> Option.defaultVal (priorities.Plane.Random(coalition) |> Option.get)
                             let oldValue =
-                                Map.tryFind priorities.Plane regState.Products.Planes
+                                Map.tryFind planeModel regState.Products.Planes
                                 |> Option.defaultVal 0.0f<E>
                             assert(planePrio >= 0.0f)
                             assert(planePrio <= 1.0f)
                             let newValue = oldValue + planePrio * energy
-                            Map.add priorities.Plane newValue regState.Products.Planes
+                            Map.add planeModel newValue regState.Products.Planes
                         let vehicles =
                             let oldValue =
                                 Map.tryFind priorities.Vehicle regState.Products.Vehicles

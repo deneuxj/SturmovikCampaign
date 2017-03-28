@@ -1,13 +1,14 @@
 ﻿module Campaign.WorldDescription
 
 open System.Numerics
-
 open Vector
-open SturmovikMission.Blocks.BlocksMissionData
+
 open SturmovikMission.DataProvider
+open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks
+open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 
 open Campaign.Util
-open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 
 [<Measure>]
 /// Cost (energy)
@@ -387,7 +388,7 @@ with
 type AirfieldId = AirfieldId of string
 
 /// Identifies the kind of plane that can be parked at some location.
-module PlaneTypes =
+module ParkedPlaneTypes =
     let (|Fighter|Attacker|Bomber|Other|) (s : string) =
         if s.Contains("bf109") then
             Fighter
@@ -398,8 +399,11 @@ module PlaneTypes =
         else
             Other
 
-open PlaneTypes
-open SturmovikMission.Blocks
+type PlaneType  =
+    | Fighter
+    | Attacker
+    | Bomber
+    | Transport
 
 let private basePlaneCost = 500.0f<E>
 
@@ -487,6 +491,19 @@ with
         | P40
         | Pe2s35 -> Allies
 
+    member this.PlaneType =
+        match this with
+        | Bf109e7 
+        | Bf109f2
+        | Mc202
+        | I16
+        | P40
+        | Mig3 -> Fighter
+        | Bf110e
+        | IL2M41 -> Attacker
+        | Ju88a4
+        | Pe2s35 -> Bomber
+        | Ju52 -> Transport
 
     static member AllModels =
         [ Bf109e7
@@ -501,6 +518,16 @@ with
           P40
           Pe2s35 ]
 
+    static member RandomPlaneOfType(typ : PlaneType, coalition : CoalitionId) =
+        PlaneModel.AllModels
+        |> Seq.filter (fun model -> model.PlaneType = typ && model.Coalition = coalition)
+        |> Array.ofSeq
+        |> Array.shuffle (System.Random())
+        |> Seq.tryHead
+
+type PlaneType
+with
+    member this.Random(coalition) = PlaneModel.RandomPlaneOfType(this, coalition)
 
 /// Description of an airfield: Its position, the planes that can be parked there, the ammo storage facilities.
 type Airfield = {
@@ -588,10 +615,10 @@ with
                     airfields
                     |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
                 match plane.GetModel().Value with
-                | Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
-                | Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
-                | Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
-                | Other -> airfields
+                | ParkedPlaneTypes.Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
+                | ParkedPlaneTypes.Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
+                | ParkedPlaneTypes.Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
+                | ParkedPlaneTypes.Other -> airfields
             ) airfields
         let airfields =
             storage
