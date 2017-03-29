@@ -327,28 +327,28 @@ with
         }
 
 /// Create icons for filled storage areas that appear when the storage area has been spotted by a plane.
-let createStorageIcons store lcStore (world : World) (state : WorldState) =
+let createStorageIcons store lcStore missionBegin (world : World) (state : WorldState) =
     [
         for region, regState in List.zip world.Regions state.Regions do
             match regState.Owner with
             | Some owner ->
-                if regState.Supplies > 0.5f * regState.StorageCapacity(region)  then
-                    let classes =
-                        region.Production
-                        |> Algo.computePartition (fun sto1 sto2 -> (sto1.Pos.Pos - sto2.Pos.Pos).Length() < 1000.0f)
-                    for group in classes do
-                        match group with
-                        | sto :: _ ->
-                            let icon = IconDisplay.Create(store, lcStore, sto.Pos.Pos, "", owner.Other.ToCoalition, Mcu.IconIdValue.AttackBuildings)
-                            let wec = WhileEnemyClose.Create(true, store, sto.Pos.Pos, owner.ToCoalition)
-                            match wec.Proximity with
-                            | :? Mcu.McuProximity as prox -> prox.Distance <- 2000
-                            | _ -> failwith "Proximity trigger is not of type McuProximity"
-                            Mcu.addTargetLink wec.WakeUp icon.Show.Index
-                            yield icon.All
-                            yield wec.All
-                        | [] ->
-                            ()
+                let classes =
+                    region.Storage
+                    |> Algo.computePartition (fun sto1 sto2 -> (sto1.Pos.Pos - sto2.Pos.Pos).Length() < 1000.0f)
+                for group in classes do
+                    match group with
+                    | sto :: _ ->
+                        let icon = IconDisplay.Create(store, lcStore, sto.Pos.Pos, "", owner.Other.ToCoalition, Mcu.IconIdValue.AttackBuildings)
+                        let wec = WhileEnemyClose.Create(true, store, sto.Pos.Pos, owner.ToCoalition)
+                        match wec.Proximity with
+                        | :? Mcu.McuProximity as prox -> prox.Distance <- 2000
+                        | _ -> failwith "Proximity trigger is not of type McuProximity"
+                        Mcu.addTargetLink wec.WakeUp icon.Show.Index
+                        Mcu.addTargetLink missionBegin wec.StartMonitoring.Index
+                        yield icon.All
+                        yield wec.All
+                    | [] ->
+                        ()
             | None ->
                 ()
     ]

@@ -39,6 +39,9 @@ with
                     )
                 yield McuUtil.groupFromList overriden
 //                yield this.EnemyClose.All
+                match this.Icon with
+                | Some icon -> yield icon.All
+                | None -> ()
             ]
 
     static member Create(specialty : DefenseSpecialty, includeSearchLights : bool, random : System.Random, store, lcStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
