@@ -64,7 +64,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
         let planeTypeShares =
             match coalition with
             | Axis -> [ 0.4f; 0.3f; 0.2f; 0.1f ]
-            | Allies -> [ 0.4f; 0.4f; 0.3f; 0.0f ]
+            | Allies -> [ 0.4f; 0.4f; 0.2f; 0.0f ]
             |> List.zip [ Fighter; Attacker; Bomber; Transport ]
             |> Map.ofList
         assert(planeTypeShares |> Seq.sumBy (fun kvp -> kvp.Value) = 1.0f)
