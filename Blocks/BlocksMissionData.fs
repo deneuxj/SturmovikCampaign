@@ -129,6 +129,13 @@ let newBlock idx country model script =
         T.Float 0.0
     ).SetModel(T.String model).SetScript(T.String script)
 
+let newBlockMcu (store : NumericalIdentifiers.IdStore) country model script =
+    let block = (newBlock 1 country model script)
+    let subst = Mcu.substId <| store.GetIdMapper()
+    let block = block.CreateMcu()
+    subst block
+    block
+
 let newBlockWithEntityMcu (store : NumericalIdentifiers.IdStore) country model script =
     let block = (newBlock 1 country model script).SetLinkTrId(T.Integer 2)
     let entity = newEntity 2

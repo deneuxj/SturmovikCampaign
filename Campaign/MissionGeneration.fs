@@ -136,13 +136,13 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                 let health = getHealth region state v
                 match health with
                 | None ->
-                    // No strategic value, create without entity.
+                    // No strategic value, health is not tracked, show without damage
                     let mcu =
                         createMcu block
                     subst mcu
                     yield mcu
                 | Some health ->
-                    // Has health and strategic value, create with an entity.
+                    // Has health and strategic value, show damage if any
                     let health = float health
                     let building = StaticGroup.FromBlock block
                     let damagedBlock =
@@ -156,7 +156,6 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                                 |> Map.ofList))
                         |> setDurability (StaticGroup.FromBlock(block).Durability |> T.Integer)
                         |> setIndex (T.Integer 1)
-                        |> setLinkTrId (T.Integer 2)
                         |> createMcu
                         :?> Mcu.HasEntity
                     match state.Owner with
@@ -166,14 +165,9 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                         damagedBlock.Country <- Mcu.CountryValue.Germany
                     | _ ->
                         ()
-                    let entity = newEntity(2)
-                    entity.MisObjID <- 1
                     let damagedBlock = damagedBlock :> Mcu.McuBase
-                    let entity = entity :> Mcu.McuBase
                     subst damagedBlock
-                    subst entity
                     yield damagedBlock
-                    yield entity
     ]
 
 let createBlocks random store world state (blocks : T.Block list) = createBlocksGen T.Block.Damaged random store world state blocks
@@ -381,14 +375,12 @@ let createColumns random store lcStore (world : World) (state : WorldState) (mis
 let createParkedPlanes store (world : World) (state : WorldState) =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
         let modelScript = model.StaticScriptModel
-        let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script
+        let block = newBlockMcu store country modelScript.Model modelScript.Script
         let p = McuUtil.newVec3(float pos.Pos.X, 0.0, float pos.Pos.Y)
         let ori = McuUtil.newVec3(0.0, float pos.Rotation, 0.0)
         McuUtil.vecCopy p block.Pos
-        McuUtil.vecCopy p entity.Pos
         McuUtil.vecCopy ori block.Ori
-        McuUtil.vecCopy ori entity.Ori
-        [block; upcast entity]
+        block
 
     let wg = world.FastAccess
     let sg = state.FastAccess
@@ -422,7 +414,6 @@ let createParkedPlanes store (world : World) (state : WorldState) =
             | None ->
                 ()
     ]
-    |> List.concat
 
 
 let writeMissionFile random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
