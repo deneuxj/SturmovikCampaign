@@ -300,7 +300,17 @@ with
             for region, regState in List.zip world.Regions state.Regions do
                 let capital = mkIcon store lcStore 0 (106, 0, 0) (region.Position + Vector2(0.1f * length, 0.5f * length))
                 let (RegionId name) = region.RegionId
-                yield capital, name
+                let label =
+                    // Show number of vehicles beside the region's name
+                    let numVehicles =
+                        regState.NumVehicles
+                        |> Map.toSeq
+                        |> Seq.sumBy snd
+                    if numVehicles > 0 then
+                        sprintf "%s (%d)" name numVehicles
+                    else
+                        name
+                yield capital, label
         ]
         let lcStrings =
             [
