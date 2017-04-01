@@ -24,6 +24,7 @@ open Campaign.Weather
 open Campaign.Orders
 open Campaign.Util
 open Campaign.MapGraphics
+open Campaign.ParkingArea
 
 type ArtilleryGroup = {
     All : Mcu.McuBase list
@@ -416,6 +417,35 @@ let createParkedPlanes store (world : World) (state : WorldState) =
     ]
 
 
+let createParkedTanks store (world : World) (state : WorldState) (orders : OrderPackage) coalition =
+    [
+        for region, regState in List.zip world.Regions state.Regions do
+            if regState.Owner = Some coalition && not(List.isEmpty region.Parking) then
+                let subtracted =
+                    orders.Invasions @ orders.Reinforcements
+                    |> List.filter (fun order -> order.Start = region.RegionId)
+                    |> List.map (fun order -> order.Composition)
+                    |> Array.concat
+                    |> compactSeq
+                let parked =
+                    subMaps regState.NumVehicles subtracted
+                    |> expandMap
+                    |> Array.shuffle (System.Random())
+                let parkingPositions = computeParkingPositions region.Parking parked.Length
+                for vehicle, pos in Seq.zip parked parkingPositions do
+                    let model =
+                        match vehicle, coalition with
+                        | HeavyTank, Axis -> Vehicles.germanStaticHeavyTank
+                        | MediumTank, Axis -> Vehicles.germanStaticMediumTank
+                        | LightArmor, Axis -> Vehicles.germanStaticLightArmor
+                        | HeavyTank, Allies -> Vehicles.russianStaticHeavyTank
+                        | MediumTank, Allies -> Vehicles.russianStaticMediumTank
+                        | LightArmor, Allies -> Vehicles.russianStaticLightArmor
+                    let block = newBlockMcu store (int coalition.ToCountry) model.Model model.Script
+                    pos.AssignTo block.Pos
+                    yield block
+    ]
+
 let writeMissionFile random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
@@ -467,6 +497,9 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let parkedPlanes =
         createParkedPlanes store world state
         |> McuUtil.groupFromList
+    let parkedTanks =
+        createParkedTanks store world state axisOrders Axis @ createParkedTanks store world state alliesOrders Allies
+        |> McuUtil.groupFromList
     let axisPrio, axisConvoys = mkConvoyNodes axisOrders.Resupply
     let alliesPrio, alliesConvoys = mkConvoyNodes alliesOrders.Resupply
     let missionBegin = McuUtil.groupFromList [missionBegin]
@@ -495,6 +528,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
           McuUtil.groupFromList columnTimers
           McuUtil.groupFromList reinforcementTimers
           parkedPlanes
+          parkedTanks
           axisPrio
           alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ reinforcements @ spotting
     writeMissionFiles "eng" filename options allGroups

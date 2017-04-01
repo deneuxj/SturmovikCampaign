@@ -1686,4 +1686,142 @@ Vehicle
 }
 
 
+
+Block
+{
+  Name = "StaticHeavyTankRUS";
+  Index = 54;
+  LinkTrId = 0;
+  XPos = 29134.946;
+  YPos = 108.584;
+  ZPos = 20277.525;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_t34-76.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_t34-76.txt";
+  Country = 101;
+  Desc = "";
+  Durability = 20000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticMediumTankRUS";
+  Index = 55;
+  LinkTrId = 0;
+  XPos = 29134.443;
+  YPos = 108.584;
+  ZPos = 20298.014;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_t70.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_t70.txt";
+  Country = 101;
+  Desc = "";
+  Durability = 15000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticLightArmorRUS";
+  Index = 56;
+  LinkTrId = 0;
+  XPos = 29134.258;
+  YPos = 108.584;
+  ZPos = 20315.825;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_bt-7m.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bt-7m.txt";
+  Country = 101;
+  Desc = "";
+  Durability = 10000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticHeavyTankGER";
+  Index = 60;
+  LinkTrId = 0;
+  XPos = 29122.335;
+  YPos = 108.584;
+  ZPos = 20276.892;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_pz_iiih.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_pz_iiih.txt";
+  Country = 201;
+  Desc = "";
+  Durability = 20000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticMediumTankGER";
+  Index = 62;
+  LinkTrId = 0;
+  XPos = 29122.287;
+  YPos = 108.584;
+  ZPos = 20297.714;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_pz_ivf1.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_pz_ivf1.txt";
+  Country = 201;
+  Desc = "";
+  Durability = 15000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticLightArmorGER";
+  Index = 64;
+  LinkTrId = 0;
+  XPos = 29122.239;
+  YPos = 108.584;
+  ZPos = 20315.846;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_sdkfz251-1c.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_sdkfz251-1c.txt";
+  Country = 201;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
 # end of file

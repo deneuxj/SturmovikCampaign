@@ -129,6 +129,8 @@ type Region = {
     Storage : StaticGroup list
     /// Regions with factories get new planes, vehicles and ammo (stored in region storage and in airfield storage).
     Production : StaticGroup list
+    /// Area where tanks are parked
+    Parking : Vector2 list
 }
 with
     static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list) =
@@ -139,6 +141,7 @@ with
               Neighbours = []
               Storage = []
               Production = []
+              Parking = []
             }
         let withBoundaries =
             regions
@@ -226,6 +229,14 @@ with
         let factories = this.GetStaticBlocks(blocks)
         { this with Production = this.Production @ factories
         }
+
+    member this.SetParking(areas : T.MCU_TR_InfluenceArea list) =
+        let parking =
+            areas
+            |> List.tryFind (fun area -> Vector2.FromPos(area).IsInConvexPolygon this.Boundary)
+            |> Option.map (fun area -> area.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord)))
+            |> Option.defaultVal []
+        { this with Parking = parking }
 
 
 /// Paths link regions to their neighbours. Road and rail convoys travel along those. Those are extracted from waypoints in groups Roads and Trains respectively in the strategy mission.
@@ -638,9 +649,12 @@ with
             let factories =
                 data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock
                 |> List.filter(fun block -> block.GetLinkTrId().Value >= 1)
+            let parkings =
+                data.GetGroup("Tank parks").ListOfMCU_TR_InfluenceArea
             regions
             |> List.map (fun area -> area.AddStorage ammoStorages)
             |> List.map (fun area -> area.AddProduction factories)
+            |> List.map (fun area -> area.SetParking parkings)
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
         let rails = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
         let defenses = data.GetGroup("Defenses")

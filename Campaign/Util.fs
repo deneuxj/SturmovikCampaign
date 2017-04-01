@@ -55,6 +55,28 @@ let compactSeq (items : _ seq) =
         |> fun n -> Map.add item n m
     ) Map.empty
 
+/// Add two maps which target integers
+let addMaps (m1 : Map<_, int>) (m2 : Map<_, int>) =
+    m1
+    |> Map.fold (fun m2 k count ->
+        let old =
+            Map.tryFind k m2
+            |> function None -> 0 | Some n -> n
+        let count = old + count
+        Map.add k count m2
+    ) m2
+
+/// Subtract m2 from m1 where both are maps which target integers
+let subMaps (m1 : Map<_, int>) (m2 : Map<_, int>) =
+    m2
+    |> Map.fold (fun m1 k count ->
+        let old =
+            Map.tryFind k m1
+            |> function None -> 0 | Some n -> n
+        let count = old - count
+        Map.add k count m1
+    ) m1
+
 /// Extensions to Option module
 module Option =
     let defaultVal x y = defaultArg y x

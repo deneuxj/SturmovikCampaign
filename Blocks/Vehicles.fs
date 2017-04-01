@@ -142,6 +142,42 @@ let germanLightArmor =
       Model = tank.GetModel().Value
     }
 
+let russianStaticHeavyTank =
+    let tank = statics.[T.Vehicles.StaticHeavyTankRUS]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let germanStaticHeavyTank =
+    let tank = statics.[T.Vehicles.StaticHeavyTankGER]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let russianStaticMediumTank =
+    let tank = statics.[T.Vehicles.StaticMediumTankRUS]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let germanStaticMediumTank =
+    let tank = statics.[T.Vehicles.StaticMediumTankGER]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let russianStaticLightArmor =
+    let tank = statics.[T.Vehicles.StaticLightArmorRUS]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
+let germanStaticLightArmor =
+    let tank = statics.[T.Vehicles.StaticLightArmorGER]
+    { Script = tank.GetScript().Value
+      Model = tank.GetModel().Value
+    }
+
 let russianSearchLight =
     let light = vehicles.[T.Vehicles.SearchLightRUS]
     { Script = light.GetScript().Value

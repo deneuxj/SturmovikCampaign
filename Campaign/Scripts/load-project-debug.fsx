@@ -9,6 +9,7 @@
       "../Orders.fs"
       "../AutoOrder.fs"
       "../MapGraphics.fs"
+      "../ParkingArea.fs"
       "../MissionGeneration.fs"
       "../ResultExtraction.fs"
       "../NewWorldState.fs"
