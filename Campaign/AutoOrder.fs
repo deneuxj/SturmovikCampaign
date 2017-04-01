@@ -149,7 +149,7 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
                 | _ -> false)
         | None ->
             []
-    let update (region : RegionId) oldValue newValue =
+    let update _ (region : RegionId) oldValue newValue =
         match oldValue with
         | None -> Some newValue
         | Some oldValue ->
@@ -274,6 +274,7 @@ let createGroundInvasionOrders (coalition : CoalitionId, world : World, state : 
     }
     |> Seq.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
     |> List.ofSeq
+
 
 let valueOfVehicles =
     Seq.sumBy (

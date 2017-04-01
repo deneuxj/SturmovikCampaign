@@ -7,6 +7,7 @@
       "../WorldState.fs"
       "../Weather.fs"
       "../Orders.fs"
+      "../MinMax.fs"
       "../AutoOrder.fs"
       "../MapGraphics.fs"
       "../ParkingArea.fs"

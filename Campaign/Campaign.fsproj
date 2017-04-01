@@ -56,6 +56,7 @@
     <Compile Include="WorldState.fs" />
     <Compile Include="Weather.fs" />
     <Compile Include="Orders.fs" />
+    <Compile Include="MinMax.fs" />
     <Compile Include="AutoOrder.fs" />
     <Compile Include="MapGraphics.fs" />
     <Compile Include="ParkingArea.fs" />
@@ -69,6 +70,7 @@
     <None Include="Init.fsx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Chess.fsx" />
     <None Include="GenerateMission.fsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

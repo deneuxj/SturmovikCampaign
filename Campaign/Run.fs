@@ -108,6 +108,39 @@ module Init =
         use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
         serializer.Serialize(stateFile, state)
 
+module PlayChess =
+    open MBrace.FsPickler
+    open System.IO
+    open Campaign.WorldDescription
+    open Campaign.WorldState
+    open Campaign.MinMax
+    open System.Diagnostics
+
+    let run(config : Configuration) =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let world, state =
+            try
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
+                serializer.Deserialize<World>(worldFile),
+                serializer.Deserialize<WorldState>(stateFile)
+            with
+            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+        seq {
+            let funcs, board = prepareEval world state
+            yield "Initially"
+            yield board.DisplayString
+            let minMax n = minMax n funcs
+            let rec timeBound n board =
+                let t = Stopwatch.StartNew()
+                let res = minMax n board
+                if n < 100 && t.ElapsedMilliseconds < 5000L then
+                    timeBound (n + 1) board
+                else
+                    res
+            yield! play (timeBound 2) board
+        }
+
 module WeatherComputation =
     open MBrace.FsPickler
     open System.IO

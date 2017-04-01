@@ -89,6 +89,13 @@ module Array =
         |> Array.sortBy fst
         |> Array.map snd
 
+    let cross2 (arr1 : _[]) (arr2 : _[]) =
+        seq {
+            for x in arr1 do
+                for y in arr2 do
+                    yield (x, y)
+        }
+
 /// Misc useful algorithms.
 module Algo =
     /// <summary>
@@ -104,11 +111,11 @@ module Algo =
             | (node, value) :: rest ->
                 let affected =
                     getSuccessors node
-                    |> List.choose (fun node -> update node (Map.tryFind node mapping) value |> Option.map (fun v -> node, v))
+                    |> List.choose (fun next -> update node next (Map.tryFind next mapping) value |> Option.map (fun v -> next, v))
                 let mapping = Map.add node value mapping
                 let working = rest @ affected
                 work (mapping, working)
-        work (Map.empty, roots)
+        work (Map.ofList roots, roots)
 
     /// <summary>
     /// Partition a list according to a provided "similarity relation":
