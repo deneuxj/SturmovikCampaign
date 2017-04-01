@@ -299,6 +299,21 @@ let (|StaticPlaneType|_|) (s : string) =
         else
             None)
 
+let (|StaticVehicleType|_|) (s : string) =
+    let s = s.ToLowerInvariant()
+    [
+        ("t34", GroundAttackVehicle.HeavyTank)
+        ("pz_iii", GroundAttackVehicle.HeavyTank)
+        ("t70", GroundAttackVehicle.MediumTank)
+        ("pz_iv", GroundAttackVehicle.MediumTank)
+        ("bt-7m", GroundAttackVehicle.LightArmor)
+        ("sdkfz251", GroundAttackVehicle.LightArmor)
+    ]
+    |> List.tryPick (fun (subs, model) ->
+        if s.Contains("static_") && s.Contains(subs) then
+            Some model
+        else
+            None)
 
 let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntry seq) =
     let wg = WorldFastAccess.Create(world)
@@ -361,6 +376,12 @@ let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntr
                     let distance = (closestAirfield.Pos - damagePos).Length()
                     if distance < 3000.0f then
                         yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = { Amount = damage.Damage } }
+                | Some(StaticVehicleType vehicleModel, _) ->
+                    match tryFindContainingRegion damagePos with
+                    | Some region ->
+                        yield { Object = Vehicle(region.RegionId, vehicleModel); Data = { Amount = damage.Damage }}
+                    | None ->
+                        ()
                 | _ -> () // Ignored object type
             | _ -> () // Ignored log entry
     }

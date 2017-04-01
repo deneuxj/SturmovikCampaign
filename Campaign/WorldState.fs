@@ -36,6 +36,8 @@ with
         | MediumTank -> GroundAttackVehicle.MediumTankCost
         | LightArmor -> GroundAttackVehicle.LightArmorCost
 
+    static member AllVehicles = [ HeavyTank; MediumTank; LightArmor ]
+
 /// How much various production goals have accumulated.
 type ProductionAssignment = {
     Supplies : float32<E>

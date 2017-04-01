@@ -367,7 +367,20 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         0.0f
                     else
                         capacityAfterDamages / capacityBeforeDamages
-                let regState = { regState with Supplies = factor * regState.Supplies }
+                let damageToVehicle vehicleType =
+                    damages
+                    |> Map.tryFind (Vehicle(region.RegionId, vehicleType))
+                    |> Option.map (Seq.sumBy (fun data -> data.Amount))
+                    |> Option.defaultVal 0.0f
+                    |> (round >> int)
+                let subtract =
+                    GroundAttackVehicle.AllVehicles
+                    |> List.map (fun x -> x, damageToVehicle x)
+                    |> Map.ofList
+                let numVehicles =
+                    subMaps regState.NumVehicles subtract
+                    |> Map.map (fun _ v -> max v 0)
+                let regState = { regState with Supplies = factor * regState.Supplies; NumVehicles = numVehicles }
                 yield regState
         ]
     // Repair and resupply regions
