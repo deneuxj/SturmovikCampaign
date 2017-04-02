@@ -126,37 +126,28 @@ with
         }
         |> String.concat "\n"
 
-let allInvasions (neighboursOf : int -> int[]) (state : BoardState) coalition =
+let allMoves (neighboursOf : int -> int[]) (state : BoardState) coalition =
     let someCoalition = Some coalition
     [|
         for i in 0 .. state.Owners.Length - 1 do
             assert(state.AxisForces.[i] = 0.0f<E> || state.AlliesForces.[i] = 0.0f<E>)
             let hasForces = state.AxisForces.[i] > 0.0f<E> || state.AlliesForces.[i] > 0.0f<E>
             if state.Owners.[i] = someCoalition && hasForces then
+                let force =
+                    match coalition with
+                    | Axis -> state.AxisForces.[i]
+                    | Allies -> state.AlliesForces.[i]
                 for j in neighboursOf i do
-                    if state.Owners.[j] <> someCoalition then
-                        let force =
-                            match coalition with
-                            | Axis -> state.AxisForces.[i]
-                            | Allies -> state.AlliesForces.[i]
-                        yield { Start = i; Destination = j; Force = force }
-                
-    |]
-
-let allReinforcements (neighboursOf : int -> int[]) (state : BoardState) coalition =
-    let someCoalition = Some coalition
-    [|
-        for i in 0 .. state.Owners.Length - 1 do
-            assert(state.AxisForces.[i] = 0.0f<E> || state.AlliesForces.[i] = 0.0f<E>)
-            let hasForces = state.AxisForces.[i] > 0.0f<E> || state.AlliesForces.[i] > 0.0f<E>
-            if state.Owners.[i] = someCoalition && hasForces then
-                for j in neighboursOf i do
-                    if state.Owners.[j] = someCoalition then
-                        let force =
-                            match coalition with
-                            | Axis -> state.AxisForces.[i]
-                            | Allies -> state.AlliesForces.[i]
-                        yield { Start = i; Destination = j; Force = force }
+                    if force > 5.0f * MediumTank.Cost then
+                        for k in neighboursOf i do
+                            yield [
+                                { Start = i; Destination = j; Force = 0.5f * force }
+                                { Start = i; Destination = k; Force = 0.5f * force }
+                            ]
+                    else
+                        yield [
+                                { Start = i; Destination = j; Force = force }
+                        ]
     |]
 
 let evalState (valueOfRegion : int -> float32<E>) (state : BoardState) =
@@ -227,26 +218,10 @@ let prepareEval (world : World) (state : WorldState) =
 let minMax (cancel : CancellationToken) maxDepth (neighboursOf, valueOfRegion) (board : BoardState) =
     let rec bestMoveAtDepth depth =
         let axisMoves =
-            let axisInvasions = allInvasions neighboursOf board Axis
-            let axisReinforcements = allReinforcements neighboursOf board Axis
-            if axisInvasions.Length = 0 then
-                axisReinforcements |> Seq.map (List.singleton)
-            elif axisReinforcements.Length = 0 then
-                axisInvasions |> Seq.map (List.singleton)
-            else
-                Array.cross2 axisInvasions axisReinforcements
-                |> Seq.map (fun (x, y) -> if x.Start <> y.Start then [x; y] else [x])
+            allMoves neighboursOf board Axis
             |> Seq.append [[]]
         let alliesMoves =
-            let alliesInvasions = allInvasions neighboursOf board Allies
-            let alliesReinforcements = allReinforcements neighboursOf board Allies
-            if alliesInvasions.Length = 0 then
-                alliesReinforcements |> Seq.map (List.singleton)
-            elif alliesReinforcements.Length = 0 then
-                alliesInvasions |> Seq.map (List.singleton)
-            else
-                Array.cross2 alliesInvasions alliesReinforcements
-                |> Seq.map (fun (x, y) -> if x.Start <> y.Start then [x; y] else [x])
+            allMoves neighboursOf board Allies
             |> Seq.append [[]]
         let bestMove =
             axisMoves
