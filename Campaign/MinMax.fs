@@ -75,7 +75,11 @@ with
             let force = order.Force
             depart this.AlliesForces order.Start force
             arrive this.AlliesForces order.Destination force
-        for i in 0 .. this.AxisForces.Length - 1 do
+        let destinations =
+            axis @ allies
+            |> List.map (fun order -> order.Destination)
+            |> List.distinct
+        for i in destinations do
             let axisForce = this.AxisForces.[i]
             let alliesForce = this.AlliesForces.[i]
             let oldOwner = this.Owners.[i]
