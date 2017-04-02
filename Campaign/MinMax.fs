@@ -3,6 +3,7 @@
 open Campaign.Util
 open Campaign.WorldDescription
 open Campaign.WorldState
+open System.Threading
 
 type Move =
     { Start : int
@@ -211,7 +212,7 @@ let prepareEval (world : World) (state : WorldState) =
         fun i -> values.[i]
     (getSuccessors, valueOfRegion), BoardState.Create state
 
-let minMax maxDepth (neighboursOf, valueOfRegion) (board : BoardState) =
+let minMax (cancel : CancellationToken) maxDepth (neighboursOf, valueOfRegion) (board : BoardState) =
     let rec bestMoveAtDepth depth =
         let axisMoves =
             let axisInvasions = allInvasions neighboursOf board Axis
@@ -244,7 +245,7 @@ let minMax maxDepth (neighboursOf, valueOfRegion) (board : BoardState) =
                         //let saved = board.Clone()
                         let restore = board.DoMove(axisMove, alliesMove)
                         let value =
-                            if depth >= maxDepth then
+                            if depth >= maxDepth || cancel.IsCancellationRequested then
                                 evalState valueOfRegion board
                             else
                                 let _, value = bestMoveAtDepth (depth + 1)

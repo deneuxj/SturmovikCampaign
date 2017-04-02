@@ -115,6 +115,7 @@ module PlayChess =
     open Campaign.WorldState
     open Campaign.MinMax
     open System.Diagnostics
+    open System.Threading
 
     let run(config : Configuration) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -130,15 +131,19 @@ module PlayChess =
             let funcs, board = prepareEval world state
             yield "Initially"
             yield board.DisplayString
-            let minMax n = minMax n funcs
-            let rec timeBound n board =
-                let t = Stopwatch.StartNew()
-                let res = minMax n board
-                if n < 100 && t.ElapsedMilliseconds < 5000L then
-                    timeBound (n + 1) board
+            let minMax cancel n = minMax cancel n funcs
+            let rec timeBound cancel prev n board =
+                printfn "Max depth: %d" n
+                let res = minMax cancel n board
+                if cancel.IsCancellationRequested then
+                    prev
                 else
-                    res
-            yield! play (timeBound 2) board
+                    timeBound cancel res (n + 1) board
+            let minMax board =
+                use cancellation = new CancellationTokenSource()
+                cancellation.CancelAfter(15000)
+                timeBound cancellation.Token (([], []), 0.0f<E>) 1 board
+            yield! play minMax board
         }
 
 module WeatherComputation =
