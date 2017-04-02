@@ -166,7 +166,7 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
     Algo.propagate getSuccessors update roots
 
 
-/// Create convoy orders from regions owned by a coalition to neighbour regions that are further away from factories.
+/// Create convoy orders from regions owned by a coalition to neighbour regions that have bigger needs.
 let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
@@ -181,27 +181,39 @@ let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getP
     let tryFind x y = Map.tryFind x y |> Option.defaultVal 0.0f<E>
     [
         for region, regState in List.zip world.Regions state.Regions do
-            match Map.tryFind region.RegionId distances with
-            | Some level ->
+            if regState.Owner = Some coalition then
+                let senderOwnNeeds = tryFind region.RegionId needs
+                let senderForwardedNeeds = tryFind region.RegionId forwardedNeeds
+                let senderDistance =
+                    Map.tryFind region.RegionId distances
+                    |> Option.defaultVal System.Int32.MaxValue
                 for ngh in region.Neighbours do
-                    match Map.tryFind ngh distances with
-                    | Some other when other > level && areConnectedByRoad(region.RegionId, ngh) ->
-                        let transfer =
-                            let alreadyAtReceiver = tryFind ngh storages
-                            let availableToReceive = tryFind ngh capacities - alreadyAtReceiver
-                            let receiverNeeds = tryFind ngh needs + tryFind ngh forwardedNeeds
-                            let requested = min receiverNeeds availableToReceive
-                            min regState.Supplies requested
-                        if transfer > 0.0f<E> then
-                            let size =
-                                ceil(transfer / vehicleCapacity)
-                                |> int
-                                |> min maxConvoySize
-                            yield { Start = region.RegionId ; Destination = ngh ; Size = size }
-                    | _ ->
-                        ()
-            | _ ->
-                ()
+                    if getOwner ngh = Some coalition then
+                        if areConnectedByRoad(region.RegionId, ngh) then
+                            let receiverDistance =
+                                Map.tryFind ngh distances
+                                |> Option.defaultVal System.Int32.MaxValue
+                            let receiverOwnNeeds = tryFind ngh needs
+                            let receiverForwardedNeeds = tryFind ngh forwardedNeeds
+                            let senderNeeds, receiverNeeds =
+                                if senderDistance < receiverDistance then
+                                    senderOwnNeeds, receiverOwnNeeds + receiverForwardedNeeds
+                                elif senderDistance > receiverDistance then
+                                    senderOwnNeeds + senderForwardedNeeds, receiverOwnNeeds
+                                else
+                                    senderOwnNeeds, receiverOwnNeeds
+                            if receiverNeeds > senderNeeds then
+                                let transfer =
+                                    let alreadyAtReceiver = tryFind ngh storages
+                                    let availableToReceive = tryFind ngh capacities - alreadyAtReceiver
+                                    let requested = min receiverNeeds availableToReceive
+                                    min regState.Supplies requested
+                                if transfer > 0.0f<E> then
+                                    let size =
+                                        ceil(transfer / vehicleCapacity)
+                                        |> int
+                                        |> min maxConvoySize
+                                    yield { Start = region.RegionId ; Destination = ngh ; Size = size }
     ]
 
 
