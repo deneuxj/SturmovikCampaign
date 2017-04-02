@@ -93,6 +93,5 @@ with
 /// Groups all orders for a faction.
 type OrderPackage = {
     Resupply : ResupplyOrder list
-    Reinforcements : ColumnMovement list
-    Invasions : ColumnMovement list
+    Columns : ColumnMovement list
 }

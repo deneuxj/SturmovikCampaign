@@ -3,8 +3,10 @@
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
+open Campaign.MinMax
 open Vector
 open Util
+open System.Threading
 
 /// Compute the full-health storage capacity of each region, including airfields'
 let computeStorageCapacity (world : World) =
@@ -239,197 +241,46 @@ let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrd
         |> List.rev
     sorted
 
-
-let createGroundInvasionOrders (coalition : CoalitionId, world : World, state : WorldState) =
-    let random = System.Random()
-    let wg = WorldFastAccess.Create world
-    let sg = WorldStateFastAccess.Create state
-    seq {
-        for region in world.Regions do
-            let regState = sg.GetRegion region.RegionId
-            if regState.Owner = Some coalition then
-                let targets =
-                    region.Neighbours
-                    |> Seq.filter(fun ngh ->
-                        let nghState = sg.GetRegion ngh
-                        match nghState.Owner with
-                        | None -> true
-                        | Some other -> other <> coalition
-                    )
-                for target in targets do
-                    let composition =
-                        regState.NumVehicles
-                    let composition =
-                        expandMap composition
-                        |> Array.shuffle random
-                    yield {
-                        OrderId = {
-                                    Index = 0 // Set later to a unique value
-                                    Coalition = coalition
-                        }
-                        Start = region.RegionId
-                        Destination = target
-                        Composition = composition
-                    }
+/// Build an order from a move computed by the minmax search.
+let realizeMove (world : World) (state : WorldState) (move : Move) =
+    let regStart = world.Regions.[move.Start].RegionId
+    let regDest = world.Regions.[move.Destination].RegionId
+    let regState = state.Regions.[move.Start]
+    let owner = regState.Owner
+    if owner.IsNone then
+        failwith "Cannot start tank column from neutral zone"
+    let content =
+        regState.NumVehicles
+        |> expandMap
+        |> Array.shuffle (System.Random())
+        |> Array.fold (fun (forceLeft, column) vehicle ->
+            if forceLeft > 0.0f<E> then
+                forceLeft - vehicle.Cost, vehicle :: column
+            else
+                forceLeft, column
+        ) (move.Force, [])
+        |> snd
+        |> Array.ofList
+    { OrderId = { Index = -1; Coalition = owner.Value }
+      Start = regStart
+      Destination = regDest
+      Composition = content
     }
-    |> Seq.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
-    |> List.ofSeq
 
-
-let valueOfVehicles =
-    Seq.sumBy (
-        function
-        | HeavyTank -> 3.0
-        | MediumTank -> 2.0
-        | LightArmor -> 1.0)
-
-let valueOfVehicles2 =
-    Map.map (fun k num ->
-        (float num) *
-        match k with
-        | HeavyTank -> 3.0
-        | MediumTank -> 2.0
-        | LightArmor -> 1.0
-    )
-    >> Map.toSeq
-    >> Seq.sumBy snd
-
-
-let getInvasionSuccessProbablity(world : World, state : WorldState) (order : ColumnMovement) =
-    let sg = WorldStateFastAccess.Create state
-    let defenseArea =
-        world.AntiTankDefenses
-        |> List.tryFind (fun area -> area.Home = FrontLine(order.Destination, order.Start))
-    match defenseArea with
-    | Some defenseArea ->
-        let defenses = sg.GetAntiTankDefenses(defenseArea.DefenseAreaId)
-        let attackValue =
-            order.Composition
-            |> valueOfVehicles
-        let staticDefenseValue =
-            float defenses.NumUnits
-        let mobileDefenseValue =
-            sg.GetRegion(order.Destination).NumVehicles
-            |> valueOfVehicles2
-        let defenseValue = staticDefenseValue + mobileDefenseValue
-        match attackValue with
-        | 0.0 -> 0.0
-        | attackValue ->
-            let ratio = defenseValue / attackValue
-            System.Math.Pow(2.0, -ratio)
-    | None ->
-        0.5
-
-
-let getInvasionValue (world, state) =
-    let sg = WorldStateFastAccess.Create state
-    let getRegionDistances =
-        let distanceToAxisFactories =
-            computeDistanceFromFactories false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) world Axis
-        let distanceToAlliesFactories =
-            computeDistanceFromFactories false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) world Allies
-        fun attacker ->
-            match attacker with
-            | Some Axis -> distanceToAlliesFactories
-            | Some Allies -> distanceToAxisFactories
-            | None -> failwith "Start of attacking column has no owner"
-    fun order ->
-        let distances = getRegionDistances (sg.GetRegion(order.Start).Owner)
-        match Map.tryFind order.Destination distances with
-        | Some dist -> 1.0 / float(1 + dist)
-        | None -> 0.0
-
-
-let prioritizeGroundInvasionOrders(world : World, state : WorldState) (orders : ColumnMovement list) =
-    let targetValue = getInvasionValue(world, state)
-    let successProbability = getInvasionSuccessProbablity(world, state)
-    orders
-    |> List.map (fun order -> order, successProbability order, targetValue order)
-    |> List.sortByDescending (fun (order, probability, gain) -> probability * gain)
-    |> List.distinctBy(fun (order, _, _) -> order.Start)
-
-
-let prioritizedReinforcementOrders(world : World, state : WorldState) coalition invasions =
-    let invasions =
-        invasions
-        |> Seq.groupBy (fun (invasion, _, _) -> invasion.Start)
-        |> dict
-    let reinforcementNeed region =
-        // invasions starting in region
-        match invasions.TryGetValue region with
-        | true, invasions ->
-            invasions
-            |> Seq.map (fun (invasion, probability, value) -> (1.0 - probability) * valueOfVehicles invasion.Composition)
-            |> Seq.max
-        | false, _ ->
-            0.0
-    let wg = WorldFastAccess.Create world
-    let sg = WorldStateFastAccess.Create state
-    let rec propagate reinforcementValues working =
-        match working with
-        | [] -> reinforcementValues
-        | (region, value) :: rest ->
-            let addAndMoveOn() =
-                let newWorking =
-                    wg.GetRegion(region).Neighbours
-                    |> List.filter(fun r -> sg.GetRegion(r).Owner = Some coalition)
-                    |> List.map (fun r -> r, 0.5 * value)
-                propagate (Map.add region value reinforcementValues) (rest @ newWorking)
-            match Map.tryFind region reinforcementValues with
-            | Some oldValue ->
-                if oldValue < value then
-                    addAndMoveOn()
-                else
-                    propagate reinforcementValues rest
-            | None ->
-                addAndMoveOn()
-    let reinforcementValues =
-        world.Regions
-        |> List.filter (fun r -> sg.GetRegion(r.RegionId).Owner = Some coalition)
-        |> List.map (fun r -> r.RegionId, reinforcementNeed r.RegionId)
-        |> propagate Map.empty
-    [
-        for region in world.Regions do
-            if sg.GetRegion(region.RegionId).Owner = Some coalition then
-                for ngh in region.Neighbours do
-                    if sg.GetRegion(ngh).Owner = Some coalition then
-                        let excessSource =
-                            valueOfVehicles2(sg.GetRegion(region.RegionId).NumVehicles)
-                        let excessDestination =
-                            valueOfVehicles2(sg.GetRegion(ngh).NumVehicles) - reinforcementValues.[ngh]
-                        yield (region.RegionId, ngh, excessSource - excessDestination)
-    ]
-    |> List.sortByDescending (fun (src, dest, transit) -> transit)
-    |> List.mapi (fun i (src, dest, transit) ->
-        let vehicles = sg.GetRegion(src).NumVehicles
-        let k =
-            transit / valueOfVehicles2 vehicles
-            |> min 1.0
-        let composition =
-            vehicles
-            |> Map.map (fun veh num -> int(ceil(k * float num)))
-            |> expandMap
-            |> Array.shuffle (System.Random())
-        { OrderId = {
-                        Index = i + 1
-                        Coalition = coalition
-          }
-          Start = src
-          Destination = dest
-          Composition = composition
-        }
-    )
-
-
-let filterIncompatible(reinforcements, invasions) =
-    let safeInvasions =
-        invasions
-        |> List.filter (fun (invasion, probability, value) -> probability >= 0.5)
-    let safeInvasionStarts =
-        safeInvasions
-        |> Seq.map (fun (invasion, _, _) -> invasion.Start)
-        |> Set.ofSeq
-    let compatibleReinforcements =
-        reinforcements
-        |> List.filter (fun reinforcement -> not(safeInvasionStarts.Contains(reinforcement.Start)))
-    compatibleReinforcements, safeInvasions
+/// Run a minmax search for the best column moves for each coalition.
+let decideColumnMovements (world : World) (state : WorldState) =
+    let funcs, board = prepareEval world state
+    let minMax cancel n = minMax cancel n funcs
+    let rec timeBound cancel prev n board =
+        //printfn "Max depth: %d" n
+        let res = minMax cancel n board
+        if cancel.IsCancellationRequested then
+            prev
+        else
+            timeBound cancel res (n + 1) board
+    let minMax board =
+        use cancellation = new CancellationTokenSource()
+        cancellation.CancelAfter(15000)
+        timeBound cancellation.Token (([], []), 0.0f) 1 board
+    minMax board
+    |> fun ((m1, m2), _) -> (m1 @ m2) |> List.map (realizeMove world state)

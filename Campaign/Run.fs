@@ -194,50 +194,32 @@ module OrderDecision =
             with
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
 
-        let mkOrders coalition =
-            let convoyOrders =
-                createAllConvoyOrders coalition (world, state)
-                |> prioritizeConvoys world state
-                |> List.truncate config.MaxConvoys
-            let invasions =
-                createGroundInvasionOrders(coalition, world, state)
-                |> prioritizeGroundInvasionOrders(world, state)
-                |> List.truncate config.MaxInvasionsInPlanning
-            let reinforcements =
-                prioritizedReinforcementOrders(world, state) coalition invasions
-            let reinforcements, invasions = filterIncompatible(reinforcements, invasions)
-            convoyOrders, reinforcements |> List.truncate config.MaxReinforcements, invasions |> List.truncate config.MaxInvasions |> List.map (fun (x, _, _) -> x)
-        let adjustIndexes(convoys : ResupplyOrder list, reinforcements : ColumnMovement list, invasions : ColumnMovement list) =
-            let convoys =
-                convoys
-                |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
-            let n = List.length convoys
-            let reinforcements =
-                reinforcements
-                |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 + n } })
-            let n = n + List.length reinforcements
-            let invasions =
-                invasions
-                |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 + n } })
-            convoys, reinforcements, invasions
-        let mkAllOrders coalition =
-            let convoys, reinforcements, invasions =
-                mkOrders coalition
-                |> adjustIndexes
-            { Resupply = convoys
-              Reinforcements = reinforcements
-              Invasions = invasions
-            }
-        let allAxisOrders = mkAllOrders Axis
-        let allAlliesOrders = mkAllOrders Allies
-
+        let adjustConvoyIndexes(convoys : ResupplyOrder list) =
+            convoys
+            
+        let mkConvoys coalition =
+            createAllConvoyOrders coalition (world, state)
+            |> prioritizeConvoys world state
+            |> List.truncate config.MaxConvoys
+            |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
+        let columnOrders =
+            decideColumnMovements world state
+            |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
+        let axisConvoys = mkConvoys Axis
+        let alliesConvoys = mkConvoys Allies
+        let axisColumns =
+            columnOrders
+            |> List.filter (fun order -> order.OrderId.Coalition = Axis)
+        let alliesColumns =
+            columnOrders
+            |> List.filter (fun order -> order.OrderId.Coalition = Allies)
         let outputDir = config.OutputDir
         backupFile state.Date outputDir "axisOrders.xml"
         backupFile state.Date outputDir "alliesOrders.xml"
         use axisOrderFiles = File.CreateText(Path.Combine(outputDir, "axisOrders.xml"))
-        serializer.Serialize(axisOrderFiles, allAxisOrders)
+        serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns } )
         use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
-        serializer.Serialize(alliesOrderFiles, allAlliesOrders)
+        serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns } )
 
 module MissionFileGeneration =
     open Campaign.WorldDescription
@@ -462,7 +444,7 @@ module MissionLogParsing =
                 |> List.ofSeq
             both |> List.choose (function Choice1Of2 x -> Some x | _ -> None),
             both |> List.choose (function Choice2Of2 x -> Some x | _ -> None)
-        let movements = axisOrders.Reinforcements @ axisOrders.Invasions @ alliesOrders.Reinforcements @ alliesOrders.Invasions
+        let movements = axisOrders.Columns @ alliesOrders.Columns
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
         let columnArrivals = extractColumnArrivals world state movements entries |> List.ofSeq
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength

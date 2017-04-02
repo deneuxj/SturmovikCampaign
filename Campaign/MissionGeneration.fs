@@ -422,7 +422,7 @@ let createParkedTanks store (world : World) (state : WorldState) (orders : Order
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && not(List.isEmpty region.Parking) then
                 let subtracted =
-                    orders.Invasions @ orders.Reinforcements
+                    orders.Columns
                     |> List.filter (fun order -> order.Start = region.RegionId)
                     |> List.map (fun order -> order.Composition)
                     |> Array.concat
@@ -492,8 +492,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
             |> createColumns random store lcStore world state missionBegin (60.0 * float convoySpacing) maxColumnSplit
             |> List.map (fun (x, t) -> x :> McuUtil.IMcuGroup, t)
         List.map fst columns, List.map snd columns
-    let columns, columnTimers = mkColumns (axisOrders.Invasions @ alliesOrders.Invasions)
-    let reinforcements, reinforcementTimers = mkColumns (axisOrders.Reinforcements @ alliesOrders.Reinforcements)
+    let columns, columnTimers = mkColumns (axisOrders.Columns @ alliesOrders.Columns)
     let parkedPlanes =
         createParkedPlanes store world state
         |> McuUtil.groupFromList
@@ -526,9 +525,8 @@ let writeMissionFile random weather author missionName briefing missionLength co
           McuUtil.groupFromList bridges
           McuUtil.groupFromList spawns
           McuUtil.groupFromList columnTimers
-          McuUtil.groupFromList reinforcementTimers
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ reinforcements @ spotting
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting
     writeMissionFiles "eng" filename options allGroups
