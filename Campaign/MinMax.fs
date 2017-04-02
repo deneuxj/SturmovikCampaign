@@ -140,14 +140,14 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) coalition =
                 for j in neighboursOf i do
                     if force > 5.0f * MediumTank.Cost then
                         for k in neighboursOf i do
-                            yield [
-                                { Start = i; Destination = j; Force = 0.5f * force }
-                                { Start = i; Destination = k; Force = 0.5f * force }
-                            ]
-                    else
-                        yield [
-                                { Start = i; Destination = j; Force = force }
-                        ]
+                            if j < k then
+                                yield [
+                                    { Start = i; Destination = j; Force = 0.5f * force }
+                                    { Start = i; Destination = k; Force = 0.5f * force }
+                                ]
+                    yield [
+                            { Start = i; Destination = j; Force = force }
+                    ]
     |]
 
 let evalState (valueOfRegion : int -> float32<E>) (state : BoardState) =
@@ -165,7 +165,11 @@ let evalState (valueOfRegion : int -> float32<E>) (state : BoardState) =
     let axisArmies =
         state.AxisForces
         |> Array.sum
-    territory + alliesArmies - axisArmies
+    float32 territory +
+        (if alliesArmies > 0.0f<E> || axisArmies > 0.0f<E> then
+            10000.0f * max -1.0f (min 1.0f (log(alliesArmies / axisArmies)))
+        else
+            0.0f)
 
 let prepareEval (world : World) (state : WorldState) =
     let indexOfRegion =
@@ -244,19 +248,19 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf, valueOfRegion) (
                             (alliesMove, value)
                         else
                             soFar
-                    ) ([], 1.0f<E> * System.Single.NegativeInfinity)
+                    ) ([], System.Single.NegativeInfinity)
                 let _, refValue = soFar
                 if value <= refValue then
                     ((axisMove, alliesResponse), value)
                 else
                     soFar
-            ) (([], []), 1.0f<E> * System.Single.PositiveInfinity)
+            ) (([], []), System.Single.PositiveInfinity)
         bestMove
     bestMoveAtDepth 0
 
 let rec play minMax (board : BoardState) =
     seq {
-        let move, (value : float32<E>) = minMax board
+        let move, (value : float32) = minMax board
         board.DoMove(move) |> ignore
         yield sprintf "Balance: %5.2f" value
         yield sprintf "GER moves: %A" (fst move)
