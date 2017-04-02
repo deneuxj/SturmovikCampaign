@@ -160,13 +160,21 @@ let allReinforcements (neighboursOf : int -> int[]) (state : BoardState) coaliti
     |]
 
 let evalState (valueOfRegion : int -> float32<E>) (state : BoardState) =
-    state.Owners
-    |> Seq.indexed
-    |> Seq.sumBy (fun (i, owner) ->
-        match owner with
-        | None -> 0.0f<E>
-        | Some Axis -> -valueOfRegion i
-        | Some Allies -> valueOfRegion i)
+    let territory =
+        state.Owners
+        |> Seq.indexed
+        |> Seq.sumBy (fun (i, owner) ->
+            match owner with
+            | None -> 0.0f<E>
+            | Some Axis -> -valueOfRegion i
+            | Some Allies -> valueOfRegion i)
+    let alliesArmies =
+        state.AlliesForces
+        |> Array.sum
+    let axisArmies =
+        state.AxisForces
+        |> Array.sum
+    territory + alliesArmies - axisArmies
 
 let prepareEval (world : World) (state : WorldState) =
     let indexOfRegion =
