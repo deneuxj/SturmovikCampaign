@@ -265,13 +265,13 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf, valueOfRegion) (
                         board.UndoMove(axisMove, alliesMove, restore)
                         //assert(saved = board)
                         let _, refValue = soFar
-                        if value > refValue then
+                        if value >= refValue then
                             (alliesMove, value)
                         else
                             soFar
                     ) ([], 1.0f<E> * System.Single.NegativeInfinity)
                 let _, refValue = soFar
-                if value < refValue then
+                if value <= refValue then
                     ((axisMove, alliesResponse), value)
                 else
                     soFar
