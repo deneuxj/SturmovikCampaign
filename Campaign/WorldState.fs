@@ -345,49 +345,28 @@ let mkInitialState(world : World, strategyFile : string) =
     
     let getRegion = wg.GetRegion
 
-    let getTransportationCosts =
-        let computeTransportationCost coalition =
-            let byRoad = computeDistanceFromFactories true (fun world -> world.Roads) getOwner world coalition
-            let byRail = computeDistanceFromFactories true (fun world -> world.Rails) getOwner world coalition
-            byRoad
-            |> Map.map (fun region hops ->
-                let roadCost = System.Math.Pow(2.0, float hops)
-                match Map.tryFind region byRail with
-                | Some hops ->
-                    let railCost = System.Math.Pow(1.1, float hops)
-                    min roadCost railCost
-                | None ->
-                    roadCost)
-        let axisTransportationCosts = computeTransportationCost Axis
-        let alliesTransportationCosts = computeTransportationCost Allies
-        function
-        | Axis -> axisTransportationCosts
-        | Allies -> alliesTransportationCosts
-
     let regions =
         world.Regions
         |> List.map (fun region ->
             let owner = getOwner region.RegionId
-            // Defense strength and number of ground attack vehicles depends on distance from closest factory.
+            let production =
+                (getRegion region.RegionId).Production
+                |> List.sumBy (fun pro -> pro.Production)
+            // Regions with factories are supplied and defended, rest is empty.
             let supplies, vehicles =
-                match owner with
-                | None -> 0.0f<E>, Map.empty
-                | Some owner ->
-                    let transportationCosts = getTransportationCosts owner
-                    match Map.tryFind region.RegionId transportationCosts with
-                    | None ->
-                        0.0f<E>, Map.empty
-                    | Some costs ->
-                        let costs = float32 costs
-                        let supplies =
-                            region.Storage
-                            |> Seq.sumBy (fun storage -> storage.Storage / costs)
-                        let scale (n : int) =
-                            int(ceil(float32 n / costs))
-                        let vehicles =
-                            [(HeavyTank, scale 3); (MediumTank, scale 9); (LightArmor, scale 3)]
-                            |> Map.ofList
-                        supplies, vehicles
+                match owner, production > 0.0f<E/H> with
+                | _, false
+                | None, _ -> 0.0f<E>, Map.empty
+                | Some owner, true ->
+                    let supplies =
+                        region.Storage
+                        |> Seq.sumBy (fun storage -> storage.Storage)
+                    let scale (n : int) =
+                        int(ceil(float32 n * production / 500.0f<E/H>))
+                    let vehicles =
+                        [(HeavyTank, scale 3); (MediumTank, scale 9); (LightArmor, scale 3)]
+                        |> Map.ofList
+                    supplies, vehicles
             { RegionId = region.RegionId
               Owner = owner
               StorageHealth = region.Storage |> List.map (fun _ -> 1.0f)
