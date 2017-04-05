@@ -279,6 +279,8 @@ module MissionFileGeneration =
         let weather = Weather.getWeather random (state.Date + daysOffset)
 
         let author = "coconut"
+        let timeAndDate =
+            sprintf "%s<br><br>" (state.Date.ToString("d MMM yyyy HH:mm"))
         let weatherDescription =
             let cover =
                 if weather.CloudDensity < 0.25 then
@@ -305,8 +307,8 @@ module MissionFileGeneration =
                 |> List.tryFind(fun (k, _) -> windDirection < k * 22.5)
                 |> Option.map snd
                 |> Option.defaultVal "south"
-            sprintf "<b>Weather<b><br>Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" cover weather.Wind.Speed windOrigin
-        let briefing = weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
+            sprintf "<b>Weather<b><br>Temperature: %2.0f Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" weather.Temperature cover weather.Wind.Speed windOrigin
+        let briefing = timeAndDate + weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
 
         let missionName = config.MissionName
         writeMissionFile random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
