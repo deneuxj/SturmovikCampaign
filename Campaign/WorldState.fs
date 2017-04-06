@@ -389,11 +389,11 @@ let mkInitialState(world : World, strategyFile : string) =
         let owner =
             getOwner airfield.Region
         let numPlanes =
-            let numFighters = List.length airfield.ParkedFighters |> float32
+            let numFighters = 5 * List.length airfield.ParkedFighters |> float32
             let numF1, numF2 = 2.0f * numFighters / 5.0f, numFighters / 5.0f
-            let numAttackers = List.length airfield.ParkedAttackers |> float32
-            let numBombers = List.length airfield.ParkedBombers |> float32
-            let numJu52 = if numBombers >= 5.0f then 2.0f else 0.0f
+            let numAttackers = 5 * List.length airfield.ParkedAttackers |> float32
+            let numBombers = 5 * List.length airfield.ParkedBombers |> float32
+            let numJu52 = if numBombers >= 25.0f then 10.0f else 0.0f
             if hasFactories then
                 match owner with
                 | None -> Map.empty
