@@ -125,7 +125,8 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     |> List.sumBy (fun (building, health) -> (1.0f - health) *  building.RepairCost)
                 yield region, cost + repairs
         }
-    Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]
+    //Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]
+    regionSaturatedCanonNeeds
     |> Seq.groupBy fst
     |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
     |> Map.ofSeq
