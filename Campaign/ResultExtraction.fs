@@ -49,10 +49,7 @@ let extractSuppliesShipped (state : WorldState) (orders : ResupplyOrder list) (e
                 | Some eventName ->
                     match tryGetOrder eventName with
                     | Some order ->
-                        let energy =
-                            match order.Means with
-                            | ByRail -> ResupplyOrder.TrainCapacity
-                            | ByRoad -> ResupplyOrder.TruckCapacity * float32 order.Convoy.Size
+                        let energy = order.Convoy.TransportedSupplies
                         yield { Sender = order.Convoy.Start; Energy = energy }
                     | None -> ()
                 | None ->

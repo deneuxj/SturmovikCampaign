@@ -88,7 +88,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     |> Seq.sumBy (fun (building, health) -> (1.0f - health) * building.RepairCost)
                 yield af.Region, bombNeed + repairs - afs.Supplies
         }
-    let frontLine = computeFrontLine world state.Regions
+    let frontLine = computeFrontLine false world state.Regions
     // Amounts of extra anti-tank and anti-air canons needed to have the region fully defended.
     // Can be negative.
     let regionCanonNeeds =
@@ -135,7 +135,7 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     let inFront =
-        let frontLine = computeFrontLine world state.Regions
+        let frontLine = computeFrontLine true world state.Regions
         frontLine
         |> Seq.map fst
         |> Set.ofSeq
@@ -167,7 +167,7 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
 
 
 /// Create convoy orders from regions owned by a coalition to neighbour regions that have bigger needs.
-let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
+let createConvoyOrders (maxTransfer : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
     let distances = computeDistanceFromFactories true getPaths getOwner world coalition
@@ -181,7 +181,7 @@ let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getP
     let tryFind x y = Map.tryFind x y |> Option.defaultVal 0.0f<E>
     [
         for region, regState in List.zip world.Regions state.Regions do
-            if regState.Owner = Some coalition then
+            if regState.Owner = Some coalition && regState.Supplies > 0.0f<E> then
                 let senderOwnNeeds = tryFind region.RegionId needs
                 let senderForwardedNeeds = tryFind region.RegionId forwardedNeeds
                 let senderDistance =
@@ -208,22 +208,19 @@ let createConvoyOrders (maxConvoySize : int, vehicleCapacity : float32<E>) (getP
                                     let availableToReceive = tryFind ngh capacities - alreadyAtReceiver
                                     let requested = min receiverNeeds availableToReceive
                                     min regState.Supplies requested
+                                    |> min maxTransfer
                                 if transfer > 0.0f<E> then
-                                    let size =
-                                        ceil(transfer / vehicleCapacity)
-                                        |> int
-                                        |> min maxConvoySize
-                                    yield { Start = region.RegionId ; Destination = ngh ; Size = size }
+                                    yield { Start = region.RegionId ; Destination = ngh ; TransportedSupplies = transfer }
     ]
 
 
 let createRoadConvoyOrders coalition =
-    createConvoyOrders (ColumnMovement.MaxColumnSize, ResupplyOrder.TruckCapacity) (fun world -> world.Roads) coalition
+    createConvoyOrders (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads) coalition
     >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
 
 
 let createRailConvoyOrders coalition =
-    createConvoyOrders (1, ResupplyOrder.TrainCapacity) (fun world -> world.Rails) coalition
+    createConvoyOrders (ResupplyOrder.TrainCapacity) (fun world -> world.Rails) coalition
     >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
 
@@ -235,20 +232,28 @@ let createAllConvoyOrders coalition x =
 let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrder list) =
     let needs =
         computeSupplyNeeds world state
+    let remaining =
+        state.Regions
+        |> List.map (fun regState -> regState.RegionId, regState.Supplies)
+        |> Map.ofList
     let sorted =
         orders
         // Sort by supply needs
         |> List.sortByDescending (fun order ->
             Map.tryFind order.Convoy.Destination needs
             |> fun x -> defaultArg x 0.0f<E>)
-        // At most one convoy of each type from each region
-        |> List.fold (fun (starts, ok) order ->
+        // Stop sending convoys if no more supplies are available at the source
+        |> List.fold (fun (remaining, ok) order ->
             let source = (order.Means, order.Convoy.Start)
-            if Set.contains source starts then
-                (starts, ok)
+            let supplies = Map.tryFind order.Convoy.Start remaining |> Option.defaultVal 0.0f<E>
+            let requested = order.Convoy.TransportedSupplies
+            let transported = min supplies requested
+            if transported > 0.0f<E> then
+                let remaining = Map.add order.Convoy.Start (supplies - transported) remaining
+                (remaining, { order with Convoy = { order.Convoy with TransportedSupplies = transported } } :: ok)
             else
-                (Set.add source starts, order :: ok)
-        ) (Set.empty, [])
+                (remaining, ok)
+            ) (remaining, [])
         |> snd
         |> List.rev
     sorted

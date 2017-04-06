@@ -249,7 +249,7 @@ let getNumCanonsPerRegion (areas : (DefenseArea * DefenseAreaState) seq) =
     |> Seq.map (fun (region, areas) -> region, areas |> Seq.map snd |> Seq.sumBy (fun area -> area.NumUnits))
 
 /// Compute set of pairs of regions that are neighbours and are controlled by different coalitions.
-let computeFrontLine (world : World) (regions : RegionState list) =
+let computeFrontLine (includeNeutral : bool) (world : World) (regions : RegionState list) =
     let wg = WorldFastAccess.Create world
     let stateOfRegion =
         let m =
@@ -257,6 +257,11 @@ let computeFrontLine (world : World) (regions : RegionState list) =
             |> List.map(fun state -> state.RegionId, state)
             |> dict
         fun x -> m.[x]
+    let filter owner =
+        if includeNeutral then
+            fun region -> region.Owner <> Some owner
+        else
+            fun region -> region.Owner.IsSome && region.Owner.Value <> owner
     seq {
         for region in regions do
             match region.Owner with
@@ -266,7 +271,7 @@ let computeFrontLine (world : World) (regions : RegionState list) =
                 let enemies =
                     neighbours
                     |> List.map stateOfRegion
-                    |> List.filter (fun region -> region.Owner.IsSome && region.Owner.Value <> owner)
+                    |> List.filter (filter owner)
                 for enemy in enemies do
                     yield (region.RegionId, enemy.RegionId)
     }
@@ -276,7 +281,7 @@ let computeFrontLine (world : World) (regions : RegionState list) =
 let updateNumCanons (world : World) (state : WorldState) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
-    let frontLine = computeFrontLine world state.Regions
+    let frontLine = computeFrontLine false world state.Regions
     let updateArea getCanonsForArea =
         setNumUnitsAsIfFullySupplied
             (fun region -> sg.GetRegion(region).Owner)

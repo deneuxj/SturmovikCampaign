@@ -278,7 +278,10 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                         let convoyName = order.MissionLogEventName
                         match order.Means with
                         | ByRoad ->
-                            VirtualConvoy.Create(store, lcStore, pathVertices, [], convoy.Size, country, coalition, convoyName, 0)
+                            let size =
+                                int (convoy.TransportedSupplies / ResupplyOrder.TruckCapacity)
+                                |> min ColumnMovement.MaxColumnSize
+                            VirtualConvoy.Create(store, lcStore, pathVertices, [], size, country, coalition, convoyName, 0)
                             |> Choice1Of2
                         | ByRail ->
                             let startV = pathVertices.Head

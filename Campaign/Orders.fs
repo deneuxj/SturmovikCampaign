@@ -7,8 +7,7 @@ open Campaign.WorldState
 type ConvoyOrder = {
     Start : RegionId
     Destination : RegionId
-    /// For a truck convoy: Number of trucks.
-    Size : int
+    TransportedSupplies : float32<E>
 }
 
 type ResupplyMeans =
@@ -28,11 +27,6 @@ type ResupplyOrder = {
 with
     static member TruckCapacity = 100.0f<E>
     static member TrainCapacity = 2000.0f<E>
-
-    member this.Capacity =
-        match this.Means with
-        | ByRoad -> float32 this.Convoy.Size * ResupplyOrder.TruckCapacity
-        | ByRail -> ResupplyOrder.TrainCapacity
 
     member this.MissionLogEventName =
         let meansLetter =
