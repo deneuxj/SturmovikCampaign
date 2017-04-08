@@ -544,6 +544,8 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let missionBegin = McuUtil.groupFromList [missionBegin]
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
     setCountries store world state (Some weather.Wind.Direction) flags
+    let ndbs = strategyMissionData.GetGroup("NDBs").CreateMcuList()
+    setCountries store world state None ndbs
     let options =
         (Weather.setOptions weather state.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
@@ -568,6 +570,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
           McuUtil.groupFromList spawns
           McuUtil.groupFromList columnTimers
           McuUtil.groupFromList flags
+          McuUtil.groupFromList ndbs
           parkedPlanes
           parkedTanks
           axisPrio
