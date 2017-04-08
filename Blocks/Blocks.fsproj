@@ -70,6 +70,7 @@
     <Content Include="ProtoTrain.txt" />
     <Compile Include="Train.fs" />
     <Compile Include="PriorityList.fs" />
+    <Compile Include="Proximity.fs" />
     <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>

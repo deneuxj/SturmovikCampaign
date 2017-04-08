@@ -4,6 +4,7 @@ open System.Numerics
 open System.Collections.Generic
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks.Proximity
 open SturmovikMission.DataProvider.Cached
 open Vector
 open Campaign.WorldDescription
@@ -349,12 +350,12 @@ let createStorageIcons store lcStore missionBegin (world : World) (state : World
                     match group with
                     | sto :: _ ->
                         let icon = IconDisplay.Create(store, lcStore, sto.Pos.Pos, "", owner.Other.ToCoalition, Mcu.IconIdValue.AttackBuildings)
-                        let wec = WhileEnemyClose.Create(true, store, sto.Pos.Pos, owner.ToCoalition)
-                        match wec.Proximity with
-                        | :? Mcu.McuProximity as prox -> prox.Distance <- 2000
-                        | _ -> failwith "Proximity trigger is not of type McuProximity"
-                        Mcu.addTargetLink wec.WakeUp icon.Show.Index
-                        Mcu.addTargetLink missionBegin wec.StartMonitoring.Index
+                        let wec = Proximity.Create(store, owner.Other.ToCoalition, 2500, sto.Pos.Pos)
+                        match icon.Show with
+                        | :? Mcu.McuTimer as timer -> timer.Time <- 300.0 // Delay icon by 5 minutes
+                        | _ -> ()
+                        Mcu.addTargetLink wec.Out icon.Show.Index
+                        Mcu.addTargetLink missionBegin wec.Start.Index
                         yield icon.All
                         yield wec.All
                     | [] ->
