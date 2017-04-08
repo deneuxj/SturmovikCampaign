@@ -295,7 +295,7 @@ module MissionFileGeneration =
                 |> List.tryFind(fun (k, _) -> windDirection < k * 22.5)
                 |> Option.map snd
                 |> Option.defaultVal "south"
-            sprintf "<b>Weather<b><br>Temperature: %2.0f Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" weather.Temperature cover weather.Wind.Speed windOrigin
+            sprintf "<b>Weather<b><br>Temperature: %2.0fC, Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" weather.Temperature cover weather.Wind.Speed windOrigin
         let briefing = timeAndDate + weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
 
         let missionName = config.MissionName
