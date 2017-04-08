@@ -127,7 +127,7 @@ with
         let whileEnemyCloseSet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
-                    yield (WhileEnemyCloseInstance i, WhileEnemyClose.Create(false, store, vertex.Pos, coalition))
+                    yield (WhileEnemyCloseInstance i, WhileEnemyClose.Create(false, false, store, vertex.Pos, coalition))
             }
             |> Map.ofSeq
         let activeWaypointSet =

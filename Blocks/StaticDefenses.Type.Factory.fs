@@ -16,7 +16,6 @@ type CanonInstance = CanonInstance of int
 type StaticDefenseGroup = {
     CanonSet : Map<CanonInstance, Canon>
     EnemyClose : WhileEnemyClose
-    CheckZoneOverride : Mcu.McuTrigger
     Decorations : Mcu.McuBase list
     Icon : (IconDisplay * Mcu.McuCounter) option
     Api : Api
@@ -35,16 +34,7 @@ with
             [
                 yield! this.CanonSet |> Seq.map (fun kvp -> kvp.Value.All)
                 yield this.Api.All
-                let overriden =
-                    this.EnemyClose.All
-                    |> McuUtil.deepContentOf
-                    |> List.map (
-                        function
-                        | :? Mcu.McuProximity as mcu when mcu.Name = "EnemyClose" -> this.CheckZoneOverride :> Mcu.McuBase
-                        | mcu -> mcu
-                    )
-                yield McuUtil.groupFromList overriden
-//                yield this.EnemyClose.All
+                yield this.EnemyClose.All
                 match this.Icon with
                 | Some(icon, counter) -> yield icon.All
                 | None -> ()
@@ -85,7 +75,7 @@ with
             ]
         let enemyClose =
             // For ATs, show when an enemy ground vehicle is near, reduce scanning range.
-            let wec = WhileEnemyClose.Create(true, store, center, coalition)
+            let wec = WhileEnemyClose.Create(true, true, store, center, coalition)
             match specialty with
             | AntiTank ->
                 let otherCoalition = McuUtil.swapCoalition coalition
@@ -98,15 +88,6 @@ with
             | _ ->
                 ()
             wec
-        // Replace proximity trigger by checkzone. Canons don't move.
-        let proximity =
-            enemyClose.Proximity :?> Mcu.McuProximity
-        let checkZone = newCheckZone proximity.Index proximity.Distance
-        checkZone.PlaneCoalitions <- proximity.PlaneCoalitions
-        checkZone.VehicleCoalitions <- proximity.VehicleCoalitions
-        checkZone.Objects <- proximity.Objects
-        checkZone.Targets <- proximity.Targets
-        McuUtil.vecCopy proximity.Pos checkZone.Pos
         // Replace a few canons by searchlights during dark hours
         if includeSearchLights then
             let numSearchLights = max 1 (groupSize / 10)
@@ -143,7 +124,6 @@ with
         { CanonSet = antiTankCanonSet
           EnemyClose = enemyClose
           Decorations = positions
-          CheckZoneOverride = checkZone
           Icon = icon
           Api = api
         }

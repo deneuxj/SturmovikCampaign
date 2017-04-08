@@ -156,11 +156,18 @@ type WhileEnemyClose =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(usePulses : bool, store : NumericalIdentifiers.IdStore, pos : Vector2, coalition : Mcu.CoalitionValue) =
+    static member Create(usePulses : bool, checkzoneOnly : bool, store : NumericalIdentifiers.IdStore, pos : Vector2, coalition : Mcu.CoalitionValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
-        let group = McuUtil.filterByPath [ (if usePulses then "WhileEnemyCloseAlt" else "WhileEnemyClose") ] db |> List.ofSeq
+        let group =
+            let groupName =
+                match usePulses, checkzoneOnly with
+                | false, false -> "WhileEnemyClose"
+                | false, true -> "WhileEnemyCloseCZ"
+                | true, true -> "WhileEnemyCloseCZAlt"
+                | true, false -> "WhileEnemyCloseAlt"
+            McuUtil.filterByPath [ groupName ] db |> List.ofSeq
         for mcu in group do
             subst mcu
         // Get key nodes

@@ -510,7 +510,7 @@ let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (stat
                     yield McuUtil.groupFromList grp
                     let coalition = owner.Other.ToCoalition
                     // Actually looking for friendlies, not enemies. It works the same, even though the name is misleading.
-                    let wec = WhileEnemyClose.Create(true, store, pos, coalition)
+                    let wec = WhileEnemyClose.Create(true, true, store, pos, coalition)
                     yield wec.All
                     Mcu.addTargetLink missionBegin wec.StartMonitoring.Index
                     for mcu in grp do
