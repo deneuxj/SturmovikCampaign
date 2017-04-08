@@ -678,7 +678,7 @@ with
           Roads = roads
           Rails = rails
           WeatherDaysOffset = 0.0
-        }, data.ListOfBlock, data.ListOfBridge, List.head data.ListOfOptions
+        }
 
     member this.GetClosestAirfield(pos : Vector2) =
         this.Airfields

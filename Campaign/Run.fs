@@ -49,7 +49,7 @@ module Init =
             | None ->
                 System.Random()
 
-        let world0, (blocks : T.Block list), (bridges : T.Bridge list), (options : T.Options) = World.Create(Path.Combine(config.ScriptPath, config.StrategyFile))
+        let world0 = World.Create(Path.Combine(config.ScriptPath, config.StrategyFile))
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
 
         let capacity =
@@ -90,12 +90,6 @@ module Init =
         let outputDir = config.OutputDir
         use worldFile = File.CreateText(Path.Combine(outputDir, "world.xml"))
         serializer.Serialize(worldFile, world)
-        use blocksFile = File.CreateText(Path.Combine(outputDir, "blocks.xml"))
-        serializer.Serialize(blocksFile, blocks)
-        use bridgesFile = File.CreateText(Path.Combine(outputDir, "bridges.xml"))
-        serializer.Serialize(bridgesFile, bridges)
-        use optionsFile = File.CreateText(Path.Combine(outputDir, "options.xml"))
-        serializer.Serialize(optionsFile, options)
 
     let createState(config : Configuration) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -243,17 +237,11 @@ module MissionFileGeneration =
                 System.Random()
 
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
-        let world, blocks, bridges, options, state =
+        let world, state =
             try
                 use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
                 use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
-                use blocksFile = File.OpenText(Path.Combine(config.OutputDir, "blocks.xml"))
-                use bridgesFile = File.OpenText(Path.Combine(config.OutputDir, "bridges.xml"))
-                use optionsFile = File.OpenText(Path.Combine(config.OutputDir, "options.xml"))
                 serializer.Deserialize<World>(worldFile),
-                serializer.Deserialize<T.Block list>(blocksFile),
-                serializer.Deserialize<T.Bridge list>(bridgesFile),
-                serializer.Deserialize<T.Options>(optionsFile),
                 serializer.Deserialize<WorldState>(stateFile)
             with
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
@@ -311,7 +299,7 @@ module MissionFileGeneration =
         let briefing = timeAndDate + weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
 
         let missionName = config.MissionName
-        writeMissionFile random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys options blocks bridges world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
+        writeMissionFile random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys (Path.Combine(config.ScriptPath, config.StrategyFile)) world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
 
         let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer")
         let swallow f = try f() with | _ -> ()

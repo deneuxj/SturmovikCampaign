@@ -453,7 +453,11 @@ let createParkedTanks store (world : World) (state : WorldState) (orders : Order
                     yield block
     ]
 
-let writeMissionFile random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (options : T.Options) (blocks : T.Block list) (bridges : T.Bridge list) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
+let writeMissionFile random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (strategyMissionFile : string) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
+    let strategyMissionData = T.GroupData(Parsing.Stream.FromFile strategyMissionFile)
+    let options = strategyMissionData.ListOfOptions.Head
+    let blocks = strategyMissionData.ListOfBlock
+    let bridges = strategyMissionData.ListOfBridge
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
     lcStore.SetNextId 3
