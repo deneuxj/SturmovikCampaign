@@ -212,6 +212,10 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
                                 let len = direction.Length()
                                 let direction = direction / len
                                 Vector2.Dot(direction, windDirection))
+                        |> fun spawn ->
+                            spawn
+                                .SetRefuelFriendlies(T.Boolean true)
+                                .SetRearmFriendlies(T.Boolean true)
                     match coalition with
                     | Axis ->
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
