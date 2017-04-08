@@ -215,6 +215,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
                                 Vector2.Dot(direction, windDirection))
                         |> fun spawn ->
                             spawn
+                                .SetReturnPlanes(T.Boolean true)
                                 .SetRefuelFriendlies(T.Boolean true)
                                 .SetRearmFriendlies(T.Boolean true)
                     match coalition with
