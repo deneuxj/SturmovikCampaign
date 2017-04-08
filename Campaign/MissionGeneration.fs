@@ -517,8 +517,8 @@ let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (stat
                         match mcu with
                         | :? Mcu.McuEntity as entity ->
                             let startStop = Effect.EffectControl.Create(store, pos)
-                            Mcu.addTargetLink startStop.Start entity.Index
-                            Mcu.addTargetLink startStop.Stop entity.Index
+                            Mcu.addObjectLink startStop.Start entity.Index
+                            Mcu.addObjectLink startStop.Stop entity.Index
                             Mcu.addTargetLink wec.WakeUp startStop.Start.Index
                             Mcu.addTargetLink wec.Sleep startStop.Stop.Index
                             yield startStop.All
