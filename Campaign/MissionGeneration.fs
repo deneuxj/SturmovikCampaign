@@ -12,6 +12,7 @@ open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.StaticDefenses.Factory
 open SturmovikMission.Blocks.StaticDefenses.Types
 open SturmovikMission.Blocks.Train
+open SturmovikMission.Blocks.Effect
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks
 open SturmovikMission.Blocks.IO
@@ -482,6 +483,48 @@ let createParkedTanks store (world : World) (state : WorldState) (orders : Order
                     yield block
     ]
 
+let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) (group : Mcu.McuBase list) =
+    let areClose (mcu1 : Mcu.McuBase) (mcu2 : Mcu.McuBase) =
+        let v1 = Vector2.FromMcu(mcu1.Pos)
+        let v2 = Vector2.FromMcu(mcu2.Pos)
+        (v1 - v2).Length() < 500.0f
+    let parted =
+        Algo.computePartition areClose group
+    [
+        for grp in parted do
+            match grp with
+            | [] -> ()
+            | hd :: _ ->
+                let pos = Vector2.FromMcu(hd.Pos)
+                let owner =
+                    List.zip world.Regions state.Regions
+                    |> List.tryPick(fun (region, regState) ->
+                        if pos.IsInConvexPolygon region.Boundary then
+                            regState.Owner
+                        else
+                            None
+                    )
+                match owner with
+                | None -> ()
+                | Some owner ->
+                    yield McuUtil.groupFromList grp
+                    let coalition = owner.Other.ToCoalition
+                    // Actually looking for friendlies, not enemies. It works the same, even though the name is misleading.
+                    let wec = WhileEnemyClose.Create(true, store, pos, coalition)
+                    yield wec.All
+                    Mcu.addTargetLink missionBegin wec.StartMonitoring.Index
+                    for mcu in grp do
+                        match mcu with
+                        | :? Mcu.McuEntity as entity ->
+                            let startStop = Effect.EffectControl.Create(store, pos)
+                            Mcu.addTargetLink startStop.Start entity.Index
+                            Mcu.addTargetLink startStop.Stop entity.Index
+                            Mcu.addTargetLink wec.WakeUp startStop.Start.Index
+                            Mcu.addTargetLink wec.Sleep startStop.Stop.Index
+                            yield startStop.All
+                        | _ -> ()
+    ]
+
 let writeMissionFile random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (strategyMissionFile : string) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
     let strategyMissionData = T.GroupData(Parsing.Stream.FromFile strategyMissionFile)
     let options = strategyMissionData.ListOfOptions.Head
@@ -541,11 +584,13 @@ let writeMissionFile random weather author missionName briefing missionLength co
         |> McuUtil.groupFromList
     let axisPrio, axisConvoys = mkConvoyNodes axisOrders.Resupply
     let alliesPrio, alliesConvoys = mkConvoyNodes alliesOrders.Resupply
-    let missionBegin = McuUtil.groupFromList [missionBegin]
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
     setCountries store world state (Some weather.Wind.Direction) flags
     let ndbs = strategyMissionData.GetGroup("NDBs").CreateMcuList()
     setCountries store world state None ndbs
+    let landFires =
+        strategyMissionData.GetGroup("Land fires").CreateMcuList()
+        |> createLandFires store world state missionBegin
     let options =
         (Weather.setOptions weather state.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
@@ -561,7 +606,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
         }
     let allGroups =
         [ optionStrings
-          missionBegin
+          McuUtil.groupFromList [missionBegin]
           upcast staticDefenses
           upcast icons
           upcast icons2
@@ -574,5 +619,5 @@ let writeMissionFile random weather author missionName briefing missionLength co
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting @ landFires
     writeMissionFiles "eng" filename options allGroups

@@ -2837,11 +2837,11 @@ Group
 Group
 {
   Name = "Proximity";
-  Index = 240;
+  Index = 236;
   Desc = "";
   MCU_Proximity
   {
-    Index = 236;
+    Index = 237;
     Name = "Proximity";
     Desc = "";
     Targets = [238,239];
@@ -2859,10 +2859,10 @@ Group
 
   MCU_Timer
   {
-    Index = 237;
+    Index = 240;
     Name = "Start";
     Desc = "";
-    Targets = [236];
+    Targets = [237];
     Objects = [];
     XPos = 15050.438;
     YPos = 132.115;
@@ -2880,7 +2880,7 @@ Group
     Index = 238;
     Name = "Trigger Deactivate";
     Desc = "";
-    Targets = [236];
+    Targets = [237];
     Objects = [];
     XPos = 14684.765;
     YPos = 136.695;
@@ -2906,6 +2906,49 @@ Group
     ZOri = 0.00;
     Counter = 1;
     Dropcount = 0;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "StartStopEffect";
+  Index = 245;
+  Desc = "";
+  MCU_CMD_Effect
+  {
+    Index = 243;
+    Name = "StartEffect";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 17322.141;
+    YPos = 55.283;
+    ZPos = 34485.067;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    ActionType = 0;
+  }
+  
+
+  MCU_CMD_Effect
+  {
+    Index = 244;
+    Name = "StopEffect";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 16907.497;
+    YPos = 55.283;
+    ZPos = 34477.662;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    ActionType = 1;
   }
   
 
