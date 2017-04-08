@@ -423,6 +423,35 @@ let createParkedPlanes store (world : World) (state : WorldState) =
                 ()
     ]
 
+/// Set the country of entity owners in a list of Mcus depending on the region where they are located.
+let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (ori : float option) (group : Mcu.McuBase list) =
+    let subst = Mcu.substId <| store.GetIdMapper()
+    for mcu in group do
+        subst mcu
+    for mcu in group do
+        match mcu with
+        | :? Mcu.HasEntity as flag ->
+            let pos = Vector2.FromMcu(flag.Pos)
+            let owner =
+                List.zip world.Regions state.Regions
+                |> List.tryPick (fun (region, regState) ->
+                    if pos.IsInConvexPolygon region.Boundary then
+                        regState.Owner
+                    else
+                        None
+                )
+                |> function
+                    | Some Axis -> Mcu.CountryValue.Germany
+                    | Some Allies -> Mcu.CountryValue.Russia
+                    | None -> Mcu.CountryValue.Russia
+            flag.Country <- owner
+            match ori with
+            | Some ori ->
+                flag.Ori.Y <- ori
+            | None ->
+                ()
+        | _ ->
+            ()
 
 let createParkedTanks store (world : World) (state : WorldState) (orders : OrderPackage) coalition =
     [
@@ -513,6 +542,8 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let axisPrio, axisConvoys = mkConvoyNodes axisOrders.Resupply
     let alliesPrio, alliesConvoys = mkConvoyNodes alliesOrders.Resupply
     let missionBegin = McuUtil.groupFromList [missionBegin]
+    let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
+    setCountries store world state (Some weather.Wind.Direction) flags
     let options =
         (Weather.setOptions weather state.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
@@ -536,6 +567,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
           McuUtil.groupFromList bridges
           McuUtil.groupFromList spawns
           McuUtil.groupFromList columnTimers
+          McuUtil.groupFromList flags
           parkedPlanes
           parkedTanks
           axisPrio
