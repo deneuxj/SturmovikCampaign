@@ -18,12 +18,18 @@ type StaticDefenseGroup = {
     EnemyClose : WhileEnemyClose
     CheckZoneOverride : Mcu.McuTrigger
     Decorations : Mcu.McuBase list
-    Icon : IconDisplay option
+    Icon : (IconDisplay * Mcu.McuCounter) option
     Api : Api
 }
 with
     interface McuUtil.IMcuGroup with
-        member this.Content = this.Decorations
+        member this.Content =
+            [
+                yield! this.Decorations
+                match this.Icon with
+                | Some(icon, counter) -> yield counter :> Mcu.McuBase
+                | None -> ()
+            ]
         member this.LcStrings = []
         member this.SubGroups =
             [
@@ -40,7 +46,7 @@ with
                 yield McuUtil.groupFromList overriden
 //                yield this.EnemyClose.All
                 match this.Icon with
-                | Some icon -> yield icon.All
+                | Some(icon, counter) -> yield icon.All
                 | None -> ()
             ]
 
@@ -117,8 +123,19 @@ with
         // Icon
         let icon =
             if groupSize >= 3 then
-                IconDisplay.Create(store, lcStore, center, "", McuUtil.swapCoalition coalition, Mcu.IconIdValue.AttackAntiAirPosition)
-                |> Some
+                let icon =
+                    IconDisplay.Create(store, lcStore, center, "", McuUtil.swapCoalition coalition, Mcu.IconIdValue.AttackAntiAirPosition)
+                match icon.Show with
+                | :? Mcu.McuTimer as timer ->
+                    timer.Time <- 300.0 // Delay showing icon by 5 minutes.
+                | _ ->
+                    ()
+                // Show the icon only once. It's never hidden anyway, and reshow-ing it every time a plane approaches is unnecessary. Moreover, I suspect it causes stutters.
+                let once = newCounter 1
+                let subst = Mcu.substId <| store.GetIdMapper()
+                subst once
+                Mcu.addTargetLink once icon.Show.Index
+                Some(icon, once)
             else
                 None
         // Result
@@ -142,8 +159,8 @@ with
                 yield this.Api.Start, upcast wec.StartMonitoring
                 yield this.Api.Stop, upcast wec.StopMonitoring
                 match this.Icon with
-                | Some icon ->
-                    yield wec.WakeUp, upcast icon.Show
+                | Some(_, once) ->
+                    yield wec.WakeUp, upcast once
                 | None ->
                     ()
             ]
