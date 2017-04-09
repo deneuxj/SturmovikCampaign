@@ -112,6 +112,33 @@ with
           All = McuUtil.groupFromList db
         }
 
+    member this.SwitchToSearchLight() =
+        let mcus = McuUtil.deepContentOf this.All
+        let attackAirOrder =
+            getTriggerByName mcus "AttackAirTargets"
+        let searchOrder =
+            let db = blocksData.GetGroup("Palette").CreateMcuList()
+            getTriggerByName db "ForceCompleteLow"
+        searchOrder.Targets <- attackAirOrder.Targets
+        searchOrder.Objects <- attackAirOrder.Objects
+        vecCopy attackAirOrder.Pos searchOrder.Pos
+        searchOrder.Index <- attackAirOrder.Index
+        let canon = getHasEntityByIndex this.Canon.MisObjID mcus
+        match canon.Country with
+        | Mcu.CountryValue.Germany ->
+            canon.Model <- germanSearchLight.Model
+            canon.Script <- germanSearchLight.Script
+        | _ ->
+            canon.Model <- russianSearchLight.Model
+            canon.Script <- russianSearchLight.Script
+        let mcus =
+            mcus
+            |> List.map (fun mcu ->
+                if mcu.Index = searchOrder.Index then
+                    searchOrder :> Mcu.McuBase
+                else
+                    mcu)
+        { this with All = McuUtil.groupFromList mcus }
 
 type Api = {
     Start : Mcu.McuTrigger

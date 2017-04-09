@@ -49,9 +49,21 @@ with
                 |> Seq.sum
             k * sum
         let antiTankCanonSet =
+            let numSearchLights =
+                if includeSearchLights then
+                    max 1 (groupSize / 10)
+                else
+                    0
             seq {
                 for i in 1 .. groupSize do
-                    yield CanonInstance(i), Canon.Create(specialty, random, store, boundary, yori, country)
+                    let canon =
+                        Canon.Create(specialty, random, store, boundary, yori, country)
+                        |> fun canon ->
+                            if i <= numSearchLights then
+                                canon.SwitchToSearchLight()
+                            else
+                                canon
+                    yield CanonInstance(i), canon
             }
             |> Map.ofSeq
         let positions =
@@ -88,19 +100,6 @@ with
             | _ ->
                 ()
             wec
-        // Replace a few canons by searchlights during dark hours
-        if includeSearchLights then
-            let numSearchLights = max 1 (groupSize / 10)
-            for kvp in antiTankCanonSet |> Seq.truncate numSearchLights do
-                let canon = kvp.Value
-                let entity = canon.Canon
-                let vehicle = McuUtil.getHasEntityByIndex entity.MisObjID (McuUtil.deepContentOf canon.All)
-                let model =
-                    match country with
-                    | Mcu.CountryValue.Germany -> Vehicles.germanSearchLight
-                    | _ -> Vehicles.russianSearchLight
-                vehicle.Model <- model.Model
-                vehicle.Script <- model.Script
         // Icon
         let icon =
             if groupSize >= 3 then

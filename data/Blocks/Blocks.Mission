@@ -1057,6 +1057,23 @@ Group
   }
   
 
+  MCU_CMD_ForceComplete
+  {
+    Index = 324;
+    Name = "ForceCompleteLow";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 43689.049;
+    YPos = 108.453;
+    ZPos = 5213.501;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Priority = 0;
+  }
+  
+
 }
 
 
@@ -1369,7 +1386,7 @@ Group
     Index = 113;
     LinkTrId = 114;
     XPos = 16373.178;
-    YPos = 100.913;
+    YPos = 100.690;
     ZPos = 24731.090;
     XOri = 0.94;
     YOri = 0.00;
@@ -1401,7 +1418,7 @@ Group
     Targets = [];
     Objects = [];
     XPos = 16373.178;
-    YPos = 101.113;
+    YPos = 100.890;
     ZPos = 24731.090;
     XOri = 0.00;
     YOri = 0.00;
@@ -1431,7 +1448,7 @@ Group
   MCU_CMD_AttackArea
   {
     Index = 117;
-    Name = "command AttackArea";
+    Name = "AttackAirTargets";
     Desc = "";
     Targets = [];
     Objects = [114];
