@@ -628,8 +628,8 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
     { state with Regions = regions }
 
 
-let eveningStop = 19
-let morningStart = 7
+let eveningStop = 20
+let morningStart = 5
 
 let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures columnArrivals =
     let state2 = applyProduction dt world state
