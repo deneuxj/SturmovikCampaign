@@ -121,7 +121,7 @@ with
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
                     for pos in 1..convoySize do
-                        yield (TruckInConvoyInstance(i, pos), TruckInConvoy.Create(store, vertex.Pos, vertex.Ori, pos, country))
+                        yield (TruckInConvoyInstance(i, pos), TruckInConvoy.Create(store, vertex.Pos, vertex.Ori, pos, country, convoyName))
             }
             |> Map
         let whileEnemyCloseSet =

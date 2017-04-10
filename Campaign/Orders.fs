@@ -19,6 +19,20 @@ type OrderId = {
     Coalition : CoalitionId
 }
 
+let private tryExtractNumberSuffix (prefix : string) (name : string) =
+    let number =
+        lazy
+            try
+                match System.Int32.TryParse(name.Substring(prefix.Length)) with
+                | true, x -> Some x
+                | false, _ -> None
+            with
+            | _ -> None
+    if name.StartsWith(prefix + "-") && number.Value.IsSome then
+        number.Value
+    else
+        None
+
 type ResupplyOrder = {
     OrderId : OrderId
     Means : ResupplyMeans
@@ -41,6 +55,28 @@ with
     member this.MatchesMissionLogDepartureEventName(name : string) =
         name.StartsWith(this.MissionLogEventName + "-D")
 
+    member this.MatchesVehicleName(name : string) =
+        tryExtractNumberSuffix this.MissionLogEventName name
+
+let private tryExtractNumberPairSuffix (prefix : string) (name : string) =
+    let number =
+        lazy
+            try
+                let suffix = name.Substring(prefix.Length)
+                let nums = suffix.Split('-')
+                match nums with
+                | [|num1; num2|] ->
+                    match System.Int32.TryParse(num1), System.Int32.TryParse(num2) with
+                    | (true, n1), (true, n2) -> Some(n1, n2)
+                    | _ -> None
+                | _ -> None
+            with
+            | _ -> None
+    if name.StartsWith(prefix + "-") && number.Value.IsSome then
+        number.Value
+    else
+        None
+
 /// A column of armored vehicles in movement.
 type ColumnMovement = {
     OrderId : OrderId
@@ -51,6 +87,13 @@ type ColumnMovement = {
 with
     member this.MissionLogEventName =
         sprintf "COL-%d-%d" (int this.OrderId.Coalition.ToCoalition) this.OrderId.Index
+
+    /// <summary>
+    /// Try to get the rank of a vehicle in a column by its name
+    /// </summary>
+    member this.MatchesVehicleName(name : string) =
+        tryExtractNumberPairSuffix this.MissionLogEventName name
+        |> Option.map (fun (n1, n2) -> n1 + n2)
 
     member this.MatchesMissionLogArrivalEventName(name : string) =
         if name.StartsWith(this.MissionLogEventName + "-A-") then

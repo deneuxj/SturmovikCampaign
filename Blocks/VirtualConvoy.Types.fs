@@ -65,7 +65,7 @@ type TruckInConvoy =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, inFormation : int, country : Mcu.CountryValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, inFormation : int, country : Mcu.CountryValue, formationName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
@@ -75,6 +75,7 @@ with
         // Get key nodes
         let getByName = getTriggerByName group
         let truck = getVehicleByName group T.Blocks.Truck
+        truck.Name <- sprintf "%s-%d" formationName inFormation
         truck.Country <- country
         match country with
         | Mcu.CountryValue.Germany ->

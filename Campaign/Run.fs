@@ -428,6 +428,7 @@ module MissionLogParsing =
             let resupsAllies = extractResupplies world state alliesOrders.Resupply entries |> List.ofSeq
             resupsAxis @ resupsAllies
         let staticDamages = extractStaticDamages world state entries |> List.ofSeq
+        let vehicleDamages = extractVehicleDamages (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply)
         let takeOffs, landings =
             let both =
                 extractTakeOffsAndLandings world state entries

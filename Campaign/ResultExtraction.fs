@@ -245,6 +245,8 @@ type DamagedObject =
     | Storage of RegionId * int
     | Airfield of AirfieldId * int
     | Canon of DefenseAreaId
+    | Convoy of OrderId * int
+    | Column of OrderId * int
     | Vehicle of RegionId * GroundAttackVehicle
     | ParkedPlane of AirfieldId * PlaneModel
 
@@ -389,6 +391,42 @@ let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntr
                         ()
                 | _ -> () // Ignored object type
             | _ -> () // Ignored log entry
+    }
+    |> Seq.groupBy (fun damage -> damage.Object)
+    |> Seq.map (fun (damageObject, damages) ->
+        { Object = damageObject
+          Data = { Amount = damages |> Seq.sumBy (fun dam -> dam.Data.Amount) } })
+
+let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : LogEntry seq) =
+    seq {
+        let idMapper = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                idMapper := Map.add spawned.ObjectId spawned.ObjectName !idMapper
+            | :? DamageEntry as damage ->
+                match Map.tryFind damage.TargetId !idMapper with
+                | Some name ->
+                    let tankDamage =
+                        tanks
+                        |> List.tryPick (fun order ->
+                            order.MatchesVehicleName(name)
+                            |> Option.map (fun rank -> order, rank))
+                    let truckDamage =
+                        lazy
+                            convoys
+                            |> List.tryPick (fun order ->
+                                order.MatchesVehicleName(name)
+                                |> Option.map (fun rank -> order, rank))
+                    match tankDamage with
+                    | Some(order, rank) -> yield { Object = Column(order.OrderId, rank); Data = { Amount = damage.Damage } }
+                    | None ->
+                        match truckDamage.Value with
+                        | Some(order, rank) -> yield { Object = Convoy(order.OrderId, rank); Data = { Amount = damage.Damage } }
+                        | None -> ()
+                | None ->
+                    ()
+            | _ -> ()
     }
     |> Seq.groupBy (fun damage -> damage.Object)
     |> Seq.map (fun (damageObject, damages) ->
