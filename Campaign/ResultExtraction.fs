@@ -244,8 +244,7 @@ type DamagedObject =
     | Production of RegionId * int
     | Storage of RegionId * int
     | Airfield of AirfieldId * int
-    | AntiAir of DefenseAreaId
-    | AntiTank of DefenseAreaId
+    | Canon of DefenseAreaId
     | Vehicle of RegionId * GroundAttackVehicle
     | ParkedPlane of AirfieldId * PlaneModel
 
@@ -324,12 +323,12 @@ let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntr
         for entry in entries do
             match entry with
             | :? ObjectSpawnedEntry as spawned ->
-                idMapper := Map.add spawned.ObjectId (spawned.ObjectType, spawned.SubGroup) !idMapper
+                idMapper := Map.add spawned.ObjectId (spawned.ObjectType, spawned.ObjectName, spawned.SubGroup) !idMapper
             | :? DamageEntry as damage ->
                 let damagePos = Vector2(damage.Position.X, damage.Position.Z)
                 match Map.tryFind damage.TargetId !idMapper with
-                | Some(IndustrialObjectType buildingType, subGroup)
-                | Some(AirfieldObjectType buildingType, subGroup) ->
+                | Some(IndustrialObjectType buildingType, _, subGroup)
+                | Some(AirfieldObjectType buildingType, _, subGroup) ->
                     // Damage to buildings: storage or production
                     match tryFindContainingRegion damagePos with
                     | Some region ->
@@ -366,17 +365,26 @@ let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntr
                                 yield { Object = damaged; Data = { Amount = damage.Damage } }
                         | None -> () // No known building nearby
                     | None -> () // Outside of know regions
-                | Some(StaticPlaneType planeModel, _) ->
+                | Some(StaticPlaneType planeModel, _, _) ->
                     let closestAirfield =
                         world.Airfields
                         |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())
                     let distance = (closestAirfield.Pos - damagePos).Length()
                     if distance < 3000.0f then
                         yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = { Amount = damage.Damage } }
-                | Some(StaticVehicleType vehicleModel, _) ->
+                | Some(StaticVehicleType vehicleModel, _, _) ->
                     match tryFindContainingRegion damagePos with
                     | Some region ->
-                        yield { Object = Vehicle(region.RegionId, vehicleModel); Data = { Amount = damage.Damage }}
+                        yield { Object = Vehicle(region.RegionId, vehicleModel); Data = { Amount = damage.Damage } }
+                    | None ->
+                        ()
+                | Some(_, "CANON", _) ->
+                    let defenseArea =
+                        world.AntiAirDefenses @ world.AntiTankDefenses
+                        |> List.tryFind (fun area -> damagePos.IsInConvexPolygon(area.Boundary))
+                    match defenseArea with
+                    | Some area ->
+                        yield { Object = Canon(area.DefenseAreaId); Data = { Amount = damage.Damage } }
                     | None ->
                         ()
                 | _ -> () // Ignored object type
