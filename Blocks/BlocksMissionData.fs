@@ -117,7 +117,7 @@ let newBlock idx country model script =
         T.String "",
         T.Integer 7000,
         T.Integer idx,
-        T.Integer -1,
+        T.Integer 0,
         T.String "",
         T.String "",
         T.String "",
