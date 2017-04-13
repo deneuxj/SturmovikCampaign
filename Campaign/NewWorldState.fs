@@ -386,17 +386,20 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
     let regionsAfterDamagesToDefenses =
         [
             for region, regState in List.zip world.Regions regionsAfterDamages do
-                for area in world.AntiAirDefenses @ world.AntiTankDefenses do
-                    if area.Home.Home = region.RegionId then
+                let damagesToDefenses =
+                    Seq.append world.AntiAirDefenses world.AntiTankDefenses
+                    |> Seq.filter (fun area -> area.Home.Home = region.RegionId)
+                    |> Seq.sumBy (fun area ->
                         let damage =
                             Map.tryFind (Canon(area.DefenseAreaId)) damages
                             |> Option.defaultVal Seq.empty
                             |> Seq.sumBy (fun data -> data.Amount)
-                        let cost = damage * canonCost
-                        if cost > 0.0f<E> then
-                            yield { regState with Supplies = max 0.0f<E> (regState.Supplies - cost) }
-                        else
-                            yield regState
+                        damage * canonCost)
+                yield
+                    if damagesToDefenses > 0.0f<E> then
+                        { regState with Supplies = max 0.0f<E> (regState.Supplies - damagesToDefenses) }
+                    else
+                        regState
         ]
     // Repair and resupply regions
     let regionsAfterSupplies =
