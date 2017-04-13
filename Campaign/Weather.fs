@@ -4,6 +4,29 @@ module Campaign.Weather
 
 open SturmovikMission.Blocks.BlocksMissionData
 
+/// <summary>
+/// Cyclical interpolation
+/// </summary>
+/// <param name="x0">Start of interval</param>
+/// <param name="x1">End of interval</param>
+/// <param name="points">Points to interpolate between within the interval</param>
+let interpolate (x0 : float, x1 : float) (points : (float * float) list) =
+    let w = x1 - x0
+    let xp, yp = List.last points
+    let xp = xp - w
+    let xP, yP = List.head points
+    let xP = xP + w
+    let points = (xp, yp) :: points @ [xP, yP]
+    fun (x : float) ->
+        let xDiv = (x - x0) / w
+        let x' = x0 + x - (floor xDiv) * w
+        let (x0, y0), (x1, y1) =
+            points
+            |> Seq.pairwise
+            |> Seq.find (fun ((x0, _), (x1, _)) -> x0 <= x' && x' < x1)
+        let f = (x'  - x0) / (x1 - x0)
+        y0 * (1.0 - f) + y1 * f
+
 type WindState =  {
     Speed : float
     Direction : float
