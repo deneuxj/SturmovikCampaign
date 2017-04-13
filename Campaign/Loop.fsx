@@ -70,7 +70,7 @@ type ExecutionState =
     | StartServer
     | WaitForMissionEnd of System.DateTime
     | ExtractResults
-    | Failed of string * ExecutionState
+    | Failed of Message:string * StackTrace:string option * ExecutionState
 with
     member this.GetAsync(serverProc : Process option) =
         match this with
@@ -97,7 +97,7 @@ with
                 printfn "Generate mission..."
                 let exitStatus = Campaign.Run.MissionFileGeneration.run config
                 if exitStatus <> 0 then
-                    return None, Failed(sprintf "Resaver failed, exit status %d" exitStatus, this)
+                    return None, Failed(sprintf "Resaver failed, exit status %d" exitStatus, None, this)
                 else
                     return None, StartServer
             }
@@ -107,7 +107,7 @@ with
                 let serverProc = startServer()
                 match serverProc with
                 | None ->
-                    return None, Failed("Failed to start server", this)
+                    return None, Failed("Failed to start server", None, this)
                 | Some _ ->
                     let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
                     return serverProc, WaitForMissionEnd expectedMissionEnd
@@ -133,7 +133,7 @@ with
                 |> Campaign.Run.MissionLogParsing.stage2 config
                 return serverProc, KillServer
             }
-        | Failed(msg, state) ->
+        | Failed(msg, stackTrace, state) ->
             async {
                 printfn "Failed!"
                 return serverProc, this
@@ -160,7 +160,7 @@ let loop() =
     let rec work (status : ExecutionState) (serverProc : Process option) =
         async {
             match status with
-            | Failed(msg, _) ->
+            | Failed(msg, _, _) ->
                 printfn "Execution aborted due to failure: %s" msg
                 status.Save()
             | _ ->
@@ -172,16 +172,16 @@ let loop() =
                     return! work status serverProc
                 with
                 | exc ->
-                    return! work (Failed(exc.Message, status)) None
+                    return! work (Failed(exc.Message, Some exc.StackTrace, status)) None
         }
     let status = ExecutionState.Restore()
     // If the status was failed, plan to retry the operation that failed.
     let status =
         match status with
-        | Failed(msg, ExtractResults) ->
+        | Failed(msg, _, ExtractResults) ->
             printfn "Previously failed to extract results, will restart the server"
             StartServer
-        | Failed(msg, status) ->
+        | Failed(msg, _, status) ->
             printfn "Retry after failure '%s'" msg
             status
         | _ ->
