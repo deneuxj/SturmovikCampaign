@@ -239,14 +239,19 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : L
             | _ -> ()
     }
 
+type VehicleInColumn = {
+    OrderId : OrderId
+    Rank : int
+}
+
 /// Something got bombed or strafed
 type DamagedObject =
     | Production of RegionId * int
     | Storage of RegionId * int
     | Airfield of AirfieldId * int
     | Canon of DefenseAreaId
-    | Convoy of OrderId * int
-    | Column of OrderId * int
+    | Convoy of VehicleInColumn
+    | Column of VehicleInColumn
     | Vehicle of RegionId * GroundAttackVehicle
     | ParkedPlane of AirfieldId * PlaneModel
 
@@ -419,10 +424,10 @@ let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder
                                 order.MatchesVehicleName(name)
                                 |> Option.map (fun rank -> order, rank))
                     match tankDamage with
-                    | Some(order, rank) -> yield { Object = Column(order.OrderId, rank); Data = { Amount = damage.Damage } }
+                    | Some(order, rank) -> yield { Object = Column { OrderId = order.OrderId; Rank = rank }; Data = { Amount = damage.Damage } }
                     | None ->
                         match truckDamage.Value with
-                        | Some(order, rank) -> yield { Object = Convoy(order.OrderId, rank); Data = { Amount = damage.Damage } }
+                        | Some(order, rank) -> yield { Object = Convoy { OrderId = order.OrderId; Rank = rank }; Data = { Amount = damage.Damage } }
                         | None -> ()
                 | None ->
                     ()

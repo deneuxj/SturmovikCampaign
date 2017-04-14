@@ -602,29 +602,46 @@ let applyConquests (state : WorldState) (battles : (RegionId * BattleParticipant
         ]
     { state with Regions = regions }
 
-/// Subtract vehicles from regions of departure. Must be called before applyConquests.
-// FIXME: vehicles that started but did not reach destination are lost. They should only be lost if they were destroyed. Otherwise, they should be returned to the starting region (if it hasn't been conquered meanwhile)
-let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) =
+/// Subtract vehicles that have arrived or have been destroyed from regions of departure. Must be called before applyConquests.
+// Note: An alternative would to subtract vehicles that have departed, but we want to let slow tanks that fail to reach their destination before the mission ends be returned to their starting region.
+let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list) (arrivals : ColumnArrived list) (damagedTanks : VehicleInColumn list) =
     let movements =
         movements
         |> Seq.map (fun movement -> movement.OrderId, movement)
         |> Map.ofSeq
     let departed =
-        departures
+        arrivals // Every arrival is preceded by a departure
         |> List.choose (fun departure -> Map.tryFind departure.OrderId movements |> Option.map (fun movement -> movement, departure))
         |> List.fold (fun regionMap (movement, departure) ->
             let numVehicles : Map<GroundAttackVehicle, int> =
                 Map.tryFind movement.Start regionMap
                 |> Option.defaultVal Map.empty
-            let numVehicles =
-                departure.Vehicles
-                |> Map.fold (fun (numVehicles : Map<GroundAttackVehicle, int>) vehicle num ->
-                    let num =
-                        num + (Map.tryFind vehicle numVehicles |> Option.defaultVal 0)
-                    Map.add vehicle num numVehicles
-                ) numVehicles
+            let qty =
+                Map.tryFind departure.Vehicle numVehicles
+                |> Option.defaultVal 0
+            let numVehicles = Map.add departure.Vehicle (qty + 1) numVehicles
             Map.add movement.Start numVehicles regionMap
         ) Map.empty
+    let departed =
+        damagedTanks // Every tank damage was preceded by a departure
+        |> List.choose (fun damaged -> Map.tryFind damaged.OrderId movements |> Option.map (fun movement -> movement, damaged))
+        |> List.fold (fun regionMap (movement, damaged) ->
+            let numVehicles : Map<GroundAttackVehicle, int> =
+                Map.tryFind movement.Start regionMap
+                |> Option.defaultVal Map.empty
+            let vehicle =
+                try
+                    movement.Composition.[damaged.Rank]
+                with
+                | _ ->
+                    printfn "Could not find damaged vehicle %d in departed column" damaged.Rank
+                    GroundAttackVehicle.LightArmor
+            let qty =
+                Map.tryFind vehicle numVehicles
+                |> Option.defaultVal 0
+            let numVehicles = Map.add vehicle (qty + 1) numVehicles
+            Map.add movement.Start numVehicles regionMap
+        ) departed
     let regions =
         state.Regions
         |> List.map (fun region ->
@@ -655,7 +672,15 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) movements co
     let state4 = applyRepairsAndDamages dt world state3 convoyDepartures (supplies @ extra) damages
     let state5 = applyPlaneTransfers state4 tookOff landed
     let battles = buildBattles state5 movements columnArrivals
-    let state6 = applyVehicleDepartures state5 movements columnDepartures
+    let damagedTanks =
+        damages
+        |> List.choose (fun damage ->
+            if damage.Data.Amount >= 0.25f then
+                match damage.Object with
+                | Column(col) -> Some col
+                | _ -> None
+            else None)
+    let state6 = applyVehicleDepartures state5 movements columnArrivals damagedTanks
     let state7 = applyConquests state6 battles
     let state8 = updateNumCanons world state7
     let h = floor(float32 dt)
