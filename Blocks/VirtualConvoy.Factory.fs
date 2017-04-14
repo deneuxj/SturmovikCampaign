@@ -21,6 +21,7 @@ type TimerInstance = TimerInstance of int
 type AtDestinationInstance =
     | TruckAtDestinationInstance of TruckInConvoyInstance
     | LeadCarAtDestinationInstance of ConvoyInstance
+type DamagedTruckInstance = DamagedTruckInstance of pos: int
 type SimpleWaypointInstance = SimpleWaypointInstance of int
 
 /// <summary>
@@ -67,6 +68,9 @@ type VirtualConvoy =
 
       AtDestinationSet : Map<AtDestinationInstance, EventReporting>
 
+      TruckDamagedSet : Map<DamagedTruckInstance, EventReporting>
+      TruckDamagedOfTruckInConvoy : Set<TruckInConvoyInstance * DamagedTruckInstance>
+
       DepartureReporting : EventReporting
       IconCover : IconDisplay
       IconAttack : IconDisplay
@@ -93,6 +97,8 @@ with
                 for kvp in this.TimerSet do
                     yield kvp.Value.All
                 for kvp in this.AtDestinationSet do
+                    yield kvp.Value.All
+                for kvp in this.TruckDamagedSet do
                     yield kvp.Value.All
                 yield this.Api.All
                 yield this.DepartureReporting.All
@@ -249,6 +255,26 @@ with
 
         let coverIcon, attackIcon = IconDisplay.CreatePair(store, lcStore, iconPos, "", coalition, Mcu.IconIdValue.CoverTransportColumn)
 
+        let damagedTrucks, damagedNotificationOfTruckInConvoy =
+            let mixed =
+                [
+                    let grouped =
+                        truckInConvoy
+                        |> Seq.groupBy (fun (convoy, rank, truck) -> rank)
+                    for rank, trucks in grouped do
+                        let name = sprintf "%s-K-%d" convoyName (rankOffset + rank - 1)
+                        let note = EventReporting.Create(store, country, apiPos + Vector2(-200.0f, -100.0f), name)
+                        yield Choice1Of2(DamagedTruckInstance rank, note)
+                        for _, _, truck in trucks do
+                            yield Choice2Of2(truck, DamagedTruckInstance rank)
+                ]
+            mixed
+            |> List.choose (function Choice1Of2 x -> Some x | _ -> None)
+            |> Map.ofList,
+            mixed
+            |> List.choose (function Choice2Of2 x -> Some x | _ -> None)
+            |> Set.ofList
+
         { ConvoySet = convoySet
           TruckInConvoy = truckInConvoy
           WhileEnemyCloseOfConvoy = whileEnemyCloseOfConvoy
@@ -270,6 +296,8 @@ with
           Api = api
           AtDestinationSet = atDestinationSet
           DepartureReporting = departure
+          TruckDamagedSet = damagedTrucks
+          TruckDamagedOfTruckInConvoy = damagedNotificationOfTruckInConvoy
           IconCover = coverIcon
           IconAttack = attackIcon
         }
@@ -344,6 +372,12 @@ with
                             yield this.TruckInConvoySet.[truck].Damaged, this.TruckInConvoySet.[truck2].Delete :> Mcu.McuBase
                             //  When truck deleted, delete copy at following waypoint.
                             yield this.TruckInConvoySet.[truck].Delete, this.TruckInConvoySet.[truck2].Delete :> Mcu.McuBase
+                // When truck damaged, notify of death
+                for _, _, truck in this.TruckInConvoy do
+                    let note = get this.TruckDamagedOfTruckInConvoy truck
+                    let truck = this.TruckInConvoySet.[truck]
+                    let note = this.TruckDamagedSet.[note]
+                    yield truck.Damaged, upcast note.Trigger
                 for wp, convoy in this.ConvoyAtWaypoint do
                     let wec = get this.WhileEnemyCloseOfConvoy convoy
                     let wec = this.WhileEnemyCloseSet.[wec]

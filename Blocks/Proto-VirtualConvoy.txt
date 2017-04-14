@@ -52,6 +52,11 @@ type AtDestination {
 predicate at_destination_convoy(AtDestination, TruckInConvoy)
 predicate at_destination_convoy(AtDestination, Convoy)
 
+type Notification {
+	trigger Trigger
+}
+Notification death_notification_of_truck(TruckInConvoy)
+
 type Spawned {
 	trigger Spawned
 }
@@ -125,6 +130,9 @@ target += for (curr, next) in path
 target += for (curr, next) in path
           for (position, truck) in truck_in_convoy(convoy_at_waypoint(curr), _, _)
           for truck2 in truck_in_convoy(convoy_at_waypoint(next), position, _) -> (truck.Delete, truck2.Delete)
+// When truck damaged, notify of death
+target += for (_, _, truck) in truck_in_convoy(convoy_at_waypoint(wp))
+		  for notify in death_notification_of_truck(truck)-> (truck.Damaged, notify.Trigger)
 
 // ActiveWaypoint <-> ActiveWaypoint
 //  When active waypoint physically reached, lead to next waypoint.
