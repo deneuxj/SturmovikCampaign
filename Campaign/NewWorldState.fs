@@ -33,6 +33,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
     assert(supplyNeed >= 0.0f<E>)
 
     let vehicleToProduce, vehicleNeed =
+        // vehicle need is dictated by number of regions on the front line
         let numHeavy, numMedium, numLight, need =
             state.Regions
             |> Seq.filter (fun state -> state.Owner = Some coalition) // Regions we control
@@ -100,10 +101,11 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
             |> Seq.minBy snd
             |> fst
         let valueTarget =
-            1.1f * state.TotalPlaneValueOfCoalition(world, coalition.Other)
+            0.8f * state.TotalPlaneValueOfCoalition(world, coalition.Other)
+        // plane need is dictated by enemy plane forces. We don't want to fall too far behind.
         let need =
             valueTarget - state.TotalPlaneValueOfCoalition(world, coalition)
-            |> max 500.0f<E>
+            |> max 200.0f<E>
         mostNeeded, need
 
     { Vehicle = vehicleToProduce
