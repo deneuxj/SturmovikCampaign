@@ -95,7 +95,7 @@ with
                     match mcu with
                     | :? Mcu.McuProximity as prox ->
                         prox.VehicleCoalitions <- [otherCoalition]
-                        prox.Distance <- 2000
+                        prox.Distance <- 3000
                     | _ -> ()
             | _ ->
                 ()
