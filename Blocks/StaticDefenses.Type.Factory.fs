@@ -102,7 +102,7 @@ with
             wec
         // Icon
         let icon =
-            if groupSize >= 3 then
+            if groupSize >= 3 && specialty = DefenseSpecialty.AntiAir then
                 let icon =
                     IconDisplay.Create(store, lcStore, center, "", McuUtil.swapCoalition coalition, Mcu.IconIdValue.AttackAntiAirPosition)
                 match icon.Show with
