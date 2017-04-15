@@ -486,10 +486,13 @@ let createParkedTanks store (world : World) (state : WorldState) (orders : Order
     ]
 
 let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) (group : Mcu.McuBase list) =
+    let subst = Mcu.substId <| store.GetIdMapper()
+    for mcu in group do
+        subst mcu
     let areClose (mcu1 : Mcu.McuBase) (mcu2 : Mcu.McuBase) =
         let v1 = Vector2.FromMcu(mcu1.Pos)
         let v2 = Vector2.FromMcu(mcu2.Pos)
-        (v1 - v2).Length() < 500.0f
+        (v1 - v2).Length() < 750.0f
     let parted =
         Algo.computePartition areClose group
     [
