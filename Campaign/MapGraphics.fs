@@ -337,6 +337,79 @@ with
           LcStrings = lcStrings
         }
 
+    static member CreateArrows(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState, axisOrders : Orders.OrderPackage, alliesOrers : Orders.OrderPackage, coalition : CoalitionId) =
+        let renderArrow(start : Vector2, tip : Vector2, width : float32, headAngle : float32, color) =
+            let dir =
+                let x = (tip - start)
+                x / x.Length()
+            let points =
+                let mkIcon =
+                    mkIcon store lcStore (int Mcu.LineTypeValue.Attack) color
+                    >> fun icon -> icon.Coalitions <- [coalition.ToCoalition]; icon
+                [
+                    yield mkIcon (start + width * dir.Rotate(90.0f))
+                    yield mkIcon start
+                    yield mkIcon tip
+                    yield mkIcon (tip + width * dir.Rotate(90.0f + headAngle))
+                ]
+            for p1, p2 in Seq.pairwise points do
+                p1.Targets <- [p2.Index]
+            points
+        let mkTravelArrow(startRegion : RegionId, endRegion : RegionId, color, numVehicles, iconId) =
+            match world.Roads |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
+            | Some x ->
+                let start, _ = x.Value.Head
+                let tip, _ = List.last x.Value
+                let width =
+                    let x = (float32 numVehicles) / 15.0f |> min 1.0f
+                    2000.0f * x + 500.0f * (1.0f - x)
+                //let icon = mkIcon store lcStore 0 color (0.5f * (start + tip))
+                //icon.IconId <- iconId
+                renderArrow(start, tip, width, 45.0f, color)
+            | None ->
+                []
+        let friendlyOrders, enemyOrders =
+            match coalition with
+            | Axis -> axisOrders, alliesOrers
+            | Allies -> alliesOrers, axisOrders
+        let arrowIcons =
+            [
+                for order in friendlyOrders.Resupply do
+                    let iconId =
+                        match order.Means with
+                        | Orders.ByRoad ->
+                            Mcu.IconIdValue.CoverTransportColumn
+                        | Orders.ByRail ->
+                            Mcu.IconIdValue.CoverTrains
+                    yield! mkTravelArrow(order.Convoy.Start, order.Convoy.Destination, (0, 0, 10), int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity), iconId)
+                for order in enemyOrders.Resupply do
+                    let iconId =
+                        match order.Means with
+                        | Orders.ByRoad ->
+                            Mcu.IconIdValue.AttackTransportColumn
+                        | Orders.ByRail ->
+                            Mcu.IconIdValue.AttackTrains
+                    yield! mkTravelArrow(order.Convoy.Start, order.Convoy.Destination, (10, 0, 0), int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity), iconId)
+                for order in friendlyOrders.Columns do
+                    let iconId = Mcu.IconIdValue.CoverArmorColumn
+                    yield! mkTravelArrow(order.Start, order.Destination, (0, 0, 10), order.Composition |> Array.length, iconId)
+                for order in enemyOrders.Columns do
+                    let iconId = Mcu.IconIdValue.AttackArmorColumn
+                    yield! mkTravelArrow(order.Start, order.Destination, (10, 0, 0), order.Composition |> Array.length, iconId)
+            ]
+        let lcStrings =
+            [
+                for icon in arrowIcons do
+                    match icon.IconLC with
+                    | Some data ->
+                        yield (data.LCDesc, "")
+                        yield (data.LCName, "")
+                    | None ->
+                        ()
+            ]
+        { All = arrowIcons |> List.map (fun x -> upcast x)
+          LcStrings = lcStrings }
+
 /// Create icons for filled storage areas that appear when the storage area has been spotted by a plane.
 let createStorageIcons store lcStore missionBegin (world : World) (state : WorldState) =
     [

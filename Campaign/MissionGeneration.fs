@@ -581,6 +581,10 @@ let writeMissionFile random weather author missionName briefing missionLength co
             |> List.map (fun (x, t) -> x :> McuUtil.IMcuGroup, t)
         List.map fst columns, List.map snd columns
     let columns, columnTimers = mkColumns (axisOrders.Columns @ alliesOrders.Columns)
+    let arrows =
+        [Axis; Allies]
+        |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, world, state, axisOrders, alliesOrders, coalition))
+        |> List.map (fun icons -> icons :> McuUtil.IMcuGroup)
     let parkedPlanes =
         createParkedPlanes store world state
         |> McuUtil.groupFromList
@@ -624,5 +628,5 @@ let writeMissionFile random weather author missionName briefing missionLength co
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting @ landFires
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting @ landFires @ arrows
     writeMissionFiles "eng" filename options allGroups
