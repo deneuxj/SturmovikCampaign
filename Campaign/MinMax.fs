@@ -11,6 +11,11 @@ type Move =
       Force : float32<E>
     }
 
+type CombinedMove =
+    { Axis : Move list
+      Allies : Move list
+    }
+
 let private depart (arr : float32<E>[]) start force =
     arr.[start] <- arr.[start] - force
 
@@ -22,9 +27,11 @@ type BoardState =
       Owners : CoalitionId option []
       AxisForces : float32<E> []
       AlliesForces : float32<E> []
+      mutable Value : float32
+      ValueOf : int -> float32
     }
 with
-    static member Create(state : WorldState) =
+    static member Create(world : World, state : WorldState) =
         let owners =
             state.Regions
             |> List.map (fun region -> region.Owner)
@@ -52,20 +59,79 @@ with
             |> List.map (fun r -> r.RegionId)
             |> List.map (function (RegionId name) -> name)
             |> Array.ofList
+        let indexOfRegion =
+            let m =
+                world.Regions
+                |> Seq.mapi (fun i region -> region.RegionId, i)
+                |> dict
+            fun i -> m.[i]
+        let getSuccessors =
+            let m =
+                world.Regions
+                |> List.map (fun region ->
+                    region.Neighbours
+                    |> List.map indexOfRegion
+                    |> Array.ofList)
+                |> List.indexed
+                |> dict
+            fun i -> m.[i]
+        let valueOfRegion =
+            let roots =
+                [
+                    for region, regState in List.zip world.Regions state.Regions do
+                        let value = regState.ProductionCapacity(region) * 48.0f<H>
+                        yield indexOfRegion region.RegionId, value
+                    for af, afState in List.zip world.Airfields state.Airfields do
+                        yield indexOfRegion af.Region, afState.TotalPlaneValue + 1000.0f<E>
+                ]
+                |> List.groupBy fst
+                |> List.map (fun (i, values) -> i, values |> List.sumBy snd)
+//            for k, v in roots do
+//                printfn "R%2d %5.2f" k v
+            let update i j oldValue (newValue : float32<E>) =
+                let n = world.Regions.[i].Neighbours.Length
+                let newValue = newValue / (float32 n)
+                match oldValue with
+                | None ->
+                    Some newValue
+                | Some oldValue ->
+                    if oldValue < newValue then
+                        Some newValue
+                    else
+                        None
+            let values =
+                Algo.propagate (getSuccessors >> List.ofArray) update roots
+            for kvp in values do
+                printfn "%2d %5.2f" kvp.Key kvp.Value
+            fun i -> values.[i] |> float32
+        let initialValue =
+            owners
+            |> Seq.indexed
+            |> Seq.sumBy (fun (i, owner) ->
+                match owner with
+                | None -> 0.0f
+                | Some Axis -> -valueOfRegion i
+                | Some Allies -> valueOfRegion i)
         { Names = names
           Owners = owners
           AxisForces = axisForces
           AlliesForces = alliesForces
-        }
+          Value = float32 initialValue
+          ValueOf = valueOfRegion
+        }, getSuccessors
 
     member this.Clone() =
         { Names = this.Names
           Owners = this.Owners |> Array.copy
           AxisForces = this.AxisForces |> Array.copy
           AlliesForces = this.AlliesForces |> Array.copy
+          Value = this.Value
+          ValueOf = this.ValueOf
         }
 
-    member this.DoMove(axis : Move list, allies : Move list) =
+    member this.DoMove(combined : CombinedMove) =
+        let axis = combined.Axis
+        let allies = combined.Allies
         let restore = ref []
         for order in axis do
             let force = order.Force
@@ -79,10 +145,12 @@ with
             axis @ allies
             |> List.map (fun order -> order.Destination)
             |> List.distinct
+        let oldValue = this.Value
         for i in destinations do
             let axisForce = this.AxisForces.[i]
             let alliesForce = this.AlliesForces.[i]
             let oldOwner = this.Owners.[i]
+            let regionValue = this.ValueOf i
             if axisForce > alliesForce then
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- axisForce - alliesForce
@@ -97,9 +165,21 @@ with
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- 0.0f<E>
                 this.AlliesForces.[i] <- 0.0f<E>
-        !restore
+            this.Value <-
+                match oldOwner, this.Owners.[i] with
+                | None, Some Axis -> this.Value - regionValue
+                | None, Some Allies -> this.Value + regionValue
+                | Some Allies, Some Axis -> this.Value - 2.0f * regionValue
+                | Some Axis, Some Allies -> this.Value + 2.0f * regionValue
+                | None, None
+                | Some Axis, Some Axis
+                | Some Allies, Some Allies -> this.Value
+                | Some _, None -> failwith "Region cannot be captured by neutral coalition"
+        !restore, oldValue
 
-    member this.UndoMove(axis : Move list, allies : Move list, restore : _ list) =
+    member this.UndoMove(combined : CombinedMove, restore : _ list, oldValue : float32) =
+        let axis = combined.Axis
+        let allies = combined.Allies
         for r in List.rev restore do
             let i, axis, allies, owner = r
             this.AxisForces.[i] <- axis
@@ -113,6 +193,7 @@ with
             let force = order.Force
             arrive this.AxisForces order.Start force
             depart this.AxisForces order.Destination force
+        this.Value <- oldValue
 
     member this.DisplayString =
         seq {
@@ -150,76 +231,8 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) coalition =
                     ]
     |]
 
-let evalState (valueOfRegion : int -> float32<E>) (state : BoardState) =
-    let territory =
-        state.Owners
-        |> Seq.indexed
-        |> Seq.sumBy (fun (i, owner) ->
-            match owner with
-            | None -> 0.0f<E>
-            | Some Axis -> -valueOfRegion i
-            | Some Allies -> valueOfRegion i)
-    let alliesArmies =
-        state.AlliesForces
-        |> Array.sum
-    let axisArmies =
-        state.AxisForces
-        |> Array.sum
-    float32 territory +
-        (if alliesArmies > 0.0f<E> || axisArmies > 0.0f<E> then
-            10000.0f * max -1.0f (min 1.0f (log(alliesArmies / axisArmies)))
-        else
-            0.0f)
 
-let prepareEval (world : World) (state : WorldState) =
-    let indexOfRegion =
-        let m =
-            world.Regions
-            |> Seq.mapi (fun i region -> region.RegionId, i)
-            |> dict
-        fun i -> m.[i]
-    let getSuccessors =
-        let m =
-            world.Regions
-            |> List.map (fun region ->
-                region.Neighbours
-                |> List.map indexOfRegion
-                |> Array.ofList)
-            |> List.indexed
-            |> dict
-        fun i -> m.[i]
-    let valueOfRegion =
-        let roots =
-            [
-                for region, regState in List.zip world.Regions state.Regions do
-                    let value = regState.ProductionCapacity(region) * 48.0f<H>
-                    yield indexOfRegion region.RegionId, value
-                for af, afState in List.zip world.Airfields state.Airfields do
-                    yield indexOfRegion af.Region, afState.TotalPlaneValue + 1000.0f<E>
-            ]
-            |> List.groupBy fst
-            |> List.map (fun (i, values) -> i, values |> List.sumBy snd)
-        for k, v in roots do
-            printfn "R%2d %5.2f" k v
-        let update i j oldValue (newValue : float32<E>) =
-            let n = world.Regions.[i].Neighbours.Length
-            let newValue = newValue / (float32 n)
-            match oldValue with
-            | None ->
-                Some newValue
-            | Some oldValue ->
-                if oldValue < newValue then
-                    Some newValue
-                else
-                    None
-        let values =
-            Algo.propagate (getSuccessors >> List.ofArray) update roots
-        for kvp in values do
-            printfn "%2d %5.2f" kvp.Key kvp.Value
-        fun i -> values.[i]
-    (getSuccessors, valueOfRegion), BoardState.Create state
-
-let minMax (cancel : CancellationToken) maxDepth (neighboursOf, valueOfRegion) (board : BoardState) =
+let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardState) =
     let rec bestMoveAtDepth depth =
         let axisMoves =
             allMoves neighboursOf board Axis
@@ -227,21 +240,22 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf, valueOfRegion) (
         let alliesMoves =
             allMoves neighboursOf board Allies
             |> Seq.append [[]]
-        let bestMove =
+        let (axis, allies), value =
             axisMoves
             |> Seq.fold (fun soFar axisMove ->
                 let alliesResponse, value =
                     alliesMoves
                     |> Seq.fold (fun soFar alliesMove ->
                         //let saved = board.Clone()
-                        let restore = board.DoMove(axisMove, alliesMove)
+                        let combined = { Axis = axisMove; Allies = alliesMove }
+                        let restore, oldValue = board.DoMove(combined)
                         let value =
                             if depth >= maxDepth || cancel.IsCancellationRequested then
-                                evalState valueOfRegion board
+                                board.Value
                             else
                                 let _, value = bestMoveAtDepth (depth + 1)
                                 value
-                        board.UndoMove(axisMove, alliesMove, restore)
+                        board.UndoMove(combined, restore, oldValue)
                         //assert(saved = board)
                         let _, refValue = soFar
                         if value >= refValue then
@@ -255,16 +269,17 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf, valueOfRegion) (
                 else
                     soFar
             ) (([], []), System.Single.PositiveInfinity)
-        bestMove
+        { Axis = axis; Allies = allies }, value
     bestMoveAtDepth 0
+
 
 let rec play minMax (board : BoardState) =
     seq {
         let move, (value : float32) = minMax board
         board.DoMove(move) |> ignore
         yield sprintf "Balance: %5.2f" value
-        yield sprintf "GER moves: %A" (fst move)
-        yield sprintf "RUS moves: %A" (snd move)
+        yield sprintf "GER moves: %A" (move.Axis)
+        yield sprintf "RUS moves: %A" (move.Allies)
         yield board.DisplayString
         yield! play minMax board
     }

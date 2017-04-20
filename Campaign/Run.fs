@@ -122,10 +122,10 @@ module PlayChess =
             with
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
         seq {
-            let funcs, board = prepareEval world state
+            let board, neighboursOf = BoardState.Create(world, state)
             yield "Initially"
             yield board.DisplayString
-            let minMax cancel n = minMax cancel n funcs
+            let minMax cancel n = minMax cancel n neighboursOf
             let rec timeBound cancel prev n board =
                 printfn "Max depth: %d" n
                 let res = minMax cancel n board
@@ -136,7 +136,7 @@ module PlayChess =
             let minMax board =
                 use cancellation = new CancellationTokenSource()
                 cancellation.CancelAfter(15000)
-                timeBound cancellation.Token (([], []), 0.0f) 1 board
+                timeBound cancellation.Token ({ Axis = []; Allies = [] }, 0.0f) 1 board
             yield! play minMax board
         }
 
