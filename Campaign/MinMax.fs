@@ -28,7 +28,10 @@ type BoardState =
       AxisForces : float32<E> []
       AlliesForces : float32<E> []
       mutable Value : float32
+      mutable NumAxisFactories : int
+      mutable NumAlliesFactories : int
       ValueOf : int -> float32
+      HasFactory : int -> bool
     }
 with
     static member Create(world : World, state : WorldState) =
@@ -104,6 +107,12 @@ with
             for kvp in values do
                 printfn "%2d %5.2f" kvp.Key kvp.Value
             fun i -> values.[i] |> float32
+        let hasFactory =
+            let m =
+                world.Regions
+                |> List.map (fun region -> not region.Production.IsEmpty)
+                |> Array.ofList
+            fun i -> m.[i]
         let initialValue =
             owners
             |> Seq.indexed
@@ -112,12 +121,23 @@ with
                 | None -> 0.0f
                 | Some Axis -> -valueOfRegion i
                 | Some Allies -> valueOfRegion i)
+        let numAxisFactories =
+            axisForces
+            |> Array.mapi (fun i qty -> if qty >= 0.0f<E> && hasFactory i then 1 else 0)
+            |> Array.sum
+        let numAlliesFactories =
+            alliesForces
+            |> Array.mapi (fun i qty -> if qty >= 0.0f<E> && hasFactory i then 1 else 0)
+            |> Array.sum
         { Names = names
           Owners = owners
           AxisForces = axisForces
           AlliesForces = alliesForces
           Value = float32 initialValue
+          NumAxisFactories = numAxisFactories
+          NumAlliesFactories = numAlliesFactories
           ValueOf = valueOfRegion
+          HasFactory = hasFactory
         }, getSuccessors
 
     member this.Clone() =
@@ -126,7 +146,10 @@ with
           AxisForces = this.AxisForces |> Array.copy
           AlliesForces = this.AlliesForces |> Array.copy
           Value = this.Value
+          NumAxisFactories = this.NumAxisFactories
+          NumAlliesFactories = this.NumAlliesFactories
           ValueOf = this.ValueOf
+          HasFactory = this.HasFactory
         }
 
     member this.DoMove(combined : CombinedMove) =
@@ -145,7 +168,7 @@ with
             axis @ allies
             |> List.map (fun order -> order.Destination)
             |> List.distinct
-        let oldValue = this.Value
+        let oldValue = this.Value, this.NumAxisFactories, this.NumAlliesFactories
         for i in destinations do
             let axisForce = this.AxisForces.[i]
             let alliesForce = this.AlliesForces.[i]
@@ -156,11 +179,21 @@ with
                 this.AxisForces.[i] <- axisForce - alliesForce
                 this.AlliesForces.[i] <- 0.0f<E>
                 this.Owners.[i] <- Some Axis
+                if this.HasFactory i then
+                    if oldOwner = Some Allies then
+                        this.NumAlliesFactories <- this.NumAlliesFactories - 1
+                    if oldOwner <> Some Axis then
+                        this.NumAxisFactories <- this.NumAxisFactories + 1
             elif axisForce < alliesForce then
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- 0.0f<E>
                 this.AlliesForces.[i] <- alliesForce - axisForce
                 this.Owners.[i] <- Some Allies
+                if this.HasFactory i then
+                    if oldOwner <> Some Allies then
+                        this.NumAlliesFactories <- this.NumAlliesFactories + 1
+                    if oldOwner = Some Axis then
+                        this.NumAxisFactories <- this.NumAxisFactories - 1
             elif axisForce > 0.0f<E> || alliesForce > 0.0f<E> then // Equal forces, it's a draw
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- 0.0f<E>
@@ -177,7 +210,7 @@ with
                 | Some _, None -> failwith "Region cannot be captured by neutral coalition"
         !restore, oldValue
 
-    member this.UndoMove(combined : CombinedMove, restore : _ list, oldValue : float32) =
+    member this.UndoMove(combined : CombinedMove, restore : _ list, oldValue : float32 * int * int) =
         let axis = combined.Axis
         let allies = combined.Allies
         for r in List.rev restore do
@@ -193,7 +226,17 @@ with
             let force = order.Force
             arrive this.AxisForces order.Start force
             depart this.AxisForces order.Destination force
+        let oldValue, oldNumAxisFactories, oldNumAlliesFactories = oldValue
         this.Value <- oldValue
+        this.NumAxisFactories <- oldNumAxisFactories
+        this.NumAlliesFactories <- oldNumAlliesFactories
+
+    member this.ComplexValue =
+        match this.NumAxisFactories, this.NumAlliesFactories with
+        | 0, 0 -> this.Value
+        | 0, _ -> System.Single.PositiveInfinity
+        | _, 0 -> System.Single.NegativeInfinity
+        | axis, allies -> this.Value + float32 (allies - axis) * 100000.0f
 
     member this.DisplayString =
         seq {
@@ -257,7 +300,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                 let restore, oldValue = board.DoMove(combined)
                                 let value =
                                     if depth >= maxDepth then
-                                        board.Value
+                                        board.ComplexValue
                                     else
                                         let _, value = bestMoveAtDepth (depth + 1)
                                         value
