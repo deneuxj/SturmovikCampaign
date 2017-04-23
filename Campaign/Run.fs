@@ -125,17 +125,21 @@ module PlayChess =
             let board, neighboursOf = BoardState.Create(world, state)
             yield "Initially"
             yield board.DisplayString
+            yield sprintf "%f" board.Value
             let minMax cancel n = minMax cancel n neighboursOf
             let rec timeBound cancel prev n board =
-                printfn "Max depth: %d" n
-                let res = minMax cancel n board
-                if cancel.IsCancellationRequested then
+                if n >= 100 then
                     prev
                 else
-                    timeBound cancel res (n + 1) board
+                    printfn "Max depth: %d" n
+                    let res = minMax cancel n board
+                    if cancel.IsCancellationRequested then
+                        prev
+                    else
+                        timeBound cancel res (n + 1) board
             let minMax board =
                 use cancellation = new CancellationTokenSource()
-                cancellation.CancelAfter(15000)
+                cancellation.CancelAfter(30000)
                 timeBound cancellation.Token ({ Axis = []; Allies = [] }, 0.0f) 1 board
             yield! play minMax board
         }

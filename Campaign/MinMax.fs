@@ -239,38 +239,46 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
             |> Seq.append [[]]
         let alliesMoves =
             allMoves neighboursOf board Allies
-            |> Seq.append [[]]
+//            |> Seq.append [[]]
         let (axis, allies), value =
             axisMoves
             |> Seq.fold (fun soFar axisMove ->
-                let alliesResponse, value =
-                    alliesMoves
-                    |> Seq.fold (fun soFar alliesMove ->
-                        //let saved = board.Clone()
-                        let combined = { Axis = axisMove; Allies = alliesMove }
-                        let restore, oldValue = board.DoMove(combined)
-                        let value =
-                            if depth >= maxDepth || cancel.IsCancellationRequested then
-                                board.Value
-                            else
-                                let _, value = bestMoveAtDepth (depth + 1)
-                                value
-                        board.UndoMove(combined, restore, oldValue)
-                        //assert(saved = board)
-                        let _, refValue = soFar
-                        if value >= refValue then
-                            (alliesMove, value)
-                        else
-                            soFar
-                    ) ([], System.Single.NegativeInfinity)
-                let _, refValue = soFar
-                if value <= refValue then
-                    ((axisMove, alliesResponse), value)
-                else
+                if cancel.IsCancellationRequested then
                     soFar
+                else
+                    let alliesResponse, value =
+                        alliesMoves
+                        |> Seq.fold (fun soFar alliesMove ->
+                            if cancel.IsCancellationRequested then
+                                soFar
+                            else
+                                //let saved = board.Clone()
+                                let combined = { Axis = axisMove; Allies = alliesMove }
+                                let restore, oldValue = board.DoMove(combined)
+                                let value =
+                                    if depth >= maxDepth then
+                                        board.Value
+                                    else
+                                        let _, value = bestMoveAtDepth (depth + 1)
+                                        value
+                                board.UndoMove(combined, restore, oldValue)
+                                //assert(saved = board)
+                                let _, refValue = soFar
+                                if value >= refValue then
+                                    (alliesMove, value)
+                                else
+                                    soFar
+                        ) ([], System.Single.NegativeInfinity)
+                    let _, refValue = soFar
+                    if value <= refValue then
+                        ((axisMove, alliesResponse), value)
+                    else
+                        soFar
             ) (([], []), System.Single.PositiveInfinity)
         { Axis = axis; Allies = allies }, value
-    bestMoveAtDepth 0
+    let x = bestMoveAtDepth 0
+    printfn "DBG: %A" x
+    x
 
 
 let rec play minMax (board : BoardState) =
