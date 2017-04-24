@@ -229,7 +229,7 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
                     |> Map.filter (fun _ number -> number >= 1.0f)
                     |> Map.map (fun plane number ->
                         let model = plane.ScriptModel
-                        newAirfieldPlane("", "", 0, 0, "", "NOICON", int number)
+                        newAirfieldPlane("", "", 0, 0, "", "", int number)
                             .SetScript(T.String model.Script)
                             .SetModel(T.String model.Model)
                     )
