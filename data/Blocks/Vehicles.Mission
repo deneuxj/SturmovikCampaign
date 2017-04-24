@@ -1062,13 +1062,13 @@ Plane
   Index = 32;
   LinkTrId = 0;
   XPos = 29086.476;
-  YPos = 110.884;
+  YPos = 111.034;
   ZPos = 20170.190;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 11.40;
-  Script = "LuaScripts\WorldObjects\Planes\ju88a4.txt";
-  Model = "graphics\planes\ju88a4\ju88a4.mgm";
+  ZOri = 9.00;
+  Script = "LuaScripts\WorldObjects\Planes\he111h6.txt";
+  Model = "graphics\planes\he111h6\he111h6.mgm";
   Country = 0;
   Desc = "";
   Skin = "";
@@ -1759,7 +1759,7 @@ Block
 Block
 {
   Name = "StaticHeavyTankGER";
-  Index = 60;
+  Index = 57;
   LinkTrId = 0;
   XPos = 29122.335;
   YPos = 108.584;
@@ -1782,7 +1782,7 @@ Block
 Block
 {
   Name = "StaticMediumTankGER";
-  Index = 62;
+  Index = 58;
   LinkTrId = 0;
   XPos = 29122.287;
   YPos = 108.584;
@@ -1805,7 +1805,7 @@ Block
 Block
 {
   Name = "StaticLightArmorGER";
-  Index = 64;
+  Index = 59;
   LinkTrId = 0;
   XPos = 29122.239;
   YPos = 108.584;
@@ -1816,6 +1816,52 @@ Block
   Model = "graphics\blocks\static_sdkfz251-1c.mgm";
   Script = "LuaScripts\WorldObjects\Blocks\static_sdkfz251-1c.txt";
   Country = 201;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staJu87GER";
+  Index = 60;
+  LinkTrId = 0;
+  XPos = 29085.504;
+  YPos = 108.584;
+  ZPos = 20432.008;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_ju87.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_ju87.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staHe111h6GER";
+  Index = 61;
+  LinkTrId = 0;
+  XPos = 29085.889;
+  YPos = 108.584;
+  ZPos = 20455.658;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_he111.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_he111.txt";
+  Country = 0;
   Desc = "";
   Durability = 25000;
   DamageReport = 50;

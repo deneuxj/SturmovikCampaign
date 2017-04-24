@@ -412,6 +412,8 @@ type PlaneModel =
     | Mig3
     | P40
     | Pe2s35
+    | Ju87
+    | He111h6
 with
     member this.ScriptModel =
         match this with
@@ -426,7 +428,9 @@ with
         | Mig3 -> Vehicles.russianFighter2
         | P40 -> Vehicles.russianFighter3
         | Pe2s35 -> Vehicles.russianBomber1
-    
+        | Ju87 -> Vehicles.germanAttacker2
+        | He111h6 -> Vehicles.germanBomber2
+
     member this.StaticScriptModel =
         match this with
         | Bf109e7 -> Vehicles.germanStaFighter1
@@ -440,13 +444,17 @@ with
         | Mig3 -> Vehicles.russianStaFighter2
         | P40 -> Vehicles.russianStaFighter3
         | Pe2s35 -> Vehicles.russianStaBomber
+        | Ju87 -> Vehicles.germanStaJu87
+        | He111h6 -> Vehicles.germanStaHe111h6
 
     member this.Cost =
         match this with
         | Bf109e7 -> basePlaneCost
         | Bf109f2 -> (5.0f / 3.0f) * basePlaneCost
         | Mc202 -> 1.33f * basePlaneCost
+        | Ju87 -> 2.0f * basePlaneCost
         | Bf110e -> (7.5f / 3.0f) * basePlaneCost
+        | He111h6
         | Ju88a4 -> (10.0f / 3.0f) * basePlaneCost
         | Ju52 -> (8.0f / 3.0f) * basePlaneCost
         | I16 -> basePlaneCost
@@ -461,6 +469,8 @@ with
         | Bf109f2
         | Mc202 -> 500.0f<K>
         | Bf110e -> 1250.0f<K>
+        | He111h6 -> 3600.0f<K>
+        | Ju87 -> 1800.0f<K>
         | Ju88a4 -> 2800.0f<K>
         | Ju52 -> 0.0f<K>
         | I16 -> 200.0f<K>
@@ -475,6 +485,8 @@ with
         | Bf109f2
         | Mc202
         | Bf110e
+        | Ju87
+        | He111h6
         | Ju88a4
         | Ju52 -> Axis
         | I16
@@ -492,8 +504,10 @@ with
         | P40
         | Mig3 -> Fighter
         | Bf110e
+        | Ju87
         | IL2M41 -> Attacker
         | Ju88a4
+        | He111h6
         | Pe2s35 -> Bomber
         | Ju52 -> Transport
 
@@ -503,8 +517,10 @@ with
         | Bf109f2 -> "bf109f2"
         | Mc202 -> "mc202"
         | Bf110e -> "bf110e"
+        | Ju87 -> "ju87"
         | Ju88a4 -> "ju88"
         | Ju52 -> "ju52"
+        | He111h6 -> "he111h6"
         | I16 -> "i16"
         | IL2M41 -> "il2mod41"
         | Mig3 -> "mig3"
@@ -517,7 +533,9 @@ with
           Mc202
           Bf110e
           Ju88a4
+          Ju87
           Ju52
+          He111h6
           I16
           IL2M41
           Mig3

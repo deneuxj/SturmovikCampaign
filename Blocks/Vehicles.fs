@@ -364,6 +364,18 @@ let germanStaTransport =
       Model = block.GetModel().Value
     }
 
+let germanStaJu87 =
+    let block = statics.[T.Vehicles.staJu87GER]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let germanStaHe111h6 =
+    let block = statics.[T.Vehicles.staHe111h6GER]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
 let antiTankPosition =
     let block = statics.[T.Vehicles.AntiTankPosition]
     { Script = block.GetScript().Value

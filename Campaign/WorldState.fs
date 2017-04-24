@@ -390,15 +390,28 @@ let mkInitialState(world : World, strategyFile : string) =
             getOwner airfield.Region
         let numPlanes =
             let numFighters = 5 * List.length airfield.ParkedFighters |> float32
-            let numF1, numF2 = 2.0f * numFighters / 5.0f, numFighters / 5.0f
             let numAttackers = 5 * List.length airfield.ParkedAttackers |> float32
             let numBombers = 5 * List.length airfield.ParkedBombers |> float32
-            let numJu52 = if numBombers >= 25.0f then 10.0f else 0.0f
+            let getNumPlanes =
+                function
+                | PlaneType.Attacker -> numAttackers
+                | PlaneType.Bomber -> numBombers
+                | PlaneType.Fighter -> numFighters
+                | PlaneType.Transport -> 0.0f
             if hasFactories then
+                let random = new System.Random()
                 match owner with
                 | None -> Map.empty
-                | Some Allies -> [ (I16, numF1); (IL2M41, numAttackers); (Mig3, numF1); (P40, numF2); (Pe2s35, numBombers) ] |> Map.ofList
-                | Some Axis -> [ (Bf109e7, numF1); (Bf110e, numAttackers); (Bf109f2, numF1); (Mc202, numF2); (Ju88a4, numBombers - numJu52); (Ju52, numJu52) ] |> Map.ofList
+                | Some coalition ->
+                    PlaneModel.AllModels
+                    |> Seq.filter (fun plane -> plane.Coalition = coalition)
+                    |> Seq.map (fun plane -> plane.PlaneType, Array.init (int <| getNumPlanes plane.PlaneType) (fun _ -> plane))
+                    |> Seq.groupBy fst
+                    |> Seq.map (fun (planeType, planes) -> planeType, planes |> Seq.map snd |> Array.concat |> Array.shuffle random |> Array.take (int <| getNumPlanes planeType))
+                    |> Seq.map snd
+                    |> Array.concat
+                    |> Util.compactSeq
+                    |> Map.map (fun k v -> float32 v)
             else
                 Map.empty
         let supplies =

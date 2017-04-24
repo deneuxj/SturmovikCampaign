@@ -411,8 +411,8 @@ let createParkedPlanes store (world : World) (state : WorldState) =
                     let parking =
                         match model with
                         | Bf109e7 | Bf109f2 | Mc202 | I16 | Mig3 | P40 -> fighterPlaces
-                        | Bf110e | IL2M41 -> attackerPlaces
-                        | Ju88a4 | Ju52 | Pe2s35 -> bomberPlaces
+                        | Bf110e | IL2M41 | Ju87 -> attackerPlaces
+                        | Ju88a4 | Ju52 | Pe2s35 | He111h6 -> bomberPlaces
                     let positions =
                         List.truncate (int qty) parking.Value
                     parking :=
