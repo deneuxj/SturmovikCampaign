@@ -22,6 +22,7 @@ let config =
         ServerBinDir = @"E:\dserver\bin"
         ServerSdsFile = @"sds\devserver.sds"
         ScriptPath = @"C:\Users\johann\Documents\SturmovikMission-git\Campaign\bin\Debug"
+        ThinkTime = 30
         Briefing = @"
 Let the battle begin!
 
