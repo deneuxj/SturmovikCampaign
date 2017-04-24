@@ -20,6 +20,7 @@ type Configuration = {
     ServerSdsFile : string
     ScriptPath : string
     Briefing : string
+    ThinkTime : int
 }
 
 let backupFile (date : System.DateTime) outputDir name =
@@ -139,7 +140,7 @@ module PlayChess =
                         timeBound cancel res (n + 1) board
             let minMax board =
                 use cancellation = new CancellationTokenSource()
-                cancellation.CancelAfter(30000)
+                cancellation.CancelAfter(config.ThinkTime * 1000)
                 timeBound cancellation.Token ({ Axis = []; Allies = [] }, Ongoing 0.0f) 1 board
             yield! play minMax board
         }
