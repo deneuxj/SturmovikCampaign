@@ -282,9 +282,9 @@ type EventReporting = {
 with
     /// <summary>
     /// Create a group that reports a given event, e.g. arrival of a convoy at destination.
-    /// This event can later be retrieved from the mission log. The mechanism that is used is destruction of a fake block, which can be identified by its name and/or position
+    /// This event can later be retrieved from the mission log. The mechanism that is used is destruction of a fake block, which can be identified by its name
     /// </summary>
-    /// <param name="pos">Position of the node.</param>
+    /// <param name="pos">Position of the logic nodes.</param>
     static member Create(store : NumericalIdentifiers.IdStore, country, pos : Vector2, eventName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
@@ -303,6 +303,9 @@ with
         let dv = pos - refPoint
         for mcu in group do
             (Vector2.FromMcu(mcu.Pos) + dv).AssignTo(mcu.Pos)
+        // Move notification plates where they won't be noticed by players
+        Vector2.Zero.AssignTo notifier.Pos
+        Vector2.Zero.AssignTo entity.Pos
         // Result
         entity.Name <- eventName
         notifier.Name <- eventName
