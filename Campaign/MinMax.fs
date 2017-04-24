@@ -31,15 +31,16 @@ type ScoreComponents =
     }
 with
     member this.Value =
+        let logBound = 3.0f
         let forcesRatio =
             if this.TotalAxisForces = 0.0f<E> then
-                1.0f
+                logBound
             else if this.TotalAlliesForces = 0.0f<E> then
-                -1.0f
+                -logBound
             else
                 log(this.TotalAlliesForces / this.TotalAxisForces)
-                |> min 1.0f
-                |> max -1.0f
+                |> min logBound
+                |> max -logBound
         let ret =
             float32 this.Territory + 500000.0f * forcesRatio
         assert(not(System.Single.IsNaN ret))
