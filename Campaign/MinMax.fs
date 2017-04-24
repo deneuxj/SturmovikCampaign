@@ -123,11 +123,11 @@ with
                 | Some Allies -> valueOfRegion i)
         let numAxisFactories =
             axisForces
-            |> Array.mapi (fun i qty -> if qty >= 0.0f<E> && hasFactory i then 1 else 0)
+            |> Array.mapi (fun i qty -> if qty > 0.0f<E> && hasFactory i then 1 else 0)
             |> Array.sum
         let numAlliesFactories =
             alliesForces
-            |> Array.mapi (fun i qty -> if qty >= 0.0f<E> && hasFactory i then 1 else 0)
+            |> Array.mapi (fun i qty -> if qty > 0.0f<E> && hasFactory i then 1 else 0)
             |> Array.sum
         { Names = names
           Owners = owners
@@ -232,11 +232,7 @@ with
         this.NumAlliesFactories <- oldNumAlliesFactories
 
     member this.ComplexValue =
-        match this.NumAxisFactories, this.NumAlliesFactories with
-        | 0, 0 -> this.Value
-        | 0, _ -> System.Single.PositiveInfinity
-        | _, 0 -> System.Single.NegativeInfinity
-        | axis, allies -> this.Value + float32 (allies - axis) * 100000.0f
+        this.Value + float32 (this.NumAlliesFactories - this.NumAxisFactories) * 100000.0f
 
     member this.DisplayString =
         seq {
@@ -274,6 +270,33 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) coalition =
                     ]
     |]
 
+type BoardEvaluation =
+    | Defeat of CoalitionId * int
+    | Ongoing of float32
+with
+    static member Lt(a : BoardEvaluation, b : BoardEvaluation) =
+        match a, b with
+        | Ongoing u, Ongoing v -> u < v
+        | Ongoing _, Defeat(Allies, _)
+        | Defeat(Axis, _), Ongoing _ -> false
+        | Ongoing _, Defeat(Axis, _)
+        | Defeat(Allies, _), Ongoing _ -> true
+        | Defeat(Axis, _), Defeat(Allies, _) -> false
+        | Defeat(Allies, _), Defeat(Axis, _) -> false
+        | Defeat(Axis, d1), Defeat(Axis, d2) -> d1 > d2
+        | Defeat(Allies, d1), Defeat(Allies, d2) -> d1 < d2
+
+    static member Min a b =
+        if BoardEvaluation.Lt(snd a, snd b) then
+            a
+        else
+            b
+
+    static member Max a b =
+        if BoardEvaluation.Lt(snd a, snd b) then
+            b
+        else
+            a
 
 let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardState) =
     let rec bestMoveAtDepth depth =
@@ -286,13 +309,29 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
         let (axis, allies), value =
             axisMoves
             |> Seq.fold (fun soFar axisMove ->
-                if cancel.IsCancellationRequested then
+                if board.NumAlliesFactories = 0 then
+                    ((axisMove, []), Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
+                else if board.NumAxisFactories = 0 then
+                    ((axisMove, []), Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
+                else if cancel.IsCancellationRequested then
                     soFar
                 else
                     let alliesResponse, value =
                         alliesMoves
+                        // Do not allow enemy columns to cross eachother on the road,
+                        |> Seq.filter (fun move ->
+                            move
+                            |> List.exists (fun allyMove ->
+                                axisMove
+                                |> List.exists (fun axisMove ->
+                                    allyMove.Destination = axisMove.Start && allyMove.Start = axisMove.Destination))
+                            |> not)
                         |> Seq.fold (fun soFar alliesMove ->
-                            if cancel.IsCancellationRequested then
+                            if board.NumAxisFactories = 0 then
+                                (alliesMove, Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
+                            else if board.NumAlliesFactories = 0 then
+                                (alliesMove, Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
+                            else if cancel.IsCancellationRequested then
                                 soFar
                             else
                                 //let saved = board.Clone()
@@ -300,24 +339,16 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                 let restore, oldValue = board.DoMove(combined)
                                 let value =
                                     if depth >= maxDepth then
-                                        board.ComplexValue
+                                        Ongoing board.Value
                                     else
                                         let _, value = bestMoveAtDepth (depth + 1)
                                         value
                                 board.UndoMove(combined, restore, oldValue)
                                 //assert(saved = board)
-                                let _, refValue = soFar
-                                if value >= refValue then
-                                    (alliesMove, value)
-                                else
-                                    soFar
-                        ) ([], System.Single.NegativeInfinity)
-                    let _, refValue = soFar
-                    if value <= refValue then
-                        ((axisMove, alliesResponse), value)
-                    else
-                        soFar
-            ) (([], []), System.Single.PositiveInfinity)
+                                (alliesMove, value) |> BoardEvaluation.Max soFar
+                        ) ([], Defeat(Allies, 0))
+                    ((axisMove, alliesResponse), value) |> BoardEvaluation.Min soFar
+            ) (([], []), Defeat(Axis, 0))
         { Axis = axis; Allies = allies }, value
     let x = bestMoveAtDepth 0
     printfn "DBG: %A" x
@@ -326,9 +357,9 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
 
 let rec play minMax (board : BoardState) =
     seq {
-        let move, (value : float32) = minMax board
+        let move, value = minMax board
         board.DoMove(move) |> ignore
-        yield sprintf "Balance: %5.2f" value
+        yield sprintf "Balance: %A" value
         yield sprintf "GER moves: %A" (move.Axis)
         yield sprintf "RUS moves: %A" (move.Allies)
         yield board.DisplayString

@@ -299,6 +299,6 @@ let decideColumnMovements (world : World) (state : WorldState) =
     let minMax board =
         use cancellation = new CancellationTokenSource()
         cancellation.CancelAfter(15000)
-        timeBound cancellation.Token ({ Axis = []; Allies = [] }, 0.0f) 1 board
+        timeBound cancellation.Token ({ Axis = []; Allies = [] }, Ongoing 0.0f) 1 board
     minMax board
     |> fun ({ Axis = m1; Allies = m2 }, _) -> (m1 @ m2) |> List.map (realizeMove world state)
