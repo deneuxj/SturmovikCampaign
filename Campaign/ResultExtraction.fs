@@ -282,6 +282,26 @@ let (|StaticObjectType|_|) (s : string) =
     else
         None
 
+let (|StaticPlaneType|_|) (s : string) =
+    [
+        ("bf109_e7", PlaneModel.Bf109e7)
+        ("bf109_net", PlaneModel.Mc202) // No static model for the mc.202
+        ("bf109", PlaneModel.Bf109f2)
+        ("bf110", PlaneModel.Bf110e)
+        ("ju88", PlaneModel.Ju88a4)
+        ("ju52", PlaneModel.Ju52)
+        ("i16", PlaneModel.I16)
+        ("mig3", PlaneModel.Mig3)
+        ("mig3_net", PlaneModel.P40) // No static model for the P40
+        ("il2", PlaneModel.IL2M41)
+        ("pe2", PlaneModel.Pe2s35)
+    ]
+    |> List.tryPick (fun (subs, model) ->
+        if s.Contains(subs) then
+            Some model
+        else
+            None)
+
 let (|StaticVehicleType|_|) (s : string) =
     let s = s.ToLowerInvariant()
     [
@@ -352,19 +372,13 @@ let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntr
                                 yield { Object = damaged; Data = { Amount = damage.Damage } }
                         | None -> () // No known building nearby
                     | None -> () // Outside of know regions
-                | Some(StaticObjectType _, name, _) ->
-                    let planeModel =
-                        PlaneModel.AllModels
-                        |> List.tryFind (fun plane -> plane.PlaneName = name)
-                    match planeModel with
-                    | Some planeModel ->
-                        let closestAirfield =
-                            world.Airfields
-                            |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())
-                        let distance = (closestAirfield.Pos - damagePos).Length()
-                        if distance < 3000.0f then
-                            yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = { Amount = damage.Damage } }
-                    | None -> ()
+                | Some(StaticPlaneType planeModel, _, _) ->
+                    let closestAirfield =
+                        world.Airfields
+                        |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())
+                    let distance = (closestAirfield.Pos - damagePos).Length()
+                    if distance < 3000.0f then
+                        yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = { Amount = damage.Damage } }
                 | Some(StaticVehicleType vehicleModel, _, _) ->
                     match tryFindContainingRegion damagePos with
                     | Some region ->
