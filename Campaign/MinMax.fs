@@ -326,7 +326,7 @@ with
             a
 
 let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardState) =
-    let rec bestMoveAtDepth depth =
+    let rec bestMoveAtDepth beta depth =
         let axisMoves =
             allMoves neighboursOf board Axis
             |> Seq.append [[]]
@@ -336,13 +336,16 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
         let (axis, allies), value =
             axisMoves
             |> Seq.fold (fun soFar axisMove ->
-                if board.Score.NumAlliesFactories = 0 then
+                if board.Score.NumAlliesFactories = 0 && board.Score.TotalAlliesForces = 0.0f<E> then
                     ((axisMove, []), Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
-                else if board.Score.NumAxisFactories = 0 then
+                else if board.Score.NumAxisFactories = 0 && board.Score.TotalAxisForces = 0.0f<E> then
                     ((axisMove, []), Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
                 else if cancel.IsCancellationRequested then
                     soFar
+                else if BoardEvaluation.Lt(snd soFar, beta) then
+                    soFar
                 else
+                    let _, alpha = soFar
                     let alliesResponse, value =
                         alliesMoves
                         // Do not allow enemy columns to cross eachother on the road,
@@ -354,10 +357,12 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                     allyMove.Destination = axisMove.Start && allyMove.Start = axisMove.Destination))
                             |> not)
                         |> Seq.fold (fun soFar alliesMove ->
-                            if board.Score.NumAxisFactories = 0 then
+                            if board.Score.NumAxisFactories = 0 && board.Score.TotalAxisForces = 0.0f<E> then
                                 (alliesMove, Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
-                            else if board.Score.NumAlliesFactories = 0 then
+                            else if board.Score.NumAlliesFactories = 0 && board.Score.TotalAlliesForces = 0.0f<E> then
                                 (alliesMove, Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
+                            else if BoardEvaluation.Lt(alpha, snd soFar) then
+                                soFar
                             else if cancel.IsCancellationRequested then
                                 soFar
                             else
@@ -368,7 +373,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                     if depth >= maxDepth then
                                         Ongoing board.Score.Value
                                     else
-                                        let _, value = bestMoveAtDepth (depth + 1)
+                                        let _, value = bestMoveAtDepth (snd soFar) (depth + 1)
                                         value
                                 board.UndoMove(combined, restore, oldValue)
                                 //assert(saved = board)
@@ -377,7 +382,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                     ((axisMove, alliesResponse), value) |> BoardEvaluation.Min soFar
             ) (([], []), Defeat(Axis, 0))
         { Axis = axis; Allies = allies }, value
-    let x = bestMoveAtDepth 0
+    let x = bestMoveAtDepth (Defeat(Allies, 0)) 0
     printfn "DBG: %A" x
     x
 
