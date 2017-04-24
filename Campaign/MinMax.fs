@@ -326,6 +326,24 @@ with
             a
 
 let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardState) =
+    let positionCompare =
+        { new System.Collections.Generic.IEqualityComparer<CoalitionId option[] * float32<E>[] * float32<E>[]> with
+              member x.Equals(x1, y) =
+                let ownersX, axisX, alliesX = x1
+                let ownersY, axisY, alliesY = y
+                Array.zip ownersX ownersY |> Array.forall (fun (x, y) -> x = y) &&
+                    Array.zip axisX axisY |> Array.forall (fun (x, y) -> x = y) &&
+                    Array.zip alliesX alliesY |> Array.forall (fun (x, y) -> x = y)
+              member x.GetHashCode(x1) =
+                let ownersX, axisX, alliesX = x1
+                let h1 = List.ofArray ownersX
+                let h2 = List.ofArray axisX
+                let h3 = List.ofArray alliesX
+                (h1, h2, h3).GetHashCode()
+        }
+    let positionCache =
+        System.Collections.Generic.Dictionary<CoalitionId option[] * float32<E>[] * float32<E>[], BoardEvaluation * int>(positionCompare)
+    let mutable hits = 0
     let rec bestMoveAtDepth beta depth =
         let axisMoves =
             allMoves neighboursOf board Axis
@@ -373,8 +391,15 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                     if depth >= maxDepth then
                                         Ongoing board.Score.Value
                                     else
-                                        let _, value = bestMoveAtDepth (snd soFar) (depth + 1)
-                                        value
+                                        let entry = (board.Owners, board.AxisForces, board.AlliesForces)
+                                        match positionCache.TryGetValue(entry) with
+                                        | true, (cachedScore, cachedDepth) when cachedDepth <= depth ->
+                                            hits <- hits + 1
+                                            cachedScore
+                                        | _ ->
+                                            let _, value = bestMoveAtDepth (snd soFar) (depth + 1)
+                                            positionCache.[entry] <- (value, depth)
+                                            value
                                 board.UndoMove(combined, restore, oldValue)
                                 //assert(saved = board)
                                 (alliesMove, value) |> BoardEvaluation.Max soFar
@@ -383,6 +408,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
             ) (([], []), Defeat(Axis, 0))
         { Axis = axis; Allies = allies }, value
     let x = bestMoveAtDepth (Defeat(Allies, 0)) 0
+    printfn "Hits: %d" hits
     printfn "DBG: %A" x
     x
 
