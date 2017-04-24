@@ -125,7 +125,7 @@ module PlayChess =
             let board, neighboursOf = BoardState.Create(world, state)
             yield "Initially"
             yield board.DisplayString
-            yield sprintf "%f" board.ComplexValue
+            yield sprintf "%f" board.Score.Value
             let minMax cancel n = minMax cancel n neighboursOf
             let rec timeBound cancel prev n board =
                 if n >= 100 then

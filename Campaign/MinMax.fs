@@ -22,16 +22,47 @@ let private depart (arr : float32<E>[]) start force =
 let private arrive (arr : float32<E>[]) dest force =
     arr.[dest] <- arr.[dest] + force
 
+type ScoreComponents =
+    { mutable Territory : float32<E>
+      mutable NumAxisFactories : int
+      mutable NumAlliesFactories : int
+      mutable TotalAxisForces : float32<E>
+      mutable TotalAlliesForces : float32<E>
+    }
+with
+    member this.Value =
+        let forcesRatio =
+            if this.TotalAxisForces = 0.0f<E> then
+                1.0f
+            else if this.TotalAlliesForces = 0.0f<E> then
+                -1.0f
+            else
+                log(this.TotalAlliesForces / this.TotalAxisForces)
+                |> min 1.0f
+                |> max -1.0f
+        let ret =
+            float32 this.Territory + 500000.0f * forcesRatio
+        assert(not(System.Single.IsNaN ret))
+        ret
+
+    member this.CopyFrom(score : ScoreComponents) =
+        this.Territory <- score.Territory
+        this.NumAxisFactories <- score.NumAxisFactories
+        this.NumAlliesFactories <- score.NumAlliesFactories
+        this.TotalAxisForces <- score.TotalAxisForces
+        this.TotalAlliesForces <- score.TotalAlliesForces
+
+    member this.Clone() =
+        { this with Territory = this.Territory }
+
 type BoardState =
     { Names : string[]
       Owners : CoalitionId option []
       AxisForces : float32<E> []
       AlliesForces : float32<E> []
-      mutable Value : float32
-      mutable NumAxisFactories : int
-      mutable NumAlliesFactories : int
-      ValueOf : int -> float32
-      HasFactory : int -> bool
+      Score : ScoreComponents
+      ValueOfRegion : int -> float32<E>
+      HasRegionFactory : int -> bool
     }
 with
     static member Create(world : World, state : WorldState) =
@@ -85,15 +116,13 @@ with
                         let value = regState.ProductionCapacity(region) * 48.0f<H>
                         yield indexOfRegion region.RegionId, value
                     for af, afState in List.zip world.Airfields state.Airfields do
-                        yield indexOfRegion af.Region, afState.TotalPlaneValue + 1000.0f<E>
+                        yield indexOfRegion af.Region, afState.TotalPlaneValue + 10000.0f<E>
                 ]
                 |> List.groupBy fst
                 |> List.map (fun (i, values) -> i, values |> List.sumBy snd)
-//            for k, v in roots do
-//                printfn "R%2d %5.2f" k v
             let update i j oldValue (newValue : float32<E>) =
                 let n = world.Regions.[i].Neighbours.Length
-                let newValue = newValue / (float32 n)
+                let newValue = newValue / 1.1f
                 match oldValue with
                 | None ->
                     Some newValue
@@ -106,7 +135,7 @@ with
                 Algo.propagate (getSuccessors >> List.ofArray) update roots
             for kvp in values do
                 printfn "%2d %5.2f" kvp.Key kvp.Value
-            fun i -> values.[i] |> float32
+            fun i -> values.[i]
         let hasFactory =
             let m =
                 world.Regions
@@ -118,7 +147,7 @@ with
             |> Seq.indexed
             |> Seq.sumBy (fun (i, owner) ->
                 match owner with
-                | None -> 0.0f
+                | None -> 0.0f<E>
                 | Some Axis -> -valueOfRegion i
                 | Some Allies -> valueOfRegion i)
         let numAxisFactories =
@@ -133,23 +162,24 @@ with
           Owners = owners
           AxisForces = axisForces
           AlliesForces = alliesForces
-          Value = float32 initialValue
-          NumAxisFactories = numAxisFactories
-          NumAlliesFactories = numAlliesFactories
-          ValueOf = valueOfRegion
-          HasFactory = hasFactory
+          Score =
+            {
+                Territory = initialValue
+                NumAxisFactories = numAxisFactories
+                NumAlliesFactories = numAlliesFactories
+                TotalAxisForces = Array.sum axisForces
+                TotalAlliesForces = Array.sum alliesForces
+            }
+          ValueOfRegion = valueOfRegion
+          HasRegionFactory = hasFactory
         }, getSuccessors
 
     member this.Clone() =
-        { Names = this.Names
-          Owners = this.Owners |> Array.copy
-          AxisForces = this.AxisForces |> Array.copy
-          AlliesForces = this.AlliesForces |> Array.copy
-          Value = this.Value
-          NumAxisFactories = this.NumAxisFactories
-          NumAlliesFactories = this.NumAlliesFactories
-          ValueOf = this.ValueOf
-          HasFactory = this.HasFactory
+        { this with
+            Owners = this.Owners |> Array.copy
+            AxisForces = this.AxisForces |> Array.copy
+            AlliesForces = this.AlliesForces |> Array.copy
+            Score = this.Score.Clone()
         }
 
     member this.DoMove(combined : CombinedMove) =
@@ -168,49 +198,51 @@ with
             axis @ allies
             |> List.map (fun order -> order.Destination)
             |> List.distinct
-        let oldValue = this.Value, this.NumAxisFactories, this.NumAlliesFactories
+        let oldScore = { this.Score with Territory = this.Score.Territory } // Make a new copy of Score
         for i in destinations do
             let axisForce = this.AxisForces.[i]
             let alliesForce = this.AlliesForces.[i]
             let oldOwner = this.Owners.[i]
-            let regionValue = this.ValueOf i
+            let regionValue = this.ValueOfRegion i
             if axisForce > alliesForce then
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- axisForce - alliesForce
                 this.AlliesForces.[i] <- 0.0f<E>
                 this.Owners.[i] <- Some Axis
-                if this.HasFactory i then
+                if this.HasRegionFactory i then
                     if oldOwner = Some Allies then
-                        this.NumAlliesFactories <- this.NumAlliesFactories - 1
+                        this.Score.NumAlliesFactories <- this.Score.NumAlliesFactories - 1
                     if oldOwner <> Some Axis then
-                        this.NumAxisFactories <- this.NumAxisFactories + 1
+                        this.Score.NumAxisFactories <- this.Score.NumAxisFactories + 1
             elif axisForce < alliesForce then
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- 0.0f<E>
                 this.AlliesForces.[i] <- alliesForce - axisForce
                 this.Owners.[i] <- Some Allies
-                if this.HasFactory i then
+                if this.HasRegionFactory i then
                     if oldOwner <> Some Allies then
-                        this.NumAlliesFactories <- this.NumAlliesFactories + 1
+                        this.Score.NumAlliesFactories <- this.Score.NumAlliesFactories + 1
                     if oldOwner = Some Axis then
-                        this.NumAxisFactories <- this.NumAxisFactories - 1
+                        this.Score.NumAxisFactories <- this.Score.NumAxisFactories - 1
             elif axisForce > 0.0f<E> || alliesForce > 0.0f<E> then // Equal forces, it's a draw
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- 0.0f<E>
                 this.AlliesForces.[i] <- 0.0f<E>
-            this.Value <-
+            this.Score.TotalAxisForces <- this.Score.TotalAxisForces - min axisForce alliesForce
+            this.Score.TotalAlliesForces <- this.Score.TotalAlliesForces - min axisForce alliesForce
+            this.Score.Territory <-
                 match oldOwner, this.Owners.[i] with
-                | None, Some Axis -> this.Value - regionValue
-                | None, Some Allies -> this.Value + regionValue
-                | Some Allies, Some Axis -> this.Value - 2.0f * regionValue
-                | Some Axis, Some Allies -> this.Value + 2.0f * regionValue
+                | None, Some Axis -> this.Score.Territory - regionValue
+                | None, Some Allies -> this.Score.Territory + regionValue
+                | Some Allies, Some Axis -> this.Score.Territory - 2.0f * regionValue
+                | Some Axis, Some Allies -> this.Score.Territory + 2.0f * regionValue
                 | None, None
                 | Some Axis, Some Axis
-                | Some Allies, Some Allies -> this.Value
+                | Some Allies, Some Allies -> this.Score.Territory
                 | Some _, None -> failwith "Region cannot be captured by neutral coalition"
-        !restore, oldValue
+        !restore, oldScore
 
-    member this.UndoMove(combined : CombinedMove, restore : _ list, oldValue : float32 * int * int) =
+    member this.UndoMove(combined : CombinedMove, restore : _ list, oldScore : ScoreComponents) =
         let axis = combined.Axis
         let allies = combined.Allies
         for r in List.rev restore do
@@ -226,13 +258,7 @@ with
             let force = order.Force
             arrive this.AxisForces order.Start force
             depart this.AxisForces order.Destination force
-        let oldValue, oldNumAxisFactories, oldNumAlliesFactories = oldValue
-        this.Value <- oldValue
-        this.NumAxisFactories <- oldNumAxisFactories
-        this.NumAlliesFactories <- oldNumAlliesFactories
-
-    member this.ComplexValue =
-        this.Value + float32 (this.NumAlliesFactories - this.NumAxisFactories) * 100000.0f
+        this.Score.CopyFrom(oldScore)
 
     member this.DisplayString =
         seq {
@@ -305,13 +331,13 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
             |> Seq.append [[]]
         let alliesMoves =
             allMoves neighboursOf board Allies
-//            |> Seq.append [[]]
+            |> Seq.append [[]]
         let (axis, allies), value =
             axisMoves
             |> Seq.fold (fun soFar axisMove ->
-                if board.NumAlliesFactories = 0 then
+                if board.Score.NumAlliesFactories = 0 then
                     ((axisMove, []), Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
-                else if board.NumAxisFactories = 0 then
+                else if board.Score.NumAxisFactories = 0 then
                     ((axisMove, []), Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
                 else if cancel.IsCancellationRequested then
                     soFar
@@ -327,9 +353,9 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                     allyMove.Destination = axisMove.Start && allyMove.Start = axisMove.Destination))
                             |> not)
                         |> Seq.fold (fun soFar alliesMove ->
-                            if board.NumAxisFactories = 0 then
+                            if board.Score.NumAxisFactories = 0 then
                                 (alliesMove, Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
-                            else if board.NumAlliesFactories = 0 then
+                            else if board.Score.NumAlliesFactories = 0 then
                                 (alliesMove, Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
                             else if cancel.IsCancellationRequested then
                                 soFar
@@ -339,7 +365,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                 let restore, oldValue = board.DoMove(combined)
                                 let value =
                                     if depth >= maxDepth then
-                                        Ongoing board.Value
+                                        Ongoing board.Score.Value
                                     else
                                         let _, value = bestMoveAtDepth (depth + 1)
                                         value
