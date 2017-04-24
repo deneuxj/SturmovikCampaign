@@ -376,19 +376,6 @@ module MissionLogParsing =
                     for line in File.ReadAllLines(file) do
                         yield LogEntry.Parse(line)
             }
-            |> Seq.filter (
-                function
-                | :? MissionStartEntry
-                | :? ObjectSpawnedEntry
-                | :? TakeOffEntry
-                | :? MissionObjectiveEntry
-                | :? DamageEntry
-                | :? KillEntry
-                | :? LandingEntry
-                | :? RoundEndEntry
-                | :? MissionEndEntry -> true
-                | _ -> false
-            )
             |> Seq.fold (fun (previous, current) entry ->  // Keep the latest mission reports with the proper mission start date
                 match current, entry with
                 | _, (:? MissionStartEntry as start) ->
@@ -411,15 +398,13 @@ module MissionLogParsing =
                 | _ :: _, _ ->
                     previous, entry :: current // Recording, update current
             ) ([], [])
-            |> function (previous, []) -> previous | (_, current) -> current // current if it's non empty, previous otherwise
-            |> fun current -> // Check if current is long enough
-                match current with
-                | last :: _ ->
+            |> function // current if it's longer than 30 min, previous otherwise
+                | (previous, []) -> previous
+                | (previous, ((last :: _) as current)) ->
                     if missionHasPassed30Min last then
                         current
                     else
-                        []
-                | [] -> []
+                        previous
             |> List.rev
 
         if List.isEmpty entries then
