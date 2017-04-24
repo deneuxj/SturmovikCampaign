@@ -497,6 +497,20 @@ with
         | Pe2s35 -> Bomber
         | Ju52 -> Transport
 
+    member this.PlaneName =
+        match this with
+        | Bf109e7 -> "bf109e7"
+        | Bf109f2 -> "bf109f2"
+        | Mc202 -> "mc202"
+        | Bf110e -> "bf110e"
+        | Ju88a4 -> "ju88"
+        | Ju52 -> "ju52"
+        | I16 -> "i16"
+        | IL2M41 -> "il2mod41"
+        | Mig3 -> "mig3"
+        | P40 -> "p40"
+        | Pe2s35 -> "pe2s35"
+
     static member AllModels =
         [ Bf109e7
           Bf109f2

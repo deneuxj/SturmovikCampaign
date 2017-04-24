@@ -386,12 +386,13 @@ let createColumns random store lcStore (world : World) (state : WorldState) (mis
 let createParkedPlanes store (world : World) (state : WorldState) =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
         let modelScript = model.StaticScriptModel
-        let block = newBlockMcu store country modelScript.Model modelScript.Script
+        let block = newBlockMcu store country modelScript.Model modelScript.Script :?> Mcu.HasEntity
+        block.Name <- model.PlaneName
         let p = McuUtil.newVec3(float pos.Pos.X, 0.0, float pos.Pos.Y)
         let ori = McuUtil.newVec3(0.0, float pos.Rotation, 0.0)
         McuUtil.vecCopy p block.Pos
         McuUtil.vecCopy ori block.Ori
-        block
+        block :> Mcu.McuBase
 
     let wg = world.FastAccess
     let sg = state.FastAccess
