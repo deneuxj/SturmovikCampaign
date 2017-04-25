@@ -26,6 +26,8 @@ let (|PlaneObjectType|_|) (s : string) =
     | "mig-3 ser.24" -> Some PlaneModel.Mig3
     | "bf 110 e-2" -> Some PlaneModel.Bf110e
     | "ju 88 a-4" -> Some PlaneModel.Ju88a4
+    | "ju 87 d-3" -> Some PlaneModel.Ju87
+    | "he 111 h-6" -> Some PlaneModel.He111h6
     | _ -> None
 
 /// A region shipped supplies
@@ -295,6 +297,8 @@ let (|StaticPlaneType|_|) (s : string) =
         ("mig3_net", PlaneModel.P40) // No static model for the P40
         ("il2", PlaneModel.IL2M41)
         ("pe2", PlaneModel.Pe2s35)
+        ("ju87", PlaneModel.Ju87)
+        ("he111", PlaneModel.He111h6)
     ]
     |> List.tryPick (fun (subs, model) ->
         if s.Contains(subs) then
