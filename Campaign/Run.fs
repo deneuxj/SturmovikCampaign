@@ -376,15 +376,7 @@ module MissionLogParsing =
                     for line in File.ReadAllLines(file) do
                         yield LogEntry.Parse(line)
             }
-            |> Seq.filter(
-                function
-                | entry ->
-                    if entry.EntryType = LogEntryType.LogVersion ||
-                       entry.EntryType = LogEntryType.PosChanged then
-                        false
-                    else
-                        true
-                | _ -> true)
+            |> Seq.filter(fun entry -> not (entry.EntryType = LogEntryType.LogVersion || entry.EntryType = LogEntryType.PosChanged))
             |> Seq.fold (fun (previous, current) entry ->  // Keep the latest mission reports with the proper mission start date
                 match current, entry with
                 | _, (:? MissionStartEntry as start) ->
