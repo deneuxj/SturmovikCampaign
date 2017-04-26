@@ -22,7 +22,7 @@ let findRunningServers() =
                 printfn "Failed to filter processes: '%s" exc.Message
                 procs
         procs
-    
+
 let killServer(runningProc : Process option) =
     let procToKill = runningProc |> Option.filter (fun proc -> not proc.HasExited)
     let procsToKill =
