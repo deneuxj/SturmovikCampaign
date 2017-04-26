@@ -62,6 +62,7 @@
     <Compile Include="AutoOrder.fs" />
     <Compile Include="MapGraphics.fs" />
     <Compile Include="ParkingArea.fs" />
+    <Compile Include="AiPlanes.fs" />
     <Compile Include="MissionGeneration.fs" />
     <Compile Include="ResultExtraction.fs" />
     <Compile Include="NewWorldState.fs" />
