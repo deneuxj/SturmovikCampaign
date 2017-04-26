@@ -202,7 +202,7 @@ module OrderDecision =
             |> List.truncate config.MaxConvoys
             |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
         let columnOrders =
-            decideColumnMovements world state
+            decideColumnMovements world state config.ThinkTime
             |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
         let axisConvoys = mkConvoys Axis
         let alliesConvoys = mkConvoys Allies

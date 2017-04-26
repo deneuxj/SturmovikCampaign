@@ -286,7 +286,7 @@ let realizeMove (world : World) (state : WorldState) (move : Move) =
     }
 
 /// Run a minmax search for the best column moves for each coalition.
-let decideColumnMovements (world : World) (state : WorldState) =
+let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     let board, neighboursOf = BoardState.Create(world, state)
     let minMax cancel n = minMax cancel n neighboursOf
     let rec timeBound cancel prev n board =
@@ -298,7 +298,7 @@ let decideColumnMovements (world : World) (state : WorldState) =
             timeBound cancel res (n + 1) board
     let minMax board =
         use cancellation = new CancellationTokenSource()
-        cancellation.CancelAfter(15000)
+        cancellation.CancelAfter(thinkTime * 1000)
         timeBound cancellation.Token ({ Axis = []; Allies = [] }, Ongoing 0.0f) 1 board
     minMax board
     |> fun ({ Axis = m1; Allies = m2 }, _) -> (m1 @ m2) |> List.map (realizeMove world state)
