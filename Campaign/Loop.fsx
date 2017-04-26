@@ -78,7 +78,7 @@ with
             async {
                 printfn "Kill server..."
                 killServer serverProc
-                return None, MakeWeather
+                return None, ExtractResults
             }
         | MakeWeather ->
             async {
@@ -116,7 +116,7 @@ with
             let rec work() =
                 async {
                     if System.DateTime.UtcNow >= time then
-                        return serverProc, ExtractResults
+                        return serverProc, KillServer
                     else
                         do! Async.Sleep 60000
                         return! work()
@@ -131,7 +131,7 @@ with
                 Campaign.Run.MissionLogParsing.stage1 config
                 |> snd
                 |> Campaign.Run.MissionLogParsing.stage2 config
-                return serverProc, KillServer
+                return serverProc, MakeWeather
             }
         | Failed(msg, stackTrace, state) ->
             async {
