@@ -2,6 +2,7 @@
 
 open Campaign.WorldDescription
 open Campaign.WorldState
+open Campaign.BasicTypes
 
 /// A truck convoy or a train, in movement.
 type ConvoyOrder = {

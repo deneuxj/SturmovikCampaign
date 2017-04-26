@@ -6,6 +6,8 @@ open Campaign.WorldState
 open Campaign.ResultExtraction
 open Campaign.Util
 open Campaign.Orders
+open Campaign.BasicTypes
+open Campaign.PlaneModel
 
 /// What to produce in each category of production, and how much does each category need
 type ProductionPriorities = {

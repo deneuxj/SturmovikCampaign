@@ -1,12 +1,16 @@
 ﻿module Campaign.AutoOrder
 
+open System.Threading
+
+open Vector
+
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
 open Campaign.MinMax
-open Vector
-open Util
-open System.Threading
+open Campaign.Util
+open Campaign.BasicTypes
+open Campaign.PlaneModel
 
 /// Compute the full-health storage capacity of each region, including airfields'
 let computeStorageCapacity (world : World) =

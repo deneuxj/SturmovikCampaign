@@ -26,6 +26,8 @@ open Campaign.Orders
 open Campaign.Util
 open Campaign.MapGraphics
 open Campaign.ParkingArea
+open Campaign.BasicTypes
+open Campaign.PlaneModel
 
 type ArtilleryGroup = {
     All : Mcu.McuBase list

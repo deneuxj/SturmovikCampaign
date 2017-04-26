@@ -6,6 +6,8 @@ open SturmovikMission.Blocks.Vehicles
 
 open Campaign.WorldDescription
 open Campaign.Util
+open Campaign.BasicTypes
+open Campaign.PlaneModel
 
 /// Types of ground attack vehicles.
 type GroundAttackVehicle =

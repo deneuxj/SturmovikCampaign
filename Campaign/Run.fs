@@ -2,6 +2,8 @@
 
 open System.IO
 
+open Campaign.BasicTypes
+
 type Configuration = {
     StrategyFile : string
     Seed : int option

@@ -2,15 +2,20 @@
 
 open System.Numerics
 open System.Collections.Generic
+
+open Vector
+
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.Proximity
 open SturmovikMission.DataProvider.Cached
-open Vector
+open SturmovikMission.Blocks.VirtualConvoy.Types
+
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Util
-open SturmovikMission.Blocks.VirtualConvoy.Types
+open Campaign.BasicTypes
+
 
 /// Merge vertices of region boundaries that are close to each other.
 let getRepresentative (world : World) =

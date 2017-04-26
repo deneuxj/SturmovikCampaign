@@ -11,6 +11,8 @@ open SturmovikMission.Blocks.VirtualConvoy.Factory
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
+open Campaign.BasicTypes
+open Campaign.PlaneModel
 
 /// Match the object type strings in log events with plane models.
 let (|PlaneObjectType|_|) (s : string) =

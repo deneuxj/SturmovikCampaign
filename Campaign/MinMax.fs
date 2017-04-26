@@ -1,9 +1,11 @@
 ﻿module Campaign.MinMax
 
+open System.Threading
+
 open Campaign.Util
 open Campaign.WorldDescription
 open Campaign.WorldState
-open System.Threading
+open Campaign.BasicTypes
 
 type Move =
     { Start : int
