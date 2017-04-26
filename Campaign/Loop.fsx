@@ -16,7 +16,7 @@ let findRunningServers() =
         let procs =
             try
                 procs
-                |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)) = Path.GetFullPath(config.ServerBinDir))
+                |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)).StartsWith(Path.GetFullPath(config.ServerBinDir)))
             with
             | exc ->
                 printfn "Failed to filter processes: '%s" exc.Message
