@@ -278,11 +278,13 @@ module MissionFileGeneration =
             sprintf "%s<br><br>" (state.Date.ToString("d MMM yyyy HH:mm"))
         let weatherDescription =
             let cover =
-                if weather.CloudDensity < 0.25 then
+                if weather.CloudDensity < 0.2 then
+                    "clear"
+                elif weather.CloudDensity < 0.4 then
                     "light"
-                elif weather.CloudDensity < 0.5 then
+                elif weather.CloudDensity < 0.6 then
                     "medium"
-                elif weather.CloudDensity < 0.75 then
+                elif weather.CloudDensity < 0.8 then
                     "heavy"
                 else
                     "overcast"
