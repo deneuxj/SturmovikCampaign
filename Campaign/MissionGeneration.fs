@@ -602,6 +602,16 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let landFires =
         strategyMissionData.GetGroup("Land fires").CreateMcuList()
         |> createLandFires store world state missionBegin
+    let axisPatrols =
+        axisOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
+    let alliesPatrols =
+        alliesOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
+    let allPatrols =
+        [
+            for block in axisPatrols @ alliesPatrols do
+                Mcu.addTargetLink missionBegin block.Start.Index
+                yield block.All
+        ]
     let options =
         (Weather.setOptions weather state.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
@@ -630,5 +640,5 @@ let writeMissionFile random weather author missionName briefing missionLength co
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting @ landFires @ arrows
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting @ landFires @ arrows @ allPatrols
     writeMissionFiles "eng" filename options allGroups

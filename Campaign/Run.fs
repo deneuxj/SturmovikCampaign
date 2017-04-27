@@ -183,6 +183,8 @@ module OrderDecision =
     open Campaign.WorldDescription
     open Campaign.WorldState
     open Campaign.Orders
+    open Campaign.AiPlanes
+    open Campaign.Util
 
     let run(config : Configuration) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -214,13 +216,22 @@ module OrderDecision =
         let alliesColumns =
             columnOrders
             |> List.filter (fun order -> order.OrderId.Coalition = Allies)
+        let mkPatrols coalition =
+            let random = System.Random()
+            mkAllPatrols world state coalition
+            |> Array.ofSeq
+            |> Array.shuffle random
+            |> Array.truncate 4
+            |> List.ofArray
+        let axisPatrols = mkPatrols Axis
+        let alliesPatrols = mkPatrols Allies
         let outputDir = config.OutputDir
         backupFile state.Date outputDir "axisOrders.xml"
         backupFile state.Date outputDir "alliesOrders.xml"
         use axisOrderFiles = File.CreateText(Path.Combine(outputDir, "axisOrders.xml"))
-        serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns } )
+        serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols } )
         use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
-        serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns } )
+        serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols } )
 
 module MissionFileGeneration =
     open Campaign.WorldDescription

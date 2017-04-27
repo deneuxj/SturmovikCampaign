@@ -132,4 +132,5 @@ with
 type OrderPackage = {
     Resupply : ResupplyOrder list
     Columns : ColumnMovement list
+    Patrols : AiPlanes.AiPatrol list
 }
