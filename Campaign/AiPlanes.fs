@@ -26,7 +26,7 @@ with
         block.Plane.Country <- this.Coalition.ToCountry
         block.Plane.Script <- this.Plane.ScriptModel.Script
         block.Plane.Model <- this.Plane.ScriptModel.Model
-        let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, 0.5f * (this.P1 + this.P2), sprintf "%d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.OffensivePatrol)
+        let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, 0.5f * (this.P1 + this.P2), sprintf "%d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
         Mcu.addTargetLink block.Killed icon1.Hide.Index
         Mcu.addTargetLink block.Killed icon2.Hide.Index
         Mcu.addTargetLink block.Spawned icon1.Show.Index
@@ -66,6 +66,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
         ]
     seq {
         // Defensive patrols
+#if DISABLED
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && regState.ProductionCapacity(region) > 0.0f<E/H> then
                 for af, afState in threats do
@@ -99,6 +100,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                             P2 = p2
                             Altitude = 2500.0f
                         }
+#endif
         // Border patrol and offensive patrol
         let frontline = computeFrontLine true world state.Regions
         for region1, region2 in frontline do
@@ -119,22 +121,26 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                 let side = dir.Rotate(90.0f)
                 let p1 = ourRegion.Position + dir * 5000.0f + side * 15000.0f
                 let p2 = p1 - side * 30000.0f
-                yield {
-                    Plane = fighter
-                    Coalition = coalition
-                    P1 = p1
-                    P2 = p2
-                    Altitude = 3000.0f
-                }
-                let p1 = ourRegion.Position + dir * 20000.0f + side * 15000.0f
-                let p2 = p1 - side * 30000.0f
-                yield {
-                    Plane = fighter
-                    Coalition = coalition
-                    P1 = p1
-                    P2 = p2
-                    Altitude = 3000.0f
-                }
+                match PlaneModel.RandomPlaneOfType(PlaneType.Fighter, coalition) with
+                | Some fighter ->
+                    yield {
+                        Plane = fighter
+                        Coalition = coalition
+                        P1 = p1
+                        P2 = p2
+                        Altitude = 3000.0f
+                    }
+                    let p1 = ourRegion.Position + dir * 20000.0f + side * 15000.0f
+                    let p2 = p1 - side * 30000.0f
+                    yield {
+                        Plane = fighter
+                        Coalition = coalition
+                        P1 = p1
+                        P2 = p2
+                        Altitude = 3000.0f
+                    }
+                | None ->
+                    ()
             | None ->
                 ()
     }

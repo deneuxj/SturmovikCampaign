@@ -103,6 +103,8 @@ type LineTypeValue =
 /// </summary>
 type IconIdValue =
     | None = 0
+    | AttackBombersFlight = 102
+    | CoverBombersFlight = 152
     | OffensivePatrol = 201
     | AttackTransportColumn = 501
     | AttackArmorColumn = 502
