@@ -691,9 +691,9 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) movements co
     let mins = 60.0f * ((float32 dt) - h)
     let newDate =
         let x = state8.Date + System.TimeSpan(int h, int mins, 0)
-        let extra =
-            if x.Hour >= eveningStop then
-                morningStart - eveningStop + 24
-            else 0
-        x + System.TimeSpan(extra, 0, 0)
+        if x.Hour >= eveningStop then
+            let x2 = x.AddDays(1.0)
+            System.DateTime(x2.Year, x2.Month, x2.Day, morningStart, 0, 0)
+        else
+            x
     { state8 with Date = newDate }
