@@ -95,7 +95,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                 if sg.GetRegion(region1).Owner = Some coalition then
                     Some(region1, region2)
                 else if sg.GetRegion(region2).Owner = Some coalition then
-                    Some(region2, region2)
+                    Some(region2, region1)
                 else
                     None
             match regions with
