@@ -4,6 +4,8 @@ open System.Numerics
 open Vector
 
 open SturmovikMission.Blocks.Patrol
+open SturmovikMission.Blocks.VirtualConvoy.Types
+open SturmovikMission.DataProvider
 
 open Campaign.BasicTypes
 open Campaign.PlaneModel
@@ -24,7 +26,16 @@ with
         block.Plane.Country <- this.Coalition.ToCountry
         block.Plane.Script <- this.Plane.ScriptModel.Script
         block.Plane.Model <- this.Plane.ScriptModel.Model
-        block
+        let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, 0.5f * (this.P1 + this.P2), sprintf "%d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.OffensivePatrol)
+        Mcu.addTargetLink block.Killed icon1.Hide.Index
+        Mcu.addTargetLink block.Killed icon2.Hide.Index
+        Mcu.addTargetLink block.Spawned icon1.Show.Index
+        Mcu.addTargetLink block.Spawned icon2.Show.Index
+        { new McuUtil.IMcuGroup with
+              member x.Content = []
+              member x.LcStrings = []
+              member x.SubGroups = [ block.All; icon1.All; icon2.All ]
+        }, block
 
 
 let getNumPlanesOfType planeType (numPlanes : Map<PlaneModel, float32>) =

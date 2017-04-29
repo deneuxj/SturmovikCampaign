@@ -608,9 +608,9 @@ let writeMissionFile random weather author missionName briefing missionLength co
         alliesOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
     let allPatrols =
         [
-            for block in axisPatrols @ alliesPatrols do
+            for allMcus, block in axisPatrols @ alliesPatrols do
                 Mcu.addTargetLink missionBegin block.Start.Index
-                yield block.All
+                yield allMcus
         ]
     let options =
         (Weather.setOptions weather state.Date options)

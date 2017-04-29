@@ -16,6 +16,8 @@ type Patrol = {
     P2 : Mcu.McuWaypoint
     P3 : Mcu.McuWaypoint
     P4 : Mcu.McuWaypoint
+    Spawned : Mcu.McuTrigger
+    Killed : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
 }
 with
@@ -32,6 +34,8 @@ with
         let p2 = getWaypointByName group T.Blocks.P2
         let p3 = getWaypointByName group T.Blocks.P3
         let p4 = getWaypointByName group T.Blocks.P4
+        let killed = getTriggerByName group T.Blocks.Killed
+        let spawned = getTriggerByName group T.Blocks.Spawned
         // Position of all nodes
         let refPoint = Vector2.FromMcu(plane.Pos)
         let dv = p14 - refPoint
@@ -54,5 +58,7 @@ with
           P2 = p2
           P3 = p3
           P4 = p4
+          Killed = killed
+          Spawned = spawned
           All = McuUtil.groupFromList group
         }
