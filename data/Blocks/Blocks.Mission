@@ -3985,9 +3985,9 @@ Group
     AttackGround = 0;
     AttackAir = 0;
     AttackGTargets = 1;
-    AttackArea = 3000;
+    AttackArea = 5000;
     Time = 1200;
-    Priority = 1;
+    Priority = 0;
   }
   
 
@@ -4137,7 +4137,7 @@ Group
   MCU_Timer
   {
     Index = 347;
-    Name = "Respawn delay";
+    Name = "RespawnDelay";
     Desc = "";
     Targets = [349];
     Objects = [];
@@ -4267,7 +4267,7 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Time = 180;
+    Time = 60;
     Random = 100;
   }
   
@@ -4380,7 +4380,7 @@ Group
     Engageable = 1;
     LimitAmmo = 1;
     StartInAir = 0;
-    Callsign = 1;
+    Callsign = 12;
     Callnum = 0;
     Time = 50;
     DamageReport = 50;

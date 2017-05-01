@@ -73,6 +73,7 @@
     <Compile Include="Proximity.fs" />
     <Compile Include="Effect.fs" />
     <Compile Include="Patrol.fs" />
+    <Compile Include="GroundAttack.fs" />
     <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>

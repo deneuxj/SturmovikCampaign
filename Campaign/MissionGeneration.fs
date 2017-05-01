@@ -612,6 +612,21 @@ let writeMissionFile random weather author missionName briefing missionLength co
                 Mcu.addTargetLink missionBegin block.Start.Index
                 yield allMcus
         ]
+    let axisAttacks =
+        axisOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
+    let alliesAttacks =
+        alliesOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
+    let mkAttackStarts (attacks : (_ * GroundAttack.Attacker) list) =
+        for (_, block1), (_, block2) in Seq.pairwise attacks do
+            Mcu.addTargetLink block1.Start block2.Start.Index
+        match axisAttacks with
+        | (_, hd) :: _ ->
+            Mcu.addTargetLink missionBegin hd.Start.Index
+        | _ -> ()
+    let allAttacks =
+        mkAttackStarts axisAttacks
+        mkAttackStarts alliesAttacks
+        axisAttacks @ alliesAttacks |> List.map fst
     let options =
         (Weather.setOptions weather state.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
@@ -640,5 +655,5 @@ let writeMissionFile random weather author missionName briefing missionLength co
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting @ landFires @ arrows @ allPatrols
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting @ landFires @ arrows @ allPatrols @ allAttacks
     writeMissionFiles "eng" filename options allGroups

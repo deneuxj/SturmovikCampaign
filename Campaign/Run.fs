@@ -185,15 +185,18 @@ module OrderDecision =
     open Campaign.Orders
     open Campaign.AiPlanes
     open Campaign.Util
+    open System.Numerics
 
     let run(config : Configuration) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
-        let world, state =
+        let world, state, weather =
             try
                 use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
                 use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
+                use weatherFile = File.OpenText(Path.Combine(config.OutputDir, "weather.xml"))
                 serializer.Deserialize<World>(worldFile),
-                serializer.Deserialize<WorldState>(stateFile)
+                serializer.Deserialize<WorldState>(stateFile),
+                serializer.Deserialize<Weather.WeatherState>(weatherFile)
             with
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
 
@@ -223,15 +226,37 @@ module OrderDecision =
             |> Array.shuffle random
             |> Array.truncate 4
             |> List.ofArray
-        let axisPatrols = mkPatrols Axis
-        let alliesPatrols = mkPatrols Allies
+        let axisPatrols, alliesPatrols =
+            if weather.CloudDensity < 0.8 || weather.CloudHeight > 3500.0 then
+                mkPatrols Axis, mkPatrols Allies
+            else
+                [], []
+        let mkAttacks() =
+            let random = System.Random()
+            let attack, numPlanes =
+                mkAllAttackers world state
+                |> Array.ofSeq
+                |> Array.shuffle random
+                |> Seq.head
+            List.init numPlanes (fun _ ->
+                let offset = 500.0f * Vector2(random.NextDouble() |> float32, random.NextDouble() |> float32)
+                { attack with
+                    Start = attack.Start + offset
+                }
+            )
+        let axisAttacks, alliesAttacks =
+            if weather.CloudDensity < 0.8 || weather.CloudHeight > 2500.0 then
+                let allAttacks = mkAttacks()
+                allAttacks |> List.filter (fun attack -> attack.Coalition = Axis), allAttacks |> List.filter (fun attack -> attack.Coalition = Allies)
+            else
+                [], []
         let outputDir = config.OutputDir
         backupFile state.Date outputDir "axisOrders.xml"
         backupFile state.Date outputDir "alliesOrders.xml"
         use axisOrderFiles = File.CreateText(Path.Combine(outputDir, "axisOrders.xml"))
-        serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols } )
+        serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks } )
         use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
-        serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols } )
+        serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols; Attacks = alliesAttacks } )
 
 module MissionFileGeneration =
     open Campaign.WorldDescription
