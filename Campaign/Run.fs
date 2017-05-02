@@ -471,7 +471,7 @@ module MissionLogParsing =
         let columnArrivals = extractColumnArrivals world state movements entries |> List.ofSeq
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
 
-        let state2 = newState dt world state movements shipments resups staticDamages takeOffs landings columnDepartures columnArrivals
+        let state2 = newState dt world state movements shipments resups staticDamages takeOffs landings columnDepartures
 
         (entries, shipments, resups, staticDamages, takeOffs, landings, columnDepartures, columnArrivals), (state, state2)
 

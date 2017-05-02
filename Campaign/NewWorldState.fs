@@ -495,28 +495,34 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
 /// Simulate a battle between two enemy columns that arrived at the same region
 /// This is also used for column movements, which are seen as degenerate battles with an empty attacker side.
 type BattleParticipants = {
-    Defenders : ColumnArrived list
-    Attackers : ColumnArrived list
+    Defenders : Map<GroundAttackVehicle, int>
+    Attackers : Map<GroundAttackVehicle, int>
+    DefenderCoalition : CoalitionId
 }
 with
+    /// Return the winning side, number of remaining vehicles of each type, collateral damages to storage.
     member this.RunBattle(random : System.Random) =
         match this.Defenders, this.Attackers with
-        | [], _ -> this.Attackers, 0.0f
-        | _, [] -> this.Defenders, 0.0f
+        | _, numAttackers when numAttackers.IsEmpty ->
+            this.DefenderCoalition, this.Defenders, 0.0f
+        | numDefenders, _ when numDefenders.IsEmpty ->
+            this.DefenderCoalition.Other, this.Attackers, 0.0f
         | _ ->
             // Lists of vehicle type and health. Health is simply the cost of the vehicle.
             let attackers =
                 this.Attackers
-                |> List.map (fun arrived -> arrived.Vehicle, float32 arrived.Vehicle.Cost)
+                |> Util.expandMap
+                |> Array.map (fun vehicle -> vehicle, float32 vehicle.Cost)
             let defenders =
                 this.Defenders
-                |> List.map (fun arrived -> arrived.Vehicle, float32 arrived.Vehicle.Cost)
+                |> Util.expandMap
+                |> Array.map (fun vehicle -> vehicle, float32 vehicle.Cost)
             // Each attacker select a target randomly, then all targets get health removed according to the number of units that aim at them.
             let fire attackers defenders =
-                let numDefenders = List.length defenders
+                let numDefenders = Array.length defenders
                 let targets =
                     attackers
-                    |> List.map (fun _ -> random.Next(0, numDefenders - 1))
+                    |> Array.map (fun _ -> random.Next(0, numDefenders - 1))
                     |> Util.compactSeq
                 defenders
                 |> Seq.mapi (fun i (v, health) ->
@@ -525,69 +531,127 @@ with
                     | None -> (v, health)
                 )
                 |> Seq.filter (fun (_, health) -> health > 0.0f)
-                |> List.ofSeq
+                |> Array.ofSeq
             // Have attackers and defenders fire at eachother simultaneously, and keep doing so until one side is defeated.
             let rec round attackers defenders =
                 let defenders2 = fire attackers defenders
                 let attackers2 = fire defenders attackers
                 match defenders2, attackers2 with
-                | [], _ :: _ -> (this.Attackers, attackers2, this.Defenders)
-                | _ :: _, [] -> (this.Defenders, defenders2, this.Attackers)
+                | _, [||] -> (this.DefenderCoalition, defenders2)
+                | [||], _ -> (this.DefenderCoalition.Other, attackers2)
                 | _, _ -> round attackers2 defenders2
-            let victors, survivors, defeated = round attackers defenders
+            let victor, survivors = round attackers defenders
+            let victors, defeated =
+                if victor = this.DefenderCoalition then
+                    this.Defenders, this.Attackers
+                else
+                    this.Attackers, this.Defenders
+            // Amount of damages to storage is same as total health losses on both sides
             let damages =
                 (defeated
-                 |> List.sumBy (fun vehicle -> float32 vehicle.Vehicle.Cost)) +
+                 |> Map.toSeq
+                 |> Seq.sumBy (fun (vehicle, qty) -> float32 qty * float32 vehicle.Cost)) +
                 (victors
-                 |> List.sumBy (fun vehicle -> float32 vehicle.Vehicle.Cost)) -
+                 |> Map.toSeq
+                 |> Seq.sumBy (fun (vehicle, qty) -> float32 qty * float32 vehicle.Cost)) -
                 (survivors
-                 |> List.sumBy (fun (vehicle, health) -> health))
-            let counts =
+                 |> Array.sumBy (fun (vehicle, health) -> health))
+            let remainingVictors =
                 survivors
                 |> Seq.groupBy fst
-                |> Seq.map (fun (vehicle, healths) -> vehicle, healths |> Seq.sumBy snd)
+                |> Seq.map (fun (vehicle, healths) -> vehicle, healths |> Seq.sumBy snd |> floor |> int)
                 |> Map.ofSeq
-            let remainingVictors =
-                victors
-                |> List.fold (fun (filtered, counts) arrived ->
-                    match Map.tryFind arrived.Vehicle counts with
-                    | None -> (filtered, counts)
-                    | Some h when h < 1.0f -> (filtered, Map.remove arrived.Vehicle counts)
-                    | Some h -> (arrived :: filtered, Map.add arrived.Vehicle (h - 1.0f) counts)
-                ) ([], counts)
-                |> fst
-            remainingVictors, damages
+            victor, remainingVictors, damages
 
 /// Group arrivals by destination and build the battle participants.
-/// Note: we generate battles without attackers when a column moves into an uncontested region, including a region already under the column owner's control.
-let buildBattles (state : WorldState) (movements : ColumnMovement list) (arrivals : ColumnArrived list) =
+/// Note: we generate battles without attackers when a column moves towards an uncontested friendly region.
+let buildBattles (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) (damaged : Damage list) =
     let sg = WorldStateFastAccess.Create state
     let movements =
         movements
         |> Seq.map (fun movement -> movement.OrderId, movement)
         |> Map.ofSeq
+    let damagedOnWayTo =
+        damaged
+        // Retain vehicles in columns that have been disabled (more than 25% damage)
+        |> Seq.choose (fun damage ->
+            match damage.Object with
+            | Column vehicle when damage.Data.Amount >= 0.25f ->
+                // Consider vehicle as fully damaged
+                Some (vehicle, { damage.Data with Amount = 1.0f })
+            | _ -> None)
+        |> Seq.groupBy (fun (column, damage) -> movements.[column.OrderId].Destination)
+        |> Seq.map (fun (destination, columnsAndDamages) ->
+            destination,
+            columnsAndDamages
+            |> Seq.groupBy (fun (column, _) -> movements.[column.OrderId].Composition.[column.Rank], column.OrderId.Coalition)
+            |> Seq.map (fun (vehicle, data) -> vehicle, data |> Seq.map snd |> Seq.sumBy (fun data -> data.Amount)))
+        |> dict
     let byDestination =
-        arrivals
-        |> Seq.groupBy (fun arrival -> movements.[arrival.OrderId].Destination)
+        departures
+        |> Seq.groupBy (fun departure -> movements.[departure.OrderId].Destination)
     byDestination
     |> Seq.map (fun (region, columns) ->
         let regState = sg.GetRegion(region)
-        let defenders, attackers =
-            columns
-            |> List.ofSeq
-            |> List.partition (fun arrived -> regState.Owner = Some (movements.[arrived.OrderId].OrderId.Coalition))
+        let (defenders, attackers), defendingSide =
+            match regState.Owner with
+            | None ->
+                // Attacking a neutral territory: defenders are always allies, attackers are axis
+                columns
+                |> List.ofSeq
+                |> List.partition (fun arrived -> arrived.OrderId.Coalition = Allies),
+                Allies
+            | Some owner ->
+                // Attacking a non-neutral territory: defenders are the owners, attackers are the others
+                columns
+                |> List.ofSeq
+                |> List.partition (fun arrived -> arrived.OrderId.Coalition = owner),
+                owner
+        // Remove damaged vehicles from attacker's columns
+        let attackers =
+            let damaged =
+                match damagedOnWayTo.TryGetValue region with
+                | false, _ -> Map.empty
+                | true, damages ->
+                    damages
+                    |> Seq.choose (
+                        function
+                        | ((vehicle, coalition), damages) when Some coalition.Other = regState.Owner -> Some(vehicle, damages |> int)
+                        | _ -> None)
+                    |> Map.ofSeq
+            let mapped =
+                attackers
+                |> Seq.map (fun column -> column.Vehicles)
+                |> Seq.fold Util.addMaps Map.empty
+            Util.subMaps mapped damaged
+        // Remove damaged vehicles from defender's reinforcements
+        let defenders =
+            let damaged =
+                match damagedOnWayTo.TryGetValue region with
+                | false, _ -> Map.empty
+                | true, damages ->
+                    damages
+                    |> Seq.choose (
+                        function
+                        | ((vehicle, coalition), damages) when Some coalition = regState.Owner -> Some(vehicle, damages |> int)
+                        | _ -> None)
+                    |> Map.ofSeq
+            let mapped =
+                defenders
+                |> Seq.map (fun column -> column.Vehicles)
+                |> Seq.fold Util.addMaps Map.empty
+            Util.subMaps mapped damaged
+        // Defense from vehicles parked at the region
         let homeDefense =
             match regState.Owner with
             | Some coalition ->
-                regState.NumVehicles
-                |> Util.expandMap
-                |> Seq.map (fun vehicle -> { OrderId = { Index = -1; Coalition = coalition }; Vehicle = vehicle })
-                |> List.ofSeq
+                Util.addMaps regState.NumVehicles defenders
             | None ->
-                []
+                Map.empty
         region,
-        { Defenders = defenders @ homeDefense
+        { Defenders = defenders
           Attackers = attackers
+          DefenderCoalition = defendingSide
         }
     )
     |> List.ofSeq
@@ -601,63 +665,29 @@ let applyConquests (state : WorldState) (battles : (RegionId * BattleParticipant
             for region in state.Regions do
                 match Map.tryFind region.RegionId battles with
                 | Some battle ->
-                    let survivors, damages = battle.RunBattle(random)
-                    match survivors with
-                    | [] ->
-                        yield { region with NumVehicles = Map.empty }
-                    | survivor :: _ ->
-                        let numVehicles =
-                            survivors
-                            |> Seq.map (fun arrived -> arrived.Vehicle)
-                            |> Util.compactSeq
-                        let newOwner =
-                            survivor.OrderId.Coalition
-                        yield { region with Owner = Some newOwner; NumVehicles = numVehicles; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
+                    let newOwner, survivors, damages = battle.RunBattle(random)
+                    yield { region with Owner = Some newOwner; NumVehicles = survivors; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
                 | None ->
                     yield region
         ]
     { state with Regions = regions }
 
-/// Subtract vehicles that have arrived or have been destroyed from regions of departure. Must be called before applyConquests.
-// Note: An alternative would to subtract vehicles that have departed, but we want to let slow tanks that fail to reach their destination before the mission ends be returned to their starting region.
-let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list) (arrivals : ColumnArrived list) (damagedTanks : VehicleInColumn list) =
+/// Subtract vehicles that have departed from regions of departure. Must be called before applyConquests.
+let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) =
     let movements =
         movements
         |> Seq.map (fun movement -> movement.OrderId, movement)
         |> Map.ofSeq
     let departed =
-        arrivals // Every arrival is preceded by a departure
+        departures
         |> List.choose (fun departure -> Map.tryFind departure.OrderId movements |> Option.map (fun movement -> movement, departure))
         |> List.fold (fun regionMap (movement, departure) ->
             let numVehicles : Map<GroundAttackVehicle, int> =
                 Map.tryFind movement.Start regionMap
                 |> Option.defaultVal Map.empty
-            let qty =
-                Map.tryFind departure.Vehicle numVehicles
-                |> Option.defaultVal 0
-            let numVehicles = Map.add departure.Vehicle (qty + 1) numVehicles
+            let numVehicles = Util.addMaps numVehicles departure.Vehicles
             Map.add movement.Start numVehicles regionMap
         ) Map.empty
-    let departed =
-        damagedTanks // Every tank damage was preceded by a departure
-        |> List.choose (fun damaged -> Map.tryFind damaged.OrderId movements |> Option.map (fun movement -> movement, damaged))
-        |> List.fold (fun regionMap (movement, damaged) ->
-            let numVehicles : Map<GroundAttackVehicle, int> =
-                Map.tryFind movement.Start regionMap
-                |> Option.defaultVal Map.empty
-            let vehicle =
-                try
-                    movement.Composition.[damaged.Rank]
-                with
-                | _ ->
-                    printfn "Could not find damaged vehicle %d in departed column" damaged.Rank
-                    GroundAttackVehicle.LightArmor
-            let qty =
-                Map.tryFind vehicle numVehicles
-                |> Option.defaultVal 0
-            let numVehicles = Map.add vehicle (qty + 1) numVehicles
-            Map.add movement.Start numVehicles regionMap
-        ) departed
     let regions =
         state.Regions
         |> List.map (fun region ->
@@ -682,21 +712,13 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
 let eveningStop = 20
 let morningStart = 5
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures columnArrivals =
+let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures =
     let state2 = applyProduction dt world state
     let state3, extra = convertProduction world state2
     let state4 = applyRepairsAndDamages dt world state3 convoyDepartures (supplies @ extra) damages
     let state5 = applyPlaneTransfers state4 tookOff landed
-    let battles = buildBattles state5 movements columnArrivals
-    let damagedTanks =
-        damages
-        |> List.choose (fun damage ->
-            if damage.Data.Amount >= 0.25f then
-                match damage.Object with
-                | Column(col) -> Some col
-                | _ -> None
-            else None)
-    let state6 = applyVehicleDepartures state5 movements columnArrivals damagedTanks
+    let battles = buildBattles state5 movements columnDepartures damages
+    let state6 = applyVehicleDepartures state5 movements columnDepartures
     let state7 = applyConquests state6 battles
     let state8 = updateNumCanons world state7
     let h = floor(float32 dt)
