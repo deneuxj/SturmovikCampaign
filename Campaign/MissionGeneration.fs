@@ -349,7 +349,7 @@ let createColumns random store lcStore (world : World) (state : WorldState) (mis
                     let toVertex(v, yori) =
                         { Pos = v
                           Ori = yori
-                          Speed = 40
+                          Speed = 20
                           Radius = 100
                           Priority = 1
                         }
