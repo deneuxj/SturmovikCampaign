@@ -501,15 +501,17 @@ type BattleParticipants = {
 with
     member this.RunBattle(random : System.Random) =
         match this.Defenders, this.Attackers with
-        | [], _ -> this.Attackers
-        | _, [] -> this.Defenders
+        | [], _ -> this.Attackers, 0.0f
+        | _, [] -> this.Defenders, 0.0f
         | _ ->
+            // Lists of vehicle type and health. Health is simply the cost of the vehicle.
             let attackers =
                 this.Attackers
                 |> List.map (fun arrived -> arrived.Vehicle, float32 arrived.Vehicle.Cost)
             let defenders =
                 this.Defenders
                 |> List.map (fun arrived -> arrived.Vehicle, float32 arrived.Vehicle.Cost)
+            // Each attacker select a target randomly, then all targets get health removed according to the number of units that aim at them.
             let fire attackers defenders =
                 let numDefenders = List.length defenders
                 let targets =
@@ -524,27 +526,37 @@ with
                 )
                 |> Seq.filter (fun (_, health) -> health > 0.0f)
                 |> List.ofSeq
+            // Have attackers and defenders fire at eachother simultaneously, and keep doing so until one side is defeated.
             let rec round attackers defenders =
                 let defenders2 = fire attackers defenders
                 let attackers2 = fire defenders attackers
                 match defenders2, attackers2 with
-                | [], _ :: _ -> (this.Attackers, attackers2)
-                | _ :: _, [] -> (this.Defenders, defenders2)
+                | [], _ :: _ -> (this.Attackers, attackers2, this.Defenders)
+                | _ :: _, [] -> (this.Defenders, defenders2, this.Attackers)
                 | _, _ -> round attackers2 defenders2
-            let victors, survivors = round attackers defenders
+            let victors, survivors, defeated = round attackers defenders
+            let damages =
+                (defeated
+                 |> List.sumBy (fun vehicle -> float32 vehicle.Vehicle.Cost)) +
+                (victors
+                 |> List.sumBy (fun vehicle -> float32 vehicle.Vehicle.Cost)) -
+                (survivors
+                 |> List.sumBy (fun (vehicle, health) -> health))
             let counts =
                 survivors
                 |> Seq.groupBy fst
                 |> Seq.map (fun (vehicle, healths) -> vehicle, healths |> Seq.sumBy snd)
                 |> Map.ofSeq
-            victors
-            |> List.fold (fun (filtered, counts) arrived ->
-                match Map.tryFind arrived.Vehicle counts with
-                | None -> (filtered, counts)
-                | Some h when h < 1.0f -> (filtered, Map.remove arrived.Vehicle counts)
-                | Some h -> (arrived :: filtered, Map.add arrived.Vehicle (h - 1.0f) counts)
-            ) ([], counts)
-            |> fst
+            let remainingVictors =
+                victors
+                |> List.fold (fun (filtered, counts) arrived ->
+                    match Map.tryFind arrived.Vehicle counts with
+                    | None -> (filtered, counts)
+                    | Some h when h < 1.0f -> (filtered, Map.remove arrived.Vehicle counts)
+                    | Some h -> (arrived :: filtered, Map.add arrived.Vehicle (h - 1.0f) counts)
+                ) ([], counts)
+                |> fst
+            remainingVictors, damages
 
 /// Group arrivals by destination and build the battle participants.
 /// Note: we generate battles without attackers when a column moves into an uncontested region, including a region already under the column owner's control.
@@ -589,7 +601,7 @@ let applyConquests (state : WorldState) (battles : (RegionId * BattleParticipant
             for region in state.Regions do
                 match Map.tryFind region.RegionId battles with
                 | Some battle ->
-                    let survivors = battle.RunBattle(random)
+                    let survivors, damages = battle.RunBattle(random)
                     match survivors with
                     | [] ->
                         yield { region with NumVehicles = Map.empty }
@@ -600,7 +612,7 @@ let applyConquests (state : WorldState) (battles : (RegionId * BattleParticipant
                             |> Util.compactSeq
                         let newOwner =
                             survivor.OrderId.Coalition
-                        yield { region with Owner = Some newOwner; NumVehicles = numVehicles }
+                        yield { region with Owner = Some newOwner; NumVehicles = numVehicles; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
                 | None ->
                     yield region
         ]
