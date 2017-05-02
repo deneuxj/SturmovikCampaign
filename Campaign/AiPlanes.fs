@@ -14,7 +14,6 @@ open Campaign.PlaneModel
 open Campaign.WorldDescription
 open Campaign.WorldState
 
-
 type AiPatrol =
     { Plane : PlaneModel
       Coalition : CoalitionId
@@ -23,11 +22,23 @@ type AiPatrol =
       Altitude : float32
     }
 with
+    // Payload suitable for air-to-air engagements.
+    member this.Payload =
+        match this.Plane with
+        | PlaneModel.Bf109e7 -> 0 // "0,1-MG17-AP-2000 + 2,3-MGFF-APHE-120"
+        | PlaneModel.Bf109f2 -> 3 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
+        | PlaneModel.I16 -> 11 // "0,1-SHKAS-AP-1000 + 2,3-SHVAK-APHE-180-add"
+        | PlaneModel.Mc202 -> 4 // 0,1-BREDA12-APHE-800 + 2,3-MG15120-APHE-270-add
+        | PlaneModel.Mig3 -> 16 // "0,1-SHVAK-APHE-300"
+        | PlaneModel.P40 -> 0
+        | _ -> 0
+
     member this.ToPatrolBlock(store, lcStore) =
         let block = Patrol.Create(store, lcStore, this.Altitude, this.P1, this.P2, 5000.0f)
         block.Plane.Country <- this.Coalition.ToCountry
         block.Plane.Script <- this.Plane.ScriptModel.Script
         block.Plane.Model <- this.Plane.ScriptModel.Model
+        block.Plane.PayloadId <- Some this.Payload
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, 0.5f * (this.P1 + this.P2), sprintf "Patrol at %d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
         Mcu.addTargetLink block.Killed icon1.Hide.Index
         Mcu.addTargetLink block.Killed icon2.Hide.Index
@@ -156,11 +167,19 @@ type AiAttack =
       Altitude : float32
     }
 with
+    member this.Payload =
+        match this.Plane with
+        | PlaneModel.Bf110e -> 2 // "0,1,2,3-MG17-AP-4000 + 4,5-MGFF-APHE-360 + SC250-2 + SC50-4"
+        | PlaneModel.IL2M41 -> 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
+        | PlaneModel.Pe2s35 -> 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
+        | _ -> 0
+
     member this.ToPatrolBlock(store, lcStore) =
         let block = Attacker.Create(store, lcStore, this.Start, this.Altitude, this.Target)
         block.Plane.Country <- this.Coalition.ToCountry
         block.Plane.Script <- this.Plane.ScriptModel.Script
         block.Plane.Model <- this.Plane.ScriptModel.Model
+        block.Plane.PayloadId <- Some this.Payload
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, 0.1f * (this.Start + 9.0f * this.Target), sprintf "Attackers at %d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
         Mcu.addTargetLink block.Killed icon1.Hide.Index
         Mcu.addTargetLink block.Killed icon2.Hide.Index

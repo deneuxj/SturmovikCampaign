@@ -43,6 +43,10 @@ let getIntField (name : string) fields =
     fields
     |> Seq.pick (function (name2, Value.Integer n) when name = name2 -> Some n | _ -> None)
 
+let getOptIntField (name : string) fields =
+    fields
+    |> Seq.tryPick (function (name2, Value.Integer n) when name = name2 -> Some n | _ -> None)
+
 let getFloatField (name : string) fields =
     fields
     |> Seq.pick (function (name2, Value.Float n) when name = name2 -> Some n | _ -> None)
@@ -71,6 +75,21 @@ let setField (name : string, value) fields =
         match xs with
         | [] -> [(name, value)]
         | (name2, _) :: rest when name2 = name -> (name, value) :: rest
+        | x :: rest -> x :: work rest
+    work fields
+
+let setOptField (name : string, value) fields =
+    let rec work xs =
+        match xs with
+        | [] ->
+            match value with
+            | None -> []
+            | Some value -> [(name, value)]
+        | (name2, _) :: rest when name2 = name ->
+            match value with
+            | None -> rest
+            | Some value ->
+                (name, value) :: rest
         | x :: rest -> x :: work rest
     work fields
 
@@ -973,6 +992,12 @@ let private mkAsHasEntity typeName path (state : (string * Value) list ref) icon
                     state := !state |> setField ("Country", Value.Integer (int country))
 
             member this.NumberInFormation = formation
+
+            member this.PayloadId
+                with get() =
+                    !state |> getOptIntField "PayloadId"
+                and set payload =
+                    state := !state |> setOptField ("PayloadId", payload |> Option.map Value.Integer)
 
         interface McuBase with
             member this.AsString() = baseImpl.AsString()
