@@ -619,7 +619,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let mkAttackStarts (attacks : (_ * GroundAttack.Attacker) list) =
         for (_, block1), (_, block2) in Seq.pairwise attacks do
             Mcu.addTargetLink block1.Start block2.Start.Index
-        match axisAttacks with
+        match attacks with
         | (_, hd) :: _ ->
             Mcu.addTargetLink missionBegin hd.Start.Index
         | _ -> ()
