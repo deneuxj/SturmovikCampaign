@@ -43,6 +43,6 @@ let computeParkingPositions (area : Vector2 list) (numVehicles : int) =
     let side = sqrt surfacePerVehicle |> max 7.5f |> min 50.0f
     serpentine()
     |> Seq.map (fun (x, y) -> center + side * Vector2(float32 x, float32 y))
+    |> Seq.take numVehicles
     |> Seq.filter (fun v -> v.IsInConvexPolygon area)
-    |> Seq.truncate numVehicles
     |> List.ofSeq
