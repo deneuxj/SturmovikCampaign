@@ -559,8 +559,9 @@ with
             let remainingVictors =
                 survivors
                 |> Seq.groupBy fst
-                |> Seq.map (fun (vehicle, healths) -> vehicle, healths |> Seq.sumBy snd |> floor |> int)
+                |> Seq.map (fun (vehicle, healths) -> vehicle, healths |> Seq.sumBy snd)
                 |> Map.ofSeq
+                |> Map.map (fun vehicle healthTotal -> (healthTotal / float32 vehicle.Cost) |> floor |> int)
             victor, remainingVictors, damages
 
 /// Group arrivals by destination and build the battle participants.
