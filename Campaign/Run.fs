@@ -397,6 +397,8 @@ module MissionLogParsing =
             Plogger.Init()
 
         let entries =
+            // entries to remove from the log
+            let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
             let missionHasPassed30Min (entry : LogEntry) =
                 entry.Timestamp > System.TimeSpan(0, 30, 0)
             seq {
@@ -416,7 +418,7 @@ module MissionLogParsing =
                     for line in File.ReadAllLines(file) do
                         yield LogEntry.Parse(line)
             }
-            |> Seq.filter(fun entry -> not (entry.EntryType = LogEntryType.LogVersion || entry.EntryType = LogEntryType.PosChanged))
+            |> Seq.filter (fun entry -> not (timeLessEntryTypes.Contains(entry.EntryType)))
             |> Seq.fold (fun (previous, current) entry ->  // Keep the latest mission reports with the proper mission start date
                 match current, entry with
                 | _, (:? MissionStartEntry as start) ->
