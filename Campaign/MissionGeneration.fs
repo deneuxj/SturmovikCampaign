@@ -87,7 +87,7 @@ with
         { All = all
         }
 
-let inline createBlocksGen mkDamaged (random : System.Random) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (blocks : ^T list) =
+let inline createBlocksGen mkDamaged (random : System.Random) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (inAttackArea : Vector2 -> bool) (blocks : ^T list) =
     let tryGetRegionAt(v : Vector2) =
         world.Regions
         |> List.tryFind (fun region ->
@@ -170,14 +170,23 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                         damagedBlock.Country <- Mcu.CountryValue.Germany
                     | _ ->
                         ()
-                    let damagedBlock = damagedBlock :> Mcu.McuBase
                     subst damagedBlock
-                    yield damagedBlock
+                    // Give an entity if located in an area attacked by AIs, so that AIs will target the block.
+                    if inAttackArea (Vector2.FromMcu damagedBlock.Pos) then
+                        let subst2 = Mcu.substId <| store.GetIdMapper()
+                        let entity = newEntity 1
+                        McuUtil.vecCopy damagedBlock.Pos entity.Pos
+                        McuUtil.vecCopy damagedBlock.Ori entity.Ori
+                        subst2 entity
+                        Mcu.connectEntity damagedBlock entity
+                        yield upcast entity
+                    // Result
+                    yield upcast damagedBlock
     ]
 
-let createBlocks random store world state (blocks : T.Block list) = createBlocksGen T.Block.Damaged random store world state blocks
+let createBlocks random store world state inAttackArea (blocks : T.Block list) = createBlocksGen T.Block.Damaged random store world state inAttackArea blocks
 
-let createBridges random store world state (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged random store world state blocks
+let createBridges random store world state inAttackArea (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged random store world state inAttackArea blocks
 
 let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (windDirection : Vector2) =
     let getOwner =
@@ -385,15 +394,21 @@ let createColumns random store lcStore (world : World) (state : WorldState) (mis
     ]
 
 
-let createParkedPlanes store (world : World) (state : WorldState) =
+let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
         let modelScript = model.StaticScriptModel
-        let block = newBlockMcu store country modelScript.Model modelScript.Script
+        let mcus =
+            if inAttackArea pos.Pos then
+                let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script
+                [ block; upcast entity ]
+            else
+                [ newBlockMcu store country modelScript.Model modelScript.Script ]
         let p = McuUtil.newVec3(float pos.Pos.X, 0.0, float pos.Pos.Y)
         let ori = McuUtil.newVec3(0.0, float pos.Rotation, 0.0)
-        McuUtil.vecCopy p block.Pos
-        McuUtil.vecCopy ori block.Ori
-        block
+        for mcu in mcus do
+            McuUtil.vecCopy p mcu.Pos
+            McuUtil.vecCopy ori mcu.Ori
+        mcus
 
     let wg = world.FastAccess
     let sg = state.FastAccess
@@ -423,7 +438,7 @@ let createParkedPlanes store (world : World) (state : WorldState) =
                         | _ -> []
                     yield!
                         positions
-                        |> List.map(fun pos -> mkParkedPlane(model, pos, int country))
+                        |> List.collect (fun pos -> mkParkedPlane(model, pos, int country))
             | None ->
                 ()
     ]
@@ -458,7 +473,7 @@ let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state :
         | _ ->
             ()
 
-let createParkedTanks store (world : World) (state : WorldState) (orders : OrderPackage) coalition =
+let createParkedTanks store (world : World) (state : WorldState) inAttackArea (orders : OrderPackage) coalition =
     [
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && not(List.isEmpty region.Parking) then
@@ -482,9 +497,15 @@ let createParkedTanks store (world : World) (state : WorldState) (orders : Order
                         | HeavyTank, Allies -> Vehicles.russianStaticHeavyTank
                         | MediumTank, Allies -> Vehicles.russianStaticMediumTank
                         | LightArmor, Allies -> Vehicles.russianStaticLightArmor
-                    let block = newBlockMcu store (int coalition.ToCountry) model.Model model.Script
-                    pos.AssignTo block.Pos
-                    yield block
+                    let mcus =
+                        if inAttackArea pos then
+                            let block, entity = newBlockWithEntityMcu store (int coalition.ToCountry) model.Model model.Script
+                            [ block; upcast entity ]
+                        else
+                            [ newBlockMcu store (int coalition.ToCountry) model.Model model.Script ]
+                    for mcu in mcus do
+                        pos.AssignTo mcu.Pos
+                    yield! mcus
     ]
 
 let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) (group : Mcu.McuBase list) =
@@ -544,12 +565,15 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let missionBegin = newMissionBegin (getId 1)
     let includeSearchLights =
         state.Date.Hour <= 8 || state.Date.Hour + missionLength / 60 >= 18
+    let inAttackArea(pos : Vector2) =
+        axisOrders.Attacks @ alliesOrders.Attacks
+        |> List.exists (fun attack -> (attack.Target - pos).Length() < 3000.0f)
     let staticDefenses = ArtilleryGroup.Create(random, store, lcStore, includeSearchLights, missionBegin, world, state)
     let icons = MapIcons.CreateRegions(store, lcStore, world, state)
     let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, world, state)
     let spotting = createStorageIcons store lcStore missionBegin world state
-    let blocks = createBlocks random store world state blocks
-    let bridges = createBridges random store world state bridges
+    let blocks = createBlocks random store world state inAttackArea blocks
+    let bridges = createBridges random store world state inAttackArea bridges
     let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
     let mkConvoyNodes orders =
         let convoyPrioNodes, convoys = createConvoys store lcStore world state orders
@@ -588,10 +612,10 @@ let writeMissionFile random weather author missionName briefing missionLength co
         |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, world, state, axisOrders, alliesOrders, coalition))
         |> List.map (fun icons -> icons :> McuUtil.IMcuGroup)
     let parkedPlanes =
-        createParkedPlanes store world state
+        createParkedPlanes store world state inAttackArea
         |> McuUtil.groupFromList
     let parkedTanks =
-        createParkedTanks store world state axisOrders Axis @ createParkedTanks store world state alliesOrders Allies
+        createParkedTanks store world state inAttackArea axisOrders Axis @ createParkedTanks store world state inAttackArea alliesOrders Allies
         |> McuUtil.groupFromList
     let axisPrio, axisConvoys = mkConvoyNodes axisOrders.Resupply
     let alliesPrio, alliesConvoys = mkConvoyNodes alliesOrders.Resupply
