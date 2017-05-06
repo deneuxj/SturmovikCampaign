@@ -500,56 +500,57 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                     |> expandMap
                     |> Array.shuffle (System.Random())
                 let parkingPositions = computeParkingPositions region.Parking parked.Length
-                let mutable x0 = System.Single.PositiveInfinity
-                let mutable x1 = System.Single.NegativeInfinity
-                let mutable z0 = System.Single.PositiveInfinity
-                let mutable z1 = System.Single.NegativeInfinity
-                for vehicle, pos in Seq.zip parked parkingPositions do
-                    x0 <- min x0 pos.X
-                    x1 <- max x1 pos.X
-                    z0 <- min z0 pos.Y
-                    z1 <- max z1 pos.Y
-                    let model =
-                        match vehicle, coalition with
-                        | HeavyTank, Axis -> Vehicles.germanStaticHeavyTank
-                        | MediumTank, Axis -> Vehicles.germanStaticMediumTank
-                        | LightArmor, Axis -> Vehicles.germanStaticLightArmor
-                        | HeavyTank, Allies -> Vehicles.russianStaticHeavyTank
-                        | MediumTank, Allies -> Vehicles.russianStaticMediumTank
-                        | LightArmor, Allies -> Vehicles.russianStaticLightArmor
-                    let position =
-                        newBlockMcu store country Vehicles.tankPosition.Model Vehicles.tankPosition.Script 3000
-                    let mcus =
-                        let durability = 5000
-                        if inAttackArea pos then
-                            let block, entity = newBlockWithEntityMcu store country model.Model model.Script durability
-                            [ block; upcast entity ]
-                        else
-                            [ newBlockMcu store country model.Model model.Script durability ]
-                    let mcus = position :: mcus
-                    for mcu in mcus do
-                        pos.AssignTo mcu.Pos
-                    yield! mcus
-                let x0 = x0 - 10.0f
-                let x1 = x1 + 10.0f
-                let z0 = z0 - 10.0f
-                let z1 = z1 + 10.0f
-                // fuel storage north and south of the group
-                let pos = Vector2(x1, 0.5f * (z0 + z1))
-                let block = newBlockMcu store country Vehicles.fuel.Model Vehicles.fuel.Script 1000
-                pos.AssignTo block.Pos
-                yield block
-                let pos = Vector2(x0, 0.5f * (z0 + z1))
-                let block = newBlockMcu store country Vehicles.fuel.Model Vehicles.fuel.Script 1000
-                pos.AssignTo block.Pos
-                yield block
-                // towers at the four corners
-                for x in [ x0; x1 ] do
-                    for z in [ z0; z1 ] do
-                        let pos = Vector2(x, z)
-                        let block = newBlockMcu store country Vehicles.tower.Model Vehicles.tower.Script 2000
-                        pos.AssignTo block.Pos
-                        yield block
+                if parked.Length > 0 then
+                    let mutable x0 = System.Single.PositiveInfinity
+                    let mutable x1 = System.Single.NegativeInfinity
+                    let mutable z0 = System.Single.PositiveInfinity
+                    let mutable z1 = System.Single.NegativeInfinity
+                    for vehicle, pos in Seq.zip parked parkingPositions do
+                        x0 <- min x0 pos.X
+                        x1 <- max x1 pos.X
+                        z0 <- min z0 pos.Y
+                        z1 <- max z1 pos.Y
+                        let model =
+                            match vehicle, coalition with
+                            | HeavyTank, Axis -> Vehicles.germanStaticHeavyTank
+                            | MediumTank, Axis -> Vehicles.germanStaticMediumTank
+                            | LightArmor, Axis -> Vehicles.germanStaticLightArmor
+                            | HeavyTank, Allies -> Vehicles.russianStaticHeavyTank
+                            | MediumTank, Allies -> Vehicles.russianStaticMediumTank
+                            | LightArmor, Allies -> Vehicles.russianStaticLightArmor
+                        let position =
+                            newBlockMcu store country Vehicles.tankPosition.Model Vehicles.tankPosition.Script 3000
+                        let mcus =
+                            let durability = 5000
+                            if inAttackArea pos then
+                                let block, entity = newBlockWithEntityMcu store country model.Model model.Script durability
+                                [ block; upcast entity ]
+                            else
+                                [ newBlockMcu store country model.Model model.Script durability ]
+                        let mcus = position :: mcus
+                        for mcu in mcus do
+                            pos.AssignTo mcu.Pos
+                        yield! mcus
+                    let x0 = x0 - 10.0f
+                    let x1 = x1 + 10.0f
+                    let z0 = z0 - 10.0f
+                    let z1 = z1 + 10.0f
+                    // fuel storage north and south of the group
+                    let pos = Vector2(x1, 0.5f * (z0 + z1))
+                    let block = newBlockMcu store country Vehicles.fuel.Model Vehicles.fuel.Script 1000
+                    pos.AssignTo block.Pos
+                    yield block
+                    let pos = Vector2(x0, 0.5f * (z0 + z1))
+                    let block = newBlockMcu store country Vehicles.fuel.Model Vehicles.fuel.Script 1000
+                    pos.AssignTo block.Pos
+                    yield block
+                    // towers at the four corners
+                    for x in [ x0; x1 ] do
+                        for z in [ z0; z1 ] do
+                            let pos = Vector2(x, z)
+                            let block = newBlockMcu store country Vehicles.tower.Model Vehicles.tower.Script 2000
+                            pos.AssignTo block.Pos
+                            yield block
     ]
 
 let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) (group : Mcu.McuBase list) =
