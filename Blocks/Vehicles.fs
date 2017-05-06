@@ -178,6 +178,24 @@ let germanStaticLightArmor =
       Model = tank.GetModel().Value
     }
 
+let tower =
+    let tower = statics.[T.Vehicles.Tower]
+    { Script = tower.GetScript().Value
+      Model = tower.GetModel().Value
+    }
+
+let fuel =
+    let tanks = statics.[T.Vehicles.FuelTanks]
+    { Script = tanks.GetScript().Value
+      Model = tanks.GetModel().Value
+    }
+
+let tankPosition =
+    let position = statics.[T.Vehicles.TankPosition]
+    { Script = position.GetScript().Value
+      Model = position.GetModel().Value
+    }
+
 let russianSearchLight =
     let light = vehicles.[T.Vehicles.SearchLightRUS]
     { Script = light.GetScript().Value
