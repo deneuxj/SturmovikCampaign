@@ -38,7 +38,7 @@ with
         member x.LcStrings = []
         member x.SubGroups = []
 
-    static member Create(random : System.Random, store, lcStore, includeSearchLights, missionBegin : Mcu.McuTrigger, world : World, state : WorldState) =
+    static member Create(random : System.Random, store, lcStore, includeSearchLights, missionBegin : Mcu.McuTrigger, world : World, state : WorldState, attackingColumns : ColumnMovement list) =
         let getAreaState =
             let m =
                 state.AntiAirDefenses @ state.AntiTankDefenses
@@ -54,20 +54,30 @@ with
         let all =
             [
                 for area in world.AntiTankDefenses do
-                    let state = getAreaState area.DefenseAreaId
-                    if state.NumUnits > 0 then
-                        let owner = getOwner area.Home.Home
-                        let country, coalition =
-                            match owner with
-                            | None -> failwithf "No owner found for group of anti-tank defenses '%A'" area.DefenseAreaId
-                            | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
-                            | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                        let group = StaticDefenseGroup.Create(AntiTank, false, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
-                        let links = group.CreateLinks()
-                        let mcus = McuUtil.deepContentOf group
-                        links.Apply(mcus)
-                        Mcu.addTargetLink missionBegin group.Api.Start.Index
-                        yield! mcus
+                    // Generate AT defenses on the frontline if there is an attack planned by the enemy.
+                    match area.Home with
+                    | FrontLine(home, neighbour) ->
+                        let invasionPlanned =
+                            attackingColumns
+                            |> List.exists (fun column -> column.Destination = home && column.Start = neighbour)
+                        if invasionPlanned then
+                            let state = getAreaState area.DefenseAreaId
+                            if state.NumUnits > 0 then
+                                let owner = getOwner area.Home.Home
+                                let country, coalition =
+                                    match owner with
+                                    | None -> failwithf "No owner found for group of anti-tank defenses '%A'" area.DefenseAreaId
+                                    | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
+                                    | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
+                                let group = StaticDefenseGroup.Create(AntiTank, false, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                                let links = group.CreateLinks()
+                                let mcus = McuUtil.deepContentOf group
+                                links.Apply(mcus)
+                                Mcu.addTargetLink missionBegin group.Api.Start.Index
+                                yield! mcus
+                    | Central _ ->
+                        ()
+
                 for area in world.AntiAirDefenses do
                     let state = getAreaState area.DefenseAreaId
                     if state.NumUnits > 0 then
@@ -568,7 +578,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let inAttackArea(pos : Vector2) =
         axisOrders.Attacks @ alliesOrders.Attacks
         |> List.exists (fun attack -> (attack.Target - pos).Length() < 3000.0f)
-    let staticDefenses = ArtilleryGroup.Create(random, store, lcStore, includeSearchLights, missionBegin, world, state)
+    let staticDefenses = ArtilleryGroup.Create(random, store, lcStore, includeSearchLights, missionBegin, world, state, axisOrders.Columns @ alliesOrders.Columns)
     let icons = MapIcons.CreateRegions(store, lcStore, world, state)
     let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, world, state)
     let spotting = createStorageIcons store lcStore missionBegin world state
