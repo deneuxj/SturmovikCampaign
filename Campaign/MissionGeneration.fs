@@ -408,11 +408,12 @@ let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
         let modelScript = model.StaticScriptModel
         let mcus =
+            let durability = 2500
             if inAttackArea pos.Pos then
-                let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script
+                let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script durability
                 [ block; upcast entity ]
             else
-                [ newBlockMcu store country modelScript.Model modelScript.Script ]
+                [ newBlockMcu store country modelScript.Model modelScript.Script durability ]
         let p = McuUtil.newVec3(float pos.Pos.X, 0.0, float pos.Pos.Y)
         let ori = McuUtil.newVec3(0.0, float pos.Rotation, 0.0)
         for mcu in mcus do
@@ -508,11 +509,12 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                         | MediumTank, Allies -> Vehicles.russianStaticMediumTank
                         | LightArmor, Allies -> Vehicles.russianStaticLightArmor
                     let mcus =
+                        let durability = 5000
                         if inAttackArea pos then
-                            let block, entity = newBlockWithEntityMcu store (int coalition.ToCountry) model.Model model.Script
+                            let block, entity = newBlockWithEntityMcu store (int coalition.ToCountry) model.Model model.Script durability
                             [ block; upcast entity ]
                         else
-                            [ newBlockMcu store (int coalition.ToCountry) model.Model model.Script ]
+                            [ newBlockMcu store (int coalition.ToCountry) model.Model model.Script durability ]
                     for mcu in mcus do
                         pos.AssignTo mcu.Pos
                     yield! mcus
