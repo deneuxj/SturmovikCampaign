@@ -531,10 +531,10 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                         for mcu in mcus do
                             pos.AssignTo mcu.Pos
                         yield! mcus
-                    let x0 = x0 - 10.0f
-                    let x1 = x1 + 10.0f
-                    let z0 = z0 - 10.0f
-                    let z1 = z1 + 10.0f
+                    let x0 = x0 - maxParkingSpacing
+                    let x1 = x1 + maxParkingSpacing
+                    let z0 = z0 - maxParkingSpacing
+                    let z1 = z1 + maxParkingSpacing
                     // fuel storage north and south of the group
                     let pos = Vector2(x1, 0.5f * (z0 + z1))
                     let block = newBlockMcu store country Vehicles.fuel.Model Vehicles.fuel.Script 1000

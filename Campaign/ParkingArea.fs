@@ -33,6 +33,9 @@ let serpentine() =
         yield! up 1 (0, 0)
     }
 
+let minParkingSpacing = 10.0f
+let maxParkingSpacing = 20.0f
+
 /// Compute positions in an area where a given numbers of vehicles can be parked.
 let computeParkingPositions (area : Vector2 list) (numVehicles : int) =
     let center =
@@ -40,7 +43,7 @@ let computeParkingPositions (area : Vector2 list) (numVehicles : int) =
         (List.sum area) / n
     let surface = Vector2.ConvexPolygonArea area
     let surfacePerVehicle = surface / float32 numVehicles
-    let side = sqrt surfacePerVehicle |> max 7.5f |> min 50.0f
+    let side = sqrt surfacePerVehicle |> max minParkingSpacing |> min maxParkingSpacing
     serpentine()
     |> Seq.map (fun (x, y) -> center + side * Vector2(float32 x, float32 y))
     |> Seq.take numVehicles
