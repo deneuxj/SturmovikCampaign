@@ -12,53 +12,47 @@ open SturmovikMission.Blocks.BlocksMissionData
 type Patrol = {
     Start : Mcu.McuTrigger
     Plane : Mcu.HasEntity
-    P1 : Mcu.McuWaypoint
-    P2 : Mcu.McuWaypoint
-    P3 : Mcu.McuWaypoint
-    P4 : Mcu.McuWaypoint
     Spawned : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
+    WhileEnemyClose : WhileEnemyClose
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, planeAlt : float32, p14 : Vector2, p23 : Vector2, breadth : float32) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, pos : Vector2, planeAlt : float32, coalition : Mcu.CoalitionValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("Patrol").CreateMcuList()
         for mcu in group do
             subst mcu
+        let wec = WhileEnemyClose.Create(true, false, store, pos, coalition)
         // Get key nodes
         let start = getTriggerByName group T.Blocks.DelayedStart
         let plane = getVehicleByName group T.Blocks.Plane
-        let p1 = getWaypointByName group T.Blocks.P1
-        let p2 = getWaypointByName group T.Blocks.P2
-        let p3 = getWaypointByName group T.Blocks.P3
-        let p4 = getWaypointByName group T.Blocks.P4
         let killed = getTriggerByName group T.Blocks.Killed
         let spawned = getTriggerByName group T.Blocks.Spawned
+        // Connection with wec
+        let wakeup = getTriggerByName group T.Blocks.WakeUp
+        let sleep = getTriggerByName group T.Blocks.Sleep
+        let startMonitoring = getTriggerByName group T.Blocks.StartMonitoring
+        Mcu.addTargetLink wec.WakeUp wakeup.Index
+        Mcu.addTargetLink wec.Sleep sleep.Index
+        Mcu.addObjectLink wec.Proximity plane.LinkTrId
         // Position of all nodes
         let refPoint = Vector2.FromMcu(plane.Pos)
-        let dv = p14 - refPoint
+        let dv = pos - refPoint
         for mcu in group do
             (Vector2.FromMcu(mcu.Pos) + dv).AssignTo(mcu.Pos)
             mcu.Pos.Y <- float planeAlt
-        // Position waypoints
-        let dir =
-            let x = p23 - p14
-            x / x.Length()
-        let side = 0.5f * breadth * dir.Rotate(90.0f)
-        (p14 + side).AssignTo(p1.Pos)
-        (p14 - side).AssignTo(p4.Pos)
-        (p23 + side).AssignTo(p2.Pos)
-        (p23 - side).AssignTo(p3.Pos)
         // result
         { Start = start
           Plane = plane
-          P1 = p1
-          P2 = p2
-          P3 = p3
-          P4 = p4
           Killed = killed
           Spawned = spawned
-          All = McuUtil.groupFromList group
+          WhileEnemyClose = wec
+          All =
+            { new McuUtil.IMcuGroup with
+                  member x.Content = group
+                  member x.LcStrings = []
+                  member x.SubGroups = [ wec.All ]
+            }
         }
