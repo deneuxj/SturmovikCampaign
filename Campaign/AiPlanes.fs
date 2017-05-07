@@ -169,6 +169,7 @@ type AiAttack =
 with
     member this.Payload =
         match this.Plane with
+        | PlaneModel.Ju87 -> 5 // "0,1-MG17-AP-2000 + SC250-3"
         | PlaneModel.Bf110e -> 2 // "0,1,2,3-MG17-AP-4000 + 4,5-MGFF-APHE-360 + SC250-2 + SC50-4"
         | PlaneModel.IL2M41 -> 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
         | PlaneModel.Pe2s35 -> 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
