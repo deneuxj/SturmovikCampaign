@@ -273,7 +273,7 @@ let computeHealing(healths, buildings, energy) =
     prodHealth, energy
 
 /// Apply damages due to attacks, use supplies to repair damages and replenish storage
-let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (supplies : Resupplied list) (damages : Damage list) =
+let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list)=
     let wg = WorldFastAccess.Create world
     let damages =
         let data =
@@ -281,18 +281,42 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
             |> Seq.groupBy (fun dmg -> dmg.Object)
             |> Seq.map (fun (victim, damages) -> victim, damages |> Seq.map (fun dmg -> dmg.Data))
         Map.ofSeq data
-    let supplies =
+    let orders =
+        orders
+        |> List.map (fun order -> order.OrderId, order)
+        |> Map.ofList
+    let arrived =
         let data =
-            supplies
-            |> Seq.groupBy (fun sup -> sup.Region)
-            |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> sup.Energy))
+            shipped
+            |> Seq.groupBy (fun sup -> orders.[sup.OrderId].Convoy.Destination)
+            |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> orders.[sup.OrderId].Convoy.TransportedSupplies))
         Map.ofSeq data
     let shipped =
         let data =
             shipped
-            |> Seq.groupBy (fun sup -> sup.Sender)
-            |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> sup.Energy))
+            |> Seq.groupBy (fun sup -> orders.[sup.OrderId].Convoy.Start)
+            |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> orders.[sup.OrderId].Convoy.TransportedSupplies))
         Map.ofSeq data
+    let arrived =
+        damages
+        |> Map.fold (fun arrived victim damages ->
+            let damages = damages |> Seq.sumBy (fun damage -> damage.Amount)
+            match victim with
+            | DamagedObject.Convoy vehicle ->
+                match orders.TryFind vehicle.OrderId with
+                | Some order ->
+                    let oldValue =
+                        Map.tryFind order.Convoy.Destination arrived |> Option.defaultVal 0.0f<E>
+                    let toBeRemoved =
+                        match order.Means with
+                        | ByRail -> order.Convoy.TransportedSupplies * (min damages 1.0f)
+                        | ByRoad -> ResupplyOrder.TruckCapacity
+                    let newValue = oldValue - toBeRemoved |> max 0.0f<E>
+                    Map.add order.Convoy.Destination newValue arrived
+                | None ->
+                    arrived
+            | _ -> arrived
+        ) arrived
     let regionsAfterShipping =
         [
             for regState in state.Regions do
@@ -411,7 +435,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
             for regState in regionsAfterDamagesToDefenses do
                 let region = wg.GetRegion regState.RegionId
                 let energy =
-                    match Map.tryFind region.RegionId supplies with
+                    match Map.tryFind region.RegionId arrived with
                     | Some e -> e
                     | None -> 0.0f<E>
                 let prodHealth, energy =
@@ -716,7 +740,7 @@ let morningStart = 5
 let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures =
     let state2 = applyProduction dt world state
     let state3, extra = convertProduction world state2
-    let state4 = applyRepairsAndDamages dt world state3 convoyDepartures (supplies @ extra) damages
+    let state4 = applyRepairsAndDamages dt world state3 convoyDepartures damages supplies
     let state5 = applyPlaneTransfers state4 tookOff landed
     let battles = buildBattles state5 movements columnDepartures damages
     let state6 = applyVehicleDepartures state5 movements columnDepartures

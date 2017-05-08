@@ -34,8 +34,7 @@ let (|PlaneObjectType|_|) (s : string) =
 
 /// A region shipped supplies
 type SuppliesShipped = {
-    Sender : RegionId
-    Energy : float32<E>
+    OrderId : OrderId // Refers to a resupply order
 }
 
 let extractSuppliesShipped (state : WorldState) (orders : ResupplyOrder list) (entries : LogEntry seq) =
@@ -54,16 +53,13 @@ let extractSuppliesShipped (state : WorldState) (orders : ResupplyOrder list) (e
                     match tryGetOrder eventName with
                     | Some order ->
                         let energy = order.Convoy.TransportedSupplies
-                        yield { Sender = order.Convoy.Start; Energy = energy }
+                        yield { OrderId = order.OrderId }
                     | None -> ()
                 | None ->
                     ()
             | _ ->
                 ()
     }
-    |> Seq.groupBy (fun shipped -> shipped.Sender)
-    |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun sup -> sup.Energy))
-    |> Seq.map (fun (region, amount) -> { Sender = region; Energy = amount })
 
 /// A region received truck convoys or trains.
 type Resupplied = {
