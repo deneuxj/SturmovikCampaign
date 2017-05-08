@@ -79,6 +79,7 @@ let mkSegmentIcons mkIcon (segment : Vector2 * Vector2) =
     let icon1 : Mcu.McuIcon = mkIcon(fst segment)
     let icon2 = mkIcon(snd segment)
     icon1.Targets <- icon2.Index :: icon1.Targets
+    [ icon1; icon2 ]
 
 /// Type of segments rendering a part of a region boundary.
 type SegmentType =
@@ -157,24 +158,25 @@ with
             ]
         let mkIcon = mkIcon store lcStore
         let frontLineIcons =
-            let cache = Dictionary<_,_>()
             let getIcon v =
                 mkIcon 13 (255, 255, 255) v
-            let getIcon = getRepresentative world >> (cached cache getIcon)
+            let getIcon = getRepresentative world >> getIcon
             let mkSegment = mkSegmentIcons getIcon
-            for segment in segments do
-                match segment.Kind with
-                | OuterBorder _ -> ()
-                | InnerBorder(home, other) ->
-                    let homeState = getState home
-                    let otherState = getState other
-                    match homeState, otherState with
-                    | { Owner = Some Allies }, { Owner = Some Axis } ->
-                        mkSegment segment.Edge
-                    | _ ->
-                        ()
-            cache.Values
-            |> List.ofSeq
+            let icons =
+                [
+                    for segment in segments do
+                        match segment.Kind with
+                        | OuterBorder _ -> ()
+                        | InnerBorder(home, other) ->
+                            let homeState = getState home
+                            let otherState = getState other
+                            match homeState, otherState with
+                            | { Owner = Some Allies }, { Owner = Some Axis } ->
+                                yield! mkSegment segment.Edge
+                            | _ ->
+                                ()
+                ]
+            icons
         let otherLineIcons =
             let mkSegment viewers color =
                 let cache = Dictionary<_,_>()
@@ -195,11 +197,11 @@ with
             let mkCoalitionSegment coalition =
                 match coalition with
                 | Axis -> fun (x, y) ->
-                    mkAxisSegment(x, y)
-                    mkAxisSegmentByAllies(x, y)
+                    mkAxisSegment(x, y) |> ignore
+                    mkAxisSegmentByAllies(x, y) |> ignore
                 | Allies -> fun (x, y) ->
-                    mkAlliesSegment(x, y)
-                    mkAlliesSegmentByAxis(x, y)
+                    mkAlliesSegment(x, y)  |> ignore
+                    mkAlliesSegmentByAxis(x, y) |> ignore
             let cache5, mkDarkSegment = mkColoredSegment (30, 0, 0)
             for segment in segments do
                 match segment.Kind with
