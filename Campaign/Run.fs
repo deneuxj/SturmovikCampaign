@@ -470,12 +470,11 @@ module MissionLogParsing =
             both |> List.choose (function Choice2Of2 x -> Some x | _ -> None)
         let movements = axisOrders.Columns @ alliesOrders.Columns
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
-        let columnArrivals = extractColumnArrivals world state movements entries |> List.ofSeq
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
 
         let state2 = newState dt world state movements shipments resups staticDamages takeOffs landings columnDepartures
 
-        (entries, shipments, resups, staticDamages, takeOffs, landings, columnDepartures, columnArrivals), (state, state2)
+        (entries, shipments, resups, staticDamages, takeOffs, landings, columnDepartures), (state, state2)
 
     let stage2 config (state, state2) =
         let outputDir = config.OutputDir

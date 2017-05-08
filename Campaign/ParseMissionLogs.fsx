@@ -10,6 +10,6 @@
 open Configuration
 
 let data, states = Campaign.Run.MissionLogParsing.stage1 config
-let entries, shipped, resups, damages, tookOff, landed, columnLeft, columnArrived = data
+let entries, shipped, resups, damages, tookOff, landed, columnLeft = data
 
 Campaign.Run.MissionLogParsing.stage2 config states

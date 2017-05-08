@@ -140,39 +140,6 @@ let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry s
                 ()
     }
 
-/// A tank in column reached its destination.
-type ColumnArrived = {
-    OrderId : OrderId
-    Vehicle : GroundAttackVehicle
-}
-
-let extractColumnArrivals (world : World) (state : WorldState) (orders : ColumnMovement list) (entries : LogEntry seq) =
-    let wg = WorldFastAccess.Create(world)
-    let sg = WorldStateFastAccess.Create(state)
-    let tryGetOrder(eventName) =
-        orders
-        |> Seq.tryPick (fun order -> order.MatchesMissionLogArrivalEventName(eventName) |> Option.map (fun rank -> order, rank))
-    seq {
-        let idxToName = ref Map.empty
-        for entry in entries do
-            match entry with
-            | :? ObjectSpawnedEntry as spawned ->
-                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
-            | :? KillEntry as event when event.AttackerId = -1 ->
-                match Map.tryFind event.TargetId !idxToName with
-                | Some eventName ->
-                    match tryGetOrder eventName with
-                    | Some(order, rank) when rank > 0 ->
-                        let vehicle = order.Composition.[rank - 1]
-                        yield { OrderId = order.OrderId; Vehicle = vehicle }
-                    | _
-                    | None -> ()
-                | None ->
-                    ()
-            | _ ->
-                ()
-    }
-
 
 /// A plane took off, possibly took some damage and then landed/crashed near or at an airfield
 type TookOff = {
