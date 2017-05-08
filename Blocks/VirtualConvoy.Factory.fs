@@ -60,6 +60,9 @@ type VirtualConvoy =
       ConvoyOfEnemyClose : Set<WhileEnemyCloseInstance * ConvoyInstance>
 
       TimerSet : Map<TimerInstance, Timer>
+      
+      DelaySet : Map<TimerInstance, Timer>
+      DelayBeforeDeactivation : Set<ConvoyInstance * TimerInstance>
 
       SimpleWaypointSet : Map<SimpleWaypointInstance, Mcu.McuWaypoint>
       InvasionPath : Set<SimpleWaypointInstance * SimpleWaypointInstance>
@@ -99,6 +102,8 @@ with
                 for kvp in this.AtDestinationSet do
                     yield kvp.Value.All
                 for kvp in this.TruckDamagedSet do
+                    yield kvp.Value.All
+                for kvp in this.DelaySet do
                     yield kvp.Value.All
                 yield this.Api.All
                 yield this.DepartureReporting.All
@@ -162,6 +167,17 @@ with
                     yield (TimerInstance i, Timer.Create(store, curr.Pos, 1.1 * expectedTime))
             }
             |> Map.ofSeq
+        let delays =
+            seq {
+                for i, vertex in Seq.indexed path do
+                    yield (TimerInstance i, Timer.Create(store, vertex.Pos, 300.0)) // 5 minutes
+            }
+            |> Map.ofSeq
+        let delayBeforeConvoyDeactivation =
+            delays
+            |> Map.toSeq
+            |> Seq.map (fun (TimerInstance i, _) -> ConvoyInstance i, TimerInstance i)
+            |> Set.ofSeq
 
         let truckInConvoy =
             seq {
@@ -292,6 +308,8 @@ with
           WhileEnemyCloseSet = whileEnemyCloseSet
           ConvoyOfEnemyClose = convoyOfEnemyClose
           TimerSet = timerSet
+          DelaySet = delays
+          DelayBeforeDeactivation = delayBeforeConvoyDeactivation
           Api = api
           AtDestinationSet = atDestinationSet
           DepartureReporting = departure
@@ -489,9 +507,15 @@ with
                     for destination in this.InvasionEnd do
                         match tryGet this.ConvoyAtWaypoint finish with
                         | Some convoy ->
-                            let wp = this.SimpleWaypointSet.[destination]
-                            let convoy = this.ConvoySet.[convoy]
-                            yield upcast wp, upcast convoy.DeactivateGroup
+                            match tryGet this.DelayBeforeDeactivation convoy with
+                            | Some delay ->
+                                let delay = this.DelaySet.[delay]
+                                let wp = this.SimpleWaypointSet.[destination]
+                                let convoy = this.ConvoySet.[convoy]
+                                yield upcast wp, upcast delay.Start
+                                yield delay.Elapsed, upcast convoy.DeactivateGroup
+                            | None ->
+                                ()
                         | None ->
                             ()
                 // Notify of objective capture when last invasion waypoint reached

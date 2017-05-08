@@ -44,6 +44,8 @@ type Timer {
 	trigger Stop
 	trigger Elapsed
 }
+// Delay between arrival of convoy and hiding of last virtual convoy group
+Timer arrival_delay(Convoy)
 
 type AtDestination {
 	trigger LeaderArrived
@@ -185,7 +187,9 @@ target += for _ in invasion_start
 // Hide convoy when invasion destination reached
 target += for dest in invasion_end
           for end in path_end
-		  for convoy in convoy_at_waypoint(end) -> (dest.Waypoint, convoy.DeactivateGroup)
+		  for convoy in convoy_at_waypoint(end)
+		  for delay in arrival_delay(convoy) -> (dest.Waypoint, delay.Start)
+		                                     -> (delay.Elapsed, convoy.DeactivateGroup)
 
 // Notify of objective capture when last invasion waypoint reached
 target += for wp in invasion_end
