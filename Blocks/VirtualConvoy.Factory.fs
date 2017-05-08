@@ -445,9 +445,6 @@ with
                         else
                             yield api.Captured, upcast kvp.Value.Trigger
                         yield truck.Delete, upcast kvp.Value.Disable
-                        //  Disable logging of damages to trucks
-                        let note = this.TruckDamagedSet.[note]
-                        yield kvp.Value.Trigger, upcast note.Disable
                     | LeadCarAtDestinationInstance(convoy) ->
                         //  Log arrival of leader, unless it has been damaged.
                         let car = this.ConvoySet.[convoy]

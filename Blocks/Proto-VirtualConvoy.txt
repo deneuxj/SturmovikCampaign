@@ -206,10 +206,6 @@ target += for (atd, truck) in at_destination -> if invasion_end is empty then (r
 target += for (atd, convoy) in at_destination_convoy -> if invasion_end is empty then (result.Arrived, atd.LeaderArrived) else (result.Captured, atd.LeaderArrived)
                                                      -> (convoy.DeleteLeadCar, atd.Destroyed)
 
-//  Disable logging of damages to trucks
-target += for (atd, truck) in at_destination
-          for note in death_notification_of_truck(truck) -> (atd.LeaderArrived, note.Disable)
-
 //  Log start of convoy
 target += for api in result
           for spawn in the_spawned -> api.Start, spawn.Spawned
