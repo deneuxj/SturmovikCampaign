@@ -521,12 +521,11 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                         let position =
                             newBlockMcu store country Vehicles.tankPosition.Model Vehicles.tankPosition.Script 3000
                         let mcus =
-                            let durability = 5000
                             if inAttackArea pos then
-                                let block, entity = newBlockWithEntityMcu store country model.Model model.Script durability
+                                let block, entity = newBlockWithEntityMcu store country model.Model model.Script vehicle.Durability
                                 [ block; upcast entity ]
                             else
-                                [ newBlockMcu store country model.Model model.Script durability ]
+                                [ newBlockMcu store country model.Model model.Script vehicle.Durability ]
                         let mcus = position :: mcus
                         for mcu in mcus do
                             pos.AssignTo mcu.Pos

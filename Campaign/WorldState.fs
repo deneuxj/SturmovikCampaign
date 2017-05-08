@@ -38,6 +38,12 @@ with
         | MediumTank -> GroundAttackVehicle.MediumTankCost
         | LightArmor -> GroundAttackVehicle.LightArmorCost
 
+    member this.Durability =
+        match this with
+        | HeavyTank -> 12500
+        | MediumTank -> 10000
+        | LightArmor -> 5000
+
     static member AllVehicles = [ HeavyTank; MediumTank; LightArmor ]
 
 /// How much various production goals have accumulated.
