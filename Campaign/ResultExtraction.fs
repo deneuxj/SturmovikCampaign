@@ -61,44 +61,6 @@ let extractSuppliesShipped (state : WorldState) (orders : ResupplyOrder list) (e
                 ()
     }
 
-/// A region received truck convoys or trains.
-type Resupplied = {
-    Region : RegionId
-    Energy : float32<E>
-}
-
-let extractResupplies (world : World) (state : WorldState) (orders : ResupplyOrder list) (entries : LogEntry seq) =
-    let wg = WorldFastAccess.Create(world)
-    let sg = WorldStateFastAccess.Create(state)
-    let tryGetOrder(eventName) =
-        orders
-        |> Seq.tryFind (fun order -> order.MatchesMissionLogArrivalEventName(eventName))
-    seq {
-        let idxToName = ref Map.empty
-        for entry in entries do
-            match entry with
-            | :? ObjectSpawnedEntry as spawned ->
-                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
-            | :? KillEntry as event when event.AttackerId = -1 ->
-                match Map.tryFind event.TargetId !idxToName with
-                | Some eventName ->
-                    match tryGetOrder eventName with
-                    | Some order ->
-                        let energy =
-                            match order.Means with
-                            | ByRail -> ResupplyOrder.TrainCapacity
-                            | ByRoad -> ResupplyOrder.TruckCapacity // FIXME: Lead car does not transport supplies, it should be excluded from the report.
-                        yield { Region = order.Convoy.Destination; Energy = energy }
-                    | None -> ()
-                | None ->
-                    ()
-            | _ ->
-                ()
-    }
-    |> Seq.groupBy (fun resup -> resup.Region)
-    |> Seq.map (fun (k, amounts) -> k, amounts |> Seq.sumBy (fun sup -> sup.Energy))
-    |> Seq.map (fun (region, amount) -> { Region = region; Energy = amount })
-
 /// A tank column left its home region
 type ColumnLeft = {
     OrderId : OrderId

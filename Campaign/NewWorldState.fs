@@ -173,6 +173,12 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
     [ Axis; Allies ]
     |> List.fold work state
 
+/// A region received supplies from production.
+type Resupplied = {
+    Region : RegionId
+    Energy : float32<E>
+}
+
 /// Create new plane and vehicle instances if enough energy has been accumulated and convert supplies to local Resupplied events.
 let convertProduction (world : World) (state : WorldState) =
     let afStates =

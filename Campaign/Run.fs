@@ -456,10 +456,6 @@ module MissionLogParsing =
             let shipmentAxis = extractSuppliesShipped state axisOrders.Resupply entries |> List.ofSeq
             let shipmentAllies = extractSuppliesShipped state alliesOrders.Resupply entries |> List.ofSeq
             shipmentAxis @ shipmentAllies
-        let resups =
-            let resupsAxis = extractResupplies world state axisOrders.Resupply entries |> List.ofSeq
-            let resupsAllies = extractResupplies world state alliesOrders.Resupply entries |> List.ofSeq
-            resupsAxis @ resupsAllies
         let staticDamages = extractStaticDamages world state entries |> List.ofSeq
         let vehicleDamages = extractVehicleDamages (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply)
         let takeOffs, landings =
@@ -474,7 +470,7 @@ module MissionLogParsing =
 
         let state2 = newState dt world state movements shipments (axisOrders.Resupply @ alliesOrders.Resupply) staticDamages takeOffs landings columnDepartures
 
-        (entries, shipments, resups, staticDamages, takeOffs, landings, columnDepartures), (state, state2)
+        (entries, shipments, staticDamages, takeOffs, landings, columnDepartures), (state, state2)
 
     let stage2 config (state, state2) =
         let outputDir = config.OutputDir
