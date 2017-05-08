@@ -485,7 +485,7 @@ let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state :
             ()
 
 let createParkedTanks store (world : World) (state : WorldState) inAttackArea (orders : OrderPackage) (coalition : CoalitionId) =
-    let country = coalition.ToCoalition |> int
+    let country = coalition.ToCountry |> int
     [
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && not(List.isEmpty region.Parking) then
