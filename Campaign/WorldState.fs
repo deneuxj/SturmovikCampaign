@@ -102,6 +102,34 @@ with
         |> Map.toSeq
         |> Seq.sumBy snd
 
+    /// Damage supplies and planes by a specified amount.
+    member this.ApplyDamage(damage : float32<E>) =
+        let random = System.Random()
+        let planes = this.NumPlanes |> Map.toArray
+        let rec apply (planes : (PlaneModel * float32)[]) (damage : float32<E>) =
+            if damage <= 0.0f<E> then
+                planes
+            elif planes.Length = 0 then
+                planes
+            else
+                let i = random.Next(planes.Length)
+                let plane, health = planes.[i]
+                let availableToDamage = health * plane.Cost
+                let damageInflicted = min damage availableToDamage
+                let damage = damage - damageInflicted
+                let health = health - damageInflicted / plane.Cost
+                planes.[i] <- (plane, health)
+                if health <= 0.0f then
+                    let planes = Array.filter (snd >> (<=) 0.0f) planes
+                    apply planes damage
+                else
+                    apply planes damage
+        let planes = apply planes damage
+        { this with
+            NumPlanes = Map.ofArray planes
+            Supplies = this.Supplies - damage |> max 0.0f<E>
+        }
+
 /// Packages all state data.
 type WorldState = {
     Regions : RegionState list

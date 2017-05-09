@@ -688,20 +688,31 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
     |> List.ofSeq
     
 /// Run each battle, update vehicles in targetted regions and flip them if attackers are victorious
-let applyConquests (state : WorldState) (battles : (RegionId * BattleParticipants) list) =
-    let battles = battles |> Map.ofList
+let applyConquests (world : World) (state : WorldState) (battles : (RegionId * BattleParticipants) list) =
     let random = System.Random()
+    let battleResults =
+        battles
+        |> List.map (fun (region, battle) -> region, battle.RunBattle(random))
+        |> Map.ofList
     let regions =
         [
             for region in state.Regions do
-                match Map.tryFind region.RegionId battles with
-                | Some battle ->
-                    let newOwner, survivors, damages = battle.RunBattle(random)
+                match Map.tryFind region.RegionId battleResults with
+                | Some(newOwner, survivors, damages) ->
                     yield { region with Owner = Some newOwner; NumVehicles = survivors; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
                 | None ->
                     yield region
         ]
-    { state with Regions = regions }
+    let airfields =
+        [
+            for af, afState in List.zip world.Airfields state.Airfields do
+                match Map.tryFind af.Region battleResults with
+                | Some(newOwner, survivors, damages) ->
+                    yield afState.ApplyDamage (1.0f<E> * damages)
+                | None ->
+                    yield afState
+        ]
+    { state with Regions = regions; Airfields = airfields }
 
 /// Subtract vehicles that have departed from regions of departure. Must be called before applyConquests.
 let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) =
@@ -750,7 +761,7 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) movements co
     let state5 = applyPlaneTransfers state4 tookOff landed
     let battles = buildBattles state5 movements columnDepartures damages
     let state6 = applyVehicleDepartures state5 movements columnDepartures
-    let state7 = applyConquests state6 battles
+    let state7 = applyConquests world state6 battles
     let state8 = updateNumCanons world state7
     let h = floor(float32 dt)
     let mins = 60.0f * ((float32 dt) - h)
