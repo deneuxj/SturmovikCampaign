@@ -34,7 +34,7 @@ let serpentine() =
     }
 
 let minParkingSpacing = 10.0f
-let maxParkingSpacing = 20.0f
+let maxParkingSpacing = 35.0f
 
 /// Compute positions in an area where a given numbers of vehicles can be parked.
 let computeParkingPositions (area : Vector2 list) (numVehicles : int) =
