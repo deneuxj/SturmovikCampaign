@@ -690,6 +690,7 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
 /// Run each battle, update vehicles in targetted regions and flip them if attackers are victorious
 let applyConquests (world : World) (state : WorldState) (battles : (RegionId * BattleParticipants) list) =
     let random = System.Random()
+    let sg = WorldStateFastAccess.Create state
     let battleResults =
         battles
         |> List.map (fun (region, battle) -> region, battle.RunBattle(random))
@@ -708,7 +709,12 @@ let applyConquests (world : World) (state : WorldState) (battles : (RegionId * B
             for af, afState in List.zip world.Airfields state.Airfields do
                 match Map.tryFind af.Region battleResults with
                 | Some(newOwner, survivors, damages) ->
-                    yield afState.ApplyDamage (1.0f<E> * damages)
+                    let factor =
+                        match sg.GetRegion(af.Region).Owner with
+                        | Some owner when owner <> newOwner -> 1.5f<E> // Previous owners sabotaged some of their planes.
+                        | Some _ -> 1.0f<E> // Previous owners defended their planes, but some got damaged in the battle.
+                        | None -> 0.0f<E> // No battle took place, region was neutral.
+                    yield afState.ApplyDamage (factor * damages)
                 | None ->
                     yield afState
         ]
