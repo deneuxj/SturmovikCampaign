@@ -120,7 +120,7 @@ with
                 let health = health - damageInflicted / plane.Cost
                 planes.[i] <- (plane, health)
                 if health <= 0.0f then
-                    let planes = Array.filter (snd >> (<=) 0.0f) planes
+                    let planes = Array.filter (fun (_, v) -> v > 0.0f) planes
                     apply planes damage
                 else
                     apply planes damage
