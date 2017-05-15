@@ -36,6 +36,7 @@ with
         let startMonitoring = getTriggerByName group T.Blocks.StartMonitoring
         Mcu.addTargetLink wec.WakeUp wakeup.Index
         Mcu.addTargetLink wec.Sleep sleep.Index
+        Mcu.addTargetLink startMonitoring wec.StartMonitoring.Index
         Mcu.addObjectLink wec.Proximity plane.LinkTrId
         // Position of all nodes
         let refPoint = Vector2.FromMcu(plane.Pos)
