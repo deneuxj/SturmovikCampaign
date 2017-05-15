@@ -296,7 +296,7 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     let rec timeBound cancel prev n board =
         //printfn "Max depth: %d" n
         let res = minMax cancel n board
-        if cancel.IsCancellationRequested then
+        if cancel.IsCancellationRequested || n >= 100 then
             prev
         else
             timeBound cancel res (n + 1) board
