@@ -444,16 +444,13 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     match Map.tryFind region.RegionId arrived with
                     | Some e -> e
                     | None -> 0.0f<E>
+                // Highest prio: repair production
                 let prodHealth, energy =
                     computeHealing(
                         regState.ProductionHealth,
                         region.Production,
                         energy)
-                let storeHealth, energy =
-                    computeHealing(
-                        regState.StorageHealth,
-                        region.Storage,
-                        energy)
+                // Second prio: fill up region supplies
                 let storeCapacity = regState.StorageCapacity(region)
                 // Consume energy to fill supplies
                 // FIXME: we should only consume what's needed, i.e. no supplies for anti-tank defenses if there are no enemy regions nearby.
@@ -462,9 +459,15 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     |> min energy
                     |> max 0.0f<E>
                 let supplies = regState.Supplies + toSupplies
+                let energy = energy - toSupplies
+                // Last: repair storage
+                let storeHealth, energy =
+                    computeHealing(
+                        regState.StorageHealth,
+                        region.Storage,
+                        energy)
                 // Part of supplies in storage that exceed the storage capacity is lost
                 let waste = 0.2f * max 0.0f<E> (supplies - regState.StorageCapacity(region))
-                let energy = energy - toSupplies
                 yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies - waste }, energy
         ]
     let regionEnergies =
