@@ -108,8 +108,8 @@ with
 
     member this.RepairCost =
         match this.Model with
-        | Contains "arf_barak" -> 1000.0f<E>
-        | Contains "arf_dugouts_2" -> 4000.0f<E>
-        | Contains "arf_ammo_1" -> 1000.0f<E>
-        | Contains "industrial_" -> 7500.0f<E>
-        | _ -> 1000.0f<E>
+        | Contains "arf_barak" -> 100.0f<E>
+        | Contains "arf_dugouts_2" -> 400.0f<E>
+        | Contains "arf_ammo_1" -> 100.0f<E>
+        | Contains "industrial_" -> 750.0f<E>
+        | _ -> 100.0f<E>
