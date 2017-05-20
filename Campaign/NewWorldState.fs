@@ -555,7 +555,7 @@ with
                 let numDefenders = Array.length defenders
                 let targets =
                     attackers
-                    |> Array.map (fun _ -> random.Next(0, numDefenders - 1))
+                    |> Array.map (fun _ -> random.Next(0, numDefenders))
                     |> Util.compactSeq
                 defenders
                 |> Seq.mapi (fun i (v, health) ->
