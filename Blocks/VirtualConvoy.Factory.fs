@@ -362,6 +362,9 @@ with
             ]
         let targetLinks =
             [
+                //  Discard trucks when convoy discarded
+                for convoy, _, truck in this.TruckInConvoy do
+                    yield this.ConvoySet.[convoy].Discard, this.TruckInConvoySet.[truck].Discard :> Mcu.McuBase
                 //  Trigger movement to next active waypoint
                 for wp, convoy in this.ConvoyAtWaypoint do
                     match tryGet this.Path wp with
@@ -404,6 +407,8 @@ with
                         yield wpData.Activate, wec.StartMonitoring :> Mcu.McuBase
                     //  Stop monitoring when waypoint becomes inactive
                     yield wpData.Deactivate, wec.StopMonitoring :> Mcu.McuBase
+                    // Discard vehicles at virtual waypoint when it becomes inactive
+                    yield wpData.Deactivate, this.ConvoySet.[convoy].Discard :> Mcu.McuBase
                 for curr, next in this.Path do
                     let curr2 = this.ActiveWaypointSet.[curr]
                     let next2 = this.ActiveWaypointSet.[next]

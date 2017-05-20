@@ -16,6 +16,7 @@ type Convoy =
       DeactivateGroup : Mcu.McuTrigger
       DeleteLeadCar : Mcu.McuTrigger
       TriggerGates : Mcu.McuTrigger
+      Discard : Mcu.McuTrigger
       All : McuUtil.IMcuGroup
     }
 with
@@ -55,6 +56,7 @@ with
           DeactivateGroup = getByName T.Blocks.DeactivateGroup
           DeleteLeadCar = getByName T.Blocks.DeleteLeadCar
           TriggerGates = getByName T.Blocks.TriggerGates
+          Discard = getByName T.Blocks.Discard
           All = McuUtil.groupFromList group
         }
 
@@ -62,6 +64,7 @@ type TruckInConvoy =
     { Entity : Mcu.McuEntity
       Damaged : Mcu.McuTrigger
       Delete : Mcu.McuTrigger
+      Discard : Mcu.McuTrigger
       All : McuUtil.IMcuGroup
     }
 with
@@ -103,6 +106,7 @@ with
         { Entity = Seq.head <| McuUtil.filterByName T.Blocks.``Truck entity`` group :?> Mcu.McuEntity
           Damaged = getByName T.Blocks.TruckDamaged
           Delete = getByName T.Blocks.DeleteTruck
+          Discard = getByName T.Blocks.Discard
           All = McuUtil.groupFromList group
         }
 

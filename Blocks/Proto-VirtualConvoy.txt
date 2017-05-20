@@ -4,6 +4,7 @@
 	trigger ActivateGroup
 	trigger DeactivateGroup
 	trigger DeleteLeadCar
+	trigger Discard
 	trigger TriggerGates
 }
 TruckInConvoy truck_in_convoy(Convoy, int)
@@ -13,6 +14,7 @@ type TruckInConvoy {
 	entity Entity
 	trigger Damaged
 	trigger Delete
+	trigger Discard
 }
 
 type ActiveWaypoint {
@@ -89,6 +91,8 @@ Icon icon_of_convoy(VirtualConvoy)
 // Convoy <-> TruckInConvoy
 //  Add trucks to columns
 columns += for (convoy, position, truck) in truck_in_convoy -> (truck.Entity, convoy.LeadCarEntity, position)
+//  Discard trucks when convoy discarded
+target += for (convoy, _, truck) in truck_in_convoy -> (convoy.Discard, truck.Discard)
 
 // Convoy <-> ActiveWaypoint
 //  Connect lead car to waypoints
@@ -151,6 +155,8 @@ target += for (wp) in path_start
 target += for (wp, convoy) in convoy_at_waypoint unless wp in path_end -> (wp.Activate, while_enemy_close_of_convoy(convoy).StartMonitoring)
 //  Stop monitoring when waypoint becomes inactive
 target += for (wp, convoy) in convoy_at_waypoint -> (wp.Deactivate, while_enemy_close_of_convoy(convoy).StopMonitoring)
+// Discard vehicles at virtual waypoint when it becomes inactive
+target += for (wp, convoy) in convoy_at_waypoint -> (wp.Deactivate, convoy.Discard)
 
 // ActiveWaypoint <-> Timer
 //  Activate next waypoint when virtual travel time elapsed, and deactivate current waypoint.
