@@ -56,7 +56,10 @@ with
         this.TotalAlliesForces <- score.TotalAlliesForces
 
     member this.Clone() =
-        { this with Territory = this.Territory }
+        let ret =
+            { this with Territory = this.Territory }
+        assert(not <| obj.ReferenceEquals(this, ret))
+        ret
 
 type BoardState =
     { Names : string[]
@@ -155,12 +158,12 @@ with
                 | Some Axis -> -valueOfRegion i
                 | Some Allies -> valueOfRegion i)
         let numAxisFactories =
-            axisForces
-            |> Array.mapi (fun i qty -> if qty > 0.0f<E> && hasFactory i then 1 else 0)
+            owners
+            |> Array.mapi (fun i coalition -> if coalition = Some Axis && hasFactory i then 1 else 0)
             |> Array.sum
         let numAlliesFactories =
-            alliesForces
-            |> Array.mapi (fun i qty -> if qty > 0.0f<E> && hasFactory i then 1 else 0)
+            owners
+            |> Array.mapi (fun i coalition -> if coalition = Some Allies && hasFactory i then 1 else 0)
             |> Array.sum
         { Names = names
           Owners = owners
@@ -202,7 +205,7 @@ with
             axis @ allies
             |> List.map (fun order -> order.Destination)
             |> List.distinct
-        let oldScore = { this.Score with Territory = this.Score.Territory } // Make a new copy of Score
+        let oldScore = this.Score.Clone()
         for i in destinations do
             let axisForce = this.AxisForces.[i]
             let alliesForce = this.AlliesForces.[i]
@@ -232,6 +235,8 @@ with
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- 0.0f<E>
                 this.AlliesForces.[i] <- 0.0f<E>
+            else
+                failwith "Encountered move without forces"
             this.Score.TotalAxisForces <- this.Score.TotalAxisForces - min axisForce alliesForce
             this.Score.TotalAlliesForces <- this.Score.TotalAlliesForces - min axisForce alliesForce
             this.Score.Territory <-
@@ -345,7 +350,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                 (h1, h2, h3).GetHashCode()
         }
     let positionCache =
-        System.Collections.Generic.Dictionary<CoalitionId option[] * float32<E>[] * float32<E>[], BoardEvaluation * int>(positionCompare)
+        System.Collections.Generic.Dictionary<CoalitionId option[] * float32<E>[] * float32<E>[], BoardEvaluation * CombinedMove list * int>(positionCompare)
     let mutable hits = 0
     let rec bestMoveAtDepth beta depth =
         let axisMoves =
@@ -354,20 +359,18 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
         let alliesMoves =
             allMoves neighboursOf board Allies
             |> Seq.append [[]]
-        let (axis, allies), value =
+        let ((axis, allies), deepMoves), value =
             axisMoves
             |> Seq.fold (fun soFar axisMove ->
-                if board.Score.NumAlliesFactories = 0 && board.Score.TotalAlliesForces = 0.0f<E> then
-                    ((axisMove, []), Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
-                else if board.Score.NumAxisFactories = 0 && board.Score.TotalAxisForces = 0.0f<E> then
-                    ((axisMove, []), Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
+                if board.Score.NumAlliesFactories = 0 then
+                    (((axisMove, []), []), Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
                 else if cancel.IsCancellationRequested then
                     soFar
                 else if BoardEvaluation.Lt(snd soFar, beta) then
                     soFar
                 else
                     let _, alpha = soFar
-                    let alliesResponse, value =
+                    let (alliesResponse, deepMoves), value =
                         alliesMoves
                         // Do not allow enemy columns to cross eachother on the road,
                         |> Seq.filter (fun move ->
@@ -378,10 +381,8 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                     allyMove.Destination = axisMove.Start && allyMove.Start = axisMove.Destination))
                             |> not)
                         |> Seq.fold (fun soFar alliesMove ->
-                            if board.Score.NumAxisFactories = 0 && board.Score.TotalAxisForces = 0.0f<E> then
-                                (alliesMove, Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
-                            else if board.Score.NumAlliesFactories = 0 && board.Score.TotalAlliesForces = 0.0f<E> then
-                                (alliesMove, Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
+                            if board.Score.NumAxisFactories = 0 then
+                                ((alliesMove, []), Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
                             else if BoardEvaluation.Lt(alpha, snd soFar) then
                                 soFar
                             else if cancel.IsCancellationRequested then
@@ -390,30 +391,38 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                 //let saved = board.Clone()
                                 let combined = { Axis = axisMove; Allies = alliesMove }
                                 let restore, oldValue = board.DoMove(combined)
-                                let value =
+                                let deepMoves, value =
                                     if depth >= maxDepth then
-                                        Ongoing board.Score.Value
+                                        [], Ongoing board.Score.Value
                                     else
                                         let entry = (board.Owners, board.AxisForces, board.AlliesForces)
                                         match positionCache.TryGetValue(entry) with
-                                        | true, (cachedScore, cachedDepth) when cachedDepth <= depth ->
+                                        | true, (cachedScore, deepMoves, cachedDepth) when cachedDepth <= depth ->
                                             hits <- hits + 1
-                                            cachedScore
+                                            deepMoves, cachedScore
                                         | _ ->
-                                            let _, value = bestMoveAtDepth (snd soFar) (depth + 1)
-                                            positionCache.[entry] <- (value, depth)
-                                            value
+                                            let deepMoves, value = bestMoveAtDepth (snd soFar) (depth + 1)
+                                            positionCache.[entry] <- (value, deepMoves, depth)
+                                            deepMoves, value
                                 board.UndoMove(combined, restore, oldValue)
                                 //assert(saved = board)
-                                (alliesMove, value) |> BoardEvaluation.Max soFar
-                        ) ([], Defeat(Allies, 0))
-                    ((axisMove, alliesResponse), value) |> BoardEvaluation.Min soFar
-            ) (([], []), Defeat(Axis, 0))
-        { Axis = axis; Allies = allies }, value
-    let x = bestMoveAtDepth (Defeat(Allies, 0)) 0
-    printfn "Hits: %d" hits
-    printfn "DBG: %A" x
-    x
+                                ((alliesMove, deepMoves), value) |> BoardEvaluation.Max soFar
+                        ) (([], []), Defeat(Allies, 0))
+                    (((axisMove, alliesResponse), deepMoves), value) |> BoardEvaluation.Min soFar
+            ) ((([], []), []), Defeat(Axis, 0))
+        { Axis = axis; Allies = allies } :: deepMoves, value
+    let moves, score = bestMoveAtDepth (Defeat(Allies, 0)) 0
+    if cancel.IsCancellationRequested then
+        printfn "Cancelled"
+        List.head moves, score
+    else
+        printfn "Hits: %d, Score: %A" hits score
+        match moves with
+        | topMove :: followingMoves ->
+            printfn "DBG: %A\nfollowed by\n%A" topMove followingMoves
+            topMove, score
+        | [] ->
+            failwith "Empty combined move list"
 
 
 let rec play minMax (board : BoardState) =
