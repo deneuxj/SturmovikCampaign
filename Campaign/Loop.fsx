@@ -9,6 +9,7 @@ open System.Diagnostics
 open System.IO
 open Configuration
 open MBrace.FsPickler
+open Campaign.BasicTypes
 
 let findRunningServers() =
         let procs =
@@ -70,6 +71,7 @@ type ExecutionState =
     | StartServer
     | WaitForMissionEnd of System.DateTime
     | ExtractResults
+    | CampaignOver of victorious: CoalitionId
     | Failed of Message:string * StackTrace:string option * ExecutionState
 with
     member this.GetAsync(serverProc : Process option) =
@@ -128,10 +130,20 @@ with
         | ExtractResults ->
             async {
                 printfn "Extract results..."
-                Campaign.Run.MissionLogParsing.stage1 config
-                |> snd
-                |> Campaign.Run.MissionLogParsing.stage2 config
-                return serverProc, MakeWeather
+                let _, ((oldState, newState) as states) = Campaign.Run.MissionLogParsing.stage1 config
+                if not(newState.HasCoalitionFactories(Axis)) then
+                    return serverProc, CampaignOver(Allies)
+                elif not(newState.HasCoalitionFactories(Allies)) then
+                    return serverProc, CampaignOver(Axis)
+                else
+                    states
+                    |> Campaign.Run.MissionLogParsing.stage2 config
+                    return serverProc, MakeWeather
+            }
+        | CampaignOver _ ->
+            async {
+                printfn "Cannot continue campaign that is over."
+                return serverProc, this
             }
         | Failed(msg, stackTrace, state) ->
             async {
@@ -162,6 +174,12 @@ let loop() =
             match status with
             | Failed(msg, _, _) ->
                 printfn "Execution aborted due to failure: %s" msg
+                status.Save()
+            | CampaignOver(victorious) ->
+                match victorious with
+                | Axis -> "Axis has won"
+                | Allies -> "Allies have won"
+                |> printfn "Campaign is over, %s the battle!"
                 status.Save()
             | _ ->
                 let action = status.GetAsync(serverProc)

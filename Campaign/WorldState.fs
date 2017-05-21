@@ -164,6 +164,10 @@ with
         |> Seq.filter (fun (af, _) -> sg.GetRegion(af.Region).Owner = Some coalition)
         |> Seq.sumBy (fun (_, afs) -> afs.TotalPlaneValue)
 
+    member this.HasCoalitionFactories(coalition : CoalitionId) =
+        this.Regions
+        |> List.exists (fun region -> region.Owner = Some coalition && not region.ProductionHealth.IsEmpty)
+
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu
 open System.Numerics
