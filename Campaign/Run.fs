@@ -216,7 +216,6 @@ module WeatherComputation =
         let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
         let weather = Weather.getWeather random (state.Date + daysOffset)
 
-        backupFile state.Date config.OutputDir "weather"
         use weatherFile = File.CreateText(Path.Combine(config.OutputDir, "weather.xml"))
         serializer.Serialize(weatherFile, weather)
 
@@ -534,5 +533,6 @@ module MissionLogParsing =
             backupFile "state"
             backupFile "axisOrders"
             backupFile "alliesOrders"
+            backupFile "weather"
             use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
             serializer.Serialize(stateFile, state2)
