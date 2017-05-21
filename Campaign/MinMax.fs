@@ -312,7 +312,7 @@ with
         | Ongoing _, Defeat(Axis, _)
         | Defeat(Allies, _), Ongoing _ -> true
         | Defeat(Axis, _), Defeat(Allies, _) -> false
-        | Defeat(Allies, _), Defeat(Axis, _) -> false
+        | Defeat(Allies, _), Defeat(Axis, _) -> true
         | Defeat(Axis, d1), Defeat(Axis, d2) -> d1 > d2
         | Defeat(Allies, d1), Defeat(Allies, d2) -> d1 < d2
 
