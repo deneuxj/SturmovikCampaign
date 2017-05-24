@@ -1,0 +1,43 @@
+How to create a campaign map
+
+1. Define campaign start date
+Done in the mission properties dialog.
+
+2. Define regions
+They cannot overlap.
+Each region's boundary must be convex.
+Neighbouring regions must share contiguous segments. Corresponding vertices must be close.
+In a region's boundary, vertices must be separated by at least 2km.
+Airfields that participate in the campaign must all be located within some region.
+Neighbouring regions should be connected by roads or rails. The roads and rails can go through other regions, or outside of all regions, but they must start and end in the two regions.
+Avoid holes between regions, they will look ugly in the mission map and confuse players.
+Put region icons on identifiable cities, need not be in the center of the region.
+Put all regions in a group named "Regions".
+Set region owners. Each coalition must own at least one region with factories.
+
+3. Define roads and railways
+Each path must start with a waypoint named "Start" and finish with another one named "End".
+Each path is bidirectional, so you don't need (and must not) define another identical path going in the opposite direction.
+The speed, altitude and radius of waypoints do not matter.
+The direction matters, and should be a tangent of the road/railway at the location of the waypoint.
+Roads must be put in a group called "Roads", railways must be in "Trains".
+Each bridge should be preceded by a waypoint named "BeforeBridge" and followed by a waypoint named "AfterBridge".
+Make sure you place the waypoints on the actual location of the road. You need to use the terrain view in the editor, as the GUI map is often misaligned.
+Consecutive waypoints should be separated by at most 20km (direct line).
+
+4. Place factories
+
+5. Place supply storage
+
+6. Define AAA defense zones
+
+7. Define AT defense zones
+
+8. Define airfield spawn points
+
+9. Place plane parking spots
+
+10. Place tank parking areas
+
+
+
