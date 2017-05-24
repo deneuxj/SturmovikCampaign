@@ -93,6 +93,7 @@ with
         match this.Model with
         | Contains "arf_barak" -> 100.0f<E>
         | Contains "arf_dugouts_2" -> 400.0f<E>
+        | Contains "arf_dugouts_3" -> 600.0f<E>
         | Contains "arf_ammo_1" -> 100.0f<E>
         | _ -> 0.0f<E>
 
