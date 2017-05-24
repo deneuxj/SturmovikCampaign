@@ -4,6 +4,7 @@ How to create a campaign map
 Done in the mission properties dialog.
 
 2. Define regions
+Use influence areas.
 They cannot overlap.
 Each region's boundary must be convex.
 Neighbouring regions must share contiguous segments. Corresponding vertices must be close.
@@ -24,16 +25,39 @@ Roads must be put in a group called "Roads", railways must be in "Trains".
 Each bridge should be preceded by a waypoint named "BeforeBridge" and followed by a waypoint named "AfterBridge".
 Make sure you place the waypoints on the actual location of the road. You need to use the terrain view in the editor, as the GUI map is often misaligned.
 Consecutive waypoints should be separated by at most 20km (direct line).
+For roads, it is a advisable to have waypoints on each side of the border, before the first AT defense zones.
 
 4. Place factories
+Place static blocks with entities in a group named "Factories"
+Suitable static blocks are: "industrial_200x140_01", "industrial_200x140_02", "industrial_300x100_01",
+"industrial_300x100_02", "industrial_300x100_03", "industrial_300x100_04", "industrial_cornerl_01",
+"industrial_cornerl_02", "industrial_cornerr_01", "industrial_cornerr_02"
 
 5. Place supply storage
-
+Place static blocks with entities in a group named "Storage".
+Suitable static blocks are: "arf_barak" (100), "arf_dugouts_2" (400), "arf_dugouts_3" (600), "arf_ammo_1" (100)
+Number between parentheses above are the storage capacity of each static block.
+Storage is used for anti-tank (AT) and anti-air (AAA) defenses. Each gun consumes 50.
+		
 6. Define AAA defense zones
+Use influence areas named AAA in a group named "Defenses".
+Each area must be located within a region.
+The size of the area decides the number of canons. There is 1 gun per 100000m^2
 
 7. Define AT defense zones
+Use influence areas named AT in a group named "Defenses".
+Orient the influence area so that its yellow pointer aims at incoming tanks.
+Place these area along each road into the region.
+Each area must be located within a region.
+The size of the area decides the number of guns. There is 1 gun per 26000m^2
+
+Make sure there is enough storage in the region for all the canons in the defense areas.
 
 8. Define airfield spawn points
+Use fakefields for planes. Both types (sideways and runway) can be used.
+Do create the chart. It's needed for picking spawn points according to wind, and also for AIs that are landing.
+Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
+These alternative waypoints should all have the same name (typically the name of the airfield).
 
 9. Place plane parking spots
 
