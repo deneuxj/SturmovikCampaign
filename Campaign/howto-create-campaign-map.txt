@@ -38,7 +38,8 @@ Place static blocks with entities in a group named "Storage".
 Suitable static blocks are: "arf_barak" (100), "arf_dugouts_2" (400), "arf_dugouts_3" (600), "arf_ammo_1" (100)
 Number between parentheses above are the storage capacity of each static block.
 Storage is used for anti-tank (AT) and anti-air (AAA) defenses. Each gun consumes 50.
-		
+(Note: the storage groups I used in Velikie-Luki provide 3200 storage units, enough for 64 guns)
+
 6. Define AAA defense zones
 Use influence areas named AAA in a group named "Defenses".
 Each area must be located within a region.
@@ -54,14 +55,32 @@ The size of the area decides the number of guns. There is 1 gun per 26000m^2
 Make sure there is enough storage in the region for all the canons in the defense areas.
 
 8. Define airfield spawn points
-Use fakefields for planes. Both types (sideways and runway) can be used.
+Use fakefields for planes. Both types (sideways and runway) can be used. They must be in a group named "Aifield spawns"
+Do not create the entit.
 Do create the chart. It's needed for picking spawn points according to wind, and also for AIs that are landing.
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 These alternative waypoints should all have the same name (typically the name of the airfield).
 
 9. Place plane parking spots
+Each airfield (not spawn) must have 9 parking spots for fighters, 9 for attack planes and 9 for bombers.
+Parking spots for fighters are marked by static bf109 blocks (any variant)
+Parking spots for attack planes are marked by static bf110 blocks (any variant)
+Parking sports for bombers are marked by static ju88 blocks.
+That applies to the Allies side as well. In other words, parking spots on allied-controlled airfields use Axis planes too.
+All these blocks must be in a group named "Parked planes"
 
 10. Place tank parking areas
+Use influence areas in a group named "Tank parks"
+Make sure there's plenty of room for up to 100 tanks
+Each region must have exactly one
+
+11. Windsocks
+
+12. Non-directional beacons
+
+13. Land fires
+
+14. Bridges and other buildings
 
 
 
