@@ -329,7 +329,14 @@ let updateNumCanons (world : World) (state : WorldState) =
             Seq.zip world.AntiTankDefenses antiTank
             |> getNumCanonsPerRegion
             |> dict
-        fun x -> m1.[x] + m2.[x]
+        fun x ->
+            match m1.TryGetValue(x) with
+            | true, y -> y
+            | false, _ -> 0
+            +
+            match m2.TryGetValue(x) with
+            | true, y -> y
+            | false, _ -> 0
     // Correct number of defensive units depending on actual shell count.
     let adjustNumCanons (area : DefenseArea, state : DefenseAreaState) =
         let region = area.Home.Home
