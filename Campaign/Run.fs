@@ -276,17 +276,20 @@ module OrderDecision =
                 [], []
         let mkAttacks() =
             let random = System.Random()
-            let attack, numPlanes =
+            let attacks = 
                 mkAllAttackers world state
                 |> Array.ofSeq
                 |> Array.shuffle random
-                |> Seq.head
-            List.init (min config.MaxAttackers numPlanes) (fun _ ->
-                let offset = 500.0f * Vector2(random.NextDouble() |> float32, random.NextDouble() |> float32)
-                { attack with
-                    Start = attack.Start + offset
-                }
-            )
+            match attacks with
+            | [||] -> []
+            | _ ->
+                let attack, numPlanes = attacks.[0]
+                List.init (min config.MaxAttackers numPlanes) (fun _ ->
+                    let offset = 500.0f * Vector2(random.NextDouble() |> float32, random.NextDouble() |> float32)
+                    { attack with
+                        Start = attack.Start + offset
+                    }
+                )
         let axisAttacks, alliesAttacks =
             if weather.CloudDensity < 0.8 || weather.CloudHeight > 2500.0 then
                 let allAttacks = mkAttacks()

@@ -349,7 +349,7 @@ with
                 af
         )
 
-    static member ExtractAirfields(spawns : T.Airfield list, parkedPlanes : T.Plane list, storage : T.Block list, regions : Region list) =
+    static member inline ExtractAirfields(spawns : T.Airfield list, parkedPlanes : ^Plane list, storage : T.Block list, regions : Region list) =
         let airfields =
             spawns
             |> List.groupBy (fun spawn -> spawn.GetName().Value)
@@ -378,13 +378,14 @@ with
             parkedPlanes
             |> List.fold (fun (airfields : Airfield list) plane ->
                 let pos = Vector2.FromPos plane
+                let yori = plane |> getYOri |> valueOf |> float32
                 let home =
                     airfields
                     |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
-                match plane.GetModel().Value with
-                | ParkedPlaneTypes.Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
-                | ParkedPlaneTypes.Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
-                | ParkedPlaneTypes.Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = float32(plane.GetYOri().Value) })
+                match (plane |> getModel |> valueOf) with
+                | ParkedPlaneTypes.Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = yori })
+                | ParkedPlaneTypes.Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = yori })
+                | ParkedPlaneTypes.Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = yori })
                 | ParkedPlaneTypes.Other -> airfields
             ) airfields
         let airfields =
@@ -422,7 +423,7 @@ with
             let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
             let ammoStorages = List.concat [ data.GetGroup("Ammo").ListOfBlock; data.GetGroup("Storage").ListOfBlock ]
             let factories =
-                [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Storage").ListOfBlock ]
+                [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Factories").ListOfBlock ]
                 |> List.concat
                 |> List.filter(fun block -> block.GetLinkTrId().Value >= 1)
             let parkings =
@@ -436,12 +437,18 @@ with
         let defenses = data.GetGroup("Defenses")
         let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AAA"))
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
-        let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value = "AT")
+        let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AT"))
         let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(ats, regions, roads)
         let afs = data.GetGroup("Airfield spawns").ListOfAirfield
         let planes = data.GetGroup("Parked planes").ListOfPlane
         let afStorages = data.GetGroup("Airfield storage").ListOfBlock
-        let airfields = Airfield.ExtractAirfields(afs, planes, afStorages, regions)
+        let airfields =
+            match planes with
+            | [] ->
+                let staticPlanes = data.GetGroup("Parked planes").ListOfBlock
+                Airfield.ExtractAirfields(afs, staticPlanes, afStorages, regions)
+            | _ :: _->
+                Airfield.ExtractAirfields(afs, planes, afStorages, regions)
         let date =
             let options = List.head data.ListOfOptions
             let h, m, s = options.GetTime().Value

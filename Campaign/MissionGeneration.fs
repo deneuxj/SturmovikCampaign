@@ -600,7 +600,14 @@ let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (stat
 let writeMissionFile random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (strategyMissionFile : string) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
     let strategyMissionData = T.GroupData(Parsing.Stream.FromFile strategyMissionFile)
     let options = strategyMissionData.ListOfOptions.Head
-    let blocks = strategyMissionData.ListOfBlock
+    let blocks =
+        let allBlocks = strategyMissionData.ListOfBlock
+        let parkedPlanes =
+            strategyMissionData.GetGroup("Parked planes").CreateMcuList()
+            |> List.map (fun mcu -> mcu.Index)
+            |> Set.ofList
+        allBlocks
+        |> List.filter(fun block -> not(parkedPlanes.Contains(block.GetIndex().Value)))
     let bridges = strategyMissionData.ListOfBridge
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
