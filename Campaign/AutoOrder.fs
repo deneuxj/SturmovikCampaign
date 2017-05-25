@@ -100,13 +100,13 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
             for antiTank, antiTankState in Seq.zip world.AntiTankDefenses state.AntiTankDefenses do
                 match antiTank.Home with
                 | FrontLine(home, ngh) when frontLine.Contains(home, ngh)->
-                    yield home, float32(getAntiTankCanonsForArea antiTank - antiTankState.NumUnits) * canonCost
+                    yield home, float32(antiTank.MaxNumGuns - antiTankState.NumUnits) * canonCost
                 | _ ->
                     ()
             for antiAir, antiAirState in Seq.zip world.AntiAirDefenses state.AntiAirDefenses do
                 match antiAir.Home with
                 | Central(home) ->
-                    yield home, float32(getAntiAirCanonsForArea antiAir - antiAirState.NumUnits) * canonCost
+                    yield home, float32(antiAir.MaxNumGuns - antiAirState.NumUnits) * canonCost
                 | _ ->
                     ()
         }

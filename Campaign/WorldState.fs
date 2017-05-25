@@ -173,22 +173,6 @@ open SturmovikMission.DataProvider.Mcu
 open System.Numerics
 open Vector
 
-/// Maximum number of anti-air canons in an area. Depends on the area's size.
-let getAntiAirCanonsForArea (area : DefenseArea) =
-    let refArea = 500000.0f
-    let area = Vector2.ConvexPolygonArea(area.Boundary)
-    max (5.0f * area / refArea) 2.0f
-    |> ceil
-    |> int
-
-/// Maximum number of anti-tank canons in an area. Depends on the area's size.
-let getAntiTankCanonsForArea (area : DefenseArea) =
-    let refArea = 130.0e3f
-    let area = Vector2.ConvexPolygonArea(area.Boundary)
-    max (5.0f * area / refArea) 2.0f
-    |> ceil
-    |> int
-
 /// <summary>
 /// Compute the number of regions from any region to its nearest reachable source region.
 /// </summary>
@@ -322,19 +306,19 @@ let updateNumCanons (world : World) (state : WorldState) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     let frontLine = computeFrontLine false world state.Regions
-    let updateArea getCanonsForArea =
+    let updateArea =
         setNumUnitsAsIfFullySupplied
             (fun region -> sg.GetRegion(region).Owner)
             (fun x -> Set.contains x frontLine)
-            getCanonsForArea
+            (fun area -> area.MaxNumGuns)
     // Number of anti-air canons in each anti-air defense area, assuming unlimited supplies
     let antiAir =
         List.zip world.AntiAirDefenses state.AntiAirDefenses
-        |> List.map (updateArea getAntiAirCanonsForArea)
+        |> List.map updateArea
     // Number of anti-tank canons in each anti-tank defense area, assuming unlimited supplies
     let antiTank =
         List.zip world.AntiTankDefenses state.AntiTankDefenses
-        |> List.map (updateArea getAntiTankCanonsForArea)
+        |> List.map updateArea
     // Total amount of anti-air and anti-tank canons in each region
     let canonsPerRegion =
         let m1 =

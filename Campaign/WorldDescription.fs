@@ -7,6 +7,7 @@ open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks
 open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
+open SturmovikMission.DataProvider.Parsing
 
 open Campaign.Util
 open Campaign.BasicTypes
@@ -222,12 +223,17 @@ type DefenseArea = {
     /// The orientation is relevant for AT tank canons, so that they can aim at incoming tanks.
     Position : OrientedPosition
     Boundary : Vector2 list
+    MaxNumGuns : int
 }
 with
     static member ExtractCentralDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
         [
             for area in areas do
                 let pos = Vector2.FromPos(area)
+                let numGuns =
+                    match (Stream.FromString <| area.GetName().Value) with
+                    | ReLit "AAA-" (ReInt (n, EOF _)) -> n
+                    | _ -> 4
                 match regions |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary)) with
                 | Some region ->
                     yield {
@@ -235,6 +241,7 @@ with
                         Home = Central region.RegionId
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value) }
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
+                        MaxNumGuns = numGuns
                     }
                 | None ->
                     failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
@@ -267,6 +274,7 @@ with
                         Home = FrontLine(region.RegionId, other)
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value) } 
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
+                        MaxNumGuns = 4
                     }
                 | None ->
                     failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
@@ -426,7 +434,7 @@ with
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
         let rails = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
         let defenses = data.GetGroup("Defenses")
-        let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value = "AAA")
+        let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AAA"))
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
         let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value = "AT")
         let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(ats, regions, roads)
