@@ -150,7 +150,7 @@ let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
                                 |> Seq.sortBy snd
                                 |> Seq.tryLast
                                 |> Option.map fst
-                                |> Option.defaultVal (priorities.Plane.Random(coalition) |> Option.get)
+                                |> Option.defaultVal (priorities.Plane.Random(world.PlaneSet, coalition) |> Option.get)
                             let oldValue =
                                 Map.tryFind planeModel regState.Products.Planes
                                 |> Option.defaultVal 0.0f<E>

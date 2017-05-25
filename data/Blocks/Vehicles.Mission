@@ -605,12 +605,12 @@ Plane
   Name = "fighter1GER";
   Index = 20;
   LinkTrId = 0;
-  XPos = 29087.598;
-  YPos = 110.139;
-  ZPos = 20049.186;
+  XPos = 29086.782;
+  YPos = 108.584;
+  ZPos = 19965.750;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 14.30;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\bf109e7.txt";
   Model = "graphics\planes\bf109e7\bf109e7.mgm";
   Country = 0;
@@ -643,12 +643,12 @@ Plane
   Name = "fighter2GER";
   Index = 21;
   LinkTrId = 0;
-  XPos = 29087.279;
-  YPos = 110.114;
-  ZPos = 20066.610;
+  XPos = 29086.463;
+  YPos = 108.584;
+  ZPos = 19983.174;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 14.80;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\bf109f2.txt";
   Model = "graphics\planes\bf109f2\bf109f2.mgm";
   Country = 0;
@@ -719,12 +719,12 @@ Plane
   Name = "bomber1GER";
   Index = 23;
   LinkTrId = 0;
-  XPos = 29086.567;
-  YPos = 110.884;
-  ZPos = 20144.886;
+  XPos = 29087.435;
+  YPos = 108.584;
+  ZPos = 20170.931;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 11.40;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\ju88a4.txt";
   Model = "graphics\planes\ju88a4\ju88a4.mgm";
   Country = 0;
@@ -757,12 +757,12 @@ Plane
   Name = "fighter3GER";
   Index = 24;
   LinkTrId = 0;
-  XPos = 29086.726;
-  YPos = 110.074;
-  ZPos = 20083.463;
+  XPos = 29085.910;
+  YPos = 108.584;
+  ZPos = 20000.027;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 13.90;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\mc202s8.txt";
   Model = "graphics\planes\mc202s8\mc202s8.mgm";
   Country = 0;
@@ -795,12 +795,12 @@ Plane
   Name = "fighter1RUS";
   Index = 25;
   LinkTrId = 0;
-  XPos = 29068.586;
-  YPos = 109.979;
-  ZPos = 20048.375;
+  XPos = 29068.827;
+  YPos = 108.584;
+  ZPos = 19963.864;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 15.30;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\i16t24.txt";
   Model = "graphics\planes\i16t24\i16t24.mgm";
   Country = 0;
@@ -833,12 +833,12 @@ Plane
   Name = "fighter2RUS";
   Index = 26;
   LinkTrId = 0;
-  XPos = 29068.108;
-  YPos = 110.064;
-  ZPos = 20065.243;
+  XPos = 29068.349;
+  YPos = 108.584;
+  ZPos = 19980.732;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 15.00;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\mig3s24.txt";
   Model = "graphics\planes\mig3s24\mig3s24.mgm";
   Country = 0;
@@ -909,12 +909,12 @@ Plane
   Name = "bomber1RUS";
   Index = 28;
   LinkTrId = 0;
-  XPos = 29068.586;
-  YPos = 110.684;
-  ZPos = 20145.681;
+  XPos = 29067.963;
+  YPos = 108.584;
+  ZPos = 20172.188;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 12.50;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\pe2s35.txt";
   Model = "graphics\planes\pe2s35\pe2s35.mgm";
   Country = 0;
@@ -947,12 +947,12 @@ Plane
   Name = "fighter3RUS";
   Index = 29;
   LinkTrId = 0;
-  XPos = 29068.824;
-  YPos = 110.424;
-  ZPos = 20082.269;
+  XPos = 29069.065;
+  YPos = 108.584;
+  ZPos = 19997.758;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 13.90;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\p40e1.txt";
   Model = "graphics\planes\p40e1\p40e1.mgm";
   Country = 0;
@@ -1024,13 +1024,13 @@ Plane
   Index = 31;
   LinkTrId = 0;
   XPos = 29069.302;
-  YPos = 108.584;
+  YPos = 110.314;
   ZPos = 20123.245;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 0.00;
-  Script = "LuaScripts\WorldObjects\Planes\il2m41.txt";
-  Model = "graphics\planes\il2m41\il2m41.mgm";
+  ZOri = 11.70;
+  Script = "LuaScripts\WorldObjects\Planes\il2m42.txt";
+  Model = "graphics\planes\il2m42\il2m42.mgm";
   Country = 0;
   Desc = "";
   Skin = "";
@@ -1061,12 +1061,12 @@ Plane
   Name = "bomber2GER";
   Index = 32;
   LinkTrId = 0;
-  XPos = 29086.476;
-  YPos = 111.034;
-  ZPos = 20170.190;
+  XPos = 29087.344;
+  YPos = 108.584;
+  ZPos = 20196.235;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 9.00;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\he111h6.txt";
   Model = "graphics\planes\he111h6\he111h6.mgm";
   Country = 0;
@@ -1099,14 +1099,14 @@ Plane
   Name = "bomber2RUS";
   Index = 33;
   LinkTrId = 0;
-  XPos = 29068.654;
+  XPos = 29068.031;
   YPos = 110.684;
-  ZPos = 20170.747;
+  ZPos = 20197.254;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 12.50;
-  Script = "LuaScripts\WorldObjects\Planes\pe2s35.txt";
-  Model = "graphics\planes\pe2s35\pe2s35.mgm";
+  Script = "LuaScripts\WorldObjects\Planes\pe2s87.txt";
+  Model = "graphics\planes\pe2s87\pe2s87.mgm";
   Country = 0;
   Desc = "";
   Skin = "";
@@ -1228,12 +1228,12 @@ Train
 
 Block
 {
-  Name = "staFighter1GER";
+  Name = "staBf109e7";
   Index = 36;
   LinkTrId = 0;
   XPos = 29087.051;
   YPos = 108.584;
-  ZPos = 20275.383;
+  ZPos = 20295.114;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1251,12 +1251,12 @@ Block
 
 Block
 {
-  Name = "staFighter2GER";
+  Name = "staBf109";
   Index = 37;
   LinkTrId = 0;
   XPos = 29086.194;
   YPos = 108.584;
-  ZPos = 20300.663;
+  ZPos = 20320.394;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1279,7 +1279,7 @@ Block
   LinkTrId = 0;
   XPos = 29086.423;
   YPos = 108.584;
-  ZPos = 20340.675;
+  ZPos = 20360.406;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1302,7 +1302,7 @@ Block
   LinkTrId = 0;
   XPos = 29085.551;
   YPos = 108.584;
-  ZPos = 20369.003;
+  ZPos = 20388.734;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1323,12 +1323,12 @@ Plane
   Name = "transportGER";
   Index = 40;
   LinkTrId = 0;
-  XPos = 29086.840;
-  YPos = 110.934;
-  ZPos = 20205.248;
+  XPos = 29086.221;
+  YPos = 108.584;
+  ZPos = 20254.717;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 11.70;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\ju523mg4e.txt";
   Model = "graphics\planes\ju523mg4e\ju523mg4e.mgm";
   Country = 0;
@@ -1358,12 +1358,12 @@ Plane
 
 Block
 {
-  Name = "staFighter1RUS";
+  Name = "staI16";
   Index = 41;
   LinkTrId = 0;
   XPos = 29070.303;
   YPos = 108.584;
-  ZPos = 20275.419;
+  ZPos = 20295.150;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1381,12 +1381,12 @@ Block
 
 Block
 {
-  Name = "staFighter2RUS";
+  Name = "staMig3";
   Index = 42;
   LinkTrId = 0;
   XPos = 29070.303;
   YPos = 108.584;
-  ZPos = 20299.662;
+  ZPos = 20319.393;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1407,9 +1407,9 @@ Block
   Name = "staAttackerRUS";
   Index = 43;
   LinkTrId = 0;
-  XPos = 29069.008;
+  XPos = 29066.875;
   YPos = 108.584;
-  ZPos = 20341.480;
+  ZPos = 20387.934;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1430,9 +1430,9 @@ Block
   Name = "staBomberRUS";
   Index = 44;
   LinkTrId = 0;
-  XPos = 29067.246;
+  XPos = 29065.113;
   YPos = 108.584;
-  ZPos = 20368.912;
+  ZPos = 20415.366;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1450,17 +1450,17 @@ Block
 
 Block
 {
-  Name = "staFighter3RUS";
+  Name = "staLagg3";
   Index = 45;
   LinkTrId = 0;
-  XPos = 29069.547;
+  XPos = 29070.586;
   YPos = 108.584;
-  ZPos = 20319.128;
+  ZPos = 20339.014;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Model = "graphics\blocks\static_mig3.mgm";
-  Script = "LuaScripts\WorldObjects\Blocks\static_mig3.txt";
+  Model = "graphics\blocks\static_lagg3.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_lagg3.txt";
   Country = 0;
   Desc = "";
   Durability = 25000;
@@ -1473,17 +1473,17 @@ Block
 
 Block
 {
-  Name = "staFighter3GER";
+  Name = "staBf109Net";
   Index = 46;
   LinkTrId = 0;
-  XPos = 29086.063;
+  XPos = 29097.359;
   YPos = 108.584;
-  ZPos = 20317.467;
+  ZPos = 20320.254;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Model = "graphics\blocks\static_bf109.mgm";
-  Script = "LuaScripts\WorldObjects\Blocks\static_bf109.txt";
+  Model = "graphics\blocks\static_bf109_net.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bf109_net.txt";
   Country = 0;
   Desc = "";
   Durability = 25000;
@@ -1501,7 +1501,7 @@ Block
   LinkTrId = 0;
   XPos = 29086.468;
   YPos = 108.584;
-  ZPos = 20400.255;
+  ZPos = 20419.986;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1694,7 +1694,7 @@ Block
   LinkTrId = 0;
   XPos = 29134.946;
   YPos = 108.584;
-  ZPos = 20277.525;
+  ZPos = 20297.256;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1717,7 +1717,7 @@ Block
   LinkTrId = 0;
   XPos = 29134.443;
   YPos = 108.584;
-  ZPos = 20298.014;
+  ZPos = 20317.745;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1740,7 +1740,7 @@ Block
   LinkTrId = 0;
   XPos = 29134.258;
   YPos = 108.584;
-  ZPos = 20315.825;
+  ZPos = 20335.556;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1763,7 +1763,7 @@ Block
   LinkTrId = 0;
   XPos = 29122.335;
   YPos = 108.584;
-  ZPos = 20276.892;
+  ZPos = 20296.623;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1786,7 +1786,7 @@ Block
   LinkTrId = 0;
   XPos = 29122.287;
   YPos = 108.584;
-  ZPos = 20297.714;
+  ZPos = 20317.445;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1809,7 +1809,7 @@ Block
   LinkTrId = 0;
   XPos = 29122.239;
   YPos = 108.584;
-  ZPos = 20315.846;
+  ZPos = 20335.577;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1832,7 +1832,7 @@ Block
   LinkTrId = 0;
   XPos = 29085.504;
   YPos = 108.584;
-  ZPos = 20432.008;
+  ZPos = 20451.739;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1855,7 +1855,7 @@ Block
   LinkTrId = 0;
   XPos = 29085.889;
   YPos = 108.584;
-  ZPos = 20455.658;
+  ZPos = 20475.389;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1920,7 +1920,7 @@ Block
 Block
 {
   Name = "staFuelTruckGER";
-  Index = 65;
+  Index = 64;
   LinkTrId = 0;
   XPos = 29121.399;
   YPos = 108.584;
@@ -1943,7 +1943,7 @@ Block
 Block
 {
   Name = "staFuelTruckRUS";
-  Index = 66;
+  Index = 65;
   LinkTrId = 0;
   XPos = 29121.550;
   YPos = 108.584;
@@ -1966,7 +1966,7 @@ Block
 Block
 {
   Name = "FuelTanks";
-  Index = 67;
+  Index = 66;
   LinkTrId = 0;
   XPos = 29149.796;
   YPos = 108.584;
@@ -1976,6 +1976,715 @@ Block
   ZOri = 0.00;
   Model = "graphics\blocks\arf_gsm_2.mgm";
   Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Plane
+{
+  Name = "attacker3RUS";
+  Index = 67;
+  LinkTrId = 0;
+  XPos = 29068.812;
+  YPos = 110.324;
+  ZPos = 20144.874;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.10;
+  Script = "LuaScripts\WorldObjects\Planes\il2m43.txt";
+  Model = "graphics\planes\il2m43\il2m43.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter4RUS";
+  Index = 68;
+  LinkTrId = 0;
+  XPos = 29068.948;
+  YPos = 109.844;
+  ZPos = 20013.935;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.00;
+  Script = "LuaScripts\WorldObjects\Planes\yak1s69.txt";
+  Model = "graphics\planes\yak1s69\yak1s69.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter7RUS";
+  Index = 69;
+  LinkTrId = 0;
+  XPos = 29068.617;
+  YPos = 109.844;
+  ZPos = 20063.598;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.00;
+  Script = "LuaScripts\WorldObjects\Planes\yak1s127.txt";
+  Model = "graphics\planes\yak1s127\yak1s127.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter6RUS";
+  Index = 70;
+  LinkTrId = 0;
+  XPos = 29068.596;
+  YPos = 110.084;
+  ZPos = 20048.028;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 13.00;
+  Script = "LuaScripts\WorldObjects\Planes\la5s8.txt";
+  Model = "graphics\planes\la5s8\la5s8.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter4GER";
+  Index = 71;
+  LinkTrId = 0;
+  XPos = 29086.722;
+  YPos = 110.114;
+  ZPos = 20014.984;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.80;
+  Script = "LuaScripts\WorldObjects\Planes\bf109f4.txt";
+  Model = "graphics\planes\bf109f4\bf109f4.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter5GER";
+  Index = 72;
+  LinkTrId = 0;
+  XPos = 29086.624;
+  YPos = 110.114;
+  ZPos = 20032.101;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.80;
+  Script = "LuaScripts\WorldObjects\Planes\bf109g2.txt";
+  Model = "graphics\planes\bf109g2\bf109g2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter6GER";
+  Index = 73;
+  LinkTrId = 0;
+  XPos = 29086.768;
+  YPos = 110.384;
+  ZPos = 20049.435;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.50;
+  Script = "LuaScripts\WorldObjects\Planes\fw190a3.txt";
+  Model = "graphics\planes\fw190a3\fw190a3.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter7GER";
+  Index = 74;
+  LinkTrId = 0;
+  XPos = 29086.870;
+  YPos = 110.384;
+  ZPos = 20064.562;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.50;
+  Script = "LuaScripts\WorldObjects\Planes\fw190a5.txt";
+  Model = "graphics\planes\fw190a5\fw190a5.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "attacker3GER";
+  Index = 75;
+  LinkTrId = 0;
+  XPos = 29086.295;
+  YPos = 110.494;
+  ZPos = 20143.983;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 10.60;
+  Script = "LuaScripts\WorldObjects\Planes\bf110g2.txt";
+  Model = "graphics\planes\bf110g2\bf110g2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter5RUS";
+  Index = 76;
+  LinkTrId = 0;
+  XPos = 29069.317;
+  YPos = 110.084;
+  ZPos = 20030.270;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.80;
+  Script = "LuaScripts\WorldObjects\Planes\lagg3s29.txt";
+  Model = "graphics\planes\lagg3s29\lagg3s29.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter8GER";
+  Index = 77;
+  LinkTrId = 0;
+  XPos = 29086.849;
+  YPos = 110.134;
+  ZPos = 20078.470;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 13.70;
+  Script = "LuaScripts\WorldObjects\Planes\bf109g4.txt";
+  Model = "graphics\planes\bf109g4\bf109g4.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bomber3GER";
+  Index = 78;
+  LinkTrId = 0;
+  XPos = 29086.091;
+  YPos = 111.034;
+  ZPos = 20222.383;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 9.00;
+  Script = "LuaScripts\WorldObjects\Planes\he111h16.txt";
+  Model = "graphics\planes\he111h16\he111h16.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Block
+{
+  Name = "staYak1";
+  Index = 79;
+  LinkTrId = 0;
+  XPos = 29069.316;
+  YPos = 108.584;
+  ZPos = 20359.593;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_yak1.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_yak1.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staBf109e7Net";
+  Index = 80;
+  LinkTrId = 0;
+  XPos = 29097.517;
+  YPos = 108.584;
+  ZPos = 20295.401;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_bf109e7_net.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bf109e7_net.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staBf109e7Open";
+  Index = 81;
+  LinkTrId = 0;
+  XPos = 29107.669;
+  YPos = 108.584;
+  ZPos = 20295.830;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_bf109e7_open.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bf109e7_open.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staBf109Open";
+  Index = 82;
+  LinkTrId = 0;
+  XPos = 29107.669;
+  YPos = 108.584;
+  ZPos = 20320.280;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_bf109_open.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_bf109_open.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staI16Net";
+  Index = 83;
+  LinkTrId = 0;
+  XPos = 29058.548;
+  YPos = 108.584;
+  ZPos = 20294.718;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_i16_net.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_i16_net.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staMig3Net";
+  Index = 84;
+  LinkTrId = 0;
+  XPos = 29058.070;
+  YPos = 108.584;
+  ZPos = 20319.964;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_mig3_net.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_mig3_net.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staLagg3Net";
+  Index = 85;
+  LinkTrId = 0;
+  XPos = 29058.067;
+  YPos = 108.584;
+  ZPos = 20339.209;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_lagg3_net.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_lagg3_net.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staLagg3W1";
+  Index = 86;
+  LinkTrId = 0;
+  XPos = 29044.996;
+  YPos = 108.584;
+  ZPos = 20339.304;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_lagg3_w1.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_lagg3_w1.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staLagg3W2";
+  Index = 87;
+  LinkTrId = 0;
+  XPos = 29033.513;
+  YPos = 108.584;
+  ZPos = 20339.252;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_lagg3_w2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_lagg3_w2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staYak1Net";
+  Index = 88;
+  LinkTrId = 0;
+  XPos = 29056.736;
+  YPos = 108.584;
+  ZPos = 20359.729;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_yak1_net.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_yak1_net.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "staYak1Open";
+  Index = 89;
+  LinkTrId = 0;
+  XPos = 29045.281;
+  YPos = 108.584;
+  ZPos = 20359.670;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_yak1_open.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_yak1_open.txt";
   Country = 0;
   Desc = "";
   Durability = 25000;

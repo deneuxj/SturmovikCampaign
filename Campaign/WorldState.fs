@@ -434,7 +434,7 @@ let mkInitialState(world : World, strategyFile : string) =
                 match owner with
                 | None -> Map.empty
                 | Some coalition ->
-                    PlaneModel.AllModels
+                    PlaneModel.AllModels world.PlaneSet
                     |> Seq.filter (fun plane -> plane.Coalition = coalition)
                     |> Seq.map (fun plane -> plane.PlaneType, Array.init (int <| getNumPlanes plane.PlaneType) (fun _ -> plane))
                     |> Seq.groupBy fst

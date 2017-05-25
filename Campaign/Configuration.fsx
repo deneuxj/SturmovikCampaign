@@ -6,6 +6,7 @@ open Campaign.Run
 
 let config =
     { Configuration.Default with
+        PlaneSet = 2
         StrategyFile = "Vluki.mission"
         //OutputDir = @"C:\Users\johann\Documents\FromServer\AutoMoscow"
         OutputDir = @"C:\Users\johann\Documents\AutoVLuki"

@@ -131,7 +131,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                     let x = theirRegion.Position - ourRegion.Position
                     x / x.Length()
                 let p1 = ourRegion.Position + dir * 5000.0f
-                match PlaneModel.RandomPlaneOfType(PlaneType.Fighter, coalition) with
+                match PlaneModel.RandomPlaneOfType(world.PlaneSet, PlaneType.Fighter, coalition) with
                 | Some fighter ->
                     yield {
                         Plane = fighter
@@ -202,7 +202,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
                             Start = af.Pos
                             Target = af2.Pos
                             Altitude = 2000.0f
-                            Plane = PlaneModel.RandomPlaneOfType(Attacker, Axis).Value
+                            Plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, Attacker, Axis).Value
                             Coalition = Axis
                         }, 3
                     if numAlliesAttackers >= 7.0f then
@@ -210,7 +210,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
                             Start = af.Pos
                             Target = af2.Pos
                             Altitude = 2000.0f
-                            Plane = PlaneModel.RandomPlaneOfType(Attacker, Allies).Value
+                            Plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, Attacker, Allies).Value
                             Coalition = Allies
                         }, 3
             // Storage raids
@@ -229,7 +229,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
                                     Start = af.Pos
                                     Target = supplyGroup.Head.Pos.Pos
                                     Altitude = 2000.0f
-                                    Plane = PlaneModel.RandomPlaneOfType(Attacker, coalition).Value
+                                    Plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, Attacker, coalition).Value
                                     Coalition = coalition
                                 }, 2
             | None -> ()

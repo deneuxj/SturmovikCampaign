@@ -2,6 +2,7 @@
 module SturmovikMission.Blocks.Vehicles
 
 open SturmovikMission.DataProvider
+open SturmovikMission.DataProvider.Parsing
 open BlocksMissionData
 open System.IO
 
@@ -9,6 +10,16 @@ type VehicleTypeData = {
     Script : string
     Model : string
 }
+with
+    member this.ShortName =
+        let filename =
+            this.Model.Split([|'\\'|])
+            |> Seq.last
+        assert(filename.StartsWith "static_")
+        assert(filename.EndsWith ".mgm")
+        let withExtension = filename.["static_".Length..]
+        let shortName = withExtension.[0..withExtension.Length-4-1]
+        shortName
 
 let private data =
     let path = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location)
@@ -262,6 +273,60 @@ let germanFighter3 =
       Model = fighter.GetModel().Value
     }
 
+let russianFighter4 =
+    let fighter = planes.[T.Vehicles.fighter4RUS]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let germanFighter4 =
+    let fighter = planes.[T.Vehicles.fighter4GER]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let russianFighter5 =
+    let fighter = planes.[T.Vehicles.fighter5RUS]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let germanFighter5 =
+    let fighter = planes.[T.Vehicles.fighter5GER]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let russianFighter6 =
+    let fighter = planes.[T.Vehicles.fighter6RUS]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let germanFighter6 =
+    let fighter = planes.[T.Vehicles.fighter6GER]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let russianFighter7 =
+    let fighter = planes.[T.Vehicles.fighter7RUS]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let germanFighter7 =
+    let fighter = planes.[T.Vehicles.fighter7GER]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let germanFighter8 =
+    let fighter = planes.[T.Vehicles.fighter8GER]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
 let russianAttacker1 =
     let fighter = planes.[T.Vehicles.attacker1RUS]
     { Script = fighter.GetScript().Value
@@ -282,6 +347,18 @@ let russianAttacker2 =
 
 let germanAttacker2 =
     let fighter = planes.[T.Vehicles.attacker2GER]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let russianAttacker3 =
+    let fighter = planes.[T.Vehicles.attacker3RUS]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
+let germanAttacker3 =
+    let fighter = planes.[T.Vehicles.attacker3GER]
     { Script = fighter.GetScript().Value
       Model = fighter.GetModel().Value
     }
@@ -310,44 +387,116 @@ let germanBomber2 =
       Model = fighter.GetModel().Value
     }
 
+let germanBomber3 =
+    let fighter = planes.[T.Vehicles.bomber3GER]
+    { Script = fighter.GetScript().Value
+      Model = fighter.GetModel().Value
+    }
+
 let germanTransport =
     let fighter = planes.[T.Vehicles.transportGER]
     { Script = fighter.GetScript().Value
       Model = fighter.GetModel().Value
     }
 
-let russianStaFighter1 =
-    let block = statics.[T.Vehicles.staFighter1RUS]
+let russianStaI16 =
+    let block = statics.[T.Vehicles.staI16]
     { Script = block.GetScript().Value
       Model = block.GetModel().Value
     }
 
-let germanStaFighter1 =
-    let block = statics.[T.Vehicles.staFighter1GER]
+let russianStaI16Net =
+    let block = statics.[T.Vehicles.staI16Net]
     { Script = block.GetScript().Value
       Model = block.GetModel().Value
     }
 
-let russianStaFighter2 =
-    let block = statics.[T.Vehicles.staFighter2RUS]
+let russianStaMig3 =
+    let block = statics.[T.Vehicles.staMig3]
     { Script = block.GetScript().Value
       Model = block.GetModel().Value
     }
 
-let germanStaFighter2 =
-    let block = statics.[T.Vehicles.staFighter2GER]
+let russianStaMig3Net =
+    let block = statics.[T.Vehicles.staMig3Net]
     { Script = block.GetScript().Value
       Model = block.GetModel().Value
     }
 
-let russianStaFighter3 =
-    let block = statics.[T.Vehicles.staFighter3RUS]
+let russianStaLagg3 =
+    let block = statics.[T.Vehicles.staLagg3]
     { Script = block.GetScript().Value
       Model = block.GetModel().Value
     }
 
-let germanStaFighter3 =
-    let block = statics.[T.Vehicles.staFighter3GER]
+let russianStaLagg3Net =
+    let block = statics.[T.Vehicles.staLagg3Net]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let russianStaLagg3W1 =
+    let block = statics.[T.Vehicles.staLagg3W1]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let russianStaLagg3W2 =
+    let block = statics.[T.Vehicles.staLagg3W2]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let russianStaYak1 =
+    let block = statics.[T.Vehicles.staYak1]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let russianStaYak1Net=
+    let block = statics.[T.Vehicles.staYak1Net]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let russianStaYak1Open =
+    let block = statics.[T.Vehicles.staYak1Open]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let germanStaBf109e7 =
+    let block = statics.[T.Vehicles.staBf109e7]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let germanStaBf109e7Net =
+    let block = statics.[T.Vehicles.staBf109e7Net]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let germanStaBf109e7Open =
+    let block = statics.[T.Vehicles.staBf109e7Open]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let germanStaBf109 =
+    let block = statics.[T.Vehicles.staBf109]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let germanStaBf109Net =
+    let block = statics.[T.Vehicles.staBf109Net]
+    { Script = block.GetScript().Value
+      Model = block.GetModel().Value
+    }
+
+let germanStaBf109Open =
+    let block = statics.[T.Vehicles.staBf109Open]
     { Script = block.GetScript().Value
       Model = block.GetModel().Value
     }

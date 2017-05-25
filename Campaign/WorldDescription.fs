@@ -404,6 +404,7 @@ open SturmovikMission.DataProvider.Parsing
 
 /// Packages all description data.
 type World = {
+    PlaneSet : PlaneSet
     Regions : Region list
     Roads : Path list
     Rails : Path list
@@ -416,7 +417,7 @@ type World = {
     WeatherDaysOffset : float
 }
 with
-    static member Create(strategyFile) =
+    static member Create(planeSet, strategyFile) =
         let s = Stream.FromFile strategyFile
         let data = T.GroupData(s)
         let regions =
@@ -453,7 +454,8 @@ with
             let options = List.head data.ListOfOptions
             let h, m, s = options.GetTime().Value
             System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
-        { Regions = regions
+        { PlaneSet = planeSet
+          Regions = regions
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
