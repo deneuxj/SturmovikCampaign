@@ -41,22 +41,25 @@ Storage is used for anti-tank (AT) and anti-air (AAA) defenses. Each gun consume
 (Note: the storage groups I used in Velikie-Luki provide 3200 storage units, enough for 64 guns)
 
 6. Define AAA defense zones
-Use influence areas named AAA in a group named "Defenses".
+Use influence areas named "AAA-nn" in a group named "Defenses", with "nn" replace by a number indicating the maximum number of AA guns in that area.
 Each area must be located within a region.
-The size of the area decides the number of canons. There is 1 gun per 100000m^2
+Each area must be convex.
+Avoid trees and buildings in the area.
 
 7. Define AT defense zones
-Use influence areas named AT in a group named "Defenses".
+Use influence areas named AT in a group named "Defenses". In the game, each zone will contain at most 4 AT guns.
 Orient the influence area so that its yellow pointer aims at incoming tanks.
 Place these area along each road into the region.
 Each area must be located within a region.
-The size of the area decides the number of guns. There is 1 gun per 26000m^2
+Each area must be convex.
+Avoid trees and buildings in the area.
 
-Make sure there is enough storage in the region for all the canons in the defense areas.
+Make sure there is enough storage in the region for all the AT and AAA canons in the defense areas.
+Additional storage facilitates transferring supplies, it's a good idea to leave some extra storage capacity unused for defenses.
 
 8. Define airfield spawn points
 Use fakefields for planes. Both types (sideways and runway) can be used. They must be in a group named "Aifield spawns"
-Do not create the entit.
+Do not create the entity.
 Do create the chart. It's needed for picking spawn points according to wind, and also for AIs that are landing.
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 These alternative waypoints should all have the same name (typically the name of the airfield).
@@ -75,12 +78,18 @@ Make sure there's plenty of room for up to 100 tanks
 Each region must have exactly one
 
 11. Windsocks
+Create windsocks with entities in a group named "Windsocks"
 
 12. Non-directional beacons
+Create non-directional beacon "vehicles" with entities in a group named "NDBs".
+Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
 13. Land fires
+Create land fire effects without entities in a group named "Land fires"
 
 14. Bridges and other buildings
+Bridges and other blocks, buildings... need not be in groups, although they can.
+You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.
 
 
 
