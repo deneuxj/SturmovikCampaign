@@ -116,40 +116,43 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
         // Border patrol and offensive patrol
         let frontline = computeFrontLine true world state.Regions
         for region1, region2 in frontline do
-            let regions =
-                if sg.GetRegion(region1).Owner = Some coalition then
-                    Some(region1, region2)
-                else if sg.GetRegion(region2).Owner = Some coalition then
-                    Some(region2, region1)
-                else
-                    None
-            match regions with
-            | Some(ourRegion, theirRegion) ->
-                let ourRegion = wg.GetRegion(ourRegion)
-                let theirRegion = wg.GetRegion(theirRegion)
-                let dir =
-                    let x = theirRegion.Position - ourRegion.Position
-                    x / x.Length()
-                let p1 = ourRegion.Position + dir * 5000.0f
-                match PlaneModel.RandomPlaneOfType(world.PlaneSet, PlaneType.Fighter, coalition) with
-                | Some fighter ->
-                    yield {
-                        Plane = fighter
-                        Coalition = coalition
-                        Pos = p1
-                        Altitude = 3000.0f
-                    }
-                    let p1 = ourRegion.Position + dir * 20000.0f
-                    yield {
-                        Plane = fighter
-                        Coalition = coalition
-                        Pos = p1
-                        Altitude = 3000.0f
-                    }
-                | None ->
-                    ()
-            | None ->
-                ()
+            for af, afState in List.zip world.Airfields state.Airfields do
+                let owner = sg.GetRegion(af.Region).Owner
+                if owner = Some coalition && getNumPlanesOfType Fighter afState.NumPlanes > 2.0f then
+                    let regions =
+                        if sg.GetRegion(region1).Owner = Some coalition then
+                            Some(region1, region2)
+                        else if sg.GetRegion(region2).Owner = Some coalition then
+                            Some(region2, region1)
+                        else
+                            None
+                    match regions with
+                    | Some(ourRegion, theirRegion) ->
+                        let ourRegion = wg.GetRegion(ourRegion)
+                        let theirRegion = wg.GetRegion(theirRegion)
+                        let dir =
+                            let x = theirRegion.Position - ourRegion.Position
+                            x / x.Length()
+                        match PlaneModel.RandomPlaneOfType(world.PlaneSet, PlaneType.Fighter, coalition) with
+                        | Some fighter ->
+                            let p1 = ourRegion.Position + dir * 5000.0f
+                            yield af, {
+                                Plane = fighter
+                                Coalition = coalition
+                                Pos = p1
+                                Altitude = 3000.0f
+                            }
+                            let p1 = ourRegion.Position + dir * 20000.0f
+                            yield af, {
+                                Plane = fighter
+                                Coalition = coalition
+                                Pos = p1
+                                Altitude = 3000.0f
+                            }
+                        | None ->
+                            ()
+                    | None ->
+                        ()
     }
 
 

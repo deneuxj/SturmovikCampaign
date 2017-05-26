@@ -40,7 +40,7 @@ with
             MaxInvasionsInPlanning = 3
             MaxInvasions = 1
             MaxReinforcements = 1
-            MaxPatrols = 8
+            MaxPatrols = 6
             MaxAttackers = 3
             MissionName = "AutoGenMission2"
             MissionLength = 180
@@ -277,8 +277,15 @@ module OrderDecision =
             mkAllPatrols world state coalition
             |> Array.ofSeq
             |> Array.shuffle random
-            |> Array.truncate config.MaxPatrols
-            |> List.ofArray
+            |> Array.fold (fun (starts, filtered) (af, patrol) ->
+                if Set.contains af.AirfieldId starts then
+                    (starts, filtered)
+                else
+                    (Set.add af.AirfieldId starts, patrol :: filtered)
+            ) (Set.empty, [])
+            |> snd
+            |> List.rev
+            |> List.truncate config.MaxPatrols
         let axisPatrols, alliesPatrols =
             if weather.CloudDensity < 0.8 || weather.CloudHeight > 3500.0 then
                 mkPatrols Axis, mkPatrols Allies
