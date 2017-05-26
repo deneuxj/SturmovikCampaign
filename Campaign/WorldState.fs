@@ -387,6 +387,8 @@ let mkInitialState(world : World, strategyFile : string) =
         function
         | Axis -> distanceFromAxisFactories
         | Allies -> distanceFromAlliesFactories
+    // regions further from factories than this value are unsupplied.
+    let cutoffHops = 4
     let regions =
         world.Regions
         |> List.map (fun region ->
@@ -399,15 +401,19 @@ let mkInitialState(world : World, strategyFile : string) =
                         Map.tryFind region.RegionId (distanceFromFactories owner)
                         |> Option.defaultVal 10
                         |> min 10
+                    let scale x =
+                        x * (1.0f - (float32 hops) / (float32 cutoffHops))
+                        |> max 0.0f
                     let supplies =
                         region.Storage
                         |> Seq.sumBy (fun storage -> storage.Storage)
-                    let scale (n : int) =
-                        int(ceil(float32 n * (1.0f - (float32 hops) / 10.0f))) |> max 0
+                        |> float32
+                        |> scale
+                    let ceilint = ceil >> int
                     let vehicles =
-                        [(HeavyTank, scale 3); (MediumTank, scale 9); (LightArmor, scale 3)]
+                        [(HeavyTank, scale 3.0f |> ceilint); (MediumTank, scale 9.0f |> ceilint); (LightArmor, scale 3.0f |> ceilint)]
                         |> Map.ofList
-                    supplies, vehicles
+                    1.0f<E> * supplies, vehicles
             { RegionId = region.RegionId
               Owner = owner
               StorageHealth = region.Storage |> List.map (fun _ -> 1.0f)
@@ -425,10 +431,10 @@ let mkInitialState(world : World, strategyFile : string) =
             | Some owner ->
                 let hops =
                     Map.tryFind airfield.Region (distanceFromFactories owner)
-                    |> Option.defaultVal 10
-                    |> min 10
+                    |> Option.defaultVal cutoffHops
+                    |> min cutoffHops
                 let scale (x : float32) =
-                    x * (1.0f - (float32 hops) / 10.0f) |> max 0.0f
+                    x * (1.0f - (float32 hops) / (float32 cutoffHops)) |> max 0.0f
                 let numFighters = List.length airfield.ParkedFighters |> float32 |> scale
                 let numAttackers = List.length airfield.ParkedAttackers |> float32 |> scale
                 let numBombers = List.length airfield.ParkedBombers |> float32 |> scale
