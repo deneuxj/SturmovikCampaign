@@ -90,7 +90,7 @@ Group
     Index = 7;
     Name = "";
     Desc = "";
-    Targets = [3,10,408];
+    Targets = [3,10,11];
     Objects = [];
     XPos = 17026.359;
     YPos = 101.220;
@@ -137,7 +137,7 @@ Group
 
   MCU_Timer
   {
-    Index = 13;
+    Index = 14;
     Name = "WakeUp";
     Desc = "";
     Targets = [];
@@ -155,10 +155,10 @@ Group
 
   MCU_Proximity
   {
-    Index = 14;
+    Index = 15;
     Name = "EnemyClose";
     Desc = "";
-    Targets = [15,16,17];
+    Targets = [16,17,18];
     Objects = [];
     XPos = 16899.093;
     YPos = 102.302;
@@ -174,10 +174,10 @@ Group
 
   MCU_Timer
   {
-    Index = 16;
+    Index = 17;
     Name = "Timeout";
     Desc = "";
-    Targets = [19,15,10];
+    Targets = [20,16,10];
     Objects = [];
     XPos = 16926.143;
     YPos = 102.166;
@@ -192,7 +192,7 @@ Group
 
   MCU_Timer
   {
-    Index = 19;
+    Index = 20;
     Name = "Sleep";
     Desc = "";
     Targets = [];
@@ -210,10 +210,10 @@ Group
 
   MCU_Timer
   {
-    Index = 21;
+    Index = 22;
     Name = "CheckAgain";
     Desc = "";
-    Targets = [22,23];
+    Targets = [23,24];
     Objects = [];
     XPos = 16899.914;
     YPos = 102.399;
@@ -228,10 +228,10 @@ Group
 
   MCU_Activate
   {
-    Index = 22;
+    Index = 23;
     Name = "";
     Desc = "";
-    Targets = [14];
+    Targets = [15];
     Objects = [];
     XPos = 16905.252;
     YPos = 102.380;
@@ -244,10 +244,10 @@ Group
 
   MCU_Timer
   {
-    Index = 23;
+    Index = 24;
     Name = "1s";
     Desc = "";
-    Targets = [14];
+    Targets = [15];
     Objects = [];
     XPos = 16899.425;
     YPos = 102.506;
@@ -262,10 +262,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 15;
+    Index = 16;
     Name = "";
     Desc = "";
-    Targets = [14];
+    Targets = [15];
     Objects = [];
     XPos = 16898.928;
     YPos = 102.515;
@@ -278,10 +278,10 @@ Group
 
   MCU_Timer
   {
-    Index = 17;
+    Index = 18;
     Name = "Delay";
     Desc = "";
-    Targets = [21];
+    Targets = [22];
     Objects = [];
     XPos = 16893.654;
     YPos = 101.885;
@@ -296,10 +296,10 @@ Group
 
   MCU_Timer
   {
-    Index = 28;
+    Index = 29;
     Name = "StopMonitoring";
     Desc = "";
-    Targets = [4,29,409];
+    Targets = [4,30,31];
     Objects = [];
     XPos = 17067.553;
     YPos = 100.846;
@@ -314,10 +314,10 @@ Group
 
   MCU_Timer
   {
-    Index = 30;
+    Index = 32;
     Name = "Deactivate";
     Desc = "";
-    Targets = [31];
+    Targets = [33];
     Objects = [];
     XPos = 16980.295;
     YPos = 101.240;
@@ -332,7 +332,7 @@ Group
 
   MCU_Deactivate
   {
-    Index = 31;
+    Index = 33;
     Name = "";
     Desc = "";
     Targets = [5];
@@ -351,7 +351,7 @@ Group
     Index = 5;
     Name = "0s";
     Desc = "";
-    Targets = [13,16,21];
+    Targets = [14,17,22];
     Objects = [];
     XPos = 16955.196;
     YPos = 102.588;
@@ -366,7 +366,7 @@ Group
 
   MCU_Activate
   {
-    Index = 34;
+    Index = 36;
     Name = "";
     Desc = "";
     Targets = [5];
@@ -382,10 +382,10 @@ Group
 
   MCU_Timer
   {
-    Index = 35;
+    Index = 37;
     Name = "Activate";
     Desc = "";
-    Targets = [34,408];
+    Targets = [36,11];
     Objects = [];
     XPos = 16998.728;
     YPos = 101.240;
@@ -400,7 +400,7 @@ Group
 
   MCU_Activate
   {
-    Index = 36;
+    Index = 38;
     Name = "";
     Desc = "";
     Targets = [3];
@@ -416,7 +416,7 @@ Group
 
   MCU_Timer
   {
-    Index = 37;
+    Index = 39;
     Name = "RandomDelay";
     Desc = "";
     Targets = [];
@@ -437,7 +437,7 @@ Group
     Index = 10;
     Name = "Gate";
     Desc = "";
-    Targets = [36];
+    Targets = [38];
     Objects = [];
     XPos = 16951.116;
     YPos = 102.772;
@@ -452,7 +452,7 @@ Group
 
   MCU_Deactivate
   {
-    Index = 29;
+    Index = 30;
     Name = "";
     Desc = "";
     Targets = [10];
@@ -468,7 +468,7 @@ Group
 
   MCU_Activate
   {
-    Index = 407;
+    Index = 42;
     Name = "";
     Desc = "";
     Targets = [3];
@@ -484,10 +484,10 @@ Group
 
   MCU_Timer
   {
-    Index = 408;
+    Index = 11;
     Name = "GateStarted";
     Desc = "";
-    Targets = [407];
+    Targets = [42];
     Objects = [];
     XPos = 17009.307;
     YPos = 101.723;
@@ -502,10 +502,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 409;
+    Index = 31;
     Name = "Trigger Deactivate";
     Desc = "";
-    Targets = [408];
+    Targets = [11];
     Objects = [];
     XPos = 17023.917;
     YPos = 101.398;
@@ -523,13 +523,13 @@ Group
 Group
 {
   Name = "Convoy";
-  Index = 40;
+  Index = 45;
   Desc = "";
   Vehicle
   {
     Name = "LeadCar";
-    Index = 41;
-    LinkTrId = 42;
+    Index = 46;
+    LinkTrId = 47;
     XPos = 16762.704;
     YPos = 102.933;
     ZPos = 28533.955;
@@ -557,7 +557,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 42;
+    Index = 47;
     Name = "LeadCar entity";
     Desc = "";
     Targets = [];
@@ -569,13 +569,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 0;
-    MisObjID = 41;
+    MisObjID = 46;
     OnEvents
     {
       OnEvent
       {
         Type = 12;
-        TarId = 44;
+        TarId = 49;
       }
     }
   }
@@ -583,10 +583,10 @@ Group
 
   MCU_Timer
   {
-    Index = 45;
+    Index = 50;
     Name = "ActivateGroup";
     Desc = "";
-    Targets = [46,47];
+    Targets = [51,52];
     Objects = [];
     XPos = 16803.381;
     YPos = 104.434;
@@ -601,11 +601,11 @@ Group
 
   MCU_Activate
   {
-    Index = 46;
+    Index = 51;
     Name = "";
     Desc = "";
     Targets = [];
-    Objects = [42];
+    Objects = [47];
     XPos = 16780.988;
     YPos = 104.711;
     ZPos = 28519.276;
@@ -617,11 +617,11 @@ Group
 
   MCU_CMD_Formation
   {
-    Index = 49;
+    Index = 54;
     Name = "OnRoad";
     Desc = "";
     Targets = [];
-    Objects = [42];
+    Objects = [47];
     XPos = 16816.126;
     YPos = 104.514;
     ZPos = 28530.502;
@@ -635,10 +635,10 @@ Group
 
   MCU_Timer
   {
-    Index = 47;
+    Index = 52;
     Name = "1s";
     Desc = "";
-    Targets = [49,51];
+    Targets = [54,56];
     Objects = [];
     XPos = 16810.331;
     YPos = 104.479;
@@ -653,7 +653,7 @@ Group
 
   MCU_Timer
   {
-    Index = 51;
+    Index = 56;
     Name = "TriggerGates";
     Desc = "";
     Targets = [];
@@ -671,10 +671,10 @@ Group
 
   MCU_Timer
   {
-    Index = 53;
+    Index = 58;
     Name = "DeactivateGroup";
     Desc = "";
-    Targets = [54];
+    Targets = [59];
     Objects = [];
     XPos = 16803.915;
     YPos = 103.742;
@@ -689,11 +689,11 @@ Group
 
   MCU_Deactivate
   {
-    Index = 54;
+    Index = 59;
     Name = "";
     Desc = "";
     Targets = [];
-    Objects = [42];
+    Objects = [47];
     XPos = 16763.654;
     YPos = 104.274;
     ZPos = 28508.557;
@@ -705,7 +705,7 @@ Group
 
   MCU_Timer
   {
-    Index = 44;
+    Index = 49;
     Name = "LeadCarDamaged";
     Desc = "";
     Targets = [];
@@ -723,11 +723,11 @@ Group
 
   MCU_Delete
   {
-    Index = 57;
+    Index = 62;
     Name = "";
     Desc = "";
     Targets = [];
-    Objects = [42];
+    Objects = [47];
     XPos = 16756.786;
     YPos = 104.969;
     ZPos = 28538.410;
@@ -740,14 +740,14 @@ Group
   Group
   {
     Name = "ActiveWaypoint";
-    Index = 58;
+    Index = 63;
     Desc = "";
     MCU_Waypoint
     {
-      Index = 59;
+      Index = 64;
       Name = "Waypoint";
       Desc = "";
-      Targets = [60];
+      Targets = [65];
       Objects = [];
       XPos = 16906.767;
       YPos = 99.288;
@@ -763,10 +763,10 @@ Group
 
     MCU_Timer
     {
-      Index = 61;
+      Index = 66;
       Name = "Gate";
       Desc = "";
-      Targets = [59];
+      Targets = [64];
       Objects = [];
       XPos = 16906.143;
       YPos = 99.673;
@@ -781,10 +781,10 @@ Group
 
     MCU_Activate
     {
-      Index = 62;
+      Index = 67;
       Name = "";
       Desc = "";
-      Targets = [61];
+      Targets = [66];
       Objects = [];
       XPos = 16925.349;
       YPos = 99.501;
@@ -797,10 +797,10 @@ Group
 
     MCU_Deactivate
     {
-      Index = 60;
+      Index = 65;
       Name = "";
       Desc = "";
-      Targets = [61];
+      Targets = [66];
       Objects = [];
       XPos = 16883.736;
       YPos = 100.558;
@@ -813,10 +813,10 @@ Group
 
     MCU_Counter
     {
-      Index = 64;
+      Index = 69;
       Name = "ActivateGate";
       Desc = "";
-      Targets = [62];
+      Targets = [67];
       Objects = [];
       XPos = 16936.501;
       YPos = 99.096;
@@ -831,10 +831,10 @@ Group
 
     MCU_Timer
     {
-      Index = 65;
+      Index = 70;
       Name = "DeactivateGate";
       Desc = "";
-      Targets = [60];
+      Targets = [65];
       Objects = [];
       XPos = 16878.541;
       YPos = 100.582;
@@ -853,13 +853,13 @@ Group
   Group
   {
     Name = "TruckInConvoy";
-    Index = 66;
+    Index = 71;
     Desc = "";
     Vehicle
     {
       Name = "Truck";
-      Index = 67;
-      LinkTrId = 68;
+      Index = 72;
+      LinkTrId = 73;
       XPos = 16727.146;
       YPos = 102.933;
       ZPos = 28498.849;
@@ -887,7 +887,7 @@ Group
 
     MCU_TR_Entity
     {
-      Index = 68;
+      Index = 73;
       Name = "Truck entity";
       Desc = "";
       Targets = [];
@@ -899,13 +899,13 @@ Group
       YOri = 0.00;
       ZOri = 0.00;
       Enabled = 0;
-      MisObjID = 67;
+      MisObjID = 72;
       OnEvents
       {
         OnEvent
         {
           Type = 12;
-          TarId = 70;
+          TarId = 75;
         }
       }
     }
@@ -913,7 +913,7 @@ Group
 
     MCU_Timer
     {
-      Index = 70;
+      Index = 75;
       Name = "TruckDamaged";
       Desc = "";
       Targets = [];
@@ -931,11 +931,11 @@ Group
 
     MCU_Delete
     {
-      Index = 72;
+      Index = 77;
       Name = "";
       Desc = "";
       Targets = [];
-      Objects = [68];
+      Objects = [73];
       XPos = 16720.553;
       YPos = 104.969;
       ZPos = 28509.680;
@@ -947,10 +947,10 @@ Group
 
     MCU_Timer
     {
-      Index = 73;
+      Index = 78;
       Name = "DeleteTruck";
       Desc = "";
-      Targets = [72];
+      Targets = [77];
       Objects = [];
       XPos = 16714.129;
       YPos = 104.764;
@@ -965,10 +965,10 @@ Group
 
     MCU_Timer
     {
-      Index = 74;
+      Index = 79;
       Name = "Discard";
       Desc = "";
-      Targets = [72];
+      Targets = [77];
       Objects = [];
       XPos = 16711.282;
       YPos = 105.012;
@@ -986,10 +986,10 @@ Group
 
   MCU_Timer
   {
-    Index = 75;
+    Index = 80;
     Name = "DeleteLeadCar";
     Desc = "";
-    Targets = [57];
+    Targets = [62];
     Objects = [];
     XPos = 16750.264;
     YPos = 105.012;
@@ -1004,10 +1004,10 @@ Group
 
   MCU_Timer
   {
-    Index = 76;
+    Index = 81;
     Name = "Discard";
     Desc = "";
-    Targets = [57];
+    Targets = [62];
     Objects = [];
     XPos = 16747.405;
     YPos = 105.012;
@@ -1027,14 +1027,14 @@ Group
 Group
 {
   Name = "Timer";
-  Index = 77;
+  Index = 82;
   Desc = "";
   MCU_Timer
   {
-    Index = 78;
+    Index = 83;
     Name = "Start";
     Desc = "";
-    Targets = [79,80];
+    Targets = [84,85];
     Objects = [];
     XPos = 16386.024;
     YPos = 109.891;
@@ -1049,10 +1049,10 @@ Group
 
   MCU_Timer
   {
-    Index = 81;
+    Index = 86;
     Name = "Stop";
     Desc = "";
-    Targets = [82];
+    Targets = [87];
     Objects = [];
     XPos = 16383.270;
     YPos = 109.891;
@@ -1067,10 +1067,10 @@ Group
 
   MCU_Timer
   {
-    Index = 80;
+    Index = 85;
     Name = "Timer";
     Desc = "";
-    Targets = [84];
+    Targets = [89];
     Objects = [];
     XPos = 16384.306;
     YPos = 109.891;
@@ -1085,7 +1085,7 @@ Group
 
   MCU_Timer
   {
-    Index = 84;
+    Index = 89;
     Name = "Elapsed";
     Desc = "";
     Targets = [];
@@ -1103,10 +1103,10 @@ Group
 
   MCU_Activate
   {
-    Index = 79;
+    Index = 84;
     Name = "";
     Desc = "";
-    Targets = [84];
+    Targets = [89];
     Objects = [];
     XPos = 16385.308;
     YPos = 109.884;
@@ -1119,10 +1119,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 82;
+    Index = 87;
     Name = "";
     Desc = "";
-    Targets = [84];
+    Targets = [89];
     Objects = [];
     XPos = 16383.270;
     YPos = 109.880;
@@ -1140,11 +1140,11 @@ Group
 Group
 {
   Name = "Palette";
-  Index = 88;
+  Index = 93;
   Desc = "";
   MCU_Counter
   {
-    Index = 89;
+    Index = 94;
     Name = "Trigger Counter";
     Desc = "";
     Targets = [];
@@ -1162,7 +1162,7 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 90;
+    Index = 95;
     Name = "Translator Mission Begin";
     Desc = "";
     Targets = [];
@@ -1179,7 +1179,7 @@ Group
 
   MCU_CMD_ForceComplete
   {
-    Index = 91;
+    Index = 96;
     Name = "ForceCompleteLow";
     Desc = "";
     Targets = [];
@@ -1201,13 +1201,13 @@ Group
 Group
 {
   Name = "AntiTank";
-  Index = 92;
+  Index = 97;
   Desc = "";
   Vehicle
   {
     Name = "CANON";
-    Index = 93;
-    LinkTrId = 94;
+    Index = 98;
+    LinkTrId = 99;
     XPos = 16395.054;
     YPos = 106.604;
     ZPos = 26584.564;
@@ -1235,7 +1235,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 94;
+    Index = 99;
     Name = "AT leader entity";
     Desc = "";
     Targets = [];
@@ -1247,13 +1247,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 0;
-    MisObjID = 93;
+    MisObjID = 98;
     OnEvents
     {
       OnEvent
       {
         Type = 13;
-        TarId = 96;
+        TarId = 101;
       }
     }
     OnReports
@@ -1261,8 +1261,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 98;
-        TarId = 97;
+        CmdId = 103;
+        TarId = 102;
       }
     }
   }
@@ -1270,11 +1270,11 @@ Group
 
   MCU_CMD_AttackArea
   {
-    Index = 97;
+    Index = 102;
     Name = "command AttackArea";
     Desc = "";
     Targets = [];
-    Objects = [94];
+    Objects = [99];
     XPos = 17380.339;
     YPos = 106.285;
     ZPos = 26586.119;
@@ -1292,10 +1292,10 @@ Group
 
   MCU_Timer
   {
-    Index = 100;
+    Index = 105;
     Name = "SHOW";
     Desc = "";
-    Targets = [98,101,102];
+    Targets = [103,106,107];
     Objects = [];
     XPos = 16368.612;
     YPos = 107.599;
@@ -1310,10 +1310,10 @@ Group
 
   MCU_Timer
   {
-    Index = 103;
+    Index = 108;
     Name = "HIDE";
     Desc = "";
-    Targets = [104,105,106,107];
+    Targets = [109,110,111,112];
     Objects = [];
     XPos = 16374.617;
     YPos = 107.594;
@@ -1328,11 +1328,11 @@ Group
 
   MCU_CMD_ForceComplete
   {
-    Index = 104;
+    Index = 109;
     Name = "sleep";
     Desc = "";
     Targets = [];
-    Objects = [94];
+    Objects = [99];
     XPos = 16394.963;
     YPos = 108.453;
     ZPos = 26604.601;
@@ -1345,11 +1345,11 @@ Group
 
   MCU_Spawner
   {
-    Index = 98;
+    Index = 103;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
-    Objects = [94];
+    Objects = [99];
     XPos = 16386.830;
     YPos = 112.427;
     ZPos = 26596.245;
@@ -1362,10 +1362,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 96;
+    Index = 101;
     Name = "";
     Desc = "";
-    Targets = [98];
+    Targets = [103];
     Objects = [];
     XPos = 16386.885;
     YPos = 112.841;
@@ -1378,10 +1378,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 105;
+    Index = 110;
     Name = "";
     Desc = "";
-    Targets = [103];
+    Targets = [108];
     Objects = [];
     XPos = 16376.734;
     YPos = 112.247;
@@ -1394,10 +1394,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 101;
+    Index = 106;
     Name = "";
     Desc = "";
-    Targets = [100];
+    Targets = [105];
     Objects = [];
     XPos = 16366.179;
     YPos = 112.247;
@@ -1410,10 +1410,10 @@ Group
 
   MCU_Activate
   {
-    Index = 106;
+    Index = 111;
     Name = "";
     Desc = "";
-    Targets = [100];
+    Targets = [105];
     Objects = [];
     XPos = 16371.773;
     YPos = 112.275;
@@ -1426,10 +1426,10 @@ Group
 
   MCU_Activate
   {
-    Index = 102;
+    Index = 107;
     Name = "";
     Desc = "";
-    Targets = [103];
+    Targets = [108];
     Objects = [];
     XPos = 16371.773;
     YPos = 112.275;
@@ -1442,10 +1442,10 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 115;
+    Index = 120;
     Name = "";
     Desc = "";
-    Targets = [105];
+    Targets = [110];
     Objects = [];
     XPos = 16379.128;
     YPos = 112.230;
@@ -1459,11 +1459,11 @@ Group
 
   MCU_Delete
   {
-    Index = 116;
+    Index = 121;
     Name = "";
     Desc = "";
     Targets = [];
-    Objects = [94];
+    Objects = [99];
     XPos = 16402.806;
     YPos = 112.093;
     ZPos = 26596.392;
@@ -1475,10 +1475,10 @@ Group
 
   MCU_Timer
   {
-    Index = 107;
+    Index = 112;
     Name = "";
     Desc = "";
-    Targets = [116];
+    Targets = [121];
     Objects = [];
     XPos = 16402.696;
     YPos = 112.033;
@@ -1498,13 +1498,13 @@ Group
 Group
 {
   Name = "AntiAir";
-  Index = 118;
+  Index = 123;
   Desc = "";
   Vehicle
   {
     Name = "CANON";
-    Index = 119;
-    LinkTrId = 120;
+    Index = 124;
+    LinkTrId = 125;
     XPos = 16373.178;
     YPos = 100.690;
     ZPos = 24731.090;
@@ -1532,7 +1532,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 120;
+    Index = 125;
     Name = "AT leader entity";
     Desc = "";
     Targets = [];
@@ -1544,13 +1544,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 0;
-    MisObjID = 119;
+    MisObjID = 124;
     OnEvents
     {
       OnEvent
       {
         Type = 13;
-        TarId = 122;
+        TarId = 127;
       }
     }
     OnReports
@@ -1558,8 +1558,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 124;
-        TarId = 123;
+        CmdId = 129;
+        TarId = 128;
       }
     }
   }
@@ -1567,11 +1567,11 @@ Group
 
   MCU_CMD_AttackArea
   {
-    Index = 123;
+    Index = 128;
     Name = "AttackAirTargets";
     Desc = "";
     Targets = [];
-    Objects = [120];
+    Objects = [125];
     XPos = 16376.486;
     YPos = 106.285;
     ZPos = 24731.122;
@@ -1589,10 +1589,10 @@ Group
 
   MCU_Timer
   {
-    Index = 126;
+    Index = 131;
     Name = "SHOW";
     Desc = "";
-    Targets = [124,127,128];
+    Targets = [129,132,133];
     Objects = [];
     XPos = 16361.364;
     YPos = 107.599;
@@ -1607,10 +1607,10 @@ Group
 
   MCU_Timer
   {
-    Index = 129;
+    Index = 134;
     Name = "HIDE";
     Desc = "";
-    Targets = [130,131,132,133];
+    Targets = [135,136,137,138];
     Objects = [];
     XPos = 16367.369;
     YPos = 107.594;
@@ -1625,11 +1625,11 @@ Group
 
   MCU_CMD_ForceComplete
   {
-    Index = 130;
+    Index = 135;
     Name = "sleep";
     Desc = "";
     Targets = [];
-    Objects = [120];
+    Objects = [125];
     XPos = 16380.816;
     YPos = 108.453;
     ZPos = 24744.140;
@@ -1642,11 +1642,11 @@ Group
 
   MCU_Spawner
   {
-    Index = 124;
+    Index = 129;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
-    Objects = [120];
+    Objects = [125];
     XPos = 16372.978;
     YPos = 100.770;
     ZPos = 24740.265;
@@ -1659,10 +1659,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 127;
+    Index = 132;
     Name = "";
     Desc = "";
-    Targets = [126];
+    Targets = [131];
     Objects = [];
     XPos = 16361.520;
     YPos = 100.414;
@@ -1675,10 +1675,10 @@ Group
 
   MCU_Activate
   {
-    Index = 128;
+    Index = 133;
     Name = "";
     Desc = "";
-    Targets = [129];
+    Targets = [134];
     Objects = [];
     XPos = 16364.410;
     YPos = 100.089;
@@ -1691,10 +1691,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 131;
+    Index = 136;
     Name = "";
     Desc = "";
-    Targets = [129];
+    Targets = [134];
     Objects = [];
     XPos = 16367.519;
     YPos = 100.414;
@@ -1707,10 +1707,10 @@ Group
 
   MCU_Activate
   {
-    Index = 132;
+    Index = 137;
     Name = "";
     Desc = "";
-    Targets = [126];
+    Targets = [131];
     Objects = [];
     XPos = 16364.362;
     YPos = 100.089;
@@ -1723,10 +1723,10 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 140;
+    Index = 145;
     Name = "";
     Desc = "";
-    Targets = [131];
+    Targets = [136];
     Objects = [];
     XPos = 16367.527;
     YPos = 100.246;
@@ -1740,10 +1740,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 122;
+    Index = 127;
     Name = "Trigger Deactivate";
     Desc = "";
-    Targets = [124];
+    Targets = [129];
     Objects = [];
     XPos = 16369.658;
     YPos = 100.951;
@@ -1756,11 +1756,11 @@ Group
 
   MCU_Delete
   {
-    Index = 142;
+    Index = 147;
     Name = "Trigger Delete";
     Desc = "";
     Targets = [];
-    Objects = [120];
+    Objects = [125];
     XPos = 16375.199;
     YPos = 100.614;
     ZPos = 24740.410;
@@ -1772,10 +1772,10 @@ Group
 
   MCU_Timer
   {
-    Index = 133;
+    Index = 138;
     Name = "Trigger Timer";
     Desc = "";
-    Targets = [142];
+    Targets = [147];
     Objects = [];
     XPos = 16375.199;
     YPos = 100.595;
@@ -1795,14 +1795,14 @@ Group
 Group
 {
   Name = "EventLogging";
-  Index = 144;
+  Index = 149;
   Desc = "";
   MCU_Timer
   {
-    Index = 145;
+    Index = 150;
     Name = "IsEnabled";
     Desc = "";
-    Targets = [146];
+    Targets = [151];
     Objects = [];
     XPos = 16659.880;
     YPos = 98.018;
@@ -1817,10 +1817,10 @@ Group
 
   MCU_Timer
   {
-    Index = 147;
+    Index = 152;
     Name = "Trigger";
     Desc = "";
-    Targets = [145];
+    Targets = [150];
     Objects = [];
     XPos = 16645.032;
     YPos = 98.505;
@@ -1835,10 +1835,10 @@ Group
 
   MCU_Timer
   {
-    Index = 148;
+    Index = 153;
     Name = "Disable";
     Desc = "";
-    Targets = [149];
+    Targets = [154];
     Objects = [];
     XPos = 16644.525;
     YPos = 98.559;
@@ -1853,10 +1853,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 149;
+    Index = 154;
     Name = "";
     Desc = "";
-    Targets = [145];
+    Targets = [150];
     Objects = [];
     XPos = 16660.113;
     YPos = 98.685;
@@ -1869,11 +1869,11 @@ Group
 
   MCU_CMD_Damage
   {
-    Index = 146;
+    Index = 151;
     Name = "TriggerNotification";
     Desc = "";
     Targets = [];
-    Objects = [152];
+    Objects = [157];
     XPos = 16674.063;
     YPos = 97.906;
     ZPos = 28870.289;
@@ -1887,10 +1887,10 @@ Group
 
   MCU_Timer
   {
-    Index = 153;
+    Index = 158;
     Name = "";
     Desc = "";
-    Targets = [154];
+    Targets = [159];
     Objects = [];
     XPos = 16681.676;
     YPos = 97.854;
@@ -1905,11 +1905,11 @@ Group
 
   MCU_CMD_Damage
   {
-    Index = 154;
+    Index = 159;
     Name = "ResetNotification";
     Desc = "";
     Targets = [];
-    Objects = [152];
+    Objects = [157];
     XPos = 16673.528;
     YPos = 97.906;
     ZPos = 28888.205;
@@ -1924,8 +1924,8 @@ Group
   Vehicle
   {
     Name = "Notification";
-    Index = 156;
-    LinkTrId = 152;
+    Index = 161;
+    LinkTrId = 157;
     XPos = 16687.093;
     YPos = 97.523;
     ZPos = 28876.993;
@@ -1953,7 +1953,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 152;
+    Index = 157;
     Name = "Notification entity";
     Desc = "";
     Targets = [];
@@ -1965,13 +1965,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 156;
+    MisObjID = 161;
     OnEvents
     {
       OnEvent
       {
         Type = 13;
-        TarId = 153;
+        TarId = 158;
       }
     }
   }
@@ -1984,14 +1984,14 @@ Group
 Group
 {
   Name = "WhileEnemyCloseAlt";
-  Index = 158;
+  Index = 163;
   Desc = "";
   MCU_CheckZone
   {
-    Index = 159;
+    Index = 164;
     Name = "EnemyEnters";
     Desc = "";
-    Targets = [160,161];
+    Targets = [165,166];
     Objects = [];
     XPos = 16975.495;
     YPos = 101.862;
@@ -2008,10 +2008,10 @@ Group
 
   MCU_Timer
   {
-    Index = 162;
+    Index = 167;
     Name = "StartMonitoring";
     Desc = "";
-    Targets = [163,164];
+    Targets = [168,169];
     Objects = [];
     XPos = 17066.441;
     YPos = 100.669;
@@ -2026,10 +2026,10 @@ Group
 
   MCU_Activate
   {
-    Index = 165;
+    Index = 170;
     Name = "";
     Desc = "";
-    Targets = [159];
+    Targets = [164];
     Objects = [];
     XPos = 16981.119;
     YPos = 101.220;
@@ -2042,10 +2042,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 160;
+    Index = 165;
     Name = "";
     Desc = "";
-    Targets = [159];
+    Targets = [164];
     Objects = [];
     XPos = 16992.116;
     YPos = 100.791;
@@ -2058,7 +2058,7 @@ Group
 
   MCU_Timer
   {
-    Index = 167;
+    Index = 172;
     Name = "WakeUp";
     Desc = "";
     Targets = [];
@@ -2076,10 +2076,10 @@ Group
 
   MCU_Proximity
   {
-    Index = 168;
+    Index = 173;
     Name = "EnemyClose";
     Desc = "";
-    Targets = [169,170,171];
+    Targets = [174,175,176];
     Objects = [];
     XPos = 16895.867;
     YPos = 102.302;
@@ -2095,10 +2095,10 @@ Group
 
   MCU_Timer
   {
-    Index = 170;
+    Index = 175;
     Name = "Timeout";
     Desc = "";
-    Targets = [173,169,174];
+    Targets = [178,174,179];
     Objects = [];
     XPos = 16922.917;
     YPos = 102.166;
@@ -2113,7 +2113,7 @@ Group
 
   MCU_Timer
   {
-    Index = 173;
+    Index = 178;
     Name = "Sleep";
     Desc = "";
     Targets = [];
@@ -2131,10 +2131,10 @@ Group
 
   MCU_Timer
   {
-    Index = 176;
+    Index = 181;
     Name = "CheckAgain";
     Desc = "";
-    Targets = [177,178];
+    Targets = [182,183];
     Objects = [];
     XPos = 16896.688;
     YPos = 102.399;
@@ -2149,10 +2149,10 @@ Group
 
   MCU_Activate
   {
-    Index = 177;
+    Index = 182;
     Name = "";
     Desc = "";
-    Targets = [168];
+    Targets = [173];
     Objects = [];
     XPos = 16902.026;
     YPos = 102.380;
@@ -2165,10 +2165,10 @@ Group
 
   MCU_Timer
   {
-    Index = 178;
+    Index = 183;
     Name = "1s";
     Desc = "";
-    Targets = [168];
+    Targets = [173];
     Objects = [];
     XPos = 16896.199;
     YPos = 102.506;
@@ -2183,10 +2183,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 169;
+    Index = 174;
     Name = "";
     Desc = "";
-    Targets = [168];
+    Targets = [173];
     Objects = [];
     XPos = 16895.702;
     YPos = 102.515;
@@ -2199,10 +2199,10 @@ Group
 
   MCU_Timer
   {
-    Index = 171;
+    Index = 176;
     Name = "Delay";
     Desc = "";
-    Targets = [176];
+    Targets = [181];
     Objects = [];
     XPos = 16890.428;
     YPos = 101.885;
@@ -2217,10 +2217,10 @@ Group
 
   MCU_Timer
   {
-    Index = 183;
+    Index = 188;
     Name = "StopMonitoring";
     Desc = "";
-    Targets = [160,184,185];
+    Targets = [165,189,190];
     Objects = [];
     XPos = 17064.327;
     YPos = 100.846;
@@ -2235,10 +2235,10 @@ Group
 
   MCU_Timer
   {
-    Index = 186;
+    Index = 191;
     Name = "Deactivate";
     Desc = "";
-    Targets = [187];
+    Targets = [192];
     Objects = [];
     XPos = 16977.069;
     YPos = 101.240;
@@ -2253,10 +2253,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 187;
+    Index = 192;
     Name = "";
     Desc = "";
-    Targets = [161];
+    Targets = [166];
     Objects = [];
     XPos = 16977.273;
     YPos = 101.382;
@@ -2269,10 +2269,10 @@ Group
 
   MCU_Timer
   {
-    Index = 161;
+    Index = 166;
     Name = "0s";
     Desc = "";
-    Targets = [167,170,176,184];
+    Targets = [172,175,181,189];
     Objects = [];
     XPos = 16951.970;
     YPos = 102.588;
@@ -2287,10 +2287,10 @@ Group
 
   MCU_Activate
   {
-    Index = 190;
+    Index = 195;
     Name = "";
     Desc = "";
-    Targets = [161];
+    Targets = [166];
     Objects = [];
     XPos = 16995.230;
     YPos = 102.848;
@@ -2303,10 +2303,10 @@ Group
 
   MCU_Timer
   {
-    Index = 191;
+    Index = 196;
     Name = "Activate";
     Desc = "";
-    Targets = [190];
+    Targets = [195];
     Objects = [];
     XPos = 16995.502;
     YPos = 101.240;
@@ -2321,10 +2321,10 @@ Group
 
   MCU_Activate
   {
-    Index = 163;
+    Index = 168;
     Name = "Open tick gate";
     Desc = "";
-    Targets = [193];
+    Targets = [198];
     Objects = [];
     XPos = 16970.055;
     YPos = 101.220;
@@ -2337,10 +2337,10 @@ Group
 
   MCU_Timer
   {
-    Index = 194;
+    Index = 199;
     Name = "Tick";
     Desc = "";
-    Targets = [195,193];
+    Targets = [200,198];
     Objects = [];
     XPos = 16981.398;
     YPos = 100.754;
@@ -2355,10 +2355,10 @@ Group
 
   MCU_Timer
   {
-    Index = 195;
+    Index = 200;
     Name = "Tack";
     Desc = "";
-    Targets = [194];
+    Targets = [199];
     Objects = [];
     XPos = 16970.646;
     YPos = 100.754;
@@ -2373,10 +2373,10 @@ Group
 
   MCU_Timer
   {
-    Index = 197;
+    Index = 202;
     Name = "pulse duration";
     Desc = "";
-    Targets = [160];
+    Targets = [165];
     Objects = [];
     XPos = 16991.820;
     YPos = 102.183;
@@ -2391,10 +2391,10 @@ Group
 
   MCU_Timer
   {
-    Index = 193;
+    Index = 198;
     Name = "Tick gate";
     Desc = "";
-    Targets = [165,159,197];
+    Targets = [170,164,202];
     Objects = [];
     XPos = 16986.463;
     YPos = 100.592;
@@ -2409,10 +2409,10 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 199;
+    Index = 204;
     Name = "";
     Desc = "";
-    Targets = [184,200];
+    Targets = [189,205];
     Objects = [];
     XPos = 16981.477;
     YPos = 100.397;
@@ -2426,10 +2426,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 184;
+    Index = 189;
     Name = "Close tick gate";
     Desc = "";
-    Targets = [193];
+    Targets = [198];
     Objects = [];
     XPos = 16986.791;
     YPos = 100.487;
@@ -2442,10 +2442,10 @@ Group
 
   MCU_Timer
   {
-    Index = 200;
+    Index = 205;
     Name = "RandomDelay";
     Desc = "";
-    Targets = [194];
+    Targets = [199];
     Objects = [];
     XPos = 16981.437;
     YPos = 100.485;
@@ -2460,10 +2460,10 @@ Group
 
   MCU_Timer
   {
-    Index = 174;
+    Index = 179;
     Name = "Gate";
     Desc = "";
-    Targets = [163];
+    Targets = [168];
     Objects = [];
     XPos = 16966.383;
     YPos = 102.772;
@@ -2478,10 +2478,10 @@ Group
 
   MCU_Activate
   {
-    Index = 164;
+    Index = 169;
     Name = "";
     Desc = "";
-    Targets = [174];
+    Targets = [179];
     Objects = [];
     XPos = 16966.360;
     YPos = 100.805;
@@ -2494,10 +2494,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 185;
+    Index = 190;
     Name = "";
     Desc = "";
-    Targets = [174];
+    Targets = [179];
     Objects = [];
     XPos = 16966.473;
     YPos = 100.487;
@@ -2515,13 +2515,13 @@ Group
 Group
 {
   Name = "Train";
-  Index = 206;
+  Index = 211;
   Desc = "";
   Train
   {
     Name = "Train";
-    Index = 207;
-    LinkTrId = 208;
+    Index = 212;
+    LinkTrId = 213;
     XPos = 17585.456;
     YPos = 99.973;
     ZPos = 28787.857;
@@ -2547,7 +2547,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 208;
+    Index = 213;
     Name = "Train entity";
     Desc = "";
     Targets = [];
@@ -2559,13 +2559,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 207;
+    MisObjID = 212;
     OnEvents
     {
       OnEvent
       {
         Type = 13;
-        TarId = 210;
+        TarId = 215;
       }
     }
     OnReports
@@ -2573,8 +2573,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 212;
-        TarId = 211;
+        CmdId = 217;
+        TarId = 216;
       }
     }
   }
@@ -2582,11 +2582,11 @@ Group
 
   MCU_Spawner
   {
-    Index = 212;
+    Index = 217;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
-    Objects = [208];
+    Objects = [213];
     XPos = 17585.835;
     YPos = 100.685;
     ZPos = 28764.487;
@@ -2599,11 +2599,11 @@ Group
 
   MCU_Waypoint
   {
-    Index = 214;
+    Index = 219;
     Name = "Destination";
     Desc = "";
-    Targets = [215,216];
-    Objects = [208];
+    Targets = [220,221];
+    Objects = [213];
     XPos = 17702.683;
     YPos = 100.061;
     ZPos = 28788.550;
@@ -2618,10 +2618,10 @@ Group
 
   MCU_Timer
   {
-    Index = 215;
+    Index = 220;
     Name = "";
     Desc = "";
-    Targets = [218,219];
+    Targets = [223,224];
     Objects = [];
     XPos = 17702.543;
     YPos = 99.807;
@@ -2636,11 +2636,11 @@ Group
 
   MCU_Delete
   {
-    Index = 218;
+    Index = 223;
     Name = "";
     Desc = "";
     Targets = [];
-    Objects = [208];
+    Objects = [213];
     XPos = 17601.970;
     YPos = 101.311;
     ZPos = 28811.181;
@@ -2652,10 +2652,10 @@ Group
 
   MCU_Counter
   {
-    Index = 221;
+    Index = 226;
     Name = "MEM";
     Desc = "";
-    Targets = [212];
+    Targets = [217];
     Objects = [];
     XPos = 17586.213;
     YPos = 101.417;
@@ -2670,10 +2670,10 @@ Group
 
   MCU_Timer
   {
-    Index = 211;
+    Index = 216;
     Name = "Spawned";
     Desc = "";
-    Targets = [223,214];
+    Targets = [228,219];
     Objects = [];
     XPos = 17618.107;
     YPos = 100.166;
@@ -2688,10 +2688,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 223;
+    Index = 228;
     Name = "";
     Desc = "";
-    Targets = [221];
+    Targets = [226];
     Objects = [];
     XPos = 17603.223;
     YPos = 100.974;
@@ -2704,10 +2704,10 @@ Group
 
   MCU_Activate
   {
-    Index = 219;
+    Index = 224;
     Name = "";
     Desc = "";
-    Targets = [221];
+    Targets = [226];
     Objects = [];
     XPos = 17632.991;
     YPos = 100.245;
@@ -2720,10 +2720,10 @@ Group
 
   MCU_Timer
   {
-    Index = 226;
+    Index = 231;
     Name = "START";
     Desc = "";
-    Targets = [221];
+    Targets = [226];
     Objects = [];
     XPos = 17585.428;
     YPos = 99.747;
@@ -2738,7 +2738,7 @@ Group
 
   MCU_Timer
   {
-    Index = 216;
+    Index = 221;
     Name = "ARRIVED";
     Desc = "";
     Targets = [];
@@ -2756,10 +2756,10 @@ Group
 
   MCU_Timer
   {
-    Index = 210;
+    Index = 215;
     Name = "KILLED";
     Desc = "";
-    Targets = [219];
+    Targets = [224];
     Objects = [];
     XPos = 17650.066;
     YPos = 99.067;
@@ -2779,11 +2779,11 @@ Group
 Group
 {
   Name = "Icon";
-  Index = 229;
+  Index = 234;
   Desc = "";
   MCU_Icon
   {
-    Index = 230;
+    Index = 235;
     Targets = [];
     Objects = [];
     XPos = 16784.091;
@@ -2806,10 +2806,10 @@ Group
 
   MCU_Activate
   {
-    Index = 231;
+    Index = 236;
     Name = "";
     Desc = "";
-    Targets = [230];
+    Targets = [235];
     Objects = [];
     XPos = 16928.066;
     YPos = 70.676;
@@ -2822,10 +2822,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 232;
+    Index = 237;
     Name = "Hide";
     Desc = "";
-    Targets = [230];
+    Targets = [235];
     Objects = [];
     XPos = 16618.058;
     YPos = 94.269;
@@ -2838,10 +2838,10 @@ Group
 
   MCU_Timer
   {
-    Index = 406;
+    Index = 238;
     Name = "Show";
     Desc = "";
-    Targets = [231];
+    Targets = [236];
     Objects = [];
     XPos = 16927.361;
     YPos = 71.362;
@@ -2861,14 +2861,14 @@ Group
 Group
 {
   Name = "PriorityNode";
-  Index = 233;
+  Index = 239;
   Desc = "";
   MCU_Timer
   {
-    Index = 234;
+    Index = 240;
     Name = "Try";
     Desc = "";
-    Targets = [235,236];
+    Targets = [241,242];
     Objects = [];
     XPos = 14836.357;
     YPos = 141.428;
@@ -2883,10 +2883,10 @@ Group
 
   MCU_Timer
   {
-    Index = 235;
+    Index = 241;
     Name = "Do";
     Desc = "";
-    Targets = [238];
+    Targets = [244];
     Objects = [];
     XPos = 14775.549;
     YPos = 141.428;
@@ -2901,7 +2901,7 @@ Group
 
   MCU_Timer
   {
-    Index = 236;
+    Index = 242;
     Name = "Pass";
     Desc = "";
     Targets = [];
@@ -2919,10 +2919,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 240;
+    Index = 246;
     Name = "";
     Desc = "";
-    Targets = [235];
+    Targets = [241];
     Objects = [];
     XPos = 14770.211;
     YPos = 141.428;
@@ -2935,10 +2935,10 @@ Group
 
   MCU_Activate
   {
-    Index = 241;
+    Index = 247;
     Name = "";
     Desc = "";
-    Targets = [236];
+    Targets = [242];
     Objects = [];
     XPos = 14769.483;
     YPos = 141.428;
@@ -2951,10 +2951,10 @@ Group
 
   MCU_Timer
   {
-    Index = 238;
+    Index = 244;
     Name = "Disable";
     Desc = "";
-    Targets = [241,240];
+    Targets = [247,246];
     Objects = [];
     XPos = 14758.973;
     YPos = 141.428;
@@ -2969,10 +2969,10 @@ Group
 
   MCU_Activate
   {
-    Index = 243;
+    Index = 249;
     Name = "";
     Desc = "";
-    Targets = [235];
+    Targets = [241];
     Objects = [];
     XPos = 14780.421;
     YPos = 141.428;
@@ -2985,10 +2985,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 244;
+    Index = 250;
     Name = "";
     Desc = "";
-    Targets = [236];
+    Targets = [242];
     Objects = [];
     XPos = 14787.445;
     YPos = 141.428;
@@ -3001,10 +3001,10 @@ Group
 
   MCU_Timer
   {
-    Index = 245;
+    Index = 251;
     Name = "Enable";
     Desc = "";
-    Targets = [243,244];
+    Targets = [249,250];
     Objects = [];
     XPos = 14786.650;
     YPos = 141.428;
@@ -3024,14 +3024,14 @@ Group
 Group
 {
   Name = "Proximity";
-  Index = 246;
+  Index = 252;
   Desc = "";
   MCU_Timer
   {
-    Index = 247;
+    Index = 253;
     Name = "Start";
     Desc = "";
-    Targets = [248];
+    Targets = [254];
     Objects = [];
     XPos = 15050.438;
     YPos = 132.115;
@@ -3046,10 +3046,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 249;
+    Index = 255;
     Name = "Trigger Deactivate";
     Desc = "";
-    Targets = [248];
+    Targets = [254];
     Objects = [];
     XPos = 14684.765;
     YPos = 136.695;
@@ -3062,7 +3062,7 @@ Group
 
   MCU_Counter
   {
-    Index = 250;
+    Index = 256;
     Name = "Out";
     Desc = "";
     Targets = [];
@@ -3080,10 +3080,10 @@ Group
 
   MCU_CheckZone
   {
-    Index = 248;
+    Index = 254;
     Name = "Proximity";
     Desc = "";
-    Targets = [249,250];
+    Targets = [255,256];
     Objects = [];
     XPos = 14845.933;
     YPos = 132.707;
@@ -3104,11 +3104,11 @@ Group
 Group
 {
   Name = "StartStopEffect";
-  Index = 252;
+  Index = 258;
   Desc = "";
   MCU_CMD_Effect
   {
-    Index = 253;
+    Index = 259;
     Name = "StartEffect";
     Desc = "";
     Targets = [];
@@ -3125,7 +3125,7 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 254;
+    Index = 260;
     Name = "StopEffect";
     Desc = "";
     Targets = [];
@@ -3147,14 +3147,14 @@ Group
 Group
 {
   Name = "WhileEnemyCloseCZAlt";
-  Index = 255;
+  Index = 261;
   Desc = "";
   MCU_CheckZone
   {
-    Index = 256;
+    Index = 262;
     Name = "EnemyEnters";
     Desc = "";
-    Targets = [257,258];
+    Targets = [263,264];
     Objects = [];
     XPos = 17323.536;
     YPos = 101.862;
@@ -3171,10 +3171,10 @@ Group
 
   MCU_Timer
   {
-    Index = 260;
+    Index = 265;
     Name = "StartMonitoring";
     Desc = "";
-    Targets = [261,262];
+    Targets = [266,267];
     Objects = [];
     XPos = 17414.482;
     YPos = 100.669;
@@ -3189,10 +3189,10 @@ Group
 
   MCU_Activate
   {
-    Index = 263;
+    Index = 268;
     Name = "";
     Desc = "";
-    Targets = [256];
+    Targets = [262];
     Objects = [];
     XPos = 17330.602;
     YPos = 101.220;
@@ -3205,10 +3205,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 257;
+    Index = 263;
     Name = "";
     Desc = "";
-    Targets = [256];
+    Targets = [262];
     Objects = [];
     XPos = 17340.157;
     YPos = 100.791;
@@ -3221,7 +3221,7 @@ Group
 
   MCU_Timer
   {
-    Index = 265;
+    Index = 270;
     Name = "WakeUp";
     Desc = "";
     Targets = [];
@@ -3239,10 +3239,10 @@ Group
 
   MCU_Timer
   {
-    Index = 266;
+    Index = 271;
     Name = "Timeout";
     Desc = "";
-    Targets = [267,268,269];
+    Targets = [272,273,274];
     Objects = [];
     XPos = 17270.958;
     YPos = 102.166;
@@ -3257,7 +3257,7 @@ Group
 
   MCU_Timer
   {
-    Index = 267;
+    Index = 272;
     Name = "Sleep";
     Desc = "";
     Targets = [];
@@ -3275,10 +3275,10 @@ Group
 
   MCU_Timer
   {
-    Index = 271;
+    Index = 276;
     Name = "CheckAgain";
     Desc = "";
-    Targets = [272,273];
+    Targets = [277,278];
     Objects = [];
     XPos = 17244.729;
     YPos = 102.399;
@@ -3293,10 +3293,10 @@ Group
 
   MCU_Activate
   {
-    Index = 272;
+    Index = 277;
     Name = "";
     Desc = "";
-    Targets = [275];
+    Targets = [280];
     Objects = [];
     XPos = 17250.067;
     YPos = 102.380;
@@ -3309,10 +3309,10 @@ Group
 
   MCU_Timer
   {
-    Index = 273;
+    Index = 278;
     Name = "1s";
     Desc = "";
-    Targets = [275];
+    Targets = [280];
     Objects = [];
     XPos = 17244.240;
     YPos = 102.506;
@@ -3327,10 +3327,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 268;
+    Index = 273;
     Name = "";
     Desc = "";
-    Targets = [275];
+    Targets = [280];
     Objects = [];
     XPos = 17243.743;
     YPos = 102.515;
@@ -3343,10 +3343,10 @@ Group
 
   MCU_Timer
   {
-    Index = 278;
+    Index = 283;
     Name = "Delay";
     Desc = "";
-    Targets = [271];
+    Targets = [276];
     Objects = [];
     XPos = 17238.469;
     YPos = 101.885;
@@ -3361,10 +3361,10 @@ Group
 
   MCU_Timer
   {
-    Index = 279;
+    Index = 284;
     Name = "StopMonitoring";
     Desc = "";
-    Targets = [257,259,280];
+    Targets = [263,285,286];
     Objects = [];
     XPos = 17412.368;
     YPos = 100.846;
@@ -3379,10 +3379,10 @@ Group
 
   MCU_Timer
   {
-    Index = 281;
+    Index = 287;
     Name = "Deactivate";
     Desc = "";
-    Targets = [282];
+    Targets = [288];
     Objects = [];
     XPos = 17325.110;
     YPos = 101.240;
@@ -3397,10 +3397,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 282;
+    Index = 288;
     Name = "";
     Desc = "";
-    Targets = [258];
+    Targets = [264];
     Objects = [];
     XPos = 17325.314;
     YPos = 101.382;
@@ -3413,10 +3413,10 @@ Group
 
   MCU_Timer
   {
-    Index = 258;
+    Index = 264;
     Name = "0s";
     Desc = "";
-    Targets = [265,266,271,259];
+    Targets = [270,271,276,285];
     Objects = [];
     XPos = 17300.011;
     YPos = 102.588;
@@ -3431,10 +3431,10 @@ Group
 
   MCU_Activate
   {
-    Index = 285;
+    Index = 291;
     Name = "";
     Desc = "";
-    Targets = [258];
+    Targets = [264];
     Objects = [];
     XPos = 17343.271;
     YPos = 102.848;
@@ -3447,10 +3447,10 @@ Group
 
   MCU_Timer
   {
-    Index = 286;
+    Index = 292;
     Name = "Activate";
     Desc = "";
-    Targets = [285];
+    Targets = [291];
     Objects = [];
     XPos = 17343.543;
     YPos = 101.240;
@@ -3465,10 +3465,10 @@ Group
 
   MCU_Activate
   {
-    Index = 261;
+    Index = 266;
     Name = "Open tick gate";
     Desc = "";
-    Targets = [288];
+    Targets = [294];
     Objects = [];
     XPos = 17318.096;
     YPos = 101.220;
@@ -3481,10 +3481,10 @@ Group
 
   MCU_Timer
   {
-    Index = 289;
+    Index = 295;
     Name = "Tick";
     Desc = "";
-    Targets = [290,288];
+    Targets = [296,294];
     Objects = [];
     XPos = 17329.439;
     YPos = 100.754;
@@ -3499,10 +3499,10 @@ Group
 
   MCU_Timer
   {
-    Index = 290;
+    Index = 296;
     Name = "Tack";
     Desc = "";
-    Targets = [289];
+    Targets = [295];
     Objects = [];
     XPos = 17318.687;
     YPos = 100.754;
@@ -3510,17 +3510,17 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Time = 30;
+    Time = 90;
     Random = 100;
   }
   
 
   MCU_Timer
   {
-    Index = 292;
+    Index = 298;
     Name = "pulse duration";
     Desc = "";
-    Targets = [257];
+    Targets = [263];
     Objects = [];
     XPos = 17340.129;
     YPos = 102.183;
@@ -3535,10 +3535,10 @@ Group
 
   MCU_Timer
   {
-    Index = 288;
+    Index = 294;
     Name = "Tick gate";
     Desc = "";
-    Targets = [263,292,256];
+    Targets = [268,298,262];
     Objects = [];
     XPos = 17334.538;
     YPos = 100.592;
@@ -3553,10 +3553,10 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 294;
+    Index = 300;
     Name = "";
     Desc = "";
-    Targets = [259,295];
+    Targets = [285,301];
     Objects = [];
     XPos = 17329.518;
     YPos = 100.397;
@@ -3570,10 +3570,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 259;
+    Index = 285;
     Name = "Close tick gate";
     Desc = "";
-    Targets = [288];
+    Targets = [294];
     Objects = [];
     XPos = 17334.832;
     YPos = 100.487;
@@ -3586,10 +3586,10 @@ Group
 
   MCU_Timer
   {
-    Index = 295;
+    Index = 301;
     Name = "RandomDelay";
     Desc = "";
-    Targets = [289];
+    Targets = [295];
     Objects = [];
     XPos = 17329.478;
     YPos = 100.485;
@@ -3604,10 +3604,10 @@ Group
 
   MCU_CheckZone
   {
-    Index = 275;
+    Index = 280;
     Name = "EnemyClose";
     Desc = "";
-    Targets = [268,278,266];
+    Targets = [273,283,271];
     Objects = [];
     XPos = 17243.798;
     YPos = 98.867;
@@ -3624,10 +3624,10 @@ Group
 
   MCU_Timer
   {
-    Index = 269;
+    Index = 274;
     Name = "EnableTickAgain";
     Desc = "";
-    Targets = [261];
+    Targets = [266];
     Objects = [];
     XPos = 17315.644;
     YPos = 102.772;
@@ -3642,10 +3642,10 @@ Group
 
   MCU_Activate
   {
-    Index = 262;
+    Index = 267;
     Name = "";
     Desc = "";
-    Targets = [269];
+    Targets = [274];
     Objects = [];
     XPos = 17315.621;
     YPos = 100.805;
@@ -3658,10 +3658,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 280;
+    Index = 286;
     Name = "";
     Desc = "";
-    Targets = [269];
+    Targets = [274];
     Objects = [];
     XPos = 17315.628;
     YPos = 100.487;
@@ -3679,14 +3679,14 @@ Group
 Group
 {
   Name = "WhileEnemyCloseCZ";
-  Index = 302;
+  Index = 308;
   Desc = "";
   MCU_CheckZone
   {
-    Index = 303;
+    Index = 309;
     Name = "EnemyEnters";
     Desc = "";
-    Targets = [304,305];
+    Targets = [310,311];
     Objects = [];
     XPos = 17310.215;
     YPos = 101.862;
@@ -3703,10 +3703,10 @@ Group
 
   MCU_Timer
   {
-    Index = 306;
+    Index = 312;
     Name = "StartMonitoring";
     Desc = "";
-    Targets = [307,308];
+    Targets = [313,314];
     Objects = [];
     XPos = 17401.161;
     YPos = 100.669;
@@ -3721,10 +3721,10 @@ Group
 
   MCU_Activate
   {
-    Index = 307;
+    Index = 313;
     Name = "";
     Desc = "";
-    Targets = [303,310,410];
+    Targets = [309,316,317];
     Objects = [];
     XPos = 17357.853;
     YPos = 101.220;
@@ -3737,10 +3737,10 @@ Group
 
   MCU_Timer
   {
-    Index = 308;
+    Index = 314;
     Name = "1s";
     Desc = "";
-    Targets = [303];
+    Targets = [309];
     Objects = [];
     XPos = 17361.565;
     YPos = 102.183;
@@ -3755,10 +3755,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 304;
+    Index = 310;
     Name = "";
     Desc = "";
-    Targets = [303];
+    Targets = [309];
     Objects = [];
     XPos = 17356.596;
     YPos = 100.791;
@@ -3771,7 +3771,7 @@ Group
 
   MCU_Timer
   {
-    Index = 313;
+    Index = 320;
     Name = "WakeUp";
     Desc = "";
     Targets = [];
@@ -3789,10 +3789,10 @@ Group
 
   MCU_Timer
   {
-    Index = 314;
+    Index = 321;
     Name = "Timeout";
     Desc = "";
-    Targets = [315,316,310];
+    Targets = [322,323,316];
     Objects = [];
     XPos = 17257.637;
     YPos = 102.166;
@@ -3807,7 +3807,7 @@ Group
 
   MCU_Timer
   {
-    Index = 315;
+    Index = 322;
     Name = "Sleep";
     Desc = "";
     Targets = [];
@@ -3825,10 +3825,10 @@ Group
 
   MCU_Timer
   {
-    Index = 318;
+    Index = 325;
     Name = "CheckAgain";
     Desc = "";
-    Targets = [319,320];
+    Targets = [326,327];
     Objects = [];
     XPos = 17231.408;
     YPos = 102.399;
@@ -3843,10 +3843,10 @@ Group
 
   MCU_Activate
   {
-    Index = 319;
+    Index = 326;
     Name = "";
     Desc = "";
-    Targets = [322];
+    Targets = [329];
     Objects = [];
     XPos = 17236.746;
     YPos = 102.380;
@@ -3859,10 +3859,10 @@ Group
 
   MCU_Timer
   {
-    Index = 320;
+    Index = 327;
     Name = "1s";
     Desc = "";
-    Targets = [322];
+    Targets = [329];
     Objects = [];
     XPos = 17230.919;
     YPos = 102.506;
@@ -3877,10 +3877,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 316;
+    Index = 323;
     Name = "";
     Desc = "";
-    Targets = [322];
+    Targets = [329];
     Objects = [];
     XPos = 17230.422;
     YPos = 102.515;
@@ -3893,10 +3893,10 @@ Group
 
   MCU_Timer
   {
-    Index = 325;
+    Index = 332;
     Name = "Delay";
     Desc = "";
-    Targets = [318];
+    Targets = [325];
     Objects = [];
     XPos = 17225.148;
     YPos = 101.885;
@@ -3911,10 +3911,10 @@ Group
 
   MCU_Timer
   {
-    Index = 326;
+    Index = 333;
     Name = "StopMonitoring";
     Desc = "";
-    Targets = [304,327,413];
+    Targets = [310,334,335];
     Objects = [];
     XPos = 17399.047;
     YPos = 100.846;
@@ -3929,10 +3929,10 @@ Group
 
   MCU_Timer
   {
-    Index = 328;
+    Index = 336;
     Name = "Deactivate";
     Desc = "";
-    Targets = [329];
+    Targets = [337];
     Objects = [];
     XPos = 17311.789;
     YPos = 101.240;
@@ -3947,10 +3947,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 329;
+    Index = 337;
     Name = "";
     Desc = "";
-    Targets = [305];
+    Targets = [311];
     Objects = [];
     XPos = 17311.993;
     YPos = 101.382;
@@ -3963,10 +3963,10 @@ Group
 
   MCU_Timer
   {
-    Index = 305;
+    Index = 311;
     Name = "0s";
     Desc = "";
-    Targets = [313,314,318];
+    Targets = [320,321,325];
     Objects = [];
     XPos = 17286.690;
     YPos = 102.588;
@@ -3981,10 +3981,10 @@ Group
 
   MCU_Activate
   {
-    Index = 332;
+    Index = 340;
     Name = "";
     Desc = "";
-    Targets = [305];
+    Targets = [311];
     Objects = [];
     XPos = 17329.950;
     YPos = 102.848;
@@ -3997,10 +3997,10 @@ Group
 
   MCU_Timer
   {
-    Index = 333;
+    Index = 341;
     Name = "Activate";
     Desc = "";
-    Targets = [332,410];
+    Targets = [340,317];
     Objects = [];
     XPos = 17330.222;
     YPos = 101.240;
@@ -4015,10 +4015,10 @@ Group
 
   MCU_Activate
   {
-    Index = 334;
+    Index = 342;
     Name = "";
     Desc = "";
-    Targets = [303];
+    Targets = [309];
     Objects = [];
     XPos = 17286.967;
     YPos = 101.220;
@@ -4031,7 +4031,7 @@ Group
 
   MCU_Timer
   {
-    Index = 335;
+    Index = 343;
     Name = "RandomDelay";
     Desc = "";
     Targets = [];
@@ -4049,10 +4049,10 @@ Group
 
   MCU_CheckZone
   {
-    Index = 322;
+    Index = 329;
     Name = "EnemyClose";
     Desc = "";
-    Targets = [316,325,314];
+    Targets = [323,332,321];
     Objects = [];
     XPos = 17230.459;
     YPos = 99.478;
@@ -4068,10 +4068,10 @@ Group
 
   MCU_Timer
   {
-    Index = 310;
+    Index = 316;
     Name = "Gate";
     Desc = "";
-    Targets = [334];
+    Targets = [342];
     Objects = [];
     XPos = 17287.130;
     YPos = 98.762;
@@ -4086,10 +4086,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 327;
+    Index = 334;
     Name = "";
     Desc = "";
-    Targets = [310];
+    Targets = [316];
     Objects = [];
     XPos = 17287.625;
     YPos = 100.791;
@@ -4102,10 +4102,10 @@ Group
 
   MCU_Timer
   {
-    Index = 410;
+    Index = 317;
     Name = "GateStarted";
     Desc = "";
-    Targets = [411];
+    Targets = [348];
     Objects = [];
     XPos = 17342.377;
     YPos = 96.891;
@@ -4120,10 +4120,10 @@ Group
 
   MCU_Activate
   {
-    Index = 411;
+    Index = 348;
     Name = "";
     Desc = "";
-    Targets = [303];
+    Targets = [309];
     Objects = [];
     XPos = 17342.377;
     YPos = 102.848;
@@ -4136,10 +4136,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 413;
+    Index = 335;
     Name = "";
     Desc = "";
-    Targets = [410];
+    Targets = [317];
     Objects = [];
     XPos = 17356.238;
     YPos = 97.198;
@@ -4157,13 +4157,13 @@ Group
 Group
 {
   Name = "GroundAttack";
-  Index = 339;
+  Index = 351;
   Desc = "";
   Plane
   {
     Name = "Plane";
-    Index = 340;
-    LinkTrId = 341;
+    Index = 352;
+    LinkTrId = 353;
     XPos = 30114.579;
     YPos = 2000.000;
     ZPos = 29949.976;
@@ -4198,7 +4198,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 341;
+    Index = 353;
     Name = "Plane entity";
     Desc = "";
     Targets = [];
@@ -4210,18 +4210,18 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 340;
+    MisObjID = 352;
     OnEvents
     {
       OnEvent
       {
         Type = 8;
-        TarId = 343;
+        TarId = 355;
       }
       OnEvent
       {
         Type = 13;
-        TarId = 344;
+        TarId = 356;
       }
     }
     OnReports
@@ -4229,8 +4229,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 346;
-        TarId = 345;
+        CmdId = 358;
+        TarId = 357;
       }
     }
   }
@@ -4238,11 +4238,11 @@ Group
 
   MCU_Waypoint
   {
-    Index = 347;
+    Index = 359;
     Name = "Ingress";
     Desc = "";
-    Targets = [348,349];
-    Objects = [341];
+    Targets = [360,361];
+    Objects = [353];
     XPos = 39915.679;
     YPos = 2000.000;
     ZPos = 29925.737;
@@ -4257,11 +4257,11 @@ Group
 
   MCU_CMD_AttackArea
   {
-    Index = 348;
+    Index = 360;
     Name = "AttackGroundTargets";
     Desc = "";
     Targets = [];
-    Objects = [341];
+    Objects = [353];
     XPos = 45029.327;
     YPos = 2000.000;
     ZPos = 29983.847;
@@ -4279,11 +4279,11 @@ Group
 
   MCU_Waypoint
   {
-    Index = 351;
+    Index = 363;
     Name = "Egress";
     Desc = "";
-    Targets = [352];
-    Objects = [341];
+    Targets = [364];
+    Objects = [353];
     XPos = 40002.843;
     YPos = 2000.000;
     ZPos = 24957.363;
@@ -4298,11 +4298,11 @@ Group
 
   MCU_Waypoint
   {
-    Index = 352;
+    Index = 364;
     Name = "Exit";
     Desc = "";
-    Targets = [354,355];
-    Objects = [341];
+    Targets = [366,367];
+    Objects = [353];
     XPos = 30007.985;
     YPos = 2000.000;
     ZPos = 24986.418;
@@ -4317,10 +4317,10 @@ Group
 
   MCU_Timer
   {
-    Index = 356;
+    Index = 368;
     Name = "RTB";
     Desc = "";
-    Targets = [351,357];
+    Targets = [363,369];
     Objects = [];
     XPos = 42472.503;
     YPos = 112.645;
@@ -4335,10 +4335,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 357;
+    Index = 369;
     Name = "Trigger Deactivate";
     Desc = "";
-    Targets = [356];
+    Targets = [368];
     Objects = [];
     XPos = 42530.613;
     YPos = 38.354;
@@ -4351,10 +4351,10 @@ Group
 
   MCU_Timer
   {
-    Index = 349;
+    Index = 361;
     Name = "AttackDuration";
     Desc = "";
-    Targets = [356];
+    Targets = [368];
     Objects = [];
     XPos = 41214.035;
     YPos = 38.296;
@@ -4369,10 +4369,10 @@ Group
 
   MCU_Timer
   {
-    Index = 343;
+    Index = 355;
     Name = "Bingo";
     Desc = "";
-    Targets = [356];
+    Targets = [368];
     Objects = [];
     XPos = 39947.263;
     YPos = 34.395;
@@ -4387,11 +4387,11 @@ Group
 
   MCU_Spawner
   {
-    Index = 346;
+    Index = 358;
     Name = "";
     Desc = "";
     Targets = [];
-    Objects = [341];
+    Objects = [353];
     XPos = 30158.855;
     YPos = 187.048;
     ZPos = 31540.771;
@@ -4404,10 +4404,10 @@ Group
 
   MCU_Timer
   {
-    Index = 345;
+    Index = 357;
     Name = "Spawned";
     Desc = "";
-    Targets = [347,363];
+    Targets = [359,375];
     Objects = [];
     XPos = 30144.704;
     YPos = 183.180;
@@ -4422,10 +4422,10 @@ Group
 
   MCU_Timer
   {
-    Index = 363;
+    Index = 375;
     Name = "RespawnDelay";
     Desc = "";
-    Targets = [365];
+    Targets = [377];
     Objects = [];
     XPos = 29396.668;
     YPos = 158.322;
@@ -4440,10 +4440,10 @@ Group
 
   MCU_Counter
   {
-    Index = 354;
+    Index = 366;
     Name = "Respawn";
     Desc = "";
-    Targets = [367];
+    Targets = [379];
     Objects = [];
     XPos = 29417.587;
     YPos = 167.485;
@@ -4458,10 +4458,10 @@ Group
 
   MCU_Timer
   {
-    Index = 367;
+    Index = 379;
     Name = "Spawn";
     Desc = "";
-    Targets = [346,369];
+    Targets = [358,381];
     Objects = [];
     XPos = 29447.126;
     YPos = 174.408;
@@ -4476,10 +4476,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 369;
+    Index = 381;
     Name = "";
     Desc = "";
-    Targets = [354];
+    Targets = [366];
     Objects = [];
     XPos = 28836.062;
     YPos = 185.677;
@@ -4492,10 +4492,10 @@ Group
 
   MCU_Activate
   {
-    Index = 365;
+    Index = 377;
     Name = "";
     Desc = "";
-    Targets = [354];
+    Targets = [366];
     Objects = [];
     XPos = 29366.860;
     YPos = 171.014;
@@ -4508,10 +4508,10 @@ Group
 
   MCU_Timer
   {
-    Index = 344;
+    Index = 356;
     Name = "Killed";
     Desc = "";
-    Targets = [354];
+    Targets = [366];
     Objects = [];
     XPos = 29785.149;
     YPos = 177.286;
@@ -4526,11 +4526,11 @@ Group
 
   MCU_Delete
   {
-    Index = 355;
+    Index = 367;
     Name = "";
     Desc = "";
     Targets = [];
-    Objects = [341];
+    Objects = [353];
     XPos = 29812.679;
     YPos = 181.027;
     ZPos = 29243.507;
@@ -4542,10 +4542,10 @@ Group
 
   MCU_Timer
   {
-    Index = 374;
+    Index = 386;
     Name = "DelayedStart";
     Desc = "";
-    Targets = [367];
+    Targets = [379];
     Objects = [];
     XPos = 29282.323;
     YPos = 172.348;
@@ -4565,13 +4565,13 @@ Group
 Group
 {
   Name = "Patrol";
-  Index = 375;
+  Index = 387;
   Desc = "";
   Plane
   {
     Name = "Plane";
-    Index = 376;
-    LinkTrId = 377;
+    Index = 388;
+    LinkTrId = 389;
     XPos = 36466.404;
     YPos = 2000.000;
     ZPos = 36388.404;
@@ -4606,7 +4606,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 377;
+    Index = 389;
     Name = "Plane entity";
     Desc = "";
     Targets = [];
@@ -4618,13 +4618,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 376;
+    MisObjID = 388;
     OnEvents
     {
       OnEvent
       {
         Type = 13;
-        TarId = 379;
+        TarId = 391;
       }
     }
     OnReports
@@ -4632,8 +4632,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 381;
-        TarId = 380;
+        CmdId = 393;
+        TarId = 392;
       }
     }
   }
@@ -4641,11 +4641,11 @@ Group
 
   MCU_Spawner
   {
-    Index = 381;
+    Index = 393;
     Name = "SpawnPlane";
     Desc = "";
     Targets = [];
-    Objects = [377];
+    Objects = [389];
     XPos = 36473.875;
     YPos = 187.048;
     ZPos = 36821.184;
@@ -4658,10 +4658,10 @@ Group
 
   MCU_Timer
   {
-    Index = 380;
+    Index = 392;
     Name = "Spawned";
     Desc = "";
-    Targets = [384];
+    Targets = [396];
     Objects = [];
     XPos = 36467.660;
     YPos = 183.180;
@@ -4676,10 +4676,10 @@ Group
 
   MCU_Timer
   {
-    Index = 379;
+    Index = 391;
     Name = "Killed";
     Desc = "";
-    Targets = [386,387];
+    Targets = [398,399];
     Objects = [];
     XPos = 36153.213;
     YPos = 177.286;
@@ -4694,11 +4694,11 @@ Group
 
   MCU_Delete
   {
-    Index = 388;
+    Index = 400;
     Name = "DeletePlane";
     Desc = "";
     Targets = [];
-    Objects = [377];
+    Objects = [389];
     XPos = 36599.542;
     YPos = 181.027;
     ZPos = 36805.417;
@@ -4710,10 +4710,10 @@ Group
 
   MCU_Timer
   {
-    Index = 389;
+    Index = 401;
     Name = "DelayedStart";
     Desc = "";
-    Targets = [390];
+    Targets = [402];
     Objects = [];
     XPos = 36302.879;
     YPos = 172.348;
@@ -4728,11 +4728,11 @@ Group
 
   MCU_CMD_AttackArea
   {
-    Index = 384;
+    Index = 396;
     Name = "AttackAir";
     Desc = "";
     Targets = [];
-    Objects = [377];
+    Objects = [389];
     XPos = 36624.129;
     YPos = 2000.000;
     ZPos = 36385.744;
@@ -4750,10 +4750,10 @@ Group
 
   MCU_Counter
   {
-    Index = 390;
+    Index = 402;
     Name = "IsAlive";
     Desc = "";
-    Targets = [393];
+    Targets = [405];
     Objects = [];
     XPos = 36409.520;
     YPos = 21.026;
@@ -4768,10 +4768,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 386;
+    Index = 398;
     Name = "";
     Desc = "";
-    Targets = [390];
+    Targets = [402];
     Objects = [];
     XPos = 36153.847;
     YPos = 39.435;
@@ -4784,7 +4784,7 @@ Group
 
   MCU_Timer
   {
-    Index = 393;
+    Index = 405;
     Name = "StartMonitoring";
     Desc = "";
     Targets = [];
@@ -4802,10 +4802,10 @@ Group
 
   MCU_Timer
   {
-    Index = 396;
+    Index = 408;
     Name = "WakeUp";
     Desc = "";
-    Targets = [381,397];
+    Targets = [393,409];
     Objects = [];
     XPos = 36426.899;
     YPos = 25.837;
@@ -4820,10 +4820,10 @@ Group
 
   MCU_Timer
   {
-    Index = 398;
+    Index = 410;
     Name = "Sleep";
     Desc = "";
-    Targets = [388,399];
+    Targets = [400,411];
     Objects = [];
     XPos = 36701.153;
     YPos = 24.016;
@@ -4838,10 +4838,10 @@ Group
 
   MCU_Timer
   {
-    Index = 387;
+    Index = 399;
     Name = "ReplacementDelay";
     Desc = "";
-    Targets = [401];
+    Targets = [413];
     Objects = [];
     XPos = 36024.530;
     YPos = 43.201;
@@ -4856,10 +4856,10 @@ Group
 
   MCU_Activate
   {
-    Index = 401;
+    Index = 413;
     Name = "";
     Desc = "";
-    Targets = [390];
+    Targets = [402];
     Objects = [];
     XPos = 36040.250;
     YPos = 21.019;
@@ -4872,10 +4872,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 397;
+    Index = 409;
     Name = "";
     Desc = "";
-    Targets = [396];
+    Targets = [408];
     Objects = [];
     XPos = 36314.466;
     YPos = 27.044;
@@ -4888,10 +4888,10 @@ Group
 
   MCU_Activate
   {
-    Index = 399;
+    Index = 411;
     Name = "";
     Desc = "";
-    Targets = [396];
+    Targets = [408];
     Objects = [];
     XPos = 36571.217;
     YPos = 25.181;
@@ -4909,14 +4909,14 @@ Group
 Group
 {
   Name = "Conjunction";
-  Index = 427;
+  Index = 417;
   Desc = "";
   MCU_Timer
   {
-    Index = 414;
+    Index = 418;
     Name = "CondA";
     Desc = "";
-    Targets = [415];
+    Targets = [419];
     Objects = [];
     XPos = 16713.588;
     YPos = 104.882;
@@ -4931,10 +4931,10 @@ Group
 
   MCU_Timer
   {
-    Index = 415;
+    Index = 419;
     Name = "CondB";
     Desc = "";
-    Targets = [416];
+    Targets = [421];
     Objects = [];
     XPos = 16713.455;
     YPos = 104.882;
@@ -4949,7 +4949,7 @@ Group
 
   MCU_Timer
   {
-    Index = 416;
+    Index = 421;
     Name = "AllTrue";
     Desc = "";
     Targets = [];
@@ -4967,10 +4967,10 @@ Group
 
   MCU_Activate
   {
-    Index = 417;
+    Index = 423;
     Name = "";
     Desc = "";
-    Targets = [414];
+    Targets = [418];
     Objects = [];
     XPos = 16716.517;
     YPos = 104.851;
@@ -4983,10 +4983,10 @@ Group
 
   MCU_Activate
   {
-    Index = 418;
+    Index = 424;
     Name = "";
     Desc = "";
-    Targets = [415];
+    Targets = [419];
     Objects = [];
     XPos = 16716.275;
     YPos = 104.851;
@@ -4999,10 +4999,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 419;
+    Index = 425;
     Name = "";
     Desc = "";
-    Targets = [414];
+    Targets = [418];
     Objects = [];
     XPos = 16710.898;
     YPos = 104.912;
@@ -5015,10 +5015,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 420;
+    Index = 426;
     Name = "";
     Desc = "";
-    Targets = [415];
+    Targets = [419];
     Objects = [];
     XPos = 16710.794;
     YPos = 104.912;
@@ -5031,10 +5031,10 @@ Group
 
   MCU_Timer
   {
-    Index = 421;
+    Index = 427;
     Name = "Test";
     Desc = "";
-    Targets = [414];
+    Targets = [418];
     Objects = [];
     XPos = 16713.604;
     YPos = 104.916;
@@ -5049,10 +5049,10 @@ Group
 
   MCU_Timer
   {
-    Index = 422;
+    Index = 428;
     Name = "SetA";
     Desc = "";
-    Targets = [417,421];
+    Targets = [423,427];
     Objects = [];
     XPos = 16719.570;
     YPos = 104.816;
@@ -5067,10 +5067,10 @@ Group
 
   MCU_Timer
   {
-    Index = 423;
+    Index = 429;
     Name = "SetB";
     Desc = "";
-    Targets = [418,421];
+    Targets = [424,427];
     Objects = [];
     XPos = 16719.431;
     YPos = 104.816;
@@ -5085,10 +5085,10 @@ Group
 
   MCU_Timer
   {
-    Index = 424;
+    Index = 430;
     Name = "ClearA";
     Desc = "";
-    Targets = [419,426];
+    Targets = [425,431];
     Objects = [];
     XPos = 16707.672;
     YPos = 104.816;
@@ -5103,10 +5103,10 @@ Group
 
   MCU_Timer
   {
-    Index = 425;
+    Index = 432;
     Name = "ClearB";
     Desc = "";
-    Targets = [420,426];
+    Targets = [426,431];
     Objects = [];
     XPos = 16707.533;
     YPos = 104.816;
@@ -5121,7 +5121,7 @@ Group
 
   MCU_Timer
   {
-    Index = 426;
+    Index = 431;
     Name = "SomeFalse";
     Desc = "";
     Targets = [];
