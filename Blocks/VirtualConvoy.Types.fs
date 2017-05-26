@@ -325,7 +325,7 @@ with
         }
 
 type IconDisplay = {
-    Show : Mcu.McuTrigger
+    Show : Mcu.McuTimer
     Hide : Mcu.McuTrigger
     Icon : Mcu.McuIcon
     All : McuUtil.IMcuGroup
@@ -347,7 +347,7 @@ with
             subst mcu
             substLc mcu
         // Get key nodes
-        let show = getTriggerByName group T.Blocks.Show
+        let show = getTriggerByName group T.Blocks.Show :?> Mcu.McuTimer
         let hide = getTriggerByName group T.Blocks.Hide
         let icon = getIconByIndex show.Targets.Head group
         // Position of all nodes

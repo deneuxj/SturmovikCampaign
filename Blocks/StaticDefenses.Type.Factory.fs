@@ -105,11 +105,7 @@ with
             if groupSize >= 3 && specialty = DefenseSpecialty.AntiAir then
                 let icon =
                     IconDisplay.Create(store, lcStore, center, "", McuUtil.swapCoalition coalition, Mcu.IconIdValue.AttackAntiAirPosition)
-                match icon.Show with
-                | :? Mcu.McuTimer as timer ->
-                    timer.Time <- 300.0 // Delay showing icon by 5 minutes.
-                | _ ->
-                    ()
+                icon.Show.Time <- 300.0 // Delay showing icon by 5 minutes.
                 // Show the icon only once. It's never hidden anyway, and reshow-ing it every time a plane approaches is unnecessary. Moreover, I suspect it causes stutters.
                 let once = newCounter 1
                 let subst = Mcu.substId <| store.GetIdMapper()
