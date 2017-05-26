@@ -381,24 +381,29 @@ let mkInitialState(world : World, strategyFile : string) =
     
     let getRegion = wg.GetRegion
 
+    let distanceFromAxisFactories = computeDistanceFromFactories true (fun world -> world.Roads @ world.Rails) getOwner world Axis
+    let distanceFromAlliesFactories = computeDistanceFromFactories true (fun world -> world.Roads @ world.Rails) getOwner world Allies
+    let distanceFromFactories =
+        function
+        | Axis -> distanceFromAxisFactories
+        | Allies -> distanceFromAlliesFactories
     let regions =
         world.Regions
         |> List.map (fun region ->
             let owner = getOwner region.RegionId
-            let production =
-                (getRegion region.RegionId).Production
-                |> List.sumBy (fun pro -> pro.Production)
-            // Regions with factories are supplied and defended, rest is empty.
             let supplies, vehicles =
-                match owner, production > 0.0f<E/H> with
-                | _, false
-                | None, _ -> 0.0f<E>, Map.empty
-                | Some owner, true ->
+                match owner with
+                | None -> 0.0f<E>, Map.empty
+                | Some owner ->
+                    let hops =
+                        Map.tryFind region.RegionId (distanceFromFactories owner)
+                        |> Option.defaultVal 10
+                        |> min 10
                     let supplies =
                         region.Storage
                         |> Seq.sumBy (fun storage -> storage.Storage)
                     let scale (n : int) =
-                        int(ceil(float32 n * production / 500.0f<E/H>))
+                        int(ceil(float32 n * (1.0f - (float32 hops) / 10.0f))) |> max 0
                     let vehicles =
                         [(HeavyTank, scale 3); (MediumTank, scale 9); (LightArmor, scale 3)]
                         |> Map.ofList
@@ -412,30 +417,31 @@ let mkInitialState(world : World, strategyFile : string) =
               NumVehicles = vehicles
             }
         )
-    // Airfields with factories have ammo and plane.
     let mkAirfield (airfield : Airfield) =
-        let hasFactories =
-            //true // For now, put planes everywhere. This makes it easier to test the mission, flight times are shorter.
-            not <| List.isEmpty (getRegion airfield.Region).Production
         let owner =
             getOwner airfield.Region
-        let numPlanes =
-            let numFighters = 5 * List.length airfield.ParkedFighters |> float32
-            let numAttackers = 5 * List.length airfield.ParkedAttackers |> float32
-            let numBombers = 5 * List.length airfield.ParkedBombers |> float32
-            let getNumPlanes =
-                function
-                | PlaneType.Attacker -> numAttackers
-                | PlaneType.Bomber -> numBombers
-                | PlaneType.Fighter -> numFighters
-                | PlaneType.Transport -> 0.0f
-            if hasFactories then
+        let numPlanes, supplies =
+            match owner with
+            | Some owner ->
+                let hops =
+                    Map.tryFind airfield.Region (distanceFromFactories owner)
+                    |> Option.defaultVal 10
+                    |> min 10
+                let scale (x : float32) =
+                    x * (1.0f - (float32 hops) / 10.0f) |> max 0.0f
+                let numFighters = List.length airfield.ParkedFighters |> float32 |> scale
+                let numAttackers = List.length airfield.ParkedAttackers |> float32 |> scale
+                let numBombers = List.length airfield.ParkedBombers |> float32 |> scale
+                let getNumPlanes =
+                    function
+                    | PlaneType.Attacker -> numAttackers
+                    | PlaneType.Bomber -> numBombers
+                    | PlaneType.Fighter -> numFighters
+                    | PlaneType.Transport -> 0.0f
                 let random = new System.Random()
-                match owner with
-                | None -> Map.empty
-                | Some coalition ->
+                let numPlanes =
                     PlaneModel.AllModels world.PlaneSet
-                    |> Seq.filter (fun plane -> plane.Coalition = coalition)
+                    |> Seq.filter (fun plane -> plane.Coalition = owner)
                     |> Seq.map (fun plane -> plane.PlaneType, Array.init (int <| getNumPlanes plane.PlaneType) (fun _ -> plane))
                     |> Seq.groupBy fst
                     |> Seq.map (fun (planeType, planes) -> planeType, planes |> Seq.map snd |> Array.concat |> Array.shuffle random |> Array.take (int <| getNumPlanes planeType))
@@ -443,15 +449,13 @@ let mkInitialState(world : World, strategyFile : string) =
                     |> Array.concat
                     |> Util.compactSeq
                     |> Map.map (fun k v -> float32 v)
-            else
-                Map.empty
-        let supplies =
-            if hasFactories then
-                match owner with
-                | None -> 0.0f<E>
-                | Some _ -> airfield.Storage |> Seq.sumBy (fun gr -> gr.Storage)
-            else
-                0.0f<E>
+                let supplies =
+                    airfield.Storage |> Seq.sumBy (fun gr -> gr.Storage)
+                    |> float32
+                    |> scale
+                numPlanes, 1.0f<E> * supplies
+            | None ->
+                Map.empty, 0.0f<E>
         { AirfieldId = airfield.AirfieldId
           NumPlanes = numPlanes
           StorageHealth = airfield.Storage |> List.map (fun _ -> 1.0f)
