@@ -4,6 +4,7 @@ module SturmovikMission.Blocks.VirtualConvoy.Factory
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.Links
 open SturmovikMission.Blocks.Predicates
+open SturmovikMission.Blocks.Conjunction
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
@@ -46,6 +47,8 @@ type VirtualConvoy =
       TruckInConvoy : Set<ConvoyInstance * int * TruckInConvoyInstance>
       WhileEnemyCloseOfConvoy : Set<ConvoyInstance * WhileEnemyCloseInstance>
       
+      DiscardConditionSet : Map<ConvoyInstance, Conjunction>
+
       TruckInConvoySet : Map<TruckInConvoyInstance, TruckInConvoy>
       
       ActiveWaypointSet : Map<ActiveWaypointInstance, ActiveWaypoint>
@@ -128,6 +131,9 @@ with
                     yield (ConvoyInstance i, Convoy.Create(store, vertex.Pos, vertex.Ori, country))
             }
             |> Map.ofSeq
+        let discardConditionSet =
+            convoySet
+            |> Map.map(fun convoy logic -> Conjunction.Create(store, Vector2.FromMcu(logic.Discard.Pos) + Vector2(100.0f)))
         let truckInConvoySet =
             seq {
                 for i, vertex in Seq.zip (Seq.initInfinite id) path do
@@ -291,6 +297,7 @@ with
             |> Set.ofList
 
         { ConvoySet = convoySet
+          DiscardConditionSet = discardConditionSet
           TruckInConvoy = truckInConvoy
           WhileEnemyCloseOfConvoy = whileEnemyCloseOfConvoy
           TruckInConvoySet = truckInConvoySet
@@ -407,8 +414,8 @@ with
                         yield wpData.Activate, wec.StartMonitoring :> Mcu.McuBase
                     //  Stop monitoring when waypoint becomes inactive
                     yield wpData.Deactivate, wec.StopMonitoring :> Mcu.McuBase
-                    // Discard vehicles at virtual waypoint when it becomes inactive
-                    yield wpData.Deactivate, this.ConvoySet.[convoy].Discard :> Mcu.McuBase
+                    // Request discard vehicles at virtual waypoint when it becomes inactive
+                    yield wpData.Deactivate, this.DiscardConditionSet.[convoy].SetA :> Mcu.McuBase
                 for curr, next in this.Path do
                     let curr2 = this.ActiveWaypointSet.[curr]
                     let next2 = this.ActiveWaypointSet.[next]
@@ -542,6 +549,19 @@ with
                 else
                     yield this.Api.Captured, upcast this.IconAttack.Hide
                     yield this.Api.Captured, upcast this.IconCover.Hide
+
+                // Convoy discard conditions
+                // Do not discard while visible
+                for convoy, discard in this.DiscardConditionSet |> Map.toSeq do
+                    match tryGet this.WhileEnemyCloseOfConvoy convoy with
+                    | Some wec ->
+                        let wec = this.WhileEnemyCloseSet.[wec]
+                        yield wec.WakeUp, upcast discard.ClearB
+                        yield wec.Sleep, upcast discard.SetB
+                    | None ->
+                        ()
+                    yield discard.AllTrue, upcast this.ConvoySet.[convoy].Discard
+                    yield this.Api.Start, upcast discard.ClearA
             ]
         { Columns = columns
           Objects = objectLinks

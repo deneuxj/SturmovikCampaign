@@ -90,7 +90,7 @@ Group
     Index = 7;
     Name = "";
     Desc = "";
-    Targets = [3,10];
+    Targets = [3,10,408];
     Objects = [];
     XPos = 17026.359;
     YPos = 101.220;
@@ -299,7 +299,7 @@ Group
     Index = 28;
     Name = "StopMonitoring";
     Desc = "";
-    Targets = [4,29];
+    Targets = [4,29,409];
     Objects = [];
     XPos = 17067.553;
     YPos = 100.846;
@@ -385,7 +385,7 @@ Group
     Index = 35;
     Name = "Activate";
     Desc = "";
-    Targets = [34];
+    Targets = [34,408];
     Objects = [];
     XPos = 16998.728;
     YPos = 101.240;
@@ -460,6 +460,56 @@ Group
     XPos = 16950.849;
     YPos = 100.791;
     ZPos = 28242.241;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 407;
+    Name = "";
+    Desc = "";
+    Targets = [3];
+    Objects = [];
+    XPos = 17008.396;
+    YPos = 102.258;
+    ZPos = 28303.005;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 408;
+    Name = "GateStarted";
+    Desc = "";
+    Targets = [407];
+    Objects = [];
+    XPos = 17009.307;
+    YPos = 101.723;
+    ZPos = 28331.497;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 409;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [408];
+    Objects = [];
+    XPos = 17023.917;
+    YPos = 101.398;
+    ZPos = 28331.144;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -2222,7 +2272,7 @@ Group
     Index = 161;
     Name = "0s";
     Desc = "";
-    Targets = [167,170,176];
+    Targets = [167,170,176,184];
     Objects = [];
     XPos = 16951.970;
     YPos = 102.588;
@@ -3104,7 +3154,7 @@ Group
     Index = 256;
     Name = "EnemyEnters";
     Desc = "";
-    Targets = [257,258,259];
+    Targets = [257,258];
     Objects = [];
     XPos = 17323.536;
     YPos = 101.862;
@@ -3366,7 +3416,7 @@ Group
     Index = 258;
     Name = "0s";
     Desc = "";
-    Targets = [265,266,271];
+    Targets = [265,266,271,259];
     Objects = [];
     XPos = 17300.011;
     YPos = 102.588;
@@ -3674,7 +3724,7 @@ Group
     Index = 307;
     Name = "";
     Desc = "";
-    Targets = [303,310];
+    Targets = [303,310,410];
     Objects = [];
     XPos = 17357.853;
     YPos = 101.220;
@@ -3864,7 +3914,7 @@ Group
     Index = 326;
     Name = "StopMonitoring";
     Desc = "";
-    Targets = [304,327];
+    Targets = [304,327,413];
     Objects = [];
     XPos = 17399.047;
     YPos = 100.846;
@@ -3950,7 +4000,7 @@ Group
     Index = 333;
     Name = "Activate";
     Desc = "";
-    Targets = [332];
+    Targets = [332,410];
     Objects = [];
     XPos = 17330.222;
     YPos = 101.240;
@@ -4044,6 +4094,56 @@ Group
     XPos = 17287.625;
     YPos = 100.791;
     ZPos = 28232.332;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 410;
+    Name = "GateStarted";
+    Desc = "";
+    Targets = [411];
+    Objects = [];
+    XPos = 17342.377;
+    YPos = 96.891;
+    ZPos = 28337.386;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 411;
+    Name = "";
+    Desc = "";
+    Targets = [303];
+    Objects = [];
+    XPos = 17342.377;
+    YPos = 102.848;
+    ZPos = 28306.785;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 413;
+    Name = "";
+    Desc = "";
+    Targets = [410];
+    Objects = [];
+    XPos = 17356.238;
+    YPos = 97.198;
+    ZPos = 28337.076;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -4799,6 +4899,241 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "Conjunction";
+  Index = 427;
+  Desc = "";
+  MCU_Timer
+  {
+    Index = 414;
+    Name = "CondA";
+    Desc = "";
+    Targets = [415];
+    Objects = [];
+    XPos = 16713.588;
+    YPos = 104.882;
+    ZPos = 28220.722;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 415;
+    Name = "CondB";
+    Desc = "";
+    Targets = [416];
+    Objects = [];
+    XPos = 16713.455;
+    YPos = 104.882;
+    ZPos = 28228.848;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 416;
+    Name = "AllTrue";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 16713.430;
+    YPos = 104.767;
+    ZPos = 28236.795;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 417;
+    Name = "";
+    Desc = "";
+    Targets = [414];
+    Objects = [];
+    XPos = 16716.517;
+    YPos = 104.851;
+    ZPos = 28220.734;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 418;
+    Name = "";
+    Desc = "";
+    Targets = [415];
+    Objects = [];
+    XPos = 16716.275;
+    YPos = 104.851;
+    ZPos = 28228.921;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 419;
+    Name = "";
+    Desc = "";
+    Targets = [414];
+    Objects = [];
+    XPos = 16710.898;
+    YPos = 104.912;
+    ZPos = 28220.526;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 420;
+    Name = "";
+    Desc = "";
+    Targets = [415];
+    Objects = [];
+    XPos = 16710.794;
+    YPos = 104.912;
+    ZPos = 28228.955;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 421;
+    Name = "Test";
+    Desc = "";
+    Targets = [414];
+    Objects = [];
+    XPos = 16713.604;
+    YPos = 104.916;
+    ZPos = 28216.155;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0.02;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 422;
+    Name = "SetA";
+    Desc = "";
+    Targets = [417,421];
+    Objects = [];
+    XPos = 16719.570;
+    YPos = 104.816;
+    ZPos = 28220.734;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 423;
+    Name = "SetB";
+    Desc = "";
+    Targets = [418,421];
+    Objects = [];
+    XPos = 16719.431;
+    YPos = 104.816;
+    ZPos = 28228.886;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 424;
+    Name = "ClearA";
+    Desc = "";
+    Targets = [419,426];
+    Objects = [];
+    XPos = 16707.672;
+    YPos = 104.816;
+    ZPos = 28220.578;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 425;
+    Name = "ClearB";
+    Desc = "";
+    Targets = [420,426];
+    Objects = [];
+    XPos = 16707.533;
+    YPos = 104.816;
+    ZPos = 28228.695;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 426;
+    Name = "SomeFalse";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 16707.528;
+    YPos = 104.828;
+    ZPos = 28236.727;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
   }
   
 

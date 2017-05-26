@@ -349,7 +349,8 @@ with
         // Get key nodes
         let show = getTriggerByName group T.Blocks.Show :?> Mcu.McuTimer
         let hide = getTriggerByName group T.Blocks.Hide
-        let icon = getIconByIndex show.Targets.Head group
+        let activate = getByIndex show.Targets.Head group :?> Mcu.McuTrigger
+        let icon = getIconByIndex activate.Targets.Head group
         // Position of all nodes
         let refPos = Vector2.FromMcu icon.Pos
         let dv = pos - refPos

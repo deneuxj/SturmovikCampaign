@@ -61,6 +61,7 @@
     <Compile Include="Predicates.fs" />
     <Compile Include="BlocksMissionData.fs" />
     <Compile Include="Vehicles.fs" />
+    <Compile Include="Conjunction.fs" />
     <Content Include="Proto-VirtualConvoy.txt" />
     <Compile Include="VirtualConvoy.Types.fs" />
     <Compile Include="VirtualConvoy.Factory.fs" />

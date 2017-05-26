@@ -10,6 +10,16 @@
 TruckInConvoy truck_in_convoy(Convoy, int)
 WhileEnemyClose while_enemy_close_of_convoy(Convoy)
 
+type Conjunction {
+	trigger SetA
+	trigger ClearA
+	trigger Set B
+	trigger ClearB
+	trigger AllTrue
+}
+Conjunction discard_conditions_of_convoy(Convoy)
+
+Conjunction 
 type TruckInConvoy {
 	entity Entity
 	trigger Damaged
@@ -155,8 +165,10 @@ target += for (wp) in path_start
 target += for (wp, convoy) in convoy_at_waypoint unless wp in path_end -> (wp.Activate, while_enemy_close_of_convoy(convoy).StartMonitoring)
 //  Stop monitoring when waypoint becomes inactive
 target += for (wp, convoy) in convoy_at_waypoint -> (wp.Deactivate, while_enemy_close_of_convoy(convoy).StopMonitoring)
-// Discard vehicles at virtual waypoint when it becomes inactive
-target += for (wp, convoy) in convoy_at_waypoint -> (wp.Deactivate, convoy.Discard)
+// Request discard vehicles at virtual waypoint when it becomes inactive
+target += for (wp, convoy) in convoy_at_waypoint
+          for cond in discard_condition_of_convoy(convoy) -> (wp.Deactivate, cond.SetA)
+
 
 // ActiveWaypoint <-> Timer
 //  Activate next waypoint when virtual travel time elapsed, and deactivate current waypoint.
@@ -168,6 +180,17 @@ target += for (curr, next) in path -> (timer_between_waypoints(curr, next).Elaps
 //  Prevent showing convoys at following waypoints while convoy at current waypoint is shown.
 target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).WakeUp, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Deactivate)
 target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).Sleep, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Activate)
+
+// Convoy discard conditions
+//  Do not discard while visible
+target += for cond, convoy in discard_condition_of_convoy
+          for wec in while_enemy_close_of_convoy(convoy) -> (wec.WakeUp, cond.ClearB)
+		                                                 -> (wec.Sleep, cond.SetB)
+//  Discard after requested and while hidden
+target += for cond, convoy in discard_condition_of_convoy -> (cond.AllTrue, convoy.Discard)
+//  Initially not requested discarded
+target += for api in result
+          for cond, _ in discard_condition_of_convoy -> (api.Start, cond.ClearA)
 
 // ... <-> VirtualConvoy
 //  Increase destroyed counter when lead car damaged
