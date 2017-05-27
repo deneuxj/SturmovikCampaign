@@ -222,8 +222,8 @@ let mkAllAttackers (world : World) (state : WorldState) =
                         }, 3
                     if numAlliesAttackers >= 7.0f then
                         yield {
-                            Start = af.Pos
-                            Target = af2.Pos
+                            Start = af2.Pos
+                            Target = af.Pos
                             Altitude = 2000.0f
                             Plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, Attacker, Allies).Value
                             Coalition = Allies
