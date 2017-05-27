@@ -247,15 +247,14 @@ and makeParser (format : ValueType) : ParserFun =
     | ValueType.FloatPair -> parseFloatPair
     | ValueType.Composite content ->
         let typeMap = content
-        let rec parse (s : Stream) =
+        let rec parse (s : Stream) pairs =
             match s with
             | ReId(kw, ((ReLit "{" _) as s)) ->
                 match typeMap.TryFind kw with
                 | Some (valueType, _, _) ->
                     let (ParserFun f) = makeParser valueType
                     let (v, s) = f s
-                    let xs, s = parse s 
-                    (kw, v) :: xs, s
+                    parse s ((kw, v) :: pairs)
                 | None ->
                     parseError(sprintf "Not a known key: %s" kw, s)
             | ReId(kw, ReLit "=" s) ->
@@ -265,23 +264,22 @@ and makeParser (format : ValueType) : ParserFun =
                     let (v, s) = f s
                     match s with
                     | ReLit ";" s ->
-                        let xs, s = parse s 
-                        (kw, v) :: xs, s
+                        parse s ((kw, v) :: pairs)
                     | _ ->
                         parseError("Not ;", s)
                 | None ->
                     parseError(sprintf "Not a known key: %s" kw, s)
             | ReLit "}" s ->
-                [], s
+                pairs |> List.rev, s
             | _ ->
                 parseError("Not } or id = data", s)
         function
         | ReLit "{" s ->
-            let vs, s = parse s
+            let vs, s = parse s []
             (Composite vs, s)
         | s -> parseError("Not {", s)
     | ValueType.Mapping itemType ->
-        let rec parse (s : Stream) =
+        let rec parse (s : Stream) pairs =
             match s with
             | ReInt(n, ReLit "=" s) ->
                 let (ParserFun f) = makeParser itemType
@@ -289,15 +287,14 @@ and makeParser (format : ValueType) : ParserFun =
                 match s with
                 | ReLit ";" s
                 | s ->
-                    let xs, s = parse s 
-                    (n, v) :: xs, s
+                    parse s ((n, v) :: pairs)
             | ReLit "}" s ->
-                [], s
+                List.rev pairs, s
             | _ ->
                 parseError("Not } or id = data", s)
         function
         | ReLit "{" s ->
-            let vs, s = parse s
+            let vs, s = parse s []
             (Mapping vs, s)
         | s -> parseError("Not {", s)
     | ValueType.Pair(itemType1, itemType2) -> parsePair (itemType1, itemType2)
@@ -324,19 +321,18 @@ and makeParser (format : ValueType) : ParserFun =
         let (ParserFun f) = makeParser itemType
         function
         | ReLit "{" s ->
-            let rec parse =
+            let rec parse items =
                 function
                 | ReLit "}" s ->
-                    [], s
+                    items, s
                 | s ->
                     let x, s = f s
                     match s with
                     | ReLit ";" s
                     | s ->
-                        let xs, s = parse s
-                        x :: xs, s
-            let xs, s = parse s
-            (List xs, s)
+                        parse (x :: items) s
+            let xs, s = parse [] s
+            (List (List.rev xs), s)
         | s ->
             parseError("Not {", s)
     |> ParserFun
