@@ -33,11 +33,11 @@ with
         leadCar.Country <- country
         match country with
         | Mcu.CountryValue.Germany ->
-            leadCar.Model <- germanCar.Model
-            leadCar.Script <- germanCar.Script
+            leadCar.Model <- vehicles.GermanCar.Model
+            leadCar.Script <- vehicles.GermanCar.Script
         | Mcu.CountryValue.Russia ->
-            leadCar.Model <- russianCar.Model
-            leadCar.Script <- russianCar.Script
+            leadCar.Model <- vehicles.RussianCar.Model
+            leadCar.Script <- vehicles.RussianCar.Script
         | _ ->
             ()
         let center = Vector2.FromMcu(leadCar.Pos)
@@ -82,11 +82,11 @@ with
         truck.Country <- country
         match country with
         | Mcu.CountryValue.Germany ->
-            truck.Model <- germanTruck.Model
-            truck.Script <- germanTruck.Script
+            truck.Model <- vehicles.GermanTruck.Model
+            truck.Script <- vehicles.GermanTruck.Script
         | Mcu.CountryValue.Russia ->
-            truck.Model <- russianTruck.Model
-            truck.Script <- russianTruck.Script
+            truck.Model <- vehicles.RussianTruck.Model
+            truck.Script <- vehicles.RussianTruck.Script
         | _ ->
             ()
         let center = Vector2.FromMcu(truck.Pos)

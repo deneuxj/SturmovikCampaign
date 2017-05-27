@@ -19,14 +19,14 @@ with
         match coalition with
         | Axis ->
             match this with
-            | HeavyTank -> germanHeavyTank
-            | MediumTank -> germanMediumTank
-            | LightArmor -> germanLightArmor
+            | HeavyTank -> vehicles.GermanHeavyTank
+            | MediumTank -> vehicles.GermanMediumTank
+            | LightArmor -> vehicles.GermanLightArmor
         | Allies ->
             match this with
-            | HeavyTank -> russianHeavyTank
-            | MediumTank -> russianMediumTank
-            | LightArmor -> russianLightArmor
+            | HeavyTank -> vehicles.RussianHeavyTank
+            | MediumTank -> vehicles.RussianMediumTank
+            | LightArmor -> vehicles.RussianLightArmor
 
     static member LightArmorCost = 600.0f<E>
     static member MediumTankCost = GroundAttackVehicle.LightArmorCost * 2.0f

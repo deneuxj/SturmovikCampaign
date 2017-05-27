@@ -45,11 +45,11 @@ with
         | AntiTank ->
             match thing.Country with
             | Mcu.CountryValue.Germany ->
-                thing.Model <- germanAntiTankCanon.Model
-                thing.Script <- germanAntiTankCanon.Script
+                thing.Model <- vehicles.GermanAntiTankCanon.Model
+                thing.Script <- vehicles.GermanAntiTankCanon.Script
             | Mcu.CountryValue.Russia ->
-                thing.Model <- russianAntiTankCanon.Model
-                thing.Script <- russianAntiTankCanon.Script
+                thing.Model <- vehicles.RussianAntiTankCanon.Model
+                thing.Script <- vehicles.RussianAntiTankCanon.Script
             | _ ->
                 ()
         | AntiAir ->
@@ -57,18 +57,18 @@ with
             match thing.Country with
             | Mcu.CountryValue.Germany ->
                 if random.Next(2) = 1 then
-                    thing.Model <- germanAntiAirCanon.Model
-                    thing.Script <- germanAntiAirCanon.Script
+                    thing.Model <- vehicles.GermanAntiAirCanon.Model
+                    thing.Script <- vehicles.GermanAntiAirCanon.Script
                 else
-                    thing.Model <- germanFlak.Model
-                    thing.Script <- germanFlak.Script
+                    thing.Model <- vehicles.GermanFlak.Model
+                    thing.Script <- vehicles.GermanFlak.Script
             | Mcu.CountryValue.Russia ->
                 if random.Next(2) = 1 then
-                    thing.Model <- russianAntiAirCanon.Model
-                    thing.Script <- russianAntiAirCanon.Script
+                    thing.Model <- vehicles.RussianAntiAirCanon.Model
+                    thing.Script <- vehicles.RussianAntiAirCanon.Script
                 else
-                    thing.Model <- russianFlak.Model
-                    thing.Script <- russianFlak.Script
+                    thing.Model <- vehicles.RussianFlak.Model
+                    thing.Script <- vehicles.RussianFlak.Script
             | _ ->
                 ()
 
@@ -126,11 +126,11 @@ with
         let canon = getHasEntityByIndex this.Canon.MisObjID mcus
         match canon.Country with
         | Mcu.CountryValue.Germany ->
-            canon.Model <- germanSearchLight.Model
-            canon.Script <- germanSearchLight.Script
+            canon.Model <- vehicles.GermanSearchLight.Model
+            canon.Script <- vehicles.GermanSearchLight.Script
         | _ ->
-            canon.Model <- russianSearchLight.Model
-            canon.Script <- russianSearchLight.Script
+            canon.Model <- vehicles.RussianSearchLight.Model
+            canon.Script <- vehicles.RussianSearchLight.Script
         let mcus =
             mcus
             |> List.map (fun mcu ->

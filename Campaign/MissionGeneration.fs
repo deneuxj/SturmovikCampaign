@@ -512,14 +512,14 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                         z1 <- max z1 pos.Y
                         let model =
                             match vehicle, coalition with
-                            | HeavyTank, Axis -> Vehicles.germanStaticHeavyTank
-                            | MediumTank, Axis -> Vehicles.germanStaticMediumTank
-                            | LightArmor, Axis -> Vehicles.germanStaticLightArmor
-                            | HeavyTank, Allies -> Vehicles.russianStaticHeavyTank
-                            | MediumTank, Allies -> Vehicles.russianStaticMediumTank
-                            | LightArmor, Allies -> Vehicles.russianStaticLightArmor
+                            | HeavyTank, Axis -> Vehicles.vehicles.GermanStaticHeavyTank
+                            | MediumTank, Axis -> Vehicles.vehicles.GermanStaticMediumTank
+                            | LightArmor, Axis -> Vehicles.vehicles.GermanStaticLightArmor
+                            | HeavyTank, Allies -> Vehicles.vehicles.RussianStaticHeavyTank
+                            | MediumTank, Allies -> Vehicles.vehicles.RussianStaticMediumTank
+                            | LightArmor, Allies -> Vehicles.vehicles.RussianStaticLightArmor
                         let position =
-                            newBlockMcu store country Vehicles.tankPosition.Model Vehicles.tankPosition.Script 3000
+                            newBlockMcu store country Vehicles.vehicles.TankPosition.Model Vehicles.vehicles.TankPosition.Script 3000
                         let mcus =
                             if inAttackArea pos then
                                 let block, entity = newBlockWithEntityMcu store country model.Model model.Script vehicle.Durability
@@ -536,18 +536,18 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                     let z1 = z1 + maxParkingSpacing
                     // fuel storage north and south of the group
                     let pos = Vector2(x1, 0.5f * (z0 + z1))
-                    let block = newBlockMcu store country Vehicles.fuel.Model Vehicles.fuel.Script 1000
+                    let block = newBlockMcu store country Vehicles.vehicles.Fuel.Model Vehicles.vehicles.Fuel.Script 1000
                     pos.AssignTo block.Pos
                     yield block
                     let pos = Vector2(x0, 0.5f * (z0 + z1))
-                    let block = newBlockMcu store country Vehicles.fuel.Model Vehicles.fuel.Script 1000
+                    let block = newBlockMcu store country Vehicles.vehicles.Fuel.Model Vehicles.vehicles.Fuel.Script 1000
                     pos.AssignTo block.Pos
                     yield block
                     // towers at the four corners
                     for x in [ x0; x1 ] do
                         for z in [ z0; z1 ] do
                             let pos = Vector2(x, z)
-                            let block = newBlockMcu store country Vehicles.tower.Model Vehicles.tower.Script 2000
+                            let block = newBlockMcu store country Vehicles.vehicles.Tower.Model Vehicles.vehicles.Tower.Script 2000
                             pos.AssignTo block.Pos
                             yield block
     ]

@@ -70,8 +70,8 @@ with
             [
                 let model =
                     match specialty with
-                    | AntiAir -> Vehicles.antiAirPosition
-                    | AntiTank -> Vehicles.antiTankPosition
+                    | AntiAir -> Vehicles.vehicles.AntiAirPosition
+                    | AntiTank -> Vehicles.vehicles.AntiTankPosition
                 let newBlock (pos : Mcu.Vec3) (ori : Mcu.Vec3) =
                     let block = newBlock 1 (int country) model.Model model.Script
                     let mcu =

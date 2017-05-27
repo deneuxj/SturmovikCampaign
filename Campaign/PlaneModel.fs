@@ -50,66 +50,66 @@ type PlaneModel =
 with
     member this.ScriptModel =
         match this with
-        | Bf109e7 -> Vehicles.germanFighter1
-        | Bf109f2 -> Vehicles.germanFighter2
-        | Mc202 -> Vehicles.germanFighter3
-        | Bf109f4 -> Vehicles.germanFighter4
-        | Bf109g2 -> Vehicles.germanFighter5
-        | Fw190a3 -> Vehicles.germanFighter6
-        | Fw190a5 -> Vehicles.germanFighter7
-        | Bf109g4 -> Vehicles.germanFighter8
-        | Bf110e -> Vehicles.germanAttacker1
-        | Bf110g -> Vehicles.germanAttacker3
-        | Ju88a4 -> Vehicles.germanBomber1
-        | Ju52 -> Vehicles.germanTransport
-        | I16 -> Vehicles.russianFighter1
-        | IL2M41 -> Vehicles.russianAttacker1
-        | IL2M42 -> Vehicles.russianAttacker2
-        | IL2M43 -> Vehicles.russianAttacker3
-        | Mig3 -> Vehicles.russianFighter2
-        | P40 -> Vehicles.russianFighter3
-        | Yak1s69 -> Vehicles.russianFighter4
-        | Yak1s127 -> Vehicles.russianFighter7
-        | La5 -> Vehicles.russianFighter6
-        | Lagg3s29 -> Vehicles.russianFighter5
-        | Pe2s35 -> Vehicles.russianBomber1
-        | Pe2s87 -> Vehicles.russianBomber2
-        | Ju87 -> Vehicles.germanAttacker2
-        | He111h6 -> Vehicles.germanBomber2
-        | He111h16 -> Vehicles.germanBomber3
+        | Bf109e7 -> Vehicles.vehicles.GermanFighter1
+        | Bf109f2 -> Vehicles.vehicles.GermanFighter2
+        | Mc202 -> Vehicles.vehicles.GermanFighter3
+        | Bf109f4 -> Vehicles.vehicles.GermanFighter4
+        | Bf109g2 -> Vehicles.vehicles.GermanFighter5
+        | Fw190a3 -> Vehicles.vehicles.GermanFighter6
+        | Fw190a5 -> Vehicles.vehicles.GermanFighter7
+        | Bf109g4 -> Vehicles.vehicles.GermanFighter8
+        | Bf110e -> Vehicles.vehicles.GermanAttacker1
+        | Bf110g -> Vehicles.vehicles.GermanAttacker3
+        | Ju88a4 -> Vehicles.vehicles.GermanBomber1
+        | Ju52 -> Vehicles.vehicles.GermanTransport
+        | I16 -> Vehicles.vehicles.RussianFighter1
+        | IL2M41 -> Vehicles.vehicles.RussianAttacker1
+        | IL2M42 -> Vehicles.vehicles.RussianAttacker2
+        | IL2M43 -> Vehicles.vehicles.RussianAttacker3
+        | Mig3 -> Vehicles.vehicles.RussianFighter2
+        | P40 -> Vehicles.vehicles.RussianFighter3
+        | Yak1s69 -> Vehicles.vehicles.RussianFighter4
+        | Yak1s127 -> Vehicles.vehicles.RussianFighter7
+        | La5 -> Vehicles.vehicles.RussianFighter6
+        | Lagg3s29 -> Vehicles.vehicles.RussianFighter5
+        | Pe2s35 -> Vehicles.vehicles.RussianBomber1
+        | Pe2s87 -> Vehicles.vehicles.RussianBomber2
+        | Ju87 -> Vehicles.vehicles.GermanAttacker2
+        | He111h6 -> Vehicles.vehicles.GermanBomber2
+        | He111h16 -> Vehicles.vehicles.GermanBomber3
 
     member this.StaticScriptModel =
         match this with
         // Moscow planeset
-        | Bf109e7 -> Vehicles.germanStaBf109e7
-        | Bf109f2 -> Vehicles.germanStaBf109e7Net
-        | Mc202 -> Vehicles.germanStaBf109e7Open
-        | Bf110e -> Vehicles.germanStaAttacker
-        | Ju88a4 -> Vehicles.germanStaBomber
-        | Ju52 -> Vehicles.germanStaTransport
-        | I16 -> Vehicles.russianStaI16
-        | IL2M41 -> Vehicles.russianStaAttacker
-        | Mig3 -> Vehicles.russianStaMig3
-        | P40 -> Vehicles.russianStaMig3Net
-        | Pe2s35 -> Vehicles.russianStaBomber
-        | Ju87 -> Vehicles.germanStaJu87
-        | He111h6 -> Vehicles.germanStaHe111h6
+        | Bf109e7 -> Vehicles.vehicles.GermanStaBf109e7
+        | Bf109f2 -> Vehicles.vehicles.GermanStaBf109e7Net
+        | Mc202 -> Vehicles.vehicles.GermanStaBf109e7Open
+        | Bf110e -> Vehicles.vehicles.GermanStaAttacker
+        | Ju88a4 -> Vehicles.vehicles.GermanStaBomber
+        | Ju52 -> Vehicles.vehicles.GermanStaTransport
+        | I16 -> Vehicles.vehicles.RussianStaI16
+        | IL2M41 -> Vehicles.vehicles.RussianStaAttacker
+        | Mig3 -> Vehicles.vehicles.RussianStaMig3
+        | P40 -> Vehicles.vehicles.RussianStaMig3Net
+        | Pe2s35 -> Vehicles.vehicles.RussianStaBomber
+        | Ju87 -> Vehicles.vehicles.GermanStaJu87
+        | He111h6 -> Vehicles.vehicles.GermanStaHe111h6
         // VLuki planeset
-        | Bf109f4 -> Vehicles.germanStaBf109
-        | Bf109g2 -> Vehicles.germanStaBf109Net
-        | Fw190a3 -> Vehicles.germanStaBf109e7
-        | Bf110g -> Vehicles.germanStaAttacker
-        | He111h16 -> Vehicles.germanStaHe111h6
-        | Yak1s69 -> Vehicles.russianStaYak1
-        | Lagg3s29 -> Vehicles.russianStaLagg3
-        | IL2M42 -> Vehicles.russianStaAttacker
-        | Pe2s87 -> Vehicles.russianStaBomber
+        | Bf109f4 -> Vehicles.vehicles.GermanStaBf109
+        | Bf109g2 -> Vehicles.vehicles.GermanStaBf109Net
+        | Fw190a3 -> Vehicles.vehicles.GermanStaBf109e7
+        | Bf110g -> Vehicles.vehicles.GermanStaAttacker
+        | He111h16 -> Vehicles.vehicles.GermanStaHe111h6
+        | Yak1s69 -> Vehicles.vehicles.RussianStaYak1
+        | Lagg3s29 -> Vehicles.vehicles.RussianStaLagg3
+        | IL2M42 -> Vehicles.vehicles.RussianStaAttacker
+        | Pe2s87 -> Vehicles.vehicles.RussianStaBomber
         // Other
-        | IL2M43 -> Vehicles.russianStaAttacker
-        | Bf109g4 -> Vehicles.germanStaBf109e7Net
-        | Fw190a5 -> Vehicles.germanStaBf109e7Open
-        | La5 -> Vehicles.russianStaLagg3W1
-        | Yak1s127 -> Vehicles.russianStaYak1Net
+        | IL2M43 -> Vehicles.vehicles.RussianStaAttacker
+        | Bf109g4 -> Vehicles.vehicles.GermanStaBf109e7Net
+        | Fw190a5 -> Vehicles.vehicles.GermanStaBf109e7Open
+        | La5 -> Vehicles.vehicles.RussianStaLagg3W1
+        | Yak1s127 -> Vehicles.vehicles.RussianStaYak1Net
 
     member this.Cost =
         match this with

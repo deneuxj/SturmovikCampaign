@@ -33,9 +33,9 @@ with
         // Override train
         let train2 =
             match country with
-            | Mcu.CountryValue.Russia -> mkRussianTrainMcu()
+            | Mcu.CountryValue.Russia -> vehicles.MkRussianTrainMcu()
             | Mcu.CountryValue.Germany 
-            | _ -> mkGermanTrainMcu()
+            | _ -> vehicles.MkGermanTrainMcu()
         train2.Index <- train.Index
         train2.LinkTrId <- train.LinkTrId
         train2.Ori.Y <- float yori
