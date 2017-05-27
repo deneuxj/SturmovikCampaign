@@ -26,10 +26,19 @@ with
         match this.Plane with
         | PlaneModel.Bf109e7 -> 0 // "0,1-MG17-AP-2000 + 2,3-MGFF-APHE-120"
         | PlaneModel.Bf109f2 -> 3 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
+        | PlaneModel.Bf109f4 -> 0 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
+        | PlaneModel.Bf109g2 -> 0 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
+        | PlaneModel.Bf109g4 -> 0 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
+        | PlaneModel.Fw190a3 -> 0 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500"
+        | PlaneModel.Fw190a5 -> 0 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500"
         | PlaneModel.I16 -> 11 // "0,1-SHKAS-AP-1000 + 2,3-SHVAK-APHE-180-add"
         | PlaneModel.Mc202 -> 4 // 0,1-BREDA12-APHE-800 + 2,3-MG15120-APHE-270-add
         | PlaneModel.Mig3 -> 16 // "0,1-SHVAK-APHE-300"
-        | PlaneModel.P40 -> 0
+        | PlaneModel.P40 -> 0 // "0,1,2,3,4,5-M250-AP-1410"
+        | PlaneModel.Yak1s69 -> 0 // "0,1-SHKAS-AP-1500 + 2-SHVAK-APHE-120"
+        | PlaneModel.Yak1s127 -> 0 // "0-UB-APHE-220 + 1-SHVAK-APHE-140"
+        | PlaneModel.Lagg3s29 -> 1 // "0-UB-APHE-200 + 1-VYA23-APHE-90-add"
+        | PlaneModel.La5 -> 0 // "0,1-SHVAK-APHE-340"
         | _ -> 0
 
     member this.ToPatrolBlock(store, lcStore) =
@@ -168,7 +177,10 @@ with
         match this.Plane with
         | PlaneModel.Ju87 -> 5 // "0,1-MG17-AP-2000 + SC250-3"
         | PlaneModel.Bf110e -> 2 // "0,1,2,3-MG17-AP-4000 + 4,5-MGFF-APHE-360 + SC250-2 + SC50-4"
+        | PlaneModel.Bf110g -> 2 //  "0,1,2,3-MG17-AP-4000 + 4-MG15120-APHE-400 + 5-MG15120-APHE-350 + SC250-2 + SC50-4"
         | PlaneModel.IL2M41 -> 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
+        | PlaneModel.IL2M42 -> 44 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-8"
+        | PlaneModel.IL2M43 -> 34
         | PlaneModel.Pe2s35 -> 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
         | _ -> 0
 
