@@ -285,6 +285,7 @@ with
               Ju87
               Ju88a4
               He111h16
+              Ju52
               Yak1s69
               Lagg3s29
               La5
@@ -299,6 +300,7 @@ with
               Ju87
               Ju88a4
               He111h16
+              Ju52
               Yak1s127
               Lagg3s29
               La5
