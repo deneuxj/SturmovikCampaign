@@ -131982,7 +131982,7 @@ Group
   Desc = "";
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7026;
     LinkTrId = 0;
     XPos = 63369.069;
@@ -131999,7 +131999,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7027;
     LinkTrId = 0;
     XPos = 64627.301;
@@ -132016,7 +132016,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7028;
     LinkTrId = 0;
     XPos = 63368.657;
@@ -132033,7 +132033,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7029;
     LinkTrId = 0;
     XPos = 64629.406;
@@ -132050,7 +132050,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7030;
     LinkTrId = 0;
     XPos = 64035.952;
@@ -132067,7 +132067,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7031;
     LinkTrId = 0;
     XPos = 64035.952;
@@ -132084,7 +132084,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7032;
     LinkTrId = 0;
     XPos = 12491.048;
@@ -132101,7 +132101,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7033;
     LinkTrId = 0;
     XPos = 12557.973;
@@ -132118,7 +132118,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7034;
     LinkTrId = 0;
     XPos = 13454.024;
@@ -132135,7 +132135,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7035;
     LinkTrId = 0;
     XPos = 13545.979;
@@ -132152,7 +132152,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7036;
     LinkTrId = 0;
     XPos = 12966.668;
@@ -132169,7 +132169,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7037;
     LinkTrId = 0;
     XPos = 13051.142;
@@ -132186,7 +132186,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7038;
     LinkTrId = 0;
     XPos = 30824.595;
@@ -132203,7 +132203,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7039;
     LinkTrId = 0;
     XPos = 32307.634;
@@ -132220,7 +132220,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7040;
     LinkTrId = 0;
     XPos = 31422.670;
@@ -132237,7 +132237,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7041;
     LinkTrId = 0;
     XPos = 31814.916;
@@ -132254,7 +132254,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7042;
     LinkTrId = 0;
     XPos = 41803.783;
@@ -132271,7 +132271,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7043;
     LinkTrId = 0;
     XPos = 41859.296;
@@ -132288,7 +132288,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7044;
     LinkTrId = 0;
     XPos = 42197.767;
@@ -132305,7 +132305,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7045;
     LinkTrId = 0;
     XPos = 42247.741;
@@ -132322,7 +132322,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7046;
     LinkTrId = 0;
     XPos = 42653.179;
@@ -132339,7 +132339,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7047;
     LinkTrId = 0;
     XPos = 42713.670;
@@ -132356,7 +132356,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7048;
     LinkTrId = 0;
     XPos = 55949.488;
@@ -132373,7 +132373,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7049;
     LinkTrId = 0;
     XPos = 56006.352;
@@ -132390,7 +132390,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7050;
     LinkTrId = 0;
     XPos = 56994.581;
@@ -132407,7 +132407,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7051;
     LinkTrId = 0;
     XPos = 57021.784;
@@ -132424,7 +132424,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7052;
     LinkTrId = 0;
     XPos = 56516.375;
@@ -132441,7 +132441,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7053;
     LinkTrId = 0;
     XPos = 56480.582;
@@ -132458,7 +132458,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7054;
     LinkTrId = 0;
     XPos = 32202.590;
@@ -132475,7 +132475,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7055;
     LinkTrId = 0;
     XPos = 32275.819;
@@ -132492,7 +132492,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7056;
     LinkTrId = 0;
     XPos = 32794.251;
@@ -132509,7 +132509,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7057;
     LinkTrId = 0;
     XPos = 32745.894;
@@ -132526,7 +132526,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7058;
     LinkTrId = 0;
     XPos = 33243.550;
@@ -132543,7 +132543,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7059;
     LinkTrId = 0;
     XPos = 33188.289;
@@ -132560,7 +132560,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7060;
     LinkTrId = 0;
     XPos = 49212.589;
@@ -132577,7 +132577,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7061;
     LinkTrId = 0;
     XPos = 48903.030;
@@ -132594,7 +132594,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7062;
     LinkTrId = 0;
     XPos = 49586.124;
@@ -132611,7 +132611,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7063;
     LinkTrId = 0;
     XPos = 49612.952;
@@ -132628,7 +132628,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7064;
     LinkTrId = 0;
     XPos = 49369.432;
@@ -132645,7 +132645,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7065;
     LinkTrId = 0;
     XPos = 49099.084;
@@ -132662,7 +132662,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7066;
     LinkTrId = 0;
     XPos = 48824.609;
@@ -132679,7 +132679,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7067;
     LinkTrId = 0;
     XPos = 48649.192;
@@ -132696,7 +132696,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7068;
     LinkTrId = 0;
     XPos = 48700.785;
@@ -132713,7 +132713,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7069;
     LinkTrId = 0;
     XPos = 22519.556;
@@ -132730,7 +132730,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7070;
     LinkTrId = 0;
     XPos = 22559.193;
@@ -132747,7 +132747,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7071;
     LinkTrId = 0;
     XPos = 21308.548;
@@ -132764,7 +132764,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7072;
     LinkTrId = 0;
     XPos = 21257.552;
@@ -132781,7 +132781,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7073;
     LinkTrId = 0;
     XPos = 21617.154;
@@ -132798,7 +132798,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7074;
     LinkTrId = 0;
     XPos = 21560.659;
@@ -132815,7 +132815,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7075;
     LinkTrId = 0;
     XPos = 22164.347;
@@ -132832,7 +132832,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7076;
     LinkTrId = 0;
     XPos = 22108.973;
@@ -132849,7 +132849,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7077;
     LinkTrId = 0;
     XPos = 21954.965;
@@ -132866,7 +132866,7 @@ Group
 
   Effect
   {
-    Name = "Effect";
+    Name = "LandFire";
     Index = 7078;
     LinkTrId = 0;
     XPos = 21987.843;

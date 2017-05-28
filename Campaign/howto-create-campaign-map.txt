@@ -85,7 +85,7 @@ Create non-directional beacon "vehicles" with entities in a group named "NDBs".
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
 13. Land fires
-Create land fire effects without entities in a group named "Land fires"
+Create land fire effects without entities named "LandFire" in a group named "Land fires"
 
 14. Bridges and other buildings
 Bridges and other blocks, buildings... need not be in groups, although they can.
