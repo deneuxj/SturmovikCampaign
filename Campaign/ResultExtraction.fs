@@ -16,21 +16,37 @@ open Campaign.PlaneModel
 
 /// Match the object type strings in log events with plane models.
 let (|PlaneObjectType|_|) (s : string) =
-    match s.ToLower() with
-    | "i-16 type 24" -> Some PlaneModel.I16
-    | "il-2 mod.1941" -> Some PlaneModel.IL2M41
-    | "ju 52 3mg4e" -> Some PlaneModel.Ju52
-    | "mc.202 ser.viii" -> Some PlaneModel.Mc202
-    | "p-40e-1" -> Some PlaneModel.P40
-    | "pe-2 ser.35" -> Some PlaneModel.Pe2s35
-    | "bf 109 e-7" -> Some PlaneModel.Bf109e7
-    | "bf 109 f-2" -> Some PlaneModel.Bf109f2
-    | "mig-3 ser.24" -> Some PlaneModel.Mig3
-    | "bf 110 e-2" -> Some PlaneModel.Bf110e
-    | "ju 88 a-4" -> Some PlaneModel.Ju88a4
-    | "ju 87 d-3" -> Some PlaneModel.Ju87
-    | "he 111 h-6" -> Some PlaneModel.He111h6
-    | _ -> None
+    match s with
+    | null -> None
+    | s -> Some s
+    |> Option.bind (fun s ->
+        match s.ToLower() with
+        | "i-16 type 24" -> Some PlaneModel.I16
+        | "il-2 mod.1941" -> Some PlaneModel.IL2M41
+        | "il-2 mod.1942" -> Some PlaneModel.IL2M42
+        | "il-2 mod.1943" -> Some PlaneModel.IL2M43
+        | "ju 52 3mg4e" -> Some PlaneModel.Ju52
+        | "mc.202 ser.viii" -> Some PlaneModel.Mc202
+        | "p-40e-1" -> Some PlaneModel.P40
+        | "pe-2 ser.35" -> Some PlaneModel.Pe2s35
+        | "pe-2 ser.87" -> Some PlaneModel.Pe2s87
+        | "bf 109 e-7" -> Some PlaneModel.Bf109e7
+        | "bf 109 f-2" -> Some PlaneModel.Bf109f2
+        | "bf 109 f-4" -> Some PlaneModel.Bf109f4
+        | "bf 109 g-2" -> Some PlaneModel.Bf109g2
+        | "bf 109 g-4" -> Some PlaneModel.Bf109g4
+        | "mig-3 ser.24" -> Some PlaneModel.Mig3
+        | "bf 110 e-2" -> Some PlaneModel.Bf110e
+        | "bf 110 g-2" -> Some PlaneModel.Bf110g
+        | "ju 88 a-4" -> Some PlaneModel.Ju88a4
+        | "ju 87 d-3" -> Some PlaneModel.Ju87
+        | "he 111 h-6" -> Some PlaneModel.He111h6
+        | "he 111 h-16" -> Some PlaneModel.He111h16
+        | "yak-1 ser.69" -> Some PlaneModel.Yak1s69
+        | "yak-1 ser.127" -> Some PlaneModel.Yak1s127
+        | "la-5 ser.8" -> Some PlaneModel.La5
+        | "lagg-3 ser.29" -> Some PlaneModel.Lagg3s29
+        | _ -> None)
 
 /// A region shipped supplies
 type SuppliesShipped = {
