@@ -392,7 +392,7 @@ module MissionFileGeneration =
                       7.0, "north-west"
                       9.0, "north"
                       11.0, "north-east"
-                      15.0, "east"
+                      13.0, "east"
                       15.0, "south-east" ]
                 descs
                 |> List.tryFind(fun (k, _) -> windDirection < k * 22.5)
