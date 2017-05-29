@@ -16,6 +16,7 @@ type Configuration = {
     MaxReinforcements : int
     MaxAttackers : int
     MaxPatrols : int
+    MaxCapturedPlanes : int
     MissionName : string
     MissionLength : int
     ConvoyInterval : int
@@ -42,6 +43,7 @@ with
             MaxReinforcements = 1
             MaxPatrols = 6
             MaxAttackers = 3
+            MaxCapturedPlanes = 3
             MissionName = "AutoGenMission2"
             MissionLength = 180
             ConvoyInterval = 60
@@ -407,7 +409,7 @@ module MissionFileGeneration =
         let briefing = timeAndDate + weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
 
         let missionName = config.MissionName
-        writeMissionFile random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys (Path.Combine(config.ScriptPath, config.StrategyFile)) world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
+        writeMissionFile config.MaxCapturedPlanes random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys (Path.Combine(config.ScriptPath, config.StrategyFile)) world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
 
         let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer")
         let swallow f = try f() with | _ -> ()

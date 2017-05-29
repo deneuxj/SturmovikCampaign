@@ -198,7 +198,7 @@ let createBlocks random store world state inAttackArea (blocks : T.Block list) =
 
 let createBridges random store world state inAttackArea (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged random store world state inAttackArea blocks
 
-let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (windDirection : Vector2) =
+let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (windDirection : Vector2) =
     let getOwner =
         let m =
             state.Regions
@@ -247,7 +247,22 @@ let createAirfieldSpawns (store : NumericalIdentifiers.IdStore) (world : World) 
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
                 let planeSpecs : T.Airfield.Planes.Plane list =
                     state.NumPlanes
-                    |> Map.filter (fun _ number -> number >= 1.0f)
+                    |> Map.map (fun _ number -> number |> floor |> int)
+                    // Limit number of captured planes available for spawning
+                    |> Util.expandMap
+                    |> Array.shuffle (new System.Random())
+                    |> Array.fold (fun (filtered, capturedLeft) plane ->
+                        if plane.Coalition <> coalition then
+                            if capturedLeft > 0 then
+                                plane :: filtered, capturedLeft - 1
+                            else
+                                filtered, 0
+                        else
+                            plane :: filtered, capturedLeft
+                    ) ([], maxCapturedPlanes)
+                    |> fst
+                    |> Util.compactSeq
+                    // Create plane spec
                     |> Map.map (fun plane number ->
                         let model = plane.ScriptModel
                         newAirfieldPlane("", "", 0, 0, "", "", int number)
@@ -597,7 +612,7 @@ let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (stat
                         | _ -> ()
     ]
 
-let writeMissionFile random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (strategyMissionFile : string) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
+let writeMissionFile maxCapturedPlanes random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (strategyMissionFile : string) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
     let strategyMissionData = T.GroupData(Parsing.Stream.FromFile strategyMissionFile)
     let options = strategyMissionData.ListOfOptions.Head
     let blocks =
@@ -625,7 +640,7 @@ let writeMissionFile random weather author missionName briefing missionLength co
     let spotting = createStorageIcons store lcStore missionBegin world state
     let blocks = createBlocks random store world state inAttackArea blocks
     let bridges = createBridges random store world state inAttackArea bridges
-    let spawns = createAirfieldSpawns store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
+    let spawns = createAirfieldSpawns maxCapturedPlanes store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
     let mkConvoyNodes orders =
         let convoyPrioNodes, convoys = createConvoys store lcStore world state orders
         for node, convoy in List.zip convoyPrioNodes.Nodes convoys do
