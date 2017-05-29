@@ -28,7 +28,7 @@ with
         let mkTankReport (m : Map<GroundAttackVehicle, int>) =
             m
             |> Map.toSeq
-            |> Seq.map (fun (tank, qty) -> sprintf "%s: %d" (tank.GetModel(coalition).ShortName) qty)
+            |> Seq.map (fun (tank, qty) -> sprintf "%s: %d" (tank.Description) qty)
             |> String.concat "<br>"
         seq {
             if not(this.RegionsCaptured.IsEmpty) then
