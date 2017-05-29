@@ -81,17 +81,12 @@ with
         | 2 -> PlaneSet.EarlyAccess
         | _ -> PlaneSet.Moscow
 
-let backupFile (date : System.DateTime) outputDir name =
-    let inFile = Path.Combine(outputDir, sprintf "%s.xml" name)
-    if File.Exists inFile then
-        let backupName =
-            let dateString =
-                date.ToString("yyyy-MM-dd_HH-mm-ss")
-            sprintf "%s_%s.xml" name dateString
-        let backupDest = Path.Combine(outputDir, backupName)
-        if File.Exists backupDest then
-            File.Delete(backupDest)
-        File.Copy(inFile, backupDest)
+module Filenames =
+    let axisOrders = "axisOrders.xml"
+    let alliesOrders = "alliesOrders.xml"
+    let state = "state.xml"
+    let world = "world.xml"
+    let weather = "weather.xml"
 
 module Init =
     open SturmovikMission.Blocks.BlocksMissionData
@@ -147,18 +142,18 @@ module Init =
 
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let outputDir = config.OutputDir
-        use worldFile = File.CreateText(Path.Combine(outputDir, "world.xml"))
+        use worldFile = File.CreateText(Path.Combine(outputDir, Filenames.world))
         serializer.Serialize(worldFile, world)
 
     let createState(config : Configuration) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
-        use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
+        use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
         let world = serializer.Deserialize<World>(worldFile)
 
         let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile))
 
         let outputDir = config.OutputDir
-        use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
+        use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
         serializer.Serialize(stateFile, state)
 
 module PlayChess =
@@ -174,8 +169,8 @@ module PlayChess =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state =
             try
-                use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
-                use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
                 serializer.Deserialize<World>(worldFile),
                 serializer.Deserialize<WorldState>(stateFile)
             with
@@ -213,8 +208,8 @@ module WeatherComputation =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state =
             try
-                use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
-                use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
                 serializer.Deserialize<World>(worldFile),
                 serializer.Deserialize<WorldState>(stateFile)
             with
@@ -228,7 +223,7 @@ module WeatherComputation =
         let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
         let weather = Weather.getWeather random (state.Date + daysOffset)
 
-        use weatherFile = File.CreateText(Path.Combine(config.OutputDir, "weather.xml"))
+        use weatherFile = File.CreateText(Path.Combine(config.OutputDir, Filenames.weather))
         serializer.Serialize(weatherFile, weather)
 
 module OrderDecision =
@@ -246,9 +241,9 @@ module OrderDecision =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state, weather =
             try
-                use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
-                use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
-                use weatherFile = File.OpenText(Path.Combine(config.OutputDir, "weather.xml"))
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                use weatherFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.weather))
                 serializer.Deserialize<World>(worldFile),
                 serializer.Deserialize<WorldState>(stateFile),
                 serializer.Deserialize<Weather.WeatherState>(weatherFile)
@@ -316,11 +311,9 @@ module OrderDecision =
             else
                 [], []
         let outputDir = config.OutputDir
-        backupFile state.Date outputDir "axisOrders.xml"
-        backupFile state.Date outputDir "alliesOrders.xml"
-        use axisOrderFiles = File.CreateText(Path.Combine(outputDir, "axisOrders.xml"))
+        use axisOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.axisOrders))
         serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks } )
-        use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, "alliesOrders.xml"))
+        use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.alliesOrders))
         serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols; Attacks = alliesAttacks } )
 
 module MissionFileGeneration =
@@ -347,8 +340,8 @@ module MissionFileGeneration =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state =
             try
-                use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
-                use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
                 serializer.Deserialize<World>(worldFile),
                 serializer.Deserialize<WorldState>(stateFile)
             with
@@ -356,15 +349,15 @@ module MissionFileGeneration =
 
         let weather =
             try
-                use weatherFile = File.OpenText(Path.Combine(config.OutputDir, "weather.xml"))
+                use weatherFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.weather))
                 serializer.Deserialize<WeatherState>(weatherFile)
             with
             | e -> failwithf "Failed to read weather data. Reason was: '%s'" e.Message
 
         let allAxisOrders, allAlliesOrders =
             try
-                use axisOrdersFile = File.OpenText(Path.Combine(config.OutputDir, "axisOrders.xml"))
-                use alliesOrdersFile = File.OpenText(Path.Combine(config.OutputDir, "alliesOrders.xml"))
+                use axisOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.axisOrders))
+                use alliesOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.alliesOrders))
                 serializer.Deserialize<OrderPackage>(axisOrdersFile),
                 serializer.Deserialize<OrderPackage>(alliesOrdersFile)
             with
@@ -445,10 +438,10 @@ module MissionLogParsing =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state, axisOrders, alliesOrders =
             try
-                use worldFile = File.OpenText(Path.Combine(config.OutputDir, "world.xml"))
-                use stateFile = File.OpenText(Path.Combine(config.OutputDir, "state.xml"))
-                use axisOrdersFile = File.OpenText(Path.Combine(config.OutputDir, "axisOrders.xml"))
-                use alliesOrdersFile = File.OpenText(Path.Combine(config.OutputDir, "alliesOrders.xml"))
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                use axisOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.axisOrders))
+                use alliesOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.alliesOrders))
                 serializer.Deserialize<World>(worldFile),
                 serializer.Deserialize<WorldState>(stateFile),
                 serializer.Deserialize<OrderPackage>(axisOrdersFile),
@@ -556,5 +549,5 @@ module MissionLogParsing =
             backupFile "axisOrders"
             backupFile "alliesOrders"
             backupFile "weather"
-            use stateFile = File.CreateText(Path.Combine(outputDir, "state.xml"))
+            use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
             serializer.Serialize(stateFile, state2)
