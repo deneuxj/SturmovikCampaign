@@ -28,6 +28,7 @@ type Configuration = {
     ScriptPath : string
     Briefing : string
     ThinkTime : int
+    AfterActionReportEntries : int
 }
 with
     static member Default =
@@ -53,6 +54,7 @@ with
             ServerSdsFile = @"nul"
             ScriptPath = @"nul"
             ThinkTime = 30
+            AfterActionReportEntries = 8
             Briefing = @"
     Let the battle begin!
 
@@ -87,6 +89,8 @@ module Filenames =
     let state = "state.xml"
     let world = "world.xml"
     let weather = "weather.xml"
+    let axisAAR = "axisAAR.xml"
+    let alliesAAR = "alliesAAR.xml"
 
 module Init =
     open SturmovikMission.Blocks.BlocksMissionData
@@ -399,7 +403,46 @@ module MissionFileGeneration =
                 |> Option.map snd
                 |> Option.defaultVal "south"
             sprintf "<b>Weather<b><br>Temperature: %2.0fC, Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" weather.Temperature cover weather.Wind.Speed windOrigin
-        let briefing = timeAndDate + weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>")
+        let afterActionReports =
+            let oldAxisReports = Directory.EnumerateFiles(config.OutputDir, "axisAAR_*.xml")
+            let oldAlliesReports = Directory.EnumerateFiles(config.OutputDir, "alliesAAR_*.xml")
+            if File.Exists(Path.Combine(config.OutputDir, Filenames.axisAAR)) && File.Exists(Path.Combine(config.OutputDir, Filenames.alliesAAR)) then
+                seq {
+                    yield "<u>After-action reports</u><br>"
+                    use axisReportFile = File.OpenRead(Path.Combine(config.OutputDir, Filenames.axisAAR))
+                    let report = serializer.Deserialize<AfterActionReport.ReportData>(axisReportFile)
+                    yield "<b>Axis</b><br>"
+                    yield report.GetText(Axis)
+                    yield "<br>"
+                    use alliesReportFile = File.OpenRead(Path.Combine(config.OutputDir, Filenames.alliesAAR))
+                    let report = serializer.Deserialize<AfterActionReport.ReportData>(axisReportFile)
+                    yield "<b>Allies</b><br>"
+                    yield report.GetText(Allies)
+                    yield "<br>"
+                    let orderedAxisFiles =
+                        oldAxisReports
+                        |> Seq.sortDescending
+                        |> Seq.truncate config.AfterActionReportEntries
+                    let orderedAlliesFiles =
+                        oldAlliesReports
+                        |> Seq.sortDescending
+                        |> Seq.truncate config.AfterActionReportEntries
+                    for axisReport, alliesReport in Seq.zip orderedAxisFiles orderedAlliesFiles do
+                        use axisReportFile = File.OpenRead(axisReport)
+                        let report = serializer.Deserialize<AfterActionReport.ReportData>(axisReportFile)
+                        yield "<b>Axis</b><br>"
+                        yield report.GetText(Axis)
+                        yield "<br>"
+                        use alliesReportFile = File.OpenRead(alliesReport)
+                        let report = serializer.Deserialize<AfterActionReport.ReportData>(axisReportFile)
+                        yield "<b>Allies</b><br>"
+                        yield report.GetText(Allies)
+                        yield "<br>"
+                }
+                |> String.concat ""
+            else
+                ""
+        let briefing = timeAndDate + weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>") + afterActionReports
 
         let missionName = config.MissionName
         writeMissionFile config.MaxCapturedPlanes random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys (Path.Combine(config.ScriptPath, config.StrategyFile)) world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
@@ -426,6 +469,7 @@ module MissionLogParsing =
     open Campaign.ResultExtraction
     open Campaign.NewWorldState
     open Campaign.Orders
+    open Campaign.AfterActionReport
     open MBrace.FsPickler
     open System.IO
     open ploggy
@@ -530,7 +574,23 @@ module MissionLogParsing =
 
         (entries, shipments, staticDamages, vehicleDamages, takeOffs, landings, columnDepartures), (state, state2)
 
-    let stage2 config (state, state2) =
+    let buildAfterActionReports(config, state1, state2, tookOff, landed, damages) =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let world, axisOrders, alliesOrders =
+            try
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use axisOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.axisOrders))
+                use alliesOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.alliesOrders))
+                serializer.Deserialize<World>(worldFile),
+                serializer.Deserialize<OrderPackage>(axisOrdersFile),
+                serializer.Deserialize<OrderPackage>(alliesOrdersFile)
+            with
+            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+        let aarAxis = buildReport world state1 state2 tookOff landed damages axisOrders.Columns Axis
+        let aarAllies = buildReport world state1 state2 tookOff landed damages alliesOrders.Columns Allies
+        aarAxis, aarAllies
+
+    let stage2 config (state, state2, aarAxis, aarAllies) =
         let outputDir = config.OutputDir
 
         let backupFile name =
@@ -541,13 +601,23 @@ module MissionLogParsing =
             let backupDest = Path.Combine(outputDir, backupName)
             if File.Exists backupDest then
                 File.Delete(backupDest)
-            File.Copy(Path.Combine(outputDir, sprintf "%s.xml" name), backupDest)
-    
+            let infile = Path.Combine(outputDir, sprintf "%s.xml" name)
+            if File.Exists(infile) then
+                File.Copy(infile, backupDest)
+
         do
             let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            backupFile "state"
-            backupFile "axisOrders"
-            backupFile "alliesOrders"
-            backupFile "weather"
+            [ Filenames.state
+              Filenames.axisOrders
+              Filenames.alliesOrders
+              Filenames.axisAAR
+              Filenames.alliesAAR
+              Filenames.weather
+            ]
+            |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
             use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
             serializer.Serialize(stateFile, state2)
+            use aarAxisFile = File.CreateText(Path.Combine(outputDir, Filenames.axisAAR))
+            serializer.Serialize(aarAxisFile, aarAxis)
+            use aarAlliesFile = File.CreateText(Path.Combine(outputDir, Filenames.alliesAAR))
+            serializer.Serialize(aarAlliesFile, aarAllies)

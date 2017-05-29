@@ -89,7 +89,7 @@ let regionsOwnedBy (state : WorldState) (coalition : CoalitionId) =
     |> List.map (fun region -> region.RegionId)
     |> Set.ofList
 
-let computeReport (world : World) (oldState : WorldState) (newState : WorldState) (tookOff : TookOff list) (landed : Landed list) (damages : Damage list) (columns : ColumnMovement list) (coalition : CoalitionId) =
+let buildReport (world : World) (oldState : WorldState) (newState : WorldState) (tookOff : TookOff list) (landed : Landed list) (damages : Damage list) (columns : ColumnMovement list) (coalition : CoalitionId) =
     let wg = WorldFastAccess.Create world
     let sg1 = WorldStateFastAccess.Create oldState
     let sg2 = WorldStateFastAccess.Create newState
@@ -130,9 +130,11 @@ let computeReport (world : World) (oldState : WorldState) (newState : WorldState
         Set.difference (regionsOwnedBy oldState coalition) (regionsOwnedBy newState coalition)
     let planesCaptured =
         newState.Airfields
+        |> List.filter (fun afState -> regionsLost.Contains(wg.GetAirfield(afState.AirfieldId).Region))
         |> List.filter (fun afState -> sg2.GetRegion(wg.GetAirfield(afState.AirfieldId).Region).Owner <> Some coalition)
         |> List.map (fun afState -> afState.NumPlanes |> Map.map (fun _ qty -> qty |> floor |> int))
         |> List.fold Util.addMaps Map.empty
+        |> Map.filter (fun _ qty -> qty > 0)
     let tanksIntercepted =
         let columns =
             columns
