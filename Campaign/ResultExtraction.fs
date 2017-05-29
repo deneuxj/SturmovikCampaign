@@ -53,7 +53,7 @@ type SuppliesShipped = {
     OrderId : OrderId // Refers to a resupply order
 }
 
-let extractSuppliesShipped (state : WorldState) (orders : ResupplyOrder list) (entries : LogEntry seq) =
+let extractSuppliesShipped (orders : ResupplyOrder list) (entries : LogEntry seq) =
     let tryGetOrder(eventName) =
         orders
         |> Seq.tryFind (fun order -> order.MatchesMissionLogDepartureEventName(eventName))
@@ -252,9 +252,8 @@ let (|StaticVehicleType|_|) (s : string) =
         else
             None)
 
-let extractStaticDamages (world : World) (state : WorldState) (entries : LogEntry seq) =
+let extractStaticDamages (world : World) (entries : LogEntry seq) =
     let wg = WorldFastAccess.Create(world)
-    let sg = WorldStateFastAccess.Create(state)
     let tryFindContainingRegion (pos : Vector2) =
         world.Regions
         |> List.tryFind(fun r ->

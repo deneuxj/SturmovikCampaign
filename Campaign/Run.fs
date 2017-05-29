@@ -518,10 +518,10 @@ module MissionLogParsing =
         if List.isEmpty entries then
             failwith "No entries found suitable for result extraction"
         let shipments =
-            let shipmentAxis = extractSuppliesShipped state axisOrders.Resupply entries |> List.ofSeq
-            let shipmentAllies = extractSuppliesShipped state alliesOrders.Resupply entries |> List.ofSeq
+            let shipmentAxis = extractSuppliesShipped axisOrders.Resupply entries |> List.ofSeq
+            let shipmentAllies = extractSuppliesShipped alliesOrders.Resupply entries |> List.ofSeq
             shipmentAxis @ shipmentAllies
-        let staticDamages = extractStaticDamages world state entries |> List.ofSeq
+        let staticDamages = extractStaticDamages world entries |> List.ofSeq
         let vehicleDamages = extractVehicleDamages (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entries |> List.ofSeq
         let takeOffs, landings =
             let both =
