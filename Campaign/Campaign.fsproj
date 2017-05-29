@@ -66,6 +66,7 @@
     <Compile Include="MissionGeneration.fs" />
     <Compile Include="ResultExtraction.fs" />
     <Compile Include="NewWorldState.fs" />
+    <Compile Include="AfterActionReport.fs" />
     <Compile Include="Run.fs" />
     <None Include="Configuration.fsx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
