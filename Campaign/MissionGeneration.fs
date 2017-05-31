@@ -612,7 +612,13 @@ let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (stat
                         | _ -> ()
     ]
 
-let writeMissionFile maxCapturedPlanes random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (strategyMissionFile : string) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
+let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Options) =
+    let configs =
+        PlaneModel.AllModels(planeSet)
+        |> List.map (fun model -> T.String(model.ScriptModel.Script))
+    options.SetMultiplayerPlaneConfig(configs)
+
+let writeMissionFile planeSet maxCapturedPlanes random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (strategyMissionFile : string) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
     let strategyMissionData = T.GroupData(Parsing.Stream.FromFile strategyMissionFile)
     let options = strategyMissionData.ListOfOptions.Head
     let blocks =
@@ -720,6 +726,7 @@ let writeMissionFile maxCapturedPlanes random weather author missionName briefin
     let options =
         (Weather.setOptions weather state.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
+            |> addMultiplayerPlaneConfigs planeSet
     let optionStrings =
         { new McuUtil.IMcuGroup with
               member x.Content = []

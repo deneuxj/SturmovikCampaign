@@ -445,7 +445,7 @@ module MissionFileGeneration =
         let briefing = timeAndDate + weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>") + afterActionReports
 
         let missionName = config.MissionName
-        writeMissionFile config.MaxCapturedPlanes random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys (Path.Combine(config.ScriptPath, config.StrategyFile)) world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
+        writeMissionFile config.PlaneSetValue config.MaxCapturedPlanes random weather author config.MissionName briefing config.MissionLength config.ConvoyInterval config.MaxSimultaneousConvoys (Path.Combine(config.ScriptPath, config.StrategyFile)) world state allAxisOrders allAlliesOrders (Path.Combine(config.OutputDir, missionName + ".Mission"))
 
         let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer")
         let swallow f = try f() with | _ -> ()
