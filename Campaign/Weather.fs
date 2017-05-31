@@ -187,7 +187,15 @@ let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Optio
         let suffix =
             let x = int(floor(weather.Precipitation * 10.0)) % 10
             sprintf "%02d" x
-        let season = "summer"
+        let season =
+            match options.GetSeasonPrefix().Value with
+            | "wi" -> "winter"
+            | "su" -> "summer"
+            | _ ->
+                if weather.Temperature < 15.0 then
+                    "winter"
+                else
+                    "summer"
         sprintf @"%s\%s_%s\sky.ini" season prefix suffix
     let windLayers =
         let windDir = int weather.Wind.Direction
