@@ -268,6 +268,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                         newAirfieldPlane("", "", 0, 0, "", "", int number)
                             .SetScript(T.String model.Script)
                             .SetModel(T.String model.Model)
+                            .SetStartInAir(T.Integer 2)
                     )
                     |> Map.toSeq
                     |> Seq.map snd
