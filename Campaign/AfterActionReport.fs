@@ -36,7 +36,7 @@ with
                     this.RegionsCaptured
                     |> List.map (fun (RegionId name) -> name)
                     |> String.concat ", "
-                    |> sprintf "The following regions were captured: %s.<br>"
+                    |> sprintf "Control over the following regions was gained: %s.<br>"
             if this.PlanesLost.IsEmpty then
                 yield "No planes lost.<br>"
             else
@@ -50,12 +50,12 @@ with
                 yield
                     this.PlanesLost
                     |> mkPlaneReport
-                    |> sprintf "Planes damaged:<br>%s<br>"
+                    |> sprintf "Planes that sustained damage:<br>%s<br>"
             if not(this.PlanesCaptured.IsEmpty) then
                 yield
                     this.PlanesCaptured
                     |> mkPlaneReport
-                    |> sprintf "Planes captured by enemy:<br>%s<br>"
+                    |> sprintf "Planes captured by the enemy:<br>%s<br>"
 (*
             if not(this.PlanesProduced.IsEmpty) then
                 yield
@@ -123,7 +123,7 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
         |> Map.map (fun _ damaged -> damaged |> ceil |> int)
     let numPlanesLandedDamaged =
         landed
-        |> List.filter (fun event -> event.Health > 0.0f && event.Health < 0.75f)
+        |> List.filter (fun event -> event.Health > 0.0f && event.Health < 0.75f && afOwnedByCoalition event.Airfield)
         |> List.map (fun event -> event.Plane)
         |> Util.compactSeq
     let regionsLost =
@@ -144,7 +144,7 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
         damages
         |> List.choose (fun event ->
             match event.Object with
-            | Column { OrderId = { Coalition = coal; Index = orderIndex }; Rank = rank } when coal = coalition ->
+            | Column { OrderId = { Coalition = owner; Index = orderIndex }; Rank = rank } when owner = coalition && event.Data.Amount > 0.25f ->
                 Some(orderIndex, rank)
             | _ -> None)
         |> List.choose (fun (order, vehicle) ->
