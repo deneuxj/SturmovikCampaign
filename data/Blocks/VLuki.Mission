@@ -131756,7 +131756,7 @@ Group
     DeleteAfterDeath = 1;
     CoopStart = 0;
     Spotter = -1;
-    BeaconChannel = 0;
+    BeaconChannel = 1;
     Callsign = 0;
   }
   
@@ -131804,7 +131804,7 @@ Group
     DeleteAfterDeath = 1;
     CoopStart = 0;
     Spotter = -1;
-    BeaconChannel = 0;
+    BeaconChannel = 1;
     Callsign = 0;
   }
   
@@ -131852,7 +131852,7 @@ Group
     DeleteAfterDeath = 1;
     CoopStart = 0;
     Spotter = -1;
-    BeaconChannel = 0;
+    BeaconChannel = 1;
     Callsign = 0;
   }
   
@@ -131900,7 +131900,7 @@ Group
     DeleteAfterDeath = 1;
     CoopStart = 0;
     Spotter = -1;
-    BeaconChannel = 0;
+    BeaconChannel = 1;
     Callsign = 0;
   }
   
@@ -131948,7 +131948,7 @@ Group
     DeleteAfterDeath = 1;
     CoopStart = 0;
     Spotter = -1;
-    BeaconChannel = 0;
+    BeaconChannel = 1;
     Callsign = 0;
   }
   
@@ -131984,7 +131984,7 @@ Group
   {
     Name = "LandFire";
     Index = 7026;
-    LinkTrId = 0;
+    LinkTrId = 7079;
     XPos = 63369.069;
     YPos = 160.342;
     ZPos = 11351.335;
@@ -132001,7 +132001,7 @@ Group
   {
     Name = "LandFire";
     Index = 7027;
-    LinkTrId = 0;
+    LinkTrId = 7080;
     XPos = 64627.301;
     YPos = 160.342;
     ZPos = 11318.682;
@@ -132018,7 +132018,7 @@ Group
   {
     Name = "LandFire";
     Index = 7028;
-    LinkTrId = 0;
+    LinkTrId = 7081;
     XPos = 63368.657;
     YPos = 160.342;
     ZPos = 11470.393;
@@ -132035,7 +132035,7 @@ Group
   {
     Name = "LandFire";
     Index = 7029;
-    LinkTrId = 0;
+    LinkTrId = 7082;
     XPos = 64629.406;
     YPos = 160.342;
     ZPos = 11436.206;
@@ -132052,7 +132052,7 @@ Group
   {
     Name = "LandFire";
     Index = 7030;
-    LinkTrId = 0;
+    LinkTrId = 7083;
     XPos = 64035.952;
     YPos = 160.342;
     ZPos = 11347.538;
@@ -132069,7 +132069,7 @@ Group
   {
     Name = "LandFire";
     Index = 7031;
-    LinkTrId = 0;
+    LinkTrId = 7084;
     XPos = 64035.952;
     YPos = 160.342;
     ZPos = 11447.261;
@@ -132086,7 +132086,7 @@ Group
   {
     Name = "LandFire";
     Index = 7032;
-    LinkTrId = 0;
+    LinkTrId = 7085;
     XPos = 12491.048;
     YPos = 141.446;
     ZPos = 11881.020;
@@ -132103,7 +132103,7 @@ Group
   {
     Name = "LandFire";
     Index = 7033;
-    LinkTrId = 0;
+    LinkTrId = 7086;
     XPos = 12557.973;
     YPos = 141.446;
     ZPos = 12054.850;
@@ -132120,7 +132120,7 @@ Group
   {
     Name = "LandFire";
     Index = 7034;
-    LinkTrId = 0;
+    LinkTrId = 7087;
     XPos = 13454.024;
     YPos = 141.446;
     ZPos = 11219.243;
@@ -132137,7 +132137,7 @@ Group
   {
     Name = "LandFire";
     Index = 7035;
-    LinkTrId = 0;
+    LinkTrId = 7088;
     XPos = 13545.979;
     YPos = 141.446;
     ZPos = 11357.483;
@@ -132154,7 +132154,7 @@ Group
   {
     Name = "LandFire";
     Index = 7036;
-    LinkTrId = 0;
+    LinkTrId = 7089;
     XPos = 12966.668;
     YPos = 141.446;
     ZPos = 11557.626;
@@ -132171,7 +132171,7 @@ Group
   {
     Name = "LandFire";
     Index = 7037;
-    LinkTrId = 0;
+    LinkTrId = 7090;
     XPos = 13051.142;
     YPos = 141.446;
     ZPos = 11702.233;
@@ -132188,7 +132188,7 @@ Group
   {
     Name = "LandFire";
     Index = 7038;
-    LinkTrId = 0;
+    LinkTrId = 7091;
     XPos = 30824.595;
     YPos = 119.528;
     ZPos = 36877.151;
@@ -132205,7 +132205,7 @@ Group
   {
     Name = "LandFire";
     Index = 7039;
-    LinkTrId = 0;
+    LinkTrId = 7092;
     XPos = 32307.634;
     YPos = 119.528;
     ZPos = 36243.773;
@@ -132222,7 +132222,7 @@ Group
   {
     Name = "LandFire";
     Index = 7040;
-    LinkTrId = 0;
+    LinkTrId = 7093;
     XPos = 31422.670;
     YPos = 119.528;
     ZPos = 36622.466;
@@ -132239,7 +132239,7 @@ Group
   {
     Name = "LandFire";
     Index = 7041;
-    LinkTrId = 0;
+    LinkTrId = 7094;
     XPos = 31814.916;
     YPos = 119.528;
     ZPos = 36451.533;
@@ -132256,7 +132256,7 @@ Group
   {
     Name = "LandFire";
     Index = 7042;
-    LinkTrId = 0;
+    LinkTrId = 7095;
     XPos = 41803.783;
     YPos = 126.504;
     ZPos = 53849.643;
@@ -132273,7 +132273,7 @@ Group
   {
     Name = "LandFire";
     Index = 7043;
-    LinkTrId = 0;
+    LinkTrId = 7096;
     XPos = 41859.296;
     YPos = 126.504;
     ZPos = 53905.150;
@@ -132290,7 +132290,7 @@ Group
   {
     Name = "LandFire";
     Index = 7044;
-    LinkTrId = 0;
+    LinkTrId = 7097;
     XPos = 42197.767;
     YPos = 126.504;
     ZPos = 53487.116;
@@ -132307,7 +132307,7 @@ Group
   {
     Name = "LandFire";
     Index = 7045;
-    LinkTrId = 0;
+    LinkTrId = 7098;
     XPos = 42247.741;
     YPos = 126.504;
     ZPos = 53547.085;
@@ -132324,7 +132324,7 @@ Group
   {
     Name = "LandFire";
     Index = 7046;
-    LinkTrId = 0;
+    LinkTrId = 7099;
     XPos = 42653.179;
     YPos = 126.504;
     ZPos = 53056.059;
@@ -132341,7 +132341,7 @@ Group
   {
     Name = "LandFire";
     Index = 7047;
-    LinkTrId = 0;
+    LinkTrId = 7100;
     XPos = 42713.670;
     YPos = 126.504;
     ZPos = 53123.217;
@@ -132358,7 +132358,7 @@ Group
   {
     Name = "LandFire";
     Index = 7048;
-    LinkTrId = 0;
+    LinkTrId = 7101;
     XPos = 55949.488;
     YPos = 56.774;
     ZPos = 71840.118;
@@ -132375,7 +132375,7 @@ Group
   {
     Name = "LandFire";
     Index = 7049;
-    LinkTrId = 0;
+    LinkTrId = 7102;
     XPos = 56006.352;
     YPos = 56.774;
     ZPos = 71924.507;
@@ -132392,7 +132392,7 @@ Group
   {
     Name = "LandFire";
     Index = 7050;
-    LinkTrId = 0;
+    LinkTrId = 7103;
     XPos = 56994.581;
     YPos = 56.774;
     ZPos = 71285.319;
@@ -132409,7 +132409,7 @@ Group
   {
     Name = "LandFire";
     Index = 7051;
-    LinkTrId = 0;
+    LinkTrId = 7104;
     XPos = 57021.784;
     YPos = 56.774;
     ZPos = 71366.929;
@@ -132426,7 +132426,7 @@ Group
   {
     Name = "LandFire";
     Index = 7052;
-    LinkTrId = 0;
+    LinkTrId = 7105;
     XPos = 56516.375;
     YPos = 56.774;
     ZPos = 71641.826;
@@ -132443,7 +132443,7 @@ Group
   {
     Name = "LandFire";
     Index = 7053;
-    LinkTrId = 0;
+    LinkTrId = 7106;
     XPos = 56480.582;
     YPos = 56.774;
     ZPos = 71570.238;
@@ -132460,7 +132460,7 @@ Group
   {
     Name = "LandFire";
     Index = 7054;
-    LinkTrId = 0;
+    LinkTrId = 7107;
     XPos = 32202.590;
     YPos = 139.452;
     ZPos = 105344.412;
@@ -132477,7 +132477,7 @@ Group
   {
     Name = "LandFire";
     Index = 7055;
-    LinkTrId = 0;
+    LinkTrId = 7108;
     XPos = 32275.819;
     YPos = 139.452;
     ZPos = 105449.304;
@@ -132494,7 +132494,7 @@ Group
   {
     Name = "LandFire";
     Index = 7056;
-    LinkTrId = 0;
+    LinkTrId = 7109;
     XPos = 32794.251;
     YPos = 139.452;
     ZPos = 105074.819;
@@ -132511,7 +132511,7 @@ Group
   {
     Name = "LandFire";
     Index = 7057;
-    LinkTrId = 0;
+    LinkTrId = 7110;
     XPos = 32745.894;
     YPos = 139.452;
     ZPos = 104975.856;
@@ -132528,7 +132528,7 @@ Group
   {
     Name = "LandFire";
     Index = 7058;
-    LinkTrId = 0;
+    LinkTrId = 7111;
     XPos = 33243.550;
     YPos = 139.452;
     ZPos = 104764.082;
@@ -132545,7 +132545,7 @@ Group
   {
     Name = "LandFire";
     Index = 7059;
-    LinkTrId = 0;
+    LinkTrId = 7112;
     XPos = 33188.289;
     YPos = 139.452;
     ZPos = 104653.560;
@@ -132562,7 +132562,7 @@ Group
   {
     Name = "LandFire";
     Index = 7060;
-    LinkTrId = 0;
+    LinkTrId = 7113;
     XPos = 49212.589;
     YPos = 158.806;
     ZPos = 133433.775;
@@ -132579,7 +132579,7 @@ Group
   {
     Name = "LandFire";
     Index = 7061;
-    LinkTrId = 0;
+    LinkTrId = 7114;
     XPos = 48903.030;
     YPos = 158.806;
     ZPos = 133850.648;
@@ -132596,7 +132596,7 @@ Group
   {
     Name = "LandFire";
     Index = 7062;
-    LinkTrId = 0;
+    LinkTrId = 7115;
     XPos = 49586.124;
     YPos = 158.806;
     ZPos = 133666.976;
@@ -132613,7 +132613,7 @@ Group
   {
     Name = "LandFire";
     Index = 7063;
-    LinkTrId = 0;
+    LinkTrId = 7116;
     XPos = 49612.952;
     YPos = 158.806;
     ZPos = 134106.550;
@@ -132630,7 +132630,7 @@ Group
   {
     Name = "LandFire";
     Index = 7064;
-    LinkTrId = 0;
+    LinkTrId = 7117;
     XPos = 49369.432;
     YPos = 158.806;
     ZPos = 134463.574;
@@ -132647,7 +132647,7 @@ Group
   {
     Name = "LandFire";
     Index = 7065;
-    LinkTrId = 0;
+    LinkTrId = 7118;
     XPos = 49099.084;
     YPos = 158.806;
     ZPos = 134857.746;
@@ -132664,7 +132664,7 @@ Group
   {
     Name = "LandFire";
     Index = 7066;
-    LinkTrId = 0;
+    LinkTrId = 7119;
     XPos = 48824.609;
     YPos = 158.806;
     ZPos = 134806.153;
@@ -132681,7 +132681,7 @@ Group
   {
     Name = "LandFire";
     Index = 7067;
-    LinkTrId = 0;
+    LinkTrId = 7120;
     XPos = 48649.192;
     YPos = 158.806;
     ZPos = 134323.241;
@@ -132698,7 +132698,7 @@ Group
   {
     Name = "LandFire";
     Index = 7068;
-    LinkTrId = 0;
+    LinkTrId = 7121;
     XPos = 48700.785;
     YPos = 158.806;
     ZPos = 134636.927;
@@ -132715,7 +132715,7 @@ Group
   {
     Name = "LandFire";
     Index = 7069;
-    LinkTrId = 0;
+    LinkTrId = 7122;
     XPos = 22519.556;
     YPos = 154.394;
     ZPos = 152636.912;
@@ -132732,7 +132732,7 @@ Group
   {
     Name = "LandFire";
     Index = 7070;
-    LinkTrId = 0;
+    LinkTrId = 7123;
     XPos = 22559.193;
     YPos = 154.394;
     ZPos = 152755.860;
@@ -132749,7 +132749,7 @@ Group
   {
     Name = "LandFire";
     Index = 7071;
-    LinkTrId = 0;
+    LinkTrId = 7124;
     XPos = 21308.548;
     YPos = 154.394;
     ZPos = 153205.877;
@@ -132766,7 +132766,7 @@ Group
   {
     Name = "LandFire";
     Index = 7072;
-    LinkTrId = 0;
+    LinkTrId = 7125;
     XPos = 21257.552;
     YPos = 154.394;
     ZPos = 153058.718;
@@ -132783,7 +132783,7 @@ Group
   {
     Name = "LandFire";
     Index = 7073;
-    LinkTrId = 0;
+    LinkTrId = 7126;
     XPos = 21617.154;
     YPos = 154.394;
     ZPos = 151950.631;
@@ -132800,7 +132800,7 @@ Group
   {
     Name = "LandFire";
     Index = 7074;
-    LinkTrId = 0;
+    LinkTrId = 7127;
     XPos = 21560.659;
     YPos = 154.394;
     ZPos = 152023.640;
@@ -132817,7 +132817,7 @@ Group
   {
     Name = "LandFire";
     Index = 7075;
-    LinkTrId = 0;
+    LinkTrId = 7128;
     XPos = 22164.347;
     YPos = 154.394;
     ZPos = 152270.764;
@@ -132834,7 +132834,7 @@ Group
   {
     Name = "LandFire";
     Index = 7076;
-    LinkTrId = 0;
+    LinkTrId = 7129;
     XPos = 22108.973;
     YPos = 154.394;
     ZPos = 152365.938;
@@ -132851,7 +132851,7 @@ Group
   {
     Name = "LandFire";
     Index = 7077;
-    LinkTrId = 0;
+    LinkTrId = 7130;
     XPos = 21954.965;
     YPos = 154.394;
     ZPos = 152836.616;
@@ -132868,7 +132868,7 @@ Group
   {
     Name = "LandFire";
     Index = 7078;
-    LinkTrId = 0;
+    LinkTrId = 7131;
     XPos = 21987.843;
     YPos = 154.394;
     ZPos = 152950.824;
@@ -132878,6 +132878,960 @@ Group
     Script = "luascripts\worldobjects\mapemitters\landfire.txt";
     Model = "";
     Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7079;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 63369.069;
+    YPos = 160.542;
+    ZPos = 11351.335;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7026;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7080;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 64627.301;
+    YPos = 160.542;
+    ZPos = 11318.682;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7027;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7081;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 63368.657;
+    YPos = 160.542;
+    ZPos = 11470.393;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7028;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7082;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 64629.406;
+    YPos = 160.542;
+    ZPos = 11436.206;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7029;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7083;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 64035.952;
+    YPos = 160.542;
+    ZPos = 11347.538;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7030;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7084;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 64035.952;
+    YPos = 160.542;
+    ZPos = 11447.261;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7031;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7085;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 12491.048;
+    YPos = 141.646;
+    ZPos = 11881.020;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7032;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7086;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 12557.973;
+    YPos = 141.646;
+    ZPos = 12054.850;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7033;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7087;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 13454.024;
+    YPos = 141.646;
+    ZPos = 11219.243;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7034;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7088;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 13545.979;
+    YPos = 141.646;
+    ZPos = 11357.483;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7035;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7089;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 12966.668;
+    YPos = 141.646;
+    ZPos = 11557.626;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7036;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7090;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 13051.142;
+    YPos = 141.646;
+    ZPos = 11702.233;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7037;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7091;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 30824.595;
+    YPos = 119.728;
+    ZPos = 36877.151;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7038;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7092;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 32307.634;
+    YPos = 119.728;
+    ZPos = 36243.773;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7039;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7093;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 31422.670;
+    YPos = 119.728;
+    ZPos = 36622.466;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7040;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7094;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 31814.916;
+    YPos = 119.728;
+    ZPos = 36451.533;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7041;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7095;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 41803.783;
+    YPos = 126.704;
+    ZPos = 53849.643;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7042;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7096;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 41859.296;
+    YPos = 126.704;
+    ZPos = 53905.150;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7043;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7097;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 42197.767;
+    YPos = 126.704;
+    ZPos = 53487.116;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7044;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7098;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 42247.741;
+    YPos = 126.704;
+    ZPos = 53547.085;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7045;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7099;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 42653.179;
+    YPos = 126.704;
+    ZPos = 53056.059;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7046;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7100;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 42713.670;
+    YPos = 126.704;
+    ZPos = 53123.217;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7047;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7101;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 55949.488;
+    YPos = 56.974;
+    ZPos = 71840.118;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7048;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7102;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 56006.352;
+    YPos = 56.974;
+    ZPos = 71924.507;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7049;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7103;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 56994.581;
+    YPos = 56.974;
+    ZPos = 71285.319;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7050;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7104;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 57021.784;
+    YPos = 56.974;
+    ZPos = 71366.929;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7051;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7105;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 56516.375;
+    YPos = 56.974;
+    ZPos = 71641.826;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7052;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7106;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 56480.582;
+    YPos = 56.974;
+    ZPos = 71570.238;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7053;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7107;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 32202.590;
+    YPos = 139.652;
+    ZPos = 105344.412;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7054;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7108;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 32275.819;
+    YPos = 139.652;
+    ZPos = 105449.304;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7055;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7109;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 32794.251;
+    YPos = 139.652;
+    ZPos = 105074.819;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7056;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7110;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 32745.894;
+    YPos = 139.652;
+    ZPos = 104975.856;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7057;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7111;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 33243.550;
+    YPos = 139.652;
+    ZPos = 104764.082;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7058;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7112;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 33188.289;
+    YPos = 139.652;
+    ZPos = 104653.560;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7059;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7113;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 49212.589;
+    YPos = 159.006;
+    ZPos = 133433.775;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7060;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7114;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 48903.030;
+    YPos = 159.006;
+    ZPos = 133850.648;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7061;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7115;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 49586.124;
+    YPos = 159.006;
+    ZPos = 133666.976;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7062;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7116;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 49612.952;
+    YPos = 159.006;
+    ZPos = 134106.550;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7063;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7117;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 49369.432;
+    YPos = 159.006;
+    ZPos = 134463.574;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7064;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7118;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 49099.084;
+    YPos = 159.006;
+    ZPos = 134857.746;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7065;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7119;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 48824.609;
+    YPos = 159.006;
+    ZPos = 134806.153;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7066;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7120;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 48649.192;
+    YPos = 159.006;
+    ZPos = 134323.241;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7067;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7121;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 48700.785;
+    YPos = 159.006;
+    ZPos = 134636.927;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7068;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7122;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 22519.556;
+    YPos = 154.594;
+    ZPos = 152636.912;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7069;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7123;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 22559.193;
+    YPos = 154.594;
+    ZPos = 152755.860;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7070;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7124;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 21308.548;
+    YPos = 154.594;
+    ZPos = 153205.877;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7071;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7125;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 21257.552;
+    YPos = 154.594;
+    ZPos = 153058.718;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7072;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7126;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 21617.154;
+    YPos = 154.594;
+    ZPos = 151950.631;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7073;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7127;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 21560.659;
+    YPos = 154.594;
+    ZPos = 152023.640;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7074;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7128;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 22164.347;
+    YPos = 154.594;
+    ZPos = 152270.764;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7075;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7129;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 22108.973;
+    YPos = 154.594;
+    ZPos = 152365.938;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7076;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7130;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 21954.965;
+    YPos = 154.594;
+    ZPos = 152836.616;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7077;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7131;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 21987.843;
+    YPos = 154.594;
+    ZPos = 152950.824;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7078;
   }
   
 

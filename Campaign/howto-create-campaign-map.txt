@@ -81,15 +81,13 @@ Each region must have exactly one
 Create windsocks with entities in a group named "Windsocks"
 
 12. Non-directional beacons
-Create non-directional beacon "vehicles" with entities in a group named "NDBs".
+Create non-directional beacons (ndb under "vehicles") with entities in a group named "NDBs".
+Set beacon channel to 1 in the advanced properties.
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
 13. Land fires
-Create land fire effects without entities named "LandFire" in a group named "Land fires"
+Create land fire effects with entities named "LandFire" in a group named "Land fires"
 
 14. Bridges and other buildings
 Bridges and other blocks, buildings... need not be in groups, although they can.
 You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.
-
-
-
