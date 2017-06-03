@@ -434,7 +434,7 @@ module MissionFileGeneration =
                         yield report.GetText(Axis)
                         yield "<br>"
                         use alliesReportFile = File.OpenRead(alliesReport)
-                        let report = serializer.Deserialize<AfterActionReport.ReportData>(axisReportFile)
+                        let report = serializer.Deserialize<AfterActionReport.ReportData>(alliesReportFile)
                         yield "<b>Allies</b><br>"
                         yield report.GetText(Allies)
                         yield "<br>"
