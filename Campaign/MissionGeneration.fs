@@ -680,9 +680,44 @@ let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Opt
         |> List.map (fun model -> T.String(model.ScriptModel.Script))
     options.SetMultiplayerPlaneConfig(configs)
 
-let writeMissionFile planeSet maxCapturedPlanes random weather author missionName briefing missionLength convoySpacing maxSimultaneousConvoys (strategyMissionFile : string) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (filename : string) =
-    let strategyMissionData = T.GroupData(Parsing.Stream.FromFile strategyMissionFile)
+type MissionGenerationParameters = {
+    PlaneSet : PlaneSet
+    MaxCapturedPlanes : int
+    Author : string
+    MissionName : string
+    Briefing : string
+    MissionLength : int
+    ConvoySpacing : int
+    MaxSimultaneousConvoys : int
+    StrategyMissionFile : string
+}
+
+type MissionData = {
+    World : World
+    Random : System.Random
+    Weather : WeatherState
+    State : WorldState
+    AxisOrders : OrderPackage
+    AlliesOrders : OrderPackage
+}
+
+let writeMissionFile (missionParams : MissionGenerationParameters) (missionData : MissionData) (filename : string) =
+    let strategyMissionData = T.GroupData(Parsing.Stream.FromFile missionParams.StrategyMissionFile)
     let options = strategyMissionData.ListOfOptions.Head
+    let store = NumericalIdentifiers.IdStore()
+    let lcStore = NumericalIdentifiers.IdStore()
+    lcStore.SetNextId 3
+    let getId = store.GetIdMapper()
+    let missionBegin = newMissionBegin (getId 1)
+    let includeSearchLights =
+        missionData.State.Date.Hour <= 8 || missionData.State.Date.Hour + missionParams.MissionLength / 60 >= 18
+    let inAttackArea(pos : Vector2) =
+        missionData.AxisOrders.Attacks @ missionData.AlliesOrders.Attacks
+        |> List.exists (fun attack -> (attack.Target - pos).Length() < 3000.0f)
+    let staticDefenses = ArtilleryGroup.Create(missionData.Random, store, lcStore, includeSearchLights, missionBegin, missionData.World, missionData.State, missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
+    let icons = MapIcons.CreateRegions(store, lcStore, missionData.World, missionData.State)
+    let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, missionData.World, missionData.State)
+    let spotting = createStorageIcons store lcStore missionBegin missionData.World missionData.State
     let blocks =
         let allBlocks = strategyMissionData.ListOfBlock
         let parkedPlanes =
@@ -691,26 +726,13 @@ let writeMissionFile planeSet maxCapturedPlanes random weather author missionNam
             |> Set.ofList
         allBlocks
         |> List.filter(fun block -> not(parkedPlanes.Contains(block.GetIndex().Value)))
-    let bridges = strategyMissionData.ListOfBridge
-    let store = NumericalIdentifiers.IdStore()
-    let lcStore = NumericalIdentifiers.IdStore()
-    lcStore.SetNextId 3
-    let getId = store.GetIdMapper()
-    let missionBegin = newMissionBegin (getId 1)
-    let includeSearchLights =
-        state.Date.Hour <= 8 || state.Date.Hour + missionLength / 60 >= 18
-    let inAttackArea(pos : Vector2) =
-        axisOrders.Attacks @ alliesOrders.Attacks
-        |> List.exists (fun attack -> (attack.Target - pos).Length() < 3000.0f)
-    let staticDefenses = ArtilleryGroup.Create(random, store, lcStore, includeSearchLights, missionBegin, world, state, axisOrders.Columns @ alliesOrders.Columns)
-    let icons = MapIcons.CreateRegions(store, lcStore, world, state)
-    let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, world, state)
-    let spotting = createStorageIcons store lcStore missionBegin world state
-    let blocks = createBlocks random store world state inAttackArea blocks
-    let bridges = createBridges random store world state inAttackArea bridges
-    let spawns = createAirfieldSpawns maxCapturedPlanes store world state (Vector2.UnitX.Rotate(float32 weather.Wind.Direction))
+        |> createBlocks missionData.Random store missionData.World missionData.State inAttackArea
+    let bridges =
+        strategyMissionData.ListOfBridge
+        |> createBridges missionData.Random store missionData.World missionData.State inAttackArea
+    let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State (Vector2.UnitX.Rotate(float32 missionData.Weather.Wind.Direction))
     let mkConvoyNodes orders =
-        let convoyPrioNodes, convoys = createConvoys store lcStore world state orders
+        let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State orders
         for node, convoy in List.zip convoyPrioNodes.Nodes convoys do
             let start, destroyed, arrived =
                 match convoy with
@@ -722,7 +744,7 @@ let writeMissionFile planeSet maxCapturedPlanes random weather author missionNam
             Mcu.addTargetLink destroyed convoyPrioNodes.Try.Index
             Mcu.addTargetLink arrived convoyPrioNodes.Try.Index
         for i, node in Seq.indexed convoyPrioNodes.Nodes do
-            if i < maxSimultaneousConvoys then
+            if i < missionParams.MaxSimultaneousConvoys then
                 Mcu.addTargetLink missionBegin node.Do.Index
             else
                 Mcu.addTargetLink missionBegin node.Enable.Index
@@ -734,71 +756,77 @@ let writeMissionFile planeSet maxCapturedPlanes random weather author missionNam
                 | Choice2Of2 x -> x :> McuUtil.IMcuGroup)
         convoyPrioNodes.All, convoys
     let mkColumns orders =
-        let maxColumnSplit = max 1 (missionLength / convoySpacing - 1)
+        let maxColumnSplit = max 1 (missionParams.MissionLength / missionParams.ConvoySpacing - 1)
         let columns =
             orders
-            |> createColumns random store lcStore world state missionBegin (60.0 * float convoySpacing) maxColumnSplit
+            |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ConvoySpacing) maxColumnSplit
             |> List.map (fun (x, t) -> x :> McuUtil.IMcuGroup, t)
         List.map fst columns, List.map snd columns
-    let columns, columnTimers = mkColumns (axisOrders.Columns @ alliesOrders.Columns)
+    let columns, columnTimers = mkColumns (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
     let arrows =
         [Axis; Allies]
-        |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, world, state, axisOrders, alliesOrders, coalition))
+        |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
         |> List.map (fun icons -> icons :> McuUtil.IMcuGroup)
     let parkedPlanes =
-        createParkedPlanes store world state inAttackArea
+        createParkedPlanes store missionData.World missionData.State inAttackArea
         |> McuUtil.groupFromList
     let parkedTanks =
-        createParkedTanks store world state inAttackArea axisOrders Axis @ createParkedTanks store world state inAttackArea alliesOrders Allies
+        createParkedTanks store missionData.World missionData.State inAttackArea missionData.AxisOrders Axis @ createParkedTanks store missionData.World missionData.State inAttackArea missionData.AlliesOrders Allies
         |> McuUtil.groupFromList
-    let axisPrio, axisConvoys = mkConvoyNodes axisOrders.Resupply
-    let alliesPrio, alliesConvoys = mkConvoyNodes alliesOrders.Resupply
+    let axisPrio, axisConvoys = mkConvoyNodes missionData.AxisOrders.Resupply
+    let alliesPrio, alliesConvoys = mkConvoyNodes missionData.AlliesOrders.Resupply
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
-    setCountries store world state (Some weather.Wind.Direction) flags
+    setCountries store missionData.World missionData.State (Some missionData.Weather.Wind.Direction) flags
     let ndbs = strategyMissionData.GetGroup("NDBs").CreateMcuList()
-    setCountries store world state None ndbs
+    setCountries store missionData.World missionData.State None ndbs
     let landFires =
-        strategyMissionData.GetGroup("Land fires").CreateMcuList()
-        |> createLandFires store world state missionBegin
+        if includeSearchLights then
+            strategyMissionData.GetGroup("Land fires").CreateMcuList()
+            |> createLandFires store missionData.World missionData.State missionBegin
+        else
+            []
     let landlights =
-        strategyMissionData.GetGroup("Land lights").CreateMcuList()
-        |> createLandLights store world state missionBegin (spawns |> List.map fst)
-    let axisPatrols =
-        axisOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
-    let alliesPatrols =
-        alliesOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
+        if includeSearchLights then
+            strategyMissionData.GetGroup("Land lights").CreateMcuList()
+            |> createLandLights store missionData.World missionData.State missionBegin (spawns |> List.map fst)
+        else
+            []
     let allPatrols =
+        let axisPatrols =
+            missionData.AxisOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
+        let alliesPatrols =
+            missionData.AlliesOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
         [
             for allMcus, block in axisPatrols @ alliesPatrols do
                 Mcu.addTargetLink missionBegin block.Start.Index
                 yield allMcus
         ]
-    let axisAttacks =
-        axisOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
-    let alliesAttacks =
-        alliesOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
-    let mkAttackStarts (attacks : (_ * GroundAttack.Attacker) list) =
-        for (_, block1), (_, block2) in Seq.pairwise attacks do
-            Mcu.addTargetLink block1.Start block2.Start.Index
-        match attacks with
-        | (_, hd) :: _ ->
-            Mcu.addTargetLink missionBegin hd.Start.Index
-        | _ -> ()
     let allAttacks =
+        let axisAttacks =
+            missionData.AxisOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
+        let alliesAttacks =
+            missionData.AlliesOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
+        let mkAttackStarts (attacks : (_ * GroundAttack.Attacker) list) =
+            for (_, block1), (_, block2) in Seq.pairwise attacks do
+                Mcu.addTargetLink block1.Start block2.Start.Index
+            match attacks with
+            | (_, hd) :: _ ->
+                Mcu.addTargetLink missionBegin hd.Start.Index
+            | _ -> ()
         mkAttackStarts axisAttacks
         mkAttackStarts alliesAttacks
         axisAttacks @ alliesAttacks |> List.map fst
     let options =
-        (Weather.setOptions weather state.Date options)
+        (Weather.setOptions missionData.Weather missionData.State.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
-            |> addMultiplayerPlaneConfigs planeSet
+            |> addMultiplayerPlaneConfigs missionParams.PlaneSet
     let optionStrings =
         { new McuUtil.IMcuGroup with
               member x.Content = []
               member x.LcStrings =
-                [ (0, missionName)
-                  (1, briefing)
-                  (2, author)
+                [ (0, missionParams.MissionName)
+                  (1, missionParams.Briefing)
+                  (2, missionParams.Author)
                 ]
               member x.SubGroups = []
         }
