@@ -5821,6 +5821,81 @@ Group
   }
   
 
+  MCU_TR_InfluenceArea
+  {
+    Index = 7141;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 48877.262;
+    YPos = 173.025;
+    ZPos = 62057.272;
+    XOri = 0.00;
+    YOri = 330.06;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      48775.5, 61985.4;
+      48841.3, 61934.5;
+      48961.9, 62113.3;
+      48906.1, 62159.1;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7142;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 49046.551;
+    YPos = 173.025;
+    ZPos = 61557.577;
+    XOri = 0.00;
+    YOri = 45.68;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      49090.9, 61441.1;
+      49156.6, 61492.3;
+      49013.3, 61653.5;
+      48955, 61610.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7143;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 48512.088;
+    YPos = 173.025;
+    ZPos = 61526.711;
+    XOri = 0.00;
+    YOri = 46.81;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      48558.7, 61411.2;
+      48623.4, 61463.6;
+      48476.9, 61622;
+      48419.5, 61578.1;
+    }
+  }
+  
+
 }
 
 
@@ -26036,6 +26111,286 @@ Group
     ZOri = 0.00;
     Enabled = 1;
     MisObjID = 2046;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7144;
+    LinkTrId = 7145;
+    XPos = 47917.974;
+    YPos = 91.406;
+    ZPos = 61602.403;
+    XOri = 0.00;
+    YOri = 120.43;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_barak.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7145;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 47917.974;
+    YPos = 91.606;
+    ZPos = 61602.403;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7144;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7147;
+    LinkTrId = 7148;
+    XPos = 47887.262;
+    YPos = 92.054;
+    ZPos = 61587.294;
+    XOri = 0.00;
+    YOri = 120.43;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_barak.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7148;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 47887.262;
+    YPos = 92.254;
+    ZPos = 61587.294;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7147;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7150;
+    LinkTrId = 7151;
+    XPos = 47856.077;
+    YPos = 92.563;
+    ZPos = 61569.528;
+    XOri = 0.00;
+    YOri = 120.43;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_barak.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7151;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 47856.077;
+    YPos = 92.763;
+    ZPos = 61569.528;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7150;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7153;
+    LinkTrId = 7154;
+    XPos = 47875.515;
+    YPos = 90.373;
+    ZPos = 61537.676;
+    XOri = 0.00;
+    YOri = 301.05;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_barak.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7154;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 47875.515;
+    YPos = 90.573;
+    ZPos = 61537.676;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7153;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7156;
+    LinkTrId = 7157;
+    XPos = 47906.069;
+    YPos = 89.143;
+    ZPos = 61553.102;
+    XOri = 0.00;
+    YOri = 301.05;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_barak.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7157;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 47906.069;
+    YPos = 89.343;
+    ZPos = 61553.102;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7156;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7159;
+    LinkTrId = 7160;
+    XPos = 47937.068;
+    YPos = 89.874;
+    ZPos = 61571.191;
+    XOri = 0.00;
+    YOri = 301.05;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_barak.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7160;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 47937.068;
+    YPos = 90.074;
+    ZPos = 61571.191;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7159;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7162;
+    LinkTrId = 7163;
+    XPos = 47903.454;
+    YPos = 100.223;
+    ZPos = 61872.739;
+    XOri = 0.00;
+    YOri = 205.67;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_dugouts_2.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_2.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7163;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 47903.454;
+    YPos = 100.423;
+    ZPos = 61872.739;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7162;
   }
   
 
@@ -129181,6 +129536,31 @@ Group
   }
   
 
+  MCU_TR_InfluenceArea
+  {
+    Index = 7165;
+    Name = "AAA-2";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 47805.604;
+    YPos = 157.865;
+    ZPos = 61776.205;
+    XOri = 0.00;
+    YOri = 301.21;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      47627, 61943.6;
+      47811.7, 61598.8;
+      47924.7, 61711.8;
+      47789, 61964;
+    }
+  }
+  
+
 }
 
 
@@ -130236,6 +130616,1481 @@ Group
       55504.4, 61999.6;
       55553.3, 62091.9;
       55492.2, 62128.5;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7132;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 48361.171;
+    YPos = 173.025;
+    ZPos = 64762.573;
+    XOri = 0.00;
+    YOri = 23.84;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      48359.5, 64638.4;
+      48439.2, 64661.5;
+      48366.1, 64864.1;
+      48296.3, 64846.1;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7133;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 48281.049;
+    YPos = 173.025;
+    ZPos = 65102.374;
+    XOri = 0.00;
+    YOri = 9.40;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      48247.9, 64982.3;
+      48331.1, 64984.6;
+      48311, 65199.4;
+      48238.7, 65199.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7134;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 47884.747;
+    YPos = 173.025;
+    ZPos = 64663.366;
+    XOri = 0.00;
+    YOri = 23.84;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      47882.6, 64538.8;
+      47962.6, 64561.8;
+      47889.6, 64764.8;
+      47819.6, 64746.8;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7135;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 47406.829;
+    YPos = 173.025;
+    ZPos = 64976.161;
+    XOri = 0.00;
+    YOri = 343.91;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      47325.2, 64882;
+      47401.3, 64848.3;
+      47475.6, 65050.8;
+      47410.4, 65082;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7136;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 48560.577;
+    YPos = 173.025;
+    ZPos = 64426.870;
+    XOri = 0.00;
+    YOri = 50.32;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      48614.2, 64314.4;
+      48675.5, 64370.7;
+      48519.7, 64519.8;
+      48465, 64472.5;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7137;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 48355.847;
+    YPos = 173.025;
+    ZPos = 65454.446;
+    XOri = 0.00;
+    YOri = 343.69;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      48273.9, 65360.6;
+      48349.8, 65326.6;
+      48424.9, 65528.9;
+      48359.8, 65560.2;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7138;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 47971.491;
+    YPos = 173.025;
+    ZPos = 64351.724;
+    XOri = 0.00;
+    YOri = 35.66;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      47994.9, 64229.3;
+      48068.5, 64268.2;
+      47955.5, 64452;
+      47890.6, 64420;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7139;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 47923.947;
+    YPos = 173.025;
+    ZPos = 65223.364;
+    XOri = 0.00;
+    YOri = 346.66;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      47847, 65125.4;
+      47924.6, 65095.4;
+      47989.1, 65301.3;
+      47922.4, 65329.2;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7140;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 47464.117;
+    YPos = 173.025;
+    ZPos = 64517.177;
+    XOri = 0.00;
+    YOri = 36.40;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      47489.1, 64395.1;
+      47562.2, 64435;
+      47446.8, 64617.2;
+      47382.4, 64584.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7167;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53852.562;
+    YPos = 173.025;
+    ZPos = 58405.815;
+    XOri = 0.00;
+    YOri = 73.26;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53916.6, 58317.7;
+      53955.9, 58404.6;
+      53778.8, 58475.3;
+      53748.2, 58411.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7168;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 54211.380;
+    YPos = 173.025;
+    ZPos = 58319.318;
+    XOri = 0.00;
+    YOri = 107.22;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      54313.6, 58281.9;
+      54297.6, 58375.6;
+      54110.9, 58335.6;
+      54120.9, 58265.1;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7169;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 54224.885;
+    YPos = 173.025;
+    ZPos = 58071.747;
+    XOri = 0.00;
+    YOri = 115.96;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      54331.7, 58050.3;
+      54301.6, 58140.5;
+      54123.1, 58072.5;
+      54143.7, 58004.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7170;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53832.674;
+    YPos = 173.025;
+    ZPos = 58070.672;
+    XOri = 0.00;
+    YOri = 69.28;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53890.3, 57978.3;
+      53935.3, 58062.1;
+      53763.4, 58145.3;
+      53728, 58083.5;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7171;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53612.140;
+    YPos = 173.025;
+    ZPos = 58206.668;
+    XOri = 0.00;
+    YOri = 62.37;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53658.3, 58108;
+      53713, 58185.8;
+      53552.4, 58289.1;
+      53509.7, 58232.1;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7172;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 54466.709;
+    YPos = 173.025;
+    ZPos = 58179.101;
+    XOri = 0.00;
+    YOri = 134.66;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      54574.7, 58193;
+      54517.3, 58268.8;
+      54370, 58147.2;
+      54411.4, 58089.3;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7173;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 54264.038;
+    YPos = 173.025;
+    ZPos = 57606.318;
+    XOri = 0.00;
+    YOri = 125.02;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      54372.8, 57602;
+      54328.9, 57686.3;
+      54163.4, 57591.1;
+      54194.5, 57527;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7174;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53869.228;
+    YPos = 173.025;
+    ZPos = 57574.202;
+    XOri = 0.00;
+    YOri = 80.64;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53944, 57495;
+      53971.6, 57586;
+      53786.6, 57633.7;
+      53764, 57566.2;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7175;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 59302.291;
+    YPos = 173.025;
+    ZPos = 59271.965;
+    XOri = 0.00;
+    YOri = 163.21;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59390.5, 59335.8;
+      59303.9, 59375;
+      59232.6, 59197.8;
+      59296.6, 59166.6;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7176;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 59082.429;
+    YPos = 173.025;
+    ZPos = 58932.376;
+    XOri = 0.00;
+    YOri = 126.88;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59191.3, 58931.5;
+      59144.7, 59014.4;
+      58982.3, 58913.9;
+      59015.5, 58850.9;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7177;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 58742.840;
+    YPos = 173.025;
+    ZPos = 59182.714;
+    XOri = 0.00;
+    YOri = 130.49;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      58851.6, 59188.7;
+      58799.8, 59268.5;
+      58644.1, 59157.9;
+      58681.1, 59097.2;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7178;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 59065.014;
+    YPos = 173.025;
+    ZPos = 59574.548;
+    XOri = 0.00;
+    YOri = 167.83;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59147.8, 59645.3;
+      59058.3, 59677.3;
+      59001.6, 59494.9;
+      59067.9, 59469.1;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7179;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 58762.432;
+    YPos = 173.025;
+    ZPos = 59833.593;
+    XOri = 0.00;
+    YOri = 160.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      58854.1, 59892.4;
+      58769.7, 59936.3;
+      58688.7, 59763.4;
+      58750.9, 59728.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7180;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 58570.869;
+    YPos = 173.025;
+    ZPos = 59533.188;
+    XOri = 0.00;
+    YOri = 123.40;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      58679.5, 59525.8;
+      58638, 59611.3;
+      58469.8, 59520.8;
+      58499.1, 59455.9;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7181;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 58978.851;
+    YPos = 173.025;
+    ZPos = 71833.367;
+    XOri = 0.00;
+    YOri = 198.90;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59013.2, 71936.7;
+      58920, 71917.9;
+      58965.6, 71732.4;
+      59035.7, 71744.5;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7182;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 58833.423;
+    YPos = 173.025;
+    ZPos = 72171.572;
+    XOri = 0.00;
+    YOri = 229.72;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      58810.1, 72277.9;
+      58739.6, 72214.1;
+      58873.7, 72078.1;
+      58927.8, 72124.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7183;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 59012.671;
+    YPos = 173.025;
+    ZPos = 71576.332;
+    XOri = 0.00;
+    YOri = 186.75;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59068.1, 71670.1;
+      58973, 71671.4;
+      58978.4, 71480.5;
+      59049.5, 71477.5;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7184;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 60239.686;
+    YPos = 173.025;
+    ZPos = 72548.880;
+    XOri = 0.00;
+    YOri = 190.67;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      60288.6, 72646.2;
+      60193.6, 72641;
+      60212, 72450.9;
+      60283.2, 72452.8;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7185;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 60199.101;
+    YPos = 173.025;
+    ZPos = 72291.845;
+    XOri = 0.00;
+    YOri = 174.13;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      60273.6, 72371.2;
+      60181.1, 72393.3;
+      60144.7, 72205.8;
+      60213.5, 72187.3;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7186;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 60131.460;
+    YPos = 173.025;
+    ZPos = 72065.248;
+    XOri = 0.00;
+    YOri = 166.31;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      60216.1, 72133.8;
+      60127.5, 72168.2;
+      60065.9, 71987.4;
+      60131.5, 71959.8;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7187;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 61105.630;
+    YPos = 173.025;
+    ZPos = 72694.003;
+    XOri = 0.00;
+    YOri = 208.93;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      61121.5, 72801.7;
+      61033, 72767;
+      61110.1, 72592.3;
+      61177.1, 72616.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7188;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 61011.821;
+    YPos = 173.025;
+    ZPos = 72912.891;
+    XOri = 0.00;
+    YOri = 201.52;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      61041.5, 73017.7;
+      60949.2, 72994.7;
+      61003.2, 72811.5;
+      61072.7, 72826.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7189;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 60914.885;
+    YPos = 173.025;
+    ZPos = 73197.445;
+    XOri = 0.00;
+    YOri = 216.41;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      60916.6, 73306.3;
+      60833.4, 73260.4;
+      60932.6, 73097.2;
+      60995.8, 73129.8;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7190;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 60767.917;
+    YPos = 173.025;
+    ZPos = 73397.571;
+    XOri = 0.00;
+    YOri = 242.87;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      60720.9, 73495.8;
+      60666.9, 73417.6;
+      60828.4, 73315.7;
+      60870.5, 73373.1;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7191;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53653.500;
+    YPos = 173.025;
+    ZPos = 74396.809;
+    XOri = 0.00;
+    YOri = 255.82;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53585.7, 74482;
+      53550.5, 74393.7;
+      53730.8, 74330.6;
+      53759, 74396;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7192;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53945.335;
+    YPos = 173.025;
+    ZPos = 74247.852;
+    XOri = 0.00;
+    YOri = 248.83;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53887.7, 74340.7;
+      53842.1, 74256.7;
+      54013.1, 74172.2;
+      54050, 74234.2;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7193;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53246.147;
+    YPos = 173.025;
+    ZPos = 74436.329;
+    XOri = 0.00;
+    YOri = 297.21;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53138.4, 74455;
+      53171, 74365.1;
+      53347.7, 74436.8;
+      53325.8, 74505.5;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7194;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53021.191;
+    YPos = 173.025;
+    ZPos = 74348.170;
+    XOri = 0.00;
+    YOri = 306.34;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      52911.9, 74349.5;
+      52958.3, 74265.9;
+      53121.4, 74364.7;
+      53088.9, 74429.1;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7195;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53738.619;
+    YPos = 173.025;
+    ZPos = 75439.511;
+    XOri = 0.00;
+    YOri = 255.82;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53670.1, 75524.7;
+      53635.1, 75435.7;
+      53815.1, 75372.7;
+      53844.1, 75438.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7196;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53410.304;
+    YPos = 173.025;
+    ZPos = 75488.150;
+    XOri = 0.00;
+    YOri = 276.57;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53316.1, 75543.6;
+      53314.9, 75447.9;
+      53505.5, 75452.8;
+      53509.3, 75524.8;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7197;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53997.014;
+    YPos = 173.025;
+    ZPos = 75327.033;
+    XOri = 0.00;
+    YOri = 246.37;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53943.5, 75422.3;
+      53894.3, 75340.3;
+      54061.5, 75248.6;
+      54100.9, 75308.9;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7198;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 53176.228;
+    YPos = 173.025;
+    ZPos = 75469.910;
+    XOri = 0.00;
+    YOri = 284.86;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      53075, 75511.1;
+      53087.6, 75416.3;
+      53275.5, 75448.6;
+      53268.9, 75520.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7199;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 46295.253;
+    YPos = 173.025;
+    ZPos = 74941.398;
+    XOri = 0.00;
+    YOri = 334.43;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      46198.2, 74891.1;
+      46278.5, 74839.2;
+      46375.9, 75003.2;
+      46316.9, 75044.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7200;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 46536.737;
+    YPos = 173.025;
+    ZPos = 74284.479;
+    XOri = 0.00;
+    YOri = 12.20;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      46490.9, 74185.3;
+      46586.1, 74193.5;
+      46562.6, 74382.7;
+      46490.6, 74379.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7201;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 46956.138;
+    YPos = 173.025;
+    ZPos = 74677.140;
+    XOri = 0.00;
+    YOri = 316.03;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      46848.2, 74660;
+      46908, 74585.4;
+      47052.1, 74710.3;
+      47009.3, 74768.3;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7202;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 47088.488;
+    YPos = 173.025;
+    ZPos = 74062.354;
+    XOri = 0.00;
+    YOri = 338.45;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      46995.2, 74005.3;
+      47079, 73959.2;
+      47164.5, 74129.7;
+      47102.8, 74166.9;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7203;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 47329.706;
+    YPos = 173.025;
+    ZPos = 74369.747;
+    XOri = 0.00;
+    YOri = 326.42;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      47226.6, 74333.4;
+      47298.9, 74270.9;
+      47418.1, 74419.7;
+      47365.5, 74469;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7204;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 45271.726;
+    YPos = 173.025;
+    ZPos = 74980.133;
+    XOri = 0.00;
+    YOri = 14.90;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      45230.5, 74878.9;
+      45325.3, 74891.5;
+      45293, 75079.5;
+      45221.2, 75072.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7205;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 59020.855;
+    YPos = 173.025;
+    ZPos = 92082.591;
+    XOri = 0.00;
+    YOri = 219.83;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59015.5, 92191.8;
+      58934.9, 92140.4;
+      59043.5, 91983.6;
+      59105.7, 92019.9;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7206;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 59240.074;
+    YPos = 173.025;
+    ZPos = 93030.483;
+    XOri = 0.00;
+    YOri = 255.82;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59171.6, 93115.7;
+      59136.6, 93026.7;
+      59316.6, 92963.7;
+      59345.6, 93029.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7207;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 59369.753;
+    YPos = 173.025;
+    ZPos = 92554.993;
+    XOri = 0.00;
+    YOri = 217.74;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59368.4, 92664.3;
+      59285.9, 92615.8;
+      59388.7, 92455.2;
+      59452.3, 92489.3;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7208;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 58795.461;
+    YPos = 173.025;
+    ZPos = 92468.540;
+    XOri = 0.00;
+    YOri = 255.82;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      58727, 92553.7;
+      58692, 92464.7;
+      58872, 92401.7;
+      58901, 92467.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7209;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 59448.559;
+    YPos = 173.025;
+    ZPos = 92297.544;
+    XOri = 0.00;
+    YOri = 194.60;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      59490.3, 92398.6;
+      59395.4, 92386.4;
+      59426.8, 92198.3;
+      59498.6, 92204.7;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7210;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 44067.500;
+    YPos = 173.025;
+    ZPos = 88478.130;
+    XOri = 0.00;
+    YOri = 270.79;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      43979.3, 88542.7;
+      43968.5, 88447.7;
+      44158.7, 88433.4;
+      44169.6, 88504.6;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7211;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 43896.089;
+    YPos = 173.025;
+    ZPos = 88788.183;
+    XOri = 0.00;
+    YOri = 255.82;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      43827.6, 88873.4;
+      43792.6, 88784.4;
+      43972.6, 88721.4;
+      44001.6, 88787.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7212;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 44032.210;
+    YPos = 173.025;
+    ZPos = 89294.854;
+    XOri = 0.00;
+    YOri = 255.82;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      43963.7, 89380;
+      43928.7, 89291;
+      44108.7, 89228;
+      44137.7, 89294;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7213;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 43825.508;
+    YPos = 173.025;
+    ZPos = 90030.915;
+    XOri = 0.00;
+    YOri = 287.99;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      43722.2, 90066.6;
+      43739.9, 89972.6;
+      43925.8, 90015.1;
+      43915.3, 90086.4;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7214;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 43772.572;
+    YPos = 173.025;
+    ZPos = 90618.251;
+    XOri = 0.00;
+    YOri = 289.78;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      43668.2, 90650.7;
+      43688.8, 90557.3;
+      43873.3, 90605.6;
+      43860.5, 90676.5;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7215;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 44254.036;
+    YPos = 173.025;
+    ZPos = 90318.281;
+    XOri = 0.00;
+    YOri = 255.82;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      44185.5, 90403.5;
+      44150.5, 90314.5;
+      44330.5, 90251.5;
+      44359.5, 90317.5;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7216;
+    Name = "AT";
+    Desc = "4 guns";
+    Targets = [];
+    Objects = [];
+    XPos = 44231.349;
+    YPos = 173.025;
+    ZPos = 89862.024;
+    XOri = 0.00;
+    YOri = 255.82;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      44162.8, 89947.2;
+      44127.8, 89858.2;
+      44307.8, 89795.2;
+      44336.8, 89861.2;
     }
   }
   
@@ -133832,6 +135687,1396 @@ Group
     ZOri = 0.00;
     Enabled = 1;
     MisObjID = 7078;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7221;
+    LinkTrId = 0;
+    XPos = 21222.215;
+    YPos = 154.394;
+    ZPos = 153109.934;
+    XOri = 0.00;
+    YOri = 355.02;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7222;
+    LinkTrId = 0;
+    XPos = 21248.619;
+    YPos = 154.394;
+    ZPos = 153206.375;
+    XOri = 0.00;
+    YOri = 330.97;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7223;
+    LinkTrId = 0;
+    XPos = 21556.241;
+    YPos = 154.394;
+    ZPos = 151896.378;
+    XOri = 0.00;
+    YOri = 40.23;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7224;
+    LinkTrId = 0;
+    XPos = 21494.880;
+    YPos = 154.394;
+    ZPos = 151992.885;
+    XOri = 0.00;
+    YOri = 16.18;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7225;
+    LinkTrId = 0;
+    XPos = 22726.310;
+    YPos = 154.394;
+    ZPos = 152698.804;
+    XOri = 0.00;
+    YOri = 172.43;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7226;
+    LinkTrId = 0;
+    XPos = 22691.596;
+    YPos = 154.394;
+    ZPos = 152583.514;
+    XOri = 0.00;
+    YOri = 148.38;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7227;
+    LinkTrId = 0;
+    XPos = 32147.280;
+    YPos = 139.452;
+    ZPos = 105405.270;
+    XOri = 0.00;
+    YOri = 336.91;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7228;
+    LinkTrId = 0;
+    XPos = 32206.946;
+    YPos = 139.452;
+    ZPos = 105495.939;
+    XOri = 0.00;
+    YOri = 312.86;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7229;
+    LinkTrId = 0;
+    XPos = 33294.618;
+    YPos = 139.452;
+    ZPos = 104717.763;
+    XOri = 0.00;
+    YOri = 156.33;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7230;
+    LinkTrId = 0;
+    XPos = 33235.961;
+    YPos = 139.452;
+    ZPos = 104627.578;
+    XOri = 0.00;
+    YOri = 132.28;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7231;
+    LinkTrId = 0;
+    XPos = 55911.282;
+    YPos = 56.774;
+    ZPos = 71868.030;
+    XOri = 0.00;
+    YOri = 346.99;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7232;
+    LinkTrId = 0;
+    XPos = 55951.944;
+    YPos = 56.774;
+    ZPos = 71954.237;
+    XOri = 0.00;
+    YOri = 322.94;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7233;
+    LinkTrId = 0;
+    XPos = 57080.263;
+    YPos = 56.774;
+    ZPos = 71344.550;
+    XOri = 0.00;
+    YOri = 164.02;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7234;
+    LinkTrId = 0;
+    XPos = 57034.924;
+    YPos = 56.774;
+    ZPos = 71260.450;
+    XOri = 0.00;
+    YOri = 139.97;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7235;
+    LinkTrId = 0;
+    XPos = 41759.166;
+    YPos = 126.504;
+    ZPos = 53890.178;
+    XOri = 0.00;
+    YOri = 329.63;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7236;
+    LinkTrId = 0;
+    XPos = 41818.460;
+    YPos = 126.504;
+    ZPos = 53961.546;
+    XOri = 0.00;
+    YOri = 305.58;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7237;
+    LinkTrId = 0;
+    XPos = 42748.143;
+    YPos = 126.504;
+    ZPos = 53084.655;
+    XOri = 0.00;
+    YOri = 150.53;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7238;
+    LinkTrId = 0;
+    XPos = 42693.710;
+    YPos = 126.504;
+    ZPos = 53021.905;
+    XOri = 0.00;
+    YOri = 126.49;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7239;
+    LinkTrId = 0;
+    XPos = 63342.068;
+    YPos = 160.342;
+    ZPos = 11362.354;
+    XOri = 0.00;
+    YOri = 11.97;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7240;
+    LinkTrId = 0;
+    XPos = 63339.020;
+    YPos = 160.342;
+    ZPos = 11468.788;
+    XOri = 0.00;
+    YOri = 347.92;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7241;
+    LinkTrId = 0;
+    XPos = 64694.371;
+    YPos = 160.342;
+    ZPos = 11430.681;
+    XOri = 0.00;
+    YOri = 188.65;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7242;
+    LinkTrId = 0;
+    XPos = 64687.950;
+    YPos = 160.342;
+    ZPos = 11323.234;
+    XOri = 0.00;
+    YOri = 164.60;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7243;
+    LinkTrId = 0;
+    XPos = 12409.466;
+    YPos = 141.446;
+    ZPos = 11943.952;
+    XOri = 0.00;
+    YOri = 337.13;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7244;
+    LinkTrId = 0;
+    XPos = 12503.123;
+    YPos = 141.446;
+    ZPos = 12082.268;
+    XOri = 0.00;
+    YOri = 313.09;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7245;
+    LinkTrId = 0;
+    XPos = 13597.035;
+    YPos = 141.446;
+    ZPos = 11317.318;
+    XOri = 0.00;
+    YOri = 153.64;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7246;
+    LinkTrId = 0;
+    XPos = 13503.673;
+    YPos = 141.446;
+    ZPos = 11186.207;
+    XOri = 0.00;
+    YOri = 129.59;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7247;
+    LinkTrId = 0;
+    XPos = 84043.848;
+    YPos = 197.225;
+    ZPos = 142269.917;
+    XOri = 0.00;
+    YOri = 318.37;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7248;
+    LinkTrId = 0;
+    XPos = 84135.091;
+    YPos = 197.225;
+    ZPos = 142358.819;
+    XOri = 0.00;
+    YOri = 294.32;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7249;
+    LinkTrId = 0;
+    XPos = 84284.608;
+    YPos = 197.225;
+    ZPos = 140993.224;
+    XOri = 0.00;
+    YOri = 33.43;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Vehicle
+  {
+    Name = "LandLight";
+    Index = 7250;
+    LinkTrId = 0;
+    XPos = 84245.148;
+    YPos = 197.225;
+    ZPos = 141089.084;
+    XOri = 0.00;
+    YOri = 9.38;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+    Model = "graphics\artillery\searchlightger\landlightger.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7251;
+    LinkTrId = 7252;
+    XPos = 84178.420;
+    YPos = 197.225;
+    ZPos = 142297.209;
+    XOri = 0.00;
+    YOri = 312.65;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7252;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84178.420;
+    YPos = 197.425;
+    ZPos = 142297.209;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7251;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7254;
+    LinkTrId = 7255;
+    XPos = 84095.874;
+    YPos = 197.225;
+    ZPos = 142213.420;
+    XOri = 0.00;
+    YOri = 337.27;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7255;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84095.874;
+    YPos = 197.425;
+    ZPos = 142213.420;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7254;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7257;
+    LinkTrId = 7258;
+    XPos = 85143.067;
+    YPos = 197.225;
+    ZPos = 141283.234;
+    XOri = 0.00;
+    YOri = 312.65;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7258;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 85143.067;
+    YPos = 197.425;
+    ZPos = 141283.234;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7257;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7260;
+    LinkTrId = 7261;
+    XPos = 85060.521;
+    YPos = 197.225;
+    ZPos = 141199.445;
+    XOri = 0.00;
+    YOri = 337.27;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7261;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 85060.521;
+    YPos = 197.425;
+    ZPos = 141199.445;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7260;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7263;
+    LinkTrId = 7264;
+    XPos = 84782.318;
+    YPos = 197.225;
+    ZPos = 141656.607;
+    XOri = 0.00;
+    YOri = 312.65;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7264;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84782.318;
+    YPos = 197.425;
+    ZPos = 141656.607;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7263;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7266;
+    LinkTrId = 7267;
+    XPos = 84699.772;
+    YPos = 197.225;
+    ZPos = 141572.818;
+    XOri = 0.00;
+    YOri = 337.27;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7267;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84699.772;
+    YPos = 197.425;
+    ZPos = 141572.818;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7266;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7269;
+    LinkTrId = 7270;
+    XPos = 84503.467;
+    YPos = 197.225;
+    ZPos = 141967.681;
+    XOri = 0.00;
+    YOri = 312.65;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7270;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84503.467;
+    YPos = 197.425;
+    ZPos = 141967.681;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7269;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7272;
+    LinkTrId = 7273;
+    XPos = 84420.921;
+    YPos = 197.225;
+    ZPos = 141883.892;
+    XOri = 0.00;
+    YOri = 337.27;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7273;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84420.921;
+    YPos = 197.425;
+    ZPos = 141883.892;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7272;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7275;
+    LinkTrId = 7276;
+    XPos = 84299.136;
+    YPos = 197.225;
+    ZPos = 141102.213;
+    XOri = 0.00;
+    YOri = 16.38;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7276;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84299.136;
+    YPos = 197.425;
+    ZPos = 141102.213;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7275;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7278;
+    LinkTrId = 7279;
+    XPos = 84330.887;
+    YPos = 197.225;
+    ZPos = 141014.603;
+    XOri = 0.00;
+    YOri = 41.00;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7279;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84330.887;
+    YPos = 197.425;
+    ZPos = 141014.603;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7278;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7281;
+    LinkTrId = 7282;
+    XPos = 85125.360;
+    YPos = 197.225;
+    ZPos = 141401.876;
+    XOri = 0.00;
+    YOri = 16.38;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7282;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 85125.360;
+    YPos = 197.425;
+    ZPos = 141401.876;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7281;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7284;
+    LinkTrId = 7285;
+    XPos = 85164.994;
+    YPos = 197.225;
+    ZPos = 141326.653;
+    XOri = 0.00;
+    YOri = 41.00;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7285;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 85164.994;
+    YPos = 197.425;
+    ZPos = 141326.653;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7284;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7287;
+    LinkTrId = 7288;
+    XPos = 84693.670;
+    YPos = 197.225;
+    ZPos = 141244.392;
+    XOri = 0.00;
+    YOri = 16.38;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7288;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84693.670;
+    YPos = 197.425;
+    ZPos = 141244.392;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7287;
+  }
+  
+
+  Effect
+  {
+    Name = "LandFire";
+    Index = 7290;
+    LinkTrId = 7291;
+    XPos = 84725.421;
+    YPos = 197.225;
+    ZPos = 141156.782;
+    XOri = 0.00;
+    YOri = 41.00;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7291;
+    Name = "LandFire entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 84725.421;
+    YPos = 197.425;
+    ZPos = 141156.782;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7290;
   }
   
 

@@ -2694,4 +2694,66 @@ Block
 }
 
 
+
+Vehicle
+{
+  Name = "LandLightGER";
+  Index = 90;
+  LinkTrId = 0;
+  XPos = 29046.015;
+  YPos = 108.584;
+  ZPos = 20155.631;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\landlightger.txt";
+  Model = "graphics\artillery\searchlightger\landlightger.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Vehicle
+{
+  Name = "LandLightRUS";
+  Index = 91;
+  LinkTrId = 0;
+  XPos = 29031.091;
+  YPos = 108.584;
+  ZPos = 20155.631;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\landlightsu.txt";
+  Model = "graphics\artillery\searchlightsu\landlightsu.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
 # end of file
