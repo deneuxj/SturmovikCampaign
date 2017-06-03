@@ -226,7 +226,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                                     |> List.pick(fun (p1, p2) ->
                                         if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
                                             let ex = Vector2.FromYOri(spawn)
-                                            let ey = -ex.Rotate(90.0f)
+                                            let ey = ex.Rotate(90.0f)
                                             let mkVec(p : T.Airfield.Chart.Point) =
                                                 (float32 <| p.GetX().Value) * ex + (float32 <| p.GetY().Value) * ey
                                             Some(mkVec(p2) - mkVec(p1))
