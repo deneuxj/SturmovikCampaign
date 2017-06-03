@@ -28,6 +28,7 @@ open Campaign.MapGraphics
 open Campaign.ParkingArea
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open SturmovikMission.Blocks.Vehicles
 
 type ArtilleryGroup = {
     All : Mcu.McuBase list
@@ -282,8 +283,14 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                 let mcu = af.CreateMcu()
                 subst mcu
                 subst entity
-                yield mcu
-                yield entity :> Mcu.McuBase
+                let runwayStartPos =
+                    af.TryGetChart()
+                    |> Option.map (fun chart -> chart.GetPoints() |> Seq.find (fun point -> point.GetType().Value = 2))
+                    |> Option.map (fun point -> Vector2(point.GetX().Value |> float32, point.GetY().Value |> float32).Rotate(af.GetYOri().Value |> float32) + Vector2.FromPos(af))
+                    |> Option.map (fun pos -> pos, coalition)
+                match runwayStartPos with
+                | Some x -> yield (x, [ mcu; upcast entity ])
+                | None -> ()
     ]
 
 /// Convoys are created according to resupply orders. A given number of convoys start at mission start, then new convoys start whenever a convoy arrives or gets destroyed.
@@ -613,6 +620,60 @@ let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (stat
                         | _ -> ()
     ]
 
+let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) (runwayStarts : (Vector2 * CoalitionId) list) (landLights : Mcu.McuBase list) =
+    let lightsOn(lights : Mcu.McuEntity list) =
+        let subst = Mcu.substId <| store.GetIdMapper()
+        let prio = T.Integer 0
+        let lowPrio = T.MCU_CMD_ForceComplete(T.String "Switch lights on", T.Integer 1, T.String "LightsOn", T.VectorOfIntegers[], prio, T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
+        subst lowPrio
+        for light in lights do
+            Mcu.addObjectLink lowPrio light.Index
+        let pos =
+            let sum =
+                lights
+                |> List.sumBy (fun light -> Vector2.FromMcu light.Pos)
+            sum / (float32 lights.Length)
+        pos.AssignTo(lowPrio.Pos)
+        Mcu.addTargetLink missionBegin lowPrio.Index
+        lowPrio
+
+    let subst = Mcu.substId <| store.GetIdMapper()
+    [
+        for mcu in landLights do
+            match mcu with
+            | :? Mcu.HasEntity as light when light.Name = "LandLight" ->
+                let entity =
+                    try
+                        McuUtil.getEntityByIndex light.LinkTrId landLights
+                    with _ ->
+                        failwith "land lights must all have entities"
+                let lightPos = Vector2.FromMcu light.Pos
+                let runwayStart =
+                    runwayStarts
+                    |> List.tryFind (fun (pos, owner) -> (pos - lightPos).Length() < 200.0f)
+                match runwayStart with
+                | Some(_, owner) ->
+                    light.Country <- owner.ToCountry
+                    match owner with
+                    | Allies ->
+                        light.Model <- vehicles.RussianLandLight.Model
+                        light.Script <- vehicles.RussianLandLight.Script
+                    | Axis ->
+                        light.Model <- vehicles.GermanLandLight.Model
+                        light.Script <- vehicles.GermanLandLight.Script
+                    subst (light :> Mcu.McuBase)
+                    subst entity
+                    let prioNode = lightsOn([entity])
+                    yield light :> Mcu.McuBase
+                    yield upcast entity
+                    yield upcast prioNode
+                | None ->
+                    ()
+            | _ ->
+                ()
+    ]
+
+
 let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Options) =
     let configs =
         PlaneModel.AllModels(planeSet)
@@ -699,6 +760,9 @@ let writeMissionFile planeSet maxCapturedPlanes random weather author missionNam
     let landFires =
         strategyMissionData.GetGroup("Land fires").CreateMcuList()
         |> createLandFires store world state missionBegin
+    let landlights =
+        strategyMissionData.GetGroup("Land lights").CreateMcuList()
+        |> createLandLights store world state missionBegin (spawns |> List.map fst)
     let axisPatrols =
         axisOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
     let alliesPatrols =
@@ -746,10 +810,11 @@ let writeMissionFile planeSet maxCapturedPlanes random weather author missionNam
           upcast icons2
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
-          McuUtil.groupFromList spawns
+          McuUtil.groupFromList (spawns |> List.collect snd)
           McuUtil.groupFromList columnTimers
           McuUtil.groupFromList flags
           McuUtil.groupFromList ndbs
+          McuUtil.groupFromList landlights
           parkedPlanes
           parkedTanks
           axisPrio

@@ -556,4 +556,16 @@ type VehicleDataTypeStore() =
           Model = block.GetModel().Value
         }
 
+    member this.GermanLandLight =
+        let light = vehicles.[T.Vehicles.LandLightGER]
+        { Script = light.GetScript().Value
+          Model = light.GetModel().Value
+        }
+
+    member this.RussianLandLight =
+        let light = vehicles.[T.Vehicles.LandLightRUS]
+        { Script = light.GetScript().Value
+          Model = light.GetModel().Value
+        }
+
 let vehicles = VehicleDataTypeStore()
