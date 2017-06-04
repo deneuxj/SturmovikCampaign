@@ -56,8 +56,6 @@ with
             ThinkTime = 30
             AfterActionReportEntries = 8
             Briefing = @"
-    Let the battle begin!
-
     This mission is part of a dynamic campaign, where the events from one mission are carried over to the next mission.
 
     Large cities with factories produce tanks, planes, ammo for the anti-air and anti-tank canons and supplies to repair damage storage facilities.
@@ -404,20 +402,23 @@ module MissionFileGeneration =
                 |> Option.defaultVal "south"
             sprintf "<b>Weather<b><br>Temperature: %2.0fC, Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" weather.Temperature cover weather.Wind.Speed windOrigin
         let afterActionReports =
+            let tryGetReportText coalition (reportFile : FileStream) =
+                try
+                    serializer.Deserialize<AfterActionReport.ReportData>(reportFile)
+                    |> Some
+                with _ -> None
+                |> Option.map (fun report -> report.GetText(coalition))
+                |> Option.defaultVal "(No AAR available)<br>"
             let oldAxisReports = Directory.EnumerateFiles(config.OutputDir, "axisAAR_*.xml")
             let oldAlliesReports = Directory.EnumerateFiles(config.OutputDir, "alliesAAR_*.xml")
             if File.Exists(Path.Combine(config.OutputDir, Filenames.axisAAR)) && File.Exists(Path.Combine(config.OutputDir, Filenames.alliesAAR)) then
                 seq {
                     yield "<u>After-action reports</u><br>"
                     use axisReportFile = File.OpenRead(Path.Combine(config.OutputDir, Filenames.axisAAR))
-                    let report = serializer.Deserialize<AfterActionReport.ReportData>(axisReportFile)
-                    yield "<b>Axis</b><br>"
-                    yield report.GetText(Axis)
+                    yield tryGetReportText Axis axisReportFile
                     yield "<br>"
                     use alliesReportFile = File.OpenRead(Path.Combine(config.OutputDir, Filenames.alliesAAR))
-                    let report = serializer.Deserialize<AfterActionReport.ReportData>(alliesReportFile)
-                    yield "<b>Allies</b><br>"
-                    yield report.GetText(Allies)
+                    yield tryGetReportText Allies alliesReportFile
                     yield "<br>"
                     let orderedAxisFiles =
                         oldAxisReports
@@ -429,14 +430,10 @@ module MissionFileGeneration =
                         |> Seq.truncate config.AfterActionReportEntries
                     for axisReport, alliesReport in Seq.zip orderedAxisFiles orderedAlliesFiles do
                         use axisReportFile = File.OpenRead(axisReport)
-                        let report = serializer.Deserialize<AfterActionReport.ReportData>(axisReportFile)
-                        yield "<b>Axis</b><br>"
-                        yield report.GetText(Axis)
+                        yield tryGetReportText Axis axisReportFile
                         yield "<br>"
                         use alliesReportFile = File.OpenRead(alliesReport)
-                        let report = serializer.Deserialize<AfterActionReport.ReportData>(alliesReportFile)
-                        yield "<b>Allies</b><br>"
-                        yield report.GetText(Allies)
+                        yield tryGetReportText Allies alliesReportFile
                         yield "<br>"
                 }
                 |> String.concat ""

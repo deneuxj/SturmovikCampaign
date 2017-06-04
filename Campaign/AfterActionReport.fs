@@ -6,6 +6,7 @@ open Campaign.WorldState
 open Campaign.BasicTypes
 
 type ReportData = {
+    MissionDate : System.DateTime
     RegionsCaptured : RegionId list
     PlanesLost : Map<PlaneModel, int>
     PlanesDamaged : Map<PlaneModel, int>
@@ -32,6 +33,9 @@ with
             |> String.concat "<br>"
         seq {
             if not(this.RegionsCaptured.IsEmpty) then
+                yield sprintf "<b>%s</b> %s<br>"
+                        (match coalition with Axis -> "Axis" | Allies -> "Allies")
+                        (this.MissionDate.ToString("d MMM yyyy HH:mm"))
                 yield
                     this.RegionsCaptured
                     |> List.map (fun (RegionId name) -> name)
@@ -109,6 +113,7 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
             |> List.map (fun event -> event.Plane)
             |> Util.compactSeq
         Util.subMaps numPlanesTookOff numPlanesLanded
+        |> Map.filter (fun _ qty -> qty > 0)
     let numParkedPlanesDestroyed =
         damages
         |> List.choose (fun event ->
@@ -186,7 +191,8 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
             | _ -> None)
         |> List.sumBy (fun (building, damage) -> building.Storage * damage)
     // Result
-    { RegionsCaptured = regionsGained |> List.ofSeq
+    { MissionDate = oldState.Date
+      RegionsCaptured = regionsGained |> List.ofSeq
       PlanesLost = Util.addMaps numPlanesLost numParkedPlanesDestroyed
       PlanesDamaged = numPlanesLandedDamaged
       PlanesCaptured = planesCaptured
