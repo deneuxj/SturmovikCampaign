@@ -256,7 +256,7 @@ with
         let start = newCounter 1
         let destroyed = newCounter 2
         Vector2(0.0f, 50.0f).AssignTo(destroyed.Pos)
-        destroyed.Count <- numTrucks + 1
+        destroyed.Count <- numTrucks
         let arrived = newCounter 3
         Vector2(0.0f, 100.0f).AssignTo(arrived.Pos)
         let captured = newCounter 4
