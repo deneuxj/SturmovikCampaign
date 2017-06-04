@@ -226,16 +226,14 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                                     |> List.pairwise
                                     |> List.pick(fun (p1, p2) ->
                                         if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
-                                            let ex = Vector2.FromYOri(spawn)
-                                            let ey = ex.Rotate(90.0f)
                                             let mkVec(p : T.Airfield.Chart.Point) =
-                                                (float32 <| p.GetX().Value) * ex + (float32 <| p.GetY().Value) * ey
-                                            Some(mkVec(p2) - mkVec(p1))
+                                                Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
+                                            Some((mkVec(p2) - mkVec(p1)).Rotate(spawn.GetYOri().Value |> float32))
                                         else
                                             None)
                                 let len = direction.Length()
                                 let direction = direction / len
-                                Vector2.Dot(direction, windDirection))
+                                -Vector2.Dot(direction, windDirection))
                         |> fun spawn ->
                             spawn
                                 .SetReturnPlanes(T.Boolean true)
