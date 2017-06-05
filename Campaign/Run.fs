@@ -6,7 +6,7 @@ open Campaign.BasicTypes
 open PlaneModel
 
 type Configuration = {
-    PlaneSet : int
+    PlaneSet : PlaneModel.PlaneSet
     StrategyFile : string
     Seed : int option
     WeatherDayMaxOffset : int
@@ -33,7 +33,7 @@ type Configuration = {
 with
     static member Default =
         {
-            PlaneSet = 0 // Moscow
+            PlaneSet = PlaneSet.Moscow
             StrategyFile = "StrategySmall1.mission"
             Seed = None // Some 0
             WeatherDayMaxOffset = 15
@@ -69,13 +69,6 @@ with
     "
         }
 
-    member this.PlaneSetValue =
-        match this.PlaneSet with
-        | 0 -> PlaneSet.Moscow
-        | 1 -> PlaneSet.VelikieLuki
-        | 2 -> PlaneSet.EarlyAccess
-        | _ -> PlaneSet.Moscow
-
 module Filenames =
     let axisOrders = "axisOrders.xml"
     let alliesOrders = "alliesOrders.xml"
@@ -100,7 +93,7 @@ module Init =
             | None ->
                 System.Random()
 
-        let world0 = World.Create(config.PlaneSetValue, Path.Combine(config.ScriptPath, config.StrategyFile))
+        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile))
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
 
         let capacity =
@@ -438,7 +431,7 @@ module MissionFileGeneration =
 
         let missionName = config.MissionName
         let missionParams =
-            { PlaneSet = config.PlaneSetValue
+            { PlaneSet = config.PlaneSet
               MaxCapturedPlanes = config.MaxCapturedPlanes
               Author = author
               MissionName = config.MissionName

@@ -3,10 +3,11 @@
 #r "Campaign.dll"
 
 open Campaign.Run
+open Campaign.PlaneModel
 
 let config =
     { Configuration.Default with
-        PlaneSet = 2
+        PlaneSet = PlaneSet.EarlyAccess
         StrategyFile = "Vluki.mission"
         //OutputDir = @"C:\Users\johann\Documents\FromServer\AutoMoscow"
         OutputDir = @"C:\Users\johann\Documents\AutoVLuki"
