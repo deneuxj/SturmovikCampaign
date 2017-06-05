@@ -362,6 +362,25 @@ let updateNumCanons (world : World) (state : WorldState) =
         AntiAirDefenses = List.zip world.AntiAirDefenses antiAir |> List.map adjustNumCanons
     }
 
+/// Compute amounts of supplies to have anti-tank and anti-air canons fully operational.
+let computeDefenseNeeds (world : World) =
+    [
+        for antiTank in world.AntiTankDefenses do
+            match antiTank.Home with
+            | FrontLine(home, ngh) ->
+                yield home, float32(antiTank.MaxNumGuns) * canonCost
+            | _ ->
+                ()
+        for antiAir in world.AntiAirDefenses do
+            match antiAir.Home with
+            | Central(home) ->
+                yield home, float32(antiAir.MaxNumGuns) * canonCost
+            | _ ->
+                ()
+    ]
+    |> List.groupBy fst
+    |> List.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
+
 /// Build the initial state
 let mkInitialState(world : World, strategyFile : string) =
     let data = T.GroupData(Stream.FromFile strategyFile)
@@ -396,8 +415,9 @@ let mkInitialState(world : World, strategyFile : string) =
     // regions further from factories than this value are unsupplied.
     let cutoffHops = 4
     let regions =
-        world.Regions
-        |> List.map (fun region ->
+        let supplyNeeds = computeDefenseNeeds world
+        List.zip world.Regions supplyNeeds
+        |> List.map (fun (region, (_, needs)) ->
             let owner = getOwner region.RegionId
             let supplies, vehicles =
                 match owner with
@@ -413,6 +433,7 @@ let mkInitialState(world : World, strategyFile : string) =
                     let supplies =
                         region.Storage
                         |> Seq.sumBy (fun storage -> storage.Storage)
+                        |> min needs
                         |> float32
                         |> scale
                     let ceilint = ceil >> int
