@@ -56,21 +56,16 @@ with
             ThinkTime = 30
             AfterActionReportEntries = 8
             Briefing = @"
-    This mission is part of a dynamic campaign, where the events from one mission are carried over to the next mission.
+    This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
-    Large cities with factories produce tanks, planes, ammo for the anti-air and anti-tank canons and supplies to repair damage storage facilities.
-    Damaging factories reduces the overall production output of their region.
+    Objectives: Truck convoys, tank columns, field camps (look for dugouts), factories, parked planes, anti-tank guns, anti-air cannons.
 
-    Each region has a number of storage facilities in the form of dugouts and baraks. Damaging these reduces the amount of ammo potentially available to the region's defenses.
+    Each region has a 'life bar' indicating the storage capacity (blue bar) and current supply level (cursor on the bar).
+    If the cursor is red, the region is poorly defended.
+    Some regions have numbers beside their name: these represent the number of tanks in that region at the start of the mission.
 
-    Supplies are transfered via truck convoys and trains. Trains have a greater capacity than truck convoys.
+    Planes can be transferred from one airfield to another, but the result will only be visible in the next mission.
 
-    Regions are captured by tank columns. If a tank column reaches the capital of a region, a battle is played after the mission's end with the defense forces.
-    If victorious, the invaders gain control over the region, including its airfields and all the planes parked there!
-
-    Airplanes can be transfered to new airfields (including enemy ones!) by landing at a different airfield than the original one.
-    Transfered planes, if undamaged, are available at the destination airfield in the next mission.
-    Damages to planes, including parked ones, are tracked and affect the availability of planes. For example, it takes two identical planes with 50% damage to make one plane available.
     "
         }
 
