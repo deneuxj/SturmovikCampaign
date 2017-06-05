@@ -574,11 +574,11 @@ module MissionLogParsing =
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
 
-        let state2 = newState dt world state movements shipments (axisOrders.Resupply @ alliesOrders.Resupply) (staticDamages @ vehicleDamages) takeOffs landings columnDepartures
+        let state2, newlyProduced = newState dt world state movements shipments (axisOrders.Resupply @ alliesOrders.Resupply) (staticDamages @ vehicleDamages) takeOffs landings columnDepartures
 
-        (entries, shipments, staticDamages, vehicleDamages, takeOffs, landings, columnDepartures), (state, state2)
+        (entries, shipments, staticDamages, vehicleDamages, takeOffs, landings, columnDepartures, newlyProduced), (state, state2)
 
-    let buildAfterActionReports(config, state1, state2, tookOff, landed, damages) =
+    let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, axisOrders, alliesOrders =
             try
@@ -590,8 +590,9 @@ module MissionLogParsing =
                 serializer.Deserialize<OrderPackage>(alliesOrdersFile)
             with
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
-        let aarAxis = buildReport world state1 state2 tookOff landed damages axisOrders.Columns Axis
-        let aarAllies = buildReport world state1 state2 tookOff landed damages alliesOrders.Columns Allies
+        let newSupplies, newAxisVehicles, newAlliesVehicles = newlyProduced
+        let aarAxis = buildReport world state1 state2 tookOff landed damages axisOrders.Columns newSupplies newAxisVehicles Axis
+        let aarAllies = buildReport world state1 state2 tookOff landed damages alliesOrders.Columns newSupplies newAlliesVehicles Allies
         aarAxis, aarAllies
 
     let stage2 config (state, state2, aarAxis, aarAllies) =

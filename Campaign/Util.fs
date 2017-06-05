@@ -66,6 +66,21 @@ let addMaps (m1 : Map<_, int>) (m2 : Map<_, int>) =
         Map.add k count m2
     ) m2
 
+/// <summary>
+/// Add a sequence of items to a multiset
+/// </summary>
+/// <param name="m">Map from items to count</param>
+/// <param name="items">Sequence of items and count</param>
+let addList (m : Map<'T, int>) (items : ('T * int) seq) =
+    let addOne (m : Map<'T, int>) (x, n) =
+        let n2 =
+            m.TryFind x
+            |> function None -> 0 | Some n -> n
+            |> (+) n
+        m.Add(x, n2)
+    items
+    |> Seq.fold addOne m
+
 /// Subtract m2 from m1 where both are maps which target integers
 let subMaps (m1 : Map<_, int>) (m2 : Map<_, int>) =
     m2

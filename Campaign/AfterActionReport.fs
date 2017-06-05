@@ -11,13 +11,12 @@ type ReportData = {
     PlanesLost : Map<PlaneModel, int>
     PlanesDamaged : Map<PlaneModel, int>
     PlanesCaptured : Map<PlaneModel, int>
-    //PlanesProduced : Map<PlaneModel, int>
+    PlanesProduced : Map<PlaneModel, int>
     VehiclesLost : Map<GroundAttackVehicle, int>
-    //VehiclesProduced : Map<GroundAttackVehicle, int>
+    VehiclesProduced : Map<GroundAttackVehicle, int>
     FactoriesDestroyed : float32<E/H>
     StorageDestroyed : float32<E>
-    //SupplyDestroyed : float32<E>
-    //SupplyProduced : float32<E>
+    SupplyProduced : float32<E>
 }
 with
     member this.GetText(coalition) =
@@ -60,13 +59,11 @@ with
                     this.PlanesCaptured
                     |> mkPlaneReport
                     |> sprintf "Planes captured by the enemy:<br>%s<br>"
-(*
             if not(this.PlanesProduced.IsEmpty) then
                 yield
                     this.PlanesProduced
                     |> mkPlaneReport
                     |> sprintf "New planes:<br>%s<br>"
-*)
             if this.VehiclesLost.IsEmpty then
                 yield "No tanks lost.<br>"
             else
@@ -74,18 +71,22 @@ with
                     this.VehiclesLost
                     |> mkTankReport
                     |> sprintf "Tank losses:<br>%s<br>"
+            if not(this.VehiclesProduced.IsEmpty) then
+                yield
+                    this.VehiclesProduced
+                    |> mkTankReport
+                    |> sprintf "New tanks:<br>%s<br>"
             if this.FactoriesDestroyed > 0.0f<E/H> then
                 yield sprintf "Production capability lost: -%d units per hour<br>" (this.FactoriesDestroyed |> float32 |> ceil |> int)
             if this.StorageDestroyed > 0.0f<E> then
                 yield sprintf "Storage capacity lost: -%d units<br>" (this.StorageDestroyed |> float32 |> ceil |> int)
-            //if this.SupplyDestroyed > 0.0f<E> then
-            //    yield sprintf "Supplies lost in convoy attacks and bombings: -%d units<br>" (this.SupplyDestroyed |> float32 |> ceil |> int)
-            //yield sprintf "New supplies from factories: +%d units<br>" (this.SupplyProduced |> float32 |> ceil |> int)
+            yield sprintf "New supplies from factories: +%d units<br>" (this.SupplyProduced |> float32 |> ceil |> int)
         }
         |> String.concat ""
 
 open Campaign.ResultExtraction
 open Campaign.Orders
+open NewWorldState
 
 let regionsOwnedBy (state : WorldState) (coalition : CoalitionId) =
     state.Regions
@@ -93,7 +94,7 @@ let regionsOwnedBy (state : WorldState) (coalition : CoalitionId) =
     |> List.map (fun region -> region.RegionId)
     |> Set.ofList
 
-let buildReport (world : World) (oldState : WorldState) (newState : WorldState) (tookOff : TookOff list) (landed : Landed list) (damages : Damage list) (columns : ColumnMovement list) (coalition : CoalitionId) =
+let buildReport (world : World) (oldState : WorldState) (newState : WorldState) (tookOff : TookOff list) (landed : Landed list) (damages : Damage list) (columns : ColumnMovement list) (newSupplies : Resupplied list) (newVehicles : NewVehiclesSummary) (coalition : CoalitionId) =
     let wg = WorldFastAccess.Create world
     let sg1 = WorldStateFastAccess.Create oldState
     let sg2 = WorldStateFastAccess.Create newState
@@ -190,13 +191,20 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
                     None
             | _ -> None)
         |> List.sumBy (fun (building, damage) -> building.Storage * damage)
+    let newSupplies =
+        newSupplies
+        |> List.filter (fun sup -> sg2.GetRegion(sup.Region).Owner = Some coalition)
+        |> List.sumBy (fun sup -> sup.Energy)
     // Result
     { MissionDate = oldState.Date
       RegionsCaptured = regionsGained |> List.ofSeq
       PlanesLost = Util.addMaps numPlanesLost numParkedPlanesDestroyed
       PlanesDamaged = numPlanesLandedDamaged
       PlanesCaptured = planesCaptured
+      PlanesProduced = newVehicles.Planes
       VehiclesLost = Util.addMaps tanksIntercepted numParkedTanksDestroyed
+      VehiclesProduced = newVehicles.Tanks
       FactoriesDestroyed = productionDamage
+      SupplyProduced = newSupplies
       StorageDestroyed = storageDamage }
 

@@ -10,7 +10,7 @@
 open Configuration
 
 let data, states = Campaign.Run.MissionLogParsing.stage1 config
-let entries, shipped, staticDamages, vehicleDamages, tookOff, landed, columnLeft = data
+let entries, shipped, staticDamages, vehicleDamages, tookOff, landed, columnLeft, newProduction = data
 let oldState, newState = states
-let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, tookOff, landed, staticDamages @ vehicleDamages)
+let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, tookOff, landed, staticDamages @ vehicleDamages, newProduction)
 Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR)

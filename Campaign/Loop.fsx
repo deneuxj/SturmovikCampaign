@@ -136,8 +136,8 @@ with
                 elif not(newState.HasCoalitionFactories(Allies)) then
                     return serverProc, CampaignOver(Axis)
                 else
-                    let entries, shipped, staticDamages, vehicleDamages, tookOff, landed, columnLeft = data
-                    let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, tookOff, landed, staticDamages @ vehicleDamages)
+                    let entries, shipped, staticDamages, vehicleDamages, tookOff, landed, columnLeft, newProduction = data
+                    let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, tookOff, landed, staticDamages @ vehicleDamages, newProduction)
                     Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR)
                     return serverProc, MakeWeather
             }

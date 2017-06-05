@@ -179,6 +179,20 @@ type Resupplied = {
     Energy : float32<E>
 }
 
+/// Statistics about vehicles produced in around.
+type NewVehiclesSummary = {
+    Planes : Map<PlaneModel, int>
+    Tanks : Map<GroundAttackVehicle, int>
+}
+with
+    static member Empty = { Planes = Map.empty; Tanks = Map.empty }
+
+    member this.AddPlanes(planes) =
+        { this with Planes = Util.addList this.Planes planes }
+
+    member this.AddTanks(tanks) =
+        { this with Tanks = Util.addList this.Tanks tanks }
+
 /// Create new plane and vehicle instances if enough energy has been accumulated and convert supplies to local Resupplied events.
 let convertProduction (world : World) (state : WorldState) =
     let afStates =
@@ -192,6 +206,8 @@ let convertProduction (world : World) (state : WorldState) =
         |> Map.ofSeq
         |> ref
     let resupplied = ref []
+    let newAxisVehicles = ref NewVehiclesSummary.Empty
+    let newAlliesVehicles = ref NewVehiclesSummary.Empty
     for region, regState in Seq.zip world.Regions state.Regions do
         // Freshly produced planes
         let af =
@@ -220,6 +236,14 @@ let convertProduction (world : World) (state : WorldState) =
                 let energyLeft = energy - numNewVehicles * vehicle.Cost
                 (vehicle, int numNewVehicles) :: newVehicles, Map.add vehicle energyLeft remainingVehicles
             ) ([], Map.empty)
+        // Record plane and tank production
+        match regState.Owner with
+        | Some Axis ->
+            newAxisVehicles := newAxisVehicles.Value.AddPlanes(newPlanes).AddTanks(newVehicles)
+        | Some Allies ->
+            newAlliesVehicles := newAlliesVehicles.Value.AddPlanes(newPlanes).AddTanks(newVehicles)
+        | None ->
+            ()
         // Supplies -> storage
         let supplySpaceAvailable = max 0.0f<E> (regState.StorageCapacity(region) - regState.Supplies)
         let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
@@ -258,7 +282,9 @@ let convertProduction (world : World) (state : WorldState) =
     { state with
         Airfields = state.Airfields |> List.map (fun af -> afStates.Value.[af.AirfieldId])
         Regions = state.Regions |> List.map (fun region -> regions.Value.[region.RegionId]) },
-    resupplied.Value
+    (resupplied.Value,
+     newAxisVehicles.Value,
+     newAlliesVehicles.Value)
 
 /// Consume supplies to heal buildings
 let computeHealing(healths, buildings, energy) =
@@ -765,7 +791,7 @@ let morningStart = 5
 
 let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures =
     let state2 = applyProduction dt world state
-    let state3, extra = convertProduction world state2
+    let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
     let state4 = applyRepairsAndDamages dt world state3 convoyDepartures damages supplies
     let state5 = applyPlaneTransfers state4 tookOff landed
     let battles = buildBattles state5 movements columnDepartures damages
@@ -781,4 +807,4 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) movements co
             System.DateTime(x2.Year, x2.Month, x2.Day, morningStart, 0, 0)
         else
             x
-    { state8 with Date = newDate }
+    { state8 with Date = newDate }, newlyProduced
