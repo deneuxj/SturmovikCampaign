@@ -293,13 +293,10 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) coalition =
                     | Axis -> state.AxisForces.[i]
                     | Allies -> state.AlliesForces.[i]
                 for j in neighboursOf i do
-                    if force > 5.0f * MediumTank.Cost then
-                        for k in neighboursOf i do
-                            if j < k then
-                                yield [
-                                    { Start = i; Destination = j; Force = 0.5f * force }
-                                    { Start = i; Destination = k; Force = 0.5f * force }
-                                ]
+                    if force > 10.0f * MediumTank.Cost then
+                        yield [
+                            { Start = i; Destination = j; Force = 0.5f * force }
+                        ]
                     yield [
                             { Start = i; Destination = j; Force = force }
                     ]
