@@ -305,7 +305,7 @@ let computeHealing(healths, buildings, energy) =
     prodHealth, energy
 
 /// Apply damages due to attacks, use supplies to repair damages and replenish storage
-let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list)=
+let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) =
     let wg = WorldFastAccess.Create world
     let damages =
         let data =
@@ -329,6 +329,10 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
             |> Seq.groupBy (fun sup -> orders.[sup.OrderId].Convoy.Start)
             |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> orders.[sup.OrderId].Convoy.TransportedSupplies))
         Map.ofSeq data
+    let newSupplies =
+        newSupplies
+        |> List.map (fun sup -> sup.Region, sup.Energy)
+        |> Map.ofSeq
     let arrived =
         damages
         |> Map.fold (fun arrived victim damages ->
@@ -467,9 +471,13 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
             for regState in regionsAfterDamagesToDefenses do
                 let region = wg.GetRegion regState.RegionId
                 let energy =
-                    match Map.tryFind region.RegionId arrived with
-                    | Some e -> e
-                    | None -> 0.0f<E>
+                    let fromShipments =
+                        arrived.TryFind region.RegionId
+                        |> Option.defaultVal 0.0f<E>
+                    let fromProduction =
+                        newSupplies.TryFind region.RegionId
+                        |> Option.defaultVal 0.0f<E>
+                    fromShipments + fromProduction
                 // Highest prio: repair production
                 let prodHealth, energy =
                     computeHealing(
@@ -792,7 +800,7 @@ let morningStart = 5
 let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures =
     let state2 = applyProduction dt world state
     let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
-    let state4 = applyRepairsAndDamages dt world state3 convoyDepartures damages supplies
+    let state4 = applyRepairsAndDamages dt world state3 convoyDepartures damages supplies newSupplies
     let state5 = applyPlaneTransfers state4 tookOff landed
     let battles = buildBattles state5 movements columnDepartures damages
     let state6 = applyVehicleDepartures state5 movements columnDepartures
