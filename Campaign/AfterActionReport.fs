@@ -24,32 +24,28 @@ with
             m
             |> Map.toSeq
             |> Seq.map (fun (plane, qty) -> sprintf "%s: %d" plane.PlaneName qty)
-            |> String.concat "<br>"
+            |> String.concat ", "
         let mkTankReport (m : Map<GroundAttackVehicle, int>) =
             m
             |> Map.toSeq
             |> Seq.map (fun (tank, qty) -> sprintf "%s: %d" (tank.Description) qty)
-            |> String.concat "<br>"
+            |> String.concat ", "
         seq {
+            yield sprintf "<b>%s</b> %s<br>"
+                    (match coalition with Axis -> "Axis" | Allies -> "Allies")
+                    (this.MissionDate.ToString("d MMM yyyy HH:mm"))
             if not(this.RegionsCaptured.IsEmpty) then
-                yield sprintf "<b>%s</b> %s<br>"
-                        (match coalition with Axis -> "Axis" | Allies -> "Allies")
-                        (this.MissionDate.ToString("d MMM yyyy HH:mm"))
                 yield
                     this.RegionsCaptured
                     |> List.map (fun (RegionId name) -> name)
                     |> String.concat ", "
-                    |> sprintf "Control over the following regions was gained: %s.<br>"
-            if this.PlanesLost.IsEmpty then
-                yield "No planes lost.<br>"
-            else
+                    |> sprintf "Regions conquered: %s.<br>"
+            if not(this.PlanesLost.IsEmpty) then
                 yield
                     this.PlanesLost
                     |> mkPlaneReport
                     |> sprintf "Plane losses:<br>%s<br>"
-            if this.PlanesDamaged.IsEmpty then
-                yield "No planes damaged.<br>"
-            else
+            if not(this.PlanesDamaged.IsEmpty) then
                 yield
                     this.PlanesLost
                     |> mkPlaneReport
@@ -64,9 +60,7 @@ with
                     this.PlanesProduced
                     |> mkPlaneReport
                     |> sprintf "New planes:<br>%s<br>"
-            if this.VehiclesLost.IsEmpty then
-                yield "No tanks lost.<br>"
-            else
+            if not(this.VehiclesLost.IsEmpty) then
                 yield
                     this.VehiclesLost
                     |> mkTankReport
