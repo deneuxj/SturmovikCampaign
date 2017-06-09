@@ -8,7 +8,8 @@ type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Block
 
 let blocksData =
     let blockMission =
-        let path = System.Environment.CurrentDirectory
+        let path = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location)
+        //let path = System.Environment.CurrentDirectory
         Path.Combine(path, "Blocks.Mission")
     T.GroupData(Parsing.Stream.FromFile blockMission)
 
