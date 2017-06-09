@@ -427,8 +427,11 @@ module MissionFileGeneration =
                 |> String.concat ""
             else
                 ""
-        let briefing = timeAndDate + weatherDescription + config.Briefing.Replace("\r\n", "\n").Replace("\n", "<br>") + afterActionReports
-
+        let mainText =
+            config.Briefing.Replace("\r\n", "\n").Split('\n')
+            |> Array.map (fun s -> s.Trim())
+            |> String.concat "<br>"
+        let briefing = timeAndDate + weatherDescription + mainText + afterActionReports
         let missionName = config.MissionName
         let missionParams =
             { PlaneSet = config.PlaneSet
@@ -452,17 +455,25 @@ module MissionFileGeneration =
         writeMissionFile missionParams missionData (Path.Combine(config.OutputDir, missionName + ".Mission"))
 
         let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer")
+        let langs = ["eng"; "fra"; "rus"; "ger"; "spa"; "pol"]
         let swallow f = try f() with | _ -> ()
+        // Remove old files from multiplayer directory
         swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".Mission")))
-        swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".eng")))
+        swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".list")))
+        for lang in langs do
+            swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + "." + lang)))
         swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".msnbin")))
+        // Copy new files to multiplayer directory
         File.Copy(Path.Combine(config.OutputDir, missionName + ".Mission"), Path.Combine(mpDir, missionName + ".Mission"))
-        File.Copy(Path.Combine(config.OutputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + ".eng"))
+        for lang in langs do
+            // Mission.eng -> Mission.lang: we use the english text for all languagues. Better than not having any text at all.
+            File.Copy(Path.Combine(config.OutputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + "." + lang))
         let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d %s -f %s" config.ServerDataDir (Path.Combine(mpDir, missionName + ".Mission")))
         p.WorkingDirectory <- Path.Combine(config.ServerBinDir, "resaver")
         p.UseShellExecute <- true
         let proc = Process.Start(p)
         proc.WaitForExit()
+        // Remove text Mission file, it slows down mission loading.
         swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".Mission")))
         printfn "Resaver exited with code %d" proc.ExitCode
         proc.ExitCode
