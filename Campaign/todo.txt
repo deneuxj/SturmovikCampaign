@@ -72,5 +72,6 @@ X Trucks should only be lost when registered as destroyed. When departed but not
 X Check if interception of tanks really works. (logs evening may 8 around 20.00, heavy cloud cover)
 X Increase maximal distance between vehicles, they are too vulnerable at the moment.
 X Battles at regions with airfields must damage planes too.
-Some tank/truck kills are missed. For trucks, can block later convoys/trains.
+X Some tank/truck kills are missed. For trucks, can block later convoys/trains.
+X Check and fix spawn of fighter patrols.
 Notify players when their units are under attack (with a delay).
