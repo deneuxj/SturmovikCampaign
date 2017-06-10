@@ -364,7 +364,7 @@ let splitCompositions random vehicles =
     |> List.ofArray
 
 /// Large columns are split to fit in the maximum size of columns, and each group starts separated by a given interval.
-let createColumns random store lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval maxColumnSplit (orders : ColumnMovement list) =
+let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore) lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval maxColumnSplit (missionLength : int) (orders : ColumnMovement list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     [
@@ -399,7 +399,32 @@ let createColumns random store lcStore (world : World) (state : WorldState) (mis
                     let invasion =
                         invasion
                         |> List.map (fun x -> { toVertex(x) with Priority = 0 })
-                    let prevStart = ref missionBegin
+                    let expectedTravelTime =
+                        let speed =
+                            20000.0f / 3600.0f
+                        path
+                        |> Seq.pairwise
+                        |> Seq.sumBy (fun ((v1, _), (v2, _)) -> (v1 - v2).Length() / speed)
+                        |> (*) 1.5f
+                        |> (*) (ceil (float32 order.Composition.Length / float32 ColumnMovement.MaxColumnSize) |> min (float32 maxColumnSplit))
+                    let initialDelay =
+                        let x = newTimer 1
+                        let subst = Mcu.substId <| store.GetIdMapper()
+                        subst x
+                        Mcu.addTargetLink missionBegin x.Index
+                        let delayValue =
+                            random.NextDouble()
+                            |> float32
+                            |> (*) ((float32 missionLength) * 60.0f - expectedTravelTime)
+                            |> max 0.0f
+                        x.Time <- float delayValue
+                        x.Name <- "Initial delay"
+                        match path with
+                        | (pos, _) :: _ -> (pos + Vector2(-100.0f, 0.0f)).AssignTo x.Pos
+                        | [] -> ()
+                        x
+                    yield initialDelay :> Mcu.McuBase
+                    let prevStart = ref initialDelay
                     let rankOffset = ref 0
                     for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
                         let columnContent =
@@ -411,14 +436,17 @@ let createColumns random store lcStore (world : World) (state : WorldState) (mis
                         let links = column.CreateLinks()
                         links.Apply(McuUtil.deepContentOf column)
                         Mcu.addTargetLink prevStart.Value column.Api.Start.Index
-                        let beforeNext = newTimer 1
-                        let subst = Mcu.substId <| store.GetIdMapper()
-                        subst beforeNext
+                        let beforeNext =
+                            let x = newTimer 1
+                            let subst = Mcu.substId <| store.GetIdMapper()
+                            subst x
+                            x
                         beforeNext.Time <- interval
                         Mcu.addTargetLink column.Api.Start beforeNext.Index
-                        prevStart := upcast beforeNext
+                        prevStart := beforeNext
                         rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
-                        yield column, beforeNext :> Mcu.McuBase
+                        yield! McuUtil.deepContentOf column
+                        yield beforeNext :> Mcu.McuBase
                 | None -> ()
             | None ->
                 ()
@@ -755,12 +783,9 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         convoyPrioNodes.All, convoys
     let mkColumns orders =
         let maxColumnSplit = max 1 (missionParams.MissionLength / missionParams.ConvoySpacing - 1)
-        let columns =
-            orders
-            |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ConvoySpacing) maxColumnSplit
-            |> List.map (fun (x, t) -> x :> McuUtil.IMcuGroup, t)
-        List.map fst columns, List.map snd columns
-    let columns, columnTimers = mkColumns (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
+        orders
+        |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ConvoySpacing) maxColumnSplit missionParams.MissionLength
+    let columns = mkColumns (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
     let arrows =
         [Axis; Allies]
         |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
@@ -837,12 +862,12 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList (spawns |> List.collect snd)
-          McuUtil.groupFromList columnTimers
+          McuUtil.groupFromList columns
           McuUtil.groupFromList flags
           McuUtil.groupFromList ndbs
           McuUtil.groupFromList landlights
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ columns @ spotting @ landFires @ arrows @ allPatrols @ allAttacks
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks
     writeMissionFiles "eng" filename options allGroups
