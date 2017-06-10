@@ -97,7 +97,7 @@ with
         // VLuki planeset
         | Bf109f4 -> Vehicles.vehicles.GermanStaBf109
         | Bf109g2 -> Vehicles.vehicles.GermanStaBf109Net
-        | Fw190a3 -> Vehicles.vehicles.GermanStaBf109e7
+        | Fw190a3 -> Vehicles.vehicles.GermanStaBf109e7Open
         | Bf110g -> Vehicles.vehicles.GermanStaAttacker
         | He111h16 -> Vehicles.vehicles.GermanStaHe111h6
         | Yak1s69 -> Vehicles.vehicles.RussianStaYak1
@@ -278,7 +278,8 @@ with
               P40
               Pe2s35 ]
         | VelikieLuki ->
-            [ Bf109f4
+            [ Bf109e7
+              Bf109f4
               Bf109g2
               Fw190a3
               Bf110g
