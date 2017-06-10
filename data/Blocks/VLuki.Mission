@@ -167,6 +167,8 @@ Group
     Boundary
     {
       46452.8, 32252.3;
+      52739.9, 8073.53;
+      66335.6, 9352.56;
       65952.1, 34581.8;
       65383.6, 48888;
       59158.8, 50685;
@@ -224,31 +226,6 @@ Group
       24467, 43173.9;
       10897.7, 34201.5;
       5734.22, 10373.6;
-    }
-  }
-  
-
-  MCU_TR_InfluenceArea
-  {
-    Index = 10;
-    Name = "Zebelye";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 56484.940;
-    YPos = 140.376;
-    ZPos = 10612.764;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    Country = 201;
-    Boundary
-    {
-      45672, 6475.78;
-      67027.7, 9457.19;
-      65916.9, 34251.1;
-      46484.2, 31935;
     }
   }
   
@@ -1682,101 +1659,6 @@ Group
     ZPos = 42276.667;
     XOri = 0.00;
     YOri = 355.72;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 135;
-    Name = "Start";
-    Desc = "";
-    Targets = [136];
-    Objects = [];
-    XPos = 54564.242;
-    YPos = 149.972;
-    ZPos = 42229.720;
-    XOri = 0.00;
-    YOri = 347.98;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 136;
-    Name = "BeforeBridge";
-    Desc = "";
-    Targets = [138];
-    Objects = [];
-    XPos = 55692.545;
-    YPos = 149.972;
-    ZPos = 40146.043;
-    XOri = 0.00;
-    YOri = 285.14;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 138;
-    Name = "AfterBridge";
-    Desc = "";
-    Targets = [140];
-    Objects = [];
-    XPos = 55788.908;
-    YPos = 149.972;
-    ZPos = 39728.794;
-    XOri = 0.00;
-    YOri = 268.78;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 140;
-    Name = "Trigger Waypoint";
-    Desc = "";
-    Targets = [142];
-    Objects = [];
-    XPos = 56254.416;
-    YPos = 149.972;
-    ZPos = 32107.106;
-    XOri = 0.00;
-    YOri = 273.70;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 142;
-    Name = "End";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 56735.203;
-    YPos = 149.972;
-    ZPos = 23633.439;
-    XOri = 0.00;
-    YOri = 271.84;
     ZOri = 0.00;
     Area = 20;
     Speed = 100;
@@ -3268,120 +3150,6 @@ Group
     ZPos = 43852.853;
     XOri = 0.00;
     YOri = 284.93;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 287;
-    Name = "Start";
-    Desc = "";
-    Targets = [288];
-    Objects = [];
-    XPos = 54867.289;
-    YPos = 149.416;
-    ZPos = 41280.153;
-    XOri = 0.00;
-    YOri = 246.41;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 288;
-    Name = "BeforeBridge";
-    Desc = "";
-    Targets = [290];
-    Objects = [];
-    XPos = 54985.770;
-    YPos = 149.416;
-    ZPos = 39114.863;
-    XOri = 0.00;
-    YOri = 285.53;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 290;
-    Name = "AfterBridge";
-    Desc = "";
-    Targets = [292];
-    Objects = [];
-    XPos = 55340.485;
-    YPos = 149.416;
-    ZPos = 38394.593;
-    XOri = 0.00;
-    YOri = 291.80;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 292;
-    Name = "BeforeBridge";
-    Desc = "";
-    Targets = [294];
-    Objects = [];
-    XPos = 55040.554;
-    YPos = 149.416;
-    ZPos = 34250.779;
-    XOri = 0.00;
-    YOri = 249.20;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 294;
-    Name = "AfterBridge";
-    Desc = "";
-    Targets = [296];
-    Objects = [];
-    XPos = 54628.945;
-    YPos = 149.416;
-    ZPos = 31727.022;
-    XOri = 0.00;
-    YOri = 264.28;
-    ZOri = 0.00;
-    Area = 20;
-    Speed = 100;
-    Priority = 1;
-  }
-  
-
-  MCU_Waypoint
-  {
-    Index = 296;
-    Name = "End";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 56002.872;
-    YPos = 149.416;
-    ZPos = 24356.916;
-    XOri = 0.00;
-    YOri = 267.31;
     ZOri = 0.00;
     Area = 20;
     Speed = 100;
@@ -25631,486 +25399,6 @@ Group
     ZOri = 0.00;
     Enabled = 1;
     MisObjID = 2013;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2016;
-    LinkTrId = 2017;
-    XPos = 61328.443;
-    YPos = 187.434;
-    ZPos = 17731.217;
-    XOri = 0.00;
-    YOri = 31.40;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_barak.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2017;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61328.443;
-    YPos = 187.634;
-    ZPos = 17731.217;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2016;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2019;
-    LinkTrId = 2020;
-    XPos = 61312.810;
-    YPos = 185.999;
-    ZPos = 17761.666;
-    XOri = 0.00;
-    YOri = 31.40;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_barak.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2020;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61312.810;
-    YPos = 186.199;
-    ZPos = 17761.666;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2019;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2022;
-    LinkTrId = 2023;
-    XPos = 61294.512;
-    YPos = 183.937;
-    ZPos = 17792.543;
-    XOri = 0.00;
-    YOri = 31.40;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_barak.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2023;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61294.512;
-    YPos = 184.137;
-    ZPos = 17792.543;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2022;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2025;
-    LinkTrId = 2026;
-    XPos = 61262.999;
-    YPos = 184.477;
-    ZPos = 17772.561;
-    XOri = 0.00;
-    YOri = 212.01;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_barak.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2026;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61262.999;
-    YPos = 184.677;
-    ZPos = 17772.561;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2025;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2028;
-    LinkTrId = 2029;
-    XPos = 61278.946;
-    YPos = 185.241;
-    ZPos = 17742.276;
-    XOri = 0.00;
-    YOri = 212.01;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_barak.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2029;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61278.946;
-    YPos = 185.441;
-    ZPos = 17742.276;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2028;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2031;
-    LinkTrId = 2032;
-    XPos = 61297.563;
-    YPos = 186.729;
-    ZPos = 17711.591;
-    XOri = 0.00;
-    YOri = 212.01;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_barak.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_barak.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2032;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61297.563;
-    YPos = 186.929;
-    ZPos = 17711.591;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2031;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2034;
-    LinkTrId = 2035;
-    XPos = 60804.863;
-    YPos = 182.656;
-    ZPos = 17755.430;
-    XOri = 0.00;
-    YOri = 303.85;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_dugouts_2.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_2.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2035;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 60804.863;
-    YPos = 182.856;
-    ZPos = 17755.430;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2034;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2037;
-    LinkTrId = 2038;
-    XPos = 60785.885;
-    YPos = 184.744;
-    ZPos = 17477.653;
-    XOri = 0.00;
-    YOri = 298.45;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_dugouts_2.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_2.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2038;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 60785.885;
-    YPos = 184.944;
-    ZPos = 17477.653;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2037;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2040;
-    LinkTrId = 2041;
-    XPos = 60839.346;
-    YPos = 193.887;
-    ZPos = 17237.275;
-    XOri = 0.00;
-    YOri = 116.30;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_dugouts_2.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_2.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2041;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 60839.346;
-    YPos = 194.087;
-    ZPos = 17237.275;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2040;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2043;
-    LinkTrId = 2044;
-    XPos = 61115.411;
-    YPos = 188.246;
-    ZPos = 17636.748;
-    XOri = 0.00;
-    YOri = 307.27;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_dugouts_2.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_2.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2044;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61115.411;
-    YPos = 188.446;
-    ZPos = 17636.748;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2043;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2046;
-    LinkTrId = 2047;
-    XPos = 61196.061;
-    YPos = 194.939;
-    ZPos = 17489.131;
-    XOri = 0.00;
-    YOri = 122.10;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_dugouts_2.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_2.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2047;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61196.061;
-    YPos = 195.139;
-    ZPos = 17489.131;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2046;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 2049;
-    LinkTrId = 2050;
-    XPos = 61049.442;
-    YPos = 184.344;
-    ZPos = 17718.131;
-    XOri = 0.00;
-    YOri = 121.27;
-    ZOri = 0.00;
-    Model = "graphics\blocks\arf_dugouts_3.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_3.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 2050;
-    Name = "Block entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 61049.442;
-    YPos = 184.544;
-    ZPos = 17718.131;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 2049;
   }
   
 
@@ -127575,58 +126863,6 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 6825;
-    Name = "AAA-2";
-    Desc = "2 guns";
-    Targets = [];
-    Objects = [];
-    XPos = 60578.781;
-    YPos = 157.865;
-    ZPos = 17243.942;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    Country = 0;
-    Boundary
-    {
-      60746.9, 17184.8;
-      60681.6, 17433.5;
-      60430.1, 17292.5;
-      60558.4, 17092;
-    }
-  }
-  
-
-  MCU_TR_InfluenceArea
-  {
-    Index = 6826;
-    Name = "AAA-2";
-    Desc = "2 guns";
-    Targets = [];
-    Objects = [];
-    XPos = 61538.849;
-    YPos = 157.865;
-    ZPos = 17956.533;
-    XOri = 0.00;
-    YOri = 23.89;
-    ZOri = 0.00;
-    Enabled = 1;
-    Country = 0;
-    Boundary
-    {
-      61785.6, 17927.7;
-      61813.9, 18073.5;
-      61650.1, 18159.3;
-      61462.5, 18073.1;
-      61282.4, 17894.9;
-      61409.3, 17625.9;
-    }
-  }
-  
-
-  MCU_TR_InfluenceArea
-  {
     Index = 6827;
     Name = "AAA-2";
     Desc = "2 guns";
@@ -129570,81 +128806,6 @@ Group
   Name = "Defenses";
   Index = 6901;
   Desc = "";
-  MCU_TR_InfluenceArea
-  {
-    Index = 6902;
-    Name = "AT";
-    Desc = "4 guns";
-    Targets = [];
-    Objects = [];
-    XPos = 55657.808;
-    YPos = 173.025;
-    ZPos = 29222.455;
-    XOri = 0.00;
-    YOri = 143.17;
-    ZOri = 0.00;
-    Enabled = 1;
-    Country = 0;
-    Boundary
-    {
-      55734.8, 29235.2;
-      55637.8, 29312.2;
-      55313.8, 28921.2;
-      55354.8, 28858.2;
-    }
-  }
-  
-
-  MCU_TR_InfluenceArea
-  {
-    Index = 6903;
-    Name = "AT";
-    Desc = "4 guns";
-    Targets = [];
-    Objects = [];
-    XPos = 55239.873;
-    YPos = 173.025;
-    ZPos = 28210.590;
-    XOri = 0.00;
-    YOri = 87.40;
-    ZOri = 0.00;
-    Enabled = 1;
-    Country = 0;
-    Boundary
-    {
-      55292.8, 28153.2;
-      55302.8, 28277.2;
-      54956.8, 28332.2;
-      54901.8, 28221.2;
-    }
-  }
-  
-
-  MCU_TR_InfluenceArea
-  {
-    Index = 6904;
-    Name = "AT";
-    Desc = "4 guns";
-    Targets = [];
-    Objects = [];
-    XPos = 55902.140;
-    YPos = 173.025;
-    ZPos = 26836.724;
-    XOri = 0.00;
-    YOri = 123.93;
-    ZOri = 0.00;
-    Enabled = 1;
-    Country = 0;
-    Boundary
-    {
-      55978.8, 26821.2;
-      55912.8, 26927.2;
-      55601.8, 26765.2;
-      55623.8, 26643.2;
-    }
-  }
-  
-
   MCU_TR_InfluenceArea
   {
     Index = 6905;
@@ -135693,8 +134854,8 @@ Group
   Effect
   {
     Name = "LandFire";
-    Index = 7329;
-    LinkTrId = 7330;
+    Index = 7269;
+    LinkTrId = 7270;
     XPos = 84178.420;
     YPos = 197.225;
     ZPos = 142297.209;
@@ -135709,7 +134870,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7330;
+    Index = 7270;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -135721,15 +134882,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7329;
+    MisObjID = 7269;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7332;
-    LinkTrId = 7333;
+    Index = 7272;
+    LinkTrId = 7273;
     XPos = 84095.874;
     YPos = 197.225;
     ZPos = 142213.420;
@@ -135744,7 +134905,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7333;
+    Index = 7273;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -135756,15 +134917,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7332;
+    MisObjID = 7272;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7335;
-    LinkTrId = 7336;
+    Index = 7275;
+    LinkTrId = 7276;
     XPos = 85143.067;
     YPos = 197.225;
     ZPos = 141283.234;
@@ -135779,7 +134940,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7336;
+    Index = 7276;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -135791,15 +134952,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7335;
+    MisObjID = 7275;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7338;
-    LinkTrId = 7339;
+    Index = 7278;
+    LinkTrId = 7279;
     XPos = 85060.521;
     YPos = 197.225;
     ZPos = 141199.445;
@@ -135814,7 +134975,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7339;
+    Index = 7279;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -135826,15 +134987,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7338;
+    MisObjID = 7278;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7341;
-    LinkTrId = 7342;
+    Index = 7281;
+    LinkTrId = 7282;
     XPos = 84782.318;
     YPos = 197.225;
     ZPos = 141656.607;
@@ -135849,7 +135010,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7342;
+    Index = 7282;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -135861,15 +135022,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7341;
+    MisObjID = 7281;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7344;
-    LinkTrId = 7345;
+    Index = 7284;
+    LinkTrId = 7285;
     XPos = 84699.772;
     YPos = 197.225;
     ZPos = 141572.818;
@@ -135884,7 +135045,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7345;
+    Index = 7285;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -135896,15 +135057,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7344;
+    MisObjID = 7284;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7347;
-    LinkTrId = 7348;
+    Index = 7287;
+    LinkTrId = 7288;
     XPos = 84503.467;
     YPos = 197.225;
     ZPos = 141967.681;
@@ -135919,7 +135080,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7348;
+    Index = 7288;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -135931,15 +135092,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7347;
+    MisObjID = 7287;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7350;
-    LinkTrId = 7351;
+    Index = 7290;
+    LinkTrId = 7291;
     XPos = 84420.921;
     YPos = 197.225;
     ZPos = 141883.892;
@@ -135954,7 +135115,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7351;
+    Index = 7291;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -135966,15 +135127,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7350;
+    MisObjID = 7290;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7353;
-    LinkTrId = 7354;
+    Index = 7293;
+    LinkTrId = 7294;
     XPos = 84299.136;
     YPos = 197.225;
     ZPos = 141102.213;
@@ -135989,7 +135150,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7354;
+    Index = 7294;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -136001,15 +135162,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7353;
+    MisObjID = 7293;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7356;
-    LinkTrId = 7357;
+    Index = 7296;
+    LinkTrId = 7297;
     XPos = 84330.887;
     YPos = 197.225;
     ZPos = 141014.603;
@@ -136024,7 +135185,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7357;
+    Index = 7297;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -136036,15 +135197,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7356;
+    MisObjID = 7296;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7359;
-    LinkTrId = 7360;
+    Index = 7299;
+    LinkTrId = 7300;
     XPos = 85125.360;
     YPos = 197.225;
     ZPos = 141401.876;
@@ -136059,7 +135220,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7360;
+    Index = 7300;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -136071,15 +135232,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7359;
+    MisObjID = 7299;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7362;
-    LinkTrId = 7363;
+    Index = 7302;
+    LinkTrId = 7303;
     XPos = 85164.994;
     YPos = 197.225;
     ZPos = 141326.653;
@@ -136094,7 +135255,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7363;
+    Index = 7303;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -136106,15 +135267,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7362;
+    MisObjID = 7302;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7365;
-    LinkTrId = 7366;
+    Index = 7305;
+    LinkTrId = 7306;
     XPos = 84693.670;
     YPos = 197.225;
     ZPos = 141244.392;
@@ -136129,7 +135290,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7366;
+    Index = 7306;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -136141,15 +135302,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7365;
+    MisObjID = 7305;
   }
   
 
   Effect
   {
     Name = "LandFire";
-    Index = 7368;
-    LinkTrId = 7369;
+    Index = 7308;
+    LinkTrId = 7309;
     XPos = 84725.421;
     YPos = 197.225;
     ZPos = 141156.782;
@@ -136164,7 +135325,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7369;
+    Index = 7309;
     Name = "LandFire entity";
     Desc = "";
     Targets = [];
@@ -136176,7 +135337,7 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7368;
+    MisObjID = 7308;
   }
   
 
@@ -136187,13 +135348,13 @@ Group
 Group
 {
   Name = "Land lights";
-  Index = 7491;
+  Index = 7311;
   Desc = "";
   Vehicle
   {
     Name = "LandLight";
-    Index = 7479;
-    LinkTrId = 7480;
+    Index = 7312;
+    LinkTrId = 7313;
     XPos = 84135.091;
     YPos = 66.391;
     ZPos = 142358.819;
@@ -136221,7 +135382,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7480;
+    Index = 7313;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136233,15 +135394,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7479;
+    MisObjID = 7312;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7482;
-    LinkTrId = 7483;
+    Index = 7315;
+    LinkTrId = 7316;
     XPos = 84043.848;
     YPos = 66.391;
     ZPos = 142269.917;
@@ -136269,7 +135430,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7483;
+    Index = 7316;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136281,15 +135442,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7482;
+    MisObjID = 7315;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7485;
-    LinkTrId = 7486;
+    Index = 7318;
+    LinkTrId = 7319;
     XPos = 84245.148;
     YPos = 66.391;
     ZPos = 141089.084;
@@ -136317,7 +135478,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7486;
+    Index = 7319;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136329,15 +135490,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7485;
+    MisObjID = 7318;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7488;
-    LinkTrId = 7489;
+    Index = 7321;
+    LinkTrId = 7322;
     XPos = 84284.608;
     YPos = 66.391;
     ZPos = 140993.224;
@@ -136365,7 +135526,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7489;
+    Index = 7322;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136377,15 +135538,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7488;
+    MisObjID = 7321;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7461;
-    LinkTrId = 7462;
+    Index = 7324;
+    LinkTrId = 7325;
     XPos = 21248.619;
     YPos = 66.391;
     ZPos = 153206.375;
@@ -136413,7 +135574,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7462;
+    Index = 7325;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136425,15 +135586,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7461;
+    MisObjID = 7324;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7464;
-    LinkTrId = 7465;
+    Index = 7327;
+    LinkTrId = 7328;
     XPos = 21222.215;
     YPos = 66.391;
     ZPos = 153109.934;
@@ -136461,7 +135622,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7465;
+    Index = 7328;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136473,15 +135634,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7464;
+    MisObjID = 7327;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7467;
-    LinkTrId = 7468;
+    Index = 7330;
+    LinkTrId = 7331;
     XPos = 21494.880;
     YPos = 66.391;
     ZPos = 151992.885;
@@ -136509,7 +135670,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7468;
+    Index = 7331;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136521,15 +135682,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7467;
+    MisObjID = 7330;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7470;
-    LinkTrId = 7471;
+    Index = 7333;
+    LinkTrId = 7334;
     XPos = 21556.241;
     YPos = 66.391;
     ZPos = 151896.378;
@@ -136557,7 +135718,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7471;
+    Index = 7334;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136569,15 +135730,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7470;
+    MisObjID = 7333;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7476;
-    LinkTrId = 7477;
+    Index = 7336;
+    LinkTrId = 7337;
     XPos = 22691.596;
     YPos = 66.391;
     ZPos = 152583.514;
@@ -136605,7 +135766,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7477;
+    Index = 7337;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136617,15 +135778,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7476;
+    MisObjID = 7336;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7473;
-    LinkTrId = 7474;
+    Index = 7339;
+    LinkTrId = 7340;
     XPos = 22726.310;
     YPos = 66.391;
     ZPos = 152698.804;
@@ -136653,7 +135814,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7474;
+    Index = 7340;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136665,15 +135826,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7473;
+    MisObjID = 7339;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7449;
-    LinkTrId = 7450;
+    Index = 7342;
+    LinkTrId = 7343;
     XPos = 32206.946;
     YPos = 66.391;
     ZPos = 105495.939;
@@ -136701,7 +135862,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7450;
+    Index = 7343;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136713,15 +135874,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7449;
+    MisObjID = 7342;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7452;
-    LinkTrId = 7453;
+    Index = 7345;
+    LinkTrId = 7346;
     XPos = 32147.280;
     YPos = 66.391;
     ZPos = 105405.270;
@@ -136749,7 +135910,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7453;
+    Index = 7346;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136761,15 +135922,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7452;
+    MisObjID = 7345;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7455;
-    LinkTrId = 7456;
+    Index = 7348;
+    LinkTrId = 7349;
     XPos = 33294.618;
     YPos = 66.391;
     ZPos = 104717.763;
@@ -136797,7 +135958,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7456;
+    Index = 7349;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136809,15 +135970,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7455;
+    MisObjID = 7348;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7458;
-    LinkTrId = 7459;
+    Index = 7351;
+    LinkTrId = 7352;
     XPos = 33235.961;
     YPos = 66.391;
     ZPos = 104627.578;
@@ -136845,7 +136006,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7459;
+    Index = 7352;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136857,15 +136018,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7458;
+    MisObjID = 7351;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7437;
-    LinkTrId = 7438;
+    Index = 7354;
+    LinkTrId = 7355;
     XPos = 55951.944;
     YPos = 66.391;
     ZPos = 71954.237;
@@ -136893,7 +136054,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7438;
+    Index = 7355;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136905,15 +136066,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7437;
+    MisObjID = 7354;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7440;
-    LinkTrId = 7441;
+    Index = 7357;
+    LinkTrId = 7358;
     XPos = 55911.282;
     YPos = 66.391;
     ZPos = 71868.030;
@@ -136941,7 +136102,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7441;
+    Index = 7358;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -136953,15 +136114,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7440;
+    MisObjID = 7357;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7443;
-    LinkTrId = 7444;
+    Index = 7360;
+    LinkTrId = 7361;
     XPos = 57080.263;
     YPos = 66.391;
     ZPos = 71344.550;
@@ -136989,7 +136150,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7444;
+    Index = 7361;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137001,15 +136162,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7443;
+    MisObjID = 7360;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7446;
-    LinkTrId = 7447;
+    Index = 7363;
+    LinkTrId = 7364;
     XPos = 57034.924;
     YPos = 66.391;
     ZPos = 71260.450;
@@ -137037,7 +136198,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7447;
+    Index = 7364;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137049,15 +136210,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7446;
+    MisObjID = 7363;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7413;
-    LinkTrId = 7414;
+    Index = 7366;
+    LinkTrId = 7367;
     XPos = 41818.460;
     YPos = 66.391;
     ZPos = 53961.546;
@@ -137085,7 +136246,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7414;
+    Index = 7367;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137097,15 +136258,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7413;
+    MisObjID = 7366;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7416;
-    LinkTrId = 7417;
+    Index = 7369;
+    LinkTrId = 7370;
     XPos = 41759.166;
     YPos = 66.391;
     ZPos = 53890.178;
@@ -137133,7 +136294,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7417;
+    Index = 7370;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137145,15 +136306,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7416;
+    MisObjID = 7369;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7419;
-    LinkTrId = 7420;
+    Index = 7372;
+    LinkTrId = 7373;
     XPos = 42748.143;
     YPos = 66.391;
     ZPos = 53084.655;
@@ -137181,7 +136342,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7420;
+    Index = 7373;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137193,15 +136354,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7419;
+    MisObjID = 7372;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7422;
-    LinkTrId = 7423;
+    Index = 7375;
+    LinkTrId = 7376;
     XPos = 42693.710;
     YPos = 66.391;
     ZPos = 53021.905;
@@ -137229,7 +136390,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7423;
+    Index = 7376;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137241,15 +136402,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7422;
+    MisObjID = 7375;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7401;
-    LinkTrId = 7402;
+    Index = 7378;
+    LinkTrId = 7379;
     XPos = 12409.466;
     YPos = 66.391;
     ZPos = 11943.952;
@@ -137277,7 +136438,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7402;
+    Index = 7379;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137289,15 +136450,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7401;
+    MisObjID = 7378;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7404;
-    LinkTrId = 7405;
+    Index = 7381;
+    LinkTrId = 7382;
     XPos = 12503.123;
     YPos = 66.391;
     ZPos = 12082.268;
@@ -137325,7 +136486,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7405;
+    Index = 7382;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137337,15 +136498,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7404;
+    MisObjID = 7381;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7410;
-    LinkTrId = 7411;
+    Index = 7384;
+    LinkTrId = 7385;
     XPos = 13597.035;
     YPos = 66.391;
     ZPos = 11317.318;
@@ -137373,7 +136534,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7411;
+    Index = 7385;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137385,15 +136546,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7410;
+    MisObjID = 7384;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7407;
-    LinkTrId = 7408;
+    Index = 7387;
+    LinkTrId = 7388;
     XPos = 13503.673;
     YPos = 66.391;
     ZPos = 11186.207;
@@ -137421,7 +136582,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7408;
+    Index = 7388;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137433,15 +136594,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7407;
+    MisObjID = 7387;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7425;
-    LinkTrId = 7426;
+    Index = 7390;
+    LinkTrId = 7391;
     XPos = 63339.020;
     YPos = 66.391;
     ZPos = 11468.788;
@@ -137469,7 +136630,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7426;
+    Index = 7391;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137481,15 +136642,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7425;
+    MisObjID = 7390;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7428;
-    LinkTrId = 7429;
+    Index = 7393;
+    LinkTrId = 7394;
     XPos = 63342.068;
     YPos = 66.391;
     ZPos = 11362.354;
@@ -137517,7 +136678,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7429;
+    Index = 7394;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137529,15 +136690,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7428;
+    MisObjID = 7393;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7431;
-    LinkTrId = 7432;
+    Index = 7396;
+    LinkTrId = 7397;
     XPos = 64694.371;
     YPos = 66.391;
     ZPos = 11430.681;
@@ -137565,7 +136726,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7432;
+    Index = 7397;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137577,15 +136738,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7431;
+    MisObjID = 7396;
   }
   
 
   Vehicle
   {
     Name = "LandLight";
-    Index = 7434;
-    LinkTrId = 7435;
+    Index = 7399;
+    LinkTrId = 7400;
     XPos = 64687.950;
     YPos = 66.391;
     ZPos = 11323.234;
@@ -137613,7 +136774,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7435;
+    Index = 7400;
     Name = "LandLight entity";
     Desc = "";
     Targets = [];
@@ -137625,7 +136786,7 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7434;
+    MisObjID = 7399;
   }
   
 
