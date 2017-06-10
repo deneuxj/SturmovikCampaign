@@ -49,7 +49,7 @@ with
                 yield
                     this.PlanesLost
                     |> mkPlaneReport
-                    |> sprintf "Planes that sustained damage:<br>%s<br>"
+                    |> sprintf "Planes damaged:<br>%s<br>"
             if not(this.PlanesCaptured.IsEmpty) then
                 yield
                     this.PlanesCaptured

@@ -80,6 +80,7 @@ let addList (m : Map<'T, int>) (items : ('T * int) seq) =
         m.Add(x, n2)
     items
     |> Seq.fold addOne m
+    |> Map.filter (fun _ v -> v > 0)
 
 /// Subtract m2 from m1 where both are maps which target integers
 let subMaps (m1 : Map<_, int>) (m2 : Map<_, int>) =
