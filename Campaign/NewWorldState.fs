@@ -179,7 +179,7 @@ type Resupplied = {
     Energy : float32<E>
 }
 
-/// Statistics about vehicles produced in around.
+/// Statistics about vehicles produced in a round.
 type NewVehiclesSummary = {
     Planes : Map<PlaneModel, int>
     Tanks : Map<GroundAttackVehicle, int>
