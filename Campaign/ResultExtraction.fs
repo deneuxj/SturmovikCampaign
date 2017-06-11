@@ -13,6 +13,7 @@ open Campaign.WorldState
 open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open Campaign.Util
 
 /// Match the object type strings in log events with plane models.
 let (|PlaneObjectType|_|) (s : string) =
@@ -120,6 +121,7 @@ type TookOff = {
     PlaneId : int
     Airfield : AirfieldId
     Plane : PlaneModel
+    Cargo : float32<E>
 }
 
 type Landed = {
@@ -127,16 +129,25 @@ type Landed = {
     Airfield : AirfieldId
     Plane : PlaneModel
     Health : float32
+    Cargo : float32<E>
 }
 with
     static member MaxDistanceFromAirfield = 5000.0f
 
+let (|TookOff|Landed|) =
+    function
+    | Choice1Of2 x -> TookOff x
+    | Choice2Of2 x -> Landed x
+
 let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : LogEntry seq) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
+    let tookOff (x : TookOff) = Choice1Of2 x
+    let landed (x : Landed) = Choice2Of2 x
     [
         let planeIds = ref Map.empty
         let damages = ref Map.empty
+        let cargo = ref Map.empty
         for entry in entries do
             match entry with
             | :? ObjectSpawnedEntry as spawned ->
@@ -152,12 +163,24 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : L
                     | None -> 0.0f
                 let newDamage = oldDamage + damage.Damage
                 damages := Map.add damage.TargetId newDamage !damages
+            | :? PlayerPlaneEntry as playerPlane ->
+                match playerPlane.VehicleType with
+                | PlaneObjectType PlaneModel.Ju52 ->
+                    if playerPlane.Payload = 0 then
+                        cargo := Map.add playerPlane.VehicleId (2300.0f<K> * bombCost) cargo.Value
+                | _ ->
+                    ()
             | :? TakeOffEntry as takeOff ->
                 let pos = Vector2(takeOff.Position.X, takeOff.Position.Z)
                 let af = world.GetClosestAirfield(pos)
                 match Map.tryFind takeOff.VehicleId !planeIds with
-                | Some plane -> yield Choice1Of2({ PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane } : TookOff)
-                | None -> ()
+                | Some plane ->
+                    let cargo =
+                        cargo.Value.TryFind takeOff.VehicleId
+                        |> Option.defaultVal 0.0f<E>
+                    yield tookOff { PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane; Cargo = cargo }
+                | None ->
+                    ()
             | :? LandingEntry as landing ->
                 let pos = Vector2(landing.Position.X, landing.Position.Z)
                 let af = world.GetClosestAirfield(pos)
@@ -181,7 +204,10 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : L
                                 1.0f
                             else
                                 health
-                        yield Choice2Of2({ PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health })
+                        let cargo =
+                            cargo.Value.TryFind landing.VehicleId
+                            |> Option.defaultVal 0.0f<E>
+                        yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health; Cargo = cargo }
                     | None -> ()
             | _ -> ()
     ]
