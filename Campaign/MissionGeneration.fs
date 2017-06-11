@@ -268,6 +268,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                             .SetScript(T.String model.Script)
                             .SetModel(T.String model.Model)
                             .SetStartInAir(T.Integer 2)
+                            .SetAvPayloads(T.String(plane.LoadOuts(state.Supplies / bombCost)))
                     )
                     |> Map.toSeq
                     |> Seq.map snd

@@ -404,7 +404,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         0.0f
                     else
                         capacityAfterDamages / capacityBeforeDamages
-                let afState = { afState with Supplies = factor * afState.Supplies }
+                let afState = { afState with Supplies = if afState.Supplies > 0.0f<E> then factor * afState.Supplies else afState.Supplies }
                 yield afState
         ]
     let regionsAfterDamages =
