@@ -545,6 +545,7 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
         ) airfields
     let airfieldsAfterLandings =
         landings
+        |> filterNoTakeOff takeOffs
         |> List.fold (fun airfields landing ->
             let af = Map.find landing.Airfield airfields
             let oldPlaneValue =

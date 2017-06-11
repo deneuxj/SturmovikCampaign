@@ -578,7 +578,6 @@ module MissionLogParsing =
         let takeOffs, landings =
             let both =
                 extractTakeOffsAndLandings world state entries
-                |> List.ofSeq
             both |> List.choose (function Choice1Of2 x -> Some x | _ -> None),
             both |> List.choose (function Choice2Of2 x -> Some x | _ -> None)
         let movements = axisOrders.Columns @ alliesOrders.Columns

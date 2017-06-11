@@ -117,11 +117,13 @@ let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry s
 
 /// A plane took off, possibly took some damage and then landed/crashed near or at an airfield
 type TookOff = {
+    PlaneId : int
     Airfield : AirfieldId
     Plane : PlaneModel
 }
 
 type Landed = {
+    PlaneId : int
     Airfield : AirfieldId
     Plane : PlaneModel
     Health : float32
@@ -132,7 +134,7 @@ with
 let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : LogEntry seq) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
-    seq {
+    [
         let planeIds = ref Map.empty
         let damages = ref Map.empty
         for entry in entries do
@@ -154,7 +156,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : L
                 let pos = Vector2(takeOff.Position.X, takeOff.Position.Z)
                 let af = world.GetClosestAirfield(pos)
                 match Map.tryFind takeOff.VehicleId !planeIds with
-                | Some plane -> yield Choice1Of2({ Airfield = af.AirfieldId; Plane = plane } : TookOff)
+                | Some plane -> yield Choice1Of2({ PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane } : TookOff)
                 | None -> ()
             | :? LandingEntry as landing ->
                 let pos = Vector2(landing.Position.X, landing.Position.Z)
@@ -179,10 +181,22 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : L
                                 1.0f
                             else
                                 health
-                        yield Choice2Of2({ Airfield = af.AirfieldId; Plane = plane; Health = health })
+                        yield Choice2Of2({ PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health })
                     | None -> ()
             | _ -> ()
-    }
+    ]
+
+/// <summary>
+/// Remove landings of planes that never took off.
+/// Used to avoid adding planes from AI flights that returned to base.
+/// </summary>
+let filterNoTakeOff (takeOffs : TookOff list) (landings : Landed list) =
+    let tookOff =
+        takeOffs
+        |> Seq.map (fun ev -> ev.PlaneId)
+        |> Set.ofSeq
+    landings
+    |> List.filter (fun ev -> tookOff.Contains ev.PlaneId)
 
 type VehicleInColumn = {
     OrderId : OrderId
