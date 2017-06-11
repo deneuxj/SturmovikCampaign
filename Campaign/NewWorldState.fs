@@ -307,6 +307,7 @@ let computeHealing(healths, buildings, energy) =
 /// Apply damages due to attacks, use supplies to repair damages and replenish storage
 let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) =
     let wg = WorldFastAccess.Create world
+    let regionNeeds = AutoOrder.computeSupplyNeeds world state
     let damages =
         let data =
             damages
@@ -486,10 +487,14 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         energy)
                 // Second prio: fill up region supplies
                 let storeCapacity = regState.StorageCapacity(region)
-                // Consume energy to fill supplies
-                // FIXME: we should only consume what's needed, i.e. no supplies for anti-tank defenses if there are no enemy regions nearby.
+                // Consume energy to fill up supplies up to what's needed
+                let needs =
+                    regionNeeds.TryFind regState.RegionId
+                    |> Option.defaultVal 0.0f<E>
+                    |> max 0.0f<E>
+                let fillTarget = min needs storeCapacity
                 let toSupplies =
-                    storeCapacity - regState.Supplies
+                    fillTarget - regState.Supplies
                     |> min energy
                     |> max 0.0f<E>
                 let supplies = regState.Supplies + toSupplies
@@ -500,31 +505,53 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         regState.StorageHealth,
                         region.Storage,
                         energy)
-                // Part of supplies in storage that exceed the storage capacity is lost
-                let waste = 0.2f * max 0.0f<E> (supplies - regState.StorageCapacity(region))
-                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies - waste }, energy
+                yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies + energy }
         ]
-    let regionEnergies =
-        regionsAfterSupplies
-        |> Seq.map (fun (reg, energy) -> reg.RegionId, energy)
-        |> Map.ofSeq
-    // Use what's left for airfields
-    let airfieldsAfterResupplies =
-        let x, _ =
+    // Distribute supplies between regions and airfields
+    let airfieldsDistribution, regSupplies =
+        let x, regSupplies =
             airfieldsAfterDamages
             |> List.fold (fun (airfields, regionEnergies) afState ->
                 let af = wg.GetAirfield(afState.AirfieldId)
+                // take from region
                 let energy =
                     Map.tryFind af.Region regionEnergies
                     |> fun x -> defaultArg x 0.0f<E>
+                // repair airfield storage
                 let storeHealth, energy =
                     computeHealing(afState.StorageHealth, af.Storage, energy)
-                { afState with StorageHealth = storeHealth } :: airfields, Map.add af.Region energy regionEnergies
-            ) ([], regionEnergies)
-        List.rev x
+                let afState = { afState with StorageHealth = storeHealth }
+                // fill storage
+                let bombNeeds = afState.BombNeeds * bombCost
+                let fillTarget = min bombNeeds (afState.StorageCapacity(af))
+                let toAfSupplies =
+                    fillTarget - afState.Supplies
+                    |> max 0.0f<E>
+                    |> min energy
+                let energy = energy - toAfSupplies
+                // what goes over the bomb needs goes back to the region
+                let backToRegion =
+                    afState.Supplies + toAfSupplies - bombNeeds
+                    |> max 0.0f<E>
+                // result
+                let afState = { afState with Supplies = afState.Supplies + toAfSupplies - backToRegion }
+                let energy = energy + backToRegion
+                afState :: airfields, Map.add af.Region energy regionEnergies
+            ) ([], regionsAfterSupplies |> List.map (fun regState -> regState.RegionId, regState.Supplies) |> Map.ofList)
+        List.rev x, regSupplies
+    let regionsAfterDistribution =
+        [
+            for regState, region in List.zip regionsAfterSupplies world.Regions do
+                // Energy back from airfields; excess over capacity is lost
+                let newEnergy =
+                    regSupplies.TryFind regState.RegionId
+                    |> Option.defaultVal 0.0f<E>
+                    |> min (regState.StorageCapacity(region))
+                yield { regState with Supplies = newEnergy }
+        ]
     { state with
-        Regions = regionsAfterSupplies |> List.map fst
-        Airfields = airfieldsAfterResupplies }
+        Regions = regionsAfterDistribution
+        Airfields = airfieldsDistribution }
 
 /// Update airfield planes according to departures and arrivals
 let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings : Landed list) =

@@ -108,6 +108,12 @@ with
         |> Map.toSeq
         |> Seq.sumBy snd
 
+    /// Get total amount of bombs for all planes at this airfield.
+    member this.BombNeeds =
+        this.NumPlanes
+        |> Map.toSeq
+        |> Seq.sumBy (fun (plane, qty) -> plane.BombCapacity * (ceil qty))
+
     /// Damage supplies and planes by a specified amount.
     member this.ApplyDamage(damage : float32<E>) =
         let random = System.Random()

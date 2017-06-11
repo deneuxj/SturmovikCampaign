@@ -83,10 +83,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
     let afNeeds =
         seq {
             for af, afs in Seq.zip world.Airfields state.Airfields do
-                let bombNeed =
-                    afs.NumPlanes
-                    |> Map.toSeq
-                    |> Seq.sumBy(fun (plane, qty) -> plane.BombCapacity * qty * bombCost)
+                let bombNeed = afs.BombNeeds * bombCost
                 let repairs =
                     Seq.zip af.Storage afs.StorageHealth
                     |> Seq.sumBy (fun (building, health) -> (1.0f - health) * building.RepairCost)
@@ -129,8 +126,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     |> List.sumBy (fun (building, health) -> (1.0f - health) *  building.RepairCost)
                 yield region, cost + repairs
         }
-    //Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]
-    regionSaturatedCanonNeeds
+    Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]
     |> Seq.groupBy fst
     |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
     |> Map.ofSeq
