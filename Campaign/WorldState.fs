@@ -30,9 +30,9 @@ with
 
     member this.Description =
         match this with
-        | HeavyTank -> "heavy tank"
-        | MediumTank -> "medium tank"
-        | LightArmor -> "light armored vehicle"
+        | HeavyTank -> "heavy"
+        | MediumTank -> "medium"
+        | LightArmor -> "light"
 
     static member LightArmorCost = 600.0f<E>
     static member MediumTankCost = GroundAttackVehicle.LightArmorCost * 2.0f
