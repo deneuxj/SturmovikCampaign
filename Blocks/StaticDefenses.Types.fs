@@ -33,14 +33,15 @@ let getRandomPositionInArea(random : System.Random, area : Vector2 list, forward
 
 type DefenseSpecialty =
     | AntiTank
-    | AntiAir
+    | AntiAirMg
+    | AntiAirCanon
 with
     member this.GroupName =
         match this with
         | AntiTank -> "AntiTank"
-        | AntiAir -> "AntiAir"
+        | AntiAirMg | AntiAirCanon -> "AntiAir"
 
-    member this.SetModel(thing : Mcu.HasEntity, ?random : System.Random) =
+    member this.SetModel(thing : Mcu.HasEntity, isFlak : bool) =
         match this with
         | AntiTank ->
             match thing.Country with
@@ -52,34 +53,58 @@ with
                 thing.Script <- vehicles.RussianAntiTankCanon.Script
             | _ ->
                 ()
-        | AntiAir ->
-            let random = defaultArg random (System.Random())
+        | AntiAirCanon ->
             match thing.Country with
             | Mcu.CountryValue.Germany ->
-                if random.Next(2) = 1 then
-                    thing.Model <- vehicles.GermanAntiAirCanon.Model
-                    thing.Script <- vehicles.GermanAntiAirCanon.Script
-                else
+                if isFlak then
                     thing.Model <- vehicles.GermanFlak.Model
                     thing.Script <- vehicles.GermanFlak.Script
-            | Mcu.CountryValue.Russia ->
-                if random.Next(2) = 1 then
-                    thing.Model <- vehicles.RussianAntiAirCanon.Model
-                    thing.Script <- vehicles.RussianAntiAirCanon.Script
                 else
+                    thing.Model <- vehicles.GermanAntiAirCanon.Model
+                    thing.Script <- vehicles.GermanAntiAirCanon.Script
+            | Mcu.CountryValue.Russia ->
+                if isFlak then
                     thing.Model <- vehicles.RussianFlak.Model
                     thing.Script <- vehicles.RussianFlak.Script
+                else
+                    thing.Model <- vehicles.RussianAntiAirCanon.Model
+                    thing.Script <- vehicles.RussianAntiAirCanon.Script
+            | _ ->
+                ()
+        | AntiAirMg ->
+            match thing.Country with
+            | Mcu.CountryValue.Germany ->
+                if isFlak then
+                    thing.Model <- vehicles.GermanFlak.Model
+                    thing.Script <- vehicles.GermanFlak.Script
+                else
+                    thing.Model <- vehicles.GermanAntiAirMachineGun.Model
+                    thing.Script <- vehicles.GermanAntiAirMachineGun.Script
+            | Mcu.CountryValue.Russia ->
+                if isFlak then
+                    thing.Model <- vehicles.RussianFlak.Model
+                    thing.Script <- vehicles.RussianFlak.Script
+                else
+                    thing.Model <- vehicles.RussianAntiAirMachineGun.Model
+                    thing.Script <- vehicles.RussianAntiAirMachineGun.Script
             | _ ->
                 ()
 
+[<Literal>]
+let CannonObjectName = "CANNON"
+[<Literal>]
+let LightMachineGunAAName = "MGAA-L"
+[<Literal>]
+let HeavyMachineGunAAName = "MGAA-H"
+
 type Canon = {
-    Canon : Mcu.McuEntity
+    Cannon : Mcu.McuEntity
     Show : Mcu.McuTrigger
     Hide : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(specialty : DefenseSpecialty, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32 , country : Mcu.CountryValue) =
+    static member Create(specialty : DefenseSpecialty, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32 , isFlak : bool, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.GetGroup(specialty.GroupName)
@@ -87,16 +112,16 @@ with
         for mcu in db do
             subst mcu
         // Get key nodes
-        let canon = getVehicleByName db "CANON"
+        let cannon = getVehicleByName db "CANNON"
         let show = getTriggerByName db "SHOW"
         let hide = getTriggerByName db "HIDE"
         // Set country and positions
-        canon.Country <- country
-        specialty.SetModel(canon, random)
+        cannon.Country <- country
+        specialty.SetModel(cannon, isFlak)
         let angle = float32 System.Math.PI * (yori / 180.0f)
         let forward = Vector2(cos angle, sin angle)
         let newPos = getRandomPositionInArea(random, boundary, forward)
-        let refPos = Vector2.FromMcu(canon.Pos)
+        let refPos = Vector2.FromMcu(cannon.Pos)
         let translation = newPos - refPos
         for mcu in db do
             // rotate around old position of canon, then translate to new position
@@ -105,8 +130,16 @@ with
             let final = v.Rotate(yori) + refPos + translation
             final.AssignTo(mcu.Pos)
             mcu.Ori.Y <- mcu.Ori.Y + float yori
+        // Set object name, used for identifying damages from the log
+        let name =
+            match specialty, country with
+            | AntiTank, _ | AntiAirCanon, _ -> CannonObjectName
+            | _ when isFlak -> CannonObjectName
+            | AntiAirMg, country when country = Mcu.CountryValue.Russia -> HeavyMachineGunAAName
+            | AntiAirMg, _ -> LightMachineGunAAName
+        cannon.Name <- name
         // Result
-        { Canon = McuUtil.getEntityByIndex canon.LinkTrId db
+        { Cannon = McuUtil.getEntityByIndex cannon.LinkTrId db
           Show = show
           Hide = hide
           All = McuUtil.groupFromList db
@@ -123,7 +156,7 @@ with
         searchOrder.Objects <- attackAirOrder.Objects
         vecCopy attackAirOrder.Pos searchOrder.Pos
         searchOrder.Index <- attackAirOrder.Index
-        let canon = getHasEntityByIndex this.Canon.MisObjID mcus
+        let canon = getHasEntityByIndex this.Cannon.MisObjID mcus
         match canon.Country with
         | Mcu.CountryValue.Germany ->
             canon.Model <- vehicles.GermanSearchLight.Model

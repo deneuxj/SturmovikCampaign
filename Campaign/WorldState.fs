@@ -352,17 +352,13 @@ let updateNumCanons (world : World) (state : WorldState) =
     // Correct number of defensive units depending on actual shell count.
     let adjustNumCanons (area : DefenseArea, state : DefenseAreaState) =
         let region = area.Home.Home
-        let totalUnits =
-            canonsPerRegion(region)
-        let supportedUnits =
-            int(ceil(sg.GetRegion(region).Supplies / canonCost))
-        if totalUnits > supportedUnits then
-            let factor = float32 supportedUnits / float32 totalUnits
-            { state with
-                NumUnits = int(ceil(factor * float32 state.NumUnits))
-            }
-        else
-            state
+        let factor =
+            sg.GetRegion(region).Supplies / area.AmmoCost
+            |> min 1.0f
+        { state with
+            NumUnits = int(ceil(factor * float32 state.NumUnits))
+        }
+
     { state with
         AntiTankDefenses = List.zip world.AntiTankDefenses antiTank |> List.map adjustNumCanons
         AntiAirDefenses = List.zip world.AntiAirDefenses antiAir |> List.map adjustNumCanons
@@ -374,13 +370,13 @@ let computeDefenseNeeds (world : World) =
         for antiTank in world.AntiTankDefenses do
             match antiTank.Home with
             | FrontLine(home, ngh) ->
-                yield home, float32(antiTank.MaxNumGuns) * canonCost
+                yield home, float32(antiTank.MaxNumGuns) * cannonCost
             | _ ->
                 ()
         for antiAir in world.AntiAirDefenses do
             match antiAir.Home with
             | Central(home) ->
-                yield home, float32(antiAir.MaxNumGuns) * canonCost
+                yield home, float32(antiAir.MaxNumGuns) * cannonCost
             | _ ->
                 ()
     ]

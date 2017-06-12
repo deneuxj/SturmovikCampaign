@@ -70,7 +70,7 @@ with
                                     | None -> failwithf "No owner found for group of anti-tank defenses '%A'" area.DefenseAreaId
                                     | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                                     | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                                let group = StaticDefenseGroup.Create(AntiTank, false, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                                let group = StaticDefenseGroup.Create(area.Role, false, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
                                 let links = group.CreateLinks()
                                 let mcus = McuUtil.deepContentOf group
                                 links.Apply(mcus)
@@ -88,7 +88,7 @@ with
                             | None -> failwithf "No owner found for group of anti-air defenses '%A'" area.DefenseAreaId
                             | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                             | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                        let group = StaticDefenseGroup.Create(AntiAir, includeSearchLights, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                        let group = StaticDefenseGroup.Create(area.Role, includeSearchLights, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)

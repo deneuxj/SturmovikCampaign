@@ -41,7 +41,9 @@ Storage is used for anti-tank (AT) and anti-air (AAA) defenses. Each gun consume
 (Note: the storage groups I used in Velikie-Luki provide 3200 storage units, enough for 64 guns)
 
 6. Define AAA defense zones
-Use influence areas named "AAA-nn" in a group named "Defenses", with "nn" replace by a number indicating the maximum number of AA guns in that area.
+Use influence areas named "AAA-nn" or "AA-nn" in a group named "Defenses", with "nn" replace by a number indicating the maximum number of guns in that area.
+If the zone is named "AAA-nn", it will be composed of flak and fast firing artillery (20mm).
+If the zone is named "AA-nn", it will be composed of flak and anti-air machine guns. The Germans get more machine guns than the Russians due to the difference in fire power of their respective machine guns.
 Each area must be located within a region.
 Each area must be convex.
 Avoid trees and buildings in the area.
@@ -64,7 +66,11 @@ Do create the chart. It's needed for picking spawn points according to wind, and
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 These alternative waypoints should all have the same name (typically the name of the airfield).
 
-9. Place plane parking spots
+9. Define airfield storage
+Create hangars with entities in a group called "Airfield storage".
+These hangars must be within 3km of the airfield's spawn points.
+
+10. Place plane parking spots
 Each airfield (not spawn) must have 9 parking spots for fighters, 9 for attack planes and 9 for bombers.
 Parking spots for fighters are marked by static bf109 blocks (any variant)
 Parking spots for attack planes are marked by static bf110 blocks (any variant)
@@ -72,22 +78,22 @@ Parking sports for bombers are marked by static ju88 blocks.
 That applies to the Allies side as well. In other words, parking spots on allied-controlled airfields use Axis planes too.
 All these blocks must be in a group named "Parked planes"
 
-10. Place tank parking areas
+11. Place tank parking areas
 Use influence areas in a group named "Tank parks"
 Make sure there's plenty of room for up to 100 tanks
 Each region must have exactly one
 
-11. Windsocks
+12. Windsocks
 Create windsocks with entities in a group named "Windsocks"
 
-12. Non-directional beacons
+13. Non-directional beacons
 Create non-directional beacons (ndb under "vehicles") with entities in a group named "NDBs".
 Set beacon channel to 1 in the advanced properties.
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
-13. Land fires
+14. Land fires
 Create land fire effects with entities named "LandFire" in a group named "Land fires"
 
-14. Bridges and other buildings
+15. Bridges and other buildings
 Bridges and other blocks, buildings... need not be in groups, although they can.
 You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.

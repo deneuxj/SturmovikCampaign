@@ -8,6 +8,7 @@ open ploggy
 open Vector
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.VirtualConvoy.Factory
+open SturmovikMission.Blocks.StaticDefenses.Types
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
@@ -248,7 +249,9 @@ type DamagedObject =
     | Production of RegionId * int
     | Storage of RegionId * int
     | Airfield of AirfieldId * int
-    | Canon of DefenseAreaId
+    | Cannon of DefenseAreaId
+    | HeavyMachineGun of DefenseAreaId
+    | LightMachineGun of DefenseAreaId
     | Convoy of VehicleInColumn
     | Column of VehicleInColumn
     | Vehicle of RegionId * GroundAttackVehicle
@@ -372,13 +375,24 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                         yield { Object = Vehicle(region.RegionId, vehicleModel); Data = { Amount = damage.Damage } }
                     | None ->
                         ()
-                | Some(_, "CANON", _) ->
+                | Some(_, (CannonObjectName as gunType), _) | Some (_, (HeavyMachineGunAAName as gunType), _) | Some (_, (LightMachineGunAAName as gunType), _) ->
                     let defenseArea =
                         world.AntiAirDefenses @ world.AntiTankDefenses
                         |> List.tryFind (fun area -> damagePos.IsInConvexPolygon(area.Boundary))
                     match defenseArea with
                     | Some area ->
-                        yield { Object = Canon(area.DefenseAreaId); Data = { Amount = damage.Damage } }
+                        let objType =
+                            match gunType with
+                            | CannonObjectName -> Some(Cannon(area.DefenseAreaId))
+                            | LightMachineGunAAName -> Some(LightMachineGun(area.DefenseAreaId))
+                            | HeavyMachineGunAAName -> Some(HeavyMachineGun(area.DefenseAreaId))
+                            | _ ->
+                                None
+                        match objType with
+                        | Some objType ->
+                            yield { Object = objType; Data = { Amount = damage.Damage } }
+                        | None ->
+                            ()
                     | None ->
                         ()
                 | _ -> () // Ignored object type

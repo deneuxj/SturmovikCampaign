@@ -49,21 +49,33 @@ with
                     0
             seq {
                 for i in 1 .. groupSize do
+                    let isFlak =
+                        match specialty with
+                        | AntiTank -> false
+                        | AntiAirMg -> i < max (numSearchLights + 1) (groupSize / 4)
+                        | AntiAirCanon -> i < max (numSearchLights + 1) (groupSize / 2)
                     let canon =
-                        Canon.Create(specialty, random, store, boundary, yori, country)
+                        Canon.Create(specialty, random, store, boundary, yori, isFlak, country)
                         |> fun canon ->
                             if i <= numSearchLights then
                                 canon.SwitchToSearchLight()
                             else
                                 canon
-                    yield CanonInstance(i), canon
+                    yield CanonInstance(4 * i), canon
+                    // Extra German MG instances, to balance for the Russian MG which has 4x the firepower.
+                    match specialty, isFlak, coalition with
+                    | AntiAirMg, false, Mcu.CoalitionValue.Axis ->
+                        for extra in 0..3 do
+                            yield CanonInstance(4 * i + extra), Canon.Create(AntiAirMg, random, store, boundary, yori, false, Mcu.CountryValue.Germany)
+                    | _ ->
+                        ()
             }
             |> Map.ofSeq
         let positions =
             [
                 let model =
                     match specialty with
-                    | AntiAir -> Vehicles.vehicles.AntiAirPosition
+                    | AntiAirMg | AntiAirCanon -> Vehicles.vehicles.AntiAirPosition
                     | AntiTank -> Vehicles.vehicles.AntiTankPosition
                 let newBlock (pos : Mcu.Vec3) (ori : Mcu.Vec3) =
                     let block = newBlock 1 (int country) model.Model model.Script
@@ -76,7 +88,7 @@ with
                     subst mcu
                     mcu
                 for canon in antiTankCanonSet do
-                    yield newBlock canon.Value.Canon.Pos canon.Value.Canon.Ori
+                    yield newBlock canon.Value.Cannon.Pos canon.Value.Cannon.Ori
             ]
         let enemyClose =
             // For ATs, show when an enemy ground vehicle is near, reduce scanning range.

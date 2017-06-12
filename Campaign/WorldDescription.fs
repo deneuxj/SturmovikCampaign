@@ -6,6 +6,7 @@ open Vector
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks
+open SturmovikMission.Blocks.StaticDefenses.Types
 open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 open SturmovikMission.DataProvider.Parsing
 
@@ -224,16 +225,26 @@ type DefenseArea = {
     Position : OrientedPosition
     Boundary : Vector2 list
     MaxNumGuns : int
+    Role : DefenseSpecialty
 }
 with
     static member ExtractCentralDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
         [
             for area in areas do
                 let pos = Vector2.FromPos(area)
+                let areaName = area.GetName().Value
                 let numGuns =
-                    match (Stream.FromString <| area.GetName().Value) with
+                    match (Stream.FromString areaName) with
                     | ReLit "AAA-" (ReInt (n, EOF _)) -> n
+                    | ReLit "AA-" (ReInt (n, EOF _)) -> n
                     | _ -> 4
+                let role =
+                    if areaName.StartsWith "AAA" then
+                        AntiAirCanon
+                    else if areaName.StartsWith "AA" then
+                        AntiAirMg
+                    else
+                        failwithf "Invalid name '%s' for defense area" areaName
                 match regions |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary)) with
                 | Some region ->
                     yield {
@@ -242,9 +253,10 @@ with
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value) }
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                         MaxNumGuns = numGuns
+                        Role = role
                     }
                 | None ->
-                    failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
+                    failwithf "Defense area '%s' is not located in any region" areaName
         ]
 
     static member ExtractFrontLineDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list, paths : Path list) =
@@ -275,6 +287,7 @@ with
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value) } 
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                         MaxNumGuns = 4
+                        Role = AntiTank
                     }
                 | None ->
                     failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
@@ -436,7 +449,7 @@ with
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
         let rails = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
         let defenses = data.GetGroup("Defenses")
-        let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AAA"))
+        let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
         let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AT"))
         let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(ats, regions, roads)
@@ -492,6 +505,17 @@ with
     member this.FastAccess = WorldFastAccess.Create(this)
 
 
-let canonCost = 50.0f<E>
+let cannonCost = 50.0f<E>
+let heavyMachineGunCost = cannonCost / 4.0f
+let lightMachineGunCost = heavyMachineGunCost / 4.0f
+
+type DefenseArea with
+    member this.AmmoCost =
+        match this.Role with
+        | AntiTank | AntiAirCanon -> float32 this.MaxNumGuns * cannonCost
+        | AntiAirMg ->
+            let numFlak = 0.25f * float32 this.MaxNumGuns
+            let numMg = 0.75f * float32 this.MaxNumGuns
+            numFlak * cannonCost + numMg * heavyMachineGunCost // OK even for light machine guns, because there are actually four times as meany as MaxNumGuns (each light machine gun counts as 25% of a machine gun)
 
 let bombCost = 100.0f<E> / 1000.0f<K>

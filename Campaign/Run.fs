@@ -99,7 +99,7 @@ module Init =
         let capacity =
             world.Regions
             |> Seq.map (fun region -> region.RegionId, region.Storage |> Seq.sumBy (fun sto -> sto.Storage))
-            |> Seq.map (fun (region, capacity) -> region, capacity / canonCost)
+            |> Seq.map (fun (region, capacity) -> region, capacity / cannonCost)
             |> Map.ofSeq
 
         let production =

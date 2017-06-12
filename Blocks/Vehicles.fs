@@ -82,8 +82,20 @@ type VehicleDataTypeStore() =
           Model = canon.GetModel().Value
         }
 
+    member this.RussianAntiAirMachineGun =
+        let canon = vehicles.[T.Vehicles.MgAARUS]
+        { Script = canon.GetScript().Value
+          Model = canon.GetModel().Value
+        }
+
     member this.RussianAntiAirCanon =
         let canon = vehicles.[T.Vehicles.AntiAirRUS]
+        { Script = canon.GetScript().Value
+          Model = canon.GetModel().Value
+        }
+
+    member this.GermanAntiAirMachineGun =
+        let canon = vehicles.[T.Vehicles.MgAAGER]
         { Script = canon.GetScript().Value
           Model = canon.GetModel().Value
         }

@@ -1205,15 +1205,15 @@ Group
   Desc = "";
   Vehicle
   {
-    Name = "CANON";
+    Name = "CANNON";
     Index = 98;
     LinkTrId = 99;
     XPos = 16395.054;
-    YPos = 106.604;
+    YPos = 112.782;
     ZPos = 26584.564;
-    XOri = 1.91;
+    XOri = 2.38;
     YOri = 0.00;
-    ZOri = 358.94;
+    ZOri = 359.09;
     Script = "LuaScripts\WorldObjects\vehicles\zis3gun.txt";
     Model = "graphics\artillery\zis3gun\zis3gun.mgm";
     Desc = "";
@@ -1241,7 +1241,7 @@ Group
     Targets = [];
     Objects = [];
     XPos = 16395.054;
-    YPos = 106.804;
+    YPos = 112.982;
     ZPos = 26584.564;
     XOri = 0.00;
     YOri = 0.00;
@@ -1502,11 +1502,11 @@ Group
   Desc = "";
   Vehicle
   {
-    Name = "CANON";
+    Name = "CANNON";
     Index = 124;
     LinkTrId = 125;
     XPos = 16373.178;
-    YPos = 100.690;
+    YPos = 100.913;
     ZPos = 24731.090;
     XOri = 0.94;
     YOri = 0.00;
@@ -1538,7 +1538,7 @@ Group
     Targets = [];
     Objects = [];
     XPos = 16373.178;
-    YPos = 100.890;
+    YPos = 101.113;
     ZPos = 24731.090;
     XOri = 0.00;
     YOri = 0.00;
@@ -4713,7 +4713,7 @@ Group
     Index = 401;
     Name = "DelayedStart";
     Desc = "";
-    Targets = [405];
+    Targets = [402];
     Objects = [];
     XPos = 36302.879;
     YPos = 172.348;
@@ -4753,7 +4753,7 @@ Group
     Index = 398;
     Name = "";
     Desc = "";
-    Targets = [434];
+    Targets = [405];
     Objects = [];
     XPos = 36151.057;
     YPos = 39.435;
@@ -4766,7 +4766,7 @@ Group
 
   MCU_Timer
   {
-    Index = 405;
+    Index = 402;
     Name = "StartMonitoring";
     Desc = "";
     Targets = [];
@@ -4784,10 +4784,10 @@ Group
 
   MCU_Timer
   {
-    Index = 408;
+    Index = 407;
     Name = "WakeUp";
     Desc = "";
-    Targets = [434,409];
+    Targets = [405,408];
     Objects = [];
     XPos = 36426.899;
     YPos = 25.837;
@@ -4802,10 +4802,10 @@ Group
 
   MCU_Timer
   {
-    Index = 410;
+    Index = 409;
     Name = "Sleep";
     Desc = "";
-    Targets = [400,411];
+    Targets = [400,410];
     Objects = [];
     XPos = 36701.153;
     YPos = 24.016;
@@ -4823,7 +4823,7 @@ Group
     Index = 399;
     Name = "ReplacementDelay";
     Desc = "";
-    Targets = [413];
+    Targets = [412];
     Objects = [];
     XPos = 36024.530;
     YPos = 43.201;
@@ -4838,10 +4838,10 @@ Group
 
   MCU_Activate
   {
-    Index = 413;
+    Index = 412;
     Name = "";
     Desc = "";
-    Targets = [434];
+    Targets = [405];
     Objects = [];
     XPos = 36028.152;
     YPos = 21.019;
@@ -4854,10 +4854,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 409;
+    Index = 408;
     Name = "";
     Desc = "";
-    Targets = [408];
+    Targets = [407];
     Objects = [];
     XPos = 36340.538;
     YPos = 27.044;
@@ -4870,10 +4870,10 @@ Group
 
   MCU_Activate
   {
-    Index = 411;
+    Index = 410;
     Name = "";
     Desc = "";
-    Targets = [408];
+    Targets = [407];
     Objects = [];
     XPos = 36571.217;
     YPos = 25.181;
@@ -4886,7 +4886,7 @@ Group
 
   MCU_Timer
   {
-    Index = 434;
+    Index = 405;
     Name = "IsAlive";
     Desc = "";
     Targets = [393];
