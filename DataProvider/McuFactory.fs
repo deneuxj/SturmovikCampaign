@@ -625,6 +625,51 @@ let tryMkAsProximity (typeName : string, typ : ValueType) =
     | _ ->
         None
 
+let tryMkAsAttackArea (typeName : string, typ : ValueType) =
+    match typeName with
+    | "MCU_CMD_AttackArea" ->
+        match typ with
+        | ValueType.Composite typeFields ->
+            function
+            | Value.Composite fields as value, path ->
+                let state = ref fields
+                let path = ref path
+                let iconLC, subtitleLC = mkLCData typeFields state
+                let baseImpl = mkAsTrigger typeName path state iconLC subtitleLC
+                {
+                    new McuAttackArea with
+                        member this.AttackArea
+                            with get() =
+                                !state |> getIntField "AttackArea"
+                            and set(coalitions) =
+                                state := !state |> setField("AttackArea", Integer coalitions)
+
+                    interface McuTrigger with
+                        member this.AsString() = baseImpl.AsString()
+                        member this.Ori = baseImpl.Ori
+                        member this.Pos = baseImpl.Pos
+                        member this.Index
+                            with get() = baseImpl.Index
+                            and set idx = baseImpl.Index <- idx
+                        member this.IconLC = baseImpl.IconLC
+                        member this.SubtitleLC = baseImpl.SubtitleLC
+                        member this.Objects
+                            with get() = baseImpl.Objects
+                            and set xs = baseImpl.Objects <- xs
+                        member this.Targets
+                            with get() = baseImpl.Targets
+                            and set xs = baseImpl.Targets <- xs
+                        member this.Name
+                            with get() = baseImpl.Name
+                            and set name = baseImpl.Name <- name
+                        member this.Path
+                            with get() = baseImpl.Path
+                            and set(p) = baseImpl.Path <- p
+                }
+            | _ -> invalidArg "value" "Not a composite"
+            |> Some
+        | _ -> None
+    | _ -> None
 
 let tryMkAsWaypoint (typeName : string, typ : ValueType) =
     match typeName with
@@ -1070,6 +1115,7 @@ let makers =
         upcastTryMaker tryMkAsWaypoint
         upcastTryMaker tryMkAsCounter
         upcastTryMaker tryMkAsProximity
+        upcastTryMaker tryMkAsAttackArea
         upcastTryMaker tryMkAsTrigger
         upcastTryMaker tryMkAsIcon
         upcastTryMaker tryMkAsBase

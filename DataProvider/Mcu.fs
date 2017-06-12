@@ -149,6 +149,13 @@ type McuProximity =
     abstract Distance : int with get, set
 
 /// <summary>
+/// Interface of attack area MCUs.
+/// </summary>
+type McuAttackArea =
+    inherit McuTrigger
+    abstract AttackArea : int with get, set
+
+/// <summary>
 /// Interface of waypoint triggers.
 /// </summary>
 type McuWaypoint =

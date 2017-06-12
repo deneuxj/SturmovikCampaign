@@ -115,6 +115,7 @@ with
         let cannon = getVehicleByName db "CANNON"
         let show = getTriggerByName db "SHOW"
         let hide = getTriggerByName db "HIDE"
+        let attackOrder = getTriggerByName db "AttackAirTargets"
         // Set country and positions
         cannon.Country <- country
         specialty.SetModel(cannon, isFlak)
@@ -138,6 +139,18 @@ with
             | AntiAirMg, country when country = Mcu.CountryValue.Russia -> HeavyMachineGunAAName
             | AntiAirMg, _ -> LightMachineGunAAName
         cannon.Name <- name
+        // Set attack radius according to gun type
+        let range =
+            match specialty, country with
+            | AntiTank, _ | AntiAirCanon, _ -> 2000
+            | _ when isFlak -> 7500
+            | AntiAirMg, country when country = Mcu.CountryValue.Russia -> 1500
+            | AntiAirMg, _ -> 1500
+        match attackOrder with
+        | :? Mcu.McuAttackArea as attackOrder ->
+            attackOrder.AttackArea <- range
+        | _ ->
+            ()
         // Result
         { Cannon = McuUtil.getEntityByIndex cannon.LinkTrId db
           Show = show
