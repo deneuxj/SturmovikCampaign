@@ -300,11 +300,13 @@ module OrderDecision =
                 allAttacks |> List.filter (fun attack -> attack.Coalition = Axis), allAttacks |> List.filter (fun attack -> attack.Coalition = Allies)
             else
                 [], []
+        let axisProduction = computeProductionPriorities Axis world state
+        let alliesProduction = computeProductionPriorities Allies world state
         let outputDir = config.OutputDir
         use axisOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.axisOrders))
-        serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks } )
+        serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks; Production = axisProduction } )
         use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.alliesOrders))
-        serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols; Attacks = alliesAttacks } )
+        serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols; Attacks = alliesAttacks; Production = alliesProduction } )
 
 module MissionFileGeneration =
     open Campaign.WorldDescription
@@ -584,7 +586,7 @@ module MissionLogParsing =
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
 
-        let state2, newlyProduced = newState dt world state movements shipments (axisOrders.Resupply @ alliesOrders.Resupply) (staticDamages @ vehicleDamages) takeOffs landings columnDepartures
+        let state2, newlyProduced = newState dt world state axisOrders.Production alliesOrders.Production movements shipments (axisOrders.Resupply @ alliesOrders.Resupply) (staticDamages @ vehicleDamages) takeOffs landings columnDepartures
 
         (entries, shipments, staticDamages, vehicleDamages, takeOffs, landings, columnDepartures, newlyProduced), (state, state2)
 

@@ -302,3 +302,102 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
         timeBound cancellation.Token ({ Axis = []; Allies = [] }, Ongoing 0.0f) 1 board
     minMax board
     |> fun ({ Axis = m1; Allies = m2 }, _) -> (m1 @ m2) |> List.map (realizeMove world state)
+
+/// Decide what vehicles and planes to produce, and how important they are.
+let computeProductionPriorities (coalition : CoalitionId) (world : World) (state : WorldState) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+
+    let supplyNeed =
+        let allNeeds = computeSupplyNeeds world state
+        state.Regions
+        |> Seq.sumBy (fun state ->
+            if state.Owner = Some coalition then
+                Map.tryFind state.RegionId allNeeds
+                |> Option.defaultVal 0.0f<E>
+            else
+                0.0f<E>)
+    assert(supplyNeed >= 0.0f<E>)
+
+    let vehicleToProduce, vehicleNeed =
+        // vehicle need is dictated by number of regions on the front line
+        let numHeavy, numMedium, numLight, need =
+            state.Regions
+            |> Seq.filter (fun state -> state.Owner = Some coalition) // Regions we control
+            |> Seq.filter (fun state -> // Regions at the front
+                let region = wg.GetRegion state.RegionId
+                region.Neighbours
+                |> Seq.exists (fun ngh -> sg.GetRegion(ngh).Owner <> Some coalition))
+            |> Seq.map (fun state ->
+                let numHeavy = state.GetNumVehicles HeavyTank
+                let numMedium = state.GetNumVehicles MediumTank
+                let numLight = state.GetNumVehicles LightArmor
+                let desiredValue = 3.0f * GroundAttackVehicle.HeavyTankCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.LightArmorCost
+                let availableValue = float32 numHeavy * GroundAttackVehicle.HeavyTankCost + float32 numMedium * GroundAttackVehicle.MediumTankCost + float32 numLight * GroundAttackVehicle.LightArmorCost
+                numHeavy, numMedium, numLight, max 0.0f<E> (desiredValue - availableValue))
+            |> Seq.fold (fun (t1, t2, t3, t4) (n1, n2, n3, n4) -> (t1 + n1, t2 + n2, t3 + n3, t4 + n4)) (0, 0, 0, 0.0f<E>)
+        let vehicle =
+            if numMedium = 0 then
+                MediumTank
+            elif numHeavy < numLight && 3 * numHeavy < numMedium then
+                HeavyTank
+            elif numLight >= numHeavy && 3 * numLight < numMedium then
+                LightArmor
+            else
+                MediumTank
+        vehicle, need
+    assert(vehicleNeed >= 0.0f<E>)
+
+    let planeTypeToProduce, planeNeed =
+        let planeTypeShares =
+            match coalition with
+            | Axis -> [ 0.4f; 0.3f; 0.2f; 0.1f ]
+            | Allies -> [ 0.4f; 0.4f; 0.2f; 0.0f ]
+            |> List.zip [ Fighter; Attacker; Bomber; Transport ]
+            |> Map.ofList
+        assert(planeTypeShares |> Seq.sumBy (fun kvp -> kvp.Value) = 1.0f)
+        let numPlanesPerType =
+            state.Airfields
+            |> Seq.filter (fun afs -> sg.GetRegion(wg.GetAirfield(afs.AirfieldId).Region).Owner = Some coalition) // Only our coalition
+            |> Seq.fold (fun perType afs ->
+                afs.NumPlanes
+                |> Map.toSeq
+                |> Seq.map (fun (plane, qty) -> plane.PlaneType, qty) // Replace exact plane model by plane type
+                |> Seq.groupBy fst
+                |> Seq.map (fun (typ, xs) -> typ, xs |> Seq.sumBy snd) // Total number of planes per type at that airfield
+                |> Seq.fold (fun perType (typ, qty) -> // Add to total number of planes per type for all regions
+                    let newQty =
+                        qty +
+                        (Map.tryFind typ perType |> Option.defaultVal 0.0f)
+                    Map.add typ newQty perType
+                ) perType
+            ) Map.empty
+        let total =
+            numPlanesPerType
+            |> Seq.sumBy (fun kvp -> kvp.Value)
+        let relNumPlanesPerType =
+            numPlanesPerType
+            |> Map.map (fun typ qty -> qty / total)
+        let mostNeeded =
+            planeTypeShares
+            |> Map.filter (fun _ qty -> qty > 0.0f)
+            |> Map.map (fun typ share ->
+                let actual = Map.tryFind typ relNumPlanesPerType |> Option.defaultVal 0.0f
+                actual / share)
+            |> Map.toSeq
+            |> Seq.minBy snd
+            |> fst
+        let valueTarget =
+            0.8f * state.TotalPlaneValueOfCoalition(world, coalition.Other)
+        // plane need is dictated by enemy plane forces. We don't want to fall too far behind.
+        let need =
+            valueTarget - state.TotalPlaneValueOfCoalition(world, coalition)
+            |> max 200.0f<E>
+        mostNeeded, need
+
+    { Vehicle = vehicleToProduce
+      PriorityVehicle = vehicleNeed
+      Plane = planeTypeToProduce
+      PriorityPlane = planeNeed
+      PrioritySupplies = supplyNeed
+    }

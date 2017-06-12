@@ -3,6 +3,7 @@
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.BasicTypes
+open Campaign.PlaneModel
 
 /// A truck convoy or a train, in movement.
 type ConvoyOrder = {
@@ -116,6 +117,14 @@ with
     // The maximum number of vehicles following the leader in a column.
     static member MaxColumnSize = SturmovikMission.Blocks.VirtualConvoy.Factory.VirtualConvoy.MaxConvoySize
 
+/// What to produce in each category of production, and how much does each category need
+type ProductionPriorities = {
+    Vehicle : GroundAttackVehicle
+    PriorityVehicle : float32<E>
+    Plane : PlaneType
+    PriorityPlane : float32<E>
+    PrioritySupplies : float32<E>
+}
 
 /// Groups all orders for a faction.
 type OrderPackage = {
@@ -123,4 +132,5 @@ type OrderPackage = {
     Columns : ColumnMovement list
     Patrols : AiPlanes.AiPatrol list
     Attacks : AiPlanes.AiAttack list
+    Production : ProductionPriorities
 }

@@ -9,169 +9,56 @@ open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 
-/// What to produce in each category of production, and how much does each category need
-type ProductionPriorities = {
-    Vehicle : GroundAttackVehicle
-    PriorityVehicle : float32<E>
-    Plane : PlaneType
-    PriorityPlane : float32<E>
-    PrioritySupplies : float32<E>
-}
-
-/// Decide what vehicles and planes to produce, and how important they are.
-let computeProductionPriorities (coalition : CoalitionId) (world : World) (state : WorldState) =
-    let wg = WorldFastAccess.Create world
-    let sg = WorldStateFastAccess.Create state
-
-    let supplyNeed =
-        let allNeeds = AutoOrder.computeSupplyNeeds world state
-        state.Regions
-        |> Seq.sumBy (fun state ->
-            if state.Owner = Some coalition then
-                Map.tryFind state.RegionId allNeeds
-                |> Option.defaultVal 0.0f<E>
-            else
-                0.0f<E>)
-    assert(supplyNeed >= 0.0f<E>)
-
-    let vehicleToProduce, vehicleNeed =
-        // vehicle need is dictated by number of regions on the front line
-        let numHeavy, numMedium, numLight, need =
-            state.Regions
-            |> Seq.filter (fun state -> state.Owner = Some coalition) // Regions we control
-            |> Seq.filter (fun state -> // Regions at the front
-                let region = wg.GetRegion state.RegionId
-                region.Neighbours
-                |> Seq.exists (fun ngh -> sg.GetRegion(ngh).Owner <> Some coalition))
-            |> Seq.map (fun state ->
-                let numHeavy = state.GetNumVehicles HeavyTank
-                let numMedium = state.GetNumVehicles MediumTank
-                let numLight = state.GetNumVehicles LightArmor
-                let desiredValue = 3.0f * GroundAttackVehicle.HeavyTankCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.LightArmorCost
-                let availableValue = float32 numHeavy * GroundAttackVehicle.HeavyTankCost + float32 numMedium * GroundAttackVehicle.MediumTankCost + float32 numLight * GroundAttackVehicle.LightArmorCost
-                numHeavy, numMedium, numLight, max 0.0f<E> (desiredValue - availableValue))
-            |> Seq.fold (fun (t1, t2, t3, t4) (n1, n2, n3, n4) -> (t1 + n1, t2 + n2, t3 + n3, t4 + n4)) (0, 0, 0, 0.0f<E>)
-        let vehicle =
-            if numMedium = 0 then
-                MediumTank
-            elif numHeavy < numLight && 3 * numHeavy < numMedium then
-                HeavyTank
-            elif numLight >= numHeavy && 3 * numLight < numMedium then
-                LightArmor
-            else
-                MediumTank
-        vehicle, need
-    assert(vehicleNeed >= 0.0f<E>)
-
-    let planeTypeToProduce, planeNeed =
-        let planeTypeShares =
-            match coalition with
-            | Axis -> [ 0.4f; 0.3f; 0.2f; 0.1f ]
-            | Allies -> [ 0.4f; 0.4f; 0.2f; 0.0f ]
-            |> List.zip [ Fighter; Attacker; Bomber; Transport ]
-            |> Map.ofList
-        assert(planeTypeShares |> Seq.sumBy (fun kvp -> kvp.Value) = 1.0f)
-        let numPlanesPerType =
-            state.Airfields
-            |> Seq.filter (fun afs -> sg.GetRegion(wg.GetAirfield(afs.AirfieldId).Region).Owner = Some coalition) // Only our coalition
-            |> Seq.fold (fun perType afs ->
-                afs.NumPlanes
-                |> Map.toSeq
-                |> Seq.map (fun (plane, qty) -> plane.PlaneType, qty) // Replace exact plane model by plane type
-                |> Seq.groupBy fst
-                |> Seq.map (fun (typ, xs) -> typ, xs |> Seq.sumBy snd) // Total number of planes per type at that airfield
-                |> Seq.fold (fun perType (typ, qty) -> // Add to total number of planes per type for all regions
-                    let newQty =
-                        qty +
-                        (Map.tryFind typ perType |> Option.defaultVal 0.0f)
-                    Map.add typ newQty perType
-                ) perType
-            ) Map.empty
-        let total =
-            numPlanesPerType
-            |> Seq.sumBy (fun kvp -> kvp.Value)
-        let relNumPlanesPerType =
-            numPlanesPerType
-            |> Map.map (fun typ qty -> qty / total)
-        let mostNeeded =
-            planeTypeShares
-            |> Map.filter (fun _ qty -> qty > 0.0f)
-            |> Map.map (fun typ share ->
-                let actual = Map.tryFind typ relNumPlanesPerType |> Option.defaultVal 0.0f
-                actual / share)
-            |> Map.toSeq
-            |> Seq.minBy snd
-            |> fst
-        let valueTarget =
-            0.8f * state.TotalPlaneValueOfCoalition(world, coalition.Other)
-        // plane need is dictated by enemy plane forces. We don't want to fall too far behind.
-        let need =
-            valueTarget - state.TotalPlaneValueOfCoalition(world, coalition)
-            |> max 200.0f<E>
-        mostNeeded, need
-
-    { Vehicle = vehicleToProduce
-      PriorityVehicle = vehicleNeed
-      Plane = planeTypeToProduce
-      PriorityPlane = planeNeed
-      PrioritySupplies = supplyNeed
-    }
-
-
 /// Add production units according to production priorities
-let applyProduction (dt : float32<H>) (world : World) (state : WorldState) =
+let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) (priorities : ProductionPriorities) (state : WorldState) =
     let wg = WorldFastAccess.Create world
-    let work (state : WorldState) (coalition : CoalitionId) =
-        let priorities = computeProductionPriorities coalition world state
-        let vehiclePrio, planePrio, energyPrio =
-            let total =
-                priorities.PriorityPlane + priorities.PrioritySupplies + priorities.PriorityVehicle
-            if total <= 0.0f<E> then
-                0.0f, 0.0f, 0.0f
-            else
-                priorities.PriorityVehicle / total, priorities.PriorityPlane / total, priorities.PriorityVehicle / total
-        let regions =
-            [
-                for region, regState in Seq.zip world.Regions state.Regions do
-                    if regState.Owner = Some coalition && not(List.isEmpty region.Production) then
-                        // Redistribute plane production resources if this region has no airfield to receive the newly produced planes.
-                        let vehiclePrio, planePrio, energyPrio =
-                            if world.Airfields |> List.exists (fun af -> af.Region = region.RegionId) then
-                                vehiclePrio, planePrio, energyPrio
-                            else
-                                vehiclePrio + 0.5f * planePrio, 0.0f, energyPrio + 0.5f * planePrio
-                        let energy = dt * regState.ProductionCapacity(region)
-                        let supplies = regState.Products.Supplies + energyPrio * energy
-                        let planes =
-                            let planeModel =
-                                regState.Products.Planes
-                                |> Map.filter (fun plane _ -> plane.PlaneType = priorities.Plane)
-                                |> Map.toSeq
-                                |> Seq.sortBy snd
-                                |> Seq.tryLast
-                                |> Option.map fst
-                                |> Option.defaultVal (priorities.Plane.Random(world.PlaneSet, coalition) |> Option.get)
-                            let oldValue =
-                                Map.tryFind planeModel regState.Products.Planes
-                                |> Option.defaultVal 0.0f<E>
-                            assert(planePrio >= 0.0f)
-                            assert(planePrio <= 1.0f)
-                            let newValue = oldValue + planePrio * energy
-                            Map.add planeModel newValue regState.Products.Planes
-                        let vehicles =
-                            let oldValue =
-                                Map.tryFind priorities.Vehicle regState.Products.Vehicles
-                                |> Option.defaultVal 0.0f<E>
-                            let newValue = oldValue + vehiclePrio * energy
-                            Map.add priorities.Vehicle newValue regState.Products.Vehicles
-                        let assignment = { regState.Products with Supplies = supplies; Planes = planes; Vehicles = vehicles }
-                        yield { regState with Products = assignment }
-                    else
-                        yield regState
-            ]
-        { state with Regions = regions }
-    [ Axis; Allies ]
-    |> List.fold work state
+    let vehiclePrio, planePrio, energyPrio =
+        let total =
+            priorities.PriorityPlane + priorities.PrioritySupplies + priorities.PriorityVehicle
+        if total <= 0.0f<E> then
+            0.0f, 0.0f, 0.0f
+        else
+            priorities.PriorityVehicle / total, priorities.PriorityPlane / total, priorities.PriorityVehicle / total
+    let regions =
+        [
+            for region, regState in Seq.zip world.Regions state.Regions do
+                if regState.Owner = Some coalition && not(List.isEmpty region.Production) then
+                    // Redistribute plane production resources if this region has no airfield to receive the newly produced planes.
+                    let vehiclePrio, planePrio, energyPrio =
+                        if world.Airfields |> List.exists (fun af -> af.Region = region.RegionId) then
+                            vehiclePrio, planePrio, energyPrio
+                        else
+                            vehiclePrio + 0.5f * planePrio, 0.0f, energyPrio + 0.5f * planePrio
+                    let energy = dt * regState.ProductionCapacity(region)
+                    let supplies = regState.Products.Supplies + energyPrio * energy
+                    let planes =
+                        let planeModel =
+                            regState.Products.Planes
+                            |> Map.filter (fun plane _ -> plane.PlaneType = priorities.Plane)
+                            |> Map.toSeq
+                            |> Seq.sortBy snd
+                            |> Seq.tryLast
+                            |> Option.map fst
+                            |> Option.defaultVal (priorities.Plane.Random(world.PlaneSet, coalition) |> Option.get)
+                        let oldValue =
+                            Map.tryFind planeModel regState.Products.Planes
+                            |> Option.defaultVal 0.0f<E>
+                        assert(planePrio >= 0.0f)
+                        assert(planePrio <= 1.0f)
+                        let newValue = oldValue + planePrio * energy
+                        Map.add planeModel newValue regState.Products.Planes
+                    let vehicles =
+                        let oldValue =
+                            Map.tryFind priorities.Vehicle regState.Products.Vehicles
+                            |> Option.defaultVal 0.0f<E>
+                        let newValue = oldValue + vehiclePrio * energy
+                        Map.add priorities.Vehicle newValue regState.Products.Vehicles
+                    let assignment = { regState.Products with Supplies = supplies; Planes = planes; Vehicles = vehicles }
+                    yield { regState with Products = assignment }
+                else
+                    yield regState
+        ]
+    { state with Regions = regions }
 
 /// A region received supplies from production.
 type Resupplied = {
@@ -833,8 +720,11 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
 let eveningStop = 20
 let morningStart = 5
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) movements convoyDepartures supplies damages tookOff landed columnDepartures =
-    let state2 = applyProduction dt world state
+let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction movements convoyDepartures supplies damages tookOff landed columnDepartures =
+    let state2 =
+        state
+        |> applyProduction dt world Axis axisProduction
+        |> applyProduction dt world Allies alliesProduction
     let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
     let state4 = applyRepairsAndDamages dt world state3 convoyDepartures damages supplies newSupplies
     let state5 = applyPlaneTransfers state4 tookOff landed
