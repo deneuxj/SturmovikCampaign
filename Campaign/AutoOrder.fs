@@ -387,9 +387,16 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
             |> Map.toSeq
             |> Seq.minBy snd
             |> fst
+        // Target 100 planes. This should leave plenty of planes for players to pick.
         let valueTarget =
-            0.8f * state.TotalPlaneValueOfCoalition(world, coalition.Other)
-        // plane need is dictated by enemy plane forces. We don't want to fall too far behind.
+            let nPlanes = 100.0f
+            planeTypeShares
+            |> Map.toSeq
+            |> Seq.sumBy (fun (planeType, share) ->
+                planeType.Random(PlaneSet.Moscow, Axis) // Use the axis side of the moscow set as reference. Exact numbers do not matter, we just want rough values.
+                |> Option.map(fun plane -> plane.Cost)
+                |> Option.defaultVal 0.0f<E>
+                |> (*) (share * nPlanes))
         let need =
             valueTarget - state.TotalPlaneValueOfCoalition(world, coalition)
             |> max 200.0f<E>
