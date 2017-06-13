@@ -115,7 +115,11 @@ with
         let cannon = getVehicleByName db "CANNON"
         let show = getTriggerByName db "SHOW"
         let hide = getTriggerByName db "HIDE"
-        let attackOrder = getTriggerByName db "AttackAirTargets"
+        let attackOrder =
+            try
+                getTriggerByName db "AttackAirTargets"
+                |> Some
+            with _ -> None
         // Set country and positions
         cannon.Country <- country
         specialty.SetModel(cannon, isFlak)
@@ -147,7 +151,7 @@ with
             | AntiAirMg, country when country = Mcu.CountryValue.Russia -> 1500
             | AntiAirMg, _ -> 1500
         match attackOrder with
-        | :? Mcu.McuAttackArea as attackOrder ->
+        | Some (:? Mcu.McuAttackArea as attackOrder) ->
             attackOrder.AttackArea <- range
         | _ ->
             ()
