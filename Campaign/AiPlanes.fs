@@ -85,43 +85,41 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                 if owner = Some coalition.Other && afState.TotalPlaneValue >= PlaneModel.I16.Cost * 2.0f then
                     yield af, afState
         ]
+    let fighterRange = 60000.0f
     seq {
         // Defensive patrols
-#if DISABLED
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && regState.ProductionCapacity(region) > 0.0f<E/H> then
-                for af, afState in threats do
-                    let dir =
-                        let x = af.Pos - region.Position
-                        x / x.Length()
-                    let side = dir.Rotate(90.0f)
-                    let p1 = region.Position + dir * 15000.0f + side * 15000.0f
-                    let p2 = p1 - side * 30000.0f
-                    if getNumPlanesOfType Bomber afState.NumPlanes >= 1.0f then
-                        yield {
-                            Plane = intercepter
-                            Coalition = coalition
-                            P1 = p1
-                            P2 = p2
-                            Altitude = 4000.0f
-                        }
-                    if getNumPlanesOfType Attacker afState.NumPlanes >= 1.0f then
-                        yield {
-                            Plane = protector
-                            Coalition = coalition
-                            P1 = p1
-                            P2 = p2
-                            Altitude = 3000.0f
-                        }
-                    if getNumPlanesOfType Fighter afState.NumPlanes >= 1.0f then
-                        yield {
-                            Plane = fighter
-                            Coalition = coalition
-                            P1 = p1
-                            P2 = p2
-                            Altitude = 2500.0f
-                        }
-#endif
+                for af, afState in List.zip world.Airfields state.Airfields do
+                    let owner = sg.GetRegion(af.Region).Owner
+                    if owner = Some coalition && getNumPlanesOfType Fighter afState.NumPlanes > 2.0f then
+                        for enemyAirfield, enemyAirfieldState in threats do
+                            let dir =
+                                let x = enemyAirfield.Pos - region.Position
+                                x / x.Length()
+                            let p1 = region.Position + dir * 15000.0f
+                            if (p1 - af.Pos).Length() < fighterRange then
+                                if getNumPlanesOfType Bomber enemyAirfieldState.NumPlanes >= 1.0f then
+                                    yield af, {
+                                        Plane = intercepter
+                                        Coalition = coalition
+                                        Pos = p1
+                                        Altitude = 4000.0f
+                                    }
+                                if getNumPlanesOfType Attacker enemyAirfieldState.NumPlanes >= 1.0f then
+                                    yield af, {
+                                        Plane = protector
+                                        Coalition = coalition
+                                        Pos = p1
+                                        Altitude = 3000.0f
+                                    }
+                                if getNumPlanesOfType Fighter enemyAirfieldState.NumPlanes >= 1.0f then
+                                    yield af, {
+                                        Plane = fighter
+                                        Coalition = coalition
+                                        Pos = p1
+                                        Altitude = 2500.0f
+                                    }
         // Border patrol and offensive patrol
         let frontline = computeFrontLine true world state.Regions
         for region1, region2 in frontline do
@@ -145,19 +143,21 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                         match PlaneModel.RandomPlaneOfType(world.PlaneSet, PlaneType.Fighter, coalition) with
                         | Some fighter ->
                             let p1 = ourRegion.Position + dir * 5000.0f
-                            yield af, {
-                                Plane = fighter
-                                Coalition = coalition
-                                Pos = p1
-                                Altitude = 3000.0f
-                            }
+                            if (p1 - af.Pos).Length() < fighterRange then
+                                yield af, {
+                                    Plane = fighter
+                                    Coalition = coalition
+                                    Pos = p1
+                                    Altitude = 3000.0f
+                                }
                             let p1 = ourRegion.Position + dir * 20000.0f
-                            yield af, {
-                                Plane = fighter
-                                Coalition = coalition
-                                Pos = p1
-                                Altitude = 3000.0f
-                            }
+                            if (p1 - af.Pos).Length() < fighterRange then
+                                yield af, {
+                                    Plane = fighter
+                                    Coalition = coalition
+                                    Pos = p1
+                                    Altitude = 3000.0f
+                                }
                         | None ->
                             ()
                     | None ->
