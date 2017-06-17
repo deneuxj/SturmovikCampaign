@@ -210,7 +210,8 @@ let createConvoyOrders (maxTransfer : float32<E>) (getPaths : World -> Path list
                                     let alreadyAtReceiver = tryFind ngh storages
                                     let availableToReceive = tryFind ngh capacities - alreadyAtReceiver
                                     let requested = min receiverNeeds availableToReceive
-                                    min regState.Supplies requested
+                                    let willingToSend = regState.Supplies - 0.75f * senderNeeds
+                                    min willingToSend requested
                                     |> min maxTransfer
                                 if transfer > 0.0f<E> then
                                     yield { Start = region.RegionId ; Destination = ngh ; TransportedSupplies = transfer }
