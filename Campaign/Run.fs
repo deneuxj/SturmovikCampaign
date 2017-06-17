@@ -77,6 +77,7 @@ module Filenames =
     let weather = "weather.xml"
     let axisAAR = "axisAAR.xml"
     let alliesAAR = "alliesAAR.xml"
+    let missionResults = "results.xml"
 
 module Init =
     open SturmovikMission.Blocks.BlocksMissionData
@@ -544,6 +545,7 @@ module MissionLogParsing =
           Filenames.axisAAR
           Filenames.alliesAAR
           Filenames.weather
+          Filenames.missionResults
         ]
         |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
 
@@ -639,14 +641,18 @@ module MissionLogParsing =
         let movements = axisOrders.Columns @ alliesOrders.Columns
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
 
-        { Entries = entries
-          Shipments = shipments
-          StaticDamages = staticDamages
-          VehicleDamages = vehicleDamages
-          TakeOffs = takeOffs
-          Landings = landings
-          ColumnDepartures = columnDepartures
-        }
+        let results =
+            { Entries = entries
+              Shipments = shipments
+              StaticDamages = staticDamages
+              VehicleDamages = vehicleDamages
+              TakeOffs = takeOffs
+              Landings = landings
+              ColumnDepartures = columnDepartures
+            }
+        use missionFile = File.CreateText(Path.Combine(config.OutputDir, Filenames.missionResults))
+        serializer.Serialize(missionFile, results)
+        results
 
     let updateState(config, missionResults) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
