@@ -171,6 +171,7 @@ type AiAttack =
       Start : Vector2
       Target : Vector2
       Altitude : float32
+      Landing : OptionalLandOrder
     }
 with
     member this.Payload =
@@ -185,7 +186,7 @@ with
         | _ -> 0
 
     member this.ToPatrolBlock(store, lcStore) =
-        let block = Attacker.Create(store, lcStore, this.Start, this.Altitude, this.Target)
+        let block = Attacker.Create(store, lcStore, this.Start, this.Altitude, this.Target, this.Landing)
         block.Plane.Country <- this.Coalition.ToCountry
         block.Plane.Script <- this.Plane.ScriptModel.Script
         block.Plane.Model <- this.Plane.ScriptModel.Model
@@ -215,6 +216,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
                     if numAxisAttackers >= 7.0f then
                         yield {
                             Start = af.Pos
+                            Landing = Land afState.Runway
                             Target = af2.Pos
                             Altitude = 2000.0f
                             Plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, Attacker, Axis).Value
@@ -223,6 +225,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
                     if numAlliesAttackers >= 7.0f then
                         yield {
                             Start = af2.Pos
+                            Landing = Land afState2.Runway
                             Target = af.Pos
                             Altitude = 2000.0f
                             Plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, Attacker, Allies).Value
@@ -242,6 +245,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
                             for supplyGroup in supplies do
                                 yield {
                                     Start = af.Pos
+                                    Landing = Land afState.Runway
                                     Target = supplyGroup.Head.Pos.Pos
                                     Altitude = 2000.0f
                                     Plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, Attacker, coalition).Value

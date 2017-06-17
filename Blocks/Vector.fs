@@ -92,3 +92,12 @@ with
     member this.AssignTo(dst : Mcu.Vec3) =
         dst.X <- float this.X
         dst.Z <- float this.Y
+
+    member this.YOri =
+        let angle = atan2 this.Y this.X
+        180.0f * angle / float32 System.Math.PI
+        |> fun degrees ->
+            if degrees < 0.0f then
+                degrees + 360.0f
+            else
+                degrees

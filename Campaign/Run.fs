@@ -84,6 +84,8 @@ module Init =
     open Campaign.WorldState
     open System.IO
     open MBrace.FsPickler
+    open System.Numerics
+    open Vector
 
     let createWorld(config : Configuration) =
         let random =
@@ -134,13 +136,16 @@ module Init =
         let outputDir = config.OutputDir
         use worldFile = File.CreateText(Path.Combine(outputDir, Filenames.world))
         serializer.Serialize(worldFile, world)
+        world.StartDate
 
     let createState(config : Configuration) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
         let world = serializer.Deserialize<World>(worldFile)
+        use weatherFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.weather))
+        let weather = serializer.Deserialize<Weather.WeatherState>(weatherFile)
 
-        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile))
+        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile), Vector2.UnitX.Rotate(float32 <| weather.Wind.Direction))
 
         let outputDir = config.OutputDir
         use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
@@ -193,17 +198,27 @@ module WeatherComputation =
     open System.IO
     open Campaign.WorldDescription
     open Campaign.WorldState
+    open Campaign.NewWorldState
 
-    let run(config : Configuration) =
+    let getNextDateFromState(config : Configuration) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
-        let world, state =
+        let state =
             try
-                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
                 use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
-                serializer.Deserialize<World>(worldFile),
                 serializer.Deserialize<WorldState>(stateFile)
             with
-            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+        let date = nextDate (1.0f<H> * float32 config.MissionLength / 60.0f) state.Date
+        date
+
+    let run(config : Configuration, date : System.DateTime) =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let world =
+            try
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                serializer.Deserialize<World>(worldFile)
+            with
+            | e -> failwithf "Failed to read world data. Did you run Init.fsx? Reason was: '%s'" e.Message
         let random =
             match config.Seed with
             | Some n ->
@@ -211,7 +226,7 @@ module WeatherComputation =
             | None ->
                 System.Random()
         let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
-        let weather = Weather.getWeather random (state.Date + daysOffset)
+        let weather = Weather.getWeather random (date + daysOffset)
 
         use weatherFile = File.CreateText(Path.Combine(config.OutputDir, Filenames.weather))
         serializer.Serialize(weatherFile, weather)
@@ -493,6 +508,45 @@ module MissionLogParsing =
     open NLog
     open System.Text.RegularExpressions
 
+    type MissionResults = {
+        Entries : LogEntry list
+        Shipments : SuppliesShipped list
+        StaticDamages : Damage list
+        VehicleDamages : Damage list
+        TakeOffs : TookOff list
+        Landings : Landed list
+        ColumnDepartures : ColumnLeft list
+    }
+
+    let backupFiles config =
+        let outputDir = config.OutputDir
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let state =
+            try
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                serializer.Deserialize<WorldState>(stateFile)
+            with
+            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+        let backupFile name =
+            let backupName =
+                let dateString =
+                    state.Date.ToString("yyyy-MM-dd_HH-mm-ss")
+                sprintf "%s_%s.xml" name dateString
+            let backupDest = Path.Combine(outputDir, backupName)
+            if File.Exists backupDest then
+                File.Delete(backupDest)
+            let infile = Path.Combine(outputDir, sprintf "%s.xml" name)
+            if File.Exists(infile) then
+                File.Copy(infile, backupDest)
+        [ Filenames.state
+          Filenames.axisOrders
+          Filenames.alliesOrders
+          Filenames.axisAAR
+          Filenames.alliesAAR
+          Filenames.weather
+        ]
+        |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
+
     let stage1(config : Configuration) =
         let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
 
@@ -584,11 +638,36 @@ module MissionLogParsing =
             both |> List.choose (function Landed x -> Some x | _ -> None)
         let movements = axisOrders.Columns @ alliesOrders.Columns
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
+
+        { Entries = entries
+          Shipments = shipments
+          StaticDamages = staticDamages
+          VehicleDamages = vehicleDamages
+          TakeOffs = takeOffs
+          Landings = landings
+          ColumnDepartures = columnDepartures
+        }
+
+    let updateState(config, missionResults) =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let world, state, axisOrders, alliesOrders, weather =
+            try
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                use axisOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.axisOrders))
+                use alliesOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.alliesOrders))
+                use weatherFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.weather))
+                serializer.Deserialize<World>(worldFile),
+                serializer.Deserialize<WorldState>(stateFile),
+                serializer.Deserialize<OrderPackage>(axisOrdersFile),
+                serializer.Deserialize<OrderPackage>(alliesOrdersFile),
+                serializer.Deserialize<Weather.WeatherState>(weatherFile)
+            with
+            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
-
-        let state2, newlyProduced = newState dt world state axisOrders.Production alliesOrders.Production movements shipments (axisOrders.Resupply @ alliesOrders.Resupply) (staticDamages @ vehicleDamages) takeOffs landings columnDepartures
-
-        (entries, shipments, staticDamages, vehicleDamages, takeOffs, landings, columnDepartures, newlyProduced), (state, state2)
+        let movements = axisOrders.Columns @ alliesOrders.Columns
+        let state2, newlyProduced = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures (float32 weather.Wind.Direction)
+        newlyProduced, (state, state2)
 
     let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -609,32 +688,10 @@ module MissionLogParsing =
 
     let stage2 config (state, state2, aarAxis, aarAllies) =
         let outputDir = config.OutputDir
-
-        let backupFile name =
-            let backupName =
-                let dateString =
-                    state.Date.ToString("yyyy-MM-dd_HH-mm-ss")
-                sprintf "%s_%s.xml" name dateString
-            let backupDest = Path.Combine(outputDir, backupName)
-            if File.Exists backupDest then
-                File.Delete(backupDest)
-            let infile = Path.Combine(outputDir, sprintf "%s.xml" name)
-            if File.Exists(infile) then
-                File.Copy(infile, backupDest)
-
-        do
-            let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            [ Filenames.state
-              Filenames.axisOrders
-              Filenames.alliesOrders
-              Filenames.axisAAR
-              Filenames.alliesAAR
-              Filenames.weather
-            ]
-            |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
-            use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
-            serializer.Serialize(stateFile, state2)
-            use aarAxisFile = File.CreateText(Path.Combine(outputDir, Filenames.axisAAR))
-            serializer.Serialize(aarAxisFile, aarAxis)
-            use aarAlliesFile = File.CreateText(Path.Combine(outputDir, Filenames.alliesAAR))
-            serializer.Serialize(aarAlliesFile, aarAllies)
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
+        serializer.Serialize(stateFile, state2)
+        use aarAxisFile = File.CreateText(Path.Combine(outputDir, Filenames.axisAAR))
+        serializer.Serialize(aarAxisFile, aarAxis)
+        use aarAlliesFile = File.CreateText(Path.Combine(outputDir, Filenames.alliesAAR))
+        serializer.Serialize(aarAlliesFile, aarAllies)

@@ -8,6 +8,8 @@ open Campaign.WorldDescription
 open Campaign.Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open System.Numerics
+open Vector
 
 /// Types of ground attack vehicles.
 type GroundAttackVehicle =
@@ -95,6 +97,7 @@ type AirfieldState = {
     NumPlanes : Map<PlaneModel, float32> // float because we are talking airplane damages into account. Two half-damaged planes make one usable one.
     StorageHealth : float32 list
     Supplies : float32<E>
+    Runway : Vector2 * float32
 }
 with
     member this.StorageCapacity(af : WorldDescription.Airfield) =
@@ -142,6 +145,32 @@ with
             Supplies = this.Supplies - damage |> max 0.0f<E>
         }
 
+    member this.SetRunway(windDirection : Vector2, spawns : T.Airfield list) =
+        let runwayPos, runwayDir =
+            spawns
+            |> List.choose(fun spawn ->
+                let chart = spawn.TryGetChart()
+                match chart with
+                | None -> None
+                | Some chart ->
+                    let points = chart.GetPoints()
+                    let pos, direction =
+                        points
+                        |> List.pairwise
+                        |> List.pick(fun (p1, p2) ->
+                            if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
+                                let mkVec(p : T.Airfield.Chart.Point) =
+                                    Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
+                                Some(mkVec(p1), (mkVec(p2) - mkVec(p1)).Rotate(spawn.GetYOri().Value |> float32))
+                            else
+                                None)
+                    let len = direction.Length()
+                    let direction = direction / len
+                    Some(pos, direction))
+            |> List.maxBy (fun (pos, direction) ->
+                -Vector2.Dot(direction, windDirection))
+        { this with Runway = (runwayPos, runwayDir.YOri)}
+
 /// Packages all state data.
 type WorldState = {
     Regions : RegionState list
@@ -182,8 +211,6 @@ with
 
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu
-open System.Numerics
-open Vector
 
 /// <summary>
 /// Compute the number of regions from any region to its nearest reachable source region.
@@ -384,7 +411,7 @@ let computeDefenseNeeds (world : World) =
     |> List.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
 
 /// Build the initial state
-let mkInitialState(world : World, strategyFile : string) =
+let mkInitialState(world : World, strategyFile : string, windDirection : Vector2) =
     let data = T.GroupData(Stream.FromFile strategyFile)
     
     let wg = WorldFastAccess.Create(world)
@@ -495,7 +522,8 @@ let mkInitialState(world : World, strategyFile : string) =
           NumPlanes = numPlanes
           StorageHealth = airfield.Storage |> List.map (fun _ -> 1.0f)
           Supplies = supplies
-        }
+          Runway = Vector2.Zero, 0.0f
+        }.SetRunway(windDirection, airfield.Spawn)
     let airfields = world.Airfields |> List.map mkAirfield
     { Airfields = airfields
       Regions = regions
@@ -506,4 +534,4 @@ let mkInitialState(world : World, strategyFile : string) =
     |> updateNumCanons world
 
 type WorldState with
-    static member Create(world : World, strategyFile : string) = mkInitialState(world, strategyFile)
+    static member Create(world : World, strategyFile : string, windDirection : Vector2) = mkInitialState(world, strategyFile, windDirection)

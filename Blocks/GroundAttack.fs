@@ -8,6 +8,10 @@ open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
 
+type OptionalLandOrder =
+    | Land of Vector2 * float32
+    | NoLanding
+
 /// A single attacker that flies to an objective, attacks ground targets there and then flies to an exit point.
 type Attacker = {
     Start : Mcu.McuTrigger
@@ -21,7 +25,7 @@ type Attacker = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, pos : Vector2, planeAlt : float32, target : Vector2) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, pos : Vector2, planeAlt : float32, target : Vector2, landOrder : OptionalLandOrder) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("GroundAttack").CreateMcuList()
@@ -38,6 +42,8 @@ with
         let attack = getTriggerByName group T.Blocks.AttackGroundTargets
         let respawnDelay = getTriggerByName group T.Blocks.RespawnDelay :?> Mcu.McuTimer
         let attackDuration = getTriggerByName group T.Blocks.AttackDuration :?> Mcu.McuTimer
+        let landNode = getTriggerByName group T.Blocks.Land
+        let landDelay = getTriggerByName group T.Blocks.LandDelay :?> Mcu.McuTimer
         // Respawn timing, depends on travel time
         respawnDelay.Time <-
             attackDuration.Time + 3.6 * 2.0 * (float <| (target - pos).Length()) / float ingress.Speed
@@ -58,6 +64,14 @@ with
         ingressPos.AssignTo ingress.Pos
         egressPos.AssignTo egress.Pos
         exitPos.AssignTo exit.Pos
+        match landOrder with
+        | Land(pos, yori) ->
+            pos.AssignTo landNode.Pos
+            landNode.Ori.Y <- float yori
+            landDelay.Time <- 5.0 * 60.0
+            Mcu.addTargetLink exit landNode.Index
+        | NoLanding ->
+            ()
         // result
         { Start = start
           Plane = plane

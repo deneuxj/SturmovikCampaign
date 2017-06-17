@@ -4,6 +4,7 @@
 
 #r "ploggy"
 #r "FsPickler"
+#r "System.Numerics.Vectors"
 
 open System.Diagnostics
 open System.IO
@@ -65,7 +66,6 @@ let startServer() =
 
 type ExecutionState =
     | KillServer
-    | MakeWeather
     | DecideOrders
     | GenerateMission
     | StartServer
@@ -81,12 +81,6 @@ with
                 printfn "Kill server..."
                 killServer serverProc
                 return None, ExtractResults
-            }
-        | MakeWeather ->
-            async {
-                printfn "Make weather..."
-                Campaign.Run.WeatherComputation.run config
-                return None, DecideOrders
             }
         | DecideOrders ->
             async {
@@ -130,16 +124,20 @@ with
         | ExtractResults ->
             async {
                 printfn "Extract results..."
-                let data, ((oldState, newState) as states) = Campaign.Run.MissionLogParsing.stage1 config
+                let missionResults = Campaign.Run.MissionLogParsing.stage1 config
+                Campaign.Run.MissionLogParsing.backupFiles config
+                printfn "Make weather..."
+                let date = Campaign.Run.WeatherComputation.getNextDateFromState config
+                Campaign.Run.WeatherComputation.run(config, date)
+                let newProduction, ((oldState, newState) as states) = Campaign.Run.MissionLogParsing.updateState(config, missionResults)
                 if not(newState.HasCoalitionFactories(Axis)) then
                     return serverProc, CampaignOver(Allies)
                 elif not(newState.HasCoalitionFactories(Allies)) then
                     return serverProc, CampaignOver(Axis)
                 else
-                    let entries, shipped, staticDamages, vehicleDamages, tookOff, landed, columnLeft, newProduction = data
-                    let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, tookOff, landed, staticDamages @ vehicleDamages, newProduction)
+                    let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, missionResults.TakeOffs, missionResults.Landings, missionResults.StaticDamages @ missionResults.VehicleDamages, newProduction)
                     Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR)
-                    return serverProc, MakeWeather
+                    return serverProc, DecideOrders
             }
         | CampaignOver _ ->
             async {

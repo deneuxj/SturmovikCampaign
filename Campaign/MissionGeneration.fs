@@ -199,7 +199,7 @@ let createBlocks random store world state inAttackArea (blocks : T.Block list) =
 
 let createBridges random store world state inAttackArea (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged random store world state inAttackArea blocks
 
-let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (windDirection : Vector2) =
+let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) =
     let getOwner =
         let m =
             state.Regions
@@ -215,25 +215,21 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                 let af =
                     let spawn =
                         airfield.Spawn
-                        |> List.maxBy(fun spawn ->
+                        |> List.minBy(fun spawn ->
                             let chart = spawn.TryGetChart()
                             match chart with
-                            | None -> 0.0f
+                            | None -> System.Single.MaxValue
                             | Some chart ->
                                 let points = chart.GetPoints()
-                                let direction =
+                                let distance =
                                     points
-                                    |> List.pairwise
-                                    |> List.pick(fun (p1, p2) ->
-                                        if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
-                                            let mkVec(p : T.Airfield.Chart.Point) =
-                                                Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
-                                            Some((mkVec(p2) - mkVec(p1)).Rotate(spawn.GetYOri().Value |> float32))
+                                    |> List.pick(fun p1 ->
+                                        if p1.GetType().Value = 2 then
+                                            let p = Vector2(float32 <| p1.GetX().Value, float32 <| p1.GetY().Value)
+                                            Some ((p - fst state.Runway).Length())
                                         else
                                             None)
-                                let len = direction.Length()
-                                let direction = direction / len
-                                -Vector2.Dot(direction, windDirection))
+                                distance)
                         |> fun spawn ->
                             spawn
                                 .SetReturnPlanes(T.Boolean true)
@@ -757,7 +753,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let bridges =
         strategyMissionData.ListOfBridge
         |> createBridges missionData.Random store missionData.World missionData.State inAttackArea
-    let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State (Vector2.UnitX.Rotate(float32 missionData.Weather.Wind.Direction))
+    let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State
     let mkConvoyNodes orders =
         let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State orders
         for node, convoy in List.zip convoyPrioNodes.Nodes convoys do
