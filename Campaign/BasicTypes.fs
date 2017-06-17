@@ -82,11 +82,16 @@ with
         | Contains "industrial_cornerl_02" -> [0..9]
         | Contains "industrial_cornerr_01" -> [0..6]
         | Contains "industrial_cornerr_02" -> [0..10]
+        | Contains "vl_pvrz01" -> [1]
+        | Contains "vl_pvrz03" -> [3]
+        | Contains "vl_rounddepot" -> [1..3]
         | _ -> []
 
     member this.Production =
         match this.Model with
         | Contains "industrial_" -> 25.0f<E/H>
+        | Contains "vl_pvrz01" | Contains "vl_pvrz03" -> 25.0f<E/H>
+        | Contains "vl_rounddepot" -> 25.0f<E/H>
         | _ -> 0.0f<E/H>
 
     member this.Storage =
@@ -104,6 +109,8 @@ with
         | Contains "arf_barak" -> 10000
         | Contains "arf_hangar" -> 10000
         | Contains "industrial" -> 10000
+        | Contains "vl_pvrz01" | Contains "vl_pvrz03" -> 10000
+        | Contains "vl_rounddepot" -> 10000
         | Contains "static_" -> 2500
         | _ -> 10000
 
@@ -113,4 +120,6 @@ with
         | Contains "arf_dugouts_2" -> 400.0f<E>
         | Contains "arf_ammo_1" -> 100.0f<E>
         | Contains "industrial_" -> 750.0f<E>
+        | Contains "vl_pvrz01" | Contains "vl_pvrz03" -> 750.0f<E>
+        | Contains "vl_rounddepot" -> 750.0f<E>
         | _ -> 100.0f<E>
