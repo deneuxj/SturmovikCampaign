@@ -320,7 +320,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
                 |> Option.defaultVal 0.0f<E>
             else
                 0.0f<E>)
-    assert(supplyNeed >= 0.0f<E>)
+        |> max 0.0f<E>
 
     let vehicleToProduce, vehicleNeed =
         // vehicle need is dictated by number of regions on the front line
@@ -349,7 +349,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
             else
                 MediumTank
         vehicle, need
-    assert(vehicleNeed >= 0.0f<E>)
+    let vehicleNeed = max vehicleNeed 0.0f<E>
 
     let planeTypeToProduce, planeNeed =
         let planeTypeShares =
