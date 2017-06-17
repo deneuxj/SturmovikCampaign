@@ -87,6 +87,8 @@ with
         | Contains "vl_rounddepot" -> [1..3]
         | Contains "arf_hangars_1" -> [0..1]
         | Contains "arf_hangararc" -> [1]
+        | Contains "arf_gsm_1" -> [2..4]
+        | Contains "arf_gsm_2" -> [1; 2]
         | _ -> []
 
     member this.Production =
@@ -104,6 +106,8 @@ with
         | Contains "arf_ammo_1" -> 100.0f<E>
         | Contains "arf_hangararc" -> 1000.0f<E>
         | Contains "arf_hangars_1" -> 1200.0f<E>
+        | Contains "arf_gsm_1" -> 100.0f<E>
+        | Contains "arf_gsm_2" -> 75.0f<E>
         | _ -> 0.0f<E>
 
     member this.Durability =
@@ -116,6 +120,8 @@ with
         | Contains "vl_pvrz01" | Contains "vl_pvrz03" -> 10000
         | Contains "vl_rounddepot" -> 10000
         | Contains "static_" -> 2500
+        | Contains "arf_gsm_1" -> 3000
+        | Contains "arf_gsm_2" -> 3000
         | _ -> 10000
 
     member this.RepairCost =
@@ -126,4 +132,6 @@ with
         | Contains "industrial_" -> 750.0f<E>
         | Contains "vl_pvrz01" | Contains "vl_pvrz03" -> 750.0f<E>
         | Contains "vl_rounddepot" -> 750.0f<E>
+        | Contains "arf_gsm_1" -> 100.0f<E>
+        | Contains "arf_gsm_2" -> 75.0f<E>
         | _ -> 100.0f<E>
