@@ -3,6 +3,7 @@
 open SturmovikMission.DataProvider
 open System.Numerics
 open System.IO
+open Vector
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission;../data/Blocks/Vehicles.mission">
 
@@ -150,6 +151,25 @@ let newBlockWithEntityMcu (store : NumericalIdentifiers.IdStore) country model s
 
 let newObjective idx lcDesc lcName =
     T.MCU_TR_MissionObjective(T.Integer 0, T.Boolean true, T.Integer 0, T.Integer idx, T.Integer lcDesc, T.Integer lcName, T.VectorOfIntegers[], T.Boolean true, T.VectorOfIntegers[], T.Integer 0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
+
+let runwayOfAirfieldSpawn (airfield : T.Airfield) =
+    let chart = airfield.TryGetChart()
+    match chart with
+    | None ->
+        None
+    | Some chart ->
+        let points = chart.GetPoints()
+        let pos, direction =
+            points
+            |> List.pairwise
+            |> List.pick(fun (p1, p2) ->
+                if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
+                    let mkVec(p : T.Airfield.Chart.Point) =
+                        Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
+                    Some(mkVec(p1), (mkVec(p2) - mkVec(p1)).Rotate(airfield.GetYOri().Value |> float32))
+                else
+                    None)
+        Some(pos, direction.YOri)
 
 module CommonMethods =
     let inline createMcu(x : ^T) =

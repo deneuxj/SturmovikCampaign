@@ -146,7 +146,7 @@ module Init =
         use weatherFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.weather))
         let weather = serializer.Deserialize<Weather.WeatherState>(weatherFile)
 
-        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile), Vector2.UnitX.Rotate(float32 <| weather.Wind.Direction))
+        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile), float32 weather.Wind.Direction)
 
         let outputDir = config.OutputDir
         use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))

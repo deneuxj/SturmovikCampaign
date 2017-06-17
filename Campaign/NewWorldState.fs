@@ -10,6 +10,7 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open System.Numerics
 open Vector
+open SturmovikMission.Blocks.BlocksMissionData
 
 /// Add production units according to production priorities
 let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) (priorities : ProductionPriorities) (state : WorldState) =
@@ -718,11 +719,11 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
         )
     { state with Regions = regions }
 
-let updateRunways (world : World) (state : WorldState) (windDirection : Vector2) =
+let updateRunways (world : World) (state : WorldState) (windDirection : float32) =
     let afStates =
         [
             for af, afState in List.zip world.Airfields state.Airfields do
-                yield afState.SetRunway(windDirection, af.Spawn)
+                yield afState.SetRunway(windDirection, af.Spawn |> List.choose runwayOfAirfieldSpawn)
         ]
     { state with Airfields = afStates
     }
@@ -754,5 +755,5 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
     let state6 = applyVehicleDepartures state5 movements columnDepartures
     let state7 = applyConquests world state6 battles
     let state8 = updateNumCanons world state7
-    let state9 = updateRunways world state8 (Vector2.UnitX.Rotate(windOri))
+    let state9 = updateRunways world state8 windOri
     { state9 with Date = nextDate dt state9.Date }, newlyProduced

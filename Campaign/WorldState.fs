@@ -145,31 +145,14 @@ with
             Supplies = this.Supplies - damage |> max 0.0f<E>
         }
 
-    member this.SetRunway(windDirection : Vector2, spawns : T.Airfield list) =
-        let runwayPos, runwayDir =
-            spawns
-            |> List.choose(fun spawn ->
-                let chart = spawn.TryGetChart()
-                match chart with
-                | None -> None
-                | Some chart ->
-                    let points = chart.GetPoints()
-                    let pos, direction =
-                        points
-                        |> List.pairwise
-                        |> List.pick(fun (p1, p2) ->
-                            if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
-                                let mkVec(p : T.Airfield.Chart.Point) =
-                                    Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
-                                Some(mkVec(p1), (mkVec(p2) - mkVec(p1)).Rotate(spawn.GetYOri().Value |> float32))
-                            else
-                                None)
-                    let len = direction.Length()
-                    let direction = direction / len
-                    Some(pos, direction))
-            |> List.maxBy (fun (pos, direction) ->
-                -Vector2.Dot(direction, windDirection))
-        { this with Runway = (runwayPos, runwayDir.YOri)}
+    member this.SetRunway(windDirection : float32, runways : (Vector2 * float32) list) =
+        let upwind =
+            runways
+            |> List.maxBy (fun (_, yori) ->
+                let angleDiff =
+                    (windDirection - yori) * float32 System.Math.PI / 180.0f
+                -cos(angleDiff))
+        { this with Runway = upwind }
 
 /// Packages all state data.
 type WorldState = {
@@ -411,7 +394,7 @@ let computeDefenseNeeds (world : World) =
     |> List.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
 
 /// Build the initial state
-let mkInitialState(world : World, strategyFile : string, windDirection : Vector2) =
+let mkInitialState(world : World, strategyFile : string, windDirection : float32) =
     let data = T.GroupData(Stream.FromFile strategyFile)
     
     let wg = WorldFastAccess.Create(world)
@@ -523,7 +506,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : Vector2
           StorageHealth = airfield.Storage |> List.map (fun _ -> 1.0f)
           Supplies = supplies
           Runway = Vector2.Zero, 0.0f
-        }.SetRunway(windDirection, airfield.Spawn)
+        }.SetRunway(windDirection, airfield.Spawn |> List.choose runwayOfAirfieldSpawn)
     let airfields = world.Airfields |> List.map mkAirfield
     { Airfields = airfields
       Regions = regions
@@ -534,4 +517,4 @@ let mkInitialState(world : World, strategyFile : string, windDirection : Vector2
     |> updateNumCanons world
 
 type WorldState with
-    static member Create(world : World, strategyFile : string, windDirection : Vector2) = mkInitialState(world, strategyFile, windDirection)
+    static member Create(world : World, strategyFile : string, windDirection : float32) = mkInitialState(world, strategyFile, windDirection)
