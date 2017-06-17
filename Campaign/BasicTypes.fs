@@ -85,6 +85,8 @@ with
         | Contains "vl_pvrz01" -> [1]
         | Contains "vl_pvrz03" -> [3]
         | Contains "vl_rounddepot" -> [1..3]
+        | Contains "arf_hangars_1" -> [0..1]
+        | Contains "arf_hangararc" -> [1]
         | _ -> []
 
     member this.Production =
@@ -100,6 +102,8 @@ with
         | Contains "arf_dugouts_2" -> 400.0f<E>
         | Contains "arf_dugouts_3" -> 600.0f<E>
         | Contains "arf_ammo_1" -> 100.0f<E>
+        | Contains "arf_hangararc" -> 1000.0f<E>
+        | Contains "arf_hangars_1" -> 1200.0f<E>
         | _ -> 0.0f<E>
 
     member this.Durability =
