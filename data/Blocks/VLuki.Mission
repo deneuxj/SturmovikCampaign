@@ -119737,7 +119737,7 @@ Group
       Index = 6448;
       LinkTrId = 0;
       XPos = 48598.832;
-      YPos = 68.005;
+      YPos = 158.806;
       ZPos = 134558.047;
       XOri = 0.00;
       YOri = 356.33;
@@ -119759,7 +119759,7 @@ Group
       Index = 6449;
       LinkTrId = 0;
       XPos = 48611.688;
-      YPos = 68.005;
+      YPos = 158.806;
       ZPos = 134367.203;
       XOri = 0.00;
       YOri = 11.11;
@@ -119781,7 +119781,7 @@ Group
       Index = 6450;
       LinkTrId = 0;
       XPos = 48866.773;
-      YPos = 68.005;
+      YPos = 158.806;
       ZPos = 134894.688;
       XOri = 0.00;
       YOri = 280.52;
@@ -119803,7 +119803,7 @@ Group
       Index = 6451;
       LinkTrId = 0;
       XPos = 49059.160;
-      YPos = 68.005;
+      YPos = 158.806;
       ZPos = 134912.750;
       XOri = 0.00;
       YOri = 262.67;
@@ -119825,7 +119825,7 @@ Group
       Index = 6452;
       LinkTrId = 0;
       XPos = 49291.680;
-      YPos = 68.005;
+      YPos = 158.806;
       ZPos = 133355.500;
       XOri = 0.00;
       YOri = 81.91;
@@ -119847,7 +119847,7 @@ Group
       Index = 6453;
       LinkTrId = 0;
       XPos = 49636.367;
-      YPos = 68.005;
+      YPos = 158.806;
       ZPos = 133823.375;
       XOri = 0.00;
       YOri = 178.10;
@@ -119866,98 +119866,10 @@ Group
     Block
     {
       Name = "Block";
-      Index = 6454;
-      LinkTrId = 0;
-      XPos = 49786.699;
-      YPos = 68.005;
-      ZPos = 134768.422;
-      XOri = 0.00;
-      YOri = 258.04;
-      ZOri = 0.00;
-      Model = "graphics\blocks\arf_dugouts_1.mgm";
-      Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_1.txt";
-      Country = 0;
-      Desc = "";
-      Durability = 10000;
-      DamageReport = 50;
-      DamageThreshold = 1;
-      DeleteAfterDeath = 1;
-    }
-    
-
-    Block
-    {
-      Name = "Block";
-      Index = 6455;
-      LinkTrId = 0;
-      XPos = 49813.137;
-      YPos = 68.005;
-      ZPos = 134693.266;
-      XOri = 0.00;
-      YOri = 77.74;
-      ZOri = 0.00;
-      Model = "graphics\blocks\arf_dugouts_1.mgm";
-      Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_1.txt";
-      Country = 0;
-      Desc = "";
-      Durability = 10000;
-      DamageReport = 50;
-      DamageThreshold = 1;
-      DeleteAfterDeath = 1;
-    }
-    
-
-    Block
-    {
-      Name = "Block";
-      Index = 6456;
-      LinkTrId = 0;
-      XPos = 50050.961;
-      YPos = 68.005;
-      ZPos = 134711.688;
-      XOri = 0.00;
-      YOri = 42.70;
-      ZOri = 0.00;
-      Model = "graphics\blocks\arf_gsm_1.mgm";
-      Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_1.txt";
-      Country = 0;
-      Desc = "";
-      Durability = 10000;
-      DamageReport = 50;
-      DamageThreshold = 1;
-      DeleteAfterDeath = 1;
-    }
-    
-
-    Block
-    {
-      Name = "Block";
-      Index = 6457;
-      LinkTrId = 0;
-      XPos = 48644.254;
-      YPos = 68.005;
-      ZPos = 133907.234;
-      XOri = 0.00;
-      YOri = 347.54;
-      ZOri = 0.00;
-      Model = "graphics\blocks\arf_gsm_2.mgm";
-      Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_2.txt";
-      Country = 0;
-      Desc = "";
-      Durability = 10000;
-      DamageReport = 50;
-      DamageThreshold = 1;
-      DeleteAfterDeath = 1;
-    }
-    
-
-    Block
-    {
-      Name = "Block";
       Index = 6458;
       LinkTrId = 0;
       XPos = 49600.430;
-      YPos = 68.005;
+      YPos = 158.806;
       ZPos = 133700.688;
       XOri = 0.00;
       YOri = 51.20;
@@ -136128,7 +136040,7 @@ Group
   {
     Name = "Block";
     Index = 7317;
-    LinkTrId = 7390;
+    LinkTrId = 7318;
     XPos = 13324.263;
     YPos = 141.446;
     ZPos = 12066.654;
@@ -136149,8 +136061,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7318;
-    LinkTrId = 7391;
+    Index = 7319;
+    LinkTrId = 7320;
     XPos = 13396.406;
     YPos = 141.446;
     ZPos = 12026.457;
@@ -136171,8 +136083,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7319;
-    LinkTrId = 7392;
+    Index = 7321;
+    LinkTrId = 7322;
     XPos = 13346.279;
     YPos = 141.446;
     ZPos = 11824.082;
@@ -136193,8 +136105,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7320;
-    LinkTrId = 7393;
+    Index = 7323;
+    LinkTrId = 7324;
     XPos = 32448.514;
     YPos = 120.527;
     ZPos = 36434.223;
@@ -136215,8 +136127,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7321;
-    LinkTrId = 7394;
+    Index = 7325;
+    LinkTrId = 7326;
     XPos = 32557.824;
     YPos = 120.714;
     ZPos = 36327.629;
@@ -136237,8 +136149,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7322;
-    LinkTrId = 7395;
+    Index = 7327;
+    LinkTrId = 7328;
     XPos = 32725.002;
     YPos = 120.565;
     ZPos = 35982.117;
@@ -136259,8 +136171,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7323;
-    LinkTrId = 7396;
+    Index = 7329;
+    LinkTrId = 7330;
     XPos = 63270.637;
     YPos = 160.342;
     ZPos = 10851.127;
@@ -136281,8 +136193,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7324;
-    LinkTrId = 7397;
+    Index = 7331;
+    LinkTrId = 7332;
     XPos = 63468.020;
     YPos = 160.342;
     ZPos = 10571.060;
@@ -136303,8 +136215,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7325;
-    LinkTrId = 7398;
+    Index = 7333;
+    LinkTrId = 7334;
     XPos = 63685.660;
     YPos = 164.790;
     ZPos = 10304.757;
@@ -136325,8 +136237,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7326;
-    LinkTrId = 7399;
+    Index = 7335;
+    LinkTrId = 7336;
     XPos = 63637.344;
     YPos = 160.342;
     ZPos = 10469.499;
@@ -136347,8 +136259,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7327;
-    LinkTrId = 7400;
+    Index = 7337;
+    LinkTrId = 7338;
     XPos = 63748.590;
     YPos = 160.801;
     ZPos = 10446.411;
@@ -136369,8 +136281,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7328;
-    LinkTrId = 7401;
+    Index = 7339;
+    LinkTrId = 7340;
     XPos = 63692.953;
     YPos = 160.631;
     ZPos = 12052.233;
@@ -136391,8 +136303,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7329;
-    LinkTrId = 7402;
+    Index = 7341;
+    LinkTrId = 7342;
     XPos = 63607.715;
     YPos = 160.342;
     ZPos = 12046.170;
@@ -136413,8 +136325,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7330;
-    LinkTrId = 7403;
+    Index = 7343;
+    LinkTrId = 7344;
     XPos = 42217.813;
     YPos = 126.670;
     ZPos = 52953.516;
@@ -136435,8 +136347,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7331;
-    LinkTrId = 7404;
+    Index = 7345;
+    LinkTrId = 7346;
     XPos = 42768.738;
     YPos = 126.504;
     ZPos = 52826.676;
@@ -136457,8 +136369,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7332;
-    LinkTrId = 7405;
+    Index = 7347;
+    LinkTrId = 7348;
     XPos = 42816.863;
     YPos = 126.504;
     ZPos = 53164.852;
@@ -136479,8 +136391,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7333;
-    LinkTrId = 7406;
+    Index = 7349;
+    LinkTrId = 7350;
     XPos = 42869.223;
     YPos = 127.043;
     ZPos = 53145.316;
@@ -136501,8 +136413,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7334;
-    LinkTrId = 7407;
+    Index = 7351;
+    LinkTrId = 7352;
     XPos = 42854.898;
     YPos = 126.512;
     ZPos = 53098.191;
@@ -136523,8 +136435,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7335;
-    LinkTrId = 7408;
+    Index = 7353;
+    LinkTrId = 7354;
     XPos = 41642.340;
     YPos = 126.629;
     ZPos = 54466.371;
@@ -136545,8 +136457,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7336;
-    LinkTrId = 7409;
+    Index = 7355;
+    LinkTrId = 7356;
     XPos = 41643.281;
     YPos = 126.504;
     ZPos = 54294.883;
@@ -136567,8 +136479,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7337;
-    LinkTrId = 7410;
+    Index = 7357;
+    LinkTrId = 7358;
     XPos = 41658.402;
     YPos = 126.504;
     ZPos = 54220.574;
@@ -136589,8 +136501,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7338;
-    LinkTrId = 7411;
+    Index = 7359;
+    LinkTrId = 7360;
     XPos = 41826.172;
     YPos = 126.504;
     ZPos = 54425.953;
@@ -136611,8 +136523,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7339;
-    LinkTrId = 7412;
+    Index = 7361;
+    LinkTrId = 7362;
     XPos = 57139.849;
     YPos = 56.774;
     ZPos = 70806.641;
@@ -136633,8 +136545,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7340;
-    LinkTrId = 7413;
+    Index = 7363;
+    LinkTrId = 7364;
     XPos = 57225.618;
     YPos = 56.774;
     ZPos = 70983.141;
@@ -136655,8 +136567,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7341;
-    LinkTrId = 7414;
+    Index = 7365;
+    LinkTrId = 7366;
     XPos = 57252.317;
     YPos = 56.774;
     ZPos = 71046.797;
@@ -136677,8 +136589,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7342;
-    LinkTrId = 7415;
+    Index = 7367;
+    LinkTrId = 7368;
     XPos = 57285.149;
     YPos = 56.774;
     ZPos = 70978.445;
@@ -136699,8 +136611,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7343;
-    LinkTrId = 7416;
+    Index = 7369;
+    LinkTrId = 7370;
     XPos = 56834.540;
     YPos = 56.774;
     ZPos = 71113.844;
@@ -136721,8 +136633,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7344;
-    LinkTrId = 7417;
+    Index = 7371;
+    LinkTrId = 7372;
     XPos = 56738.563;
     YPos = 56.774;
     ZPos = 71114.711;
@@ -136743,8 +136655,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7345;
-    LinkTrId = 7418;
+    Index = 7373;
+    LinkTrId = 7374;
     XPos = 55836.716;
     YPos = 56.774;
     ZPos = 71831.672;
@@ -136765,8 +136677,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7346;
-    LinkTrId = 7419;
+    Index = 7375;
+    LinkTrId = 7376;
     XPos = 55815.380;
     YPos = 56.774;
     ZPos = 71793.438;
@@ -136787,8 +136699,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7347;
-    LinkTrId = 7420;
+    Index = 7377;
+    LinkTrId = 7378;
     XPos = 55870.923;
     YPos = 56.774;
     ZPos = 71787.289;
@@ -136809,8 +136721,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7348;
-    LinkTrId = 7421;
+    Index = 7379;
+    LinkTrId = 7380;
     XPos = 55821.431;
     YPos = 56.774;
     ZPos = 72117.695;
@@ -136831,8 +136743,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7349;
-    LinkTrId = 7422;
+    Index = 7381;
+    LinkTrId = 7382;
     XPos = 32774.066;
     YPos = 139.452;
     ZPos = 104554.734;
@@ -136853,8 +136765,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7350;
-    LinkTrId = 7423;
+    Index = 7383;
+    LinkTrId = 7384;
     XPos = 32816.125;
     YPos = 139.452;
     ZPos = 104548.477;
@@ -136875,8 +136787,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7351;
-    LinkTrId = 7424;
+    Index = 7385;
+    LinkTrId = 7386;
     XPos = 32521.553;
     YPos = 139.452;
     ZPos = 105713.469;
@@ -136897,8 +136809,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7352;
-    LinkTrId = 7425;
+    Index = 7387;
+    LinkTrId = 7388;
     XPos = 32519.338;
     YPos = 139.452;
     ZPos = 105643.328;
@@ -136919,8 +136831,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7353;
-    LinkTrId = 7426;
+    Index = 7389;
+    LinkTrId = 7390;
     XPos = 32734.088;
     YPos = 137.607;
     ZPos = 105591.305;
@@ -136941,8 +136853,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7354;
-    LinkTrId = 7427;
+    Index = 7391;
+    LinkTrId = 7392;
     XPos = 32658.531;
     YPos = 139.452;
     ZPos = 105326.828;
@@ -136963,8 +136875,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7355;
-    LinkTrId = 7428;
+    Index = 7393;
+    LinkTrId = 7394;
     XPos = 21988.047;
     YPos = 154.394;
     ZPos = 151792.375;
@@ -136985,8 +136897,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7356;
-    LinkTrId = 7429;
+    Index = 7395;
+    LinkTrId = 7396;
     XPos = 22120.371;
     YPos = 154.394;
     ZPos = 151778.250;
@@ -137007,8 +136919,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7357;
-    LinkTrId = 7430;
+    Index = 7397;
+    LinkTrId = 7398;
     XPos = 22117.834;
     YPos = 154.394;
     ZPos = 151755.375;
@@ -137029,8 +136941,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7358;
-    LinkTrId = 7431;
+    Index = 7399;
+    LinkTrId = 7400;
     XPos = 22287.482;
     YPos = 154.394;
     ZPos = 151783.219;
@@ -137051,8 +136963,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7359;
-    LinkTrId = 7432;
+    Index = 7401;
+    LinkTrId = 7402;
     XPos = 22319.510;
     YPos = 154.394;
     ZPos = 151733.328;
@@ -137073,8 +136985,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7360;
-    LinkTrId = 7433;
+    Index = 7403;
+    LinkTrId = 7404;
     XPos = 21631.082;
     YPos = 154.394;
     ZPos = 153676.875;
@@ -137095,8 +137007,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7361;
-    LinkTrId = 7434;
+    Index = 7405;
+    LinkTrId = 7406;
     XPos = 21860.813;
     YPos = 154.394;
     ZPos = 153814.844;
@@ -137117,8 +137029,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7362;
-    LinkTrId = 7435;
+    Index = 7407;
+    LinkTrId = 7408;
     XPos = 84229.039;
     YPos = 197.225;
     ZPos = 141795.781;
@@ -137139,8 +137051,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7363;
-    LinkTrId = 7436;
+    Index = 7409;
+    LinkTrId = 7410;
     XPos = 84053.930;
     YPos = 197.225;
     ZPos = 141970.688;
@@ -137161,8 +137073,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7364;
-    LinkTrId = 7437;
+    Index = 7411;
+    LinkTrId = 7412;
     XPos = 84173.680;
     YPos = 197.225;
     ZPos = 141552.984;
@@ -137183,8 +137095,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7365;
-    LinkTrId = 7438;
+    Index = 7413;
+    LinkTrId = 7414;
     XPos = 84195.930;
     YPos = 197.225;
     ZPos = 141611.609;
@@ -137205,8 +137117,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7366;
-    LinkTrId = 7439;
+    Index = 7415;
+    LinkTrId = 7416;
     XPos = 84228.211;
     YPos = 197.225;
     ZPos = 141644.172;
@@ -137227,8 +137139,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7367;
-    LinkTrId = 7440;
+    Index = 7417;
+    LinkTrId = 7418;
     XPos = 85044.313;
     YPos = 197.225;
     ZPos = 140893.656;
@@ -137249,8 +137161,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7368;
-    LinkTrId = 7441;
+    Index = 7419;
+    LinkTrId = 7420;
     XPos = 85080.336;
     YPos = 197.225;
     ZPos = 140933.453;
@@ -137271,8 +137183,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7369;
-    LinkTrId = 7442;
+    Index = 7421;
+    LinkTrId = 7422;
     XPos = 13399.369;
     YPos = 141.446;
     ZPos = 11118.039;
@@ -137293,8 +137205,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7370;
-    LinkTrId = 7443;
+    Index = 7423;
+    LinkTrId = 7424;
     XPos = 12718.559;
     YPos = 141.446;
     ZPos = 11474.301;
@@ -137315,8 +137227,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7371;
-    LinkTrId = 7444;
+    Index = 7425;
+    LinkTrId = 7426;
     XPos = 12620.060;
     YPos = 141.446;
     ZPos = 11569.342;
@@ -137337,8 +137249,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7372;
-    LinkTrId = 7445;
+    Index = 7427;
+    LinkTrId = 7428;
     XPos = 64424.702;
     YPos = 160.342;
     ZPos = 11188.629;
@@ -137359,8 +137271,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7373;
-    LinkTrId = 7446;
+    Index = 7429;
+    LinkTrId = 7430;
     XPos = 64344.906;
     YPos = 160.358;
     ZPos = 10896.033;
@@ -137381,8 +137293,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7374;
-    LinkTrId = 7447;
+    Index = 7431;
+    LinkTrId = 7432;
     XPos = 63977.305;
     YPos = 160.342;
     ZPos = 11617.496;
@@ -137403,8 +137315,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7375;
-    LinkTrId = 7448;
+    Index = 7433;
+    LinkTrId = 7434;
     XPos = 32795.818;
     YPos = 123.591;
     ZPos = 36111.934;
@@ -137425,8 +137337,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7376;
-    LinkTrId = 7449;
+    Index = 7435;
+    LinkTrId = 7436;
     XPos = 32763.952;
     YPos = 121.279;
     ZPos = 36201.539;
@@ -137447,8 +137359,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7377;
-    LinkTrId = 7450;
+    Index = 7437;
+    LinkTrId = 7438;
     XPos = 41942.161;
     YPos = 126.504;
     ZPos = 53939.030;
@@ -137469,8 +137381,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7378;
-    LinkTrId = 7451;
+    Index = 7439;
+    LinkTrId = 7440;
     XPos = 42013.177;
     YPos = 126.504;
     ZPos = 53872.106;
@@ -137491,8 +137403,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7379;
-    LinkTrId = 7452;
+    Index = 7441;
+    LinkTrId = 7442;
     XPos = 56024.227;
     YPos = 56.774;
     ZPos = 72099.632;
@@ -137513,8 +137425,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7380;
-    LinkTrId = 7453;
+    Index = 7443;
+    LinkTrId = 7444;
     XPos = 57169.311;
     YPos = 56.774;
     ZPos = 71423.205;
@@ -137535,8 +137447,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7381;
-    LinkTrId = 7454;
+    Index = 7445;
+    LinkTrId = 7446;
     XPos = 56725.373;
     YPos = 56.774;
     ZPos = 71646.995;
@@ -137557,8 +137469,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7382;
-    LinkTrId = 7455;
+    Index = 7447;
+    LinkTrId = 7448;
     XPos = 32994.386;
     YPos = 139.452;
     ZPos = 104664.218;
@@ -137579,8 +137491,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7383;
-    LinkTrId = 7456;
+    Index = 7449;
+    LinkTrId = 7450;
     XPos = 32902.996;
     YPos = 139.452;
     ZPos = 104731.323;
@@ -137601,8 +137513,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7384;
-    LinkTrId = 7457;
+    Index = 7451;
+    LinkTrId = 7452;
     XPos = 32331.628;
     YPos = 139.452;
     ZPos = 105579.504;
@@ -137623,8 +137535,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7385;
-    LinkTrId = 7458;
+    Index = 7453;
+    LinkTrId = 7454;
     XPos = 21428.494;
     YPos = 154.394;
     ZPos = 152637.452;
@@ -137645,8 +137557,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7386;
-    LinkTrId = 7459;
+    Index = 7455;
+    LinkTrId = 7456;
     XPos = 21301.767;
     YPos = 154.394;
     ZPos = 152915.378;
@@ -137667,8 +137579,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7387;
-    LinkTrId = 7460;
+    Index = 7457;
+    LinkTrId = 7458;
     XPos = 21368.397;
     YPos = 154.394;
     ZPos = 152770.159;
@@ -137689,8 +137601,8 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7388;
-    LinkTrId = 7461;
+    Index = 7459;
+    LinkTrId = 7460;
     XPos = 21575.462;
     YPos = 154.394;
     ZPos = 153238.184;
@@ -137711,7 +137623,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 7389;
+    Index = 7461;
     LinkTrId = 7462;
     XPos = 21837.514;
     YPos = 154.394;
@@ -137732,7 +137644,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7390;
+    Index = 7318;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137750,7 +137662,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7391;
+    Index = 7320;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137762,13 +137674,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7318;
+    MisObjID = 7319;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7392;
+    Index = 7322;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137780,13 +137692,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7319;
+    MisObjID = 7321;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7393;
+    Index = 7324;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137798,13 +137710,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7320;
+    MisObjID = 7323;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7394;
+    Index = 7326;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137816,13 +137728,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7321;
+    MisObjID = 7325;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7395;
+    Index = 7328;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137834,13 +137746,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7322;
+    MisObjID = 7327;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7396;
+    Index = 7330;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137852,13 +137764,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7323;
+    MisObjID = 7329;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7397;
+    Index = 7332;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137870,13 +137782,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7324;
+    MisObjID = 7331;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7398;
+    Index = 7334;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137888,13 +137800,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7325;
+    MisObjID = 7333;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7399;
+    Index = 7336;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137906,13 +137818,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7326;
+    MisObjID = 7335;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7400;
+    Index = 7338;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137924,13 +137836,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7327;
+    MisObjID = 7337;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7401;
+    Index = 7340;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137942,13 +137854,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7328;
+    MisObjID = 7339;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7402;
+    Index = 7342;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137960,13 +137872,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7329;
+    MisObjID = 7341;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7403;
+    Index = 7344;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137978,13 +137890,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7330;
+    MisObjID = 7343;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7404;
+    Index = 7346;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -137996,13 +137908,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7331;
+    MisObjID = 7345;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7405;
+    Index = 7348;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138014,13 +137926,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7332;
+    MisObjID = 7347;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7406;
+    Index = 7350;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138032,13 +137944,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7333;
+    MisObjID = 7349;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7407;
+    Index = 7352;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138050,13 +137962,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7334;
+    MisObjID = 7351;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7408;
+    Index = 7354;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138068,13 +137980,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7335;
+    MisObjID = 7353;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7409;
+    Index = 7356;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138086,13 +137998,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7336;
+    MisObjID = 7355;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7410;
+    Index = 7358;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138104,13 +138016,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7337;
+    MisObjID = 7357;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7411;
+    Index = 7360;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138122,13 +138034,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7338;
+    MisObjID = 7359;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7412;
+    Index = 7362;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138140,13 +138052,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7339;
+    MisObjID = 7361;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7413;
+    Index = 7364;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138158,13 +138070,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7340;
+    MisObjID = 7363;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7414;
+    Index = 7366;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138176,13 +138088,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7341;
+    MisObjID = 7365;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7415;
+    Index = 7368;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138194,13 +138106,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7342;
+    MisObjID = 7367;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7416;
+    Index = 7370;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138212,13 +138124,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7343;
+    MisObjID = 7369;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7417;
+    Index = 7372;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138230,13 +138142,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7344;
+    MisObjID = 7371;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7418;
+    Index = 7374;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138248,13 +138160,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7345;
+    MisObjID = 7373;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7419;
+    Index = 7376;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138266,13 +138178,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7346;
+    MisObjID = 7375;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7420;
+    Index = 7378;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138284,13 +138196,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7347;
+    MisObjID = 7377;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7421;
+    Index = 7380;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138302,13 +138214,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7348;
+    MisObjID = 7379;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7422;
+    Index = 7382;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138320,13 +138232,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7349;
+    MisObjID = 7381;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7423;
+    Index = 7384;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138338,13 +138250,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7350;
+    MisObjID = 7383;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7424;
+    Index = 7386;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138356,13 +138268,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7351;
+    MisObjID = 7385;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7425;
+    Index = 7388;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138374,13 +138286,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7352;
+    MisObjID = 7387;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7426;
+    Index = 7390;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138392,13 +138304,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7353;
+    MisObjID = 7389;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7427;
+    Index = 7392;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138410,13 +138322,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7354;
+    MisObjID = 7391;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7428;
+    Index = 7394;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138428,13 +138340,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7355;
+    MisObjID = 7393;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7429;
+    Index = 7396;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138446,13 +138358,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7356;
+    MisObjID = 7395;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7430;
+    Index = 7398;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138464,13 +138376,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7357;
+    MisObjID = 7397;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7431;
+    Index = 7400;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138482,13 +138394,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7358;
+    MisObjID = 7399;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7432;
+    Index = 7402;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138500,13 +138412,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7359;
+    MisObjID = 7401;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7433;
+    Index = 7404;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138518,13 +138430,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7360;
+    MisObjID = 7403;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7434;
+    Index = 7406;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138536,13 +138448,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7361;
+    MisObjID = 7405;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7435;
+    Index = 7408;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138554,13 +138466,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7362;
+    MisObjID = 7407;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7436;
+    Index = 7410;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138572,13 +138484,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7363;
+    MisObjID = 7409;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7437;
+    Index = 7412;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138590,13 +138502,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7364;
+    MisObjID = 7411;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7438;
+    Index = 7414;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138608,13 +138520,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7365;
+    MisObjID = 7413;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7439;
+    Index = 7416;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138626,13 +138538,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7366;
+    MisObjID = 7415;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7440;
+    Index = 7418;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138644,13 +138556,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7367;
+    MisObjID = 7417;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7441;
+    Index = 7420;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138662,13 +138574,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7368;
+    MisObjID = 7419;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7442;
+    Index = 7422;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138680,13 +138592,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7369;
+    MisObjID = 7421;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7443;
+    Index = 7424;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138698,13 +138610,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7370;
+    MisObjID = 7423;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7444;
+    Index = 7426;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138716,13 +138628,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7371;
+    MisObjID = 7425;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7445;
+    Index = 7428;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138734,13 +138646,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7372;
+    MisObjID = 7427;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7446;
+    Index = 7430;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138752,13 +138664,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7373;
+    MisObjID = 7429;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7447;
+    Index = 7432;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138770,13 +138682,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7374;
+    MisObjID = 7431;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7448;
+    Index = 7434;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138788,13 +138700,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7375;
+    MisObjID = 7433;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7449;
+    Index = 7436;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138806,13 +138718,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7376;
+    MisObjID = 7435;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7450;
+    Index = 7438;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138824,13 +138736,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7377;
+    MisObjID = 7437;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7451;
+    Index = 7440;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138842,13 +138754,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7378;
+    MisObjID = 7439;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7452;
+    Index = 7442;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138860,13 +138772,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7379;
+    MisObjID = 7441;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7453;
+    Index = 7444;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138878,13 +138790,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7380;
+    MisObjID = 7443;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7454;
+    Index = 7446;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138896,13 +138808,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7381;
+    MisObjID = 7445;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7455;
+    Index = 7448;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138914,13 +138826,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7382;
+    MisObjID = 7447;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7456;
+    Index = 7450;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138932,13 +138844,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7383;
+    MisObjID = 7449;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7457;
+    Index = 7452;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138950,13 +138862,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7384;
+    MisObjID = 7451;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7458;
+    Index = 7454;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138968,13 +138880,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7385;
+    MisObjID = 7453;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7459;
+    Index = 7456;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -138986,13 +138898,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7386;
+    MisObjID = 7455;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7460;
+    Index = 7458;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -139004,13 +138916,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7387;
+    MisObjID = 7457;
   }
   
 
   MCU_TR_Entity
   {
-    Index = 7461;
+    Index = 7460;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -139022,7 +138934,7 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7388;
+    MisObjID = 7459;
   }
   
 
@@ -139040,7 +138952,247 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7389;
+    MisObjID = 7461;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7536;
+    LinkTrId = 7542;
+    XPos = 48644.254;
+    YPos = 159.781;
+    ZPos = 133907.234;
+    XOri = 0.00;
+    YOri = 347.54;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_gsm_2.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_2.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 10000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7537;
+    LinkTrId = 7543;
+    XPos = 49786.699;
+    YPos = 162.772;
+    ZPos = 134768.422;
+    XOri = 0.00;
+    YOri = 258.04;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_dugouts_1.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_1.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 10000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7538;
+    LinkTrId = 7544;
+    XPos = 49813.137;
+    YPos = 161.276;
+    ZPos = 134693.266;
+    XOri = 0.00;
+    YOri = 77.74;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_dugouts_1.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_1.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 10000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7539;
+    LinkTrId = 7545;
+    XPos = 50050.961;
+    YPos = 161.778;
+    ZPos = 134711.688;
+    XOri = 0.00;
+    YOri = 42.70;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_gsm_1.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_1.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 10000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7540;
+    LinkTrId = 7546;
+    XPos = 48571.366;
+    YPos = 158.806;
+    ZPos = 134126.353;
+    XOri = 0.00;
+    YOri = 195.26;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_hangararc.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_hangararc.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 7541;
+    LinkTrId = 7547;
+    XPos = 49394.264;
+    YPos = 158.806;
+    ZPos = 134577.096;
+    XOri = 0.00;
+    YOri = 33.24;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_hangararc.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_hangararc.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7542;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 48644.254;
+    YPos = 159.981;
+    ZPos = 133907.234;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7536;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7543;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 49786.699;
+    YPos = 162.972;
+    ZPos = 134768.422;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7537;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7544;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 49813.137;
+    YPos = 161.476;
+    ZPos = 134693.266;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7538;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7545;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 50050.961;
+    YPos = 161.978;
+    ZPos = 134711.688;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7539;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7546;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 48571.366;
+    YPos = 159.006;
+    ZPos = 134126.353;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7540;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7547;
+    Name = "Block entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 49394.264;
+    YPos = 159.006;
+    ZPos = 134577.096;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7541;
   }
   
 
