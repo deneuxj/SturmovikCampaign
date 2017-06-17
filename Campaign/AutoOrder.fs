@@ -83,7 +83,9 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
     let afNeeds =
         seq {
             for af, afs in Seq.zip world.Airfields state.Airfields do
-                let bombNeed = afs.BombNeeds * bombCost
+                let bombNeed =
+                    afs.BombNeeds * bombCost
+                    |> min (afs.StorageCapacity(af))
                 let repairs =
                     Seq.zip af.Storage afs.StorageHealth
                     |> Seq.sumBy (fun (building, health) -> (1.0f - health) * building.RepairCost)
