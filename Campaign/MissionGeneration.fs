@@ -272,7 +272,8 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                 let planes =
                     T.Airfield.Planes()
                         .SetPlane(planeSpecs)
-                let af = af.SetPlanes(planes).SetIndex(T.Integer 1).SetLinkTrId(T.Integer 2)
+                let afName = sprintf "%s (%d Kg)" (af.GetName().Value) (state.Supplies / bombCost |> float32 |> ceil |> int)
+                let af = af.SetPlanes(planes).SetIndex(T.Integer 1).SetLinkTrId(T.Integer 2).SetName(T.String afName)
                 let entity = newEntity 2
                 entity.MisObjID <- 1
                 let mcu = af.CreateMcu()
