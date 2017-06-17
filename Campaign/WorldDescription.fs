@@ -507,7 +507,7 @@ with
 
 let cannonCost = 50.0f<E>
 let heavyMachineGunCost = cannonCost / 4.0f
-let lightMachineGunCost = heavyMachineGunCost / 4.0f
+let lightMachineGunCost = heavyMachineGunCost / (float32 SturmovikMission.Blocks.StaticDefenses.Factory.numLightMachineGunsPerHeavyMachineGun)
 
 type DefenseArea with
     member this.AmmoCost =
