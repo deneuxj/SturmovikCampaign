@@ -158,6 +158,7 @@ let runwayOfAirfieldSpawn (airfield : T.Airfield) =
     | None ->
         None
     | Some chart ->
+        let yori = airfield.GetYOri().Value |> float32
         let points = chart.GetPoints()
         let pos, direction =
             points
@@ -166,7 +167,7 @@ let runwayOfAirfieldSpawn (airfield : T.Airfield) =
                 if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
                     let mkVec(p : T.Airfield.Chart.Point) =
                         Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
-                    Some(mkVec(p1), (mkVec(p2) - mkVec(p1)).Rotate(airfield.GetYOri().Value |> float32))
+                    Some(mkVec(p1).Rotate(yori) + Vector2.FromPos(airfield), (mkVec(p2) - mkVec(p1)).Rotate(yori))
                 else
                     None)
         Some(pos, direction.YOri)
