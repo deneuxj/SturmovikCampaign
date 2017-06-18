@@ -510,7 +510,7 @@ module MissionLogParsing =
     open System.Text.RegularExpressions
 
     type MissionResults = {
-        Entries : LogEntry list
+        Entries : string list
         Shipments : SuppliesShipped list
         StaticDamages : Damage list
         VehicleDamages : Damage list
@@ -642,7 +642,7 @@ module MissionLogParsing =
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
 
         let results =
-            { Entries = entries
+            { Entries = entries |> List.map (fun entry -> entry.OriginalString)
               Shipments = shipments
               StaticDamages = staticDamages
               VehicleDamages = vehicleDamages
