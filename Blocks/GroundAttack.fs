@@ -60,7 +60,11 @@ with
         target.AssignTo attack.Pos
         let ingressPos = target - 10000.0f * dir
         let egressPos = ingressPos - 10000.0f * dir.Rotate(90.0f)
-        let exitPos = egressPos - (target - pos)
+        let exitPos =
+            let rtbDir =
+                let x = pos - egressPos
+                x / x.Length()
+            pos - 3000.0f * rtbDir
         ingressPos.AssignTo ingress.Pos
         egressPos.AssignTo egress.Pos
         exitPos.AssignTo exit.Pos
