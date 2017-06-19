@@ -11,6 +11,10 @@ type PlaneType  =
     | Bomber
     | Transport
 
+type PlaneRole =
+    | Interceptor
+    | Patroller
+
 let private basePlaneCost = 500.0f<E>
 
 type PlaneSet =
@@ -326,6 +330,37 @@ with
         work 0 this.BombLoads
         |> String.concat "/"
 
+    member this.Roles =
+        match this with
+        | Bf109e7 -> [ Patroller ]
+        | Bf109f2
+        | Bf109f4
+        | Bf109g2
+        | Bf109g4 -> [ Interceptor ; Patroller ]
+        | Fw190a3
+        | Fw190a5 -> [ Interceptor ]
+        | Mc202 -> [ Patroller ]
+        | Bf110e
+        | Bf110g -> [ Interceptor ]
+        | Ju88a4
+        | Ju52 -> []
+        | I16 -> [ Patroller ]
+        | IL2M41
+        | IL2M42
+        | IL2M43 -> []
+        | Mig3 -> [ Interceptor ]
+        | P40 -> [ Interceptor ]
+        | Yak1s69 
+        | Yak1s127
+        | La5
+        | Lagg3s29 -> [ Interceptor ; Patroller ]
+        | Pe2s35
+        | Pe2s87
+        | Ju87
+        | He111h6
+        | He111h16 -> []
+        |> Set.ofList
+
     static member AllModels(planeSet) =
         match planeSet with
         | Moscow ->
@@ -378,6 +413,13 @@ with
     static member RandomPlaneOfType(planeSet : PlaneSet, typ : PlaneType, coalition : CoalitionId) =
         PlaneModel.AllModels planeSet
         |> Seq.filter (fun model -> model.PlaneType = typ && model.Coalition = coalition)
+        |> Array.ofSeq
+        |> Array.shuffle (System.Random())
+        |> Seq.tryHead
+
+    static member RandomPlaneWithRole(planeSet : PlaneSet, role : PlaneRole, coalition : CoalitionId) =
+        PlaneModel.AllModels planeSet
+        |> Seq.filter (fun model -> model.Roles.Contains(role) && model.Coalition = coalition)
         |> Array.ofSeq
         |> Array.shuffle (System.Random())
         |> Seq.tryHead
