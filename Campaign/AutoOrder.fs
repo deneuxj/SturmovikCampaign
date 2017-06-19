@@ -352,12 +352,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
     let vehicleNeed = max vehicleNeed 0.0f<E>
 
     let planeTypeToProduce, planeNeed =
-        let planeTypeShares =
-            match coalition with
-            | Axis -> [ 0.4f; 0.3f; 0.2f; 0.1f ]
-            | Allies -> [ 0.4f; 0.4f; 0.2f; 0.0f ]
-            |> List.zip [ Fighter; Attacker; Bomber; Transport ]
-            |> Map.ofList
+        let planeTypeShares = PlaneModel.PlaneTypeShares(coalition)
         assert(planeTypeShares |> Seq.sumBy (fun kvp -> kvp.Value) = 1.0f)
         let numPlanesPerType =
             state.Airfields

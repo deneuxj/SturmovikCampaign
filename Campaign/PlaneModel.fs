@@ -409,6 +409,12 @@ with
               IL2M43
               Pe2s87 ]
 
+    static member PlaneTypeShares(coalition) =
+        match coalition with
+        | Axis -> [ 0.6f; 0.2f; 0.15f; 0.05f ]
+        | Allies -> [ 0.5f; 0.3f; 0.2f; 0.0f ]
+        |> List.zip [ Fighter; Attacker; Bomber; Transport ]
+        |> Map.ofList
 
     static member RandomPlaneOfType(planeSet : PlaneSet, typ : PlaneType, coalition : CoalitionId) =
         PlaneModel.AllModels planeSet
