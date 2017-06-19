@@ -219,10 +219,11 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : L
                                 1.0f
                             else
                                 health
-                        let cargo =
+                        let cargoAmount =
                             cargo.Value.TryFind landing.VehicleId
                             |> Option.defaultVal 0.0f<E>
-                        yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health; Cargo = cargo }
+                        cargo := cargo.Value.Remove landing.VehicleId
+                        yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health; Cargo = cargoAmount }
                     | None -> ()
             | _ -> ()
     ]
