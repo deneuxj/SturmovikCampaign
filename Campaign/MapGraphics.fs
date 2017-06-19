@@ -393,6 +393,8 @@ with
                             Mcu.IconIdValue.CoverTransportColumn
                         | Orders.ByRail ->
                             Mcu.IconIdValue.CoverTrains
+                        | Orders.ByAir _ ->
+                            Mcu.IconIdValue.CoverBombersFlight
                     yield! mkTravelArrow(order.Convoy.Start, order.Convoy.Destination, (0, 0, 10), int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity), iconId)
                 for order in enemyOrders.Resupply do
                     let iconId =
@@ -401,6 +403,8 @@ with
                             Mcu.IconIdValue.AttackTransportColumn
                         | Orders.ByRail ->
                             Mcu.IconIdValue.AttackTrains
+                        | Orders.ByAir _ ->
+                            Mcu.IconIdValue.AttackBombersFlight
                     yield! mkTravelArrow(order.Convoy.Start, order.Convoy.Destination, (10, 0, 0), int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity), iconId)
                 for order in friendlyOrders.Columns do
                     let iconId = Mcu.IconIdValue.CoverArmorColumn

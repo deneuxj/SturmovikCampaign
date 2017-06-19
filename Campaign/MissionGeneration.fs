@@ -294,12 +294,13 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
     let sg = WorldStateFastAccess.Create state
     let convoys =
         [
-            for order in orders do
+            for order in orders |> Seq.filter (function { Means = ByRail } | { Means = ByRoad } -> true | _ -> false) do
                 let convoy = order.Convoy
                 let paths =
                     match order.Means with
                     | ByRail -> world.Rails
                     | ByRoad -> world.Roads
+                    | ByAir _ -> failwith "Cannot handle air cargo"
                 let path =
                     paths
                     |> List.tryPick(fun road -> road.MatchesEndpoints(convoy.Start, convoy.Destination))
@@ -335,6 +336,7 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                             let endV = pathVertices |> List.last
                             TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
                             |> Choice2Of2
+                        | ByAir _ -> failwith "Cannot handle air cargo"
                     let links =
                         match virtualConvoy with
                         | Choice1Of2 x -> x.CreateLinks()

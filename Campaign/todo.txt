@@ -25,16 +25,17 @@ X Feedback: AAA destruction
 X Feedback: Vehicle loss
 Feedback: bridge destroyed
 Mission building: No convoy, train or column over destroyed bridges.
-Feedback: air supply
+X Feedback: air supply
 Feedback: paratrooper drop
 Mission building: limit bomb payload depending on storage
 X Order: air defense
 Order: level bombing
-Order: ground attack
+X Order: ground attack
 Order: paratrooper drop
 X Order: air supremacy
 Order: air supply
 Order: ship supply
+Feedback: ship supply
 
 --- bugs & small improvements ---
 
@@ -74,4 +75,6 @@ X Increase maximal distance between vehicles, they are too vulnerable at the mom
 X Battles at regions with airfields must damage planes too.
 X Some tank/truck kills are missed. For trucks, can block later convoys/trains.
 X Check and fix spawn of fighter patrols.
+Generate mission logic for AI transports.
+Write separate auto-order function for AI transports.
 Notify players when their units are under attack (with a delay).

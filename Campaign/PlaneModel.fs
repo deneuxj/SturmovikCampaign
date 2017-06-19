@@ -175,6 +175,11 @@ with
         | Pe2s87
         | Pe2s35 -> 1000.0f<K>
 
+    member this.CargoCapacity =
+        match this with
+        | Ju52 -> 2300.0f<K>
+        | _ -> 0.0f<K>
+
     member this.Coalition =
         match this with
         | Bf109e7

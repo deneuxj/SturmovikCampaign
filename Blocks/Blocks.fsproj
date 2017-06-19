@@ -75,6 +75,7 @@
     <Compile Include="Effect.fs" />
     <Compile Include="Patrol.fs" />
     <Compile Include="GroundAttack.fs" />
+    <Compile Include="TransportFlight.fs" />
     <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>

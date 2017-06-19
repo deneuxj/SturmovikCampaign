@@ -15,6 +15,7 @@ type ConvoyOrder = {
 type ResupplyMeans =
     | ByRoad
     | ByRail
+    | ByAir of AirfieldId * AirfieldId
 
 type OrderId = {
     Index : int
@@ -49,6 +50,7 @@ with
             match this.Means with
             | ByRoad -> "R"
             | ByRail -> "T"
+            | ByAir _ -> "A"
         sprintf "CNV-%s-%d-%d" meansLetter (int this.OrderId.Coalition.ToCoalition) this.OrderId.Index
 
     member this.MatchesMissionLogArrivalEventName(name : string) =

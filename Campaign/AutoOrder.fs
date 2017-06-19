@@ -170,13 +170,13 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
 
 
 /// Create convoy orders from regions owned by a coalition to neighbour regions that have bigger needs.
-let createConvoyOrders (maxTransfer : float32<E>) (getPaths : World -> Path list) (coalition : CoalitionId) (world : World, state : WorldState) =
+let createConvoyOrders (maxTransfer : float32<E>) (getPaths : World -> (Path * 'D) list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
-    let distances = computeDistanceFromFactories true getPaths getOwner world coalition
+    let distances = computeDistanceFromFactories true (getPaths >> List.map fst) getOwner world coalition
     let areConnectedByRoad(start, destination) =
         getPaths world
-        |> List.exists (fun path -> path.MatchesEndpoints(start, destination).IsSome)
+        |> List.choose (fun (path, data) -> if path.MatchesEndpoints(start, destination).IsSome then Some data else None)
     let capacities = computeStorageCapacity world
     let storages = computeStorage world state
     let needs = computeSupplyNeeds world state
@@ -192,7 +192,7 @@ let createConvoyOrders (maxTransfer : float32<E>) (getPaths : World -> Path list
                     |> Option.defaultVal System.Int32.MaxValue
                 for ngh in region.Neighbours do
                     if getOwner ngh = Some coalition then
-                        if areConnectedByRoad(region.RegionId, ngh) then
+                        for data in areConnectedByRoad(region.RegionId, ngh) do
                             let receiverDistance =
                                 Map.tryFind ngh distances
                                 |> Option.defaultVal System.Int32.MaxValue
@@ -214,19 +214,31 @@ let createConvoyOrders (maxTransfer : float32<E>) (getPaths : World -> Path list
                                     min willingToSend requested
                                     |> min maxTransfer
                                 if transfer > 0.0f<E> then
-                                    yield { Start = region.RegionId ; Destination = ngh ; TransportedSupplies = transfer }
+                                    yield { Start = region.RegionId ; Destination = ngh ; TransportedSupplies = transfer }, data
     ]
 
 
 let createRoadConvoyOrders coalition =
-    createConvoyOrders (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads) coalition
-    >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
+    createConvoyOrders (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads |> List.map (fun x -> x, ())) coalition
+    >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
 
 
 let createRailConvoyOrders coalition =
-    createConvoyOrders (ResupplyOrder.TrainCapacity) (fun world -> world.Rails) coalition
-    >> List.mapi (fun i convoy -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
+    createConvoyOrders (ResupplyOrder.TrainCapacity) (fun world -> world.Rails |> List.map (fun x -> x, ())) coalition
+    >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
+let createAirConvoyOrders coalition =
+    createConvoyOrders
+        (PlaneModel.Ju52.CargoCapacity * bombCost)
+        (fun world ->
+            [
+                for af1 in world.Airfields do
+                    for af2 in world.Airfields do
+                        if af1 <> af2 && (af1.Pos - af2.Pos).Length() < 100000.0f then
+                            yield { StartId = af1.Region; EndId = af2.Region; Locations = [] }, (af1.AirfieldId, af2.AirfieldId)
+            ])
+        coalition
+    >> List.mapi (fun i (convoy, (af1, af2)) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByAir(af1, af2); Convoy = convoy })
 
 let createAllConvoyOrders coalition x =
     createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x
