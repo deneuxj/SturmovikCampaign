@@ -177,17 +177,25 @@ let convertProduction (world : World) (state : WorldState) =
      newAlliesVehicles.Value)
 
 /// Consume supplies to heal buildings
-let computeHealing(healths, buildings, energy) =
+/// healths : List of health levels
+/// buildings : List of building descriptions, must match healths
+/// energy : input energy
+/// healLimit : max amount of input energy that can be used for healing
+let computeHealing(healths, buildings, energy, healLimit) =
     let energyPerBuilding =
         buildings
         |> List.map (fun (x : StaticGroup) -> x.RepairCost)
-    let prodHealing, energy =
+    let prodHealing, energy, healLimit =
         List.zip healths energyPerBuilding
-        |> List.fold (fun (healings, available) (health, healthCost : float32<E>) ->
+        |> List.fold (fun (healings, available, healLimit) (health, healthCost : float32<E>) ->
             let spend =
-                min ((1.0f - health) * healthCost) available
-            (spend / healthCost) :: healings, available - spend
-        ) ([], energy)
+                ((1.0f - health) * healthCost)
+                |> min available
+                |> min healLimit
+            (spend / healthCost) :: healings, available - spend, healLimit - spend
+        ) ([], energy, healLimit)
+    assert(healLimit >= 0.0f<E>)
+    assert(energy >= 0.0f<E>)
     let prodHealing = List.rev prodHealing
     let prodHealth =
         List.zip healths prodHealing
@@ -198,6 +206,7 @@ let computeHealing(healths, buildings, energy) =
 let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) =
     let wg = WorldFastAccess.Create world
     let regionNeeds = AutoOrder.computeSupplyNeeds world state
+    let healLimit = 200.0f<E/H> * dt
     let damages =
         let data =
             damages
@@ -383,7 +392,8 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     computeHealing(
                         regState.ProductionHealth,
                         region.Production,
-                        energy)
+                        energy,
+                        healLimit)
                 // Second prio: fill up region supplies
                 let storeCapacity = regState.StorageCapacity(region)
                 // Consume energy to fill up supplies up to what's needed
@@ -403,7 +413,8 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     computeHealing(
                         regState.StorageHealth,
                         region.Storage,
-                        energy)
+                        energy,
+                        healLimit)
                 yield { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies + energy }
         ]
     // Distribute supplies between regions and airfields
@@ -418,7 +429,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     |> fun x -> defaultArg x 0.0f<E>
                 // repair airfield storage
                 let storeHealth, energy =
-                    computeHealing(afState.StorageHealth, af.Storage, energy)
+                    computeHealing(afState.StorageHealth, af.Storage, energy, healLimit)
                 let afState = { afState with StorageHealth = storeHealth }
                 // fill storage
                 let bombNeeds = afState.BombNeeds * bombCost
