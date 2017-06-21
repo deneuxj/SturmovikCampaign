@@ -242,23 +242,11 @@ type Damage = {
     Data : CommonDamageData
 }
 
-let (|AirfieldObjectType|_|) (s : string) =
-    if s.StartsWith "arf_" || s.StartsWith "Arf_" then
-        Some s
-    else
-        None
-
-let (|IndustrialObjectType|_|) (s : string) =
-    if s.StartsWith "industrial_" then
-        Some s
-    else
-        None
-
-let (|StaticObjectType|_|) (s : string) =
-    if s.StartsWith "static_" then
-        Some s
-    else
-        None
+let (|BuildingObjectType|_|) (s : string) =
+    let low = s.ToLower()
+    [ "arf_"; "industrial_"; "vl_" ]
+    |> List.exists (fun prefix -> low.StartsWith(prefix))
+    |> function true -> Some s | false -> None
 
 let (|StaticPlaneType|_|) (planeSet : PlaneSet) (s : string) =
     PlaneModel.AllModels planeSet
@@ -300,8 +288,7 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
             | :? DamageEntry as damage ->
                 let damagePos = Vector2(damage.Position.X, damage.Position.Z)
                 match Map.tryFind damage.TargetId !idMapper with
-                | Some(IndustrialObjectType buildingType, _, subGroup)
-                | Some(AirfieldObjectType buildingType, _, subGroup) ->
+                | Some(BuildingObjectType buildingType, _, subGroup) ->
                     // Damage to buildings: storage or production
                     match tryFindContainingRegion damagePos with
                     | Some region ->

@@ -67,6 +67,7 @@ with
         }
 
     /// List of sub-block numbers that represent objects with significant storage or production capabilities
+    /// When adding buildings here, one must also remember to update the code in ResultExtraction, active pattern BuildingObjectType
     member this.SubBlocks = 
         match this.Model with
         | Contains "arf_barak" -> [1]
