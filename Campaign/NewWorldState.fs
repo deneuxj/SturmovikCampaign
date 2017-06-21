@@ -49,7 +49,23 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                         assert(planePrio >= 0.0f)
                         assert(planePrio <= 1.0f)
                         let newValue = oldValue + planePrio * energy
-                        Map.add planeModel newValue regState.Products.Planes
+                        let toBeProduced = floor(newValue / planeModel.Cost)
+                        let excess = newValue - toBeProduced * planeModel.Cost
+                        regState.Products.Planes
+                        |> Map.add planeModel (toBeProduced * planeModel.Cost) // add round value of new planes of the model currently being built
+                        |> if toBeProduced >= 1.0f then
+                            // If enough energy was accumulated to produce planes, pick a new model of the same type for the next of production.
+                            let newPlaneModel =
+                                priorities.Plane.Random(world.PlaneSet, coalition)
+                            match newPlaneModel with
+                            | Some model ->
+                                Map.add model excess
+                            | None ->
+                                // Should not happen, but if we failed to pick a new model of plane, we keep the old one and let it have the entire amount of energy
+                                Map.add planeModel newValue
+                            else
+                                // No excess energy, keep the mapping as it was
+                                id
                     let vehicles =
                         let oldValue =
                             Map.tryFind priorities.Vehicle regState.Products.Vehicles
@@ -116,6 +132,9 @@ let convertProduction (world : World) (state : WorldState) =
                 ) ([], Map.empty)
             | None ->
                 [], regState.Products.Planes
+        let remainingPlanes =
+            // Retain only the new production choices. 0.1f instead of 0.0f to avoid float precision loss issues
+            Map.filter (fun _ energy -> energy > 0.1f<E>) remainingPlanes
         // Freshly produced vehicles
         let newVehicles, remainingVehicles =
             regState.Products.Vehicles
