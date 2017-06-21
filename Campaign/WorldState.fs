@@ -474,11 +474,14 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                     |> min cutoffHops
                 let scale (x : float32) =
                     x * (1.0f - (float32 hops) / (float32 cutoffHops)) |> max 0.0f
+                let maxPlanes =
+                    airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
+                    |> float32
                 let planeTypeShares = PlaneModel.PlaneTypeShares(owner)
-                let numFighters = planeTypeShares.[PlaneType.Fighter] |> float32 |> scale |> round
-                let numAttackers = planeTypeShares.[PlaneType.Attacker] |> float32 |> scale |> round
-                let numBombers = planeTypeShares.[PlaneType.Bomber] |> float32 |> scale |> round
-                let numTransports = planeTypeShares.[PlaneType.Transport] |> float32 |> scale |> round
+                let numFighters = maxPlanes * planeTypeShares.[PlaneType.Fighter] |> scale |> round
+                let numAttackers = maxPlanes * planeTypeShares.[PlaneType.Attacker] |> scale |> round
+                let numBombers = maxPlanes * planeTypeShares.[PlaneType.Bomber] |> scale |> round
+                let numTransports = maxPlanes * planeTypeShares.[PlaneType.Transport] |> scale |> round
                 let getNumPlanes =
                     function
                     | PlaneType.Attacker -> numAttackers
