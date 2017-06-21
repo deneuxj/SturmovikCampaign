@@ -21,6 +21,7 @@ type PlaneSet =
     | Moscow
     | VelikieLuki
     | EarlyAccess
+    | All
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
@@ -270,6 +271,39 @@ with
         | Yak1s69 -> "yak1s69"
         | Yak1s127 -> "yak1s127"
 
+    /// <summary>
+    /// Substring of the TYPE: field in the mission log
+    /// </summary>
+    member this.MissionLogName =
+        match this with
+        | Bf109e7 -> "bf 109 e-7"
+        | Bf109f2 -> "bf 109 f-2"
+        | Bf109f4 -> "bf 109 f-4"
+        | Bf109g2 -> "bf 109 g-2"
+        | Bf109g4 -> "bf 109 g-4"
+        | Fw190a3 -> "fw 190 a-3"
+        | Fw190a5 -> "fw 190 a-5"
+        | Mc202 -> "mc 202"
+        | Bf110e -> "bf 110 e"
+        | Bf110g -> "bf 110 g"
+        | Ju87 -> "ju 87"
+        | Ju88a4 -> "ju 88"
+        | Ju52 -> "ju 52"
+        | He111h6 -> "he 111 h-6"
+        | He111h16 -> "he 111 h-16"
+        | I16 -> "i-16"
+        | IL2M41 -> "il-2 mod.41"
+        | IL2M42 -> "il-2 mod.42"
+        | IL2M43 -> "il-2 mod.43"
+        | La5 -> "la-5"
+        | Lagg3s29 -> "lagg-3 ser.29"
+        | Mig3 -> "mig-3"
+        | P40 -> "p40"
+        | Pe2s35 -> "pe-2 ser.35"
+        | Pe2s87 -> "pe-2 ser.87"
+        | Yak1s69 -> "yak-1 ser.69"
+        | Yak1s127 -> "yak-1 ser.127"
+
     member this.BombLoads =
         let times N xs =
             [
@@ -413,6 +447,34 @@ with
               I16
               IL2M43
               Pe2s87 ]
+        | All ->
+            [ Bf109e7
+              Bf109f2
+              Bf109f4
+              Bf109g2
+              Bf109g4
+              Fw190a3
+              Fw190a5
+              Mc202
+              Bf110e
+              Bf110g
+              Ju88a4
+              Ju52
+              I16
+              IL2M41
+              IL2M42
+              IL2M43
+              Mig3
+              P40
+              Yak1s69
+              Yak1s127
+              La5
+              Lagg3s29
+              Pe2s35
+              Pe2s87
+              Ju87
+              He111h6
+              He111h16 ]
 
     static member PlaneTypeShares(coalition) =
         match coalition with

@@ -78,3 +78,8 @@ X Check and fix spawn of fighter patrols.
 Generate mission logic for AI transports.
 Write separate auto-order function for AI transports.
 Notify players when their units are under attack (with a delay).
+Runway selection when wind blows from the south does not work.
+Check for convoys without trucks.
+Airplane to produce never changes for each type.
+Check if destroyed hangars remain destroyed as they should. Maybe increase their repair cost.
+X Transferred plane failure: http://coconutside.eu/en/sortie/log/1159/?tour=2
