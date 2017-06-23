@@ -112,22 +112,15 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
             |> dict
         fun x -> m.[x]
     let getHealth (region : Region) (regionState : RegionState) (v : Vector2) =
-        let airfields =
-            world.Airfields
-            |> List.filter (fun af -> af.Region = region.RegionId)
-        let afStates =
-            state.Airfields
-            |> List.filter (fun s -> airfields |> List.exists (fun af -> af.AirfieldId = s.AirfieldId))
         let afStorageWithHealth =
-            let blocks =
-                airfields
-                |> List.map (fun af -> af.Storage)
-                |> List.concat
-            let healths =
-                afStates
-                |> List.map (fun af -> af.StorageHealth)
-                |> List.concat
-            Seq.zip blocks healths
+            List.zip world.Airfields state.Airfields
+            |> List.filter (fun (af, _) -> af.Region = region.RegionId)
+            |> List.collect (fun (af, afState) -> List.zip af.Storage afState.StorageHealth)
+        let yell = ref false
+        for building, health in afStorageWithHealth do
+            if health < 1.0f then
+                yell := true
+                printfn "In %A: %s %f" region.RegionId building.Model health
         let dist, health =
             try
                 Seq.zip (region.Storage @ region.Production) (regionState.StorageHealth @ regionState.ProductionHealth)
@@ -136,6 +129,11 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                 |> Seq.minBy fst
             with
             | _ -> 10.0f, 1.0f
+        if yell.Value then
+            if dist < 1.0f then
+                printfn "dist, health = %f, %f" dist health
+            else
+                printfn "too far"
         if dist < 1.0f then
             Some health
         else
@@ -167,14 +165,24 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                             mkDamaged (
                                 let subBlocks = building.SubBlocks
                                 let numSubs = List.length subBlocks |> float
+                                let subDamage = 1.0 / numSubs
                                 subBlocks
-                                |> List.mapi (fun i sub -> if float i / numSubs < health then (sub, T.Float 0.0) else (sub, T.Float 1.0))
+                                |> List.fold (fun (items, damage) sub ->
+                                    if damage > 0.5 * subDamage then
+                                        (sub, T.Float 1.0) :: items, damage - subDamage
+                                    else
+                                        items, damage
+                                    ) ([], 1.0 - health)
+                                |> fst
+                                |> List.rev
                                 |> Map.ofList))
                         |> setDurability (StaticGroup.FromBlock(block).Durability |> T.Integer)
                         |> setIndex (T.Integer 1)
                         |> setLinkTrId (T.Integer 0) // No entity
                         |> createMcu
                         :?> Mcu.HasEntity
+                    if health < 1.0 then
+                        printfn "health < 1.0 -> '%s'" (damagedBlock.AsString())
                     match state.Owner with
                     | Some Allies ->
                         damagedBlock.Country <- Mcu.CountryValue.Russia
