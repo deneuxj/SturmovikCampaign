@@ -170,7 +170,7 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
 
 
 /// Create convoy orders from regions owned by a coalition to neighbour regions that have bigger needs.
-let createConvoyOrders (maxTransfer : float32<E>) (getPaths : World -> (Path * 'D) list) (coalition : CoalitionId) (world : World, state : WorldState) =
+let createConvoyOrders (minTransfer : float32<E>) (maxTransfer : float32<E>) (getPaths : World -> (Path * 'D) list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
     let distances = computeDistanceFromFactories true (getPaths >> List.map fst) getOwner world coalition
@@ -211,25 +211,33 @@ let createConvoyOrders (maxTransfer : float32<E>) (getPaths : World -> (Path * '
                                     let availableToReceive = tryFind ngh capacities - alreadyAtReceiver
                                     let requested = min receiverNeeds availableToReceive
                                     let willingToSend = regState.Supplies - 0.75f * senderNeeds
-                                    min willingToSend requested
-                                    |> min maxTransfer
-                                if transfer > 0.0f<E> then
+                                    if willingToSend >= minTransfer then
+                                        willingToSend
+                                        |> min requested
+                                        |> min maxTransfer
+                                        |> max minTransfer
+                                    else
+                                        0.0f<E>
+                                if transfer >= minTransfer then
                                     yield { Start = region.RegionId ; Destination = ngh ; TransportedSupplies = transfer }, data
     ]
 
 
 let createRoadConvoyOrders coalition =
-    createConvoyOrders (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads |> List.map (fun x -> x, ())) coalition
+    createConvoyOrders (2.0f * ResupplyOrder.TruckCapacity) (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads |> List.map (fun x -> x, ())) coalition
     >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
 
 
 let createRailConvoyOrders coalition =
-    createConvoyOrders (ResupplyOrder.TrainCapacity) (fun world -> world.Rails |> List.map (fun x -> x, ())) coalition
+    createConvoyOrders (0.0f<E>) (ResupplyOrder.TrainCapacity) (fun world -> world.Rails |> List.map (fun x -> x, ())) coalition
     >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
+
 let createAirConvoyOrders coalition =
+    let exactCapacity = (PlaneModel.Ju52.CargoCapacity * bombCost)
     createConvoyOrders
-        (PlaneModel.Ju52.CargoCapacity * bombCost)
+        exactCapacity
+        exactCapacity
         (fun world ->
             [
                 for af1 in world.Airfields do
