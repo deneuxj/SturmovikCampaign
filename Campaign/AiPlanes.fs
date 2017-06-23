@@ -191,9 +191,14 @@ with
         | PlaneModel.Bf110g -> 2 //  "0,1,2,3-MG17-AP-4000 + 4-MG15120-APHE-400 + 5-MG15120-APHE-350 + SC250-2 + SC50-4"
         | PlaneModel.IL2M41 -> 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
         | PlaneModel.IL2M42 -> 44 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-8"
-        | PlaneModel.IL2M43 -> 34
+        | PlaneModel.IL2M43 -> 41
         | PlaneModel.Pe2s35 -> 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
         | _ -> 0
+
+    member this.ModMask =
+        match this.Plane with
+        | PlaneModel.IL2M42 -> 33
+        | _ -> 1
 
     member this.ToPatrolBlock(store, lcStore) =
         let landOrder =
@@ -204,6 +209,7 @@ with
         block.Plane.Country <- this.Coalition.ToCountry
         block.Plane.Script <- this.Plane.ScriptModel.Script
         block.Plane.Model <- this.Plane.ScriptModel.Model
+        block.Plane.WMMask <- Some this.ModMask
         block.Plane.PayloadId <- Some this.Payload
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, 0.1f * (this.Start + 9.0f * this.Target), sprintf "Attackers at %d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
         Mcu.addTargetLink block.Killed icon1.Hide.Index
