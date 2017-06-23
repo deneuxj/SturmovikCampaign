@@ -1001,6 +1001,30 @@ let tryMkAsEntity (typeName : string, typ : ValueType) =
     | _ ->
         None
 
+/// Encode a number such that its representation in base 10 is indentical to its representation in base 2.
+// ex: 33 becomes 100001
+let private encodeToFakeBase2 n =
+    let rec work n k res =
+        if n = 0 then
+            res
+        elif n % 2 = 1 then
+            work (n / 2) (k * 10) (res + k)
+        else
+            work (n / 2) (k * 10) res
+    work n 1 0
+
+/// Inverse of encodeToFakeBase2, input number must have only 0 and 1 in its base-10 representation.
+let private decodeFromFakeBase2 n =
+    let rec work n k res =
+        if n = 0 then
+            res
+        elif n % 10 = 1 then
+            work (n / 10) (k * 2) (res + k)
+        elif n % 10 = 0 then
+            work (n / 10) (k * 2) res
+        else
+            failwith "Invalid fake base 2 number"
+    work n 1 0
 
 let private mkAsHasEntity typeName path (state : (string * Value) list ref) iconLC subtitleLC formation =
     let baseImpl = mkAsBase typeName path state iconLC subtitleLC
@@ -1043,6 +1067,12 @@ let private mkAsHasEntity typeName path (state : (string * Value) list ref) icon
                     !state |> getOptIntField "PayloadId"
                 and set payload =
                     state := !state |> setOptField ("PayloadId", payload |> Option.map Value.Integer)
+
+            member this.WMMask
+                with get() =
+                    !state |> getOptIntField "WMMask" |> Option.map decodeFromFakeBase2
+                and set mask =
+                    state := !state |> setOptField ("WMMask", mask |> Option.map (encodeToFakeBase2 >> Value.Integer))
 
         interface McuBase with
             member this.AsString() = baseImpl.AsString()

@@ -358,6 +358,7 @@ type HasEntity =
     abstract Country : CountryValue with get, set
     abstract NumberInFormation : NumberInFormationData option
     abstract PayloadId : int option with get, set
+    abstract WMMask : int option with get, set
 
 /// <summary>
 /// Substitute occurrences of numerical ids in an MCU.
