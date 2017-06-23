@@ -9,6 +9,8 @@ open SturmovikMission.Blocks.BlocksMissionData
 
 type TransportFlight = {
     Start : Mcu.McuTrigger
+    Killed : Mcu.McuTrigger
+    Arrived : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
 }
 with
@@ -25,6 +27,8 @@ with
         let cmdLand = getTriggerByName group T.Blocks.Land
         let plane1 = getVehicleByName group T.Blocks.Transport1
         let plane2 = getVehicleByName group T.Blocks.Transport2
+        let killed = getTriggerByName group T.Blocks.AllKilled
+        let arrived = getTriggerByName group T.Blocks.AllLanded
         // Position of all nodes
         let refPoint = Vector2.FromMcu takeOff.Pos
         let dPos = takeOffPos - refPoint
@@ -41,5 +45,7 @@ with
         plane2.Country <- country
         // result
         { Start = start
+          Killed = killed
+          Arrived = arrived
           All = McuUtil.groupFromList group
         }
