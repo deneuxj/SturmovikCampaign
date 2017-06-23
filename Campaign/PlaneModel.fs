@@ -424,7 +424,7 @@ with
               Bf110g
               Ju87
               Ju88a4
-              He111h16
+              He111h6
               Ju52
               Yak1s69
               Lagg3s29
