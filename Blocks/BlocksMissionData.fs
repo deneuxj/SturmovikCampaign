@@ -194,6 +194,9 @@ module CommonMethods =
     let inline getYOri(x : ^T) : ^R =
         (^T : (member GetYOri : unit -> ^R) x)
 
+    let inline getAlt(x : ^T) : ^R =
+        (^T : (member GetYPos : unit -> ^R) x)
+
     let inline valueOf(v : ^V) : ^R =
         (^V : (member Value : ^R) v)
 

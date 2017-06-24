@@ -250,7 +250,7 @@ with
                     yield {
                         DefenseAreaId = DefenseAreaId(area.GetIndex().Value)
                         Home = Central region.RegionId
-                        Position = { Pos = pos; Rotation = float32(area.GetYOri().Value) }
+                        Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f }
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                         MaxNumGuns = numGuns
                         Role = role
@@ -284,7 +284,7 @@ with
                     yield {
                         DefenseAreaId = DefenseAreaId(area.GetIndex().Value)
                         Home = FrontLine(region.RegionId, other)
-                        Position = { Pos = pos; Rotation = float32(area.GetYOri().Value) } 
+                        Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f } 
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                         MaxNumGuns = 4
                         Role = AntiTank
@@ -396,9 +396,9 @@ with
                     airfields
                     |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
                 match (plane |> getModel |> valueOf) with
-                | ParkedPlaneTypes.Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = yori })
-                | ParkedPlaneTypes.Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = yori })
-                | ParkedPlaneTypes.Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = yori })
+                | ParkedPlaneTypes.Fighter -> Airfield.AddParkedFighter(airfields, home.AirfieldId, { Pos = pos; Rotation = yori; Altitude = 0.0f })
+                | ParkedPlaneTypes.Attacker -> Airfield.AddParkedAttacker(airfields, home.AirfieldId, { Pos = pos; Rotation = yori; Altitude = 0.0f })
+                | ParkedPlaneTypes.Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = yori; Altitude = 0.0f })
                 | ParkedPlaneTypes.Other -> airfields
             ) airfields
         let airfields =
@@ -408,7 +408,7 @@ with
                 let home =
                     airfields
                     |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
-                Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.GetModel().Value; Script = group.GetScript().Value; Pos = { Pos = pos; Rotation = float32(group.GetYOri().Value) } }))
+                Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.GetModel().Value; Script = group.GetScript().Value; Pos = { Pos = pos; Rotation = float32(group.GetYOri().Value); Altitude = float32(group.GetYPos().Value) } }))
             ) airfields
         airfields
 

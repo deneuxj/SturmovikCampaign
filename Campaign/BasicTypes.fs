@@ -50,6 +50,7 @@ with
 type OrientedPosition = {
     Pos : Vector2
     Rotation : float32
+    Altitude : float32
 }
 
 /// A group of buildings or some other static objects.
@@ -63,7 +64,8 @@ with
         { Model = block |> getModel |> valueOf
           Script = block |> getScript |> valueOf
           Pos = { Pos = Vector2.FromPos block
-                  Rotation = block |> getYOri |> valueOf |> float32 }
+                  Rotation = block |> getYOri |> valueOf |> float32 
+                  Altitude = block |> getAlt |> valueOf |> float32 }
         }
 
     /// List of sub-block numbers that represent objects with significant storage or production capabilities

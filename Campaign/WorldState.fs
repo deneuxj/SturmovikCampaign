@@ -523,3 +523,29 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
 
 type WorldState with
     static member Create(world : World, strategyFile : string, windDirection : float32) = mkInitialState(world, strategyFile, windDirection)
+
+    /// <summary>
+    /// Get positions of the most damaged buildings (storage and production).
+    /// </summary>
+    /// <param name="world">Description of buildings in regions and airfields.</param>
+    /// <param name="maxNumFires">Maximum number of positions to return.</param>
+    member this.FirePositions(world : World, maxNumFires : int) =
+        let damagedRegionStorage =
+            List.zip (world.Regions |> List.map (fun region -> region.Storage)) (this.Regions |> List.map (fun region -> region.StorageHealth))
+            |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
+            |> List.filter (fun (_, health) -> health < 0.5f)
+            |> List.map (fun (building, health) -> building.Storage * (1.0f - health), (building, health))
+        let damagedRegionProduction =
+            List.zip (world.Regions |> List.map (fun region -> region.Production)) (this.Regions |> List.map (fun region -> region.ProductionHealth))
+            |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
+            |> List.filter (fun (_, health) -> health < 0.5f)
+            |> List.map (fun (building, health) -> 24.0f<H> * building.Production * (1.0f - health), (building, health))
+        let damagedAirfieldStorage =
+            List.zip (world.Airfields |> List.map (fun airfield -> airfield.Storage)) (this.Airfields |> List.map (fun airfield -> airfield.StorageHealth))
+            |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
+            |> List.filter (fun (_, health) -> health < 0.5f)
+            |> List.map (fun (building, health) -> building.Storage * (1.0f - health), (building, health))
+        List.concat [ damagedRegionStorage; damagedRegionProduction; damagedAirfieldStorage ]
+        |> List.sortByDescending fst
+        |> List.truncate maxNumFires
+        |> List.map (snd >> fst >> fun grp -> grp.Pos.Pos, grp.Pos.Altitude)

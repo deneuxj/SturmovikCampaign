@@ -18,6 +18,7 @@ open SturmovikMission.Blocks
 open SturmovikMission.Blocks.IO
 open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 open SturmovikMission.Blocks.TransportFlight
+open SturmovikMission.Blocks.FireLoop
 open Vector
 
 open Campaign.WorldDescription
@@ -727,6 +728,13 @@ let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (stat
                 ()
     ]
 
+let createBuildingFires store (world : World) (state : WorldState) (windDirection : float32) =
+    let maxFires = 20
+    let fires = state.FirePositions(world, maxFires)
+    [
+        for pos, alt in fires do
+            yield FireLoop.Create(store, pos, alt, windDirection, FireType.CityFire)
+    ]
 
 let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Options) =
     let configs =
@@ -870,6 +878,9 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         mkAttackStarts axisAttacks
         mkAttackStarts alliesAttacks
         axisAttacks @ alliesAttacks |> List.map fst
+    let buildingFires =
+        createBuildingFires store missionData.World missionData.State (float32 missionData.Weather.Wind.Direction)
+        |> List.map (fun fire -> fire.All)
     let options =
         (Weather.setOptions missionData.Weather missionData.State.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
@@ -900,5 +911,5 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires
     writeMissionFiles "eng" filename options allGroups
