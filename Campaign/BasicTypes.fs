@@ -53,6 +53,10 @@ type OrientedPosition = {
     Altitude : float32
 }
 
+let bigDamage = 500.0f<E>
+let mediumDamage = 300.0f<E>
+let smallDamage = 25.0f<E>
+
 /// A group of buildings or some other static objects.
 type StaticGroup = {
     Model : string

@@ -720,8 +720,16 @@ let createBuildingFires store (world : World) (state : WorldState) (windDirectio
     let maxFires = 20
     let fires = state.FirePositions(world, maxFires)
     [
-        for pos, alt in fires do
-            yield FireLoop.Create(store, pos, alt, windDirection, FireType.CityFire)
+        for pos, alt, size in fires do
+            if size >= smallDamage then
+                let fireType =
+                    if size >= bigDamage then
+                        FireType.CityFire
+                    elif size >= mediumDamage then
+                        FireType.CityFireSmall
+                    else
+                        FireType.VillageSmoke
+                yield FireLoop.Create(store, pos, alt, windDirection, fireType)
     ]
 
 let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Options) =

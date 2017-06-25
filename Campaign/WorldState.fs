@@ -548,4 +548,4 @@ type WorldState with
         List.concat [ damagedRegionStorage; damagedRegionProduction; damagedAirfieldStorage ]
         |> List.sortByDescending fst
         |> List.truncate maxNumFires
-        |> List.map (snd >> fst >> fun grp -> grp.Pos.Pos, grp.Pos.Altitude)
+        |> List.map (fun (damage, (grp, _)) -> grp.Pos.Pos, grp.Pos.Altitude, damage)
