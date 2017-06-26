@@ -66,18 +66,6 @@ let getIconByIndex idx mcus =
     |> getByIndex idx
     :?> McuIcon
 
-/// Get a command by its index.
-let getCommandByIndex idx mcus =
-    mcus
-    |> getByIndex idx
-    :?> McuTrigger
-
-/// Get a complex trigger by its index.
-let getComplexTriggerByIndex idx mcus =
-    mcus
-    |> getByIndex idx
-    :?> McuComplex
-
 /// <summary>A group of Mcus.</summary>
 /// <remark>Not to be mistaken with groups in missions, with which this type has nothing to do.</remark>
 type IMcuGroup =
