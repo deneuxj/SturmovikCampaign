@@ -19,6 +19,7 @@ open SturmovikMission.Blocks.IO
 open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 open SturmovikMission.Blocks.TransportFlight
 open SturmovikMission.Blocks.FireLoop
+open SturmovikMission.Blocks.ParaDrop
 open Vector
 
 open Campaign.WorldDescription
@@ -416,6 +417,12 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                     let invasion =
                         invasion
                         |> List.map (fun x -> { toVertex(x) with Priority = 0 })
+                    match invasion with
+                    | [] -> ()
+                    | wps ->
+                        let destination = List.last wps
+                        let paraDrop = ParaDrop.Create(store, lcStore, destination.Pos, coalition.ToCountry, order.OrderId.AsString())
+                        yield paraDrop.All
                     let expectedTravelTime =
                         let speed =
                             20000.0f / 3600.0f
@@ -440,7 +447,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         | (pos, _) :: _ -> (pos + Vector2(-100.0f, 0.0f)).AssignTo x.Pos
                         | [] -> ()
                         x
-                    yield initialDelay :> Mcu.McuBase
+                    yield McuUtil.groupFromList [ initialDelay ]
                     let prevStart = ref initialDelay
                     let rankOffset = ref 0
                     for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
@@ -462,8 +469,8 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         Mcu.addTargetLink column.Api.Start beforeNext.Index
                         prevStart := beforeNext
                         rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
-                        yield! McuUtil.deepContentOf column
-                        yield beforeNext :> Mcu.McuBase
+                        yield column :> McuUtil.IMcuGroup
+                        yield McuUtil.groupFromList [ beforeNext ]
                 | None -> ()
             | None ->
                 ()
@@ -760,6 +767,7 @@ type MissionData = {
 }
 
 let writeMissionFile (missionParams : MissionGenerationParameters) (missionData : MissionData) (filename : string) =
+    let wg = WorldFastAccess.Create(missionData.World)
     let strategyMissionData = T.GroupData(Parsing.Stream.FromFile missionParams.StrategyMissionFile)
     let options = strategyMissionData.ListOfOptions.Head
     let store = NumericalIdentifiers.IdStore()
@@ -900,12 +908,11 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList (spawns |> List.collect snd)
-          McuUtil.groupFromList columns
           McuUtil.groupFromList flags
           McuUtil.groupFromList ndbs
           McuUtil.groupFromList landlights
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires
+          alliesPrio ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns
     writeMissionFiles "eng" filename options allGroups

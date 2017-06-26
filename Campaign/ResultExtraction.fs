@@ -9,6 +9,7 @@ open Vector
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.VirtualConvoy.Factory
 open SturmovikMission.Blocks.StaticDefenses.Types
+open SturmovikMission.Blocks.ParaDrop
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
@@ -91,6 +92,55 @@ let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry s
                 ()
     }
 
+/// Precision of successful paratropper drop.
+type ParaDropPrecision = Precise | Wide
+
+/// A paratrooper landed alive inside or near a landing zone.
+type ParaDropResult = {
+    Coalition : CoalitionId
+    LandZone : RegionId
+    Precision : ParaDropPrecision
+}
+
+let extractParaDrops (orders : ColumnMovement list) (entries : LogEntry seq) =
+    let checkForParaDrop precision eventName =
+        let f =
+            match precision with
+            | Precise -> ParaDrop.TryGetPreciseDropEventName
+            | Wide -> ParaDrop.TryGetWideDropEventName
+        match f eventName with
+        | Some suffix ->
+            match orders |> List.tryFind (fun order -> order.OrderId.AsString() = suffix) with
+            | Some order ->
+                Some {
+                    Coalition = order.OrderId.Coalition
+                    LandZone = order.Destination
+                    Precision = Precise
+                }
+            | None ->
+                None
+        | None ->
+            None
+    [
+        let idxToName = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
+            | :? KillEntry as event when event.AttackerId = -1 ->
+                match Map.tryFind event.TargetId !idxToName with
+                | Some eventName ->
+                    match checkForParaDrop Precise eventName with
+                    | Some result -> yield result
+                    | None ->
+                        match checkForParaDrop Wide eventName with
+                        | Some result -> yield result
+                        | None -> ()
+                | None ->
+                    ()
+            | _ ->
+                ()
+    ]
 
 /// A plane took off, possibly took some damage and then landed/crashed near or at an airfield
 type TookOff = {

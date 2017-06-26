@@ -517,6 +517,7 @@ module MissionLogParsing =
         TakeOffs : TookOff list
         Landings : Landed list
         ColumnDepartures : ColumnLeft list
+        ParaDrops : ParaDropResult list
     }
 
     let backupFiles config =
@@ -640,7 +641,7 @@ module MissionLogParsing =
             both |> List.choose (function Landed x -> Some x | _ -> None)
         let movements = axisOrders.Columns @ alliesOrders.Columns
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
-
+        let paraDrops = extractParaDrops movements entries
         let results =
             { Entries = entries |> List.map (fun entry -> entry.OriginalString)
               Shipments = shipments
@@ -649,6 +650,7 @@ module MissionLogParsing =
               TakeOffs = takeOffs
               Landings = landings
               ColumnDepartures = columnDepartures
+              ParaDrops = paraDrops
             }
         use missionFile = File.CreateText(Path.Combine(config.OutputDir, Filenames.missionResults))
         serializer.Serialize(missionFile, results)

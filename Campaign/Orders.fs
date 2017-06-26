@@ -21,6 +21,9 @@ type OrderId = {
     Index : int
     Coalition : CoalitionId
 }
+with
+    member this.AsString() =
+        sprintf "%d-%d" this.Index (int this.Coalition.ToCoalition)
 
 let private tryExtractNumberSuffix (prefix : string) (name : string) =
     let number =

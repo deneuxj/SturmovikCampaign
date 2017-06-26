@@ -8,6 +8,9 @@ open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
 
+let preciseParaDropPrefix = "PreciseParaDrop"
+let wideParaDropprefix = "WideParaDrop"
+
 type ParaDrop = {
     Pos : Vector2
     Country : Mcu.CountryValue
@@ -16,7 +19,7 @@ type ParaDrop = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, country : Mcu.CountryValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, country : Mcu.CountryValue, eventName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let substlc = Mcu.substLCId <| lcStore.GetIdMapper()
@@ -40,9 +43,9 @@ with
         preciseCx.Countries <- [ country ]
         wideCx.Countries <- [ country ]
         // Notification
-        let notifyPreciseName = sprintf "PreciseParaDrop-%d" precise.Index
+        let notifyPreciseName = sprintf "%s-%s" preciseParaDropPrefix eventName
         let notifyPrecise = EventReporting.Create(store, country, pos, notifyPreciseName)
-        let notifyWideName = sprintf "WideParaDrop-%d" precise.Index
+        let notifyWideName = sprintf "%s-%s" wideParaDropprefix eventName
         let notifyWide = EventReporting.Create(store, country, pos, notifyPreciseName)
         Mcu.addTargetLink precise notifyPrecise.Trigger.Index
         Mcu.addTargetLink wide notifyWide.Trigger.Index
@@ -65,3 +68,15 @@ with
                   member x.SubGroups = [ notifyPrecise.All; notifyWide.All ]
             }
         }
+
+    static member TryGetPreciseDropEventName(name : string) =
+        if name.StartsWith(preciseParaDropPrefix + "-") then
+            Some (name.Substring(preciseParaDropPrefix.Length + 1))
+        else
+            None
+
+    static member TryGetWideDropEventName(name : string) =
+        if name.StartsWith(preciseParaDropPrefix + "-") then
+            Some (name.Substring(wideParaDropprefix.Length + 1))
+        else
+            None
