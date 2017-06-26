@@ -25,20 +25,22 @@ let filterByName (name : string) (mcus : #McuBase list) =
 /// Get a trigger by its name.
 let getTriggerByName group name =
     filterByName name group
-    |> Seq.choose (function :? Mcu.McuTrigger as trigger -> Some trigger | _ -> None)
-    |> Seq.head
+    |> Seq.pick (function :? Mcu.McuTrigger as trigger -> Some trigger | _ -> None)
 
 /// Get a vehicle by its name.
 let getVehicleByName group name =
     filterByName name group
-    |> Seq.choose (function :? Mcu.HasEntity as vehicle -> Some vehicle | _ -> None)
-    |> Seq.head
+    |> Seq.pick (function :? Mcu.HasEntity as vehicle -> Some vehicle | _ -> None)
 
 /// Get a waypoint by its name.
 let getWaypointByName group name =
     filterByName name group
-    |> Seq.choose (function :? Mcu.McuWaypoint as waypoint -> Some waypoint | _ -> None)
-    |> Seq.head
+    |> Seq.pick (function :? Mcu.McuWaypoint as waypoint -> Some waypoint | _ -> None)
+
+/// Get a complex trigger by its name.
+let getComplexTriggerByName group name =
+    filterByName name group
+    |> Seq.pick (function :? Mcu.McuComplex as cx -> Some cx | _ -> None)
 
 /// Get an Mcu from a list by its index.
 let getByIndex (idx : int) (mcus : #McuBase list) : McuBase =
