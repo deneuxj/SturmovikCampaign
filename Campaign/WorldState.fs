@@ -77,6 +77,11 @@ with
         |> Map.tryFind vehicle
         |> Option.defaultVal 0
 
+    member this.TotalVehicleValue =
+        this.NumVehicles
+        |> Map.toSeq
+        |> Seq.sumBy (fun (vehicle, qty) -> vehicle.Cost * float32 qty)
+
     member this.StorageCapacity(region : WorldDescription.Region) =
         List.zip region.Storage this.StorageHealth
         |> List.sumBy (fun (sto, health) -> health * sto.Storage)

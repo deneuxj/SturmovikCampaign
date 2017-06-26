@@ -276,11 +276,9 @@ module OrderDecision =
             columnOrders
             |> List.filter (fun order -> order.OrderId.Coalition = Allies)
         let mkPatrols coalition =
-            let random = System.Random()
             mkAllPatrols world state coalition
-            |> Array.ofSeq
-            |> Array.shuffle random
-            |> Array.fold (fun (starts, filtered) (af, patrol) ->
+            |> prioritizeAiPatrols world state
+            |> Seq.fold (fun (starts, filtered) (af, patrol) ->
                 if Set.contains af.AirfieldId starts then
                     (starts, filtered)
                 else

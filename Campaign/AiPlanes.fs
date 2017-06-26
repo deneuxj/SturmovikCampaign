@@ -20,6 +20,7 @@ type AiPatrol =
       Coalition : CoalitionId
       Pos : Vector2
       Altitude : float32
+      ProtectedRegion : RegionId option
     }
 with
     // Payload suitable for air-to-air engagements.
@@ -105,6 +106,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                             Coalition = coalition
                                             Pos = p1
                                             Altitude = 4000.0f
+                                            ProtectedRegion = Some af.Region
                                         }
                                     | None ->
                                         ()
@@ -116,6 +118,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                             Coalition = coalition
                                             Pos = p1
                                             Altitude = 3000.0f
+                                            ProtectedRegion = Some af.Region
                                         }
                                     | None ->
                                         ()
@@ -127,6 +130,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                             Coalition = coalition
                                             Pos = p1
                                             Altitude = 2500.0f
+                                            ProtectedRegion = Some af.Region
                                         }
                                     | None ->
                                         ()
@@ -159,6 +163,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                     Coalition = coalition
                                     Pos = p1
                                     Altitude = 3000.0f
+                                    ProtectedRegion = Some ourRegion.RegionId
                                 }
                             let p1 = ourRegion.Position + dir * 20000.0f
                             if (p1 - af.Pos).Length() < fighterRange then
@@ -167,6 +172,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                     Coalition = coalition
                                     Pos = p1
                                     Altitude = 3000.0f
+                                    ProtectedRegion = None
                                 }
                         | None ->
                             ()
@@ -174,6 +180,31 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                         ()
     }
 
+let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (_ * AiPatrol) seq) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+    let defenseNeeds =
+        computeDefenseNeeds world
+        |> Map.ofList
+    patrols
+    |> Seq.sortByDescending (fun (_, patrol) ->
+        match patrol.ProtectedRegion with
+        | Some region ->
+            let assets = sg.GetRegion(region)
+            let planeAssets =
+                List.zip world.Airfields state.Airfields
+                |> List.sumBy (fun (af, afState) -> if af.Region = region then afState.TotalPlaneValue + afState.Supplies else 0.0f<E>)
+            let tankAssets =
+                assets.TotalVehicleValue
+            let productionAssets =
+                assets.ProductionCapacity(wg.GetRegion(region)) * 24.0f<H>
+            let vulnerability =
+                1.0f - assets.Supplies / (max 1.0f<E> (defenseNeeds.TryFind region |> Option.defaultVal 0.0f<E>))
+                |> max 0.0f
+            vulnerability * (tankAssets + productionAssets + planeAssets)
+        | None ->
+            0.0f<E>
+    )
 
 type AiAttack =
     { Plane : PlaneModel
