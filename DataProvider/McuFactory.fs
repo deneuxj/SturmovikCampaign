@@ -66,9 +66,37 @@ let getStringField (name : string) fields =
     fields
     |> Seq.pick (function (name2, Value.String s) when name = name2 -> Some s | _ -> None)
 
-let getListField  (name : string) fields =
+let getListField (name : string) fields =
     fields
     |> Seq.pick (function (name2, Value.List s) when name = name2 -> Some s | _ -> None)
+
+/// <summary>
+/// Get the values of a field that has max multiplicity larger than 1
+/// </summary>
+/// <remarks>
+/// Not to be mistaken with a list field, which in the syntax is of the form key = { values }.
+/// This function deals with key = value, where the same key can occur multiple times in a composite.
+/// </remarks>
+let getMultField (name : string) fields =
+    fields
+    |> Seq.choose (function (name2, v) when name = name2 -> Some v | _ -> None)
+
+let getMultIntField (name : string) fields =
+    fields
+    |> getMultField name
+    |> Seq.choose (function Value.Integer s -> Some s | _ -> None)
+
+let setMultField (name : string, values : Value list) fields =
+    [
+        for v in values do
+            yield name, v
+        yield! fields |> List.filter (fun (name2, _) -> name2 <> name)
+    ]
+
+let setMultIntField (name : string, values : int list) fields =
+    values
+    |> List.map Value.Integer
+    |> fun values -> setMultField (name, values) fields
 
 let setField (name : string, value) fields =
     let rec work xs =
@@ -375,6 +403,11 @@ let private mkAsComplex path (typeName : string) (state : (string * Value) list 
                     !state |> getStringField "Name"
                 and set name =
                     state := !state |> setField ("Name", Value.String name)
+            member this.Countries
+                with get () =
+                    !state |> getMultIntField "Country" |> Seq.map enum |> List.ofSeq
+                and set countries =
+                    state := !state |> setMultIntField ("Country", countries |> List.map int)
             
         interface McuBase with
             member this.AsString() = baseImpl.AsString()
@@ -392,8 +425,8 @@ let private mkAsComplex path (typeName : string) (state : (string * Value) list 
 
 let tryMkAsComplex (typeName : string, typ : ValueType) =
     match typeName, typ with
-    | "MCU_TR_ComplexTrigger", ValueType.Composite fields ->
-        let typeFields = fields
+    | "MCU_TR_ComplexTrigger", ValueType.Composite typeFields ->
+        assert(typeFields.["Country"] = (ValueType.Integer, MinMultiplicity.Zero, MaxMultiplicity.Multiple))
         function
         | Value.Composite fields, path ->
             let state = ref fields

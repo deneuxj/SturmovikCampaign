@@ -281,12 +281,20 @@ type EventConnection =
       TarId : int }
 
 /// <summary>
+/// Known country values.
+/// </summary>
+type CountryValue =
+    | Russia = 101
+    | Germany = 201
+
+/// <summary>
 /// Interface of complex triggers.
 /// </summary>
 type McuComplex =
     inherit McuBase
     abstract Name : string with get, set
     abstract OnEvents : EventConnection list with get, set
+    abstract Countries : CountryValue list with get, set
 
 /// <summary>
 /// Report codes, to be used in ReportConnection.Type
@@ -335,13 +343,6 @@ type McuEntity =
 /// </summary>
 type NumberInFormationData =
     abstract Number : int with get, set
-
-/// <summary>
-/// Known country values.
-/// </summary>
-type CountryValue =
-    | Russia = 101
-    | Germany = 201
 
 /// <summary>
 /// Interface of things that can have entities: ground vehicles, planes, artillery, buildings, bridges...
