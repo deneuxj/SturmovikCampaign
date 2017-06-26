@@ -279,6 +279,7 @@ with
         }
 
 type EventReporting = {
+    Name : string
     Trigger : Mcu.McuTrigger
     Disable : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
@@ -314,7 +315,8 @@ with
         entity.Name <- eventName
         notifier.Name <- eventName
         notifier.Country <- country
-        { Trigger = leaderArrived
+        { Name = eventName
+          Trigger = leaderArrived
           Disable = destroyed
           All =
             { new McuUtil.IMcuGroup with

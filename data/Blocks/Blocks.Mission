@@ -5686,51 +5686,16 @@ Group
 Group
 {
   Name = "CityFire";
-  Index = 496;
+  Index = 477;
   Desc = "";
   Effect
   {
     Name = "Effect1";
-    Index = 477;
-    LinkTrId = 480;
-    XPos = 29565.583;
-    YPos = 108.584;
-    ZPos = 22612.231;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Script = "luascripts\worldobjects\mapemitters\city_fire.txt";
-    Model = "";
-    Desc = "";
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 480;
-    Name = "Effect entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 29565.583;
-    YPos = 108.784;
-    ZPos = 22612.231;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 477;
-  }
-  
-
-  Effect
-  {
-    Name = "Effect2";
     Index = 478;
     LinkTrId = 479;
-    XPos = 29565.564;
+    XPos = 29565.583;
     YPos = 108.584;
-    ZPos = 22612.581;
+    ZPos = 22612.231;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -5747,9 +5712,9 @@ Group
     Desc = "";
     Targets = [];
     Objects = [];
-    XPos = 29565.564;
+    XPos = 29565.583;
     YPos = 108.784;
-    ZPos = 22612.581;
+    ZPos = 22612.231;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -5758,13 +5723,48 @@ Group
   }
   
 
+  Effect
+  {
+    Name = "Effect2";
+    Index = 481;
+    LinkTrId = 482;
+    XPos = 29565.564;
+    YPos = 108.584;
+    ZPos = 22612.581;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\city_fire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 482;
+    Name = "Effect entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 29565.564;
+    YPos = 108.784;
+    ZPos = 22612.581;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 481;
+  }
+  
+
   MCU_CMD_Effect
   {
-    Index = 481;
+    Index = 484;
     Name = "Play1";
     Desc = "";
     Targets = [];
-    Objects = [480];
+    Objects = [479];
     XPos = 29564.850;
     YPos = 108.584;
     ZPos = 22611.455;
@@ -5777,10 +5777,10 @@ Group
 
   MCU_Timer
   {
-    Index = 482;
+    Index = 485;
     Name = "0s";
     Desc = "";
-    Targets = [481,483];
+    Targets = [484,486];
     Objects = [];
     XPos = 29564.239;
     YPos = 108.584;
@@ -5795,10 +5795,10 @@ Group
 
   MCU_Timer
   {
-    Index = 483;
+    Index = 486;
     Name = "12s";
     Desc = "";
-    Targets = [484,486,492];
+    Targets = [488,489,490];
     Objects = [];
     XPos = 29563.516;
     YPos = 108.584;
@@ -5813,11 +5813,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 484;
+    Index = 488;
     Name = "Play2";
     Desc = "";
     Targets = [];
-    Objects = [479];
+    Objects = [482];
     XPos = 29564.801;
     YPos = 108.584;
     ZPos = 22613.223;
@@ -5830,10 +5830,10 @@ Group
 
   MCU_Timer
   {
-    Index = 486;
+    Index = 489;
     Name = "3s";
     Desc = "";
-    Targets = [487,489];
+    Targets = [493,494];
     Objects = [];
     XPos = 29562.527;
     YPos = 108.584;
@@ -5848,11 +5848,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 487;
+    Index = 493;
     Name = "Stop1";
     Desc = "";
     Targets = [];
-    Objects = [480];
+    Objects = [479];
     XPos = 29564.850;
     YPos = 108.584;
     ZPos = 22609.945;
@@ -5865,10 +5865,10 @@ Group
 
   MCU_Timer
   {
-    Index = 489;
+    Index = 494;
     Name = "1s";
     Desc = "";
-    Targets = [482];
+    Targets = [485];
     Objects = [];
     XPos = 29563.548;
     YPos = 108.584;
@@ -5883,11 +5883,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 490;
+    Index = 497;
     Name = "Stop2";
     Desc = "";
     Targets = [];
-    Objects = [479];
+    Objects = [482];
     XPos = 29564.721;
     YPos = 108.584;
     ZPos = 22614.163;
@@ -5900,10 +5900,10 @@ Group
 
   MCU_Timer
   {
-    Index = 492;
+    Index = 490;
     Name = "15s";
     Desc = "";
-    Targets = [490];
+    Targets = [497];
     Objects = [];
     XPos = 29563.492;
     YPos = 108.584;
@@ -5918,10 +5918,10 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 495;
+    Index = 499;
     Name = "";
     Desc = "";
-    Targets = [482];
+    Targets = [485];
     Objects = [];
     XPos = 29563.556;
     YPos = 108.584;
@@ -5930,6 +5930,356 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "ParaDrop";
+  Index = 508;
+  Desc = "";
+  MCU_TR_ComplexTrigger
+  {
+    Index = 500;
+    Name = "PreciseDrop";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36957.160;
+    YPos = 98.868;
+    ZPos = 24454.165;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Enabled = 1;
+    Cylinder = 1;
+    Radius = 1000;
+    DamageThreshold = 1;
+    DamageReport = 50;
+    CheckVehicles = 0;
+    CheckPlanes = 0;
+    EventsFilterSpawned = 0;
+    EventsFilterEnteredSimple = 0;
+    EventsFilterEnteredAlive = 0;
+    EventsFilterLeftSimple = 0;
+    EventsFilterLeftAlive = 0;
+    EventsFilterFinishedSimple = 0;
+    EventsFilterFinishedAlive = 0;
+    EventsFilterStationaryAndAlive = 0;
+    EventsFilterFinishedStationaryAndAlive = 0;
+    EventsFilterTookOff = 0;
+    EventsFilterDamaged = 0;
+    EventsFilterCriticallyDamaged = 0;
+    EventsFilterRepaired = 0;
+    EventsFilterKilled = 0;
+    EventsFilterDropedBombs = 0;
+    EventsFilterFiredFlare = 0;
+    EventsFilterFiredRockets = 0;
+    EventsFilterDroppedCargoContainers = 0;
+    EventsFilterDeliveredCargo = 0;
+    EventsFilterParatrooperJumped = 0;
+    EventsFilterParatrooperLandedAlive = 1;
+    Country = 201;
+    OnEvents
+    {
+      OnEvent
+      {
+        Type = 78;
+        TarId = 502;
+      }
+    }
+  }
+  
+
+  MCU_TR_ComplexTrigger
+  {
+    Index = 501;
+    Name = "WideDrop";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36951.331;
+    YPos = 98.868;
+    ZPos = 24454.202;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Enabled = 1;
+    Cylinder = 1;
+    Radius = 2000;
+    DamageThreshold = 1;
+    DamageReport = 50;
+    CheckVehicles = 0;
+    CheckPlanes = 0;
+    EventsFilterSpawned = 0;
+    EventsFilterEnteredSimple = 0;
+    EventsFilterEnteredAlive = 0;
+    EventsFilterLeftSimple = 0;
+    EventsFilterLeftAlive = 0;
+    EventsFilterFinishedSimple = 0;
+    EventsFilterFinishedAlive = 0;
+    EventsFilterStationaryAndAlive = 0;
+    EventsFilterFinishedStationaryAndAlive = 0;
+    EventsFilterTookOff = 0;
+    EventsFilterDamaged = 0;
+    EventsFilterCriticallyDamaged = 0;
+    EventsFilterRepaired = 0;
+    EventsFilterKilled = 0;
+    EventsFilterDropedBombs = 0;
+    EventsFilterFiredFlare = 0;
+    EventsFilterFiredRockets = 0;
+    EventsFilterDroppedCargoContainers = 0;
+    EventsFilterDeliveredCargo = 0;
+    EventsFilterParatrooperJumped = 0;
+    EventsFilterParatrooperLandedAlive = 1;
+    Country = 201;
+    OnEvents
+    {
+      OnEvent
+      {
+        Type = 78;
+        TarId = 503;
+      }
+    }
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 502;
+    Name = "PreciselyDropped";
+    Desc = "";
+    Targets = [505,506,513];
+    Objects = [];
+    XPos = 36957.372;
+    YPos = 98.909;
+    ZPos = 24474.287;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 503;
+    Name = "PossiblyWidelyDropped";
+    Desc = "";
+    Targets = [504,514];
+    Objects = [];
+    XPos = 36951.487;
+    YPos = 98.909;
+    ZPos = 24474.287;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 504;
+    Name = "WidelyDropped";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36951.469;
+    YPos = 99.203;
+    ZPos = 24480.570;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 505;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [504];
+    Objects = [];
+    XPos = 36954.490;
+    YPos = 99.041;
+    ZPos = 24477.494;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 506;
+    Name = "20ms";
+    Desc = "";
+    Targets = [507];
+    Objects = [];
+    XPos = 36957.369;
+    YPos = 98.965;
+    ZPos = 24478.077;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0.02;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 507;
+    Name = "Trigger Activate";
+    Desc = "";
+    Targets = [504];
+    Objects = [];
+    XPos = 36954.497;
+    YPos = 99.063;
+    ZPos = 24479.413;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  Effect
+  {
+    Name = "Effect";
+    Index = 509;
+    LinkTrId = 510;
+    XPos = 36954.398;
+    YPos = 98.698;
+    ZPos = 24453.921;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "luascripts\worldobjects\mapemitters\landfire.txt";
+    Model = "";
+    Desc = "";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 510;
+    Name = "Effect entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36954.398;
+    YPos = 98.898;
+    ZPos = 24453.921;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 509;
+  }
+  
+
+  MCU_TR_MissionBegin
+  {
+    Index = 511;
+    Name = "Translator Mission Begin";
+    Desc = "";
+    Targets = [512];
+    Objects = [];
+    XPos = 36953.994;
+    YPos = 98.733;
+    ZPos = 24442.052;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+  }
+  
+
+  MCU_CMD_Effect
+  {
+    Index = 512;
+    Name = "Command Effect";
+    Desc = "";
+    Targets = [];
+    Objects = [510];
+    XPos = 36953.913;
+    YPos = 98.758;
+    ZPos = 24447.865;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    ActionType = 0;
+  }
+  
+
+  MCU_TR_Subtitle
+  {
+    Index = 513;
+    Name = "SubtitlePrecise";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36961.484;
+    YPos = 98.782;
+    ZPos = 24474.010;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    SubtitleInfo
+    {
+      Duration = 2;
+      FontSize = 20;
+      HAlign = 2;
+      VAlign = 0;
+      RColor = 255;
+      GColor = 255;
+      BColor = 0;
+      LCText = 5;
+    }
+    
+    Coalitions = [1, 2];
+  }
+  
+
+  MCU_TR_Subtitle
+  {
+    Index = 514;
+    Name = "SubtitleWide";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36948.441;
+    YPos = 98.782;
+    ZPos = 24474.264;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    SubtitleInfo
+    {
+      Duration = 2;
+      FontSize = 20;
+      HAlign = 2;
+      VAlign = 0;
+      RColor = 255;
+      GColor = 255;
+      BColor = 0;
+      LCText = 6;
+    }
+    
+    Coalitions = [1, 2];
   }
   
 
