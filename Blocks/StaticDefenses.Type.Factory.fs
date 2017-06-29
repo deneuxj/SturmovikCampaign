@@ -54,8 +54,8 @@ with
                     let isFlak =
                         match specialty with
                         | AntiTank -> false
-                        | AntiAirMg -> i < max (numSearchLights + 1) (groupSize / 4)
-                        | AntiAirCanon -> i < max (numSearchLights + 1) (groupSize / 2)
+                        | AntiAirMg -> i <= max (numSearchLights + 1) (groupSize / 4)
+                        | AntiAirCanon -> i <= max (numSearchLights + 1) (groupSize / 2)
                     let canon =
                         Canon.Create(specialty, random, store, boundary, yori, isFlak, country)
                         |> fun canon ->
