@@ -94,6 +94,7 @@ with
         | Contains "vl_rounddepot" -> [1..3]
         | Contains "arf_hangars_1" -> [0..1]
         | Contains "arf_hangararc" -> [1]
+        | Contains "arf_hangarbox" -> [1]
         | Contains "arf_gsm_1" -> [2..4]
         | Contains "arf_gsm_2" -> [1; 2]
         | _ -> []
@@ -112,6 +113,7 @@ with
         | Contains "arf_dugouts_3" -> 600.0f<E>
         | Contains "arf_ammo_1" -> 100.0f<E>
         | Contains "arf_hangararc" -> 1000.0f<E>
+        | Contains "arf_hangarbox" -> 1000.0f<E>
         | Contains "arf_hangars_1" -> 1200.0f<E>
         | Contains "arf_gsm_1" -> 100.0f<E>
         | Contains "arf_gsm_2" -> 75.0f<E>
@@ -138,6 +140,7 @@ with
         | Contains "arf_dugouts_3" -> 600.0f<E>
         | Contains "arf_ammo_1" -> 100.0f<E>
         | Contains "arf_hangararc" -> 1000.0f<E>
+        | Contains "arf_hangarbox" -> 1000.0f<E>
         | Contains "arf_hangars_1" -> 1200.0f<E>
         | Contains "arf_gsm_1" -> 100.0f<E>
         | Contains "arf_gsm_2" -> 75.0f<E>
