@@ -426,7 +426,10 @@ let private mkAsComplex path (typeName : string) (state : (string * Value) list 
 let tryMkAsComplex (typeName : string, typ : ValueType) =
     match typeName, typ with
     | "MCU_TR_ComplexTrigger", ValueType.Composite typeFields ->
-        assert(typeFields.["Country"] = (ValueType.Integer, MinMultiplicity.Zero, MaxMultiplicity.Multiple))
+        assert(
+                match typeFields.["Country"] with
+                | (ValueType.Integer, _, MaxMultiplicity.Multiple) -> true
+                | _ -> false)
         function
         | Value.Composite fields, path ->
             let state = ref fields
