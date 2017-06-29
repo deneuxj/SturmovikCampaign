@@ -94,6 +94,10 @@ Keep the the number of NDBs low. The game puts them all in the same channel, so 
 14. Land fires
 Create land fire effects with entities named "LandFire" in a group named "Land fires"
 
-15. Bridges and other buildings
+15. Land lights
+Create land lights with entities named "LandLight" in a group named "Land lights".
+Create a pair for each spawn so that planes will take off and land with the lights in their back.
+
+16. Bridges and other buildings
 Bridges and other blocks, buildings... need not be in groups, although they can.
 You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.
