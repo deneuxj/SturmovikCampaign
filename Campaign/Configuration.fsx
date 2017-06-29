@@ -7,10 +7,10 @@ open Campaign.PlaneModel
 
 let config =
     { Configuration.Default with
-        PlaneSet = PlaneSet.EarlyAccess
-        StrategyFile = "Vluki.mission"
+        PlaneSet = PlaneSet.Moscow
+        StrategyFile = "StrategySmall1.mission"
         //OutputDir = @"C:\Users\johann\Documents\FromServer\AutoMoscow"
-        OutputDir = @"C:\Users\johann\Documents\AutoVLuki"
+        OutputDir = @"C:\Users\johann\Documents\AutoMoscow"
         //ServerDataDir = @"C:\Users\johann\Documents\FromServer"
         ServerDataDir = @"E:\dserver\data"
         ServerBinDir = @"E:\dserver\bin"
