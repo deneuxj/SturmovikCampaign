@@ -13,5 +13,5 @@
 #r "System.Runtime.Serialization.dll"
 #r "System.Xml.dll"
 #r "../../Blocks/packages/Newtonsoft.Json.9.0.1/lib/net45/Newtonsoft.Json.dll"
-#r "../../../plog/ploggy/bin/Debug/ploggy.dll"
 #r "../../Blocks/packages/NLog.4.4.4/lib/net45/NLog.dll"
+#r "../../../plog/ploggy/bin/Debug/ploggy.dll"
