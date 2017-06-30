@@ -145,11 +145,10 @@ with
         cannon.Name <- name
         // Set attack radius according to gun type
         let range =
-            match specialty, country with
-            | AntiTank, _ | AntiAirCanon, _ -> 2000
-            | _ when isFlak -> 7500
-            | AntiAirMg, country when country = Mcu.CountryValue.Russia -> 1500
-            | AntiAirMg, _ -> 1500
+            match specialty with
+            | _ when isFlak -> 9000
+            | AntiTank | AntiAirCanon -> 2000
+            | AntiAirMg -> 1500
         match attackOrder with
         | Some (:? Mcu.McuAttackArea as attackOrder) ->
             attackOrder.AttackArea <- range
