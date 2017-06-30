@@ -137,11 +137,11 @@ with
             mcu.Ori.Y <- mcu.Ori.Y + float yori
         // Set object name, used for identifying damages from the log
         let name =
-            match specialty, country with
-            | AntiTank, _ | AntiAirCanon, _ -> CannonObjectName
-            | _ when isFlak -> CannonObjectName
-            | AntiAirMg, country when country = Mcu.CountryValue.Russia -> HeavyMachineGunAAName
-            | AntiAirMg, _ -> LightMachineGunAAName
+            match specialty with
+            | AntiTank | AntiAirCanon -> CannonObjectName
+            | AntiAirMg when isFlak -> CannonObjectName
+            | AntiAirMg when country = Mcu.CountryValue.Russia -> HeavyMachineGunAAName
+            | AntiAirMg -> LightMachineGunAAName
         cannon.Name <- name
         // Set attack radius according to gun type
         let range =
