@@ -76,7 +76,7 @@ with
             None
 
     static member TryGetWideDropEventName(name : string) =
-        if name.StartsWith(preciseParaDropPrefix + "-") then
+        if name.StartsWith(wideParaDropprefix + "-") then
             Some (name.Substring(wideParaDropprefix.Length + 1))
         else
             None

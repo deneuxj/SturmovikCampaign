@@ -5940,11 +5940,11 @@ Group
 Group
 {
   Name = "ParaDrop";
-  Index = 508;
+  Index = 500;
   Desc = "";
   MCU_TR_ComplexTrigger
   {
-    Index = 500;
+    Index = 501;
     Name = "PreciseDrop";
     Desc = "";
     Targets = [];
@@ -5998,7 +5998,7 @@ Group
 
   MCU_TR_ComplexTrigger
   {
-    Index = 501;
+    Index = 503;
     Name = "WideDrop";
     Desc = "";
     Targets = [];
@@ -6044,7 +6044,7 @@ Group
       OnEvent
       {
         Type = 78;
-        TarId = 503;
+        TarId = 504;
       }
     }
   }
@@ -6055,7 +6055,7 @@ Group
     Index = 502;
     Name = "PreciselyDropped";
     Desc = "";
-    Targets = [505,506,513];
+    Targets = [506,507,508];
     Objects = [];
     XPos = 36957.372;
     YPos = 98.909;
@@ -6070,10 +6070,10 @@ Group
 
   MCU_Timer
   {
-    Index = 503;
+    Index = 504;
     Name = "PossiblyWidelyDropped";
     Desc = "";
-    Targets = [504,514];
+    Targets = [510,511];
     Objects = [];
     XPos = 36951.487;
     YPos = 98.909;
@@ -6081,14 +6081,14 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Time = 0;
+    Time = 0.02;
     Random = 100;
   }
   
 
   MCU_Timer
   {
-    Index = 504;
+    Index = 510;
     Name = "WidelyDropped";
     Desc = "";
     Targets = [];
@@ -6106,10 +6106,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 505;
+    Index = 506;
     Name = "Trigger Deactivate";
     Desc = "";
-    Targets = [504];
+    Targets = [510];
     Objects = [];
     XPos = 36954.490;
     YPos = 99.041;
@@ -6122,10 +6122,10 @@ Group
 
   MCU_Timer
   {
-    Index = 506;
-    Name = "20ms";
+    Index = 507;
+    Name = "delay";
     Desc = "";
-    Targets = [507];
+    Targets = [515];
     Objects = [];
     XPos = 36957.369;
     YPos = 98.965;
@@ -6133,17 +6133,17 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Time = 0.02;
+    Time = 0.05;
     Random = 100;
   }
   
 
   MCU_Activate
   {
-    Index = 507;
+    Index = 515;
     Name = "Trigger Activate";
     Desc = "";
-    Targets = [504];
+    Targets = [510];
     Objects = [];
     XPos = 36954.497;
     YPos = 99.063;
@@ -6157,10 +6157,10 @@ Group
   Effect
   {
     Name = "Effect";
-    Index = 509;
-    LinkTrId = 510;
+    Index = 517;
+    LinkTrId = 518;
     XPos = 36954.398;
-    YPos = 98.698;
+    YPos = 98.789;
     ZPos = 24453.921;
     XOri = 0.00;
     YOri = 0.00;
@@ -6173,28 +6173,28 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 510;
+    Index = 518;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
     Objects = [];
     XPos = 36954.398;
-    YPos = 98.898;
+    YPos = 98.989;
     ZPos = 24453.921;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 509;
+    MisObjID = 517;
   }
   
 
   MCU_TR_MissionBegin
   {
-    Index = 511;
+    Index = 520;
     Name = "Translator Mission Begin";
     Desc = "";
-    Targets = [512];
+    Targets = [521];
     Objects = [];
     XPos = 36953.994;
     YPos = 98.733;
@@ -6208,11 +6208,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 512;
+    Index = 521;
     Name = "Command Effect";
     Desc = "";
     Targets = [];
-    Objects = [510];
+    Objects = [518];
     XPos = 36953.913;
     YPos = 98.758;
     ZPos = 24447.865;
@@ -6225,7 +6225,7 @@ Group
 
   MCU_TR_Subtitle
   {
-    Index = 513;
+    Index = 508;
     Name = "SubtitlePrecise";
     Desc = "";
     Targets = [];
@@ -6255,7 +6255,7 @@ Group
 
   MCU_TR_Subtitle
   {
-    Index = 514;
+    Index = 511;
     Name = "SubtitleWide";
     Desc = "";
     Targets = [];
