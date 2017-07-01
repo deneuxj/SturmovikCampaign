@@ -14,7 +14,12 @@ open Campaign.Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 
-type RegionId = RegionId of string
+type RegionId =
+    RegionId of string
+with
+    override this.ToString() =
+        let (RegionId s) = this
+        s
 
 /// All items in a region are under the control of the owner of the region.
 /// Regions are built from influence areas in the group "Regions" in the strategy mission file.

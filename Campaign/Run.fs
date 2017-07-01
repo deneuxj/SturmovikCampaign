@@ -78,6 +78,7 @@ module Filenames =
     let axisAAR = "axisAAR.xml"
     let alliesAAR = "alliesAAR.xml"
     let missionResults = "results.xml"
+    let battles = "battles.xml"
 
 module Init =
     open SturmovikMission.Blocks.BlocksMissionData
@@ -330,6 +331,8 @@ module MissionFileGeneration =
     open Campaign.Orders
     open Campaign.Weather
     open Campaign.Util
+    open Campaign.NewWorldState
+    open Campaign.AfterActionReport
     open SturmovikMission.Blocks.BlocksMissionData
     open System.IO
     open MBrace.FsPickler
@@ -368,6 +371,16 @@ module MissionFileGeneration =
                 serializer.Deserialize<OrderPackage>(alliesOrdersFile)
             with
             | e -> failwithf "Failed to read orders. Reason was: '%s'" e.Message
+
+        let battles =
+            try
+                use battleFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.battles))
+                serializer.Deserialize<BattleSummary list>(battleFile)
+            with
+            | _ -> []
+            |> List.map (fun battle -> battle.GetText() |> String.concat "")
+            |> String.concat "<br>"
+
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
 
         let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
@@ -447,7 +460,7 @@ module MissionFileGeneration =
             config.Briefing.Replace("\r\n", "\n").Split('\n')
             |> Array.map (fun s -> s.Trim())
             |> String.concat "<br>"
-        let briefing = timeAndDate + weatherDescription + mainText + afterActionReports
+        let briefing = timeAndDate + weatherDescription + mainText + battles + afterActionReports
         let missionName = config.MissionName
         let missionParams =
             { PlaneSet = config.PlaneSet
@@ -545,6 +558,7 @@ module MissionLogParsing =
           Filenames.alliesAAR
           Filenames.weather
           Filenames.missionResults
+          Filenames.battles
         ]
         |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
 
@@ -672,8 +686,8 @@ module MissionLogParsing =
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
         let movements = axisOrders.Columns @ alliesOrders.Columns
-        let state2, newlyProduced = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures missionResults.ParaDrops (float32 weather.Wind.Direction)
-        newlyProduced, (state, state2)
+        let state2, newlyProduced, battleReports = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures missionResults.ParaDrops (float32 weather.Wind.Direction)
+        newlyProduced, battleReports, (state, state2)
 
     let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -692,7 +706,7 @@ module MissionLogParsing =
         let aarAllies = buildReport world state1 state2 tookOff landed damages alliesOrders.Columns newSupplies newAlliesVehicles Allies
         aarAxis, aarAllies
 
-    let stage2 config (state, state2, aarAxis, aarAllies) =
+    let stage2 config (state, state2, aarAxis, aarAllies, battles) =
         let outputDir = config.OutputDir
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
@@ -701,3 +715,5 @@ module MissionLogParsing =
         serializer.Serialize(aarAxisFile, aarAxis)
         use aarAlliesFile = File.CreateText(Path.Combine(outputDir, Filenames.alliesAAR))
         serializer.Serialize(aarAlliesFile, aarAllies)
+        use battlesFile = File.CreateText(Path.Combine(outputDir, Filenames.battles))
+        serializer.Serialize(battlesFile, battles)

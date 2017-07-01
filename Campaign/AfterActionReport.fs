@@ -4,6 +4,24 @@ open Campaign.WorldDescription
 open Campaign.PlaneModel
 open Campaign.WorldState
 open Campaign.BasicTypes
+open Campaign.NewWorldState
+
+let mkTankReport (m : Map<GroundAttackVehicle, int>) =
+    m
+    |> Map.toSeq
+    |> Seq.map (fun (tank, qty) -> sprintf "%s: %d" (tank.Description) qty)
+    |> String.concat ", "
+
+type Campaign.NewWorldState.BattleSummary
+with
+    member this.GetText() =
+        seq {
+            yield sprintf "<b>Battle for %s owned by %s</b><br>" (this.Region.ToString()) (this.Participants.DefenderCoalition.ToString())
+            yield sprintf "Defenders: %s<br>" (mkTankReport this.Participants.Defenders)
+            yield sprintf "Attackers: %s (+%1.0f%%)<br>" (mkTankReport this.Participants.Attackers) (100.0f * (this.Participants.AttackerBonus - 1.0f))
+            yield sprintf "Victors: %s %s<br>" (this.Victors.ToString()) (mkTankReport this.Survivors)
+            yield sprintf "Collateral damage: %f<br>" this.CollateralDamage
+        }
 
 type ReportData = {
     MissionDate : System.DateTime
@@ -24,11 +42,6 @@ with
             m
             |> Map.toSeq
             |> Seq.map (fun (plane, qty) -> sprintf "%s: %d" plane.PlaneName qty)
-            |> String.concat ", "
-        let mkTankReport (m : Map<GroundAttackVehicle, int>) =
-            m
-            |> Map.toSeq
-            |> Seq.map (fun (tank, qty) -> sprintf "%s: %d" (tank.Description) qty)
             |> String.concat ", "
         seq {
             yield sprintf "<b>%s</b> %s<br>"

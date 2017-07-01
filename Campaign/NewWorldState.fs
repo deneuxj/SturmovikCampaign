@@ -692,6 +692,15 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
     )
     |> List.ofSeq
 
+/// Used for after-action reports
+type BattleSummary = {
+    Region : RegionId
+    Participants : BattleParticipants
+    Victors : CoalitionId
+    Survivors : Map<GroundAttackVehicle, int>
+    CollateralDamage : float32
+}
+
 /// Run each battle, update vehicles in targetted regions and flip them if attackers are victorious
 let applyConquests (world : World) (state : WorldState) (battles : (RegionId * BattleParticipants) list) =
     let random = System.Random()
@@ -700,6 +709,21 @@ let applyConquests (world : World) (state : WorldState) (battles : (RegionId * B
         battles
         |> List.map (fun (region, battle) -> region, battle.RunBattle(random))
         |> Map.ofList
+    let battleReports =
+        battles
+        |> List.filter (fun (_, battle) -> not battle.Attackers.IsEmpty)
+        |> List.choose (fun (region, battle) ->
+            match battleResults.TryFind region with
+            | Some (victors, survivors, damage) ->
+                Some {
+                    Region = region
+                    Participants = battle
+                    Victors = victors
+                    Survivors = survivors
+                    CollateralDamage = damage
+                }
+            | None ->
+                None)
     let regions =
         [
             for region in state.Regions do
@@ -723,7 +747,7 @@ let applyConquests (world : World) (state : WorldState) (battles : (RegionId * B
                 | None ->
                     yield afState
         ]
-    { state with Regions = regions; Airfields = airfields }
+    { state with Regions = regions; Airfields = airfields }, battleReports
 
 /// Subtract vehicles that have departed from regions of departure. Must be called before applyConquests.
 let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) =
@@ -795,7 +819,7 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
     let state5 = applyPlaneTransfers state4 tookOff landed
     let battles = buildBattles state5 movements columnDepartures damages paradrops
     let state6 = applyVehicleDepartures state5 movements columnDepartures
-    let state7 = applyConquests world state6 battles
+    let state7, battleReports = applyConquests world state6 battles
     let state8 = updateNumCanons world state7
     let state9 = updateRunways world state8 windOri
-    { state9 with Date = nextDate dt state9.Date }, newlyProduced
+    { state9 with Date = nextDate dt state9.Date }, newlyProduced, battleReports
