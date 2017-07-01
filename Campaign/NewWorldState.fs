@@ -522,6 +522,7 @@ type BattleParticipants = {
     Defenders : Map<GroundAttackVehicle, int>
     Attackers : Map<GroundAttackVehicle, int>
     DefenderCoalition : CoalitionId
+    AttackerBonus : float32
 }
 with
     /// Return the winning side, number of remaining vehicles of each type, collateral damages to storage.
@@ -536,7 +537,7 @@ with
             let attackers =
                 this.Attackers
                 |> Util.expandMap
-                |> Array.map (fun vehicle -> vehicle, float32 vehicle.Cost)
+                |> Array.map (fun vehicle -> vehicle, this.AttackerBonus * float32 vehicle.Cost)
             let defenders =
                 this.Defenders
                 |> Util.expandMap
@@ -590,7 +591,7 @@ with
 
 /// Group arrivals by destination and build the battle participants.
 /// Note: we generate battles without attackers when a column moves towards an uncontested friendly region.
-let buildBattles (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) (damaged : Damage list) =
+let buildBattles (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) (damaged : Damage list) (paras : ParaDropResult list) =
     let sg = WorldStateFastAccess.Create state
     let movements =
         movements
@@ -673,14 +674,24 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
                 Util.addMaps regState.NumVehicles defenders
             | None ->
                 Map.empty
+        // Bonus to attackers from paratrooper drops
+        let bonus =
+            paras
+            |> List.filter (fun drop -> drop.Coalition = defendingSide.Other && drop.LandZone = region)
+            |> List.sumBy (fun drop ->
+                match drop.Precision with
+                | Precise -> 0.01f // 1% force multiplier for precise drop (per soldier)
+                | Wide -> 0.005f)   // 0.5% force multiplier for wide drop
+            |> min 1.0f // Up to 100% multiplier overall
         region,
         { Defenders = defenders
           Attackers = attackers
           DefenderCoalition = defendingSide
+          AttackerBonus = 1.0f + bonus
         }
     )
     |> List.ofSeq
-    
+
 /// Run each battle, update vehicles in targetted regions and flip them if attackers are victorious
 let applyConquests (world : World) (state : WorldState) (battles : (RegionId * BattleParticipants) list) =
     let random = System.Random()
@@ -774,7 +785,7 @@ let nextDate (dt : float32<H>) (date : System.DateTime) =
             x
     newDate
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction movements convoyDepartures supplies damages tookOff landed columnDepartures windOri =
+let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction movements convoyDepartures supplies damages tookOff landed columnDepartures paradrops windOri =
     let state2 =
         state
         |> applyProduction dt world Axis axisProduction
@@ -782,7 +793,7 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
     let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
     let state4 = applyRepairsAndDamages dt world state3 convoyDepartures damages supplies newSupplies
     let state5 = applyPlaneTransfers state4 tookOff landed
-    let battles = buildBattles state5 movements columnDepartures damages
+    let battles = buildBattles state5 movements columnDepartures damages paradrops
     let state6 = applyVehicleDepartures state5 movements columnDepartures
     let state7 = applyConquests world state6 battles
     let state8 = updateNumCanons world state7

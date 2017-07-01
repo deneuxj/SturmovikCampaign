@@ -672,7 +672,7 @@ module MissionLogParsing =
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
         let movements = axisOrders.Columns @ alliesOrders.Columns
-        let state2, newlyProduced = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures (float32 weather.Wind.Direction)
+        let state2, newlyProduced = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures missionResults.ParaDrops (float32 weather.Wind.Direction)
         newlyProduced, (state, state2)
 
     let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =
