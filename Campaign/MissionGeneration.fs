@@ -341,7 +341,7 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                                 let size =
                                     int (convoy.TransportedSupplies / ResupplyOrder.TruckCapacity)
                                     |> min ColumnMovement.MaxColumnSize
-                                VirtualConvoy.Create(store, lcStore, pathVertices, [], size, country, coalition, convoyName, 0)
+                                VirtualConvoy.Create(store, lcStore, pathVertices, size, country, coalition, convoyName, 0)
                                 |> Choice1Of3
                             | ByRail ->
                                 let startV = pathVertices.Head
@@ -398,13 +398,6 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                     |> Option.map (fun x -> x.Value)
                 match path with
                 | Some path ->
-                    let travel, invasion =
-                        match sg.GetRegion(order.Destination).Owner with
-                        | Some owner when owner = coalition ->
-                            path, []
-                        | _ ->
-                            path
-                            |> List.partition (fun (v, _) -> v.IsInConvexPolygon (wg.GetRegion(order.Start).Boundary))
                     let toVertex(v, yori) =
                         { Pos = v
                           Ori = yori
@@ -413,15 +406,10 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                           Priority = 1
                         }
                     let travel =
-                        travel
+                        path
                         |> List.map toVertex
-                    let invasion =
-                        invasion
-                        |> List.map (fun x -> { toVertex(x) with Priority = 0 })
-                    match invasion with
-                    | [] -> ()
-                    | wps ->
-                        let destination = List.last wps
+                    if sg.GetRegion(order.Destination).Owner = Some coalition.Other then
+                        let destination = List.last travel
                         let paraDrop = ParaDrop.Create(store, lcStore, destination.Pos, coalition.ToCountry, order.OrderId.AsString())
                         yield paraDrop.All
                     let expectedTravelTime =
@@ -457,7 +445,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                             |> List.ofArray
                             |> List.map (fun vehicleType -> vehicleType.GetModel(coalition))
                         let columnName = order.MissionLogEventName
-                        let column = VirtualConvoy.CreateColumn(store, lcStore, travel, invasion, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                        let column = VirtualConvoy.CreateColumn(store, lcStore, travel, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                         let links = column.CreateLinks()
                         links.Apply(McuUtil.deepContentOf column)
                         Mcu.addTargetLink prevStart.Value column.Api.Start.Index

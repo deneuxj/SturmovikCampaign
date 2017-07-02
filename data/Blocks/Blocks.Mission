@@ -739,7 +739,7 @@ Group
 
   Group
   {
-    Name = "ActiveWaypoint";
+    Name = "Waypoint";
     Index = 63;
     Desc = "";
     MCU_Waypoint
@@ -747,7 +747,7 @@ Group
       Index = 64;
       Name = "Waypoint";
       Desc = "";
-      Targets = [65];
+      Targets = [];
       Objects = [];
       XPos = 16906.767;
       YPos = 99.288;
@@ -758,92 +758,6 @@ Group
       Area = 20;
       Speed = 50;
       Priority = 1;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 66;
-      Name = "Gate";
-      Desc = "";
-      Targets = [64];
-      Objects = [];
-      XPos = 16906.143;
-      YPos = 99.673;
-      ZPos = 28677.128;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 0;
-      Random = 100;
-    }
-    
-
-    MCU_Activate
-    {
-      Index = 67;
-      Name = "";
-      Desc = "";
-      Targets = [66];
-      Objects = [];
-      XPos = 16925.349;
-      YPos = 99.501;
-      ZPos = 28655.788;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_Deactivate
-    {
-      Index = 65;
-      Name = "";
-      Desc = "";
-      Targets = [66];
-      Objects = [];
-      XPos = 16883.736;
-      YPos = 100.558;
-      ZPos = 28655.077;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_Counter
-    {
-      Index = 69;
-      Name = "ActivateGate";
-      Desc = "";
-      Targets = [67];
-      Objects = [];
-      XPos = 16936.501;
-      YPos = 99.096;
-      ZPos = 28655.742;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Counter = 1;
-      Dropcount = 0;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 70;
-      Name = "DeactivateGate";
-      Desc = "";
-      Targets = [65];
-      Objects = [];
-      XPos = 16878.541;
-      YPos = 100.582;
-      ZPos = 28647.533;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 0;
-      Random = 100;
     }
     
 
@@ -6073,7 +5987,7 @@ Group
     Index = 504;
     Name = "PossiblyWidelyDropped";
     Desc = "";
-    Targets = [510,511];
+    Targets = [510];
     Objects = [];
     XPos = 36951.487;
     YPos = 98.909;
@@ -6091,7 +6005,7 @@ Group
     Index = 510;
     Name = "WidelyDropped";
     Desc = "";
-    Targets = [];
+    Targets = [511];
     Objects = [];
     XPos = 36951.469;
     YPos = 99.203;

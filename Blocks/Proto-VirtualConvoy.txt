@@ -1,250 +1,106 @@
 ﻿type Convoy {
 	entity LeadCarEntity
-	trigger LeadCarDamaged
 	trigger ActivateGroup
 	trigger DeactivateGroup
 	trigger DeleteLeadCar
 	trigger Discard
-	trigger TriggerGates
 }
-TruckInConvoy truck_in_convoy(Convoy, int)
-WhileEnemyClose while_enemy_close_of_convoy(Convoy)
+Convoy the_convoy
 
-type Conjunction {
-	trigger SetA
-	trigger ClearA
-	trigger Set B
-	trigger ClearB
-	trigger AllTrue
-}
-Conjunction discard_conditions_of_convoy(Convoy)
-
-Conjunction 
 type TruckInConvoy {
 	entity Entity
 	trigger Damaged
 	trigger Delete
 	trigger Discard
 }
-
-type ActiveWaypoint {
-	trigger Waypoint
-	trigger Gate
-	trigger Activate
-	trigger Deactivate
-}
-Convoy convoy_at_waypoint(ActiveWaypoint)
-WhileEnemyClose enemy_close_at_waypoint(ActiveWaypoint)
-predicate path(ActiveWaypoint, ActiveWaypoint)
-predicate path_start(ActiveWaypoint)
-predicate path_end(ActiveWaypoint)
-Timer timer_between_waypoints(ActiveWaypoint, ActiveWaypoint)
-
-type WhileEnemyClose {
-	trigger StartMonitoring
-	trigger StopMonitoring
-	trigger Deactivate
-	trigger Activate
-	trigger WakeUp
-	trigger Sleep
-	trigger Proximity
-}
-Convoy convoy_of_enemy_close(WhileEnemyClose)
+TruckInConvoy truck_in_convoy(int)
 
 type Timer {
 	trigger Start
 	trigger Stop
 	trigger Elapsed
 }
-// Delay between arrival of convoy and hiding of last virtual convoy group
-Timer arrival_delay(Convoy)
-
-type AtDestination {
-	trigger LeaderArrived
-	trigger Destroyed
-}
-predicate at_destination_convoy(AtDestination, TruckInConvoy)
-predicate at_destination_convoy(AtDestination, Convoy)
+Timer start_delay
+Timer discard_delay
 
 type Notification {
 	trigger Trigger
 	trigger Disable
 }
 Notification death_notification_of_truck(TruckInConvoy)
+Notification start_notification_of_convoy
 
-type Spawned {
-	trigger Spawned
-}
-predicate the_spawned(Spawned)
-
-type SimpleWaypoint {
+type Waypoint {
 	trigger Waypoint
 }
-predicate invasion_path(SimpleWaypoint, SimpleWaypoint)
-predicate invasion_start(SimpleWaypoint)
-predicate invasion_end(SimpleWaypoint)
+predicate path(Waypoint, Waypoint)
+predicate start
+predicate end
 
-type VirtualConvoy {
+type ConvoyApi {
 	trigger Start // 1x counter
 	trigger Destroyed // This is a non-wraping counter set to (num of trucks in convoy) + 1
-	trigger Arrived // 1x counter, means "enters enemy territory" for a column
-	trigger Captured // 1x counter, means "arrived at destination in enemy territory" for a column, not used for a supply convoy.
+	trigger Arrived
 }
-predicate result(VirtualConvoy)
+ConvoyApi the_api
 
 type Icon {
 	trigger Show
 	trigger Hide
 }
-Icon icon_of_convoy(VirtualConvoy)
+Icon cover_icon
+Icon attack_icon
 
-// Convoy <-> TruckInConvoy
-//  Add trucks to columns
-columns += for (convoy, position, truck) in truck_in_convoy -> (truck.Entity, convoy.LeadCarEntity, position)
-//  Discard trucks when convoy discarded
-target += for (convoy, _, truck) in truck_in_convoy -> (convoy.Discard, truck.Discard)
+// Requirements
+1. Convoy activated when started
+2. Convoy starts moving when started
+3. Convoy moves to next waypoint when waypoint reached
+4. Convoy is discarded after reaching its destination
+5. Damaged truck produces a notification in the log
+6. Icon is shown when convoy starts
+7. Icon is hidden when convoy is destroyed
+8. Icon is hidden when convoy arrives
+9. Truck destruction accounted for in api
+10. Start of convoy is logged
+11. Arrival is reported in API
 
-// Convoy <-> ActiveWaypoint
-//  Connect lead car to waypoints
-object += for (wp, convoy) in convoy_at_waypoint for wp2 in path*(wp) -> (convoy.LeadCarEntity, wp2.Waypoint)
-//  Trigger movement to next active waypoint
-target += for (wp, convoy) in convoy_at_waypoint for wp2 in path(wp) -> (convoy.TriggerGates, wp2.Gate)
+// Req.1
+targets += (the_api.Start, the_convoy.ActivateGroup)
+columns += for (position, truck) in truck_in_convoy -> (truck.Entity, the_convoy.LeadCarEntity, position)
 
-// Convoy <-> SimpleWaypoint
-//  Connect convoy at last active waypoint to invasion waypoints
-object += for end in path_end for convoy in convoy_at_waypoint(end) for start in invasion_start for wp2 in invasion_path*(start) -> (convoy.LeadCarEntity, wp2.Waypoint)
-//  First invasion waypoint triggered when last active waypoint reached (virtually or physically)
-target += for start in invasion_start for end in path_end for convoy in convoy_at_waypoint(end) -> (convoy.TriggerGates, start.Waypoint)
+// Req.2
+targets += (the_api.Start, start_delay.Start)
+targets += (start_delay.Elapsed, start.Waypoint)
+objects += for wp in path -> (the_convoy.LeadCarEntity, wp.Waypoint)
 
-// ActiveWaypoint <-> SimpleWaypoint
-//  TODO: remove, not needed.
-target += for end in path_end for start in invasion_start -> (end.Waypoint, start.Waypoint)
+// Req.3
+targets += for wp1, wp2 in path -> (wp1.Waypoint, wp2.Waypoint)
 
-// SimpleWaypoint <-> SimpleWaypoint
-//  Each waypoint in invasion path leads to next waypoint
-target += for (curr, next) in invasion_path -> (curr.Waypoint, next.Waypoint)
+// Req.4
+targets += (end.Waypoint, discard_delay.Start)
+targets += (discard_delay.Elapsed, the_convoy.Discard)
+targets += for (_, truck) in truck_in_convoy -> (the_convoy.Discard, truck.Discard)
 
-// Convoy <-> WhileEnemyClose
-//  Check zone connected to its convoy leader
-object += for (convoy, wec) in convoy_of_enemy_close -> (wec.Proximity, convoy.LeadCarEntity)
-//  Activate convoy when enemy close
-target += for (convoy, wec) in convoy_of_enemy_close -> (wec.WakeUp, convoy.ActivateGroup)
-//  Deactivate convoy when enemy gone
-target += for (convoy, wec) in convoy_of_enemy_close -> (wec.Sleep, convoy.DeactivateGroup)
+// Req.5
+targets += for note in truck, note in death_notification_of_truck -> (truck.Damaged, note.Trigger)
 
-// Convoy <-> Convoy
-//  When leader damaged, delete copy at following waypoint
-target += for (current, next) in path -> (convoy_at_waypoint(current).LeadCarDamaged, convoy_at_waypoint(next).DeleteLeadCar)
-//  When leader deleted at some waypoint, delete at following waypoint too.
-target += for (current, next) in path -> (convoy_at_waypoint(current).DeleteLeadCar, convoy_at_waypoint(next).DeleteLeadCar)
+// Req.6
+targets += (the_api.Start, cover_icon.Show)
+targets += (the_api.Start, attack_icon.Show)
 
-// TruckInConvoy <-> TruckInConvoy
-//  When truck damaged, delete copy at following waypoint.
-target += for (curr, next) in path
-          for (position, truck) in truck_in_convoy(convoy_at_waypoint(curr), _, _)
-          for truck2 in truck_in_convoy(convoy_at_waypoint(next), position, _) -> (truck.Damaged, truck2.Delete)
-//  When truck deleted, delete copy at following waypoint.
-target += for (curr, next) in path
-          for (position, truck) in truck_in_convoy(convoy_at_waypoint(curr), _, _)
-          for truck2 in truck_in_convoy(convoy_at_waypoint(next), position, _) -> (truck.Delete, truck2.Delete)
-// When truck damaged, notify of death
-target += for (_, _, truck) in truck_in_convoy(convoy_at_waypoint(wp))
-		  for notify in death_notification_of_truck(truck)-> (truck.Damaged, notify.Trigger)
+// Req.7
+targets += (the_api.Destroyed, cover_icon.Hide)
+targets += (the_api.Destroyed, attack_icon.Hide)
 
-// ActiveWaypoint <-> ActiveWaypoint
-//  When active waypoint physically reached, lead to next waypoint.
-target += for (curr, next) in path -> (curr.Waypoint, next.Waypoint)
+// Req.8
+targets += (end.Waypoint, cover_icon.Hide)
+targets += (end.Waypoint, attack_icon.Hide)
 
-// ActiveWaypoint
-//  Activate first waypoint upon API start
-target += for (wp) in path_start
-          for out in result -> (out.Start, wp.Activate)
+// Req.9
+targets += for (_, truck) in truck_in_convoy -> (truck.Damaged, the_api.Destroyed)
 
-// ActiveWaypoint <-> WhileEnemyClose
-//  Start monitoring when waypoint becomes active (except for the last waypoint)
-target += for (wp, convoy) in convoy_at_waypoint unless wp in path_end -> (wp.Activate, while_enemy_close_of_convoy(convoy).StartMonitoring)
-//  Stop monitoring when waypoint becomes inactive
-target += for (wp, convoy) in convoy_at_waypoint -> (wp.Deactivate, while_enemy_close_of_convoy(convoy).StopMonitoring)
-// Request discard vehicles at virtual waypoint when it becomes inactive
-target += for (wp, convoy) in convoy_at_waypoint
-          for cond in discard_condition_of_convoy(convoy) -> (wp.Deactivate, cond.SetA)
+// Req.10
+target += (the_api.Start, start_notification.Trigger)
 
-
-// ActiveWaypoint <-> Timer
-//  Activate next waypoint when virtual travel time elapsed, and deactivate current waypoint.
-target += for (curr, next) in path -> (timer_between_waypoints(curr, next).Elapsed, next.Activate)
-                                   -> (timer_between_waypoints(curr, next).Elapsed, curr.Deactivate)
-                                   -> (curr.Activate, timer_between_waypoints(curr, next).Start)
-
-// WhileEnemyClose <-> WhileEnemyClose
-//  Prevent showing convoys at following waypoints while convoy at current waypoint is shown.
-target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).WakeUp, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Deactivate)
-target += for (curr, next) in path for wp in path*(next) -> (while_enemy_close_of_convoy(convoy_at_waypoint(curr)).Sleep, while_enemy_close_of_convoy(convoy_at_waypoint(wp)).Activate)
-
-// Convoy discard conditions
-//  Do not discard while visible
-target += for cond, convoy in discard_condition_of_convoy
-          for wec in while_enemy_close_of_convoy(convoy) -> (wec.WakeUp, cond.ClearB)
-		                                                 -> (wec.Sleep, cond.SetB)
-//  Discard after requested and while hidden
-target += for cond, convoy in discard_condition_of_convoy -> (cond.AllTrue, convoy.Discard)
-//  Initially not requested discarded
-target += for api in result
-          for cond, _ in discard_condition_of_convoy -> (api.Start, cond.ClearA)
-
-// ... <-> VirtualConvoy
-//  Increase destroyed counter when lead car damaged
-target += for (_, convoy) in convoy_at_waypoint
-          for out in result -> (convoy.LeadCarDamaged, out.Destroyed)
-// Increase destroyed counter when truck damaged
-target += for (convoy, _, truck) in truck_in_convoy
-          for out in result -> (truck.Damaged, out.Destroyed)
-// Notify of arrival when last waypoint reached (virtually or physically)
-target += for wp in path_end
-          for out in result -> (wp.Waypoint, out.Arrived)
-                            -> (wp.Activate, out.Arrived)
-// Hide non-last convoy when last travel waypoint reached (virtually or physically)
-target += for end in path_end
-          for (prev, _) in path
-		  for convoy in convoy_at_waypoint(prev) -> (end.Waypoint, convoy.DeactivateGroup)
-		                                         -> (end.Activate, convoy.DeactivateGroup)
-// Show last convoy when last travel waypoint reached (physically or virtually)
-target += for _ in invasion_start
-          for end in path_end
-		  for convoy in convoy_at_waypoint(end) -> (end.Waypoint, convoy.ActivateGroup)
-		                                        -> (end.Activate, convoy.ActivateGroup)
-// Hide convoy when invasion destination reached
-target += for dest in invasion_end
-          for end in path_end
-		  for convoy in convoy_at_waypoint(end)
-		  for delay in arrival_delay(convoy) -> (dest.Waypoint, delay.Start)
-		                                     -> (delay.Elapsed, convoy.DeactivateGroup)
-
-// Notify of objective capture when last invasion waypoint reached
-target += for wp in invasion_end
-		  for out in result -> (wp.Waypoint, out.Captured)
-//  Stop monitoring at last travel waypoint when convoy arrives (last travel waypoint reached, physically or virtually)
-//  FIXME: is this necessary? Maybe avoid starting monitoring. Or maybe do not event include monitor for last travel waypoint.
-target += for wp in path_end
-          for convoy in convoy_at_waypoint(wp)
-		  for wec, convoy2 in convoy_of_enemy_close
-		  where convoy = convoy2
-		  for out in result -> (out.Arrived, wec.StopMonitoring)
-
-// AtDestination
-//  Log arrival of truck WHEN LEADER ARRIVES, unless truck destroyed
-target += for (atd, truck) in at_destination -> if invasion_end is empty then (result.Arrived, atd.LeaderArrived) else (result.Captured, atd.LeaderArrived)
-                                             -> (truck.Damaged, atd.Destroyed)
-//  Log arrival of leader, unless it has been damaged.
-target += for (atd, convoy) in at_destination_convoy -> if invasion_end is empty then (result.Arrived, atd.LeaderArrived) else (result.Captured, atd.LeaderArrived)
-                                                     -> (convoy.DeleteLeadCar, atd.Destroyed)
-
-//  Log start of convoy
-target += for api in result
-          for spawn in the_spawned -> api.Start, spawn.Spawned
-
-// Icon
-target += for (convoy, icon) in icon_of_convoy -> (convoy.Start, icon.Show)
-                                               -> (convoy.Destroyed, icon.Hide)
-											   -> (convoy.Arrived, icon.Hide) when invasion_end empty
-											      (convoy.Captured, icon.Hide) otherwise
+// Req.11
+target += (end.Waypoint, the_api.Arrived)

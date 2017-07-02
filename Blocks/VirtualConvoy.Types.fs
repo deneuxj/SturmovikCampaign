@@ -15,7 +15,6 @@ type Convoy =
       ActivateGroup : Mcu.McuTrigger
       DeactivateGroup : Mcu.McuTrigger
       DeleteLeadCar : Mcu.McuTrigger
-      TriggerGates : Mcu.McuTrigger
       Discard : Mcu.McuTrigger
       All : McuUtil.IMcuGroup
     }
@@ -55,7 +54,6 @@ with
           ActivateGroup = getByName T.Blocks.ActivateGroup
           DeactivateGroup = getByName T.Blocks.DeactivateGroup
           DeleteLeadCar = getByName T.Blocks.DeleteLeadCar
-          TriggerGates = getByName T.Blocks.TriggerGates
           Discard = getByName T.Blocks.Discard
           All = McuUtil.groupFromList group
         }
@@ -110,11 +108,8 @@ with
           All = McuUtil.groupFromList group
         }
 
-type ActiveWaypoint =
+type Waypoint =
     { Waypoint : Mcu.McuWaypoint
-      Activate : Mcu.McuTrigger
-      Deactivate : Mcu.McuTrigger
-      Gate : Mcu.McuTrigger
       All : McuUtil.IMcuGroup
     }
 with
@@ -122,15 +117,12 @@ with
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
-        let group = McuUtil.filterByPath ["ActiveWaypoint" ; "Convoy"] db |> List.ofSeq
+        let group = McuUtil.filterByPath ["Waypoint" ; "Convoy"] db |> List.ofSeq
         for mcu in group do
             subst mcu
         // Get key nodes
         let getByName = getTriggerByName group
         let waypoint = getWaypointByName group "Waypoint"
-        let activate = getByName T.Blocks.ActivateGate
-        let deactivate = getByName T.Blocks.DeactivateGate
-        let gate = getByName T.Blocks.Gate
         // Orientation of waypoint
         waypoint.Ori.Y <- float ori 
         waypoint.Speed <- speed
@@ -142,17 +134,13 @@ with
             pos2.AssignTo(mcu.Pos)
         // Result
         { Waypoint = waypoint
-          Activate = activate
-          Deactivate = deactivate
-          Gate = gate
           All = McuUtil.groupFromList group
         }
 
-type ConvoyControl =
+type ConvoyApi =
     { Start : Mcu.McuTrigger
       Destroyed : Mcu.McuTrigger
       Arrived : Mcu.McuTrigger
-      Captured : Mcu.McuTrigger
       All : McuUtil.IMcuGroup
     }
 with
@@ -160,13 +148,11 @@ with
         // Create all nodes
         let start = newCounter 1
         let destroyed = newCounter 2
-        Vector2(0.0f, 50.0f).AssignTo(destroyed.Pos)
-        destroyed.Count <- numTrucks
         let arrived = newCounter 3
+        Vector2(0.0f, 50.0f).AssignTo(destroyed.Pos)
         Vector2(0.0f, 100.0f).AssignTo(arrived.Pos)
-        let captured = newCounter 4
-        Vector2(0.0f, 150.0f).AssignTo(captured.Pos)
-        let group : Mcu.McuBase list = [ start; destroyed; arrived; captured ]
+        destroyed.Count <- numTrucks
+        let group : Mcu.McuBase list = [ start; destroyed; arrived ]
         // Position
         for mcu in group do
             let pos2 = Vector2.FromMcu(mcu.Pos) + pos
@@ -179,6 +165,5 @@ with
         { Start = start
           Destroyed = destroyed
           Arrived = arrived
-          Captured = captured
           All = McuUtil.groupFromList group
         }
