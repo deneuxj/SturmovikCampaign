@@ -11,6 +11,10 @@ open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.Vehicles
 open System.Numerics
 open Vector
+open SturmovikMission.Blocks.WhileEnemyClose
+open SturmovikMission.Blocks.Timer
+open SturmovikMission.Blocks.EventReporting
+open SturmovikMission.Blocks.IconDisplay
 
 // Types for each instance type.
 // Those are typically typed ints, but could be typed strings, or any other type suitable for a dictionary key.

@@ -10,6 +10,7 @@ open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.Proximity
 open SturmovikMission.DataProvider.Cached
 open SturmovikMission.Blocks.VirtualConvoy.Types
+open SturmovikMission.Blocks.IconDisplay
 
 open Campaign.WorldDescription
 open Campaign.WorldState

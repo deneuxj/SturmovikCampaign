@@ -7,6 +7,7 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks.EventReporting
 
 let preciseParaDropPrefix = "PreciseParaDrop"
 let wideParaDropprefix = "WideParaDrop"

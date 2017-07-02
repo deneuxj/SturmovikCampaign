@@ -7,7 +7,8 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
-
+open SturmovikMission.Blocks.IconDisplay
+open SturmovikMission.Blocks.EventReporting
 
 type Train = {
     Start : Mcu.McuTrigger

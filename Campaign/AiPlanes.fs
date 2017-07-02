@@ -8,6 +8,7 @@ open SturmovikMission.Blocks.GroundAttack
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.Cached
+open SturmovikMission.Blocks.IconDisplay
 
 open Campaign.BasicTypes
 open Campaign.PlaneModel

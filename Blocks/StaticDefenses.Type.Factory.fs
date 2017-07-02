@@ -10,6 +10,7 @@ open SturmovikMission.Blocks.Predicates
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks.WhileEnemyClose
 
 let numLightMachineGunsPerHeavyMachineGun = 2
 

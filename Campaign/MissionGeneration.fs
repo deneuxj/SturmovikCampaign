@@ -20,6 +20,7 @@ open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 open SturmovikMission.Blocks.TransportFlight
 open SturmovikMission.Blocks.FireLoop
 open SturmovikMission.Blocks.ParaDrop
+open SturmovikMission.Blocks.WhileEnemyClose
 open Vector
 
 open Campaign.WorldDescription
