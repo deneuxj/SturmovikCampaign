@@ -29,6 +29,7 @@ type Configuration = {
     Briefing : string
     ThinkTime : int
     AfterActionReportEntries : int
+    ProductionFactor : float32
 }
 with
     static member Default =
@@ -55,6 +56,7 @@ with
             ScriptPath = @"nul"
             ThinkTime = 30
             AfterActionReportEntries = 8
+            ProductionFactor = 1.0f
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
@@ -108,7 +110,7 @@ module Init =
 
         let production =
             world.Regions
-            |> Seq.map (fun region -> region.RegionId, region.Production |> Seq.sumBy (fun prod -> prod.Production))
+            |> Seq.map (fun region -> region.RegionId, region.Production |> Seq.sumBy (fun prod -> prod.Production(config.ProductionFactor)))
             |> Seq.map (fun (region, production) -> region, production)
             |> Map.ofSeq
 

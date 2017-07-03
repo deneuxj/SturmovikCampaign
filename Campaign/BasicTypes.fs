@@ -104,12 +104,13 @@ with
         | Contains "arf_gsm_2" -> [1; 2]
         | _ -> []
 
-    member this.Production =
+    member this.Production(factor : float32) =
         match this.Model with
         | Contains "industrial_" -> 25.0f<E/H>
         | Contains "vl_pvrz01" | Contains "vl_pvrz03" -> 25.0f<E/H>
         | Contains "vl_rounddepot" -> 25.0f<E/H>
         | _ -> 0.0f<E/H>
+        |> (*) factor
 
     member this.Storage =
         match this.Model with

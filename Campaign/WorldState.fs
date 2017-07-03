@@ -86,9 +86,9 @@ with
         List.zip region.Storage this.StorageHealth
         |> List.sumBy (fun (sto, health) -> health * sto.Storage)
 
-    member this.ProductionCapacity(region : WorldDescription.Region) =
+    member this.ProductionCapacity(region : WorldDescription.Region, factor) =
         List.zip region.Production this.ProductionHealth
-        |> List.sumBy (fun (prod, health) -> health * prod.Production)
+        |> List.sumBy (fun (prod, health) -> health * prod.Production(factor))
 
 /// State of a defense area within a region.
 type DefenseAreaState = {
@@ -544,7 +544,7 @@ type WorldState with
             List.zip (world.Regions |> List.map (fun region -> region.Production)) (this.Regions |> List.map (fun region -> region.ProductionHealth))
             |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
             |> List.filter (fun (_, health) -> health < 0.5f)
-            |> List.map (fun (building, health) -> 24.0f<H> * building.Production * (1.0f - health), (building, health))
+            |> List.map (fun (building, health) -> 24.0f<H> * (building.Production(productionFactor world)) * (1.0f - health), (building, health))
         let damagedAirfieldStorage =
             List.zip (world.Airfields |> List.map (fun airfield -> airfield.Storage)) (this.Airfields |> List.map (fun airfield -> airfield.StorageHealth))
             |> List.collect (fun (buildings, healths) -> List.zip buildings healths)

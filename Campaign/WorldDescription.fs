@@ -487,6 +487,7 @@ with
         this.Airfields
         |> List.minBy(fun af -> (af.Pos - pos).LengthSquared())
 
+let productionFactor (world : World) = 3.0f
 
 open Campaign.Util
 

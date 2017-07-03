@@ -120,7 +120,7 @@ with
             let roots =
                 [
                     for region, regState in List.zip world.Regions state.Regions do
-                        let value = regState.ProductionCapacity(region) * 48.0f<H>
+                        let value = regState.ProductionCapacity(region, productionFactor world) * 48.0f<H>
                         yield indexOfRegion region.RegionId, value
                     for af, afState in List.zip world.Airfields state.Airfields do
                         yield indexOfRegion af.Region, afState.TotalPlaneValue + 10000.0f<E>

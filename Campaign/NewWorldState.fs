@@ -32,7 +32,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                             vehiclePrio, planePrio, energyPrio
                         else
                             vehiclePrio + 0.5f * planePrio, 0.0f, energyPrio + 0.5f * planePrio
-                    let energy = dt * regState.ProductionCapacity(region)
+                    let energy = dt * regState.ProductionCapacity(region, productionFactor world)
                     let supplies = regState.Products.Supplies + energyPrio * energy
                     let planes =
                         let planeModel =
