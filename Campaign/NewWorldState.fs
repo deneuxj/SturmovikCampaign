@@ -451,16 +451,18 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     computeHealing(afState.StorageHealth, af.Storage, energy, healLimit)
                 let afState = { afState with StorageHealth = storeHealth }
                 // fill storage
-                let bombNeeds = afState.BombNeeds * bombCost
+                let bombNeeds =
+                    afState.BombNeeds * bombCost
+                    |> max (1000.0f<K> * bombCost)
                 let fillTarget = min bombNeeds (afState.StorageCapacity(af))
                 let toAfSupplies =
                     fillTarget - afState.Supplies
                     |> max 0.0f<E>
                     |> min energy
                 let energy = energy - toAfSupplies
-                // what goes over the bomb needs goes back to the region
+                // what goes over the bomb storage fill target goes back to the region
                 let backToRegion =
-                    afState.Supplies + toAfSupplies - bombNeeds
+                    afState.Supplies + toAfSupplies - fillTarget
                     |> max 0.0f<E>
                 // result
                 let afState = { afState with Supplies = afState.Supplies + toAfSupplies - backToRegion }

@@ -85,4 +85,5 @@ X Prioritize AI patrols according to assets being protected.
 X Damaged hangars appear undamaged.
 X Transferred plane failure: http://coconutside.eu/en/sortie/log/1159/?tour=2
 ? Attacks with empty columns can capture undefended regions
-Bomb stocks get transfered away from airfields without planes
+? Bomb stocks get transfered away from airfields without planes
+Set all start/end points of paths on the ground, needed for drop zone fires to be at the correct altitude
