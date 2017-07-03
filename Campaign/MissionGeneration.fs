@@ -517,7 +517,7 @@ let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
     ]
 
 /// Set the country of entity owners in a list of Mcus depending on the region where they are located.
-let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (ori : float option) (group : Mcu.McuBase list) =
+let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (group : Mcu.McuBase list) =
     let subst = Mcu.substId <| store.GetIdMapper()
     for mcu in group do
         subst mcu
@@ -538,11 +538,6 @@ let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state :
                     | Some Allies -> Mcu.CountryValue.Russia
                     | None -> Mcu.CountryValue.Russia
             flag.Country <- owner
-            match ori with
-            | Some ori ->
-                flag.Ori.Y <- ori
-            | None ->
-                ()
         | _ ->
             ()
 
@@ -831,9 +826,9 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let axisPrio, axisConvoys = mkConvoyNodes missionData.AxisOrders.Resupply
     let alliesPrio, alliesConvoys = mkConvoyNodes missionData.AlliesOrders.Resupply
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
-    setCountries store missionData.World missionData.State (Some missionData.Weather.Wind.Direction) flags
+    setCountries store missionData.World missionData.State flags
     let ndbs = strategyMissionData.GetGroup("NDBs").CreateMcuList()
-    setCountries store missionData.World missionData.State None ndbs
+    setCountries store missionData.World missionData.State ndbs
     let landFires =
         if includeSearchLights then
             strategyMissionData.GetGroup("Land fires").CreateMcuList()
