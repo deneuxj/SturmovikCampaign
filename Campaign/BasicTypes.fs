@@ -46,6 +46,11 @@ with
         | Axis -> Allies
         | Allies -> Axis
 
+    override this.ToString() =
+        match this with
+        | Axis -> "Axis"
+        | Allies -> "Allies"
+
 /// A position on the map and a rotation around the vertical axis.
 type OrientedPosition = {
     Pos : Vector2

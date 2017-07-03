@@ -16,11 +16,11 @@ type Campaign.NewWorldState.BattleSummary
 with
     member this.GetText() =
         seq {
-            yield sprintf "<b>Battle for %s owned by %s</b><br>" (this.Region.ToString()) (this.Participants.DefenderCoalition.ToString())
+            yield sprintf "<u>Battle for %s</u> owned by %s<br>" (this.Region.ToString()) (this.Participants.DefenderCoalition.ToString())
             yield sprintf "Defenders: %s<br>" (mkTankReport this.Participants.Defenders)
             yield sprintf "Attackers: %s (+%1.0f%%)<br>" (mkTankReport this.Participants.Attackers) (100.0f * (this.Participants.AttackerBonus - 1.0f))
             yield sprintf "Victors: %s %s<br>" (this.Victors.ToString()) (mkTankReport this.Survivors)
-            yield sprintf "Collateral damage: %f<br>" this.CollateralDamage
+            yield sprintf "Damaged supplies: %3.0f<br>" this.CollateralDamage
         }
 
 type ReportData = {
@@ -44,8 +44,8 @@ with
             |> Seq.map (fun (plane, qty) -> sprintf "%s: %d" plane.PlaneName qty)
             |> String.concat ", "
         seq {
-            yield sprintf "<b>%s</b> %s<br>"
-                    (match coalition with Axis -> "Axis" | Allies -> "Allies")
+            yield sprintf "<u>%s</u> %s<br>"
+                    (coalition.ToString())
                     (this.MissionDate.ToString("d MMM yyyy HH:mm"))
             if not(this.RegionsCaptured.IsEmpty) then
                 yield
