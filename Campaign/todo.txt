@@ -26,7 +26,7 @@ X Feedback: Vehicle loss
 Feedback: bridge destroyed
 Mission building: No convoy, train or column over destroyed bridges.
 X Feedback: air supply
-? Feedback: paratrooper drop
+X Feedback: paratrooper drop
 X Mission building: limit bomb payload depending on storage
 X Order: air defense
 Order: level bombing
@@ -76,11 +76,13 @@ X Battles at regions with airfields must damage planes too.
 X Some tank/truck kills are missed. For trucks, can block later convoys/trains.
 X Check and fix spawn of fighter patrols.
 ? Generate mission logic for AI transports.
-Paratrooper drop result handling (affect battles).
+X Paratrooper drop result handling (affect battles).
 Notify players when their units are under attack (with a delay).
 Runway selection when wind blows from the south does not work.
 Check for convoys without trucks.
 ? Airplane to produce never changes for each type.
-? Prioritize AI patrols according to assets being protected.
+X Prioritize AI patrols according to assets being protected.
 X Damaged hangars appear undamaged.
 X Transferred plane failure: http://coconutside.eu/en/sortie/log/1159/?tour=2
+? Attacks with empty columns can capture undefended regions
+Bomb stocks get transfered away from airfields without planes

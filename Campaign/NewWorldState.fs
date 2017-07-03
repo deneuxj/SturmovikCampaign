@@ -667,11 +667,13 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
                 |> Seq.map (fun column -> column.Vehicles)
                 |> Seq.fold Util.addMaps Map.empty
             Util.subMaps mapped damaged
+            |> Map.filter (fun _ qty -> qty > 0)
         // Defense from vehicles parked at the region
         let homeDefense =
             match regState.Owner with
             | Some coalition ->
                 Util.addMaps regState.NumVehicles defenders
+                |> Map.filter (fun _ qty -> qty > 0)
             | None ->
                 Map.empty
         // Bonus to attackers from paratrooper drops
