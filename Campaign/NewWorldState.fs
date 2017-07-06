@@ -652,6 +652,7 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
                 |> Seq.map (fun column -> column.Vehicles)
                 |> Seq.fold Util.addMaps Map.empty
             Util.subMaps mapped damaged
+            |> Map.filter (fun _ qty -> qty > 0)
         // Remove damaged vehicles from defender's reinforcements
         let defenders =
             let damaged =
