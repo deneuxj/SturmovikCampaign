@@ -47,6 +47,7 @@ type PlaneModel =
     | Yak1s127
     | La5
     | Lagg3s29
+    | SpitfireMkVb
     | Pe2s35
     | Pe2s87
     | Ju87
@@ -77,6 +78,7 @@ with
         | Yak1s127 -> Vehicles.vehicles.RussianFighter7
         | La5 -> Vehicles.vehicles.RussianFighter6
         | Lagg3s29 -> Vehicles.vehicles.RussianFighter5
+        | SpitfireMkVb -> Vehicles.vehicles.RussianFighter8
         | Pe2s35 -> Vehicles.vehicles.RussianBomber1
         | Pe2s87 -> Vehicles.vehicles.RussianBomber2
         | Ju87 -> Vehicles.vehicles.GermanAttacker2
@@ -99,6 +101,7 @@ with
         | Pe2s35 -> Vehicles.vehicles.RussianStaBomber
         | Ju87 -> Vehicles.vehicles.GermanStaJu87
         | He111h6 -> Vehicles.vehicles.GermanStaHe111h6
+        | SpitfireMkVb -> Vehicles.vehicles.RussianStaLagg3Net
         // VLuki planeset
         | Bf109f4 -> Vehicles.vehicles.GermanStaBf109
         | Bf109g2 -> Vehicles.vehicles.GermanStaBf109Net
@@ -141,6 +144,7 @@ with
         | Yak1s69
         | Yak1s127
         | La5
+        | SpitfireMkVb
         | Mig3 -> (5.0f / 3.0f) * basePlaneCost
         | P40 -> basePlaneCost
         | Pe2s87
@@ -162,6 +166,7 @@ with
         | He111h6 -> 3600.0f<K>
         | Ju87 -> 1800.0f<K>
         | Ju88a4 -> 2800.0f<K>
+        | SpitfireMkVb
         | Ju52 -> 0.0f<K>
         | Yak1s69
         | Yak1s127
@@ -207,6 +212,7 @@ with
         | Yak1s69
         | Yak1s127
         | Lagg3s29
+        | SpitfireMkVb
         | P40
         | Pe2s87
         | Pe2s35 -> Allies
@@ -227,6 +233,7 @@ with
         | Yak1s69
         | Yak1s127
         | Lagg3s29
+        | SpitfireMkVb
         | Mig3 -> Fighter
         | Bf110e
         | Bf110g
@@ -270,6 +277,7 @@ with
         | Pe2s87 -> "pe2s87"
         | Yak1s69 -> "yak1s69"
         | Yak1s127 -> "yak1s127"
+        | SpitfireMkVb -> "spitfiremkvb"
 
     /// <summary>
     /// Substring of the TYPE: field in the mission log
@@ -303,6 +311,7 @@ with
         | Pe2s87 -> "pe-2 ser.87"
         | Yak1s69 -> "yak-1 ser.69"
         | Yak1s127 -> "yak-1 ser.127"
+        | SpitfireMkVb -> "spitfire"
 
     member this.BombLoads =
         let times N xs =
@@ -341,6 +350,7 @@ with
         | P40 -> times 4 [(4, 250.0f<K>); (8, 500.0f<K>); (28, 250.0f<K>); (32, 500.0f<K>)]
         | Yak1s69 -> [(9, 100.0f<K>); (10, 200.0f<K>)]
         | Yak1s127 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
+        | SpitfireMkVb -> [(0, 0.0f<K>); (1, 0.0f<K>)]
 
     member this.LoadOuts(maxWeight : float32<K>) =
         let rec work (loadout : int) (weights : (int * float32<K>) list) =
@@ -392,6 +402,7 @@ with
         | Yak1s69 
         | Yak1s127
         | La5
+        | SpitfireMkVb
         | Lagg3s29 -> [ Interceptor ; Patroller ]
         | Pe2s35
         | Pe2s87
@@ -415,7 +426,8 @@ with
               IL2M41
               Mig3
               P40
-              Pe2s35 ]
+              Pe2s35
+              SpitfireMkVb ]
         | VelikieLuki ->
             [ Bf109e7
               Bf109f4
@@ -446,7 +458,8 @@ with
               La5
               I16
               IL2M43
-              Pe2s87 ]
+              Pe2s87
+              SpitfireMkVb ]
         | All ->
             [ Bf109e7
               Bf109f2
@@ -474,7 +487,8 @@ with
               Pe2s87
               Ju87
               He111h6
-              He111h16 ]
+              He111h16
+              SpitfireMkVb ]
 
     static member PlaneTypeShares(coalition) =
         match coalition with

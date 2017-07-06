@@ -2818,4 +2818,42 @@ Vehicle
 }
 
 
+
+Plane
+{
+  Name = "fighter8RUS";
+  Index = 94;
+  LinkTrId = 0;
+  XPos = 29068.929;
+  YPos = 110.264;
+  ZPos = 20078.020;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.30;
+  Script = "LuaScripts\WorldObjects\Planes\spitfiremkvb.txt";
+  Model = "graphics\planes\spitfiremkvb\spitfiremkvb.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
 # end of file
