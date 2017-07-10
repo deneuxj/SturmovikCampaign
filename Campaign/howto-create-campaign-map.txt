@@ -29,16 +29,16 @@ For roads, it is a advisable to have waypoints on each side of the border, befor
 
 4. Place factories
 Place static blocks with entities in a group named "Factories"
-Suitable static blocks are: "industrial_200x140_01", "industrial_200x140_02", "industrial_300x100_01",
-"industrial_300x100_02", "industrial_300x100_03", "industrial_300x100_04", "industrial_cornerl_01",
-"industrial_cornerl_02", "industrial_cornerr_01", "industrial_cornerr_02"
+Suitable static blocks start with: "industrial_", "vl_pvrz01", "vl_rounddepot".
 
 5. Place supply storage
 Place static blocks with entities in a group named "Storage".
-Suitable static blocks are: "arf_barak" (100), "arf_dugouts_2" (400), "arf_dugouts_3" (600), "arf_ammo_1" (100)
+Suitable static blocks are: "arf_barak" (100), "arf_dugouts_2" (400), "arf_dugouts_3" (600), "arf_ammo_1" (100), "arf_hangararc" (1000),
+"arf_hangarbox" (1000), "arf_hangars_1" (1200), "arf_gsm_1" (100), "arf_gsm_2" (75).
 Number between parentheses above are the storage capacity of each static block.
 Storage is used for anti-tank (AT) and anti-air (AAA) defenses. Each gun consumes 50.
 (Note: the storage groups I used in Velikie-Luki provide 3200 storage units, enough for 64 guns)
+Storage near airfields is used for bombs, each storage unit represents 10Kg of bombs.
 
 6. Define AAA defense zones
 Use influence areas named "AAA-nn" or "AA-nn" in a group named "Defenses", with "nn" replace by a number indicating the maximum number of guns in that area.
