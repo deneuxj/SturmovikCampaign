@@ -671,8 +671,8 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
                 |> Seq.fold Util.addMaps Map.empty
             Util.subMaps mapped damaged
             |> Map.filter (fun _ qty -> qty > 0)
-        // Defense from vehicles parked at the region
-        let homeDefense =
+        // Add defense from vehicles parked at the region
+        let defenders =
             match regState.Owner with
             | Some coalition ->
                 Util.addMaps regState.NumVehicles defenders
