@@ -181,14 +181,15 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                         ()
     }
 
-let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (_ * AiPatrol) seq) =
+let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (Airfield * AiPatrol) seq) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     let defenseNeeds =
         computeDefenseNeeds world
         |> Map.ofList
     patrols
-    |> Seq.sortByDescending (fun (_, patrol) ->
+    // Prioritize by vulnerability and assets, then by distance (prioritize greater distances to help extend reach of covers).
+    |> Seq.sortByDescending (fun (af, patrol) ->
         match patrol.ProtectedRegion with
         | Some region ->
             let assets = sg.GetRegion(region)
@@ -202,10 +203,11 @@ let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (_ * AiP
             let vulnerability =
                 1.0f - assets.Supplies / (max 1.0f<E> (defenseNeeds.TryFind region |> Option.defaultVal 0.0f<E>))
                 |> max 0.0f
-            vulnerability * (tankAssets + productionAssets + planeAssets)
+            vulnerability * (tankAssets + productionAssets + planeAssets), (af.Pos - wg.GetRegion(region).Position).Length()
         | None ->
-            0.0f<E>
-    )
+            0.0f<E>, 0.0f)
+    // Do not assign multiple patrols to the same region at the same altitude
+    |> Seq.distinctBy (fun (_, patrol) -> patrol.ProtectedRegion, patrol.Altitude)
 
 type AiAttack =
     { Plane : PlaneModel
