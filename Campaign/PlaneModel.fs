@@ -277,7 +277,7 @@ with
         | Pe2s87 -> "pe2s87"
         | Yak1s69 -> "yak1s69"
         | Yak1s127 -> "yak1s127"
-        | SpitfireMkVb -> "spitfiremkvb"
+        | SpitfireMkVb -> "spitfireMkVb"
 
     /// <summary>
     /// Substring of the TYPE: field in the mission log
@@ -306,12 +306,12 @@ with
         | La5 -> "la-5"
         | Lagg3s29 -> "lagg-3 ser.29"
         | Mig3 -> "mig-3"
-        | P40 -> "p40"
+        | P40 -> "p-40"
         | Pe2s35 -> "pe-2 ser.35"
         | Pe2s87 -> "pe-2 ser.87"
         | Yak1s69 -> "yak-1 ser.69"
         | Yak1s127 -> "yak-1 ser.127"
-        | SpitfireMkVb -> "spitfire"
+        | SpitfireMkVb -> "spitfire mk.vb"
 
     member this.BombLoads =
         let times N xs =
