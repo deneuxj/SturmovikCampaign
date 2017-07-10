@@ -618,6 +618,9 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
     let byDestination =
         departures
         |> Seq.groupBy (fun departure -> movements.[departure.OrderId].Destination)
+    let byStart =
+        departures
+        |> Seq.groupBy (fun departure -> movements.[departure.OrderId].Start)
     byDestination
     |> Seq.map (fun (region, columns) ->
         let regState = sg.GetRegion(region)
@@ -675,7 +678,17 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
         let defenders =
             match regState.Owner with
             | Some coalition ->
-                Util.addMaps regState.NumVehicles defenders
+                // Remove departed vehicles from the vehicles parked at the region
+                let departed =
+                    byStart
+                    |> Seq.tryFind (fun (start, _) -> region = start)
+                    |> Option.map (fun (_, departed) ->
+                        departed
+                        |> Seq.map (fun order -> movements.[order.OrderId])
+                        |> Seq.fold (fun m order -> order.Composition |> Util.compactSeq |> Util.addMaps m) Map.empty)
+                    |> Option.defaultVal Map.empty
+                Util.subMaps regState.NumVehicles departed
+                |> Util.addMaps defenders
                 |> Map.filter (fun _ qty -> qty > 0)
             | None ->
                 Map.empty
