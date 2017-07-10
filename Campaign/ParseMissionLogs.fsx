@@ -9,8 +9,6 @@
 
 open Configuration
 
-let data, states = Campaign.Run.MissionLogParsing.stage1 config
-let entries, shipped, staticDamages, vehicleDamages, tookOff, landed, columnLeft, newProduction = data
-let oldState, newState = states
-let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, tookOff, landed, staticDamages @ vehicleDamages, newProduction)
-Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR)
+let missionResults = Campaign.Run.MissionLogParsing.stage1 config
+let newProduction, battleResults, ((oldState, newState) as states) = Campaign.Run.MissionLogParsing.updateState(config, missionResults)
+let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, missionResults.TakeOffs, missionResults.Landings, missionResults.StaticDamages @ missionResults.VehicleDamages, newProduction)
