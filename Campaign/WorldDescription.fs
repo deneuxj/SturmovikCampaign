@@ -431,6 +431,7 @@ type World = {
     Airfields : Airfield list
     MaxTankNeeds : float32<E>
     PlaneNeedsTarget : float32 // In number of planes
+    ProductionFactor : float32
     /// Date of the first mission.
     StartDate : System.DateTime
     /// Weather offset: affects how late or early the weather pattern is.
@@ -481,6 +482,7 @@ with
           Airfields = airfields
           MaxTankNeeds = maxTankNeeds
           PlaneNeedsTarget = planeNeedsTarget
+          ProductionFactor = 1.0f
           StartDate = date
           Roads = roads
           Rails = rails
@@ -491,7 +493,7 @@ with
         this.Airfields
         |> List.minBy(fun af -> (af.Pos - pos).LengthSquared())
 
-let productionFactor (world : World) = 3.0f
+let productionFactor (world : World) = world.ProductionFactor
 
 open Campaign.Util
 
