@@ -407,9 +407,9 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
             |> Map.toSeq
             |> Seq.minBy snd
             |> fst
-        // Target 100 planes. This should leave plenty of planes for players to pick.
+        // Target 100 planes (by default, settable in options and stored in world). This should leave plenty of planes for players to pick.
         let valueTarget =
-            let nPlanes = 100.0f
+            let nPlanes = world.PlaneNeedsTarget
             planeTypeShares
             |> Map.toSeq
             |> Seq.sumBy (fun (planeType, share) ->

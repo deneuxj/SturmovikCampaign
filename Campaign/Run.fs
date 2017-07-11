@@ -31,6 +31,7 @@ type Configuration = {
     AfterActionReportEntries : int
     ProductionFactor : float32
     MaxTankNeeds : float32
+    PlaneNeedsTarget : float32
 }
 with
     static member Default =
@@ -59,6 +60,7 @@ with
             AfterActionReportEntries = 8
             ProductionFactor = 1.0f
             MaxTankNeeds = 30.0f
+            PlaneNeedsTarget = 100.0f
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
@@ -101,7 +103,7 @@ module Init =
             | None ->
                 System.Random()
 
-        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), config.MaxTankNeeds * GroundAttackVehicle.MediumTankCost)
+        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), config.MaxTankNeeds * GroundAttackVehicle.MediumTankCost, config.PlaneNeedsTarget)
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
 
         let capacity =

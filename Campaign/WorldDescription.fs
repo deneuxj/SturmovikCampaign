@@ -430,13 +430,14 @@ type World = {
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
     MaxTankNeeds : float32<E>
+    PlaneNeedsTarget : float32 // In number of planes
     /// Date of the first mission.
     StartDate : System.DateTime
     /// Weather offset: affects how late or early the weather pattern is.
     WeatherDaysOffset : float
 }
 with
-    static member Create(planeSet, strategyFile, maxTankNeeds) =
+    static member Create(planeSet, strategyFile, maxTankNeeds, planeNeedsTarget) =
         let s = Stream.FromFile strategyFile
         let data = T.GroupData(s)
         let regions =
@@ -479,6 +480,7 @@ with
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
           MaxTankNeeds = maxTankNeeds
+          PlaneNeedsTarget = planeNeedsTarget
           StartDate = date
           Roads = roads
           Rails = rails
