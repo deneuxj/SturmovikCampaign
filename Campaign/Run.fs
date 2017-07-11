@@ -58,7 +58,7 @@ with
             ScriptPath = @"nul"
             ThinkTime = 30
             AfterActionReportEntries = 8
-            ProductionFactor = 1.0f
+            ProductionFactor = 3.0f
             MaxTankNeeds = 30.0f
             PlaneNeedsTarget = 100.0f
             Briefing = @"
