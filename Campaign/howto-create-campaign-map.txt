@@ -26,6 +26,7 @@ Each bridge should be preceded by a waypoint named "BeforeBridge" and followed b
 Make sure you place the waypoints on the actual location of the road. You need to use the terrain view in the editor, as the GUI map is often misaligned.
 Consecutive waypoints should be separated by at most 20km (direct line).
 For roads, it is a advisable to have waypoints on each side of the border, before the first AT defense zones.
+Waypoints of roads should be adjusted to match the ground's altitude.
 
 4. Place factories
 Place static blocks with entities in a group named "Factories"

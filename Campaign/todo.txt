@@ -84,6 +84,8 @@ Check for convoys without trucks.
 X Prioritize AI patrols according to assets being protected.
 X Damaged hangars appear undamaged.
 X Transferred plane failure: http://coconutside.eu/en/sortie/log/1159/?tour=2
-? Attacks with empty columns can capture undefended regions
-? Bomb stocks get transfered away from airfields without planes
-Set all start/end points of paths on the ground, needed for drop zone fires to be at the correct altitude
+X Attacks with empty columns can capture undefended regions
+X Bomb stocks get transfered away from airfields without planes
+? Set all start/end points of paths on the ground, needed for drop zone fires to be at the correct altitude
+Production does not properly transfer supplies to airfields in the region
+? Plane production too slow when tank needs are high
