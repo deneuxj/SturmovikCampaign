@@ -30,6 +30,7 @@ type Configuration = {
     ThinkTime : int
     AfterActionReportEntries : int
     ProductionFactor : float32
+    MaxTankNeeds : float32
 }
 with
     static member Default =
@@ -57,6 +58,7 @@ with
             ThinkTime = 30
             AfterActionReportEntries = 8
             ProductionFactor = 1.0f
+            MaxTankNeeds = 30.0f
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
@@ -99,7 +101,7 @@ module Init =
             | None ->
                 System.Random()
 
-        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile))
+        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), config.MaxTankNeeds * GroundAttackVehicle.MediumTankCost)
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5) }
 
         let capacity =
