@@ -416,6 +416,7 @@ with
         | Moscow ->
             [ Bf109e7
               Bf109f2
+              Bf109f4
               Mc202
               Bf110e
               Ju88a4
