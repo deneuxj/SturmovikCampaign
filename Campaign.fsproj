@@ -84,11 +84,11 @@
     <None Include="Loop.fsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\data\Blocks\StrategySmall1.Mission">
+    <None Include="data\StrategySmall1.Mission">
       <Link>StrategySmall1.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="..\data\Blocks\VLuki.Mission">
+    <None Include="data\VLuki.Mission">
       <Link>VLuki.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
