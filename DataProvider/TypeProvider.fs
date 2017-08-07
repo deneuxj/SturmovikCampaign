@@ -915,7 +915,7 @@ type MissionTypes(config: TypeProviderConfig) as this =
         let invokeCodeImpl = invokeCodeImpl :?> InvokeCodeImplementation
 
         if not(System.IO.File.Exists(sample)) then
-            failwithf "Cannot open sample file '%s' for reading" sample
+            failwithf "Cannot open sample file '%s' for reading (runtime assembly is '%s')" sample config.RuntimeAssembly
         // Check if modifications were made to input files
         let ty, modifs = getProvider(typeName, sample, libs, invokeCodeImpl)
         let modifs2 =
