@@ -2,7 +2,7 @@
 
 open System.Threading
 
-open Vector
+open VectorExtension
 
 open Campaign.WorldDescription
 open Campaign.WorldState

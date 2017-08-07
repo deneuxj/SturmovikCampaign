@@ -21,7 +21,7 @@ open SturmovikMission.Blocks.TransportFlight
 open SturmovikMission.Blocks.FireLoop
 open SturmovikMission.Blocks.ParaDrop
 open SturmovikMission.Blocks.WhileEnemyClose
-open Vector
+open VectorExtension
 
 open Campaign.WorldDescription
 open Campaign.WorldState

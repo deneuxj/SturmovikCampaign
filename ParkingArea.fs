@@ -1,7 +1,7 @@
 ﻿module Campaign.ParkingArea
 
 open System.Numerics
-open Vector
+open VectorExtension
 
 let serpentine() =
     let rec up n (x, y) =

@@ -1,7 +1,7 @@
 ﻿module Campaign.WorldDescription
 
 open System.Numerics
-open Vector
+open VectorExtension
 
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData

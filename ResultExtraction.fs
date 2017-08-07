@@ -5,7 +5,7 @@ module Campaign.ResultExtraction
 open System.Numerics
 
 open ploggy
-open Vector
+open VectorExtension
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.VirtualConvoy.Factory
 open SturmovikMission.Blocks.StaticDefenses.Types

@@ -3,7 +3,7 @@
 open System.Numerics
 open System.Collections.Generic
 
-open Vector
+open VectorExtension
 
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData

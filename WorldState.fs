@@ -9,7 +9,7 @@ open Campaign.Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open System.Numerics
-open Vector
+open VectorExtension
 
 /// Types of ground attack vehicles.
 type GroundAttackVehicle =

@@ -93,7 +93,7 @@ module Init =
     open System.IO
     open MBrace.FsPickler
     open System.Numerics
-    open Vector
+    open VectorExtension
 
     let createWorld(config : Configuration) =
         let random =

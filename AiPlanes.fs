@@ -1,7 +1,7 @@
 ﻿module Campaign.AiPlanes
 
 open System.Numerics
-open Vector
+open VectorExtension
 
 open SturmovikMission.Blocks.Patrol
 open SturmovikMission.Blocks.GroundAttack

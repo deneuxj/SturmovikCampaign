@@ -9,7 +9,7 @@ open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open System.Numerics
-open Vector
+open VectorExtension
 open SturmovikMission.Blocks.BlocksMissionData
 
 /// Add production units according to production priorities
