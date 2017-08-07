@@ -5,7 +5,17 @@ open System.Numerics
 open System.IO
 open VectorExtension
 
-type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission;../data/Blocks/Vehicles.mission">
+[<Literal>]
+let dataDir = __SOURCE_DIRECTORY__ + "/../data"
+[<Literal>]
+let sampleFile = dataDir + "/Sample.Mission"
+[<Literal>]
+let blocksFile = dataDir + "/Blocks/Blocks.Mission"
+[<Literal>]
+let vehiclesFile = dataDir + "/Blocks/Vehicles.mission"
+[<Literal>]
+let libFiles = blocksFile + ";" + vehiclesFile
+type T = SturmovikMissionTypes.Provider<sampleFile, libFiles>
 
 let blocksData =
     let blockMission =
