@@ -1,0 +1,104 @@
+How to create a campaign map
+
+1. Define campaign start date
+Done in the mission properties dialog.
+
+2. Define regions
+Use influence areas.
+They cannot overlap.
+Each region's boundary must be convex.
+Neighbouring regions must share contiguous segments. Corresponding vertices must be close.
+In a region's boundary, vertices must be separated by at least 2km.
+Airfields that participate in the campaign must all be located within some region.
+Neighbouring regions should be connected by roads or rails. The roads and rails can go through other regions, or outside of all regions, but they must start and end in the two regions.
+Avoid holes between regions, they will look ugly in the mission map and confuse players.
+Put region icons on identifiable cities, need not be in the center of the region.
+Put all regions in a group named "Regions".
+Set region owners. Each coalition must own at least one region with factories.
+
+3. Define roads and railways
+Each path must start with a waypoint named "Start" and finish with another one named "End".
+Each path is bidirectional, so you don't need (and must not) define another identical path going in the opposite direction.
+The speed, altitude and radius of waypoints do not matter.
+The direction matters, and should be a tangent of the road/railway at the location of the waypoint.
+Roads must be put in a group called "Roads", railways must be in "Trains".
+Each bridge should be preceded by a waypoint named "BeforeBridge" and followed by a waypoint named "AfterBridge".
+Make sure you place the waypoints on the actual location of the road. You need to use the terrain view in the editor, as the GUI map is often misaligned.
+Consecutive waypoints should be separated by at most 20km (direct line).
+For roads, it is a advisable to have waypoints on each side of the border, before the first AT defense zones.
+Waypoints of roads should be adjusted to match the ground's altitude.
+
+4. Place factories
+Place static blocks with entities in a group named "Factories"
+Suitable static blocks start with: "industrial_", "vl_pvrz01", "vl_rounddepot".
+
+5. Place supply storage
+Place static blocks with entities in a group named "Storage".
+Suitable static blocks are: "arf_barak" (100), "arf_dugouts_2" (400), "arf_dugouts_3" (600), "arf_ammo_1" (100), "arf_hangararc" (1000),
+"arf_hangarbox" (1000), "arf_hangars_1" (1200), "arf_gsm_1" (100), "arf_gsm_2" (75).
+Number between parentheses above are the storage capacity of each static block.
+Storage is used for anti-tank (AT) and anti-air (AAA) defenses. Each gun consumes 50.
+(Note: the storage groups I used in Velikie-Luki provide 3200 storage units, enough for 64 guns)
+Storage near airfields is used for bombs, each storage unit represents 10Kg of bombs.
+
+6. Define AAA defense zones
+Use influence areas named "AAA-nn" or "AA-nn" in a group named "Defenses", with "nn" replace by a number indicating the maximum number of guns in that area.
+If the zone is named "AAA-nn", it will be composed of flak and fast firing artillery (20mm).
+If the zone is named "AA-nn", it will be composed of flak and anti-air machine guns. The Germans get more machine guns than the Russians due to the difference in fire power of their respective machine guns.
+Each area must be located within a region.
+Each area must be convex.
+Avoid trees and buildings in the area.
+
+7. Define AT defense zones
+Use influence areas named AT in a group named "Defenses". In the game, each zone will contain at most 4 AT guns.
+Orient the influence area so that its yellow pointer aims at incoming tanks.
+Place these area along each road into the region.
+Each area must be located within a region.
+Each area must be convex.
+Avoid trees and buildings in the area.
+
+Make sure there is enough storage in the region for all the AT and AAA canons in the defense areas.
+Additional storage facilitates transferring supplies, it's a good idea to leave some extra storage capacity unused for defenses.
+
+8. Define airfield spawn points
+Use fakefields for planes. Both types (sideways and runway) can be used. They must be in a group named "Aifield spawns"
+Do not create the entity.
+Do create the chart. It's needed for picking spawn points according to wind, and also for AIs that are landing.
+Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
+These alternative waypoints should all have the same name (typically the name of the airfield).
+
+9. Define airfield storage
+Create hangars with entities in a group called "Airfield storage".
+These hangars must be within 3km of the airfield's spawn points.
+
+10. Place plane parking spots
+Each airfield (not spawn) must have 9 parking spots for fighters, 9 for attack planes and 9 for bombers.
+Parking spots for fighters are marked by static bf109 blocks (any variant)
+Parking spots for attack planes are marked by static bf110 blocks (any variant)
+Parking sports for bombers are marked by static ju88 blocks.
+That applies to the Allies side as well. In other words, parking spots on allied-controlled airfields use Axis planes too.
+All these blocks must be in a group named "Parked planes"
+
+11. Place tank parking areas
+Use influence areas in a group named "Tank parks"
+Make sure there's plenty of room for up to 100 tanks
+Each region must have exactly one
+
+12. Windsocks
+Create windsocks with entities in a group named "Windsocks"
+
+13. Non-directional beacons
+Create non-directional beacons (ndb under "vehicles") with entities in a group named "NDBs".
+Set beacon channel to 1 in the advanced properties.
+Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
+
+14. Land fires
+Create land fire effects with entities named "LandFire" in a group named "Land fires"
+
+15. Land lights
+Create land lights with entities named "LandLight" in a group named "Land lights".
+Create a pair for each spawn so that planes will take off and land with the lights in their back.
+
+16. Bridges and other buildings
+Bridges and other blocks, buildings... need not be in groups, although they can.
+You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.
