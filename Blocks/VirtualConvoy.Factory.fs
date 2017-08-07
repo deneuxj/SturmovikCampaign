@@ -10,7 +10,7 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.Vehicles
 open System.Numerics
-open Vector
+open VectorExtension
 open SturmovikMission.Blocks.WhileEnemyClose
 open SturmovikMission.Blocks.Timer
 open SturmovikMission.Blocks.EventReporting

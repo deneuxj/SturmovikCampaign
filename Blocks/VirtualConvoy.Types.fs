@@ -6,7 +6,7 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.BlocksMissionData
 open System.Numerics
-open Vector
+open VectorExtension
 
 // The types. See Proto-VirtualConvoy.txt.
 type Convoy =

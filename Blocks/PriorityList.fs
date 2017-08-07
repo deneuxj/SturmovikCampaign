@@ -5,7 +5,7 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
 open System.Numerics
-open Vector
+open VectorExtension
 
 /// A node in the list
 type Node = {

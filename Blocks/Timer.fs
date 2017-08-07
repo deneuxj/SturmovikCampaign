@@ -4,7 +4,7 @@ open SturmovikMission.DataProvider
 open System.Numerics
 open BlocksMissionData
 open SturmovikMission.DataProvider.McuUtil
-open Vector
+open VectorExtension
 
 type Timer =
     { Start : Mcu.McuTrigger

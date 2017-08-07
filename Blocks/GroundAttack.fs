@@ -1,7 +1,7 @@
 ﻿module SturmovikMission.Blocks.GroundAttack
 
 open System.Numerics
-open Vector
+open VectorExtension
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles

@@ -4,7 +4,7 @@ open SturmovikMission.DataProvider
 open System.Numerics
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider.McuUtil
-open Vector
+open VectorExtension
 
 let private randomDelaySource = System.Random(0)
 

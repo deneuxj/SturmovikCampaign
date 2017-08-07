@@ -3,7 +3,7 @@
 open SturmovikMission.DataProvider
 open System.Numerics
 open System.IO
-open Vector
+open VectorExtension
 
 type T = SturmovikMissionTypes.Provider<"../data/Sample.Mission", "../data/Blocks/Blocks.Mission;../data/Blocks/Vehicles.mission">
 

@@ -4,7 +4,7 @@ open SturmovikMission.DataProvider
 open System.Numerics
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider.McuUtil
-open Vector
+open VectorExtension
 
 type IconDisplay = {
     Show : Mcu.McuTimer

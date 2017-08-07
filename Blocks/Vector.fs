@@ -1,4 +1,4 @@
-﻿module Vector
+﻿module VectorExtension
 
 open System.Numerics
 open SturmovikMission.DataProvider
