@@ -1,0 +1,60 @@
+﻿Campaign:
+    # Can be Moscow, VelikieLuki, EarlyAccess
+    PlaneSet: Moscow
+    # Name of file describing the scenario
+    StrategyFile: StrategySmall1.Mission
+    # Seed for the random generator; affects weather
+    Seed: 42
+    # Max deviation of the weather with respect of standard weather for start date
+    WeatherDayMaxOffset: 7
+    # Max number of convoys in mission (per side)
+    MaxConvoys: 8
+    # How far ahead the AI plans column movements
+    MaxInvasionsInPlanning: 20
+    # Max number of tank columns (per side)
+    MaxInvasions: 1
+    # Max number of attacker planes (per side)
+    MaxAttackers: 3
+    # Max number of patrolling fighters (per side)
+    MaxPatrols: 8
+    # Max number of captured planes available for spawning (per airfield)
+    MaxCapturedPlanes: 0
+    # Base name of generated mission file
+    MissionName: AutoGenCampaign
+    # Length of mission, in minutes
+    MissionLength: 180
+    # Interval between group of vehilces in a column (for columns larger than 15 tanks)
+    ColumnSplitInterval: 60
+    # Max number of convoys active simultaneously (per side)
+    MaxSimultaneousConvoys: 2
+    # Where the textual generated mission file is written; this also the place where the campaign state is kept
+    OutputDir: C:/somewhere
+    # IL2 data dir
+    ServerDataDir: C:/il2/data
+    # IL2 bin dir
+    ServerBinDir: C:/il2/bin
+    # SDS file, relative to data dir
+    ServerSdsFile: sds/server.sds
+    # Where this file resides
+    InstallPath: C:/Campaign
+    # Max think time for column movement planning
+    ThinkTime: 60
+    # Number of action reports to include in briefing
+    AfterActionReportEntries: 8
+    # Affects factory output. Values under 3.0 tend to lead to depletion of planes and tanks
+    ProductionFactor: 3.0
+    # Affects production. Keep this low or the AI might stop producing planes
+    MaxTankNeeds: 30.0
+    # Affects production. Keep this high or the AI might stop producing planes
+    PlaneNeedsTarget: 100.0
+    # Fixed part of the mission briefing
+    Briefing: |
+        This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
+        
+        Objectives: Truck convoys, tank columns, field camps (look for dugouts), factories, parked planes, anti-tank guns, anti-air cannons.
+        
+        Each region has a 'life bar' indicating the storage capacity (blue bar) and current supply level (cursor on the bar).
+        If the cursor is red, the region is poorly defended.
+        Some regions have numbers beside their name: these represent the number of tanks in that region at the start of the mission.
+        
+        Planes can be transferred from one airfield to another, but the result will only be visible in the next mission.

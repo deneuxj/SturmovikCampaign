@@ -3,77 +3,9 @@
 open System.IO
 
 open Campaign.BasicTypes
+open Campaign.Configuration
 open PlaneModel
 
-type Configuration = {
-    PlaneSet : PlaneModel.PlaneSet
-    StrategyFile : string
-    Seed : int option
-    WeatherDayMaxOffset : int
-    MaxConvoys : int
-    MaxInvasionsInPlanning : int
-    MaxInvasions : int
-    MaxReinforcements : int
-    MaxAttackers : int
-    MaxPatrols : int
-    MaxCapturedPlanes : int
-    MissionName : string
-    MissionLength : int
-    ConvoyInterval : int
-    MaxSimultaneousConvoys : int
-    OutputDir : string
-    ServerDataDir : string
-    ServerBinDir : string
-    ServerSdsFile : string
-    ScriptPath : string
-    Briefing : string
-    ThinkTime : int
-    AfterActionReportEntries : int
-    ProductionFactor : float32
-    MaxTankNeeds : float32
-    PlaneNeedsTarget : float32
-}
-with
-    static member Default =
-        {
-            PlaneSet = PlaneSet.Moscow
-            StrategyFile = "StrategySmall1.mission"
-            Seed = None // Some 0
-            WeatherDayMaxOffset = 15
-            MaxConvoys = 10
-            MaxSimultaneousConvoys = 2
-            MaxInvasionsInPlanning = 3
-            MaxInvasions = 1
-            MaxReinforcements = 1
-            MaxPatrols = 6
-            MaxAttackers = 3
-            MaxCapturedPlanes = 3
-            MissionName = "AutoGenMission2"
-            MissionLength = 180
-            ConvoyInterval = 60
-            OutputDir = @"nul"
-            ServerDataDir = @"nul"
-            ServerBinDir = @"nul"
-            ServerSdsFile = @"nul"
-            ScriptPath = @"nul"
-            ThinkTime = 30
-            AfterActionReportEntries = 8
-            ProductionFactor = 3.0f
-            MaxTankNeeds = 30.0f
-            PlaneNeedsTarget = 100.0f
-            Briefing = @"
-    This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
-
-    Objectives: Truck convoys, tank columns, field camps (look for dugouts), factories, parked planes, anti-tank guns, anti-air cannons.
-
-    Each region has a 'life bar' indicating the storage capacity (blue bar) and current supply level (cursor on the bar).
-    If the cursor is red, the region is poorly defended.
-    Some regions have numbers beside their name: these represent the number of tanks in that region at the start of the mission.
-
-    Planes can be transferred from one airfield to another, but the result will only be visible in the next mission.
-
-    "
-        }
 
 module Filenames =
     let axisOrders = "axisOrders.xml"
@@ -475,7 +407,7 @@ module MissionFileGeneration =
               MissionName = config.MissionName
               Briefing = briefing
               MissionLength = config.MissionLength
-              ConvoySpacing = config.ConvoyInterval
+              ColumnSplitInterval = config.ColumnSplitInterval
               MaxSimultaneousConvoys = config.MaxSimultaneousConvoys
               StrategyMissionFile = Path.Combine(config.ScriptPath, config.StrategyFile)
             }

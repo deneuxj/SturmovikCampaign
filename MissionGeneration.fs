@@ -736,7 +736,7 @@ type MissionGenerationParameters = {
     MissionName : string
     Briefing : string
     MissionLength : int
-    ConvoySpacing : int
+    ColumnSplitInterval : int
     MaxSimultaneousConvoys : int
     StrategyMissionFile : string
 }
@@ -809,9 +809,9 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 | Choice3Of3 x -> x.All)
         convoyPrioNodes.All, convoys
     let mkColumns orders =
-        let maxColumnSplit = max 1 (missionParams.MissionLength / missionParams.ConvoySpacing - 1)
+        let maxColumnSplit = max 1 (missionParams.MissionLength / missionParams.ColumnSplitInterval - 1)
         orders
-        |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ConvoySpacing) maxColumnSplit missionParams.MissionLength
+        |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ColumnSplitInterval) maxColumnSplit missionParams.MissionLength
     let columns = mkColumns (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
     let arrows =
         [Axis; Allies]

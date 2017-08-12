@@ -67,7 +67,12 @@
     <Compile Include="ResultExtraction.fs" />
     <Compile Include="NewWorldState.fs" />
     <Compile Include="AfterActionReport.fs" />
+    <Compile Include="Config.fs" />
     <Compile Include="Run.fs" />
+    <Compile Include="ServerControlPlugin.fs" />
+    <None Include="SampleConfig.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Configuration.fsx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -100,6 +105,14 @@
     <Reference Include="DataProvider">
       <HintPath>..\SturmovikMission-git\DataProvider\bin\Debug\DataProvider.dll</HintPath>
     </Reference>
+    <Reference Include="FSharp.Configuration">
+      <HintPath>packages\FSharp.Configuration.1.3.0\lib\net45\FSharp.Configuration.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharp.Core">
+      <HintPath>packages\FSharp.Core.4.0.0.1\lib\net40\FSharp.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="FSharp.Data.TypeProviders" />
     <Reference Include="FsPickler">
       <HintPath>..\Blocks\packages\FsPickler.3.2.0\lib\net45\FsPickler.dll</HintPath>
@@ -110,9 +123,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\Blocks\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -140,6 +150,11 @@
     <ProjectReference Include="..\SturmovikMission-git\Blocks\Blocks.fsproj">
       <Name>Blocks</Name>
       <Project>{6f0be45c-721f-49fb-bfda-73eb7a6d07ba}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\sturmovikservercontrol\CampaignServerControl\CampaignServerControl.fsproj">
+      <Name>CampaignServerControl</Name>
+      <Project>{641f10fc-c185-4c95-881d-cc2bec4b95fc}</Project>
       <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
