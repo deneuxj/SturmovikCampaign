@@ -9,6 +9,7 @@ open MBrace.FsPickler
 open Campaign.BasicTypes
 open Campaign.Run
 open Campaign.Configuration
+open Campaign.Util
 open System
 
 module Support =
@@ -162,7 +163,7 @@ module Support =
             else
                 StartServer
 
-    let start(config) =
+    let start(config, status) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -194,7 +195,9 @@ module Support =
                 let action = status.GetAsync(config, serverProc)
                 ScheduledTask.SomeTaskNow(step action)
 
-        let status = ExecutionState.Restore(config)
+        let status =
+            status
+            |> Option.defaultVal (ExecutionState.Restore(config))
         // If the status was failed, plan to retry the operation that failed.
         let status =
             match status with
@@ -246,7 +249,7 @@ module Support =
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
             // Start campaign
-            return start config
+            return start(config, Some GenerateMission)
         }
         |> ScheduledTask.SomeTaskNow
 
@@ -255,7 +258,7 @@ type Plugin() =
         member x.StartOrResume configFile =
             try
                 let config = loadConfigFile configFile
-                Support.start config
+                Support.start(config, None)
                 |> Choice1Of2
             with
             | e ->
