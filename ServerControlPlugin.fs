@@ -225,6 +225,31 @@ module Support =
                 status
         work status None
 
+    let reset (config : Configuration) =
+        async {
+            // Delete log files
+            let logDir = Path.Combine(config.ServerDataDir, "logs")
+            for file in Directory.EnumerateFiles(logDir, "*.txt") do
+                try
+                    File.Delete(file)
+                with
+                | _ -> ()
+            // Delete campaign files
+            for file in Directory.EnumerateFiles(config.OutputDir) do
+                try
+                    File.Delete(file)
+                with
+                | _ -> ()
+            // Initial campaign state
+            let startDate = Campaign.Run.Init.createWorld config
+            Campaign.Run.WeatherComputation.run(config, startDate)
+            Campaign.Run.Init.createState config
+            Campaign.Run.OrderDecision.run config
+            // Start campaign
+            return start config
+        }
+        |> ScheduledTask.SomeTaskNow
+
 type Plugin() =
     interface CampaignServerApi with
         member x.StartOrResume configFile =
@@ -234,5 +259,14 @@ type Plugin() =
                 |> Choice1Of2
             with
             | e ->
-                sprintf "Failed to load config file: '%s'" e.Message
+                sprintf "Failed to start or resume campaign: '%s'" e.Message
+                |> Choice2Of2
+        member x.Reset configFile =
+            try
+                let config = loadConfigFile configFile
+                Support.reset config
+                |> Choice1Of2
+            with
+            | e ->
+                sprintf "Failed to reset campaign: '%s'" e.Message
                 |> Choice2Of2
