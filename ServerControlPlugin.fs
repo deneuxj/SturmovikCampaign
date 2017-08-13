@@ -75,6 +75,16 @@ module Support =
         | CampaignOver of victorious: CoalitionId
         | Failed of Message:string * StackTrace:string option * ExecutionState
     with
+        member this.Description =
+            match this with
+            | KillServer -> "kill server"
+            | DecideOrders -> "decide orders"
+            | GenerateMission -> "generate mission"
+            | StartServer -> "start server"
+            | WaitForMissionEnd _ -> "wait for mission end"
+            | ExtractResults -> "extract results"
+            | CampaignOver _ -> "terminate campaign"
+            | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
         member this.GetAsync(config, serverProc : Process option) =
             match this with
             | DecideOrders ->
@@ -185,15 +195,15 @@ module Support =
                             status.Save(config)
                             match status with
                             | WaitForMissionEnd time ->
-                                return SomeTask(time, async { return work status proc })
+                                return SomeTask(time, async { return work status proc }, status.Description)
                             | _ ->
-                                return ScheduledTask.SomeTaskNow(async { return work status proc })
+                                return ScheduledTask.SomeTaskNow status.Description (async { return work status proc })
                         with
                         | exc ->
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
                 let action = status.GetAsync(config, serverProc)
-                ScheduledTask.SomeTaskNow(step action)
+                ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         let status =
             status
@@ -251,7 +261,7 @@ module Support =
             // Start campaign
             return start(config, Some GenerateMission)
         }
-        |> ScheduledTask.SomeTaskNow
+        |> ScheduledTask.SomeTaskNow "generate mission"
 
 type Plugin() =
     interface CampaignServerApi with
