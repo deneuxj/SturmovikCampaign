@@ -435,9 +435,10 @@ module MissionFileGeneration =
         for lang in langs do
             // Mission.eng -> Mission.lang: we use the english text for all languagues. Better than not having any text at all.
             File.Copy(Path.Combine(config.OutputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + "." + lang))
-        let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d %s -f %s" config.ServerDataDir (Path.Combine(mpDir, missionName + ".Mission")))
-        p.WorkingDirectory <- Path.Combine(config.ServerBinDir, "resaver")
-        p.UseShellExecute <- true
+        let resaverDir = Path.Combine(config.ServerBinDir, "resaver")
+        let p = ProcessStartInfo(Path.Combine(resaverDir, "MissionResaver.exe"), sprintf "-d %s -f %s" config.ServerDataDir (Path.Combine(mpDir, missionName + ".Mission")))
+        p.WorkingDirectory <- resaverDir
+        p.UseShellExecute <- false
         let proc = Process.Start(p)
         proc.WaitForExit()
         // Remove text Mission file, it slows down mission loading.
