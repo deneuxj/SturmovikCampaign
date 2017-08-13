@@ -19,7 +19,7 @@ namespace SturmovikMission
 
 module Constants =
     [<Literal>]
-    let version = "2.0.1.0"
+    let version = "3.0.0.0"
 
 open System.Reflection
 open System.Resources;
