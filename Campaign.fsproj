@@ -115,11 +115,11 @@
     </Reference>
     <Reference Include="FSharp.Data.TypeProviders" />
     <Reference Include="FsPickler">
-      <HintPath>..\Blocks\packages\FsPickler.3.2.0\lib\net45\FsPickler.dll</HintPath>
+      <HintPath>packages\FsPickler.3.3.0\lib\net45\FsPickler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FsPickler.Json">
-      <HintPath>..\Blocks\packages\FsPickler.Json.3.2.0\lib\net45\FsPickler.Json.dll</HintPath>
+      <HintPath>packages\FsPickler.Json.3.3.0\lib\net45\FsPickler.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
