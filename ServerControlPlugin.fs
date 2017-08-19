@@ -66,9 +66,10 @@ module Support =
             None
 
     type ExecutionState =
-        | KillServer
         | DecideOrders
         | GenerateMission
+        | KillOrSkip
+        | KillServer
         | StartServer
         | WaitForMissionEnd of System.DateTime
         | ExtractResults
@@ -77,6 +78,7 @@ module Support =
     with
         member this.Description =
             match this with
+            | KillOrSkip -> "next mission"
             | KillServer -> "kill server"
             | DecideOrders -> "decide orders"
             | GenerateMission -> "generate mission"
@@ -85,32 +87,71 @@ module Support =
             | ExtractResults -> "extract results"
             | CampaignOver _ -> "terminate campaign"
             | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
-        member this.GetAsync(config, serverProc : Process option) =
+        member this.GetAsync(support : SupportApis, config, serverProc : Process option) =
+            let tryOrNotifyPlayers errorMessage action =
+                async {
+                    let result =
+                        try
+                            action()
+                            |> Choice1Of2
+                        with
+                        | e -> Choice2Of2 e
+                    match result with
+                    | Choice2Of2 e ->
+                        do! support.ServerControl.MessageAll errorMessage
+                        raise(Exception("See inner exception", e))
+                    | _ ->
+                        ()
+                    return
+                        match result with
+                        | Choice1Of2 x -> x
+                        | Choice2Of2 _ -> failwith "Unreachable"
+                }
             match this with
             | DecideOrders ->
                 async {
-                    printfn "Deciding orders..."
+                    support.Logging.LogInfo "Deciding orders..."
                     Campaign.Run.OrderDecision.run config
-                    return None, KillServer
-                }
-            | KillServer ->
-                async {
-                    printfn "Kill server..."
-                    killServer(config, serverProc)
-                    return None, GenerateMission
+                    return serverProc, GenerateMission
                 }
             | GenerateMission ->
                 async {
-                    printfn "Generate mission..."
+                    support.Logging.LogInfo "Generate mission..."
                     let exitStatus = Campaign.Run.MissionFileGeneration.run config
                     if exitStatus <> 0 then
-                        return None, Failed(sprintf "Resaver failed, exit status %d" exitStatus, None, this)
+                        do! support.ServerControl.MessageAll ["Failed to generate next mission"]
+                        return serverProc, Failed(sprintf "Resaver failed, exit status %d" exitStatus, None, this)
                     else
-                        return None, StartServer
+                        do! support.ServerControl.MessageAll ["Next mission ready"]
+                        return serverProc, KillOrSkip
+                }
+            | KillOrSkip ->
+                async {
+                    support.Logging.LogInfo "Next mission..."
+                    match serverProc with
+                    | Some proc when proc.StartTime - DateTime.Now >= TimeSpan(12, 0, 0) ->
+                        support.Logging.LogInfo "Server process will be killed"
+                        do!
+                            [ "Server is restarting before next mission start"
+                              "Wait a minute, then join again from server list to keep playing"
+                            ]
+                            |> support.ServerControl.MessageAll
+                        return serverProc, KillServer
+                    | _ ->
+                        do! support.ServerControl.MessageAll ["Rotating missions now"]
+                        do! support.ServerControl.SkipMission
+                        let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
+                        return serverProc, WaitForMissionEnd expectedMissionEnd
+                }
+            | KillServer ->
+                async {
+                    support.Logging.LogInfo "Kill server..."
+                    killServer(config, serverProc)
+                    return None, StartServer
                 }
             | StartServer ->
                 async {
-                    printfn "Start server..."
+                    support.Logging.LogInfo "Start server..."
                     let serverProc = startServer(config)
                     match serverProc with
                     | None ->
@@ -121,7 +162,7 @@ module Support =
                 }
             | WaitForMissionEnd time ->
                 async {
-                    printfn "Check if mission is over..."
+                    support.Logging.LogInfo "Check if mission is over..."
                     if System.DateTime.UtcNow >= time then
                         return serverProc, ExtractResults
                     else
@@ -129,30 +170,61 @@ module Support =
                 }
             | ExtractResults ->
                 async {
-                    printfn "Extract results..."
-                    let missionResults = Campaign.Run.MissionLogParsing.stage1 config
+                    support.Logging.LogInfo "Extract results..."
+                    do!
+                        [ "Mission has ended"
+                          "Actions past this point will not be taken into account"
+                        ]
+                        |> support.ServerControl.MessageAll
+                    let! missionResults =
+                        tryOrNotifyPlayers
+                            [ "Bad news, result extraction failed"
+                              "Campaign is now halted"
+                              "Sorry for the inconvenience" ]
+                            (fun() -> Campaign.Run.MissionLogParsing.stage1 config)
                     Campaign.Run.MissionLogParsing.backupFiles config
-                    printfn "Make weather..."
+                    support.Logging.LogInfo "Make weather..."
                     let date = Campaign.Run.WeatherComputation.getNextDateFromState config
                     Campaign.Run.WeatherComputation.run(config, date)
-                    let newProduction, battleResults, ((oldState, newState) as states) = Campaign.Run.MissionLogParsing.updateState(config, missionResults)
+                    let! updatedState =
+                        tryOrNotifyPlayers
+                            [ "Bad news, campaign updated failed"
+                              "Campaign is now halted"
+                              "Sorry for the inconvenience" ]
+                            (fun() -> Campaign.Run.MissionLogParsing.updateState(config, missionResults))
+                    let newProduction, battleResults, ((oldState, newState) as states) = updatedState
                     if not(newState.HasCoalitionFactories(Axis)) then
+                        do!
+                            [ "Campaign is over"
+                              "Allies are victorious"
+                            ]
+                            |> support.ServerControl.MessageAll
                         return serverProc, CampaignOver(Allies)
                     elif not(newState.HasCoalitionFactories(Allies)) then
+                        do!
+                            [ "Campaign is over"
+                              "Axis is victorious"
+                            ]
+                            |> support.ServerControl.MessageAll
                         return serverProc, CampaignOver(Axis)
                     else
+                        do!
+                            [ "Campaign continues"
+                              "Next mission is being generated..."
+                            ]
+                            |> support.ServerControl.MessageAll
                         let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, missionResults.TakeOffs, missionResults.Landings, missionResults.StaticDamages @ missionResults.VehicleDamages, newProduction)
                         Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR, battleResults)
                         return serverProc, DecideOrders
                 }
             | CampaignOver _ ->
                 async {
-                    printfn "Cannot continue campaign that is over."
+                    support.Logging.LogInfo "Cannot continue campaign that is over."
                     return serverProc, KillServer
                 }
             | Failed(msg, stackTrace, state) ->
                 async {
-                    printfn "Failed!"
+                    support.Logging.LogInfo "Failed!"
                     return serverProc, this
                 }
 
@@ -173,18 +245,19 @@ module Support =
             else
                 StartServer
 
-    let start(config, status) =
+    let start(support : SupportApis, config, status) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
-                printfn "Execution aborted due to failure: %s" msg
+                support.Logging.LogInfo(sprintf "Execution aborted due to failure: %s" msg)
                 status.Save(config)
                 NoTask
             | CampaignOver(victorious) ->
                 match victorious with
                 | Axis -> "Axis has won"
                 | Allies -> "Allies have won"
-                |> printfn "Campaign is over, %s the battle!"
+                |> sprintf "Campaign is over, %s the battle!"
+                |> support.Logging.LogInfo
                 status.Save(config)
                 NoTask
             | _ ->
@@ -202,7 +275,7 @@ module Support =
                         | exc ->
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
-                let action = status.GetAsync(config, serverProc)
+                let action = status.GetAsync(support, config, serverProc)
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         let status =
@@ -212,10 +285,10 @@ module Support =
         let status =
             match status with
             | Failed(msg, _, ExtractResults) ->
-                printfn "Previously failed to extract results, will restart the server"
+                support.Logging.LogInfo "Previously failed to extract results, will restart the server"
                 StartServer
             | Failed(msg, _, status) ->
-                printfn "Retry after failure '%s'" msg
+                support.Logging.LogInfo(sprintf "Retry after failure '%s'" msg)
                 status
             | _ ->
                 status
@@ -225,20 +298,20 @@ module Support =
             | WaitForMissionEnd time ->
                 if System.DateTime.UtcNow < time then
                     if findRunningServers(config).Length > 0 then
-                        printfn "Resume waiting"
+                        support.Logging.LogInfo "Resume waiting"
                         status // deadline not passed, and server running -> resume waiting
                     else
-                        printfn "Restart server"
+                        support.Logging.LogInfo "Restart server"
                         StartServer // deadline not passed, no server running -> restart the server
                 else
-                    printfn "Extract results"
+                    support.Logging.LogInfo "Extract results"
                     ExtractResults // deadline passed -> extract results
             | _ ->
-                printfn "Resume"
+                support.Logging.LogInfo "Resume"
                 status
         work status None
 
-    let reset (config : Configuration) =
+    let reset(support : SupportApis, config : Configuration) =
         async {
             // Delete log files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -259,25 +332,39 @@ module Support =
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
             // Start campaign
-            return start(config, Some GenerateMission)
+            return start(support, config, Some GenerateMission)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
 type Plugin() =
+    let mutable support : SupportApis option = None
+
     interface CampaignServerApi with
+        member x.Init(apis) =
+            support <- Some apis
+
         member x.StartOrResume configFile =
+            let support =
+                match support with
+                | None -> invalidOp "Must call Init first"
+                | Some x -> x
             try
                 let config = loadConfigFile configFile
-                Support.start(config, None)
+                Support.start(support, config, None)
                 |> Choice1Of2
             with
             | e ->
                 sprintf "Failed to start or resume campaign: '%s'" e.Message
                 |> Choice2Of2
+
         member x.Reset configFile =
+            let support =
+                match support with
+                | None -> invalidOp "Must call Init first"
+                | Some x -> x
             try
                 let config = loadConfigFile configFile
-                Support.reset config
+                Support.reset(support, config)
                 |> Choice1Of2
             with
             | e ->
