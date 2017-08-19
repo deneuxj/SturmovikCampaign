@@ -21,6 +21,8 @@ open SturmovikMission.Blocks.TransportFlight
 open SturmovikMission.Blocks.FireLoop
 open SturmovikMission.Blocks.ParaDrop
 open SturmovikMission.Blocks.WhileEnemyClose
+open SturmovikMission.Blocks.MissionEnd
+
 open VectorExtension
 
 open Campaign.WorldDescription
@@ -883,6 +885,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 ]
               member x.SubGroups = []
         }
+    let serverInputMissionEnd = MissionEnd.Create(store)
     let allGroups =
         [ optionStrings
           McuUtil.groupFromList [missionBegin]
@@ -898,5 +901,6 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           parkedPlanes
           parkedTanks
           axisPrio
-          alliesPrio ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns
+          alliesPrio
+          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns
     writeMissionFiles "eng" filename options allGroups

@@ -243,7 +243,7 @@ module Support =
                 use s = File.OpenText(statusFile)
                 serializer.Deserialize<ExecutionState>(s)
             else
-                StartServer
+                GenerateMission
 
     let start(support : SupportApis, config, status) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
@@ -285,8 +285,8 @@ module Support =
         let status =
             match status with
             | Failed(msg, _, ExtractResults) ->
-                support.Logging.LogInfo "Previously failed to extract results, will restart the server"
-                StartServer
+                support.Logging.LogInfo "Previously failed to extract results, will restart the mission"
+                GenerateMission
             | Failed(msg, _, status) ->
                 support.Logging.LogInfo(sprintf "Retry after failure '%s'" msg)
                 status
@@ -302,7 +302,7 @@ module Support =
                         status // deadline not passed, and server running -> resume waiting
                     else
                         support.Logging.LogInfo "Restart server"
-                        StartServer // deadline not passed, no server running -> restart the server
+                        GenerateMission // deadline not passed, no server running -> regenerate mission and restart
                 else
                     support.Logging.LogInfo "Extract results"
                     ExtractResults // deadline passed -> extract results
