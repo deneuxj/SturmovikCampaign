@@ -81,6 +81,7 @@
     <Compile Include="GroundAttack.fs" />
     <Compile Include="TransportFlight.fs" />
     <Compile Include="FireLoop.fs" />
+    <Compile Include="MissionEnd.fs" />
     <Compile Include="ParaDrop.fs" />
     <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">

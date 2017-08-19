@@ -6,16 +6,16 @@ open System.Runtime.InteropServices
 
 module Constants =
     [<Literal>]
-    let version = "1.0.0.0"
+    let version = "1.1.0.0"
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[<assembly: AssemblyTitle("generator")>]
-[<assembly: AssemblyDescription("")>]
+[<assembly: AssemblyTitle("SturmovikMission.Blocks")>]
+[<assembly: AssemblyDescription("Instantiation of mission logic")>]
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("")>]
-[<assembly: AssemblyProduct("generator")>]
+[<assembly: AssemblyProduct("Blocks")>]
 [<assembly: AssemblyCopyright("Copyright © Johann Deneux 2016")>]
 [<assembly: AssemblyTrademark("")>]
 [<assembly: AssemblyCulture("")>]
