@@ -30,6 +30,7 @@ type Configuration = {
     ProductionFactor : float32
     MaxTankNeeds : float32
     PlaneNeedsTarget : float32
+    WebHook : string
 }
 with
     static member Default =
@@ -58,6 +59,7 @@ with
             ProductionFactor = 3.0f
             MaxTankNeeds = 30.0f
             PlaneNeedsTarget = 100.0f
+            WebHook = ""
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
@@ -114,4 +116,5 @@ let loadConfigFile (path : string) =
         MaxTankNeeds = float32 values.MaxTankNeeds
         PlaneNeedsTarget = float32 values.PlaneNeedsTarget
         Briefing = values.Briefing
+        WebHook = values.WebHook
     }

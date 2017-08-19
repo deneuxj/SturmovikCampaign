@@ -58,3 +58,6 @@
         Some regions have numbers beside their name: these represent the number of tanks in that region at the start of the mission.
         
         Planes can be transferred from one airfield to another, but the result will only be visible in the next mission.
+
+    # If non-empty, webhook URL of a discord channel where comments extracted from the ongoing mission log entries will be posted.
+    WebHook: ""

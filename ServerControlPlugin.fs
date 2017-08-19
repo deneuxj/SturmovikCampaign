@@ -3,6 +3,7 @@ namespace Campaign.ServerControlPlugin
 
 open CampaignServerControl.Api
 
+open System
 open System.Diagnostics
 open System.IO
 open MBrace.FsPickler
@@ -10,20 +11,15 @@ open Campaign.BasicTypes
 open Campaign.Run
 open Campaign.Configuration
 open Campaign.Util
-open System
+open Campaign.WebHook
+open Campaign.Commenting
 
 module Support =
     let findRunningServers(config) =
             let procs =
                 Process.GetProcessesByName("DServer")
-            let procs =
-                try
-                    procs
-                    |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)).StartsWith(Path.GetFullPath(config.ServerBinDir)))
-                with
-                | exc ->
-                    printfn "Failed to filter processes: '%s" exc.Message
-                    procs
+                |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)).StartsWith(Path.GetFullPath(config.ServerBinDir)))
+            printfn "Found procs %s" (procs |> Seq.map (fun p -> p.Id.ToString() + " " + p.MainModule.FileName) |> String.concat ", ")
             procs
 
     let killServer(config, runningProc : Process option) =
@@ -87,7 +83,7 @@ module Support =
             | ExtractResults -> "extract results"
             | CampaignOver _ -> "terminate campaign"
             | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
-        member this.GetAsync(support : SupportApis, config, serverProc : Process option) =
+        member this.GetAsync(support : SupportApis, config, serverProc : Process option, onMissionStart) =
             let tryOrNotifyPlayers errorMessage action =
                 async {
                     let result =
@@ -137,10 +133,14 @@ module Support =
                             ]
                             |> support.ServerControl.MessageAll
                         return serverProc, KillServer
+                    | None ->
+                        support.Logging.LogInfo "Server process could not be found"
+                        return None, StartServer
                     | _ ->
                         do! support.ServerControl.MessageAll ["Rotating missions now"]
                         do! support.ServerControl.SkipMission
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
+                        onMissionStart()
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
             | KillServer ->
@@ -158,6 +158,7 @@ module Support =
                         return None, Failed("Failed to start server", None, this)
                     | Some _ ->
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
+                        onMissionStart()
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
             | WaitForMissionEnd time ->
@@ -245,7 +246,7 @@ module Support =
             else
                 GenerateMission
 
-    let start(support : SupportApis, config, status) =
+    let start(support : SupportApis, config, status, onMissionStart) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -275,7 +276,7 @@ module Support =
                         | exc ->
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
-                let action = status.GetAsync(support, config, serverProc)
+                let action = status.GetAsync(support, config, serverProc, onMissionStart)
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         let status =
@@ -311,7 +312,7 @@ module Support =
                 status
         work status None
 
-    let reset(support : SupportApis, config : Configuration) =
+    let reset(support : SupportApis, config : Configuration, onMissionStart) =
         async {
             // Delete log files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -332,12 +333,54 @@ module Support =
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
             // Start campaign
-            return start(support, config, Some GenerateMission)
+            return start(support, config, Some GenerateMission, onMissionStart)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
 type Plugin() =
     let mutable support : SupportApis option = None
+    let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
+    let mutable commenter : Commentator option = None
+
+    member x.StartWebHookClient(config : Configuration) =
+        let webHookUri = config.WebHook
+        // Create WebClient for web hook, if not already done
+        match webHookClient with
+        | None ->
+            if not(String.IsNullOrEmpty(webHookUri)) then
+                webHookClient <- Some(createClient(webHookUri))
+                printfn "WebHook client created"
+        | Some x ->
+            ()
+        // Stop commenter
+        match commenter with
+        | Some commenter ->
+            commenter.Dispose()
+        | None ->
+            ()
+        // (Re-)start commenter
+        match webHookClient with
+        | Some webHookClient ->
+            let serializer = FsPickler.CreateXmlSerializer(indent = true)
+            let worldAndState =
+                try
+                    use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                    use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                    Some(
+                        serializer.Deserialize<Campaign.WorldDescription.World>(worldFile),
+                        serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile))
+                with
+                | e -> None
+            match worldAndState with
+            | Some(world, state) ->
+                let init = initState (world, state)
+                let update = update (world, state) (onTookOff webHookClient, onLanded webHookClient)
+                commenter <- Some(new Commentator(world, state, config, init, update))
+                printfn "Commenter set"
+            | None ->
+                printfn "Could not load world or state, commenter not set"
+        | None ->
+            ()
 
     interface CampaignServerApi with
         member x.Init(apis) =
@@ -350,7 +393,7 @@ type Plugin() =
                 | Some x -> x
             try
                 let config = loadConfigFile configFile
-                Support.start(support, config, None)
+                Support.start(support, config, None, fun() -> x.StartWebHookClient(config))
                 |> Choice1Of2
             with
             | e ->
@@ -364,7 +407,7 @@ type Plugin() =
                 | Some x -> x
             try
                 let config = loadConfigFile configFile
-                Support.reset(support, config)
+                Support.reset(support, config, fun() -> x.StartWebHookClient(config))
                 |> Choice1Of2
             with
             | e ->

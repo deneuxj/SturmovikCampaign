@@ -68,6 +68,8 @@
     <Compile Include="NewWorldState.fs" />
     <Compile Include="AfterActionReport.fs" />
     <Compile Include="Config.fs" />
+    <Compile Include="Commenting.fs" />
+    <Compile Include="WebHook.fs" />
     <Compile Include="Run.fs" />
     <Compile Include="ServerControlPlugin.fs" />
     <None Include="SampleConfig.yaml">
@@ -89,6 +91,7 @@
     <None Include="Loop.fsx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Script1.fsx" />
     <None Include="data\StrategySmall1.Mission">
       <Link>StrategySmall1.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -138,6 +141,9 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Numerics.Vectors">
       <HintPath>packages\System.Numerics.Vectors.4.3.0\lib\portable-net45+win8+wp8+wpa81\System.Numerics.Vectors.dll</HintPath>
