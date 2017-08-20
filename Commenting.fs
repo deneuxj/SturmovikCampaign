@@ -100,6 +100,18 @@ let update (onPlayerTookOff, onPlayerLanded, onMissionStarted) (entries : LogEnt
                 InFlight = round.InFlight |> List.filter (fun flight -> flight.PlaneId <> killed.TargetId)
                 Damages = round.Damages |> Map.filter (fun planeId _ -> planeId <> killed.TargetId)
             }
+        | :? LeaveEntry as leave ->
+            // Find the plane flown by the player that left, if any
+            let plane =
+                round.InFlight
+                |> List.tryFind (fun flight -> flight.Player = leave.NickId)
+                |> Option.map (fun flight -> flight.PlaneId)
+            // Remove all info linked to the player that left.
+            { round with
+                Pilots = round.Pilots |> Map.filter (fun _ pilot -> pilot.Player <> leave.NickId)
+                InFlight = round.InFlight |> List.filter (fun flight -> flight.Player <> leave.NickId)
+                Damages = round.Damages |> Map.filter (fun planeId _ -> Some planeId <> plane)
+            }
         | _ ->
             round
     ) round
