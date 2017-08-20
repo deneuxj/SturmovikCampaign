@@ -141,21 +141,24 @@ type Commentator (missionLogsDir : string, init : LogEntry list -> RoundState, u
     do watcher.Path <- missionLogsDir
        watcher.Filter <- "missionReport*.txt"
        watcher.NotifyFilter <- NotifyFilters.LastWrite
+    let alreadyHandled = System.Collections.Generic.HashSet<string>()
     let onChanged = watcher.Changed.Subscribe(fun ev ->
-        let entries =
+        if not(alreadyHandled.Contains(ev.FullPath)) then
+            let entries =
+                try
+                    [
+                        for line in File.ReadAllLines(ev.FullPath) do
+                            yield LogEntry.Parse(line)
+                    ]
+                with
+                | e ->
+                    eprintfn "Failed to parse '%s' because '%s'" ev.FullPath e.Message
+                    []
             try
-                [
-                    for line in File.ReadAllLines(ev.FullPath) do
-                        yield LogEntry.Parse(line)
-                ]
+                state <- update(entries, state)
             with
-            | e ->
-                eprintfn "Failed to parse '%s'" ev.FullPath
-                []
-        try
-            state <- update(entries, state)
-        with
-        | e -> eprintfn "Failed to update state: '%s'" e.Message)
+            | e -> eprintfn "Failed to update state: '%s'" e.Message
+            alreadyHandled.Add(ev.FullPath) |> ignore)
     do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =
