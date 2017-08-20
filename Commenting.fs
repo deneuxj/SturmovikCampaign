@@ -39,6 +39,11 @@ let update (onPlayerTookOff, onPlayerLanded) (entries : LogEntry list, round : R
     entries
     |> List.fold (fun round entry ->
         match entry with
+        | :? MissionStartEntry ->
+            { Pilots = Map.empty
+              InFlight = []
+              Damages = Map.empty
+            }
         | :? PlayerPlaneEntry as planeEntry ->
             let pilot =
                 { Pilot.Player = planeEntry.NickId
