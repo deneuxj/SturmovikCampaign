@@ -97,6 +97,17 @@ let onMissionStarted (queue : MailboxProcessor<unit -> int>, client) (missionTim
             (missionTime.ToString("HH:mm"))
     queue.Post(fun() -> toChat client message)
 
+let onCampaignOver (queue : MailboxProcessor<unit -> int>, client) (victors : CoalitionId) =
+    let be =
+        match victors with
+        | Axis -> "is"
+        | Allies -> "are"
+    let message =
+        sprintf "Campaign is over, %s %s victorious"
+            (victors.ToString())
+            be
+    queue.Post(fun() -> toChat client message)
+
 let createClient(webHookUri) =
     let client = new WebClient()
     let uri = System.Uri(webHookUri)

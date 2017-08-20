@@ -246,7 +246,7 @@ module Support =
             else
                 GenerateMission
 
-    let start(support : SupportApis, config, status, onMissionStart) =
+    let start(support : SupportApis, config, status, onMissionStart, onCampaignOver) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -260,6 +260,7 @@ module Support =
                 |> sprintf "Campaign is over, %s the battle!"
                 |> support.Logging.LogInfo
                 status.Save(config)
+                onCampaignOver victorious
                 NoTask
             | _ ->
                 let step action =
@@ -316,7 +317,7 @@ module Support =
             | _ -> None
         work status proc
 
-    let reset(support : SupportApis, config : Configuration, onMissionStart) =
+    let reset(support : SupportApis, config : Configuration, onMissionStart, onCampaignOver) =
         async {
             // Delete log files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -337,7 +338,7 @@ module Support =
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
             // Start campaign
-            return start(support, config, Some GenerateMission, onMissionStart)
+            return start(support, config, Some GenerateMission, onMissionStart, onCampaignOver)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
@@ -345,6 +346,12 @@ type Plugin() =
     let mutable support : SupportApis option = None
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
     let mutable commenter : Commentator option = None
+    let mutable queue = startQueue()
+
+    let onCampaignOver victors =
+        match webHookClient with
+        | Some hook -> onCampaignOver (queue, hook) victors
+        | None -> ()
 
     member x.StartWebHookClient(config : Configuration) =
         let webHookUri = config.WebHook
@@ -365,7 +372,6 @@ type Plugin() =
         // (Re-)start commenter
         match webHookClient with
         | Some webHookClient ->
-            let queue = startQueue()
             let update = update (onTookOff(queue, webHookClient), onLanded(queue, webHookClient), onMissionStarted(queue, webHookClient))
             commenter <- Some(new Commentator(Path.Combine(config.ServerDataDir, "logs"), initState, update))
             printfn "Commenter set"
@@ -383,7 +389,7 @@ type Plugin() =
                 | Some x -> x
             try
                 let config = loadConfigFile configFile
-                Support.start(support, config, None, fun() -> x.StartWebHookClient(config))
+                Support.start(support, config, None, (fun() -> x.StartWebHookClient(config)), onCampaignOver)
                 |> Choice1Of2
             with
             | e ->
@@ -397,7 +403,7 @@ type Plugin() =
                 | Some x -> x
             try
                 let config = loadConfigFile configFile
-                Support.reset(support, config, fun() -> x.StartWebHookClient(config))
+                Support.reset(support, config, (fun() -> x.StartWebHookClient(config)), onCampaignOver)
                 |> Choice1Of2
             with
             | e ->
