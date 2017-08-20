@@ -15,10 +15,43 @@ type ChannelUpdate =
 let toChat (client : WebClient, hookUri : System.Uri) message =
     let json = JsonConvert.SerializeObject { content = message }
     client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
-    client.UploadString(hookUri, json)
-    |> ignore
+    let response =
+        try
+            client.UploadString(hookUri, json)
+            |> Some
+        with
+        | e ->
+            eprintfn "Sending chat entry to web hook failed with '%s'" e.Message
+            None
+    let responseHeaders =
+        client.ResponseHeaders
+    let retryAfter =
+        seq {
+            for i in 0..responseHeaders.Count-1 do
+                yield (responseHeaders.GetKey(i), responseHeaders.Get(i))
+        }
+        |> Seq.tryFind(fun (k, v) -> k = "Retry-After")
+    match retryAfter with
+    | Some(_, delay) ->
+        match System.Int32.TryParse(delay) with
+        | true, delay -> delay
+        | false, _ -> 0
+    | None ->
+        0
 
-let onTookOff client (flight : InFlight, pilot : Pilot, numFlights : int) =
+let startQueue() =
+    MailboxProcessor.Start(fun msg ->
+        let rec loop() =
+            async {
+                let! msg = msg.Receive()
+                let delay = msg()
+                do! Async.Sleep(max delay 1000)
+                return! loop()
+            }
+        loop()
+    )
+
+let onTookOff (queue : MailboxProcessor<unit -> int>, client) (flight : InFlight, pilot : Pilot, numFlights : int) =
     let message =
         sprintf "A plane took off%s. There are now %d planes in the air."
             (match pilot.Coalition with
@@ -26,9 +59,9 @@ let onTookOff client (flight : InFlight, pilot : Pilot, numFlights : int) =
              | Some Allies -> " on the allies side"
              | None -> "")
             numFlights
-    toChat client message
+    queue.Post(fun () -> toChat client message)
 
-let onLanded client (_, damage, flightDuration) =
+let onLanded (queue : MailboxProcessor<unit -> int>, client) (_, damage, flightDuration) =
     let planeState =
         if damage = 0.0f then
             "a plane in pristine condition"
@@ -53,7 +86,7 @@ let onLanded client (_, damage, flightDuration) =
                 "after a sortie"
             else
                 "after a long flight"
-    toChat client (sprintf "A %s landed %s" planeState flightDuration)
+    queue.Post(fun() -> toChat client (sprintf "A %s landed %s" planeState flightDuration))
 
 let createClient(webHookUri) =
     let client = new WebClient()
