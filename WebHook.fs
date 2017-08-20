@@ -18,12 +18,12 @@ let toChat (web : WebClient, hookUri : System.Uri) message =
     web.UploadString(hookUri, json)
     |> ignore
 
-let onTookOff client (flight : InFlight, numFlights : int) =
+let onTookOff client (flight : InFlight, pilot : Pilot, numFlights : int) =
     let message =
         sprintf "A plane took off%s. There are now %d planes in the air."
-            (match flight.Coalition with
-             | Some Axis -> " the axis side"
-             | Some Allies -> " the allies side"
+            (match pilot.Coalition with
+             | Some Axis -> " on the axis side"
+             | Some Allies -> " on the allies side"
              | None -> "")
             numFlights
     toChat client message

@@ -5,8 +5,6 @@ open System.IO
 open System.Text.RegularExpressions
 open Campaign.BasicTypes
 open Campaign.Configuration
-open Campaign.WorldDescription
-open Campaign.WorldState
 open Campaign.Util
 open ploggy
 open System.Numerics
@@ -17,15 +15,19 @@ open System.Numerics
 type InFlight =
     { Player : Guid
       Time : DateTime
-      Coalition : CoalitionId option
       PlaneId : int
+    }
+
+type Pilot =
+    { Player : Guid
+      Coalition : CoalitionId option
     }
 
 /// <summary>
 /// State of ongoing round
 /// </summary>
 type RoundState =
-    { Pilots : Map<int, Guid>
+    { Pilots : Map<int, Pilot>
       InFlight : InFlight list
       Damages : Map<int, float32>
     }
@@ -33,38 +35,32 @@ type RoundState =
 /// <summary>
 /// Update the state of a round and call event handlers
 /// </summary>
-let update (world : World, state : WorldState) (onPlayerTookOff, onPlayerLanded) (entries : LogEntry list, round : RoundState) =
+let update (onPlayerTookOff, onPlayerLanded) (entries : LogEntry list, round : RoundState) =
     entries
     |> List.fold (fun round entry ->
         match entry with
         | :? PlayerPlaneEntry as planeEntry ->
+            let pilot =
+                { Pilot.Player = planeEntry.NickId
+                  Coalition =
+                    match planeEntry.Country with
+                    | Country.Germany | Country.OtherAxis -> Some Axis
+                    | Country.USSR | Country.OtherAllies -> Some Allies
+                    | _ -> None
+                }
             let pilots =
-                Map.add planeEntry.VehicleId planeEntry.NickId round.Pilots
+                Map.add planeEntry.VehicleId pilot round.Pilots
             { round with Pilots = pilots }
         | :? TakeOffEntry as takeOff ->
             match round.Pilots.TryFind takeOff.VehicleId with
-            | Some player ->
-                let pos = Vector2(takeOff.Position.X, takeOff.Position.Z)
-                let af = world.GetClosestAirfield(pos)
-                let region =
-                    try
-                        state.Regions
-                        |> List.find (fun region -> region.RegionId = af.Region)
-                        |> Some
-                    with
-                    | _ -> None
-                match region with
-                | Some region ->
-                    let inFlight =
-                        { Player = player
-                          Time = DateTime.Now
-                          Coalition = region.Owner
-                          PlaneId = takeOff.VehicleId
-                        }
-                    onPlayerTookOff(inFlight, 1 + List.length round.InFlight)
-                    { round with InFlight = inFlight :: round.InFlight }
-                | None ->
-                    round
+            | Some pilot ->
+                let inFlight =
+                    { Player = pilot.Player
+                      Time = DateTime.Now
+                      PlaneId = takeOff.VehicleId
+                    }
+                onPlayerTookOff(inFlight, pilot, 1 + List.length round.InFlight)
+                { round with InFlight = inFlight :: round.InFlight }
             | None ->
                 round
         | :? LandingEntry as landing ->
@@ -102,19 +98,18 @@ let update (world : World, state : WorldState) (onPlayerTookOff, onPlayerLanded)
             round
     ) round
 
-let initState (world, state) (entries : LogEntry list) =
+let initState (entries : LogEntry list) =
     let round =
         { Pilots = Map.empty
           InFlight = []
           Damages = Map.empty
         }
-    update (world, state) (ignore, ignore) (entries, round)
+    update (ignore, ignore) (entries, round)
 
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
-type Commentator (world : World, state : WorldState, config : Configuration, init : LogEntry list -> RoundState, update : LogEntry list * RoundState -> RoundState) =
-    let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
+type Commentator (missionLogsDir : string, init : LogEntry list -> RoundState, update : LogEntry list * RoundState -> RoundState) =
     // retrieve entries from most recent mission, if it matches the state's mission and start date.
     let initialEntries =
         seq {
@@ -137,17 +132,9 @@ type Commentator (world : World, state : WorldState, config : Configuration, ini
         |> Seq.fold (fun entries entry ->
             match entry with
             | :? MissionStartEntry as start ->
-                let expectedMissionFile = sprintf "Multiplayer/%s.msnbin" config.MissionName
-                if start.MissionTime = state.Date && start.MissionFile = expectedMissionFile then
-                    Some [entry] // Start new list
-                else
-                    None // Start new skip
-            | _ ->
-                match entries with
-                | None -> None
-                | Some x -> Some(entry :: x)
-        ) None
-        |> Option.defaultVal []
+                [entry] // Start new list
+            | _ -> entry :: entries
+        ) []
         |> List.rev
     let mutable state = init initialEntries
     let watcher = new FileSystemWatcher()

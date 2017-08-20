@@ -361,24 +361,9 @@ type Plugin() =
         // (Re-)start commenter
         match webHookClient with
         | Some webHookClient ->
-            let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            let worldAndState =
-                try
-                    use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
-                    use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
-                    Some(
-                        serializer.Deserialize<Campaign.WorldDescription.World>(worldFile),
-                        serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile))
-                with
-                | e -> None
-            match worldAndState with
-            | Some(world, state) ->
-                let init = initState (world, state)
-                let update = update (world, state) (onTookOff webHookClient, onLanded webHookClient)
-                commenter <- Some(new Commentator(world, state, config, init, update))
-                printfn "Commenter set"
-            | None ->
-                printfn "Could not load world or state, commenter not set"
+            let update = update (onTookOff webHookClient, onLanded webHookClient)
+            commenter <- Some(new Commentator(Path.Combine(config.ServerDataDir, "logs"), initState, update))
+            printfn "Commenter set"
         | None ->
             ()
 
