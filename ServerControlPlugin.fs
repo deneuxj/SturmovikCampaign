@@ -310,7 +310,11 @@ module Support =
             | _ ->
                 support.Logging.LogInfo "Resume"
                 status
-        work status None
+        let proc =
+            match findRunningServers(config) with
+            | [| proc |] -> Some proc
+            | _ -> None
+        work status proc
 
     let reset(support : SupportApis, config : Configuration, onMissionStart) =
         async {
