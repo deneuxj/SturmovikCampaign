@@ -156,6 +156,7 @@ type Commentator (missionLogsDir : string, init : LogEntry list -> RoundState, u
             state <- update(entries, state)
         with
         | e -> eprintfn "Failed to update state: '%s'" e.Message)
+    do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =
         onChanged.Dispose()

@@ -12,10 +12,10 @@ type ChannelUpdate =
     { content : string
     }
 
-let toChat (web : WebClient, hookUri : System.Uri) message =
+let toChat (client : WebClient, hookUri : System.Uri) message =
     let json = JsonConvert.SerializeObject { content = message }
-    printfn "%s" json
-    web.UploadString(hookUri, json)
+    client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
+    client.UploadString(hookUri, json)
     |> ignore
 
 let onTookOff client (flight : InFlight, pilot : Pilot, numFlights : int) =
@@ -57,6 +57,5 @@ let onLanded client (_, damage, flightDuration) =
 
 let createClient(webHookUri) =
     let client = new WebClient()
-    client.Headers.Add(HttpRequestHeader.ContentType, "application/json");
     let uri = System.Uri(webHookUri)
     client, uri
