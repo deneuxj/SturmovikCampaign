@@ -35,11 +35,12 @@ type RoundState =
 /// <summary>
 /// Update the state of a round and call event handlers
 /// </summary>
-let update (onPlayerTookOff, onPlayerLanded) (entries : LogEntry list, round : RoundState) =
+let update (onPlayerTookOff, onPlayerLanded, onMissionStarted) (entries : LogEntry list, round : RoundState) =
     entries
     |> List.fold (fun round entry ->
         match entry with
-        | :? MissionStartEntry ->
+        | :? MissionStartEntry as start ->
+            onMissionStarted start.MissionTime
             { Pilots = Map.empty
               InFlight = []
               Damages = Map.empty
@@ -109,7 +110,7 @@ let initState (entries : LogEntry list) =
           InFlight = []
           Damages = Map.empty
         }
-    update (ignore, ignore) (entries, round)
+    update (ignore, ignore, ignore) (entries, round)
 
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files

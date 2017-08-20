@@ -53,24 +53,27 @@ let startQueue() =
 
 let onTookOff (queue : MailboxProcessor<unit -> int>, client) (flight : InFlight, pilot : Pilot, numFlights : int) =
     let message =
-        sprintf "A plane took off%s. There are now %d planes in the air."
+        let plural =
+            if numFlights > 1 then "s" else ""
+        sprintf "A plane took off%s. There are now %d plane%s in the air."
             (match pilot.Coalition with
              | Some Axis -> " on the axis side"
              | Some Allies -> " on the allies side"
              | None -> "")
             numFlights
+            plural
     queue.Post(fun () -> toChat client message)
 
 let onLanded (queue : MailboxProcessor<unit -> int>, client) (_, damage, flightDuration) =
     let planeState =
         if damage = 0.0f then
-            "a plane in pristine condition"
+            "plane in pristine condition"
         elif damage < 0.1f then
-            "a plane with scratches"
+            "plane with scratches"
         elif damage < 0.2f then
-            "a damaged plane"
+            "damaged plane"
         else
-            "a wreck"
+            "wreck"
     let flightDuration =
         match flightDuration with
         | None -> ""
@@ -87,6 +90,12 @@ let onLanded (queue : MailboxProcessor<unit -> int>, client) (_, damage, flightD
             else
                 "after a long flight"
     queue.Post(fun() -> toChat client (sprintf "A %s landed %s" planeState flightDuration))
+
+let onMissionStarted (queue : MailboxProcessor<unit -> int>, client) (missionTime : System.DateTime) =
+    let message =
+        sprintf "New mission started, in-game time is %s"
+            (missionTime.ToString("HH:mm"))
+    queue.Post(fun() -> toChat client message)
 
 let createClient(webHookUri) =
     let client = new WebClient()

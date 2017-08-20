@@ -366,7 +366,7 @@ type Plugin() =
         match webHookClient with
         | Some webHookClient ->
             let queue = startQueue()
-            let update = update (onTookOff(queue, webHookClient), onLanded(queue, webHookClient))
+            let update = update (onTookOff(queue, webHookClient), onLanded(queue, webHookClient), onMissionStarted(queue, webHookClient))
             commenter <- Some(new Commentator(Path.Combine(config.ServerDataDir, "logs"), initState, update))
             printfn "Commenter set"
         | None ->
