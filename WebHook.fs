@@ -5,6 +5,8 @@ open System.Net.Http
 open Newtonsoft.Json
 
 open Campaign.BasicTypes
+open Campaign.AfterActionReport
+open Campaign.NewWorldState
 open Campaign.Commenting
 open Campaign.Configuration
 
@@ -51,20 +53,24 @@ let startQueue() =
         loop()
     )
 
-let onTookOff (queue : MailboxProcessor<unit -> int>, client) (flight : InFlight, pilot : Pilot, numFlights : int) =
+let postMessage (queue : MailboxProcessor<unit -> int>, client) message =
+    queue.Post(fun() -> toChat client message)
+
+let onTookOff channel (flight : InFlight, pilot : Pilot, numFlights : int) =
     let message =
-        let plural =
-            if numFlights > 1 then "s" else ""
-        sprintf "A plane took off%s. There are now %d plane%s in the air."
+        let be, plural =
+            if numFlights > 1 then "are", "s" else "is", ""
+        sprintf "A plane took off%s. There %s now %d plane%s in the air."
             (match pilot.Coalition with
              | Some Axis -> " on the axis side"
              | Some Allies -> " on the allies side"
              | None -> "")
+            be
             numFlights
             plural
-    queue.Post(fun () -> toChat client message)
+    postMessage channel message
 
-let onLanded (queue : MailboxProcessor<unit -> int>, client) (_, damage, flightDuration) =
+let onLanded channel (_, damage, flightDuration) =
     let planeState =
         if damage = 0.0f then
             "plane in pristine condition"
@@ -89,15 +95,15 @@ let onLanded (queue : MailboxProcessor<unit -> int>, client) (_, damage, flightD
                 "after a sortie"
             else
                 "after a long flight"
-    queue.Post(fun() -> toChat client (sprintf "A %s landed %s" planeState flightDuration))
+    postMessage channel (sprintf "A %s landed %s" planeState flightDuration)
 
-let onMissionStarted (queue : MailboxProcessor<unit -> int>, client) (missionTime : System.DateTime) =
+let onMissionStarted channel (missionTime : System.DateTime) =
     let message =
         sprintf "New mission started, in-game time is %s"
             (missionTime.ToString("HH:mm"))
-    queue.Post(fun() -> toChat client message)
+    postMessage channel message
 
-let onCampaignOver (queue : MailboxProcessor<unit -> int>, client) (victors : CoalitionId) =
+let onCampaignOver channel (victors : CoalitionId) =
     let be =
         match victors with
         | Axis -> "is"
@@ -106,7 +112,23 @@ let onCampaignOver (queue : MailboxProcessor<unit -> int>, client) (victors : Co
         sprintf "Campaign is over, %s %s victorious"
             (victors.ToString())
             be
-    queue.Post(fun() -> toChat client message)
+    postMessage channel message
+
+let onMissionEnd channel (axisAAR : ReportData, alliesAAR : ReportData, battles : BattleSummary list) =
+    let message =
+        axisAAR.GetText(Axis)
+        |> pseudoHtmlToMarkdown
+    postMessage channel message
+    let message =
+        alliesAAR.GetText(Allies)
+        |> pseudoHtmlToMarkdown
+    postMessage channel message
+    for battle in battles do
+        let message =
+            battle.GetText()
+            |> String.concat "<br>"
+            |> pseudoHtmlToMarkdown
+        postMessage channel message
 
 let createClient(webHookUri) =
     let client = new WebClient()

@@ -215,3 +215,5 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
       SupplyProduced = newSupplies
       StorageDestroyed = storageDamage }
 
+let pseudoHtmlToMarkdown (s : string) =
+    s.Replace("<br>", "\n").Replace("<u>", "__").Replace("</u>", "__")
