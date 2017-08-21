@@ -83,7 +83,7 @@ module Support =
             | ExtractResults -> "extract results"
             | CampaignOver _ -> "terminate campaign"
             | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
-        member this.GetAsync(support : SupportApis, config, serverProc : Process option, onMissionStart) =
+        member this.GetAsync(support : SupportApis, config, serverProc : Process option) =
             let tryOrNotifyPlayers errorMessage action =
                 async {
                     let result =
@@ -140,7 +140,6 @@ module Support =
                         do! support.ServerControl.MessageAll ["Rotating missions now"]
                         do! support.ServerControl.SkipMission
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
-                        onMissionStart()
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
             | KillServer ->
@@ -158,7 +157,6 @@ module Support =
                         return None, Failed("Failed to start server", None, this)
                     | Some _ ->
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
-                        onMissionStart()
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
             | WaitForMissionEnd time ->
@@ -246,7 +244,7 @@ module Support =
             else
                 GenerateMission
 
-    let start(support : SupportApis, config, status, onMissionStart, onCampaignOver) =
+    let start(support : SupportApis, config, status, onCampaignOver) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -277,7 +275,7 @@ module Support =
                         | exc ->
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
-                let action = status.GetAsync(support, config, serverProc, onMissionStart)
+                let action = status.GetAsync(support, config, serverProc)
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         let status =
@@ -317,7 +315,7 @@ module Support =
             | _ -> None
         work status proc
 
-    let reset(support : SupportApis, config : Configuration, onMissionStart, onCampaignOver) =
+    let reset(support : SupportApis, config : Configuration, onCampaignOver) =
         async {
             // Delete log files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -338,7 +336,7 @@ module Support =
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
             // Start campaign
-            return start(support, config, Some GenerateMission, onMissionStart, onCampaignOver)
+            return start(support, config, Some GenerateMission, onCampaignOver)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
@@ -389,7 +387,8 @@ type Plugin() =
                 | Some x -> x
             try
                 let config = loadConfigFile configFile
-                Support.start(support, config, None, (fun() -> x.StartWebHookClient(config)), onCampaignOver)
+                x.StartWebHookClient(config)
+                Support.start(support, config, None, onCampaignOver)
                 |> Choice1Of2
             with
             | e ->
@@ -403,7 +402,8 @@ type Plugin() =
                 | Some x -> x
             try
                 let config = loadConfigFile configFile
-                Support.reset(support, config, (fun() -> x.StartWebHookClient(config)), onCampaignOver)
+                x.StartWebHookClient(config)
+                Support.reset(support, config, onCampaignOver)
                 |> Choice1Of2
             with
             | e ->
