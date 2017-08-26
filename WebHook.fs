@@ -101,7 +101,7 @@ let onLanded channel (_, damage, flightDuration, numFlights) =
                 "after a sortie"
             else
                 "after a long flight"
-    postMessage channel (sprintf "A %s landed %s" planeState flightDuration)
+    postMessage channel (sprintf "A %s landed %s." planeState flightDuration)
     postNumPlanes channel numFlights
 
 let onKilled channel (pilot : Pilot, numFlights : int) =
@@ -115,7 +115,7 @@ let onKilled channel (pilot : Pilot, numFlights : int) =
 
 let onMissionStarted channel (missionTime : System.DateTime) =
     let message =
-        sprintf "New mission started, in-game time is %s"
+        sprintf "New mission started, in-game time is %s."
             (missionTime.ToString("HH:mm"))
     postMessage channel message
 
@@ -125,7 +125,7 @@ let onCampaignOver channel (victors : CoalitionId) =
         | Axis -> "is"
         | Allies -> "are"
     let message =
-        sprintf "Campaign is over, %s %s victorious"
+        sprintf "Campaign is over, %s %s victorious."
             (victors.ToString())
             be
     postMessage channel message
