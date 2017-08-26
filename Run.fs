@@ -41,7 +41,6 @@ module Init =
         let capacity =
             world.Regions
             |> Seq.map (fun region -> region.RegionId, region.Storage |> Seq.sumBy (fun sto -> sto.Storage))
-            |> Seq.map (fun (region, capacity) -> region, capacity / cannonCost)
             |> Map.ofSeq
 
         let production =
@@ -68,9 +67,9 @@ module Init =
             let (RegionId regionName) = region.RegionId
             let aa = Map.tryFind region.RegionId antiAirUsage |> fun x -> defaultArg x 0
             let at = Map.tryFind region.RegionId antiTankUsage |> fun x -> defaultArg x 0
-            let cap = Map.tryFind region.RegionId capacity |> fun x -> defaultArg x 0.0f
+            let cap = Map.tryFind region.RegionId capacity |> fun x -> defaultArg x 0.0f<E>
             let prod = Map.tryFind region.RegionId production |> fun x -> defaultArg x 0.0f<E/H>
-            printfn "%20s | %6.1f - %3d | %4d - %5.1f | %4d - %5.1f" regionName prod (int cap) aa (100.0f * float32 aa / cap) at (100.0f * float32 at / cap)
+            printfn "%20s | %6.1f - %3.0f | %4d - %5.1f | %4d - %5.1f" regionName prod cap aa (100.0f * float32 aa / (cap / cannonCost)) at (100.0f * float32 at / (cap / cannonCost))
 
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let outputDir = config.OutputDir

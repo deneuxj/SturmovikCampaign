@@ -60,6 +60,13 @@ Avoid trees and buildings in the area.
 Make sure there is enough storage in the region for all the AT and AAA canons in the defense areas.
 Additional storage facilitates transferring supplies, it's a good idea to leave some extra storage capacity unused for defenses.
 
+7. Define battle areas (not yet implemented, will replace AT defense zones)
+Use influence areas in a group named "Battles". Each influence area should be shaped as a rectangle that is at least 5km long.
+The marker of each area should be roughly in its center.
+There should be an influence area for each direction from which a region can be attacked, facing the direction from which attackers will come.
+In other words, there should be an area for each neighbouring region connected with a road, facing that region.
+Strictly speaking, only one battle area is really needed, but having multiple properly oriented lets the mission generator create more believable battles.
+
 8. Define airfield spawn points
 Use fakefields for planes. Both types (sideways and runway) can be used. They must be in a group named "Aifield spawns"
 Do not create the entity.

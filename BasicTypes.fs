@@ -83,6 +83,7 @@ with
         match this.Model with
         | Contains "arf_barak" -> [1]
         | Contains "arf_dugouts_2" -> [2..5]
+        | Contains "arf_dugouts_3" -> [0..6]
         | Contains "arf_ammo_1" -> [2]
         | Contains "industrial_200x140_01" -> [0..12]
         | Contains "industrial_200x140_02" -> [0..19]
