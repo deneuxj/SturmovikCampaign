@@ -104,6 +104,15 @@ let onLanded channel (_, damage, flightDuration, numFlights) =
     postMessage channel (sprintf "A %s landed %s" planeState flightDuration)
     postNumPlanes channel numFlights
 
+let onKilled channel (pilot : Pilot, numFlights : int) =
+    let message =
+        sprintf "A plane on the %s side was shot down."
+            (match pilot.Coalition with
+             | Some x -> x.ToString()
+             | None -> "neutral")
+    postMessage channel message
+    postNumPlanes channel numFlights
+
 let onMissionStarted channel (missionTime : System.DateTime) =
     let message =
         sprintf "New mission started, in-game time is %s"

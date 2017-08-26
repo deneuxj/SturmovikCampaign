@@ -35,7 +35,7 @@ type RoundState =
 /// <summary>
 /// Update the state of a round and call event handlers
 /// </summary>
-let update (onPlayerTookOff, onPlayerLanded, onMissionStarted) (entries : LogEntry list, round : RoundState) =
+let update (onPlayerTookOff, onPlayerLanded, onPlaneDestroyed, onMissionStarted) (entries : LogEntry list, round : RoundState) =
     entries
     |> List.fold (fun round entry ->
         match entry with
@@ -69,6 +69,21 @@ let update (onPlayerTookOff, onPlayerLanded, onMissionStarted) (entries : LogEnt
                 { round with InFlight = inFlight :: round.InFlight }
             | None ->
                 round
+        | :? KillEntry as killed ->
+            let damages = round.Damages |> Map.filter (fun planeId _ -> planeId <> killed.TargetId)
+            let flights = round.InFlight |> List.filter (fun flight -> flight.PlaneId <> killed.TargetId)
+            let pilots = round.Pilots |> Map.filter (fun planeId _ -> planeId <> killed.TargetId)
+            let round =
+                { round with
+                    Pilots = pilots
+                    InFlight = flights
+                    Damages = damages }
+            match round.Pilots |> Map.tryFind killed.TargetId with
+            | Some pilot ->
+                onPlaneDestroyed(pilot, List.length flights)
+                round
+            | None ->
+                round
         | :? LandingEntry as landing ->
             match round.Pilots.TryFind landing.VehicleId with
             | Some player ->
@@ -95,12 +110,6 @@ let update (onPlayerTookOff, onPlayerLanded, onMissionStarted) (entries : LogEnt
             let newDamage =
                 oldDamage + damage.Damage
             { round with Damages = Map.add damage.TargetId newDamage round.Damages }
-        | :? KillEntry as killed ->
-            { round with
-                Pilots = round.Pilots |> Map.filter (fun planeId _ -> planeId <> killed.TargetId)
-                InFlight = round.InFlight |> List.filter (fun flight -> flight.PlaneId <> killed.TargetId)
-                Damages = round.Damages |> Map.filter (fun planeId _ -> planeId <> killed.TargetId)
-            }
         | :? LeaveEntry as leave ->
             // Find the plane flown by the player that left, if any
             let plane =
@@ -123,7 +132,7 @@ let initState (entries : LogEntry list) =
           InFlight = []
           Damages = Map.empty
         }
-    update (ignore, ignore, ignore) (entries, round)
+    update (ignore, ignore, ignore, ignore) (entries, round)
 
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
