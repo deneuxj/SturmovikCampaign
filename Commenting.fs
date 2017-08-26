@@ -79,10 +79,11 @@ let update (onPlayerTookOff, onPlayerLanded, onMissionStarted) (entries : LogEnt
                     round.InFlight
                     |> List.tryFind (fun flight -> flight.PlaneId = landing.VehicleId)
                     |> Option.map (fun flight -> DateTime.Now - flight.Time)
-                onPlayerLanded(player, damages, flightDuration)
+                let flights = round.InFlight |> List.filter (fun flight -> flight.PlaneId <> landing.VehicleId)
+                onPlayerLanded(player, damages, flightDuration, List.length flights)
                 { round with
                     Pilots = round.Pilots |> Map.filter (fun planeId _ -> planeId <> landing.VehicleId)
-                    InFlight = round.InFlight |> List.filter (fun flight -> flight.PlaneId <> landing.VehicleId)
+                    InFlight = flights
                     Damages = round.Damages |> Map.filter (fun planeId _ -> planeId <> landing.VehicleId)
                 }
             | None ->

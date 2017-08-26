@@ -56,21 +56,27 @@ let startQueue() =
 let postMessage (queue : MailboxProcessor<unit -> int>, client) message =
     queue.Post(fun() -> toChat client message)
 
-let onTookOff channel (flight : InFlight, pilot : Pilot, numFlights : int) =
+let postNumPlanes channel numFlights =
     let message =
         let be, plural =
             if numFlights > 1 then "are", "s" else "is", ""
-        sprintf "A plane took off%s. There %s now %d plane%s in the air."
-            (match pilot.Coalition with
-             | Some Axis -> " on the axis side"
-             | Some Allies -> " on the allies side"
-             | None -> "")
+        sprintf "There %s now %d plane%s in the air."
             be
             numFlights
             plural
     postMessage channel message
 
-let onLanded channel (_, damage, flightDuration) =
+let onTookOff channel (flight : InFlight, pilot : Pilot, numFlights : int) =
+    let message =
+        sprintf "A plane took off%s."
+            (match pilot.Coalition with
+             | Some Axis -> " on the axis side"
+             | Some Allies -> " on the allies side"
+             | None -> "")
+    postMessage channel message
+    postNumPlanes channel numFlights
+
+let onLanded channel (_, damage, flightDuration, numFlights) =
     let planeState =
         if damage = 0.0f then
             "plane in pristine condition"
@@ -96,6 +102,7 @@ let onLanded channel (_, damage, flightDuration) =
             else
                 "after a long flight"
     postMessage channel (sprintf "A %s landed %s" planeState flightDuration)
+    postNumPlanes channel numFlights
 
 let onMissionStarted channel (missionTime : System.DateTime) =
     let message =
