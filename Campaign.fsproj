@@ -92,9 +92,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Script1.fsx" />
-    <None Include="data\StrategySmall1.Mission">
-      <Link>StrategySmall1.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <None Include="data\MoscowAutumn1.Mission">
+      <Link>MoscowAutumn1.Mission</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="data\VLuki.Mission">
       <Link>VLuki.Mission</Link>
