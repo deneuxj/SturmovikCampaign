@@ -83,7 +83,7 @@ module Support =
             | ExtractResults -> "extract results"
             | CampaignOver _ -> "terminate campaign"
             | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
-        member this.GetAsync(support : SupportApis, config, serverProc : Process option, announceResults) =
+        member this.GetAsync(support : SupportApis, config, serverProc : Process option, announceResults, announceWeather) =
             let tryOrNotifyPlayers errorMessage action =
                 async {
                     let result =
@@ -184,7 +184,8 @@ module Support =
                     Campaign.Run.MissionLogParsing.backupFiles config
                     support.Logging.LogInfo "Make weather..."
                     let date = Campaign.Run.WeatherComputation.getNextDateFromState config
-                    Campaign.Run.WeatherComputation.run(config, date)
+                    let weather = Campaign.Run.WeatherComputation.run(config, date)
+                    announceWeather weather
                     let! updatedState =
                         tryOrNotifyPlayers
                             [ "Bad news, campaign updated failed"
@@ -245,7 +246,7 @@ module Support =
             else
                 GenerateMission
 
-    let start(support : SupportApis, config, status, onCampaignOver, announceResults) =
+    let start(support : SupportApis, config, status, onCampaignOver, announceResults, announceWeather) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -276,7 +277,7 @@ module Support =
                         | exc ->
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
-                let action = status.GetAsync(support, config, serverProc, announceResults)
+                let action = status.GetAsync(support, config, serverProc, announceResults, announceWeather)
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         let status =
@@ -316,7 +317,7 @@ module Support =
             | _ -> None
         work status proc
 
-    let reset(support : SupportApis, config : Configuration, onCampaignOver, announceResults) =
+    let reset(support : SupportApis, config : Configuration, onCampaignOver, announceResults, announceWeather) =
         async {
             // Delete log files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -333,11 +334,11 @@ module Support =
                 | _ -> ()
             // Initial campaign state
             let startDate = Campaign.Run.Init.createWorld config
-            Campaign.Run.WeatherComputation.run(config, startDate)
+            ignore <| Campaign.Run.WeatherComputation.run(config, startDate)
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
             // Start campaign
-            return start(support, config, Some GenerateMission, onCampaignOver, announceResults)
+            return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
@@ -355,6 +356,11 @@ type Plugin() =
     let announceResults results =
         match webHookClient with
         | Some hook -> onMissionEnd (queue, hook) results
+        | None -> ()
+
+    let announceWeather weather =
+        match webHookClient with
+        | Some hook -> postWeatherReport (queue, hook) weather
         | None -> ()
 
     member x.StartWebHookClient(config : Configuration) =
@@ -394,7 +400,7 @@ type Plugin() =
             try
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
-                Support.start(support, config, None, onCampaignOver, announceResults)
+                Support.start(support, config, None, onCampaignOver, announceResults, announceWeather)
                 |> Choice1Of2
             with
             | e ->
@@ -409,7 +415,7 @@ type Plugin() =
             try
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
-                Support.reset(support, config, onCampaignOver, announceResults)
+                Support.reset(support, config, onCampaignOver, announceResults, announceWeather)
                 |> Choice1Of2
             with
             | e ->

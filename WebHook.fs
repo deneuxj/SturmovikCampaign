@@ -146,6 +146,22 @@ let onMissionEnd channel (axisAAR : ReportData, alliesAAR : ReportData, battles 
             |> pseudoHtmlToMarkdown
         postMessage channel message
 
+let postWeatherReport channel (weather : Weather.WeatherState) =
+    let sky =
+        if weather.CloudDensity < 0.1 then
+            "clear"
+        elif weather.CloudDensity < 0.3 then
+            "light clouds"
+        elif weather.CloudDensity < 0.6 then
+            "medium cloud cover"
+        elif weather.CloudDensity < 0.95 then
+            "heavy clouds"
+        else
+            "overcast"
+    let message =
+        sprintf "Sky: %s" sky
+    postMessage channel message
+
 let createClient(webHookUri) =
     let client = new WebClient()
     let uri = System.Uri(webHookUri)

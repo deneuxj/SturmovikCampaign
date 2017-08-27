@@ -169,6 +169,7 @@ module WeatherComputation =
 
         use weatherFile = File.CreateText(Path.Combine(config.OutputDir, Filenames.weather))
         serializer.Serialize(weatherFile, weather)
+        weather
 
 module OrderDecision =
     open System.IO
@@ -325,9 +326,6 @@ module MissionFileGeneration =
                 ""
 
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
-
-        let daysOffset = System.TimeSpan(int64(world.WeatherDaysOffset * 3600.0 * 24.0  * 1.0e7))
-        let weather = Weather.getWeather random (state.Date + daysOffset)
 
         let author = "coconut"
         let timeAndDate =
