@@ -246,12 +246,13 @@ module Support =
             else
                 GenerateMission
 
-    let start(support : SupportApis, config, status, onCampaignOver, announceResults, announceWeather) =
+    let start(support : SupportApis, config, status, onCampaignOver, announceResults, announceWeather, postMessage) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
                 support.Logging.LogInfo(sprintf "Execution aborted due to failure: %s" msg)
                 status.Save(config)
+                postMessage "Hey @coconut something went wrong, check the server"
                 NoTask
             | CampaignOver(victorious) ->
                 match victorious with
@@ -275,6 +276,10 @@ module Support =
                                 return ScheduledTask.SomeTaskNow status.Description (async { return work status proc })
                         with
                         | exc ->
+                            let exc =
+                                match exc.InnerException with
+                                | null -> exc
+                                | inner -> inner
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
                 let action = status.GetAsync(support, config, serverProc, announceResults, announceWeather)
@@ -317,7 +322,7 @@ module Support =
             | _ -> None
         work status proc
 
-    let reset(support : SupportApis, config : Configuration, onCampaignOver, announceResults, announceWeather) =
+    let reset(support : SupportApis, config : Configuration, onCampaignOver, announceResults, announceWeather, postMessage) =
         async {
             // Delete log files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -338,7 +343,7 @@ module Support =
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
             // Start campaign
-            return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather)
+            return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather, postMessage)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
@@ -361,6 +366,11 @@ type Plugin() =
     let announceWeather weather =
         match webHookClient with
         | Some hook -> postWeatherReport (queue, hook) weather
+        | None -> ()
+
+    let postMessage message =
+        match webHookClient with
+        | Some hook -> postMessage (queue, hook) message
         | None -> ()
 
     member x.StartWebHookClient(config : Configuration) =
@@ -400,7 +410,7 @@ type Plugin() =
             try
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
-                Support.start(support, config, None, onCampaignOver, announceResults, announceWeather)
+                Support.start(support, config, None, onCampaignOver, announceResults, announceWeather, postMessage)
                 |> Choice1Of2
             with
             | e ->
@@ -415,7 +425,7 @@ type Plugin() =
             try
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
-                Support.reset(support, config, onCampaignOver, announceResults, announceWeather)
+                Support.reset(support, config, onCampaignOver, announceResults, announceWeather, postMessage)
                 |> Choice1Of2
             with
             | e ->
