@@ -76,7 +76,7 @@ let onTookOff channel (flight : InFlight, pilot : Pilot, numFlights : int) =
     postMessage channel message
     postNumPlanes channel numFlights
 
-let onLanded channel (_, damage, flightDuration, numFlights) =
+let onLanded channel (_, damage, _, flightDuration, numFlights) =
     let planeState =
         if damage = 0.0f then
             "plane in pristine condition"

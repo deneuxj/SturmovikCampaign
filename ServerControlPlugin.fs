@@ -373,6 +373,43 @@ type Plugin() =
         | Some hook -> postMessage (queue, hook) message
         | None -> ()
 
+    let announceLandingToTeam (player : Pilot, damageReceived, damageInflicted, _, _) =
+        match support with
+        | Some support ->
+            async {
+                match player.Coalition with
+                | Some coalition ->
+                    let team =
+                        match coalition with
+                        | Axis -> support.ServerControl.GetAxisTeam()
+                        | Allies -> support.ServerControl.GetAlliesTeam()
+                    let intro =
+                        if damageInflicted = 0.0f then
+                            sprintf "%s is back" player.Name
+                        elif damageInflicted < 1.0f then
+                            sprintf "%s is welcomed back on the ground" player.Name
+                        elif damageInflicted < 2.0f then
+                            sprintf "%s's return is celebrated" player.Name
+                        else
+                            sprintf "the entire base rushes to welcome %s" player.Name
+                    let difficulty =
+                        if damageReceived = 0.0f then
+                            ""
+                        elif damageReceived < 0.1f then
+                            " after a difficult mission"
+                        elif damageReceived < 0.9f then
+                            " after a dangerous mission"
+                        else
+                            " after narrowly escaping death"
+                    return! support.ServerControl.MessageTeam(team, [intro + difficulty])
+                | None ->
+                    ()
+            }
+        | None ->
+            async {
+                return()
+            }
+
     member x.StartWebHookClient(config : Configuration) =
         let webHookUri = config.WebHook
         // Create WebClient for web hook, if not already done
@@ -392,7 +429,10 @@ type Plugin() =
         // (Re-)start commenter
         match webHookClient with
         | Some webHookClient ->
-            let update = update (onTookOff(queue, webHookClient), onLanded(queue, webHookClient), onKilled(queue, webHookClient), onMissionStarted(queue, webHookClient))
+            let onLanded x =
+                Async.Start(announceLandingToTeam x)
+                onLanded(queue, webHookClient) x
+            let update = update (onTookOff(queue, webHookClient), onLanded, onKilled(queue, webHookClient), onMissionStarted(queue, webHookClient))
             commenter <- Some(new Commentator(Path.Combine(config.ServerDataDir, "logs"), initState, update))
             printfn "Commenter set"
         | None ->

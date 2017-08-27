@@ -20,6 +20,7 @@ type InFlight =
 
 type Pilot =
     { Player : Guid
+      Name : string
       Coalition : CoalitionId option
     }
 
@@ -29,18 +30,21 @@ type Pilot =
 type RoundState =
     { Pilots : Map<int, Pilot>
       InFlight : InFlight list
-      Damages : Map<int, float32>
+      DamageReceived : Map<int, float32>
+      DamageInflicted : Map<int, float32>
     }
 
 let private removePlane removed (round : RoundState) =
-    let damages = round.Damages |> Map.filter (fun planeId _ -> planeId <> removed)
+    let damages = round.DamageReceived |> Map.filter (fun planeId _ -> planeId <> removed)
+    let inflicted = round.DamageInflicted |> Map.filter (fun planeId _ -> planeId <> removed)
     let flights = round.InFlight |> List.filter (fun flight -> flight.PlaneId <> removed)
     let pilots = round.Pilots |> Map.filter (fun planeId _ -> planeId <> removed)
     let round =
         { round with
             Pilots = pilots
             InFlight = flights
-            Damages = damages }
+            DamageReceived = damages
+            DamageInflicted = inflicted }
     round
 
 /// <summary>
@@ -54,11 +58,13 @@ let update (onPlayerTookOff, onPlayerLanded, onPlaneDestroyed, onMissionStarted)
             onMissionStarted start.MissionTime
             { Pilots = Map.empty
               InFlight = []
-              Damages = Map.empty
+              DamageReceived = Map.empty
+              DamageInflicted = Map.empty
             }
         | :? PlayerPlaneEntry as planeEntry ->
             let pilot =
                 { Pilot.Player = planeEntry.NickId
+                  Name = planeEntry.Name
                   Coalition =
                     match planeEntry.Country with
                     | Country.Germany | Country.OtherAxis -> Some Axis
@@ -92,24 +98,34 @@ let update (onPlayerTookOff, onPlayerLanded, onPlaneDestroyed, onMissionStarted)
             match round.Pilots.TryFind landing.VehicleId with
             | Some player ->
                 let damages =
-                    round.Damages.TryFind landing.VehicleId
+                    round.DamageReceived.TryFind landing.VehicleId
+                    |> Option.defaultVal 0.0f
+                let inflicted =
+                    round.DamageInflicted.TryFind landing.VehicleId
                     |> Option.defaultVal 0.0f
                 let flightDuration =
                     round.InFlight
                     |> List.tryFind (fun flight -> flight.PlaneId = landing.VehicleId)
                     |> Option.map (fun flight -> DateTime.Now - flight.Time)
                 let round = removePlane landing.VehicleId round
-                onPlayerLanded(player, damages, flightDuration, List.length round.InFlight)
+                onPlayerLanded(player, damages, inflicted, flightDuration, List.length round.InFlight)
                 round
             | None ->
                 round
         | :? DamageEntry as damage ->
             let oldDamage =
-                round.Damages.TryFind damage.TargetId
+                round.DamageReceived.TryFind damage.TargetId
                 |> Option.defaultVal 0.0f
             let newDamage =
                 oldDamage + damage.Damage
-            { round with Damages = Map.add damage.TargetId newDamage round.Damages }
+            let oldInflicted =
+                round.DamageInflicted.TryFind damage.AttackerId
+                |> Option.defaultVal 0.0f
+            let newInflicted =
+                oldInflicted + damage.Damage
+            { round with
+                DamageReceived = Map.add damage.TargetId newDamage round.DamageReceived
+                DamageInflicted = Map.add damage.AttackerId newInflicted round.DamageInflicted }
         | :? LeaveEntry as leave ->
             // Find the plane flown by the player that left, if any
             let plane =
@@ -120,7 +136,8 @@ let update (onPlayerTookOff, onPlayerLanded, onPlaneDestroyed, onMissionStarted)
             { round with
                 Pilots = round.Pilots |> Map.filter (fun _ pilot -> pilot.Player <> leave.NickId)
                 InFlight = round.InFlight |> List.filter (fun flight -> flight.Player <> leave.NickId)
-                Damages = round.Damages |> Map.filter (fun planeId _ -> Some planeId <> plane)
+                DamageReceived = round.DamageReceived |> Map.filter (fun planeId _ -> Some planeId <> plane)
+                DamageInflicted = round.DamageInflicted |> Map.filter (fun planeId _ -> Some planeId <> plane)
             }
         | _ ->
             round
@@ -130,7 +147,8 @@ let initState (entries : LogEntry list) =
     let round =
         { Pilots = Map.empty
           InFlight = []
-          Damages = Map.empty
+          DamageReceived = Map.empty
+          DamageInflicted = Map.empty
         }
     update (ignore, ignore, ignore, ignore) (entries, round)
 
