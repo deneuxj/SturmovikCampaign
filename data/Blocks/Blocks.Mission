@@ -6204,14 +6204,14 @@ Group
 Group
 {
   Name = "ServerInputMissionEnd";
-  Index = 521;
+  Index = 519;
   Desc = "";
   MCU_TR_ServerInput
   {
-    Index = 519;
+    Index = 520;
     Name = "ReqMissionEnd";
     Desc = "";
-    Targets = [520];
+    Targets = [521];
     Objects = [];
     XPos = 25235.951;
     YPos = 38.311;
@@ -6225,7 +6225,7 @@ Group
 
   MCU_TR_MissionEnd
   {
-    Index = 520;
+    Index = 521;
     Name = "EndMission";
     Desc = "";
     Targets = [];
@@ -6238,6 +6238,395 @@ Group
     ZOri = 0.00;
     Enabled = 1;
     Succeeded = 1;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "RespawningTank";
+  Index = 528;
+  Desc = "";
+  Vehicle
+  {
+    Name = "HeavyTank";
+    Index = 523;
+    LinkTrId = 524;
+    XPos = 14581.289;
+    YPos = 89.176;
+    ZPos = 11108.760;
+    XOri = 0.95;
+    YOri = 0.00;
+    ZOri = 358.26;
+    Script = "LuaScripts\WorldObjects\vehicles\t34-76stz.txt";
+    Model = "graphics\vehicles\t34-76stz\t34-76stz.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 524;
+    Name = "HeavyTank entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 14581.289;
+    YPos = 89.376;
+    ZPos = 11108.760;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 523;
+    OnEvents
+    {
+      OnEvent
+      {
+        Type = 13;
+        TarId = 529;
+      }
+    }
+    OnReports
+    {
+      OnReport
+      {
+        Type = 0;
+        CmdId = 526;
+        TarId = 527;
+      }
+    }
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 525;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [];
+    Objects = [524];
+    XPos = 17846.519;
+    YPos = 91.680;
+    ZPos = 11138.866;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 100;
+    Speed = 10;
+    Priority = 0;
+  }
+  
+
+  MCU_Spawner
+  {
+    Index = 526;
+    Name = "Trigger Spawner";
+    Desc = "";
+    Targets = [];
+    Objects = [524];
+    XPos = 14579.767;
+    YPos = 88.582;
+    ZPos = 10649.238;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    SpawnAtMe = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 527;
+    Name = "Spawned";
+    Desc = "";
+    Targets = [525];
+    Objects = [];
+    XPos = 14905.151;
+    YPos = 75.684;
+    ZPos = 10650.122;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 529;
+    Name = "Killed";
+    Desc = "";
+    Targets = [530];
+    Objects = [];
+    XPos = 14173.523;
+    YPos = 85.978;
+    ZPos = 11103.884;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 530;
+    Name = "1min";
+    Desc = "";
+    Targets = [526];
+    Objects = [];
+    XPos = 14168.230;
+    YPos = 85.454;
+    ZPos = 10643.353;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 60;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 531;
+    Name = "Start";
+    Desc = "";
+    Targets = [526];
+    Objects = [];
+    XPos = 14581.119;
+    YPos = 90.378;
+    ZPos = 10219.876;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "RespawningArtillery";
+  Index = 533;
+  Desc = "";
+  Vehicle
+  {
+    Name = "Gun";
+    Index = 534;
+    LinkTrId = 535;
+    XPos = 14563.721;
+    YPos = 76.143;
+    ZPos = 12217.127;
+    XOri = 359.74;
+    YOri = 0.00;
+    ZOri = 357.21;
+    Script = "LuaScripts\WorldObjects\vehicles\zis3gun.txt";
+    Model = "graphics\artillery\zis3gun\zis3gun.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 0;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 535;
+    Name = "HeavyTank entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 14563.721;
+    YPos = 76.343;
+    ZPos = 12217.127;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 534;
+    OnEvents
+    {
+      OnEvent
+      {
+        Type = 13;
+        TarId = 537;
+      }
+    }
+    OnReports
+    {
+      OnReport
+      {
+        Type = 0;
+        CmdId = 538;
+        TarId = 539;
+      }
+    }
+  }
+  
+
+  MCU_Spawner
+  {
+    Index = 538;
+    Name = "Trigger Spawner";
+    Desc = "";
+    Targets = [];
+    Objects = [535];
+    XPos = 14562.199;
+    YPos = 88.582;
+    ZPos = 11757.605;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    SpawnAtMe = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 539;
+    Name = "Spawned";
+    Desc = "";
+    Targets = [547];
+    Objects = [];
+    XPos = 14887.583;
+    YPos = 75.684;
+    ZPos = 11758.489;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 537;
+    Name = "Killed";
+    Desc = "";
+    Targets = [544];
+    Objects = [];
+    XPos = 14155.955;
+    YPos = 85.978;
+    ZPos = 12212.251;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 544;
+    Name = "20min";
+    Desc = "";
+    Targets = [538];
+    Objects = [];
+    XPos = 14150.662;
+    YPos = 85.454;
+    ZPos = 11751.720;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1200;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 546;
+    Name = "Start";
+    Desc = "";
+    Targets = [538];
+    Objects = [];
+    XPos = 14563.551;
+    YPos = 90.378;
+    ZPos = 11328.243;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_CMD_AttackArea
+  {
+    Index = 547;
+    Name = "AttackArea";
+    Desc = "";
+    Targets = [];
+    Objects = [535];
+    XPos = 15756.173;
+    YPos = 70.963;
+    ZPos = 12213.589;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    AttackGround = 0;
+    AttackAir = 0;
+    AttackGTargets = 1;
+    AttackArea = 1000;
+    Time = 59940;
+    Priority = 1;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 548;
+    LinkTrId = 0;
+    XPos = 14564.366;
+    YPos = 76.143;
+    ZPos = 12217.194;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Model = "graphics\blocks\art_position_at2.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\art_position_at2.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
   }
   
 
