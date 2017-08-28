@@ -6,6 +6,6 @@
 #load "Configuration.fsx" 
 
 let startDate = Campaign.Run.Init.createWorld Configuration.config
-Campaign.Run.WeatherComputation.run(config, startDate)
-Campaign.Run.Init.createState config
-Campaign.Run.OrderDecision.run config
+Campaign.Run.WeatherComputation.run(Configuration.config, startDate)
+Campaign.Run.Init.createState Configuration.config
+Campaign.Run.OrderDecision.run Configuration.config

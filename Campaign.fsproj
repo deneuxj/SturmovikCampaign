@@ -94,7 +94,7 @@
     <None Include="Script1.fsx" />
     <None Include="data\MoscowAutumn1.Mission">
       <Link>MoscowAutumn1.Mission</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="data\VLuki.Mission">
       <Link>VLuki.Mission</Link>
@@ -102,7 +102,7 @@
     </None>
     <None Include="data\StalingradSummer.Mission">
       <Link>StalingradSummer.Mission</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Content Include="packages.config" />
     <None Include="Scripts\load-references-debug.fsx" />

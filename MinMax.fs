@@ -309,20 +309,20 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) coalition =
     }
 
 type BoardEvaluation =
-    | Defeat of CoalitionId * int
+    | Defeat of CoalitionId * int * string
     | Ongoing of float32
 with
     static member Lt(a : BoardEvaluation, b : BoardEvaluation) =
         match a, b with
         | Ongoing u, Ongoing v -> u < v
-        | Ongoing _, Defeat(Allies, _)
-        | Defeat(Axis, _), Ongoing _ -> false
-        | Ongoing _, Defeat(Axis, _)
-        | Defeat(Allies, _), Ongoing _ -> true
-        | Defeat(Axis, _), Defeat(Allies, _) -> false
-        | Defeat(Allies, _), Defeat(Axis, _) -> true
-        | Defeat(Axis, d1), Defeat(Axis, d2) -> d1 > d2
-        | Defeat(Allies, d1), Defeat(Allies, d2) -> d1 < d2
+        | Ongoing _, Defeat(Allies, _, _)
+        | Defeat(Axis, _, _), Ongoing _ -> false
+        | Ongoing _, Defeat(Axis, _, _)
+        | Defeat(Allies, _, _), Ongoing _ -> true
+        | Defeat(Axis, _, _), Defeat(Allies, _, _) -> false
+        | Defeat(Allies, _, _), Defeat(Axis, _, _) -> true
+        | Defeat(Axis, d1, _), Defeat(Axis, d2, _) -> d1 > d2
+        | Defeat(Allies, d1, _), Defeat(Allies, d2, _) -> d1 < d2
 
     static member Min a b =
         if BoardEvaluation.Lt(snd a, snd b) then
@@ -364,7 +364,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
             axisMoves
             |> Seq.fold (fun soFar axisMove ->
                 if board.Score.NumAlliesFactories = 0 then
-                    (((Some axisMove, None), []), Defeat(Allies, depth)) |> BoardEvaluation.Min soFar
+                    (((Some axisMove, None), []), Defeat(Allies, depth, "No factories")) |> BoardEvaluation.Min soFar
                 else if cancel.IsCancellationRequested then
                     soFar
                 else if BoardEvaluation.Lt(snd soFar, beta) then
@@ -379,7 +379,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                             |> not)
                         |> Seq.fold (fun soFar alliesMove ->
                             if board.Score.NumAxisFactories = 0 then
-                                ((Some alliesMove, []), Defeat(Axis, depth)) |> BoardEvaluation.Max soFar
+                                ((Some alliesMove, []), Defeat(Axis, depth, "No factories")) |> BoardEvaluation.Max soFar
                             else if BoardEvaluation.Lt(alpha, snd soFar) then
                                 soFar
                             else if cancel.IsCancellationRequested then
@@ -404,11 +404,11 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                                 board.UndoMove(combined, restore, oldValue)
                                 //assert(saved = board)
                                 ((Some alliesMove, deepMoves), value) |> BoardEvaluation.Max soFar
-                        ) ((None, []), Defeat(Allies, 0))
+                        ) ((None, []), Defeat(Allies, 0, "Avoid allies no moves"))
                     (((Some axisMove, alliesResponse), deepMoves), value) |> BoardEvaluation.Min soFar
-            ) (((None, None), []), Defeat(Axis, 0))
+            ) (((None, None), []), Defeat(Axis, 0, "Avoid axis no moves"))
         { Axis = axis; Allies = allies } :: deepMoves, value
-    let moves, score = bestMoveAtDepth (Defeat(Allies, 0)) 0
+    let moves, score = bestMoveAtDepth (Defeat(Allies, 0, "Initial beta")) 0
     if cancel.IsCancellationRequested then
         printfn "Cancelled"
         List.head moves, score
