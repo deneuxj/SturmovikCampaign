@@ -128,7 +128,7 @@ module PlayChess =
             let minMax board =
                 use cancellation = new CancellationTokenSource()
                 cancellation.CancelAfter(config.ThinkTime * 1000)
-                timeBound cancellation.Token ({ Axis = []; Allies = [] }, Ongoing 0.0f) 1 board
+                timeBound cancellation.Token ({ Axis = None; Allies = None }, Ongoing 0.0f) 1 board
             yield! play minMax board
         }
 
