@@ -141,12 +141,26 @@ let postWorldState channel (world : World, state : WorldState) =
         |> Map.toSeq
         |> Seq.map snd
         |> String.concat "\n"
+    let countTanks coalition =
+        state.Regions
+        |> Seq.filter (fun region -> region.Owner = Some coalition)
+        |> Seq.map (fun region -> region.NumVehicles)
+        |> Seq.fold Util.addMaps Map.empty
+        |> Map.filter (fun _ num -> num > 0)
+    let showTanks tanks =
+        tanks
+        |> Map.map (fun (tank : GroundAttackVehicle) num -> sprintf "%s: %d" tank.Description num)
+        |> Map.toSeq
+        |> Seq.map snd
+        |> String.concat "\n"
     let send = postMessage channel
     sprintf "New mission started, in-game time is %s." (state.Date.ToString("HH:mm")) |> send
     sprintf "Axis production: %5.0f units per hour." (countProduction Axis) |> send
     sprintf "Axis planes:\n%s\n" (countPlanes Axis |> showPlanes) |> send
+    sprintf "Axis tanks:\n%s\n" (countTanks Axis |> showTanks) |> send
     sprintf "Allies production: %5.0f units per hour." (countProduction Allies) |> send
     sprintf "Allies planes:\n%s\n" (countPlanes Allies |> showPlanes) |> send
+    sprintf "Allies tanks:\n%s\n" (countTanks Allies |> showTanks) |> send
 
 let onCampaignOver channel (victors : CoalitionId) =
     let be =
