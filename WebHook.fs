@@ -9,6 +9,9 @@ open Campaign.AfterActionReport
 open Campaign.NewWorldState
 open Campaign.Commenting
 open Campaign.Configuration
+open Campaign.WorldDescription
+open Campaign.WorldState
+open Campaign.PlaneModel
 
 type ChannelUpdate =
     { content : string
@@ -118,6 +121,32 @@ let onMissionStarted channel (missionTime : System.DateTime) =
         sprintf "New mission started, in-game time is %s."
             (missionTime.ToString("HH:mm"))
     postMessage channel message
+
+let postWorldState channel (world : World, state : WorldState) =
+    let wg = world.FastAccess
+    let sg = state.FastAccess
+    let countProduction coalition =
+        state.Regions
+        |> Seq.filter (fun region -> region.Owner = Some coalition)
+        |> Seq.sumBy(fun region -> region.ProductionCapacity(wg.GetRegion(region.RegionId), world.ProductionFactor))
+    let countPlanes coalition =
+        state.Airfields
+        |> Seq.filter (fun af -> sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner = Some coalition)
+        |> Seq.map (fun af -> af.NumPlanes |> Map.map (fun _ qty -> int qty))
+        |> Seq.fold Util.addMaps Map.empty
+        |> Map.filter (fun _ num -> num > 0)
+    let showPlanes planes =
+        planes
+        |> Map.map (fun (plane : PlaneModel) num -> sprintf "%s: %d" plane.PlaneName num)
+        |> Map.toSeq
+        |> Seq.map snd
+        |> String.concat "\n"
+    let send = postMessage channel
+    sprintf "New mission started, in-game time is %s." (state.Date.ToString("HH:mm")) |> send
+    sprintf "Axis production: %5.0f units per hour." (countProduction Axis) |> send
+    sprintf "Axis planes:\n%s\n" (countPlanes Axis |> showPlanes) |> send
+    sprintf "Allies production: %5.0f units per hour." (countProduction Allies) |> send
+    sprintf "Allies planes:\n%s\n" (countPlanes Allies |> showPlanes) |> send
 
 let onCampaignOver channel (victors : CoalitionId) =
     let be =
