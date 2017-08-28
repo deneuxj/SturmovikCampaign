@@ -497,8 +497,10 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
             let oldPlaneValue =
                 Map.tryFind takeOff.Plane af.NumPlanes
                 |> fun x -> defaultArg x 0.0f
+            let newPlaneValue =
+                oldPlaneValue - 1.0f |> max 0.0f
             let newPlanes =
-                Map.add takeOff.Plane (oldPlaneValue - 1.0f) af.NumPlanes
+                Map.add takeOff.Plane newPlaneValue af.NumPlanes
             Map.add takeOff.Airfield { af with NumPlanes = newPlanes; Supplies = af.Supplies - takeOff.Cargo - takeOff.BombLoad * bombCost } airfields
         ) airfields
     let airfieldsAfterLandings =
@@ -509,6 +511,7 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
             let oldPlaneValue =
                 Map.tryFind landing.Plane af.NumPlanes
                 |> fun x -> defaultArg x 0.0f
+                |> max 0.0f
             let newPlanes =
                 Map.add landing.Plane (oldPlaneValue + landing.Health) af.NumPlanes
             Map.add landing.Airfield { af with NumPlanes = newPlanes; Supplies = af.Supplies + landing.Cargo } airfields
