@@ -6248,13 +6248,13 @@ Group
 Group
 {
   Name = "RespawningTank";
-  Index = 528;
+  Index = 523;
   Desc = "";
   Vehicle
   {
     Name = "HeavyTank";
-    Index = 523;
-    LinkTrId = 524;
+    Index = 524;
+    LinkTrId = 525;
     XPos = 14581.289;
     YPos = 89.176;
     ZPos = 11108.760;
@@ -6282,7 +6282,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 524;
+    Index = 525;
     Name = "HeavyTank entity";
     Desc = "";
     Targets = [];
@@ -6294,13 +6294,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 523;
+    MisObjID = 524;
     OnEvents
     {
       OnEvent
       {
         Type = 13;
-        TarId = 529;
+        TarId = 527;
       }
     }
     OnReports
@@ -6308,8 +6308,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 526;
-        TarId = 527;
+        CmdId = 529;
+        TarId = 528;
       }
     }
   }
@@ -6317,11 +6317,11 @@ Group
 
   MCU_Waypoint
   {
-    Index = 525;
+    Index = 530;
     Name = "Trigger Waypoint";
     Desc = "";
     Targets = [];
-    Objects = [524];
+    Objects = [525];
     XPos = 17846.519;
     YPos = 91.680;
     ZPos = 11138.866;
@@ -6336,11 +6336,11 @@ Group
 
   MCU_Spawner
   {
-    Index = 526;
+    Index = 529;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
-    Objects = [524];
+    Objects = [525];
     XPos = 14579.767;
     YPos = 88.582;
     ZPos = 10649.238;
@@ -6353,10 +6353,10 @@ Group
 
   MCU_Timer
   {
-    Index = 527;
+    Index = 528;
     Name = "Spawned";
     Desc = "";
-    Targets = [525];
+    Targets = [530];
     Objects = [];
     XPos = 14905.151;
     YPos = 75.684;
@@ -6371,10 +6371,10 @@ Group
 
   MCU_Timer
   {
-    Index = 529;
+    Index = 527;
     Name = "Killed";
     Desc = "";
-    Targets = [530];
+    Targets = [534];
     Objects = [];
     XPos = 14173.523;
     YPos = 85.978;
@@ -6389,10 +6389,10 @@ Group
 
   MCU_Timer
   {
-    Index = 530;
+    Index = 534;
     Name = "1min";
     Desc = "";
-    Targets = [526];
+    Targets = [529];
     Objects = [];
     XPos = 14168.230;
     YPos = 85.454;
@@ -6407,10 +6407,10 @@ Group
 
   MCU_Timer
   {
-    Index = 531;
+    Index = 536;
     Name = "Start";
     Desc = "";
-    Targets = [526];
+    Targets = [529];
     Objects = [];
     XPos = 14581.119;
     YPos = 90.378;
@@ -6430,13 +6430,13 @@ Group
 Group
 {
   Name = "RespawningArtillery";
-  Index = 533;
+  Index = 537;
   Desc = "";
   Vehicle
   {
     Name = "Gun";
-    Index = 534;
-    LinkTrId = 535;
+    Index = 538;
+    LinkTrId = 539;
     XPos = 14563.721;
     YPos = 76.143;
     ZPos = 12217.127;
@@ -6464,7 +6464,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 535;
+    Index = 539;
     Name = "HeavyTank entity";
     Desc = "";
     Targets = [];
@@ -6476,13 +6476,13 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 534;
+    MisObjID = 538;
     OnEvents
     {
       OnEvent
       {
         Type = 13;
-        TarId = 537;
+        TarId = 541;
       }
     }
     OnReports
@@ -6490,8 +6490,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 538;
-        TarId = 539;
+        CmdId = 543;
+        TarId = 542;
       }
     }
   }
@@ -6499,11 +6499,11 @@ Group
 
   MCU_Spawner
   {
-    Index = 538;
+    Index = 543;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
-    Objects = [535];
+    Objects = [539];
     XPos = 14562.199;
     YPos = 88.582;
     ZPos = 11757.605;
@@ -6516,10 +6516,10 @@ Group
 
   MCU_Timer
   {
-    Index = 539;
+    Index = 542;
     Name = "Spawned";
     Desc = "";
-    Targets = [547];
+    Targets = [546];
     Objects = [];
     XPos = 14887.583;
     YPos = 75.684;
@@ -6534,10 +6534,10 @@ Group
 
   MCU_Timer
   {
-    Index = 537;
+    Index = 541;
     Name = "Killed";
     Desc = "";
-    Targets = [544];
+    Targets = [548];
     Objects = [];
     XPos = 14155.955;
     YPos = 85.978;
@@ -6552,10 +6552,10 @@ Group
 
   MCU_Timer
   {
-    Index = 544;
+    Index = 548;
     Name = "20min";
     Desc = "";
-    Targets = [538];
+    Targets = [543];
     Objects = [];
     XPos = 14150.662;
     YPos = 85.454;
@@ -6570,10 +6570,10 @@ Group
 
   MCU_Timer
   {
-    Index = 546;
+    Index = 550;
     Name = "Start";
     Desc = "";
-    Targets = [538];
+    Targets = [543];
     Objects = [];
     XPos = 14563.551;
     YPos = 90.378;
@@ -6588,11 +6588,11 @@ Group
 
   MCU_CMD_AttackArea
   {
-    Index = 547;
+    Index = 546;
     Name = "AttackArea";
     Desc = "";
     Targets = [];
-    Objects = [535];
+    Objects = [539];
     XPos = 15756.173;
     YPos = 70.963;
     ZPos = 12213.589;
@@ -6611,7 +6611,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 548;
+    Index = 552;
     LinkTrId = 0;
     XPos = 14564.366;
     YPos = 76.143;
@@ -6627,6 +6627,373 @@ Group
     DamageReport = 50;
     DamageThreshold = 1;
     DeleteAfterDeath = 1;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "PlaneTransfer";
+  Index = 571;
+  Desc = "";
+  Plane
+  {
+    Name = "TransferPlane";
+    Index = 553;
+    LinkTrId = 554;
+    XPos = 14997.175;
+    YPos = 119.950;
+    ZPos = 14187.722;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 14.80;
+    Script = "LuaScripts\WorldObjects\Planes\bf109f4.txt";
+    Model = "graphics\planes\bf109f4\bf109f4.mgm";
+    Country = 0;
+    Desc = "";
+    Skin = "";
+    AILevel = 2;
+    CoopStart = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    StartInAir = 2;
+    Callsign = 0;
+    Callnum = 0;
+    Time = 60;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    PayloadId = 0;
+    WMMask = 1;
+    AiRTBDecision = 0;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    Fuel = 1;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 554;
+    Name = "Plane entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 14997.175;
+    YPos = 120.150;
+    ZPos = 14187.722;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 553;
+    OnReports
+    {
+      OnReport
+      {
+        Type = 0;
+        CmdId = 555;
+        TarId = 566;
+      }
+      OnReport
+      {
+        Type = 3;
+        CmdId = 565;
+        TarId = 567;
+      }
+      OnReport
+      {
+        Type = 4;
+        CmdId = 569;
+        TarId = 570;
+      }
+    }
+  }
+  
+
+  MCU_Spawner
+  {
+    Index = 555;
+    Name = "Trigger Spawner";
+    Desc = "";
+    Targets = [];
+    Objects = [554];
+    XPos = 14997.183;
+    YPos = 118.420;
+    ZPos = 14155.582;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    SpawnAtMe = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 556;
+    Name = "Start";
+    Desc = "";
+    Targets = [558,559,557];
+    Objects = [];
+    XPos = 14997.909;
+    YPos = 118.420;
+    ZPos = 14107.805;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_CheckZone
+  {
+    Index = 557;
+    Name = "Spawn occupied";
+    Desc = "";
+    Targets = [558];
+    Objects = [];
+    XPos = 14995.155;
+    YPos = 118.420;
+    ZPos = 14189.056;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Zone = 20;
+    Cylinder = 0;
+    Closer = 1;
+    PlaneCoalitions = [0, 1, 2];
+    VehicleCoalitions = [0, 1, 2];
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 558;
+    Name = "SpawnFree";
+    Desc = "";
+    Targets = [555,564];
+    Objects = [];
+    XPos = 15006.756;
+    YPos = 118.420;
+    ZPos = 14130.012;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 5;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 559;
+    Name = "Tick";
+    Desc = "";
+    Targets = [560,561,563];
+    Objects = [];
+    XPos = 14993.957;
+    YPos = 118.420;
+    ZPos = 14182.303;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 560;
+    Name = "Tack";
+    Desc = "";
+    Targets = [559];
+    Objects = [];
+    XPos = 14991.350;
+    YPos = 118.420;
+    ZPos = 14182.337;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 561;
+    Name = "Trigger Activate";
+    Desc = "";
+    Targets = [557];
+    Objects = [];
+    XPos = 14993.789;
+    YPos = 118.420;
+    ZPos = 14185.227;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 562;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [557];
+    Objects = [];
+    XPos = 14992.655;
+    YPos = 118.420;
+    ZPos = 14185.254;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 563;
+    Name = "0.1s";
+    Desc = "";
+    Targets = [562];
+    Objects = [];
+    XPos = 14992.696;
+    YPos = 118.420;
+    ZPos = 14183.539;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0.1;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 564;
+    Name = "Free Check Off";
+    Desc = "";
+    Targets = [559,557];
+    Objects = [];
+    XPos = 14994.860;
+    YPos = 118.420;
+    ZPos = 14183.873;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_CMD_TakeOff
+  {
+    Index = 565;
+    Name = "command Take off";
+    Desc = "";
+    Targets = [];
+    Objects = [554];
+    XPos = 15003.315;
+    YPos = 118.420;
+    ZPos = 14181.363;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 566;
+    Name = "Spawned";
+    Desc = "";
+    Targets = [565];
+    Objects = [];
+    XPos = 15000.087;
+    YPos = 118.420;
+    ZPos = 14175.557;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 567;
+    Name = "Took Off";
+    Desc = "";
+    Targets = [568];
+    Objects = [];
+    XPos = 15001.911;
+    YPos = 118.420;
+    ZPos = 14194.919;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 568;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [569];
+    Objects = [554];
+    XPos = 17749.661;
+    YPos = 219.950;
+    ZPos = 14261.022;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 200;
+    Speed = 350;
+    Priority = 1;
+  }
+  
+
+  MCU_CMD_Land
+  {
+    Index = 569;
+    Name = "command Land";
+    Desc = "";
+    Targets = [];
+    Objects = [554];
+    XPos = 17986.930;
+    YPos = 94.375;
+    ZPos = 14259.970;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Priority = 1;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 570;
+    Name = "Landed";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 14997.082;
+    YPos = 118.420;
+    ZPos = 14199.386;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
   }
   
 
