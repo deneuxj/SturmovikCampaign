@@ -10,8 +10,6 @@ type Configuration = {
     Seed : int option
     WeatherDayMaxOffset : int
     MaxConvoys : int
-    MaxInvasionsInPlanning : int
-    MaxInvasions : int
     MaxAttackers : int
     MaxPatrols : int
     MaxCapturedPlanes : int
@@ -26,7 +24,6 @@ type Configuration = {
     ScriptPath : string
     Briefing : string
     ThinkTime : int
-    AfterActionReportEntries : int
     ProductionFactor : float32
     MaxTankNeeds : float32
     PlaneNeedsTarget : float32
@@ -41,8 +38,6 @@ with
             WeatherDayMaxOffset = 15
             MaxConvoys = 10
             MaxSimultaneousConvoys = 2
-            MaxInvasionsInPlanning = 3
-            MaxInvasions = 1
             MaxPatrols = 6
             MaxAttackers = 3
             MaxCapturedPlanes = 3
@@ -55,7 +50,6 @@ with
             ServerSdsFile = @"nul"
             ScriptPath = @"nul"
             ThinkTime = 30
-            AfterActionReportEntries = 8
             ProductionFactor = 3.0f
             MaxTankNeeds = 30.0f
             PlaneNeedsTarget = 100.0f
@@ -97,8 +91,6 @@ let loadConfigFile (path : string) =
         WeatherDayMaxOffset = values.WeatherDayMaxOffset
         MaxConvoys = values.MaxConvoys
         MaxSimultaneousConvoys = values.MaxSimultaneousConvoys
-        MaxInvasionsInPlanning = values.MaxInvasionsInPlanning
-        MaxInvasions = values.MaxInvasions
         MaxPatrols = values.MaxPatrols
         MaxAttackers = values.MaxAttackers
         MaxCapturedPlanes = values.MaxCapturedPlanes
@@ -111,7 +103,6 @@ let loadConfigFile (path : string) =
         ServerSdsFile = values.ServerSdsFile
         ScriptPath = values.InstallPath
         ThinkTime = values.ThinkTime
-        AfterActionReportEntries = values.AfterActionReportEntries
         ProductionFactor = float32 values.ProductionFactor
         MaxTankNeeds = float32 values.MaxTankNeeds
         PlaneNeedsTarget = float32 values.PlaneNeedsTarget

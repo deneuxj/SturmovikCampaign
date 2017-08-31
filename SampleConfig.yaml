@@ -9,10 +9,6 @@
     WeatherDayMaxOffset: 7
     # Max number of convoys in mission (per side)
     MaxConvoys: 8
-    # How far ahead the AI plans column movements
-    MaxInvasionsInPlanning: 20
-    # Max number of tank columns (per side)
-    MaxInvasions: 1
     # Max number of attacker planes (per side)
     MaxAttackers: 3
     # Max number of patrolling fighters (per side)
