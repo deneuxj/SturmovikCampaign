@@ -35,7 +35,7 @@ module Init =
             | None ->
                 System.Random()
 
-        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), config.MaxTankNeeds * GroundAttackVehicle.MediumTankCost, config.PlaneNeedsTarget)
+        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), config.MaxTankNeeds * GroundAttackVehicle.MediumTankCost, 1.0f<E/H> * config.PlaneProduction)
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5); ProductionFactor = config.ProductionFactor }
 
         let capacity =

@@ -326,6 +326,46 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     minMax board
     |> fun ({ Axis = m1; Allies = m2 }, _) -> (Option.toList m1 @ Option.toList m2) |> List.map (realizeMove world state)
 
+/// Decide what plane to add to the rear airfield
+let pickPlaneToProduce (coalition : CoalitionId) (world : World) (state : WorldState) =
+    let wg = WorldFastAccess.Create world
+    let sg = WorldStateFastAccess.Create state
+
+    let planeTypeShares = PlaneModel.PlaneTypeShares(coalition)
+    assert(planeTypeShares |> Seq.sumBy (fun kvp -> kvp.Value) = 1.0f)
+    let numPlanesPerType =
+        state.Airfields
+        |> Seq.filter (fun afs -> sg.GetRegion(wg.GetAirfield(afs.AirfieldId).Region).Owner = Some coalition) // Only our coalition
+        |> Seq.fold (fun perType afs ->
+            afs.NumPlanes
+            |> Map.toSeq
+            |> Seq.map (fun (plane, qty) -> plane.PlaneType, qty) // Replace exact plane model by plane type
+            |> Seq.groupBy fst
+            |> Seq.map (fun (typ, xs) -> typ, xs |> Seq.sumBy snd) // Total number of planes per type at that airfield
+            |> Seq.fold (fun perType (typ, qty) -> // Add to total number of planes per type for all regions
+                let newQty =
+                    qty +
+                    (Map.tryFind typ perType |> Option.defaultVal 0.0f)
+                Map.add typ newQty perType
+            ) perType
+        ) Map.empty
+    let total =
+        numPlanesPerType
+        |> Seq.sumBy (fun kvp -> kvp.Value)
+    let relNumPlanesPerType =
+        numPlanesPerType
+        |> Map.map (fun typ qty -> qty / total)
+    let mostNeeded =
+        planeTypeShares
+        |> Map.filter (fun _ qty -> qty > 0.0f)
+        |> Map.map (fun typ share ->
+            let actual = Map.tryFind typ relNumPlanesPerType |> Option.defaultVal 0.0f
+            actual / share)
+        |> Map.toSeq
+        |> Seq.minBy snd
+        |> fst
+    mostNeeded
+
 /// Decide what vehicles and planes to produce, and how important they are.
 let computeProductionPriorities (coalition : CoalitionId) (world : World) (state : WorldState) =
     let wg = WorldFastAccess.Create world
@@ -373,58 +413,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
         max vehicleNeed 0.0f<E>
         |> min world.MaxTankNeeds // Limit tank objectives, otherwise it can dwarf the plane needs, depriving players from planes to fly.
 
-    let planeTypeToProduce, planeNeed =
-        let planeTypeShares = PlaneModel.PlaneTypeShares(coalition)
-        assert(planeTypeShares |> Seq.sumBy (fun kvp -> kvp.Value) = 1.0f)
-        let numPlanesPerType =
-            state.Airfields
-            |> Seq.filter (fun afs -> sg.GetRegion(wg.GetAirfield(afs.AirfieldId).Region).Owner = Some coalition) // Only our coalition
-            |> Seq.fold (fun perType afs ->
-                afs.NumPlanes
-                |> Map.toSeq
-                |> Seq.map (fun (plane, qty) -> plane.PlaneType, qty) // Replace exact plane model by plane type
-                |> Seq.groupBy fst
-                |> Seq.map (fun (typ, xs) -> typ, xs |> Seq.sumBy snd) // Total number of planes per type at that airfield
-                |> Seq.fold (fun perType (typ, qty) -> // Add to total number of planes per type for all regions
-                    let newQty =
-                        qty +
-                        (Map.tryFind typ perType |> Option.defaultVal 0.0f)
-                    Map.add typ newQty perType
-                ) perType
-            ) Map.empty
-        let total =
-            numPlanesPerType
-            |> Seq.sumBy (fun kvp -> kvp.Value)
-        let relNumPlanesPerType =
-            numPlanesPerType
-            |> Map.map (fun typ qty -> qty / total)
-        let mostNeeded =
-            planeTypeShares
-            |> Map.filter (fun _ qty -> qty > 0.0f)
-            |> Map.map (fun typ share ->
-                let actual = Map.tryFind typ relNumPlanesPerType |> Option.defaultVal 0.0f
-                actual / share)
-            |> Map.toSeq
-            |> Seq.minBy snd
-            |> fst
-        // Target 100 planes (by default, settable in options and stored in world). This should leave plenty of planes for players to pick.
-        let valueTarget =
-            let nPlanes = world.PlaneNeedsTarget
-            planeTypeShares
-            |> Map.toSeq
-            |> Seq.sumBy (fun (planeType, share) ->
-                planeType.Random(PlaneSet.Moscow, Axis) // Use the axis side of the moscow set as reference. Exact numbers do not matter, we just want rough values.
-                |> Option.map(fun plane -> plane.Cost)
-                |> Option.defaultVal 0.0f<E>
-                |> (*) (share * nPlanes))
-        let need =
-            valueTarget - state.TotalPlaneValueOfCoalition(world, coalition)
-            |> max 200.0f<E>
-        mostNeeded, need
-
     { Vehicle = vehicleToProduce
       PriorityVehicle = vehicleNeed
-      Plane = planeTypeToProduce
-      PriorityPlane = planeNeed
       PrioritySupplies = supplyNeed
     }

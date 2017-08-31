@@ -26,7 +26,7 @@ type Configuration = {
     ThinkTime : int
     ProductionFactor : float32
     MaxTankNeeds : float32
-    PlaneNeedsTarget : float32
+    PlaneProduction : float32
     WebHook : string
 }
 with
@@ -52,7 +52,7 @@ with
             ThinkTime = 30
             ProductionFactor = 3.0f
             MaxTankNeeds = 30.0f
-            PlaneNeedsTarget = 100.0f
+            PlaneProduction = 1000.0f
             WebHook = ""
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
@@ -105,7 +105,7 @@ let loadConfigFile (path : string) =
         ThinkTime = values.ThinkTime
         ProductionFactor = float32 values.ProductionFactor
         MaxTankNeeds = float32 values.MaxTankNeeds
-        PlaneNeedsTarget = float32 values.PlaneNeedsTarget
+        PlaneProduction = float32 values.PlaneProduction
         Briefing = values.Briefing
         WebHook = values.WebHook
     }

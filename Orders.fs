@@ -126,8 +126,6 @@ with
 type ProductionPriorities = {
     Vehicle : GroundAttackVehicle
     PriorityVehicle : float32<E>
-    Plane : PlaneType
-    PriorityPlane : float32<E>
     PrioritySupplies : float32<E>
 }
 

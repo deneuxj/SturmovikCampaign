@@ -12,72 +12,80 @@ open System.Numerics
 open VectorExtension
 open SturmovikMission.Blocks.BlocksMissionData
 
+/// Try to find the airfield that is furthest away from any enemy region.
+let tryFindRearAirfield (world : World) (coalition : CoalitionId) (state : WorldState) =
+    let wg = world.FastAccess
+    let sg = state.FastAccess
+    let furthest =
+        try
+            List.zip world.Airfields state.Airfields
+            |> Seq.filter (fun (af, afs) -> sg.GetRegion(af.Region).Owner = Some coalition)
+            |> Seq.maxBy(fun (af, afs) ->
+                let distance =
+                    try
+                        List.zip world.Regions state.Regions
+                        |> Seq.filter(fun (region, regs) -> regs.Owner = Some (coalition.Other))
+                        |> Seq.map (fun (region, _) -> (region.Position - af.Pos).LengthSquared())
+                        |> Seq.min
+                    with
+                    | _ -> 0.0f
+                distance)
+            |> fst
+            |> fun af -> af.AirfieldId
+            |> Some
+        with
+        | _ -> None
+    furthest
+
 /// Add production units according to production priorities
 let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) (priorities : ProductionPriorities) (state : WorldState) =
     let wg = WorldFastAccess.Create world
-    let vehiclePrio, planePrio, energyPrio =
+    let vehiclePrio, energyPrio =
         let total =
-            priorities.PriorityPlane + priorities.PrioritySupplies + priorities.PriorityVehicle
+            priorities.PrioritySupplies + priorities.PriorityVehicle
         if total <= 0.0f<E> then
-            0.0f, 0.0f, 0.0f
+            0.0f, 0.0f
         else
-            priorities.PriorityVehicle / total, priorities.PriorityPlane / total, priorities.PriorityVehicle / total
+            priorities.PriorityVehicle / total, priorities.PriorityVehicle / total
     let regions =
         [
             for region, regState in Seq.zip world.Regions state.Regions do
                 if regState.Owner = Some coalition && not(List.isEmpty region.Production) then
-                    // Redistribute plane production resources if this region has no airfield to receive the newly produced planes.
-                    let vehiclePrio, planePrio, energyPrio =
-                        if world.Airfields |> List.exists (fun af -> af.Region = region.RegionId) then
-                            vehiclePrio, planePrio, energyPrio
-                        else
-                            vehiclePrio + 0.5f * planePrio, 0.0f, energyPrio + 0.5f * planePrio
                     let energy = dt * regState.ProductionCapacity(region, productionFactor world)
                     let supplies = regState.Products.Supplies + energyPrio * energy
-                    let planes =
-                        let planeModel =
-                            regState.Products.Planes
-                            |> Map.filter (fun plane _ -> plane.PlaneType = priorities.Plane)
-                            |> Map.toSeq
-                            |> Seq.sortBy snd
-                            |> Seq.tryLast
-                            |> Option.map fst
-                            |> Option.defaultVal (priorities.Plane.Random(world.PlaneSet, coalition) |> Option.get)
-                        let oldValue =
-                            Map.tryFind planeModel regState.Products.Planes
-                            |> Option.defaultVal 0.0f<E>
-                        assert(planePrio >= 0.0f)
-                        assert(planePrio <= 1.0f)
-                        let newValue = oldValue + planePrio * energy
-                        let toBeProduced = floor(newValue / planeModel.Cost)
-                        let excess = newValue - toBeProduced * planeModel.Cost
-                        regState.Products.Planes
-                        |> Map.add planeModel (toBeProduced * planeModel.Cost) // add round value of new planes of the model currently being built
-                        |> if toBeProduced >= 1.0f then
-                            // If enough energy was accumulated to produce planes, pick a new model of the same type for the next of production.
-                            let newPlaneModel =
-                                priorities.Plane.Random(world.PlaneSet, coalition)
-                            match newPlaneModel with
-                            | Some model ->
-                                Map.add model excess
-                            | None ->
-                                // Should not happen, but if we failed to pick a new model of plane, we keep the old one and let it have the entire amount of energy
-                                Map.add planeModel newValue
-                            else
-                                // No excess energy, keep the mapping as it was
-                                id
                     let vehicles =
                         let oldValue =
                             Map.tryFind priorities.Vehicle regState.Products.Vehicles
                             |> Option.defaultVal 0.0f<E>
                         let newValue = oldValue + vehiclePrio * energy
                         Map.add priorities.Vehicle newValue regState.Products.Vehicles
-                    let assignment = { regState.Products with Supplies = supplies; Planes = planes; Vehicles = vehicles }
+                    let assignment = { regState.Products with Supplies = supplies; Vehicles = vehicles }
                     yield { regState with Products = assignment }
                 else
                     yield regState
         ]
-    { state with Regions = regions }
+    // Add the most needed kind of plane to the rear airfield
+    let airfields =
+        [
+            let rear = tryFindRearAirfield world coalition state
+            for af, afs in List.zip world.Airfields state.Airfields do
+                if Some af.AirfieldId = rear then
+                    let plane = AutoOrder.pickPlaneToProduce coalition world state
+                    let plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, plane, coalition)
+                    match plane with
+                    | Some model ->
+                        let produced = world.PlaneProduction * dt / model.Cost
+                        let oldValue = afs.NumPlanes |> Map.tryFind model |> Option.defaultVal 0.0f
+                        let newValue = oldValue + produced
+                        yield { afs with
+                                    NumPlanes = Map.add model newValue afs.NumPlanes
+                        }
+                    | None ->
+                        yield afs
+                else
+                    yield afs
+        ]
+    { state with Regions = regions; Airfields = airfields }
 
 /// A region received supplies from production.
 type Resupplied = {

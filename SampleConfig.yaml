@@ -41,8 +41,8 @@
     ProductionFactor: 3.0
     # Affects production. Keep this low or the AI might stop producing planes
     MaxTankNeeds: 30.0
-    # Affects production. Keep this high or the AI might stop producing planes
-    PlaneNeedsTarget: 100.0
+    # Amount of production (resource units per hour) for planes. 500.0f gives one i16 or bf109e7 per hour.
+    PlaneProduction: 1000.0
     # Fixed part of the mission briefing
     Briefing: |
         This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
