@@ -17,7 +17,8 @@ Put all regions in a group named "Regions".
 Set region owners. Each coalition must own at least one region with factories.
 
 3. Define roads and railways
-Each path must start with a waypoint named "StartR" or "StartL" and finish with another one named "EndR" or "EndL".
+Each road path must start with a waypoint named "StartR" or "StartL" and finish with another one named "EndR" or "EndL".
+Each rail path must start with a waypoint named "Start" and finish with another one named "End".
 Each path is bidirectional, so you don't need (and must not) define another identical path going in the opposite direction.
 The speed, altitude and radius of waypoints do not matter.
 The direction matters, and should be a tangent of the road/railway at the location of the waypoint.
@@ -51,15 +52,7 @@ Each area must be located within a region.
 Each area must be convex.
 Avoid trees and buildings in the area.
 
-7. Define AT defense zones
-Use influence areas named AT in a group named "Defenses". In the game, each zone will contain at most 4 AT guns.
-Orient the influence area so that its yellow pointer aims at incoming tanks.
-Place these area along each road into the region.
-Each area must be located within a region.
-Each area must be convex.
-Avoid trees and buildings in the area.
-
-Make sure there is enough storage in the region for all the AT and AAA canons in the defense areas.
+Make sure there is enough storage in the region for all the AAA canons in the defense areas.
 Additional storage facilitates transferring supplies, it's a good idea to leave some extra storage capacity unused for defenses.
 
 7. Define battle areas (not yet implemented, will replace AT defense zones)
