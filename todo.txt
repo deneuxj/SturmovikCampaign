@@ -43,8 +43,13 @@ Feedback: ship supply
 --- bugs & small improvements ---
 
 ? Production does not properly transfer supplies to airfields in the region
-? Generate mission logic for AI transports.
+? Generate mission logic for AI transports
+Ship AA zone
+AI leaves large number of tanks in rear bases
+Troll prevention
+Check spawn of vehicles does not spawn them in obstacles or water
 Limit airplane available to bad pilots
-Notify players when their units are under attack (with a delay).
-Runway selection when wind blows from the south does not work.
+Notify players when their units are under attack (with a delay)
+Runway selection when wind blows from the south does not work
 Check for convoys without trucks.
+No need to show levels of storage, show defense strength instead.
