@@ -8,6 +8,15 @@ open SturmovikMission.Blocks.BlocksMissionData
 open System.Numerics
 open VectorExtension
 
+/// Side of the first waypoint where vehicles of a convoy spawn.
+type SpawnSide = Left | Right | Center
+with
+    member this.Mirrored =
+        match this with
+        | Left -> Right
+        | Right -> Left
+        | Center -> Center
+
 // The types. See Proto-VirtualConvoy.txt.
 type Convoy =
     { LeadCarEntity : Mcu.McuEntity
@@ -66,7 +75,7 @@ type TruckInConvoy =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, inFormation : int, country : Mcu.CountryValue, formationName : string) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, inFormation : int, spawnSide : SpawnSide, country : Mcu.CountryValue, formationName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
@@ -90,8 +99,13 @@ with
         let center = Vector2.FromMcu(truck.Pos)
         // Rotation
         let rot = ori - float32 truck.Ori.Y
-        // Actual position is to the right of the leader
-        let offset = Vector2.UnitY * (float32 inFormation) * 20.0f
+        // Spawn position relative to the leader
+        let spawnRel =
+            match spawnSide with
+            | Right -> Vector2.UnitY
+            | Left -> -Vector2.UnitY
+            | Center -> -Vector2.UnitX
+        let offset = spawnRel * (float32 inFormation) * 20.0f
         let offset = offset.Rotate(ori)
         let pos2 = pos + offset
         let diff = pos2 - Vector2.FromMcu(truck.Pos)

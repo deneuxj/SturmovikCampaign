@@ -32,6 +32,7 @@ type PathVertex =
       Radius : int
       Speed : int
       Priority : int
+      SpawnSide : SpawnSide
     }
 
 /// <summary>
@@ -99,7 +100,7 @@ with
         let truckInConvoySet =
             seq {
                 for pos in 1..convoySize do
-                    yield (TruckInConvoyInstance(pos), TruckInConvoy.Create(store, startPos.Pos, startPos.Ori, pos, country, convoyName))
+                    yield (TruckInConvoyInstance(pos), TruckInConvoy.Create(store, startPos.Pos, startPos.Ori, pos, startPos.SpawnSide, country, convoyName))
             }
             |> Map
         let waypointSet =
