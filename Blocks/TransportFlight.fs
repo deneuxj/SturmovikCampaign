@@ -34,7 +34,7 @@ with
         let dPos = takeOffPos - refPoint
         let dRot = takeOffDir - float32 takeOff.Ori.Y
         for mcu in group do
-            ((Vector2.FromMcu mcu.Pos - refPoint).Rotate(dRot) + dPos).AssignTo(mcu.Pos)
+            ((Vector2.FromMcu mcu.Pos - refPoint).Rotate(dRot) + dPos + refPoint).AssignTo(mcu.Pos)
             mcu.Ori.Y <- mcu.Ori.Y + float dRot
         // Position of destination and land order
         destinationPos.AssignTo destination.Pos

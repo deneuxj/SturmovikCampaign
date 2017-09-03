@@ -182,6 +182,26 @@ let runwayOfAirfieldSpawn (airfield : T.Airfield) =
                     None)
         Some(pos, direction.YOri)
 
+let parkingOfAirfieldSpawn (airfield : T.Airfield) =
+    let chart = airfield.TryGetChart()
+    match chart with
+    | None ->
+        None
+    | Some chart ->
+        let yori = airfield.GetYOri().Value |> float32
+        let points = chart.GetPoints()
+        let pos, direction =
+            points
+            |> List.pairwise
+            |> List.pick(fun (p1, p2) ->
+                if p1.GetType().Value = 0 && p2.GetType().Value = 1 then
+                    let mkVec(p : T.Airfield.Chart.Point) =
+                        Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
+                    Some(mkVec(p1).Rotate(yori) + Vector2.FromPos(airfield), (mkVec(p2) - mkVec(p1)).Rotate(yori))
+                else
+                    None)
+        Some(pos, direction.YOri)
+
 module CommonMethods =
     let inline createMcu(x : ^T) =
         (^T : (member CreateMcu : unit -> Mcu.McuBase) x)
