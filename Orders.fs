@@ -122,6 +122,15 @@ with
     // The maximum number of vehicles following the leader in a column.
     static member MaxColumnSize = SturmovikMission.Blocks.VirtualConvoy.Factory.VirtualConvoy.MaxConvoySize
 
+/// Ferry planes from airfields to airfields
+type PlaneFerryOrder = {
+    OrderId : OrderId
+    Plane : PlaneModel
+    Qty : int
+    Start : AirfieldId
+    Destination : AirfieldId
+}
+
 /// What to produce in each category of production, and how much does each category need
 type ProductionPriorities = {
     Vehicle : GroundAttackVehicle
@@ -135,5 +144,19 @@ type OrderPackage = {
     Columns : ColumnMovement list
     Patrols : AiPlanes.AiPatrol list
     Attacks : AiPlanes.AiAttack list
+    PlaneFerries : PlaneFerryOrder list
     Production : ProductionPriorities
 }
+with
+    /// Make sure every order has an unique index.
+    member this.Renumber() =
+        let resupply = this.Resupply |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i }})
+        let offset = List.length resupply
+        let columns = this.Columns |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = offset + i }})
+        let offset = offset + List.length columns
+        let ferries = this.PlaneFerries |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = offset + i }})
+        { this with
+            Resupply = resupply
+            Columns = columns
+            PlaneFerries = ferries
+        }

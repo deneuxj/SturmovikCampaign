@@ -11,6 +11,7 @@ open Campaign.MinMax
 open Campaign.Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open AiPlanes
 
 /// Compute the full-health storage capacity of each region, including airfields'
 let computeStorageCapacity (world : World) =
@@ -417,3 +418,97 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
       PriorityVehicle = vehicleNeed
       PrioritySupplies = supplyNeed
     }
+
+/// Decide how many planes to ferry, where from and where to.
+let decidePlaneTransfers (world : World) (state : WorldState) (coalition : CoalitionId) =
+    let wg = world.FastAccess
+    let sg = state.FastAccess
+    let starts =
+        seq {
+            for af, afs in List.zip world.Airfields state.Airfields do
+                if sg.GetRegion(af.Region).Owner = Some coalition then
+                    let totalPlanes =
+                        afs.NumPlanes |> Map.toSeq |> Seq.sumBy (snd >> int)
+                    let expRel = PlaneModel.PlaneTypeShares coalition
+                    // Note that we don't ferry bombers, normally there is no need to have them close to the enemy lines.
+                    let planeTypes = [PlaneModel.Fighter; PlaneModel.Attacker]
+                    let excessPlaneType =
+                        planeTypes
+                        |> Seq.maxBy(fun pt ->
+                            (float32(getNumPlanesOfType pt afs.NumPlanes) / (float32 totalPlanes)) / expRel.[pt])
+                    let numAvailableToFerry =
+                        int(getNumPlanesOfType excessPlaneType afs.NumPlanes - 5.0f)
+                        |> max 0 // Don't offer to transfer negative amounts of planes.
+                    yield af.AirfieldId, excessPlaneType, numAvailableToFerry
+        }
+        |> Seq.sortByDescending(fun (_, _, n) -> n)
+        |> Seq.filter (fun (_, _, n) -> n > 0)
+        |> List.ofSeq
+    let destinations =
+        seq {
+            for af, afs in List.zip world.Airfields state.Airfields do
+                if sg.GetRegion(af.Region).Owner = Some coalition then
+                    // Do not send planes to airfields that are about to be conquered
+                    let afUnderThreat =
+                        let reg = wg.GetRegion(af.Region)
+                        reg.Neighbours
+                        |> Seq.exists(fun ngh ->
+                            let regs = sg.GetRegion(ngh)
+                            regs.Owner <> Some coalition && regs.TotalVehicleValue >= 0.75f * sg.GetRegion(reg.RegionId).TotalVehicleValue)
+                    if not afUnderThreat then
+                        let totalPlanes =
+                            afs.NumPlanes |> Map.toSeq |> Seq.sumBy (snd >> int)
+                        let expRel = PlaneModel.PlaneTypeShares coalition
+                        // Note that we don't ferry bombers, normally there is no need to have them close to enemy lines.
+                        let planeTypes = [PlaneModel.Fighter; PlaneModel.Attacker]
+                        let excessPlaneType =
+                            planeTypes
+                            |> Seq.minBy(fun pt ->
+                                (float32(getNumPlanesOfType pt afs.NumPlanes) / (float32 totalPlanes)) / expRel.[pt])
+                        let numRequestedToFerry =
+                            10 - int(getNumPlanesOfType excessPlaneType afs.NumPlanes)
+                            |> max 0 // Don't request negative amounts of planes.
+                        yield af.AirfieldId, excessPlaneType, numRequestedToFerry
+        }
+        |> Seq.sortByDescending(fun (_, _, n) -> n)
+        |> Seq.filter (fun (_, _, n) -> n > 0)
+        |> List.ofSeq
+    let rec tryFindMatchingDestination ((af0, pt0, _) as start) destinations =
+        match destinations with
+        | [] -> None
+        | (af, pt, num) as hd :: rest ->
+            if af <> af0 && pt = pt0 then
+                Some hd
+            else
+                tryFindMatchingDestination start rest
+    let rec matchAirfields starts destinations =
+        seq {
+            match starts with
+            | [] -> ()
+            | start :: rest ->
+                match tryFindMatchingDestination start destinations with
+                | Some destination ->
+                    yield start, destination
+                    yield! matchAirfields rest (destinations |> List.filter ((<>) destination))
+                | None ->
+                    yield! matchAirfields rest destinations
+        }
+    matchAirfields starts destinations
+    |> Seq.map (fun ((af, pt, numSend), (af2, _, numReceive)) ->
+        let planeModel, count =
+            sg.GetAirfield(af).NumPlanes
+            |> Map.filter (fun m c -> m.PlaneType = pt)
+            |> Map.toSeq
+            |> Seq.maxBy snd
+        let count =
+            count
+            |> int
+            |> min numSend
+            |> min numReceive
+        { OrderId = { Coalition = coalition; Index = 0 } // Index to be set when all orders have been decided
+          Plane = planeModel
+          Qty = count
+          Start = af
+          Destination = af2
+        })
+    |> List.ofSeq

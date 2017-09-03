@@ -818,7 +818,7 @@ let updateRunways (world : World) (state : WorldState) (windDirection : float32)
     let afStates =
         [
             for af, afState in List.zip world.Airfields state.Airfields do
-                yield afState.SetRunway(windDirection, af.Spawn |> List.choose runwayOfAirfieldSpawn)
+                yield afState.SetRunway(windDirection, af.Spawn)
         ]
     { state with Airfields = afStates
     }

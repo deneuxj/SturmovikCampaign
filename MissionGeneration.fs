@@ -868,6 +868,10 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         mkAttackStarts axisAttacks
         mkAttackStarts alliesAttacks
         axisAttacks @ alliesAttacks |> List.map fst
+    let axisPlaneFerries =
+        missionData.AxisOrders.PlaneFerries |> List.map (fun ferry -> PlaneFerry.generatePlaneTransfer store missionData.World missionData.State ferry missionBegin)
+    let alliesPlaneFerries =
+        missionData.AlliesOrders.PlaneFerries |> List.map (fun ferry -> PlaneFerry.generatePlaneTransfer store missionData.World missionData.State ferry missionBegin)
     let buildingFires =
         createBuildingFires store missionData.World missionData.State (float32 missionData.Weather.Wind.Direction)
         |> List.map (fun fire -> fire.All)
@@ -902,5 +906,5 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           parkedTanks
           axisPrio
           alliesPrio
-          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns
+          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ axisPlaneFerries @ alliesPlaneFerries
     writeMissionFiles "eng" filename options allGroups

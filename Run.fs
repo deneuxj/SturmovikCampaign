@@ -197,15 +197,13 @@ module OrderDecision =
 
         let adjustConvoyIndexes(convoys : ResupplyOrder list) =
             convoys
-            
+
         let mkConvoys coalition =
             createAllConvoyOrders coalition (world, state)
             |> prioritizeConvoys world state
             |> List.truncate config.MaxConvoys
-            |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
         let columnOrders =
             decideColumnMovements world state config.ThinkTime
-            |> List.mapi (fun i order -> { order with OrderId = { order.OrderId with Index = i + 1 } })
         let axisConvoys = mkConvoys Axis
         let alliesConvoys = mkConvoys Allies
         let axisColumns =
@@ -253,13 +251,22 @@ module OrderDecision =
                 allAttacks |> List.filter (fun attack -> attack.Coalition = Axis), allAttacks |> List.filter (fun attack -> attack.Coalition = Allies)
             else
                 [], []
+
+        let axisFerryFlights, alliesFerryFlights =
+            if weather.CloudDensity < 0.8 || weather.CloudHeight > 2500.0 then
+                decidePlaneTransfers world state Axis, decidePlaneTransfers world state Allies
+            else
+                [], []
+
         let axisProduction = computeProductionPriorities Axis world state
         let alliesProduction = computeProductionPriorities Allies world state
         let outputDir = config.OutputDir
         use axisOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.axisOrders))
-        serializer.Serialize(axisOrderFiles, { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks; Production = axisProduction } )
+        let package = { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks; Production = axisProduction; PlaneFerries = axisFerryFlights }.Renumber()
+        serializer.Serialize(axisOrderFiles, package )
         use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.alliesOrders))
-        serializer.Serialize(alliesOrderFiles, { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols; Attacks = alliesAttacks; Production = alliesProduction } )
+        let package = { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols; Attacks = alliesAttacks; Production = alliesProduction; PlaneFerries = alliesFerryFlights }.Renumber()
+        serializer.Serialize(alliesOrderFiles, package )
 
 module MissionFileGeneration =
     open Campaign.WorldDescription

@@ -103,6 +103,7 @@ type AirfieldState = {
     StorageHealth : float32 list
     Supplies : float32<E>
     Runway : Vector2 * float32
+    AiSpawnPos : Vector2 * float32
 }
 with
     member this.StorageCapacity(af : WorldDescription.Airfield) =
@@ -150,14 +151,23 @@ with
             Supplies = this.Supplies - damage |> max 0.0f<E>
         }
 
-    member this.SetRunway(windDirection : float32, runways : (Vector2 * float32) list) =
+    /// Set runway and AI spawn position according to wind direction.
+    member this.SetRunway(windDirection : float32, runways : T.Airfield list) =
         let upwind =
             runways
-            |> List.maxBy (fun (_, yori) ->
-                let angleDiff =
-                    (windDirection - yori) * float32 System.Math.PI / 180.0f
-                -cos(angleDiff))
-        { this with Runway = upwind }
+            |> List.maxBy (fun spawn ->
+                match runwayOfAirfieldSpawn spawn with
+                | Some(_, yori) ->
+                    let angleDiff =
+                        (windDirection - yori) * float32 System.Math.PI / 180.0f
+                    -cos(angleDiff)
+                | None ->
+                    System.Single.NegativeInfinity)
+        match runwayOfAirfieldSpawn upwind, parkingOfAirfieldSpawn upwind with
+        | Some runway, Some parking ->
+            { this with Runway = runway; AiSpawnPos = parking }
+        | _ ->
+            this
 
 /// Packages all state data.
 type WorldState = {
@@ -516,7 +526,8 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
           StorageHealth = airfield.Storage |> List.map (fun _ -> 1.0f)
           Supplies = supplies
           Runway = Vector2.Zero, 0.0f
-        }.SetRunway(windDirection, airfield.Spawn |> List.choose runwayOfAirfieldSpawn)
+          AiSpawnPos = Vector2.Zero, 0.0f
+        }.SetRunway(windDirection, airfield.Spawn)
     let airfields = world.Airfields |> List.map mkAirfield
     { Airfields = airfields
       Regions = regions
