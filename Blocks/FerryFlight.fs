@@ -15,7 +15,7 @@ type FerryFlight = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, startPos : Vector2, destinationPos : Vector2, ori : float32, landingOri : float32, count : int) =
+    static member Create(store : NumericalIdentifiers.IdStore, startPos : Vector2, destinationPos : Vector2, ori : float32, landingOri : float32, count : int, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("PlaneTransfer").CreateMcuList()
@@ -29,6 +29,17 @@ with
         let killed = getTriggerByName group T.Blocks.Killed
         let arrived = getTriggerByName group T.Blocks.Landed
         let counter = getTriggerByName group T.Blocks.StartCount :?> Mcu.McuCounter
+        let setCountry =
+            let name =
+                match country with
+                | Mcu.CountryValue.Germany -> T.Blocks.SetGerman
+                | Mcu.CountryValue.Russia -> T.Blocks.SetRussian
+                | _ -> failwithf "unknown country value %d" (int country)
+            getTriggerByName group name
+        let spawned = getTriggerByName group T.Blocks.Spawned
+        // When spawned -> set country
+        // The aircraft is initially neutral so that it does not trigger the CZ that checks for occupancy of the spawn area.
+        Mcu.addTargetLink spawned setCountry.Index
         // Position of all nodes
         let refPoint = Vector2.FromMcu plane.Pos
         let dPos = startPos - refPoint

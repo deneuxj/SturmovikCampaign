@@ -6645,11 +6645,11 @@ Group
     Index = 554;
     LinkTrId = 555;
     XPos = 14997.175;
-    YPos = 119.950;
+    YPos = 118.420;
     ZPos = 14187.722;
     XOri = 0.00;
     YOri = 0.00;
-    ZOri = 14.80;
+    ZOri = 0.00;
     Script = "LuaScripts\WorldObjects\Planes\bf109f4.txt";
     Model = "graphics\planes\bf109f4\bf109f4.mgm";
     Country = 0;
@@ -6658,8 +6658,8 @@ Group
     AILevel = 2;
     CoopStart = 0;
     NumberInFormation = 0;
-    Vulnerable = 1;
-    Engageable = 1;
+    Vulnerable = 0;
+    Engageable = 0;
     LimitAmmo = 1;
     StartInAir = 2;
     Callsign = 19;
@@ -6684,12 +6684,12 @@ Group
     Targets = [];
     Objects = [];
     XPos = 14997.175;
-    YPos = 120.150;
+    YPos = 118.620;
     ZPos = 14187.722;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Enabled = 1;
+    Enabled = 0;
     MisObjID = 554;
     OnEvents
     {
@@ -6780,8 +6780,8 @@ Group
     Zone = 20;
     Cylinder = 0;
     Closer = 1;
-    PlaneCoalitions = [0, 1, 2];
-    VehicleCoalitions = [0, 1, 2];
+    PlaneCoalitions = [1, 2];
+    VehicleCoalitions = [1, 2];
   }
   
 
@@ -7128,6 +7128,58 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
+  }
+  
+
+  MCU_CMD_Behaviour
+  {
+    Index = 601;
+    Name = "SetRussian";
+    Desc = "";
+    Targets = [];
+    Objects = [555];
+    XPos = 14998.192;
+    YPos = 118.420;
+    ZPos = 14185.319;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Filter = 19;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    RepairFriendlies = 0;
+    RearmFriendlies = 0;
+    RefuelFriendlies = 0;
+    AILevel = 2;
+    Country = 101;
+    FloatParam = 0;
+  }
+  
+
+  MCU_CMD_Behaviour
+  {
+    Index = 602;
+    Name = "SetGerman";
+    Desc = "";
+    Targets = [];
+    Objects = [555];
+    XPos = 14996.554;
+    YPos = 118.420;
+    ZPos = 14185.302;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Filter = 19;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    RepairFriendlies = 0;
+    RearmFriendlies = 0;
+    RefuelFriendlies = 0;
+    AILevel = 2;
+    Country = 201;
+    FloatParam = 0;
   }
   
 
