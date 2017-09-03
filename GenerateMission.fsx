@@ -7,4 +7,4 @@
 
 open Configuration
 
-Campaign.Run.MissionFileGeneration.run config
+Campaign.Run.MissionFileGeneration.run Configuration.config
