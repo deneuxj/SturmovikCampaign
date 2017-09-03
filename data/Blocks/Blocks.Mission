@@ -6926,7 +6926,7 @@ Group
     Index = 558;
     Name = "Spawned";
     Desc = "";
-    Targets = [561,584,585];
+    Targets = [561,584,585,603];
     Objects = [];
     XPos = 15000.087;
     YPos = 118.420;
@@ -7102,7 +7102,7 @@ Group
     Index = 593;
     Name = "5min";
     Desc = "";
-    Targets = [566];
+    Targets = [566,604];
     Objects = [];
     XPos = 14985.073;
     YPos = 118.420;
@@ -7180,6 +7180,38 @@ Group
     AILevel = 2;
     Country = 201;
     FloatParam = 0;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 603;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [559];
+    Objects = [];
+    XPos = 14999.199;
+    YPos = 118.420;
+    ZPos = 14157.673;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 604;
+    Name = "Trigger Activate";
+    Desc = "";
+    Targets = [559];
+    Objects = [];
+    XPos = 14994.646;
+    YPos = 118.420;
+    ZPos = 14157.758;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
   }
   
 
