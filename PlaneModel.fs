@@ -54,6 +54,7 @@ type PlaneModel =
     | Ju87
     | He111h6
     | He111h16
+    | Hs129b2
 with
     member this.ScriptModel =
         match this with
@@ -85,6 +86,7 @@ with
         | Ju87 -> Vehicles.vehicles.GermanAttacker2
         | He111h6 -> Vehicles.vehicles.GermanBomber2
         | He111h16 -> Vehicles.vehicles.GermanBomber3
+        | Hs129b2 -> Vehicles.vehicles.GermanAttacker4
 
     member this.StaticScriptModel =
         match this with
@@ -119,6 +121,7 @@ with
         | Fw190a5 -> Vehicles.vehicles.GermanStaBf109e7Open
         | La5 -> Vehicles.vehicles.RussianStaLagg3W1
         | Yak1s127 -> Vehicles.vehicles.RussianStaYak1Net
+        | Hs129b2 -> Vehicles.vehicles.GermanStaJu87Net
 
     member this.Cost =
         match this with
@@ -131,6 +134,7 @@ with
         | Bf109f2 -> (5.0f / 3.0f) * basePlaneCost
         | Mc202 -> 1.33f * basePlaneCost
         | Ju87 -> 2.0f * basePlaneCost
+        | Hs129b2
         | Bf110g
         | Bf110e -> (7.5f / 3.0f) * basePlaneCost
         | He111h6
@@ -165,6 +169,7 @@ with
         | Bf110e -> 1250.0f<K>
         | He111h16
         | He111h6 -> 3600.0f<K>
+        | Hs129b2 -> 350.0f<K>
         | Ju87 -> 1800.0f<K>
         | Ju88a4 -> 2800.0f<K>
         | SpitfireMkVb
@@ -203,6 +208,7 @@ with
         | He111h6
         | He111h16
         | Ju88a4
+        | Hs129b2
         | Ju52 -> Axis
         | I16
         | IL2M41
@@ -236,6 +242,7 @@ with
         | Lagg3s29
         | SpitfireMkVb
         | Mig3 -> Fighter
+        | Hs129b2
         | Bf110e
         | Bf110g
         | Ju87
@@ -266,6 +273,7 @@ with
         | Ju52 -> "ju52"
         | He111h6 -> "he111h6"
         | He111h16 -> "he111h16"
+        | Hs129b2 -> "hs129b2"
         | I16 -> "i16"
         | IL2M41 -> "il2mod41"
         | IL2M42 -> "il2mod42"
@@ -300,6 +308,7 @@ with
         | Ju52 -> "ju 52"
         | He111h6 -> "he 111 h-6"
         | He111h16 -> "he 111 h-16"
+        | Hs129b2 -> "hs 129 b-2"
         | I16 -> "i-16"
         | IL2M41 -> "il-2 mod.1941"
         | IL2M42 -> "il-2 mod.1942"
@@ -315,17 +324,26 @@ with
         | SpitfireMkVb -> "spitfire mk.vb"
 
     member this.BombLoads =
+        // times 2 [(4, x); (10, y)] -> [(4, x); (5, x); (10, y); (11, y)]
         let times N xs =
             [
                 for (n, x) in xs do
                     for c in 0..(N - 1) do
                         yield (n + c, x)
             ]
+        // vTimes [(3, 10, x)] -> [(10, x); (11, x); (12, x)]
         let vTimes xs =
             [
                 for (n, N, x) in xs do
                     for c in 0..(N - 1) do
                         yield (n + c, x)
+            ]
+        /// xTimes [10; 20] [(1, x); (2, y)] -> [(11, x); (12, y); (21, x); (22, y)]
+        let xTimes offsets xs =
+            [
+                for offset in offsets do
+                    for (n, x) in xs do
+                        yield (n + offset, x)
             ]
         match this with
         | Bf109e7 | Bf109f4 | Bf109f2 | Bf109g2 | Bf109g4 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
@@ -339,6 +357,7 @@ with
         | Ju52 -> [(1, 2500.0f<K>)]
         | He111h6 -> [(0, 800.0f<K>); (1, 1000.0f<K>); (2, 1300.0f<K>); (3, 1500.0f<K>); (4, 2000.0f<K>); (5, 1800.0f<K>); (6, 2000.0f<K>); (7, 3600.0f<K>); (8, 2600.0f<K>); (9, 2800.0f<K>); (10, 2800.0f<K>); (11, 2500.0f<K>); (12, 3500.0f<K>)]
         | He111h16 -> [(0, 800.0f<K>); (1, 1600.0f<K>); (2, 1000.0f<K>); (3, 2000.0f<K>); (4, 1800.0f<K>); (5, 1300.0f<K>); (6, 1500.0f<K>); (7, 1000.0f<K>); (8, 1800.0f<K>); (9, 2000.0f<K>); (10, 2000.0f<K>); (11, 2600.0f<K>); (12, 2800.0f<K>); (13, 3600.0f<K>); (14, 2800.0f<K>); (15, 2500.0f<K>); (16, 3300.0f<K>); (17, 3500.0f<K>); (18, 3500.0f<K>)]
+        | Hs129b2 -> xTimes [0; 17] [(1, 200.0f<K>); (2, 300.0f<K>); (3, 250.0f<K>); (4, 350.0f<K>); (6, 100.0f<K>)] @ times 2 [(9, 100.0f<K>)] @ times 2 [(26, 100.0f<K>)] @ times 3 [(14, 100.0f<K>)] @ times 3 [(31, 100.0f<K>)] @ [(23, 100.0f<K>)]
         | I16 -> [(1, 100.0f<K>); (2, 200.0f<K>); (12, 100.0f<K>); (13, 200.0f<K>)]
         | IL2M41 -> times 4 [(4, 200.0f<K>); (8, 300.0f<K>); (12, 400.0f<K>); (16, 600.0f<K>); (24, 200.0f<K>); (28, 300.0f<K>); (32, 400.0f<K>); (36, 500.0f<K>); (44, 200.0f<K>); (48, 300.0f<K>); (52, 400.0f<K>); (60, 200.0f<K>); (64, 300.0f<K>); (68, 200.0f<K>)]
         | IL2M42 -> vTimes [(7, 7, 200.0f<K>); (14, 4, 300.0f<K>); (18, 4, 400.0f<K>); (22, 3, 200.0f<K>); (25, 4, 600.0f<K>); (36, 4, 200.0f<K>); (40, 4, 300.0f<K>); (44, 4, 400.0f<K>); (48, 4, 500.0f<K>); (59, 4, 200.0f<K>); (63, 4, 300.0f<K>); (67, 4, 400.0f<K>); (75, 4, 200.0f<K>); (79, 4, 300.0f<K>); (84, 4, 200.0f<K>)]
@@ -408,6 +427,7 @@ with
         | Pe2s35
         | Pe2s87
         | Ju87
+        | Hs129b2
         | He111h6
         | He111h16 -> []
         |> Set.ofList
@@ -438,6 +458,7 @@ with
               Ju87
               Ju52
               He111h6
+              Hs129b2
               I16
               IL2M42
               Yak1s69
@@ -453,6 +474,7 @@ with
               Ju87
               Ju88a4
               He111h6
+              Hs129b2
               Ju52
               Yak1s69
               Lagg3s29
@@ -475,7 +497,8 @@ with
               I16
               IL2M43
               Pe2s87
-              SpitfireMkVb ]
+              SpitfireMkVb
+              Hs129b2 ]
         | All ->
             [ Bf109e7
               Bf109f2
@@ -504,6 +527,7 @@ with
               Ju87
               He111h6
               He111h16
+              Hs129b2
               SpitfireMkVb ]
 
     static member PlaneTypeShares(coalition) =
