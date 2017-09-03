@@ -125,7 +125,7 @@ module Support =
                 async {
                     support.Logging.LogInfo "Next mission..."
                     match serverProc with
-                    | Some proc when proc.StartTime - DateTime.Now >= TimeSpan(12, 0, 0) ->
+                    | Some proc when DateTime.Now - proc.StartTime >= TimeSpan(12, 0, 0) ->
                         support.Logging.LogInfo "Server process will be killed"
                         do!
                             [ "Server is restarting before next mission start"
