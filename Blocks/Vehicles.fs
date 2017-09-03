@@ -382,6 +382,12 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.GermanAttacker4 =
+        let fighter = planes.[T.Vehicles.attacker4GER]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
     member this.RussianBomber1 =
         let fighter = planes.[T.Vehicles.bomber1RUS]
         { Script = fighter.GetScript().Value
@@ -552,6 +558,12 @@ type VehicleDataTypeStore() =
 
     member this.GermanStaJu87 =
         let block = statics.[T.Vehicles.staJu87GER]
+        { Script = block.GetScript().Value
+          Model = block.GetModel().Value
+        }
+
+    member this.GermanStaJu87Net =
+        let block = statics.[T.Vehicles.staJu87NetGER]
         { Script = block.GetScript().Value
           Model = block.GetModel().Value
         }

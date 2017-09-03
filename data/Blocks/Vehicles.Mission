@@ -2856,4 +2856,65 @@ Plane
 }
 
 
+
+Plane
+{
+  Name = "attacker4GER";
+  Index = 95;
+  LinkTrId = 0;
+  XPos = 29099.543;
+  YPos = 110.554;
+  ZPos = 20143.860;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 10.00;
+  Script = "LuaScripts\WorldObjects\Planes\hs129b2.txt";
+  Model = "graphics\planes\hs129b2\hs129b2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Block
+{
+  Name = "staJu87NetGER";
+  Index = 96;
+  LinkTrId = 0;
+  XPos = 29065.702;
+  YPos = 108.584;
+  ZPos = 20452.264;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_ju87_net.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_ju87_net.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
 # end of file
