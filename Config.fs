@@ -82,6 +82,7 @@ let loadConfigFile (path : string) =
             | "Moscow" -> PlaneSet.Moscow
             | "VelikieLuki" -> PlaneSet.VelikieLuki
             | "EarlyAccess" -> PlaneSet.EarlyAccess
+            | "Stalingrad" -> PlaneSet.Stalingrad
             | x -> failwithf "Invalid PlaneSet value: '%s'" x
         StrategyFile = values.StrategyFile
         Seed =
