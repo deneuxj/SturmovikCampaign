@@ -15,8 +15,8 @@ let generatePlaneTransfer store (world : World) (state : WorldState) (order : Pl
     let landPos, landOri = sg.GetAirfield(order.Destination).Runway
     let flight = FerryFlight.Create(store, spawnPos, landPos, spawnOri, landOri, order.Qty)
     // Plane type and country
-    flight.Plane.Script <- flight.Plane.Script
-    flight.Plane.Model <- flight.Plane.Model
+    flight.Plane.Script <- order.Plane.ScriptModel.Script
+    flight.Plane.Model <- order.Plane.ScriptModel.Model
     flight.Plane.Country <- order.OrderId.Coalition.ToCountry
     // Connect to mission start
     Mcu.addTargetLink missionStart flight.Start.Index
