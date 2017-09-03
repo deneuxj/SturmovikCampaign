@@ -19,6 +19,7 @@ let private basePlaneCost = 500.0f<E>
 
 type PlaneSet =
     | Moscow
+    | Stalingrad
     | VelikieLuki
     | EarlyAccess
     | All
@@ -427,8 +428,22 @@ with
               IL2M41
               Mig3
               P40
-              Pe2s35
-              SpitfireMkVb ]
+              Pe2s35 ]
+        | Stalingrad ->
+            [ Bf109e7
+              Bf109f4
+              Bf109g2
+              Bf110e
+              Ju88a4
+              Ju87
+              Ju52
+              He111h6
+              I16
+              IL2M42
+              Yak1s69
+              Lagg3s29
+              P40
+              Pe2s35 ]
         | VelikieLuki ->
             [ Bf109e7
               Bf109f4
