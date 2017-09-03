@@ -227,7 +227,8 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                                     points
                                     |> List.pick(fun p1 ->
                                         if p1.GetType().Value = 2 then
-                                            let p = Vector2(float32 <| p1.GetX().Value, float32 <| p1.GetY().Value)
+                                            let p =
+                                                Vector2(float32 <| p1.GetX().Value, float32 <| p1.GetY().Value).Rotate(float32 (spawn.GetYOri().Value)) + Vector2.FromPos(spawn)
                                             Some ((p - fst state.Runway).Length())
                                         else
                                             None)
