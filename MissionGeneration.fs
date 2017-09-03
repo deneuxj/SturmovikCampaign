@@ -328,12 +328,13 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                     | Some path ->
                         let pathVertices =
                             path
-                            |> List.map (fun (v, yori) ->
+                            |> List.map (fun (v, yori, side) ->
                                 { Pos = v
                                   Ori = yori
                                   Radius = 10000
                                   Speed = 50
                                   Priority = 1
+                                  SpawnSide = side
                                 }
                             )
                         let virtualConvoy =
@@ -400,12 +401,13 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                     |> Option.map (fun x -> x.Value)
                 match path with
                 | Some path ->
-                    let toVertex(v, yori) =
+                    let toVertex(v, yori, side) =
                         { Pos = v
                           Ori = yori
                           Speed = 20
                           Radius = 100
                           Priority = 1
+                          SpawnSide = side
                         }
                     let travel =
                         path
@@ -419,7 +421,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                             20000.0f / 3600.0f
                         path
                         |> Seq.pairwise
-                        |> Seq.sumBy (fun ((v1, _), (v2, _)) -> (v1 - v2).Length() / speed)
+                        |> Seq.sumBy (fun ((v1, _, _), (v2, _, _)) -> (v1 - v2).Length() / speed)
                         |> (*) 1.5f
                         |> (*) (ceil (float32 order.Composition.Length / float32 ColumnMovement.MaxColumnSize) |> min (float32 maxColumnSplit))
                     let initialDelay =
@@ -435,7 +437,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         x.Time <- float delayValue
                         x.Name <- "Initial delay"
                         match path with
-                        | (pos, _) :: _ -> (pos + Vector2(-100.0f, 0.0f)).AssignTo x.Pos
+                        | (pos, _, _) :: _ -> (pos + Vector2(-100.0f, 0.0f)).AssignTo x.Pos
                         | [] -> ()
                         x
                     yield McuUtil.groupFromList [ initialDelay ]

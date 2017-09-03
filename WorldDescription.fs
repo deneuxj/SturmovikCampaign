@@ -13,6 +13,7 @@ open SturmovikMission.DataProvider.Parsing
 open Campaign.Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open SturmovikMission.Blocks.VirtualConvoy.Types
 
 type RegionId =
     RegionId of string
@@ -141,13 +142,12 @@ with
             |> Option.defaultVal []
         { this with Parking = parking }
 
-
 /// Paths link regions to their neighbours. Road and rail convoys travel along those. Those are extracted from waypoints in groups Roads and Trains respectively in the strategy mission.
 type Path = {
     StartId : RegionId
     EndId : RegionId
     /// Ordered list of path vertices, composed of a location and an orientation. The orientation is important for properly orienting trains and vehicle columns.
-    Locations : (Vector2 * float32) list
+    Locations : (Vector2 * float32 * SpawnSide) list
 }
 with
     static member ExtractPaths(waypoints : T.MCU_Waypoint list, regions : Region list) =
@@ -158,12 +158,19 @@ with
         let buildPath(start : T.MCU_Waypoint) =
             let rec work (current : T.MCU_Waypoint) path =
                 match current.GetName().Value with
-                | "End" -> current :: path
+                | "EndL" -> (current, Left) :: path
+                | "EndR" -> (current, Right) :: path
+                | "End" -> (current, Center) :: path
                 | _ ->
                     match current.GetTargets().Value with
                     | [next] ->
+                        let spawnSide =
+                            match current.GetName().Value with
+                            | "StartR" -> Right
+                            | "StartL" -> Left
+                            | _ -> Center
                         match waypointsById.TryGetValue(next) with
-                        | true, next -> work next (current :: path)
+                        | true, next -> work next ((current, spawnSide) :: path)
                         | false, _ -> failwithf "Failed building path because there is no waypoints with id '%d'" next
                     | [] ->
                         failwithf "Failed to build path because node '%d' has no successor" (current.GetIndex().Value)
@@ -177,7 +184,7 @@ with
             let endRegion =
                 match path with
                 | finish :: reversed ->
-                    match regions |> List.tryFind (fun area -> Vector2.FromPos(finish).IsInConvexPolygon(area.Boundary)) with
+                    match regions |> List.tryFind (fun area -> Vector2.FromPos(fst finish).IsInConvexPolygon(area.Boundary)) with
                     | None -> failwithf "Failed to build path because end node '%d' is not in a region" (start.GetIndex().Value)
                     | Some x -> x
                 | _ ->
@@ -185,15 +192,18 @@ with
             let locations =
                 path
                 |> List.rev
-                |> List.map (fun wp -> Vector2.FromPos wp, float32(wp.GetYOri().Value))
+                |> List.map (fun (wp, side) -> Vector2.FromPos wp, float32(wp.GetYOri().Value), side)
             { StartId = startRegion.RegionId
               EndId = endRegion.RegionId
               Locations = locations
             }
         [
             for wp in waypoints do
-                if wp.GetName().Value = "Start" then
+                match wp.GetName().Value with
+                | "Start" | "StartL" | "StartR" ->
                     yield buildPath wp
+                | _ ->
+                    ()
         ]
 
     member this.MatchesEndpoints(start, finish) =
@@ -203,7 +213,7 @@ with
             lazy (
                 this.Locations
                 |> List.rev
-                |> List.map (fun (pos, yori) -> pos, if yori < 180.0f then yori + 180.0f else yori - 180.0f))
+                |> List.map (fun (pos, yori, side) -> pos, (if yori < 180.0f then yori + 180.0f else yori - 180.0f), side.Mirrored))
             |> Some
         else
             None
@@ -282,7 +292,7 @@ with
                     let other =
                         try
                             toNeighbours
-                            |> List.minBy(fun (path, id) -> pos.DistanceFromPath(path.Locations |> List.map fst))
+                            |> List.minBy(fun (path, id) -> pos.DistanceFromPath(path.Locations |> List.map (fun (x, _, _) -> x)))
                         with
                         | _ -> failwithf "Failed to find closest path to defense area '%d'" (area.GetIndex().Value)
                         |> snd

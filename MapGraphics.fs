@@ -371,8 +371,8 @@ with
         let mkTravelArrow(startRegion : RegionId, endRegion : RegionId, color, numVehicles, iconId) =
             match world.Roads |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
-                let start, _ = x.Value.Head
-                let tip, _ = List.last x.Value
+                let start, _, _ = x.Value.Head
+                let tip, _, _ = List.last x.Value
                 let width =
                     let x = (float32 numVehicles) / 15.0f |> min 1.0f
                     2000.0f * x + 500.0f * (1.0f - x)
