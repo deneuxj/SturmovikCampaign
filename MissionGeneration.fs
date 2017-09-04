@@ -872,9 +872,9 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         mkAttackStarts alliesAttacks
         axisAttacks @ alliesAttacks |> List.map fst
     let axisPlaneFerries =
-        missionData.AxisOrders.PlaneFerries |> List.map (fun ferry -> PlaneFerry.generatePlaneTransfer store missionData.World missionData.State ferry missionBegin)
+        missionData.AxisOrders.PlaneFerries |> List.map (fun ferry -> PlaneFerry.generatePlaneTransfer store lcStore missionData.World missionData.State ferry missionBegin)
     let alliesPlaneFerries =
-        missionData.AlliesOrders.PlaneFerries |> List.map (fun ferry -> PlaneFerry.generatePlaneTransfer store missionData.World missionData.State ferry missionBegin)
+        missionData.AlliesOrders.PlaneFerries |> List.map (fun ferry -> PlaneFerry.generatePlaneTransfer store lcStore missionData.World missionData.State ferry missionBegin)
     let buildingFires =
         createBuildingFires store missionData.World missionData.State (float32 missionData.Weather.Wind.Direction)
         |> List.map (fun fire -> fire.All)
