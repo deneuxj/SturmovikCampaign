@@ -55,7 +55,7 @@ with
     /// <summary>
     /// Create a pair of colocated icons, visible to each coalition as attack/cover
     /// </summary>
-    /// <param name="coalition">The coalition with the attacking role</param>
+    /// <param name="coalition">The coalition for which the icon should appear as friendly</param>
     /// <param name="iconType">The icon type, should be of one of the CoverXXX types</param>
     static member CreatePair(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, label : string, coalition : Mcu.CoalitionValue, iconType : Mcu.IconIdValue) =
         let one = IconDisplay.Create(store, lcStore, pos, label, coalition, iconType)
