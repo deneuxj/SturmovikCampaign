@@ -427,11 +427,11 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
     let starts =
         seq {
             for af, afs in List.zip world.Airfields state.Airfields do
-                if sg.GetRegion(af.Region).Owner = Some coalition then
+                if sg.GetRegion(af.Region).Owner = Some coalition && not(Map.isEmpty afs.NumPlanes) then
                     let excessPlaneModel, count =
                         afs.NumPlanes
                         |> Map.toSeq
-                        |> Seq.maxBy fst
+                        |> Seq.maxBy snd
                     let numAvailableToFerry =
                         count - targetNumPlanes
                         |> max 0.0f
@@ -486,19 +486,15 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
                     yield! matchAirfields rest destinations
         }
     matchAirfields starts destinations
-    |> Seq.map (fun ((af, pt, numSend), (af2, _, numReceive)) ->
-        let planeModel, count =
-            sg.GetAirfield(af).NumPlanes
-            |> Map.filter (fun m c -> m = pt)
-            |> Map.toSeq
-            |> Seq.maxBy snd
+    |> Seq.map (fun ((af, plane, numSend), (af2, _, numReceive)) ->
+        let count = sg.GetAirfield(af).NumPlanes.[plane]
         let count =
             count
             |> int
             |> min numSend
             |> min numReceive
         { OrderId = { Coalition = coalition; Index = 0 } // Index to be set when all orders have been decided
-          Plane = planeModel
+          Plane = plane
           Qty = count
           Start = af
           Destination = af2
