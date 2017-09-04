@@ -423,23 +423,21 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
 let decidePlaneTransfers (world : World) (state : WorldState) (coalition : CoalitionId) =
     let wg = world.FastAccess
     let sg = state.FastAccess
+    let targetNumPlanes = 3.0f
     let starts =
         seq {
             for af, afs in List.zip world.Airfields state.Airfields do
                 if sg.GetRegion(af.Region).Owner = Some coalition then
-                    let totalPlanes =
-                        afs.NumPlanes |> Map.toSeq |> Seq.sumBy (snd >> int)
-                    let expRel = PlaneModel.PlaneTypeShares coalition
-                    // Note that we don't ferry bombers, normally there is no need to have them close to the enemy lines.
-                    let planeTypes = [PlaneModel.Fighter; PlaneModel.Attacker]
-                    let excessPlaneType =
-                        planeTypes
-                        |> Seq.maxBy(fun pt ->
-                            (float32(getNumPlanesOfType pt afs.NumPlanes) / (float32 totalPlanes)) / expRel.[pt])
+                    let excessPlaneModel, count =
+                        afs.NumPlanes
+                        |> Map.toSeq
+                        |> Seq.maxBy fst
                     let numAvailableToFerry =
-                        int(getNumPlanesOfType excessPlaneType afs.NumPlanes - 5.0f)
-                        |> max 0 // Don't offer to transfer negative amounts of planes.
-                    yield af.AirfieldId, excessPlaneType, numAvailableToFerry
+                        count - targetNumPlanes
+                        |> max 0.0f
+                        |> floor
+                        |> int
+                    yield af.AirfieldId, excessPlaneModel, numAvailableToFerry
         }
         |> Seq.sortByDescending(fun (_, _, n) -> n)
         |> Seq.filter (fun (_, _, n) -> n > 0)
@@ -456,19 +454,13 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
                             let regs = sg.GetRegion(ngh)
                             regs.Owner <> Some coalition && regs.TotalVehicleValue >= 0.75f * sg.GetRegion(reg.RegionId).TotalVehicleValue)
                     if not afUnderThreat then
-                        let totalPlanes =
-                            afs.NumPlanes |> Map.toSeq |> Seq.sumBy (snd >> int)
-                        let expRel = PlaneModel.PlaneTypeShares coalition
-                        // Note that we don't ferry bombers, normally there is no need to have them close to enemy lines.
-                        let planeTypes = [PlaneModel.Fighter; PlaneModel.Attacker]
-                        let excessPlaneType =
-                            planeTypes
-                            |> Seq.minBy(fun pt ->
-                                (float32(getNumPlanesOfType pt afs.NumPlanes) / (float32 totalPlanes)) / expRel.[pt])
-                        let numRequestedToFerry =
-                            10 - int(getNumPlanesOfType excessPlaneType afs.NumPlanes)
-                            |> max 0 // Don't request negative amounts of planes.
-                        yield af.AirfieldId, excessPlaneType, numRequestedToFerry
+                        for (plane, count) in afs.NumPlanes |> Map.toSeq do
+                            let numRequestedToFerry =
+                                targetNumPlanes - count
+                                |> max 0.0f
+                                |> ceil
+                                |> int
+                            yield af.AirfieldId, plane, numRequestedToFerry
         }
         |> Seq.sortByDescending(fun (_, _, n) -> n)
         |> Seq.filter (fun (_, _, n) -> n > 0)
@@ -497,7 +489,7 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
     |> Seq.map (fun ((af, pt, numSend), (af2, _, numReceive)) ->
         let planeModel, count =
             sg.GetAirfield(af).NumPlanes
-            |> Map.filter (fun m c -> m.PlaneType = pt)
+            |> Map.filter (fun m c -> m = pt)
             |> Map.toSeq
             |> Seq.maxBy snd
         let count =
