@@ -427,20 +427,17 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
     let starts =
         seq {
             for af, afs in List.zip world.Airfields state.Airfields do
-                if sg.GetRegion(af.Region).Owner = Some coalition && not(Map.isEmpty afs.NumPlanes) then
-                    let excessPlaneModel, count =
-                        afs.NumPlanes
-                        |> Map.toSeq
-                        |> Seq.maxBy snd
-                    let numAvailableToFerry =
-                        count - targetNumPlanes
-                        |> max 0.0f
-                        |> floor
-                        |> int
-                    yield af.AirfieldId, excessPlaneModel, numAvailableToFerry
+                if sg.GetRegion(af.Region).Owner = Some coalition then
+                    for plane, count in afs.NumPlanes |> Map.toSeq do
+                        let numAvailableToFerry =
+                            count - targetNumPlanes
+                            |> max 0.0f
+                            |> floor
+                            |> int
+                        if numAvailableToFerry > 0 then
+                            yield af.AirfieldId, plane, numAvailableToFerry
         }
         |> Seq.sortByDescending(fun (_, _, n) -> n)
-        |> Seq.filter (fun (_, _, n) -> n > 0)
         |> List.ofSeq
     let destinations =
         seq {
@@ -465,23 +462,27 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
         |> Seq.sortByDescending(fun (_, _, n) -> n)
         |> Seq.filter (fun (_, _, n) -> n > 0)
         |> List.ofSeq
-    let rec tryFindMatchingDestination ((af0, pt0, _) as start) destinations =
-        match destinations with
+    let rec tryFindMatchingStart ((af0, pt0, _) as destination) starts =
+        match starts with
         | [] -> None
         | (af, pt, num) as hd :: rest ->
             if af <> af0 && pt = pt0 then
                 Some hd
             else
-                tryFindMatchingDestination start rest
+                tryFindMatchingStart destination rest
     let rec matchAirfields starts destinations =
         seq {
-            match starts with
+            match destinations with
             | [] -> ()
-            | start :: rest ->
-                match tryFindMatchingDestination start destinations with
-                | Some destination ->
+            | destination :: rest ->
+                match tryFindMatchingStart destination starts with
+                | Some ((af0, _, _) as start) ->
                     yield start, destination
-                    yield! matchAirfields rest (destinations |> List.filter ((<>) destination))
+                    // Each airfield can only be used for one transport flight
+                    let starts =
+                        starts
+                        |> List.filter (fun (af, _, _) -> af <> af0)
+                    yield! matchAirfields starts rest
                 | None ->
                     yield! matchAirfields rest destinations
         }
