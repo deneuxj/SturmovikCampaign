@@ -1,4 +1,4 @@
-﻿#I "bin/Debug"
+﻿#I "bin/Release"
 #r "Campaign.dll"
 
 #load "Configuration.fsx" 

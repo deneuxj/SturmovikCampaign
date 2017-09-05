@@ -204,15 +204,16 @@ with
             depart this.AlliesForces order.Start force
             arrive this.AlliesForces order.Destination force)
         let destinations =
-            [
-                match axis with
-                | Some order -> yield order.Destination
-                | None -> ()
-                match allies with
-                | Some order -> yield order.Destination
-                | None -> ()
-            ]
-            |> List.distinct
+            match axis, allies with
+            | None, None -> []
+            | None, Some order
+            | Some order, None ->
+                [order.Destination]
+            | Some axis, Some allies ->
+                if axis.Destination <> allies.Destination then
+                    [axis.Destination; allies.Destination]
+                else
+                    [axis.Destination]
         let oldScore = this.Score.Clone()
         for i in destinations do
             let axisForce = this.AxisForces.[i]
