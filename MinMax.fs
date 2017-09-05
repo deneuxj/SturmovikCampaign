@@ -360,53 +360,65 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
             allMoves neighboursOf board Axis
         let alliesMoves =
             allMoves neighboursOf board Allies
+            |> List.ofSeq
+        let axisMovesIt = axisMoves.GetEnumerator()
         let ((axis, allies), deepMoves), value =
-            axisMoves
-            |> Seq.fold (fun soFar axisMove ->
-                if board.Score.NumAlliesFactories = 0 then
-                    (((Some axisMove, None), []), Defeat(Allies, depth, "No factories")) |> BoardEvaluation.Min soFar
-                else if cancel.IsCancellationRequested then
-                    soFar
-                else if BoardEvaluation.Lt(snd soFar, beta) then
-                    soFar
+            let rec workAxis soFar =
+                if axisMovesIt.MoveNext() then
+                    let axisMove = axisMovesIt.Current
+                    if board.Score.NumAlliesFactories = 0 then
+                        (((Some axisMove, None), []), Defeat(Allies, depth, "No factories")) |> BoardEvaluation.Min soFar
+                    else if cancel.IsCancellationRequested then
+                        soFar
+                    else if BoardEvaluation.Lt(snd soFar, beta) then
+                        soFar
+                    else
+                        let _, alpha = soFar
+                        let (alliesResponse, deepMoves), value =
+                            workAllies (axisMove, alpha, alliesMoves) ((None, []), Defeat(Allies, 0, "Avoid allies no moves"))
+                        (((Some axisMove, alliesResponse), deepMoves), value)
+                        |> BoardEvaluation.Min soFar
+                        |> workAxis
                 else
-                    let _, alpha = soFar
-                    let (alliesResponse, deepMoves), value =
-                        alliesMoves
-                        // Do not allow enemy columns to cross eachother on the road,
-                        |> Seq.filter (fun allyMove ->
-                            (allyMove.Destination = axisMove.Start && allyMove.Start = axisMove.Destination)
-                            |> not)
-                        |> Seq.fold (fun soFar alliesMove ->
-                            if board.Score.NumAxisFactories = 0 then
-                                ((Some alliesMove, []), Defeat(Axis, depth, "No factories")) |> BoardEvaluation.Max soFar
-                            else if BoardEvaluation.Lt(alpha, snd soFar) then
-                                soFar
-                            else if cancel.IsCancellationRequested then
-                                soFar
-                            else
-                                //let saved = board.Clone()
-                                let combined = { Axis = Some axisMove; Allies = Some alliesMove }
-                                let restore, oldValue = board.DoMove(combined)
-                                let deepMoves, value =
-                                    if depth >= maxDepth then
-                                        [], Ongoing board.Score.Value
-                                    else
-                                        let entry = (board.Owners, board.AxisForces, board.AlliesForces)
-                                        match positionCache.TryGetValue(entry) with
-                                        | true, (cachedScore, deepMoves, cachedDepth) when cachedDepth <= depth ->
-                                            hits <- hits + 1
-                                            deepMoves, cachedScore
-                                        | _ ->
-                                            let deepMoves, value = bestMoveAtDepth (snd soFar) (depth + 1)
-                                            positionCache.[entry] <- (value, deepMoves, depth)
-                                            deepMoves, value
-                                board.UndoMove(combined, restore, oldValue)
-                                //assert(saved = board)
-                                ((Some alliesMove, deepMoves), value) |> BoardEvaluation.Max soFar
-                        ) ((None, []), Defeat(Allies, 0, "Avoid allies no moves"))
-                    (((Some axisMove, alliesResponse), deepMoves), value) |> BoardEvaluation.Min soFar
-            ) (((None, None), []), Defeat(Axis, 0, "Avoid axis no moves"))
+                    soFar
+            and workAllies(axisMove, alpha, alliesMoves) soFar =
+                match alliesMoves with
+                | [] ->
+                    soFar
+                | alliesMove :: alliesMoves ->
+                    if alliesMove.Destination = axisMove.Start && alliesMove.Start = axisMove.Destination then
+                        soFar
+                        |> workAllies(axisMove, alpha, alliesMoves)
+                    else
+                        if board.Score.NumAxisFactories = 0 then
+                            ((Some alliesMove, []), Defeat(Axis, depth, "No factories")) |> BoardEvaluation.Max soFar
+                        else if BoardEvaluation.Lt(alpha, snd soFar) then
+                            soFar
+                        else if cancel.IsCancellationRequested then
+                            soFar
+                        else
+//                            let saved = board.Clone()
+                            let combined = { Axis = Some axisMove; Allies = Some alliesMove }
+                            let restore, oldValue = board.DoMove(combined)
+                            let deepMoves, value =
+                                if depth >= maxDepth then
+                                    [], Ongoing board.Score.Value
+                                else
+                                    let entry = (board.Owners, board.AxisForces, board.AlliesForces)
+                                    match positionCache.TryGetValue(entry) with
+                                    | true, (cachedScore, deepMoves, cachedDepth) when cachedDepth <= depth ->
+                                        hits <- hits + 1
+                                        deepMoves, cachedScore
+                                    | _ ->
+                                        let deepMoves, value = bestMoveAtDepth (snd soFar) (depth + 1)
+                                        positionCache.[entry] <- (value, deepMoves, depth)
+                                        deepMoves, value
+                            board.UndoMove(combined, restore, oldValue)
+//                            assert(saved.DisplayString = board.DisplayString)
+                            ((Some alliesMove, deepMoves), value)
+                            |> BoardEvaluation.Max soFar
+                            |> workAllies(axisMove, alpha, alliesMoves)
+            workAxis (((None, None), []), Defeat(Axis, 0, "Avoid axis no moves"))
         { Axis = axis; Allies = allies } :: deepMoves, value
     let moves, score = bestMoveAtDepth (Defeat(Allies, 0, "Initial beta")) 0
     if cancel.IsCancellationRequested then
