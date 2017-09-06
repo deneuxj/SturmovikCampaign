@@ -484,7 +484,7 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
                         |> List.filter (fun (af, _, _) -> af <> af0)
                     yield! matchAirfields starts rest
                 | None ->
-                    yield! matchAirfields rest destinations
+                    yield! matchAirfields starts rest
         }
     matchAirfields starts destinations
     |> Seq.map (fun ((af, plane, numSend), (af2, _, numReceive)) ->
