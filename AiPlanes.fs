@@ -45,21 +45,32 @@ with
         | _ -> 0
 
     member this.ToPatrolBlock(store, lcStore) =
-        let block = Patrol.Create(store, lcStore, this.Pos, this.Altitude, this.Coalition.ToCoalition)
-        block.Plane.Country <- this.Coalition.ToCountry
-        block.Plane.Script <- this.Plane.ScriptModel.Script
-        block.Plane.Model <- this.Plane.ScriptModel.Model
-        block.Plane.PayloadId <- Some this.Payload
+        let blocks =
+            [
+                for i in 0..1 do
+                    let block = Patrol.Create(store, lcStore, this.Pos, this.Altitude, this.Coalition.ToCoalition)
+                    block.Plane.Country <- this.Coalition.ToCountry
+                    block.Plane.Script <- this.Plane.ScriptModel.Script
+                    block.Plane.Model <- this.Plane.ScriptModel.Model
+                    block.Plane.PayloadId <- Some this.Payload
+                    yield block
+            ]
+        let bothKilled = SturmovikMission.Blocks.Conjunction.Conjunction.Create(store, this.Pos + Vector2(200.0f, 200.0f))
+        Mcu.addTargetLink blocks.[0].Killed bothKilled.SetA.Index
+        Mcu.addTargetLink blocks.[1].Killed bothKilled.SetB.Index
+        Mcu.addTargetLink blocks.[0].Spawned bothKilled.ClearA.Index
+        Mcu.addTargetLink blocks.[1].Spawned bothKilled.ClearB.Index
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, this.Pos, sprintf "Patrol at %d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
-        Mcu.addTargetLink block.Killed icon1.Hide.Index
-        Mcu.addTargetLink block.Killed icon2.Hide.Index
-        Mcu.addTargetLink block.Spawned icon1.Show.Index
-        Mcu.addTargetLink block.Spawned icon2.Show.Index
+        Mcu.addTargetLink bothKilled.AllTrue icon1.Hide.Index
+        Mcu.addTargetLink bothKilled.AllTrue icon2.Hide.Index
+        for i in 0..1 do
+            Mcu.addTargetLink blocks.[i].Spawned icon1.Show.Index
+            Mcu.addTargetLink blocks.[i].Spawned icon2.Show.Index
         { new McuUtil.IMcuGroup with
               member x.Content = []
               member x.LcStrings = []
-              member x.SubGroups = [ block.All; icon1.All; icon2.All ]
-        }, block
+              member x.SubGroups = [ blocks.[0].All; blocks.[1].All; bothKilled.All; icon1.All; icon2.All ]
+        }, blocks
 
 
 let getNumPlanesOfType planeType (numPlanes : Map<PlaneModel, float32>) =

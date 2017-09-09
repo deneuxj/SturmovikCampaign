@@ -852,8 +852,9 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         let alliesPatrols =
             missionData.AlliesOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
         [
-            for allMcus, block in axisPatrols @ alliesPatrols do
-                Mcu.addTargetLink missionBegin block.Start.Index
+            for allMcus, blocks in axisPatrols @ alliesPatrols do
+                for block in blocks do
+                    Mcu.addTargetLink missionBegin block.Start.Index
                 yield allMcus
         ]
     let allAttacks =
