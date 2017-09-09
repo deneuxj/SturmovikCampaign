@@ -22,37 +22,20 @@ type AiPatrol =
       Pos : Vector2
       Altitude : float32
       ProtectedRegion : RegionId option
+      Role : PlaneRole
     }
 with
-    // Payload suitable for air-to-air engagements.
-    member this.Payload =
-        match this.Plane with
-        | PlaneModel.Bf109e7 -> 0 // "0,1-MG17-AP-2000 + 2,3-MGFF-APHE-120"
-        | PlaneModel.Bf109f2 -> 3 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
-        | PlaneModel.Bf109f4 -> 0 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
-        | PlaneModel.Bf109g2 -> 0 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
-        | PlaneModel.Bf109g4 -> 0 // "0,1-MG17-AP-1000 + 2-MG15120-APHE-200"
-        | PlaneModel.Fw190a3 -> 0 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500"
-        | PlaneModel.Fw190a5 -> 0 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500"
-        | PlaneModel.I16 -> 11 // "0,1-SHKAS-AP-1000 + 2,3-SHVAK-APHE-180-add"
-        | PlaneModel.Mc202 -> 4 // 0,1-BREDA12-APHE-800 + 2,3-MG15120-APHE-270-add
-        | PlaneModel.Mig3 -> 16 // "0,1-SHVAK-APHE-300"
-        | PlaneModel.P40 -> 0 // "0,1,2,3,4,5-M250-AP-1410"
-        | PlaneModel.Yak1s69 -> 0 // "0,1-SHKAS-AP-1500 + 2-SHVAK-APHE-120"
-        | PlaneModel.Yak1s127 -> 0 // "0-UB-APHE-220 + 1-SHVAK-APHE-140"
-        | PlaneModel.Lagg3s29 -> 1 // "0-UB-APHE-200 + 1-VYA23-APHE-90-add"
-        | PlaneModel.La5 -> 0 // "0,1-SHVAK-APHE-340"
-        | _ -> 0
-
     member this.ToPatrolBlock(store, lcStore) =
         let blocks =
             [
                 for i in 0..1 do
                     let block = Patrol.Create(store, lcStore, this.Pos, this.Altitude, this.Coalition.ToCoalition)
+                    let modmask, payload = this.Plane.PayloadForRole(this.Role)
                     block.Plane.Country <- this.Coalition.ToCountry
                     block.Plane.Script <- this.Plane.ScriptModel.Script
                     block.Plane.Model <- this.Plane.ScriptModel.Model
-                    block.Plane.PayloadId <- Some this.Payload
+                    block.Plane.PayloadId <- Some payload
+                    block.Plane.WMMask <- Some modmask
                     yield block
             ]
         let bothKilled = SturmovikMission.Blocks.Conjunction.Conjunction.Create(store, this.Pos + Vector2(200.0f, 200.0f))
@@ -113,6 +96,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                             Pos = p1
                                             Altitude = 4000.0f
                                             ProtectedRegion = Some af.Region
+                                            Role = Interceptor
                                         }
                                     if getNumPlanesOfType Attacker enemyAirfieldState.NumPlanes >= 1.0f && plane.Roles.Contains Patroller && count >= 2.0f then
                                         yield af, {
@@ -121,6 +105,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                             Pos = p1
                                             Altitude = 3000.0f
                                             ProtectedRegion = Some af.Region
+                                            Role = Patroller
                                         }
                                     if getNumPlanesOfType Fighter enemyAirfieldState.NumPlanes >= 1.0f && plane.Roles.Contains Patroller && count >= 2.0f then
                                         yield af, {
@@ -129,6 +114,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                             Pos = p1
                                             Altitude = 2500.0f
                                             ProtectedRegion = Some af.Region
+                                            Role = Patroller
                                         }
         // Border patrol and offensive patrol
         let frontline = computeFrontLine true world state.Regions
@@ -161,6 +147,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                     Pos = p1
                                     Altitude = 3000.0f
                                     ProtectedRegion = Some ourRegion.RegionId
+                                    Role = Patroller
                                 }
                             // Offensive patrol
                             let p1 = ourRegion.Position + dir * 20000.0f
@@ -171,6 +158,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                     Pos = p1
                                     Altitude = 3000.0f
                                     ProtectedRegion = None
+                                    Role = Patroller
                                 }
                         | None ->
                             ()

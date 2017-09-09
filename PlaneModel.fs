@@ -230,6 +230,15 @@ with
         | PlaneModel.Ju52 -> 1, 0
         | _ -> 0, 0
 
+    /// The mod mask and payload ID suitable for a given role
+    member this.PayloadForRole(role) =
+        match role with
+        | Patroller
+        | Interceptor -> this.FighterPayload
+        | GroundAttacker -> this.AttackPayload
+        | LevelBomber -> this.BomberPayLoad
+        | CargoTransporter -> this.CargoPayload
+
     /// Capacity of transporters
     member this.CargoCapacity =
         match this with
