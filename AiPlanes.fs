@@ -200,16 +200,9 @@ type AiAttack =
       Target : Vector2
       Altitude : float32
       Landing : (Vector2 * float32) option
+      Role : PlaneRole
     }
 with
-    member this.Payload =
-        this.Plane.AttackPayload
-        |> snd
-
-    member this.ModMask =
-        this.Plane.AttackPayload
-        |> fst
-
     member this.ToPatrolBlock(store, lcStore) =
         let landOrder =
             match this.Landing with
@@ -219,11 +212,12 @@ with
             [
                 for i in 0..1 do
                     let block = Attacker.Create(store, lcStore, this.Start + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Target, landOrder)
+                    let modmask, payload = this.Plane.PayloadForRole(this.Role)
                     block.Plane.Country <- this.Coalition.ToCountry
                     block.Plane.Script <- this.Plane.ScriptModel.Script
                     block.Plane.Model <- this.Plane.ScriptModel.Model
-                    block.Plane.WMMask <- Some this.ModMask
-                    block.Plane.PayloadId <- Some this.Payload
+                    block.Plane.WMMask <- Some modmask
+                    block.Plane.PayloadId <- Some payload
                     yield block
             ]
         let bothKilled = SturmovikMission.Blocks.Conjunction.Conjunction.Create(store, this.Start + Vector2(200.0f, 200.0f))
@@ -246,6 +240,7 @@ with
 let mkAllAttackers (world : World) (state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
+    let attackers = PlaneModel.AllModels(world.PlaneSet) |> Seq.filter (fun plane -> plane.Roles.Contains GroundAttacker)
     seq {
         for af, afState in List.zip world.Airfields state.Airfields do
             for af2, afState2 in List.zip world.Airfields state.Airfields do
@@ -253,7 +248,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
                 // af: Axis, af2: Allies, separated by less than 75km (30min round trip at 300km/h)
                 if sg.GetRegion(af.Region).Owner = Some Axis && sg.GetRegion(af2.Region).Owner = Some Allies && (af.Pos - af2.Pos).Length() < 75000.0f then
                     for coalition in [Axis; Allies] do
-                        for attacker in PlaneModel.AllPlanesOfType(world.PlaneSet, Attacker, coalition) do
+                        for attacker in attackers do
                             // If there are enough attackers of the same type, with enough bombs in the airfield's supplies, generate an attack order.
                             let _, payload = attacker.AttackPayload
                             let bombLoad =
@@ -266,24 +261,26 @@ let mkAllAttackers (world : World) (state : WorldState) =
                             if numPlanes >= minPlanes then
                                 match coalition with
                                 | Axis ->
-                                    if afState.Supplies / bombCost > bombLoad * minPlanes then
+                                    if attacker.Coalition = coalition && afState.Supplies / bombCost > bombLoad * minPlanes then
                                         yield {
                                             Start = af.Pos
                                             Landing = Some afState.Runway
                                             Target = af2.Pos
                                             Altitude = 2000.0f
                                             Plane = attacker
-                                            Coalition = Axis
+                                            Coalition = coalition
+                                            Role = GroundAttacker
                                         }, 3
                                 | Allies ->
-                                    if afState2.Supplies / bombCost > bombLoad * minPlanes then
+                                    if attacker.Coalition = coalition && afState2.Supplies / bombCost > bombLoad * minPlanes then
                                         yield {
                                             Start = af2.Pos
                                             Landing = Some afState2.Runway
                                             Target = af.Pos
                                             Altitude = 2000.0f
                                             Plane = attacker
-                                            Coalition = Allies
+                                            Coalition = coalition
+                                            Role = GroundAttacker
                                         }, 3
             // Storage raids
             let storages =
@@ -293,7 +290,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
             | Some coalition ->
                 for region, regState in List.zip world.Regions state.Regions do
                     if regState.Owner = Some coalition.Other && (region.Position - af.Pos).Length() < 75000.0f then
-                        for attacker in PlaneModel.AllPlanesOfType(world.PlaneSet, Attacker, coalition) do
+                        for attacker in attackers |> Seq.filter (fun plane -> plane.Coalition = coalition) do
                             // If there are enough attackers of the same type, with enough bombs in the airfield's supplies, generate an attack order.
                             let _, payload = attacker.AttackPayload
                             let bombLoad =
@@ -314,6 +311,7 @@ let mkAllAttackers (world : World) (state : WorldState) =
                                             Altitude = 2000.0f
                                             Plane = attacker
                                             Coalition = coalition
+                                            Role = GroundAttacker
                                         }, 1
             | None -> ()
     }
