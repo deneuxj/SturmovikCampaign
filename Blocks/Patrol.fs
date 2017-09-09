@@ -9,7 +9,7 @@ open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.WhileEnemyClose
 
-/// A single fighter that flies a rectangular pattern for one hour, then respawns.
+/// A pair of fighters that fly a circular pattern for one hour, then respawns.
 type Patrol = {
     Start : Mcu.McuTrigger
     Plane : Mcu.HasEntity
