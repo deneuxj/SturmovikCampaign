@@ -14,6 +14,9 @@ type PlaneType  =
 type PlaneRole =
     | Interceptor
     | Patroller
+    | GroundAttacker
+    | LevelBomber
+    | CargoTransporter
 
 let private basePlaneCost = 500.0f<E>
 
@@ -187,7 +190,7 @@ with
         | Pe2s87
         | Pe2s35 -> 1000.0f<K>
 
-    /// The modmask and payload ID for suitable for ground attack
+    /// The mod mask and payload ID suitable for ground attack
     member this.AttackPayload =
         let modmask =
             match this with
@@ -206,10 +209,32 @@ with
             | _ -> 0
         modmask, payload
 
+    /// The mod mask and payload ID suitable for fighter patrols
+    member this.FighterPayload =
+        match this with
+        | _ -> 0, 0
+
+    /// The mod mask and payload ID suitable for level-bombing
+    member this.BomberPayLoad =
+        match this with
+        | PlaneModel.He111h6 -> 0, 3
+        | PlaneModel.He111h16 -> 0, 3
+        | PlaneModel.Ju88a4 -> 0, 4
+        | PlaneModel.Pe2s35 -> 0, 2
+        | PlaneModel.Pe2s87 -> 0, 2
+        | _ -> 0, 0
+
+    /// The mod mask and payload ID suitable for cargo transport
+    member this.CargoPayload =
+        match this with
+        | PlaneModel.Ju52 -> 1, 0
+        | _ -> 0, 0
+
+    /// Capacity of transporters
     member this.CargoCapacity =
         match this with
         | Ju52 -> 2300.0f<K>
-        | _ -> 0.0f<K>
+        | _ -> this.BombCapacity
 
     member this.Coalition =
         match this with
@@ -439,35 +464,35 @@ with
 
     member this.Roles =
         match this with
-        | Bf109e7 -> [ Patroller ]
+        | Bf109e7 -> [ GroundAttacker; Patroller ]
         | Bf109f2
         | Bf109f4
         | Bf109g2
-        | Bf109g4 -> [ Interceptor ; Patroller ]
+        | Bf109g4 -> [ GroundAttacker; Interceptor ; Patroller ]
         | Fw190a3
-        | Fw190a5 -> [ Interceptor ]
+        | Fw190a5 -> [ GroundAttacker; Interceptor ]
         | Mc202 -> [ Patroller ]
         | Bf110e
-        | Bf110g -> [ Interceptor ]
-        | Ju88a4
-        | Ju52 -> []
+        | Bf110g -> [ GroundAttacker; Interceptor ]
+        | Ju88a4 -> [ LevelBomber ]
+        | Ju52 -> [ CargoTransporter ]
         | I16 -> [ Patroller ]
         | IL2M41
         | IL2M42
-        | IL2M43 -> []
+        | IL2M43 -> [ GroundAttacker ]
         | Mig3 -> [ Interceptor ]
-        | P40 -> [ Interceptor ]
+        | P40 -> [ GroundAttacker; Interceptor ]
         | Yak1s69 
         | Yak1s127
         | La5
         | SpitfireMkVb
         | Lagg3s29 -> [ Interceptor ; Patroller ]
+        | Ju87 -> [ GroundAttacker ]
         | Pe2s35
-        | Pe2s87
-        | Ju87
-        | Hs129b2
+        | Pe2s87 -> [ GroundAttacker; LevelBomber; CargoTransporter ]
+        | Hs129b2 -> [ GroundAttacker ]
         | He111h6
-        | He111h16 -> []
+        | He111h16 -> [ LevelBomber; CargoTransporter ]
         |> Set.ofList
 
     static member AllModels(planeSet) =
