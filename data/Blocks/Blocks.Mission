@@ -6661,7 +6661,7 @@ Group
     Vulnerable = 0;
     Engageable = 0;
     LimitAmmo = 1;
-    StartInAir = 2;
+    StartInAir = 1;
     Callsign = 19;
     Callnum = 0;
     Time = 60;
@@ -6712,12 +6712,6 @@ Group
         Type = 3;
         CmdId = 561;
         TarId = 560;
-      }
-      OnReport
-      {
-        Type = 4;
-        CmdId = 563;
-        TarId = 562;
       }
       OnReport
       {
@@ -6926,7 +6920,7 @@ Group
     Index = 558;
     Name = "Spawned";
     Desc = "";
-    Targets = [561,584,585,603];
+    Targets = [561,584,585,586];
     Objects = [];
     XPos = 15000.087;
     YPos = 118.420;
@@ -6944,7 +6938,7 @@ Group
     Index = 560;
     Name = "Took Off";
     Desc = "";
-    Targets = [587];
+    Targets = [588];
     Objects = [];
     XPos = 15001.911;
     YPos = 118.420;
@@ -6959,7 +6953,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 587;
+    Index = 588;
     Name = "Destination";
     Desc = "";
     Targets = [563];
@@ -6995,28 +6989,10 @@ Group
 
   MCU_Timer
   {
-    Index = 562;
-    Name = "Landed";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 14997.082;
-    YPos = 118.420;
-    ZPos = 14199.386;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Time = 0;
-    Random = 100;
-  }
-  
-
-  MCU_Timer
-  {
     Index = 557;
     Name = "Killed";
     Desc = "";
-    Targets = [592,593];
+    Targets = [593,594];
     Objects = [];
     XPos = 14990.080;
     YPos = 118.420;
@@ -7034,7 +7010,7 @@ Group
     Index = 564;
     Name = "Landed";
     Desc = "";
-    Targets = [592,593];
+    Targets = [593,594];
     Objects = [];
     XPos = 14990.002;
     YPos = 118.420;
@@ -7052,7 +7028,7 @@ Group
     Index = 584;
     Name = "StartCount";
     Desc = "";
-    Targets = [596];
+    Targets = [597];
     Objects = [];
     XPos = 14987.997;
     YPos = 118.420;
@@ -7067,7 +7043,7 @@ Group
 
   MCU_Deactivate
   {
-    Index = 596;
+    Index = 597;
     Name = "Trigger Deactivate";
     Desc = "";
     Targets = [566];
@@ -7083,7 +7059,7 @@ Group
 
   MCU_Deactivate
   {
-    Index = 592;
+    Index = 593;
     Name = "Trigger Deactivate";
     Desc = "";
     Targets = [557,564];
@@ -7099,10 +7075,10 @@ Group
 
   MCU_Timer
   {
-    Index = 593;
+    Index = 594;
     Name = "5min";
     Desc = "";
-    Targets = [566,604];
+    Targets = [566,601];
     Objects = [];
     XPos = 14985.073;
     YPos = 118.420;
@@ -7133,7 +7109,7 @@ Group
 
   MCU_CMD_Behaviour
   {
-    Index = 601;
+    Index = 603;
     Name = "SetRussian";
     Desc = "";
     Targets = [];
@@ -7159,7 +7135,7 @@ Group
 
   MCU_CMD_Behaviour
   {
-    Index = 602;
+    Index = 604;
     Name = "SetGerman";
     Desc = "";
     Targets = [];
@@ -7185,7 +7161,7 @@ Group
 
   MCU_Deactivate
   {
-    Index = 603;
+    Index = 586;
     Name = "Trigger Deactivate";
     Desc = "";
     Targets = [559];
@@ -7201,7 +7177,7 @@ Group
 
   MCU_Activate
   {
-    Index = 604;
+    Index = 601;
     Name = "Trigger Activate";
     Desc = "";
     Targets = [559];
