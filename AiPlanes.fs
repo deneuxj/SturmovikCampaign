@@ -170,7 +170,11 @@ let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (Airfiel
     let defenseNeeds =
         computeDefenseNeeds world
         |> Map.ofList
+    let random = System.Random()
     patrols
+    // So taht it's not always the same type of plane that gets to do patrols when an airfield has multiple types of fighters available.
+    |> Array.ofSeq
+    |> Array.shuffle random
     // Prioritize by vulnerability and assets, then by distance (prioritize greater distances to help extend reach of covers).
     |> Seq.sortByDescending (fun (af, patrol) ->
         match patrol.ProtectedRegion with
