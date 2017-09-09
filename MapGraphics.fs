@@ -252,27 +252,26 @@ with
     /// Create health bars for each region showing supply and damage levels.
     static member CreateSupplyLevels(store, lcStore, world, state) =
         let length = 2000.0f
-        let renderSupplyBar (pos : Vector2) health color supply =
+        let renderSupplyBar (pos : Vector2) health color =
             let mkIcon = mkIcon store lcStore
+            // Gray thin background bar representing max storage
             let l0 = mkIcon (int Mcu.LineTypeValue.SectorType1) (64, 64, 64) pos
             let l1 = mkIcon (int Mcu.LineTypeValue.SectorType1) (64, 64, 64) (pos + length * Vector2.UnitY)
-            let h0 = mkIcon (int Mcu.LineTypeValue.Bold) (0, 0, 128) (pos)
-            let h1 = mkIcon (int Mcu.LineTypeValue.Bold) (0, 0, 128) (pos + length * health * Vector2.UnitY)
-            let s0 = mkIcon (int Mcu.LineTypeValue.Normal) color (pos + length * supply * Vector2.UnitY + Vector2(0.05f * length, 0.0f))
-            let s1 = mkIcon (int Mcu.LineTypeValue.Normal) color (pos + length * supply * Vector2.UnitY - Vector2(0.05f * length, 0.0f))
+            // Thick colored foreground bar representing available storage; color shows supply level relative to ammo needs
+            let h0 = mkIcon (int Mcu.LineTypeValue.Bold) color (pos)
+            let h1 = mkIcon (int Mcu.LineTypeValue.Bold) color (pos + length * health * Vector2.UnitY)
             l0.Targets <- [l1.Index]
             h0.Targets <- [h1.Index]
-            s0.Targets <- [s1.Index]
-            [ l0; l1; h0; h1; s0; s1 ]
-        let needs = AutoOrder.computeSupplyNeeds world state
+            [ l0; l1; h0; h1 ]
         let supplies = AutoOrder.computeStorage world state
         let fullCapacities = AutoOrder.computeStorageCapacity world
         let actualCapacities = AutoOrder.computeActualStorageCapacity world state
         let icons = [
             for region, regState in List.zip world.Regions state.Regions do
                 let needs =
-                    Map.tryFind region.RegionId needs
-                    |> Option.defaultVal 0.0f<E>
+                    world.AntiAirDefenses @ world.AntiTankDefenses
+                    |> List.filter (fun area -> area.Home.Home = region.RegionId)
+                    |> List.sumBy (fun area -> area.AmmoCost)
                 let supplies =
                     Map.tryFind region.RegionId supplies
                     |> Option.defaultVal 0.0f<E>
@@ -283,19 +282,13 @@ with
                     Map.tryFind region.RegionId fullCapacities
                     |> Option.defaultVal 0.0f<E>
                 let color =
-                    if needs < 0.0f<E> then
-                        (0, 255, 0)
-                    elif needs < 0.25f * supplies then
-                        (200, 175, 32)
-                    else
-                        (200, 0, 0)
-                let level =
-                    if fullCapacity = 0.0f<E> then
-                        0.0f
-                    else
-                        supplies / fullCapacity
+                    let k =
+                        supplies / needs
                         |> max 0.0f
                         |> min 1.0f
+                    let red = 200.0f * (1.0f - k)
+                    let green = 255.0f * k
+                    (int red, int green, 0)
                 let health =
                     if fullCapacity = 0.0f<E> then
                         0.0f
@@ -303,7 +296,7 @@ with
                         capacity / fullCapacity
                         |> max 0.0f
                         |> min 1.0f
-                yield! renderSupplyBar region.Position health color level
+                yield! renderSupplyBar region.Position health color
         ]
         let capitals = [
             for region, regState in List.zip world.Regions state.Regions do
