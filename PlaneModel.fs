@@ -187,6 +187,25 @@ with
         | Pe2s87
         | Pe2s35 -> 1000.0f<K>
 
+    /// The modmask and payload ID for suitable for ground attack
+    member this.AttackPayload =
+        let modmask =
+            match this with
+            | PlaneModel.IL2M43 -> 33
+            | _ -> 1
+        let payload =
+            match this with
+            | PlaneModel.Ju87 -> 5 // "0,1-MG17-AP-2000 + SC250-3"
+            | PlaneModel.Bf110e -> 2 // "0,1,2,3-MG17-AP-4000 + 4,5-MGFF-APHE-360 + SC250-2 + SC50-4"
+            | PlaneModel.Bf110g -> 2 //  "0,1,2,3-MG17-AP-4000 + 4-MG15120-APHE-400 + 5-MG15120-APHE-350 + SC250-2 + SC50-4"
+            | PlaneModel.IL2M41 -> 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
+            | PlaneModel.IL2M42 -> 44 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-8"
+            | PlaneModel.IL2M43 -> 41 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-4"
+            | PlaneModel.Pe2s35 -> 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
+            | PlaneModel.Hs129b2 -> 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
+            | _ -> 0
+        modmask, payload
+
     member this.CargoCapacity =
         match this with
         | Ju52 -> 2300.0f<K>
@@ -556,10 +575,13 @@ with
         |> List.zip [ Fighter; Attacker; Bomber; Transport ]
         |> Map.ofList
 
-    static member RandomPlaneOfType(planeSet : PlaneSet, typ : PlaneType, coalition : CoalitionId) =
+    static member AllPlanesOfType(planeSet : PlaneSet, typ : PlaneType, coalition : CoalitionId) =
         PlaneModel.AllModels planeSet
         |> Seq.filter (fun model -> model.PlaneType = typ && model.Coalition = coalition)
         |> Array.ofSeq
+
+    static member RandomPlaneOfType(planeSet : PlaneSet, typ : PlaneType, coalition : CoalitionId) =
+        PlaneModel.AllPlanesOfType(planeSet, typ, coalition)
         |> Array.shuffle (System.Random())
         |> Seq.tryHead
 

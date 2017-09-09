@@ -861,11 +861,15 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             missionData.AxisOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
         let alliesAttacks =
             missionData.AlliesOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
-        let mkAttackStarts (attacks : (_ * GroundAttack.Attacker) list) =
-            for (_, block1), (_, block2) in Seq.pairwise attacks do
+        let mkAttackStarts (attacks : (_ * GroundAttack.Attacker list) list) =
+            let attacks =
+                attacks
+                |> Seq.map snd
+                |> List.concat
+            for (block1, block2) in Seq.pairwise attacks do
                 Mcu.addTargetLink block1.Start block2.Start.Index
             match attacks with
-            | (_, hd) :: _ ->
+            | hd :: _ ->
                 Mcu.addTargetLink missionBegin hd.Start.Index
             | _ -> ()
         mkAttackStarts axisAttacks
