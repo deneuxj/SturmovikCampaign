@@ -82,11 +82,6 @@ let getNumPlanesWithRole planeRole (numPlanes : Map<PlaneModel, float32>) =
     |> Seq.sumBy (fun kvp -> if kvp.Key.Roles.Contains(planeRole) then kvp.Value else 0.0f)
 
 let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) =
-    let intercepter =
-        PlaneModel.RandomPlaneWithRole(world.PlaneSet, PlaneRole.Interceptor, coalition)
-    let fighter =
-        PlaneModel.RandomPlaneWithRole(world.PlaneSet, PlaneRole.Patroller, coalition)
-
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
     let threats =
@@ -105,82 +100,73 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                     let owner = sg.GetRegion(af.Region).Owner
                     if owner = Some coalition && getNumPlanesOfType Fighter afState.NumPlanes > 2.0f then
                         for enemyAirfield, enemyAirfieldState in threats do
-                            let dir =
-                                let x = enemyAirfield.Pos - region.Position
-                                x / x.Length()
-                            let p1 = region.Position + dir * 15000.0f
-                            if (p1 - af.Pos).Length() < fighterRange then
-                                if getNumPlanesOfType Bomber enemyAirfieldState.NumPlanes >= 1.0f && getNumPlanesWithRole Interceptor afState.NumPlanes > 1.0f then
-                                    match intercepter with
-                                    | Some intercepter ->
+                            for plane, count in afState.NumPlanes |> Map.toSeq do
+                                let dir =
+                                    let x = enemyAirfield.Pos - region.Position
+                                    x / x.Length()
+                                let p1 = region.Position + dir * 15000.0f
+                                if (p1 - af.Pos).Length() < fighterRange then
+                                    if getNumPlanesOfType Bomber enemyAirfieldState.NumPlanes >= 1.0f && plane.Roles.Contains Interceptor && count >= 2.0f then
                                         yield af, {
-                                            Plane = intercepter
+                                            Plane = plane
                                             Coalition = coalition
                                             Pos = p1
                                             Altitude = 4000.0f
                                             ProtectedRegion = Some af.Region
                                         }
-                                    | None ->
-                                        ()
-                                if getNumPlanesOfType Attacker enemyAirfieldState.NumPlanes >= 1.0f && getNumPlanesWithRole Patroller afState.NumPlanes > 1.0f then
-                                    match fighter with
-                                    | Some protector ->
+                                    if getNumPlanesOfType Attacker enemyAirfieldState.NumPlanes >= 1.0f && plane.Roles.Contains Patroller && count >= 2.0f then
                                         yield af, {
-                                            Plane = protector
+                                            Plane = plane
                                             Coalition = coalition
                                             Pos = p1
                                             Altitude = 3000.0f
                                             ProtectedRegion = Some af.Region
                                         }
-                                    | None ->
-                                        ()
-                                if getNumPlanesOfType Fighter enemyAirfieldState.NumPlanes >= 1.0f && getNumPlanesWithRole Patroller afState.NumPlanes > 1.0f then
-                                    match fighter with
-                                    | Some fighter ->
+                                    if getNumPlanesOfType Fighter enemyAirfieldState.NumPlanes >= 1.0f && plane.Roles.Contains Patroller && count >= 2.0f then
                                         yield af, {
-                                            Plane = fighter
+                                            Plane = plane
                                             Coalition = coalition
                                             Pos = p1
                                             Altitude = 2500.0f
                                             ProtectedRegion = Some af.Region
                                         }
-                                    | None ->
-                                        ()
         // Border patrol and offensive patrol
         let frontline = computeFrontLine true world state.Regions
         for region1, region2 in frontline do
             for af, afState in List.zip world.Airfields state.Airfields do
                 let owner = sg.GetRegion(af.Region).Owner
-                if owner = Some coalition && getNumPlanesOfType Fighter afState.NumPlanes > 2.0f then
-                    let regions =
-                        if sg.GetRegion(region1).Owner = Some coalition then
-                            Some(region1, region2)
-                        else if sg.GetRegion(region2).Owner = Some coalition then
-                            Some(region2, region1)
-                        else
-                            None
-                    match regions with
-                    | Some(ourRegion, theirRegion) ->
-                        let ourRegion = wg.GetRegion(ourRegion)
-                        let theirRegion = wg.GetRegion(theirRegion)
-                        let dir =
-                            let x = theirRegion.Position - ourRegion.Position
-                            x / x.Length()
-                        match PlaneModel.RandomPlaneOfType(world.PlaneSet, PlaneType.Fighter, coalition) with
-                        | Some fighter ->
+                for plane, count in afState.NumPlanes |> Map.toSeq do
+                    if owner = Some coalition && plane.Roles.Contains Patroller && count > 2.0f then
+                        // Order the two regions so that the friendly one is first, if any
+                        let regions =
+                            if sg.GetRegion(region1).Owner = Some coalition then
+                                Some(region1, region2)
+                            else if sg.GetRegion(region2).Owner = Some coalition then
+                                Some(region2, region1)
+                            else
+                                None
+                        match regions with
+                        | Some(ourRegion, theirRegion) ->
+                            let ourRegion = wg.GetRegion(ourRegion)
+                            let theirRegion = wg.GetRegion(theirRegion)
+                            let dir =
+                                let x = theirRegion.Position - ourRegion.Position
+                                x / x.Length()
+                            // Defensive patrol
                             let p1 = ourRegion.Position + dir * 5000.0f
                             if (p1 - af.Pos).Length() < fighterRange then
                                 yield af, {
-                                    Plane = fighter
+                                    Plane = plane
                                     Coalition = coalition
                                     Pos = p1
                                     Altitude = 3000.0f
                                     ProtectedRegion = Some ourRegion.RegionId
                                 }
+                            // Offensive patrol
                             let p1 = ourRegion.Position + dir * 20000.0f
                             if (p1 - af.Pos).Length() < fighterRange then
                                 yield af, {
-                                    Plane = fighter
+                                    Plane = plane
                                     Coalition = coalition
                                     Pos = p1
                                     Altitude = 3000.0f
@@ -188,8 +174,6 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                                 }
                         | None ->
                             ()
-                    | None ->
-                        ()
     }
 
 let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (Airfield * AiPatrol) seq) =
