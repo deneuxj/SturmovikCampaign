@@ -863,15 +863,21 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         let alliesAttacks =
             missionData.AlliesOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
         let mkAttackStarts (attacks : (_ * GroundAttack.Attacker list) list) =
-            let attacks =
-                attacks
-                |> Seq.map snd
-                |> List.concat
-            for (block1, block2) in Seq.pairwise attacks do
-                Mcu.addTargetLink block1.Start block2.Start.Index
+            // Spawn "wing" immediately after "leader"
+            for (_, blocks) in attacks do
+                for b1, b2 in Seq.pairwise blocks do
+                    Mcu.addTargetLink b1.Spawned b2.ImmediateStart.Index
+            // Spawn pairs one minute after previous pair
+            for (_, block1), (_, block2) in Seq.pairwise attacks do
+                match block1, block2 with
+                | b1 :: _, b2 :: _ ->
+                    Mcu.addTargetLink b1.Spawned b2.DelayedStart.Index
+                | _, _ ->
+                    failwith "Expected at least one block in each attack list"
+            // Start first pair one minute after mission start
             match attacks with
-            | hd :: _ ->
-                Mcu.addTargetLink missionBegin hd.Start.Index
+            | (_, hd :: _) :: _ ->
+                Mcu.addTargetLink missionBegin hd.DelayedStart.Index
             | _ -> ()
         mkAttackStarts axisAttacks
         mkAttackStarts alliesAttacks
