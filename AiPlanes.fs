@@ -29,7 +29,7 @@ with
         let blocks =
             [
                 for i in 0..1 do
-                    let block = Patrol.Create(store, lcStore, this.Pos, this.Altitude, this.Coalition.ToCoalition)
+                    let block = Patrol.Create(store, lcStore, this.Pos + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Coalition.ToCoalition)
                     let modmask, payload = this.Plane.PayloadForRole(this.Role)
                     block.Plane.Country <- this.Coalition.ToCountry
                     block.Plane.Script <- this.Plane.ScriptModel.Script
