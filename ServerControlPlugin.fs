@@ -95,6 +95,7 @@ module Support =
                     match result with
                     | Choice2Of2 e ->
                         do! support.ServerControl.MessageAll errorMessage
+                        do! Async.Sleep(5000)
                         raise(Exception("See inner exception", e))
                     | _ ->
                         ()
@@ -132,6 +133,7 @@ module Support =
                               "Wait a minute, then join again from server list to keep playing"
                             ]
                             |> support.ServerControl.MessageAll
+                        do! Async.Sleep(15000)
                         return serverProc, KillServer
                     | None ->
                         support.Logging.LogInfo "Server process could not be found"
@@ -176,11 +178,16 @@ module Support =
                         ]
                         |> support.ServerControl.MessageAll
                     let! missionResults =
-                        tryOrNotifyPlayers
-                            [ "Bad news, result extraction failed"
-                              "Campaign is now halted"
-                              "Sorry for the inconvenience" ]
-                            (fun() -> Campaign.Run.MissionLogParsing.stage1 config)
+                        try
+                            tryOrNotifyPlayers
+                                [ "Bad news, result extraction failed"
+                                  "Campaign is now halted"
+                                  "Sorry for the inconvenience" ]
+                                (fun() -> Campaign.Run.MissionLogParsing.stage1 config)
+                        with
+                        | exc ->
+                            killServer(config, serverProc)
+                            raise exc
                     Campaign.Run.MissionLogParsing.backupFiles config
                     support.Logging.LogInfo "Make weather..."
                     let date = Campaign.Run.WeatherComputation.getNextDateFromState config
