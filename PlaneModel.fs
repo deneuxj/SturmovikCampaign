@@ -192,43 +192,51 @@ with
 
     /// The mod mask and payload ID suitable for ground attack
     member this.AttackPayload =
-        let modmask =
+        let modmask, payload =
             match this with
-            | PlaneModel.IL2M43 -> 33
-            | _ -> 1
-        let payload =
-            match this with
-            | PlaneModel.Ju87 -> 5 // "0,1-MG17-AP-2000 + SC250-3"
-            | PlaneModel.Bf110e -> 2 // "0,1,2,3-MG17-AP-4000 + 4,5-MGFF-APHE-360 + SC250-2 + SC50-4"
-            | PlaneModel.Bf110g -> 2 //  "0,1,2,3-MG17-AP-4000 + 4-MG15120-APHE-400 + 5-MG15120-APHE-350 + SC250-2 + SC50-4"
-            | PlaneModel.IL2M41 -> 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
-            | PlaneModel.IL2M42 -> 44 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-8"
-            | PlaneModel.IL2M43 -> 41 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-4"
-            | PlaneModel.Pe2s35 -> 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
-            | PlaneModel.Hs129b2 -> 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
-            | _ -> 0
+            | PlaneModel.Bf109e7 -> 5, 2
+            | PlaneModel.Bf109f2 | PlaneModel.Bf109f4 | PlaneModel.Bf109g2 | PlaneModel.Bf109g4 -> 8, 2 // SC250-1
+            | PlaneModel.Fw190a3 -> 9, 3 // SC500-1
+            | PlaneModel.Fw190a5 -> 73, 9 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500 + SC500-1 + SC50-4"
+            | PlaneModel.I16 -> 9, 2 // "0,1-SHKAS-AP-1000 + 2,3-SHKAS-AP-1800 + FAB100M-2"
+            | PlaneModel.La5 -> 37, 5 // "0,1-SHVAK-AP-340 + FAB100M-2"
+            | PlaneModel.Lagg3s29 -> 17, 14 // "0-UB-APHE-200 + 1-SHVAK-APHE-160 + FAB100M-2"
+            | PlaneModel.Mc202 -> 9 , 2 // "0,1-BREDA12-APHE-800 + T100-2"
+            | PlaneModel.Mig3 -> 5, 6 // "0,1-SHKAS-AP-1500 + 2-BS-APHE-300 + FAB100M-2"
+            | PlaneModel.P40 -> 33, 8 // "0,1,2,3,4,5-M250-AP-1410 + FAB500M-1"
+            | PlaneModel.Yak1s127 -> 5, 2 // "0-UB-APHE-220 + 1-SHVAK-APHE-140 + FAB100M-2"
+            | PlaneModel.Yak1s69 -> 17, 10 // "0,1-SHKAS-AP-1500 + 2-SHVAK-APHE-120 + FAB100M-2"
+            | PlaneModel.Ju87 -> 1, 5 // "0,1-MG17-AP-2000 + SC250-3"
+            | PlaneModel.Bf110e -> 1, 2 // "0,1,2,3-MG17-AP-4000 + 4,5-MGFF-APHE-360 + SC250-2 + SC50-4"
+            | PlaneModel.Bf110g -> 1, 2 //  "0,1,2,3-MG17-AP-4000 + 4-MG15120-APHE-400 + 5-MG15120-APHE-350 + SC250-2 + SC50-4"
+            | PlaneModel.IL2M41 -> 1, 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
+            | PlaneModel.IL2M42 -> 1, 44 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-8"
+            | PlaneModel.IL2M43 -> 33, 41 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-4"
+            | PlaneModel.Pe2s35 -> 1, 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
+            | PlaneModel.Hs129b2 -> 1, 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
+            | _ -> 1, 0
         modmask, payload
 
     /// The mod mask and payload ID suitable for fighter patrols
     member this.FighterPayload =
         match this with
-        | _ -> 0, 0
+        | _ -> 1, 0
 
     /// The mod mask and payload ID suitable for level-bombing
     member this.BomberPayLoad =
         match this with
-        | PlaneModel.He111h6 -> 0, 3
-        | PlaneModel.He111h16 -> 0, 3
-        | PlaneModel.Ju88a4 -> 0, 4
-        | PlaneModel.Pe2s35 -> 0, 2
-        | PlaneModel.Pe2s87 -> 0, 2
-        | _ -> 0, 0
+        | PlaneModel.He111h6 -> 1, 3
+        | PlaneModel.He111h16 -> 1, 3
+        | PlaneModel.Ju88a4 -> 1, 4
+        | PlaneModel.Pe2s35 -> 1, 2
+        | PlaneModel.Pe2s87 -> 1, 2
+        | _ -> 1, 0
 
     /// The mod mask and payload ID suitable for cargo transport
     member this.CargoPayload =
         match this with
         | PlaneModel.Ju52 -> 1, 0
-        | _ -> 0, 0
+        | _ -> 1, 0
 
     /// The mod mask and payload ID suitable for a given role
     member this.PayloadForRole(role) =
