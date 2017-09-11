@@ -7,8 +7,15 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.BlocksMissionData
 
+/// Logic for transfering a plane from one airfield to another.
+// Includes a prio node for chaining multiple flights.
 type FerryFlight = {
-    Start : Mcu.McuTrigger
+    TryStart : Mcu.McuTrigger
+    Do : Mcu.McuTrigger
+    Pass : Mcu.McuTrigger
+    Next : Mcu.McuTrigger
+    Enable : Mcu.McuTrigger
+    Spawned : Mcu.McuTrigger
     Landed : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
     Plane : Mcu.HasEntity
@@ -22,7 +29,11 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.Start
+        let start = getTriggerByName group T.Blocks.Try
+        let enable = getTriggerByName group T.Blocks.Enable
+        let doNode = getTriggerByName group T.Blocks.Do
+        let pass = getTriggerByName group T.Blocks.Pass
+        let next = getTriggerByName group T.Blocks.Next
         let destination = getTriggerByName group T.Blocks.Destination
         let cmdLand = getTriggerByName group T.Blocks.Land
         let plane = getVehicleByName group T.Blocks.TransferPlane
@@ -53,9 +64,14 @@ with
         // Restart count
         counter.Count <- count
         // Return
-        { Start = start
+        { TryStart = start
+          Do = doNode
+          Pass = pass
+          Next = next
+          Enable = enable
           Landed = arrived
           Killed = killed
+          Spawned = spawned
           Plane = plane
           All = McuUtil.groupFromList group
         }
