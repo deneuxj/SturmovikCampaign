@@ -396,6 +396,7 @@ module MissionFileGeneration =
               MissionLength = config.MissionLength
               ColumnSplitInterval = config.ColumnSplitInterval
               MaxSimultaneousConvoys = config.MaxSimultaneousConvoys
+              MaxSimultaneousFerryFlights = config.MaxSimultaneousFerryFlights
               StrategyMissionFile = Path.Combine(config.ScriptPath, config.StrategyFile)
             }
         let missionData =

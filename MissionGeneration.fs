@@ -743,6 +743,7 @@ type MissionGenerationParameters = {
     MissionLength : int
     ColumnSplitInterval : int
     MaxSimultaneousConvoys : int
+    MaxSimultaneousFerryFlights : int
     StrategyMissionFile : string
 }
 
@@ -883,9 +884,11 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         mkAttackStarts alliesAttacks
         axisAttacks @ alliesAttacks |> List.map fst
     let axisPlaneFerries =
-        missionData.AxisOrders.PlaneFerries |> List.map (fun ferry -> PlaneFerry.generatePlaneTransfer store lcStore missionData.World missionData.State ferry missionBegin)
+        missionData.AxisOrders.PlaneFerries
+        |> PlaneFerry.generatePlaneTransfer store lcStore missionData.World missionData.State missionBegin missionParams.MaxSimultaneousFerryFlights
     let alliesPlaneFerries =
-        missionData.AlliesOrders.PlaneFerries |> List.map (fun ferry -> PlaneFerry.generatePlaneTransfer store lcStore missionData.World missionData.State ferry missionBegin)
+        missionData.AlliesOrders.PlaneFerries
+        |> PlaneFerry.generatePlaneTransfer store lcStore missionData.World missionData.State missionBegin missionParams.MaxSimultaneousFerryFlights
     let buildingFires =
         createBuildingFires store missionData.World missionData.State (float32 missionData.Weather.Wind.Direction)
         |> List.map (fun fire -> fire.All)
@@ -920,5 +923,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           parkedTanks
           axisPrio
           alliesPrio
-          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ axisPlaneFerries @ alliesPlaneFerries
+          axisPlaneFerries
+          alliesPlaneFerries
+          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns
     writeMissionFiles "eng" filename options allGroups

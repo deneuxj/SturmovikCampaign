@@ -506,12 +506,12 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
             | [] -> ()
             | destination :: rest ->
                 match tryFindMatchingStart destination starts with
-                | Some ((af0, _, _) as start) ->
+                | Some ((af0, plane0, _) as start) ->
                     yield start, destination
-                    // Each airfield can only be used for one transport flight
+                    // Each airfield can only be used for one transport flight type
                     let starts =
                         starts
-                        |> List.filter (fun (af, _, _) -> af <> af0)
+                        |> List.filter (fun (af, plane, _) -> (af, plane) <> (af0, plane0))
                     yield! matchAirfields starts rest
                 | None ->
                     yield! matchAirfields starts rest
