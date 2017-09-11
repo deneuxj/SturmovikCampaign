@@ -283,14 +283,8 @@ let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrd
         |> List.rev
     sorted
 
-/// Build an order from a move computed by the minmax search.
-let realizeMove (world : World) (state : WorldState) (move : Move) =
-    let regStart = world.Regions.[move.Start].RegionId
-    let regDest = world.Regions.[move.Destination].RegionId
-    let regState = state.Regions.[move.Start]
-    let owner = regState.Owner
-    if owner.IsNone then
-        failwith "Cannot start tank column from neutral zone"
+/// Select vehicles among those available in a region
+let selectVehicles (regState : RegionState) (force : float32<E>) =
     let content =
         regState.NumVehicles
         |> expandMap
@@ -300,9 +294,21 @@ let realizeMove (world : World) (state : WorldState) (move : Move) =
                 forceLeft - vehicle.Cost, vehicle :: column
             else
                 forceLeft, column
-        ) (move.Force, [])
+        ) (force, [])
         |> snd
         |> Array.ofList
+    content
+
+/// Build an order from a move computed by the minmax search.
+let realizeMove (world : World) (state : WorldState) (move : Move) =
+    let regStart = world.Regions.[move.Start].RegionId
+    let regDest = world.Regions.[move.Destination].RegionId
+    let regState = state.Regions.[move.Start]
+    let owner = regState.Owner
+    if owner.IsNone then
+        failwith "Cannot start tank column from neutral zone"
+    let content =
+        selectVehicles regState move.Force
     { OrderId = { Index = -1; Coalition = owner.Value }
       Start = regStart
       Destination = regDest
@@ -326,6 +332,30 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
         timeBound cancellation.Token ({ Axis = None; Allies = None }, Ongoing 0.0f) 1 board
     minMax board
     |> fun ({ Axis = m1; Allies = m2 }, _) -> (Option.toList m1 @ Option.toList m2) |> List.map (realizeMove world state)
+
+/// Move tanks from a rear region (where they typically are in excess) closer to the front line (where they typically are in need)
+let allTankReinforcements (world : World) (state : WorldState) (coalition : CoalitionId) =
+    let vehicleMinValue = GroundAttackVehicle.HeavyTank.Cost * 5.0f
+    let frontLine =
+        computeFrontLine false world state.Regions
+        |> Set.map fst
+    let sg = state.FastAccess
+    let distanceToFrontLine = computeDistance true (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) frontLine.Contains world
+    [|
+        for region, regState in List.zip world.Regions state.Regions do
+            if regState.Owner = Some coalition && regState.TotalVehicleValue > vehicleMinValue then
+                let regionDistance = distanceToFrontLine.[region.RegionId]
+                for ngh in region.Neighbours do
+                    let nghState = sg.GetRegion(ngh)
+                    if nghState.Owner = Some coalition && distanceToFrontLine.[ngh] < regionDistance then
+                        let composition = selectVehicles regState vehicleMinValue
+                        yield {
+                            OrderId = { Index = -1; Coalition = coalition }
+                            Start = region.RegionId
+                            Destination = ngh
+                            Composition = composition
+                        }
+    |]
 
 /// Decide what plane to add to the rear airfield
 let pickPlaneToProduce (coalition : CoalitionId) (world : World) (state : WorldState) =

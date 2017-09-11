@@ -212,6 +212,21 @@ module OrderDecision =
         let alliesColumns =
             columnOrders
             |> List.filter (fun order -> order.OrderId.Coalition = Allies)
+        let pickReinforcements coalition =
+            // Don't send reinforcements from regions that are already involved in a move picked by minmax
+            let noStart =
+                match coalition with
+                | Axis -> axisColumns
+                | Allies -> alliesColumns
+                |> List.map (fun order -> order.Start) |> Set.ofList
+            allTankReinforcements world state coalition
+            |> Array.filter (fun move -> not(noStart.Contains(move.Start)))
+            |> Array.shuffle (System.Random())
+            |> function
+                | [||] -> []
+                | arr -> [arr.[0]]
+        let axisColumns = axisColumns @ pickReinforcements Axis
+        let alliesColumns = alliesColumns @ pickReinforcements Allies
         let mkPatrols coalition =
             mkAllPatrols world state coalition
             |> prioritizeAiPatrols world state
