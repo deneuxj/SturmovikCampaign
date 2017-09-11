@@ -236,6 +236,8 @@ with
     member this.CargoPayload =
         match this with
         | PlaneModel.Ju52 -> 1, 0
+        | PlaneModel.He111h16 -> 1, 19
+        | PlaneModel.He111h6 -> 1, 13
         | PlaneModel.Pe2s35 | PlaneModel.Pe2s87 -> 1, 0
         | _ -> 1, 0
 

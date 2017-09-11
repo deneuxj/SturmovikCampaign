@@ -214,9 +214,10 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : L
             | :? PlayerPlaneEntry as playerPlane ->
                 playerPilot := playerPilot.Value.Add(playerPlane.NickId, playerPlane.VehicleId)
                 match playerPlane.VehicleType with
-                | PlaneObjectType PlaneModel.Ju52 ->
-                    if playerPlane.Payload = 0 then
-                        cargo := Map.add playerPlane.VehicleId (2300.0f<K> * bombCost) cargo.Value
+                | PlaneObjectType plane when plane.Roles.Contains CargoTransporter ->
+                    let modmask, payload = plane.CargoPayload
+                    if playerPlane.Payload = payload then
+                        cargo := Map.add playerPlane.VehicleId (plane.CargoCapacity * bombCost) cargo.Value
                 | _ ->
                     ()
                 match playerPlane.VehicleType with
