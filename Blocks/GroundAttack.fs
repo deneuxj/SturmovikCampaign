@@ -14,7 +14,8 @@ type OptionalLandOrder =
 
 /// A single attacker that flies to an objective, attacks ground targets there and then flies to an exit point.
 type Attacker = {
-    Start : Mcu.McuTrigger
+    DelayedStart : Mcu.McuTrigger
+    ImmediateStart : Mcu.McuTrigger
     Plane : Mcu.HasEntity
     Ingress : Mcu.McuWaypoint
     AttackArea : Mcu.McuTrigger
@@ -32,7 +33,8 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.DelayedStart
+        let delayedStart = getTriggerByName group T.Blocks.DelayedStart
+        let immStart = getTriggerByName group T.Blocks.ImmediateStart
         let plane = getVehicleByName group T.Blocks.Plane
         let ingress = getWaypointByName group T.Blocks.Ingress
         let egress = getWaypointByName group T.Blocks.Egress
@@ -77,7 +79,8 @@ with
         | NoLanding ->
             ()
         // result
-        { Start = start
+        { DelayedStart = delayedStart
+          ImmediateStart = immStart
           Plane = plane
           Ingress = ingress
           Egress = egress
