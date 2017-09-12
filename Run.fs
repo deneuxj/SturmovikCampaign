@@ -456,6 +456,7 @@ module MissionLogParsing =
         Landings : Landed list
         ColumnDepartures : ColumnLeft list
         ParaDrops : ParaDropResult list
+        FerryPlanes : Choice<PlaneFerryOrder, PlaneFerryOrder, PlaneFerryOrder> list
     }
 
     let backupFiles config =
@@ -581,6 +582,7 @@ module MissionLogParsing =
         let movements = axisOrders.Columns @ alliesOrders.Columns
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
         let paraDrops = extractParaDrops movements entries
+        let planeFerryEvents = extractFerryPlanes (axisOrders.PlaneFerries @ alliesOrders.PlaneFerries) entries
         let results =
             { Entries = entries |> List.map (fun entry -> entry.OriginalString)
               Shipments = shipments
@@ -590,6 +592,7 @@ module MissionLogParsing =
               Landings = landings
               ColumnDepartures = columnDepartures
               ParaDrops = paraDrops
+              FerryPlanes = planeFerryEvents
             }
         use missionFile = File.CreateText(Path.Combine(config.OutputDir, Filenames.missionResults))
         serializer.Serialize(missionFile, results)
@@ -613,7 +616,7 @@ module MissionLogParsing =
             | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
         let movements = axisOrders.Columns @ alliesOrders.Columns
-        let state2, newlyProduced, battleReports = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures missionResults.ParaDrops (float32 weather.Wind.Direction)
+        let state2, newlyProduced, battleReports = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures missionResults.ParaDrops missionResults.FerryPlanes (float32 weather.Wind.Direction)
         newlyProduced, battleReports, (state, state2)
 
     let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =

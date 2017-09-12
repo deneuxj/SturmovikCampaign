@@ -130,6 +130,10 @@ type PlaneFerryOrder = {
     Start : AirfieldId
     Destination : AirfieldId
 }
+with
+    member this.SpawnedEventName = sprintf "FerryPlane-D-%s" (this.OrderId.ToString())
+    member this.LandedEventName = sprintf "FerryPlane-A-%s" (this.OrderId.ToString())
+    member this.KilledEventName = sprintf "FerryPlane-K-%s" (this.OrderId.ToString())
 
 /// What to produce in each category of production, and how much does each category need
 type ProductionPriorities = {
