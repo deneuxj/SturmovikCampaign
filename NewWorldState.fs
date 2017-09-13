@@ -561,7 +561,7 @@ let applyPlaneFerries (state : WorldState) ferryEvents =
         |> List.fold (fun airfields planeFerryEvent ->
             match planeFerryEvent with
             | PlaneFerryLanded order ->
-                let af = Map.find order.Start airfields
+                let af = Map.find order.Destination airfields
                 let oldPlaneValue =
                     Map.tryFind order.Plane af.NumPlanes
                     |> fun x -> defaultArg x 0.0f
@@ -569,7 +569,7 @@ let applyPlaneFerries (state : WorldState) ferryEvents =
                     oldPlaneValue + 1.0f |> max 0.0f
                 let newPlanes =
                     Map.add order.Plane newPlaneValue af.NumPlanes
-                Map.add order.Start { af with NumPlanes = newPlanes } airfields
+                Map.add order.Destination { af with NumPlanes = newPlanes } airfields
             | _ ->
                 airfields
         ) airfieldsAfterTakeOffs
