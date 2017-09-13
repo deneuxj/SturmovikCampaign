@@ -76,23 +76,12 @@
     <None Include="SampleConfig.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Configuration.fsx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Init.fsx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <None Include="Configuration.fsx" />
+    <None Include="Init.fsx" />
     <None Include="Chess.fsx" />
-    <None Include="GenerateMission.fsx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="ParseMissionLogs.fsx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Loop.fsx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Script1.fsx" />
+    <None Include="GenerateMission.fsx" />
+    <None Include="ParseMissionLogs.fsx" />
+    <None Include="Loop.fsx" />
     <None Include="data\MoscowAutumn1.Mission">
       <Link>MoscowAutumn1.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
