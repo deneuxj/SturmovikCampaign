@@ -1,6 +1,7 @@
 ﻿module Campaign.PlaneFerry
 
 open SturmovikMission.Blocks.IconDisplay
+open SturmovikMission.Blocks.EventReporting
 open SturmovikMission.Blocks.FerryFlight
 open SturmovikMission.DataProvider
 open BasicTypes
@@ -8,6 +9,7 @@ open Orders
 open WorldDescription
 open WorldState
 open SturmovikMission.Blocks.BlocksMissionData
+open System.Numerics
 
 /// Generate mission logic of AI flights that realize plane transfer orders.
 let generatePlaneTransfer store lcStore (world : World) (state : WorldState) (missionStart : Mcu.McuTrigger) (numSimultaneous : int) (orders : PlaneFerryOrder list) =
@@ -20,6 +22,9 @@ let generatePlaneTransfer store lcStore (world : World) (state : WorldState) (mi
                 let landPos, landOri = sg.GetAirfield(order.Destination).Runway
                 let flight = FerryFlight.Create(store, spawnPos, landPos, spawnOri, landOri, order.Qty, order.OrderId.Coalition.ToCountry)
                 let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, (5.0f * landPos + spawnPos) / 6.0f, "Transfer", order.OrderId.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
+                let reportSpawned = EventReporting.Create(store, order.OrderId.Coalition.ToCountry, spawnPos + Vector2(0.0f, 100.0f), order.SpawnedEventName)
+                let reportLanded = EventReporting.Create(store, order.OrderId.Coalition.ToCountry, landPos + Vector2(0.0f, 100.0f), order.LandedEventName)
+                let reportKilled = EventReporting.Create(store, order.OrderId.Coalition.ToCountry, spawnPos + Vector2(0.0f, 200.0f), order.KilledEventName)
                 // Plane type
                 flight.Plane.Script <- order.Plane.ScriptModel.Script
                 flight.Plane.Model <- order.Plane.ScriptModel.Model
@@ -28,13 +33,16 @@ let generatePlaneTransfer store lcStore (world : World) (state : WorldState) (mi
                     Mcu.addTargetLink flight.Spawned icon.Show.Index
                     Mcu.addTargetLink flight.Killed icon.Hide.Index
                     Mcu.addTargetLink flight.Landed icon.Hide.Index
+                Mcu.addTargetLink flight.Spawned reportSpawned.Trigger.Index
+                Mcu.addTargetLink flight.Landed reportLanded.Trigger.Index
+                Mcu.addTargetLink flight.Killed reportKilled.Trigger.Index
                 // Result
                 yield
                     flight,
                     { new McuUtil.IMcuGroup with
                           member x.Content = []
                           member x.LcStrings = []
-                          member x.SubGroups = [flight.All; icon1.All; icon2.All]
+                          member x.SubGroups = [flight.All; icon1.All; icon2.All; reportSpawned.All; reportLanded.All; reportKilled.All]
                     }
         ]
     let additionalLogic =

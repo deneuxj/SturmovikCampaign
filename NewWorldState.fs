@@ -529,6 +529,55 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
         |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
     { state with Airfields = airfields }
 
+/// Similar to applyPlaneTransfers, but for AI ferry flights
+let applyPlaneFerries (state : WorldState) ferryEvents =
+    let airfields =
+        state.Airfields
+        |> Seq.map (fun af -> af.AirfieldId, af)
+        |> Map.ofSeq
+    // Deduce plane from start airfield if landed or killed.
+    // That way incomplete flights to not lead to a plane loss.
+    let airfieldsAfterTakeOffs =
+        ferryEvents
+        |> List.fold (fun airfields planeFerryEvent ->
+            match planeFerryEvent with
+            | PlaneFerryLanded order
+            | PlaneFerryKilled order ->
+                let af = Map.find order.Start airfields
+                let oldPlaneValue =
+                    Map.tryFind order.Plane af.NumPlanes
+                    |> fun x -> defaultArg x 0.0f
+                let newPlaneValue =
+                    oldPlaneValue - 1.0f |> max 0.0f
+                let newPlanes =
+                    Map.add order.Plane newPlaneValue af.NumPlanes
+                Map.add order.Start { af with NumPlanes = newPlanes } airfields
+            | _ ->
+                airfields
+        ) airfields
+    // Credit destination airfield after landing.
+    let airfieldsAfterLandings =
+        ferryEvents
+        |> List.fold (fun airfields planeFerryEvent ->
+            match planeFerryEvent with
+            | PlaneFerryLanded order ->
+                let af = Map.find order.Start airfields
+                let oldPlaneValue =
+                    Map.tryFind order.Plane af.NumPlanes
+                    |> fun x -> defaultArg x 0.0f
+                let newPlaneValue =
+                    oldPlaneValue + 1.0f |> max 0.0f
+                let newPlanes =
+                    Map.add order.Plane newPlaneValue af.NumPlanes
+                Map.add order.Start { af with NumPlanes = newPlanes } airfields
+            | _ ->
+                airfields
+        ) airfieldsAfterTakeOffs
+    let airfields =
+        state.Airfields
+        |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
+    { state with Airfields = airfields }
+
 /// Simulate a battle between two enemy columns that arrived at the same region
 /// This is also used for column movements, which are seen as degenerate battles with an empty attacker side.
 type BattleParticipants = {
@@ -838,7 +887,7 @@ let nextDate (dt : float32<H>) (date : System.DateTime) =
             x
     newDate
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction movements convoyDepartures supplies damages tookOff landed columnDepartures paradrops windOri =
+let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction movements convoyDepartures supplies damages tookOff landed columnDepartures paradrops ferryPlanes windOri =
     let state2 =
         state
         |> applyProduction dt world Axis axisProduction
@@ -846,8 +895,9 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
     let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
     let state4 = applyRepairsAndDamages dt world state3 convoyDepartures damages supplies newSupplies
     let state5 = applyPlaneTransfers state4 tookOff landed
-    let battles = buildBattles state5 movements columnDepartures damages paradrops
-    let state6 = applyVehicleDepartures state5 movements columnDepartures
+    let state5b = applyPlaneFerries state5 ferryPlanes
+    let battles = buildBattles state5b movements columnDepartures damages paradrops
+    let state6 = applyVehicleDepartures state5b movements columnDepartures
     let state7, battleReports = applyConquests world state6 battles
     let state8 = updateNumCanons world state7
     let state9 = updateRunways world state8 windOri

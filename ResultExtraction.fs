@@ -92,6 +92,48 @@ let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry s
                 ()
     }
 
+/// Easy handling of result of extractFerryPlanes
+let (|PlaneFerrySpawned|PlaneFerryLanded|PlaneFerryKilled|) =
+    function
+    | Choice1Of3 (x : PlaneFerryOrder) -> PlaneFerrySpawned x
+    | Choice2Of3 (x : PlaneFerryOrder) -> PlaneFerryLanded x
+    | Choice3Of3 (x : PlaneFerryOrder) -> PlaneFerryKilled x
+
+/// Extract events related to ferry planes.
+let extractFerryPlanes (orders : PlaneFerryOrder list) (entries : LogEntry seq) =
+    [
+        let idxToName = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
+            | :? KillEntry as event when event.AttackerId = -1 ->
+                match Map.tryFind event.TargetId !idxToName with
+                | Some eventName ->
+                    let spawnedOrder =
+                        orders
+                        |> List.tryFind (fun order -> order.SpawnedEventName = eventName)
+                    let landedOrder =
+                        orders
+                        |> List.tryFind (fun order -> order.LandedEventName = eventName)
+                    let killedOrder =
+                        orders
+                        |> List.tryFind (fun order -> order.KilledEventName = eventName)
+                    match spawnedOrder, landedOrder, killedOrder with
+                    | Some order, _, _ ->
+                        yield Choice1Of3 order
+                    | None, Some order, _ ->
+                        yield Choice2Of3 order
+                    | None, None, Some order ->
+                        yield Choice3Of3 order
+                    | None, None, None ->
+                        ()
+                | None ->
+                    ()
+            | _ ->
+                ()
+    ]
+
 /// Precision of successful paratropper drop.
 type ParaDropPrecision = Precise | Wide
 
