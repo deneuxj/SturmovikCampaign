@@ -135,7 +135,7 @@ with
     member this.LandedEventName = sprintf "FerryPlane-A-%s" (this.OrderId.AsString())
     member this.KilledEventName = sprintf "FerryPlane-K-%s" (this.OrderId.AsString())
 
-/// What to produce in each category of production, and how much does each category need
+    /// What to produce in each category of production, and how much does each category need
 type ProductionPriorities = {
     Vehicle : GroundAttackVehicle
     PriorityVehicle : float32<E>
