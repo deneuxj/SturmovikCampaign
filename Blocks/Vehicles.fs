@@ -598,4 +598,16 @@ type VehicleDataTypeStore() =
           Model = light.GetModel().Value
         }
 
+    member this.GermanRocketArtillery =
+        let vehicle = vehicles.[T.Vehicles.RocketArtilleryGER]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.RussianRocketArtillery =
+        let vehicle = vehicles.[T.Vehicles.RocketArtilleryRUS]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
 let vehicles = VehicleDataTypeStore()

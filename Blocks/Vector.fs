@@ -25,6 +25,10 @@ with
         let alpha = System.Math.PI * angle / 180.0
         Vector2(float32 <| cos alpha, float32 <| sin alpha)
 
+    static member FromYOri(ori : float) =
+        let alpha = System.Math.PI * ori / 180.0
+        Vector2(float32 <| cos alpha, float32 <| sin alpha)
+
     static member Cross(u : Vector2, v : Vector2) =
         u.X * v.Y - u.Y * v.X
 

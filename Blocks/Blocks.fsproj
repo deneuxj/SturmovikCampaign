@@ -84,6 +84,7 @@
     <Compile Include="FireLoop.fs" />
     <Compile Include="MissionEnd.fs" />
     <Compile Include="ParaDrop.fs" />
+    <Compile Include="Battlefield.fs" />
     <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>
