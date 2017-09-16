@@ -64,6 +64,7 @@
     <Compile Include="MapGraphics.fs" />
     <Compile Include="ParkingArea.fs" />
     <Compile Include="PlaneFerry.fs" />
+    <Compile Include="Battlefield.fs" />
     <Compile Include="MissionGeneration.fs" />
     <Compile Include="ResultExtraction.fs" />
     <Compile Include="NewWorldState.fs" />
