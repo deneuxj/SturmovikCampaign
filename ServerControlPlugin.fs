@@ -19,7 +19,6 @@ module Support =
             let procs =
                 Process.GetProcessesByName("DServer")
                 |> Array.filter (fun proc -> Path.GetFullPath(Path.GetDirectoryName(proc.MainModule.FileName)).StartsWith(Path.GetFullPath(config.ServerBinDir)))
-            printfn "Found procs %s" (procs |> Seq.map (fun p -> p.Id.ToString() + " " + p.MainModule.FileName) |> String.concat ", ")
             procs
 
     let killServer(config, runningProc : Process option) =
@@ -27,17 +26,11 @@ module Support =
         let procsToKill =
             match procToKill with
             | None ->
-                let procs = findRunningServers(config)
-                // Kill all DServers started from that instance directory (should be one or zero).
-                if procs.Length = 0 then
-                    printfn "No DServer running, none to kill."
-                elif procs.Length > 1 then
-                    printfn "Multiple DServer instances running under %s" config.ServerBinDir
-                procs
+                findRunningServers(config)
             | Some running ->
                 [| running |]
         for running in procsToKill do
-            printfn "Killing DServer process..."
+            printfn "Killing DServer process [%d]..." running.Id
             try
                 running.Kill()
             with
@@ -275,6 +268,7 @@ module Support =
                 | Allies -> "Allies have won"
                 |> sprintf "Campaign is over, %s the battle!"
                 |> support.Logging.LogInfo
+                killServer(config, serverProc)
                 status.Save(config)
                 onCampaignOver victorious
                 NoTask
