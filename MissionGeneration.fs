@@ -46,55 +46,35 @@ with
         member x.SubGroups = []
 
     static member Create(random : System.Random, store, lcStore, includeSearchLights, missionBegin : Mcu.McuTrigger, world : World, state : WorldState, attackingColumns : ColumnMovement list) =
-        let getAreaState =
-            let m =
-                state.AntiAirDefenses @ state.AntiTankDefenses
-                |> Seq.map (fun area -> area.DefenseAreaId, area)
-                |> dict
-            fun x -> m.[x]
-        let getOwner =
-            let m =
-                state.Regions
-                |> Seq.map (fun region -> region.RegionId, region.Owner)
-                |> dict
-            fun x -> m.[x]
+        let wg = world.FastAccess
+        let sg = state.FastAccess
+        let regionFillLevel =
+            state.GetAmmoCostPerRegion(world)
+            |> Map.map (fun region cost ->
+                if cost > 0.0f<E> then
+                    sg.GetRegion(region).Supplies / cost
+                else
+                    1.0f
+                |> max 0.0f
+                |> min 1.0f)
         let all =
             [
-                for area in world.AntiTankDefenses do
-                    // Generate AT defenses on the frontline if there is an attack planned by the enemy.
-                    match area.Home with
-                    | FrontLine(home, neighbour) ->
-                        let invasionPlanned =
-                            attackingColumns
-                            |> List.exists (fun column -> column.Destination = home && column.Start = neighbour)
-                        if invasionPlanned then
-                            let state = getAreaState area.DefenseAreaId
-                            if state.NumUnits > 0 then
-                                let owner = getOwner area.Home.Home
-                                let country, coalition =
-                                    match owner with
-                                    | None -> failwithf "No owner found for group of anti-tank defenses '%A'" area.DefenseAreaId
-                                    | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
-                                    | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                                let group = StaticDefenseGroup.Create(area.Role, false, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
-                                let links = group.CreateLinks()
-                                let mcus = McuUtil.deepContentOf group
-                                links.Apply(mcus)
-                                Mcu.addTargetLink missionBegin group.Api.Start.Index
-                                yield! mcus
-                    | Central _ ->
-                        ()
-
                 for area in world.AntiAirDefenses do
-                    let state = getAreaState area.DefenseAreaId
-                    if state.NumUnits > 0 then
-                        let owner = getOwner area.Home.Home
+                    let numUnits =
+                        regionFillLevel
+                        |> Map.tryFind area.Home.Home
+                        |> Option.defaultVal 0.0f
+                        |> ((*) (float32 area.MaxNumGuns))
+                        |> ceil
+                        |> int
+                    if numUnits > 0 then
+                        let owner = sg.GetRegion(area.Home.Home).Owner
                         let country, coalition =
                             match owner with
                             | None -> failwithf "No owner found for group of anti-air defenses '%A'" area.DefenseAreaId
                             | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                             | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                        let group = StaticDefenseGroup.Create(area.Role, includeSearchLights, random, store, lcStore, area.Boundary, area.Position.Rotation, state.NumUnits, country, coalition)
+                        let group = StaticDefenseGroup.Create(area.Role, includeSearchLights, random, store, lcStore, area.Boundary, area.Position.Rotation, numUnits, country, coalition)
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)

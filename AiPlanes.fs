@@ -168,7 +168,7 @@ let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (Airfiel
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     let defenseNeeds =
-        computeDefenseNeeds world
+        computeFullDefenseNeeds world
         |> Map.ofList
     let random = System.Random()
     patrols

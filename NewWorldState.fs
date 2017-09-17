@@ -899,6 +899,5 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
     let battles = buildBattles state5b movements columnDepartures damages paradrops
     let state6 = applyVehicleDepartures state5b movements columnDepartures
     let state7, battleReports = applyConquests world state6 battles
-    let state8 = updateNumCanons world state7
-    let state9 = updateRunways world state8 windOri
-    { state9 with Date = nextDate dt state9.Date }, newlyProduced, battleReports
+    let state8 = updateRunways world state7 windOri
+    { state8 with Date = nextDate dt state8.Date }, newlyProduced, battleReports

@@ -92,31 +92,16 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     |> Seq.sumBy (fun (building, health) -> (1.0f - health) * building.RepairCost)
                 yield af.Region, bombNeed + repairs - afs.Supplies
         }
-    let frontLine = computeFrontLine false world state.Regions
-    // Amounts of extra anti-tank and anti-air canons needed to have the region fully defended.
-    // Can be negative.
+    // Ammo needs. Can be negative.
+    let regionAmmoCost = state.GetAmmoCostPerRegion(world)
     let regionCanonNeeds =
-        seq {
-            for antiTank, antiTankState in Seq.zip world.AntiTankDefenses state.AntiTankDefenses do
-                match antiTank.Home with
-                | FrontLine(home, ngh) when frontLine.Contains(home, ngh)->
-                    yield home, float32(antiTank.MaxNumGuns - antiTankState.NumUnits) * cannonCost
-                | _ ->
-                    ()
-            for antiAir, antiAirState in Seq.zip world.AntiAirDefenses state.AntiAirDefenses do
-                match antiAir.Home with
-                | Central(home) ->
-                    yield home, float32(antiAir.MaxNumGuns - antiAirState.NumUnits) * cannonCost
-                | _ ->
-                    ()
-        }
-        |> Seq.groupBy fst
-        |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
+        regionAmmoCost
+        |> Map.map (fun region cost -> cost - sg.GetRegion(region).Supplies)
     // Costs for canons adjusted by storage capacity. Can be negative
     let regionSaturatedCanonNeeds =
         let capacities = computeStorageCapacity world
         seq {
-            for region, costs in regionCanonNeeds do
+            for region, costs in regionCanonNeeds |> Map.toSeq do
                 let capacity =
                     Map.tryFind region capacities
                     |> Option.defaultVal 0.0f<E>
