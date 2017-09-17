@@ -344,6 +344,7 @@ with
         }
 
     static member CreateArrows(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState, axisOrders : Orders.OrderPackage, alliesOrers : Orders.OrderPackage, coalition : CoalitionId) =
+        let sg = state.FastAccess
         let renderArrow(start : Vector2, tip : Vector2, width : float32, headAngle : float32, color) =
             let dir =
                 let x = (tip - start)
@@ -401,11 +402,19 @@ with
                             Mcu.IconIdValue.AttackBombersFlight
                     yield! mkTravelArrow(order.Convoy.Start, order.Convoy.Destination, (10, 0, 0), int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity), iconId)
                 for order in friendlyOrders.Columns do
-                    let iconId = Mcu.IconIdValue.CoverArmorColumn
-                    yield! mkTravelArrow(order.Start, order.Destination, (0, 0, 10), order.Composition |> Array.length, iconId)
+                    match sg.GetRegion(order.Destination).Owner with
+                    | Some owner when owner = coalition.Other ->
+                        () // No arrow for battles
+                    | _ ->
+                        let iconId = Mcu.IconIdValue.CoverArmorColumn
+                        yield! mkTravelArrow(order.Start, order.Destination, (0, 0, 10), order.Composition |> Array.length, iconId)
                 for order in enemyOrders.Columns do
-                    let iconId = Mcu.IconIdValue.AttackArmorColumn
-                    yield! mkTravelArrow(order.Start, order.Destination, (10, 0, 0), order.Composition |> Array.length, iconId)
+                    match sg.GetRegion(order.Destination).Owner with
+                    | Some owner when owner = coalition ->
+                        () // No arrow for battles
+                    | _ ->
+                        let iconId = Mcu.IconIdValue.AttackArmorColumn
+                        yield! mkTravelArrow(order.Start, order.Destination, (10, 0, 0), order.Composition |> Array.length, iconId)
             ]
         let lcStrings =
             [
