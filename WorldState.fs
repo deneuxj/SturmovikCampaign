@@ -207,33 +207,43 @@ with
 
     member this.GetAmmoCostPerRegion(world : World) =
         let sg = this.FastAccess
-        let costs =
+        let aaCosts =
             seq {
-                for area in world.AntiTankDefenses @ world.AntiAirDefenses do
-                    match area.Home with
-                    | FrontLine(here, ngh) ->
-                        // Border defense only counted if part of the front line
-                        let regState = sg.GetRegion(here)
-                        match sg.GetRegion(ngh).Owner, regState.Owner with
-                        | Some x, Some y when x <> y ->
-                            yield area.Home.Home, area.AmmoCost
-                        | _ ->
-                            ()
-                    | Central(home) ->
-                        // Central defense always counted
-                        yield home, area.AmmoCost
+                for area in world.AntiAirDefenses do
+                    yield area.Home, area.AmmoCost
             }
             |> Seq.groupBy fst
             |> Seq.map (fun (reg, costs) -> reg, costs |> Seq.sumBy snd)
             |> Map.ofSeq
-        costs
+        let atCosts =
+            seq {
+                for region, regState in List.zip world.Regions this.Regions do
+                    let areas =
+                        region.Neighbours
+                        |> Seq.filter (fun ngh ->
+                            match sg.GetRegion(ngh).Owner, regState.Owner with
+                            | Some x, Some y when x <> y -> true
+                            | _ -> false
+                        )
+                        |> Seq.map (fun ngh ->
+                            let area = world.GetBattlefield(ngh, region.RegionId)
+                            area.DefenseAreaId, area)
+                        |> Map.ofSeq
+                    let cost =
+                        areas
+                        |> Map.toSeq
+                        |> Seq.sumBy (fun (_, area) -> area.AmmoCost)
+                    yield region.RegionId, cost
+            }
+            |> Map.ofSeq
+        Map.sumUnion aaCosts atCosts
 
     member this.GetAmmoFillLevel(world : World, region : RegionId, invader : RegionId) =
         let regState = this.GetRegion(region)
         let aaCost =
             seq {
                 for area in world.AntiAirDefenses do
-                    if area.Home.Home = region then
+                    if area.Home = region then
                         yield area.AmmoCost
             }
             |> Seq.sum
@@ -325,25 +335,18 @@ let computeDistanceFromFactories requirePathsInOwnedRegions getPaths getOwner (w
 /// <param name="baseNumUnits">get the number of units that will fit in a certain area</param>
 /// <param name="area">the description of the defense area</param>
 let setNumUnitsAsIfFullySupplied (getOwner : RegionId -> CoalitionId Option) inFrontLine (baseNumUnits : DefenseArea -> int) (area : DefenseArea, areaState : DefenseAreaState) =
-    let owner = getOwner area.Home.Home
+    let owner = getOwner area.Home
     let numUnits =
         match owner with
         | None -> 0
-        | Some _ ->
-            match area.Home with
-            | Central _ -> baseNumUnits area
-            | FrontLine(home, other) ->
-                if inFrontLine(home, other) then
-                    baseNumUnits area
-                else
-                    0
+        | Some _ -> baseNumUnits area
     { areaState with
         NumUnits = numUnits
     }
 
 let getNumCanonsPerRegion (areas : (DefenseArea * DefenseAreaState) seq) =
     areas
-    |> Seq.groupBy (fun (desc, state) -> desc.Home.Home)
+    |> Seq.groupBy (fun (desc, state) -> desc.Home)
     |> Seq.map (fun (region, areas) -> region, areas |> Seq.map snd |> Seq.sumBy (fun area -> area.NumUnits))
 
 /// Compute set of pairs of regions that are neighbours and are controlled by different coalitions.
@@ -379,7 +382,7 @@ let computeFrontLine (includeNeutral : bool) (world : World) (regions : RegionSt
 let computeFullDefenseNeeds (world : World) =
     [
         for area in world.AntiTankDefenses @ world.AntiAirDefenses do
-            yield area.Home.Home, area.AmmoCost
+            yield area.Home, area.AmmoCost
     ]
     |> List.groupBy fst
     |> List.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)

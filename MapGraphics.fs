@@ -270,7 +270,7 @@ with
             for region, regState in List.zip world.Regions state.Regions do
                 let needs =
                     world.AntiAirDefenses @ world.AntiTankDefenses
-                    |> List.filter (fun area -> area.Home.Home = region.RegionId)
+                    |> List.filter (fun area -> area.Home = region.RegionId)
                     |> List.sumBy (fun area -> area.AmmoCost)
                 let supplies =
                     Map.tryFind region.RegionId supplies

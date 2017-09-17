@@ -51,14 +51,14 @@ module Init =
 
         let antiAirUsage =
             world.AntiAirDefenses
-            |> Seq.map (fun def -> def.Home.Home, def.MaxNumGuns)
+            |> Seq.map (fun def -> def.Home, def.MaxNumGuns)
             |> Seq.groupBy fst
             |> Seq.map (fun (region, canons) -> region, canons |> Seq.sumBy snd)
             |> Map.ofSeq
 
         let antiTankUsage =
             world.AntiTankDefenses
-            |> Seq.map (fun def -> def.Home.Home, def.MaxNumGuns)
+            |> Seq.map (fun def -> def.Home, def.MaxNumGuns)
             |> Seq.groupBy fst
             |> Seq.map (fun (region, canons) -> region, canons |> Seq.maxBy snd |> snd)
             |> Map.ofSeq

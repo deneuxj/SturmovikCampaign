@@ -221,21 +221,11 @@ with
 
 type DefenseAreaId = DefenseAreaId of int
 
-/// A defense area can be tied to the region itself, or the border with another region.
-type DefenseAreaHome =
-    | Central of RegionId
-    | FrontLine of RegionId * RegionId
-with
-    member this.Home =
-        match this with
-        | Central home
-        | FrontLine(home, _) -> home
-
 /// Defense areas contain static anti-air and anti-tank defenses. Defense areas are extracted from influence areas in group Defenses in the strategy mission.
 /// Influence areas for anti-air are named "AAA" and "AT" for anti-tank.
 type DefenseArea = {
     DefenseAreaId : DefenseAreaId
-    Home : DefenseAreaHome
+    Home : RegionId
     /// The orientation is relevant for AT tank canons, so that they can aim at incoming tanks.
     Position : OrientedPosition
     Boundary : Vector2 list
@@ -264,7 +254,7 @@ with
                 | Some region ->
                     yield {
                         DefenseAreaId = DefenseAreaId(area.GetIndex().Value)
-                        Home = Central region.RegionId
+                        Home = region.RegionId
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f }
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                         MaxNumGuns = numGuns
@@ -280,25 +270,9 @@ with
                 let pos = Vector2.FromPos(area)
                 match regions |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary)) with
                 | Some region ->
-                    let outgoing =
-                        paths
-                        |> List.filter (fun path -> path.StartId = region.RegionId)
-                        |> List.map (fun path -> path, path.EndId)
-                    let incoming =
-                        paths
-                        |> List.filter (fun path -> path.EndId = region.RegionId)
-                        |> List.map (fun path -> path, path.StartId)
-                    let toNeighbours = outgoing @ incoming
-                    let other =
-                        try
-                            toNeighbours
-                            |> List.minBy(fun (path, id) -> pos.DistanceFromPath(path.Locations |> List.map (fun (x, _, _) -> x)))
-                        with
-                        | _ -> failwithf "Failed to find closest path to defense area '%d'" (area.GetIndex().Value)
-                        |> snd
                     yield {
                         DefenseAreaId = DefenseAreaId(area.GetIndex().Value)
-                        Home = FrontLine(region.RegionId, other)
+                        Home = region.RegionId
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f } 
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                         MaxNumGuns = 12
@@ -539,7 +513,7 @@ with
         // Find battlefield whose orientation best matches the respective location of regions
         let dir = attackerPos - defenderPos
         this.AntiTankDefenses
-        |> Seq.filter (fun area -> area.Home.Home = defender)
+        |> Seq.filter (fun area -> area.Home = defender)
         |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
 
 let cannonCost = 50.0f<E>

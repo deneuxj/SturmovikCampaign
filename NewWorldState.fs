@@ -380,7 +380,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
             for region, regState in List.zip world.Regions regionsAfterDamages do
                 let damagesToDefenses =
                     Seq.append world.AntiAirDefenses world.AntiTankDefenses
-                    |> Seq.filter (fun area -> area.Home.Home = region.RegionId)
+                    |> Seq.filter (fun area -> area.Home = region.RegionId)
                     |> Seq.sumBy (fun area ->
                         let damagedCannons =
                             Map.tryFind (Cannon(area.DefenseAreaId)) damages

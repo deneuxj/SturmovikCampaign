@@ -62,13 +62,13 @@ with
                 for area in world.AntiAirDefenses do
                     let numUnits =
                         regionFillLevel
-                        |> Map.tryFind area.Home.Home
+                        |> Map.tryFind area.Home
                         |> Option.defaultVal 0.0f
                         |> ((*) (float32 area.MaxNumGuns))
                         |> ceil
                         |> int
                     if numUnits > 0 then
-                        let owner = sg.GetRegion(area.Home.Home).Owner
+                        let owner = sg.GetRegion(area.Home).Owner
                         let country, coalition =
                             match owner with
                             | None -> failwithf "No owner found for group of anti-air defenses '%A'" area.DefenseAreaId
