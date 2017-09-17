@@ -527,6 +527,20 @@ type World
 with
     member this.FastAccess = WorldFastAccess.Create(this)
 
+    member this.GetBattlefield(attacker : RegionId, defender : RegionId) =
+        let attackerPos =
+            this.Regions
+            |> List.find (fun reg -> reg.RegionId = attacker)
+            |> fun x -> x.Position
+        let defenderPos =
+            this.Regions
+            |> List.find (fun reg -> reg.RegionId = defender)
+            |> fun x -> x.Position
+        // Find battlefield whose orientation best matches the respective location of regions
+        let dir = attackerPos - defenderPos
+        this.AntiTankDefenses
+        |> Seq.filter (fun area -> area.Home.Home = defender)
+        |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
 
 let cannonCost = 50.0f<E>
 let heavyMachineGunCost = cannonCost / 4.0f

@@ -370,6 +370,16 @@ let splitCompositions random vehicles =
 let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore) lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval maxColumnSplit (missionLength : int) (orders : ColumnMovement list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
+    // Only generate columns for reinforcements. Invading columns generate battlefields instead.
+    let orders =
+        orders
+        |> Seq.filter (fun order ->
+            match sg.GetRegion(order.Start).Owner, sg.GetRegion(order.Destination).Owner with
+            | Some x, Some y ->
+                x = y
+            | _, None -> true // No battlefield when capturing neutral regions
+            | None, _ -> failwith "Column starting from neutral zone"
+        )
     [
         for order in orders do
             let regState = sg.GetRegion(order.Start)

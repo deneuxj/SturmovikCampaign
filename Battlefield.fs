@@ -10,6 +10,7 @@ open WorldState
 open System.Numerics
 open VectorExtension
 open Util
+open Orders
 
 type private AreaLocation =
     | Back
@@ -24,7 +25,7 @@ type Battlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : Map<GroundAttackVehicle, int>) =
+    static member Create(random : System.Random, store, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[]) =
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float yori)
@@ -77,7 +78,6 @@ with
         // Instantiate attacker blocks
         let attackers, support =
             attackers
-            |> expandMap
             |> Seq.map (fun vehicle ->
                 match defendingCoalition.Other, vehicle with
                 | Allies, HeavyTank -> vehicles.RussianHeavyTank |> buildTank
@@ -149,3 +149,21 @@ with
             for d in this.Defenders do
                 yield d.Start
         ]
+
+/// Generate battlefields from invasions in column movement orders.
+let generateBattlefields random store (world : World) (state : WorldState) (orders : ColumnMovement list) =
+    let wg = world.FastAccess
+    let sg = state.FastAccess
+    [
+        for order in orders do
+            match sg.GetRegion(order.Start), sg.GetRegion(order.Destination) with
+            | { Owner = Some attacking } as regStart, ({ Owner = Some defending } as region) when attacking <> defending ->
+                let bf = world.GetBattlefield(order.Start, order.Destination)
+                let numGuns =
+                    state.GetAmmoFillLevel(world, region.RegionId, regStart.RegionId) * (float32 bf.MaxNumGuns)
+                    |> ceil
+                    |> int
+                yield Battlefield.Create(random, store, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, region.NumVehicles, order.Composition)
+            | _ ->
+                ()
+    ]

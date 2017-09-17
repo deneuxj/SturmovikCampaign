@@ -191,6 +191,10 @@ type WorldState
 with
     member this.FastAccess = WorldStateFastAccess.Create(this)
 
+    member this.GetRegion(region) =
+        this.Regions
+        |> List.find (fun r -> r.RegionId = region)
+
     member this.TotalPlaneValueOfCoalition(world : World, coalition : CoalitionId) =
         let sg = this.FastAccess
         List.zip world.Airfields this.Airfields
@@ -223,6 +227,22 @@ with
             |> Seq.map (fun (reg, costs) -> reg, costs |> Seq.sumBy snd)
             |> Map.ofSeq
         costs
+
+    member this.GetAmmoFillLevel(world : World, region : RegionId, invader : RegionId) =
+        let regState = this.GetRegion(region)
+        let aaCost =
+            seq {
+                for area in world.AntiAirDefenses do
+                    if area.Home.Home = region then
+                        yield area.AmmoCost
+            }
+            |> Seq.sum
+        let atCost =
+            world.GetBattlefield(invader, region).AmmoCost
+        regState.Supplies / (aaCost + atCost)
+        |> max 0.0f
+        |> min 1.0f
+
 
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu
