@@ -813,6 +813,12 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         [Axis; Allies]
         |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
         |> List.map (fun icons -> icons :> McuUtil.IMcuGroup)
+    let battles =
+        Battlefield.generateBattlefields missionData.Random store missionData.World missionData.State (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
+    for bf in battles do
+        for start in bf.Starts do
+            Mcu.addTargetLink missionBegin start.Index
+    let battles = battles |> List.map (fun bf -> bf.All)
     let parkedPlanes =
         createParkedPlanes store missionData.World missionData.State inAttackArea
         |> McuUtil.groupFromList
@@ -915,5 +921,5 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           alliesPrio
           axisPlaneFerries
           alliesPlaneFerries
-          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns
+          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles
     writeMissionFiles "eng" filename options allGroups
