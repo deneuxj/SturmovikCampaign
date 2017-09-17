@@ -301,7 +301,7 @@ with
                         Home = FrontLine(region.RegionId, other)
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f } 
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
-                        MaxNumGuns = 4
+                        MaxNumGuns = 12
                         Role = AntiTank
                     }
                 | None ->
@@ -469,8 +469,9 @@ with
         let defenses = data.GetGroup("Defenses")
         let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
-        let ats = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AT"))
-        let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(ats, regions, roads)
+        let battlefieldZones = data.GetGroup("Battles")
+        let battlefields = battlefieldZones.ListOfMCU_TR_InfluenceArea
+        let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(battlefields, regions, roads)
         let afs = data.GetGroup("Airfield spawns").ListOfAirfield
         let planes = data.GetGroup("Parked planes").ListOfPlane
         let afStorages = data.GetGroup("Airfield storage").ListOfBlock
@@ -507,7 +508,7 @@ let productionFactor (world : World) = world.ProductionFactor
 
 open Campaign.Util
 
-/// Provides fast accesst to world description data by index.
+/// Provides fast access to world description data by index.
 type WorldFastAccess = {
     GetRegion : RegionId -> Region
     GetAntiAirDefenses : DefenseAreaId -> DefenseArea
