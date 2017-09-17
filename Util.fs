@@ -112,6 +112,30 @@ module Array =
                     yield (x, y)
         }
 
+module Map =
+    let getKeys m =
+        m
+        |> Map.toSeq
+        |> Seq.map fst
+        |> Set.ofSeq
+
+    let sumUnion m1 m2 =
+        let allKeys = Set.unionMany [ getKeys m1; getKeys m2 ]
+        let z = LanguagePrimitives.Float32WithMeasure 0.0f
+        seq {
+            for k in allKeys do
+                let n1 =
+                    m1
+                    |> Map.tryFind k
+                    |> Option.defaultVal z
+                let n2 =
+                    m2
+                    |> Map.tryFind k
+                    |> Option.defaultVal z
+                yield k, n1 + n2
+        }
+        |> Map.ofSeq
+
 /// Misc useful algorithms.
 module Algo =
     /// <summary>
