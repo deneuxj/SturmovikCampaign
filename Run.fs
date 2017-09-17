@@ -60,9 +60,10 @@ module Init =
             world.AntiTankDefenses
             |> Seq.map (fun def -> def.Home.Home, def.MaxNumGuns)
             |> Seq.groupBy fst
-            |> Seq.map (fun (region, canons) -> region, canons |> Seq.sumBy snd)
+            |> Seq.map (fun (region, canons) -> region, canons |> Seq.maxBy snd |> snd)
             |> Map.ofSeq
 
+        printfn "%20s | %13s | %12s | %12s" "region" "Prod - cap" "AA" "AT"
         for region in world.Regions do
             let (RegionId regionName) = region.RegionId
             let aa = Map.tryFind region.RegionId antiAirUsage |> fun x -> defaultArg x 0
