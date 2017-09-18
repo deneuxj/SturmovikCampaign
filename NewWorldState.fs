@@ -780,10 +780,13 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
                     attackers
                 |> expandMap
                 |> Seq.sumBy (fun v -> v.Cost)
-            cost / capacity
-            |> max 0.5f
-            |> min 0.0f
-            |> ((*) -1.0f)
+            if capacity = 0.0f<E> then
+                0.0f
+            else
+                cost / capacity
+                |> min 0.5f
+                |> max 0.0f
+                |> ((*) -1.0f)
         region,
         { Defenders = defenders
           Attackers = attackers
