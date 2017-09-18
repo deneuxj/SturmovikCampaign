@@ -814,7 +814,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
         |> List.map (fun icons -> icons :> McuUtil.IMcuGroup)
     let battles =
-        Battlefield.generateBattlefields missionData.Random store missionData.World missionData.State (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
+        Battlefield.generateBattlefields missionData.Random store lcStore missionData.World missionData.State (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
     for bf in battles do
         for start in bf.Starts do
             Mcu.addTargetLink missionBegin start.Index

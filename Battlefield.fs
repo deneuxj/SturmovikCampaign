@@ -11,6 +11,7 @@ open System.Numerics
 open VectorExtension
 open Util
 open Orders
+open SturmovikMission.Blocks.IconDisplay
 
 type private AreaLocation =
     | Back
@@ -22,10 +23,11 @@ type Battlefield =
     { Supporters : RespawningCanon list // Artillery behind the attacking front, fires at defenses
       Attackers : RespawningTank list // Moving tanks
       Defenders : RespawningCanon list // Static tanks, defensive artillery and anti-tank canons
+      Icons : IconDisplay list
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[]) =
+    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[]) =
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float yori)
@@ -120,10 +122,13 @@ with
                 | Allies -> vehicles.RussianAntiTankCanon
                 |> fun x -> buildCanon(Defense, x, vehicles.AntiTankPosition)
             )
+        // Icons
+        let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, center, "Ground battle", defendingCoalition.ToCoalition, Mcu.IconIdValue.CoverArmorColumn)
         // Result
         { Supporters = support
           Attackers = attackers
           Defenders = defenders @ canons
+          Icons = [ icon1; icon2 ]
           All =
             { new McuUtil.IMcuGroup with
                   member x.Content = []
@@ -135,6 +140,8 @@ with
                         yield a.All
                     for d in defenders @ canons do
                         yield d.All
+                    yield icon1.All
+                    yield icon2.All
                   ]
             }
         }
@@ -148,10 +155,12 @@ with
                 yield s.Start
             for d in this.Defenders do
                 yield d.Start
+            for i in this.Icons do
+                yield upcast i.Show
         ]
 
 /// Generate battlefields from invasions in column movement orders.
-let generateBattlefields random store (world : World) (state : WorldState) (orders : ColumnMovement list) =
+let generateBattlefields random store lcStore (world : World) (state : WorldState) (orders : ColumnMovement list) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     [
@@ -163,7 +172,7 @@ let generateBattlefields random store (world : World) (state : WorldState) (orde
                     state.GetAmmoFillLevel(world, region.RegionId, regStart.RegionId) * (float32 bf.MaxNumGuns)
                     |> ceil
                     |> int
-                yield Battlefield.Create(random, store, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, region.NumVehicles, order.Composition)
+                yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, region.NumVehicles, order.Composition)
             | _ ->
                 ()
     ]
