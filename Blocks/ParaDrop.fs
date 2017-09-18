@@ -8,9 +8,10 @@ open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.EventReporting
+open SturmovikMission.Blocks.Util
 
 let preciseParaDropPrefix = "PreciseParaDrop"
-let wideParaDropprefix = "WideParaDrop"
+let wideParaDropPrefix = "WideParaDrop"
 
 type ParaDrop = {
     Pos : Vector2
@@ -46,8 +47,8 @@ with
         // Notification
         let notifyPreciseName = sprintf "%s-%s" preciseParaDropPrefix eventName
         let notifyPrecise = EventReporting.Create(store, country, pos, notifyPreciseName)
-        let notifyWideName = sprintf "%s-%s" wideParaDropprefix eventName
-        let notifyWide = EventReporting.Create(store, country, pos, notifyPreciseName)
+        let notifyWideName = sprintf "%s-%s" wideParaDropPrefix eventName
+        let notifyWide = EventReporting.Create(store, country, pos, notifyWideName)
         Mcu.addTargetLink precise notifyPrecise.Trigger.Index
         Mcu.addTargetLink wide notifyWide.Trigger.Index
         // Result
@@ -72,12 +73,20 @@ with
 
     static member TryGetPreciseDropEventName(name : string) =
         if name.StartsWith(preciseParaDropPrefix + "-") then
-            Some (name.Substring(preciseParaDropPrefix.Length + 1))
+            try
+                let att, rest = String.sscanf "-%c-%s" (name.Substring(preciseParaDropPrefix.Length))
+                Some (att, rest)
+            with
+            | _ -> None
         else
             None
 
     static member TryGetWideDropEventName(name : string) =
-        if name.StartsWith(wideParaDropprefix + "-") then
-            Some (name.Substring(wideParaDropprefix.Length + 1))
+        if name.StartsWith(wideParaDropPrefix + "-") then
+            try
+                let att, rest = String.sscanf "-%c-%s" (name.Substring(wideParaDropPrefix.Length))
+                Some (att, rest)
+            with
+            | _ -> None
         else
             None
