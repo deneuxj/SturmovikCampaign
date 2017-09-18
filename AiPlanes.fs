@@ -83,7 +83,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                     let owner = sg.GetRegion(af.Region).Owner
                     if owner = Some coalition && getNumPlanesOfType Fighter afState.NumPlanes > 2.0f then
                         for enemyAirfield, enemyAirfieldState in threats do
-                            for plane, count in afState.NumPlanes |> Map.toSeq do
+                            for plane, count in afState.NumPlanes |> Map.toSeq |> Seq.filter (fun (plane, _) -> plane.Coalition = coalition) do
                                 let dir =
                                     let x = enemyAirfield.Pos - region.Position
                                     x / x.Length()
@@ -122,7 +122,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
             for af, afState in List.zip world.Airfields state.Airfields do
                 let owner = sg.GetRegion(af.Region).Owner
                 for plane, count in afState.NumPlanes |> Map.toSeq do
-                    if owner = Some coalition && plane.Roles.Contains Patroller && count > 2.0f then
+                    if owner = Some coalition && plane.Coalition = coalition && plane.Roles.Contains Patroller && count > 2.0f then
                         // Order the two regions so that the friendly one is first, if any
                         let regions =
                             if sg.GetRegion(region1).Owner = Some coalition then
