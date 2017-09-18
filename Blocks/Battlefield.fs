@@ -57,7 +57,7 @@ with
             subst mcu
         // Key nodes
         let start = McuUtil.getTriggerByName group T.Blocks.Start
-        let canon = McuUtil.getVehicleByName group T.Blocks.HeavyTank
+        let canon = McuUtil.getVehicleByName group T.Blocks.Gun
         let wall = McuUtil.getVehicleByName group T.Blocks.Wall
         let target = McuUtil.getTriggerByName group T.Blocks.AttackArea :?> Mcu.McuAttackArea
         // Position all nodes
