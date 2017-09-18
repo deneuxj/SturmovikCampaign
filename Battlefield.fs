@@ -14,10 +14,10 @@ open Orders
 open SturmovikMission.Blocks.IconDisplay
 
 type private AreaLocation =
-    | Back
-    | Defense
-    | Support
-    | Offense
+    | DefenseBack
+    | DefenseMiddle
+    | AttackBack
+    | AttackMiddle
 
 type Battlefield =
     { Supporters : RespawningCanon list // Artillery behind the attacking front, fires at defenses
@@ -51,10 +51,10 @@ with
             let r0 =
                 let r = random.NextDouble() |> float32
                 match areaLocation with
-                | Back -> 0.25f * r + 0.75f
-                | Support -> 0.25f * r
-                | Defense -> 0.25f * r + 0.5f
-                | Offense -> 0.25f * r + 0.25f
+                | DefenseBack -> 0.25f * r + 0.75f
+                | AttackBack -> 0.25f * r
+                | DefenseMiddle -> 0.25f * r + 0.5f
+                | AttackMiddle -> 0.25f * r + 0.25f
             let r1 = random.NextDouble() |> float32
             let dx = (back * r0 + front * (1.0f - r0)) * dir
             let dz = (left * r1 + right * (1.0f - r1)) * side
@@ -65,14 +65,16 @@ with
             |> Seq.find (fun v -> v.IsInConvexPolygon(boundary))
         // Build an attacking tank
         let buildTank(model : VehicleTypeData) =
-            let tank = RespawningTank.Create(store, getRandomPos(Offense), getRandomPos(Back))
+            let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack))
             tank.Tank.Model <- model.Model
             tank.Tank.Script <- model.Script
             tank.Tank.Country <- defendingCoalition.Other.ToCountry
             tank |> Choice1Of2
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCanon(model : VehicleTypeData, wallModel : VehicleTypeData) =
-            let arty = RespawningCanon.Create(store, getRandomPos(Support), getRandomPos(Back))
+            let arty = RespawningCanon.Create(store, getRandomPos(AttackBack), getRandomPos(DefenseBack))
+            arty.Wall.Model <- wallModel.Model
+            arty.Wall.Script <- wallModel.Script
             arty.Canon.Model <- model.Model
             arty.Canon.Script <- model.Script
             arty.Canon.Country <- defendingCoalition.Other.ToCountry
@@ -84,10 +86,10 @@ with
                 match defendingCoalition.Other, vehicle with
                 | Allies, HeavyTank -> vehicles.RussianHeavyTank |> buildTank
                 | Allies, MediumTank -> vehicles.RussianMediumTank |> buildTank
-                | Allies, LightArmor -> (vehicles.RussianRocketArtillery, vehicles.AntiTankPosition) |> buildCanon
+                | Allies, LightArmor -> (vehicles.RussianRocketArtillery, vehicles.TankPosition) |> buildCanon
                 | Axis, HeavyTank -> vehicles.GermanHeavyTank |> buildTank
                 | Axis, MediumTank -> vehicles.GermanMediumTank |> buildTank
-                | Axis, LightArmor -> (vehicles.GermanRocketArtillery, vehicles.AntiTankPosition) |> buildCanon
+                | Axis, LightArmor -> (vehicles.GermanRocketArtillery, vehicles.TankPosition) |> buildCanon
             )
             |> List.ofSeq
             |> List.partition (function Choice1Of2 _ -> true | _ -> false)
@@ -96,7 +98,9 @@ with
         // Instantiate defender blocks
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCanon(location, model : VehicleTypeData, wallModel : VehicleTypeData) =
-            let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(Back))
+            let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack))
+            arty.Wall.Model <- wallModel.Model
+            arty.Wall.Script <- wallModel.Script
             arty.Canon.Model <- model.Model
             arty.Canon.Script <- model.Script
             arty.Canon.Country <- defendingCoalition.ToCountry
@@ -105,14 +109,14 @@ with
             defenders
             |> expandMap
             |> Seq.map (fun vehicle ->
-                match defendingCoalition.Other, vehicle with
+                match defendingCoalition, vehicle with
                 | Allies, HeavyTank -> vehicles.RussianHeavyTank
                 | Allies, MediumTank -> vehicles.RussianMediumTank
                 | Allies, LightArmor -> vehicles.RussianRocketArtillery
                 | Axis, HeavyTank -> vehicles.GermanHeavyTank
                 | Axis, MediumTank -> vehicles.GermanMediumTank
                 | Axis, LightArmor -> vehicles.GermanRocketArtillery
-                |> fun x -> buildCanon(Back, x, vehicles.AntiTankPosition)
+                |> fun x -> buildCanon(DefenseBack, x, vehicles.TankPosition)
             )
             |> List.ofSeq
         let canons =
@@ -120,7 +124,7 @@ with
                 match defendingCoalition with
                 | Axis -> vehicles.GermanAntiTankCanon
                 | Allies -> vehicles.RussianAntiTankCanon
-                |> fun x -> buildCanon(Defense, x, vehicles.AntiTankPosition)
+                |> fun x -> buildCanon(DefenseMiddle, x, vehicles.AntiTankPosition)
             )
         // Icons
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, center, "Ground battle", defendingCoalition.ToCoalition, Mcu.IconIdValue.CoverArmorColumn)
