@@ -652,9 +652,80 @@ with
                 |> Map.map (fun vehicle healthTotal -> (healthTotal / float32 vehicle.Cost) |> floor |> int)
             victor, remainingVictors, damages
 
-/// Group arrivals by destination and build the battle participants.
-/// Note: we generate battles without attackers when a column moves towards an uncontested friendly region.
-let buildBattles (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) (damaged : Damage list) (paras : ParaDropResult list) (preambleKills : BattleParticipantKilled list) =
+/// Build a battle for each column moving into enemy territory.
+let buildRealBattles (state : WorldState) (safeMovements : ColumnMovement list) (departures : ColumnLeft list) (paras : ParaDropResult list) (preambleKills : BattleParticipantKilled list) (invasions : ColumnMovement list) =
+    let sg = WorldStateFastAccess.Create state
+    let movements =
+        safeMovements
+        |> Seq.map (fun movement -> movement.OrderId, movement)
+        |> Map.ofSeq
+    let byStart =
+        departures
+        |> Seq.groupBy (fun departure -> movements.[departure.OrderId].Start)
+    invasions
+    |> List.map (fun order ->
+        let region = order.Destination
+        let regState = sg.GetRegion(region)
+        let defenders, attackers, defendingSide =
+            regState.NumVehicles, order.Composition, order.OrderId.Coalition.Other
+        // Add defense from vehicles parked at the region
+        let defenders =
+            match regState.Owner with
+            | Some coalition ->
+                // Remove departed vehicles from the vehicles parked at the region
+                let departed =
+                    byStart
+                    |> Seq.tryFind (fun (start, _) -> region = start)
+                    |> Option.map (fun (_, departed) ->
+                        departed
+                        |> Seq.map (fun order -> movements.[order.OrderId])
+                        |> Seq.fold (fun m order -> order.Composition |> Util.compactSeq |> Util.addMaps m) Map.empty)
+                    |> Option.defaultVal Map.empty
+                Util.subMaps regState.NumVehicles departed
+                |> Util.addMaps defenders
+                |> Map.filter (fun _ qty -> qty > 0)
+            | None ->
+                Map.empty
+        // Bonus to attackers from paratrooper drops
+        let paraBonus =
+            paras
+            |> List.filter (fun drop -> drop.Coalition = defendingSide.Other && drop.LandZone = region)
+            |> List.sumBy (fun drop ->
+                match drop.Precision with
+                | Precise -> 0.01f // 1% force multiplier for precise drop (per soldier)
+                | Wide -> 0.005f)   // 0.5% force multiplier for wide drop
+            |> min 0.5f // Up to 50% multiplier overall
+        // Compute negative bonus due to losses during preamble
+        let computeLoss coalition =
+            let cost =
+                preambleKills
+                |> Seq.filter (fun killed -> killed.Coalition = coalition && order.OrderId = killed.BattleId)
+                |> Seq.sumBy (fun killed -> killed.Vehicle.Cost)
+            let capacity =
+                if coalition = defendingSide then
+                    defenders
+                    |> expandMap
+                else
+                    attackers
+                |> Seq.sumBy (fun v -> v.Cost)
+            if capacity = 0.0f<E> then
+                0.0f
+            else
+                cost / capacity
+                |> min 0.5f
+                |> max 0.0f
+        region,
+        { Defenders = defenders
+          Attackers = attackers |> compactSeq
+          DefenderCoalition = defendingSide
+          AttackerBonus = 1.0f + paraBonus - computeLoss defendingSide.Other
+          DefenderBonus = 1.0f - computeLoss defendingSide
+        }
+    )
+    |> List.ofSeq
+
+/// Build a battle for each column moving in friendly territory (aka reinforcements) or into neutral terrirory.
+let buildFakeBattles (state : WorldState) (movements : ColumnMovement list) (departures : ColumnLeft list) (damaged : Damage list) =
     let sg = WorldStateFastAccess.Create state
     let movements =
         movements
@@ -758,41 +829,12 @@ let buildBattles (state : WorldState) (movements : ColumnMovement list) (departu
                 |> Map.filter (fun _ qty -> qty > 0)
             | None ->
                 Map.empty
-        // Bonus to attackers from paratrooper drops
-        let bonus =
-            paras
-            |> List.filter (fun drop -> drop.Coalition = defendingSide.Other && drop.LandZone = region)
-            |> List.sumBy (fun drop ->
-                match drop.Precision with
-                | Precise -> 0.01f // 1% force multiplier for precise drop (per soldier)
-                | Wide -> 0.005f)   // 0.5% force multiplier for wide drop
-            |> min 0.5f // Up to 50% multiplier overall
-        // Compute negative bonus due to loses during preamble
-        let computeLoss coalition =
-            let cost =
-                preambleKills
-                |> Seq.filter (fun killed -> killed.Coalition = coalition && attackOrders.Contains(killed.BattleId))
-                |> Seq.sumBy (fun killed -> killed.Vehicle.Cost)
-            let capacity =
-                if coalition = defendingSide then
-                    defenders
-                else
-                    attackers
-                |> expandMap
-                |> Seq.sumBy (fun v -> v.Cost)
-            if capacity = 0.0f<E> then
-                0.0f
-            else
-                cost / capacity
-                |> min 0.5f
-                |> max 0.0f
-                |> ((*) -1.0f)
         region,
         { Defenders = defenders
           Attackers = attackers
           DefenderCoalition = defendingSide
-          AttackerBonus = 1.0f + bonus - computeLoss defendingSide.Other
-          DefenderBonus = 1.0f - computeLoss defendingSide.Other
+          AttackerBonus = 1.0f
+          DefenderBonus = 1.0f
         }
     )
     |> List.ofSeq
@@ -860,6 +902,7 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
         movements
         |> Seq.map (fun movement -> movement.OrderId, movement)
         |> Map.ofSeq
+    // Registered departures from safe movements
     let departed =
         departures
         |> List.choose (fun departure -> Map.tryFind departure.OrderId movements |> Option.map (fun movement -> movement, departure))
@@ -870,6 +913,18 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
             let numVehicles = Util.addMaps numVehicles departure.Vehicles
             Map.add movement.Start numVehicles regionMap
         ) Map.empty
+    // All vehicles involved in battles are considered departed
+    let departed =
+        movements
+        |> Map.filter (fun _ movement -> movement.IsInvasion(state))
+        |> Map.fold (fun regionMap _ movement ->
+            let numVehicles : Map<GroundAttackVehicle, int> =
+                Map.tryFind movement.Start regionMap
+                |> Option.defaultVal Map.empty
+            let numVehicles = Util.addMaps numVehicles (compactSeq movement.Composition)
+            Map.add movement.Start numVehicles regionMap
+        ) departed
+    // Remove departed vehicles from regions
     let regions =
         state.Regions
         |> List.map (fun region ->
@@ -914,7 +969,7 @@ let nextDate (dt : float32<H>) (date : System.DateTime) =
             x
     newDate
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction movements convoyDepartures supplies damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
+let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction (movements : ColumnMovement list) convoyDepartures supplies damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
     let state2 =
         state
         |> applyProduction dt world Axis axisProduction
@@ -923,8 +978,12 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
     let state4 = applyRepairsAndDamages dt world state3 convoyDepartures damages supplies newSupplies
     let state5 = applyPlaneTransfers state4 tookOff landed
     let state5b = applyPlaneFerries state5 ferryPlanes
-    let battles = buildBattles state5b movements columnDepartures damages paradrops battleKills
+    let invasionMovements, safeMovements =
+        movements
+        |> List.partition (fun movement -> movement.IsInvasion(state5b))
+    let fakeBattles = buildFakeBattles state5b safeMovements columnDepartures damages
+    let realBattles = buildRealBattles state5b safeMovements columnDepartures paradrops battleKills invasionMovements
     let state6 = applyVehicleDepartures state5b movements columnDepartures
-    let state7, battleReports = applyConquests world state6 battles
+    let state7, battleReports = applyConquests world state6 (fakeBattles @ realBattles)
     let state8 = updateRunways world state7 windOri
     { state8 with Date = nextDate dt state8.Date }, newlyProduced, battleReports

@@ -119,6 +119,12 @@ with
         else
             None
 
+    /// Return true iff this movement order sends troops into (non-neutral) enemy territory.
+    member this.IsInvasion(state : WorldState) =
+        match state.GetRegion(this.Start).Owner, state.GetRegion(this.Destination).Owner with
+        | Some x, Some y -> x <> y
+        | _ -> false
+
     // The maximum number of vehicles following the leader in a column.
     static member MaxColumnSize = SturmovikMission.Blocks.VirtualConvoy.Factory.VirtualConvoy.MaxConvoySize
 
