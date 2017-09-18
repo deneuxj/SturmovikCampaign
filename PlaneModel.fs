@@ -547,7 +547,7 @@ with
               Yak1s69
               Lagg3s29
               P40
-              Pe2s35 ]
+              Pe2s87 ]
         | VelikieLuki ->
             [ Bf109e7
               Bf109f4
