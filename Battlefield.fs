@@ -27,7 +27,7 @@ type Battlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[]) =
+    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[], namePrefix) =
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float yori)
@@ -64,8 +64,9 @@ with
             Seq.initInfinite (fun _ -> getRandomPos areaLocation)
             |> Seq.find (fun v -> v.IsInConvexPolygon(boundary))
         // Build an attacking tank
-        let buildTank(model : VehicleTypeData) =
+        let buildTank name (model : VehicleTypeData) =
             let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack))
+            tank.Tank.Name <- namePrefix + "A-" + name
             tank.Tank.Model <- model.Model
             tank.Tank.Script <- model.Script
             tank.Tank.Country <- defendingCoalition.Other.ToCountry
@@ -84,11 +85,11 @@ with
             attackers
             |> Seq.map (fun vehicle ->
                 match defendingCoalition.Other, vehicle with
-                | Allies, HeavyTank -> vehicles.RussianHeavyTank |> buildTank
-                | Allies, MediumTank -> vehicles.RussianMediumTank |> buildTank
+                | Allies, HeavyTank -> vehicles.RussianHeavyTank |> buildTank vehicle.Description
+                | Allies, MediumTank -> vehicles.RussianMediumTank |> buildTank vehicle.Description
                 | Allies, LightArmor -> (vehicles.RussianRocketArtillery, vehicles.TankPosition) |> buildCanon
-                | Axis, HeavyTank -> vehicles.GermanHeavyTank |> buildTank
-                | Axis, MediumTank -> vehicles.GermanMediumTank |> buildTank
+                | Axis, HeavyTank -> vehicles.GermanHeavyTank |> buildTank vehicle.Description
+                | Axis, MediumTank -> vehicles.GermanMediumTank |> buildTank vehicle.Description
                 | Axis, LightArmor -> (vehicles.GermanRocketArtillery, vehicles.TankPosition) |> buildCanon
             )
             |> List.ofSeq
@@ -97,8 +98,11 @@ with
         let support = support |> List.map (function Choice2Of2 x -> x | _ -> failwith "Not a Choice2Of2")
         // Instantiate defender blocks
         // Build a supporting object (dug-in tank or rocket artillery)
-        let buildCanon(location, model : VehicleTypeData, wallModel : VehicleTypeData) =
+        let buildCanon (location, model : VehicleTypeData, name , wallModel : VehicleTypeData) =
             let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack))
+            match name with
+            | Some name -> arty.Canon.Name <- namePrefix + "D-" + name
+            | None -> ()
             arty.Wall.Model <- wallModel.Model
             arty.Wall.Script <- wallModel.Script
             arty.Canon.Model <- model.Model
@@ -116,7 +120,7 @@ with
                 | Axis, HeavyTank -> vehicles.GermanHeavyTank
                 | Axis, MediumTank -> vehicles.GermanMediumTank
                 | Axis, LightArmor -> vehicles.GermanRocketArtillery
-                |> fun x -> buildCanon(DefenseBack, x, vehicles.TankPosition)
+                |> fun x -> buildCanon(DefenseBack, x, Some vehicle.Description, vehicles.TankPosition)
             )
             |> List.ofSeq
         let canons =
@@ -124,7 +128,7 @@ with
                 match defendingCoalition with
                 | Axis -> vehicles.GermanAntiTankCanon
                 | Allies -> vehicles.RussianAntiTankCanon
-                |> fun x -> buildCanon(DefenseMiddle, x, vehicles.AntiTankPosition)
+                |> fun x -> buildCanon(DefenseMiddle, x, None, vehicles.AntiTankPosition)
             )
         // Icons
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, center, "Ground battle", defendingCoalition.ToCoalition, Mcu.IconIdValue.CoverArmorColumn)
@@ -176,7 +180,8 @@ let generateBattlefields random store lcStore (world : World) (state : WorldStat
                     state.GetAmmoFillLevel(world, region.RegionId, regStart.RegionId) * (float32 bf.MaxNumGuns)
                     |> ceil
                     |> int
-                yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, region.NumVehicles, order.Composition)
+                let namePrefix = sprintf "B-%s-" (order.OrderId.AsString())
+                yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, region.NumVehicles, order.Composition, namePrefix)
             | _ ->
                 ()
     ]

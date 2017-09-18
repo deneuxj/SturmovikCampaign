@@ -543,3 +543,44 @@ let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder
     |> Seq.map (fun (damageObject, damages) ->
         { Object = damageObject
           Data = { Amount = damages |> Seq.sumBy (fun dam -> dam.Data.Amount) } })
+
+
+type BattleParticipantKilled = {
+    Coalition : CoalitionId
+    BattleId : OrderId
+    Vehicle : GroundAttackVehicle
+}
+
+/// Extract damages caused to vehicles in a battle. Used to compute battle bonuses.
+let extractBattleDamages (battles : ColumnMovement list) (entries : LogEntry seq) =
+    [
+        let idMapper = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                idMapper := Map.add spawned.ObjectId spawned.ObjectName !idMapper
+            | :? KillEntry as kill ->
+                match Map.tryFind kill.TargetId !idMapper with
+                | Some name ->
+                    yield!
+                        seq {
+                            for battle in battles do
+                                for vehicle in GroundAttackVehicle.AllVehicles do
+                                    for side in [ "A"; "D" ] do
+                                        let vehName = sprintf "B-%s-%s-%s" (battle.OrderId.AsString()) side vehicle.Description
+                                        if name = vehName then
+                                            let coalition =
+                                                match side with
+                                                | "D" -> battle.OrderId.Coalition.Other
+                                                | "A" -> battle.OrderId.Coalition
+                                                | _ -> failwithf "Unknown side '%s'" side
+                                            yield {
+                                                Coalition = coalition
+                                                BattleId = battle.OrderId
+                                                Vehicle = vehicle
+                                            }
+                        }
+                | None ->
+                    ()
+            | _ -> ()
+    ]
