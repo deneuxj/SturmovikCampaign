@@ -282,6 +282,21 @@ with
                     failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
         ]
 
+    member private this.LongPositions =
+        let dir = Vector2.FromYOri(float this.Position.Rotation)
+        this.Boundary
+        |> Seq.map (fun v -> Vector2.Dot(v - this.Position.Pos, dir))
+
+    member this.DefensePos =
+        let dir = Vector2.FromYOri(float this.Position.Rotation)
+        let c = this.LongPositions |> Seq.min
+        this.Position.Pos + c * dir
+
+    member this.AttackPos =
+        let dir = Vector2.FromYOri(float this.Position.Rotation)
+        let c = this.LongPositions |> Seq.max
+        this.Position.Pos + c * dir
+
 /// Airfield identifier, uses the name of the fakefield.
 type AirfieldId = AirfieldId of string
 

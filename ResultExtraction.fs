@@ -139,8 +139,8 @@ type ParaDropPrecision = Precise | Wide
 
 /// A paratrooper landed alive inside or near a landing zone.
 type ParaDropResult = {
+    BattleId : OrderId
     Coalition : CoalitionId
-    LandZone : RegionId
     Precision : ParaDropPrecision
 }
 
@@ -151,14 +151,23 @@ let extractParaDrops (orders : ColumnMovement list) (entries : LogEntry seq) =
             | Precise -> ParaDrop.TryGetPreciseDropEventName
             | Wide -> ParaDrop.TryGetWideDropEventName
         match f eventName with
-        | Some suffix ->
+        | Some(side, suffix) ->
             match orders |> List.tryFind (fun order -> order.OrderId.AsString() = suffix) with
             | Some order ->
-                Some {
-                    Coalition = order.OrderId.Coalition
-                    LandZone = order.Destination
-                    Precision = Precise
-                }
+                match side with
+                | 'A' ->
+                    Some {
+                        BattleId = order.OrderId
+                        Coalition = order.OrderId.Coalition
+                        Precision = precision
+                    }
+                | 'D' ->
+                    Some {
+                        BattleId = order.OrderId
+                        Coalition = order.OrderId.Coalition.Other
+                        Precision = precision
+                    }
+                | _ -> failwithf "Bad side %c" side
             | None ->
                 None
         | None ->

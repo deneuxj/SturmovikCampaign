@@ -403,10 +403,6 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                     let travel =
                         path
                         |> List.map toVertex
-                    if sg.GetRegion(order.Destination).Owner = Some coalition.Other then
-                        let destination = List.last travel
-                        let paraDrop = ParaDrop.Create(store, lcStore, destination.Pos, coalition.ToCountry, order.OrderId.AsString())
-                        yield paraDrop.All
                     let expectedTravelTime =
                         let speed =
                             20000.0f / 3600.0f
@@ -718,6 +714,14 @@ let createBuildingFires store (world : World) (state : WorldState) (windDirectio
                 yield FireLoop.Create(store, pos, alt, windDirection, fireType)
     ]
 
+let createParaTrooperDrops (world : World) store lcStore (invasions : ColumnMovement list) =
+    invasions
+    |> List.map (fun invasion ->
+        let bf = world.GetBattlefield(invasion.Start, invasion.Destination)
+        [ ParaDrop.Create(store, lcStore, bf.DefensePos, invasion.OrderId.Coalition.Other.ToCountry, "D-" + invasion.OrderId.AsString())
+          ParaDrop.Create(store, lcStore, bf.AttackPos, invasion.OrderId.Coalition.ToCountry, "A-" + invasion.OrderId.AsString()) ])
+    |> List.concat
+
 let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Options) =
     let configs =
         PlaneModel.AllModels(planeSet)
@@ -819,6 +823,12 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         for start in bf.Starts do
             Mcu.addTargetLink missionBegin start.Index
     let battles = battles |> List.map (fun bf -> bf.All)
+    let paraDrops =
+        let invasions =
+            (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
+            |> List.filter (fun m -> m.IsInvasion(missionData.State))
+        createParaTrooperDrops missionData.World store lcStore invasions
+        |> List.map (fun p -> p.All)
     let parkedPlanes =
         createParkedPlanes store missionData.World missionData.State inAttackArea
         |> McuUtil.groupFromList
@@ -921,5 +931,5 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           alliesPrio
           axisPlaneFerries
           alliesPlaneFerries
-          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles
+          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops
     writeMissionFiles "eng" filename options allGroups

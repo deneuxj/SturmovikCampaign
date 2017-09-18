@@ -686,10 +686,10 @@ let buildRealBattles (state : WorldState) (safeMovements : ColumnMovement list) 
                 |> Map.filter (fun _ qty -> qty > 0)
             | None ->
                 Map.empty
-        // Bonus to attackers from paratrooper drops
-        let paraBonus =
+        // Bonus from paratrooper drops
+        let computeParaBonus coalition =
             paras
-            |> List.filter (fun drop -> drop.Coalition = defendingSide.Other && drop.LandZone = region)
+            |> List.filter (fun drop -> drop.Coalition = coalition && drop.BattleId = order.OrderId)
             |> List.sumBy (fun drop ->
                 match drop.Precision with
                 | Precise -> 0.01f // 1% force multiplier for precise drop (per soldier)
@@ -718,8 +718,8 @@ let buildRealBattles (state : WorldState) (safeMovements : ColumnMovement list) 
         { Defenders = defenders
           Attackers = attackers |> compactSeq
           DefenderCoalition = defendingSide
-          AttackerBonus = 1.0f + paraBonus - computeLoss defendingSide.Other
-          DefenderBonus = 1.0f - computeLoss defendingSide
+          AttackerBonus = 1.0f + computeParaBonus defendingSide.Other - computeLoss defendingSide.Other
+          DefenderBonus = 1.0f + computeParaBonus defendingSide - computeLoss defendingSide
         }
     )
     |> List.ofSeq
