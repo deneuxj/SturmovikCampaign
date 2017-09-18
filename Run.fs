@@ -549,8 +549,9 @@ module MissionLogParsing =
                                 current
                             else
                                 previous
-                    let expectedMissionFile = sprintf "multiplayer/%s.msnbin" config.MissionName
-                    if start.MissionTime = state.Date && start.MissionFile.ToLower() = expectedMissionFile.ToLower() then
+                    let expectedMissionFile = sprintf "%s.msnbin" config.MissionName
+                    let actualMissionFile = start.MissionFile.Split('/') |> Seq.last
+                    if start.MissionTime = state.Date && actualMissionFile.ToLower() = expectedMissionFile.ToLower() then
                         previous, [entry] // Start new list
                     else
                         previous, [] // Start new skip
