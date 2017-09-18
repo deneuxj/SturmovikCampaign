@@ -51,7 +51,7 @@ let generatePlaneTransfer store lcStore (world : World) (state : WorldState) (mi
             for block, _ in blocksAndGroups do
                 Mcu.addTargetLink missionStart block.Enable.Index
             // The first numSimultaneous flights that spawn start the next flight
-            for (curr, _), (next, _) in Seq.pairwise blocksAndGroups |> Seq.truncate numSimultaneous do
+            for (curr, _), (next, _) in Seq.pairwise blocksAndGroups |> Seq.truncate (max 0 (numSimultaneous - 1)) do
                 let once = newCounter 1
                 once.Count <- 1
                 once.WrapAround <- false
