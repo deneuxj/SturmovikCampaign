@@ -54,6 +54,7 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
+    <Compile Include="Util.fs" />
     <Compile Include="Vector.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="IO.fs" />
