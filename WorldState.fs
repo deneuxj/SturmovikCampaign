@@ -171,9 +171,10 @@ with
 
 /// Packages all state data.
 type WorldState = {
+    Date : System.DateTime
+    AttackingSide : CoalitionId
     Regions : RegionState list
     Airfields : AirfieldState list
-    Date : System.DateTime
 }
 
 /// Provide fast access to state data using indexes.
@@ -511,6 +512,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
     { Airfields = airfields
       Regions = regions
       Date = world.StartDate
+      AttackingSide = Axis
     }
 
 type WorldState with

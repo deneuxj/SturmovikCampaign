@@ -69,6 +69,7 @@ type BoardState =
       Score : ScoreComponents
       ValueOfRegion : int -> float32<E>
       HasRegionFactory : int -> bool
+      AttackingSide : CoalitionId ref
     }
 with
     static member Create(world : World, state : WorldState) =
@@ -179,6 +180,7 @@ with
             }
           ValueOfRegion = valueOfRegion
           HasRegionFactory = hasFactory
+          AttackingSide = ref state.AttackingSide
         }, getSuccessors
 
     member this.Clone() =
@@ -258,6 +260,7 @@ with
                 | Some Axis, Some Axis
                 | Some Allies, Some Allies -> this.Score.Territory
                 | Some _, None -> failwith "Region cannot be captured by neutral coalition"
+        this.AttackingSide := this.AttackingSide.Value.Other
         !restore, oldScore
 
     member this.UndoMove(combined : CombinedMove, restore : _ list, oldScore : ScoreComponents) =
@@ -279,6 +282,7 @@ with
             arrive this.AxisForces order.Start force
             depart this.AxisForces order.Destination force)
         this.Score.CopyFrom(oldScore)
+        this.AttackingSide := this.AttackingSide.Value.Other
 
     member this.DisplayString =
         seq {
@@ -292,8 +296,10 @@ with
         }
         |> String.concat "\n"
 
-let allMoves (neighboursOf : int -> int[]) (state : BoardState) coalition =
+let allMoves (neighboursOf : int -> int[]) (state : BoardState) (coalition : CoalitionId) =
+    let canInvade = state.AttackingSide.Value = coalition
     let someCoalition = Some coalition
+    let someEnemy = Some coalition.Other
     seq {
         for i in 0 .. state.Owners.Length - 1 do
             assert(state.AxisForces.[i] = 0.0f<E> || state.AlliesForces.[i] = 0.0f<E>)
@@ -304,9 +310,10 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) coalition =
                     | Axis -> state.AxisForces.[i]
                     | Allies -> state.AlliesForces.[i]
                 for j in neighboursOf i do
-                    if force > 10.0f * MediumTank.Cost then
-                        yield { Start = i; Destination = j; Force = 0.5f * force }
-                    yield { Start = i; Destination = j; Force = force }
+                    if canInvade || state.Owners.[j] <> someEnemy then
+                        if force > 10.0f * MediumTank.Cost then
+                            yield { Start = i; Destination = j; Force = 0.5f * force }
+                        yield { Start = i; Destination = j; Force = force }
     }
 
 type BoardEvaluation =

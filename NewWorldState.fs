@@ -986,4 +986,4 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
     let state6 = applyVehicleDepartures state5b movements columnDepartures
     let state7, battleReports = applyConquests world state6 (fakeBattles @ realBattles)
     let state8 = updateRunways world state7 windOri
-    { state8 with Date = nextDate dt state8.Date }, newlyProduced, battleReports
+    { state8 with Date = nextDate dt state8.Date; AttackingSide = state8.AttackingSide.Other }, newlyProduced, battleReports
