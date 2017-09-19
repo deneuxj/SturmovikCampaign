@@ -18,6 +18,7 @@ type Configuration = {
     ColumnSplitInterval : int
     MaxSimultaneousConvoys : int
     MaxSimultaneousFerryFlights : int
+    MaxVehiclesInBattle : int
     OutputDir : string
     ServerDataDir : string
     ServerBinDir : string
@@ -40,6 +41,7 @@ with
             MaxConvoys = 10
             MaxSimultaneousConvoys = 2
             MaxSimultaneousFerryFlights = 3
+            MaxVehiclesInBattle = 15
             MaxPatrols = 6
             MaxAttackers = 3
             MaxCapturedPlanes = 3
@@ -95,6 +97,7 @@ let loadConfigFile (path : string) =
         MaxConvoys = values.MaxConvoys
         MaxSimultaneousConvoys = values.MaxSimultaneousConvoys
         MaxSimultaneousFerryFlights = values.MaxSimultaneousFerryFlights
+        MaxVehiclesInBattle = values.MaxVehiclesInBattle
         MaxPatrols = values.MaxPatrols
         MaxAttackers = values.MaxAttackers
         MaxCapturedPlanes = values.MaxCapturedPlanes

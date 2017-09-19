@@ -25,6 +25,8 @@
     MaxSimultaneousConvoys: 2
     # Max number of ferry flights active simultaneously (per side)
     MaxSimultaneousFerryFlights: 2
+    # Max number of vehicles in a battle (per side)
+    MaxVehiclesInBattle: 15
     # Where the textual generated mission file is written; this also the place where the campaign state is kept
     OutputDir: C:/somewhere
     # IL2 data dir

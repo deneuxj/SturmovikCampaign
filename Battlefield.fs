@@ -168,7 +168,7 @@ with
         ]
 
 /// Generate battlefields from invasions in column movement orders.
-let generateBattlefields random store lcStore (world : World) (state : WorldState) (orders : ColumnMovement list) =
+let generateBattlefields (maxVehicles) random store lcStore (world : World) (state : WorldState) (orders : ColumnMovement list) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     [
@@ -181,7 +181,17 @@ let generateBattlefields random store lcStore (world : World) (state : WorldStat
                     |> ceil
                     |> int
                 let namePrefix = sprintf "B-%s-" (order.OrderId.AsString())
-                yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, region.NumVehicles, order.Composition, namePrefix)
+                let defendingVehicles =
+                    region.NumVehicles
+                    |> expandMap
+                    |> Array.shuffle random
+                    |> Array.truncate maxVehicles
+                    |> compactSeq
+                let attackingVehicles =
+                    order.Composition
+                    |> Array.shuffle random
+                    |> Array.truncate maxVehicles
+                yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, namePrefix)
             | _ ->
                 ()
     ]
