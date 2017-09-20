@@ -17,8 +17,8 @@ with
     member this.GetText() =
         seq {
             yield sprintf "<u>Battle for %s</u> owned by %s<br>" (this.Region.ToString()) (this.Participants.DefenderCoalition.ToString())
-            yield sprintf "Defenders: %s<br>" (mkTankReport this.Participants.Defenders)
-            yield sprintf "Attackers: %s (+%1.0f%%)<br>" (mkTankReport this.Participants.Attackers) (100.0f * (this.Participants.AttackerBonus - 1.0f))
+            yield sprintf "Defenders: %s (%1.0f%%)<br>" (mkTankReport this.Participants.Defenders) (100.0f * (this.Participants.DefenderBonus - 1.0f))
+            yield sprintf "Attackers: %s (%1.0f%%)<br>" (mkTankReport this.Participants.Attackers) (100.0f * (this.Participants.AttackerBonus - 1.0f))
             yield sprintf "Victors: %s %s<br>" (this.Victors.ToString()) (mkTankReport this.Survivors)
             yield sprintf "Damaged supplies: %3.0f<br>" this.CollateralDamage
         }
