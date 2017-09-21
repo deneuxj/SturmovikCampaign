@@ -556,7 +556,7 @@ let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder
 
 type BattleParticipantKilled = {
     Coalition : CoalitionId
-    BattleId : OrderId
+    BattleId : RegionId
     Vehicle : GroundAttackVehicle
 }
 
@@ -585,7 +585,7 @@ let extractBattleDamages (battles : ColumnMovement list) (entries : LogEntry seq
                                                 | _ -> failwithf "Unknown side '%s'" side
                                             yield {
                                                 Coalition = coalition
-                                                BattleId = battle.OrderId
+                                                BattleId = battle.Destination
                                                 Vehicle = vehicle
                                             }
                         }

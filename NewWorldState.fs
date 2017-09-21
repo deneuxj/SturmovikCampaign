@@ -578,6 +578,46 @@ let applyPlaneFerries (state : WorldState) ferryEvents =
         |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
     { state with Airfields = airfields }
 
+/// Remove vehicles killed during a battle preamble from a vehicle count map.
+let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed : BattleParticipantKilled list) =
+    // Remove no more than 50% of the original total value
+    let totalValue =
+        numVehicles
+        |> Map.fold (fun value vehicle num ->
+            value + (float32 num) * vehicle.Cost
+        ) 0.0f<E>
+    // First remove the exact vehicles, if they can be found,
+    // keeping track of the value of vehicles killed that could not be removed.
+    let rec damageExact numVehicles unmatchedDamage damageSoFar (killed : BattleParticipantKilled list) =
+        if damageSoFar + unmatchedDamage >= 0.5f * totalValue then
+            numVehicles, unmatchedDamage, damageSoFar
+        else
+            match killed with
+            | [] -> numVehicles, unmatchedDamage, damageSoFar
+            | veh :: rest ->
+                match numVehicles |> Map.tryFind veh.Vehicle with
+                | Some n when n > 0 ->
+                    let numVehicles = Map.add veh.Vehicle (n - 1) numVehicles
+                    damageExact numVehicles unmatchedDamage (damageSoFar + veh.Vehicle.Cost) rest
+                | _ ->
+                    damageExact numVehicles (unmatchedDamage + veh.Vehicle.Cost) damageSoFar rest
+    // Remove other vehicles up to the value computed above
+    let rec damageOther damageLeft (vehicles : GroundAttackVehicle list) =
+        if damageLeft <= 0.0f<E> then
+            vehicles
+        else
+            match vehicles with
+            | [] -> []
+            | veh :: rest ->
+                damageOther (damageLeft - veh.Cost) rest
+    // Result
+    let numVehicles, unmatchedDamage, doneDamage = damageExact numVehicles 0.0f<E> 0.0f<E> killed
+    let numVehicles =
+        damageOther unmatchedDamage (numVehicles |> expandMap |> Array.shuffle random |> List.ofArray)
+        |> compactSeq
+    let doneDamage = doneDamage + unmatchedDamage
+    doneDamage / totalValue, numVehicles
+
 /// Simulate a battle between two enemy columns that arrived at the same region
 /// This is also used for column movements, which are seen as degenerate battles with an empty attacker side.
 type BattleParticipants = {
@@ -586,8 +626,23 @@ type BattleParticipants = {
     DefenderCoalition : CoalitionId
     AttackerBonus : float32
     DefenderBonus : float32
+    Region : RegionId
 }
 with
+    member this.Decimate(random : System.Random, preambleKills : BattleParticipantKilled list) =
+        let defendersDecimation =
+            preambleKills
+            |> List.filter (fun killed -> killed.BattleId = this.Region && killed.Coalition = this.DefenderCoalition)
+        let attackersDecimation =
+            preambleKills
+            |> List.filter (fun killed -> killed.BattleId = this.Region && killed.Coalition = this.DefenderCoalition.Other)
+        let damageToDefenders, defenders = decimateColumn random this.Defenders defendersDecimation
+        let damageToAttackers, attackers = decimateColumn random this.Attackers attackersDecimation
+        { this with
+            Defenders = defenders
+            Attackers = attackers
+        }, damageToDefenders, damageToAttackers
+
     /// Return the winning side, number of remaining vehicles of each type, collateral damages to storage.
     member this.RunBattle(random : System.Random) =
         match this.Defenders, this.Attackers with
@@ -653,7 +708,7 @@ with
             victor, remainingVictors, damages
 
 /// Build a battle for each column moving into enemy territory.
-let buildRealBattles (state : WorldState) (safeMovements : ColumnMovement list) (departures : ColumnLeft list) (paras : ParaDropResult list) (preambleKills : BattleParticipantKilled list) (invasions : ColumnMovement list) =
+let buildRealBattles (state : WorldState) (safeMovements : ColumnMovement list) (departures : ColumnLeft list) (paras : ParaDropResult list) (invasions : ColumnMovement list) =
     let sg = WorldStateFastAccess.Create state
     let movements =
         safeMovements
@@ -695,31 +750,12 @@ let buildRealBattles (state : WorldState) (safeMovements : ColumnMovement list) 
                 | Precise -> 0.01f // 1% force multiplier for precise drop (per soldier)
                 | Wide -> 0.005f)   // 0.5% force multiplier for wide drop
             |> min 0.5f // Up to 50% multiplier overall
-        // Compute negative bonus due to losses during preamble
-        let computeLoss coalition =
-            let cost =
-                preambleKills
-                |> Seq.filter (fun killed -> killed.Coalition = coalition && order.OrderId = killed.BattleId)
-                |> Seq.sumBy (fun killed -> killed.Vehicle.Cost)
-            let capacity =
-                if coalition = defendingSide then
-                    defenders
-                    |> expandMap
-                else
-                    attackers
-                |> Seq.sumBy (fun v -> v.Cost)
-            if capacity = 0.0f<E> then
-                0.0f
-            else
-                cost / capacity
-                |> min 0.5f
-                |> max 0.0f
-        region,
         { Defenders = defenders
           Attackers = attackers |> compactSeq
           DefenderCoalition = defendingSide
-          AttackerBonus = 1.0f + computeParaBonus defendingSide.Other - computeLoss defendingSide.Other
-          DefenderBonus = 1.0f + computeParaBonus defendingSide - computeLoss defendingSide
+          AttackerBonus = 1.0f + computeParaBonus defendingSide.Other
+          DefenderBonus = 1.0f + computeParaBonus defendingSide
+          Region = region
         }
     )
     |> List.ofSeq
@@ -829,12 +865,12 @@ let buildFakeBattles (state : WorldState) (movements : ColumnMovement list) (dep
                 |> Map.filter (fun _ qty -> qty > 0)
             | None ->
                 Map.empty
-        region,
         { Defenders = defenders
           Attackers = attackers
           DefenderCoalition = defendingSide
           AttackerBonus = 1.0f
           DefenderBonus = 1.0f
+          Region = region
         }
     )
     |> List.ofSeq
@@ -845,29 +881,35 @@ type BattleSummary = {
     Participants : BattleParticipants
     Victors : CoalitionId
     Survivors : Map<GroundAttackVehicle, int>
+    DamageToDefendersFromAir : float32
+    DamageToAttackersFromAir : float32
     CollateralDamage : float32
 }
 
 /// Run each battle, update vehicles in targetted regions and flip them if attackers are victorious
-let applyConquests (world : World) (state : WorldState) (battles : (RegionId * BattleParticipants) list) =
+let applyConquests (world : World) (state : WorldState) (battles : BattleParticipants list) (preambleKills : BattleParticipantKilled list) =
     let random = System.Random()
-    let sg = WorldStateFastAccess.Create state
+    let sg = state.FastAccess
     let battleResults =
         battles
-        |> List.map (fun (region, battle) -> region, battle.RunBattle(random))
+        |> List.map (fun battle ->
+            let battle, damageToDefenders, damageToAttackers = battle.Decimate(random, preambleKills)
+            battle.Region, (battle.RunBattle(random), damageToDefenders, damageToAttackers))
         |> Map.ofList
     let battleReports =
         battles
-        |> List.filter (fun (_, battle) -> not battle.Attackers.IsEmpty)
-        |> List.choose (fun (region, battle) ->
-            match battleResults.TryFind region with
-            | Some (victors, survivors, damage) ->
+        |> List.filter (fun battle -> not battle.Attackers.IsEmpty)
+        |> List.choose (fun battle ->
+            match battleResults.TryFind battle.Region with
+            | Some ((victors, survivors, damage), damageToDefenders, damageToAttackers) ->
                 Some {
-                    Region = region
+                    Region = battle.Region
                     Participants = battle
                     Victors = victors
                     Survivors = survivors
                     CollateralDamage = damage
+                    DamageToDefendersFromAir = damageToDefenders
+                    DamageToAttackersFromAir = damageToAttackers
                 }
             | None ->
                 None)
@@ -875,7 +917,7 @@ let applyConquests (world : World) (state : WorldState) (battles : (RegionId * B
         [
             for region in state.Regions do
                 match Map.tryFind region.RegionId battleResults with
-                | Some(newOwner, survivors, damages) ->
+                | Some((newOwner, survivors, damages), _, _) ->
                     yield { region with Owner = Some newOwner; NumVehicles = survivors; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
                 | None ->
                     yield region
@@ -884,7 +926,7 @@ let applyConquests (world : World) (state : WorldState) (battles : (RegionId * B
         [
             for af, afState in List.zip world.Airfields state.Airfields do
                 match Map.tryFind af.Region battleResults with
-                | Some(newOwner, survivors, damages) ->
+                | Some((newOwner, survivors, damages), _, _) ->
                     let factor =
                         match sg.GetRegion(af.Region).Owner with
                         | Some owner when owner <> newOwner -> 1.5f<E> // Previous owners sabotaged some of their planes.
@@ -982,8 +1024,8 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
         movements
         |> List.partition (fun movement -> movement.IsInvasion(state5b))
     let fakeBattles = buildFakeBattles state5b safeMovements columnDepartures damages
-    let realBattles = buildRealBattles state5b safeMovements columnDepartures paradrops battleKills invasionMovements
+    let realBattles = buildRealBattles state5b safeMovements columnDepartures paradrops invasionMovements
     let state6 = applyVehicleDepartures state5b movements columnDepartures
-    let state7, battleReports = applyConquests world state6 (fakeBattles @ realBattles)
+    let state7, battleReports = applyConquests world state6 (fakeBattles @ realBattles) battleKills
     let state8 = updateRunways world state7 windOri
     { state8 with Date = nextDate dt state8.Date; AttackingSide = state8.AttackingSide.Other }, newlyProduced, battleReports
