@@ -3,6 +3,50 @@
 open System.Numerics
 open SturmovikMission.DataProvider
 
+let convexHull (points : Vector2 list) =
+    let ccw(p1 : Vector2, p2 : Vector2, p3 : Vector2) =
+        (p2.X - p1.X) * (p3.Y - p1.Y) - (p2.Y - p1.Y) * (p3.X - p1.X) >= 0.0f
+    let lowest, points =
+        let rec work (lowest : Vector2) points (working : Vector2 list) =
+            match working with
+            | [] -> lowest, points
+            | pt :: working ->
+                if pt.Y < lowest.Y then
+                    work pt (lowest :: points) working
+                else
+                    work lowest (pt :: points) working
+        match points with
+        | [] -> invalidArg "points" "Must not be empty"
+        | lowest :: working -> work lowest [] working
+    let points =
+        points
+        |> List.sortByDescending (fun v ->
+            let l = (v - lowest).Length()
+            if l = 0.0f then
+                0.0f
+            else
+                Vector2.Dot(v - lowest, Vector2.UnitX) / l)
+    let rec backoff pt outerPoints =
+        match outerPoints with
+        | pt2 :: ((pt1 :: _) as tail) ->
+            if ccw(pt1, pt2, pt) then
+                pt :: outerPoints
+            else
+                backoff pt tail
+        | [_] ->
+            pt :: outerPoints
+        | [] ->
+            failwith "outerPoints should never become empty"
+    let rec work outerPoints working =
+//        printfn "outerPoints: %A working: %A" outerPoints working
+        match working with
+        | [] -> outerPoints
+        | pt :: working ->
+            let outerPoints = backoff pt outerPoints
+            work outerPoints working
+    work [lowest] points
+    |> List.rev
+
 type Vector2
 with
     static member inline FromPos(pos : ^T) =
@@ -105,3 +149,30 @@ with
                 degrees + 360.0f
             else
                 degrees
+
+
+let testConvexHull (random : System.Random) N =
+    let nextFloat() =
+        random.NextDouble()
+        |> fun x -> x * 10.0
+        |> floor
+        |> fun x -> x / 10.0
+        |> float32
+    let points =
+        List.init N (fun _ -> Vector2(nextFloat(), nextFloat()))
+    let hull = convexHull points
+    let ok =
+        points
+        |> List.forall (fun p ->
+            let ok = p.IsInConvexPolygon(hull)
+            if not ok then
+                printfn "%A not in polygon" p
+            ok)
+    if not ok then
+        Some(points, hull)
+    else
+        None
+
+let repeat rnd =
+    Seq.initInfinite (fun _ -> testConvexHull rnd 4)
+    |> Seq.tryPick id
