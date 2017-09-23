@@ -113,13 +113,24 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
             Some health
         else
             None
+    let playArea =
+        world.Regions
+        |> List.map (fun region -> region.Boundary)
+        |> List.concat
+        |> convexHull
     [
         for block in blocks do
             let v = Vector2.FromPos(block)
             let subst = Mcu.substId <| store.GetIdMapper()
             match tryGetRegionAt v with
             | None ->
-                ()
+                // Include all objects in the convex hull of all regions
+                // This fixes a bug where bridges located in the space between two neighbouring regions were culled.
+                if v.IsInConvexPolygon playArea then
+                    let mcu =
+                        createMcu block
+                    subst mcu
+                    yield mcu
             | Some region ->
                 let state = getState region.RegionId
                 let health = getHealth region state v
