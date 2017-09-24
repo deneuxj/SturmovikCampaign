@@ -2,7 +2,7 @@
     # Can be Moscow, VelikieLuki, EarlyAccess
     PlaneSet: Stalingrad
     # Name of file describing the scenario
-    StrategyFile: StalingradSummer
+    StrategyFile: StalingradSummer.Mission
     # Seed for the random generator; affects weather
     Seed: 42
     # Max deviation of the weather with respect of standard weather for start date
