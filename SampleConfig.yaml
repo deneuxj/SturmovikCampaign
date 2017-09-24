@@ -1,5 +1,5 @@
 ﻿Campaign:
-    # Can be Moscow, VelikieLuki, EarlyAccess
+    # Can be Stalingrad, Moscow, VelikieLuki, EarlyAccess
     PlaneSet: Stalingrad
     # Name of file describing the scenario
     StrategyFile: StalingradSummer.Mission
