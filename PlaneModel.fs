@@ -454,6 +454,7 @@ with
         | Yak1s69 -> [(9, 100.0f<K>); (10, 200.0f<K>)]
         | Yak1s127 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | SpitfireMkVb -> [(0, 0.0f<K>); (1, 0.0f<K>)]
+        |> List.sortBy fst
 
     member this.LoadOuts(maxWeight : float32<K>) =
         let rec work (loadout : int) (weights : (int * float32<K>) list) =
