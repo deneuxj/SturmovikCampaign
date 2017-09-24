@@ -455,6 +455,7 @@ type Plugin() =
     interface CampaignServerApi with
         member x.Init(apis) =
             support <- Some apis
+            apis.Logging.LogInfo(sprintf "SturmovikCampaign %s" Campaign.AssemblyInfo.Constants.version)
 
         member x.StartOrResume configFile =
             let support =
