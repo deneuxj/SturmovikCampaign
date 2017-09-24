@@ -426,7 +426,7 @@ module MissionFileGeneration =
             // Mission.eng -> Mission.lang: we use the english text for all languagues. Better than not having any text at all.
             File.Copy(Path.Combine(config.OutputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + "." + lang))
         let resaverDir = Path.Combine(config.ServerBinDir, "resaver")
-        let p = ProcessStartInfo(Path.Combine(resaverDir, "MissionResaver.exe"), sprintf "-d %s -f %s" config.ServerDataDir (Path.Combine(mpDir, missionName + ".Mission")))
+        let p = ProcessStartInfo(sprintf "\"%s\"" (Path.Combine(resaverDir, "MissionResaver.exe")), sprintf "-d \"%s\" -f \"%s\"" config.ServerDataDir (Path.Combine(mpDir, missionName + ".Mission")))
         p.WorkingDirectory <- resaverDir
         p.UseShellExecute <- false
         let proc = Process.Start(p)
