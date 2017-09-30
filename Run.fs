@@ -516,6 +516,7 @@ module MissionLogParsing =
             Plogger.Init()
 
         let entries =
+            printfn "Looking for logs in %s" missionLogsDir
             // entries to remove from the log
             let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
             let missionHasPassed30Min (entry : LogEntry) =
@@ -535,10 +536,10 @@ module MissionLogParsing =
                     |> Seq.map fst
                 for file in ordered do
                     for line in File.ReadAllLines(file) do
-                        yield LogEntry.Parse(line)
+                        yield LogEntry.Parse(line), file
             }
-            |> Seq.filter (fun entry -> not (timeLessEntryTypes.Contains(entry.EntryType)))
-            |> Seq.fold (fun (previous, current) entry ->  // Keep the latest mission reports with the proper mission start date
+            |> Seq.filter (fun (entry, _) -> not (timeLessEntryTypes.Contains(entry.EntryType)))
+            |> Seq.fold (fun (previous, current) (entry, file) ->  // Keep the latest mission reports with the proper mission start date
                 match current, entry with
                 | _, (:? MissionStartEntry as start) ->
                     // Move current to previous if it's non empty and has lasted long enough (30 minutes)
@@ -547,18 +548,31 @@ module MissionLogParsing =
                         | [] -> previous
                         | (last : LogEntry) :: _ ->
                             if missionHasPassed30Min last then
+                                printfn "Reached start of new mission, moving current to previous"
                                 current
                             else
+                                printfn "Reached start of new mission, discarding current because too short"
                                 previous
                     let expectedMissionFile = sprintf "%s.msnbin" config.MissionName
                     let actualMissionFile = start.MissionFile.Split('/') |> Seq.last
                     if start.MissionTime = state.Date && actualMissionFile.ToLower() = expectedMissionFile.ToLower() then
+                        printfn "Start collecting from %s" file
                         previous, [entry] // Start new list
                     else
+                        let reason =
+                            if start.MissionTime <> state.Date then
+                                "bad start date"
+                            elif actualMissionFile.ToLower() <> expectedMissionFile.ToLower() then
+                                "bad mission filename"
+                            else
+                                "???"
+                        printfn "Stopped collecting at %s because %s" file reason
                         previous, [] // Start new skip
                 | [], _ ->
+                    printfn "Skipped %s" file
                     previous, [] // Skip, looking for next mission start that has the right time
                 | _ :: _, _ ->
+                    printfn "Collected %s" file
                     previous, entry :: current // Recording, update current
             ) ([], [])
             |> function // current if it's longer than 30 min, previous otherwise
@@ -567,6 +581,7 @@ module MissionLogParsing =
                     if missionHasPassed30Min last then
                         current
                     else
+                        printfn "Discarded short sequence"
                         previous
             |> List.rev
 
