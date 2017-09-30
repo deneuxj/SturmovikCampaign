@@ -83,6 +83,10 @@
     <None Include="GenerateMission.fsx" />
     <None Include="ParseMissionLogs.fsx" />
     <None Include="Loop.fsx" />
+    <None Include="data\KubanSpring.Mission">
+      <Link>KubanSpring.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\MoscowAutumn1.Mission">
       <Link>MoscowAutumn1.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
