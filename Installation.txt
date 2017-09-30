@@ -12,7 +12,9 @@ Copy C:\Campaign\Bin\SampleConfig.yaml to some other file (e.g. Config.yaml)
 Edit Config.yaml to suit your needs
 
 Create a SDS configuration file for dserver, set the mission length duration to MissionLength in Config.yaml + 10min
-For the default three hours that 190 * 60 = 11400.
+For the default three hours that (180 + 10) * 60 = 11400.
+Set the mission to run to DynCampaign.
+Set lockPayloads = 1.
 
 Set the name of the SDS configuration file in Config.yaml, see ServerSdsFile.
 
