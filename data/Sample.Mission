@@ -24,7 +24,7 @@ Options
   PrecLevel = 2;
   PrecType = 2;
   CloudConfig = "winter\00_clear_00\sky.ini";
-  SeaState = 0;
+  SeaState = 4;
   Turbulence = 0.2;
   TempPressLevel = 10;
   Temperature = -15;
