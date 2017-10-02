@@ -119,7 +119,12 @@ let moveEntitiesAfterOwners (mcus : McuBase list) : McuBase list =
         ]
     finally
         if entities.Count > 0 then
-            failwith "Entities left without owners"
+            let details =
+                entities
+                |> Seq.truncate 5
+                |> Seq.map (fun kvp -> sprintf "%d - '%s' linked to %d" kvp.Key kvp.Value.Name kvp.Value.MisObjID)
+                |> String.concat ", "
+            failwithf "Entities left without owners: %s" details
 
 /// Get the string representation of the content of a group and its subgroups.
 let asString (gr : IMcuGroup) : string =
