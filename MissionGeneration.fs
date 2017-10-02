@@ -674,6 +674,9 @@ let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (stat
         lowPrio
 
     let subst = Mcu.substId <| store.GetIdMapper()
+    for mcu in landLights do
+        subst mcu
+
     [
         for mcu in landLights do
             match mcu with
@@ -697,8 +700,6 @@ let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (stat
                     | Axis ->
                         light.Model <- vehicles.GermanLandLight.Model
                         light.Script <- vehicles.GermanLandLight.Script
-                    subst (light :> Mcu.McuBase)
-                    subst entity
                     let prioNode = lightsOn([entity])
                     yield light :> Mcu.McuBase
                     yield upcast entity
