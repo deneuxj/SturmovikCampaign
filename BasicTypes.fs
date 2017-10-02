@@ -183,6 +183,8 @@ with
         | Contains "arf_hangararc" -> 1000.0f<E>
         | Contains "arf_hangarbox" -> 1000.0f<E>
         | Contains "arf_hangars_1" -> 1200.0f<E>
+        | Contains "arf_hangars_2" -> 1200.0f<E>
+        | Contains "arf_hangars_3" -> 600.0f<E>
         | Contains "arf_gsm_1" -> 100.0f<E>
         | Contains "arf_gsm_2" -> 75.0f<E>
         | _ ->
