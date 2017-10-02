@@ -95,7 +95,8 @@ let moveEntitiesAfterOwners (mcus : McuBase list) : McuBase list =
     let entities = Dictionary<int, McuEntity>()
     // Owners seen so far
     let owners = HashSet<int>()
-
+    // Already handled, used to detect duplicates
+    let handled = Dictionary<int, McuBase>()
     try
         [
             for mcu in mcus do
@@ -113,9 +114,16 @@ let moveEntitiesAfterOwners (mcus : McuBase list) : McuBase list =
                         yield upcast entity
                     | false, _ ->
                         yield upcast owner
-                        owners.Add(owner.Index) |> ignore
+                        let added = owners.Add(owner.Index)
+                        if not added then
+                            failwithf "Duplicate entity owner %d" owner.Index
                 | _ ->
                     yield mcu
+                match handled.TryGetValue(mcu.Index) with
+                | true, dup ->
+                    failwithf "Duplicate mcu %d, '%s' vs '%s'" mcu.Index (dup.AsString()) (mcu.AsString())
+                | false, _ ->
+                    handled.Add(mcu.Index, mcu)
         ]
     finally
         if entities.Count > 0 then
