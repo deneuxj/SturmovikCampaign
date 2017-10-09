@@ -84,7 +84,10 @@ with
         | Contains "arf_barak" -> [1]
         | Contains "arf_dugouts_2" -> [2..5]
         | Contains "arf_dugouts_3" -> [0..6]
-        | Contains "arf_ammo_1" -> [2]
+        | Contains "arf_ammo_1" -> [0] @ [2..10]
+        | Contains "arf_ammo_2" -> [0..9]
+        | Contains "arf_ammo_3" -> [3..10]
+        | Contains "arf_ammo_4" -> [2..8]
         | Contains "arf_sklad" -> [1]
         | Contains "arf_saray" -> [1]
         | Contains "industrial_200x140_01" -> [0..12]
@@ -180,6 +183,9 @@ with
         | Contains "arf_dugouts_2" -> 400.0f<E>
         | Contains "arf_dugouts_3" -> 600.0f<E>
         | Contains "arf_ammo_1" -> 100.0f<E>
+        | Contains "arf_ammo_2" -> 125.0f<E>
+        | Contains "arf_ammo_3" -> 50.0f<E>
+        | Contains "arf_ammo_4" -> 75.0f<E>
         | Contains "arf_hangararc" -> 1000.0f<E>
         | Contains "arf_hangarbox" -> 1000.0f<E>
         | Contains "arf_hangars_1" -> 1200.0f<E>
@@ -187,6 +193,10 @@ with
         | Contains "arf_hangars_3" -> 600.0f<E>
         | Contains "arf_gsm_1" -> 100.0f<E>
         | Contains "arf_gsm_2" -> 75.0f<E>
+        | Contains "arf_tower"
+        | Contains "arf_nets" -> 0.0f<E>
+        | Contains "arf_sarray" -> 500.0f<E>
+        | Contains "arf_sklad" -> 750.0f<E>
         | _ ->
             printfn "No storage in %s" this.Model
             0.0f<E>
@@ -194,6 +204,7 @@ with
     member this.Durability =
         match this.Model with
         | Contains "arf_net" -> 1000
+        | Contains "arf_ammo" -> 1000
         | Contains "arf_dugout" -> 15000
         | Contains "arf_barak" -> 7000
         | Contains "arf_hangar" -> 10000
