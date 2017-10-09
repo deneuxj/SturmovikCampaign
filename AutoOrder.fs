@@ -321,11 +321,8 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
 /// Move tanks from a rear region (where they typically are in excess) closer to the front line (where they typically are in need)
 let allTankReinforcements (world : World) (state : WorldState) (coalition : CoalitionId) =
     let vehicleMinValue = GroundAttackVehicle.HeavyTank.Cost * 5.0f
-    let frontLine =
-        computeFrontLine false world state.Regions
-        |> Set.map fst
     let sg = state.FastAccess
-    let distanceToFrontLine = computeDistance true (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) frontLine.Contains world
+    let distanceToFrontLine = computeDistance false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (fun region -> sg.GetRegion(region).Owner = Some coalition.Other) world
     [|
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && regState.TotalVehicleValue > vehicleMinValue then
