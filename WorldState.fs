@@ -319,8 +319,8 @@ let computeDistance requirePathsInOwnedRegions (getPaths : World -> Path list) (
     distances
 
 /// Compute the number of regions from a region to the nearest region with factories.
-let computeDistanceFromFactories requirePathsInOwnedRegions getPaths getOwner (world : World) (coalition : CoalitionId) =
-    computeDistance requirePathsInOwnedRegions getPaths getOwner (
+let computeDistanceFromFactories getPaths getOwner (world : World) (coalition : CoalitionId) =
+    computeDistance true getPaths getOwner (
         fun regionId ->
             getOwner regionId = Some coalition &&
             world.Regions
@@ -410,15 +410,31 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
             | true, _ -> Some Allies
             | _, true -> Some Axis
             | false, false -> None
-    
+
+    // Set of regions explicitly marked as strong, i.e. they have full supplies and vehicles
+    let strongRegions =
+        data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
+        |> Seq.filter (fun region -> region.GetDesc().Value.Contains "***")
+        |> Seq.map (fun region -> RegionId(region.GetName().Value))
+        |> Set.ofSeq
+
     let getRegion = wg.GetRegion
 
-    let distanceFromAxisFactories = computeDistanceFromFactories true (fun world -> world.Roads @ world.Rails) getOwner world Axis
-    let distanceFromAlliesFactories = computeDistanceFromFactories true (fun world -> world.Roads @ world.Rails) getOwner world Allies
-    let distanceFromFactories =
-        function
-        | Axis -> distanceFromAxisFactories
-        | Allies -> distanceFromAlliesFactories
+    let distanceFromStrongRegions =
+        if strongRegions.IsEmpty then
+            // No region explicitly marked as strong, use factories instead.
+            let distanceFromAxisFactories = computeDistanceFromFactories (fun world -> world.Roads @ world.Rails) getOwner world Axis
+            let distanceFromAlliesFactories = computeDistanceFromFactories (fun world -> world.Roads @ world.Rails) getOwner world Allies
+            function
+            | Axis -> distanceFromAxisFactories
+            | Allies -> distanceFromAlliesFactories
+        else
+            let distanceFromAxisStrong = computeDistance true (fun world -> world.Roads @ world.Rails) getOwner (fun r -> getOwner r = Some Axis && strongRegions.Contains r) world
+            let distanceFromAlliesStrong = computeDistance true (fun world -> world.Roads @ world.Rails) getOwner (fun r -> getOwner r = Some Allies && strongRegions.Contains r) world
+            function
+            | Axis -> distanceFromAxisStrong
+            | Allies -> distanceFromAlliesStrong
+
     // regions further from factories than this value are unsupplied.
     let cutoffHops = 4
     let regions =
@@ -431,7 +447,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                 | None -> 0.0f<E>, Map.empty
                 | Some owner ->
                     let hops =
-                        Map.tryFind region.RegionId (distanceFromFactories owner)
+                        Map.tryFind region.RegionId (distanceFromStrongRegions owner)
                         |> Option.defaultVal 10
                         |> min 10
                     let scale x =
@@ -464,7 +480,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
             match owner with
             | Some owner ->
                 let hops =
-                    Map.tryFind airfield.Region (distanceFromFactories owner)
+                    Map.tryFind airfield.Region (distanceFromStrongRegions owner)
                     |> Option.defaultVal cutoffHops
                     |> min cutoffHops
                 let scale (x : float32) =

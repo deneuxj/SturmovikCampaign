@@ -159,7 +159,7 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
 let createConvoyOrders (minTransfer : float32<E>) (maxTransfer : float32<E>) (getPaths : World -> (Path * 'D) list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
-    let distances = computeDistanceFromFactories true (getPaths >> List.map fst) getOwner world coalition
+    let distances = computeDistanceFromFactories (getPaths >> List.map fst) getOwner world coalition
     let areConnectedByRoad(start, destination) =
         getPaths world
         |> List.choose (fun (path, data) -> if path.MatchesEndpoints(start, destination).IsSome then Some data else None)
