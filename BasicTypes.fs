@@ -195,8 +195,8 @@ with
         | Contains "arf_gsm_2" -> 75.0f<E>
         | Contains "arf_tower"
         | Contains "arf_nets" -> 0.0f<E>
-        | Contains "arf_saray" -> 500.0f<E>
-        | Contains "arf_sklad" -> 750.0f<E>
+        | Contains "arf_saray" -> 200.0f<E>
+        | Contains "arf_sklad" -> 300.0f<E>
         | _ ->
             printfn "No storage in %s" this.Model
             0.0f<E>
