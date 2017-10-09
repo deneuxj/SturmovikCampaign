@@ -125,12 +125,16 @@ with
         |> List.map StaticGroup.FromBlock
 
     member this.AddStorage(blocks : T.Block list) =
-        let storage = this.GetStaticBlocks(blocks)
+        let storage =
+            this.GetStaticBlocks(blocks)
+            |> List.filter (fun block -> block.Storage > 0.0f<E>)
         { this with Storage = this.Storage @ storage
         }
 
     member this.AddProduction(blocks : T.Block list) =
-        let factories = this.GetStaticBlocks(blocks)
+        let factories =
+            this.GetStaticBlocks(blocks)
+            |> List.filter (fun block -> block.Production(1.0f) > 0.0f<E/H>)
         { this with Production = this.Production @ factories
         }
 
