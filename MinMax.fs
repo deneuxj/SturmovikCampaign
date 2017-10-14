@@ -394,7 +394,11 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                 | [] ->
                     soFar
                 | alliesMove :: alliesMoves ->
-                    if alliesMove.Destination = axisMove.Start && alliesMove.Start = axisMove.Destination then
+                    // Skip the following moves
+                    // - A -> B; B -> A (armies swapping positions)
+                    // - A -> B; C -> B (reinforcements into battle, not properly handled by campaign update)
+                    if alliesMove.Destination = axisMove.Start && alliesMove.Start = axisMove.Destination ||
+                        alliesMove.Destination = axisMove.Destination then
                         soFar
                         |> workAllies(axisMove, alpha, alliesMoves)
                     else
