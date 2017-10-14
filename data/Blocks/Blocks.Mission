@@ -7488,4 +7488,64 @@ Group
 }
 
 
+
+Group
+{
+  Name = "TankSpawn";
+  Index = 637;
+  Desc = "";
+  Airfield
+  {
+    Name = "Tankfield";
+    Index = 633;
+    LinkTrId = 634;
+    XPos = 43513.719;
+    YPos = 81.370;
+    ZPos = 5008.076;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Model = "graphics\airfields\fakevehiclefield.mgm";
+    Script = "LuaScripts\WorldObjects\Airfields\fakevehiclefield.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Callsign = 0;
+    Callnum = 0;
+    ReturnPlanes = 0;
+    Hydrodrome = 0;
+    RepairFriendlies = 0;
+    RearmFriendlies = 0;
+    RefuelFriendlies = 0;
+    RepairTime = 0;
+    RearmTime = 0;
+    RefuelTime = 0;
+    MaintenanceRadius = 1000;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 634;
+    Name = "Tankfield entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 43513.719;
+    YPos = 81.570;
+    ZPos = 5008.076;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 633;
+  }
+  
+
+}
+
+
 # end of file

@@ -2329,4 +2329,161 @@ MCU_TR_ComplexTrigger
 }
 
 
+
+Airfield
+{
+  Name = "Tankfield";
+  Index = 112;
+  LinkTrId = 113;
+  XPos = 24428.076;
+  YPos = 149.180;
+  ZPos = 26262.420;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\airfields\fakevehiclefield.mgm";
+  Script = "LuaScripts\WorldObjects\Airfields\fakevehiclefield.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Callsign = 28;
+  Callnum = 12;
+  Planes
+  {
+    Vehicle
+    {
+      SetIndex = 12;
+      Number = 10;
+      AILevel = 4;
+      Engageable = 1;
+      Vulnerable = 1;
+      LimitAmmo = 1;
+      Renewable = 1;
+      RenewTime = 1815;
+      Model = "graphics\vehicles\_pziii-l\_pziii-l.mgm";
+      Script = "LuaScripts\WorldObjects\Vehicles\_pziii-l.txt";
+      Name = "trytr";
+      BeaconChannel = 0;
+      Spotter = 456;
+      AvMods = "1..10";
+      AvSkins = "1..10";
+      AvPayloads = "1..10";
+    }
+    Vehicle
+    {
+      SetIndex = 12;
+      Number = 10;
+      AILevel = 4;
+      Engageable = 1;
+      Vulnerable = 1;
+      LimitAmmo = 1;
+      Renewable = 1;
+      RenewTime = 1815;
+      Model = "graphics\vehicles\_pziii-l\_pziii-l.mgm";
+      Script = "LuaScripts\WorldObjects\Vehicles\_pziii-l.txt";
+      Name = "trytrkjh";
+      BeaconChannel = 0;
+      Spotter = 456;
+      AvMods = "1..10";
+      AvSkins = "1..10";
+      AvPayloads = "1..10";
+    }
+  }
+  Chart
+  {
+    Point
+    {
+      Type = 0;
+      X = -300;
+      Y = 200;
+    }
+    Point
+    {
+      Type = 1;
+      X = -300;
+      Y = 100;
+    }
+    Point
+    {
+      Type = 1;
+      X = -400;
+      Y = 100;
+    }
+    Point
+    {
+      Type = 1;
+      X = -500;
+      Y = 100;
+    }
+    Point
+    {
+      Type = 2;
+      X = -500;
+      Y = 0;
+    }
+    Point
+    {
+      Type = 2;
+      X = 500;
+      Y = 0;
+    }
+    Point
+    {
+      Type = 1;
+      X = 500;
+      Y = 100;
+    }
+    Point
+    {
+      Type = 1;
+      X = 400;
+      Y = 100;
+    }
+    Point
+    {
+      Type = 1;
+      X = 300;
+      Y = 100;
+    }
+    Point
+    {
+      Type = 0;
+      X = 300;
+      Y = 200;
+    }
+  }
+  ReturnPlanes = 0;
+  Hydrodrome = 0;
+  RepairFriendlies = 0;
+  RearmFriendlies = 0;
+  RefuelFriendlies = 0;
+  RepairTime = 21;
+  RearmTime = 21;
+  RefuelTime = 21;
+  MaintenanceRadius = 1000;
+}
+
+
+
+MCU_TR_Entity
+{
+  Index = 113;
+  Name = "Airfield entity";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 24428.076;
+  YPos = 149.380;
+  ZPos = 26262.420;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  MisObjID = 112;
+}
+
+
 # end of file

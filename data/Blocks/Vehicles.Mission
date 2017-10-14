@@ -2917,4 +2917,66 @@ Block
 }
 
 
+
+Vehicle
+{
+  Name = "PlayerTankGer";
+  Index = 97;
+  LinkTrId = 0;
+  XPos = 28967.202;
+  YPos = 108.584;
+  ZPos = 19965.147;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\_pziii-l.txt";
+  Model = "graphics\vehicles\_pziii-l\_pziii-l.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Vehicle
+{
+  Name = "PlayerTankRus";
+  Index = 98;
+  LinkTrId = 0;
+  XPos = 28945.767;
+  YPos = 108.584;
+  ZPos = 19964.822;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\_t34-76stz.txt";
+  Model = "graphics\vehicles\_t34-76stz\_t34-76stz.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
 # end of file

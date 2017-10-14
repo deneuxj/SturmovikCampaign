@@ -75,3 +75,37 @@ with
           Target = target
           All = McuUtil.groupFromList group
         }
+
+/// A tank base where players can spawn
+type PlayerTankSpawn =
+    { TankSpawn : Mcu.McuBase
+      All : McuUtil.IMcuGroup
+    }
+    static member Ceate(store : NumericalIdentifiers.IdStore, position : Vector2, yori : float32, coalition : Mcu.CoalitionValue, numTanks : int) =
+        let spawn =
+            blocksData.ListOfAirfield |> List.find(fun af -> af.GetName().Value = "Tankfield")
+        let entity = newEntity 2
+        let spawn = spawn.SetLinkTrId(T.Integer 2).SetIndex(T.Integer 1)
+        entity.MisObjID <- 1
+        // Tank selection
+        let m =
+            match coalition with
+            | Mcu.CoalitionValue.Axis -> vehicles.GermanPlayerTank
+            | Mcu.CoalitionValue.Allies -> vehicles.RussianPlayerTank
+            | _ -> failwith "Unknown coalition"
+        let tank = newAirfieldTank("Heavy tank", m.Model, m.Script, numTanks).SetRenewable(T.Boolean true).SetRenewTime(T.Integer 900)
+        let spawn =
+            spawn.SetPlanes(T.Airfield.Planes().SetVehicle([tank]))
+        let spawn = spawn.CreateMcu()
+        position.AssignTo(spawn.Pos)
+        position.AssignTo(entity.Pos)
+        spawn.Ori.Y <- float yori
+        entity.Ori.Y <- float yori
+        let group = [ spawn; upcast entity ]
+        let subst = Mcu.substId <| store.GetIdMapper()
+        for mcu in group do
+            subst mcu
+        { TankSpawn = spawn
+          All = McuUtil.groupFromList group
+        }
+        

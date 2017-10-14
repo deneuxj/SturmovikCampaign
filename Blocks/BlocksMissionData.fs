@@ -120,6 +120,26 @@ let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, 
         T.Integer mods
     ).SetRenewable(T.Boolean false)
 
+let newAirfieldTank(name, model, script, number) =
+    T.Airfield.Planes.Vehicle(
+        T.Integer 2,
+        T.String "",
+        T.String "",
+        T.String "",
+        T.Boolean false,
+        T.Boolean true, // engageable
+        T.Boolean true, // limit ammo
+        T.String model,
+        T.String name,
+        T.Integer number,
+        T.Integer 0, // renew time
+        T.Boolean false, // renew time
+        T.String script,
+        T.Integer 0, // set index
+        T.Integer -1, // spotter
+        T.Boolean true // vulnerable
+    )
+
 let newBlock idx country model script =
     T.Block(
         T.Integer country,

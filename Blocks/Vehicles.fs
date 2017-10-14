@@ -610,4 +610,16 @@ type VehicleDataTypeStore() =
           Model = vehicle.GetModel().Value
         }
 
+    member this.GermanPlayerTank =
+        let vehicle = vehicles.[T.Vehicles.PlayerTankGer]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.RussianPlayerTank =
+        let vehicle = vehicles.[T.Vehicles.PlayerTankRus]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
 let vehicles = VehicleDataTypeStore()
