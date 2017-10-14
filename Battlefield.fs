@@ -23,6 +23,7 @@ type Battlefield =
     { Supporters : RespawningCanon list // Artillery behind the attacking front, fires at defenses
       Attackers : RespawningTank list // Moving tanks
       Defenders : RespawningCanon list // Static tanks, defensive artillery and anti-tank canons
+      PlayerSpawns : PlayerTankSpawn list
       Icons : IconDisplay list
       All : McuUtil.IMcuGroup
     }
@@ -63,6 +64,26 @@ with
         let getRandomPos(areaLocation) =
             Seq.initInfinite (fun _ -> getRandomPos areaLocation)
             |> Seq.find (fun v -> v.IsInConvexPolygon(boundary))
+        // Player spawns
+        let players =
+            [
+                let numDefendingHeavy = 
+                    defenders
+                    |> Map.tryFind HeavyTank
+                    |> Option.defaultVal 1
+                yield PlayerTankSpawn.Ceate(store, getRandomPos(DefenseBack), yori, defendingCoalition.ToCoalition, numDefendingHeavy)
+                let numAttackingHeavy =
+                    attackers
+                    |> Seq.filter (function HeavyTank -> true | _ -> false)
+                    |> Seq.length
+                    |> max 1
+                let mirrored =
+                    if yori < 180.0f then
+                        yori + 180.0f
+                    else
+                        yori - 180.0f
+                yield PlayerTankSpawn.Ceate(store, getRandomPos(AttackBack), mirrored, defendingCoalition.Other.ToCoalition, numAttackingHeavy)
+            ]
         // Build an attacking tank
         let buildTank name (model : VehicleTypeData) =
             let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack))
@@ -137,6 +158,7 @@ with
           Attackers = attackers
           Defenders = defenders @ canons
           Icons = [ icon1; icon2 ]
+          PlayerSpawns = players
           All =
             { new McuUtil.IMcuGroup with
                   member x.Content = []
@@ -150,6 +172,8 @@ with
                         yield d.All
                     yield icon1.All
                     yield icon2.All
+                    for p in players do
+                        yield p.All
                   ]
             }
         }
