@@ -853,6 +853,22 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
     setCountries store missionData.World missionData.State flags
     let ndbs = strategyMissionData.GetGroup("NDBs").CreateMcuList()
+    let ndbIcons =
+        ndbs
+        |> List.choose (fun ndb ->
+            match ndb with
+            | :? Mcu.HasEntity as ndb ->
+                let coalition =
+                    match ndb.Country with
+                    | Mcu.CountryValue.Germany -> Mcu.CoalitionValue.Axis
+                    | Mcu.CountryValue.Russia -> Mcu.CoalitionValue.Allies
+                    | _ -> Mcu.CoalitionValue.Neutral
+                let icon =
+                    IconDisplay.IconDisplay.Create(store, lcStore, Vector2.FromMcu ndb.Pos, "NDB", coalition, Mcu.IconIdValue.Waypoint)
+                Mcu.addTargetLink missionBegin icon.Show.Index
+                Some icon.All
+            | _ ->
+                None)
     setCountries store missionData.World missionData.State ndbs
     let landFires =
         if includeSearchLights then
@@ -944,5 +960,5 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           alliesPrio
           axisPlaneFerries
           alliesPlaneFerries
-          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops
+          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons
     writeMissionFiles "eng" filename options allGroups
