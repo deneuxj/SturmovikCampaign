@@ -116,6 +116,8 @@ type IconIdValue =
     | CoverAntiAirPosition = 554
     | CoverBuildings = 557
     | CoverTrains = 558
+    | Waypoint = 901
+    | ActionPoint = 902
 
 /// <summary>
 /// Interface of icons.
