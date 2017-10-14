@@ -126,7 +126,9 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
             | None ->
                 // Include all objects in the convex hull of all regions
                 // This fixes a bug where bridges located in the space between two neighbouring regions were culled.
-                if v.IsInConvexPolygon playArea then
+                // Include all port pierce objects.
+                let model : string = valueOf(getModel block)
+                if v.IsInConvexPolygon playArea || model.Contains("port_pierce")  then
                     let mcu =
                         createMcu block
                     subst mcu
@@ -853,6 +855,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
     setCountries store missionData.World missionData.State flags
     let ndbs = strategyMissionData.GetGroup("NDBs").CreateMcuList()
+    setCountries store missionData.World missionData.State ndbs
     let ndbIcons =
         ndbs
         |> List.choose (fun ndb ->
@@ -869,7 +872,6 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 Some icon.All
             | _ ->
                 None)
-    setCountries store missionData.World missionData.State ndbs
     let landFires =
         if includeSearchLights then
             strategyMissionData.GetGroup("Land fires").CreateMcuList()
