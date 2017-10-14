@@ -81,17 +81,17 @@ type PlayerTankSpawn =
     { TankSpawn : Mcu.McuBase
       All : McuUtil.IMcuGroup
     }
-    static member Ceate(store : NumericalIdentifiers.IdStore, position : Vector2, yori : float32, coalition : Mcu.CoalitionValue, numTanks : int) =
+    static member Ceate(store : NumericalIdentifiers.IdStore, position : Vector2, yori : float32, country : Mcu.CountryValue, numTanks : int) =
         let spawn =
             blocksData.ListOfAirfield |> List.find(fun af -> af.GetName().Value = "Tankfield")
         let entity = newEntity 2
-        let spawn = spawn.SetLinkTrId(T.Integer 2).SetIndex(T.Integer 1)
+        let spawn = spawn.SetLinkTrId(T.Integer 2).SetIndex(T.Integer 1).SetCountry(T.Integer(int country))
         entity.MisObjID <- 1
         // Tank selection
         let m =
-            match coalition with
-            | Mcu.CoalitionValue.Axis -> vehicles.GermanPlayerTank
-            | Mcu.CoalitionValue.Allies -> vehicles.RussianPlayerTank
+            match country with
+            | Mcu.CountryValue.Germany -> vehicles.GermanPlayerTank
+            | Mcu.CountryValue.Russia -> vehicles.RussianPlayerTank
             | _ -> failwith "Unknown coalition"
         let tank = newAirfieldTank("Heavy tank", m.Model, m.Script, numTanks).SetRenewable(T.Boolean true).SetRenewTime(T.Integer 900)
         let spawn =
