@@ -104,3 +104,14 @@ Create a pair for each spawn so that planes will take off and land with the ligh
 16. Bridges and other buildings
 Bridges and other blocks, buildings... need not be in groups, although they can.
 You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.
+
+17. Sea paths
+Create waypoints with end points named Start and End. They should be between 20 and 30km long. Start point must be in start region, End point in destination.
+Regions of start and end must be neighbours.
+The game automatically creates mirrored paths, i.e. the paths you specify are two-ways.
+Put all these waypoints in a group named "Sea".
+
+18. Anchorage
+They play a similar role to tank parks, but for armed ships (destroyers, speed boats and submarines).
+Create influence areas name "Anchorage" in a group name "Anchorage".
+Orientation of influence areas is used to orient the ships.
