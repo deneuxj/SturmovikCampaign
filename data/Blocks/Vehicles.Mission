@@ -6,7 +6,7 @@ Options
   LCDesc = 1;
   LCAuthor = 2;
   PlayerConfig = "";
-  Time = 12:30:0;
+  Time = 7:30:0;
   Date = 19.11.1942;
   HMap = "graphics\landscape\height.hini";
   Textures = "graphics\landscape\textures.tini";
@@ -2973,6 +2973,267 @@ Vehicle
   DamageThreshold = 1;
   DeleteAfterDeath = 1;
   CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "SubmarineRus";
+  Index = 99;
+  LinkTrId = 0;
+  XPos = 29087.953;
+  YPos = 108.584;
+  ZPos = 21180.642;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\subtypesh10.txt";
+  Model = "graphics\ships\subtypesh10\subtypesh10.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "SubmarineGer";
+  Index = 100;
+  LinkTrId = 0;
+  XPos = 28870.575;
+  YPos = 108.584;
+  ZPos = 21189.629;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\subtype2b.txt";
+  Model = "graphics\ships\subtype2b\subtype2b.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "CargoShip";
+  Index = 102;
+  LinkTrId = 0;
+  XPos = 29001.693;
+  YPos = 108.584;
+  ZPos = 21650.863;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\largecargoshiptype1.txt";
+  Model = "graphics\ships\largecargoshiptype1\largecargoshiptype1.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "TankerShip";
+  Index = 103;
+  LinkTrId = 0;
+  XPos = 29004.836;
+  YPos = 108.584;
+  ZPos = 21745.711;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\largetankershiptype1.txt";
+  Model = "graphics\ships\largetankershiptype1\largetankershiptype1.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "TorpedoBoatGer";
+  Index = 105;
+  LinkTrId = 0;
+  XPos = 28870.441;
+  YPos = 108.584;
+  ZPos = 21228.569;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\torpboats38.txt";
+  Model = "graphics\ships\torpboats38\torpboats38.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "TorpedoBoatRus";
+  Index = 107;
+  LinkTrId = 0;
+  XPos = 29087.785;
+  YPos = 108.584;
+  ZPos = 21222.752;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\torpboatg5s11b213.txt";
+  Model = "graphics\ships\torpboatg5s11b\torpboatg5s11b213.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "DestroyerRus";
+  Index = 108;
+  LinkTrId = 0;
+  XPos = 29089.481;
+  YPos = 108.584;
+  ZPos = 21129.066;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\destroyertype7.txt";
+  Model = "graphics\ships\destroyertype7\destroyertype7.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "ArmoredBoatRus";
+  Index = 109;
+  LinkTrId = 0;
+  XPos = 29088.610;
+  YPos = 108.584;
+  ZPos = 21257.779;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\1124.txt";
+  Model = "graphics\ships\1124\1124.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
+
+Ship
+{
+  Name = "ArmoredBoatArtilleryRus";
+  Index = 110;
+  LinkTrId = 0;
+  XPos = 29088.201;
+  YPos = 108.584;
+  ZPos = 21284.188;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\1124bm13.txt";
+  Model = "graphics\ships\1124\1124bm13.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
   Spotter = -1;
   BeaconChannel = 0;
   Callsign = 0;
