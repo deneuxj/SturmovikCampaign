@@ -2329,4 +2329,33 @@ MCU_TR_ComplexTrigger
 }
 
 
+
+Ship
+{
+  Name = "Ship";
+  Index = 112;
+  LinkTrId = 0;
+  XPos = 26622.972;
+  YPos = 147.964;
+  ZPos = 28665.743;
+  XOri = 359.91;
+  YOri = 0.00;
+  ZOri = 359.72;
+  Script = "LuaScripts\WorldObjects\Ships\1124.txt";
+  Model = "graphics\ships\1124\1124.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
 # end of file
