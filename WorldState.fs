@@ -254,6 +254,40 @@ with
         |> max 0.0f
         |> min 1.0f
 
+    member this.VictoriousSide(world : World) =
+        let getProduction coalition =
+            List.zip world.Regions this.Regions
+            |> List.sumBy (fun (reg, regState) ->
+                if regState.Owner = Some coalition then
+                    regState.ProductionCapacity(reg, 1.0f)
+                else
+                    0.0f<E/H>)
+        let getTanks coalition =
+            this.Regions
+            |> List.sumBy (fun regState ->
+                if regState.Owner = Some coalition then
+                    regState.TotalVehicleValue
+                else
+                    0.0f<E>)
+        let getPlanes coalition =
+            let sg = this.FastAccess
+            List.zip world.Airfields this.Airfields
+            |> List.sumBy (fun (af, afState) ->
+                if sg.GetRegion(af.Region).Owner = Some coalition then
+                    afState.TotalPlaneValue
+                else
+                    0.0f<E>)
+        let axisProd, alliesProd = getProduction Axis, getProduction Allies
+        let axisTanks, alliesTanks = getTanks Axis, getTanks Allies
+        let axisPlanes, alliesPlanes = getPlanes Axis, getPlanes Allies
+        let k = 2.0f
+        if axisProd > k * alliesProd && axisTanks > k * alliesTanks && axisPlanes > k * alliesPlanes then
+            Some Axis
+        elif k * axisProd < alliesProd && k * axisTanks < alliesTanks && k * axisPlanes < alliesPlanes then
+            Some Allies
+        else
+            None
+
 
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu

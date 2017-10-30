@@ -193,21 +193,29 @@ module Support =
                               "Sorry for the inconvenience" ]
                             (fun() -> Campaign.Run.MissionLogParsing.updateState(config, missionResults))
                     let newProduction, battleResults, ((oldState, newState) as states) = updatedState
-                    if not(newState.HasCoalitionFactories(Axis)) then
+                    let world =
+                        try
+                            let serializer = FsPickler.CreateXmlSerializer(indent = true)
+                            use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                            serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
+                        with
+                        | e -> failwithf "Failed to read world data. Reason was: '%s'" e.Message
+                    match newState.VictoriousSide(world) with
+                    | Some Allies ->
                         do!
                             [ "Campaign is over"
                               "Allies are victorious"
                             ]
                             |> support.ServerControl.MessageAll
                         return serverProc, CampaignOver(Allies)
-                    elif not(newState.HasCoalitionFactories(Allies)) then
+                    | Some Axis ->
                         do!
                             [ "Campaign is over"
                               "Axis is victorious"
                             ]
                             |> support.ServerControl.MessageAll
                         return serverProc, CampaignOver(Axis)
-                    else
+                    | None ->
                         do!
                             [ "Campaign continues"
                               "Next mission is being generated..."
@@ -216,13 +224,6 @@ module Support =
                         let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, missionResults.TakeOffs, missionResults.Landings, missionResults.StaticDamages @ missionResults.VehicleDamages, newProduction)
                         Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR, battleResults)
                         announceResults(axisAAR, alliesAAR, battleResults)
-                        let world =
-                            try
-                                let serializer = FsPickler.CreateXmlSerializer(indent = true)
-                                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
-                                serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
-                            with
-                            | e -> failwithf "Failed to read world data. Did you run Init.fsx? Reason was: '%s'" e.Message
                         announceWorldState(world, newState)
                         return serverProc, DecideOrders
                 }
