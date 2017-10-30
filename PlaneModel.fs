@@ -584,6 +584,7 @@ with
               Yak1s127
               Lagg3s29
               La5
+              P40
               IL2M43
               Pe2s87
               SpitfireMkVb
