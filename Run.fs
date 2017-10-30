@@ -109,7 +109,7 @@ module PlayChess =
                 serializer.Deserialize<World>(worldFile),
                 serializer.Deserialize<WorldState>(stateFile)
             with
-            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         seq {
             let board, neighboursOf = BoardState.Create(world, state)
             yield "Initially"
@@ -147,7 +147,7 @@ module WeatherComputation =
                 use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
                 serializer.Deserialize<WorldState>(stateFile)
             with
-            | e -> failwithf "Failed to read state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read state data. Reason was: '%s'" e.Message
         let date = nextDate (1.0f<H> * float32 config.MissionLength / 60.0f) state.Date
         date
 
@@ -158,7 +158,7 @@ module WeatherComputation =
                 use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
                 serializer.Deserialize<World>(worldFile)
             with
-            | e -> failwithf "Failed to read world data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read world data. Reason was: '%s'" e.Message
         let random =
             match config.Seed with
             | Some n ->
@@ -194,7 +194,7 @@ module OrderDecision =
                 serializer.Deserialize<WorldState>(stateFile),
                 serializer.Deserialize<Weather.WeatherState>(weatherFile)
             with
-            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
 
         let adjustConvoyIndexes(convoys : ResupplyOrder list) =
             convoys
@@ -315,7 +315,7 @@ module MissionFileGeneration =
                 serializer.Deserialize<World>(worldFile),
                 serializer.Deserialize<WorldState>(stateFile)
             with
-            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
 
         let weather =
             try
@@ -470,7 +470,7 @@ module MissionLogParsing =
                 use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
                 serializer.Deserialize<WorldState>(stateFile)
             with
-            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         let backupFile name =
             let backupName =
                 let dateString =
@@ -508,7 +508,7 @@ module MissionLogParsing =
                 serializer.Deserialize<OrderPackage>(axisOrdersFile),
                 serializer.Deserialize<OrderPackage>(alliesOrdersFile)
             with
-            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
 
         do
             let config = Config.LoggingConfiguration()
@@ -634,7 +634,7 @@ module MissionLogParsing =
                 serializer.Deserialize<OrderPackage>(alliesOrdersFile),
                 serializer.Deserialize<Weather.WeatherState>(weatherFile)
             with
-            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
         let movements = axisOrders.Columns @ alliesOrders.Columns
         let state2, newlyProduced, battleReports = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures missionResults.ParaDrops missionResults.FerryPlanes missionResults.BattleKills (float32 weather.Wind.Direction)
@@ -651,7 +651,7 @@ module MissionLogParsing =
                 serializer.Deserialize<OrderPackage>(axisOrdersFile),
                 serializer.Deserialize<OrderPackage>(alliesOrdersFile)
             with
-            | e -> failwithf "Failed to read world and state data. Did you run Init.fsx? Reason was: '%s'" e.Message
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         let newSupplies, newAxisVehicles, newAlliesVehicles = newlyProduced
         let aarAxis = buildReport world state1 state2 tookOff landed damages axisOrders.Columns newSupplies newAxisVehicles Axis
         let aarAllies = buildReport world state1 state2 tookOff landed damages alliesOrders.Columns newSupplies newAlliesVehicles Allies
