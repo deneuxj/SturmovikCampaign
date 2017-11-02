@@ -254,14 +254,14 @@ with
         |> max 0.0f
         |> min 1.0f
 
+    /// <summary>
+    /// Check if a side is victorious.
+    /// </summary>
     member this.VictoriousSide(world : World) =
-        let getProduction coalition =
-            List.zip world.Regions this.Regions
-            |> List.sumBy (fun (reg, regState) ->
-                if regState.Owner = Some coalition then
-                    regState.ProductionCapacity(reg, 1.0f)
-                else
-                    0.0f<E/H>)
+        let getNumRegions coalition =
+            this.Regions
+            |> Seq.filter (fun reg -> reg.Owner = Some coalition)
+            |> Seq.length
         let getTanks coalition =
             this.Regions
             |> List.sumBy (fun regState ->
@@ -277,13 +277,14 @@ with
                     afState.TotalPlaneValue
                 else
                     0.0f<E>)
-        let axisProd, alliesProd = getProduction Axis, getProduction Allies
+        let axisRegions, alliesRegions = getNumRegions Axis, getNumRegions Allies
         let axisTanks, alliesTanks = getTanks Axis, getTanks Allies
         let axisPlanes, alliesPlanes = getPlanes Axis, getPlanes Allies
         let k = 2.0f
-        if axisProd > k * alliesProd && axisTanks > k * alliesTanks && axisPlanes > k * alliesPlanes then
+        // If one side has twice as many planes and tanks as the other, and it controls 3x more regions, it has won
+        if axisRegions >= 3 * alliesRegions && axisTanks > k * alliesTanks && axisPlanes > k * alliesPlanes then
             Some Axis
-        elif k * axisProd < alliesProd && k * axisTanks < alliesTanks && k * axisPlanes < alliesPlanes then
+        elif 3 * axisRegions <= alliesRegions && k * axisTanks < alliesTanks && k * axisPlanes < alliesPlanes then
             Some Allies
         else
             None
