@@ -122,17 +122,17 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
         for block in blocks do
             let v = Vector2.FromPos(block)
             let subst = Mcu.substId <| store.GetIdMapper()
+            let model : string = valueOf(getModel block)
             match tryGetRegionAt v with
-            | None ->
+            | None when v.IsInConvexPolygon playArea ->
                 // Include all objects in the convex hull of all regions
                 // This fixes a bug where bridges located in the space between two neighbouring regions were culled.
-                // Include all port pierce objects.
-                let model : string = valueOf(getModel block)
-                if v.IsInConvexPolygon playArea || model.Contains("port_pierce")  then
-                    let mcu =
-                        createMcu block
-                    subst mcu
-                    yield mcu
+                let mcu =
+                    createMcu block
+                subst mcu
+                yield mcu
+            | None ->
+                ()
             | Some region ->
                 let state = getState region.RegionId
                 let health = getHealth region state v
@@ -193,6 +193,16 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
 let createBlocks random store world state inAttackArea (blocks : T.Block list) = createBlocksGen T.Block.Damaged random store world state inAttackArea blocks
 
 let createBridges random store world state inAttackArea (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged random store world state inAttackArea blocks
+
+let createGrounds (store : NumericalIdentifiers.IdStore) (blocks : T.Ground list) =
+    [
+        for block in blocks do
+            let subst = Mcu.substId <| store.GetIdMapper()
+            let mcu =
+                createMcu block
+            subst mcu
+            yield mcu
+    ]
 
 let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) =
     let getOwner =
@@ -795,6 +805,9 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let bridges =
         strategyMissionData.ListOfBridge
         |> createBridges missionData.Random store missionData.World missionData.State inAttackArea
+    let ground =
+        strategyMissionData.ListOfGround
+        |> createGrounds store
     let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State
     let mkConvoyNodes orders =
         let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State orders
@@ -952,6 +965,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           upcast icons2
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
+          McuUtil.groupFromList ground
           McuUtil.groupFromList (spawns |> List.collect snd)
           McuUtil.groupFromList flags
           McuUtil.groupFromList ndbs
