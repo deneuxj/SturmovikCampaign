@@ -294,8 +294,8 @@ with
 
 let allMoves (neighboursOf : int -> int[]) (state : BoardState) (coalition : CoalitionId) =
     let someCoalition = Some coalition
-    seq {
-        for i in 0 .. state.Owners.Length - 1 do
+    let moves i aggressive =
+        seq {
             assert(state.AxisForces.[i] = 0.0f<E> || state.AlliesForces.[i] = 0.0f<E>)
             let hasForces = state.AxisForces.[i] > 0.0f<E> || state.AlliesForces.[i] > 0.0f<E>
             if state.Owners.[i] = someCoalition && hasForces then
@@ -304,9 +304,16 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) (coalition : Coa
                     | Axis -> state.AxisForces.[i]
                     | Allies -> state.AlliesForces.[i]
                 for j in neighboursOf i do
-                    if force > 10.0f * MediumTank.Cost then
-                        yield { Start = i; Destination = j; Force = 0.5f * force }
-                    yield { Start = i; Destination = j; Force = force }
+                    if aggressive && state.Owners.[j] <> someCoalition || not aggressive && state.Owners.[j] = someCoalition then
+                        yield { Start = i; Destination = j; Force = force }
+                        if force > 10.0f * MediumTank.Cost then
+                            yield { Start = i; Destination = j; Force = 0.5f * force }
+        }
+    seq {
+        for i in 0 .. state.Owners.Length - 1 do
+            yield! moves i true
+        for i in 0 .. state.Owners.Length - 1 do
+            yield! moves i false
     }
 
 type BoardEvaluation =
