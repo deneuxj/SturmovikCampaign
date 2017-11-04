@@ -372,6 +372,8 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                         None
                 if board.Score.NumAlliesFactories = 0 then
                     (((axisMove, None), []), Defeat(Allies, depth, "No factories")) |> BoardEvaluation.Min soFar
+                elif board.Score.TotalAlliesForces = 0.0f<E> then
+                    (((axisMove, None), []), Defeat(Allies, depth, "No forces")) |> BoardEvaluation.Min soFar
                 else if cancel.IsCancellationRequested then
                     soFar
                 else if BoardEvaluation.Lt(snd soFar, beta) then
@@ -414,6 +416,8 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                 else
                     if board.Score.NumAxisFactories = 0 then
                         ((alliesMove, []), Defeat(Axis, depth, "No factories")) |> BoardEvaluation.Max soFar
+                    elif board.Score.TotalAxisForces = 0.0f<E> then
+                        ((alliesMove, []), Defeat(Axis, depth, "No forces")) |> BoardEvaluation.Max soFar
                     else if BoardEvaluation.Lt(alpha, snd soFar) then
                         soFar
                     else if cancel.IsCancellationRequested then
