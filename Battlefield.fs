@@ -67,22 +67,23 @@ with
         // Player spawns
         let players =
             [
-                let numDefendingHeavy = 
-                    defenders
-                    |> Map.tryFind HeavyTank
-                    |> Option.defaultVal 1
-                yield PlayerTankSpawn.Ceate(store, getRandomPos(DefenseBack), yori, defendingCoalition.ToCountry, numDefendingHeavy)
-                let numAttackingHeavy =
-                    attackers
-                    |> Seq.filter (function HeavyTank -> true | _ -> false)
-                    |> Seq.length
-                    |> max 1
-                let mirrored =
-                    if yori < 180.0f then
-                        yori + 180.0f
-                    else
-                        yori - 180.0f
-                yield PlayerTankSpawn.Ceate(store, getRandomPos(AttackBack), mirrored, defendingCoalition.Other.ToCountry, numAttackingHeavy)
+                if not defenders.IsEmpty && attackers.Length > 0 then
+                    let numDefendingHeavy =
+                        defenders
+                        |> Map.tryFind HeavyTank
+                        |> Option.defaultVal 1
+                    yield PlayerTankSpawn.Ceate(store, getRandomPos(DefenseBack), yori, defendingCoalition.ToCountry, numDefendingHeavy)
+                    let numAttackingHeavy =
+                        attackers
+                        |> Seq.filter (function HeavyTank -> true | _ -> false)
+                        |> Seq.length
+                        |> max 1
+                    let mirrored =
+                        if yori < 180.0f then
+                            yori + 180.0f
+                        else
+                            yori - 180.0f
+                    yield PlayerTankSpawn.Ceate(store, getRandomPos(AttackBack), mirrored, defendingCoalition.Other.ToCountry, numAttackingHeavy)
             ]
         // Build an attacking tank
         let buildTank name (model : VehicleTypeData) =
