@@ -588,19 +588,33 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
         ) 0.0f<E>
     // First remove the exact vehicles, if they can be found,
     // keeping track of the value of vehicles killed that could not be removed.
-    let rec damageExact numVehicles unmatchedDamage damageSoFar (killed : BattleParticipantKilled list) =
-        if damageSoFar + unmatchedDamage >= 0.5f * totalValue then
-            numVehicles, unmatchedDamage, damageSoFar
-        else
-            match killed with
-            | [] -> numVehicles, unmatchedDamage, damageSoFar
-            | veh :: rest ->
-                match numVehicles |> Map.tryFind veh.Vehicle with
-                | Some n when n > 0 ->
-                    let numVehicles = Map.add veh.Vehicle (n - 1) numVehicles
-                    damageExact numVehicles unmatchedDamage (damageSoFar + veh.Vehicle.Cost) rest
-                | _ ->
-                    damageExact numVehicles (unmatchedDamage + veh.Vehicle.Cost) damageSoFar rest
+    let rec damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar (killed : BattleParticipantKilled list) =
+        match killed with
+        | [] -> numVehicles, unmatchedAiDamage + unmatchedPlayerDamage, aiDamageSoFar + playerDamageSoFar
+        | veh :: rest ->
+            if not veh.KilledByPlayer then
+                if unmatchedAiDamage + aiDamageSoFar >= 0.25f * totalValue then
+                    // Damage by AI reached the limit, skip
+                    damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
+                else
+                    match numVehicles |> Map.tryFind veh.Vehicle with
+                    | Some n when n > 0 ->
+                        let numVehicles = Map.add veh.Vehicle (n - 1) numVehicles
+                        damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage (aiDamageSoFar + veh.Vehicle.Cost) playerDamageSoFar rest
+                    | _ ->
+                        damageExact numVehicles (unmatchedAiDamage + veh.Vehicle.Cost) unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
+            else
+                if unmatchedPlayerDamage + playerDamageSoFar >= 0.5f * totalValue then
+                    // Damage by players reached the limit, skip
+                    damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
+                else
+                    match numVehicles |> Map.tryFind veh.Vehicle with
+                    | Some n when n > 0 ->
+                        let numVehicles = Map.add veh.Vehicle (n - 1) numVehicles
+                        damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar (playerDamageSoFar + veh.Vehicle.Cost) rest
+                    | _ ->
+                        damageExact numVehicles unmatchedAiDamage (unmatchedPlayerDamage + veh.Vehicle.Cost) aiDamageSoFar playerDamageSoFar rest
+
     // Remove other vehicles up to the value computed above
     let rec damageOther damageLeft (vehicles : GroundAttackVehicle list) =
         if damageLeft <= 0.0f<E> then
@@ -611,7 +625,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
             | veh :: rest ->
                 damageOther (damageLeft - veh.Cost) rest
     // Result
-    let numVehicles, unmatchedDamage, doneDamage = damageExact numVehicles 0.0f<E> 0.0f<E> killed
+    let numVehicles, unmatchedDamage, doneDamage = damageExact numVehicles 0.0f<E> 0.0f<E> 0.0f<E> 0.0f<E> killed
     let numVehicles =
         damageOther unmatchedDamage (numVehicles |> expandMap |> Array.shuffle random |> List.ofArray)
         |> compactSeq
