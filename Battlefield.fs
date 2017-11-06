@@ -67,7 +67,11 @@ with
         // Player spawns
         let players =
             [
-                if not defenders.IsEmpty && attackers.Length > 0 then
+                let defendersExist =
+                    defenders
+                    |> Map.toSeq
+                    |> Seq.exists (fun (_, qty) -> qty > 0)
+                if defendersExist && attackers.Length > 0 then
                     let numDefendingHeavy =
                         defenders
                         |> Map.tryFind HeavyTank
