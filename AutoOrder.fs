@@ -329,7 +329,11 @@ let allTankReinforcements (world : World) (state : WorldState) (coalition : Coal
                 let regionDistance = distanceToFrontLine.[region.RegionId]
                 for ngh in region.Neighbours do
                     let nghState = sg.GetRegion(ngh)
-                    if nghState.Owner = Some coalition && distanceToFrontLine.[ngh] < regionDistance then
+                    let nghDistance = distanceToFrontLine.[ngh]
+                    // Note: do not move to a region on the frontline, this may be a poor tactical choice. Let the minmax search take that decision instead.
+                    // This also avoids sending reinforcements into an ongoing battle, which is something the battle system does not handle well.
+                    // If the battle is lost, the reinforcements will also be lost.
+                    if nghState.Owner = Some coalition && nghDistance < regionDistance && nghDistance > 0 then
                         let composition = selectVehicles regState vehicleMinValue
                         yield {
                             OrderId = { Index = -1; Coalition = coalition }
