@@ -448,9 +448,8 @@ with
             let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
             let ammoStorages = List.concat [ data.GetGroup("Ammo").ListOfBlock; data.GetGroup("Storage").ListOfBlock ]
             let factories =
-                [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Factories").ListOfBlock ]
+                [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Factories").ListOfBlock; data.GetGroup("Static").ListOfBlock ]
                 |> List.concat
-                |> List.filter(fun block -> block.GetLinkTrId().Value >= 1)
             let parkings =
                 data.GetGroup("Tank parks").ListOfMCU_TR_InfluenceArea
             regions

@@ -32,8 +32,10 @@ Similarly if it ends with "L", but on the left side instead.
 Picking the side where the convoy spawns is important if one side is occupied by a lake or by static objects.
 
 4. Place factories
-Place static blocks with entities in a group named "Factories"
-Suitable static blocks start with: "industrial_", "vl_pvrz01", "vl_rounddepot".
+Place static blocks in a group named "Factories" or "Static".
+Suitable static blocks start with: "industrial_", "vl_pvrz01", "vl_rounddepot" (complete list is actually bigger than that).
+Tip: On the Kuban and Moscow maps, all you need to do is import the template for that map into a group named "Static".
+Factory buildings will be recognized automatically.
 
 5. Place supply storage
 Place static blocks with entities in a group named "Storage".
