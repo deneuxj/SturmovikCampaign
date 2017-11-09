@@ -139,12 +139,22 @@ type ParaDropPrecision = Precise | Wide
 
 /// A paratrooper landed alive inside or near a landing zone.
 type ParaDropResult = {
-    BattleId : OrderId
+    BattleId : RegionId
     Coalition : CoalitionId
     Precision : ParaDropPrecision
 }
 
-let extractParaDrops (orders : ColumnMovement list) (entries : LogEntry seq) =
+let extractParaDrops (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : LogEntry seq) =
+    let defenders =
+        battles
+        |> dict
+    let battles =
+        battles
+        |> Seq.map fst
+        |> Set.ofSeq
+    let battles =
+        world.AntiTankDefenses
+        |> List.filter(fun area -> battles.Contains area.DefenseAreaId)
     let checkForParaDrop precision eventName =
         let f =
             match precision with
@@ -152,19 +162,19 @@ let extractParaDrops (orders : ColumnMovement list) (entries : LogEntry seq) =
             | Wide -> ParaDrop.TryGetWideDropEventName
         match f eventName with
         | Some(side, suffix) ->
-            match orders |> List.tryFind (fun order -> order.OrderId.AsString() = suffix) with
-            | Some order ->
+            match battles |> List.tryFind (fun battle -> string battle.Home = suffix) with
+            | Some battle ->
                 match side with
                 | 'A' ->
                     Some {
-                        BattleId = order.OrderId
-                        Coalition = order.OrderId.Coalition
+                        BattleId = battle.Home
+                        Coalition = defenders.[battle.DefenseAreaId].Other
                         Precision = precision
                     }
                 | 'D' ->
                     Some {
-                        BattleId = order.OrderId
-                        Coalition = order.OrderId.Coalition.Other
+                        BattleId = battle.Home
+                        Coalition = defenders.[battle.DefenseAreaId]
                         Precision = precision
                     }
                 | _ -> failwithf "Bad side %c" side
@@ -562,7 +572,17 @@ type BattleParticipantKilled = {
 }
 
 /// Extract damages caused to vehicles in a battle. Used to compute battle bonuses.
-let extractBattleDamages (battles : ColumnMovement list) (entries : LogEntry seq) =
+let extractBattleDamages (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : LogEntry seq) =
+    let defenders =
+        battles
+        |> dict
+    let battles =
+        battles
+        |> Seq.map fst
+        |> Set.ofSeq
+    let battles =
+        world.AntiTankDefenses
+        |> List.filter(fun area -> battles.Contains area.DefenseAreaId)
     [
         let idMapper = ref Map.empty
         let playerVehicles = ref Set.empty
@@ -580,16 +600,16 @@ let extractBattleDamages (battles : ColumnMovement list) (entries : LogEntry seq
                             for battle in battles do
                                 for vehicle in GroundAttackVehicle.AllVehicles do
                                     for side in [ "A"; "D" ] do
-                                        let vehName = sprintf "B-%s-%s-%s" (battle.OrderId.AsString()) side vehicle.Description
+                                        let vehName = sprintf "B-%s-%s-%s" (string battle.Home) side vehicle.Description
                                         if name = vehName then
                                             let coalition =
                                                 match side with
-                                                | "D" -> battle.OrderId.Coalition.Other
-                                                | "A" -> battle.OrderId.Coalition
+                                                | "D" -> defenders.[battle.DefenseAreaId]
+                                                | "A" -> defenders.[battle.DefenseAreaId].Other
                                                 | _ -> failwithf "Unknown side '%s'" side
                                             yield {
                                                 Coalition = coalition
-                                                BattleId = battle.Destination
+                                                BattleId = battle.Home
                                                 Vehicle = vehicle
                                                 KilledByPlayer = playerVehicles.Value.Contains(kill.AttackerId)
                                             }

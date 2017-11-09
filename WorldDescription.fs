@@ -519,11 +519,15 @@ type World
 with
     member this.FastAccess = WorldFastAccess.Create(this)
 
-    member this.GetBattlefield(attacker : RegionId, defender : RegionId) =
+    member this.GetBattlefield(attacker : RegionId option, defender : RegionId) =
         let attackerPos =
-            this.Regions
-            |> List.find (fun reg -> reg.RegionId = attacker)
-            |> fun x -> x.Position
+            match attacker with
+            | Some attacker ->
+                this.Regions
+                |> List.find (fun reg -> reg.RegionId = attacker)
+                |> fun x -> x.Position
+            | None ->
+                Vector2.Zero
         let defenderPos =
             this.Regions
             |> List.find (fun reg -> reg.RegionId = defender)

@@ -196,31 +196,53 @@ with
                 yield upcast i.Show
         ]
 
+/// Identify regions with invaders, pick a battle area
+let identifyBattleAreas (world : World) (state : WorldState) =
+    let wg = world.FastAccess
+    let sg = state.FastAccess
+    seq {
+        for region, regState in List.zip world.Regions state.Regions do
+            match regState.Owner with
+            | Some defending when regState.HasInvaders ->
+                let attacker =
+                    try
+                        region.Neighbours
+                        |> Seq.map sg.GetRegion
+                        |> Seq.filter (fun ngh -> ngh.Owner = Some defending.Other)
+                        |> Seq.maxBy (fun ngh -> ngh.StorageCapacity(wg.GetRegion(ngh.RegionId)))
+                        |> fun ngh -> ngh.RegionId
+                        |> Some
+                    with
+                    | _ -> None
+                let bf = world.GetBattlefield(attacker, regState.RegionId)
+                yield bf.DefenseAreaId, defending
+            | _ ->
+                ()
+    }
+
 /// Generate battlefields from invasions in column movement orders.
-let generateBattlefields (maxVehicles) random store lcStore (world : World) (state : WorldState) (orders : ColumnMovement list) =
+let generateBattlefields maxVehicles random store lcStore (world : World) (state : WorldState) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     [
-        for order in orders do
-            match sg.GetRegion(order.Start), sg.GetRegion(order.Destination) with
-            | { Owner = Some attacking } as regStart, ({ Owner = Some defending } as region) when attacking <> defending ->
-                let bf = world.GetBattlefield(order.Start, order.Destination)
-                let numGuns =
-                    state.GetAmmoFillLevel(world, region.RegionId, regStart.RegionId) * (float32 bf.MaxNumGuns)
-                    |> ceil
-                    |> int
-                let namePrefix = sprintf "B-%s-" (order.OrderId.AsString())
-                let defendingVehicles =
-                    region.NumVehicles
-                    |> expandMap
-                    |> Array.shuffle random
-                    |> Array.truncate maxVehicles
-                    |> compactSeq
-                let attackingVehicles =
-                    order.Composition
-                    |> Array.shuffle random
-                    |> Array.truncate maxVehicles
-                yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, namePrefix)
-            | _ ->
-                ()
+        for bf, defending in identifyBattleAreas world state do
+            let bf = wg.GetAntiTankDefenses(bf)
+            let regState = sg.GetRegion(bf.Home)
+            let numGuns =
+                state.GetAmmoFillLevel(world, bf) * (float32 bf.MaxNumGuns)
+                |> ceil
+                |> int
+            let namePrefix = sprintf "B-%s-" (string regState.RegionId)
+            let defendingVehicles =
+                regState.NumVehicles
+                |> expandMap
+                |> Array.shuffle random
+                |> Array.truncate maxVehicles
+                |> compactSeq
+            let attackingVehicles =
+                regState.NumInvadingVehicles
+                |> expandMap
+                |> Array.shuffle random
+                |> Array.truncate maxVehicles
+            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, namePrefix)
     ]

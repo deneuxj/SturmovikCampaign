@@ -204,7 +204,10 @@ module OrderDecision =
             |> prioritizeConvoys world state
             |> List.truncate config.MaxConvoys
         let columnOrders =
-            decideColumnMovements world state config.ThinkTime
+            if state.Regions |> List.exists (fun region -> region.HasInvaders) then
+                []
+            else
+                decideColumnMovements world state config.ThinkTime
         let axisConvoys = mkConvoys Axis
         let alliesConvoys = mkConvoys Allies
         let axisColumns =
@@ -600,9 +603,12 @@ module MissionLogParsing =
             both |> List.choose (function Landed x -> Some x | _ -> None)
         let movements = axisOrders.Columns @ alliesOrders.Columns
         let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
-        let paraDrops = extractParaDrops movements entries
+        let battles =
+            Battlefield.identifyBattleAreas world state
+            |> Seq.cache
+        let paraDrops = extractParaDrops world state battles entries
         let planeFerryEvents = extractFerryPlanes (axisOrders.PlaneFerries @ alliesOrders.PlaneFerries) entries
-        let battleKills = extractBattleDamages movements entries
+        let battleKills = extractBattleDamages world state battles entries
         let results =
             { Entries = entries |> List.map (fun entry -> entry.OriginalString)
               Shipments = shipments

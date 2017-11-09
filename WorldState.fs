@@ -70,12 +70,17 @@ type RegionState = {
     Products : ProductionAssignment
     Supplies : float32<E>
     NumVehicles : Map<GroundAttackVehicle, int>
+    NumInvadingVehicles : Map<GroundAttackVehicle, int>
 }
 with
     member this.GetNumVehicles(vehicle : GroundAttackVehicle) =
         this.NumVehicles
         |> Map.tryFind vehicle
         |> Option.defaultVal 0
+
+    member this.HasInvaders =
+        this.NumVehicles
+        |> Map.exists (fun _ qty -> qty > 0)
 
     member this.TotalVehicleValue =
         this.NumVehicles
@@ -89,6 +94,7 @@ with
     member this.ProductionCapacity(region : WorldDescription.Region, factor) =
         List.zip region.Production this.ProductionHealth
         |> List.sumBy (fun (prod, health) -> health * prod.Production(factor))
+
 
 /// State of a defense area within a region.
 type DefenseAreaState = {
@@ -227,7 +233,7 @@ with
                             | _ -> false
                         )
                         |> Seq.map (fun ngh ->
-                            let area = world.GetBattlefield(ngh, region.RegionId)
+                            let area = world.GetBattlefield(Some ngh, region.RegionId)
                             area.DefenseAreaId, area)
                         |> Map.ofSeq
                     let cost =
@@ -239,7 +245,8 @@ with
             |> Map.ofSeq
         Map.sumUnion aaCosts atCosts
 
-    member this.GetAmmoFillLevel(world : World, region : RegionId, invader : RegionId) =
+    member this.GetAmmoFillLevel(world : World, bf : DefenseArea) =
+        let region = bf.Home
         let regState = this.GetRegion(region)
         let aaCost =
             seq {
@@ -248,8 +255,7 @@ with
                         yield area.AmmoCost
             }
             |> Seq.sum
-        let atCost =
-            world.GetBattlefield(invader, region).AmmoCost
+        let atCost = bf.AmmoCost
         regState.Supplies / (aaCost + atCost)
         |> max 0.0f
         |> min 1.0f
@@ -506,6 +512,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
               Products = { Supplies = 0.0f<E>; Vehicles = Map.empty; Planes = Map.empty }
               Supplies = supplies
               NumVehicles = vehicles
+              NumInvadingVehicles = Map.empty
             }
         )
     let mkAirfield (airfield : Airfield) =

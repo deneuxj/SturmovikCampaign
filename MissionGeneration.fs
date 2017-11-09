@@ -393,16 +393,6 @@ let splitCompositions random vehicles =
 let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore) lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval maxColumnSplit (missionLength : int) (orders : ColumnMovement list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
-    // Only generate columns for reinforcements. Invading columns generate battlefields instead.
-    let orders =
-        orders
-        |> Seq.filter (fun order ->
-            match sg.GetRegion(order.Start).Owner, sg.GetRegion(order.Destination).Owner with
-            | Some x, Some y ->
-                x = y
-            | _, None -> true // No battlefield when capturing neutral regions
-            | None, _ -> failwith "Column starting from neutral zone"
-        )
     [
         for order in orders do
             let regState = sg.GetRegion(order.Start)
@@ -738,12 +728,13 @@ let createBuildingFires store (world : World) (state : WorldState) (windDirectio
                 yield FireLoop.Create(store, pos, alt, windDirection, fireType)
     ]
 
-let createParaTrooperDrops (world : World) store lcStore (invasions : ColumnMovement list) =
-    invasions
-    |> List.map (fun invasion ->
-        let bf = world.GetBattlefield(invasion.Start, invasion.Destination)
-        [ ParaDrop.Create(store, lcStore, bf.DefensePos, invasion.OrderId.Coalition.Other.ToCountry, "D-" + invasion.OrderId.AsString())
-          ParaDrop.Create(store, lcStore, bf.AttackPos, invasion.OrderId.Coalition.ToCountry, "A-" + invasion.OrderId.AsString()) ])
+let createParaTrooperDrops (world : World) store lcStore (battlefields : (DefenseAreaId * CoalitionId) seq) =
+    let wg = world.FastAccess
+    battlefields
+    |> Seq.map (fun (bf, defending) ->
+        let bf = wg.GetAntiTankDefenses(bf)
+        [ ParaDrop.Create(store, lcStore, bf.DefensePos, defending.ToCountry, "D-" + string bf.Home)
+          ParaDrop.Create(store, lcStore, bf.AttackPos, defending.Other.ToCountry, "A-" + string bf.Home) ])
     |> List.concat
 
 let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Options) =
@@ -846,16 +837,13 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
         |> List.map (fun icons -> icons :> McuUtil.IMcuGroup)
     let battles =
-        Battlefield.generateBattlefields missionParams.MaxVehiclesInBattle missionData.Random store lcStore missionData.World missionData.State (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
+        Battlefield.generateBattlefields missionParams.MaxVehiclesInBattle missionData.Random store lcStore missionData.World missionData.State
     for bf in battles do
         for start in bf.Starts do
             Mcu.addTargetLink missionBegin start.Index
     let battles = battles |> List.map (fun bf -> bf.All)
     let paraDrops =
-        let invasions =
-            (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
-            |> List.filter (fun m -> m.IsInvasion(missionData.State))
-        createParaTrooperDrops missionData.World store lcStore invasions
+        createParaTrooperDrops missionData.World store lcStore (Battlefield.identifyBattleAreas missionData.World missionData.State)
         |> List.map (fun p -> p.All)
     let parkedPlanes =
         createParkedPlanes store missionData.World missionData.State inAttackArea
