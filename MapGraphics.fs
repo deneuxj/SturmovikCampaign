@@ -402,19 +402,11 @@ with
                             Mcu.IconIdValue.AttackBombersFlight
                     yield! mkTravelArrow(order.Convoy.Start, order.Convoy.Destination, (10, 0, 0), int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity), iconId)
                 for order in friendlyOrders.Columns do
-                    match sg.GetRegion(order.Destination).Owner with
-                    | Some owner when owner = coalition.Other ->
-                        () // No arrow for battles
-                    | _ ->
-                        let iconId = Mcu.IconIdValue.CoverArmorColumn
-                        yield! mkTravelArrow(order.Start, order.Destination, (0, 0, 10), order.Composition |> Array.length, iconId)
+                    let iconId = Mcu.IconIdValue.CoverArmorColumn
+                    yield! mkTravelArrow(order.Start, order.Destination, (0, 0, 10), order.Composition |> Array.length, iconId)
                 for order in enemyOrders.Columns do
-                    match sg.GetRegion(order.Destination).Owner with
-                    | Some owner when owner = coalition ->
-                        () // No arrow for battles
-                    | _ ->
-                        let iconId = Mcu.IconIdValue.AttackArmorColumn
-                        yield! mkTravelArrow(order.Start, order.Destination, (10, 0, 0), order.Composition |> Array.length, iconId)
+                    let iconId = Mcu.IconIdValue.AttackArmorColumn
+                    yield! mkTravelArrow(order.Start, order.Destination, (10, 0, 0), order.Composition |> Array.length, iconId)
             ]
         let lcStrings =
             [
