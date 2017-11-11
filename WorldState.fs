@@ -79,7 +79,7 @@ with
         |> Option.defaultVal 0
 
     member this.HasInvaders =
-        this.NumVehicles
+        this.NumInvadingVehicles
         |> Map.exists (fun _ qty -> qty > 0)
 
     member this.TotalVehicleValue =
