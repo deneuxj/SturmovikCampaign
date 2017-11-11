@@ -371,9 +371,10 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                     | None ->
                         ()
                 | ByAir(afStart, afDestination) ->
+                    let airName = order.MissionLogEventName
                     let startPos, startDir = sg.GetAirfield(afStart).Runway
                     let landPos, landDir = sg.GetAirfield(afDestination).Runway
-                    let flight = TransportFlight.Create(store, lcStore, startPos, startDir, landPos, landDir, country)
+                    let flight = TransportFlight.Create(store, lcStore, startPos, startDir, landPos, landDir, country, airName)
                     yield startPos, Choice3Of3 flight
         ]
     let nodes =
