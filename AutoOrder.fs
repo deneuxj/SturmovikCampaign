@@ -322,25 +322,31 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
 let allTankReinforcements (world : World) (state : WorldState) (coalition : CoalitionId) =
     let vehicleMinValue = GroundAttackVehicle.HeavyTank.Cost * 5.0f
     let sg = state.FastAccess
-    let distanceToFrontLine = computeDistance false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (fun region -> sg.GetRegion(region).Owner = Some coalition.Other) world
+    let distanceToEnemy = computeDistance false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (fun region -> sg.GetRegion(region).Owner = Some coalition.Other) world
     [|
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && regState.TotalVehicleValue > vehicleMinValue then
-                let regionDistance = distanceToFrontLine.[region.RegionId]
-                for ngh in region.Neighbours do
-                    let nghState = sg.GetRegion(ngh)
-                    let nghDistance = distanceToFrontLine.[ngh]
-                    // Note: do not move to a region on the frontline, this may be a poor tactical choice. Let the minmax search take that decision instead.
-                    // This also avoids sending reinforcements into an ongoing battle, which is something the battle system does not handle well.
-                    // If the battle is lost, the reinforcements will also be lost.
-                    if nghState.Owner = Some coalition && nghDistance < regionDistance && nghDistance > 0 then
-                        let composition = selectVehicles regState vehicleMinValue
-                        yield {
-                            OrderId = { Index = -1; Coalition = coalition }
-                            Start = region.RegionId
-                            Destination = ngh
-                            Composition = composition
-                        }
+                match Map.tryFind region.RegionId distanceToEnemy with
+                | Some regionDistance ->
+                    for ngh in region.Neighbours do
+                        let nghState = sg.GetRegion(ngh)
+                        match Map.tryFind ngh distanceToEnemy with
+                        | Some nghDistance ->
+                            // Note: do not move to a region on the frontline, this may be a poor tactical choice. Let the minmax search take that decision instead.
+                            // This also avoids sending reinforcements into an ongoing battle, which is something the battle system does not handle well.
+                            // If the battle is lost, the reinforcements will also be lost.
+                            if nghState.Owner = Some coalition && nghDistance < regionDistance && nghDistance > 1 then
+                                let composition = selectVehicles regState vehicleMinValue
+                                yield {
+                                    OrderId = { Index = -1; Coalition = coalition }
+                                    Start = region.RegionId
+                                    Destination = ngh
+                                    Composition = composition
+                                }
+                        | None ->
+                            ()
+                | None ->
+                    ()
     |]
 
 /// Decide what plane to add to the rear airfield
