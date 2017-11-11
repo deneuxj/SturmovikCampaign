@@ -235,8 +235,7 @@ let createAirConvoyOrders coalition =
     >> List.mapi (fun i (convoy, (af1, af2)) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByAir(af1, af2); Convoy = convoy })
 
 let createAllConvoyOrders coalition x =
-    createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x
-
+    createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x @ createAirConvoyOrders coalition x
 
 /// Prioritize convoys according to needs of destination
 let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrder list) =
@@ -266,7 +265,19 @@ let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrd
             ) (remaining, [])
         |> snd
         |> List.rev
-    sorted
+    // Remove duplicate / reversed trips
+    let noRoundTrip =
+        sorted
+        |> List.fold (fun (endpoints, ok) order ->
+            let orderEndPoints = order.Convoy.EndPoints
+            if Set.contains orderEndPoints endpoints then
+                (endpoints, ok)
+            else
+                (Set.add orderEndPoints endpoints, order :: ok)
+        ) (Set.empty, [])
+        |> snd
+        |> List.rev
+    noRoundTrip
 
 /// Select vehicles among those available in a region
 let selectVehicles (regState : RegionState) (force : float32<E>) =

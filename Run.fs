@@ -231,9 +231,7 @@ module OrderDecision =
                 match order.Means with
                 | ByRoad ->
                     // Remove road convoys that take the same road as a tank column
-                    let orderEndPoints =
-                        [ order.Convoy.Start; order.Convoy.Destination ]
-                        |> List.sort
+                    let orderEndPoints = order.Convoy.EndPoints
                     match coalition with
                     | Axis -> axisColumns
                     | Allies -> alliesColumns

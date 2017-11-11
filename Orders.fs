@@ -11,6 +11,10 @@ type ConvoyOrder = {
     Destination : RegionId
     TransportedSupplies : float32<E>
 }
+with
+    member this.EndPoints =
+        [ this.Start; this.Destination ]
+        |> List.sort
 
 type ResupplyMeans =
     | ByRoad
