@@ -5134,9 +5134,9 @@ Group
     Name = "Transport1";
     Index = 433;
     LinkTrId = 434;
-    XPos = 29057.547;
-    YPos = 110.934;
-    ZPos = 20085.726;
+    XPos = 29055.166;
+    YPos = 800.000;
+    ZPos = 20103.896;
     XOri = 0.00;
     YOri = 64.69;
     ZOri = 11.70;
@@ -5151,7 +5151,7 @@ Group
     Vulnerable = 1;
     Engageable = 1;
     LimitAmmo = 1;
-    StartInAir = 1;
+    StartInAir = 0;
     Callsign = 0;
     Callnum = 0;
     Time = 60;
@@ -5173,9 +5173,9 @@ Group
     Desc = "";
     Targets = [];
     Objects = [];
-    XPos = 29057.547;
-    YPos = 111.134;
-    ZPos = 20085.726;
+    XPos = 29055.166;
+    YPos = 800.200;
+    ZPos = 20103.896;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -5194,83 +5194,6 @@ Group
         TarId = 437;
       }
     }
-    OnReports
-    {
-      OnReport
-      {
-        Type = 3;
-        CmdId = 439;
-        TarId = 438;
-      }
-    }
-  }
-  
-
-  Plane
-  {
-    Name = "Transport2";
-    Index = 440;
-    LinkTrId = 441;
-    XPos = 29020.179;
-    YPos = 108.584;
-    ZPos = 20086.194;
-    XOri = 0.00;
-    YOri = 64.69;
-    ZOri = 0.00;
-    Script = "LuaScripts\WorldObjects\Planes\ju523mg4e.txt";
-    Model = "graphics\planes\ju523mg4e\ju523mg4e.mgm";
-    Country = 201;
-    Desc = "";
-    Skin = "";
-    AILevel = 2;
-    CoopStart = 0;
-    NumberInFormation = 1;
-    Vulnerable = 1;
-    Engageable = 1;
-    LimitAmmo = 1;
-    StartInAir = 1;
-    Callsign = 0;
-    Callnum = 0;
-    Time = 60;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    PayloadId = 0;
-    WMMask = 11;
-    AiRTBDecision = 0;
-    DeleteAfterDeath = 1;
-    Spotter = -1;
-    Fuel = 1;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 441;
-    Name = "Transport1 entity";
-    Desc = "";
-    Targets = [434];
-    Objects = [];
-    XPos = 29020.179;
-    YPos = 108.784;
-    ZPos = 20086.194;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 0;
-    MisObjID = 440;
-    OnEvents
-    {
-      OnEvent
-      {
-        Type = 13;
-        TarId = 443;
-      }
-      OnEvent
-      {
-        Type = 5;
-        TarId = 444;
-      }
-    }
   }
   
 
@@ -5287,40 +5210,6 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-  }
-  
-
-  MCU_CMD_TakeOff
-  {
-    Index = 439;
-    Name = "TakeOff";
-    Desc = "";
-    Targets = [];
-    Objects = [434];
-    XPos = 29055.535;
-    YPos = 108.584;
-    ZPos = 20124.671;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-  }
-  
-
-  MCU_Timer
-  {
-    Index = 438;
-    Name = "TookOff";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 29006.318;
-    YPos = 108.584;
-    ZPos = 20133.765;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Time = 5;
-    Random = 100;
   }
   
 
@@ -5365,7 +5254,7 @@ Group
     Index = 451;
     Name = "Spawn";
     Desc = "";
-    Targets = [445,452,453];
+    Targets = [445,452];
     Objects = [];
     XPos = 29159.065;
     YPos = 108.584;
@@ -5383,7 +5272,7 @@ Group
     Index = 452;
     Name = "";
     Desc = "";
-    Targets = [439];
+    Targets = [448];
     Objects = [];
     XPos = 29158.151;
     YPos = 108.584;
@@ -5391,29 +5280,8 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Time = 15;
+    Time = 1;
     Random = 100;
-  }
-  
-
-  MCU_CheckZone
-  {
-    Index = 455;
-    Name = "CheckFree";
-    Desc = "";
-    Targets = [456,453,457];
-    Objects = [];
-    XPos = 29040.276;
-    YPos = 108.584;
-    ZPos = 20086.046;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Zone = 50;
-    Cylinder = 1;
-    Closer = 1;
-    PlaneCoalitions = [0, 1, 2];
-    VehicleCoalitions = [0, 1, 2];
   }
   
 
@@ -5422,7 +5290,7 @@ Group
     Index = 458;
     Name = "RequestSpawn";
     Desc = "";
-    Targets = [455,456];
+    Targets = [451];
     Objects = [];
     XPos = 29161.076;
     YPos = 108.584;
@@ -5435,124 +5303,20 @@ Group
   }
   
 
-  MCU_Timer
-  {
-    Index = 456;
-    Name = "timeout";
-    Desc = "";
-    Targets = [451];
-    Objects = [];
-    XPos = 29160.387;
-    YPos = 108.584;
-    ZPos = 20044.012;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Time = 15;
-    Random = 100;
-  }
-  
-
-  MCU_Timer
-  {
-    Index = 457;
-    Name = "CheckAgain";
-    Desc = "";
-    Targets = [461];
-    Objects = [];
-    XPos = 29035.711;
-    YPos = 108.584;
-    ZPos = 20056.571;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Time = 10;
-    Random = 100;
-  }
-  
-
-  MCU_Deactivate
-  {
-    Index = 453;
-    Name = "";
-    Desc = "";
-    Targets = [455];
-    Objects = [];
-    XPos = 29047.655;
-    YPos = 108.584;
-    ZPos = 20051.608;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-  }
-  
-
-  MCU_Activate
-  {
-    Index = 461;
-    Name = "";
-    Desc = "";
-    Targets = [455];
-    Objects = [];
-    XPos = 29022.201;
-    YPos = 108.584;
-    ZPos = 20064.092;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-  }
-  
-
   MCU_Counter
   {
     Index = 436;
     Name = "Killed";
     Desc = "";
-    Targets = [465];
-    Objects = [];
-    XPos = 28959.638;
-    YPos = 108.584;
-    ZPos = 20021.461;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Counter = 1;
-    Dropcount = 0;
-  }
-  
-
-  MCU_Counter
-  {
-    Index = 443;
-    Name = "Killed";
-    Desc = "";
-    Targets = [465];
-    Objects = [];
-    XPos = 28933.906;
-    YPos = 108.584;
-    ZPos = 20053.864;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Counter = 1;
-    Dropcount = 0;
-  }
-  
-
-  MCU_Counter
-  {
-    Index = 465;
-    Name = "AllKilled";
-    Desc = "";
     Targets = [];
     Objects = [];
-    XPos = 28913.416;
+    XPos = 28956.785;
     YPos = 108.584;
-    ZPos = 20009.549;
+    ZPos = 20024.671;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Counter = 2;
+    Counter = 1;
     Dropcount = 0;
   }
   
@@ -5562,51 +5326,15 @@ Group
     Index = 437;
     Name = "Landed";
     Desc = "";
-    Targets = [469];
-    Objects = [];
-    XPos = 29066.270;
-    YPos = 108.584;
-    ZPos = 19979.018;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Counter = 1;
-    Dropcount = 0;
-  }
-  
-
-  MCU_Counter
-  {
-    Index = 444;
-    Name = "Landed";
-    Desc = "";
-    Targets = [469];
-    Objects = [];
-    XPos = 29014.759;
-    YPos = 108.584;
-    ZPos = 19990.317;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Counter = 1;
-    Dropcount = 0;
-  }
-  
-
-  MCU_Counter
-  {
-    Index = 469;
-    Name = "AllLanded";
-    Desc = "";
     Targets = [];
     Objects = [];
-    XPos = 29040.348;
+    XPos = 29055.214;
     YPos = 108.584;
-    ZPos = 19939.471;
+    ZPos = 19989.004;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Counter = 2;
+    Counter = 1;
     Dropcount = 0;
   }
   
@@ -7492,13 +7220,13 @@ Group
 Group
 {
   Name = "TankSpawn";
-  Index = 637;
+  Index = 631;
   Desc = "";
   Airfield
   {
     Name = "Tankfield";
-    Index = 633;
-    LinkTrId = 634;
+    Index = 632;
+    LinkTrId = 633;
     XPos = 43513.719;
     YPos = 81.370;
     ZPos = 5008.076;
@@ -7529,7 +7257,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 634;
+    Index = 633;
     Name = "Tankfield entity";
     Desc = "";
     Targets = [];
@@ -7541,7 +7269,7 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 633;
+    MisObjID = 632;
   }
   
 
