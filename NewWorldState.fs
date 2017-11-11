@@ -273,8 +273,13 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     let toBeRemoved =
                         match order.Means with
                         | ByRail -> order.Convoy.TransportedSupplies * (min damages 1.0f)
-                        | ByRoad -> ResupplyOrder.TruckCapacity
-                        | ByAir _ -> 0.0f<E> // Air cargo not handled here. It's handled using the take-off/landing mechanism, same as for human players.
+                        | ByRoad ->
+                            if vehicle.Rank > 0 then
+                                ResupplyOrder.TruckCapacity
+                            else
+                                // Lead car, does not transport anything
+                                0.0f<E>
+                        | ByAir _ -> order.Convoy.TransportedSupplies
                     let newValue = oldValue - toBeRemoved |> max 0.0f<E>
                     Map.add order.Convoy.Destination newValue arrived
                 | None ->
