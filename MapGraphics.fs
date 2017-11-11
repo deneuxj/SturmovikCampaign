@@ -365,13 +365,13 @@ with
             points
         let computeArrowWidth x =
             2000.0f * x + 500.0f * (1.0f - x)
-        let mkRoadTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
+        let mkRoadTravelArrow(startRegion : RegionId, endRegion : RegionId, color, numVehicles : int) =
             match world.Roads |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
                 let start, _, _ = x.Value.Head
                 let tip, _, _ = List.last x.Value
                 let width =
-                    let x = (qty / Orders.ResupplyOrder.TruckCapacity) / 15.0f |> min 1.0f
+                    let x = (float32 numVehicles) / 15.0f |> min 1.0f
                     computeArrowWidth x
                 renderArrow(start, tip, width, 45.0f, color)
             | None ->
@@ -401,12 +401,12 @@ with
             | Allies -> alliesOrers, axisOrders
         let arrowIcons =
             [
-                let handleOrder color (order : Orders.ResupplyOrder) =
+                let handleResupplyOrder color (order : Orders.ResupplyOrder) =
                     seq {
                         match order.Means with
                         | Orders.ByRoad ->
                             let iconId = Mcu.IconIdValue.CoverTransportColumn
-                            yield! mkRoadTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
+                            yield! mkRoadTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity))
                         | Orders.ByRail ->
                             let iconId = Mcu.IconIdValue.CoverTrains
                             yield! mkRailTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
@@ -414,10 +414,19 @@ with
                             let iconId = Mcu.IconIdValue.CoverBombersFlight
                             yield! mkAirTravelArrow(start, destination, color, order.Convoy.TransportedSupplies)
                     }
+                let handleColumnOrder color (order : Orders.ColumnMovement) =
+                    seq {
+                        let iconId = Mcu.IconIdValue.CoverArmorColumn
+                        yield! mkRoadTravelArrow(order.Start, order.Destination, color, order.Composition.Length)
+                    }
                 for order in friendlyOrders.Resupply do
-                    yield! handleOrder (0, 0, 10) order
+                    yield! handleResupplyOrder (0, 0, 10) order
                 for order in enemyOrders.Resupply do
-                    yield! handleOrder (10, 0, 0) order
+                    yield! handleResupplyOrder (10, 0, 0) order
+                for order in friendlyOrders.Columns do
+                    yield! handleColumnOrder (0, 0, 10) order
+                for order in enemyOrders.Columns do
+                    yield! handleColumnOrder (10, 0, 0) order
             ]
         let lcStrings =
             [
