@@ -829,7 +829,7 @@ let applyConquests (world : World) (state : WorldState) (battles : BattlePartici
             for region in state.Regions do
                 match Map.tryFind region.RegionId battleResults with
                 | Some((newOwner, survivors, damages), _, _) ->
-                    yield { region with Owner = Some newOwner; NumVehicles = survivors; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
+                    yield { region with Owner = Some newOwner; NumVehicles = survivors; NumInvadingVehicles = Map.empty; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
                 | None ->
                     yield region
         ]
