@@ -537,21 +537,21 @@ let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder
             | :? KillEntry as kill ->
                 match Map.tryFind kill.TargetId !idMapper with
                 | Some name ->
-                    let tankDamage =
+                    let columnDamage =
                         tanks
                         |> List.tryPick (fun order ->
                             order.MatchesMissionLogVehicleKilledEventName(name)
                             |> Option.map (fun rank -> order, rank))
-                    let truckDamage =
+                    let convoyDamage =
                         lazy
                             convoys
                             |> List.tryPick (fun order ->
                                 order.MatchesMissionLogVehicleKilledEventName(name)
                                 |> Option.map (fun rank -> order, rank))
-                    match tankDamage with
+                    match columnDamage with
                     | Some(order, rank) -> yield { Object = Column { OrderId = order.OrderId; Rank = rank }; Data = { Amount = 1.0f } }
                     | None ->
-                        match truckDamage.Value with
+                        match convoyDamage.Value with
                         | Some(order, rank) -> yield { Object = Convoy { OrderId = order.OrderId; Rank = rank }; Data = { Amount = 1.0f } }
                         | None -> ()
                 | None ->
