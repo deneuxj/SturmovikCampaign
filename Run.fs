@@ -196,20 +196,12 @@ module OrderDecision =
             with
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
 
-        let adjustConvoyIndexes(convoys : ResupplyOrder list) =
-            convoys
-
-        let mkConvoys coalition =
-            createAllConvoyOrders coalition (world, state)
-            |> prioritizeConvoys world state
-            |> List.truncate config.MaxConvoys
+        // Decide column movements
         let columnOrders =
             if state.Regions |> List.exists (fun region -> region.HasInvaders) then
                 []
             else
                 decideColumnMovements world state config.ThinkTime
-        let axisConvoys = mkConvoys Axis
-        let alliesConvoys = mkConvoys Allies
         let axisColumns =
             columnOrders
             |> List.filter (fun order -> order.OrderId.Coalition = Axis)
@@ -231,6 +223,40 @@ module OrderDecision =
                 | arr -> [arr.[0]]
         let axisColumns = axisColumns @ pickReinforcements Axis
         let alliesColumns = alliesColumns @ pickReinforcements Allies
+
+        // Decide resupply convoy movements
+        let mkConvoys coalition =
+            createAllConvoyOrders coalition (world, state)
+            |> List.filter (fun order ->
+                match order.Means with
+                | ByRoad ->
+                    // Remove road convoys that take the same road as a tank column
+                    let orderEndPoints =
+                        [ order.Convoy.Start; order.Convoy.Destination ]
+                        |> List.sort
+                    match coalition with
+                    | Axis -> axisColumns
+                    | Allies -> alliesColumns
+                    |> List.exists (fun column ->
+                        let columnEndPoints =
+                            [ column.Start; column.Destination ]
+                            |> List.sort
+                        orderEndPoints <> columnEndPoints)
+                | ByRail | ByAir _ ->
+                    true)
+            |> List.filter (fun order ->
+                // Remove excessively small convoys. From a player's perspective it's a but underwhelming to find convoys with composed of two trucks.
+                match order.Means with
+                | ByRoad ->
+                    order.Convoy.TransportedSupplies >= ResupplyOrder.TruckCapacity * 6.0f
+                | ByRail | ByAir _ ->
+                    true)
+            |> prioritizeConvoys world state
+            |> List.truncate config.MaxConvoys
+        let axisConvoys = mkConvoys Axis
+        let alliesConvoys = mkConvoys Allies
+
+        // Air patrols
         let mkPatrols coalition =
             mkAllPatrols world state coalition
             |> prioritizeAiPatrols world state
@@ -248,6 +274,8 @@ module OrderDecision =
                 mkPatrols Axis, mkPatrols Allies
             else
                 [], []
+
+        // Air attacks
         let mkAttacks() =
             let random = System.Random()
             let attacks = 
@@ -271,14 +299,18 @@ module OrderDecision =
             else
                 [], []
 
+        // Ferry flights
         let axisFerryFlights, alliesFerryFlights =
             if weather.CloudDensity < 0.8 || weather.CloudHeight > 2500.0 then
                 decidePlaneTransfers world state Axis, decidePlaneTransfers world state Allies
             else
                 [], []
 
+        // Production
         let axisProduction = computeProductionPriorities Axis world state
         let alliesProduction = computeProductionPriorities Allies world state
+
+        // Write orders to disk
         let outputDir = config.OutputDir
         use axisOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.axisOrders))
         let package = { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks; Production = axisProduction; PlaneFerries = axisFerryFlights }.Renumber()
@@ -523,7 +555,8 @@ module MissionLogParsing =
             // entries to remove from the log
             let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
             let missionHasPassed30Min (entry : LogEntry) =
-                entry.Timestamp > System.TimeSpan(0, 30, 0)
+                true
+                //entry.Timestamp > System.TimeSpan(0, 30, 0)
             seq {
                 let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
                 let r = Regex(@"(missionReport\(.*\))\[([0-9]+)\]\.txt")
