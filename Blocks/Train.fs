@@ -82,6 +82,7 @@ type TrainWithNotification = {
     TheTrain : Train
     Started : EventReporting
     Arrived : EventReporting
+    Destroyed : EventReporting
 }
 with
     interface McuUtil.IMcuGroup with
@@ -96,13 +97,16 @@ with
 
     static member Create(store, lcStore, pos, yori, destinationPos, country, eventName) =
         let train = Train.Create(store, lcStore, pos, yori, destinationPos, country)
-        let startEventName = sprintf "%s-D-0" eventName
+        let startEventName = sprintf "%s-D" eventName
         let started = EventReporting.Create(store, country, pos + Vector2(0.0f, 100.0f), startEventName)
         let arrivedEventName = sprintf "%s-A-0" eventName
         let arrived = EventReporting.Create(store, country, destinationPos + Vector2(0.0f, 100.0f), arrivedEventName)
+        let destroyedEventName = sprintf "%s-K-0" eventName
+        let destroyed = EventReporting.Create(store, country, pos + Vector2(0.0f, 200.0f), destroyedEventName)
         { TheTrain = train
           Started = started
           Arrived = arrived
+          Destroyed = destroyed
         }
 
     member this.CreateLinks() =
@@ -110,6 +114,7 @@ with
             [
                 yield this.TheTrain.Start, this.Started.Trigger :> Mcu.McuBase
                 yield this.TheTrain.Arrived, upcast this.Arrived.Trigger
+                yield this.TheTrain.Killed, upcast this.Destroyed.Trigger
                 yield this.TheTrain.Start, upcast this.TheTrain.IconAttack.Show
                 yield this.TheTrain.Start, upcast this.TheTrain.IconCover.Show
                 yield this.TheTrain.Killed, upcast this.TheTrain.IconAttack.Hide
