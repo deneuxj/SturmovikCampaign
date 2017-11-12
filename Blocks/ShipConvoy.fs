@@ -67,7 +67,8 @@ with
             | _ ->
                 invalidArg "path" "Must have at least two items"
         for mcu in group do
-            ((Vector2.FromMcu(mcu.Pos) - refPoint).Rotate(rot) + dv).AssignTo(mcu.Pos)
+            ((Vector2.FromMcu(mcu.Pos) - refPoint).Rotate(rot) + dv + refPoint).AssignTo(mcu.Pos)
+            mcu.Ori.Y <- mcu.Ori.Y + float rot
         // waypoints
         let mkWp(pos, dir) =
             let subst = Mcu.substId <| store.GetIdMapper()
