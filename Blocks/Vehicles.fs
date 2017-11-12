@@ -41,6 +41,11 @@ type VehicleDataTypeStore() =
         |> List.map (fun vehicle -> vehicle.GetName().Value, vehicle)
         |> dict
 
+    let ships =
+        data.ListOfShip
+        |> List.map (fun vehicle -> vehicle.GetName().Value, vehicle)
+        |> dict
+
     let statics =
         data.ListOfBlock
         |> List.map (fun block -> block.GetName().Value, block)
@@ -621,5 +626,26 @@ type VehicleDataTypeStore() =
         { Script = vehicle.GetScript().Value
           Model = vehicle.GetModel().Value
         }
+
+    member this.GermanTorpedoBoat =
+        let vehicle = ships.[T.Vehicles.TorpedoBoatGer]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.RussianTorpedoBoat =
+        let vehicle = ships.[T.Vehicles.TorpedoBoatRus]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.CargoShip =
+        let vehicle = ships.[T.Vehicles.CargoShip]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.MkShip() =
+        ships.[T.Vehicles.CargoShip].CreateMcu() :?> Mcu.HasEntity
 
 let vehicles = VehicleDataTypeStore()

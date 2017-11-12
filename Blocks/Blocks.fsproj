@@ -75,6 +75,7 @@
     <Compile Include="StaticDefenses.Type.Factory.fs" />
     <Content Include="ProtoTrain.txt" />
     <Compile Include="Train.fs" />
+    <Compile Include="ShipConvoy.fs" />
     <Compile Include="PriorityList.fs" />
     <Compile Include="Proximity.fs" />
     <Compile Include="Effect.fs" />

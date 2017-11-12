@@ -3041,7 +3041,7 @@ Ship
 Ship
 {
   Name = "CargoShip";
-  Index = 102;
+  Index = 101;
   LinkTrId = 0;
   XPos = 29001.693;
   YPos = 108.584;
@@ -3070,7 +3070,7 @@ Ship
 Ship
 {
   Name = "TankerShip";
-  Index = 103;
+  Index = 102;
   LinkTrId = 0;
   XPos = 29004.836;
   YPos = 108.584;
@@ -3099,7 +3099,7 @@ Ship
 Ship
 {
   Name = "TorpedoBoatGer";
-  Index = 105;
+  Index = 103;
   LinkTrId = 0;
   XPos = 28870.441;
   YPos = 108.584;
@@ -3128,7 +3128,7 @@ Ship
 Ship
 {
   Name = "TorpedoBoatRus";
-  Index = 107;
+  Index = 104;
   LinkTrId = 0;
   XPos = 29087.785;
   YPos = 108.584;
@@ -3157,7 +3157,7 @@ Ship
 Ship
 {
   Name = "DestroyerRus";
-  Index = 108;
+  Index = 105;
   LinkTrId = 0;
   XPos = 29089.481;
   YPos = 108.584;
@@ -3186,7 +3186,7 @@ Ship
 Ship
 {
   Name = "ArmoredBoatRus";
-  Index = 109;
+  Index = 106;
   LinkTrId = 0;
   XPos = 29088.610;
   YPos = 108.584;
@@ -3215,7 +3215,7 @@ Ship
 Ship
 {
   Name = "ArmoredBoatArtilleryRus";
-  Index = 110;
+  Index = 107;
   LinkTrId = 0;
   XPos = 29088.201;
   YPos = 108.584;

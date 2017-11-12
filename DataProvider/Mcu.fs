@@ -111,11 +111,13 @@ type IconIdValue =
     | AttackAntiAirPosition = 504
     | AttackBuildings = 507
     | AttackTrains = 508
+    | AttackShips = 509
     | CoverTransportColumn = 551
     | CoverArmorColumn = 552
     | CoverAntiAirPosition = 554
     | CoverBuildings = 557
     | CoverTrains = 558
+    | CoverShips = 559
     | Waypoint = 901
     | ActionPoint = 902
 
