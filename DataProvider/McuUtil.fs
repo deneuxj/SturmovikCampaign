@@ -206,6 +206,13 @@ let swapCoalition =
     | CoalitionValue.Axis -> CoalitionValue.Allies
     | other -> other
 
+/// Get the coalition of a country.
+let coalitionOf =
+    function
+    | CountryValue.Germany -> CoalitionValue.Axis
+    | CountryValue.Russia -> CoalitionValue.Allies
+    | _ -> failwith "Unknown country value"
+
 type Mcu.McuProximity with
     /// Set the plane and vehicle coalitions relatively to a given coalition.
     /// If the instatiated owner and the template owner are the same, do nothing.
