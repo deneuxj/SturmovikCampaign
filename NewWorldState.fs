@@ -279,6 +279,11 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                             else
                                 // Lead car, does not transport anything
                                 0.0f<E>
+                        | ByShip ->
+                            if vehicle.Rank > 0 && vehicle.Rank < 3 then
+                                ResupplyOrder.ShipCapacity
+                            else
+                                0.0f<E>
                         | ByAir _ -> order.Convoy.TransportedSupplies
                     let newValue = oldValue - toBeRemoved |> max 0.0f<E>
                     Map.add order.Convoy.Destination newValue arrived

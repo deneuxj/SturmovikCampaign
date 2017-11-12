@@ -20,6 +20,7 @@ type ResupplyMeans =
     | ByRoad
     | ByRail
     | ByAir of AirfieldId * AirfieldId
+    | ByShip
 
 type OrderId = {
     Index : int
@@ -51,6 +52,7 @@ type ResupplyOrder = {
 with
     static member TruckCapacity = 100.0f<E>
     static member TrainCapacity = 2000.0f<E>
+    static member ShipCapacity = 2000.0f<E>
 
     member this.MissionLogEventName =
         let meansLetter =
@@ -58,6 +60,7 @@ with
             | ByRoad -> "R"
             | ByRail -> "T"
             | ByAir _ -> "A"
+            | ByShip -> "S"
         sprintf "CNV-%s-%d-%d" meansLetter (int this.OrderId.Coalition.ToCoalition) this.OrderId.Index
 
     member this.MatchesMissionLogArrivalEventName(name : string) =

@@ -387,6 +387,17 @@ with
                 renderArrow(start, tip, width, 45.0f, color)
             | None ->
                 []
+        let mkSeaTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
+            match world.Rails |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
+            | Some x ->
+                let start, _, _ = x.Value.Head
+                let tip, _, _ = List.last x.Value
+                let width =
+                    let x = (qty / Orders.ResupplyOrder.ShipCapacity) / 15.0f |> min 1.0f
+                    computeArrowWidth x
+                renderArrow(start, tip, width, 45.0f, color)
+            | None ->
+                []
         let mkAirTravelArrow(startAirfield : AirfieldId, endAirfield : AirfieldId, color, qty) =
             let af1, af2 = wg.GetAirfield(startAirfield), wg.GetAirfield(endAirfield)
             let start = af1.Pos
@@ -410,6 +421,9 @@ with
                         | Orders.ByRail ->
                             let iconId = Mcu.IconIdValue.CoverTrains
                             yield! mkRailTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
+                        | Orders.ByShip ->
+                            let iconId = Mcu.IconIdValue.CoverShips
+                            yield! mkSeaTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
                         | Orders.ByAir(start, destination) ->
                             let iconId = Mcu.IconIdValue.CoverBombersFlight
                             yield! mkAirTravelArrow(start, destination, color, order.Convoy.TransportedSupplies)

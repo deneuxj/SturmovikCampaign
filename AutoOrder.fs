@@ -210,7 +210,7 @@ let createConvoyOrders (minTransfer : float32<E>) (maxTransfer : float32<E>) (ge
 
 
 let createRoadConvoyOrders coalition =
-    createConvoyOrders (2.0f * ResupplyOrder.TruckCapacity) (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads |> List.map (fun x -> x, ())) coalition
+    createConvoyOrders (6.0f * ResupplyOrder.TruckCapacity) (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads |> List.map (fun x -> x, ())) coalition
     >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
 
 
@@ -218,6 +218,9 @@ let createRailConvoyOrders coalition =
     createConvoyOrders (0.0f<E>) (ResupplyOrder.TrainCapacity) (fun world -> world.Rails |> List.map (fun x -> x, ())) coalition
     >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
+let createShipConvoyOrders coalition =
+    createConvoyOrders (ResupplyOrder.ShipCapacity) (2.0f * ResupplyOrder.ShipCapacity) (fun world -> world.SeaWays |> List.map (fun x -> x, ())) coalition
+    >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
 let createAirConvoyOrders coalition =
     let exactCapacity = (PlaneModel.Ju52.CargoCapacity * bombCost)
@@ -235,7 +238,7 @@ let createAirConvoyOrders coalition =
     >> List.mapi (fun i (convoy, (af1, af2)) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByAir(af1, af2); Convoy = convoy })
 
 let createAllConvoyOrders coalition x =
-    createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x @ createAirConvoyOrders coalition x
+    createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x @ createAirConvoyOrders coalition x @ createShipConvoyOrders coalition x
 
 /// Prioritize convoys according to needs of destination
 let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrder list) =
@@ -247,6 +250,17 @@ let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrd
         |> Map.ofList
     let sorted =
         orders
+        // Remove flights that start from airfields without transport planes
+        |> List.filter (fun order ->
+            match order.Means with
+            | ByAir(af0, _) ->
+                let afs =
+                    state.Airfields
+                    |> List.find (fun af -> af.AirfieldId = af0)
+                afs.NumPlanes
+                |> Map.exists (fun plane qty -> plane.Roles.Contains PlaneModel.CargoTransporter && qty >= 1.0f)
+            | _ ->
+                true)
         // Sort by supply needs
         |> List.sortByDescending (fun order ->
             Map.tryFind order.Convoy.Destination needs

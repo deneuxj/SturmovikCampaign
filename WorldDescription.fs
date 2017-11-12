@@ -429,6 +429,7 @@ type World = {
     Regions : Region list
     Roads : Path list
     Rails : Path list
+    SeaWays : Path list
     AntiAirDefenses : DefenseArea list
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
@@ -458,6 +459,7 @@ with
             |> List.map (fun area -> area.SetParking parkings)
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
         let rails = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
+        let seaWays = Path.ExtractPaths(data.GetGroup("Sea").ListOfMCU_Waypoint, regions)
         let defenses = data.GetGroup("Defenses")
         let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
@@ -489,6 +491,7 @@ with
           StartDate = date
           Roads = roads
           Rails = rails
+          SeaWays = seaWays
           WeatherDaysOffset = 0.0
         }
 

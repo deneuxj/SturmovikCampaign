@@ -18,6 +18,7 @@ open SturmovikMission.Blocks
 open SturmovikMission.Blocks.IO
 open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 open SturmovikMission.Blocks.TransportFlight
+open SturmovikMission.Blocks.ShipConvoy
 open SturmovikMission.Blocks.FireLoop
 open SturmovikMission.Blocks.ParaDrop
 open SturmovikMission.Blocks.WhileEnemyClose
@@ -318,12 +319,13 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                     | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
                     | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                 match order.Means with
-                | ByRoad | ByRail ->
+                | ByRoad | ByRail | ByShip ->
                     let path =
                         let paths =
                             match order.Means with
                             | ByRail -> world.Rails
                             | ByRoad -> world.Roads
+                            | ByShip -> world.SeaWays
                             | ByAir _ -> failwith "Cannot handle air cargo"
                         paths
                         |> List.tryPick(fun road -> road.MatchesEndpoints(convoy.Start, convoy.Destination))
@@ -349,23 +351,28 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                                     int (convoy.TransportedSupplies / ResupplyOrder.TruckCapacity)
                                     |> min ColumnMovement.MaxColumnSize
                                 VirtualConvoy.Create(store, lcStore, pathVertices, size, country, coalition, convoyName, 0)
-                                |> Choice1Of3
+                                |> Choice1Of4
                             | ByRail ->
                                 let startV = pathVertices.Head
                                 let endV = pathVertices |> List.last
                                 TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
-                                |> Choice2Of3
+                                |> Choice2Of4
+                            | ByShip ->
+                                ShipConvoy.Create(store, lcStore, pathVertices |> List.map (fun x -> x.Pos, x.Ori), country, convoyName)
+                                |> Choice3Of4
                             | ByAir _ -> failwith "Cannot handle air cargo"
                         let links =
                             match virtualConvoy with
-                            | Choice1Of3 x -> x.CreateLinks()
-                            | Choice2Of3 x -> x.CreateLinks()
-                            | Choice3Of3 _ -> failwith "Cannot handle air cargo"
+                            | Choice1Of4 x -> x.CreateLinks()
+                            | Choice2Of4 x -> x.CreateLinks()
+                            | Choice3Of4 x -> Links.Links.Empty
+                            | Choice4Of4 _ -> failwith "Cannot handle air cargo"
                         let mcuGroup =
                             match virtualConvoy with
-                            | Choice1Of3 x -> x :> McuUtil.IMcuGroup
-                            | Choice2Of3 x -> x :> McuUtil.IMcuGroup
-                            | Choice3Of3 _ -> failwith "Cannot handle air cargo"
+                            | Choice1Of4 x -> x :> McuUtil.IMcuGroup
+                            | Choice2Of4 x -> x :> McuUtil.IMcuGroup
+                            | Choice3Of4 x -> x.All
+                            | Choice4Of4 _ -> failwith "Cannot handle air cargo"
                         links.Apply(McuUtil.deepContentOf mcuGroup)
                         yield pathVertices.Head.Pos, virtualConvoy
                     | None ->
@@ -375,7 +382,7 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                     let startPos, startDir = sg.GetAirfield(afStart).Runway
                     let landPos, landDir = sg.GetAirfield(afDestination).Runway
                     let flight = TransportFlight.Create(store, lcStore, startPos, startDir, landPos, landDir, country, airName)
-                    yield startPos, Choice3Of3 flight
+                    yield startPos, Choice4Of4 flight
         ]
     let nodes =
         let positions =
@@ -806,11 +813,13 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         for node, convoy in List.zip convoyPrioNodes.Nodes convoys do
             let start, destroyed, arrived =
                 match convoy with
-                | Choice1Of3 trucks ->
+                | Choice1Of4 trucks ->
                     trucks.Api.Start, trucks.Api.Destroyed, trucks.Api.Arrived
-                | Choice2Of3 train ->
+                | Choice2Of4 train ->
                     train.TheTrain.Start, train.TheTrain.Killed, train.TheTrain.Arrived
-                | Choice3Of3 flight ->
+                | Choice3Of4 ships ->
+                    ships.Start, ships.Killed, ships.Arrived
+                | Choice4Of4 flight ->
                     flight.Start, flight.Killed, flight.Arrived
             Mcu.addTargetLink node.Do start.Index
             Mcu.addTargetLink destroyed convoyPrioNodes.Try.Index
@@ -824,9 +833,10 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             convoys
             |> List.map (
                 function
-                | Choice1Of3 x -> x :> McuUtil.IMcuGroup
-                | Choice2Of3 x -> x :> McuUtil.IMcuGroup
-                | Choice3Of3 x -> x.All)
+                | Choice1Of4 x -> x :> McuUtil.IMcuGroup
+                | Choice2Of4 x -> x :> McuUtil.IMcuGroup
+                | Choice3Of4 x -> x.All
+                | Choice4Of4 x -> x.All)
         convoyPrioNodes.All, convoys
     let mkColumns orders =
         let maxColumnSplit = max 1 (missionParams.MissionLength / missionParams.ColumnSplitInterval - 1)

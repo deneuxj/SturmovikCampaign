@@ -240,14 +240,14 @@ module OrderDecision =
                             [ column.Start; column.Destination ]
                             |> List.sort
                         orderEndPoints <> columnEndPoints)
-                | ByRail | ByAir _ ->
+                | ByRail | ByAir _ | ByShip ->
                     true)
             |> List.filter (fun order ->
                 // Remove excessively small convoys. From a player's perspective it's a but underwhelming to find convoys with composed of two trucks.
                 match order.Means with
                 | ByRoad ->
                     order.Convoy.TransportedSupplies >= ResupplyOrder.TruckCapacity * 6.0f
-                | ByRail | ByAir _ ->
+                | ByRail | ByAir _ | ByShip ->
                     true)
             |> prioritizeConvoys world state
             |> List.truncate config.MaxConvoys
