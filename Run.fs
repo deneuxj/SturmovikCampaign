@@ -239,7 +239,8 @@ module OrderDecision =
                         let columnEndPoints =
                             [ column.Start; column.Destination ]
                             |> List.sort
-                        orderEndPoints <> columnEndPoints)
+                        orderEndPoints = columnEndPoints)
+                    |> not
                 | ByRail | ByAir _ | ByShip ->
                     true)
             |> List.filter (fun order ->
