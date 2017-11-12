@@ -388,7 +388,7 @@ with
             | None ->
                 []
         let mkSeaTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
-            match world.Rails |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
+            match world.SeaWays |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
                 let start, _, _ = x.Value.Head
                 let tip, _, _ = List.last x.Value
