@@ -219,8 +219,8 @@ let createRailConvoyOrders coalition =
     >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
 let createShipConvoyOrders coalition =
-    createConvoyOrders (ResupplyOrder.ShipCapacity) (2.0f * ResupplyOrder.ShipCapacity) (fun world -> world.SeaWays |> List.map (fun x -> x, ())) coalition
-    >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
+    createConvoyOrders (0.0f<E>) (2.0f * ResupplyOrder.ShipCapacity) (fun world -> world.SeaWays |> List.map (fun x -> x, ())) coalition
+    >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByShip; Convoy = convoy })
 
 let createAirConvoyOrders coalition =
     let exactCapacity = (PlaneModel.Ju52.CargoCapacity * bombCost)
