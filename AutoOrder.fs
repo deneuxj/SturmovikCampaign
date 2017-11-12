@@ -238,7 +238,7 @@ let createAirConvoyOrders coalition =
     >> List.mapi (fun i (convoy, (af1, af2)) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByAir(af1, af2); Convoy = convoy })
 
 let createAllConvoyOrders coalition x =
-    createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x @ createAirConvoyOrders coalition x @ createShipConvoyOrders coalition x
+    createShipConvoyOrders coalition x @ createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x @ createAirConvoyOrders coalition x
 
 /// Prioritize convoys according to needs of destination
 let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrder list) =
