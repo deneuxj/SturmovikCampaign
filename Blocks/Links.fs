@@ -8,6 +8,12 @@ type Links =
       Targets : (Mcu.McuTrigger * Mcu.McuBase) list
     }
 with
+    static member Empty =
+        { Columns = []
+          Objects = []
+          Targets = []
+        }
+
     member this.Apply(mcus: Mcu.McuBase list) =
         let mcuById =
             mcus
