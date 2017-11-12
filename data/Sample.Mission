@@ -2491,7 +2491,7 @@ Ship
 {
   Name = "Ship";
   Index = 115;
-  LinkTrId = 0;
+  LinkTrId = 116;
   XPos = 26868.728;
   YPos = 149.907;
   ZPos = 28555.800;
@@ -2509,9 +2509,124 @@ Ship
   DamageReport = 50;
   DamageThreshold = 1;
   DeleteAfterDeath = 1;
-  Spotter = -1;
+  Spotter = 10;
   BeaconChannel = 0;
-  Callsign = 0;
+  Callsign = 44;
+}
+
+
+
+MCU_TR_Entity
+{
+  Index = 116;
+  Name = "Ship entity";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 26868.728;
+  YPos = 150.107;
+  ZPos = 28555.800;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  MisObjID = 115;
+}
+
+
+
+Ship
+{
+  Name = "Ship";
+  Index = 117;
+  LinkTrId = 118;
+  XPos = 26817.512;
+  YPos = 149.907;
+  ZPos = 28558.067;
+  XOri = 1.73;
+  YOri = 0.00;
+  ZOri = 1.38;
+  Script = "LuaScripts\WorldObjects\Ships\1124.txt";
+  Model = "graphics\ships\1124\1124.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = 10;
+  BeaconChannel = 0;
+  Callsign = 41;
+}
+
+
+
+MCU_TR_Entity
+{
+  Index = 118;
+  Name = "Ship entity";
+  Desc = "";
+  Targets = [116];
+  Objects = [];
+  XPos = 26817.512;
+  YPos = 150.107;
+  ZPos = 28558.067;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  MisObjID = 117;
+}
+
+
+
+Ship
+{
+  Name = "Ship";
+  Index = 120;
+  LinkTrId = 121;
+  XPos = 26771.003;
+  YPos = 149.907;
+  ZPos = 28557.151;
+  XOri = 1.73;
+  YOri = 0.00;
+  ZOri = 1.38;
+  Script = "LuaScripts\WorldObjects\Ships\1124.txt";
+  Model = "graphics\ships\1124\1124.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = 10;
+  BeaconChannel = 0;
+  Callsign = 45;
+}
+
+
+
+MCU_TR_Entity
+{
+  Index = 121;
+  Name = "Ship entity";
+  Desc = "";
+  Targets = [116];
+  Objects = [];
+  XPos = 26771.003;
+  YPos = 150.107;
+  ZPos = 28557.151;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  MisObjID = 120;
 }
 
 
