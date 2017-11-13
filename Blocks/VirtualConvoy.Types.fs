@@ -87,15 +87,23 @@ with
         let truck = getVehicleByName group T.Blocks.Truck
         truck.Name <- sprintf "%s-%d" formationName inFormation
         truck.Country <- country
-        match country with
-        | Mcu.CountryValue.Germany ->
-            truck.Model <- vehicles.GermanTruck.Model
-            truck.Script <- vehicles.GermanTruck.Script
-        | Mcu.CountryValue.Russia ->
-            truck.Model <- vehicles.RussianTruck.Model
-            truck.Script <- vehicles.RussianTruck.Script
-        | _ ->
-            ()
+        // Truck model. Every fifth truck is a mobile AA truck.
+        let m =
+            match country with
+            | Mcu.CountryValue.Germany ->
+                if inFormation % 5 = 0 then
+                    vehicles.GermanMobileAA
+                else
+                    vehicles.GermanTruck
+            | Mcu.CountryValue.Russia ->
+                if inFormation % 5 = 0 then
+                    vehicles.RussianMobileAA
+                else
+                    vehicles.RussianTruck
+            | _ ->
+                failwith "Unsupported country"
+        truck.Model <- m.Model
+        truck.Script <- m.Script
         let center = Vector2.FromMcu(truck.Pos)
         // Rotation
         let rot = ori - float32 truck.Ori.Y
