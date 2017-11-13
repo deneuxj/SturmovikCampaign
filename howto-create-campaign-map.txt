@@ -32,6 +32,12 @@ If the waypoint name ends with "R", the column will spawn in a line to the right
 Similarly if it ends with "L", but on the left side instead.
 Picking the side where the convoy spawns is important if one side is occupied by a lake or by static objects.
 
+Note about spacing of waypoints in seaway paths: Try to keep at most 10km between two consecutive waypoints.
+Keep the waypoints within the influence areas of regions.
+The reason for that is that the mission generator will pick a sub-sequence of the path that is short enough that a cargo convoy does not take more than one hour.
+Excessively long supply convoys would delay other convoys planned later in the mission.
+Seaway paths are also used for military ships, and those are typically faster. They need longer paths so that their missions last one hour.
+
 4. Place factories
 Place static blocks in a group named "Factories" or "Static".
 Suitable static blocks start with: "industrial_", "vl_pvrz01", "vl_rounddepot" (complete list is actually bigger than that).
