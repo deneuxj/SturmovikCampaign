@@ -35,9 +35,9 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.Start
-        let arrived = getTriggerByName group T.Blocks.Arrived
-        let killed = getTriggerByName group T.Blocks.Killed
+        let start = getTriggerByName group T.Blocks.START
+        let arrived = getTriggerByName group T.Blocks.ARRIVED
+        let killed = getTriggerByName group T.Blocks.KILLED
         let wp1 = getWaypointByName group T.Blocks.WP1
         let destWp = getWaypointByName group T.Blocks.Destination
         let escort1 = getVehicleByName group T.Blocks.Escort1
@@ -72,9 +72,10 @@ with
         // waypoints
         let mkWp(pos, dir) =
             let subst = Mcu.substId <| store.GetIdMapper()
-            let wp = newWaypoint 1 pos dir 200 10 0
+            let wp = newWaypoint 1 pos dir wp1.Radius wp1.Speed wp1.Priority
             subst wp
-            Mcu.addObjectLink wp escort1.Index
+            Mcu.addObjectLink wp escort1.LinkTrId
+            Mcu.addObjectLink wp ship1.LinkTrId
             wp
         let rec work xs =
             match xs with
