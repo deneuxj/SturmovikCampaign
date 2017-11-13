@@ -17,18 +17,26 @@ type GroundAttackVehicle =
     | MediumTank
     | LightArmor
 with
-    member this.GetModel(coalition) =
+    member this.GetModel(coalition, lightArmorIsAA) =
         match coalition with
         | Axis ->
             match this with
             | HeavyTank -> vehicles.GermanHeavyTank
             | MediumTank -> vehicles.GermanMediumTank
-            | LightArmor -> vehicles.GermanLightArmor
+            | LightArmor ->
+                if lightArmorIsAA then
+                    vehicles.GermanMobileAA
+                else
+                    vehicles.GermanLightArmor
         | Allies ->
             match this with
             | HeavyTank -> vehicles.RussianHeavyTank
             | MediumTank -> vehicles.RussianMediumTank
-            | LightArmor -> vehicles.RussianLightArmor
+            | LightArmor ->
+                if lightArmorIsAA then
+                    vehicles.RussianMobileAA
+                else
+                    vehicles.RussianLightArmor
 
     member this.Description =
         match this with

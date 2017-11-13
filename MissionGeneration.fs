@@ -499,7 +499,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         let columnContent =
                             composition
                             |> List.ofArray
-                            |> List.map (fun vehicleType -> vehicleType.GetModel(coalition))
+                            |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
                         let columnName = order.MissionLogEventName
                         let column = VirtualConvoy.CreateColumn(store, lcStore, travel, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                         let links = column.CreateLinks()
