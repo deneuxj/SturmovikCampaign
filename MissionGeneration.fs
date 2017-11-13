@@ -308,7 +308,8 @@ let createAirCargo store lcStore (order : ResupplyOrder) (world : World) (state 
 
 /// Convoys are created according to resupply orders. A given number of convoys start at mission start, then new convoys start whenever a convoy arrives or gets destroyed.
 let createConvoys store lcStore (world : World) (state : WorldState) (orders : ResupplyOrder list) =
-    let sg = WorldStateFastAccess.Create state
+    let wg = world.FastAccess
+    let sg = state.FastAccess
     let convoys =
         [
             for order in orders do
@@ -343,6 +344,49 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                                   SpawnSide = side
                                 }
                             )
+                        let convoySpeed = // km/h
+                            match order.Means with
+                            | ByRoad -> 50.0f
+                            | ByRail -> 70.0f
+                            | ByShip -> 8.0f
+                            | ByAir _ -> 300.0f
+                        let targetTravelTime = 1.0f // hours
+                        let pathVertices =
+                            let rec takeUntilTargetDuration (time, prev) waypoints  =
+                                if time < 0.0f then
+                                    []
+                                else
+                                    match waypoints with
+                                    | [] -> []
+                                    | (wp : PathVertex) :: rest ->
+                                        match prev with
+                                        | Some (prev : Vector2)->
+                                            let dist = (prev - wp.Pos).Length()
+                                            let t = dist / convoySpeed
+                                            wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
+                                        | None ->
+                                            wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
+                            let rec trails xs =
+                                seq {
+                                    yield xs
+                                    match xs with
+                                    | _ :: xs ->
+                                        yield! trails xs
+                                    | [] ->
+                                        ()
+                                }
+                            let destinationZone = wg.GetRegion(convoy.Destination).Boundary
+                            pathVertices
+                            |> trails
+                            |> Seq.map (takeUntilTargetDuration (targetTravelTime, None))
+                            |> Seq.tryFind (fun path ->
+                                // Goes into destination region?
+                                match Seq.tryLast path with
+                                | Some ep ->
+                                    ep.Pos.IsInConvexPolygon(destinationZone)
+                                | None ->
+                                    false)
+                            |> Option.defaultVal pathVertices
                         let virtualConvoy =
                             let convoyName = order.MissionLogEventName
                             match order.Means with
