@@ -216,3 +216,4 @@ let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Optio
         .SetTurbulence(T.Float weather.Turbulence)
         .SetTemperature(T.Integer(int(floor(weather.Temperature))))
         .SetWindLayers(T.Options.WindLayers(windLayers))
+        .SetSeaState(T.Integer (int (6.0 * weather.Wind.Speed / 40.0) |> min 6))
