@@ -230,7 +230,6 @@ with
         | Contains "warehouse" -> 7000
         | Contains "static_" -> 2500
         | _ ->
-            printfn "Default durability for %s" this.Model
             10000
 
     member this.RepairCost =
