@@ -11,6 +11,7 @@ type Move =
     { Start : int
       Destination : int
       Force : float32<E>
+      AllowTrains : bool
     }
 
 type CombinedMove =
@@ -110,7 +111,7 @@ with
                 world.Regions
                 |> List.map (fun region ->
                     region.Neighbours
-                    |> List.filter (fun ngh -> world.Roads |> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
+                    |> List.filter (fun ngh -> world.Roads @ world.Rails @ world.SeaWays|> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
                     |> List.map indexOfRegion
                     |> Array.ofList)
                 |> List.indexed
@@ -305,9 +306,9 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) (coalition : Coa
                     | Allies -> state.AlliesForces.[i]
                 for j in neighboursOf i do
                     if aggressive && state.Owners.[j] <> someCoalition || not aggressive && state.Owners.[j] = someCoalition then
-                        yield { Start = i; Destination = j; Force = force }
+                        yield { Start = i; Destination = j; Force = force; AllowTrains = not aggressive }
                         if force > 10.0f * MediumTank.Cost then
-                            yield { Start = i; Destination = j; Force = 0.5f * force }
+                            yield { Start = i; Destination = j; Force = 0.5f * force; AllowTrains = not aggressive }
         }
     seq {
         for i in 0 .. state.Owners.Length - 1 do

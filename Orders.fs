@@ -75,12 +75,18 @@ with
         else
             None
 
+type ColumnTransportType =
+    | ColByRoad
+    | ColByShip
+    | ColByTrain
+
 /// A column of armored vehicles in movement.
 type ColumnMovement = {
     OrderId : OrderId
     Start : RegionId
     Destination : RegionId
     Composition : GroundAttackVehicle[]
+    TransportType : ColumnTransportType
 }
 with
     member this.MissionLogEventName =

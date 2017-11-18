@@ -382,7 +382,7 @@ with
                 let start, _, _ = x.Value.Head
                 let tip, _, _ = List.last x.Value
                 let width =
-                    let x = (qty / Orders.ResupplyOrder.TrainCapacity) / 15.0f |> min 1.0f
+                    let x = (qty / Orders.ResupplyOrder.TrainCapacity) |> min 1.0f
                     computeArrowWidth x
                 renderArrow(start, tip, width, 45.0f, color)
             | None ->
@@ -393,7 +393,7 @@ with
                 let start, _, _ = x.Value.Head
                 let tip, _, _ = List.last x.Value
                 let width =
-                    let x = (qty / Orders.ResupplyOrder.ShipCapacity) / 15.0f |> min 1.0f
+                    let x = (qty / Orders.ResupplyOrder.ShipCapacity) |> min 1.0f
                     computeArrowWidth x
                 renderArrow(start, tip, width, 45.0f, color)
             | None ->
@@ -403,7 +403,7 @@ with
             let start = af1.Pos
             let tip = af2.Pos
             let width =
-                let x = (qty / (PlaneModel.Ju52.CargoCapacity * bombCost)) / 15.0f |> min 1.0f
+                let x = (qty / (PlaneModel.Ju52.CargoCapacity * bombCost)) |> min 1.0f
                 computeArrowWidth x
             renderArrow(start, tip, width, 45.0f, color)
         let friendlyOrders, enemyOrders =
@@ -431,7 +431,13 @@ with
                 let handleColumnOrder color (order : Orders.ColumnMovement) =
                     seq {
                         let iconId = Mcu.IconIdValue.CoverArmorColumn
-                        yield! mkRoadTravelArrow(order.Start, order.Destination, color, order.Composition.Length)
+                        match order.TransportType with
+                        | Orders.ColByRoad ->
+                            yield! mkRoadTravelArrow(order.Start, order.Destination, color, order.Composition.Length)
+                        | Orders.ColByTrain ->
+                            yield! mkRailTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.TrainCapacity)
+                        | Orders.ColByShip ->
+                            yield! mkSeaTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.ShipCapacity)
                     }
                 for order in friendlyOrders.Resupply do
                     yield! handleResupplyOrder (0, 0, 10) order

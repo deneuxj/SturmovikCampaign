@@ -309,6 +309,24 @@ let selectVehicles (regState : RegionState) (force : float32<E>) =
         |> Array.ofList
     content
 
+/// Check if a set of paths contains a path between two regions
+let hasPath (start, destination) (paths : Path list) =
+    paths
+    |> List.exists (fun path -> path.MatchesEndpoints(start, destination).IsSome)
+
+/// Try to get a kind of path that connects two regions
+/// Prioritize in that order: trains (if allowed), roads, sea ways
+let tryGetPathKind allowTrains (world : World) (start, destination) =
+    let hasPath = hasPath (start, destination)
+    if allowTrains && hasPath world.Rails then
+        Some ColByTrain
+    elif hasPath world.Roads then
+        Some ColByRoad
+    elif hasPath world.SeaWays then
+        Some ColByShip
+    else
+        None
+
 /// Build an order from a move computed by the minmax search.
 let realizeMove (world : World) (state : WorldState) (move : Move) =
     let regStart = world.Regions.[move.Start].RegionId
@@ -319,11 +337,16 @@ let realizeMove (world : World) (state : WorldState) (move : Move) =
         failwith "Cannot start tank column from neutral zone"
     let content =
         selectVehicles regState move.Force
-    { OrderId = { Index = -1; Coalition = owner.Value }
-      Start = regStart
-      Destination = regDest
-      Composition = content
-    }
+    match tryGetPathKind move.AllowTrains world (regStart, regDest) with
+    | Some medium ->
+        { OrderId = { Index = -1; Coalition = owner.Value }
+          Start = regStart
+          Destination = regDest
+          Composition = content
+          TransportType = medium
+        }
+    | None ->
+        failwithf "Cannot realize move between %s and %s" (string regStart) (string regDest)
 
 /// Run a minmax search for the best column moves for each coalition.
 let decideColumnMovements (world : World) (state : WorldState) thinkTime =
@@ -347,7 +370,7 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
 let allTankReinforcements (world : World) (state : WorldState) (coalition : CoalitionId) =
     let vehicleMinValue = GroundAttackVehicle.HeavyTank.Cost * 5.0f
     let sg = state.FastAccess
-    let distanceToEnemy = computeDistance false (fun world -> world.Roads) (fun region -> sg.GetRegion(region).Owner) (fun region -> sg.GetRegion(region).Owner = Some coalition.Other) world
+    let distanceToEnemy = computeDistance false (fun world -> world.Roads @ world.Rails @ world.SeaWays) (fun region -> sg.GetRegion(region).Owner) (fun region -> sg.GetRegion(region).Owner = Some coalition.Other) world
     [|
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && regState.TotalVehicleValue > vehicleMinValue then
@@ -362,12 +385,18 @@ let allTankReinforcements (world : World) (state : WorldState) (coalition : Coal
                             // If the battle is lost, the reinforcements will also be lost.
                             if nghState.Owner = Some coalition && nghDistance < regionDistance && nghDistance > 1 then
                                 let composition = selectVehicles regState vehicleMinValue
-                                yield {
-                                    OrderId = { Index = -1; Coalition = coalition }
-                                    Start = region.RegionId
-                                    Destination = ngh
-                                    Composition = composition
-                                }
+                                let medium = tryGetPathKind true world (region.RegionId, ngh)
+                                match medium with
+                                | Some medium ->
+                                    yield {
+                                        OrderId = { Index = -1; Coalition = coalition }
+                                        Start = region.RegionId
+                                        Destination = ngh
+                                        Composition = composition
+                                        TransportType = medium
+                                    }
+                                | None ->
+                                    ()
                         | None ->
                             ()
                 | None ->

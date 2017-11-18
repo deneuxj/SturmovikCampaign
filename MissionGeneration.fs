@@ -352,41 +352,44 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                             | ByAir _ -> 300.0f
                         let targetTravelTime = 1.0f // hours
                         let pathVertices =
-                            let rec takeUntilTargetDuration (time, prev) waypoints  =
-                                if time < 0.0f then
-                                    []
-                                else
-                                    match waypoints with
-                                    | [] -> []
-                                    | (wp : PathVertex) :: rest ->
-                                        match prev with
-                                        | Some (prev : Vector2)->
-                                            let dist = (prev - wp.Pos).Length()
-                                            let t = dist / convoySpeed
-                                            wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
-                                        | None ->
-                                            wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
-                            let rec trails xs =
-                                seq {
-                                    yield xs
-                                    match xs with
-                                    | _ :: xs ->
-                                        yield! trails xs
-                                    | [] ->
-                                        ()
-                                }
-                            let destinationZone = wg.GetRegion(convoy.Destination).Boundary
-                            pathVertices
-                            |> trails
-                            |> Seq.map (takeUntilTargetDuration (targetTravelTime, None))
-                            |> Seq.tryFind (fun path ->
-                                // Goes into destination region?
-                                match Seq.tryLast path with
-                                | Some ep ->
-                                    ep.Pos.IsInConvexPolygon(destinationZone)
-                                | None ->
-                                    false)
-                            |> Option.defaultVal pathVertices
+                            match order.Means with
+                            | ByShip ->
+                                let rec takeUntilTargetDuration (time, prev) waypoints  =
+                                    if time < 0.0f then
+                                        []
+                                    else
+                                        match waypoints with
+                                        | [] -> []
+                                        | (wp : PathVertex) :: rest ->
+                                            match prev with
+                                            | Some (prev : Vector2)->
+                                                let dist = (prev - wp.Pos).Length()
+                                                let t = dist / convoySpeed
+                                                wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
+                                            | None ->
+                                                wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
+                                let rec trails xs =
+                                    seq {
+                                        yield xs
+                                        match xs with
+                                        | _ :: xs ->
+                                            yield! trails xs
+                                        | [] ->
+                                            ()
+                                    }
+                                let destinationZone = wg.GetRegion(convoy.Destination).Boundary
+                                pathVertices
+                                |> trails
+                                |> Seq.map (takeUntilTargetDuration (targetTravelTime, None))
+                                |> Seq.tryFind (fun path ->
+                                    // Goes into destination region?
+                                    match Seq.tryLast path with
+                                    | Some ep ->
+                                        ep.Pos.IsInConvexPolygon(destinationZone)
+                                    | None ->
+                                        false)
+                                |> Option.defaultVal pathVertices
+                            | _ -> pathVertices
                         let virtualConvoy =
                             let convoyName = order.MissionLogEventName
                             match order.Means with
@@ -452,15 +455,23 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
             match coalition with
             | Some coalition ->
                 let path =
-                    world.Roads
+                    match order.TransportType with
+                    | ColByRoad -> world.Roads
+                    | ColByTrain -> world.Rails
+                    | ColByShip -> world.SeaWays
                     |> Seq.tryPick (fun path -> path.MatchesEndpoints(order.Start, order.Destination))
                     |> Option.map (fun x -> x.Value)
                 match path with
                 | Some path ->
+                    let convoySpeed =
+                        match order.TransportType with
+                        | ColByRoad -> 20
+                        | ColByTrain -> 50
+                        | ColByShip -> 10
                     let toVertex(v, yori, side) =
                         { Pos = v
                           Ori = yori
-                          Speed = 20
+                          Speed = convoySpeed
                           Radius = 100
                           Priority = 1
                           SpawnSide = side
@@ -470,7 +481,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         |> List.map toVertex
                     let expectedTravelTime =
                         let speed =
-                            20000.0f / 3600.0f
+                            (float32 convoySpeed) / 3.6f
                         path
                         |> Seq.pairwise
                         |> Seq.sumBy (fun ((v1, _, _), (v2, _, _)) -> (v1 - v2).Length() / speed)
@@ -494,28 +505,61 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         x
                     yield McuUtil.groupFromList [ initialDelay ]
                     let prevStart = ref initialDelay
-                    let rankOffset = ref 0
-                    for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
-                        let columnContent =
-                            composition
-                            |> List.ofArray
-                            |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
-                        let columnName = order.MissionLogEventName
-                        let column = VirtualConvoy.CreateColumn(store, lcStore, travel, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
-                        let links = column.CreateLinks()
-                        links.Apply(McuUtil.deepContentOf column)
-                        Mcu.addTargetLink prevStart.Value column.Api.Start.Index
-                        let beforeNext =
-                            let x = newTimer 1
-                            let subst = Mcu.substId <| store.GetIdMapper()
-                            subst x
-                            x
-                        beforeNext.Time <- interval
-                        Mcu.addTargetLink column.Api.Start beforeNext.Index
-                        prevStart := beforeNext
-                        rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
-                        yield column :> McuUtil.IMcuGroup
-                        yield McuUtil.groupFromList [ beforeNext ]
+                    let columnName = order.MissionLogEventName
+                    match order.TransportType with
+                    | ColByRoad ->
+                        let rankOffset = ref 0
+                        for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
+                            let columnContent =
+                                composition
+                                |> List.ofArray
+                                |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
+                            let column = VirtualConvoy.CreateColumn(store, lcStore, travel, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                            let links = column.CreateLinks()
+                            links.Apply(McuUtil.deepContentOf column)
+                            Mcu.addTargetLink prevStart.Value column.Api.Start.Index
+                            let beforeNext =
+                                let x = newTimer 1
+                                let subst = Mcu.substId <| store.GetIdMapper()
+                                subst x
+                                x
+                            beforeNext.Time <- interval
+                            Mcu.addTargetLink column.Api.Start beforeNext.Index
+                            prevStart := beforeNext
+                            rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
+                            yield column :> McuUtil.IMcuGroup
+                            yield McuUtil.groupFromList [ beforeNext ]
+                    | ColByTrain ->
+                        let train = TrainWithNotification.Create(store, lcStore, travel.Head.Pos, travel.Head.Ori, (Seq.last travel).Pos, coalition.ToCountry, columnName)
+                        Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
+                        yield upcast train
+                    | ColByShip ->
+                        let convoySpeed = 8.0f // km/h
+                        let targetTravelTime = 1.0f // hours
+                        // select last segment of path, we want the landing party to get as close as possible to the shore
+                        let pathVertices =
+                            let rec takeUntilTargetDuration (time, prev) waypoints =
+                                if time < 0.0f then
+                                    []
+                                else
+                                    match waypoints with
+                                    | [] -> []
+                                    | (wp : PathVertex) :: rest ->
+                                        match prev with
+                                        | Some (prev : Vector2)->
+                                            let dist = (prev - wp.Pos).Length()
+                                            let t = dist / convoySpeed
+                                            wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
+                                        | None ->
+                                            wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
+                            travel
+                            |> List.rev
+                            |> takeUntilTargetDuration (targetTravelTime, None)
+                            |> List.rev
+                        let ships = ShipConvoy.Create(store, lcStore, pathVertices |> List.map (fun x -> x.Pos, x.Ori), coalition.ToCountry, columnName)
+                        ships.MakeAsLandShips()
+                        Mcu.addTargetLink prevStart.Value ships.Start.Index
+                        yield ships.All
                 | None -> ()
             | None ->
                 ()
