@@ -117,8 +117,18 @@ with
         let startEvent = EventReporting.Create(store, country, Vector2.FromMcu wp1.Pos + Vector2(0.0f, 100.0f), startEventName)
         let arrivedEventName = sprintf "%s-A-0" eventName
         let arrivedEvent = EventReporting.Create(store, country, Vector2.FromMcu destWp.Pos + Vector2(0.0f, 100.0f), arrivedEventName)
-        let destroyedEventName = sprintf "%s-K-0" eventName
-        let destroyedEvent = EventReporting.Create(store, country, Vector2.FromMcu escort1.Pos + Vector2(0.0f, 100.0f), destroyedEventName)
+        let destroyedEvents =
+            [
+                for rank, ship in Seq.indexed [ ship1; ship2 ] do
+                    let destroyedEventName = sprintf "%s-K-%d" eventName rank
+                    let destroyedEvent = EventReporting.Create(store, country, Vector2.FromMcu ship.Pos + Vector2(0.0f, 100.0f), destroyedEventName)
+                    let entity = getEntityByIndex ship.LinkTrId group
+                    entity.OnEvents <-
+                        { Mcu.Type = int Mcu.EventTypes.OnKilled
+                          Mcu.TarId = destroyedEvent.Trigger.Index }
+                        :: entity.OnEvents
+                    yield destroyedEvent
+            ]
         // Connections to icons
         for icon in [ iconAttack; iconCover] do
             Mcu.addTargetLink start icon.Show.Index
@@ -127,7 +137,6 @@ with
         // Connections to events
         Mcu.addTargetLink start startEvent.Trigger.Index
         Mcu.addTargetLink arrived arrivedEvent.Trigger.Index
-        Mcu.addTargetLink killed destroyedEvent.Trigger.Index
         // result
         let midWps = midWps |> List.map (fun x -> x :> Mcu.McuBase)
         { Start = start
@@ -140,7 +149,7 @@ with
           All = { new McuUtil.IMcuGroup with
                       member x.Content = group @ midWps
                       member x.LcStrings = []
-                      member x.SubGroups = [ iconCover.All; iconAttack.All; startEvent.All; arrivedEvent.All ]
+                      member x.SubGroups = [ iconCover.All; iconAttack.All; startEvent.All; arrivedEvent.All ] @ (destroyedEvents |> List.map (fun ev -> ev.All))
           }
         }
 
