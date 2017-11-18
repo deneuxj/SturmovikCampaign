@@ -3240,4 +3240,33 @@ Ship
 }
 
 
+
+Ship
+{
+  Name = "LandShipGer";
+  Index = 108;
+  LinkTrId = 0;
+  XPos = 28870.696;
+  YPos = 108.584;
+  ZPos = 21314.876;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Ships\landboata.txt";
+  Model = "graphics\ships\landboata\landboata.mgm";
+  Desc = "";
+  Country = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+}
+
+
 # end of file

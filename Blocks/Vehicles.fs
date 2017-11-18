@@ -645,6 +645,18 @@ type VehicleDataTypeStore() =
           Model = vehicle.GetModel().Value
         }
 
+    member this.LandShip =
+        let vehicle = ships.[T.Vehicles.LandShipGer]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.Destroyer =
+        let vehicle = ships.[T.Vehicles.DestroyerRus]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+        
     member this.MkShip() =
         ships.[T.Vehicles.CargoShip].CreateMcu() :?> Mcu.HasEntity
 

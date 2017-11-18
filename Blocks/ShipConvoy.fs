@@ -17,6 +17,8 @@ type ShipConvoy = {
     Killed : Mcu.McuTrigger
     IconCover : IconDisplay
     IconAttack : IconDisplay
+    Ships : Mcu.HasEntity list
+    Escort : Mcu.HasEntity list
     All : McuUtil.IMcuGroup
 }
 with
@@ -133,9 +135,22 @@ with
           Killed = killed
           IconCover = iconCover
           IconAttack = iconAttack
+          Ships = [ ship1; ship2 ]
+          Escort = [ escort1; escort2 ]
           All = { new McuUtil.IMcuGroup with
                       member x.Content = group @ midWps
                       member x.LcStrings = []
                       member x.SubGroups = [ iconCover.All; iconAttack.All; startEvent.All; arrivedEvent.All ]
           }
         }
+
+    /// Replace cargo ships by landing ships, replace torpedo boats by destroyers
+    member this.MakeAsLandShips() =
+        let landing = vehicles.LandShip
+        let destroyer = vehicles.Destroyer
+        for ship in this.Ships do
+            ship.Model <- landing.Model
+            ship.Script <- landing.Script
+        for ship in this.Escort do
+            ship.Model <- destroyer.Model
+            ship.Script <- destroyer.Script
