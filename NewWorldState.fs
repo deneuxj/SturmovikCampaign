@@ -786,9 +786,18 @@ let computeCompletedColumnMovements (movements : ColumnMovement list) (departure
                 let comp =
                     [|
                         for i, tank in move.Composition |> Seq.indexed do
-                            let vehicle = { OrderId = move.OrderId; Rank = i }
+                            let rank, damageThreshold =
+                                match move.TransportType with
+                                | ColByRoad -> i, 0.25f
+                                | ColByTrain -> 0, 1.0f
+                                | ColByShip ->
+                                    if i <= move.Composition.Length / 2 then
+                                        0, 1.0f
+                                    else
+                                        1, 1.0f
+                            let vehicle = { OrderId = move.OrderId; Rank = rank }
                             match Map.tryFind vehicle damageMap with
-                            | Some amount when amount > 0.25f -> ()
+                            | Some amount when amount >= damageThreshold -> ()
                             | _ -> yield tank
                     |]
                 if not(Array.isEmpty comp) then
