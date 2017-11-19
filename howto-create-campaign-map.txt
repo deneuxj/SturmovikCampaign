@@ -15,6 +15,8 @@ Avoid holes between regions, they will look ugly in the mission map and confuse 
 Put region icons on identifiable cities, need not be in the center of the region.
 Put all regions in a group named "Regions".
 Set region owners. Each coalition must own at least one region with factories.
+In the initial world state, regions which have "***" in their Description are fully supplied. Those are the "strong bases".
+Other regions are supplied depending on their distance to the nearest strong base.
 
 3. Define roads, railways and seaways
 Each road path must start with a waypoint named "StartR" or "StartL" and finish with another one named "EndR" or "EndL".
