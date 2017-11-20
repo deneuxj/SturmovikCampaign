@@ -220,7 +220,9 @@ with
         | Contains "arf_hangars_2"
         | Contains "arf_hangars_3"
         | Contains "arf_gsm_1"
-        | Contains "arf_gsm_2" -> true
+        | Contains "arf_gsm_2"
+        | Contains "arf_saray"
+        | Contains "arf_sklad" -> true
         | _ -> false
 
     member this.Durability =

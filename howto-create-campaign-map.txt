@@ -48,8 +48,7 @@ Factory buildings will be recognized automatically.
 
 5. Place supply storage
 Place static blocks with entities in a group named "Storage".
-Suitable static blocks are: "arf_barak" (100), "arf_dugouts_2" (400), "arf_dugouts_3" (600), "arf_ammo_1" (100), "arf_hangararc" (1000),
-"arf_hangarbox" (1000), "arf_hangars_1" (1200), "arf_gsm_1" (100), "arf_gsm_2" (75).
+Suitable static blocks are: "arf_barak" (100), "arf_dugouts_2" (400), "arf_dugouts_3" (600).
 Number between parentheses above are the storage capacity of each static block.
 Storage is used for anti-tank (AT) and anti-air (AAA) defenses. Each gun consumes 50.
 (Note: the storage groups I used in Velikie-Luki provide 3200 storage units, enough for 64 guns)
