@@ -411,12 +411,21 @@ with
             ) airfields
         let airfields =
             storage
-            |> List.fold (fun (airfields : Airfield list) group ->
-                let pos = Vector2.FromPos group
+            |> List.choose (fun storage ->
+                let blck = StaticGroup.FromBlock storage
+                if blck.IsAirfieldStorage then
+                    Some blck
+                else
+                    None)
+            |> List.fold (fun (airfields : Airfield list) blck ->
+                let pos = blck.Pos.Pos
                 let home =
                     airfields
                     |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
-                Airfield.AddStorage(airfields, home.AirfieldId, ( { Model = group.GetModel().Value; Script = group.GetScript().Value; Pos = { Pos = pos; Rotation = float32(group.GetYOri().Value); Altitude = float32(group.GetYPos().Value) } }))
+                if (home.Pos - pos).Length() <= 3000.0f then
+                    Airfield.AddStorage(airfields, home.AirfieldId, blck)
+                else
+                    airfields
             ) airfields
         airfields
 
@@ -468,7 +477,7 @@ with
         let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(battlefields, regions, roads)
         let afs = data.GetGroup("Airfield spawns").ListOfAirfield
         let planes = data.GetGroup("Parked planes").ListOfPlane
-        let afStorages = data.GetGroup("Airfield storage").ListOfBlock
+        let afStorages = data.GetGroup("Airfield storage").ListOfBlock @ data.GetGroup("Static").ListOfBlock
         let airfields =
             match planes with
             | [] ->

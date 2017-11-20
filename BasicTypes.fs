@@ -179,9 +179,7 @@ with
         | Contains "town_lrg_corner" -> 1.0f<E/H>
         | Contains "vl_selsovet" -> 0.0f<E/H>
         | Contains "watertower" -> 5.0f<E/H>
-        | _ ->
-            printfn "No production in %s" this.Model
-            0.0f<E/H>
+        | _ -> 0.0f<E/H>
         |> (*) factor
 
     member this.Storage =
@@ -200,13 +198,24 @@ with
         | Contains "arf_hangars_3" -> 600.0f<E>
         | Contains "arf_gsm_1" -> 100.0f<E>
         | Contains "arf_gsm_2" -> 75.0f<E>
-        | Contains "arf_tower"
-        | Contains "arf_nets" -> 0.0f<E>
         | Contains "arf_saray" -> 200.0f<E>
         | Contains "arf_sklad" -> 300.0f<E>
-        | _ ->
-            printfn "No storage in %s" this.Model
-            0.0f<E>
+        | _ -> 0.0f<E>
+
+    member this.IsAirfieldStorage =
+        match this.Model with
+        | Contains "arf_ammo_1"
+        | Contains "arf_ammo_2"
+        | Contains "arf_ammo_3"
+        | Contains "arf_ammo_4"
+        | Contains "arf_hangararc"
+        | Contains "arf_hangarbox"
+        | Contains "arf_hangars_1"
+        | Contains "arf_hangars_2"
+        | Contains "arf_hangars_3"
+        | Contains "arf_gsm_1"
+        | Contains "arf_gsm_2" -> true
+        | _ -> false
 
     member this.Durability =
         match this.Model with

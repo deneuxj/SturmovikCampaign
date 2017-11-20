@@ -81,7 +81,8 @@ Create multiple spawn points, typically one at each runway end. This allows the 
 These alternative waypoints should all have the same name (typically the name of the airfield).
 
 9. Define airfield storage
-Create hangars with entities in a group called "Airfield storage".
+Create hangars in a group called "Airfield storage".
+Alternatively, all hangars, ammo tents and fuel tanks found under "Static" will be considered.
 These hangars must be within 3km of the airfield's spawn points.
 
 10. Place plane parking spots
