@@ -509,6 +509,15 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                         |> float32
                         |> scale
                     let ceilint = ceil >> int
+                    let scale =
+                        let numAirfields =
+                            world.Airfields
+                            |> Seq.filter (fun af -> af.Region = region.RegionId)
+                            |> Seq.length
+                            |> max 1
+                            |> float32
+                        fun x ->
+                            (scale x) * numAirfields
                     let vehicles =
                         [(HeavyTank, scale 3.0f |> ceilint); (MediumTank, scale 9.0f |> ceilint); (LightArmor, scale 3.0f |> ceilint)]
                         |> Map.ofList
