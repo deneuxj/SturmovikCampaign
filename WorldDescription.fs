@@ -360,6 +360,50 @@ with
                 af
         )
 
+    static member AddCaponiers(airfields : Airfield list, airfield : AirfieldId, caponiers : StaticGroup) =
+        airfields
+        |> List.map (fun af ->
+            if af.AirfieldId = airfield then
+                match caponiers.PlaneParkingPositions with
+                | None -> af
+                | Some positions ->
+                    let transform(pos : Vector3) =
+                        let angle =
+                            caponiers.Pos.Rotation + pos.Z
+                            |> fun x ->
+                                if x >= 360.0f then
+                                    x - 360.0f
+                                else
+                                    x
+                        let x = Vector2(pos.X, pos.Y) - positions.RefPos
+                        { Pos = caponiers.Pos.Pos + x
+                          Rotation = angle
+                          Altitude = caponiers.Pos.Altitude }
+                    if positions.Size <= 0 then
+                        { af with ParkedFighters =
+                                    af.ParkedFighters @ (
+                                        positions.Positions
+                                        |> List.map transform
+                                    )
+                        }
+                    elif positions.Size <= 2 then
+                        { af with ParkedAttackers =
+                                    af.ParkedAttackers @ (
+                                        positions.Positions
+                                        |> List.map transform
+                                    )
+                        }
+                    else
+                        { af with ParkedBombers =
+                                    af.ParkedBombers @ (
+                                        positions.Positions
+                                        |> List.map transform
+                                    )
+                        }
+            else
+                af
+        )
+
     static member AddStorage(airfields : Airfield list, airfield : AirfieldId, storage : StaticGroup) =
         airfields
         |> List.map (fun af ->
@@ -370,7 +414,7 @@ with
                 af
         )
 
-    static member inline ExtractAirfields(spawns : T.Airfield list, parkedPlanes : ^Plane list, storage : T.Block list, regions : Region list) =
+    static member inline ExtractAirfields(spawns : T.Airfield list, parkedPlanes : ^Plane list, caponiers : StaticGroup list, storage : T.Block list, regions : Region list) =
         let airfields =
             spawns
             |> List.groupBy (fun spawn -> spawn.GetName().Value)
@@ -409,6 +453,15 @@ with
                 | ParkedPlaneTypes.Bomber -> Airfield.AddParkedBomber(airfields, home.AirfieldId, { Pos = pos; Rotation = yori; Altitude = 0.0f })
                 | ParkedPlaneTypes.Other -> airfields
             ) airfields
+        let airfields =
+            caponiers
+            |> List.fold (fun airfields caponiers ->
+                let pos = caponiers.Pos.Pos
+                let home =
+                    airfields
+                    |> List.minBy (fun af -> (af.Pos - pos).LengthSquared())
+                Airfield.AddCaponiers(airfields, home.AirfieldId, caponiers)
+                ) airfields
         let airfields =
             storage
             |> List.choose (fun storage ->
@@ -479,12 +532,16 @@ with
         let planes = data.GetGroup("Parked planes").ListOfPlane
         let afStorages = data.GetGroup("Airfield storage").ListOfBlock @ data.GetGroup("Static").ListOfBlock
         let airfields =
+            let caponiers =
+                data.GetGroup("Static").ListOfBlock
+                |> List.map StaticGroup.FromBlock
+                |> List.filter (fun group -> group.PlaneParkingPositions.IsSome)
             match planes with
             | [] ->
                 let staticPlanes = data.GetGroup("Parked planes").ListOfBlock
-                Airfield.ExtractAirfields(afs, staticPlanes, afStorages, regions)
+                Airfield.ExtractAirfields(afs, staticPlanes, caponiers, afStorages, regions)
             | _ :: _->
-                Airfield.ExtractAirfields(afs, planes, afStorages, regions)
+                Airfield.ExtractAirfields(afs, planes, caponiers, afStorages, regions)
         let date =
             let options = List.head data.ListOfOptions
             let h, m, s = options.GetTime().Value

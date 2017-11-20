@@ -62,6 +62,12 @@ let bigDamage = 500.0f<E>
 let mediumDamage = 300.0f<E>
 let smallDamage = 25.0f<E>
 
+type ReferencePositions =
+    { RefPos : Vector2
+      Positions : Vector3 list // Last component is orientation, in degrees (0 .. 360)
+      Size : int // 0 -> fighter, 1, 2 -> attacker, 3 -> bomber / transport
+    }
+
 /// A group of buildings or some other static objects.
 type StaticGroup = {
     Model : string
@@ -240,6 +246,150 @@ with
         | Contains "static_" -> 2500
         | _ ->
             10000
+
+    member this.PlaneParkingPositions =
+        match this.Model with
+        | Contains "arf_caponiers_5_r_7.mgm" ->
+            { RefPos = Vector2(0.0f, 700.0f)
+              Size = 2
+              Positions =
+              [
+                Vector3(0.0f, 631.0f, 0.0f)
+                Vector3(0.0f, 700.0f, 0.0f)
+                Vector3(0.0f, 768.0f, 0.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_11_h_5.mgm" ->
+            { RefPos = Vector2(0.0f, 700.0f)
+              Size = 3
+              Positions =
+              [
+                Vector3(0.0f, 631.0f, 0.0f)
+                Vector3(0.0f, 700.0f, 0.0f)
+                Vector3(0.0f, 768.0f, 0.0f)
+                Vector3(47.0f, 575.0f, 90.0f)
+                Vector3(47.0f, 825.0f, 270.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_12_h_5.mgm" ->
+            { RefPos = Vector2(0.0f, 700.0f)
+              Size = 0
+              Positions =
+              [
+                Vector3(0.0f, 631.0f, 0.0f)
+                Vector3(0.0f, 700.0f, 0.0f)
+                Vector3(0.0f, 768.0f, 0.0f)
+                Vector3(47.0f, 575.0f, 90.0f)
+                Vector3(47.0f, 825.0f, 270.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_1_v_5.mgm" ->
+            { RefPos = Vector2(1000.0f, 700.0f)
+              Size = 1
+              Positions =
+              [
+                Vector3(948.0f, 604.0f, 0.0f)
+                Vector3(931.0f, 696.0f, 0.0f)
+                Vector3(946.0f, 781.0f, 0.0f)
+                Vector3(1067.0f, 649.0f, 180.0f)
+                Vector3(1067.0f, 747.0f, 180.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_2_v_5.mgm" ->
+            { RefPos = Vector2(1000.0f, 700.0f)
+              Size = 0
+              Positions =
+              [
+                Vector3(948.0f, 604.0f, 0.0f)
+                Vector3(931.0f, 696.0f, 0.0f)
+                Vector3(946.0f, 781.0f, 0.0f)
+                Vector3(1067.0f, 649.0f, 180.0f)
+                Vector3(1067.0f, 747.0f, 180.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_4_r_6.mgm" ->
+            { RefPos = Vector2(1000.0f, 700.0f)
+              Size = 1
+              Positions =
+              [
+                Vector3(1060.0f, 537.0f, 348.0f)
+                Vector3(1089.0f, 818.0f, 14.0f)
+                Vector3(984.0f, 713.0f, 344.0f)
+                Vector3(891.0f, 480.0f, 11.0f)
+                Vector3(844.0f, 731.0f, 2.0f)
+                Vector3(912.0f, 896.0f, 357.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_5_r_7.mgm" ->
+            { RefPos = Vector2(1000.0f, 700.0f)
+              Size = 0
+              Positions =
+              [
+                Vector3(1073.0f, 505.0f, 349.0f)
+                Vector3(1085.0f, 816.0f, 15.0f)
+                Vector3(964.0f, 578.0f, 9.0f)
+                Vector3(961.0f, 768.0f, 345.0f)
+                Vector3(887.0f, 479.0f, 10.0f)
+                Vector3(840.0f, 731.0f, 2.0f)
+                Vector3(910.0f, 896.0f, 357.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_6_h_4.mgm" ->
+            { RefPos = Vector2(1000.0f, 700.0f)
+              Size = 0
+              Positions =
+              [
+                Vector3(1046.0f, 606.0f, 90.0f)
+                Vector3(986.0f, 665.0f, 358.0f)
+                Vector3(984.0f, 732.0f, 359.0f)
+                Vector3(987.0f, 801.0f, 8.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_7_h_4.mgm" ->
+            { RefPos = Vector2(1000.0f, 700.0f)
+              Size = 1
+              Positions =
+              [
+                Vector3(1046.0f, 606.0f, 90.0f)
+                Vector3(986.0f, 665.0f, 358.0f)
+                Vector3(984.0f, 732.0f, 359.0f)
+                Vector3(987.0f, 801.0f, 8.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_8_h_4.mgm" ->
+            { RefPos = Vector2(1000.0f, 700.0f)
+              Size = 1
+              Positions =
+              [
+                Vector3(986.0f, 665.0f, 358.0f)
+                Vector3(984.0f, 732.0f, 359.0f)
+                Vector3(987.0f, 801.0f, 8.0f)
+                Vector3(1046.0f, 793.0f, 270.0f)
+              ]
+            }
+            |> Some
+        | Contains "arf_caponiers_9_h_3.mgm" ->
+            { RefPos = Vector2(1000.0f, 700.0f)
+              Size = 1
+              Positions =
+              [
+                Vector3(986.0f, 665.0f, 358.0f)
+                Vector3(984.0f, 732.0f, 359.0f)
+                Vector3(987.0f, 801.0f, 8.0f)
+              ]
+            }
+            |> Some
+        | _ ->
+            None
 
     member this.RepairCost =
         this.Production(1.0f) * 40.0f<H> + this.Storage + 0.1f<E> * float32 this.Durability
