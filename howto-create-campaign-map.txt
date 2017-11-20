@@ -85,12 +85,8 @@ Alternatively, all hangars, ammo tents and fuel tanks found under "Static" will 
 These hangars must be within 3km of the airfield's spawn points.
 
 10. Place plane parking spots
-Each airfield (not spawn) must have 9 parking spots for fighters, 9 for attack planes and 9 for bombers.
-Parking spots for fighters are marked by static bf109 blocks (any variant)
-Parking spots for attack planes are marked by static bf110 blocks (any variant)
-Parking sports for bombers are marked by static ju88 blocks.
-That applies to the Allies side as well. In other words, parking spots on allied-controlled airfields use Axis planes too.
-All these blocks must be in a group named "Parked planes"
+Planes are parked in caponiers. If needed, add a couple to an airfield that lacks them.
+There are multiple sizes, make sure there is enough of each type (small fighters, medium attackers, large bombers and transports)
 
 11. Place tank parking areas
 Use influence areas in a group named "Tank parks"
@@ -122,7 +118,7 @@ Regions of start and end must be neighbours.
 The game automatically creates mirrored paths, i.e. the paths you specify are two-ways.
 Put all these waypoints in a group named "Sea".
 
-18. Anchorage
+18. Anchorage (not used yet)
 They play a similar role to tank parks, but for armed ships (destroyers, speed boats and submarines).
 Create influence areas name "Anchorage" in a group name "Anchorage".
 Orientation of influence areas is used to orient the ships.
