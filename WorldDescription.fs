@@ -127,7 +127,7 @@ with
     member this.AddStorage(blocks : T.Block list) =
         let storage =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Storage > 0.0f<E>)
+            |> List.filter (fun block -> block.Storage > 0.0f<E> && not block.IsAirfieldStorage)
         { this with Storage = this.Storage @ storage
         }
 
