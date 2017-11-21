@@ -363,7 +363,7 @@ with
     static member AddCaponiers(airfields : Airfield list, airfield : AirfieldId, caponiers : StaticGroup) =
         airfields
         |> List.map (fun af ->
-            if af.AirfieldId = airfield then
+            if af.AirfieldId = airfield && (caponiers.Pos.Pos - af.Pos).Length() < 3000.0f then
                 match caponiers.PlaneParkingPositions with
                 | None -> af
                 | Some positions ->
@@ -375,7 +375,7 @@ with
                                     x - 360.0f
                                 else
                                     x
-                        let x = Vector2(pos.X, pos.Y) - positions.RefPos
+                        let x = (Vector2(pos.X, pos.Y) - positions.RefPos).Rotate(caponiers.Pos.Rotation)
                         { Pos = caponiers.Pos.Pos + x
                           Rotation = angle
                           Altitude = caponiers.Pos.Altitude }

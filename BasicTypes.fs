@@ -251,7 +251,7 @@ with
 
     member this.PlaneParkingPositions =
         match this.Model with
-        | Contains "arf_caponiers_5_r_7.mgm" ->
+        | Contains "arf_caponiers_10_h_3.mgm" ->
             { RefPos = Vector2(0.0f, 700.0f)
               Size = 2
               Positions =
@@ -380,13 +380,13 @@ with
             }
             |> Some
         | Contains "arf_caponiers_9_h_3.mgm" ->
-            { RefPos = Vector2(1000.0f, 700.0f)
+            { RefPos = Vector2(300.0f, 1000.0f)
               Size = 1
               Positions =
               [
-                Vector3(986.0f, 665.0f, 358.0f)
-                Vector3(984.0f, 732.0f, 359.0f)
-                Vector3(987.0f, 801.0f, 8.0f)
+                Vector3(309.0f, 931.0f, 358.0f)
+                Vector3(309.0f, 1000.0f, 359.0f)
+                Vector3(310.0f, 1067.0f, 8.0f)
               ]
             }
             |> Some
