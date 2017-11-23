@@ -405,7 +405,7 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                                 TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
                                 |> Choice2Of4
                             | ByShip ->
-                                ShipConvoy.Create(store, lcStore, pathVertices |> List.map (fun x -> x.Pos, x.Ori), country, convoyName)
+                                ShipConvoy.Create(store, lcStore, pathVertices, country, convoyName)
                                 |> Choice3Of4
                             | ByAir _ -> failwith "Cannot handle air cargo"
                         let links =
@@ -556,7 +556,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                             |> List.rev
                             |> takeUntilTargetDuration (targetTravelTime, None)
                             |> List.rev
-                        let ships = ShipConvoy.Create(store, lcStore, pathVertices |> List.map (fun x -> x.Pos, x.Ori), coalition.ToCountry, columnName)
+                        let ships = ShipConvoy.Create(store, lcStore, pathVertices, coalition.ToCountry, columnName)
                         ships.MakeAsLandShips()
                         Mcu.addTargetLink prevStart.Value ships.Start.Index
                         yield ships.All
