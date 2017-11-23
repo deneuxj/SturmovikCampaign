@@ -1,0 +1,244 @@
+# Mission File Version = 1.0;
+
+Options
+{
+  LCName = 0;
+  LCDesc = 1;
+  LCAuthor = 2;
+  PlayerConfig = "";
+  Time = 12:30:0;
+  Date = 19.11.1942;
+  HMap = "graphics\LANDSCAPE_Stalin_w\height.hini";
+  Textures = "graphics\LANDSCAPE_Stalin_w\textures.tini";
+  Forests = "graphics\LANDSCAPE_Stalin_w\trees\woods.wds";
+  Layers = "";
+  GuiMap = "stalingrad-1942";
+  SeasonPrefix = "wi";
+  MissionType = 0;
+  AqmId = 0;
+  CloudLevel = 500;
+  CloudHeight = 200;
+  PrecLevel = 0;
+  PrecType = 0;
+  CloudConfig = "winter\00_clear_00\sky.ini";
+  SeaState = 0;
+  Turbulence = 0;
+  TempPressLevel = 0;
+  Temperature = -15;
+  Pressure = 760;
+  WindLayers
+  {
+    0 :     0 :     0;
+    500 :     0 :     0;
+    1000 :     0 :     0;
+    2000 :     0 :     0;
+    5000 :     0 :     0;
+  }
+  Countries
+  {
+    0 : 0;
+    101 : 1;
+    201 : 2;
+  }
+}
+
+MCU_TR_InfluenceArea
+{
+  Index = 2;
+  Name = "Pitomnik";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 134655.572;
+  YPos = 141.336;
+  ZPos = 231460.649;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    133656, 230461;
+    135656, 231461;
+    133656, 232461;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 3;
+  Name = "Stalingrad";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 132618.593;
+  YPos = 141.336;
+  ZPos = 253630.556;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    131619, 252631;
+    133619, 253631;
+    131619, 254631;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 4;
+  Name = "Beketovka";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 116606.994;
+  YPos = 141.336;
+  ZPos = 247851.221;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    115607, 246852;
+    117607, 247852;
+    115607, 248852;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 5;
+  Name = "Samofalovka";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 158005.765;
+  YPos = 141.336;
+  ZPos = 232557.926;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    157006, 231558;
+    159006, 232558;
+    157006, 233558;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 6;
+  Name = "Peskovatka";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 154075.315;
+  YPos = 141.336;
+  ZPos = 202069.569;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    153076, 201070;
+    155076, 202070;
+    153076, 203070;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 7;
+  Name = "Karpovka";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 131026.945;
+  YPos = 141.336;
+  ZPos = 214550.466;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    130027, 213551;
+    132027, 214551;
+    130027, 215551;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 8;
+  Name = "Surovikino";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 122311.849;
+  YPos = 141.336;
+  ZPos = 131290.123;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    121312, 130291;
+    123312, 131291;
+    121312, 132291;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 9;
+  Name = "Tsybenko";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 118203.185;
+  YPos = 141.336;
+  ZPos = 227770.320;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    117204, 226771;
+    119204, 227771;
+    117204, 228771;
+  }
+}
+
+
+# end of file
