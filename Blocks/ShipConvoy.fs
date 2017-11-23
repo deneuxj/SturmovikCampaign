@@ -9,6 +9,7 @@ open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.IconDisplay
 open SturmovikMission.Blocks.EventReporting
+open SturmovikMission.Blocks.VirtualConvoy.Factory
 
 /// A ship convoy with escort
 type ShipConvoy = {
@@ -30,7 +31,7 @@ with
     /// <param name="path">Waypoints the convoy will sail along</param>
     /// <param name="country">Country owning the ships</param>
     /// <param name="eventName">Base event name for convoy start, arrival and destruction.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, path : (Vector2 * float32) list, country : Mcu.CountryValue, eventName) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, country : Mcu.CountryValue, eventName) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("ShipConvoy").CreateMcuList()
@@ -61,44 +62,49 @@ with
         for ship in [ ship1; ship2 ] do
             ship.Country <- country
         // Position of all nodes
-        let refPoint = Vector2(float32 wp1.Pos.X, float32 wp1.Pos.Z)
-        let dv, rot =
+        let v1 =
             match path with
-            | (pos, dir) :: _ ->
-                pos - refPoint, dir
-            | _ ->
-                invalidArg "path" "Must have at least two items"
+            | v1 :: _ -> v1
+            | [] -> invalidArg "path" "Must not be empty"
+        let refPoint = Vector2(float32 wp1.Pos.X, float32 wp1.Pos.Z)
+        let dv, rot =v1 .Pos - refPoint, v1.Ori
         for mcu in group do
             ((Vector2.FromMcu(mcu.Pos) - refPoint).Rotate(rot) + dv + refPoint).AssignTo(mcu.Pos)
             mcu.Ori.Y <- mcu.Ori.Y + float rot
         // waypoints
-        let mkWp(pos, dir) =
+        let mkWp(v : PathVertex) =
             let subst = Mcu.substId <| store.GetIdMapper()
-            let wp = newWaypoint 1 pos dir wp1.Radius wp1.Speed wp1.Priority
+            let wp = newWaypoint 1 v.Pos v.Ori v.Radius v.Speed v.Priority
             subst wp
             Mcu.addObjectLink wp escort1.LinkTrId
             Mcu.addObjectLink wp ship1.LinkTrId
             wp
         let rec work xs =
             match xs with
-            | [pos : Vector2, dir : float32] ->
-                pos.AssignTo destWp.Pos
-                destWp.Ori.Y <- float dir
+            | [v : PathVertex] ->
+                v.Pos.AssignTo destWp.Pos
+                destWp.Ori.Y <- float v.Ori
+                destWp.Speed <- v.Speed
+                destWp.Priority <- v.Priority
+                destWp.Radius <- v.Radius
                 []
             | [] ->
                 invalidArg "path" "Must have at least two items"
-            | (pos, dir) :: rest ->
+            | v :: rest ->
                 let tail = work rest
-                let wp = mkWp(pos, dir)
+                let wp = mkWp v
                 match tail with
                 | (x : Mcu.McuWaypoint) :: _ -> Mcu.addTargetLink wp x.Index
                 | [] -> Mcu.addTargetLink wp destWp.Index
                 wp :: tail
         let midWps =
             match path with
-            | (pos, dir) :: rest ->
-                pos.AssignTo wp1.Pos
-                wp1.Ori.Y <- float dir
+            | v :: rest ->
+                v.Pos.AssignTo wp1.Pos
+                wp1.Ori.Y <- float v.Ori
+                wp1.Speed <- v.Speed
+                wp1.Priority <- v.Priority
+                wp1.Radius <- v.Radius
                 work rest
             | [] ->
                 invalidArg "path" "Must have at least two items"
