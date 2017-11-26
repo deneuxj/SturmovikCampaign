@@ -26,7 +26,7 @@ type Configuration = {
     ScriptPath : string
     Briefing : string
     ThinkTime : int
-    ProductionFactor : float32
+    DesiredProduction : float32
     MaxTankNeeds : float32
     PlaneProduction : float32
     WebHook : string
@@ -54,7 +54,7 @@ with
             ServerSdsFile = @"nul"
             ScriptPath = @"nul"
             ThinkTime = 30
-            ProductionFactor = 3.0f
+            DesiredProduction = 6000.0f
             MaxTankNeeds = 30.0f
             PlaneProduction = 1000.0f
             WebHook = ""
@@ -110,7 +110,7 @@ let loadConfigFile (path : string) =
         ServerSdsFile = values.ServerSdsFile
         ScriptPath = values.InstallPath
         ThinkTime = values.ThinkTime
-        ProductionFactor = float32 values.ProductionFactor
+        DesiredProduction = float32 values.DesiredProduction
         MaxTankNeeds = float32 values.MaxTankNeeds
         PlaneProduction = float32 values.PlaneProduction
         Briefing = values.Briefing

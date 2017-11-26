@@ -39,8 +39,8 @@
     InstallPath: C:\Campaign\Bin
     # Max think time for column movement planning
     ThinkTime: 60
-    # Affects factory output. Values under 3.0 tend to lead to depletion of planes and tanks
-    ProductionFactor: 3.0
+    # Total production of all factories. Used to compute production factor to adjust production per factory building on the map.
+    DesiredProduction: 6000.0
     # Affects production. Keep this low or the AI might stop producing planes
     MaxTankNeeds: 30.0
     # Amount of production (resource units per hour) for planes. 500.0f gives one i16 or bf109e7 per hour.

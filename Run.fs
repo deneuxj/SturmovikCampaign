@@ -36,7 +36,12 @@ module Init =
                 System.Random()
 
         let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), config.MaxTankNeeds * GroundAttackVehicle.MediumTankCost, 1.0f<E/H> * config.PlaneProduction)
-        let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5); ProductionFactor = config.ProductionFactor }
+        let totalProduction =
+            world0.Regions
+            |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(1.0f)))
+        let desiredProduction = config.DesiredProduction * 1.0f<E/H>
+        let factor = desiredProduction / totalProduction
+        let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5); ProductionFactor = factor }
 
         let capacity =
             world.Regions
@@ -45,7 +50,7 @@ module Init =
 
         let production =
             world.Regions
-            |> Seq.map (fun region -> region.RegionId, region.Production |> Seq.sumBy (fun prod -> prod.Production(config.ProductionFactor)))
+            |> Seq.map (fun region -> region.RegionId, region.Production |> Seq.sumBy (fun prod -> prod.Production(world.ProductionFactor)))
             |> Seq.map (fun (region, production) -> region, production)
             |> Map.ofSeq
 
