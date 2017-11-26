@@ -363,7 +363,7 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                                         | (wp : PathVertex) :: rest ->
                                             match prev with
                                             | Some (prev : Vector2)->
-                                                let dist = (prev - wp.Pos).Length()
+                                                let dist = (prev - wp.Pos).Length() / 1000.0f
                                                 let t = dist / convoySpeed
                                                 wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
                                             | None ->
@@ -547,7 +547,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                                     | (wp : PathVertex) :: rest ->
                                         match prev with
                                         | Some (prev : Vector2)->
-                                            let dist = (prev - wp.Pos).Length()
+                                            let dist = (prev - wp.Pos).Length() / 1000.0f
                                             let t = dist / convoySpeed
                                             wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
                                         | None ->
