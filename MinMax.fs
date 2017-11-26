@@ -107,16 +107,43 @@ with
                 |> dict
             fun i -> m.[i]
         let getSuccessors =
+            // by sea and road
             let m =
                 world.Regions
                 |> List.map (fun region ->
                     region.Neighbours
-                    |> List.filter (fun ngh -> world.Roads @ world.Rails @ world.SeaWays|> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
+                    |> List.filter (fun ngh -> world.Roads @ world.SeaWays |> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
                     |> List.map indexOfRegion
                     |> Array.ofList)
                 |> List.indexed
                 |> dict
-            fun i -> m.[i]
+            // by train
+            let mt =
+                world.Regions
+                |> List.map (fun region ->
+                    region.Neighbours
+                    |> List.filter (fun ngh -> world.Roads @ world.SeaWays |> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
+                    |> List.map indexOfRegion
+                    |> Array.ofList)
+                |> List.indexed
+                |> dict
+            let byAll =
+                seq {
+                    for i, _ in Seq.indexed world.Regions do
+                        let vs =
+                            [m.[i]; mt.[i]]
+                            |> Array.concat
+                            |> Array.sort
+                            |> Array.distinct
+                        yield i, vs
+                }
+                |> dict
+            fun (allowTrains, i) ->
+                if allowTrains then
+                    byAll.[i]
+                else
+                    m.[i]
+
         let valueOfRegion =
             let roots =
                 [
@@ -140,6 +167,8 @@ with
                     else
                         None
             let values =
+                let getSuccessors =
+                    fun i -> getSuccessors(true, i)
                 Algo.propagate (getSuccessors >> List.ofArray) update roots
             for kvp in values do
                 printfn "%2d %5.2f" kvp.Key kvp.Value
@@ -293,7 +322,7 @@ with
         }
         |> String.concat "\n"
 
-let allMoves (neighboursOf : int -> int[]) (state : BoardState) (coalition : CoalitionId) =
+let allMoves (neighboursOf : bool * int -> int[]) (state : BoardState) (coalition : CoalitionId) =
     let someCoalition = Some coalition
     let moves i aggressive =
         seq {
@@ -304,7 +333,7 @@ let allMoves (neighboursOf : int -> int[]) (state : BoardState) (coalition : Coa
                     match coalition with
                     | Axis -> state.AxisForces.[i]
                     | Allies -> state.AlliesForces.[i]
-                for j in neighboursOf i do
+                for j in neighboursOf(not aggressive, i) do
                     if aggressive && state.Owners.[j] <> someCoalition || not aggressive && state.Owners.[j] = someCoalition then
                         yield { Start = i; Destination = j; Force = force; AllowTrains = not aggressive }
                         if force > 10.0f * MediumTank.Cost then
