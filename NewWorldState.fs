@@ -279,7 +279,8 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                             else
                                 // Lead car, does not transport anything
                                 0.0f<E>
-                        | ByShip ->
+                        | ByRiverShip
+                        | BySeaShip ->
                             if vehicle.Rank > 0 && vehicle.Rank < 3 then
                                 ResupplyOrder.ShipCapacity
                             else
@@ -790,7 +791,8 @@ let computeCompletedColumnMovements (movements : ColumnMovement list) (departure
                                 match move.TransportType with
                                 | ColByRoad -> i, 0.25f
                                 | ColByTrain -> 0, 1.0f
-                                | ColByShip ->
+                                | ColByRiverShip
+                                | ColBySeaShip ->
                                     if i <= move.Composition.Length / 2 then
                                         0, 1.0f
                                     else

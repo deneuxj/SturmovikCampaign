@@ -219,8 +219,12 @@ let createRailConvoyOrders coalition =
     >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
 let createShipConvoyOrders coalition =
-    createConvoyOrders (0.0f<E>) (2.0f * ResupplyOrder.ShipCapacity) (fun world -> world.SeaWays |> List.map (fun x -> x, ())) coalition
-    >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByShip; Convoy = convoy })
+    createConvoyOrders
+        (0.0f<E>)
+        (2.0f * ResupplyOrder.ShipCapacity)
+        (fun world -> (world.SeaWays |> List.map (fun x -> x, BySeaShip)) @ (world.RiverWays |> List.map (fun x -> x, ByRiverShip)))
+        coalition
+    >> List.mapi (fun i (convoy, means) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = means; Convoy = convoy })
 
 let createAirConvoyOrders coalition =
     let exactCapacity = (PlaneModel.Ju52.CargoCapacity * bombCost)
@@ -323,7 +327,9 @@ let tryGetPathKind allowTrains (world : World) (start, destination) =
     elif hasPath world.Roads then
         Some ColByRoad
     elif hasPath world.SeaWays then
-        Some ColByShip
+        Some ColBySeaShip
+    elif hasPath world.RiverWays then
+        Some ColByRiverShip
     else
         None
 

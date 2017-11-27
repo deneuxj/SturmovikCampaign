@@ -320,13 +320,14 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                     | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
                     | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                 match order.Means with
-                | ByRoad | ByRail | ByShip ->
+                | ByRoad | ByRail | BySeaShip | ByRiverShip ->
                     let path =
                         let paths =
                             match order.Means with
                             | ByRail -> world.Rails
                             | ByRoad -> world.Roads
-                            | ByShip -> world.SeaWays
+                            | BySeaShip -> world.SeaWays
+                            | ByRiverShip -> world.RiverWays
                             | ByAir _ -> failwith "Cannot handle air cargo"
                         paths
                         |> List.tryPick(fun road -> road.MatchesEndpoints(convoy.Start, convoy.Destination))
@@ -348,12 +349,14 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                             match order.Means with
                             | ByRoad -> 50.0f
                             | ByRail -> 70.0f
-                            | ByShip -> 8.0f
+                            | ByRiverShip -> 5.0f
+                            | BySeaShip -> 8.0f
                             | ByAir _ -> 300.0f
                         let targetTravelTime = 1.0f // hours
                         let pathVertices =
                             match order.Means with
-                            | ByShip ->
+                            | ByRiverShip
+                            | BySeaShip ->
                                 let rec takeUntilTargetDuration (time, prev) waypoints  =
                                     if time < 0.0f then
                                         []
@@ -404,8 +407,14 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                                 let endV = pathVertices |> List.last
                                 TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
                                 |> Choice2Of4
-                            | ByShip ->
-                                ShipConvoy.Create(store, lcStore, pathVertices, country, convoyName)
+                            | BySeaShip
+                            | ByRiverShip ->
+                                let waterType =
+                                    match order.Means with
+                                    | BySeaShip -> Sea
+                                    | ByRiverShip -> River
+                                    | _ -> failwith "Unexpected ship transport means"
+                                ShipConvoy.Create(store, lcStore, waterType, pathVertices, country, convoyName)
                                 |> Choice3Of4
                             | ByAir _ -> failwith "Cannot handle air cargo"
                         let links =
@@ -458,7 +467,8 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                     match order.TransportType with
                     | ColByRoad -> world.Roads
                     | ColByTrain -> world.Rails
-                    | ColByShip -> world.SeaWays
+                    | ColBySeaShip -> world.SeaWays
+                    | ColByRiverShip -> world.RiverWays
                     |> Seq.tryPick (fun path -> path.MatchesEndpoints(order.Start, order.Destination))
                     |> Option.map (fun x -> x.Value)
                 match path with
@@ -467,7 +477,8 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         match order.TransportType with
                         | ColByRoad -> 20
                         | ColByTrain -> 50
-                        | ColByShip -> 10
+                        | ColByRiverShip -> 5
+                        | ColBySeaShip -> 8
                     let toVertex(v, yori, side) =
                         { Pos = v
                           Ori = yori
@@ -533,8 +544,13 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         let train = TrainWithNotification.Create(store, lcStore, travel.Head.Pos, travel.Head.Ori, (Seq.last travel).Pos, coalition.ToCountry, columnName)
                         Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
                         yield upcast train
-                    | ColByShip ->
-                        let convoySpeed = 8.0f // km/h
+                    | ColByRiverShip
+                    | ColBySeaShip ->
+                        let convoySpeed =
+                            match order.TransportType with
+                            | ColBySeaShip -> 8.0f // km/h
+                            | ColByRiverShip -> 5.0f
+                            | _ -> failwith "Unexpected column transport type"
                         let targetTravelTime = 1.0f // hours
                         // select last segment of path, we want the landing party to get as close as possible to the shore
                         let pathVertices =
@@ -556,8 +572,13 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                             |> List.rev
                             |> takeUntilTargetDuration (targetTravelTime, None)
                             |> List.rev
-                        let ships = ShipConvoy.Create(store, lcStore, pathVertices, coalition.ToCountry, columnName)
-                        ships.MakeAsLandShips()
+                        let waterType =
+                            match order.TransportType with
+                            | ColBySeaShip -> Sea
+                            | ColByRiverShip -> River
+                            | _ -> failwith "Unexpected column transport type"
+                        let ships = ShipConvoy.Create(store, lcStore, waterType, pathVertices, coalition.ToCountry, columnName)
+                        ships.MakeAsLandShips(waterType)
                         Mcu.addTargetLink prevStart.Value ships.Start.Index
                         yield ships.All
                 | None -> ()

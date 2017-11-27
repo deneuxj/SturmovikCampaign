@@ -20,7 +20,8 @@ type ResupplyMeans =
     | ByRoad
     | ByRail
     | ByAir of AirfieldId * AirfieldId
-    | ByShip
+    | BySeaShip
+    | ByRiverShip
 
 type OrderId = {
     Index : int
@@ -60,7 +61,8 @@ with
             | ByRoad -> "R"
             | ByRail -> "T"
             | ByAir _ -> "A"
-            | ByShip -> "S"
+            | BySeaShip
+            | ByRiverShip -> "S"
         sprintf "CNV-%s-%d-%d" meansLetter (int this.OrderId.Coalition.ToCoalition) this.OrderId.Index
 
     member this.MatchesMissionLogArrivalEventName(name : string) =
@@ -77,7 +79,8 @@ with
 
 type ColumnTransportType =
     | ColByRoad
-    | ColByShip
+    | ColBySeaShip
+    | ColByRiverShip
     | ColByTrain
 
 /// A column of armored vehicles in movement.

@@ -112,7 +112,7 @@ with
                 world.Regions
                 |> List.map (fun region ->
                     region.Neighbours
-                    |> List.filter (fun ngh -> world.Roads @ world.SeaWays |> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
+                    |> List.filter (fun ngh -> world.Roads @ world.SeaWays @ world.RiverWays |> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
                     |> List.map indexOfRegion
                     |> Array.ofList)
                 |> List.indexed

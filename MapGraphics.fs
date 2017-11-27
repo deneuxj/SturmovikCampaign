@@ -421,7 +421,8 @@ with
                         | Orders.ByRail ->
                             let iconId = Mcu.IconIdValue.CoverTrains
                             yield! mkRailTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
-                        | Orders.ByShip ->
+                        | Orders.ByRiverShip
+                        | Orders.BySeaShip ->
                             let iconId = Mcu.IconIdValue.CoverShips
                             yield! mkSeaTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
                         | Orders.ByAir(start, destination) ->
@@ -436,7 +437,8 @@ with
                             yield! mkRoadTravelArrow(order.Start, order.Destination, color, order.Composition.Length)
                         | Orders.ColByTrain ->
                             yield! mkRailTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.TrainCapacity)
-                        | Orders.ColByShip ->
+                        | Orders.ColByRiverShip
+                        | Orders.ColBySeaShip ->
                             yield! mkSeaTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.ShipCapacity)
                     }
                 for order in friendlyOrders.Resupply do
