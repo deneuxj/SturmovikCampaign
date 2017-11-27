@@ -18,14 +18,13 @@ Set region owners. Each coalition must own at least one region with factories.
 In the initial world state, regions which have "***" in their Description are fully supplied. Those are the "strong bases".
 Other regions are supplied depending on their distance to the nearest strong base.
 
-3. Define roads, railways and seaways
+3. Define roads and railways
 Each road path must start with a waypoint named "StartR" or "StartL" and finish with another one named "EndR" or "EndL".
 Each rail path must start with a waypoint named "Start" and finish with another one named "End".
-Each seaway path must start with a waypoint named "Start" and finish with another one named "End".
 Each path is bidirectional, so you don't need (and must not) define another identical path going in the opposite direction.
 The speed, altitude and radius of waypoints do not matter.
 The direction matters, and should be a tangent of the road/railway at the location of the waypoint.
-Roads must be put in a group called "Roads", railways must be in "Trains", seways must be in "Sea".
+Roads must be put in a group called "Roads", railways must be in "Trains".
 Each bridge should be preceded by a waypoint named "BeforeBridge" and followed by a waypoint named "AfterBridge" (Not implemented yet, so you need not bother for now).
 Make sure you place the waypoints on the actual location of the road. You need to use the terrain view in the editor, as the GUI map is often misaligned.
 Consecutive waypoints should be separated by at most 20km (direct line).
@@ -34,19 +33,25 @@ If the waypoint name ends with "R", the column will spawn in a line to the right
 Similarly if it ends with "L", but on the left side instead.
 Picking the side where the convoy spawns is important if one side is occupied by a lake or by static objects.
 
+4. Water paths
+Create waypoints with end points named Start and End. They should be between 20 and 30km long. Start point must be in start region, End point in destination.
+Regions of start and end must be neighbours.
+The game automatically creates mirrored paths, i.e. the paths you specify are two-ways.
+Put all these waypoints in groups named "Sea" and "River".
+
 Note about spacing of waypoints in seaway paths: Try to keep at most 10km between two consecutive waypoints.
 Keep the waypoints within the influence areas of regions.
 The reason for that is that the mission generator will pick a sub-sequence of the path that is short enough that a cargo convoy does not take more than one hour.
 Excessively long supply convoys would delay other convoys planned later in the mission.
 Seaway paths are also used for military ships, and those are typically faster. They need longer paths so that their missions last one hour.
 
-4. Place factories
+5. Place factories
 Place static blocks in a group named "Factories" or "Static".
 Suitable static blocks start with: "industrial_", "vl_pvrz01", "vl_rounddepot" (complete list is actually bigger than that).
 Tip: On the Kuban and Moscow maps, all you need to do is import the template for that map into a group named "Static".
 Factory buildings will be recognized automatically.
 
-5. Place supply storage
+6. Place supply storage
 Place static blocks with entities in a group named "Storage".
 Suitable static blocks are: "arf_barak" (100), "arf_dugouts_2" (400), "arf_dugouts_3" (600).
 Number between parentheses above are the storage capacity of each static block.
@@ -54,7 +59,7 @@ Storage is used for anti-tank (AT) and anti-air (AAA) defenses. Each gun consume
 (Note: the storage groups I used in Velikie-Luki provide 3200 storage units, enough for 64 guns)
 Storage near airfields is used for bombs, each storage unit represents 10Kg of bombs.
 
-6. Define AAA defense zones
+7. Define AAA defense zones
 Use influence areas named "AAA-nn" or "AA-nn" in a group named "Defenses", with "nn" replace by a number indicating the maximum number of guns in that area.
 If the zone is named "AAA-nn", it will be composed of flak and fast firing artillery (20mm).
 If the zone is named "AA-nn", it will be composed of flak and anti-air machine guns. The Germans get more machine guns than the Russians due to the difference in fire power of their respective machine guns.
@@ -65,58 +70,52 @@ Avoid trees and buildings in the area.
 Make sure there is enough storage in the region for all the AAA canons in the defense areas.
 Additional storage facilitates transferring supplies, it's a good idea to leave some extra storage capacity unused for defenses.
 
-7. Define battle areas
+8. Define battle areas
 Use influence areas in a group named "Battles". Each influence area should be shaped as a rectangle that is about 5km long.
 The marker of each area should be roughly in its center.
 There should be an influence area for each direction from which a region can be attacked, facing the direction from which attackers will come.
 In other words, there should be an area for each neighbouring region connected with a road, facing that region.
 Strictly speaking, only one battle area is really needed, but having multiple properly oriented lets the mission generator create more believable battles.
 
-8. Define airfield spawn points
+9. Define airfield spawn points
 Use fakefields for planes. Both types (sideways and runway) can be used. They must be in a group named "Aifield spawns"
 Do not create the entity.
 Do create the chart. It's needed for picking spawn points according to wind, and also for AIs that are landing.
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 These alternative waypoints should all have the same name (typically the name of the airfield).
 
-9. Define airfield storage
+10. Define airfield storage
 Create hangars in a group called "Airfield storage".
 Alternatively, all hangars, ammo tents and fuel tanks found under "Static" will be considered.
 These hangars must be within 3km of the airfield's spawn points.
 
-10. Place plane parking spots
+11. Place plane parking spots
 Planes are parked in caponiers. If needed, add a couple to an airfield that lacks them.
 There are multiple sizes, make sure there is enough of each type (small fighters, medium attackers, large bombers and transports)
 
-11. Place tank parking areas
+12. Place tank parking areas
 Use influence areas in a group named "Tank parks"
 Make sure there's plenty of room for up to 100 tanks
 Each region must have exactly one
 
-12. Windsocks
+13. Windsocks
 Create windsocks with entities in a group named "Windsocks"
 
-13. Non-directional beacons
+14. Non-directional beacons
 Create non-directional beacons (ndb under "vehicles") with entities in a group named "NDBs".
 Set beacon channel to 1 in the advanced properties.
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
-14. Land fires
+15. Land fires
 Create land fire effects with entities named "LandFire" in a group named "Land fires"
 
-15. Land lights
+16. Land lights
 Create land lights with entities named "LandLight" in a group named "Land lights".
 Create a pair for each spawn so that planes will take off and land with the lights in their back.
 
-16. Bridges and other buildings
+17. Bridges and other buildings
 Bridges and other blocks, buildings... need not be in groups, although they can.
 You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.
-
-17. Sea paths
-Create waypoints with end points named Start and End. They should be between 20 and 30km long. Start point must be in start region, End point in destination.
-Regions of start and end must be neighbours.
-The game automatically creates mirrored paths, i.e. the paths you specify are two-ways.
-Put all these waypoints in a group named "Sea".
 
 18. Anchorage (not used yet)
 They play a similar role to tank parks, but for armed ships (destroyers, speed boats and submarines).
