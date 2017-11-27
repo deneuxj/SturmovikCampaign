@@ -387,8 +387,8 @@ with
                 renderArrow(start, tip, width, 45.0f, color)
             | None ->
                 []
-        let mkSeaTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
-            match world.SeaWays |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
+        let mkWaterTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
+            match world.SeaWays @ world.RiverWays |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
                 let start, _, _ = x.Value.Head
                 let tip, _, _ = List.last x.Value
@@ -424,7 +424,7 @@ with
                         | Orders.ByRiverShip
                         | Orders.BySeaShip ->
                             let iconId = Mcu.IconIdValue.CoverShips
-                            yield! mkSeaTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
+                            yield! mkWaterTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
                         | Orders.ByAir(start, destination) ->
                             let iconId = Mcu.IconIdValue.CoverBombersFlight
                             yield! mkAirTravelArrow(start, destination, color, order.Convoy.TransportedSupplies)
@@ -439,7 +439,7 @@ with
                             yield! mkRailTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.TrainCapacity)
                         | Orders.ColByRiverShip
                         | Orders.ColBySeaShip ->
-                            yield! mkSeaTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.ShipCapacity)
+                            yield! mkWaterTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.ShipCapacity)
                     }
                 for order in friendlyOrders.Resupply do
                     yield! handleResupplyOrder (0, 0, 10) order
