@@ -369,37 +369,24 @@ with
                 | Some positions ->
                     let transform(pos : Vector3) =
                         let angle =
-                            caponiers.Pos.Rotation + pos.Z
-                            |> fun x ->
-                                if x >= 360.0f then
-                                    x - 360.0f
-                                else
-                                    x
+                            (caponiers.Pos.Rotation + pos.Z) % 360.0f
                         let x = (Vector2(pos.X, pos.Y) - positions.RefPos).Rotate(caponiers.Pos.Rotation)
                         { Pos = caponiers.Pos.Pos + x
                           Rotation = angle
                           Altitude = caponiers.Pos.Altitude }
-                    if positions.Size <= 0 then
-                        { af with ParkedFighters =
-                                    af.ParkedFighters @ (
-                                        positions.Positions
-                                        |> List.map transform
-                                    )
-                        }
-                    elif positions.Size <= 2 then
-                        { af with ParkedAttackers =
-                                    af.ParkedAttackers @ (
-                                        positions.Positions
-                                        |> List.map transform
-                                    )
-                        }
-                    else
-                        { af with ParkedBombers =
-                                    af.ParkedBombers @ (
-                                        positions.Positions
-                                        |> List.map transform
-                                    )
-                        }
+                    let fighters, attackers, bombers =
+                        positions.Positions
+                        |> List.fold (fun (fighters, attackers, bombers) (pos, sz) ->
+                            match sz with
+                            | SizeFighter -> transform pos :: fighters, attackers, bombers
+                            | SizeAttacker -> fighters, transform pos :: attackers, bombers
+                            | SizeBomber -> fighters, attackers, transform pos :: bombers
+                        ) (af.ParkedFighters, af.ParkedAttackers, af.ParkedBombers)
+                    { af with
+                        ParkedFighters = fighters
+                        ParkedAttackers = attackers
+                        ParkedBombers = bombers
+                    }
             else
                 af
         )
