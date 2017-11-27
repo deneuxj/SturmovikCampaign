@@ -423,6 +423,12 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.RussianTransport =
+        let fighter = planes.[T.Vehicles.transportRUS]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
     member this.GermanTransport =
         let fighter = planes.[T.Vehicles.transportGER]
         { Script = fighter.GetScript().Value

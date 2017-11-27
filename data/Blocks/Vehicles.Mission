@@ -3298,4 +3298,42 @@ Ship
 }
 
 
+
+Plane
+{
+  Name = "transportRUS";
+  Index = 110;
+  LinkTrId = 0;
+  XPos = 29068.170;
+  YPos = 108.584;
+  ZPos = 20253.804;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Planes\pe2s35.txt";
+  Model = "graphics\planes\pe2s35\pe2s35.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 11;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
 # end of file

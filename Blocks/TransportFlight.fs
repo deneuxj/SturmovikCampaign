@@ -42,12 +42,13 @@ with
         cmdLand.Ori.Y <- float landingDir
         // Countries
         plane1.Country <- country
-        // Icons
-        let coalition =
+        let model =
             match country with
-            | Mcu.CountryValue.Germany -> Mcu.CoalitionValue.Axis
-            | Mcu.CountryValue.Russia -> Mcu.CoalitionValue.Allies
+            | Mcu.CountryValue.Germany -> vehicles.GermanTransport
+            | Mcu.CountryValue.Russia -> vehicles.RussianTransport
             | _ -> failwith "Unsupported country value"
+        // Icons
+        let coalition = McuUtil.coalitionOf country
         let iconAttack, iconCover = IconDisplay.CreatePair(store, lcStore, 0.5f * (takeOffPos + destinationPos), "Transport", coalition, Mcu.IconIdValue.CoverBombersFlight)
         // Events
         let startEventName = sprintf "%s-D-0" eventName
