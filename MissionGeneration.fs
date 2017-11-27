@@ -850,8 +850,8 @@ let createParaTrooperDrops (world : World) store lcStore (battlefields : (Defens
     battlefields
     |> Seq.map (fun (bf, defending) ->
         let bf = wg.GetAntiTankDefenses(bf)
-        [ ParaDrop.Create(store, lcStore, bf.DefensePos, defending.ToCountry, "D-" + string bf.Home)
-          ParaDrop.Create(store, lcStore, bf.AttackPos, defending.Other.ToCountry, "A-" + string bf.Home) ])
+        [ ParaDrop.Create(store, lcStore, bf.DefensePos, bf.Position.Rotation, defending.ToCountry, "D-" + string bf.Home)
+          ParaDrop.Create(store, lcStore, bf.AttackPos, bf.Position.Rotation + 180.0f, defending.Other.ToCountry, "A-" + string bf.Home) ])
     |> List.concat
 
 let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Options) =
