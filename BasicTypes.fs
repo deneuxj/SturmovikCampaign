@@ -429,6 +429,38 @@ with
               ]
             }
             |> Some
+        | Contains "arf_nets_1_4.mgm" ->
+            { RefPos = Vector2(1000.0f, 1000.0f)
+              Positions =
+              [
+                Vector3(1004.0f, 928.0f, 10.0f), SizeFighter
+                Vector3(1003.0f, 969.0f, 7.0f), SizeFighter
+                Vector3(1002.0f, 1038.0f, 10.0f), SizeFighter
+                Vector3(1002.0f, 1067.0f, 359.0f), SizeFighter
+              ]
+            }
+            |> Some
+        | Contains "arf_nets_2_5.mgm" ->
+            { RefPos = Vector2(1000.0f, 1000.0f)
+              Positions =
+              [
+                Vector3(1010.0f, 927.0f, 10.0f), SizeFighter
+                Vector3(1000.0f, 967.0f, 7.0f), SizeFighter
+                Vector3(1002.0f, 1001.0f, 350.0f), SizeFighter
+                Vector3(1005.0f, 1045.0f, 12.0f), SizeAttacker
+                Vector3(1001.0f, 1090.0f, 359.0f), SizeFighter
+              ]
+            }
+            |> Some
+        | Contains "arf_nets_3_3.mgm" ->
+            { RefPos = Vector2(1000.0f, 1000.0f)
+              Positions =
+              [
+                Vector3(1020.0f, 1007.0f, 5.0f), SizeAttacker
+                Vector3(1001.0f, 1070.0f, 356.0f), SizeFighter
+              ]
+            }
+            |> Some
         | _ ->
             None
 
