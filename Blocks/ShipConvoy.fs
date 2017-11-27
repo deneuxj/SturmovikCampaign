@@ -11,6 +11,10 @@ open SturmovikMission.Blocks.IconDisplay
 open SturmovikMission.Blocks.EventReporting
 open SturmovikMission.Blocks.VirtualConvoy.Factory
 
+type WaterType =
+    | Sea
+    | River
+
 /// A ship convoy with escort
 type ShipConvoy = {
     Start : Mcu.McuTrigger
@@ -23,6 +27,23 @@ type ShipConvoy = {
     All : McuUtil.IMcuGroup
 }
 with
+    static member CargoModel(wt) =
+        match wt with
+        | Sea -> vehicles.CargoShip
+        | River -> vehicles.RiverCargoShip
+
+    static member StrongEscort(wt) =
+        match wt with
+        | Sea -> vehicles.Destroyer
+        | River -> vehicles.RussianGunBoat
+
+    static member LightEscort(wt, country) =
+        match wt, country with
+        | Sea, Mcu.CountryValue.Germany -> vehicles.GermanTorpedoBoat
+        | Sea, Mcu.CountryValue.Russia -> vehicles.RussianTorpedoBoat
+        | Sea, _ -> failwith "Unsupported country"
+        | River, _ -> vehicles.RussianGunBoat
+
     /// <summary>
     /// Create a ship convoy with escort
     /// </summary>
@@ -31,7 +52,7 @@ with
     /// <param name="path">Waypoints the convoy will sail along</param>
     /// <param name="country">Country owning the ships</param>
     /// <param name="eventName">Base event name for convoy start, arrival and destruction.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, country : Mcu.CountryValue, eventName) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, waterType : WaterType, path : PathVertex list, country : Mcu.CountryValue, eventName) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("ShipConvoy").CreateMcuList()
@@ -47,19 +68,20 @@ with
         let escort2 = getVehicleByName group T.Blocks.Escort2
         let ship1 = getVehicleByName group T.Blocks.Cargo1
         let ship2 = getVehicleByName group T.Blocks.Cargo2
-        // Override escort
+        // Override model escort
         do
             let model =
-                match country with
-                | Mcu.CountryValue.Russia -> vehicles.RussianTorpedoBoat
-                | Mcu.CountryValue.Germany -> vehicles.GermanTorpedoBoat
-                | _ -> failwith "Unknown country value"
+                ShipConvoy.LightEscort(waterType, country)
             for escort in [ escort1; escort2 ] do
                 escort.Script <- model.Script
                 escort.Model <- model.Model
                 escort.Country <- country
-        // Set country of cargo ships
+        // Override model of cargo ships
         for ship in [ ship1; ship2 ] do
+            let model =
+                ShipConvoy.CargoModel(waterType)
+            ship.Model <- model.Model
+            ship.Script <- model.Script
             ship.Country <- country
         // Position of all nodes
         let v1 =
@@ -160,12 +182,12 @@ with
         }
 
     /// Replace cargo ships by landing ships, replace torpedo boats by destroyers
-    member this.MakeAsLandShips() =
+    member this.MakeAsLandShips(waterType) =
         let landing = vehicles.LandShip
-        let destroyer = vehicles.Destroyer
+        let escort = ShipConvoy.StrongEscort(waterType)
         for ship in this.Ships do
             ship.Model <- landing.Model
             ship.Script <- landing.Script
         for ship in this.Escort do
-            ship.Model <- destroyer.Model
-            ship.Script <- destroyer.Script
+            ship.Model <- escort.Model
+            ship.Script <- escort.Script

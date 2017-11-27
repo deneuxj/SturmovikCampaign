@@ -639,8 +639,20 @@ type VehicleDataTypeStore() =
           Model = vehicle.GetModel().Value
         }
 
+    member this.RussianGunBoat =
+        let vehicle = ships.[T.Vehicles.ArmoredBoatRus]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
     member this.CargoShip =
         let vehicle = ships.[T.Vehicles.CargoShip]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.RiverCargoShip =
+        let vehicle = ships.[T.Vehicles.RiverCargoShip]
         { Script = vehicle.GetScript().Value
           Model = vehicle.GetModel().Value
         }
