@@ -624,31 +624,53 @@ let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
     let sg = state.FastAccess
 
     [
+        // Random distribution of planes among fitting parking slots
+        let rnd = System.Random()
         for afs in state.Airfields do
             let af = wg.GetAirfield afs.AirfieldId
             let reg = sg.GetRegion af.Region
             match reg.Owner with
             | Some coalition ->
                 let country = coalition.ToCountry
-                let fighterPlaces = ref af.ParkedFighters
-                let attackerPlaces = ref af.ParkedAttackers
-                let bomberPlaces = ref af.ParkedBombers
-                for (model, qty) in afs.NumPlanes |> Map.toSeq do
-                    let parking =
-                        match model.PlaneType with
-                        | PlaneType.Fighter -> fighterPlaces
-                        | PlaneType.Attacker -> attackerPlaces
-                        | PlaneType.Bomber | PlaneType.Transport -> bomberPlaces
-                    let positions =
-                        List.truncate (int qty) parking.Value
-                    parking :=
-                        try
-                            List.skip (int qty) parking.Value
-                        with
-                        | _ -> []
-                    yield!
-                        positions
-                        |> List.collect (fun pos -> mkParkedPlane(model, pos, int country))
+                let fighterPlaces = ref(af.ParkedFighters |> Array.ofList |> Array.shuffle rnd |> List.ofArray)
+                let attackerPlaces = ref(af.ParkedAttackers |> Array.ofList |> Array.shuffle rnd |> List.ofArray)
+                let bomberPlaces = ref(af.ParkedBombers |> Array.ofList |> Array.shuffle rnd |> List.ofArray)
+                // Assign a plane to a spot where it fits. Prioritize the smallest spots.
+                let assign (plane : PlaneModel) =
+                    match plane.PlaneType with
+                    | PlaneType.Transport
+                    | PlaneType.Bomber ->
+                        match bomberPlaces.Value with
+                        | [] -> None
+                        | spot :: rest -> bomberPlaces := rest; Some spot
+                    | PlaneType.Attacker ->
+                        match bomberPlaces.Value, attackerPlaces.Value with
+                        | _, spot :: rest -> attackerPlaces := rest; Some spot
+                        | spot :: rest, [] -> bomberPlaces := rest; Some spot
+                        | [], [] -> None
+                    | PlaneType.Fighter ->
+                        match bomberPlaces.Value, attackerPlaces.Value, fighterPlaces.Value with
+                        | _, _, spot :: rest -> fighterPlaces := rest; Some spot
+                        | _, spot :: rest, _ -> attackerPlaces := rest; Some spot
+                        | spot :: rest, _, _ -> bomberPlaces := rest; Some spot
+                        | [], [], [] -> None
+                // Sort planes by decreasing size
+                let planes =
+                    afs.NumPlanes
+                    |> Map.toSeq
+                    |> Seq.sortBy(fun (plane, _) ->
+                        match plane.PlaneType with
+                        | PlaneType.Bomber
+                        | PlaneType.Transport -> 0
+                        | PlaneType.Attacker -> 1
+                        | PlaneType.Fighter ->2)
+                for plane, qty in planes do
+                    for i in 0..(int qty - 1) do
+                        match assign plane with
+                        | Some spot ->
+                            yield! mkParkedPlane(plane, spot, int country)
+                        | None ->
+                            ()
             | None ->
                 ()
     ]
