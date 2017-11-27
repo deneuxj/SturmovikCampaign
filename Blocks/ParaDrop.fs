@@ -42,7 +42,7 @@ with
         let dv = pos - ref
         for mcu in group do
             let rel = Vector2.FromMcu(mcu.Pos) - ref
-            let pos2 = rel.Rotate(ori) + dv
+            let pos2 = rel.Rotate(ori) + dv + ref
             pos2.AssignTo mcu.Pos
             let angle = mcu.Ori.Y + float ori
             mcu.Ori.Y <- angle % 360.0
