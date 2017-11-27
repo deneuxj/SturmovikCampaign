@@ -103,6 +103,10 @@
       <Link>StalingradSummer.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\StalingradAutumn.Mission">
+      <Link>StalingradAutumn.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Content Include="Installation.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
