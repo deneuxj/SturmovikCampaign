@@ -21,7 +21,7 @@ type ParaDrop = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, country : Mcu.CountryValue, eventName : string) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, country : Mcu.CountryValue, eventName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let substlc = Mcu.substLCId <| lcStore.GetIdMapper()
@@ -34,16 +34,23 @@ with
         let wide = getTriggerByName group T.Blocks.WidelyDropped
         let preciseCx = getComplexTriggerByName group T.Blocks.PreciseDrop
         let wideCx = getComplexTriggerByName group T.Blocks.WideDrop
+        let signaler = getVehicleByName group T.Blocks.SIGNALER
         let msgPrecise = getTriggerByName group T.Blocks.SubtitlePrecise
         let msgWide = getTriggerByName group T.Blocks.SubtitleWide
         // Correct positions
-        let dv = pos - Vector2.FromMcu precise.Pos
+        let ref = Vector2.FromMcu precise.Pos
+        let dv = pos - ref
         for mcu in group do
-            (Vector2.FromMcu(mcu.Pos) + dv).AssignTo mcu.Pos
+            let rel = Vector2.FromMcu(mcu.Pos) - ref
+            let pos2 = rel.Rotate(ori) + dv
+            pos2.AssignTo mcu.Pos
+            let angle = mcu.Ori.Y + float ori
+            mcu.Ori.Y <- angle % 360.0
         McuUtil.vecCopy preciseCx.Pos wideCx.Pos
         // Correct countries
         preciseCx.Countries <- [ country ]
         wideCx.Countries <- [ country ]
+        signaler.Country <- country
         // Notification
         let notifyPreciseName = sprintf "%s-%s" preciseParaDropPrefix eventName
         let notifyPrecise = EventReporting.Create(store, country, pos, notifyPreciseName)
