@@ -284,7 +284,7 @@ Group
   {
     Index = 12;
     Name = "Leninsk";
-    Desc = "";
+    Desc = "***";
     Targets = [];
     Objects = [];
     XPos = 130693.978;
@@ -309,7 +309,7 @@ Group
   {
     Index = 13;
     Name = "Kalach";
-    Desc = "";
+    Desc = "***";
     Targets = [];
     Objects = [];
     XPos = 130103.759;
