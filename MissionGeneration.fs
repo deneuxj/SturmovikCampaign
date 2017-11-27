@@ -23,6 +23,7 @@ open SturmovikMission.Blocks.FireLoop
 open SturmovikMission.Blocks.ParaDrop
 open SturmovikMission.Blocks.WhileEnemyClose
 open SturmovikMission.Blocks.MissionEnd
+open SturmovikMission.Blocks.LandingTee
 
 open VectorExtension
 
@@ -294,6 +295,21 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                 match runwayStartPos with
                 | Some x -> yield (x, [ mcu; upcast entity ])
                 | None -> ()
+    ]
+
+let createLandingDirections store (world : World) (state : WorldState) =
+    let wg = world.FastAccess
+    let sg = state.FastAccess
+    [
+        for af in state.Airfields do
+            let pos, ori = af.Runway
+            let back = Vector2.UnitX.Rotate(ori)
+            match sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner with
+            | Some owner ->
+                let tee = LandingTee.Create(store, pos - 150.0f * back, ori, owner.ToCountry)
+                yield tee.All
+            | None ->
+                ()
     ]
 
 let createAirCargo store lcStore (order : ResupplyOrder) (world : World) (state : WorldState) =
@@ -917,6 +933,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         strategyMissionData.ListOfGround
         |> createGrounds store
     let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State
+    let landingDirections = createLandingDirections store missionData.World missionData.State
     let mkConvoyNodes orders =
         let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State orders
         for node, convoy in List.zip convoyPrioNodes.Nodes convoys do
@@ -1084,5 +1101,5 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           alliesPrio
           axisPlaneFerries
           alliesPlaneFerries
-          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons
+          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections
     writeMissionFiles "eng" filename options allGroups
