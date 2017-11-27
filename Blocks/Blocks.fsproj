@@ -87,6 +87,7 @@
     <Compile Include="MissionEnd.fs" />
     <Compile Include="ParaDrop.fs" />
     <Compile Include="Battlefield.fs" />
+    <Compile Include="LandingTee.fs" />
     <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>
