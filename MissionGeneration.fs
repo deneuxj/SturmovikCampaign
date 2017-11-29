@@ -559,6 +559,8 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                     | ColByTrain ->
                         let train = TrainWithNotification.Create(store, lcStore, travel.Head.Pos, travel.Head.Ori, (Seq.last travel).Pos, coalition.ToCountry, columnName)
                         Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
+                        let links = train.CreateLinks()
+                        links.Apply(McuUtil.deepContentOf train)
                         yield upcast train
                     | ColByRiverShip
                     | ColBySeaShip ->
