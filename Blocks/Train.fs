@@ -93,6 +93,7 @@ with
                 yield this.TheTrain.All
                 yield this.Started.All
                 yield this.Arrived.All
+                yield this.Destroyed.All
             ]
 
     static member Create(store, lcStore, pos, yori, destinationPos, country, eventName) =
