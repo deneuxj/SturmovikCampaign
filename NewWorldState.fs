@@ -778,22 +778,23 @@ let computeCompletedColumnMovements (movements : ColumnMovement list) (departure
         |> Map.ofSeq
     let departed =
         departures
-        |> Seq.map (fun d -> d.OrderId)
-        |> Set.ofSeq
+        |> Seq.map (fun d -> d.OrderId, d)
+        |> dict
     // Return updated movements with damaged vehicles removed
     [
         for move in movements do
-            if departed.Contains(move.OrderId) then
+            match departed.TryGetValue(move.OrderId) with
+            | true, group ->
                 let comp =
                     [|
-                        for i, tank in move.Composition |> Seq.indexed do
+                        for i, tank in group.Vehicles |> Seq.indexed do
                             let rank, damageThreshold =
                                 match move.TransportType with
-                                | ColByRoad -> i, 0.25f
+                                | ColByRoad -> group.RankOffset + i, 0.25f
                                 | ColByTrain -> 0, 1.0f
                                 | ColByRiverShip
                                 | ColBySeaShip ->
-                                    if i <= move.Composition.Length / 2 then
+                                    if i <= group.Vehicles.Length / 2 then
                                         0, 1.0f
                                     else
                                         1, 1.0f
@@ -804,6 +805,9 @@ let computeCompletedColumnMovements (movements : ColumnMovement list) (departure
                     |]
                 if not(Array.isEmpty comp) then
                     yield { move with Composition = comp }
+            | false, _ ->
+                // If it not depart, then it could not arrive.
+                ()
     ]
 
 
@@ -884,7 +888,7 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
             let numVehicles : Map<GroundAttackVehicle, int> =
                 Map.tryFind movement.Start regionMap
                 |> Option.defaultVal Map.empty
-            let numVehicles = Util.addMaps numVehicles departure.Vehicles
+            let numVehicles = Util.addMaps numVehicles (Util.compactSeq departure.Vehicles)
             Map.add movement.Start numVehicles regionMap
         ) Map.empty
     // Remove departed vehicles from regions

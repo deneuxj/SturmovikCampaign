@@ -58,7 +58,8 @@ let extractSuppliesShipped (orders : ResupplyOrder list) (entries : LogEntry seq
 /// A tank column left its home region
 type ColumnLeft = {
     OrderId : OrderId
-    Vehicles : Map<GroundAttackVehicle, int>
+    RankOffset : int
+    Vehicles : GroundAttackVehicle[]
 }
 
 let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry seq) =
@@ -76,15 +77,22 @@ let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry s
                 | Some eventName ->
                     match tryGetRank eventName with
                     | Some(order, rankOffset) ->
+                        let maxLength =
+                            match order.TransportType with
+                            | ColByRoad ->
+                                ColumnMovement.MaxColumnSize
+                            | ColByRiverShip
+                            | ColBySeaShip
+                            | ColByTrain ->
+                                System.Int32.MaxValue
                         let vehicles =
                             try
                                 order.Composition
-                                |> Seq.skip (rankOffset - 1)
+                                |> Array.skip rankOffset
                             with
-                            | _ -> order.Composition |> Seq.ofArray
-                            |> Seq.truncate ColumnMovement.MaxColumnSize
-                            |> Util.compactSeq
-                        yield { OrderId = order.OrderId; Vehicles = vehicles }
+                            | _ -> order.Composition
+                            |> Array.truncate maxLength
+                        yield { OrderId = order.OrderId; Vehicles = vehicles; RankOffset = rankOffset }
                     | None -> ()
                 | None ->
                     ()
