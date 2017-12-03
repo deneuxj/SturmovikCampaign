@@ -289,7 +289,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
           Hide = None
         }
 
-    static member CreateArrows(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState, axisOrders : Orders.OrderPackage, alliesOrers : Orders.OrderPackage, coalition : CoalitionId) =
+    static member CreateArrows(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState, axisOrders : Orders.OrderPackage, alliesOrders : Orders.OrderPackage, coalition : CoalitionId) =
         let sg = state.FastAccess
         let wg = world.FastAccess
         let computeArrowWidth x =
@@ -306,6 +306,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                 renderArrow(start, tip, width, 45.0f, color)
             | None ->
                 []
+            |> MapIcons.FromIcons
         let mkRailTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
             match world.Rails |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
@@ -317,6 +318,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                 renderArrow(start, tip, width, 45.0f, color)
             | None ->
                 []
+            |> MapIcons.FromIcons
         let mkWaterTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
             match world.SeaWays @ world.RiverWays |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
@@ -328,6 +330,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                 renderArrow(start, tip, width, 45.0f, color)
             | None ->
                 []
+            |> MapIcons.FromIcons
         let mkAirTravelArrow(startAirfield : AirfieldId, endAirfield : AirfieldId, color, qty) =
             let af1, af2 = wg.GetAirfield(startAirfield), wg.GetAirfield(endAirfield)
             let start = af1.Pos
@@ -336,10 +339,11 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                 let x = (qty / (PlaneModel.Ju52.CargoCapacity * bombCost)) |> min 1.0f
                 computeArrowWidth x
             renderArrow(start, tip, width, 45.0f, color)
+            |> MapIcons.FromIcons
         let friendlyOrders, enemyOrders =
             match coalition with
-            | Axis -> axisOrders, alliesOrers
-            | Allies -> alliesOrers, axisOrders
+            | Axis -> axisOrders, alliesOrders
+            | Allies -> alliesOrders, axisOrders
         let arrowIcons =
             [
                 let handleResupplyOrder color (order : Orders.ResupplyOrder) =
@@ -347,29 +351,29 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                         match order.Means with
                         | Orders.ByRoad ->
                             let iconId = Mcu.IconIdValue.CoverTransportColumn
-                            yield! mkRoadTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity))
+                            yield order.OrderId, mkRoadTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, int(order.Convoy.TransportedSupplies / Orders.ResupplyOrder.TruckCapacity)).AddShow(store)
                         | Orders.ByRail ->
                             let iconId = Mcu.IconIdValue.CoverTrains
-                            yield! mkRailTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
+                            yield order.OrderId, mkRailTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies).AddShow(store)
                         | Orders.ByRiverShip
                         | Orders.BySeaShip ->
                             let iconId = Mcu.IconIdValue.CoverShips
-                            yield! mkWaterTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies)
+                            yield order.OrderId, mkWaterTravelArrow(order.Convoy.Start, order.Convoy.Destination, color, order.Convoy.TransportedSupplies).AddShow(store)
                         | Orders.ByAir(start, destination) ->
                             let iconId = Mcu.IconIdValue.CoverBombersFlight
-                            yield! mkAirTravelArrow(start, destination, color, order.Convoy.TransportedSupplies)
+                            yield order.OrderId, mkAirTravelArrow(start, destination, color, order.Convoy.TransportedSupplies).AddShow(store)
                     }
                 let handleColumnOrder color (order : Orders.ColumnMovement) =
                     seq {
                         let iconId = Mcu.IconIdValue.CoverArmorColumn
                         match order.TransportType with
                         | Orders.ColByRoad ->
-                            yield! mkRoadTravelArrow(order.Start, order.Destination, color, order.Composition.Length)
+                            yield order.OrderId, mkRoadTravelArrow(order.Start, order.Destination, color, order.Composition.Length).AddShow(store)
                         | Orders.ColByTrain ->
-                            yield! mkRailTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.TrainCapacity)
+                            yield order.OrderId, mkRailTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.TrainCapacity).AddShow(store)
                         | Orders.ColByRiverShip
                         | Orders.ColBySeaShip ->
-                            yield! mkWaterTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.ShipCapacity)
+                            yield order.OrderId, mkWaterTravelArrow(order.Start, order.Destination, color, (float32 order.Composition.Length / 15.0f) * Orders.ResupplyOrder.ShipCapacity).AddShow(store)
                     }
                 for order in friendlyOrders.Resupply do
                     yield! handleResupplyOrder (0, 0, 10) order
@@ -380,20 +384,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                 for order in enemyOrders.Columns do
                     yield! handleColumnOrder (10, 0, 0) order
             ]
-        let lcStrings =
-            [
-                for icon in arrowIcons do
-                    match icon.IconLC with
-                    | Some data ->
-                        yield (data.LCDesc, "")
-                        yield (data.LCName, "")
-                    | None ->
-                        ()
-            ]
-        { All = arrowIcons |> List.map (fun x -> upcast x)
-          Show = None
-          Hide = None
-          LcStrings = lcStrings }
+        arrowIcons
 
 /// Create icons for filled storage areas that appear when the storage area has been spotted by a plane.
 let createStorageIcons store lcStore missionBegin (world : World) (state : WorldState) =

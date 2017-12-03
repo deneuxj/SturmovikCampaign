@@ -447,7 +447,7 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                             | Choice3Of4 x -> x.All
                             | Choice4Of4 _ -> failwith "Cannot handle air cargo"
                         links.Apply(McuUtil.deepContentOf mcuGroup)
-                        yield pathVertices.Head.Pos, virtualConvoy
+                        yield order.OrderId, pathVertices.Head.Pos, virtualConvoy
                     | None ->
                         ()
                 | ByAir(afStart, afDestination) ->
@@ -455,14 +455,14 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                     let startPos, startDir = sg.GetAirfield(afStart).Runway
                     let landPos, landDir = sg.GetAirfield(afDestination).Runway
                     let flight = TransportFlight.Create(store, lcStore, startPos, startDir, landPos, landDir, country, airName)
-                    yield startPos, Choice4Of4 flight
+                    yield order.OrderId, startPos, Choice4Of4 flight
         ]
     let nodes =
         let positions =
             convoys
-            |> List.map fst
+            |> List.map (fun (_, x, _) -> x)
         PriorityList.NodeList.Create(store, positions)
-    nodes, convoys |> List.map snd
+    nodes, convoys |> List.map (fun (orderId, _, convoy) -> orderId, convoy)
 
 
 let splitCompositions random vehicles =
@@ -531,38 +531,42 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         | (pos, _, _) :: _ -> (pos + Vector2(-100.0f, 0.0f)).AssignTo x.Pos
                         | [] -> ()
                         x
-                    yield McuUtil.groupFromList [ initialDelay ]
                     let prevStart = ref initialDelay
                     let columnName = order.MissionLogEventName
                     match order.TransportType with
                     | ColByRoad ->
                         let rankOffset = ref 0
                         for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
-                            let columnContent =
-                                composition
-                                |> List.ofArray
-                                |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
-                            let column = VirtualConvoy.CreateColumn(store, lcStore, travel, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
-                            let links = column.CreateLinks()
-                            links.Apply(McuUtil.deepContentOf column)
-                            Mcu.addTargetLink prevStart.Value column.Api.Start.Index
-                            let beforeNext =
-                                let x = newTimer 1
-                                let subst = Mcu.substId <| store.GetIdMapper()
-                                subst x
-                                x
-                            beforeNext.Time <- interval
-                            Mcu.addTargetLink column.Api.Start beforeNext.Index
-                            prevStart := beforeNext
-                            rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
-                            yield column :> McuUtil.IMcuGroup
-                            yield McuUtil.groupFromList [ beforeNext ]
+                            yield
+                                order.OrderId,
+                                initialDelay,
+                                [
+                                    let columnContent =
+                                        composition
+                                        |> List.ofArray
+                                        |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
+                                    let column = VirtualConvoy.CreateColumn(store, lcStore, travel, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                                    let links = column.CreateLinks()
+                                    links.Apply(McuUtil.deepContentOf column)
+                                    Mcu.addTargetLink prevStart.Value column.Api.Start.Index
+                                    let beforeNext =
+                                        let x = newTimer 1
+                                        let subst = Mcu.substId <| store.GetIdMapper()
+                                        subst x
+                                        x
+                                    beforeNext.Time <- interval
+                                    Mcu.addTargetLink column.Api.Start beforeNext.Index
+                                    prevStart := beforeNext
+                                    rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
+                                    yield column :> McuUtil.IMcuGroup
+                                    yield McuUtil.groupFromList [ beforeNext ]
+                                ]
                     | ColByTrain ->
                         let train = TrainWithNotification.Create(store, lcStore, travel.Head.Pos, travel.Head.Ori, (Seq.last travel).Pos, coalition.ToCountry, columnName)
                         Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
                         let links = train.CreateLinks()
                         links.Apply(McuUtil.deepContentOf train)
-                        yield upcast train
+                        yield order.OrderId, initialDelay, [ train :> McuUtil.IMcuGroup ]
                     | ColByRiverShip
                     | ColBySeaShip ->
                         let convoySpeed =
@@ -599,7 +603,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                         let ships = ShipConvoy.Create(store, lcStore, waterType, pathVertices, coalition.ToCountry, columnName)
                         ships.MakeAsLandShips(waterType)
                         Mcu.addTargetLink prevStart.Value ships.Start.Index
-                        yield ships.All
+                        yield order.OrderId, initialDelay, [ ships.All ]
                 | None -> ()
             | None ->
                 ()
@@ -959,7 +963,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let landingDirections = createLandingDirections store missionData.World missionData.State
     let mkConvoyNodes orders =
         let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State orders
-        for node, convoy in List.zip convoyPrioNodes.Nodes convoys do
+        for node, (orderId, convoy) in List.zip convoyPrioNodes.Nodes convoys do
             let start, destroyed, arrived =
                 match convoy with
                 | Choice1Of4 trucks ->
@@ -978,24 +982,52 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 Mcu.addTargetLink missionBegin node.Do.Index
             else
                 Mcu.addTargetLink missionBegin node.Enable.Index
-        let convoys : McuUtil.IMcuGroup list =
+        let convoys : (OrderId * Mcu.McuTrigger * McuUtil.IMcuGroup) list =
             convoys
             |> List.map (
                 function
-                | Choice1Of4 x -> x :> McuUtil.IMcuGroup
-                | Choice2Of4 x -> x :> McuUtil.IMcuGroup
-                | Choice3Of4 x -> x.All
-                | Choice4Of4 x -> x.All)
+                | orderId, Choice1Of4 x -> orderId, x.StartDelay.Elapsed, x :> McuUtil.IMcuGroup
+                | orderId, Choice2Of4 x -> orderId, x.Started.Trigger, x :> McuUtil.IMcuGroup
+                | orderId, Choice3Of4 x -> orderId, x.Start, x.All
+                | orderId, Choice4Of4 x -> orderId, x.Start, x.All)
         convoyPrioNodes.All, convoys
+    let axisPrio, axisConvoys = mkConvoyNodes missionData.AxisOrders.Resupply
+    let alliesPrio, alliesConvoys = mkConvoyNodes missionData.AlliesOrders.Resupply
     let mkColumns orders =
         let maxColumnSplit = max 1 (missionParams.MissionLength / missionParams.ColumnSplitInterval - 1)
         orders
         |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ColumnSplitInterval) maxColumnSplit missionParams.MissionLength
     let columns = mkColumns (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
     let arrows =
+        let startOfOrder =
+            seq {
+                for orderId, start, _ in axisConvoys do
+                    yield orderId, start
+                for orderId, start, _ in alliesConvoys do
+                    yield orderId, start
+                for orderId, start, _ in columns do
+                    yield orderId, upcast start
+            }
+            |> dict
         [Axis; Allies]
-        |> List.map (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
-        |> List.map (fun icons -> icons :> McuUtil.IMcuGroup)
+        |> List.collect (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
+        |> List.map (fun (orderId, arrow) ->
+            match startOfOrder.TryGetValue(orderId), arrow.Show with
+            | (true, start), Some show ->
+                Mcu.addTargetLink start show.Index
+                arrow.All
+            | _, _ ->
+                arrow.All)
+        |> List.map McuUtil.groupFromList
+    let axisConvoys =
+        axisConvoys
+        |> List.map (fun (_, _, group) -> group)
+    let alliesConvoys =
+        alliesConvoys
+        |> List.map (fun (_, _, group) -> group)
+    let columns =
+        columns
+        |> List.collect (fun (_, start, group) -> (McuUtil.groupFromList [start]) :: group)
     let battles =
         Battlefield.generateBattlefields missionParams.MaxVehiclesInBattle missionData.Random store lcStore missionData.World missionData.State
     for bf in battles do
@@ -1011,8 +1043,6 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let parkedTanks =
         createParkedTanks store missionData.World missionData.State inAttackArea missionData.AxisOrders Axis @ createParkedTanks store missionData.World missionData.State inAttackArea missionData.AlliesOrders Allies
         |> McuUtil.groupFromList
-    let axisPrio, axisConvoys = mkConvoyNodes missionData.AxisOrders.Resupply
-    let alliesPrio, alliesConvoys = mkConvoyNodes missionData.AlliesOrders.Resupply
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
     setCountries store missionData.World missionData.State flags
     let ndbs = strategyMissionData.GetGroup("NDBs").CreateMcuList()
