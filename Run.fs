@@ -621,6 +621,28 @@ module MissionLogParsing =
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         getEntries(missionLogsDir, config.MissionName, state.Date)
 
+    /// Retrieve mission log entries from an existing results.xml file
+    let stage0alt(config : Configuration) =
+        do
+            let config = Config.LoggingConfiguration()
+            LogManager.Configuration <- config
+            Plogger.Init()
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let state =
+            try
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                serializer.Deserialize<WorldState>(stateFile)
+            with
+            | e -> failwithf "Failed to read state data. Reason was: '%s'" e.Message
+        let results =
+            try
+                use resultsFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.missionResults))
+                serializer.Deserialize<MissionResults>(resultsFile)
+            with
+            | e -> failwithf "Failed to read previously existing mission results. Reason was: '%s'" e.Message
+        results.Entries
+        |> List.map LogEntry.Parse
+
     let stage1(config : Configuration, entries : LogEntry list) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state, axisOrders, alliesOrders =
