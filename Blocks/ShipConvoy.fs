@@ -186,8 +186,6 @@ with
         let landing = vehicles.LandShip
         let escort = ShipConvoy.StrongEscort(waterType)
         for ship in this.Ships do
-            ship.Model <- landing.Model
-            ship.Script <- landing.Script
+            landing.AssignTo(ship)
         for ship in this.Escort do
-            ship.Model <- escort.Model
-            ship.Script <- escort.Script
+            escort.AssignTo(ship)

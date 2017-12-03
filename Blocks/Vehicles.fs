@@ -21,6 +21,11 @@ with
         let shortName = withExtension.[0..withExtension.Length-4-1]
         shortName
 
+    member this.AssignTo(vehicle : Mcu.HasEntity) =
+        vehicle.Model <- this.Model
+        vehicle.Script <- this.Script
+
+
 type VehicleDataTypeStore() =
     let data =
         let path = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location)

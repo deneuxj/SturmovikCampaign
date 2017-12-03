@@ -192,8 +192,7 @@ with
             let vehicle = getByIndex truck.Entity.MisObjID (McuUtil.deepContentOf truck.All) :?> Mcu.HasEntity
             let (TruckInConvoyInstance(pos)) = instance
             let model = columnContent.[pos - 1]
-            vehicle.Model <- model.Model
-            vehicle.Script <- model.Script
+            model.AssignTo(vehicle)
         convoy
 
 

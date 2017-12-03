@@ -46,47 +46,37 @@ with
         | AntiTank ->
             match thing.Country with
             | Mcu.CountryValue.Germany ->
-                thing.Model <- vehicles.GermanAntiTankCanon.Model
-                thing.Script <- vehicles.GermanAntiTankCanon.Script
+                vehicles.GermanAntiTankCanon.AssignTo(thing)
             | Mcu.CountryValue.Russia ->
-                thing.Model <- vehicles.RussianAntiTankCanon.Model
-                thing.Script <- vehicles.RussianAntiTankCanon.Script
+                vehicles.RussianAntiTankCanon.AssignTo(thing)
             | _ ->
                 ()
         | AntiAirCanon ->
             match thing.Country with
             | Mcu.CountryValue.Germany ->
                 if isFlak then
-                    thing.Model <- vehicles.GermanFlak.Model
-                    thing.Script <- vehicles.GermanFlak.Script
+                    vehicles.GermanFlak.AssignTo(thing)
                 else
-                    thing.Model <- vehicles.GermanAntiAirCanon.Model
-                    thing.Script <- vehicles.GermanAntiAirCanon.Script
+                    vehicles.GermanAntiAirCanon.AssignTo(thing)
             | Mcu.CountryValue.Russia ->
                 if isFlak then
-                    thing.Model <- vehicles.RussianFlak.Model
-                    thing.Script <- vehicles.RussianFlak.Script
+                    vehicles.RussianFlak.AssignTo(thing)
                 else
-                    thing.Model <- vehicles.RussianAntiAirCanon.Model
-                    thing.Script <- vehicles.RussianAntiAirCanon.Script
+                    vehicles.RussianAntiAirCanon.AssignTo(thing)
             | _ ->
                 ()
         | AntiAirMg ->
             match thing.Country with
             | Mcu.CountryValue.Germany ->
                 if isFlak then
-                    thing.Model <- vehicles.GermanFlak.Model
-                    thing.Script <- vehicles.GermanFlak.Script
+                    vehicles.GermanFlak.AssignTo(thing)
                 else
-                    thing.Model <- vehicles.GermanAntiAirMachineGun.Model
-                    thing.Script <- vehicles.GermanAntiAirMachineGun.Script
+                    vehicles.GermanAntiAirMachineGun.AssignTo(thing)
             | Mcu.CountryValue.Russia ->
                 if isFlak then
-                    thing.Model <- vehicles.RussianFlak.Model
-                    thing.Script <- vehicles.RussianFlak.Script
+                    vehicles.RussianFlak.AssignTo(thing)
                 else
-                    thing.Model <- vehicles.RussianAntiAirMachineGun.Model
-                    thing.Script <- vehicles.RussianAntiAirMachineGun.Script
+                    vehicles.RussianAntiAirMachineGun.AssignTo(thing)
             | _ ->
                 ()
 
@@ -175,11 +165,9 @@ with
         let canon = getHasEntityByIndex this.Cannon.MisObjID mcus
         match canon.Country with
         | Mcu.CountryValue.Germany ->
-            canon.Model <- vehicles.GermanSearchLight.Model
-            canon.Script <- vehicles.GermanSearchLight.Script
+            vehicles.GermanSearchLight.AssignTo(canon)
         | _ ->
-            canon.Model <- vehicles.RussianSearchLight.Model
-            canon.Script <- vehicles.RussianSearchLight.Script
+            vehicles.RussianSearchLight.AssignTo(canon)
         let mcus =
             mcus
             |> List.map (fun mcu ->

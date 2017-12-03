@@ -41,11 +41,9 @@ with
         leadCar.Country <- country
         match country with
         | Mcu.CountryValue.Germany ->
-            leadCar.Model <- vehicles.GermanCar.Model
-            leadCar.Script <- vehicles.GermanCar.Script
+            vehicles.GermanCar.AssignTo(leadCar)
         | Mcu.CountryValue.Russia ->
-            leadCar.Model <- vehicles.RussianCar.Model
-            leadCar.Script <- vehicles.RussianCar.Script
+            vehicles.RussianCar.AssignTo(leadCar)
         | _ ->
             ()
         let center = Vector2.FromMcu(leadCar.Pos)
@@ -102,8 +100,7 @@ with
                     vehicles.RussianTruck
             | _ ->
                 failwith "Unsupported country"
-        truck.Model <- m.Model
-        truck.Script <- m.Script
+        m.AssignTo(truck)
         let center = Vector2.FromMcu(truck.Pos)
         // Rotation
         let rot = ori - float32 truck.Ori.Y
