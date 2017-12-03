@@ -706,7 +706,7 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
     let country = coalition.ToCountry |> int
     [
         for region, regState in List.zip world.Regions state.Regions do
-            if regState.Owner = Some coalition && not(List.isEmpty region.Parking) then
+            if regState.Owner = Some coalition && not(List.isEmpty region.Parking) && not regState.HasInvaders then
                 let subtracted =
                     orders.Columns
                     |> List.filter (fun order -> order.Start = region.RegionId)
