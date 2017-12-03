@@ -170,13 +170,24 @@ module Support =
                           "Actions past this point will not be taken into account"
                         ]
                         |> support.ServerControl.MessageAll
+                    let! missionLogEntries =
+                        try
+                            tryOrNotifyPlayers
+                                [ "Bad news, mission log entries were not found"
+                                  "Campaign is now halted"
+                                  "Sorry for the inconvenience" ]
+                                (fun() -> Campaign.Run.MissionLogParsing.stage0 config)
+                        with
+                        | exc ->
+                            killServer(config, serverProc)
+                            raise exc
                     let! missionResults =
                         try
                             tryOrNotifyPlayers
                                 [ "Bad news, result extraction failed"
                                   "Campaign is now halted"
                                   "Sorry for the inconvenience" ]
-                                (fun() -> Campaign.Run.MissionLogParsing.stage1 config)
+                                (fun() -> Campaign.Run.MissionLogParsing.stage1(config, missionLogEntries))
                         with
                         | exc ->
                             killServer(config, serverProc)

@@ -532,23 +532,7 @@ module MissionLogParsing =
         ]
         |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
 
-    let stage1(config : Configuration) =
-        let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
-
-        let serializer = FsPickler.CreateXmlSerializer(indent = true)
-        let world, state, axisOrders, alliesOrders =
-            try
-                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
-                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
-                use axisOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.axisOrders))
-                use alliesOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.alliesOrders))
-                serializer.Deserialize<World>(worldFile),
-                serializer.Deserialize<WorldState>(stateFile),
-                serializer.Deserialize<OrderPackage>(axisOrdersFile),
-                serializer.Deserialize<OrderPackage>(alliesOrdersFile)
-            with
-            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
-
+    let getEntries(missionLogsDir : string, missionName : string, startDate : System.DateTime) =
         do
             let config = Config.LoggingConfiguration()
             LogManager.Configuration <- config
@@ -593,14 +577,14 @@ module MissionLogParsing =
                             else
                                 printfn "Reached start of new mission, discarding current because too short"
                                 previous
-                    let expectedMissionFile = sprintf "%s.msnbin" config.MissionName
+                    let expectedMissionFile = sprintf "%s.msnbin" missionName
                     let actualMissionFile = start.MissionFile.Split('/') |> Seq.last
-                    if start.MissionTime = state.Date && actualMissionFile.ToLower() = expectedMissionFile.ToLower() then
+                    if start.MissionTime = startDate && actualMissionFile.ToLower() = expectedMissionFile.ToLower() then
                         printfn "Start collecting from %s" file
                         previous, [entry] // Start new list
                     else
                         let reason =
-                            if start.MissionTime <> state.Date then
+                            if start.MissionTime <> startDate then
                                 "bad start date"
                             elif actualMissionFile.ToLower() <> expectedMissionFile.ToLower() then
                                 "bad mission filename"
@@ -624,6 +608,33 @@ module MissionLogParsing =
                         printfn "Discarded short sequence"
                         previous
             |> List.rev
+        entries
+
+    let stage0(config : Configuration) =
+        let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
+        let state =
+            let serializer = FsPickler.CreateXmlSerializer(indent = true)
+            try
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                serializer.Deserialize<WorldState>(stateFile)
+            with
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
+        getEntries(missionLogsDir, config.MissionName, state.Date)
+
+    let stage1(config : Configuration, entries : LogEntry list) =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let world, state, axisOrders, alliesOrders =
+            try
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                use axisOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.axisOrders))
+                use alliesOrdersFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.alliesOrders))
+                serializer.Deserialize<World>(worldFile),
+                serializer.Deserialize<WorldState>(stateFile),
+                serializer.Deserialize<OrderPackage>(axisOrdersFile),
+                serializer.Deserialize<OrderPackage>(alliesOrdersFile)
+            with
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
 
         if List.isEmpty entries then
             failwith "No entries found suitable for result extraction"
