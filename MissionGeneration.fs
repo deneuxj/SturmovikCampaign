@@ -24,6 +24,7 @@ open SturmovikMission.Blocks.ParaDrop
 open SturmovikMission.Blocks.WhileEnemyClose
 open SturmovikMission.Blocks.MissionEnd
 open SturmovikMission.Blocks.LandingTee
+open SturmovikMission.Blocks.MapGraphics
 
 open VectorExtension
 

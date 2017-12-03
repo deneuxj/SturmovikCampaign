@@ -11,6 +11,7 @@ open SturmovikMission.Blocks.Proximity
 open SturmovikMission.DataProvider.Cached
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.IconDisplay
+open SturmovikMission.Blocks.MapGraphics
 
 open Campaign.WorldDescription
 open Campaign.WorldState
@@ -32,55 +33,6 @@ let getRepresentative (world : World) =
     let equivClasses = Algo.computePartition areSimilar allVecs
     Algo.getEquivalent equivClasses
 
-/// Default icon from which all icons are cloned.
-let private defaultIcon =
-    let lcDesc = 1
-    let lcName = 2
-    T.MCU_Icon(
-        T.Integer(0),
-        T.VectorOfIntegers[1;2],
-        T.Boolean true,
-        T.Integer(0),
-        T.Integer(0),
-        T.Integer(1),
-        T.Integer(lcDesc),
-        T.Integer(lcName),
-        T.Integer(0),
-        T.VectorOfIntegers[],
-        T.Integer(0),
-        T.VectorOfIntegers[],
-        T.Float(0.0),
-        T.Float(0.0),
-        T.Float(0.0),
-        T.Float(0.0),
-        T.Float(0.0),
-        T.Float(0.0)
-    )
-
-/// Make an icon.
-let mkIcon (store : NumericalIdentifiers.IdStore) (lcStore : NumericalIdentifiers.IdStore) (lineType : int) (red, green, blue) (v : Vector2) =
-    let subst = Mcu.substId <| store.GetIdMapper()
-    let substLc = Mcu.substLCId <| lcStore.GetIdMapper()
-    let mcu =
-        defaultIcon
-            .SetXPos(T.Float(float v.X))
-            .SetZPos(T.Float(float v.Y))
-            .SetLineType(T.Integer lineType)
-            .SetRColor(T.Integer red)
-            .SetGColor(T.Integer green)
-            .SetBColor(T.Integer blue)
-            .CreateMcu()
-            :?> Mcu.McuIcon
-    subst mcu
-    substLc mcu
-    mcu
-
-/// Make two icons connected by a line.
-let mkSegmentIcons mkIcon (segment : Vector2 * Vector2) =
-    let icon1 : Mcu.McuIcon = mkIcon(fst segment)
-    let icon2 = mkIcon(snd segment)
-    icon1.Targets <- icon2.Index :: icon1.Targets
-    [ icon1; icon2 ]
 
 /// Type of segments rendering a part of a region boundary.
 type SegmentType =
@@ -93,17 +45,7 @@ type Segment = {
     Edge : Vector2 * Vector2
 }
 
-/// Groups icons and their labels.
-type MapIcons = {
-    All : Mcu.McuBase list
-    LcStrings : (int * string) list
-}
-with
-    interface McuUtil.IMcuGroup with
-        member x.Content = x.All
-        member x.LcStrings = x.LcStrings
-        member x.SubGroups = []
-
+type SturmovikMission.Blocks.MapGraphics.MapIcons with
     /// Render region boundaries
     static member CreateRegions(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState) =
         let getState =
@@ -246,6 +188,8 @@ with
                         ()
             ]
         { All = allIcons |> List.map (fun x -> upcast x)
+          Show = None
+          Hide = None
           LcStrings = lcStrings
         }
 
@@ -341,30 +285,16 @@ with
             |> List.concat
         { All = allIcons |> List.map (fun x -> upcast x)
           LcStrings = lcStrings
+          Show = None
+          Hide = None
         }
 
     static member CreateArrows(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState, axisOrders : Orders.OrderPackage, alliesOrers : Orders.OrderPackage, coalition : CoalitionId) =
         let sg = state.FastAccess
         let wg = world.FastAccess
-        let renderArrow(start : Vector2, tip : Vector2, width : float32, headAngle : float32, color) =
-            let dir =
-                let x = (tip - start)
-                x / x.Length()
-            let points =
-                let mkIcon =
-                    mkIcon store lcStore (int Mcu.LineTypeValue.Attack) color
-                    >> fun icon -> icon.Coalitions <- [coalition.ToCoalition]; icon
-                [
-                    yield mkIcon (start + width * dir.Rotate(90.0f))
-                    yield mkIcon start
-                    yield mkIcon tip
-                    yield mkIcon (tip + width * dir.Rotate(90.0f + headAngle))
-                ]
-            for p1, p2 in Seq.pairwise points do
-                p1.Targets <- [p2.Index]
-            points
         let computeArrowWidth x =
             2000.0f * x + 500.0f * (1.0f - x)
+        let renderArrow = renderArrow (store, lcStore, [coalition.ToCoalition])
         let mkRoadTravelArrow(startRegion : RegionId, endRegion : RegionId, color, numVehicles : int) =
             match world.Roads |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
@@ -461,6 +391,8 @@ with
                         ()
             ]
         { All = arrowIcons |> List.map (fun x -> upcast x)
+          Show = None
+          Hide = None
           LcStrings = lcStrings }
 
 /// Create icons for filled storage areas that appear when the storage area has been spotted by a plane.
