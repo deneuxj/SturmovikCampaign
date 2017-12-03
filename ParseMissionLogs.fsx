@@ -9,7 +9,9 @@
 
 open Configuration
 
-let missionResults = Campaign.Run.MissionLogParsing.stage1 config
+let entries = Campaign.Run.MissionLogParsing.stage0(config)
+
+let missionResults = Campaign.Run.MissionLogParsing.stage1(config, entries)
 
 Campaign.Run.MissionLogParsing.backupFiles config
 let date = Campaign.Run.WeatherComputation.getNextDateFromState config
