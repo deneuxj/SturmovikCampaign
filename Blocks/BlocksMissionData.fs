@@ -42,6 +42,14 @@ let newCheckZone idx distance =
     mcu.VehicleCoalitions <- []
     mcu
 
+let newActivate idx =
+    T.MCU_Activate(T.String "", T.Integer idx, T.String "", T.VectorOfIntegers [], T.VectorOfIntegers [], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
+        .CreateMcu() :?> Mcu.McuTrigger
+
+let newDeactivate idx =
+    T.MCU_Deactivate(T.String "", T.Integer idx, T.String "", T.VectorOfIntegers [], T.VectorOfIntegers [], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0)
+        .CreateMcu() :?> Mcu.McuTrigger
+
 let newWaypoint idx (pos : Vector2) (yori : float32) (radius : int) (speed : int) (priority : int) =
     T.MCU_Waypoint(
         T.Integer radius,
