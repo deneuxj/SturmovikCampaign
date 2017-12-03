@@ -39,7 +39,7 @@ module Init =
         let totalProduction =
             world0.Regions
             |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(1.0f)))
-        let desiredProduction = config.DesiredProduction * 1.0f<E/H>
+        let desiredProduction = config.DesiredProduction * 1.0f<E/H> * float32 world0.Regions.Length
         let factor = desiredProduction / totalProduction
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5); ProductionFactor = factor }
 
