@@ -89,3 +89,22 @@ with
         member x.Content = x.All
         member x.LcStrings = x.LcStrings
         member x.SubGroups = []
+
+    /// <summary>
+    /// Make the icons hidden by default, and add a trigger that shows them
+    /// </summary>
+    member this.AddShow(store : NumericalIdentifiers.IdStore) =
+        let subst = Mcu.substId <| store.GetIdMapper()
+        let show = newActivate 1
+        subst show
+        show.Targets <- this.All |> List.map (fun mcu -> mcu.Index)
+        for mcu in this.All do
+            match mcu with
+            | :? Mcu.McuIcon as icon ->
+                icon.Enabled <- false
+            | _ ->
+                ()
+        { this with
+            Show = Some show
+            All = (upcast show) :: this.All
+        }
