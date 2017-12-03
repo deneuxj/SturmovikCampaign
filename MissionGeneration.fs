@@ -536,11 +536,11 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                     match order.TransportType with
                     | ColByRoad ->
                         let rankOffset = ref 0
-                        for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
-                            yield
-                                order.OrderId,
-                                initialDelay,
-                                [
+                        yield
+                            order.OrderId,
+                            initialDelay,
+                            [
+                                for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
                                     let columnContent =
                                         composition
                                         |> List.ofArray
@@ -560,7 +560,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                                     rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
                                     yield column :> McuUtil.IMcuGroup
                                     yield McuUtil.groupFromList [ beforeNext ]
-                                ]
+                            ]
                     | ColByTrain ->
                         let train = TrainWithNotification.Create(store, lcStore, travel.Head.Pos, travel.Head.Ori, (Seq.last travel).Pos, coalition.ToCountry, columnName)
                         Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
