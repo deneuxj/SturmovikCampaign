@@ -47,6 +47,8 @@ with
             | Mcu.CountryValue.Germany -> vehicles.GermanTransport
             | Mcu.CountryValue.Russia -> vehicles.RussianTransport
             | _ -> failwith "Unsupported country value"
+        plane1.Model <- model.Model
+        plane1.Script <- model.Script
         // Icons
         let coalition = McuUtil.coalitionOf country
         let iconAttack, iconCover = IconDisplay.CreatePair(store, lcStore, 0.5f * (takeOffPos + destinationPos), "Transport", coalition, Mcu.IconIdValue.CoverBombersFlight)
