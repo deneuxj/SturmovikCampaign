@@ -91,7 +91,28 @@ with
         member x.SubGroups = []
 
     /// <summary>
-    /// Make the icons hidden by default, and add a trigger that shows them
+    /// Create an instance from an existing list of icons, where all locale strings are empty.
+    /// </summary>
+    static member FromIcons(icons : Mcu.McuIcon list) =
+        let lcStrings =
+            [
+                for icon in icons do
+                    match icon.IconLC with
+                    | Some data ->
+                        yield (data.LCDesc, "")
+                        yield (data.LCName, "")
+                    | None ->
+                        ()
+            ]
+        { Show = None
+          Hide = None
+          All = icons |> List.map (fun x -> upcast x)
+          LcStrings = lcStrings
+        }
+
+    /// <summary>
+    /// Make the icons hidden by default, and add a trigger that shows them.
+    /// Note that the returned instance of MapIcons and the original one share the same icons, which are mutated by this call.
     /// </summary>
     member this.AddShow(store : NumericalIdentifiers.IdStore) =
         let subst = Mcu.substId <| store.GetIdMapper()
