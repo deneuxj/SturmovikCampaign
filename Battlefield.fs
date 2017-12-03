@@ -93,17 +93,14 @@ with
         let buildTank name (model : VehicleTypeData) =
             let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack))
             tank.Tank.Name <- namePrefix + "A-" + name
-            tank.Tank.Model <- model.Model
-            tank.Tank.Script <- model.Script
+            model.AssignTo(tank.Tank)
             tank.Tank.Country <- defendingCoalition.Other.ToCountry
             tank |> Choice1Of2
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCanon(model : VehicleTypeData, wallModel : VehicleTypeData) =
             let arty = RespawningCanon.Create(store, getRandomPos(AttackBack), getRandomPos(DefenseBack))
-            arty.Wall.Model <- wallModel.Model
-            arty.Wall.Script <- wallModel.Script
-            arty.Canon.Model <- model.Model
-            arty.Canon.Script <- model.Script
+            wallModel.AssignTo(arty.Wall)
+            model.AssignTo(arty.Canon)
             arty.Canon.Country <- defendingCoalition.Other.ToCountry
             arty |> Choice2Of2
         // Instantiate attacker blocks
@@ -129,10 +126,8 @@ with
             match name with
             | Some name -> arty.Canon.Name <- namePrefix + "D-" + name
             | None -> ()
-            arty.Wall.Model <- wallModel.Model
-            arty.Wall.Script <- wallModel.Script
-            arty.Canon.Model <- model.Model
-            arty.Canon.Script <- model.Script
+            wallModel.AssignTo(arty.Wall)
+            model.AssignTo(arty.Canon)
             arty.Canon.Country <- defendingCoalition.ToCountry
             arty
         let defenders =

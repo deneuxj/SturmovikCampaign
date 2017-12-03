@@ -854,11 +854,9 @@ let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (stat
                     light.Country <- owner.ToCountry
                     match owner with
                     | Allies ->
-                        light.Model <- vehicles.RussianLandLight.Model
-                        light.Script <- vehicles.RussianLandLight.Script
+                        vehicles.RussianLandLight.AssignTo(light)
                     | Axis ->
-                        light.Model <- vehicles.GermanLandLight.Model
-                        light.Script <- vehicles.GermanLandLight.Script
+                        vehicles.GermanLandLight.AssignTo(light)
                     let prioNode = lightsOn([entity])
                     yield light :> Mcu.McuBase
                     yield upcast entity

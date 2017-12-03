@@ -26,8 +26,7 @@ let generatePlaneTransfer store lcStore (world : World) (state : WorldState) (mi
                 let reportLanded = EventReporting.Create(store, order.OrderId.Coalition.ToCountry, landPos + Vector2(0.0f, 100.0f), order.LandedEventName)
                 let reportKilled = EventReporting.Create(store, order.OrderId.Coalition.ToCountry, spawnPos + Vector2(0.0f, 200.0f), order.KilledEventName)
                 // Plane type
-                flight.Plane.Script <- order.Plane.ScriptModel.Script
-                flight.Plane.Model <- order.Plane.ScriptModel.Model
+                order.Plane.ScriptModel.AssignTo(flight.Plane)
                 // Links
                 for icon in [icon1; icon2] do
                     Mcu.addTargetLink flight.Spawned icon.Show.Index
