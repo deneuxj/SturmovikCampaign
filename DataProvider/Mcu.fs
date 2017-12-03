@@ -133,6 +133,7 @@ type McuIcon =
     abstract Blue : int with get, set
     abstract LineType : LineTypeValue with get, set
     abstract Coalitions : CoalitionValue list with get, set
+    abstract Enabled : bool with get, set
 
 /// <summary>
 /// Interface of triggers (timers, counters...).

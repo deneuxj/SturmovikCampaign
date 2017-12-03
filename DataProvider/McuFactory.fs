@@ -480,7 +480,12 @@ let private mkAsIcon (typeName : string) path (state : (string * Value) list ref
                     !state |> getIntField "RColor"
                 and set (v: int): unit = 
                     state := !state |> setField("RColor", Value.Integer v)
-                
+            member x.Enabled
+                with get (): bool =
+                    !state |> getBoolField "Enabled"
+                and set (v: bool): unit =
+                    state := !state |> setField("Enabled", Value.Boolean v)
+
         interface McuBase with
             member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori
@@ -506,6 +511,7 @@ let tryMkAsIcon (typeName : string, typ : ValueType) =
               ("GColor", ValueType.Integer)
               ("IconId", ValueType.Integer)
               ("LineType", ValueType.Integer)
+              ("Enabled", ValueType.Boolean)
             ] @ requiredForBase
         let hasItAll =
             required
