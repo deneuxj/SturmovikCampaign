@@ -127,14 +127,14 @@ with
     member this.AddStorage(blocks : T.Block list) =
         let storage =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Storage > 0.0f<E> && not block.IsAirfieldStorage)
+            |> List.filter (fun block -> block.Storage > 0.0f<E> && not block.IsAirfieldStorage && not block.SubBlocks.IsEmpty)
         { this with Storage = this.Storage @ storage
         }
 
     member this.AddProduction(blocks : T.Block list) =
         let factories =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Production(1.0f) > 0.0f<E/H>)
+            |> List.filter (fun block -> block.Production(1.0f) > 0.0f<E/H> && not block.SubBlocks.IsEmpty)
         { this with Production = this.Production @ factories
         }
 
