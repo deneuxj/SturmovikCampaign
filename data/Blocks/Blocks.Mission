@@ -8086,16 +8086,16 @@ Group
 Group
 {
   Name = "LandingTee";
-  Index = 676;
+  Index = 671;
   Desc = "";
   Vehicle
   {
     Name = "Leg";
-    Index = 671;
-    LinkTrId = 672;
-    XPos = 38953.942;
-    YPos = 138.671;
-    ZPos = 35074.582;
+    Index = 672;
+    LinkTrId = 673;
+    XPos = 38958.440;
+    YPos = 138.690;
+    ZPos = 35072.145;
     XOri = 0.31;
     YOri = 0.00;
     ZOri = 0.06;
@@ -8104,7 +8104,7 @@ Group
     Desc = "";
     Country = 201;
     NumberInFormation = 0;
-    Vulnerable = 1;
+    Vulnerable = 0;
     Engageable = 0;
     LimitAmmo = 1;
     AILevel = 2;
@@ -8120,30 +8120,30 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 672;
+    Index = 673;
     Name = "Vehicle entity";
     Desc = "";
     Targets = [];
     Objects = [];
-    XPos = 38953.942;
-    YPos = 138.871;
-    ZPos = 35074.582;
+    XPos = 38958.440;
+    YPos = 138.890;
+    ZPos = 35072.145;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 671;
+    MisObjID = 672;
   }
   
 
   Vehicle
   {
     Name = "Tee";
-    Index = 673;
-    LinkTrId = 674;
-    XPos = 38959.942;
-    YPos = 138.671;
-    ZPos = 35074.567;
+    Index = 675;
+    LinkTrId = 676;
+    XPos = 38964.441;
+    YPos = 138.690;
+    ZPos = 35072.130;
     XOri = 0.06;
     YOri = 90.00;
     ZOri = 359.69;
@@ -8152,7 +8152,7 @@ Group
     Desc = "";
     Country = 201;
     NumberInFormation = 0;
-    Vulnerable = 1;
+    Vulnerable = 0;
     Engageable = 0;
     LimitAmmo = 1;
     AILevel = 2;
@@ -8168,19 +8168,19 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 674;
+    Index = 676;
     Name = "Vehicle entity";
     Desc = "";
     Targets = [];
     Objects = [];
-    XPos = 38959.942;
-    YPos = 138.871;
-    ZPos = 35074.567;
+    XPos = 38964.441;
+    YPos = 138.890;
+    ZPos = 35072.130;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 673;
+    MisObjID = 675;
   }
   
 
