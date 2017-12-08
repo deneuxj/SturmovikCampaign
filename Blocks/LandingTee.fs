@@ -21,6 +21,9 @@ with
         // Key nodes
         let leg = McuUtil.getVehicleByName group T.Blocks.Leg
         let bar = McuUtil.getVehicleByName group T.Blocks.Tee
+        // Hide icons, or people might get confused and try to attack them
+        leg.Name <- "NOICON"
+        bar.Name <- "NOICON"
         // Position all nodes
         let refPos = Vector2.FromMcu leg.Pos
         let dv = pos - refPos
