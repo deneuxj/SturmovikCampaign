@@ -386,10 +386,7 @@ let allTankReinforcements (world : World) (state : WorldState) (coalition : Coal
                         let nghState = sg.GetRegion(ngh)
                         match Map.tryFind ngh distanceToEnemy with
                         | Some nghDistance ->
-                            // Note: do not move to a region on the frontline, this may be a poor tactical choice. Let the minmax search take that decision instead.
-                            // This also avoids sending reinforcements into an ongoing battle, which is something the battle system does not handle well.
-                            // If the battle is lost, the reinforcements will also be lost.
-                            if nghState.Owner = Some coalition && nghDistance < regionDistance && nghDistance > 1 then
+                            if nghState.Owner = Some coalition && nghDistance < regionDistance && not nghState.HasInvaders then
                                 let composition = selectVehicles regState vehicleMinValue
                                 let medium = tryGetPathKind true world (region.RegionId, ngh)
                                 match medium with
