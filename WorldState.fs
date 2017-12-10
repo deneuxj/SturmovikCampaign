@@ -281,24 +281,19 @@ with
             |> List.sumBy (fun regState ->
                 if regState.Owner = Some coalition then
                     regState.TotalVehicleValue
-                else
-                    0.0f<E>)
-        let getPlanes coalition =
-            let sg = this.FastAccess
-            List.zip world.Airfields this.Airfields
-            |> List.sumBy (fun (af, afState) ->
-                if sg.GetRegion(af.Region).Owner = Some coalition then
-                    afState.TotalPlaneValue
+                elif regState.Owner = Some coalition.Other then
+                    regState.NumInvadingVehicles
+                    |> Map.toSeq
+                    |> Seq.sumBy (fun (tank, qty) -> tank.Cost * float32 qty)
                 else
                     0.0f<E>)
         let axisRegions, alliesRegions = getNumRegions Axis, getNumRegions Allies
         let axisTanks, alliesTanks = getTanks Axis, getTanks Allies
-        let axisPlanes, alliesPlanes = getPlanes Axis, getPlanes Allies
         let k = 2.0f
-        // If one side has twice as many planes and tanks as the other, and it controls 3x more regions, it has won
-        if axisRegions >= 3 * alliesRegions && axisTanks > k * alliesTanks && axisPlanes > k * alliesPlanes then
+        // If one side has twice as many tanks as the other, and it controls 3x more regions, it has won
+        if axisRegions >= 3 * alliesRegions && axisTanks > k * alliesTanks then
             Some Axis
-        elif 3 * axisRegions <= alliesRegions && k * axisTanks < alliesTanks && k * axisPlanes < alliesPlanes then
+        elif 3 * axisRegions <= alliesRegions && k * axisTanks < alliesTanks then
             Some Allies
         else
             None
