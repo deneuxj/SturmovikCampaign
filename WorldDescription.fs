@@ -483,6 +483,7 @@ type World = {
     AntiAirDefenses : DefenseArea list
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
+    // Deprecated
     MaxTankNeeds : float32<E>
     PlaneProduction : float32<E/H>
     ProductionFactor : float32
@@ -492,7 +493,7 @@ type World = {
     WeatherDaysOffset : float
 }
 with
-    static member Create(planeSet, strategyFile, maxTankNeeds, planeProduction) =
+    static member Create(planeSet, strategyFile, planeProduction) =
         let s = Stream.FromFile strategyFile
         let data = T.GroupData(s)
         let regions =
@@ -540,7 +541,7 @@ with
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
-          MaxTankNeeds = maxTankNeeds
+          MaxTankNeeds = 0.0f<E>
           PlaneProduction = planeProduction
           ProductionFactor = 1.0f
           StartDate = date

@@ -494,7 +494,6 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
         vehicle, need
     let vehicleNeed =
         max vehicleNeed 0.0f<E>
-        |> min world.MaxTankNeeds // Limit tank objectives, otherwise it can dwarf the plane needs, depriving players from planes to fly.
 
     { Vehicle = vehicleToProduce
       PriorityVehicle = vehicleNeed

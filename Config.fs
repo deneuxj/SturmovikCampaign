@@ -27,7 +27,6 @@ type Configuration = {
     Briefing : string
     ThinkTime : int
     DesiredProduction : float32
-    MaxTankNeeds : float32
     PlaneProduction : float32
     WebHook : string
 }
@@ -55,7 +54,6 @@ with
             ScriptPath = @"nul"
             ThinkTime = 30
             DesiredProduction = 6000.0f
-            MaxTankNeeds = 30.0f
             PlaneProduction = 1000.0f
             WebHook = ""
             Briefing = @"
@@ -111,7 +109,6 @@ let loadConfigFile (path : string) =
         ScriptPath = values.InstallPath
         ThinkTime = values.ThinkTime
         DesiredProduction = float32 values.DesiredProduction
-        MaxTankNeeds = float32 values.MaxTankNeeds
         PlaneProduction = float32 values.PlaneProduction
         Briefing = values.Briefing
         WebHook = values.WebHook

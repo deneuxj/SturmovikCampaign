@@ -41,10 +41,8 @@
     ThinkTime: 60
     # Total production of all factories in an average region. Used to compute production factor to adjust production per factory building on the map.
     DesiredProduction: 300.0
-    # Affects production. Keep this low or the AI might stop producing planes
-    MaxTankNeeds: 30.0
     # Amount of production (resource units per hour) for planes. 500.0f gives one i16 or bf109e7 per hour.
-    PlaneProduction: 1000.0
+    PlaneProduction: 2000.0
     # Fixed part of the mission briefing
     Briefing: |
         This mission is part of a dynamic campaign where the events from one mission affect the following missions.
