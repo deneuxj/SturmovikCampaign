@@ -143,8 +143,14 @@ let postWorldState channel (world : World, state : WorldState) =
         |> String.concat "\n"
     let countTanks coalition =
         state.Regions
-        |> Seq.filter (fun region -> region.Owner = Some coalition)
-        |> Seq.map (fun region -> region.NumVehicles)
+        |> Seq.map (fun region ->
+            if region.Owner = Some coalition then
+                region.NumVehicles
+            elif region.Owner = Some coalition.Other then
+                region.NumInvadingVehicles
+            else
+                Map.empty
+        )
         |> Seq.fold Util.addMaps Map.empty
         |> Map.filter (fun _ num -> num > 0)
     let showTanks tanks =
