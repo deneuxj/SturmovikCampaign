@@ -34,7 +34,6 @@ with
         let wide = getTriggerByName group T.Blocks.WidelyDropped
         let preciseCx = getComplexTriggerByName group T.Blocks.PreciseDrop
         let wideCx = getComplexTriggerByName group T.Blocks.WideDrop
-        let signaler = getVehicleByName group T.Blocks.SIGNALER
         let msgPrecise = getTriggerByName group T.Blocks.SubtitlePrecise
         let msgWide = getTriggerByName group T.Blocks.SubtitleWide
         // Correct positions
@@ -50,7 +49,10 @@ with
         // Correct countries
         preciseCx.Countries <- [ country ]
         wideCx.Countries <- [ country ]
-        signaler.Country <- country
+        for mcu in group do
+            match mcu with
+            | :? Mcu.HasEntity as vehicle -> vehicle.Country <- country
+            | _ -> ()
         // Notification
         let notifyPreciseName = sprintf "%s-%s" preciseParaDropPrefix eventName
         let notifyPrecise = EventReporting.Create(store, country, pos, notifyPreciseName)

@@ -5676,7 +5676,7 @@ Group
     DamageThreshold = 1;
     DamageReport = 50;
     CheckVehicles = 0;
-    CheckPlanes = 0;
+    CheckPlanes = 1;
     EventsFilterSpawned = 0;
     EventsFilterEnteredSimple = 0;
     EventsFilterEnteredAlive = 1;
@@ -5885,7 +5885,7 @@ Group
     Index = 491;
     LinkTrId = 0;
     XPos = 36924.491;
-    YPos = 98.861;
+    YPos = 100.409;
     ZPos = 24344.617;
     XOri = 0.00;
     YOri = 322.58;
@@ -5894,7 +5894,7 @@ Group
     Script = "LuaScripts\WorldObjects\Blocks\static_opel.txt";
     Country = 0;
     Desc = "";
-    Durability = 25000;
+    Durability = 3000;
     DamageReport = 50;
     DamageThreshold = 1;
     DeleteAfterDeath = 1;
@@ -5907,7 +5907,7 @@ Group
     Index = 492;
     LinkTrId = 0;
     XPos = 36903.465;
-    YPos = 98.861;
+    YPos = 100.527;
     ZPos = 24355.379;
     XOri = 0.00;
     YOri = 43.04;
@@ -5916,7 +5916,7 @@ Group
     Script = "LuaScripts\WorldObjects\Blocks\static_opel.txt";
     Country = 0;
     Desc = "";
-    Durability = 25000;
+    Durability = 3000;
     DamageReport = 50;
     DamageThreshold = 1;
     DeleteAfterDeath = 1;
@@ -5929,7 +5929,7 @@ Group
     Index = 493;
     LinkTrId = 0;
     XPos = 36951.029;
-    YPos = 98.861;
+    YPos = 100.822;
     ZPos = 24317.329;
     XOri = 0.00;
     YOri = 46.66;
@@ -5938,7 +5938,7 @@ Group
     Script = "LuaScripts\WorldObjects\Blocks\static_opel.txt";
     Country = 0;
     Desc = "";
-    Durability = 25000;
+    Durability = 3000;
     DamageReport = 50;
     DamageThreshold = 1;
     DeleteAfterDeath = 1;
@@ -5951,7 +5951,7 @@ Group
     Index = 494;
     LinkTrId = 0;
     XPos = 36934.501;
-    YPos = 98.861;
+    YPos = 101.084;
     ZPos = 24320.520;
     XOri = 0.00;
     YOri = 322.58;
@@ -5960,7 +5960,7 @@ Group
     Script = "LuaScripts\WorldObjects\Blocks\static_opel.txt";
     Country = 0;
     Desc = "";
-    Durability = 25000;
+    Durability = 3000;
     DamageReport = 50;
     DamageThreshold = 1;
     DeleteAfterDeath = 1;
@@ -5973,7 +5973,7 @@ Group
     Index = 495;
     LinkTrId = 0;
     XPos = 36883.191;
-    YPos = 98.861;
+    YPos = 99.379;
     ZPos = 24447.149;
     XOri = 0.00;
     YOri = 356.14;
@@ -5982,7 +5982,7 @@ Group
     Script = "LuaScripts\WorldObjects\Blocks\arf_nets_3_3.txt";
     Country = 0;
     Desc = "";
-    Durability = 25000;
+    Durability = 3000;
     DamageReport = 50;
     DamageThreshold = 1;
     DeleteAfterDeath = 1;
@@ -5995,7 +5995,7 @@ Group
     Index = 496;
     LinkTrId = 0;
     XPos = 36892.732;
-    YPos = 98.861;
+    YPos = 100.378;
     ZPos = 24318.715;
     XOri = 0.00;
     YOri = 208.43;
@@ -6004,7 +6004,7 @@ Group
     Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_2.txt";
     Country = 0;
     Desc = "";
-    Durability = 25000;
+    Durability = 3000;
     DamageReport = 50;
     DamageThreshold = 1;
     DeleteAfterDeath = 1;
@@ -6017,7 +6017,7 @@ Group
     Index = 497;
     LinkTrId = 0;
     XPos = 36933.087;
-    YPos = 98.861;
+    YPos = 101.147;
     ZPos = 24284.539;
     XOri = 0.00;
     YOri = 230.27;
@@ -6026,7 +6026,7 @@ Group
     Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_2.txt";
     Country = 0;
     Desc = "";
-    Durability = 25000;
+    Durability = 3000;
     DamageReport = 50;
     DamageThreshold = 1;
     DeleteAfterDeath = 1;
@@ -6149,6 +6149,198 @@ Group
     ZOri = 0.00;
     Time = 20;
     Random = 100;
+  }
+  
+
+  Vehicle
+  {
+    Name = "NOICON";
+    Index = 678;
+    LinkTrId = 679;
+    XPos = 36953.109;
+    YPos = 98.645;
+    ZPos = 24416.230;
+    XOri = 359.90;
+    YOri = 268.89;
+    ZOri = 359.77;
+    Script = "LuaScripts\WorldObjects\vehicles\land_canvas.txt";
+    Model = "graphics\vehicles\land_canvas\land_canvas.mgm";
+    Desc = "";
+    Country = 201;
+    NumberInFormation = 0;
+    Vulnerable = 0;
+    Engageable = 0;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 679;
+    Name = "NOICON entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36953.109;
+    YPos = 98.845;
+    ZPos = 24416.230;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 678;
+  }
+  
+
+  Vehicle
+  {
+    Name = "NOICON";
+    Index = 680;
+    LinkTrId = 681;
+    XPos = 36953.435;
+    YPos = 99.310;
+    ZPos = 24493.432;
+    XOri = 1.73;
+    YOri = 268.89;
+    ZOri = 359.18;
+    Script = "LuaScripts\WorldObjects\vehicles\land_canvas.txt";
+    Model = "graphics\vehicles\land_canvas\land_canvas.mgm";
+    Desc = "";
+    Country = 201;
+    NumberInFormation = 0;
+    Vulnerable = 0;
+    Engageable = 0;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 681;
+    Name = "NOICON entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36953.435;
+    YPos = 99.510;
+    ZPos = 24493.432;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 680;
+  }
+  
+
+  Vehicle
+  {
+    Name = "NOICON";
+    Index = 683;
+    LinkTrId = 684;
+    XPos = 36915.238;
+    YPos = 98.470;
+    ZPos = 24453.197;
+    XOri = 358.40;
+    YOri = 0.00;
+    ZOri = 0.64;
+    Script = "LuaScripts\WorldObjects\vehicles\land_canvas.txt";
+    Model = "graphics\vehicles\land_canvas\land_canvas.mgm";
+    Desc = "";
+    Country = 201;
+    NumberInFormation = 0;
+    Vulnerable = 0;
+    Engageable = 0;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 684;
+    Name = "NOICON entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36915.238;
+    YPos = 98.670;
+    ZPos = 24453.197;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 683;
+  }
+  
+
+  Vehicle
+  {
+    Name = "NOICON";
+    Index = 686;
+    LinkTrId = 687;
+    XPos = 36992.431;
+    YPos = 97.567;
+    ZPos = 24454.393;
+    XOri = 359.15;
+    YOri = 0.00;
+    ZOri = 358.29;
+    Script = "LuaScripts\WorldObjects\vehicles\land_canvas.txt";
+    Model = "graphics\vehicles\land_canvas\land_canvas.mgm";
+    Desc = "";
+    Country = 201;
+    NumberInFormation = 0;
+    Vulnerable = 0;
+    Engageable = 0;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 687;
+    Name = "NOICON entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 36992.431;
+    YPos = 97.767;
+    ZPos = 24454.393;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 686;
   }
   
 
