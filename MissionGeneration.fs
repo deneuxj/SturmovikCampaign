@@ -351,24 +351,24 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                         |> Option.map (fun path -> path.Value)
                     match path with
                     | Some path ->
+                        let convoySpeed = // km/h
+                            match order.Means with
+                            | ByRoad -> 50
+                            | ByRail -> 70
+                            | ByRiverShip -> 5
+                            | BySeaShip -> 8
+                            | ByAir _ -> 300
                         let pathVertices =
                             path
                             |> List.map (fun (v, yori, side) ->
                                 { Pos = v
                                   Ori = yori
-                                  Radius = 10000
-                                  Speed = 50
+                                  Radius = 100
+                                  Speed = convoySpeed
                                   Priority = 1
                                   SpawnSide = side
                                 }
                             )
-                        let convoySpeed = // km/h
-                            match order.Means with
-                            | ByRoad -> 50.0f
-                            | ByRail -> 70.0f
-                            | ByRiverShip -> 5.0f
-                            | BySeaShip -> 8.0f
-                            | ByAir _ -> 300.0f
                         let targetTravelTime = 1.0f // hours
                         let pathVertices =
                             match order.Means with
@@ -384,7 +384,7 @@ let createConvoys store lcStore (world : World) (state : WorldState) (orders : R
                                             match prev with
                                             | Some (prev : Vector2)->
                                                 let dist = (prev - wp.Pos).Length() / 1000.0f
-                                                let t = dist / convoySpeed
+                                                let t = dist / float32 wp.Speed
                                                 wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
                                             | None ->
                                                 wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
