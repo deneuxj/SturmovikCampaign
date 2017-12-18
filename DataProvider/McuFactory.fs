@@ -1098,9 +1098,9 @@ let private mkAsHasEntity typeName path (state : (string * Value) list ref) icon
 
             member this.Country
                 with get() =
-                    !state |> getIntField "Country" |> enum
+                    !state |> getOptIntField "Country" |> Option.map enum
                 and set country =
-                    state := !state |> setField ("Country", Value.Integer (int country))
+                    state := !state |> setOptField ("Country", country |> Option.map (int >> Value.Integer))
 
             member this.NumberInFormation = formation
 
@@ -1143,7 +1143,6 @@ let tryMkAsHasEntity (typeName : string, typ : ValueType) =
         let required =
             [ ("LinkTrId", ValueType.Integer)
               ("Name", ValueType.String)
-              ("Country", ValueType.Integer)
               ("Model", ValueType.String)
               ("Script", ValueType.String) ] @ requiredForBase
         let hasItAll =

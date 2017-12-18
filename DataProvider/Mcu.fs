@@ -361,7 +361,7 @@ type HasEntity =
     abstract Name : string with get, set
     abstract Model : string with get, set
     abstract Script : string with get, set
-    abstract Country : CountryValue with get, set
+    abstract Country : CountryValue option with get, set
     abstract NumberInFormation : NumberInFormationData option
     abstract PayloadId : int option with get, set
     abstract WMMask : int option with get, set
