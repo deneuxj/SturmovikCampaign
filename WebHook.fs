@@ -59,63 +59,6 @@ let startQueue() =
 let postMessage (queue : MailboxProcessor<unit -> int>, client) message =
     queue.Post(fun() -> toChat client message)
 
-let postNumPlanes channel numFlights =
-    let message =
-        let be, plural =
-            if numFlights > 1 then "are", "s" else "is", ""
-        sprintf "There %s now %d plane%s in the air."
-            be
-            numFlights
-            plural
-    postMessage channel message
-
-let onTookOff channel (flight : InFlight, pilot : Pilot, numFlights : int) =
-    let message =
-        sprintf "A plane took off%s."
-            (match pilot.Coalition with
-             | Some Axis -> " on the axis side"
-             | Some Allies -> " on the allies side"
-             | None -> "")
-    postMessage channel message
-    postNumPlanes channel numFlights
-
-let onLanded channel (_, damage, _, flightDuration, numFlights) =
-    let planeState =
-        if damage = 0.0f then
-            "plane in pristine condition"
-        elif damage < 0.1f then
-            "plane with scratches"
-        elif damage < 0.2f then
-            "damaged plane"
-        else
-            "wreck"
-    let flightDuration =
-        match flightDuration with
-        | None -> ""
-        | Some (duration : System.TimeSpan) ->
-            let duration = duration.TotalMinutes
-            if duration <= 2.0 then
-                "shortly after take off"
-            elif duration <= 10.0 then
-                "after flying for a few minutes"
-            elif duration <= 20.0 then
-                "after a short sortie"
-            elif duration <= 45.0 then
-                "after a sortie"
-            else
-                "after a long flight"
-    postMessage channel (sprintf "A %s landed %s." planeState flightDuration)
-    postNumPlanes channel numFlights
-
-let onKilled channel (pilot : Pilot, numFlights : int) =
-    let message =
-        sprintf "A plane on the %s side was shot down."
-            (match pilot.Coalition with
-             | Some x -> x.ToString()
-             | None -> "neutral")
-    postMessage channel message
-    postNumPlanes channel numFlights
-
 let onMissionStarted channel (missionTime : System.DateTime) =
     let message =
         sprintf "New mission started, in-game time is %s."

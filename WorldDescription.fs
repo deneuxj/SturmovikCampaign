@@ -303,6 +303,10 @@ with
 
 /// Airfield identifier, uses the name of the fakefield.
 type AirfieldId = AirfieldId of string
+with
+    member this.AirfieldName =
+        match this with
+        | AirfieldId name -> name
 
 /// Identifies the kind of plane that can be parked at some location.
 module ParkedPlaneTypes =

@@ -13,6 +13,9 @@ open Campaign.Configuration
 open Campaign.Util
 open Campaign.WebHook
 open Campaign.Commenting
+open Campaign.WorldDescription
+open Campaign.PlaneModel
+open Campaign.WorldState
 
 module Support =
     let findRunningServers(config) =
@@ -373,6 +376,8 @@ type Plugin() =
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
     let mutable commenter : Commentator option = None
     let mutable queue = startQueue()
+    let mutable world = None
+    let mutable state = None
 
     let onCampaignOver victors =
         match webHookClient with
@@ -394,37 +399,56 @@ type Plugin() =
         | Some hook -> postMessage (queue, hook) message
         | None -> ()
 
-    let announceLandingToTeam (player : Pilot, damageReceived, damageInflicted, _, _) =
+    let announceTakeOffToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, plane : PlaneModel, cargo : float32<E>) =
         match support with
         | Some support ->
             async {
-                match player.Coalition with
-                | Some coalition ->
-                    let team =
-                        match coalition with
-                        | Axis -> support.ServerControl.GetAxisTeam()
-                        | Allies -> support.ServerControl.GetAlliesTeam()
-                    let intro =
-                        if damageInflicted = 0.0f then
-                            sprintf "%s is back" player.Name
-                        elif damageInflicted < 1.0f then
-                            sprintf "%s is welcomed back on the ground" player.Name
-                        elif damageInflicted < 2.0f then
-                            sprintf "%s's return is celebrated" player.Name
-                        else
-                            sprintf "the entire base rushes to welcome %s" player.Name
-                    let difficulty =
-                        if damageReceived = 0.0f then
-                            ""
-                        elif damageReceived < 0.1f then
-                            " after a difficult mission"
-                        elif damageReceived < 0.9f then
-                            " after a dangerous mission"
-                        else
-                            " after narrowly escaping death"
-                    return! support.ServerControl.MessageTeam(team, [intro + difficulty])
-                | None ->
-                    ()
+                let message =
+                    sprintf "%s took off from %s with %3.0fkg of cargo."
+                        player
+                        airfield.AirfieldName
+                        (cargo / bombCost)
+                let team =
+                    match coalition with
+                    | Axis -> support.ServerControl.GetAxisTeam()
+                    | Allies -> support.ServerControl.GetAlliesTeam()
+                return! support.ServerControl.MessageTeam(team, [message])
+            }
+        | None ->
+            async { return () }
+
+    let announceLandingToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, plane : PlaneModel, cargo : float32<E>, health : float32, damageInflicted : float32<E>) =
+        match support with
+        | Some support ->
+            async {
+                let cargo =
+                    if cargo > 0.0f<E> then
+                        sprintf " with %3.0fkg of cargo" (cargo / bombCost)
+                    else
+                        ""
+                let team =
+                    match coalition with
+                    | Axis -> support.ServerControl.GetAxisTeam()
+                    | Allies -> support.ServerControl.GetAlliesTeam()
+                let intro =
+                    if damageInflicted = 0.0f<E> then
+                        sprintf "%s is back" player
+                    elif damageInflicted < GroundAttackVehicle.LightArmorCost then
+                        sprintf "%s is welcomed back on the ground" player
+                    elif damageInflicted < GroundAttackVehicle.MediumTankCost then
+                        sprintf "%s's return is celebrated" player
+                    else
+                        sprintf "the entire base rushes to welcome %s" player
+                let difficulty =
+                    if health = 1.0f then
+                        ""
+                    elif health > 0.9f then
+                        " after a difficult mission"
+                    elif health > 0.1f then
+                        " after a dangerous mission"
+                    else
+                        " after narrowly escaping death"
+                return! support.ServerControl.MessageTeam(team, [intro + difficulty + cargo])
             }
         | None ->
             async {
@@ -444,7 +468,7 @@ type Plugin() =
             if not(String.IsNullOrEmpty(webHookUri)) then
                 webHookClient <- Some(createClient(webHookUri))
                 printfn "WebHook client created"
-        | Some x ->
+        | Some _ ->
             ()
         // Stop commenter
         match commenter with
@@ -453,16 +477,38 @@ type Plugin() =
         | None ->
             ()
         // (Re-)start commenter
-        match webHookClient with
-        | Some webHookClient ->
-            let onLanded x =
-                Async.Start(announceLandingToTeam x)
-                onLanded(queue, webHookClient) x
-            let update = update (onTookOff(queue, webHookClient), onLanded, onKilled(queue, webHookClient), onMissionStarted(queue, webHookClient))
-            commenter <- Some(new Commentator(Path.Combine(config.ServerDataDir, "logs"), initState, update))
+        match webHookClient, world, state with
+        | Some webHookClient, Some world, Some state ->
+            let handlers =
+                { OnCargoTookOff = announceTakeOffToTeam
+                  OnLanded = announceLandingToTeam
+                  OnNewMission = fun() ->
+                    x.LoadWorldAndState(config.OutputDir)
+                    x.StartWebHookClient(config)
+                }
+            commenter <- Some(new Commentator(Path.Combine(config.ServerDataDir, "logs"), handlers, world, state))
             printfn "Commenter set"
-        | None ->
+        | _, None, _
+        | _, _, None
+        | None, _, _ ->
             ()
+
+    member x.LoadWorldAndState(path) =
+        let serializer = FsPickler.CreateXmlSerializer()
+        try
+            use worldFile = File.OpenText(Path.Combine(path, Filenames.world))
+            use stateFile = File.OpenText(Path.Combine(path, Filenames.state))
+            let w = serializer.Deserialize<World>(worldFile)
+            let s = serializer.Deserialize<WorldState>(stateFile)
+            world <- Some w
+            state <- Some s
+        with
+        | exc ->
+            match support with
+            | Some apis ->
+                apis.Logging.LogError(sprintf "Failed to load world and state from %s: '%s'" path exc.Message)
+            | None ->
+                ()
 
     interface CampaignServerApi with
         member x.Init(apis) =

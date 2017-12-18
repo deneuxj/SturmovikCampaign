@@ -219,6 +219,8 @@ type TookOff = {
     Plane : PlaneModel
     Cargo : float32<E>
     BombLoad : float32<K>
+    PlayerName : string option
+    Coalition : CoalitionId option
 }
 
 type Landed = {
@@ -227,6 +229,8 @@ type Landed = {
     Plane : PlaneModel
     Health : float32
     Cargo : float32<E>
+    PlayerName : string option
+    Coalition : CoalitionId option
 }
 with
     static member MaxDistanceFromAirfield = 5000.0f
@@ -250,6 +254,8 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
         let ongoingFlight = ref Map.empty
         // Map human player (NickId) to vehicle id
         let playerPilot = ref Map.empty
+        // Map plane id to name of human player
+        let planePilot = ref Map.empty
         // Function to send back a plane to starting airfield. Used for planes still in the air when the round ends or if a player disconnects while flying.
         let sendPlaneBack vehicle af =
             match planeIds.Value.TryFind vehicle with
@@ -263,7 +269,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     |> Option.defaultVal 0.0f<E>
                 cargo := cargo.Value.Remove vehicle
                 ongoingFlight := ongoingFlight.Value.Remove vehicle
-                Some { PlaneId = vehicle; Airfield = af; Plane = plane; Health = health; Cargo = cargoAmount }
+                Some { PlaneId = vehicle; Airfield = af; Plane = plane; Health = health; Cargo = cargoAmount; PlayerName = None; Coalition = sg.GetRegion(wg.GetAirfield(af).Region).Owner }
             | None ->
                 None
         for entry in entries do
@@ -283,6 +289,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 damages := Map.add damage.TargetId newDamage !damages
             | :? PlayerPlaneEntry as playerPlane ->
                 playerPilot := playerPilot.Value.Add(playerPlane.NickId, playerPlane.VehicleId)
+                planePilot := planePilot.Value.Add(playerPlane.VehicleId, playerPlane.Name)
                 match playerPlane.VehicleType with
                 | PlaneObjectType plane when plane.Roles.Contains CargoTransporter ->
                     let modmask, payload = plane.CargoPayload
@@ -310,8 +317,10 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     let bombLoad =
                         bombLoad.Value.TryFind takeOff.VehicleId
                         |> Option.defaultVal 0.0f<K>
+                    let pilot = planePilot.Value.TryFind takeOff.VehicleId
                     ongoingFlight := ongoingFlight.Value.Add(takeOff.VehicleId, af.AirfieldId)
-                    yield tookOff { PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane; Cargo = cargo; BombLoad = bombLoad }
+                    let coalition = sg.GetRegion(af.Region).Owner
+                    yield tookOff { PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane; Cargo = cargo; BombLoad = bombLoad; PlayerName = pilot; Coalition = coalition }
                 | None ->
                     ()
             | :? LandingEntry as landing ->
@@ -344,7 +353,9 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                             cargo.Value.TryFind landing.VehicleId
                             |> Option.defaultVal 0.0f<E>
                         cargo := cargo.Value.Remove landing.VehicleId
-                        yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health; Cargo = cargoAmount }
+                        let pilot = planePilot.Value.TryFind landing.VehicleId
+                        let coalition = sg.GetRegion(af.Region).Owner
+                        yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health; Cargo = cargoAmount; PlayerName = pilot; Coalition = coalition }
                     | None -> ()
             | :? RoundEndEntry as roundEnd ->
                 // register all ongoing flights as landed back at starting airfield
@@ -360,6 +371,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 // register an in-flight disconnection as landed back at starting airfield
                 match playerPilot.Value.TryFind left.NickId with
                 | Some vehicle ->
+                    planePilot := planePilot.Value.Remove vehicle
                     match ongoingFlight.Value.TryFind vehicle with
                     | Some af ->
                         match sendPlaneBack vehicle af with
