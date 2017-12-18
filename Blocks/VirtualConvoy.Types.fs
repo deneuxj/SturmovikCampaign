@@ -38,7 +38,7 @@ with
         // Get key nodes
         let getByName = getTriggerByName group
         let leadCar = getVehicleByName group T.Blocks.LeadCar
-        leadCar.Country <- country
+        leadCar.Country <- Some country
         match country with
         | Mcu.CountryValue.Germany ->
             vehicles.GermanCar.AssignTo(leadCar)
@@ -84,7 +84,7 @@ with
         let getByName = getTriggerByName group
         let truck = getVehicleByName group T.Blocks.Truck
         truck.Name <- sprintf "%s-%d" formationName inFormation
-        truck.Country <- country
+        truck.Country <- Some country
         // Truck model. Every fifth truck is a mobile AA truck.
         let m =
             match country with

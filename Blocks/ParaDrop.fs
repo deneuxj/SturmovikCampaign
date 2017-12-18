@@ -51,7 +51,7 @@ with
         wideCx.Countries <- [ country ]
         for mcu in group do
             match mcu with
-            | :? Mcu.HasEntity as vehicle -> vehicle.Country <- country
+            | :? Mcu.HasEntity as vehicle -> vehicle.Country <- Some country
             | _ -> ()
         // Notification
         let notifyPreciseName = sprintf "%s-%s" preciseParaDropPrefix eventName

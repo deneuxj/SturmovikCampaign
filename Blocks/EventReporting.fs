@@ -18,7 +18,7 @@ with
     /// This event can later be retrieved from the mission log. The mechanism that is used is destruction of a fake block, which can be identified by its name
     /// </summary>
     /// <param name="pos">Position of the logic nodes.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, country, pos : Vector2, eventName : string) =
+    static member Create(store : NumericalIdentifiers.IdStore, country: Mcu.CountryValue, pos : Vector2, eventName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("EventLogging").CreateMcuList()
@@ -42,7 +42,7 @@ with
         // Result
         entity.Name <- eventName
         notifier.Name <- eventName
-        notifier.Country <- country
+        notifier.Country <- Some country
         { Name = eventName
           Trigger = leaderArrived
           Disable = destroyed

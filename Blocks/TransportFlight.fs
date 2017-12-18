@@ -41,7 +41,7 @@ with
         destinationPos.AssignTo cmdLand.Pos
         cmdLand.Ori.Y <- float landingDir
         // Countries
-        plane1.Country <- country
+        plane1.Country <- Some country
         let model =
             match country with
             | Mcu.CountryValue.Germany -> vehicles.GermanTransport

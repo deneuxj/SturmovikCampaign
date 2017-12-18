@@ -75,14 +75,14 @@ with
             for escort in [ escort1; escort2 ] do
                 escort.Script <- model.Script
                 escort.Model <- model.Model
-                escort.Country <- country
+                escort.Country <- Some country
         // Override model of cargo ships
         for ship in [ ship1; ship2 ] do
             let model =
                 ShipConvoy.CargoModel(waterType)
             ship.Model <- model.Model
             ship.Script <- model.Script
-            ship.Country <- country
+            ship.Country <- Some country
         // Position of all nodes
         let v1 =
             match path with

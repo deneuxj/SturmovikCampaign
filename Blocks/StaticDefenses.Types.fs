@@ -45,20 +45,20 @@ with
         match this with
         | AntiTank ->
             match thing.Country with
-            | Mcu.CountryValue.Germany ->
+            | Some Mcu.CountryValue.Germany ->
                 vehicles.GermanAntiTankCanon.AssignTo(thing)
-            | Mcu.CountryValue.Russia ->
+            | Some Mcu.CountryValue.Russia ->
                 vehicles.RussianAntiTankCanon.AssignTo(thing)
             | _ ->
                 ()
         | AntiAirCanon ->
             match thing.Country with
-            | Mcu.CountryValue.Germany ->
+            | Some Mcu.CountryValue.Germany ->
                 if isFlak then
                     vehicles.GermanFlak.AssignTo(thing)
                 else
                     vehicles.GermanAntiAirCanon.AssignTo(thing)
-            | Mcu.CountryValue.Russia ->
+            | Some Mcu.CountryValue.Russia ->
                 if isFlak then
                     vehicles.RussianFlak.AssignTo(thing)
                 else
@@ -67,12 +67,12 @@ with
                 ()
         | AntiAirMg ->
             match thing.Country with
-            | Mcu.CountryValue.Germany ->
+            | Some Mcu.CountryValue.Germany ->
                 if isFlak then
                     vehicles.GermanFlak.AssignTo(thing)
                 else
                     vehicles.GermanAntiAirMachineGun.AssignTo(thing)
-            | Mcu.CountryValue.Russia ->
+            | Some Mcu.CountryValue.Russia ->
                 if isFlak then
                     vehicles.RussianFlak.AssignTo(thing)
                 else
@@ -111,7 +111,7 @@ with
                 |> Some
             with _ -> None
         // Set country and positions
-        cannon.Country <- country
+        cannon.Country <- Some country
         specialty.SetModel(cannon, isFlak)
         let angle = float32 System.Math.PI * (yori / 180.0f)
         let forward = Vector2(cos angle, sin angle)
@@ -166,7 +166,7 @@ with
         searchOrder.Index <- attackAirOrder.Index
         let canon = getHasEntityByIndex this.Cannon.MisObjID mcus
         match canon.Country with
-        | Mcu.CountryValue.Germany ->
+        | Some Mcu.CountryValue.Germany ->
             vehicles.GermanSearchLight.AssignTo(canon)
         | _ ->
             vehicles.RussianSearchLight.AssignTo(canon)

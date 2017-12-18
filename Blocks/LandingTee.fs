@@ -32,8 +32,8 @@ with
             (rel.Rotate(ori) + pos).AssignTo mcu.Pos
             mcu.Ori.Y <- (mcu.Ori.Y + float ori) % 360.0
         // Country
-        leg.Country <- country
-        bar.Country <- country
+        leg.Country <- Some country
+        bar.Country <- Some country
         // Return
         { All = McuUtil.groupFromList group
         }
