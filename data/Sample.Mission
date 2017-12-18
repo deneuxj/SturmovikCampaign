@@ -2538,8 +2538,8 @@ MCU_TR_Entity
 Ship
 {
   Name = "Ship";
-  Index = 117;
-  LinkTrId = 118;
+  Index = 118;
+  LinkTrId = 119;
   XPos = 26817.512;
   YPos = 149.907;
   ZPos = 28558.067;
@@ -2549,7 +2549,7 @@ Ship
   Script = "LuaScripts\WorldObjects\Ships\1124.txt";
   Model = "graphics\ships\1124\1124.mgm";
   Desc = "";
-  Country = 0;
+  Country = 201;
   Vulnerable = 1;
   Engageable = 1;
   LimitAmmo = 1;
@@ -2566,7 +2566,7 @@ Ship
 
 MCU_TR_Entity
 {
-  Index = 118;
+  Index = 119;
   Name = "Ship entity";
   Desc = "";
   Targets = [116];
@@ -2578,7 +2578,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 117;
+  MisObjID = 118;
 }
 
 
@@ -2586,8 +2586,8 @@ MCU_TR_Entity
 Ship
 {
   Name = "Ship";
-  Index = 120;
-  LinkTrId = 121;
+  Index = 121;
+  LinkTrId = 122;
   XPos = 26771.003;
   YPos = 149.907;
   ZPos = 28557.151;
@@ -2614,7 +2614,7 @@ Ship
 
 MCU_TR_Entity
 {
-  Index = 121;
+  Index = 122;
   Name = "Ship entity";
   Desc = "";
   Targets = [116];
@@ -2626,7 +2626,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 120;
+  MisObjID = 121;
 }
 
 
