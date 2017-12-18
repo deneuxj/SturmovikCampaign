@@ -144,6 +144,8 @@ with
             attackOrder.AttackArea <- range
         | _ ->
             ()
+        // Set AI level to low, otherwise it's way too good (see https://forum.il2sturmovik.com/topic/32578-bravery-being-out-range/?p=544344)
+        cannon.AILevel <- Some 1
         // Result
         { Cannon = McuUtil.getEntityByIndex cannon.LinkTrId db
           Show = show
