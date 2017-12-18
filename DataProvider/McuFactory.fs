@@ -1116,6 +1116,12 @@ let private mkAsHasEntity typeName path (state : (string * Value) list ref) icon
                 and set mask =
                     state := !state |> setOptField ("WMMask", mask |> Option.map (encodeToFakeBase2 >> Value.Integer))
 
+            member this.AILevel
+                with get() =
+                    !state |> getOptIntField "AILevel"
+                and set level =
+                    state := !state |> setOptField ("AILevel", level |> Option.map Value.Integer)
+
         interface McuBase with
             member this.AsString() = baseImpl.AsString()
             member this.Ori = baseImpl.Ori
@@ -1136,7 +1142,10 @@ let tryMkAsHasEntity (typeName : string, typ : ValueType) =
     | ValueType.Composite fields ->
         let required =
             [ ("LinkTrId", ValueType.Integer)
-              ("Name", ValueType.String) ] @ requiredForBase
+              ("Name", ValueType.String)
+              ("Country", ValueType.Integer)
+              ("Model", ValueType.String)
+              ("Script", ValueType.String) ] @ requiredForBase
         let hasItAll =
             required
             |> List.forall (hasField fields)

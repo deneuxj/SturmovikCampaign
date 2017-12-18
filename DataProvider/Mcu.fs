@@ -365,6 +365,7 @@ type HasEntity =
     abstract NumberInFormation : NumberInFormationData option
     abstract PayloadId : int option with get, set
     abstract WMMask : int option with get, set
+    abstract AILevel : int option with get, set
 
 /// <summary>
 /// Substitute occurrences of numerical ids in an MCU.
