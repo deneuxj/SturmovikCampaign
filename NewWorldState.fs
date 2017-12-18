@@ -11,6 +11,7 @@ open Campaign.PlaneModel
 open System.Numerics
 open VectorExtension
 open SturmovikMission.Blocks.BlocksMissionData
+open FSharp.Control
 
 /// Try to find the airfield that is furthest away from any enemy region.
 let tryFindRearAirfield (world : World) (coalition : CoalitionId) (state : WorldState) =

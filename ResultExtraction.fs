@@ -16,6 +16,7 @@ open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.Util
+open FSharp.Control
 
 /// Match the object type strings in log events with plane models.
 let (|PlaneObjectType|_|) (s : string) =
@@ -31,11 +32,11 @@ type SuppliesShipped = {
     OrderId : OrderId // Refers to a resupply order
 }
 
-let extractSuppliesShipped (orders : ResupplyOrder list) (entries : LogEntry seq) =
+let extractSuppliesShipped (orders : ResupplyOrder list) (entries : AsyncSeq<LogEntry>) =
     let tryGetOrder(eventName) =
         orders
         |> Seq.tryFind (fun order -> order.MatchesMissionLogDepartureEventName(eventName))
-    seq {
+    asyncSeq {
         let idxToName = ref Map.empty
         for entry in entries do
             match entry with
@@ -62,11 +63,11 @@ type ColumnLeft = {
     Vehicles : GroundAttackVehicle[]
 }
 
-let extractColumnDepartures (orders : ColumnMovement list) (entries : LogEntry seq) =
+let extractColumnDepartures (orders : ColumnMovement list) (entries : AsyncSeq<LogEntry>) =
     let tryGetRank(eventName) =
         orders
         |> Seq.tryPick (fun order -> order.MatchesMissionLogDepartureEventName(eventName) |> Option.map (fun rankOffset -> order, rankOffset))
-    seq {
+    asyncSeq {
         let idxToName = ref Map.empty
         for entry in entries do
             match entry with
@@ -108,8 +109,8 @@ let (|PlaneFerrySpawned|PlaneFerryLanded|PlaneFerryKilled|) =
     | Choice3Of3 (x : PlaneFerryOrder) -> PlaneFerryKilled x
 
 /// Extract events related to ferry planes.
-let extractFerryPlanes (orders : PlaneFerryOrder list) (entries : LogEntry seq) =
-    [
+let extractFerryPlanes (orders : PlaneFerryOrder list) (entries : AsyncSeq<LogEntry>) =
+    asyncSeq {
         let idxToName = ref Map.empty
         for entry in entries do
             match entry with
@@ -140,7 +141,7 @@ let extractFerryPlanes (orders : PlaneFerryOrder list) (entries : LogEntry seq) 
                     ()
             | _ ->
                 ()
-    ]
+    }
 
 /// Precision of successful paratropper drop.
 type ParaDropPrecision = Precise | Wide
@@ -152,7 +153,7 @@ type ParaDropResult = {
     Precision : ParaDropPrecision
 }
 
-let extractParaDrops (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : LogEntry seq) =
+let extractParaDrops (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : AsyncSeq<LogEntry>) =
     let defenders =
         battles
         |> dict
@@ -190,7 +191,7 @@ let extractParaDrops (world : World) (state : WorldState) (battles : (DefenseAre
                 None
         | None ->
             None
-    [
+    asyncSeq {
         let idxToName = ref Map.empty
         for entry in entries do
             match entry with
@@ -209,7 +210,7 @@ let extractParaDrops (world : World) (state : WorldState) (battles : (DefenseAre
                     ()
             | _ ->
                 ()
-    ]
+    }
 
 /// A plane took off, possibly took some damage and then landed/crashed near or at an airfield
 type TookOff = {
@@ -235,12 +236,12 @@ let (|TookOff|Landed|) =
     | Choice1Of2 x -> TookOff x
     | Choice2Of2 x -> Landed x
 
-let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : LogEntry seq) =
+let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : AsyncSeq<LogEntry>) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     let tookOff (x : TookOff) = Choice1Of2 x
     let landed (x : Landed) = Choice2Of2 x
-    [
+    asyncSeq {
         let planeIds = ref Map.empty
         let damages = ref Map.empty
         let cargo = ref Map.empty
@@ -370,7 +371,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : L
                     ()
                 playerPilot := playerPilot.Value.Remove left.NickId
             | _ -> ()
-    ]
+    }
 
 /// <summary>
 /// Remove landings of planes that never took off.
@@ -405,11 +406,28 @@ type DamagedObject =
 type CommonDamageData = {
     Amount : float32
 }
+with
+    static member FromValue(v) =
+        { Amount = v
+        }
 
 type Damage = {
     Object : DamagedObject
     Data : CommonDamageData
 }
+with
+    static member GroupByObject(xs) =
+        xs
+        |> Seq.groupBy (fun damage -> damage.Object)
+        |> Seq.map (fun (damageObject, damages) ->
+            { Object = damageObject
+              Data =
+                { Amount =
+                    damages
+                    |> Seq.map (fun dam -> dam.Data.Amount)
+                    |> Seq.sum
+                }
+            })
 
 let (|BuildingObjectType|_|) (s : string) =
     let low = s.ToLower()
@@ -491,7 +509,7 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                             if  List.contains subGroup significantSubBlocks then
                                 let damageAmount =
                                     damage.Damage / float32 (List.length significantSubBlocks)
-                                yield { Object = damaged; Data = { Amount = damage.Damage } }
+                                yield { Object = damaged; Data = CommonDamageData.FromValue damage.Damage }
                         | None -> () // No known building nearby
                     | None -> () // Outside of know regions
                 | Some(StaticPlaneType world.PlaneSet planeModel, _, _) ->
@@ -500,11 +518,11 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                         |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())
                     let distance = (closestAirfield.Pos - damagePos).Length()
                     if distance < 3000.0f then
-                        yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = { Amount = damage.Damage } }
+                        yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = CommonDamageData.FromValue damage.Damage }
                 | Some(StaticVehicleType vehicleModel, _, _) ->
                     match tryFindContainingRegion damagePos with
                     | Some region ->
-                        yield { Object = Vehicle(region.RegionId, vehicleModel); Data = { Amount = damage.Damage } }
+                        yield { Object = Vehicle(region.RegionId, vehicleModel); Data = CommonDamageData.FromValue damage.Damage }
                     | None ->
                         ()
                 | Some(_, (CannonObjectName as gunType), _) | Some (_, (HeavyMachineGunAAName as gunType), _) | Some (_, (LightMachineGunAAName as gunType), _) ->
@@ -522,7 +540,7 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                                 None
                         match objType with
                         | Some objType ->
-                            yield { Object = objType; Data = { Amount = damage.Damage } }
+                            yield { Object = objType; Data = CommonDamageData.FromValue damage.Damage }
                         | None ->
                             ()
                     | None ->
@@ -530,10 +548,7 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                 | _ -> () // Ignored object type
             | _ -> () // Ignored log entry
     }
-    |> Seq.groupBy (fun damage -> damage.Object)
-    |> Seq.map (fun (damageObject, damages) ->
-        { Object = damageObject
-          Data = { Amount = damages |> Seq.sumBy (fun dam -> dam.Data.Amount) } })
+    |> Damage.GroupByObject
 
 let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : LogEntry seq) =
     seq {
@@ -557,19 +572,16 @@ let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder
                                 order.MatchesMissionLogVehicleKilledEventName(name)
                                 |> Option.map (fun rank -> order, rank))
                     match columnDamage with
-                    | Some(order, rank) -> yield { Object = Column { OrderId = order.OrderId; Rank = rank }; Data = { Amount = 1.0f } }
+                    | Some(order, rank) -> yield { Object = Column { OrderId = order.OrderId; Rank = rank }; Data = CommonDamageData.FromValue 1.0f }
                     | None ->
                         match convoyDamage.Value with
-                        | Some(order, rank) -> yield { Object = Convoy { OrderId = order.OrderId; Rank = rank }; Data = { Amount = 1.0f } }
+                        | Some(order, rank) -> yield { Object = Convoy { OrderId = order.OrderId; Rank = rank }; Data = CommonDamageData.FromValue 1.0f }
                         | None -> ()
                 | None ->
                     ()
             | _ -> ()
     }
-    |> Seq.groupBy (fun damage -> damage.Object)
-    |> Seq.map (fun (damageObject, damages) ->
-        { Object = damageObject
-          Data = { Amount = damages |> Seq.sumBy (fun dam -> dam.Data.Amount) } })
+    |> Damage.GroupByObject
 
 
 type BattleParticipantKilled = {
@@ -580,7 +592,7 @@ type BattleParticipantKilled = {
 }
 
 /// Extract damages caused to vehicles in a battle. Used to compute battle bonuses.
-let extractBattleDamages (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : LogEntry seq) =
+let extractBattleDamages (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : AsyncSeq<LogEntry>) =
     let defenders =
         battles
         |> dict
@@ -591,7 +603,7 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
     let battles =
         world.AntiTankDefenses
         |> List.filter(fun area -> battles.Contains area.DefenseAreaId)
-    [
+    asyncSeq {
         let idMapper = ref Map.empty
         let playerVehicles = ref Set.empty
         for entry in entries do
@@ -604,7 +616,7 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
                 match Map.tryFind kill.TargetId !idMapper with
                 | Some name ->
                     yield!
-                        seq {
+                        asyncSeq {
                             for battle in battles do
                                 for vehicle in GroundAttackVehicle.AllVehicles do
                                     for side in [ "A"; "D" ] do
@@ -625,4 +637,4 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
                 | None ->
                     ()
             | _ -> ()
-    ]
+    }

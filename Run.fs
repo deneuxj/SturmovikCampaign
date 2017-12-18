@@ -5,7 +5,7 @@ open System.IO
 open Campaign.BasicTypes
 open Campaign.Configuration
 open PlaneModel
-
+open FSharp.Control
 
 module Filenames =
     let axisOrders = "axisOrders.xml"
@@ -660,27 +660,33 @@ module MissionLogParsing =
 
         if List.isEmpty entries then
             failwith "No entries found suitable for result extraction"
+        let entriesAsStrings =
+            entries
+            |> List.map (fun entry -> entry.OriginalString)
+        let entryList = entries
+        let entries = AsyncSeq.ofSeq entries
         let shipments =
-            let shipmentAxis = extractSuppliesShipped axisOrders.Resupply entries |> List.ofSeq
-            let shipmentAllies = extractSuppliesShipped alliesOrders.Resupply entries |> List.ofSeq
+            let shipmentAxis = extractSuppliesShipped axisOrders.Resupply entries |> AsyncSeq.toList
+            let shipmentAllies = extractSuppliesShipped alliesOrders.Resupply entries |> AsyncSeq.toList
             shipmentAxis @ shipmentAllies
-        let staticDamages = extractStaticDamages world entries |> List.ofSeq
-        let vehicleDamages = extractVehicleDamages (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entries |> List.ofSeq
+        let staticDamages = extractStaticDamages world entryList |> Seq.toList
+        let vehicleDamages = extractVehicleDamages (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entryList |> Seq.toList
         let takeOffs, landings =
             let both =
                 extractTakeOffsAndLandings world state entries
+                |> AsyncSeq.toList
             both |> List.choose (function TookOff x -> Some x | _ -> None),
             both |> List.choose (function Landed x -> Some x | _ -> None)
         let movements = axisOrders.Columns @ alliesOrders.Columns
-        let columnDepartures = extractColumnDepartures movements entries |> List.ofSeq
+        let columnDepartures = extractColumnDepartures movements entries |> AsyncSeq.toList
         let battles =
             Battlefield.identifyBattleAreas world state
             |> Seq.cache
-        let paraDrops = extractParaDrops world state battles entries
-        let planeFerryEvents = extractFerryPlanes (axisOrders.PlaneFerries @ alliesOrders.PlaneFerries) entries
-        let battleKills = extractBattleDamages world state battles entries
+        let paraDrops = extractParaDrops world state battles entries |> AsyncSeq.toList
+        let planeFerryEvents = extractFerryPlanes (axisOrders.PlaneFerries @ alliesOrders.PlaneFerries) entries |> AsyncSeq.toList
+        let battleKills = extractBattleDamages world state battles entries |> AsyncSeq.toList
         let results =
-            { Entries = entries |> List.map (fun entry -> entry.OriginalString)
+            { Entries = entriesAsStrings
               Shipments = shipments
               StaticDamages = staticDamages
               VehicleDamages = vehicleDamages

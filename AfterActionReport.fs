@@ -157,8 +157,11 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
         damages
         |> List.choose (fun event ->
             match event.Object with
-            | Column { OrderId = { Coalition = owner; Index = orderIndex }; Rank = rank } when owner = coalition && event.Data.Amount > 0.25f ->
-                Some(orderIndex, rank)
+            | Column { OrderId = { Coalition = owner; Index = orderIndex }; Rank = rank } when owner = coalition ->
+                if event.Data.Amount > 0.25f then
+                    Some(orderIndex, rank)
+                else
+                    None
             | _ -> None)
         |> List.choose (fun (order, vehicle) ->
             columns.TryFind order
