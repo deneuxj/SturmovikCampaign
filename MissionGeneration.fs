@@ -174,9 +174,9 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                         :?> Mcu.HasEntity
                     match state.Owner with
                     | Some Allies ->
-                        damagedBlock.Country <- Mcu.CountryValue.Russia
+                        damagedBlock.Country <- Some Mcu.CountryValue.Russia
                     | Some Axis ->
-                        damagedBlock.Country <- Mcu.CountryValue.Germany
+                        damagedBlock.Country <- Some Mcu.CountryValue.Germany
                     | _ ->
                         ()
                     subst damagedBlock
@@ -703,7 +703,7 @@ let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state :
                     | Some Axis -> Mcu.CountryValue.Germany
                     | Some Allies -> Mcu.CountryValue.Russia
                     | None -> Mcu.CountryValue.Russia
-            flag.Country <- owner
+            flag.Country <- Some owner
         | _ ->
             ()
 
@@ -856,7 +856,7 @@ let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (stat
                     |> List.tryFind (fun (pos, owner) -> (pos - lightPos).Length() < 200.0f)
                 match runwayStart with
                 | Some(_, owner) ->
-                    light.Country <- owner.ToCountry
+                    light.Country <- Some owner.ToCountry
                     match owner with
                     | Allies ->
                         vehicles.RussianLandLight.AssignTo(light)
@@ -1054,8 +1054,8 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             | :? Mcu.HasEntity as ndb ->
                 let coalition =
                     match ndb.Country with
-                    | Mcu.CountryValue.Germany -> Mcu.CoalitionValue.Axis
-                    | Mcu.CountryValue.Russia -> Mcu.CoalitionValue.Allies
+                    | Some Mcu.CountryValue.Germany -> Mcu.CoalitionValue.Axis
+                    | Some Mcu.CountryValue.Russia -> Mcu.CoalitionValue.Allies
                     | _ -> Mcu.CoalitionValue.Neutral
                 let icon =
                     IconDisplay.IconDisplay.Create(store, lcStore, Vector2.FromMcu ndb.Pos, "NDB", coalition, Mcu.IconIdValue.Waypoint)

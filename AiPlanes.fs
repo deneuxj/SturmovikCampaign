@@ -31,7 +31,7 @@ with
                 for i in 0..1 do
                     let block = Patrol.Create(store, lcStore, this.Pos + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Coalition.ToCoalition)
                     let modmask, payload = this.Plane.PayloadForRole(this.Role)
-                    block.Plane.Country <- this.Coalition.ToCountry
+                    block.Plane.Country <- Some this.Coalition.ToCountry
                     this.Plane.ScriptModel.AssignTo(block.Plane)
                     block.Plane.PayloadId <- Some payload
                     block.Plane.WMMask <- Some modmask
@@ -216,7 +216,7 @@ with
                 for i in 0..1 do
                     let block = Attacker.Create(store, lcStore, this.Start + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Target, landOrder)
                     let modmask, payload = this.Plane.PayloadForRole(this.Role)
-                    block.Plane.Country <- this.Coalition.ToCountry
+                    block.Plane.Country <- Some this.Coalition.ToCountry
                     this.Plane.ScriptModel.AssignTo(block.Plane)
                     block.Plane.WMMask <- Some modmask
                     block.Plane.PayloadId <- Some payload

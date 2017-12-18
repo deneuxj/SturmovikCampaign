@@ -94,14 +94,14 @@ with
             let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack))
             tank.Tank.Name <- namePrefix + "A-" + name
             model.AssignTo(tank.Tank)
-            tank.Tank.Country <- defendingCoalition.Other.ToCountry
+            tank.Tank.Country <- Some defendingCoalition.Other.ToCountry
             tank |> Choice1Of2
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCanon(model : VehicleTypeData, wallModel : VehicleTypeData) =
             let arty = RespawningCanon.Create(store, getRandomPos(AttackBack), getRandomPos(DefenseBack))
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
-            arty.Canon.Country <- defendingCoalition.Other.ToCountry
+            arty.Canon.Country <- Some defendingCoalition.Other.ToCountry
             arty |> Choice2Of2
         // Instantiate attacker blocks
         let attackers, support =
@@ -128,7 +128,7 @@ with
             | None -> ()
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
-            arty.Canon.Country <- defendingCoalition.ToCountry
+            arty.Canon.Country <- Some defendingCoalition.ToCountry
             arty
         let defenders =
             defenders
