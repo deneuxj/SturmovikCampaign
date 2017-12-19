@@ -14,15 +14,39 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open MBrace.FsPickler
 
 type EventHandlers =
     // player name, coalition, airfield, plane, cargo
     { OnCargoTookOff : string * CoalitionId * AirfieldId * PlaneModel * float32<E> -> Async<unit>
       // playername, coalition, airfield, plane, cargo, health, damages inflicted
       OnLanded : string * CoalitionId * AirfieldId * PlaneModel * float32<E> * float32 * float32<E> -> Async<unit>
-      // Called when a mission starts: current commentator should be killed, new one started with updated world and state
-      OnNewMission : unit -> unit
     }
+
+// Scan state of a sequence of log entries
+type ScanState =
+    | Skipping // Current mission is not one we are interested in
+    | Handling of AsyncSeq<LogEntry> // Current mission is of interest: keep building result extraction state
+
+// Split flow of log entries into groups corresponding to missions of interest.
+let split (date : DateTime) (entries : AsyncSeq<LogEntry>) =
+    entries
+    |> AsyncSeq.scan (fun ss entry ->
+        match ss, entry with
+        | _, (:? MissionStartEntry as start) ->
+            if start.MissionTime = date then
+                Handling(AsyncSeq.singleton entry)
+            else
+                Skipping
+        | Skipping, _ ->
+            Skipping
+        | Handling entries, _ ->
+            Handling(AsyncSeq.append entries (AsyncSeq.singleton entry))
+    ) Skipping
+    |> AsyncSeq.choose (fun ss ->
+        match ss with
+        | Skipping -> None
+        | Handling entries -> Some entries)
 
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
@@ -50,32 +74,9 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                 yield! File.ReadAllLines(file)
         }
         |> List.ofSeq
-    let rec skipEntries lines =
-        seq {
-            match lines with
-            | line :: rest ->
-                match LogEntry.Parse(line) with
-                | :? MissionStartEntry as start ->
-                    if start.MissionTime = state.Date then
-                        yield! collectEntries rest
-                    else
-                        yield! skipEntries rest
-                | _ ->
-                    yield! skipEntries rest
-            | [] ->
-                ()
-        }
-    and collectEntries lines =
-        seq {
-            match lines with
-            | line :: rest ->
-                yield LogEntry.Parse(line)
-                yield! collectEntries rest
-            | [] ->
-                ()
-        }
     let initialEntries =
-        skipEntries lines
+        lines
+        |> Seq.map LogEntry.Parse
         |> List.ofSeq
     let watcher = new FileSystemWatcher()
     do watcher.Path <- missionLogsDir
@@ -98,19 +99,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                         | e ->
                             eprintfn "Failed to parse '%s' because '%s'" ev.FullPath e.Message
                             []
-                    let missionEnded =
-                        entries2
-                        |> List.exists (fun entry ->
-                            match entry with
-                            | :? RoundEndEntry
-                            | :? MissionEndEntry
-                            | :? MissionStartEntry -> true
-                            | _ -> false
-                        )
-                    if missionEnded then
-                        return None
-                    else
-                        return! getEntry (entries2, Set.add  ev.FullPath alreadyHandled)
+                    return! getEntry (entries2, Set.add  ev.FullPath alreadyHandled)
                 else
                     return! getEntry (batched, alreadyHandled)
             | x :: xs ->
@@ -124,29 +113,64 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
     do
         let task =
             asyncSeqEntries
-            |> extractTakeOffsAndLandings world state
-            |> AsyncSeq.iterAsync (fun entry ->
-                async {
-                    match entry with
-                    | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                        if x.Cargo > 0.0f<E> then
-                            return! handlers.OnCargoTookOff(player, coalition, x.Airfield, x.Plane, x.Cargo)
-                    | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                        if x.Cargo > 0.0f<E> || x.Health < 1.0f then
-                            return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, 0.0f<E>)
-                    | _ ->
-                        return()
-                })
+            |> split state.Date
+            |> AsyncSeq.map (extractTakeOffsAndLandings world state)
+            |> AsyncSeq.iterAsync (fun events ->
+                events
+                |> AsyncSeq.iterAsync(fun event ->
+                    async {
+                        match event with
+                        | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
+                            if true || x.Cargo > 0.0f<E> then
+                                return! handlers.OnCargoTookOff(player, coalition, x.Airfield, x.Plane, x.Cargo)
+                        | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
+                            if true || x.Cargo > 0.0f<E> || x.Health < 1.0f then
+                                return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, 0.0f<E>)
+                        | _ ->
+                            return()
+                    }))
         Async.Start(task, cancelOnDispose.Token)
-    // Notify of mission ends. Used to kill this commentator and build a new one with updated state
-    do
-        let task =
-            async {
-                do! asyncSeqEntries |> AsyncSeq.iter ignore
-                handlers.OnNewMission()
-                return()
-            }
-        Async.Start(task, cancelOnDispose.Token)
+    do watcher.EnableRaisingEvents <- true
+
+    member this.Dispose() =
+        watcher.Dispose()
+        cancelOnDispose.Cancel()
+
+/// Monitor state.xml, (re-) starting a commentator whenever the file is modified
+type CommentatorRestarter(missionLogsDir : string, campaignDir : string, handlers : EventHandlers, onStateWritten : unit -> unit) =
+    let watcher = new FileSystemWatcher()
+    do watcher.Path <- campaignDir
+       watcher.Filter <- "state.xml"
+       watcher.NotifyFilter <- NotifyFilters.LastWrite
+    let serializer = FsPickler.CreateXmlSerializer()
+    let worldFile = File.OpenText(Path.Combine(campaignDir, "world.xml"))
+    let world = serializer.Deserialize<World>(worldFile)
+    do worldFile.Dispose()
+    let rec work commentator =
+        async {
+            let! ev = Async.AwaitEvent watcher.Changed
+            onStateWritten()
+            match commentator with
+            | Some (commentator : Commentator) -> commentator.Dispose()
+            | None -> ()
+            let state =
+                try
+                    use stateFile = File.OpenText(Path.Combine(campaignDir, "state.xml"))
+                    serializer.Deserialize<WorldState>(stateFile) |> Some
+                with
+                | exc ->
+                    eprintfn "Failed to parse state.xml: %s" exc.Message
+                    None
+            match state with
+            | Some state ->
+                let commentator = new Commentator(missionLogsDir, handlers, world, state)
+                return! work(Some commentator)
+            | None ->
+                return! work None
+        }
+    // Stop notifications when we are disposed
+    let cancelOnDispose = new System.Threading.CancellationTokenSource()
+    do Async.Start(work None, cancelOnDispose.Token)
     do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =

@@ -374,7 +374,7 @@ module Support =
 type Plugin() =
     let mutable support : SupportApis option = None
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
-    let mutable commenter : Commentator option = None
+    let mutable commenter : CommentatorRestarter option = None
     let mutable queue = startQueue()
     let mutable world = None
     let mutable state = None
@@ -482,11 +482,8 @@ type Plugin() =
             let handlers =
                 { OnCargoTookOff = announceTakeOffToTeam
                   OnLanded = announceLandingToTeam
-                  OnNewMission = fun() ->
-                    x.LoadWorldAndState(config.OutputDir)
-                    x.StartWebHookClient(config)
                 }
-            commenter <- Some(new Commentator(Path.Combine(config.ServerDataDir, "logs"), handlers, world, state))
+            commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, handlers, fun() -> x.StartWebHookClient(config)))
             printfn "Commenter set"
         | _, None, _
         | _, _, None
@@ -523,6 +520,7 @@ type Plugin() =
             try
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
+                x.LoadWorldAndState(config.OutputDir)
                 Support.start(support, config, None, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
                 |> Choice1Of2
             with
@@ -538,6 +536,7 @@ type Plugin() =
             try
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
+                x.LoadWorldAndState(config.OutputDir)
                 Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
                 |> Choice1Of2
             with
