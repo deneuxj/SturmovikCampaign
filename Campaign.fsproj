@@ -65,6 +65,11 @@
     <Compile Include="ParkingArea.fs" />
     <Compile Include="PlaneFerry.fs" />
     <Compile Include="Battlefield.fs" />
+    <Compile Include="ArtilleryGroup.fs" />
+    <Compile Include="StaticBlocks.fs" />
+    <Compile Include="Airfield.fs" />
+    <Compile Include="Convoys.fs" />
+    <Compile Include="TankParks.fs" />
     <Compile Include="MissionGeneration.fs" />
     <Compile Include="ResultExtraction.fs" />
     <Compile Include="NewWorldState.fs" />

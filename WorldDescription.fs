@@ -10,7 +10,7 @@ open SturmovikMission.Blocks.StaticDefenses.Types
 open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 open SturmovikMission.DataProvider.Parsing
 
-open Campaign.Util
+open Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open SturmovikMission.Blocks.VirtualConvoy.Types
@@ -562,7 +562,7 @@ with
 
 let productionFactor (world : World) = world.ProductionFactor
 
-open Campaign.Util
+open Util
 
 /// Provides fast access to world description data by index.
 type WorldFastAccess = {

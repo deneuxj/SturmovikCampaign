@@ -185,7 +185,7 @@ module OrderDecision =
     open Campaign.WorldState
     open Campaign.Orders
     open Campaign.AiPlanes
-    open Campaign.Util
+    open Util
     open System.Numerics
 
     let run(config : Configuration) =
@@ -330,7 +330,7 @@ module MissionFileGeneration =
     open Campaign.AutoOrder
     open Campaign.Orders
     open Campaign.Weather
-    open Campaign.Util
+    open Util
     open Campaign.NewWorldState
     open Campaign.AfterActionReport
     open SturmovikMission.Blocks.BlocksMissionData

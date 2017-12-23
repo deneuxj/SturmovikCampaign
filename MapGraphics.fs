@@ -15,7 +15,7 @@ open SturmovikMission.Blocks.MapGraphics
 
 open Campaign.WorldDescription
 open Campaign.WorldState
-open Campaign.Util
+open Util
 open Campaign.BasicTypes
 
 

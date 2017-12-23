@@ -15,7 +15,7 @@ open Campaign.WorldState
 open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.PlaneModel
-open Campaign.Util
+open Util
 open FSharp.Control
 
 /// Match the object type strings in log events with plane models.

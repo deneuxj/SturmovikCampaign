@@ -3,7 +3,7 @@
 open SturmovikMission.Blocks
 
 open Campaign.BasicTypes
-open Campaign.Util
+open Util
 
 type PlaneType  =
     | Fighter

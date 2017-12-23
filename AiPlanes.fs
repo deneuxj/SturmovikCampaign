@@ -14,7 +14,7 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.WorldDescription
 open Campaign.WorldState
-open Campaign.Util
+open Util
 
 type AiPatrol =
     { Plane : PlaneModel

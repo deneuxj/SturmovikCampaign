@@ -4,7 +4,7 @@ module Campaign.NewWorldState
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.ResultExtraction
-open Campaign.Util
+open Util
 open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.PlaneModel

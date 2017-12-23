@@ -10,7 +10,7 @@ open MBrace.FsPickler
 open Campaign.BasicTypes
 open Campaign.Run
 open Campaign.Configuration
-open Campaign.Util
+open Util
 open Campaign.WebHook
 open Campaign.Commenting
 open Campaign.WorldDescription

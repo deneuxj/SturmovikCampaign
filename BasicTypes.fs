@@ -6,7 +6,7 @@ open VectorExtension
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 
-open Campaign.Util
+open Util
 
 [<Measure>]
 /// Cost (energy)

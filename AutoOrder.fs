@@ -8,7 +8,7 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
 open Campaign.MinMax
-open Campaign.Util
+open Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open AiPlanes

@@ -1,4 +1,4 @@
-﻿module Campaign.Util
+﻿module Util
 
 /// <summary>
 /// Build a dictionary from a sequence of items and expose it as getter function.

@@ -5,7 +5,7 @@ open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.Vehicles
 
 open Campaign.WorldDescription
-open Campaign.Util
+open Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open System.Numerics

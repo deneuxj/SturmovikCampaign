@@ -2,7 +2,7 @@
 
 open System.Threading
 
-open Campaign.Util
+open Util
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.BasicTypes

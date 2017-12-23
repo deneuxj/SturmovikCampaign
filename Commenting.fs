@@ -5,7 +5,7 @@ open System.IO
 open System.Text.RegularExpressions
 open Campaign.BasicTypes
 open Campaign.Configuration
-open Campaign.Util
+open Util
 open ploggy
 open System.Numerics
 open FSharp.Control
