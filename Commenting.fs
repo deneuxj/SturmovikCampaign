@@ -77,6 +77,18 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
     let initialEntries =
         lines
         |> Seq.map LogEntry.Parse
+        |> Seq.split (function :? MissionStartEntry -> true | _ -> false)
+        |> Seq.filter (fun group ->
+            if Seq.isEmpty group then
+                false
+            else
+                match Seq.head group with
+                | :? MissionStartEntry as start ->
+                    start.MissionTime = state.Date
+                | _ ->
+                    false)
+        |> Seq.tryLast
+        |> Option.defaultVal Seq.empty
         |> List.ofSeq
     let watcher = new FileSystemWatcher()
     do watcher.Path <- missionLogsDir
