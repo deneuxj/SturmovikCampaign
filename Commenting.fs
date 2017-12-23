@@ -23,31 +23,6 @@ type EventHandlers =
       OnLanded : string * CoalitionId * AirfieldId * PlaneModel * float32<E> * float32 * float32<E> -> Async<unit>
     }
 
-// Scan state of a sequence of log entries
-type ScanState =
-    | Skipping // Current mission is not one we are interested in
-    | Handling of AsyncSeq<LogEntry> // Current mission is of interest: keep building result extraction state
-
-// Split flow of log entries into groups corresponding to missions of interest.
-let split (date : DateTime) (entries : AsyncSeq<LogEntry>) =
-    entries
-    |> AsyncSeq.scan (fun ss entry ->
-        match ss, entry with
-        | _, (:? MissionStartEntry as start) ->
-            if start.MissionTime = date then
-                Handling(AsyncSeq.singleton entry)
-            else
-                Skipping
-        | Skipping, _ ->
-            Skipping
-        | Handling entries, _ ->
-            Handling(AsyncSeq.append entries (AsyncSeq.singleton entry))
-    ) Skipping
-    |> AsyncSeq.choose (fun ss ->
-        match ss with
-        | Skipping -> None
-        | Handling entries -> Some entries)
-
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
@@ -125,22 +100,19 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
     do
         let task =
             asyncSeqEntries
-            |> split state.Date
-            |> AsyncSeq.map (extractTakeOffsAndLandings world state)
-            |> AsyncSeq.iterAsync (fun events ->
-                events
-                |> AsyncSeq.iterAsync(fun event ->
-                    async {
-                        match event with
-                        | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                            if true || x.Cargo > 0.0f<E> then
-                                return! handlers.OnCargoTookOff(player, coalition, x.Airfield, x.Plane, x.Cargo)
-                        | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                            if true || x.Cargo > 0.0f<E> || x.Health < 1.0f then
-                                return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, 0.0f<E>)
-                        | _ ->
-                            return()
-                    }))
+            |> extractTakeOffsAndLandings world state
+            |> AsyncSeq.iterAsync (fun event ->
+                async {
+                    match event with
+                    | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
+                        if true || x.Cargo > 0.0f<E> then
+                            return! handlers.OnCargoTookOff(player, coalition, x.Airfield, x.Plane, x.Cargo)
+                    | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
+                        if true || x.Cargo > 0.0f<E> || x.Health < 1.0f then
+                            return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, 0.0f<E>)
+                    | _ ->
+                        return()
+                })
         Async.Start(task, cancelOnDispose.Token)
     do watcher.EnableRaisingEvents <- true
 
