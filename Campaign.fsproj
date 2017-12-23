@@ -133,7 +133,6 @@
     <Reference Include="FSharp.Core">
       <HintPath>packages\FSharp.Core.4.2.3\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
-    <Reference Include="FSharp.Data.TypeProviders" />
     <Reference Include="FsPickler">
       <HintPath>packages\FsPickler.4.5\lib\net45\FsPickler.dll</HintPath>
     </Reference>
