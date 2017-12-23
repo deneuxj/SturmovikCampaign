@@ -136,6 +136,22 @@ module Map =
         }
         |> Map.ofSeq
 
+ module Seq =
+    /// <summary>
+    /// Split a sequence at elements where a predicate evaluates to true.
+    /// </summary>
+    /// <param name="pred">The predicate</param>
+    /// <param name="xs">The sequence</param>
+    let split pred xs =
+        let curr, seqs =
+            xs
+            |> Seq.fold (fun (curr, seqs) x ->
+                if pred x then
+                    Seq.singleton x, seq { yield! seqs; yield curr }
+                else
+                    seq { yield! curr; yield x}, seqs) (Seq.empty, Seq.empty) 
+        seq { yield! seqs; yield curr }
+
 /// Misc useful algorithms.
 module Algo =
     /// <summary>
