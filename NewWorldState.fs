@@ -234,7 +234,7 @@ let computeHealing(healths, buildings, energy, healLimit) =
 let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) =
     let wg = WorldFastAccess.Create world
     let regionNeeds = AutoOrder.computeSupplyNeeds world state
-    let healLimit = 200.0f<E/H> * dt
+    let healLimit = healLimit * dt
     let damages =
         let data =
             damages

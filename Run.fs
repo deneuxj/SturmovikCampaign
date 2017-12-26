@@ -669,8 +669,16 @@ module MissionLogParsing =
             let shipmentAxis = extractSuppliesShipped axisOrders.Resupply entries |> AsyncSeq.toList
             let shipmentAllies = extractSuppliesShipped alliesOrders.Resupply entries |> AsyncSeq.toList
             shipmentAxis @ shipmentAllies
-        let staticDamages = extractStaticDamages world entryList |> Seq.toList
-        let vehicleDamages = extractVehicleDamages (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entryList |> Seq.toList
+        let staticDamages =
+            extractStaticDamages world entries
+            |> AsyncSeq.toBlockingSeq
+            |> Damage.GroupByObject
+            |> List.ofSeq
+        let vehicleDamages =
+            extractVehicleDamages (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entries
+            |> AsyncSeq.toBlockingSeq
+            |> Damage.GroupByObject
+            |> List.ofSeq
         let takeOffs, landings =
             let both =
                 extractTakeOffsAndLandings world state entries

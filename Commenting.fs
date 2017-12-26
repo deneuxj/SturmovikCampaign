@@ -15,6 +15,7 @@ open Campaign.WorldState
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open MBrace.FsPickler
+open Campaign.Orders
 
 type EventHandlers =
     // player name, coalition, airfield, plane, cargo
@@ -26,7 +27,7 @@ type EventHandlers =
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
-type Commentator (missionLogsDir : string, handlers : EventHandlers, world : World, state : WorldState) =
+type Commentator (missionLogsDir : string, handlers : EventHandlers, world : World, state : WorldState, convoys : ResupplyOrder list, columns : ColumnMovement list) =
     // retrieve entries from most recent mission, if it matches the state's mission and start date.
     let files =
         let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
@@ -99,9 +100,93 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
     // Notify of interesting take-offs and landings
     do
         let task =
-            asyncSeqEntries
-            |> extractTakeOffsAndLandings world state
-            |> AsyncSeq.iterAsync (fun event ->
+            let takeOffsAndLandings =
+                asyncSeqEntries
+                |> extractTakeOffsAndLandings world state
+            let staticDamages =
+                asyncSeqEntries
+                |> extractStaticDamages world
+            asyncSeq {
+                let damageInflicted = ref Map.empty
+                let wg = world.FastAccess
+                let sg = state.FastAccess
+                let convoys =
+                    convoys
+                    |> Seq.map (fun convoy -> convoy.OrderId, convoy)
+                    |> Map.ofSeq
+                let columns =
+                    columns
+                    |> Seq.map (fun column -> column.OrderId, column)
+                    |> Map.ofSeq
+                for event in AsyncSeq.mergeChoice takeOffsAndLandings staticDamages do
+                    match event with
+                    | Choice1Of2((TookOff { PlayerName = Some player }) as tookOff) ->
+                        damageInflicted := Map.add player 0.0f<E> damageInflicted.Value
+                        yield tookOff, 0.0f<E>
+                    | Choice1Of2((Landed { PlayerName = Some player }) as landed) ->
+                        let damage = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
+                        damageInflicted := Map.remove player damageInflicted.Value
+                        yield landed, damage
+                    | Choice1Of2(TookOff { PlayerName = None }) | Choice1Of2(Landed { PlayerName = None }) -> ()
+                    | Choice2Of2 damage ->
+                        match damage.Data.ByPlayer with
+                        | Some player ->
+                            let acc = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
+                            let cost =
+                                match damage.Object with
+                                | Production(region, idx) ->
+                                    let pro = wg.GetRegion(region).Production.[idx]
+                                    let lostDueToDamage =
+                                        0.5f * pro.Production world.ProductionFactor * pro.RepairCost * damage.Data.Amount / healLimit
+                                    pro.RepairCost + pro.Storage + lostDueToDamage / damage.Data.Amount
+                                | Storage(region, idx) ->
+                                    let sto = wg.GetRegion(region).Storage.[idx]
+                                    sto.RepairCost + sto.Storage
+                                | Airfield(af, idx) ->
+                                    let sto = wg.GetAirfield(af).Storage.[idx]
+                                    sto.RepairCost + sto.Storage
+                                | Convoy vehicle ->
+                                    match convoys.TryFind(vehicle.OrderId) with
+                                    | Some order ->
+                                        match order.Means with
+                                        | ByRiverShip
+                                        | BySeaShip -> ResupplyOrder.ShipCapacity
+                                        | ByAir(_, _) -> order.Convoy.TransportedSupplies
+                                        | ByRail -> order.Convoy.TransportedSupplies
+                                        | ByRoad -> ResupplyOrder.TruckCapacity
+                                    | None ->
+                                        0.0f<E>
+                                | Column vehicle ->
+                                    match columns.TryFind(vehicle.OrderId) with
+                                    | Some order ->
+                                        match order.TransportType with
+                                        | ColByRiverShip
+                                        | ColBySeaShip ->
+                                            order.Composition
+                                            |> Seq.sumBy (fun x -> x.Cost)
+                                            |> fun x -> x * 0.5f
+                                        | ColByTrain ->
+                                            order.Composition
+                                            |> Seq.sumBy (fun x -> x.Cost)
+                                        | ColByRoad ->
+                                            order.Composition.[vehicle.Rank].Cost
+                                    | None ->
+                                        0.0f<E>
+                                | ParkedPlane(af, plane) ->
+                                    plane.Cost
+                                | Cannon _ ->
+                                    cannonCost
+                                | LightMachineGun _ ->
+                                    lightMachineGunCost
+                                | HeavyMachineGun _ ->
+                                    heavyMachineGunCost
+                                | Vehicle(_, vehicle) ->
+                                    vehicle.Cost
+                            damageInflicted := Map.add player (acc + damage.Data.Amount * cost) damageInflicted.Value
+                        | None ->
+                            ()
+            }
+            |> AsyncSeq.iterAsync (fun (event, damage) ->
                 async {
                     match event with
                     | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
@@ -109,7 +194,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                             return! handlers.OnCargoTookOff(player, coalition, x.Airfield, x.Plane, x.Cargo)
                     | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
                         if true || x.Cargo > 0.0f<E> || x.Health < 1.0f then
-                            return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, 0.0f<E>)
+                            return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, damage)
                     | _ ->
                         return()
                 })
@@ -124,15 +209,23 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
 type CommentatorRestarter(missionLogsDir : string, campaignDir : string, handlers : EventHandlers, onStateWritten : unit -> unit) =
     let watcher = new FileSystemWatcher()
     do watcher.Path <- campaignDir
-       watcher.Filter <- "state.xml"
+       watcher.Filter <- "*.xml"
        watcher.NotifyFilter <- NotifyFilters.LastWrite
     let serializer = FsPickler.CreateXmlSerializer()
     let worldFile = File.OpenText(Path.Combine(campaignDir, "world.xml"))
     let world = serializer.Deserialize<World>(worldFile)
     do worldFile.Dispose()
+    let rec awaitStateAndOrders remaining =
+        async {
+            if Set.isEmpty remaining then
+                return ()
+            else
+                let! ev = Async.AwaitEvent watcher.Changed
+                return! awaitStateAndOrders (Set.remove ev.Name remaining)
+        }
     let rec work commentator =
         async {
-            let! ev = Async.AwaitEvent watcher.Changed
+            do! awaitStateAndOrders (Set["state.xml"; "axisOrders.xml"; "alliesOrders.xml"])
             onStateWritten()
             match commentator with
             | Some (commentator : Commentator) -> commentator.Dispose()
@@ -145,11 +238,27 @@ type CommentatorRestarter(missionLogsDir : string, campaignDir : string, handler
                 | exc ->
                     eprintfn "Failed to parse state.xml: %s" exc.Message
                     None
-            match state with
-            | Some state ->
-                let commentator = new Commentator(missionLogsDir, handlers, world, state)
+            let axisOrders =
+                try
+                    use ordersFile = File.OpenText(Path.Combine(campaignDir, "axisOrders.xml"))
+                    serializer.Deserialize<OrderPackage>(ordersFile) |> Some
+                with
+                | exc ->
+                    eprintfn "Failed to parse axisOrders.xml: %s" exc.Message
+                    None
+            let alliesOrders =
+                try
+                    use ordersFile = File.OpenText(Path.Combine(campaignDir, "alliesOrders.xml"))
+                    serializer.Deserialize<OrderPackage>(ordersFile) |> Some
+                with
+                | exc ->
+                    eprintfn "Failed to parse alliesOrders.xml: %s" exc.Message
+                    None
+            match state, axisOrders, alliesOrders with
+            | Some state, Some axisOrders, Some alliesOrders ->
+                let commentator = new Commentator(missionLogsDir, handlers, world, state, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
                 return! work(Some commentator)
-            | None ->
+            | _ ->
                 return! work None
         }
     // Stop notifications when we are disposed

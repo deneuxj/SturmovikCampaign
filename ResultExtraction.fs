@@ -415,13 +415,20 @@ type DamagedObject =
     | Vehicle of RegionId * GroundAttackVehicle
     | ParkedPlane of AirfieldId * PlaneModel
 
+
 type CommonDamageData = {
     Amount : float32
+    ByPlayer : string option
 }
 with
     static member FromValue(v) =
         { Amount = v
+          ByPlayer = None
         }
+
+    member this.SetByPlayer(player) =
+        { this with ByPlayer = player }
+
 
 type Damage = {
     Object : DamagedObject
@@ -438,6 +445,7 @@ with
                     damages
                     |> Seq.map (fun dam -> dam.Data.Amount)
                     |> Seq.sum
+                  ByPlayer = None
                 }
             })
 
@@ -472,16 +480,19 @@ let (|StaticVehicleType|_|) (s : string) =
         else
             None)
 
-let extractStaticDamages (world : World) (entries : LogEntry seq) =
+let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
     let wg = WorldFastAccess.Create(world)
     let tryFindContainingRegion (pos : Vector2) =
         world.Regions
         |> List.tryFind(fun r ->
             pos.IsInConvexPolygon(r.Boundary))
-    seq {
+    asyncSeq {
         let idMapper = ref Map.empty
+        let pilots = ref Map.empty
         for entry in entries do
             match entry with
+            | :? PlayerPlaneEntry as entry ->
+                pilots := Map.add entry.VehicleId entry.Name pilots.Value
             | :? ObjectSpawnedEntry as spawned ->
                 idMapper := Map.add spawned.ObjectId (spawned.ObjectType, spawned.ObjectName, spawned.SubGroup) !idMapper
             | :? DamageEntry as damage ->
@@ -521,7 +532,10 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                             if  List.contains subGroup significantSubBlocks then
                                 let damageAmount =
                                     damage.Damage / float32 (List.length significantSubBlocks)
-                                yield { Object = damaged; Data = CommonDamageData.FromValue damage.Damage }
+                                let player =
+                                    pilots.Value.TryFind damage.AttackerId
+                                let data = { Amount = damage.Damage; ByPlayer = player }
+                                yield { Object = damaged; Data = data }
                         | None -> () // No known building nearby
                     | None -> () // Outside of know regions
                 | Some(StaticPlaneType world.PlaneSet planeModel, _, _) ->
@@ -530,11 +544,15 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                         |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())
                     let distance = (closestAirfield.Pos - damagePos).Length()
                     if distance < 3000.0f then
-                        yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = CommonDamageData.FromValue damage.Damage }
+                        let player = pilots.Value.TryFind damage.AttackerId
+                        let data = { Amount = damage.Damage; ByPlayer = player }
+                        yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = data }
                 | Some(StaticVehicleType vehicleModel, _, _) ->
                     match tryFindContainingRegion damagePos with
                     | Some region ->
-                        yield { Object = Vehicle(region.RegionId, vehicleModel); Data = CommonDamageData.FromValue damage.Damage }
+                        let player = pilots.Value.TryFind damage.AttackerId
+                        let data = { Amount = damage.Damage; ByPlayer = player }
+                        yield { Object = Vehicle(region.RegionId, vehicleModel); Data = data }
                     | None ->
                         ()
                 | Some(_, (CannonObjectName as gunType), _) | Some (_, (HeavyMachineGunAAName as gunType), _) | Some (_, (LightMachineGunAAName as gunType), _) ->
@@ -552,7 +570,9 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                                 None
                         match objType with
                         | Some objType ->
-                            yield { Object = objType; Data = CommonDamageData.FromValue damage.Damage }
+                            let player = pilots.Value.TryFind damage.AttackerId
+                            let data = { Amount = damage.Damage; ByPlayer = player }
+                            yield { Object = objType; Data = data }
                         | None ->
                             ()
                     | None ->
@@ -560,10 +580,9 @@ let extractStaticDamages (world : World) (entries : LogEntry seq) =
                 | _ -> () // Ignored object type
             | _ -> () // Ignored log entry
     }
-    |> Damage.GroupByObject
 
-let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : LogEntry seq) =
-    seq {
+let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : AsyncSeq<LogEntry>) =
+    asyncSeq {
         let idMapper = ref Map.empty
         for entry in entries do
             match entry with
@@ -593,7 +612,6 @@ let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder
                     ()
             | _ -> ()
     }
-    |> Damage.GroupByObject
 
 
 type BattleParticipantKilled = {
