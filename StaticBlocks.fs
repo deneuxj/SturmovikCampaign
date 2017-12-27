@@ -89,7 +89,7 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                                 |> fst
                                 |> List.rev
                                 |> Map.ofList))
-                        |> setDurability (StaticGroup.FromBlock(block).Durability |> T.Integer)
+                        |> setDurability (StaticGroup.FromBlock(block).Durability(world.SubBlockSpecs) |> T.Integer)
                         |> setIndex (T.Integer 1)
                         |> setLinkTrId (T.Integer 0) // No entity
                         |> createMcu

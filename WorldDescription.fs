@@ -127,7 +127,7 @@ with
     member this.AddStorage(blocks : T.Block list, subBlockSpecs) =
         let storage =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Storage subBlockSpecs > 0.0f<E> && not block.IsAirfieldStorage && not (block.SubBlocks(subBlockSpecs).IsEmpty))
+            |> List.filter (fun block -> block.Storage subBlockSpecs > 0.0f<E> && not (block.IsAirfieldStorage subBlockSpecs) && not (block.SubBlocks(subBlockSpecs).IsEmpty))
         { this with Storage = this.Storage @ storage
         }
 
@@ -405,7 +405,7 @@ with
                 af
         )
 
-    static member inline ExtractAirfields(spawns : T.Airfield list, parkedPlanes : ^Plane list, caponiers : StaticGroup list, storage : T.Block list, regions : Region list) =
+    static member inline ExtractAirfields(spawns : T.Airfield list, parkedPlanes : ^Plane list, caponiers : StaticGroup list, storage : T.Block list, regions : Region list, subBlocksSpecs) =
         let airfields =
             spawns
             |> List.groupBy (fun spawn -> spawn.GetName().Value)
@@ -457,7 +457,7 @@ with
             storage
             |> List.choose (fun storage ->
                 let blck = StaticGroup.FromBlock storage
-                if blck.IsAirfieldStorage then
+                if blck.IsAirfieldStorage subBlocksSpecs then
                     Some blck
                 else
                     None)
@@ -507,7 +507,7 @@ with
         subBlocks.Load(subBlocksFile)
         let subBlockSpecs =
             subBlocks.Blocks
-            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production, spec.storage, spec.is_airfield))
+            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production, spec.storage, spec.is_airfield, spec.durability))
             |> List.ofSeq
         let s = Stream.FromFile strategyFile
         let data = T.GroupData(s)
@@ -544,9 +544,9 @@ with
             match planes with
             | [] ->
                 let staticPlanes = data.GetGroup("Parked planes").ListOfBlock
-                Airfield.ExtractAirfields(afs, staticPlanes, caponiers, afStorages, regions)
+                Airfield.ExtractAirfields(afs, staticPlanes, caponiers, afStorages, regions, subBlockSpecs)
             | _ :: _->
-                Airfield.ExtractAirfields(afs, planes, caponiers, afStorages, regions)
+                Airfield.ExtractAirfields(afs, planes, caponiers, afStorages, regions, subBlockSpecs)
         let date =
             let options = List.head data.ListOfOptions
             let h, m, s = options.GetTime().Value
