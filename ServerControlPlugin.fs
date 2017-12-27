@@ -403,11 +403,23 @@ type Plugin() =
         match support with
         | Some support ->
             async {
+                let cargo =
+                    if cargo > 0.0f<E> then
+                        sprintf " with %3.0fkg of cargo" (cargo / bombCost)
+                    else
+                        ""
+                let planeType =
+                    match plane.PlaneType with
+                    | PlaneType.Attacker -> "an attacker"
+                    | PlaneType.Bomber -> "a bomber"
+                    | PlaneType.Fighter -> "a fighter"
+                    | PlaneType.Transport -> "a transport plane"
                 let message =
-                    sprintf "%s took off from %s with %3.0fkg of cargo."
+                    sprintf "%s took off from %s in %s%s"
                         player
                         airfield.AirfieldName
-                        (cargo / bombCost)
+                        planeType
+                        cargo
                 let team =
                     match coalition with
                     | Axis -> support.ServerControl.GetAxisTeam()
