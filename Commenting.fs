@@ -138,13 +138,13 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                                     let pro = wg.GetRegion(region).Production.[idx]
                                     let lostDueToDamage =
                                         0.5f * pro.Production(world.SubBlockSpecs, world.ProductionFactor) * pro.RepairCost(world.SubBlockSpecs) * damage.Data.Amount / healLimit
-                                    pro.RepairCost(world.SubBlockSpecs) + pro.Storage + lostDueToDamage / damage.Data.Amount
+                                    pro.RepairCost(world.SubBlockSpecs) + pro.Storage world.SubBlockSpecs + lostDueToDamage / damage.Data.Amount
                                 | Storage(region, idx) ->
                                     let sto = wg.GetRegion(region).Storage.[idx]
-                                    sto.RepairCost(world.SubBlockSpecs) + sto.Storage
+                                    sto.RepairCost(world.SubBlockSpecs) + sto.Storage world.SubBlockSpecs
                                 | Airfield(af, idx) ->
                                     let sto = wg.GetAirfield(af).Storage.[idx]
-                                    sto.RepairCost(world.SubBlockSpecs) + sto.Storage
+                                    sto.RepairCost(world.SubBlockSpecs) + sto.Storage world.SubBlockSpecs
                                 | Convoy vehicle ->
                                     match convoys.TryFind(vehicle.OrderId) with
                                     | Some order ->

@@ -95,9 +95,9 @@ with
         |> Map.toSeq
         |> Seq.sumBy (fun (vehicle, qty) -> vehicle.Cost * float32 qty)
 
-    member this.StorageCapacity(region : WorldDescription.Region) =
+    member this.StorageCapacity(region : WorldDescription.Region, subBlocksSpecs) =
         List.zip region.Storage this.StorageHealth
-        |> List.sumBy (fun (sto, health) -> health * sto.Storage)
+        |> List.sumBy (fun (sto, health) -> health * sto.Storage subBlocksSpecs)
 
     member this.ProductionCapacity(region : WorldDescription.Region, subBlockSpecs, factor) =
         List.zip region.Production this.ProductionHealth
@@ -120,9 +120,9 @@ type AirfieldState = {
     AiSpawnPos : Vector2 * float32
 }
 with
-    member this.StorageCapacity(af : WorldDescription.Airfield) =
+    member this.StorageCapacity(af : WorldDescription.Airfield, subBlocksSpecs) =
         List.zip af.Storage this.StorageHealth
-        |> List.sumBy (fun (sto, health) -> health * sto.Storage)
+        |> List.sumBy (fun (sto, health) -> health * sto.Storage subBlocksSpecs)
 
     /// Get total value of all planes at this airfield.
     member this.TotalPlaneValue =
@@ -499,7 +499,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                         |> max 0.0f
                     let supplies =
                         region.Storage
-                        |> Seq.sumBy (fun storage -> storage.Storage)
+                        |> Seq.sumBy (fun storage -> storage.Storage world.SubBlockSpecs)
                         |> if region.Production.IsEmpty then min needs else id
                         |> float32
                         |> scale
@@ -565,7 +565,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                     |> Util.compactSeq
                     |> Map.map (fun k v -> float32 v)
                 let supplies =
-                    airfield.Storage |> Seq.sumBy (fun gr -> gr.Storage)
+                    airfield.Storage |> Seq.sumBy (fun gr -> gr.Storage world.SubBlockSpecs)
                     |> float32
                     |> scale
                 numPlanes, 1.0f<E> * supplies
@@ -598,7 +598,7 @@ type WorldState with
             List.zip (world.Regions |> List.map (fun region -> region.Storage)) (this.Regions |> List.map (fun region -> region.StorageHealth))
             |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
             |> List.filter (fun (_, health) -> health < 0.5f)
-            |> List.map (fun (building, health) -> building.Storage * (1.0f - health), (building, health))
+            |> List.map (fun (building, health) -> building.Storage world.SubBlockSpecs * (1.0f - health), (building, health))
         let damagedRegionProduction =
             List.zip (world.Regions |> List.map (fun region -> region.Production)) (this.Regions |> List.map (fun region -> region.ProductionHealth))
             |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
@@ -608,7 +608,7 @@ type WorldState with
             List.zip (world.Airfields |> List.map (fun airfield -> airfield.Storage)) (this.Airfields |> List.map (fun airfield -> airfield.StorageHealth))
             |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
             |> List.filter (fun (_, health) -> health < 0.5f)
-            |> List.map (fun (building, health) -> building.Storage * (1.0f - health), (building, health))
+            |> List.map (fun (building, health) -> building.Storage world.SubBlockSpecs * (1.0f - health), (building, health))
         List.concat [ damagedRegionStorage; damagedRegionProduction; damagedAirfieldStorage ]
         |> List.sortByDescending fst
         |> List.truncate maxNumFires

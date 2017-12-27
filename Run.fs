@@ -45,7 +45,7 @@ module Init =
 
         let capacity =
             world.Regions
-            |> Seq.map (fun region -> region.RegionId, region.Storage |> Seq.sumBy (fun sto -> sto.Storage))
+            |> Seq.map (fun region -> region.RegionId, region.Storage |> Seq.sumBy (fun sto -> sto.Storage world.SubBlockSpecs))
             |> Map.ofSeq
 
         let production =

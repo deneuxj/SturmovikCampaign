@@ -163,7 +163,7 @@ let convertProduction (world : World) (state : WorldState) =
         | None ->
             ()
         // Supplies -> storage
-        let supplySpaceAvailable = max 0.0f<E> (regState.StorageCapacity(region) - regState.Supplies)
+        let supplySpaceAvailable = max 0.0f<E> (regState.StorageCapacity(region, world.SubBlockSpecs) - regState.Supplies)
         let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
         resupplied := { Region = region.RegionId; Energy = transferedEnergy } :: !resupplied
         // Remove produced things from ongoing production
@@ -327,7 +327,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                             qty - totalDamages
                         | None ->
                             qty)
-                let capacityBeforeDamages = afState.StorageCapacity(af)
+                let capacityBeforeDamages = afState.StorageCapacity(af, world.SubBlockSpecs)
                 let storeHealth =
                     afState.StorageHealth
                     |> List.mapi (fun idx health ->
@@ -336,7 +336,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 let afState = { afState with
                                     NumPlanes = planes
                                     StorageHealth = storeHealth }
-                let capacityAfterDamages = afState.StorageCapacity(af)
+                let capacityAfterDamages = afState.StorageCapacity(af, world.SubBlockSpecs)
                 let factor =
                     if capacityAfterDamages = 0.0f<E> then
                         0.0f
@@ -356,14 +356,14 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     |> List.mapi (fun idx health ->
                         Map.tryFind (Production(region.RegionId, idx)) damages
                         |> applyDamage health)
-                let capacityBeforeDamages = regState.StorageCapacity(region)
+                let capacityBeforeDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let storeHealth =
                     regState.StorageHealth
                     |> List.mapi (fun idx health ->
                         Map.tryFind (Storage(region.RegionId, idx)) damages
                         |> applyDamage health)
                 let regState = { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth }
-                let capacityAfterDamages = regState.StorageCapacity(region)
+                let capacityAfterDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let factor =
                     if capacityAfterDamages = 0.0f<E> then
                         0.0f
@@ -435,7 +435,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                         energy,
                         healLimit)
                 // Second prio: fill up region supplies
-                let storeCapacity = regState.StorageCapacity(region)
+                let storeCapacity = regState.StorageCapacity(region, world.SubBlockSpecs)
                 // Consume energy to fill up supplies up to what's needed
                 let needs =
                     regionNeeds.TryFind regState.RegionId
@@ -476,7 +476,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 let bombNeeds =
                     afState.BombNeeds * bombCost
                     |> max (1000.0f<K> * bombCost)
-                let fillTarget = min bombNeeds (afState.StorageCapacity(af))
+                let fillTarget = min bombNeeds (afState.StorageCapacity(af, world.SubBlockSpecs))
                 let toAfSupplies =
                     fillTarget - afState.Supplies
                     |> max 0.0f<E>
@@ -499,7 +499,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 let newEnergy =
                     regSupplies.TryFind regState.RegionId
                     |> Option.defaultVal 0.0f<E>
-                    |> min (regState.StorageCapacity(region))
+                    |> min (regState.StorageCapacity(region, world.SubBlockSpecs))
                 yield { regState with Supplies = newEnergy }
         ]
     { state with

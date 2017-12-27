@@ -204,7 +204,7 @@ let identifyBattleAreas (world : World) (state : WorldState) =
                         region.Neighbours
                         |> Seq.map sg.GetRegion
                         |> Seq.filter (fun ngh -> ngh.Owner = Some defending.Other)
-                        |> Seq.maxBy (fun ngh -> ngh.StorageCapacity(wg.GetRegion(ngh.RegionId)))
+                        |> Seq.maxBy (fun ngh -> ngh.StorageCapacity(wg.GetRegion(ngh.RegionId), world.SubBlockSpecs))
                         |> fun ngh -> ngh.RegionId
                         |> Some
                     with

@@ -200,7 +200,7 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
                 else
                     None
             | _ -> None)
-        |> List.sumBy (fun (building, damage) -> building.Storage * damage)
+        |> List.sumBy (fun (building, damage) -> building.Storage(world.SubBlockSpecs) * damage)
     let newSupplies =
         newSupplies
         |> List.filter (fun sup -> sg2.GetRegion(sup.Region).Owner = Some coalition)

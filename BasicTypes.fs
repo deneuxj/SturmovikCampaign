@@ -79,10 +79,12 @@ type SubBlockSpec = {
     Pattern : string
     SubBlocks : int list
     Production : float32<E/H>
+    Storage : float32<E>
+    IsAirfield : bool
 }
 with
     /// Create from a pattern and a string representation of the list of sub-blocks
-    static member Create(pattern, subBlocks : string, production : float) =
+    static member Create(pattern, subBlocks : string, production : float, storage : float, isAirfield) =
         let parseError s = parseError(sprintf "Failed to parse sub-blocks of pattern '%s'" pattern, s)
         let rec parseUnits s =
             match s with
@@ -112,7 +114,9 @@ with
             | Some(x, s) -> parseError s
         { Pattern = pattern
           SubBlocks = Stream.FromString subBlocks |> parseAll|> List.concat
-          Production = 1.0f<E/H> * float32 production }
+          Production = 1.0f<E/H> * float32 production
+          Storage = 1.0f<E> * float32 storage
+          IsAirfield = isAirfield }
 
 /// A group of buildings or some other static objects.
 type StaticGroup = {
@@ -150,25 +154,14 @@ with
         |> Option.defaultValue 0.0f<E/H>
         |> (*) factor
 
-    member this.Storage =
-        match this.Model with
-        | Contains "arf_barak" -> 100.0f<E>
-        | Contains "arf_dugouts_2" -> 400.0f<E>
-        | Contains "arf_dugouts_3" -> 600.0f<E>
-        | Contains "arf_ammo_1" -> 100.0f<E>
-        | Contains "arf_ammo_2" -> 125.0f<E>
-        | Contains "arf_ammo_3" -> 50.0f<E>
-        | Contains "arf_ammo_4" -> 75.0f<E>
-        | Contains "arf_hangararc" -> 1000.0f<E>
-        | Contains "arf_hangarbox" -> 1000.0f<E>
-        | Contains "arf_hangars_1" -> 1200.0f<E>
-        | Contains "arf_hangars_2" -> 1200.0f<E>
-        | Contains "arf_hangars_3" -> 600.0f<E>
-        | Contains "arf_gsm_1" -> 100.0f<E>
-        | Contains "arf_gsm_2" -> 75.0f<E>
-        | Contains "arf_saray" -> 200.0f<E>
-        | Contains "arf_sklad" -> 300.0f<E>
-        | _ -> 0.0f<E>
+    member this.Storage(subBlocksSpecs) =
+        subBlocksSpecs
+        |> List.tryPick (fun spec ->
+            if this.Model.Contains(spec.Pattern) then
+                Some spec.Storage
+            else
+                None)
+        |> Option.defaultValue 0.0f<E>
 
     member this.IsAirfieldStorage =
         match this.Model with
@@ -423,4 +416,4 @@ with
             None
 
     member this.RepairCost(subBlocksSpecs) =
-        this.Production(subBlocksSpecs, 1.0f) * 40.0f<H> + this.Storage + 0.1f<E> * float32 this.Durability
+        this.Production(subBlocksSpecs, 1.0f) * 40.0f<H> + this.Storage(subBlocksSpecs) + 0.1f<E> * float32 this.Durability

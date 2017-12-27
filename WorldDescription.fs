@@ -127,7 +127,7 @@ with
     member this.AddStorage(blocks : T.Block list, subBlockSpecs) =
         let storage =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Storage > 0.0f<E> && not block.IsAirfieldStorage && not (block.SubBlocks(subBlockSpecs).IsEmpty))
+            |> List.filter (fun block -> block.Storage subBlockSpecs > 0.0f<E> && not block.IsAirfieldStorage && not (block.SubBlocks(subBlockSpecs).IsEmpty))
         { this with Storage = this.Storage @ storage
         }
 
@@ -507,7 +507,7 @@ with
         subBlocks.Load(subBlocksFile)
         let subBlockSpecs =
             subBlocks.Blocks
-            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production))
+            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production, spec.storage, spec.is_airfield))
             |> List.ofSeq
         let s = Stream.FromFile strategyFile
         let data = T.GroupData(s)
