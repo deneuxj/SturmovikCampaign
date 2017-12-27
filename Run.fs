@@ -38,7 +38,7 @@ module Init =
         let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), 1.0f<E/H> * config.PlaneProduction, subBlocksFile)
         let totalProduction =
             world0.Regions
-            |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(1.0f)))
+            |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(world0.SubBlockSpecs, 1.0f)))
         let desiredProduction = config.DesiredProduction * 1.0f<E/H> * float32 world0.Regions.Length
         let factor = desiredProduction / totalProduction
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5); ProductionFactor = factor }
@@ -50,7 +50,7 @@ module Init =
 
         let production =
             world.Regions
-            |> Seq.map (fun region -> region.RegionId, region.Production |> Seq.sumBy (fun prod -> prod.Production(world.ProductionFactor)))
+            |> Seq.map (fun region -> region.RegionId, region.Production |> Seq.sumBy (fun prod -> prod.Production(world.SubBlockSpecs, world.ProductionFactor)))
             |> Seq.map (fun (region, production) -> region, production)
             |> Map.ofSeq
 

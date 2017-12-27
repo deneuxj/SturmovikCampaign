@@ -78,10 +78,11 @@ open SturmovikMission.DataProvider.Parsing
 type SubBlockSpec = {
     Pattern : string
     SubBlocks : int list
+    Production : float32<E/H>
 }
 with
     /// Create from a pattern and a string representation of the list of sub-blocks
-    static member Create(pattern, subBlocks : string) =
+    static member Create(pattern, subBlocks : string, production : float) =
         let parseError s = parseError(sprintf "Failed to parse sub-blocks of pattern '%s'" pattern, s)
         let rec parseUnits s =
             match s with
@@ -110,7 +111,8 @@ with
                 x :: parseAll s
             | Some(x, s) -> parseError s
         { Pattern = pattern
-          SubBlocks = Stream.FromString subBlocks |> parseAll|> List.concat }
+          SubBlocks = Stream.FromString subBlocks |> parseAll|> List.concat
+          Production = 1.0f<E/H> * float32 production }
 
 /// A group of buildings or some other static objects.
 type StaticGroup = {
@@ -138,41 +140,14 @@ with
                 None)
         |> Option.defaultValue []
 
-    member this.Production(factor : float32) =
-        match this.Model with
-        | Contains "arf_barak" -> 1.0f<E/H>
-        | Contains "arf_gsm" -> 1.0f<E/H>
-        | Contains "arf_hangars_1" -> 10.0f<E/H>
-        | Contains "arf_hangars_2" -> 10.0f<E/H>
-        | Contains "arf_hangars_3" -> 5.0f<E/H>
-        | Contains "arf_saray" -> 2.0f<E/H>
-        | Contains "arf_sklad" -> 2.0f<E/H>
-        | Contains "\\buildings\\" -> 0.0f<E/H>
-        | Contains "industrial_" -> 25.0f<E/H>
-        | Contains "vl_pvrz01" | Contains "vl_pvrz03" -> 25.0f<E/H>
-        | Contains "vl_rounddepot" -> 25.0f<E/H>
-        | Contains "meh_01" -> 10.0f<E/H>
-        | Contains "port_up_crane" -> 5.0f<E/H>
-        | Contains "port_up_group_cargo_190x15" -> 10.0f<E/H>
-        | Contains "port_up_group_cargo_50x25" -> 5.0f<E/H>
-        | Contains "port_up_group_smallsklad" -> 5.0f<E/H>
-        | Contains "port_up_group_smallwarehouse" -> 7.5f<E/H>
-        | Contains "port_up_object_smallsklad" -> 2.5f<E/H>
-        | Contains "port_up_object_smallwarehouse" -> 4.0f<E/H>
-        | Contains "port_up_unit_bags" -> 0.5f<E/H>
-        | Contains "port_up_unit_container" -> 1.0f<E/H>
-        | Contains "port_up_unit_woodbox_1x4" -> 0.5f<E/H>
-        | Contains "port_up_unit_woodbox_2x24" -> 2.0f<E/H>
-        | Contains "rwstation_b" -> 15.0f<E/H>
-        | Contains "rwstation_s" -> 10.0f<E/H>
-        | Contains "scot_01" -> 20.0f<E/H>
-        | Contains "sklad_01" -> 20.0f<E/H>
-        | Contains "school" -> 0.0f<E/H>
-        | Contains "town_lrg" -> 2.0f<E/H>
-        | Contains "town_lrg_corner" -> 1.0f<E/H>
-        | Contains "vl_selsovet" -> 0.0f<E/H>
-        | Contains "watertower" -> 5.0f<E/H>
-        | _ -> 0.0f<E/H>
+    member this.Production(subBlocksSpecs, factor : float32) =
+        subBlocksSpecs
+        |> List.tryPick (fun spec ->
+            if this.Model.Contains(spec.Pattern) then
+                Some spec.Production
+            else
+                None)
+        |> Option.defaultValue 0.0f<E/H>
         |> (*) factor
 
     member this.Storage =
@@ -447,5 +422,5 @@ with
         | _ ->
             None
 
-    member this.RepairCost =
-        this.Production(1.0f) * 40.0f<H> + this.Storage + 0.1f<E> * float32 this.Durability
+    member this.RepairCost(subBlocksSpecs) =
+        this.Production(subBlocksSpecs, 1.0f) * 40.0f<H> + this.Storage + 0.1f<E> * float32 this.Durability

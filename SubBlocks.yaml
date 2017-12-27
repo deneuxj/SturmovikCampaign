@@ -1,133 +1,191 @@
-﻿SubBlocks:
+﻿Blocks:
     - pattern: arf_barak
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 1.0
     - pattern: "arf_dugouts_2"
-      value: "[2..5]"
+      sub_blocks: "[2..5]"
     - pattern: "arf_dugouts_3"
-      value: "[0..6]"
+      sub_blocks: "[0..6]"
     - pattern: "arf_ammo_1"
-      value: "[0] @ [2..10]"
+      sub_blocks: "[0] @ [2..10]"
     - pattern: "arf_ammo_2"
-      value: "[0..9]"
+      sub_blocks: "[0..9]"
     - pattern: "arf_ammo_3"
-      value: "[3..10]"
+      sub_blocks: "[3..10]"
     - pattern: "arf_ammo_4"
-      value: "[2..8]"
+      sub_blocks: "[2..8]"
     - pattern: "arf_sklad"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 2.0
     - pattern: "arf_saray"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 2.0
     - pattern: "industrial_200x140_01"
-      value: "[0..12]"
+      sub_blocks: "[0..12]"
+      production: 25.0
     - pattern: "industrial_200x140_02"
-      value: "[0..19]"
+      sub_blocks: "[0..19]"
+      production: 25.0
     - pattern: "industrial_300x100_01"
-      value: "[0..13]"
+      sub_blocks: "[0..13]"
+      production: 25.0
     - pattern: "industrial_300x100_02"
-      value: "[0..15]"
+      sub_blocks: "[0..15]"
+      production: 25.0
     - pattern: "industrial_300x100_03"
-      value: "[0..9]"
+      sub_blocks: "[0..9]"
+      production: 25.0
     - pattern: "industrial_300x100_04"
-      value: "[0..7]"
+      sub_blocks: "[0..7]"
+      production: 25.0
     - pattern: "industrial_block_fuel35m_300x100"
-      value: "[0..7]"
+      sub_blocks: "[0..7]"
+      production: 25.0
     - pattern: "industrial_block_fuel25m_300x100"
-      value: "[0..6]"
+      sub_blocks: "[0..6]"
+      production: 25.0
     - pattern: "industrial_block_bigwarehouse_300x100"
-      value: "[1..4] @ [6..7]"
+      sub_blocks: "[1..4] @ [6..7]"
+      production: 25.0
     - pattern: "industrial_block_midwarehouse_200x140"
-      value: "[0..8]"
+      sub_blocks: "[0..8]"
+      production: 25.0
     - pattern: "industrial_block_smallwarehouse_150x100"
-      value: "[0..12] @ [19..21] @ [23..29]"
+      sub_blocks: "[0..12] @ [19..21] @ [23..29]"
+      production: 25.0
     - pattern: "industrial_block_smallwarehouse_300x100"
-      value: "[0..8] @ [10..12] @ [15] @ [23..28] @ [33..42]"
+      sub_blocks: "[0..8] @ [10..12] @ [15] @ [23..28] @ [33..42]"
+      production: 25.0
     - pattern: "industrial_block_smallwarehouse2_150x100"
-      value: "[0..18]"
+      sub_blocks: "[0..18]"
+      production: 25.0
     - pattern: "industrial_block_smallwarehouse2_300x100"
-      value: "[0..12] @ [15] @ [22..26] @ [33..37]"
+      sub_blocks: "[0..12] @ [15] @ [22..26] @ [33..37]"
+      production: 25.0
     - pattern: "industrial_block_fuel_300x100"
-      value: "[2..3] @ [16..19]"
+      sub_blocks: "[2..3] @ [16..19]"
+      production: 25.0
     - pattern: "industrial_cornerl_01"
-      value: "[0..8]"
+      sub_blocks: "[0..8]"
+      production: 25.0
     - pattern: "industrial_cornerl_02"
-      value: "[0..9]"
+      sub_blocks: "[0..9]"
+      production: 25.0
     - pattern: "industrial_cornerr_01"
-      value: "[0..6]"
+      sub_blocks: "[0..6]"
+      production: 25.0
     - pattern: "industrial_cornerr_02"
-      value: "[0..10]"
+      sub_blocks: "[0..10]"
+      production: 25.0
     - pattern: "industrial_object_oil"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 25.0
     - pattern: "industrial_object_zavodkorpys45m"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 25.0
     - pattern: "vl_pvrz01"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 25.0
     - pattern: "vl_pvrz03"
-      value: "[3]"
+      sub_blocks: "[3]"
+      production: 25.0
     - pattern: "vl_rounddepot"
-      value: "[1..3]"
+      sub_blocks: "[1..3]
+      production: 25"
     - pattern: "arf_hangars_1"
-      value: "[0..1]"
+      sub_blocks: "[0..1]"
+      production: 10.0
     - pattern: "arf_hangars_2"
-      value: "[0..1]"
+      sub_blocks: "[0..1]"
+      production: 10.0
     - pattern: "arf_hangars_3"
-      value: "[0]"
+      sub_blocks: "[0]"
+      production: 5.0
     - pattern: "arf_hangararc"
-      value: "[1]"
+      sub_blocks: "[1]"
     - pattern: "arf_hangarbox"
-      value: "[1]"
+      sub_blocks: "[1]"
     - pattern: "arf_gsm_1"
-      value: "[2..4]"
+      sub_blocks: "[2..4]"
+      production: 1.0
     - pattern: "arf_gsm_2"
-      value: "[1; 2]"
+      sub_blocks: "[1; 2]"
+      production: 1.0
     - pattern: "meh_01"
-      value: "[0..7]"
+      sub_blocks: "[0..7]"
+      production: 10.0
     - pattern: "port_up_crane"
-      value: "[0; 2]"
+      sub_blocks: "[0; 2]"
+      production: 5.0
     - pattern: "port_up_group_cargo_190x15"
-      value: "[0..15]"
+      sub_blocks: "[0..15]"
+      production: 10.0
     - pattern: "port_up_group_cargo_50x25"
-      value: "[0..7]"
+      sub_blocks: "[0..7]"
+      production: 5.0
     - pattern: "port_up_group_smallsklad"
-      value: "[0..1]"
+      sub_blocks: "[0..1]"
+      production: 5.0
     - pattern: "port_up_group_smallwarehouse"
-      value: "[0..1]"
+      sub_blocks: "[0..1]"
+      production: 7.5
     - pattern: "port_up_object_smallsklad"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 2.5
     - pattern: "port_up_object_smallwarehouse"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 4.0
     - pattern: "port_up_unit_bags"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 0.5
     - pattern: "port_up_unit_container"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 1.0
     - pattern: "port_up_unit_woodbox_1x4"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 0.5
     - pattern: "port_up_unit_woodbox_2x24"
-      value: "[1]"
+      sub_blocks: "[1]"
+      production: 2.0
     - pattern: "rwstation_b"
-      value: "[0..1] @ [3..7] @ [9..16]"
+      sub_blocks: "[0..1] @ [3..7] @ [9..16]"
+      production: 15.0
     - pattern: "rwstation_s1"
-      value: "[0; 2; 3] @ [5] @ [7..10]"
+      sub_blocks: "[0; 2; 3] @ [5] @ [7..10]"
+      production: 10.0
     - pattern: "rwstation_s2"
-      value: "[0; 2; 3] @ [6..8]"
+      sub_blocks: "[0; 2; 3] @ [6..8]"
+      production: 10.0
     - pattern: "scot_01"
-      value: "[0..4] @ [15..21]"
+      sub_blocks: "[0..4] @ [15..21]"
+      production: 20.0
     - pattern: "sklad_01"
-      value: "[0..14]"
+      sub_blocks: "[0..14]"
+      production: 20.0
     - pattern: "town_lrg_01"
-      value: "[0..6] @ [9..10] @ [12]"
+      sub_blocks: "[0..6] @ [9..10] @ [12]"
+      production: 2.0
     - pattern: "town_lrg_02"
-      value: "[0..4] @ [6..9]"
+      sub_blocks: "[0..4] @ [6..9]"
+      production: 2.0
     - pattern: "town_lrg_03"
-      value: "[0..6] @ [8..13]"
+      sub_blocks: "[0..6] @ [8..13]"
+      production: 2.0
     - pattern: "town_lrg_04"
-      value: "[0..4] @ [8..9] @ [11] @ [13..20]"
+      sub_blocks: "[0..4] @ [8..9] @ [11] @ [13..20]"
+      production: 2.0
     - pattern: "town_lrg_05"
-      value: "[0..3] @ [5] @ [7..9]"
+      sub_blocks: "[0..3] @ [5] @ [7..9]"
+      production: 2.0
     - pattern: "town_lrg_06"
-      value: "[0..7] @ [9]"
+      sub_blocks: "[0..7] @ [9]"
+      production: 2.0
     - pattern: "town_lrg_corner_01"
-      value: "[0; 2] @ [4..7]"
+      sub_blocks: "[0; 2] @ [4..7]"
+      production: 1.0
     - pattern: "town_lrg_corner_02"
-      value: "[0..6] @ [8]"
+      sub_blocks: "[0..6] @ [8]"
+      production: 1.0
     - pattern: "watertower"
-      value: "[0]"
+      sub_blocks: "[0]"
+      production: 5.0

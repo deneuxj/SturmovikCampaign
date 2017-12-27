@@ -77,7 +77,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
     seq {
         // Defensive patrols
         for region, regState in List.zip world.Regions state.Regions do
-            if regState.Owner = Some coalition && regState.ProductionCapacity(region, productionFactor world) > 0.0f<E/H> then
+            if regState.Owner = Some coalition && regState.ProductionCapacity(region, world.SubBlockSpecs, productionFactor world) > 0.0f<E/H> then
                 for af, afState in List.zip world.Airfields state.Airfields do
                     let owner = sg.GetRegion(af.Region).Owner
                     if owner = Some coalition && getNumPlanesOfType Fighter afState.NumPlanes > 2.0f then
@@ -185,7 +185,7 @@ let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (Airfiel
             let tankAssets =
                 assets.TotalVehicleValue
             let productionAssets =
-                assets.ProductionCapacity(wg.GetRegion(region), productionFactor world) * 24.0f<H>
+                assets.ProductionCapacity(wg.GetRegion(region), world.SubBlockSpecs, productionFactor world) * 24.0f<H>
             let vulnerability =
                 1.0f - assets.Supplies / (max 1.0f<E> (defenseNeeds.TryFind region |> Option.defaultVal 0.0f<E>))
                 |> max 0.0f

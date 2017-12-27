@@ -89,7 +89,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     |> min (afs.StorageCapacity(af))
                 let repairs =
                     Seq.zip af.Storage afs.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> (1.0f - health) * building.RepairCost)
+                    |> Seq.sumBy (fun (building, health) -> (1.0f - health) * building.RepairCost(world.SubBlockSpecs))
                 yield af.Region, bombNeed + repairs - afs.Supplies
         }
     // Ammo needs. Can be negative.
@@ -111,7 +111,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     min (capacity - regState.Supplies) costs
                 let repairs =
                     List.zip reg.Production regState.ProductionHealth
-                    |> List.sumBy (fun (building, health) -> (1.0f - health) *  building.RepairCost)
+                    |> List.sumBy (fun (building, health) -> (1.0f - health) *  building.RepairCost(world.SubBlockSpecs))
                 yield region, cost + repairs
         }
     Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]

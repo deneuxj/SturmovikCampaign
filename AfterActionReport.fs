@@ -189,7 +189,7 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
                 else
                     None
             | _ -> None)
-        |> List.sumBy (fun (building, damage) -> building.Production(productionFactor world) * damage)
+        |> List.sumBy (fun (building, damage) -> building.Production(world.SubBlockSpecs, productionFactor world) * damage)
     let storageDamage =
         damages
         |> List.choose (fun event ->

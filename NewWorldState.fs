@@ -52,7 +52,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
         [
             for region, regState in Seq.zip world.Regions state.Regions do
                 if regState.Owner = Some coalition && not(List.isEmpty region.Production) then
-                    let energy = dt * regState.ProductionCapacity(region, productionFactor world)
+                    let energy = dt * regState.ProductionCapacity(region, world.SubBlockSpecs, world.ProductionFactor)
                     let supplies = regState.Products.Supplies + energyPrio * energy
                     let vehicles =
                         let oldValue =
@@ -209,10 +209,10 @@ let convertProduction (world : World) (state : WorldState) =
 /// buildings : List of building descriptions, must match healths
 /// energy : input energy
 /// healLimit : max amount of input energy that can be used for healing
-let computeHealing(healths, buildings, energy, healLimit) =
+let computeHealing(subBlocksSpecs, healths, buildings, energy, healLimit) =
     let energyPerBuilding =
         buildings
-        |> List.map (fun (x : StaticGroup) -> x.RepairCost)
+        |> List.map (fun (x : StaticGroup) -> x.RepairCost(subBlocksSpecs))
     let prodHealing, energy, healLimit =
         List.zip healths energyPerBuilding
         |> List.fold (fun (healings, available, healLimit) (health, healthCost : float32<E>) ->
@@ -429,6 +429,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 // Highest prio: repair production
                 let prodHealth, energy =
                     computeHealing(
+                        world.SubBlockSpecs,
                         regState.ProductionHealth,
                         region.Production,
                         energy,
@@ -450,6 +451,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                 // Last: repair storage
                 let storeHealth, energy =
                     computeHealing(
+                        world.SubBlockSpecs,
                         regState.StorageHealth,
                         region.Storage,
                         energy,
@@ -468,7 +470,7 @@ let applyRepairsAndDamages (dt : float32<H>) (world : World) (state : WorldState
                     |> fun x -> defaultArg x 0.0f<E>
                 // repair airfield storage
                 let storeHealth, energy =
-                    computeHealing(afState.StorageHealth, af.Storage, energy, healLimit)
+                    computeHealing(world.SubBlockSpecs, afState.StorageHealth, af.Storage, energy, healLimit)
                 let afState = { afState with StorageHealth = storeHealth }
                 // fill storage
                 let bombNeeds =

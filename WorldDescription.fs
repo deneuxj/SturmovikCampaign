@@ -134,7 +134,7 @@ with
     member this.AddProduction(blocks : T.Block list, subBlockSpecs) =
         let factories =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Production(1.0f) > 0.0f<E/H> && not (block.SubBlocks(subBlockSpecs).IsEmpty))
+            |> List.filter (fun block -> block.Production(subBlockSpecs, 1.0f) > 0.0f<E/H> && not (block.SubBlocks(subBlockSpecs).IsEmpty))
         { this with Production = this.Production @ factories
         }
 
@@ -506,8 +506,8 @@ with
         let subBlocks = SubBlockFile()
         subBlocks.Load(subBlocksFile)
         let subBlockSpecs =
-            subBlocks.SubBlocks
-            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.value))
+            subBlocks.Blocks
+            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production))
             |> List.ofSeq
         let s = Stream.FromFile strategyFile
         let data = T.GroupData(s)

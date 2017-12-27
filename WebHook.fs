@@ -71,7 +71,7 @@ let postWorldState channel (world : World, state : WorldState) =
     let countProduction coalition =
         state.Regions
         |> Seq.filter (fun region -> region.Owner = Some coalition)
-        |> Seq.sumBy(fun region -> region.ProductionCapacity(wg.GetRegion(region.RegionId), world.ProductionFactor))
+        |> Seq.sumBy(fun region -> region.ProductionCapacity(wg.GetRegion(region.RegionId), world.SubBlockSpecs, world.ProductionFactor))
     let countPlanes coalition =
         state.Airfields
         |> Seq.filter (fun af -> sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner = Some coalition)
