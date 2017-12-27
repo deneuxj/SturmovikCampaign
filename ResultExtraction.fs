@@ -528,7 +528,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                             | _ -> None
                         match closest with
                         | Some(damaged, _, building) ->
-                            let significantSubBlocks = building.SubBlocks
+                            let significantSubBlocks = building.SubBlocks(world.SubBlockSpecs)
                             if  List.contains subGroup significantSubBlocks then
                                 let damageAmount =
                                     damage.Damage / float32 (List.length significantSubBlocks)

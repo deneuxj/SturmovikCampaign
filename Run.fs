@@ -34,8 +34,8 @@ module Init =
                 System.Random(n)
             | None ->
                 System.Random()
-
-        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), 1.0f<E/H> * config.PlaneProduction)
+        let subBlocksFile = Path.Combine(config.ScriptPath, "SubBlocks.yaml")
+        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), 1.0f<E/H> * config.PlaneProduction, subBlocksFile)
         let totalProduction =
             world0.Regions
             |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(1.0f)))

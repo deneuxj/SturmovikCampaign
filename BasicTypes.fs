@@ -72,6 +72,46 @@ type ReferencePositions =
       Positions : (Vector3 * PlaneParkingSize) list // Z is orientation, in degrees (0 .. 360)
     }
 
+open SturmovikMission.DataProvider.Parsing
+
+/// A static block model substring and a list of sub-block identifiers
+type SubBlockSpec = {
+    Pattern : string
+    SubBlocks : int list
+}
+with
+    /// Create from a pattern and a string representation of the list of sub-blocks
+    static member Create(pattern, subBlocks : string) =
+        let parseError s = parseError(sprintf "Failed to parse sub-blocks of pattern '%s'" pattern, s)
+        let rec parseUnits s =
+            match s with
+            | ReInt (n, ReLit ";" s) ->
+                match parseUnits s with
+                | None -> parseError s
+                | Some(x, s) -> Some(n :: x, s)
+            | ReInt (n, ReLit "]" s) ->
+                Some([n], s)
+            | ReLit "]" s ->
+                Some([], s)
+            | _ -> parseError s
+        let parseSquare s =
+            match s with
+            | ReLit "[" (ReInt (n0, ReLit ".." (ReInt (n1, ReLit "]" s)))) ->
+                Some([n0..n1], s)
+            | ReLit "[" s  ->
+                parseUnits s
+            | _ ->
+                None
+        let rec parseAll s =
+            match parseSquare s with
+            | None -> parseError s
+            | Some(x, EOF _) -> [x]
+            | Some(x, ReLit "@" s) ->
+                x :: parseAll s
+            | Some(x, s) -> parseError s
+        { Pattern = pattern
+          SubBlocks = Stream.FromString subBlocks |> parseAll|> List.concat }
+
 /// A group of buildings or some other static objects.
 type StaticGroup = {
     Model : string
@@ -89,75 +129,14 @@ with
 
     /// List of sub-block numbers that represent objects with significant storage or production capabilities
     /// When adding buildings here, one must also remember to update the code in ResultExtraction, active pattern BuildingObjectType
-    member this.SubBlocks = 
-        match this.Model with
-        | Contains "arf_barak" -> [1]
-        | Contains "arf_dugouts_2" -> [2..5]
-        | Contains "arf_dugouts_3" -> [0..6]
-        | Contains "arf_ammo_1" -> [0] @ [2..10]
-        | Contains "arf_ammo_2" -> [0..9]
-        | Contains "arf_ammo_3" -> [3..10]
-        | Contains "arf_ammo_4" -> [2..8]
-        | Contains "arf_sklad" -> [1]
-        | Contains "arf_saray" -> [1]
-        | Contains "industrial_200x140_01" -> [0..12]
-        | Contains "industrial_200x140_02" -> [0..19]
-        | Contains "industrial_300x100_01" -> [0..13]
-        | Contains "industrial_300x100_02" -> [0..15]
-        | Contains "industrial_300x100_03" -> [0..9]
-        | Contains "industrial_300x100_04" -> [0..7]
-        | Contains "industrial_block_fuel35m_300x100" -> [0..7]
-        | Contains "industrial_block_fuel25m_300x100" -> [0..6]
-        | Contains "industrial_block_bigwarehouse_300x100" -> [1..4] @ [6..7]
-        | Contains "industrial_block_midwarehouse_200x140" -> [0..8]
-        | Contains "industrial_block_smallwarehouse_150x100" -> [0..12] @ [19..21] @ [23..29]
-        | Contains "industrial_block_smallwarehouse_300x100" -> [0..8] @ [10..12] @ [15] @ [23..28] @ [33..42]
-        | Contains "industrial_block_smallwarehouse2_150x100" -> [0..18]
-        | Contains "industrial_block_smallwarehouse2_300x100" -> [0..12] @ [15] @ [22..26] @ [33..37]
-        | Contains "industrial_block_fuel_300x100" -> [2..3] @ [16..19]
-        | Contains "industrial_cornerl_01" -> [0..8]
-        | Contains "industrial_cornerl_02" -> [0..9]
-        | Contains "industrial_cornerr_01" -> [0..6]
-        | Contains "industrial_cornerr_02" -> [0..10]
-        | Contains "industrial_object_oil" -> [1]
-        | Contains "industrial_object_zavodkorpys45m" -> [1]
-        | Contains "vl_pvrz01" -> [1]
-        | Contains "vl_pvrz03" -> [3]
-        | Contains "vl_rounddepot" -> [1..3]
-        | Contains "arf_hangars_1" -> [0..1]
-        | Contains "arf_hangars_2" -> [0..1]
-        | Contains "arf_hangars_3" -> [0]
-        | Contains "arf_hangararc" -> [1]
-        | Contains "arf_hangarbox" -> [1]
-        | Contains "arf_gsm_1" -> [2..4]
-        | Contains "arf_gsm_2" -> [1; 2]
-        | Contains "meh_01" -> [0..7]
-        | Contains "port_up_crane" -> [0;2]
-        | Contains "port_up_group_cargo_190x15" -> [0..15]
-        | Contains "port_up_group_cargo_50x25" -> [0..7]
-        | Contains "port_up_group_smallsklad" -> [0..1]
-        | Contains "port_up_group_smallwarehouse" -> [0..1]
-        | Contains "port_up_object_smallsklad" -> [1]
-        | Contains "port_up_object_smallwarehouse" -> [1]
-        | Contains "port_up_unit_bags" -> [1]
-        | Contains "port_up_unit_container" -> [1]
-        | Contains "port_up_unit_woodbox_1x4" -> [1]
-        | Contains "port_up_unit_woodbox_2x24" -> [1]
-        | Contains "rwstation_b" -> [0..1] @ [3..7] @ [9..16]
-        | Contains "rwstation_s1" -> 0 :: [2..3] @ [5] @ [7..10]
-        | Contains "rwstation_s2" -> 0 :: [2..3] @ [6..8]
-        | Contains "scot_01" -> [0..4] @ [15..21]
-        | Contains "sklad_01" -> [0..14]
-        | Contains "town_lrg_01" -> [0..6] @ [9..10] @ [12]
-        | Contains "town_lrg_02" -> [0..4] @ [6..9]
-        | Contains "town_lrg_03" -> [0..6] @ [8..13]
-        | Contains "town_lrg_04" -> [0..4] @ [8..9] @ [11] @ [13..20]
-        | Contains "town_lrg_05" -> [0..3] @ [5] @ [7..9]
-        | Contains "town_lrg_06" -> [0..7] @ [9]
-        | Contains "town_lrg_corner_01" -> 0 :: 2 :: [4..7]
-        | Contains "town_lrg_corner_02" -> [0..6] @ [8]
-        | Contains "watertower" -> [0]
-        | _ -> []
+    member this.SubBlocks(subBlocksSpecs) =
+        subBlocksSpecs
+        |> List.tryPick (fun spec ->
+            if this.Model.Contains(spec.Pattern) then
+                Some spec.SubBlocks
+            else
+                None)
+        |> Option.defaultValue []
 
     member this.Production(factor : float32) =
         match this.Model with

@@ -124,17 +124,17 @@ with
         |> List.filter (fun block -> Vector2.FromPos(block).IsInConvexPolygon(this.Boundary))
         |> List.map StaticGroup.FromBlock
 
-    member this.AddStorage(blocks : T.Block list) =
+    member this.AddStorage(blocks : T.Block list, subBlockSpecs) =
         let storage =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Storage > 0.0f<E> && not block.IsAirfieldStorage && not block.SubBlocks.IsEmpty)
+            |> List.filter (fun block -> block.Storage > 0.0f<E> && not block.IsAirfieldStorage && not (block.SubBlocks(subBlockSpecs).IsEmpty))
         { this with Storage = this.Storage @ storage
         }
 
-    member this.AddProduction(blocks : T.Block list) =
+    member this.AddProduction(blocks : T.Block list, subBlockSpecs) =
         let factories =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Production(1.0f) > 0.0f<E/H> && not block.SubBlocks.IsEmpty)
+            |> List.filter (fun block -> block.Production(1.0f) > 0.0f<E/H> && not (block.SubBlocks(subBlockSpecs).IsEmpty))
         { this with Production = this.Production @ factories
         }
 
@@ -474,7 +474,11 @@ with
         airfields
 
 
-open SturmovikMission.DataProvider.Parsing
+open FSharp.Configuration
+
+[<Literal>]
+let sampleSubBlocksFile = __SOURCE_DIRECTORY__ + @"\SubBlocks.yaml"
+type SubBlockFile = YamlConfig<sampleSubBlocksFile>
 
 /// Packages all description data.
 type World = {
@@ -495,9 +499,16 @@ type World = {
     StartDate : System.DateTime
     /// Weather offset: affects how late or early the weather pattern is.
     WeatherDaysOffset : float
+    SubBlockSpecs : SubBlockSpec list
 }
 with
-    static member Create(planeSet, strategyFile, planeProduction) =
+    static member Create(planeSet, strategyFile, planeProduction, subBlocksFile : string) =
+        let subBlocks = SubBlockFile()
+        subBlocks.Load(subBlocksFile)
+        let subBlockSpecs =
+            subBlocks.SubBlocks
+            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.value))
+            |> List.ofSeq
         let s = Stream.FromFile strategyFile
         let data = T.GroupData(s)
         let regions =
@@ -509,8 +520,8 @@ with
             let parkings =
                 data.GetGroup("Tank parks").ListOfMCU_TR_InfluenceArea
             regions
-            |> List.map (fun area -> area.AddStorage ammoStorages)
-            |> List.map (fun area -> area.AddProduction factories)
+            |> List.map (fun area -> area.AddStorage(ammoStorages, subBlockSpecs))
+            |> List.map (fun area -> area.AddProduction(factories, subBlockSpecs))
             |> List.map (fun area -> area.SetParking parkings)
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
         let rails = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
@@ -554,6 +565,7 @@ with
           SeaWays = seaWays
           RiverWays = riverWays
           WeatherDaysOffset = 0.0
+          SubBlockSpecs = subBlockSpecs
         }
 
     member this.GetClosestAirfield(pos : Vector2) =

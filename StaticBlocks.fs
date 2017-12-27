@@ -76,7 +76,7 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                         block
                         |> setDamaged (
                             mkDamaged (
-                                let subBlocks = building.SubBlocks
+                                let subBlocks = building.SubBlocks(world.SubBlockSpecs)
                                 let numSubs = List.length subBlocks |> float
                                 let subDamage = 1.0 / numSubs
                                 subBlocks
