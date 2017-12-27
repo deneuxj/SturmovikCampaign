@@ -79,7 +79,9 @@
     <Compile Include="WebHook.fs" />
     <Compile Include="Run.fs" />
     <Compile Include="ServerControlPlugin.fs" />
-    <None Include="SubBlocks.yaml" />
+    <None Include="SubBlocks.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="SampleConfig.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
