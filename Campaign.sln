@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2010
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Campaign", "Campaign\Campaign.fsproj", "{CDAFF307-1FCE-40E7-AE1E-FD4A813D1BCA}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CampaignServerControl", "..\sturmovikservercontrol\CampaignServerControl\CampaignServerControl.fsproj", "{641F10FC-C185-4C95-881D-CC2BEC4B95FC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ploggy", "..\plog\ploggy\ploggy.csproj", "{C23498B3-892D-4F98-A8E4-00FBC6B97ED0}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CampaignControlApp", "CampaignControlApp\CampaignControlApp.fsproj", "{E610D140-B7DA-4216-94DD-F34A29D79C5A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{C23498B3-892D-4F98-A8E4-00FBC6B97ED0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C23498B3-892D-4F98-A8E4-00FBC6B97ED0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C23498B3-892D-4F98-A8E4-00FBC6B97ED0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E610D140-B7DA-4216-94DD-F34A29D79C5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E610D140-B7DA-4216-94DD-F34A29D79C5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E610D140-B7DA-4216-94DD-F34A29D79C5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E610D140-B7DA-4216-94DD-F34A29D79C5A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
