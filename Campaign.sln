@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27004.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Campaign", "Campaign.fsproj", "{CDAFF307-1FCE-40E7-AE1E-FD4A813D1BCA}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Campaign", "Campaign\Campaign.fsproj", "{CDAFF307-1FCE-40E7-AE1E-FD4A813D1BCA}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Blocks", "..\SturmovikMission-git\Blocks\Blocks.fsproj", "{6F0BE45C-721F-49FB-BFDA-73EB7A6D07BA}"
 EndProject

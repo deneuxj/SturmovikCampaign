@@ -129,33 +129,32 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">
-      <HintPath>..\SturmovikMission-git\DataProvider\bin\Debug\DataProvider.dll</HintPath>
+      <HintPath>..\..\SturmovikMission-git\DataProvider\bin\Debug\DataProvider.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Configuration">
-      <HintPath>packages\FSharp.Configuration.1.3.1\lib\net45\FSharp.Configuration.dll</HintPath>
+      <HintPath>..\packages\FSharp.Configuration.1.3.1\lib\net45\FSharp.Configuration.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Control.AsyncSeq">
-      <HintPath>packages\FSharp.Control.AsyncSeq.2.0.18\lib\net45\FSharp.Control.AsyncSeq.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\packages\FSharp.Control.AsyncSeq.2.0.20\lib\net45\FSharp.Control.AsyncSeq.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Core">
-      <HintPath>packages\FSharp.Core.4.2.3\lib\net45\FSharp.Core.dll</HintPath>
+      <HintPath>..\packages\FSharp.Core.4.2.3\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="FsPickler">
-      <HintPath>packages\FsPickler.4.5\lib\net45\FsPickler.dll</HintPath>
+      <HintPath>..\packages\FsPickler.4.5\lib\net45\FsPickler.dll</HintPath>
     </Reference>
     <Reference Include="FsPickler.Json">
-      <HintPath>packages\FsPickler.Json.4.5\lib\net45\FsPickler.Json.dll</HintPath>
+      <HintPath>..\packages\FsPickler.Json.4.5\lib\net45\FsPickler.Json.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="Newtonsoft.Json">
-      <HintPath>packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NLog">
-      <HintPath>packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="SharpYaml">
-      <HintPath>packages\FSharp.Configuration.1.3.1\lib\net45\SharpYaml.dll</HintPath>
+      <HintPath>..\packages\FSharp.Configuration.1.3.1\lib\net45\SharpYaml.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -166,24 +165,28 @@
     <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Numerics.Vectors">
-      <HintPath>packages\System.Numerics.Vectors.4.4.0\lib\portable-net45+win8+wp8+wpa81\System.Numerics.Vectors.dll</HintPath>
+      <HintPath>..\packages\System.Numerics.Vectors.4.4.0\lib\portable-net45+win8+wp8+wpa81\System.Numerics.Vectors.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.ValueTuple">
+      <HintPath>..\packages\System.ValueTuple.4.4.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\plog\ploggy\ploggy.csproj">
+    <ProjectReference Include="..\..\plog\ploggy\ploggy.csproj">
       <Name>ploggy</Name>
       <Project>{c23498b3-892d-4f98-a8e4-00fbc6b97ed0}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\SturmovikMission-git\Blocks\Blocks.fsproj">
+    <ProjectReference Include="..\..\SturmovikMission-git\Blocks\Blocks.fsproj">
       <Name>Blocks</Name>
       <Project>{6f0be45c-721f-49fb-bfda-73eb7a6d07ba}</Project>
       <Private>True</Private>
     </ProjectReference>
-    <ProjectReference Include="..\sturmovikservercontrol\CampaignServerControl\CampaignServerControl.fsproj">
+    <ProjectReference Include="..\..\sturmovikservercontrol\CampaignServerControl\CampaignServerControl.fsproj">
       <Name>CampaignServerControl</Name>
       <Project>{641f10fc-c185-4c95-881d-cc2bec4b95fc}</Project>
       <Private>True</Private>
