@@ -87,7 +87,15 @@ type SubBlockSpec = {
 }
 with
     /// Create from a pattern and a string representation of the list of sub-blocks
-    static member Create(pattern, subBlocks : string, production : float, storage : float, isAirfield, durability : float) =
+    static member Create(pattern, subBlocks : string, production : float, storage : float, isAirfield, durability : int) =
+        let reInt = regex(@"\G\s*([+-]?\d+)")
+        let (|ReInt|_|) (SubString(data, offset)) =
+            let m = reInt.Match(data, offset)
+            let g = m.Groups.[1]
+            if m.Success then
+                Some (System.Int32.Parse g.Value, SubString(data, g.Index + g.Length))
+            else
+                None
         let parseError s = parseError(sprintf "Failed to parse sub-blocks of pattern '%s'" pattern, s)
         let rec parseUnits s =
             match s with
@@ -115,7 +123,6 @@ with
             | Some(x, ReLit "@" s) ->
                 x :: parseAll s
             | Some(x, s) -> parseError s
-        let durability = int durability
         { Pattern = pattern
           SubBlocks = Stream.FromString subBlocks |> parseAll|> List.concat
           Production = 1.0f<E/H> * float32 production
