@@ -143,9 +143,6 @@
     <Reference Include="FsPickler">
       <HintPath>..\packages\FsPickler.4.5\lib\net45\FsPickler.dll</HintPath>
     </Reference>
-    <Reference Include="FsPickler.Json">
-      <HintPath>..\packages\FsPickler.Json.4.5\lib\net45\FsPickler.Json.dll</HintPath>
-    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
