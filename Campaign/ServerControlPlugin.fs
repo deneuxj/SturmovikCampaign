@@ -66,7 +66,7 @@ module Support =
         | WaitForMissionEnd of System.DateTime
         | ExtractResults
         | CampaignOver of victorious: CoalitionId
-        | Failed of Message:string * StackTrace:string option * ExecutionState
+        | Failed of message:string * stackTrace:string option * ExecutionState
     with
         member this.Description =
             match this with
