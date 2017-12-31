@@ -56,6 +56,7 @@
     <Compile Include="Ast.fs" />
     <Compile Include="Mcu.fs" />
     <Compile Include="McuUtil.fs" />
+    <Compile Include="McuOutput.fs" />
     <Compile Include="McuFactory.fs" />
     <Compile Include="NumericalIdentifiers.fs" />
     <Compile Include="Localization.fs" />

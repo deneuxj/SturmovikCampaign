@@ -60,6 +60,7 @@ type McuBase =
     /// fields of this instance.
     /// </summary>
     abstract AsString : unit -> string
+    /// Path through groups, from leaf to top. Each level is identified by the name and id of the group.
     abstract Path : (string * int) list with get, set
 
 /// <summary>

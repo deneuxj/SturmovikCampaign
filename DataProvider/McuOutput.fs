@@ -1,8 +1,59 @@
-﻿module SturmovikMission.Blocks.IO
+﻿//    Copyright 2017 Johann Deneux
+//
+//    This file is part of SturmovikMission.
+//
+//    SturmovikMission is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU Lesser General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    SturmovikMission is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU Lesser General Public License for more details.
+//
+//    You should have received a copy of the GNU Lesser General Public License
+//    along with SturmovikMission.  If not, see <http://www.gnu.org/licenses/>.
 
-open System
+module SturmovikMission.DataProvider.McuOutput
+
 open System.IO
-open SturmovikMission.DataProvider
+
+/// MCUs organized in groups
+type Hierarchy =
+    | Flat of Mcu.McuBase
+    | Group of (string * int) * Hierarchy list
+
+/// Build a hierarchy from the paths of MCUs. The paths are all set to the empty list upon return.
+let mkHierarchy (mcus : Mcu.McuBase list) =
+    let rec work (mcus : Mcu.McuBase list) =
+        let flat, nested = mcus |> List.partition (fun mcu -> mcu.Path.IsEmpty)
+        [
+            yield! flat |> McuUtil.moveEntitiesAfterOwners |> List.map Flat
+            for grp in nested |> List.groupBy (fun mcu -> mcu.Path.Head) do
+                let name, members = grp
+                for m in members do
+                    m.Path <- m.Path.Tail
+                yield Group(name, work members)
+        ]
+    for m in mcus do
+        m.Path <- List.rev m.Path
+    work mcus
+
+/// Get the string representation of a list of MCUs where groups have been recreated.
+let getAsStringWithHierarchy (mcus : Mcu.McuBase list) =
+    let rec work h =
+        match h with
+        | Flat m -> m.AsString()
+        | Group((name, idx), hs) ->
+            hs
+            |> List.map work
+            |> String.concat "\n"
+            |> sprintf "Group {\nName = \"%s\";\nIndex = %d;\nDesc = \"\";\n%s\n}" name idx
+    mcus
+    |> mkHierarchy
+    |> List.map work
+    |> String.concat "\n"
 
 /// <summary>
 /// Write a list of MCUs into a file that can be imported as a template by the mission editor.
@@ -13,9 +64,7 @@ let writeGroupFile filename mcus =
     use file = File.CreateText(filename)
     let groupStr =
         mcus
-        |> McuUtil.moveEntitiesAfterOwners
-        |> Seq.map (fun mcu -> mcu.AsString())
-        |> String.concat "\n"
+        |> getAsStringWithHierarchy
     file.Write(groupStr)
 
 /// <summary>
@@ -53,9 +102,7 @@ let inline writeMissionFile filename (options : ^T) mcus =
     let optionsStr = (^T : (member AsString : unit -> string) options)
     let groupStr =
         mcus
-        |> McuUtil.moveEntitiesAfterOwners
-        |> Seq.map (fun mcu -> mcu.AsString())
-        |> String.concat "\n"
+        |> getAsStringWithHierarchy
     file.WriteLine("# Mission File Version = 1.0;")
     file.WriteLine(optionsStr)
     file.Write(groupStr)
