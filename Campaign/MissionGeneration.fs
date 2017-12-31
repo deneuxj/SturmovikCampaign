@@ -12,7 +12,6 @@ open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.Train
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks
-open SturmovikMission.Blocks.IO
 open SturmovikMission.Blocks.TransportFlight
 open SturmovikMission.Blocks.ShipConvoy
 open SturmovikMission.Blocks.FireLoop
@@ -351,4 +350,4 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           axisPlaneFerries
           alliesPlaneFerries
           serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections
-    writeMissionFiles "eng" filename options allGroups
+    McuOutput.writeMissionFiles "eng" filename options allGroups
