@@ -415,6 +415,7 @@ type DamagedObject =
     | Column of VehicleInColumn
     | Vehicle of RegionId * GroundAttackVehicle
     | ParkedPlane of AirfieldId * PlaneModel
+    | ActivePlane of CoalitionId * PlaneModel
 with
     member this.Coalition(wg : WorldFastAccess, sg : WorldStateFastAccess) =
         match this with
@@ -433,6 +434,8 @@ with
         | Convoy v
         | Column v ->
             Some v.OrderId.Coalition
+        | ActivePlane(coalition, _) ->
+            Some coalition
 
 type CommonDamageData = {
     Amount : float32
@@ -605,10 +608,10 @@ let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder
         for entry in entries do
             match entry with
             | :? ObjectSpawnedEntry as spawned ->
-                idMapper := Map.add spawned.ObjectId spawned.ObjectName !idMapper
+                idMapper := Map.add spawned.ObjectId (spawned.ObjectName, spawned.ObjectType, spawned.Country) !idMapper
             | :? KillEntry as kill ->
                 match Map.tryFind kill.TargetId !idMapper with
-                | Some name ->
+                | Some(name, objectType, country) ->
                     let columnDamage =
                         tanks
                         |> List.tryPick (fun order ->
@@ -625,7 +628,21 @@ let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder
                     | None ->
                         match convoyDamage.Value with
                         | Some(order, rank) -> yield { Object = Convoy { OrderId = order.OrderId; Rank = rank }; Data = CommonDamageData.FromValue 1.0f }
-                        | None -> ()
+                        | None ->
+                            match objectType with
+                            | PlaneObjectType plane ->
+                                let coalition =
+                                    match country with
+                                    | Country.Germany | Country.OtherAxis -> Some Axis
+                                    | Country.USSR | Country.OtherAllies -> Some Allies
+                                    | _ -> None
+                                match coalition with
+                                | Some coalition ->
+                                    yield { Object = ActivePlane(coalition, plane); Data = CommonDamageData.FromValue 1.0f }
+                                | None ->
+                                    ()
+                            | _ ->
+                                ()
                 | None ->
                     ()
             | _ -> ()
