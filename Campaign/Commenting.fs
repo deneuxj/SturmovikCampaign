@@ -106,6 +106,10 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
             let staticDamages =
                 asyncSeqEntries
                 |> extractStaticDamages world
+            let vehicleDamages =
+                asyncSeqEntries
+                |> extractVehicleDamages columns convoys
+            let damages = AsyncSeq.merge staticDamages vehicleDamages
             asyncSeq {
                 let damageInflicted = ref Map.empty
                 let coalitionOf = ref Map.empty
@@ -119,7 +123,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                     columns
                     |> Seq.map (fun column -> column.OrderId, column)
                     |> Map.ofSeq
-                for event in AsyncSeq.mergeChoice takeOffsAndLandings staticDamages do
+                for event in AsyncSeq.mergeChoice takeOffsAndLandings damages do
                     match event with
                     | Choice1Of2((TookOff { PlayerName = Some player; Coalition = coalition }) as tookOff) ->
                         damageInflicted := Map.add player 0.0f<E> damageInflicted.Value
