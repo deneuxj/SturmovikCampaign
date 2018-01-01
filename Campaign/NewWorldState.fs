@@ -606,7 +606,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
         match killed with
         | [] -> numVehicles, unmatchedAiDamage + unmatchedPlayerDamage, aiDamageSoFar + playerDamageSoFar
         | veh :: rest ->
-            if not veh.KilledByPlayer then
+            if veh.KilledByPlayer.IsNone then
                 if unmatchedAiDamage + aiDamageSoFar >= 0.25f * totalValue then
                     // Damage by AI reached the limit, skip
                     damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest

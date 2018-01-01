@@ -653,7 +653,7 @@ type BattleParticipantKilled = {
     Coalition : CoalitionId
     BattleId : RegionId
     Vehicle : GroundAttackVehicle
-    KilledByPlayer : bool
+    KilledByPlayer : string option
 }
 
 /// Extract damages caused to vehicles in a battle. Used to compute battle bonuses.
@@ -670,13 +670,13 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
         |> List.filter(fun area -> battles.Contains area.DefenseAreaId)
     asyncSeq {
         let idMapper = ref Map.empty
-        let playerVehicles = ref Set.empty
+        let playerVehicles = ref Map.empty
         for entry in entries do
             match entry with
             | :? ObjectSpawnedEntry as spawned ->
                 idMapper := Map.add spawned.ObjectId spawned.ObjectName !idMapper
             | :? PlayerPlaneEntry as entry ->
-                playerVehicles := Set.add entry.VehicleId !playerVehicles
+                playerVehicles := Map.add entry.VehicleId entry.Name !playerVehicles
             | :? KillEntry as kill ->
                 match Map.tryFind kill.TargetId !idMapper with
                 | Some name ->
@@ -696,7 +696,7 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
                                                 Coalition = coalition
                                                 BattleId = battle.Home
                                                 Vehicle = vehicle
-                                                KilledByPlayer = playerVehicles.Value.Contains(kill.AttackerId)
+                                                KilledByPlayer = playerVehicles.Value.TryFind(kill.AttackerId)
                                             }
                         }
                 | None ->
