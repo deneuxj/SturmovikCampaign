@@ -17,6 +17,7 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Util
 open FSharp.Control
+open SturmovikMission.Blocks.Vehicles
 
 /// Match the object type strings in log events with plane models.
 let (|PlaneObjectType|_|) (s : string) =
@@ -414,7 +415,24 @@ type DamagedObject =
     | Column of VehicleInColumn
     | Vehicle of RegionId * GroundAttackVehicle
     | ParkedPlane of AirfieldId * PlaneModel
-
+with
+    member this.Coalition(wg : WorldFastAccess, sg : WorldStateFastAccess) =
+        match this with
+        | Storage(region, _)
+        | Vehicle(region, _)
+        | Production(region, _) -> sg.GetRegion(region).Owner
+        | ParkedPlane(af, _)
+        | Airfield(af, _) -> sg.GetRegion(wg.GetAirfield(af).Region).Owner
+        | Cannon def
+        | HeavyMachineGun def
+        | LightMachineGun def ->
+            try
+                sg.GetRegion(wg.GetAntiAirDefenses(def).Home).Owner
+            with
+            | _ -> sg.GetRegion(wg.GetAntiTankDefenses(def).Home).Owner
+        | Convoy v
+        | Column v ->
+            Some v.OrderId.Coalition
 
 type CommonDamageData = {
     Amount : float32

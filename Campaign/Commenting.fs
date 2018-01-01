@@ -108,6 +108,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                 |> extractStaticDamages world
             asyncSeq {
                 let damageInflicted = ref Map.empty
+                let coalitionOf = ref Map.empty
                 let wg = world.FastAccess
                 let sg = state.FastAccess
                 let convoys =
@@ -120,8 +121,9 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                     |> Map.ofSeq
                 for event in AsyncSeq.mergeChoice takeOffsAndLandings staticDamages do
                     match event with
-                    | Choice1Of2((TookOff { PlayerName = Some player }) as tookOff) ->
+                    | Choice1Of2((TookOff { PlayerName = Some player; Coalition = coalition }) as tookOff) ->
                         damageInflicted := Map.add player 0.0f<E> damageInflicted.Value
+                        coalitionOf := Map.add player coalition coalitionOf.Value
                         yield tookOff, 0.0f<E>
                     | Choice1Of2((Landed { PlayerName = Some player }) as landed) ->
                         let damage = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
@@ -132,6 +134,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                         match damage.Data.ByPlayer with
                         | Some player ->
                             let acc = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
+                            let coalition = coalitionOf.Value.TryFind player |> Option.bind id
                             let cost =
                                 match damage.Object with
                                 | Production(region, idx) ->
@@ -172,7 +175,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                                             order.Composition.[vehicle.Rank].Cost
                                     | None ->
                                         0.0f<E>
-                                | ParkedPlane(af, plane) ->
+                                | ParkedPlane(_, plane) ->
                                     plane.Cost
                                 | Cannon _ ->
                                     cannonCost
@@ -182,7 +185,13 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                                     heavyMachineGunCost
                                 | Vehicle(_, vehicle) ->
                                     vehicle.Cost
-                            damageInflicted := Map.add player (acc + damage.Data.Amount * cost) damageInflicted.Value
+                            // friendly-fire modifier: -1 coefficient
+                            let penalty =
+                                if coalition = damage.Object.Coalition(wg, sg) then
+                                    -1.0f
+                                else
+                                    1.0f
+                            damageInflicted := Map.add player (acc + penalty * damage.Data.Amount * cost) damageInflicted.Value
                         | None ->
                             ()
             }
