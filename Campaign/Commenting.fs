@@ -189,6 +189,8 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                                     heavyMachineGunCost
                                 | Vehicle(_, vehicle) ->
                                     vehicle.Cost
+                                | ActivePlane(_, plane) ->
+                                    plane.Cost
                             // friendly-fire modifier: -1 coefficient
                             let penalty =
                                 if coalition = damage.Object.Coalition(wg, sg) then
