@@ -495,7 +495,7 @@ type Plugin() =
                 { OnCargoTookOff = announceTakeOffToTeam
                   OnLanded = announceLandingToTeam
                 }
-            commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, handlers, fun() -> x.StartWebHookClient(config)))
+            commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, config.MissionName, handlers, fun() -> x.StartWebHookClient(config)))
             printfn "Commenter set"
         | _, None, _
         | _, _, None

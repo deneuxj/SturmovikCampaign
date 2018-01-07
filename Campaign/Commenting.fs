@@ -221,27 +221,23 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
         cancelOnDispose.Cancel()
 
 /// Monitor state.xml, (re-) starting a commentator whenever the file is modified
-type CommentatorRestarter(missionLogsDir : string, campaignDir : string, handlers : EventHandlers, onStateWritten : unit -> unit) =
+type CommentatorRestarter(missionLogsDir : string, campaignDir : string, missionName : string, handlers : EventHandlers, onStateWritten : unit -> unit) =
+    let missionFile = missionName + ".mission"
     let watcher = new FileSystemWatcher()
     do watcher.Path <- campaignDir
-       watcher.Filter <- "*.xml"
+       watcher.Filter <- missionFile
        watcher.NotifyFilter <- NotifyFilters.LastWrite
     let serializer = FsPickler.CreateXmlSerializer()
-    let worldFile = File.OpenText(Path.Combine(campaignDir, "world.xml"))
-    let world = serializer.Deserialize<World>(worldFile)
-    do worldFile.Dispose()
-    let rec awaitStateAndOrders remaining =
+    let rec awaitFiles remaining =
         async {
             if Set.isEmpty remaining then
                 return ()
             else
                 let! ev = Async.AwaitEvent watcher.Changed
-                return! awaitStateAndOrders (Set.remove ev.Name remaining)
+                return! awaitFiles (Set.remove ev.Name remaining)
         }
-    let rec work commentator =
+    let rec work world commentator =
         async {
-            do! awaitStateAndOrders (Set["state.xml"; "axisOrders.xml"; "alliesOrders.xml"])
-            onStateWritten()
             match commentator with
             | Some (commentator : Commentator) -> commentator.Dispose()
             | None -> ()
@@ -271,14 +267,39 @@ type CommentatorRestarter(missionLogsDir : string, campaignDir : string, handler
                     None
             match state, axisOrders, alliesOrders with
             | Some state, Some axisOrders, Some alliesOrders ->
+                printfn "Starting new commentator"
                 let commentator = new Commentator(missionLogsDir, handlers, world, state, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
-                return! work(Some commentator)
+                do! awaitFiles (Set[missionFile])
+                onStateWritten()
+                return! work world (Some commentator)
             | _ ->
-                return! work None
+                printfn "Waiting until next change to %s" missionFile
+                do! awaitFiles (Set[missionFile])
+                onStateWritten()
+                return! work world None
+        }
+    // Load world, then repeatedly monitor for new state and order files
+    let prepare =
+        async {
+            let worldPath = Path.Combine(campaignDir, "world.xml")
+            let missionPath = Path.Combine(campaignDir, missionFile)
+            let rec loadWorld() =
+                async {
+                    // Wait until the mission file exists. When that file exists, we know that world.xml is ready to be read.
+                    if not (File.Exists(missionPath)) then
+                        do! Async.Sleep 5000
+                        return! loadWorld()
+                    else
+                        use worldFile = File.OpenText(worldPath)
+                        let world = serializer.Deserialize<World>(worldFile)
+                        return world
+                }
+            let! world = loadWorld()
+            return! work world None
         }
     // Stop notifications when we are disposed
     let cancelOnDispose = new System.Threading.CancellationTokenSource()
-    do Async.Start(work None, cancelOnDispose.Token)
+    do Async.Start(prepare, cancelOnDispose.Token)
     do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =
