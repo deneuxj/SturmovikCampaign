@@ -142,15 +142,24 @@ module Map =
     /// </summary>
     /// <param name="pred">The predicate</param>
     /// <param name="xs">The sequence</param>
-    let split pred xs =
-        let curr, seqs =
-            xs
-            |> Seq.fold (fun (curr, seqs) x ->
-                if pred x then
-                    Seq.singleton x, seq { yield! seqs; yield curr }
-                else
-                    seq { yield! curr; yield x}, seqs) (Seq.empty, Seq.empty) 
-        seq { yield! seqs; yield curr }
+    let split pred (xs : 'T seq) =
+        let it = xs.GetEnumerator()
+        let untilPred() =
+            [
+                while it.MoveNext() && not (pred it.Current) do
+                    yield it.Current
+            ]
+        let current() =
+            try
+                Some it.Current
+            with
+            | _ -> None
+        seq {
+            if it.MoveNext() then
+                yield it.Current :: untilPred()
+            while current().IsSome do
+                yield it.Current :: untilPred()
+        }
 
 /// Misc useful algorithms.
 module Algo =

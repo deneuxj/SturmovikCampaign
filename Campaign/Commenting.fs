@@ -64,7 +64,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                 | _ ->
                     false)
         |> Seq.tryLast
-        |> Option.defaultVal Seq.empty
+        |> Option.defaultVal []
         |> List.ofSeq
     let watcher = new FileSystemWatcher()
     do watcher.Path <- missionLogsDir
