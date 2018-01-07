@@ -436,9 +436,7 @@ type Plugin() =
                     | Axis -> support.ServerControl.GetAxisTeam()
                     | Allies -> support.ServerControl.GetAlliesTeam()
                 let msg =
-                    if (1.0f - health) * plane.Cost > 2.0f * damageInflicted then
-                        "Command is considering whether %s should be sent to fly for the enemy instead"
-                    elif health = 0.0f then
+                    if health = 0.0f then
                         sprintf "%s \"landed\" back at %s" player airfield.AirfieldName
                     else
                         let cargo =
@@ -448,13 +446,13 @@ type Plugin() =
                                 ""
                         let intro =
                             if damageInflicted = 0.0f<E> then
-                                sprintf "%s is back" player
+                                sprintf "%s is back at %s" player airfield.AirfieldName
                             elif damageInflicted < GroundAttackVehicle.LightArmorCost then
-                                sprintf "%s is welcomed back on the ground" player
+                                sprintf "%s is welcomed back on the ground at %s" player airfield.AirfieldName
                             elif damageInflicted < GroundAttackVehicle.MediumTankCost then
-                                sprintf "%s's return is celebrated" player
+                                sprintf "%s's return to %s is celebrated" player airfield.AirfieldName
                             else
-                                sprintf "the entire base rushes to welcome %s" player
+                                sprintf "the entire base rushes to welcome %s at %s" player airfield.AirfieldName
                         let difficulty =
                             if health = 1.0f then
                                 ""
