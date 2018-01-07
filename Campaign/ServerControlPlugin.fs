@@ -376,8 +376,6 @@ type Plugin() =
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
     let mutable commenter : CommentatorRestarter option = None
     let mutable queue = startQueue()
-    let mutable world = None
-    let mutable state = None
 
     let onCampaignOver victors =
         match webHookClient with
@@ -482,6 +480,8 @@ type Plugin() =
                 printfn "WebHook client created"
         | Some _ ->
             ()
+
+    member x.StartCommenter(config : Configuration) =
         // Stop commenter
         match commenter with
         | Some commenter ->
@@ -489,35 +489,12 @@ type Plugin() =
         | None ->
             ()
         // (Re-)start commenter
-        match webHookClient, world, state with
-        | Some webHookClient, Some world, Some state ->
-            let handlers =
-                { OnCargoTookOff = announceTakeOffToTeam
-                  OnLanded = announceLandingToTeam
-                }
-            commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, config.MissionName, handlers, fun() -> x.StartWebHookClient(config)))
-            printfn "Commenter set"
-        | _, None, _
-        | _, _, None
-        | None, _, _ ->
-            ()
-
-    member x.LoadWorldAndState(path) =
-        let serializer = FsPickler.CreateXmlSerializer()
-        try
-            use worldFile = File.OpenText(Path.Combine(path, Filenames.world))
-            use stateFile = File.OpenText(Path.Combine(path, Filenames.state))
-            let w = serializer.Deserialize<World>(worldFile)
-            let s = serializer.Deserialize<WorldState>(stateFile)
-            world <- Some w
-            state <- Some s
-        with
-        | exc ->
-            match support with
-            | Some apis ->
-                apis.Logging.LogError(sprintf "Failed to load world and state from %s: '%s'" path exc.Message)
-            | None ->
-                ()
+        let handlers =
+            { OnCargoTookOff = announceTakeOffToTeam
+              OnLanded = announceLandingToTeam
+            }
+        commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, config.MissionName, handlers, fun() -> x.StartWebHookClient(config)))
+        printfn "Commenter set"
 
     interface CampaignServerApi with
         member x.Init(apis) =
@@ -532,7 +509,7 @@ type Plugin() =
             try
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
-                x.LoadWorldAndState(config.OutputDir)
+                x.StartCommenter(config)
                 Support.start(support, config, None, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
                 |> Choice1Of2
             with
@@ -548,7 +525,7 @@ type Plugin() =
             try
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
-                x.LoadWorldAndState(config.OutputDir)
+                x.StartCommenter(config)
                 Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
                 |> Choice1Of2
             with
