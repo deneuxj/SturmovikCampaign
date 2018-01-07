@@ -127,7 +127,12 @@ let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
         let modelScript = model.StaticScriptModel
         let mcus =
-            let durability = 3000
+            let durability =
+                match model.PlaneType with
+                | PlaneType.Attacker | PlaneType.Bomber | PlaneType.Transport ->
+                    2500
+                | PlaneType.Fighter ->
+                    2000
             if inAttackArea pos.Pos then
                 let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script durability
                 [ block; upcast entity ]
