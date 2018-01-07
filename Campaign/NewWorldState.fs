@@ -68,11 +68,33 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
     // Add the most needed kind of plane to the rear airfield
     let airfields =
         [
+            let random = System.Random()
             let rear = tryFindRearAirfield world coalition state
             for af, afs in List.zip world.Airfields state.Airfields do
                 if Some af.AirfieldId = rear then
-                    let plane = AutoOrder.pickPlaneToProduce coalition world state
-                    let plane = PlaneModel.RandomPlaneOfType(world.PlaneSet, plane, coalition)
+                    let planeType = AutoOrder.pickPlaneToProduce coalition world state
+                    // Pick the plane model of that type that has smallest number at the rear airfield
+                    let candidates = PlaneModel.AllPlanesOfType(world.PlaneSet, planeType, coalition) |> Array.shuffle random
+                    let plane =
+                        try
+                            candidates
+                            |> Array.map (fun plane -> plane, afs.NumPlanes.TryFind plane |> Option.defaultValue 0.0f)
+                            |> Array.minBy snd
+                            |> fst
+                            |> Some
+                        with
+                        | _ -> None
+                    // Weird case: No plane could be picked. Can only happen with broken planesets that lack models of a certain type
+                    let plane =
+                        match plane with
+                        | Some _ -> plane
+                        | None ->
+                            try
+                                PlaneModel.AllModels world.PlaneSet
+                                |> List.minBy (fun _ -> random.NextDouble())
+                                |> Some
+                            with
+                            | _ -> None
                     match plane with
                     | Some model ->
                         let produced = world.PlaneProduction * dt / model.Cost
@@ -82,8 +104,10 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                                     NumPlanes = Map.add model newValue afs.NumPlanes
                         }
                     | None ->
+                        // Another weird case: No plane at all in the given plane set and coalition. Don't produce any plane.
                         yield afs
                 else
+                    // Weird case: No rear airfield. Don't produce any plane.
                     yield afs
         ]
     { state with Regions = regions; Airfields = airfields }
