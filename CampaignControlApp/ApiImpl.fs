@@ -143,7 +143,7 @@ type Scheduler(configFile : string) =
         async {
             match scheduled with
             | [] ->
-                return ()
+                printfn "No more tasks to schedule"
             | task :: rest ->
                 match task with
                 | NoTask ->
