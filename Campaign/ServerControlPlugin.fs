@@ -431,34 +431,41 @@ type Plugin() =
         match support with
         | Some support ->
             async {
-                let cargo =
-                    if cargo > 0.0f<E> then
-                        sprintf " with %3.0fkg of cargo" (cargo / bombCost)
-                    else
-                        ""
                 let team =
                     match coalition with
                     | Axis -> support.ServerControl.GetAxisTeam()
                     | Allies -> support.ServerControl.GetAlliesTeam()
-                let intro =
-                    if damageInflicted = 0.0f<E> then
-                        sprintf "%s is back" player
-                    elif damageInflicted < GroundAttackVehicle.LightArmorCost then
-                        sprintf "%s is welcomed back on the ground" player
-                    elif damageInflicted < GroundAttackVehicle.MediumTankCost then
-                        sprintf "%s's return is celebrated" player
+                let msg =
+                    if (1.0f - health) * plane.Cost > 2.0f * damageInflicted then
+                        "Command is considering whether %s should be sent to fly for the enemy instead"
+                    elif health = 0.0f then
+                        sprintf "%s \"landed\" back at %s" player airfield.AirfieldName
                     else
-                        sprintf "the entire base rushes to welcome %s" player
-                let difficulty =
-                    if health = 1.0f then
-                        ""
-                    elif health > 0.9f then
-                        " after a difficult mission"
-                    elif health > 0.1f then
-                        " after a dangerous mission"
-                    else
-                        " after narrowly escaping death"
-                return! support.ServerControl.MessageTeam(team, [intro + difficulty + cargo])
+                        let cargo =
+                            if cargo > 0.0f<E> then
+                                sprintf " with %3.0fkg of cargo" (cargo / bombCost)
+                            else
+                                ""
+                        let intro =
+                            if damageInflicted = 0.0f<E> then
+                                sprintf "%s is back" player
+                            elif damageInflicted < GroundAttackVehicle.LightArmorCost then
+                                sprintf "%s is welcomed back on the ground" player
+                            elif damageInflicted < GroundAttackVehicle.MediumTankCost then
+                                sprintf "%s's return is celebrated" player
+                            else
+                                sprintf "the entire base rushes to welcome %s" player
+                        let difficulty =
+                            if health = 1.0f then
+                                ""
+                            elif health > 0.9f then
+                                " after a difficult mission"
+                            elif health > 0.1f then
+                                " after a dangerous mission"
+                            else
+                                " after narrowly escaping death"
+                        intro + difficulty + cargo
+                return! support.ServerControl.MessageTeam(team, [msg])
             }
         | None ->
             async {
