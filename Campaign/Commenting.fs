@@ -19,7 +19,7 @@ open Campaign.Orders
 
 type EventHandlers =
     // player name, coalition, airfield, plane, cargo
-    { OnCargoTookOff : string * CoalitionId * AirfieldId * PlaneModel * float32<E> -> Async<unit>
+    { OnTookOff : string * CoalitionId * AirfieldId * PlaneModel * float32<E> -> Async<unit>
       // playername, coalition, airfield, plane, cargo, health, damages inflicted
       OnLanded : string * CoalitionId * AirfieldId * PlaneModel * float32<E> * float32 * float32<E> -> Async<unit>
     }
@@ -205,11 +205,9 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                 async {
                     match event with
                     | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                        if true || x.Cargo > 0.0f<E> then
-                            return! handlers.OnCargoTookOff(player, coalition, x.Airfield, x.Plane, x.Cargo)
+                        return! handlers.OnTookOff(player, coalition, x.Airfield, x.Plane, x.Cargo)
                     | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                        if true || x.Cargo > 0.0f<E> || x.Health < 1.0f then
-                            return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, damage)
+                        return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, damage)
                     | _ ->
                         return()
                 })

@@ -490,7 +490,7 @@ type Plugin() =
             ()
         // (Re-)start commenter
         let handlers =
-            { OnCargoTookOff = announceTakeOffToTeam
+            { OnTookOff = announceTakeOffToTeam
               OnLanded = announceLandingToTeam
             }
         commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, config.MissionName, handlers, fun() -> x.StartWebHookClient(config)))
