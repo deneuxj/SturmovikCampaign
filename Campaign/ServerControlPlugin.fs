@@ -397,10 +397,11 @@ type Plugin() =
         | Some hook -> postMessage (queue, hook) message
         | None -> ()
 
-    let announceTakeOffToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, plane : PlaneModel, cargo : float32<E>) =
+    let announceTakeOffToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, afCoalition : CoalitionId option, plane : PlaneModel, cargo : float32<E>) =
         match support with
         | Some support ->
             async {
+                let atEnemy = Some coalition.Other = afCoalition
                 let cargo =
                     if cargo > 0.0f<E> then
                         sprintf " with %3.0fkg of cargo" (cargo / bombCost)
@@ -413,8 +414,14 @@ type Plugin() =
                     | PlaneType.Fighter -> "a fighter"
                     | PlaneType.Transport -> "a transport plane"
                 let message =
-                    sprintf "%s took off from %s in %s%s"
+                    let verb =
+                        if atEnemy then
+                            "escaped"
+                        else
+                            "took off"
+                    sprintf "%s %s from %s in %s%s"
                         player
+                        verb
                         airfield.AirfieldName
                         planeType
                         cargo
@@ -422,12 +429,15 @@ type Plugin() =
                     match coalition with
                     | Axis -> support.ServerControl.GetAxisTeam()
                     | Allies -> support.ServerControl.GetAlliesTeam()
-                return! support.ServerControl.MessageTeam(team, [message])
+                if atEnemy then
+                    return! support.ServerControl.MessageAll([message])
+                else
+                    return! support.ServerControl.MessageTeam(team, [message])
             }
         | None ->
             async { return () }
 
-    let announceLandingToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, plane : PlaneModel, cargo : float32<E>, health : float32, damageInflicted : float32<E>) =
+    let announceLandingToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, afCoalition : CoalitionId option, plane : PlaneModel, cargo : float32<E>, health : float32, damageInflicted : float32<E>) =
         match support with
         | Some support ->
             async {
@@ -435,35 +445,50 @@ type Plugin() =
                     match coalition with
                     | Axis -> support.ServerControl.GetAxisTeam()
                     | Allies -> support.ServerControl.GetAlliesTeam()
+                let atEnemy = Some coalition.Other = afCoalition
                 let msg =
-                    if health = 0.0f then
-                        sprintf "%s \"landed\" back at %s" player airfield.AirfieldName
+                    if not atEnemy then
+                        if health = 0.0f then
+                            sprintf "%s \"landed\" back at %s" player airfield.AirfieldName
+                        else
+                            let cargo =
+                                if cargo > 0.0f<E> then
+                                    sprintf " with %3.0fkg of cargo" (cargo / bombCost)
+                                else
+                                    ""
+                            let intro =
+                                if damageInflicted = 0.0f<E> then
+                                    sprintf "%s is back at %s" player airfield.AirfieldName
+                                elif damageInflicted < GroundAttackVehicle.LightArmorCost then
+                                    sprintf "%s is welcomed back on the ground at %s" player airfield.AirfieldName
+                                elif damageInflicted < GroundAttackVehicle.MediumTankCost then
+                                    sprintf "%s's return to %s is celebrated" player airfield.AirfieldName
+                                else
+                                    sprintf "the entire base rushes to welcome %s at %s" player airfield.AirfieldName
+                            let difficulty =
+                                if health = 1.0f then
+                                    ""
+                                elif health > 0.9f then
+                                    " after a difficult mission"
+                                elif health > 0.1f then
+                                    " after a dangerous mission"
+                                else
+                                    " after narrowly escaping death"
+                            intro + difficulty + cargo
                     else
-                        let cargo =
+                        if damageInflicted = 0.0f<E> then
                             if cargo > 0.0f<E> then
-                                sprintf " with %3.0fkg of cargo" (cargo / bombCost)
-                            else
-                                ""
-                        let intro =
-                            if damageInflicted = 0.0f<E> then
-                                sprintf "%s is back at %s" player airfield.AirfieldName
-                            elif damageInflicted < GroundAttackVehicle.LightArmorCost then
-                                sprintf "%s is welcomed back on the ground at %s" player airfield.AirfieldName
-                            elif damageInflicted < GroundAttackVehicle.MediumTankCost then
-                                sprintf "%s's return to %s is celebrated" player airfield.AirfieldName
-                            else
-                                sprintf "the entire base rushes to welcome %s at %s" player airfield.AirfieldName
-                        let difficulty =
-                            if health = 1.0f then
-                                ""
+                                sprintf "The enemy welcomes %s and his cargo" player
                             elif health > 0.9f then
-                                " after a difficult mission"
-                            elif health > 0.1f then
-                                " after a dangerous mission"
+                                sprintf "%s has defected to the enemy at %s" player airfield.AirfieldName
                             else
-                                " after narrowly escaping death"
-                        intro + difficulty + cargo
-                return! support.ServerControl.MessageTeam(team, [msg])
+                                sprintf "The enemy has captured %s and what's left of their plane at %s" player airfield.AirfieldName
+                        else
+                            sprintf "%s receives stern looks after being captured at %s" player airfield.AirfieldName
+                if atEnemy then
+                    return! support.ServerControl.MessageAll([msg])
+                else
+                    return! support.ServerControl.MessageTeam(team, [msg])
             }
         | None ->
             async {

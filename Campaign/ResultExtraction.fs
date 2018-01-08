@@ -255,7 +255,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
         let ongoingFlight = ref Map.empty
         // Map human player (NickId) to vehicle id
         let playerPilot = ref Map.empty
-        // Map plane id to name of human player
+        // Map plane id to name of human player and coalition
         let planePilot = ref Map.empty
         // Function to send back a plane to starting airfield. Used for planes still in the air when the round ends or if a player disconnects while flying.
         let sendPlaneBack vehicle af =
@@ -289,8 +289,14 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 let newDamage = oldDamage + damage.Damage
                 damages := Map.add damage.TargetId newDamage !damages
             | :? PlayerPlaneEntry as playerPlane ->
+                let coalition =
+                    match playerPlane.Country with
+                    | Country.Germany | Country.OtherAxis -> Some Axis
+                    | Country.USSR | Country.OtherAllies -> Some Allies
+                    | Country.None | Country.Neutral -> None // Should not happen
+                    | _ -> failwithf "Unknown country value %d" (int playerPlane.Country)
                 playerPilot := playerPilot.Value.Add(playerPlane.NickId, playerPlane.VehicleId)
-                planePilot := planePilot.Value.Add(playerPlane.VehicleId, playerPlane.Name)
+                planePilot := planePilot.Value.Add(playerPlane.VehicleId, (playerPlane.Name, coalition))
                 match playerPlane.VehicleType with
                 | PlaneObjectType plane when plane.Roles.Contains CargoTransporter ->
                     let modmask, payload = plane.CargoPayload
@@ -318,9 +324,11 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     let bombLoad =
                         bombLoad.Value.TryFind takeOff.VehicleId
                         |> Option.defaultVal 0.0f<K>
-                    let pilot = planePilot.Value.TryFind takeOff.VehicleId
+                    let pilot, coalition =
+                        match planePilot.Value.TryFind takeOff.VehicleId with
+                        | None -> None, None
+                        | Some(pilot, coalition) -> Some pilot, coalition
                     ongoingFlight := ongoingFlight.Value.Add(takeOff.VehicleId, af.AirfieldId)
-                    let coalition = sg.GetRegion(af.Region).Owner
                     yield tookOff { PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane; Cargo = cargo; BombLoad = bombLoad; PlayerName = pilot; Coalition = coalition }
                 | None ->
                     ()
@@ -354,8 +362,10 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                             cargo.Value.TryFind landing.VehicleId
                             |> Option.defaultVal 0.0f<E>
                         cargo := cargo.Value.Remove landing.VehicleId
-                        let pilot = planePilot.Value.TryFind landing.VehicleId
-                        let coalition = sg.GetRegion(af.Region).Owner
+                        let pilot, coalition =
+                            match planePilot.Value.TryFind landing.VehicleId with
+                            | None -> None, None
+                            | Some(pilot, coalition) -> Some pilot, coalition
                         yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health; Cargo = cargoAmount; PlayerName = pilot; Coalition = coalition }
                     | None -> ()
             | :? RoundEndEntry as roundEnd ->

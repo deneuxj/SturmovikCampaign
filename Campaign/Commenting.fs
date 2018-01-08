@@ -18,10 +18,10 @@ open MBrace.FsPickler
 open Campaign.Orders
 
 type EventHandlers =
-    // player name, coalition, airfield, plane, cargo
-    { OnTookOff : string * CoalitionId * AirfieldId * PlaneModel * float32<E> -> Async<unit>
-      // playername, coalition, airfield, plane, cargo, health, damages inflicted
-      OnLanded : string * CoalitionId * AirfieldId * PlaneModel * float32<E> * float32 * float32<E> -> Async<unit>
+    // player name, coalition, airfield, coalition of airfield, plane, cargo
+    { OnTookOff : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<E> -> Async<unit>
+      // playername, coalition of player, airfield, coalition of airfield, plane, cargo, health, damages inflicted
+      OnLanded : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<E> * float32 * float32<E> -> Async<unit>
     }
 
 /// <summary>
@@ -110,11 +110,11 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                 asyncSeqEntries
                 |> extractVehicleDamages columns convoys
             let damages = AsyncSeq.merge staticDamages vehicleDamages
+            let wg = world.FastAccess
+            let sg = state.FastAccess
             asyncSeq {
                 let damageInflicted = ref Map.empty
                 let coalitionOf = ref Map.empty
-                let wg = world.FastAccess
-                let sg = state.FastAccess
                 let convoys =
                     convoys
                     |> Seq.map (fun convoy -> convoy.OrderId, convoy)
@@ -205,9 +205,11 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                 async {
                     match event with
                     | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                        return! handlers.OnTookOff(player, coalition, x.Airfield, x.Plane, x.Cargo)
+                        let afCoalition = sg.GetRegion(wg.GetAirfield(x.Airfield).Region).Owner
+                        return! handlers.OnTookOff(player, coalition, x.Airfield, afCoalition, x.Plane, x.Cargo)
                     | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                        return! handlers.OnLanded(player, coalition, x.Airfield, x.Plane, x.Cargo, x.Health, damage)
+                        let afCoalition = sg.GetRegion(wg.GetAirfield(x.Airfield).Region).Owner
+                        return! handlers.OnLanded(player, coalition, x.Airfield, afCoalition, x.Plane, x.Cargo, x.Health, damage)
                     | _ ->
                         return()
                 })
