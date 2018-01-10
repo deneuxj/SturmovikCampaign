@@ -38,7 +38,7 @@ with
         let cmdLand = getTriggerByName group T.Blocks.Land
         let plane = getVehicleByName group T.Blocks.TransferPlane
         let killed = getTriggerByName group T.Blocks.Killed
-        let arrived = getTriggerByName group T.Blocks.Landed
+        let arrived = getTriggerByName group T.Blocks.JustLanded
         let counter = getTriggerByName group T.Blocks.StartCount :?> Mcu.McuCounter
         let setCountry =
             let name =
