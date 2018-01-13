@@ -616,6 +616,12 @@ let applyPlaneFerries (state : WorldState) ferryEvents =
         |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
     { state with Airfields = airfields }
 
+/// Max fraction of a column that AIs can kill in a battle
+let maxAiBattleKills = 0.25f
+
+/// Max fraction of a column that players can kill in a battle
+let maxPlayerBattleKills = 0.5f
+
 /// Remove vehicles killed during a battle preamble from a vehicle count map.
 let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed : BattleParticipantKilled list) =
     // Make it so that every concrete vehicle kill accounts for a fraction of a kill when applied.
@@ -638,7 +644,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
         | [] -> numVehicles, unmatchedAiDamage + unmatchedPlayerDamage, aiDamageSoFar + playerDamageSoFar
         | veh :: rest ->
             if veh.KilledByPlayer.IsNone then
-                if unmatchedAiDamage + aiDamageSoFar >= 0.25f * totalValue then
+                if unmatchedAiDamage + aiDamageSoFar >= maxAiBattleKills * totalValue then
                     // Damage by AI reached the limit, skip
                     damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
                 else
@@ -649,7 +655,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
                     | _ ->
                         damageExact numVehicles (unmatchedAiDamage + veh.Vehicle.Cost) unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
             else
-                if unmatchedPlayerDamage + playerDamageSoFar >= 0.5f * totalValue then
+                if unmatchedPlayerDamage + playerDamageSoFar >= maxPlayerBattleKills * totalValue then
                     // Damage by players reached the limit, skip
                     damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
                 else
