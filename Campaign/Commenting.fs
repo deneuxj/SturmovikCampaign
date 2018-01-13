@@ -16,6 +16,7 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open MBrace.FsPickler
 open Campaign.Orders
+open SturmovikMission.Blocks.Util.String
 
 type EventHandlers =
     // player name, coalition, airfield, coalition of airfield, plane, cargo
@@ -30,11 +31,11 @@ type EventHandlers =
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
 type Commentator (missionLogsDir : string, handlers : EventHandlers, world : World, state : WorldState, convoys : ResupplyOrder list, columns : ColumnMovement list) =
-    // retrieve entries from most recent mission, if it matches the state's mission and start date.
+    // retrieve entries from most recent mission
     let files =
         let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
         let r = Regex(@"(missionReport\(.*\))\[([0-9]+)\]\.txt")
-        let ordered =
+        let filtered =
             unordered
             |> Seq.choose(fun path ->
                 let m = r.Match(Path.GetFileName(path))
@@ -42,31 +43,28 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                     None
                 else
                     Some(path, (m.Groups.[1].ToString(), System.Int32.Parse(m.Groups.[2].ToString()))))
+        let lastGroup =
+            filtered
+            |> Seq.groupBy (snd >> fst)
+            |> Seq.tryLast
+            |> Option.map snd
+            |> Option.defaultVal Seq.empty
+        let sorted =
+            lastGroup
             |> Seq.sortBy snd
             |> Seq.map fst
-        ordered
+        sorted
         |> List.ofSeq
-    let lines =
+    let initialEntries =
         seq {
             for file in files do
                 yield! File.ReadAllLines(file)
         }
-        |> List.ofSeq
-    let initialEntries =
-        lines
-        |> Seq.map LogEntry.Parse
-        |> Seq.split (function :? MissionStartEntry -> true | _ -> false)
-        |> Seq.filter (fun group ->
-            if Seq.isEmpty group then
-                false
-            else
-                match Seq.head group with
-                | :? MissionStartEntry as start ->
-                    start.MissionTime = state.Date
-                | _ ->
-                    false)
-        |> Seq.tryLast
-        |> Option.defaultVal []
+        |> Seq.choose (fun line ->
+            try
+                (line, LogEntry.Parse(line))
+                |> Some
+            with _ -> None)
         |> List.ofSeq
     let watcher = new FileSystemWatcher()
     do watcher.Path <- missionLogsDir
@@ -78,25 +76,59 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
             match batched with
             | [] ->
                 let! ev = Async.AwaitEvent watcher.Changed
-                if not(alreadyHandled.Contains(ev.FullPath)) then
-                    let entries2 =
-                        try
-                            [
-                                for line in File.ReadAllLines(ev.FullPath) do
-                                    yield LogEntry.Parse(line)
-                            ]
-                        with
-                        | e ->
-                            eprintfn "Failed to parse '%s' because '%s'" ev.FullPath e.Message
-                            []
-                    return! getEntry (entries2, Set.add  ev.FullPath alreadyHandled)
-                else
-                    return! getEntry (batched, alreadyHandled)
+                let entries2 =
+                    try
+                        [
+                            for line in File.ReadAllLines(ev.FullPath) do
+                                if not(alreadyHandled.Contains line) then
+                                    yield line, LogEntry.Parse(line)
+                        ]
+                    with
+                    | e ->
+                        eprintfn "Failed to parse '%s' because '%s'" ev.FullPath e.Message
+                        []
+                let alreadyHandled =
+                    entries2
+                    |> Seq.map fst
+                    |> Seq.fold (fun alreadyHandled x -> Set.add x alreadyHandled) alreadyHandled
+                let batched =
+                    entries2
+                    |> List.map snd
+                // We are initially called with a batch corresponding to the initial entries.
+                // If we are in this branch, it means the initial batch has been consumed by now, or it was empty.
+                // In either case, returning Some(None, state) will generate a None, which will be recognized as the signal to start calling the handlers.
+                let notifyStartEmittingMessages = None
+                return Some(notifyStartEmittingMessages, (batched, alreadyHandled))
             | x :: xs ->
-                return Some(x, (xs, alreadyHandled))
+                return Some(Some x, (xs, alreadyHandled))
         }
     let asyncSeqEntries =
-        AsyncSeq.unfoldAsync getEntry (initialEntries, Set.ofSeq files)
+        AsyncSeq.unfoldAsync getEntry (initialEntries |> List.map snd, initialEntries |> List.map fst |> Set.ofList)
+    let startEmitting =
+        asyncSeqEntries
+        |> AsyncSeq.filter (Option.isNone)
+        |> AsyncSeq.map (fun _ -> ())
+    let asyncSeqEntries =
+        asyncSeqEntries
+        |> AsyncSeq.choose id
+    let asyncIterNonMuted f xs =
+        let work =
+            AsyncSeq.mergeChoice startEmitting xs
+            |> AsyncSeq.foldAsync (fun muted item ->
+                async {
+                    match item with
+                    | Choice1Of2() ->
+                        // Unmute
+                        return false
+                    | Choice2Of2 x->
+                        if not muted then
+                            do! f x
+                        return muted
+                }) true
+        async {
+            let! _ = work
+            return ()
+        }
     // Stop notifications when we are disposed
     let cancelOnDispose = new System.Threading.CancellationTokenSource()
     // Notify of interesting take-offs and landings
@@ -222,7 +254,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                             ()
                     | Choice3Of3 { KilledByPlayer = None } -> ()
                 }
-            |> AsyncSeq.iterAsync (fun (event, damage) ->
+            |> asyncIterNonMuted(fun (event, damage) ->
                 async {
                     match event with
                     | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
@@ -232,7 +264,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                         let afCoalition = sg.GetRegion(wg.GetAirfield(x.Airfield).Region).Owner
                         return! handlers.OnLanded(player, coalition, x.Airfield, afCoalition, x.Plane, x.Cargo, x.Health, damage)
                     | _ ->
-                        return()
+                        return ()
                 })
         let task2 =
             asyncSeq {
@@ -250,7 +282,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                     if newDamage > totalValue * NewWorldState.maxPlayerBattleKills then
                         yield battleKill.Coalition.Other, battleKill.BattleId
             }
-            |> AsyncSeq.iterAsync (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
+            |> asyncIterNonMuted (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
         Async.Start(task, cancelOnDispose.Token)
         Async.Start(task2, cancelOnDispose.Token)
     do watcher.EnableRaisingEvents <- true
