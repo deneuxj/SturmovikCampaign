@@ -152,7 +152,9 @@ with
                 |> fun x -> buildCanon(DefenseMiddle, x, None, vehicles.AntiTankPosition)
             )
         // Icons
-        let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, center, "Ground battle", defendingCoalition.ToCoalition, Mcu.IconIdValue.CoverArmorColumn)
+        let title =
+            sprintf "Battle %s (%d:%d)" region attackers.Length defenders.Length
+        let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, center, title, defendingCoalition.ToCoalition, Mcu.IconIdValue.CoverArmorColumn)
         // Result
         { Supporters = support
           Attackers = attackers
