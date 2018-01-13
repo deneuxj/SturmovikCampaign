@@ -466,16 +466,17 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
         // vehicle need is dictated by number of regions on the front line
         let numHeavy, numMedium, numLight, need =
             state.Regions
-            |> Seq.filter (fun state -> state.Owner = Some coalition) // Regions we control
             |> Seq.filter (fun state -> // Regions at the front
                 let region = wg.GetRegion state.RegionId
                 region.Neighbours
                 |> Seq.exists (fun ngh -> sg.GetRegion(ngh).Owner <> Some coalition))
             |> Seq.map (fun state ->
-                let numHeavy = state.GetNumVehicles HeavyTank
-                let numMedium = state.GetNumVehicles MediumTank
-                let numLight = state.GetNumVehicles LightArmor
+                let numHeavy, numMedium, numLight =
+                    state.GetNumVehicles(coalition, HeavyTank),
+                    state.GetNumVehicles(coalition, MediumTank),
+                    state.GetNumVehicles(coalition, LightArmor)
                 let desiredValue = 3.0f * GroundAttackVehicle.HeavyTankCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.LightArmorCost
+                let desiredValue = (float32 world.TankTargetNumber / 15.0f) * desiredValue
                 let availableValue = float32 numHeavy * GroundAttackVehicle.HeavyTankCost + float32 numMedium * GroundAttackVehicle.MediumTankCost + float32 numLight * GroundAttackVehicle.LightArmorCost
                 numHeavy, numMedium, numLight, max 0.0f<E> (desiredValue - availableValue))
             |> Seq.fold (fun (t1, t2, t3, t4) (n1, n2, n3, n4) -> (t1 + n1, t2 + n2, t3 + n3, t4 + n4)) (0, 0, 0, 0.0f<E>)

@@ -86,6 +86,17 @@ with
         |> Map.tryFind vehicle
         |> Option.defaultVal 0
 
+    member this.GetNumInvadingVehicles(vehicle : GroundAttackVehicle) =
+        this.NumInvadingVehicles
+        |> Map.tryFind vehicle
+        |> Option.defaultVal 0
+
+    member this.GetNumVehicles(coalition: CoalitionId, vehicle : GroundAttackVehicle) =
+        match this.Owner with
+        | None -> 0
+        | Some x when x = coalition -> this.GetNumVehicles(vehicle)
+        | Some _ -> this.GetNumInvadingVehicles(vehicle)
+
     member this.HasInvaders =
         this.NumInvadingVehicles
         |> Map.exists (fun _ qty -> qty > 0)

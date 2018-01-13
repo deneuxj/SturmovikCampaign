@@ -614,6 +614,9 @@ with
         |> Seq.filter (fun area -> area.Home = defender)
         |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
 
+    /// Number of tanks per region on the frontline
+    member this.TankTargetNumber = 30
+
 let cannonCost = 50.0f<E>
 let heavyMachineGunCost = cannonCost / 4.0f
 let lightMachineGunCost = heavyMachineGunCost / (float32 SturmovikMission.Blocks.StaticDefenses.Factory.numLightMachineGunsPerHeavyMachineGun)
