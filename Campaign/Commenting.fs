@@ -22,6 +22,8 @@ type EventHandlers =
     { OnTookOff : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<E> -> Async<unit>
       // playername, coalition of player, airfield, coalition of airfield, plane, cargo, health, damages inflicted
       OnLanded : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<E> * float32 * float32<E> -> Async<unit>
+      // Region name, attacker coalition
+      OnMaxBattleDamageExceeded : string * CoalitionId -> Async<unit>
     }
 
 /// <summary>
@@ -99,19 +101,25 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
     let cancelOnDispose = new System.Threading.CancellationTokenSource()
     // Notify of interesting take-offs and landings
     do
+        let battleDamages =
+            let battles =
+                Battlefield.identifyBattleAreas world state
+                |> Seq.cache
+            asyncSeqEntries
+            |> extractBattleDamages world state battles
+        let takeOffsAndLandings =
+            asyncSeqEntries
+            |> extractTakeOffsAndLandings world state
+        let staticDamages =
+            asyncSeqEntries
+            |> extractStaticDamages world
+        let vehicleDamages =
+            asyncSeqEntries
+            |> extractVehicleDamages columns convoys
+        let damages = AsyncSeq.merge staticDamages vehicleDamages
+        let wg = world.FastAccess
+        let sg = state.FastAccess
         let task =
-            let takeOffsAndLandings =
-                asyncSeqEntries
-                |> extractTakeOffsAndLandings world state
-            let staticDamages =
-                asyncSeqEntries
-                |> extractStaticDamages world
-            let vehicleDamages =
-                asyncSeqEntries
-                |> extractVehicleDamages columns convoys
-            let damages = AsyncSeq.merge staticDamages vehicleDamages
-            let wg = world.FastAccess
-            let sg = state.FastAccess
             asyncSeq {
                 let damageInflicted = ref Map.empty
                 let coalitionOf = ref Map.empty
@@ -213,7 +221,25 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                     | _ ->
                         return()
                 })
+        let task2 =
+            asyncSeq {
+                let battleDamage = ref Map.empty
+                for battleKill in battleDamages do
+                    let oldBattleDamage =
+                        battleDamage.Value.TryFind (battleKill.BattleId, battleKill.Coalition)
+                        |> Option.defaultValue 0.0f<E>
+                    let newDamage = oldBattleDamage + battleKill.Vehicle.Cost / (float32 NewWorldState.battleKillFactor)
+                    battleDamage := Map.add (battleKill.BattleId, battleKill.Coalition) newDamage battleDamage.Value
+                    let totalValue =
+                        GroundAttackVehicle.AllVehicles
+                        |> Seq.sumBy (fun vehicle ->
+                            (float32(sg.GetRegion(battleKill.BattleId).GetNumVehicles(battleKill.Coalition, vehicle))) * vehicle.Cost)
+                    if newDamage > totalValue * NewWorldState.maxPlayerBattleKills then
+                        yield battleKill.Coalition.Other, battleKill.BattleId
+            }
+            |> AsyncSeq.iterAsync (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
         Async.Start(task, cancelOnDispose.Token)
+        Async.Start(task2, cancelOnDispose.Token)
     do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =

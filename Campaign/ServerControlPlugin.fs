@@ -495,6 +495,22 @@ type Plugin() =
                 return()
             }
 
+    let announceBattleKillsExceeded (region : string, coalition : CoalitionId) =
+        match support with
+        | Some support ->
+            async {
+                let team =
+                    match coalition with
+                    | Axis -> support.ServerControl.GetAxisTeam()
+                    | Allies -> support.ServerControl.GetAlliesTeam()
+                let msg = sprintf "Max battle damage inflicted at %s, further kills will be ignored" region
+                return! support.ServerControl.MessageTeam(team, [msg])
+            }
+        | None ->
+            async {
+                return()
+            }
+
     let announceWorldState arg =
         match webHookClient with
         | Some hook -> postWorldState (queue, hook) arg
@@ -522,6 +538,7 @@ type Plugin() =
         let handlers =
             { OnTookOff = announceTakeOffToTeam
               OnLanded = announceLandingToTeam
+              OnMaxBattleDamageExceeded = announceBattleKillsExceeded
             }
         commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, config.MissionName, handlers, fun() -> x.StartWebHookClient(config)))
         printfn "Commenter set"

@@ -622,15 +622,17 @@ let maxAiBattleKills = 0.25f
 /// Max fraction of a column that players can kill in a battle
 let maxPlayerBattleKills = 0.5f
 
+/// Number of reported battle kills per actual battle kill
+let battleKillFactor = 5
+
 /// Remove vehicles killed during a battle preamble from a vehicle count map.
 let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed : BattleParticipantKilled list) =
     // Make it so that every concrete vehicle kill accounts for a fraction of a kill when applied.
     // This makes it harder for players to reach the kill limit.
     // It's a bit of a hack, but the way we do that is to multiply the number of vehicles before processing, then divide them
-    let vehicleFactor = 5
     let numVehicles =
         numVehicles
-        |> Map.map (fun k num -> num * vehicleFactor)
+        |> Map.map (fun k num -> num / battleKillFactor)
     // Remove no more than 50% of the original total value
     let totalValue =
         numVehicles
@@ -680,7 +682,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
     let numVehicles =
         damageOther unmatchedDamage (numVehicles |> expandMap |> Array.shuffle random |> List.ofArray)
         |> compactSeq
-        |> Map.map (fun k num -> num / vehicleFactor)
+        |> Map.map (fun k num -> num / battleKillFactor)
     let doneDamage = doneDamage + unmatchedDamage
     doneDamage / totalValue, numVehicles
 
