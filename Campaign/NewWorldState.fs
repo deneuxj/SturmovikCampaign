@@ -618,6 +618,13 @@ let applyPlaneFerries (state : WorldState) ferryEvents =
 
 /// Remove vehicles killed during a battle preamble from a vehicle count map.
 let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed : BattleParticipantKilled list) =
+    // Make it so that every concrete vehicle kill accounts for a fraction of a kill when applied.
+    // This makes it harder for players to reach the kill limit.
+    // It's a bit of a hack, but the way we do that is to multiply the number of vehicles before processing, then divide them
+    let vehicleFactor = 5
+    let numVehicles =
+        numVehicles
+        |> Map.map (fun k num -> num * vehicleFactor)
     // Remove no more than 50% of the original total value
     let totalValue =
         numVehicles
@@ -667,6 +674,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
     let numVehicles =
         damageOther unmatchedDamage (numVehicles |> expandMap |> Array.shuffle random |> List.ofArray)
         |> compactSeq
+        |> Map.map (fun k num -> num / vehicleFactor)
     let doneDamage = doneDamage + unmatchedDamage
     doneDamage / totalValue, numVehicles
 
