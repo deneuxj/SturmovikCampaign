@@ -28,7 +28,7 @@ type Battlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[], namePrefix) =
+    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[], region) =
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float yori)
@@ -92,7 +92,7 @@ with
         // Build an attacking tank
         let buildTank name (model : VehicleTypeData) =
             let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack))
-            tank.Tank.Name <- namePrefix + "A-" + name
+            tank.Tank.Name <- sprintf "B-%s-A-%s" region name
             model.AssignTo(tank.Tank)
             tank.Tank.Country <- Some defendingCoalition.Other.ToCountry
             tank |> Choice1Of2
@@ -124,7 +124,7 @@ with
         let buildCanon (location, model : VehicleTypeData, name , wallModel : VehicleTypeData) =
             let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack))
             match name with
-            | Some name -> arty.Canon.Name <- namePrefix + "D-" + name
+            | Some name -> arty.Canon.Name <- sprintf "B-%s-D-%s" region name
             | None -> ()
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
@@ -227,7 +227,6 @@ let generateBattlefields maxVehicles random store lcStore (world : World) (state
                 state.GetAmmoFillLevel(world, bf) * (float32 bf.MaxNumGuns)
                 |> ceil
                 |> int
-            let namePrefix = sprintf "B-%s-" (string regState.RegionId)
             let defendingVehicles =
                 regState.NumVehicles
                 |> expandMap
@@ -239,5 +238,5 @@ let generateBattlefields maxVehicles random store lcStore (world : World) (state
                 |> expandMap
                 |> Array.shuffle random
                 |> Array.truncate maxVehicles
-            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, namePrefix)
+            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, string bf.Home)
     ]
