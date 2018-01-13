@@ -1,5 +1,7 @@
 ﻿module Util
 
+open FSharp.Control
+
 /// <summary>
 /// Build a dictionary from a sequence of items and expose it as getter function.
 /// The entire dictionary is computed at once when the first call to the getter function is called.
@@ -223,3 +225,10 @@ module Algo =
             |> Seq.concat
             |> dict
         fun v -> m.[v]
+
+module AsyncSeq =
+    let mergeChoice3 xa xb xc =
+        [ xa |> AsyncSeq.map Choice1Of3
+          xb |> AsyncSeq.map Choice2Of3
+          xc |> AsyncSeq.map Choice3Of3 ]
+        |> AsyncSeq.mergeAll
