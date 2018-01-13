@@ -131,18 +131,18 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                     columns
                     |> Seq.map (fun column -> column.OrderId, column)
                     |> Map.ofSeq
-                for event in AsyncSeq.mergeChoice takeOffsAndLandings damages do
+                for event in AsyncSeq.mergeChoice3 takeOffsAndLandings damages battleDamages do
                     match event with
-                    | Choice1Of2((TookOff { PlayerName = Some player; Coalition = coalition }) as tookOff) ->
+                    | Choice1Of3((TookOff { PlayerName = Some player; Coalition = coalition }) as tookOff) ->
                         damageInflicted := Map.add player 0.0f<E> damageInflicted.Value
                         coalitionOf := Map.add player coalition coalitionOf.Value
                         yield tookOff, 0.0f<E>
-                    | Choice1Of2((Landed { PlayerName = Some player }) as landed) ->
+                    | Choice1Of3((Landed { PlayerName = Some player }) as landed) ->
                         let damage = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
                         damageInflicted := Map.remove player damageInflicted.Value
                         yield landed, damage
-                    | Choice1Of2(TookOff { PlayerName = None }) | Choice1Of2(Landed { PlayerName = None }) -> ()
-                    | Choice2Of2 damage ->
+                    | Choice1Of3(TookOff { PlayerName = None }) | Choice1Of3(Landed { PlayerName = None }) -> ()
+                    | Choice2Of3 damage ->
                         match damage.Data.ByPlayer with
                         | Some player ->
                             let acc = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
@@ -208,7 +208,20 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                             damageInflicted := Map.add player (acc + penalty * damage.Data.Amount * cost) damageInflicted.Value
                         | None ->
                             ()
-            }
+                    | Choice3Of3 ({ KilledByPlayer = Some killer } as battleKill) ->
+                        match coalitionOf.Value.TryFind(killer) |> Option.bind id with
+                        | Some coalition ->
+                            let penalty =
+                                if coalition = battleKill.Coalition then
+                                    -1.0f
+                                else
+                                    1.0f
+                            let acc = damageInflicted.Value.TryFind killer |> Option.defaultVal 0.0f<E>
+                            damageInflicted := Map.add killer (acc + penalty * battleKill.Vehicle.Cost / (float32 NewWorldState.battleKillFactor)) damageInflicted.Value
+                        | None ->
+                            ()
+                    | Choice3Of3 { KilledByPlayer = None } -> ()
+                }
             |> AsyncSeq.iterAsync (fun (event, damage) ->
                 async {
                     match event with
