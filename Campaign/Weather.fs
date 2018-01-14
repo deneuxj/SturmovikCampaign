@@ -151,10 +151,11 @@ let getWeather random (t : System.DateTime) =
         else
             windDirection
     let temperature = getTemperature random t
-    let hLcl = (20.0 + temperature / 5.0) * 100.0 * (1.0 - humidity)
+    let hLcl = (10.0 + temperature / 1.5) * 100.0 * (1.0 - 0.5 * humidity)
+    let thickness = 100.0 + 500.0 * humidity
     { CloudDensity = humidity
-      CloudHeight = max 500.0 hLcl
-      CloudThickness = 500.0
+      CloudHeight = hLcl
+      CloudThickness = thickness
       Precipitation = humidity
       Wind = { Speed = windSpeed; Direction = windDirection }
       Turbulence = turbulence
@@ -163,7 +164,7 @@ let getWeather random (t : System.DateTime) =
     }
 
 /// Build an options mission section, based on an existing one.
-let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Options) =
+let setOptions (random : System.Random) (weather : WeatherState) (t : System.DateTime) (options : T.Options) =
     let precType =
         if weather.Temperature < 0.0 then
             2 // snow
@@ -207,8 +208,11 @@ let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Optio
         let windSpeed = int weather.Wind.Speed
         options.GetWindLayers().Value
         |> List.map(fun trip ->
-            let alt, dir, speed = trip.Value
-            T.Options.WindLayers.WindLayers_ValueType(alt, T.Integer windDir, T.Integer windSpeed)
+            let alt, _, _ = trip.Value
+            let dir = int((float windDir + 60.0 * (random.NextDouble() - 0.5)) % 360.0)
+            let altSpeedK = 1.0 + (float alt.Value) / 3000.0
+            let speed = int(float windSpeed * altSpeedK * (1.0 + random.NextDouble() * 0.1))
+            T.Options.WindLayers.WindLayers_ValueType(alt, T.Integer dir, T.Integer speed)
         )
     options
         .SetDate(T.Date(t.Day, t.Month, t.Year))

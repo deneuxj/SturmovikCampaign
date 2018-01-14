@@ -316,7 +316,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         createBuildingFires store missionData.World missionData.State (float32 missionData.Weather.Wind.Direction)
         |> List.map (fun fire -> fire.All)
     let options =
-        (Weather.setOptions missionData.Weather missionData.State.Date options)
+        (Weather.setOptions missionData.Random missionData.Weather missionData.State.Date options)
             .SetMissionType(T.Integer 2) // deathmatch
             |> addMultiplayerPlaneConfigs missionParams.PlaneSet
     let optionStrings =
