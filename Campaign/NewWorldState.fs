@@ -632,7 +632,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
     // It's a bit of a hack, but the way we do that is to multiply the number of vehicles before processing, then divide them
     let numVehicles =
         numVehicles
-        |> Map.map (fun k num -> num / battleKillFactor)
+        |> Map.map (fun k num -> num * battleKillFactor)
     // Remove no more than 50% of the original total value
     let totalValue =
         numVehicles
