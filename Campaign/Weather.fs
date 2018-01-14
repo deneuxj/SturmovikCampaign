@@ -169,18 +169,23 @@ let setOptions (weather : WeatherState) (t : System.DateTime) (options : T.Optio
             2 // snow
         else
             1 // rain
+    let rainThreshold = 0.95
+    let rainAmount =
+        (weather.Precipitation - rainThreshold) / (1.0 - rainThreshold)
+        |> min 1.0
+        |> max 0.0
     let precLevel =
-        int(floor(100.0 * min (weather.Precipitation / 0.8) 1.0))
+        int(floor(100.0 * rainAmount))
     let cloudConfig =
         let prefix =
-            let x = weather.Precipitation * 5.0
-            if x < 1.0 then
+            let x = weather.Precipitation
+            if x < 0.1 then
                 "00_clear"
-            elif x < 2.0 then
+            elif x < 0.3 then
                 "01_light"
-            elif x < 3.0 then
+            elif x < 0.6 then
                 "02_medium"
-            elif x < 4.0 then
+            elif x < rainThreshold then
                 "03_heavy"
             else
                 "04_overcast"
