@@ -232,3 +232,14 @@ module AsyncSeq =
           xb |> AsyncSeq.map Choice2Of3
           xc |> AsyncSeq.map Choice3Of3 ]
         |> AsyncSeq.mergeAll
+
+module Async =
+    let catchLog label task =
+        async {
+            try
+                return! task
+            with
+            | e ->
+                printfn "Task '%s' failed: %s at\n%s" label e.Message e.StackTrace
+                return()
+        }

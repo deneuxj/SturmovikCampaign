@@ -82,6 +82,8 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                             for line in File.ReadAllLines(ev.FullPath) do
                                 if not(alreadyHandled.Contains line) then
                                     yield line, LogEntry.Parse(line)
+                                else
+                                    printfn "Skipping log line %s" line
                         ]
                     with
                     | e ->
@@ -123,6 +125,8 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                     | Choice2Of2 x->
                         if not muted then
                             do! f x
+                        else
+                            printfn "Muted: %A" x
                         return muted
                 }) true
         async {
@@ -283,8 +287,8 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                         yield battleKill.Coalition.Other, battleKill.BattleId
             }
             |> asyncIterNonMuted (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
-        Async.Start(task, cancelOnDispose.Token)
-        Async.Start(task2, cancelOnDispose.Token)
+        Async.Start(Async.catchLog "live commentator" task, cancelOnDispose.Token)
+        Async.Start(Async.catchLog "battle limits notifier" task2, cancelOnDispose.Token)
     do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =
