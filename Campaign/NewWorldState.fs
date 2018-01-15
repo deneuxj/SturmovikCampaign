@@ -252,7 +252,7 @@ let computeHealing(subBlocksSpecs, healths, buildings, energy, healLimit) =
     let prodHealth =
         List.zip healths prodHealing
         |> List.map (fun (health, healing) -> health + healing |> max 0.0f |> min 1.0f)
-    prodHealth, energy
+    prodHealth, energy, healLimit
 
 /// Compute how many supplies were removed from each region's stores
 let computeShipped (orders : ResupplyOrder list) (shipped : SuppliesShipped list) =
@@ -488,7 +488,7 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                 let productionHealLimit =
                     Map.tryFind region.RegionId productionHealLimit
                     |> Option.defaultValue (healRate * dt)
-                let prodHealth, energy =
+                let prodHealth, energy, productionHealLimit =
                     computeHealing(
                         world.SubBlockSpecs,
                         regState.ProductionHealth,
@@ -513,7 +513,7 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                 let storageHealLimit =
                     Map.tryFind region.RegionId storageHealLimit
                     |> Option.defaultValue (healRate * dt)
-                let storeHealth, energy =
+                let storeHealth, energy, storageHealLimit =
                     computeHealing(
                         world.SubBlockSpecs,
                         regState.StorageHealth,
@@ -542,10 +542,10 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
         regionsAfterSupplies
         |> List.map fst
     // Distribute supplies between regions and airfields
-    let airfieldsDistribution, regSupplies =
-        let x, regSupplies =
+    let airfieldsDistribution, regSupplies, airfieldHealLimit =
+        let x, regSupplies, airfieldHealLimit =
             state.Airfields
-            |> List.fold (fun (airfields, regionEnergies) afState ->
+            |> List.fold (fun (airfields, regionEnergies, airfieldHealLimit) afState ->
                 let af = wg.GetAirfield(afState.AirfieldId)
                 // take from what's left of incoming supplies
                 let energy =
@@ -555,7 +555,7 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                 let healLimit =
                     Map.tryFind af.AirfieldId airfieldHealLimit
                     |> Option.defaultValue (healRate * dt)
-                let storeHealth, energy =
+                let storeHealth, energy, healLimit =
                     computeHealing(world.SubBlockSpecs, afState.StorageHealth, af.Storage, energy, healLimit)
                 let afState = { afState with StorageHealth = storeHealth }
                 // fill storage
@@ -575,9 +575,9 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                 // result
                 let afState = { afState with Supplies = afState.Supplies + toAfSupplies - backToRegion }
                 let energy = energy + backToRegion
-                afState :: airfields, Map.add af.Region energy regionEnergies
-            ) ([], newSupplies)
-        List.rev x, regSupplies
+                afState :: airfields, Map.add af.Region energy regionEnergies, Map.add afState.AirfieldId healLimit airfieldHealLimit
+            ) ([], newSupplies, airfieldHealLimit)
+        List.rev x, regSupplies, airfieldHealLimit
     let regionsAfterDistribution =
         [
             for regState, region in List.zip regionsAfterSupplies world.Regions do
