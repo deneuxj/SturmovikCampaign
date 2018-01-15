@@ -463,11 +463,9 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
         Airfields = airfieldsAfterDamages }
 
 /// Transfer supplies and apply repairs
-let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) =
+let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newSupplies : Map<RegionId, float32<E>>) =
     let wg = WorldFastAccess.Create world
     let healLimit = healLimit * dt
-    let arrived = computeDelivered orders shipped damages
-    let newSupplies = computeSuppliesProduced newSupplies
     let regionNeeds = AutoOrder.computeSupplyNeeds world state
 
     // Repair and resupply regions
@@ -476,13 +474,8 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (ship
             for regState in state.Regions do
                 let region = wg.GetRegion regState.RegionId
                 let energy =
-                    let fromShipments =
-                        arrived.TryFind region.RegionId
-                        |> Option.defaultVal 0.0f<E>
-                    let fromProduction =
-                        newSupplies.TryFind region.RegionId
-                        |> Option.defaultVal 0.0f<E>
-                    fromShipments + fromProduction
+                    newSupplies.TryFind region.RegionId
+                    |> Option.defaultValue 0.0f<E>
                 // Highest prio: repair production
                 let prodHealth, energy =
                     computeHealing(
@@ -565,7 +558,10 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (ship
 
 let applyDamagesAndResupplies (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) =
     let state = applyDamages world state shipped damages orders
-    let state = applyResupplies dt world state shipped damages orders newSupplies
+    let arrived = computeDelivered orders shipped damages
+    let state = applyResupplies dt world state arrived
+    let newSupplies = computeSuppliesProduced newSupplies
+    let state = applyResupplies dt world state newSupplies
     state
 
 /// Update airfield planes according to departures and arrivals
