@@ -582,14 +582,16 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
         [
             for regState, region in List.zip regionsAfterSupplies world.Regions do
                 // Energy back from airfields; excess is returned
-                let oldEnergy =
+                let backFromAf =
                     regSupplies.TryFind regState.RegionId
                     |> Option.defaultValue 0.0f<E>
                 let newEnergy =
-                    oldEnergy
+                    backFromAf + regState.Supplies
                     |> min (regState.StorageCapacity(region, world.SubBlockSpecs))
-                yield { regState with Supplies = newEnergy },
-                newEnergy - oldEnergy
+                let transferred = newEnergy - regState.Supplies
+                yield
+                    { regState with Supplies = newEnergy },
+                    newEnergy - transferred
         ]
     let regSupplies =
         regionsAfterDistribution
