@@ -229,12 +229,15 @@ type Landed = {
     Airfield : AirfieldId
     Plane : PlaneModel
     Health : float32
-    Cargo : float32<E>
+    Cargo : float32<E> // FIXME: Measure cargo in K instead.
     PlayerName : string option
     Coalition : CoalitionId option
 }
 with
     static member MaxDistanceFromAirfield = 5000.0f
+    /// Amount of supplies when cargo is used for supplies and repairs
+    member this.SuppliesCargo =
+        cargoCost * this.Cargo / bombCost
 
 let (|TookOff|Landed|) =
     function

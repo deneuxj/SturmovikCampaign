@@ -331,7 +331,7 @@ let computeSuppliesProduced (newSupplies : Resupplied list) =
 /// Compute supplies delivered by air cargo in each region
 let computeCargoSupplies (wg : WorldFastAccess) (landed : Landed list) =
     landed
-    |> List.map (fun landed -> wg.GetAirfield(landed.Airfield).Region, landed.Cargo)
+    |> List.map (fun landed -> wg.GetAirfield(landed.Airfield).Region, landed.SuppliesCargo)
     |> List.groupBy fst
     |> List.map (fun (af, xs) -> af, xs |> List.sumBy snd)
     |> Map.ofList
@@ -473,7 +473,7 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
 /// Transfer supplies and apply repairs
 let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newSupplies, storageHealLimit, productionHealLimit, airfieldHealLimit) =
     let wg = WorldFastAccess.Create world
-    let regionNeeds = AutoOrder.computeSupplyNeeds world state
+    let regionNeeds = state.GetAmmoCostPerRegion world
     let healRate = healLimit
 
     // Repair and resupply regions
@@ -647,7 +647,10 @@ let applyDamagesAndResupplies (dt : float32<H>) (world : World) (state : WorldSt
     let newCargo = computeCargoSupplies wg cargo
     let data = (newCargo, storageHealLimit, productionHealLimit, airfieldHealLimit)
     let state, (cargoLeft, _, _, _) = applyResupplies dt world state data
-    let state = distributeCargo world state cargoLeft
+    let bombCargo =
+        cargoLeft
+        |> Map.map (fun _ cargoLeft -> bombCost * cargoLeft / cargoCost)
+    let state = distributeCargo world state bombCargo
     state
 
 /// Update airfield planes according to departures and arrivals

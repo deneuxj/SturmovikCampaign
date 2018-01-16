@@ -631,4 +631,5 @@ type DefenseArea with
             numFlak * cannonCost + numMg * heavyMachineGunCost // OK even for light machine guns, because there are actually four times as meany as MaxNumGuns (each light machine gun counts as 25% of a machine gun)
 
 let bombCost = 100.0f<E> / 1000.0f<K>
+let cargoCost = 0.5f<E/K>
 let healLimit = 200.0f<E/H>
