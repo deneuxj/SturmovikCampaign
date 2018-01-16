@@ -572,6 +572,9 @@ with
         this.Airfields
         |> List.minBy(fun af -> (af.Pos - pos).LengthSquared())
 
+    /// Fraction of cargo in planes reserved for bombs
+    member this.CargoReservedForBombs = 0.2f
+
 let productionFactor (world : World) = world.ProductionFactor
 
 open Util

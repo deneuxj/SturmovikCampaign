@@ -644,12 +644,20 @@ let applyDamagesAndResupplies (dt : float32<H>) (world : World) (state : WorldSt
     let data = (newSupplies, storageHealLimit, productionHealLimit, airfieldHealLimit)
     let state, (_, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
     let wg = world.FastAccess
-    let newCargo = computeCargoSupplies wg cargo
+    let newCargo =
+        computeCargoSupplies wg cargo
+        |> Map.map (fun _ qty -> qty * (1.0f - world.CargoReservedForBombs))
     let data = (newCargo, storageHealLimit, productionHealLimit, airfieldHealLimit)
     let state, (cargoLeft, _, _, _) = applyResupplies dt world state data
     let bombCargo =
-        cargoLeft
-        |> Map.map (fun _ cargoLeft -> bombCost * cargoLeft / cargoCost)
+        computeCargoSupplies wg cargo
+        |> Map.map (fun r qty ->
+            let suppliesLeft =
+                Map.tryFind r cargoLeft
+                |> Option.defaultValue 0.0f<E>
+            let bombsLeft = bombCost * suppliesLeft / cargoCost
+            let qty = bombCost * qty / cargoCost
+            bombsLeft + qty * world.CargoReservedForBombs)
     let state = distributeCargo world state bombCargo
     state
 
