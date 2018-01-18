@@ -44,8 +44,22 @@ type WeatherState = {
 }
 with
     static member RainThreshold = 0.95
+
     member this.IsOvercast =
         this.Precipitation >= WeatherState.RainThreshold
+
+    member this.CloudDescription =
+        let x = this.CloudDensity
+        if x < 0.1 then
+            "clear sky"
+        elif x < 0.3 then
+            "light clouds"
+        elif x < 0.6 then
+            "medium clouds"
+        elif not this.IsOvercast then
+            "heavy clouds"
+        else
+            "overcast"
 
 let wave mag period pow x =
     let y = sin (2.0 * System.Math.PI * x / period)

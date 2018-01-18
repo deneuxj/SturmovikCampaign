@@ -274,7 +274,7 @@ module OrderDecision =
             |> List.rev
             |> List.truncate config.MaxPatrols
         let axisPatrols, alliesPatrols =
-            if weather.CloudDensity < 0.8 || weather.CloudHeight > 3500.0 then
+            if not weather.IsOvercast || weather.CloudHeight > 3500.0 then
                 mkPatrols Axis, mkPatrols Allies
             else
                 [], []
@@ -297,7 +297,7 @@ module OrderDecision =
                     }
                 )
         let axisAttacks, alliesAttacks =
-            if weather.CloudDensity < 0.8 || weather.CloudHeight > 2500.0 then
+            if not weather.IsOvercast || weather.CloudHeight > 2500.0 then
                 let allAttacks = mkAttacks()
                 allAttacks |> List.filter (fun attack -> attack.Coalition = Axis), allAttacks |> List.filter (fun attack -> attack.Coalition = Allies)
             else
@@ -305,7 +305,7 @@ module OrderDecision =
 
         // Ferry flights
         let axisFerryFlights, alliesFerryFlights =
-            if weather.CloudDensity < 0.8 || weather.CloudHeight > 2500.0 then
+            if weather.Wind.Speed < 7.0 then
                 decidePlaneTransfers world state Axis, decidePlaneTransfers world state Allies
             else
                 [], []
@@ -393,17 +393,7 @@ module MissionFileGeneration =
         let timeAndDate =
             sprintf "%s<br><br>" (state.Date.ToString("d MMM yyyy HH:mm"))
         let weatherDescription =
-            let cover =
-                if weather.CloudDensity < 0.2 then
-                    "clear"
-                elif weather.CloudDensity < 0.4 then
-                    "light"
-                elif weather.CloudDensity < 0.6 then
-                    "medium"
-                elif weather.CloudDensity < 0.8 then
-                    "heavy"
-                else
-                    "overcast"
+            let cover = weather.CloudDescription
             let windDirection =
                 weather.Wind.Direction
             let windOrigin =
