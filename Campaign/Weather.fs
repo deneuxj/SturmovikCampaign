@@ -42,6 +42,10 @@ type WeatherState = {
     Temperature : float
     Pressure : float
 }
+with
+    static member RainThreshold = 0.95
+    member this.IsOvercast =
+        this.Precipitation >= WeatherState.RainThreshold
 
 let wave mag period pow x =
     let y = sin (2.0 * System.Math.PI * x / period)
@@ -170,7 +174,7 @@ let setOptions (random : System.Random) (weather : WeatherState) (t : System.Dat
             2 // snow
         else
             1 // rain
-    let rainThreshold = 0.95
+    let rainThreshold = WeatherState.RainThreshold
     let rainAmount =
         (weather.Precipitation - rainThreshold) / (1.0 - rainThreshold)
         |> min 1.0
