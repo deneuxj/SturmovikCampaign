@@ -120,7 +120,7 @@ type ServerControl(config : Configuration) =
                     ()
             }
 
-        member this.BanPlayer(player: PlayerId): Async<unit> =
+        member this.BanPlayer(player: PlayerId, hours: int): Async<unit> =
             async {
                 let playerId =
                     match player with

@@ -523,10 +523,12 @@ type Plugin() =
                     players
                     |> Seq.tryFind (fun p -> p.GetName() = penalty.Player.Name)
                 match player, penalty.Decision with
-                | Some player, Banned _ ->
-                    do! support.ServerControl.BanPlayer(player)
+                | Some player, Banned hours ->
+                    do! support.ServerControl.BanPlayer(player, hours)
+                    do! support.ServerControl.MessageAll([sprintf "%s was banned for %d hours" penalty.Player.Name hours])
                 | Some player, Kicked ->
                     do! support.ServerControl.KickPlayer(player)
+                    do! support.ServerControl.MessageAll([sprintf "%s was kicked" penalty.Player.Name])
                 | None, _ ->
                     // Player not found
                     ()

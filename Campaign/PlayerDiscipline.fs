@@ -16,7 +16,7 @@ open MBrace.FsPickler
 
 type JudgementDecision =
     | Kicked
-    | Banned of release:DateTime
+    | Banned of hours:int
 
 type UserIds =
     { NickId : string
@@ -45,7 +45,7 @@ with
                     acc + curr.Amount
             ) 0.0f<E>
         if accumulated_damages |> Seq.exists ((<=) PlaneModel.I16.Cost) then
-            Some(Banned(DateTime.UtcNow + TimeSpan(48, 0, 0)))
+            Some(Banned 48)
         else
             None
 
