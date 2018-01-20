@@ -34,17 +34,28 @@ type FriendlyDamage =
     }
 with
     static member Judge(damages: FriendlyDamage seq) =
-        let accumulated_damages =
-            damages
+        let threshold = 0.005f * PlaneModel.I16.Cost
+        // Accumulate damages, resetting whenever no damage is done for 10s or more
+        let accumulatedDamages =
+            seq {
+                let mutable acc = 0.0f<E>
+                for (prec, curr) in Seq.pairwise damages do
+                    let span = curr.Time - prec.Time
+                    if span > TimeSpan(0, 0, 10) then
+                        acc <- 0.0f<E>
+                        yield acc
+                        acc <- curr.Amount
+                        yield acc
+                    else
+                        acc <- acc + curr.Amount
+                        yield acc
+            }
+        let numExcesses =
+            accumulatedDamages
             |> Seq.pairwise
-            |> Seq.scan (fun acc (pre, curr) ->
-                let span = curr.Time - pre.Time
-                if span > TimeSpan(0, 5, 0) then
-                    0.0f<E>
-                else
-                    acc + curr.Amount
-            ) 0.0f<E>
-        if accumulated_damages |> Seq.exists ((<=) PlaneModel.I16.Cost) then
+            |> Seq.sumBy (fun (d0, d1) -> if d0 < threshold && d1 >= threshold then 1 else 0)
+        printfn "Someone is up to %d friendly damage excesses" numExcesses
+        if numExcesses >= 2 then
             Some(Banned 48)
         else
             None
