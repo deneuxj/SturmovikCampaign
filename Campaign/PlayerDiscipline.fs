@@ -66,15 +66,17 @@ let disciplinePlayers (world : World) (events : AsyncSeq<LogEntry>) =
     let coalitionOf = ref Map.empty
     let damagesOf = ref Map.empty
     let objects = ref Map.empty
+    let missionStart = ref (DateTime())
     asyncSeq {
         for event in events do
             match event with
             // Reset state
-            | :? MissionStartEntry ->
+            | :? MissionStartEntry as start ->
                 nameOf := Map.empty
                 coalitionOf := Map.empty
                 damagesOf := Map.empty
                 objects := Map.empty
+                missionStart := start.MissionTime
             // Map object id to object type and to country
             | :? ObjectSpawnedEntry as spawned ->
                 objects := Map.add spawned.ObjectId spawned.ObjectType objects.Value
@@ -112,7 +114,7 @@ let disciplinePlayers (world : World) (events : AsyncSeq<LogEntry>) =
                                 0.0f<E>
                         let cost = cost * damage.Damage
                         let entry =
-                            { Time = DateTime.UtcNow
+                            { Time = missionStart.Value + damage.Timestamp
                               Amount = cost }
                         let record =
                             damagesOf.Value.[damage.AttackerId]
