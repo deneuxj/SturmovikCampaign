@@ -14,6 +14,7 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open Campaign.PlayerDiscipline
 open MBrace.FsPickler
 open Campaign.Orders
 open SturmovikMission.Blocks.Util.String
@@ -25,6 +26,8 @@ type EventHandlers =
       OnLanded : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<E> * float32 * float32<E> -> Async<unit>
       // Region name, attacker coalition
       OnMaxBattleDamageExceeded : string * CoalitionId -> Async<unit>
+      // A player was banned or kicked
+      OnPlayerPunished : Judgement -> Async<unit>
     }
 
 /// <summary>
@@ -287,8 +290,12 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                         yield battleKill.Coalition.Other, battleKill.BattleId
             }
             |> asyncIterNonMuted (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
+        let disciplineTask =
+            disciplinePlayers world asyncSeqEntries
+            |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
         Async.Start(Async.catchLog "live commentator" task, cancelOnDispose.Token)
         Async.Start(Async.catchLog "battle limits notifier" task2, cancelOnDispose.Token)
+        Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
     do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =

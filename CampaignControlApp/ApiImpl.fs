@@ -14,7 +14,9 @@ type Logging() =
 
 type NamedPlayer =
     { PlayerName : string
-      PlayerId : int
+      PlayerId : string
+      ProfileId : string
+      ClientId : int
     }
 with
     interface PlayerId with
@@ -71,7 +73,7 @@ type ServerControl(config : Configuration) =
                 | Some(Some players) ->
                     return
                         players
-                        |> Seq.map (fun p -> { PlayerName = p.Name; PlayerId = p.ClientId } :> PlayerId)
+                        |> Seq.map (fun p -> { PlayerName = p.Name; ClientId = p.ClientId; PlayerId = p.PlayerId; ProfileId = p.ProfileId } :> PlayerId)
                         |> List.ofSeq
                 | None | Some None ->
                     return []
@@ -88,7 +90,7 @@ type ServerControl(config : Configuration) =
             async {
                 let playerId =
                     match player with
-                    | :? NamedPlayer as player -> Some player.PlayerId
+                    | :? NamedPlayer as player -> Some player.ClientId
                     | _ -> None
                 match playerId with
                 | Some pid ->
@@ -114,6 +116,34 @@ type ServerControl(config : Configuration) =
                     for msg in msgs do
                         let! _ = rcon.Run(lazy rcon.Client.MessageTeam(tid, msg))
                         do! Async.Sleep 1000
+                | None ->
+                    ()
+            }
+
+        member this.BanPlayer(player: PlayerId): Async<unit> =
+            async {
+                let playerId =
+                    match player with
+                    | :? NamedPlayer as player -> Some player.ClientId
+                    | _ -> None
+                match playerId with
+                | Some pid ->
+                    let! _ = rcon.Run(lazy rcon.Client.BanPlayer(pid))
+                    ()
+                | None ->
+                    ()
+            }
+
+        member this.KickPlayer(player: PlayerId): Async<unit> =
+            async {
+                let playerId =
+                    match player with
+                    | :? NamedPlayer as player -> Some player.ClientId
+                    | _ -> None
+                match playerId with
+                | Some pid ->
+                    let! _ = rcon.Run(lazy rcon.Client.KickPlayer(pid))
+                    ()
                 | None ->
                     ()
             }

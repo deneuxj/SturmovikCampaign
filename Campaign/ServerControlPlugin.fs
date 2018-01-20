@@ -16,6 +16,8 @@ open Campaign.Commenting
 open Campaign.WorldDescription
 open Campaign.PlaneModel
 open Campaign.WorldState
+open Campaign
+open Campaign.PlayerDiscipline
 
 module Support =
     let findRunningServers(config) =
@@ -511,6 +513,29 @@ type Plugin() =
                 return()
             }
 
+    let punishPlayer (penalty : Judgement) =
+        match support with
+        | Some support ->
+            async {
+                let! players =
+                    support.ServerControl.GetPlayerList
+                let player =
+                    players
+                    |> Seq.tryFind (fun p -> p.GetName() = penalty.Player.Name)
+                match player, penalty.Decision with
+                | Some player, Banned _ ->
+                    do! support.ServerControl.BanPlayer(player)
+                | Some player, Kicked ->
+                    do! support.ServerControl.KickPlayer(player)
+                | None, _ ->
+                    // Player not found
+                    ()
+            }
+        | None ->
+            async {
+                return ()
+            }
+
     let announceWorldState arg =
         match webHookClient with
         | Some hook -> postWorldState (queue, hook) arg
@@ -539,6 +564,7 @@ type Plugin() =
             { OnTookOff = announceTakeOffToTeam
               OnLanded = announceLandingToTeam
               OnMaxBattleDamageExceeded = announceBattleKillsExceeded
+              OnPlayerPunished = punishPlayer
             }
         commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, config.MissionName, handlers, fun() -> x.StartWebHookClient(config)))
         printfn "Commenter set"

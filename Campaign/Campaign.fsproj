@@ -75,6 +75,7 @@
     <Compile Include="NewWorldState.fs" />
     <Compile Include="AfterActionReport.fs" />
     <Compile Include="Config.fs" />
+    <Compile Include="PlayerDiscipline.fs" />
     <Compile Include="Commenting.fs" />
     <Compile Include="WebHook.fs" />
     <Compile Include="Run.fs" />
