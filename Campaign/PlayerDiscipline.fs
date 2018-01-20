@@ -39,6 +39,13 @@ with
         let accumulatedDamages =
             seq {
                 let mutable acc = 0.0f<E>
+                yield acc
+                match Seq.tryHead damages with
+                | Some curr ->
+                    acc <- curr.Amount
+                    yield acc
+                | None ->
+                    ()
                 for (prec, curr) in Seq.pairwise damages do
                     let span = curr.Time - prec.Time
                     if span > TimeSpan(0, 0, 10) then
