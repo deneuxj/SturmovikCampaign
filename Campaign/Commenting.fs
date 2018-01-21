@@ -127,9 +127,11 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                         return false
                     | Choice2Of2 x->
                         if not muted then
+                            //printfn "Do: %A" x
                             do! f x
                         else
-                            printfn "Muted: %A" x
+                            //printfn "Muted: %A" x
+                            ()
                         return muted
                 }) true
         async {
