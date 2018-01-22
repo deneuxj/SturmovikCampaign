@@ -575,6 +575,9 @@ with
     /// Fraction of cargo in planes reserved for bombs
     member this.CargoReservedForBombs = 0.2f
 
+    /// Number of planes of each kind the AI will attempt to put at each airfield when planning transfers.
+    member this.TransferNumPlaneTarget = 3
+
 let productionFactor (world : World) = world.ProductionFactor
 
 open Util

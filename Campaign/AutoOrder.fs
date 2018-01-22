@@ -510,7 +510,7 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
 let decidePlaneTransfers (world : World) (state : WorldState) (coalition : CoalitionId) =
     let wg = world.FastAccess
     let sg = state.FastAccess
-    let targetNumPlanes = 8.0f
+    let targetNumPlanes = float32 world.TransferNumPlaneTarget
     let starts =
         seq {
             for af, afs in List.zip world.Airfields state.Airfields do
