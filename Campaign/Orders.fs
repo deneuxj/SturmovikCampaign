@@ -82,6 +82,24 @@ type ColumnTransportType =
     | ColBySeaShip
     | ColByRiverShip
     | ColByTrain
+with
+    static member All = [ ColByRoad; ColByRiverShip; ColBySeaShip; ColByTrain ]
+
+    member this.MaxNumVehicles =
+        match this with
+        | ColBySeaShip
+        | ColByRiverShip -> 30
+        | ColByRoad -> 15
+        | ColByTrain -> 30
+
+type Campaign.WorldDescription.World
+with
+    member this.PathsFor(medium : ColumnTransportType) =
+        match medium with
+        | ColByRoad -> this.Roads
+        | ColByTrain -> this.Rails
+        | ColByRiverShip -> this.RiverWays
+        | ColBySeaShip -> this.SeaWays
 
 /// A column of armored vehicles in movement.
 type ColumnMovement = {

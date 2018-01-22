@@ -297,7 +297,7 @@ let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrd
         |> List.rev
     noRoundTrip
 
-/// Select vehicles among those available in a region
+/// Select vehicles among those available in a region. Pick up vehicles up to a specified force.
 let selectVehicles (regState : RegionState) (force : float32<E>) =
     let content =
         regState.NumVehicles
@@ -311,6 +311,15 @@ let selectVehicles (regState : RegionState) (force : float32<E>) =
         ) (force, [])
         |> snd
         |> Array.ofList
+    content
+
+/// Select vehicles among those available in a region. Pick up to a specified number of vehicles.
+let selectLimitedNumberOfVehicles (regState : RegionState) (maxNumVehicles : int) =
+    let content =
+        regState.NumVehicles
+        |> expandMap
+        |> Array.shuffle (System.Random())
+        |> Array.truncate maxNumVehicles
     content
 
 /// Check if a set of paths contains a path between two regions
@@ -387,19 +396,18 @@ let allTankReinforcements (world : World) (state : WorldState) (coalition : Coal
                         match Map.tryFind ngh distanceToEnemy with
                         | Some nghDistance ->
                             if nghState.Owner = Some coalition && nghDistance < regionDistance && not nghState.HasInvaders then
-                                let composition = selectVehicles regState vehicleMinValue
-                                let medium = tryGetPathKind true world (region.RegionId, ngh)
-                                match medium with
-                                | Some medium ->
-                                    yield {
-                                        OrderId = { Index = -1; Coalition = coalition }
-                                        Start = region.RegionId
-                                        Destination = ngh
-                                        Composition = composition
-                                        TransportType = medium
-                                    }
-                                | None ->
-                                    ()
+                                let hasPath = hasPath (region.RegionId, ngh)
+                                for medium in ColumnTransportType.All do
+                                    if hasPath (world.PathsFor medium) then
+                                        let maxVehicleNumber = medium.MaxNumVehicles
+                                        let composition = selectLimitedNumberOfVehicles regState maxVehicleNumber
+                                        yield {
+                                            OrderId = { Index = -1; Coalition = coalition }
+                                            Start = region.RegionId
+                                            Destination = ngh
+                                            Composition = composition
+                                            TransportType = medium
+                                        }
                         | None ->
                             ()
                 | None ->
