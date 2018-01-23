@@ -222,6 +222,7 @@ module OrderDecision =
                 |> List.map (fun order -> order.Start) |> Set.ofList
             allTankReinforcements world state coalition
             |> Array.filter (fun move -> not(noStart.Contains(move.Start)))
+            |> Array.truncate(5) // Pick at random among the 5 best choices
             |> Array.shuffle (System.Random())
             |> function
                 | [||] -> []

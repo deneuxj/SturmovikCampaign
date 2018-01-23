@@ -413,6 +413,7 @@ let allTankReinforcements (world : World) (state : WorldState) (coalition : Coal
                 | None ->
                     ()
     |]
+    |> Array.sortBy (fun order -> -sg.GetRegion(order.Start).TotalVehicleValue)
 
 /// Decide what plane to add to the rear airfield
 let pickPlaneToProduce (coalition : CoalitionId) (world : World) (state : WorldState) =
