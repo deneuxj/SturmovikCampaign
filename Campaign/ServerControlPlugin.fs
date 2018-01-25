@@ -172,7 +172,8 @@ module Support =
                     support.Logging.LogInfo "Extract results..."
                     do!
                         [ "Mission has ended"
-                          "Actions past this point will not be taken into account"
+                          "Actions past this point will not affect the campaign"
+                          "Note: personal stats keep being collected until the round ends"
                         ]
                         |> support.ServerControl.MessageAll
                     let! missionLogEntries =
