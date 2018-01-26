@@ -572,13 +572,33 @@ with
         this.Airfields
         |> List.minBy(fun af -> (af.Pos - pos).LengthSquared())
 
+    member this.GetBattlefield(attacker : RegionId option, defender : RegionId) =
+        let attackerPos =
+            match attacker with
+            | Some attacker ->
+                this.Regions
+                |> List.find (fun reg -> reg.RegionId = attacker)
+                |> fun x -> x.Position
+            | None ->
+                Vector2.Zero
+        let defenderPos =
+            this.Regions
+            |> List.find (fun reg -> reg.RegionId = defender)
+            |> fun x -> x.Position
+        // Find battlefield whose orientation best matches the respective location of regions
+        let dir = attackerPos - defenderPos
+        this.AntiTankDefenses
+        |> Seq.filter (fun area -> area.Home = defender)
+        |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
+
     /// Fraction of cargo in planes reserved for bombs
     member this.CargoReservedForBombs = 0.2f
 
     /// Number of planes of each kind the AI will attempt to put at each airfield when planning transfers.
     member this.TransferNumPlaneTarget = 3
 
-let productionFactor (world : World) = world.ProductionFactor
+    /// Number of tanks per region on the frontline
+    member this.TankTargetNumber = 30
 
 open Util
 
@@ -600,28 +620,6 @@ with
 type World
 with
     member this.FastAccess = WorldFastAccess.Create(this)
-
-    member this.GetBattlefield(attacker : RegionId option, defender : RegionId) =
-        let attackerPos =
-            match attacker with
-            | Some attacker ->
-                this.Regions
-                |> List.find (fun reg -> reg.RegionId = attacker)
-                |> fun x -> x.Position
-            | None ->
-                Vector2.Zero
-        let defenderPos =
-            this.Regions
-            |> List.find (fun reg -> reg.RegionId = defender)
-            |> fun x -> x.Position
-        // Find battlefield whose orientation best matches the respective location of regions
-        let dir = attackerPos - defenderPos
-        this.AntiTankDefenses
-        |> Seq.filter (fun area -> area.Home = defender)
-        |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
-
-    /// Number of tanks per region on the frontline
-    member this.TankTargetNumber = 30
 
 let cannonCost = 50.0f<E>
 let heavyMachineGunCost = cannonCost / 4.0f

@@ -152,7 +152,7 @@ with
                         yield indexOfRegion region.RegionId, 5000.0f<E>
                     // Production
                     for region, regState in List.zip world.Regions state.Regions do
-                        let value = regState.ProductionCapacity(region, world.SubBlockSpecs, productionFactor world) * 48.0f<H>
+                        let value = regState.ProductionCapacity(region, world.SubBlockSpecs, world.ProductionFactor) * 48.0f<H>
                         yield indexOfRegion region.RegionId, value
                     // Planes
                     for af, afState in List.zip world.Airfields state.Airfields do
