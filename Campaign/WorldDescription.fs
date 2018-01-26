@@ -595,7 +595,7 @@ with
     member this.CargoReservedForBombs = 0.2f
 
     /// Number of planes of each kind the AI will attempt to put at each airfield when planning transfers.
-    member this.TransferNumPlaneTarget = 3
+    member this.TransferNumPlaneTarget = 8
 
     /// Number of tanks per region on the frontline
     member this.TankTargetNumber = 30
