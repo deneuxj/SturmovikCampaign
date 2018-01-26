@@ -66,6 +66,7 @@ let createBuildingFires store (world : World) (state : WorldState) (windDirectio
     let maxFires = 20
     let fires = state.FirePositions(world, maxFires)
     [
+        let mutable bigFirePositions = []
         for pos, alt, size in fires do
             if size >= smallDamage then
                 let fireType =
@@ -75,7 +76,14 @@ let createBuildingFires store (world : World) (state : WorldState) (windDirectio
                         FireType.CityFireSmall
                     else
                         FireType.VillageSmoke
-                yield FireLoop.Create(store, pos, alt, windDirection, fireType)
+                let tooCloseToOtherFire =
+                    lazy
+                        bigFirePositions
+                        |> List.exists (fun pos2 -> (pos2 - pos).Length() < 5000.0f)
+                if fireType <> FireType.CityFire || not tooCloseToOtherFire.Value then
+                    if fireType = FireType.CityFire then
+                        bigFirePositions <- pos :: bigFirePositions
+                    yield FireLoop.Create(store, pos, alt, windDirection, fireType)
     ]
 
 
