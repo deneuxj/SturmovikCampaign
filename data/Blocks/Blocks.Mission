@@ -5576,20 +5576,124 @@ Group
   }
   
 
-  MCU_TR_MissionBegin
+  MCU_Timer
   {
-    Index = 470;
-    Name = "";
+    Index = 687;
+    Name = "START_LOOP";
+    Desc = "";
+    Targets = [688,689];
+    Objects = [];
+    XPos = 29561.799;
+    YPos = 108.584;
+    ZPos = 22611.343;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 688;
+    Name = "Trigger Activate";
     Desc = "";
     Targets = [456];
     Objects = [];
-    XPos = 29563.556;
+    XPos = 29562.329;
     YPos = 108.584;
-    ZPos = 22612.307;
+    ZPos = 22611.359;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 689;
+    Name = "1s";
+    Desc = "";
+    Targets = [456];
+    Objects = [];
+    XPos = 29562.185;
+    YPos = 108.584;
+    ZPos = 22611.704;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 690;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [456];
+    Objects = [];
+    XPos = 29562.177;
+    YPos = 108.584;
+    ZPos = 22612.942;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 691;
+    Name = "STOP_LOOP";
+    Desc = "";
+    Targets = [690];
+    Objects = [];
+    XPos = 29561.775;
+    YPos = 108.584;
+    ZPos = 22612.926;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_TR_MissionBegin
+  {
+    Index = 692;
+    Name = "Translator Mission Begin";
+    Desc = "";
+    Targets = [693];
+    Objects = [];
+    XPos = 29559.690;
+    YPos = 108.584;
+    ZPos = 22612.146;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 693;
+    Name = "INITIALLY";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 29560.333;
+    YPos = 108.584;
+    ZPos = 22612.146;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 90;
+    Random = 100;
   }
   
 
