@@ -7,6 +7,8 @@
     Seed: 42
     # Max deviation of the weather with respect of standard weather for start date
     WeatherDayMaxOffset: 7
+    # Max number of fires (on destroyed storage/factories)
+    MaxFires: 20
     # Max number of convoys in mission (per side)
     MaxConvoys: 8
     # Max number of attacker planes (per side)

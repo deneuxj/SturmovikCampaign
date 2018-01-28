@@ -62,10 +62,9 @@ let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state :
             ()
 
 
-let createBuildingFires store (world : World) (state : WorldState) (windDirection : float32) =
-    let maxFires = 20
+let createBuildingFires maxFires store (world : World) (state : WorldState) (windDirection : float32) =
     let fires = state.FirePositions(world, maxFires)
-    [
+    seq {
         let mutable bigFirePositions = []
         for pos, alt, size in fires do
             if size >= smallDamage then
@@ -84,7 +83,9 @@ let createBuildingFires store (world : World) (state : WorldState) (windDirectio
                     if fireType = FireType.CityFire then
                         bigFirePositions <- pos :: bigFirePositions
                     yield FireLoop.Create(store, pos, alt, windDirection, fireType)
-    ]
+    }
+    |> Seq.truncate 20
+    |> List.ofSeq
 
 
 let createParaTrooperDrops (world : World) store lcStore (battlefields : (DefenseAreaId * CoalitionId) seq) =
@@ -116,6 +117,7 @@ type MissionGenerationParameters = {
     MaxSimultaneousFerryFlights : int
     MaxVehiclesInBattle : int
     StrategyMissionFile : string
+    MaxFires : int
 }
 
 
@@ -321,7 +323,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         missionData.AlliesOrders.PlaneFerries
         |> PlaneFerry.generatePlaneTransfer store lcStore missionData.World missionData.State missionBegin missionParams.MaxSimultaneousFerryFlights
     let buildingFires =
-        createBuildingFires store missionData.World missionData.State (float32 missionData.Weather.Wind.Direction)
+        createBuildingFires missionParams.MaxFires store missionData.World missionData.State (float32 missionData.Weather.Wind.Direction)
         |> List.map (fun fire -> fire.All)
     let options =
         (Weather.setOptions missionData.Random missionData.Weather missionData.State.Date options)

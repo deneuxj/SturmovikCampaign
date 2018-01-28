@@ -426,6 +426,7 @@ module MissionFileGeneration =
               Briefing = briefing
               MissionLength = config.MissionLength
               ColumnSplitInterval = config.ColumnSplitInterval
+              MaxFires = config.MaxFires
               MaxSimultaneousConvoys = config.MaxSimultaneousConvoys
               MaxSimultaneousFerryFlights = config.MaxSimultaneousFerryFlights
               StrategyMissionFile = Path.Combine(config.ScriptPath, config.StrategyFile)

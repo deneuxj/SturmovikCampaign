@@ -9,6 +9,7 @@ type Configuration = {
     StrategyFile : string
     Seed : int option
     WeatherDayMaxOffset : int
+    MaxFires : int
     MaxConvoys : int
     MaxAttackers : int
     MaxPatrols : int
@@ -37,6 +38,7 @@ with
             StrategyFile = "StrategySmall1.mission"
             Seed = None // Some 0
             WeatherDayMaxOffset = 15
+            MaxFires = 20
             MaxConvoys = 10
             MaxSimultaneousConvoys = 2
             MaxSimultaneousFerryFlights = 3
@@ -92,6 +94,7 @@ let loadConfigFile (path : string) =
             | -1 -> None
             | x -> Some x
         WeatherDayMaxOffset = values.WeatherDayMaxOffset
+        MaxFires = values.MaxFires
         MaxConvoys = values.MaxConvoys
         MaxSimultaneousConvoys = values.MaxSimultaneousConvoys
         MaxSimultaneousFerryFlights = values.MaxSimultaneousFerryFlights
