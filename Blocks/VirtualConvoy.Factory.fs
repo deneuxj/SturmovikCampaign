@@ -49,6 +49,7 @@ type VirtualConvoy =
       DiscardDelay : Timer
       TruckDamagedSet : Map<DamagedTruckInstance, EventReporting>
       DepartureReporting : EventReporting
+      BlockedReporting : EventReporting
       IconCover : IconDisplay
       IconAttack : IconDisplay
       Api : ConvoyApi
@@ -138,6 +139,11 @@ with
                 sprintf "%s-D-%d" convoyName rankOffset
             EventReporting.Create(store, country, apiPos + Vector2(-100.0f, -100.0f), name)
 
+        let blocked =
+            let name =
+                sprintf "%s-B-%d" convoyName rankOffset
+            EventReporting.Create(store, country, apiPos + Vector2(-100.0f, -200.0f), name)
+
         let iconPos =
             let tip = (List.head path).Pos
             let top = (List.last path).Pos
@@ -172,6 +178,7 @@ with
           DiscardDelay = discardDelay
           TruckDamagedSet = damagedTrucks
           DepartureReporting = departure
+          BlockedReporting = blocked
           IconCover = coverIcon
           IconAttack = attackIcon
           Api = api
@@ -246,6 +253,10 @@ with
                 yield this.Api.Start, upcast this.DepartureReporting.Trigger
                 // Req.11
                 yield upcast this.WaypointSet.[this.PathEnd].Waypoint, upcast this.Api.Arrived
+                // Req.12
+                yield this.Api.Blocked, upcast this.DiscardDelay.Start
+                // Req.13
+                yield this.Api.Blocked, upcast this.BlockedReporting.Trigger
             ]
         { Columns = columns
           Objects = objectLinks

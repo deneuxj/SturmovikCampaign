@@ -160,6 +160,7 @@ type ConvoyApi =
     { Start : Mcu.McuTrigger
       Destroyed : Mcu.McuTrigger
       Arrived : Mcu.McuTrigger
+      Blocked : Mcu.McuTrigger // e.g. because of a destroyed bridge
       All : McuUtil.IMcuGroup
     }
 with
@@ -168,10 +169,12 @@ with
         let start = newCounter 1
         let destroyed = newCounter 2
         let arrived = newCounter 3
+        let blocked = newCounter 4
         Vector2(0.0f, 50.0f).AssignTo(destroyed.Pos)
         Vector2(0.0f, 100.0f).AssignTo(arrived.Pos)
+        Vector2(0.0f, 150.0f).AssignTo(blocked.Pos)
         destroyed.Count <- numTrucks
-        let group : Mcu.McuBase list = [ start; destroyed; arrived ]
+        let group : Mcu.McuBase list = [ start; destroyed; arrived; blocked ]
         // Position
         for mcu in group do
             let pos2 = Vector2.FromMcu(mcu.Pos) + pos
@@ -184,5 +187,6 @@ with
         { Start = start
           Destroyed = destroyed
           Arrived = arrived
+          Blocked = blocked
           All = McuUtil.groupFromList group
         }

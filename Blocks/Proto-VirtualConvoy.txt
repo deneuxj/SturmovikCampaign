@@ -29,6 +29,7 @@ type Notification {
 }
 Notification death_notification_of_truck(TruckInConvoy)
 Notification start_notification_of_convoy
+Notification blocked_notification
 
 type Waypoint {
 	trigger Waypoint
@@ -41,6 +42,7 @@ type ConvoyApi {
 	trigger Start // 1x counter
 	trigger Destroyed // This is a non-wraping counter set to (num of trucks in convoy) + 1
 	trigger Arrived
+	trigger Blocked
 }
 ConvoyApi the_api
 
@@ -63,6 +65,8 @@ Icon attack_icon
 9. Truck destruction accounted for in api
 10. Start of convoy is logged
 11. Arrival is reported in API
+12. Blocked stops the convoy and deactivates it
+13. Blocked convoy is logged
 
 // Req.1
 targets += (the_api.Start, the_convoy.ActivateGroup)
@@ -103,4 +107,10 @@ targets += for (_, truck) in truck_in_convoy -> (truck.Damaged, the_api.Destroye
 target += (the_api.Start, start_notification.Trigger)
 
 // Req.11
-target += (end.Waypoint, the_api.Arrived)
+target +=(end.Waypoint, the_api.Arrived)
+
+// Req.12
+targets += (the_api.Blocked, discard_delay.Start)
+
+// Req.13
+targets += (the_api.Blocked, blocked_notification.Trigger)
