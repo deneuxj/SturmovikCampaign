@@ -14,6 +14,7 @@ type Train = {
     Start : Mcu.McuTrigger
     Arrived : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
+    Blocked : Mcu.McuTrigger
     IconCover : IconDisplay
     IconAttack : IconDisplay
     All : McuUtil.IMcuGroup
@@ -29,6 +30,7 @@ with
         let start = getTriggerByName group T.Blocks.START
         let arrived = getTriggerByName group T.Blocks.ARRIVED
         let killed = getTriggerByName group T.Blocks.KILLED
+        let blocked = getTriggerByName group T.Blocks.BLOCKED
         let destWp = getWaypointByName group T.Blocks.Destination
         let train = getVehicleByName group T.Blocks.Train
         // Override train
@@ -68,6 +70,7 @@ with
         { Start = start
           Arrived = arrived
           Killed = killed
+          Blocked = blocked
           IconCover = iconCover
           IconAttack = iconAttack
           All = { new McuUtil.IMcuGroup with
@@ -82,6 +85,7 @@ type TrainWithNotification = {
     TheTrain : Train
     Started : EventReporting
     Arrived : EventReporting
+    Blocked : EventReporting
     Destroyed : EventReporting
 }
 with
@@ -104,9 +108,12 @@ with
         let arrived = EventReporting.Create(store, country, destinationPos + Vector2(0.0f, 100.0f), arrivedEventName)
         let destroyedEventName = sprintf "%s-K-0" eventName
         let destroyed = EventReporting.Create(store, country, pos + Vector2(0.0f, 200.0f), destroyedEventName)
+        let blockedEventName = sprintf "%s-B-0" eventName
+        let blocked = EventReporting.Create(store, country, pos + Vector2(0.0f, 300.0f), blockedEventName)
         { TheTrain = train
           Started = started
           Arrived = arrived
+          Blocked = blocked
           Destroyed = destroyed
         }
 
@@ -122,6 +129,7 @@ with
                 yield this.TheTrain.Killed, upcast this.TheTrain.IconCover.Hide
                 yield this.TheTrain.Arrived, upcast this.TheTrain.IconAttack.Hide
                 yield this.TheTrain.Arrived, upcast this.TheTrain.IconCover.Hide
+                yield this.TheTrain.Blocked, upcast this.Blocked.Trigger
             ]
         { Links.Columns = []
           Links.Objects = []
