@@ -71,6 +71,9 @@ with
     member this.MatchesMissionLogDepartureEventName(name : string) =
         name.StartsWith(this.MissionLogEventName + "-D")
 
+    member this.MatchesMissionLogBlockedEventName(name : string) =
+        name.StartsWith(this.MissionLogEventName + "-B")
+
     member this.MatchesMissionLogVehicleKilledEventName(name : string) =
         if name.StartsWith(this.MissionLogEventName + "-K-") then
             tryExtractNumberSuffix (this.MissionLogEventName + "-K-") name
@@ -129,6 +132,20 @@ with
         if name.StartsWith(this.MissionLogEventName + "-A-") then
             // Return the number past the last -, which denotes the vehicle rank in the column.
             // Used to credit the destination region with an additional vehicle
+            match name.LastIndexOf("-") with
+            | n when n >= 0 ->
+                match System.Int32.TryParse(name.Substring(n + 1)) with
+                | true, x -> Some x
+                | _ -> None
+            | _ ->
+                None
+        else
+            None
+
+    member this.MatchesMissionLogBlockedEventName(name : string) =
+        if name.StartsWith(this.MissionLogEventName + "-B-") then
+            // Return the rank offset
+            // Used to return vehicles to the starting region
             match name.LastIndexOf("-") with
             | n when n >= 0 ->
                 match System.Int32.TryParse(name.Substring(n + 1)) with

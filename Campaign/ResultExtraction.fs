@@ -102,6 +102,44 @@ let extractColumnDepartures (orders : ColumnMovement list) (entries : AsyncSeq<L
                 ()
     }
 
+/// A train, truck convoy or a tank column encountered a destroyed bridge and stopped
+type VehiclesBlocked = {
+    OrderId : OrderId
+    RankOffset : int option
+}
+
+let extractBlockedVehicles (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : AsyncSeq<LogEntry>) : AsyncSeq<VehiclesBlocked> =
+    let tryGetTanksRank(eventName) =
+        tanks
+        |> Seq.tryPick (fun order -> order.MatchesMissionLogBlockedEventName(eventName) |> Option.map (fun rankOffset -> order, rankOffset))
+    let tryGetConvoyRank(eventName) =
+        convoys
+        |> Seq.tryFind (fun order -> order.MatchesMissionLogBlockedEventName(eventName))
+    asyncSeq {
+        let idxToName = ref Map.empty
+        for entry in entries do
+            match entry with
+            | :? ObjectSpawnedEntry as spawned ->
+                idxToName := Map.add spawned.ObjectId spawned.ObjectName !idxToName
+            | :? KillEntry as event when event.AttackerId = -1 ->
+                match Map.tryFind event.TargetId !idxToName with
+                | Some eventName ->
+                    match tryGetTanksRank eventName with
+                    | Some(order, rankOffset) ->
+                        yield { OrderId = order.OrderId; RankOffset = Some rankOffset }
+                    | None ->
+                        match tryGetConvoyRank eventName with
+                        | Some(order) ->
+                            yield { OrderId = order.OrderId; RankOffset = None }
+                        | None ->
+                            ()
+                | None ->
+                    ()
+            | _ ->
+                ()
+    }
+
+
 /// Easy handling of result of extractFerryPlanes
 let (|PlaneFerrySpawned|PlaneFerryLanded|PlaneFerryKilled|) =
     function

@@ -480,6 +480,7 @@ module MissionLogParsing =
     open NLog
     open System.Text.RegularExpressions
 
+    // BREAKING: move this to NewWorldState, use as argument to newState
     type MissionResults = {
         Entries : string list
         Shipments : SuppliesShipped list
@@ -492,6 +493,9 @@ module MissionLogParsing =
         FerryPlanes : Choice<PlaneFerryOrder, PlaneFerryOrder, PlaneFerryOrder> list
         BattleKills : BattleParticipantKilled list
     }
+    with
+        // BREAKING: add as field
+        member this.Blocked : VehiclesBlocked list= []
 
     let backupFiles config =
         let outputDir = config.OutputDir
@@ -719,7 +723,13 @@ module MissionLogParsing =
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
         let movements = axisOrders.Columns @ alliesOrders.Columns
-        let state2, newlyProduced, battleReports = newState dt world state axisOrders.Production alliesOrders.Production movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply) (missionResults.StaticDamages @ missionResults.VehicleDamages) missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures missionResults.ParaDrops missionResults.FerryPlanes missionResults.BattleKills (float32 weather.Wind.Direction)
+        let state2, newlyProduced, battleReports =
+            newState
+                dt world state axisOrders.Production alliesOrders.Production
+                movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply)
+                missionResults.Blocked (missionResults.StaticDamages @ missionResults.VehicleDamages)
+                missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures
+                missionResults.ParaDrops missionResults.FerryPlanes missionResults.BattleKills (float32 weather.Wind.Direction)
         newlyProduced, battleReports, (state, state2)
 
     let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =

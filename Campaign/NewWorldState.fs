@@ -269,7 +269,11 @@ let computeShipped (orders : ResupplyOrder list) (shipped : SuppliesShipped list
     shipped
 
 /// Compute how many supplies can be potentially added to each region's stores
-let computeDelivered (orders : ResupplyOrder list) (shipped : SuppliesShipped list) (damages : Damage list) =
+let computeDelivered (orders : ResupplyOrder list) (shipped : SuppliesShipped list) (blocked : VehiclesBlocked list) (damages : Damage list) =
+    let blocked =
+        blocked
+        |> Seq.map (fun bl -> bl.OrderId)
+        |> Set.ofSeq
     let damages =
         let data =
             damages
@@ -283,9 +287,21 @@ let computeDelivered (orders : ResupplyOrder list) (shipped : SuppliesShipped li
     let arrived =
         let data =
             shipped
+            |> Seq.filter (fun sup -> blocked.Contains(sup.OrderId) |> not)
             |> Seq.groupBy (fun sup -> orders.[sup.OrderId].Convoy.Destination)
             |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> orders.[sup.OrderId].Convoy.TransportedSupplies))
         Map.ofSeq data
+    let arrived =
+        // Supplies that could not reach their destination because of a destroyed bridge are returned to the starting region
+        let returned =
+            shipped
+            |> Seq.filter (fun sup -> blocked.Contains(sup.OrderId))
+            |> Seq.groupBy (fun sup -> orders.[sup.OrderId].Convoy.Start)
+            |> Seq.map (fun (reg, sups) -> reg, sups |> Seq.sumBy (fun sup -> orders.[sup.OrderId].Convoy.TransportedSupplies))
+        returned
+        |> Seq.fold (fun arrived (reg, supplies) ->
+            let x = Map.tryFind reg arrived |> Option.defaultValue 0.0f<E>
+            Map.add reg (x + supplies) arrived) arrived
     let arrived =
         damages
         |> Map.fold (fun arrived victim damages ->
@@ -336,7 +352,7 @@ let computeCargoSupplies (wg : WorldFastAccess) (landed : Landed list) =
     |> List.map (fun (af, xs) -> af, xs |> List.sumBy snd)
     |> Map.ofList
 
-/// Apply damages due to attacks, use supplies to repair damages and replenish storage
+/// Remove shipped supplies from region of origin, apply damages due to attacks
 let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) =
     let wg = WorldFastAccess.Create world
     let shipped = computeShipped orders shipped
@@ -637,9 +653,9 @@ let distributeCargo (world : World) (state : WorldState) (cargo : Map<RegionId, 
         Airfields = List.rev afs }
 
 /// Apply damages to airfields and regions, then repair and resupply according to resupplies, local production and cargo deliveries
-let applyDamagesAndResupplies (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) (cargo : Landed list) =
+let applyDamagesAndResupplies (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (blocked : VehiclesBlocked list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) (cargo : Landed list) =
     let state = applyDamages world state shipped damages orders
-    let arrived = computeDelivered orders shipped damages
+    let arrived = computeDelivered orders shipped blocked damages
     let data = (arrived, Map.empty, Map.empty, Map.empty)
     let state, (_, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
     let newSupplies = computeSuppliesProduced newSupplies
@@ -1147,13 +1163,13 @@ let nextDate (dt : float32<H>) (date : System.DateTime) =
             x
     newDate
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction (movements : ColumnMovement list) convoyDepartures supplies damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
+let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction (movements : ColumnMovement list) convoyDepartures supplies blocked damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
     let state2 =
         state
         |> applyProduction dt world Axis axisProduction
         |> applyProduction dt world Allies alliesProduction
     let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
-    let state4 = applyDamagesAndResupplies dt world state3 convoyDepartures damages supplies newSupplies landed
+    let state4 = applyDamagesAndResupplies dt world state3 convoyDepartures blocked damages supplies newSupplies landed
     let state5 = applyPlaneTransfers state4 tookOff landed
     let state5b = applyPlaneFerries state5 ferryPlanes
     let state6 = applyVehicleDepartures state5b movements columnDepartures
