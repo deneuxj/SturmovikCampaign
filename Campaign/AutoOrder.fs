@@ -533,15 +533,16 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
     let destinations =
         seq {
             for af, afs in List.zip world.Airfields state.Airfields do
-                if sg.GetRegion(af.Region).Owner = Some coalition then
+                let destination = sg.GetRegion(af.Region)
+                if destination.Owner = Some coalition then
                     // Do not send planes to airfields that are about to be conquered
-                    let afUnderThreat =
+                    let threatFromNeighbour =
                         let reg = wg.GetRegion(af.Region)
                         reg.Neighbours
                         |> Seq.exists(fun ngh ->
                             let regs = sg.GetRegion(ngh)
                             regs.Owner <> Some coalition && regs.TotalVehicleValue >= 0.75f * sg.GetRegion(reg.RegionId).TotalVehicleValue)
-                    if not afUnderThreat then
+                    if not threatFromNeighbour && not destination.HasInvaders then
                         for (plane, count) in afs.NumPlanes |> Map.toSeq do
                             let numRequestedToFerry =
                                 targetNumPlanes - count
