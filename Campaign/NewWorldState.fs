@@ -956,7 +956,11 @@ let buildBattles (state : WorldState) (paras : ParaDropResult list) =
     ]
 
 /// Compute the tanks that have reached their destination (i.e. departed and were not damaged)
-let computeCompletedColumnMovements (movements : ColumnMovement list) (departures : ColumnLeft list) (damaged : Damage list) =
+let computeCompletedColumnMovements (movements : ColumnMovement list) (departures : ColumnLeft list) (blocked : VehiclesBlocked list) (damaged : Damage list) =
+    let blocked =
+        blocked
+        |> Seq.map (fun bl -> bl.OrderId)
+        |> Set.ofSeq
     let damageMap =
         damaged
         |> Seq.choose (fun damage ->
@@ -996,7 +1000,11 @@ let computeCompletedColumnMovements (movements : ColumnMovement list) (departure
                             | _ -> yield tank
                     |]
                 if not(Array.isEmpty comp) then
-                    yield { move with Composition = comp }
+                    if blocked.Contains(move.OrderId) then
+                        // Return survivors to start region
+                        yield { move with Composition = comp; Destination = move.Start }
+                    else
+                        yield { move with Composition = comp }
             | false, _ ->
                 // If it not depart, then it could not arrive.
                 ()
@@ -1176,7 +1184,7 @@ let newState (dt : float32<H>) (world : World) (state : WorldState) axisProducti
     let battles = buildBattles state6 paradrops
     let state7, battleReports = applyConquests world state6 battles battleKills
     let state7b =
-        computeCompletedColumnMovements movements columnDepartures damages
+        computeCompletedColumnMovements movements columnDepartures blocked damages
         |> applyVehicleArrivals state7
     let state8 = updateRunways world state7b windOri
     { state8 with Date = nextDate dt state8.Date; AttackingSide = state8.AttackingSide.Other }, newlyProduced, battleReports
