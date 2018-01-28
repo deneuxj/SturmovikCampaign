@@ -723,8 +723,10 @@ module MissionLogParsing =
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
         let movements = axisOrders.Columns @ alliesOrders.Columns
+        let mustConvertCapturedPlanes = config.MaxCapturedPlanes = 0
         let state2, newlyProduced, battleReports =
             newState
+                mustConvertCapturedPlanes
                 dt world state axisOrders.Production alliesOrders.Production
                 movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply)
                 missionResults.Blocked (missionResults.StaticDamages @ missionResults.VehicleDamages)

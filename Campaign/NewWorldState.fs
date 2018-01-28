@@ -652,21 +652,67 @@ let distributeCargo (world : World) (state : WorldState) (cargo : Map<RegionId, 
     { state with
         Airfields = List.rev afs }
 
+/// Captured planes are converted to resources
+let convertCapturedPlanes (wg : WorldFastAccess) (state : WorldState) =
+    let sg = state.FastAccess
+    let mutable regions = Map.empty
+    let airfields =
+        [
+            for afs in state.Airfields do
+                let af = wg.GetAirfield(afs.AirfieldId)
+                match sg.GetRegion(af.Region).Owner with
+                | Some coalition ->
+                    let captured =
+                        afs.NumPlanes
+                        |> Map.toSeq
+                        |> Seq.sumBy (fun (model, qty) ->
+                            if model.Coalition <> coalition then
+                                model.Cost * qty
+                            else
+                                0.0f<E>)
+                    let numPlanes =
+                        afs.NumPlanes
+                        |> Map.filter (fun model _ -> model.Coalition = coalition)
+                    let x =
+                        Map.tryFind af.Region regions
+                        |> Option.defaultValue 0.0f<E>
+                    regions <- Map.add af.Region (x + captured) regions
+                    yield { afs with NumPlanes = numPlanes }
+                | None ->
+                    yield afs
+        ]
+    airfields, regions
+
 /// Apply damages to airfields and regions, then repair and resupply according to resupplies, local production and cargo deliveries
-let applyDamagesAndResupplies (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (blocked : VehiclesBlocked list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) (cargo : Landed list) =
+let applyDamagesAndResupplies (mustConvertCapturedPlanes : bool) (dt : float32<H>) (world : World) (state : WorldState) (shipped : SuppliesShipped list) (blocked : VehiclesBlocked list) (damages : Damage list) (orders : ResupplyOrder list) (newSupplies : Resupplied list) (cargo : Landed list) =
+    let wg = world.FastAccess
+    // Damages
     let state = applyDamages world state shipped damages orders
+    // Resupplies
     let arrived = computeDelivered orders shipped blocked damages
     let data = (arrived, Map.empty, Map.empty, Map.empty)
     let state, (_, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
     let newSupplies = computeSuppliesProduced newSupplies
+    // New production
     let data = (newSupplies, storageHealLimit, productionHealLimit, airfieldHealLimit)
     let state, (_, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
-    let wg = world.FastAccess
+    // Captured planes
+    let state, storageHealLimit, productionHealLimit, airfieldHealLimit =
+        if mustConvertCapturedPlanes then
+            let afs, captured = convertCapturedPlanes wg state
+            let state = { state with Airfields = afs }
+            let data = (captured, storageHealLimit, productionHealLimit, airfieldHealLimit)
+            let state, (_, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
+            state, storageHealLimit, productionHealLimit, airfieldHealLimit
+        else
+            state, storageHealLimit, productionHealLimit, airfieldHealLimit
+    // Cargo deliveries
     let newCargo =
         computeCargoSupplies wg cargo
         |> Map.map (fun _ qty -> qty * (1.0f - world.CargoReservedForBombs))
     let data = (newCargo, storageHealLimit, productionHealLimit, airfieldHealLimit)
     let state, (cargoLeft, _, _, _) = applyResupplies dt world state data
+    // Bombs
     let bombCargo =
         computeCargoSupplies wg cargo
         |> Map.map (fun r qty ->
@@ -1171,13 +1217,13 @@ let nextDate (dt : float32<H>) (date : System.DateTime) =
             x
     newDate
 
-let newState (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction (movements : ColumnMovement list) convoyDepartures supplies blocked damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
+let newState (mustConvertCapturedPlanes : bool) (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction (movements : ColumnMovement list) convoyDepartures supplies blocked damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
     let state2 =
         state
         |> applyProduction dt world Axis axisProduction
         |> applyProduction dt world Allies alliesProduction
     let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
-    let state4 = applyDamagesAndResupplies dt world state3 convoyDepartures blocked damages supplies newSupplies landed
+    let state4 = applyDamagesAndResupplies mustConvertCapturedPlanes dt world state3 convoyDepartures blocked damages supplies newSupplies landed
     let state5 = applyPlaneTransfers state4 tookOff landed
     let state5b = applyPlaneFerries state5 ferryPlanes
     let state6 = applyVehicleDepartures state5b movements columnDepartures
