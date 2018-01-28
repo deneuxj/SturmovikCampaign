@@ -29,27 +29,21 @@ X Mission building: limit bomb payload depending on storage
 X Order: air defense
 X Order: ground attack
 X Order: air supremacy
-Mission building: battles
-Feedback: battle results
-Campaign logic: battle results affect capture mechanism
+X Mission building: battles
+X Feedback: battle results
+X Campaign logic: battle results affect capture mechanism
 Feedback: bridge destroyed
 Mission building: No convoy, train or column over destroyed bridges.
 Order: level bombing
 Order: paratrooper drop
 Order: air supply
-Order: ship supply
-Feedback: ship supply
+X Order: ship supply
+X Feedback: ship supply
 
 --- bugs & small improvements ---
 
-? Production does not properly transfer supplies to airfields in the region
 ? Generate mission logic for AI transports
-Ship AA zone
-AI leaves large number of tanks in rear bases
-Troll prevention
-Check spawn of vehicles does not spawn them in obstacles or water
 Limit airplane available to bad pilots
 Notify players when their units are under attack (with a delay)
-Runway selection when wind blows from the south does not work
-Check for convoys without trucks.
-No need to show levels of storage, show defense strength instead.
+Log of resupply distribution (repairs, bombs...), production stays suspiciously after factories get destroyed.
+Live commenter sometimes stops working. Improve logging to facilitate filtering noise
