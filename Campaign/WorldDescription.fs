@@ -591,12 +591,15 @@ with
         |> Seq.filter (fun area -> area.Home = defender)
         |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
 
+    // BREAKING: add as field
     /// Fraction of cargo in planes reserved for bombs
     member this.CargoReservedForBombs = 0.2f
 
+    // BREAKING: add as field
     /// Number of planes of each kind the AI will attempt to put at each airfield when planning transfers.
     member this.TransferNumPlaneTarget = 8
 
+    // BREAKING: add as field
     /// Number of tanks per region on the frontline
     member this.TankTargetNumber = 30
 
