@@ -69,6 +69,24 @@ type ProductionAssignment = {
     Vehicles : Map<GroundAttackVehicle, float32<E>>
 }
 
+/// Total storage capacity of a list of buildings
+let buildingsStorageCapacity subBlockSpecs buildings healths =
+    List.zip buildings healths
+    |> List.sumBy(fun (building : StaticGroup, health) ->
+        if health < 0.5f then
+            0.0f<E>
+        else
+            building.Storage subBlockSpecs)
+
+/// Total production capacity of a list of buildings
+let buildingsProductionCapacity subBlockSpecs prodFactor buildings healths =
+    List.zip buildings healths
+    |> List.sumBy(fun (building : StaticGroup, health) ->
+        if health < 0.5f then
+            0.0f<E/H>
+        else
+            building.Production(subBlockSpecs, prodFactor))
+
 /// State of a region.
 type RegionState = {
     RegionId : RegionId
@@ -107,12 +125,10 @@ with
         |> Seq.sumBy (fun (vehicle, qty) -> vehicle.Cost * float32 qty)
 
     member this.StorageCapacity(region : WorldDescription.Region, subBlocksSpecs) =
-        List.zip region.Storage this.StorageHealth
-        |> List.sumBy (fun (sto, health) -> health * sto.Storage subBlocksSpecs)
+        buildingsStorageCapacity subBlocksSpecs region.Storage this.StorageHealth
 
     member this.ProductionCapacity(region : WorldDescription.Region, subBlockSpecs, factor) =
-        List.zip region.Production this.ProductionHealth
-        |> List.sumBy (fun (prod, health) -> health * prod.Production(subBlockSpecs, factor))
+        buildingsProductionCapacity subBlockSpecs factor region.Production this.ProductionHealth
 
 
 /// State of a defense area within a region.
@@ -132,8 +148,7 @@ type AirfieldState = {
 }
 with
     member this.StorageCapacity(af : WorldDescription.Airfield, subBlocksSpecs) =
-        List.zip af.Storage this.StorageHealth
-        |> List.sumBy (fun (sto, health) -> health * sto.Storage subBlocksSpecs)
+        buildingsStorageCapacity subBlocksSpecs af.Storage this.StorageHealth
 
     /// Get total value of all planes at this airfield.
     member this.TotalPlaneValue =
