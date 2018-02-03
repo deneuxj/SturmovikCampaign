@@ -20,13 +20,7 @@ open Campaign
 open Campaign.PlayerDiscipline
 
 module Support =
-    let private logger =
-        // Set config before getting logger
-        let config = NLog.Config.LoggingConfiguration()
-        NLog.LogManager.Configuration <- config
-        // Get the logger for the current module
-        NLog.LogManager.GetCurrentClassLogger()
-
+    let private logger = NLog.LogManager.GetCurrentClassLogger()
 
     let findRunningServers(config) =
             let procs =
