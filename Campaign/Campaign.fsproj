@@ -91,7 +91,6 @@
     <None Include="Chess.fsx" />
     <None Include="GenerateMission.fsx" />
     <None Include="ParseMissionLogs.fsx" />
-    <None Include="Loop.fsx" />
     <None Include="data\KubanAutumn.Mission">
       <Link>KubanAutumn.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
