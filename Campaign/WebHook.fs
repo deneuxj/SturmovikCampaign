@@ -13,6 +13,8 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.PlaneModel
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
+
 type ChannelUpdate =
     { content : string
     }
@@ -26,7 +28,7 @@ let toChat (client : WebClient, hookUri : System.Uri) message =
             |> Some
         with
         | e ->
-            eprintfn "Sending chat entry to web hook failed with '%s'" e.Message
+            logger.Debug(sprintf "Sending chat entry to web hook failed with '%s'" e.Message)
             None
     let responseHeaders =
         client.ResponseHeaders

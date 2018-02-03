@@ -19,6 +19,8 @@ open MBrace.FsPickler
 open Campaign.Orders
 open SturmovikMission.Blocks.Util.String
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
+
 type EventHandlers =
     // player name, coalition, airfield, coalition of airfield, plane, cargo
     { OnTookOff : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<E> -> Async<unit>
@@ -86,11 +88,11 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                                 if not(alreadyHandled.Contains line) then
                                     yield line, LogEntry.Parse(line)
                                 else
-                                    printfn "Skipping log line %s" line
+                                    logger.Info(sprintf "Skipping log line %s" line)
                         ]
                     with
                     | e ->
-                        eprintfn "Failed to parse '%s' because '%s'" ev.FullPath e.Message
+                        logger.Warn(sprintf "Failed to parse '%s' because '%s'" ev.FullPath e.Message)
                         []
                 let alreadyHandled =
                     entries2
@@ -127,11 +129,10 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                         return false
                     | Choice2Of2 x->
                         if not muted then
-                            //printfn "Do: %A" x
+                            logger.Trace(sprintf "Do: %A" x)
                             do! f x
                         else
-                            //printfn "Muted: %A" x
-                            ()
+                            logger.Trace(sprintf "Muted: %A" x)
                         return muted
                 }) true
         async {
@@ -331,7 +332,7 @@ type CommentatorRestarter(missionLogsDir : string, campaignDir : string, mission
                     serializer.Deserialize<WorldState>(stateFile) |> Some
                 with
                 | exc ->
-                    eprintfn "Failed to parse state.xml: %s" exc.Message
+                    logger.Error(sprintf "Failed to parse state.xml: %s" exc.Message)
                     None
             let axisOrders =
                 try
@@ -339,7 +340,7 @@ type CommentatorRestarter(missionLogsDir : string, campaignDir : string, mission
                     serializer.Deserialize<OrderPackage>(ordersFile) |> Some
                 with
                 | exc ->
-                    eprintfn "Failed to parse axisOrders.xml: %s" exc.Message
+                    logger.Error(sprintf "Failed to parse axisOrders.xml: %s" exc.Message)
                     None
             let alliesOrders =
                 try
@@ -347,17 +348,17 @@ type CommentatorRestarter(missionLogsDir : string, campaignDir : string, mission
                     serializer.Deserialize<OrderPackage>(ordersFile) |> Some
                 with
                 | exc ->
-                    eprintfn "Failed to parse alliesOrders.xml: %s" exc.Message
+                    logger.Error(sprintf "Failed to parse alliesOrders.xml: %s" exc.Message)
                     None
             match state, axisOrders, alliesOrders with
             | Some state, Some axisOrders, Some alliesOrders ->
-                printfn "Starting new commentator"
+                logger.Info("Starting new commentator")
                 let commentator = new Commentator(missionLogsDir, handlers, world, state, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
                 do! awaitFiles (Set[missionFile])
                 onStateWritten()
                 return! work world (Some commentator)
             | _ ->
-                printfn "Waiting until next change to %s" missionFile
+                logger.Info(sprintf "Waiting until next change to %s" missionFile)
                 do! awaitFiles (Set[missionFile])
                 onStateWritten()
                 return! work world None

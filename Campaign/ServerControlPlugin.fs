@@ -20,6 +20,14 @@ open Campaign
 open Campaign.PlayerDiscipline
 
 module Support =
+    let private logger =
+        // Set config before getting logger
+        let config = NLog.Config.LoggingConfiguration()
+        NLog.LogManager.Configuration <- config
+        // Get the logger for the current module
+        NLog.LogManager.GetCurrentClassLogger()
+
+
     let findRunningServers(config) =
             let procs =
                 Process.GetProcessesByName("DServer")
@@ -35,28 +43,28 @@ module Support =
             | Some running ->
                 [| running |]
         for running in procsToKill do
-            printfn "Killing DServer process [%d]..." running.Id
+            logger.Info(sprintf "Killing DServer process [%d]..." running.Id)
             try
                 running.Kill()
             with
             | e ->
-                printfn "Failed to kill DServer.exe: %s" e.Message
+                logger.Warn(sprintf "Failed to kill DServer.exe: %s" e.Message)
 
     let startServer(config) =
         // Start DServer with given SDS file.
         try
             let exePath = Path.Combine(config.ServerBinDir, "game", "DServer.exe")
             let sdsPath = Path.Combine(config.ServerDataDir, config.ServerSdsFile)
-            printfn "Will start server '%s' with arg '%s'" exePath sdsPath
+            logger.Info(sprintf "Will start server '%s' with arg '%s'" exePath sdsPath)
             let si = ProcessStartInfo(exePath, sdsPath)
             si.WorkingDirectory <- Path.GetDirectoryName(exePath)
             si.UseShellExecute <- false
             let proc = Process.Start(si)
-            printfn "%s [%d] started." proc.ProcessName proc.Id
+            logger.Info(sprintf "%s [%d] started." proc.ProcessName proc.Id)
             Some proc
         with
         | e ->
-            printfn "Failed to start DServer.exe: %s" e.Message
+            logger.Error(sprintf "Failed to start DServer.exe: %s" e.Message)
             None
 
     type ExecutionState =
@@ -379,6 +387,7 @@ type Plugin() =
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
     let mutable commenter : CommentatorRestarter option = None
     let mutable queue = startQueue()
+    let logger = NLog.LogManager.GetCurrentClassLogger()
 
     let onCampaignOver victors =
         match webHookClient with
@@ -525,7 +534,7 @@ type Plugin() =
                     |> Seq.tryFind (fun p -> p.GetName() = penalty.Player.Name)
                 match player, penalty.Decision with
                 | Some player, Banned hours ->
-                    printfn "Ban player '%s' for %d hours" penalty.Player.Name hours
+                    logger.Info(sprintf "Ban player '%s' for %d hours" penalty.Player.Name hours)
                     do! support.ServerControl.BanPlayer(player, hours)
                     do! support.ServerControl.MessageAll([sprintf "%s was banned for %d hours" penalty.Player.Name hours])
                 | Some player, Kicked ->
@@ -552,7 +561,7 @@ type Plugin() =
         | None ->
             if not(String.IsNullOrEmpty(webHookUri)) then
                 webHookClient <- Some(createClient(webHookUri))
-                printfn "WebHook client created"
+                logger.Info("WebHook client created")
         | Some _ ->
             ()
 
@@ -571,7 +580,7 @@ type Plugin() =
               OnPlayerPunished = punishPlayer
             }
         commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, config.MissionName, handlers, fun() -> x.StartWebHookClient(config)))
-        printfn "Commenter set"
+        logger.Info("Commenter set")
 
     interface CampaignServerApi with
         member x.Init(apis) =

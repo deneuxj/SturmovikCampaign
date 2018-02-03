@@ -27,6 +27,8 @@ module Init =
     open System.Numerics
     open VectorExtension
 
+    let private logger = NLog.LogManager.GetCurrentClassLogger()
+
     let createWorld(config : Configuration) =
         let random =
             match config.Seed with
@@ -68,14 +70,14 @@ module Init =
             |> Seq.map (fun (region, canons) -> region, canons |> Seq.maxBy snd |> snd)
             |> Map.ofSeq
 
-        printfn "%20s | %13s | %12s | %12s" "region" "Prod - cap" "AA" "AT"
+        logger.Info(sprintf "%20s | %13s | %12s | %12s" "region" "Prod - cap" "AA" "AT")
         for region in world.Regions do
             let (RegionId regionName) = region.RegionId
             let aa = Map.tryFind region.RegionId antiAirUsage |> fun x -> defaultArg x 0
             let at = Map.tryFind region.RegionId antiTankUsage |> fun x -> defaultArg x 0
             let cap = Map.tryFind region.RegionId capacity |> fun x -> defaultArg x 0.0f<E>
             let prod = Map.tryFind region.RegionId production |> fun x -> defaultArg x 0.0f<E/H>
-            printfn "%20s | %6.1f - %3.0f | %4d - %5.1f | %4d - %5.1f" regionName prod cap aa (100.0f * float32 aa / (cap / cannonCost)) at (100.0f * float32 at / (cap / cannonCost))
+            logger.Info(sprintf "%20s | %6.1f - %3.0f | %4d - %5.1f | %4d - %5.1f" regionName prod cap aa (100.0f * float32 aa / (cap / cannonCost)) at (100.0f * float32 at / (cap / cannonCost)))
 
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let outputDir = config.OutputDir
@@ -339,6 +341,8 @@ module MissionFileGeneration =
     open MBrace.FsPickler
     open System.Diagnostics
 
+    let private logger = NLog.LogManager.GetCurrentClassLogger()
+
     let run(config : Configuration) =
         let random =
             match config.Seed with
@@ -381,7 +385,7 @@ module MissionFileGeneration =
                     serializer.Deserialize<BattleSummary list>(battleFile)
                 with
                 | e ->
-                    printfn "Failed to read battles file because '%s'" e.Message
+                    logger.Warn(sprintf "Failed to read battles file because '%s'" e.Message)
                     []
                 |> List.map (fun battle -> battle.GetText() |> String.concat "")
                 |> String.concat "<br>"
@@ -464,7 +468,7 @@ module MissionFileGeneration =
         proc.WaitForExit()
         // Remove text Mission file, it slows down mission loading.
         swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".Mission")))
-        printfn "Resaver exited with code %d" proc.ExitCode
+        logger.Info(sprintf "Resaver exited with code %d" proc.ExitCode)
         proc.ExitCode
 
 module MissionLogParsing =
@@ -477,8 +481,9 @@ module MissionLogParsing =
     open MBrace.FsPickler
     open System.IO
     open ploggy
-    open NLog
     open System.Text.RegularExpressions
+
+    let private logger = NLog.LogManager.GetCurrentClassLogger()
 
     // BREAKING: move this to NewWorldState, use as argument to newState
     type MissionResults = {
@@ -530,12 +535,10 @@ module MissionLogParsing =
 
     let getEntries(missionLogsDir : string, missionName : string, startDate : System.DateTime) =
         do
-            let config = Config.LoggingConfiguration()
-            LogManager.Configuration <- config
             Plogger.Init()
 
         let entries =
-            printfn "Looking for logs in %s" missionLogsDir
+            logger.Info(sprintf "Looking for logs in %s" missionLogsDir)
             // entries to remove from the log
             let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
             let missionHasPassed30Min (entry : LogEntry) =
@@ -568,15 +571,15 @@ module MissionLogParsing =
                         | [] -> previous
                         | (last : LogEntry) :: _ ->
                             if missionHasPassed30Min last then
-                                printfn "Reached start of new mission, moving current to previous"
+                                logger.Debug(sprintf "Reached start of new mission, moving current to previous")
                                 current
                             else
-                                printfn "Reached start of new mission, discarding current because too short"
+                                logger.Debug(sprintf "Reached start of new mission, discarding current because too short")
                                 previous
                     let expectedMissionFile = sprintf "%s.msnbin" missionName
                     let actualMissionFile = start.MissionFile.Split('/') |> Seq.last
                     if start.MissionTime = startDate && actualMissionFile.ToLower() = expectedMissionFile.ToLower() then
-                        printfn "Start collecting from %s" file
+                        logger.Info(sprintf "Start collecting from %s" file)
                         previous, [entry] // Start new list
                     else
                         let reason =
@@ -586,13 +589,13 @@ module MissionLogParsing =
                                 "bad mission filename"
                             else
                                 "???"
-                        printfn "Stopped collecting at %s because %s" file reason
+                        logger.Warn(sprintf "Stopped collecting at %s because %s" file reason)
                         previous, [] // Start new skip
                 | [], _ ->
-                    printfn "Skipped %s" file
+                    logger.Debug(sprintf "Skipped %s" file)
                     previous, [] // Skip, looking for next mission start that has the right time
                 | _ :: _, _ ->
-                    printfn "Collected %s" file
+                    logger.Debug(sprintf "Collected %s" file)
                     previous, entry :: current // Recording, update current
             ) ([], [])
             |> function // current if it's longer than 30 min, previous otherwise
@@ -601,7 +604,7 @@ module MissionLogParsing =
                     if missionHasPassed30Min last then
                         current
                     else
-                        printfn "Discarded short sequence"
+                        logger.Debug("Discarded short sequence")
                         previous
             |> List.rev
         entries
@@ -620,8 +623,6 @@ module MissionLogParsing =
     /// Retrieve mission log entries from an existing results.xml file
     let stage0alt(config : Configuration) =
         do
-            let config = Config.LoggingConfiguration()
-            LogManager.Configuration <- config
             Plogger.Init()
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let state =

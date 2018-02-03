@@ -6,6 +6,9 @@ open Util
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.BasicTypes
+open NLog
+
+let private logger = LogManager.GetCurrentClassLogger()
 
 type Move =
     { Start : int
@@ -176,7 +179,7 @@ with
                     fun i -> getSuccessors(true, i)
                 Algo.propagate (getSuccessors >> List.ofArray) update roots
             for kvp in values do
-                printfn "%2d %5.2f" kvp.Key kvp.Value
+                logger.Info(sprintf "%2d %5.2f" kvp.Key kvp.Value)
             fun i -> values.[i]
         let hasFactory =
             let m =
@@ -492,13 +495,13 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
         { Axis = axis; Allies = allies } :: deepMoves, value
     let moves, score = bestMoveAtDepth (Defeat(Allies, 0, "Initial beta")) 0
     if cancel.IsCancellationRequested then
-        printfn "Cancelled"
+        logger.Info("Cancelled")
         List.head moves, score
     else
-        printfn "Hits: %d, Score: %A" hits score
+        logger.Trace(sprintf "Hits: %d, Score: %A" hits score)
         match moves with
         | topMove :: followingMoves ->
-            printfn "DBG: %A\nfollowed by\n%A" topMove followingMoves
+            logger.Debug(sprintf "DBG: %A\nfollowed by\n%A" topMove followingMoves)
             topMove, score
         | [] ->
             failwith "Empty combined move list"

@@ -13,6 +13,9 @@ open Campaign.WorldState
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open MBrace.FsPickler
+open NLog
+
+let private logger = LogManager.GetCurrentClassLogger()
 
 type JudgementDecision =
     | Kicked
@@ -61,7 +64,7 @@ with
             accumulatedDamages
             |> Seq.pairwise
             |> Seq.sumBy (fun (d0, d1) -> if d0 < threshold && d1 >= threshold then 1 else 0)
-        printfn "Someone is up to %d friendly damage excesses" numExcesses
+        logger.Info(sprintf "Someone is up to %d friendly damage excesses" numExcesses)
         if numExcesses >= 2 then
             Some(Banned 48)
         else
