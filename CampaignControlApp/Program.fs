@@ -19,8 +19,8 @@ with
 [<EntryPoint>]
 let main argv = 
     // Set NLog
-    let config = NLog.Config.LoggingConfiguration()
-    NLog.LogManager.Configuration <- config
+//    let config = NLog.Config.LoggingConfiguration()
+//    NLog.LogManager.Configuration <- config
 
     if argv |> Array.exists (fun s -> s = "-h" || s = "--help" || s = "/?") then
         printfn """

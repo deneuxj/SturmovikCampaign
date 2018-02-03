@@ -8,9 +8,10 @@ open Campaign.Configuration
 open SdsFile
 
 type Logging() =
+    let logger = NLog.LogManager.GetLogger("Remote.Plugin")
     interface LoggingApi with
-        member this.LogError(msg) = eprintfn "%s" msg
-        member this.LogInfo(msg) = printfn "%s" msg
+        member this.LogError(msg) = logger.Error msg
+        member this.LogInfo(msg) = logger.Info msg
 
 type NamedPlayer =
     { PlayerName : string
