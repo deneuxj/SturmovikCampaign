@@ -89,7 +89,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                                 if not(alreadyHandled.Contains line) then
                                     yield line, LogEntry.Parse(line)
                                 else
-                                    logger.Info(sprintf "Skipping log line %s" line)
+                                    logger.Debug(sprintf "Skipping log line %s" line)
                         ]
                     with
                     | e ->
