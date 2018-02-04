@@ -272,7 +272,7 @@ let computeShipped (orders : ResupplyOrder list) (shipped : SuppliesShipped list
 let computeDelivered (orders : ResupplyOrder list) (shipped : SuppliesShipped list) (blocked : VehiclesBlocked list) (damages : Damage list) =
     let blocked =
         blocked
-        |> Seq.map (fun bl -> bl.OrderId)
+        |> Seq.map (fun bl -> bl.OrderId) // No need to include the rank offset, convoys are never split.
         |> Set.ofSeq
     let damages =
         let data =
@@ -1005,7 +1005,7 @@ let buildBattles (state : WorldState) (paras : ParaDropResult list) =
 let computeCompletedColumnMovements (movements : ColumnMovement list) (departures : ColumnLeft list) (blocked : VehiclesBlocked list) (damaged : Damage list) =
     let blocked =
         blocked
-        |> Seq.map (fun bl -> bl.OrderId)
+        |> Seq.map (fun bl -> bl.OrderId, bl.RankOffset)
         |> Set.ofSeq
     let damageMap =
         damaged
@@ -1020,37 +1020,39 @@ let computeCompletedColumnMovements (movements : ColumnMovement list) (departure
         |> Map.ofSeq
     let departed =
         departures
-        |> Seq.map (fun d -> d.OrderId, d)
+        |> Seq.groupBy(fun d -> d.OrderId)
         |> dict
     // Return updated movements with damaged vehicles removed
     [
         for move in movements do
             match departed.TryGetValue(move.OrderId) with
-            | true, group ->
+            | true, groups ->
                 let comp =
                     [|
-                        for i, tank in group.Vehicles |> Seq.indexed do
-                            let rank, damageThreshold =
-                                match move.TransportType with
-                                | ColByRoad -> group.RankOffset + i, 0.25f
-                                | ColByTrain -> 0, 1.0f
-                                | ColByRiverShip
-                                | ColBySeaShip ->
-                                    if i <= group.Vehicles.Length / 2 then
-                                        0, 1.0f
-                                    else
-                                        1, 1.0f
-                            let vehicle = { OrderId = move.OrderId; Rank = rank }
-                            match Map.tryFind vehicle damageMap with
-                            | Some amount when amount >= damageThreshold -> ()
-                            | _ -> yield tank
+                        for group in groups do
+                            let sendBack = blocked.Contains((move.OrderId, Some group.RankOffset))
+                            for i, tank in group.Vehicles |> Seq.indexed do
+                                let rank, damageThreshold =
+                                    match move.TransportType with
+                                    | ColByRoad -> group.RankOffset + i, 0.25f
+                                    | ColByTrain -> 0, 1.0f
+                                    | ColByRiverShip
+                                    | ColBySeaShip ->
+                                        if i <= group.Vehicles.Length / 2 then
+                                            0, 1.0f
+                                        else
+                                            1, 1.0f
+                                let vehicle = { OrderId = move.OrderId; Rank = rank }
+                                match Map.tryFind vehicle damageMap with
+                                | Some amount when amount >= damageThreshold -> ()
+                                | _ -> yield sendBack, tank
                     |]
-                if not(Array.isEmpty comp) then
-                    if blocked.Contains(move.OrderId) then
-                        // Return survivors to start region
-                        yield { move with Composition = comp; Destination = move.Start }
-                    else
-                        yield { move with Composition = comp }
+                let sentBack, arrived = comp |> Array.partition fst
+                if not(Array.isEmpty sentBack) then
+                    // Return survivors to start region
+                    yield { move with Composition = sentBack |> Array.map snd; Destination = move.Start }
+                if not(Array.isEmpty arrived) then
+                    yield { move with Composition = arrived |> Array.map snd }
             | false, _ ->
                 // If it not depart, then it could not arrive.
                 ()
