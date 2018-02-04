@@ -357,14 +357,6 @@ let computeCargoSupplies (wg : WorldFastAccess) (landed : Landed list) =
 /// Remove shipped supplies from region of origin, apply damages due to attacks
 let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) =
     let wg = WorldFastAccess.Create world
-    let numSubBlocks location (buildings : StaticGroup list) idx =
-        try
-            buildings.[idx].SubBlocks world.SubBlockSpecs
-            |> List.length
-        with
-        | _ ->
-            logger.Warn(sprintf "Bad damage index %d at %s" idx location)
-            1
 
     let shipped = computeShipped orders shipped
     let damages =
@@ -409,7 +401,7 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                             qty)
                 let capacityBeforeDamages = afState.StorageCapacity(af, world.SubBlockSpecs)
                 let storeHealth =
-                    let numSubBlocks = numSubBlocks af.AirfieldId.AirfieldName af.Storage
+                    let numSubBlocks = wg.GetAirfieldStorageNumSubBlocks af.AirfieldId
                     afState.StorageHealth
                     |> List.mapi (fun idx health ->
                         let numSubBlocks = numSubBlocks idx
@@ -434,7 +426,7 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
             for regState in regionsAfterShipping do
                 let region = wg.GetRegion regState.RegionId
                 let prodHealth =
-                    let numSubBlocks = numSubBlocks (string region.RegionId) region.Production
+                    let numSubBlocks = wg.GetRegionProductionNumSubBlocks region.RegionId
                     regState.ProductionHealth
                     |> List.mapi (fun idx health ->
                         let numSubBlocks = numSubBlocks idx
@@ -442,7 +434,7 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                         |> applyDamage numSubBlocks health)
                 let capacityBeforeDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let storeHealth =
-                    let numSubBlocks = numSubBlocks (string region.RegionId) region.Storage
+                    let numSubBlocks = wg.GetRegionStorageNumSubBlocks region.RegionId
                     regState.StorageHealth
                     |> List.mapi (fun idx health ->
                         let numSubBlocks = numSubBlocks idx
