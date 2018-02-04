@@ -13,6 +13,8 @@ open VectorExtension
 open SturmovikMission.Blocks.BlocksMissionData
 open FSharp.Control
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
+
 /// Try to find the airfield that is furthest away from any enemy region.
 let tryFindRearAirfield (world : World) (coalition : CoalitionId) (state : WorldState) =
     let wg = world.FastAccess
@@ -355,6 +357,15 @@ let computeCargoSupplies (wg : WorldFastAccess) (landed : Landed list) =
 /// Remove shipped supplies from region of origin, apply damages due to attacks
 let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) =
     let wg = WorldFastAccess.Create world
+    let numSubBlocks location (buildings : StaticGroup list) idx =
+        try
+            buildings.[idx].SubBlocks world.SubBlockSpecs
+            |> List.length
+        with
+        | _ ->
+            logger.Warn(sprintf "Bad damage index %d at %s" idx location)
+            1
+
     let shipped = computeShipped orders shipped
     let damages =
         let data =
@@ -374,10 +385,10 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                     |> max 0.0f<E>
                 yield { regState with Supplies = newStored }
         ]
-    let applyDamage health =
+    let applyDamage numSubBlocks health =
         Option.map (fun damages ->
             damages
-            |> Seq.sumBy (fun data -> data.Amount)
+            |> Seq.sumBy (fun data -> data.Amount / float32 numSubBlocks)
             |> (-) health
             |> max 0.0f)
         >> Option.defaultVal health
@@ -398,10 +409,12 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                             qty)
                 let capacityBeforeDamages = afState.StorageCapacity(af, world.SubBlockSpecs)
                 let storeHealth =
+                    let numSubBlocks = numSubBlocks af.AirfieldId.AirfieldName af.Storage
                     afState.StorageHealth
                     |> List.mapi (fun idx health ->
+                        let numSubBlocks = numSubBlocks idx
                         Map.tryFind (Airfield(afState.AirfieldId, idx)) damages
-                        |> applyDamage health)
+                        |> applyDamage numSubBlocks health)
                 let afState = { afState with
                                     NumPlanes = planes
                                     StorageHealth = storeHealth }
@@ -421,16 +434,20 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
             for regState in regionsAfterShipping do
                 let region = wg.GetRegion regState.RegionId
                 let prodHealth =
+                    let numSubBlocks = numSubBlocks (string region.RegionId) region.Production
                     regState.ProductionHealth
                     |> List.mapi (fun idx health ->
+                        let numSubBlocks = numSubBlocks idx
                         Map.tryFind (Production(region.RegionId, idx)) damages
-                        |> applyDamage health)
+                        |> applyDamage numSubBlocks health)
                 let capacityBeforeDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let storeHealth =
+                    let numSubBlocks = numSubBlocks (string region.RegionId) region.Storage
                     regState.StorageHealth
                     |> List.mapi (fun idx health ->
+                        let numSubBlocks = numSubBlocks idx
                         Map.tryFind (Storage(region.RegionId, idx)) damages
-                        |> applyDamage health)
+                        |> applyDamage numSubBlocks health)
                 let regState = { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth }
                 let capacityAfterDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let factor =
