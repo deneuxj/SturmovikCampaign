@@ -54,6 +54,7 @@
     <Compile Include="Util.fs" />
     <Compile Include="BasicTypes.fs" />
     <Compile Include="PlaneModel.fs" />
+    <Compile Include="Config.fs" />
     <Compile Include="WorldDescription.fs" />
     <Compile Include="WorldState.fs" />
     <Compile Include="Weather.fs" />
@@ -74,7 +75,6 @@
     <Compile Include="ResultExtraction.fs" />
     <Compile Include="NewWorldState.fs" />
     <Compile Include="AfterActionReport.fs" />
-    <Compile Include="Config.fs" />
     <Compile Include="PlayerDiscipline.fs" />
     <Compile Include="Commenting.fs" />
     <Compile Include="WebHook.fs" />

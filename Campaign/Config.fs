@@ -20,6 +20,9 @@ type Configuration = {
     MaxSimultaneousConvoys : int
     MaxSimultaneousFerryFlights : int
     MaxVehiclesInBattle : int
+    BattleKillRatio: int
+    MaxBattleKillsRatioByPlayers: float32
+    MaxBattleKillsRatioByAI: float32
     OutputDir : string
     ServerDataDir : string
     ServerBinDir : string
@@ -46,6 +49,9 @@ with
             MaxPatrols = 6
             MaxAttackers = 3
             MaxCapturedPlanes = 3
+            BattleKillRatio = 5
+            MaxBattleKillsRatioByPlayers = 1.0f
+            MaxBattleKillsRatioByAI = 0.25f
             MissionName = "AutoGenMission2"
             MissionLength = 180
             ColumnSplitInterval = 60
@@ -102,6 +108,9 @@ let loadConfigFile (path : string) =
         MaxPatrols = values.MaxPatrols
         MaxAttackers = values.MaxAttackers
         MaxCapturedPlanes = values.MaxCapturedPlanes
+        BattleKillRatio = values.BattleKillRatio
+        MaxBattleKillsRatioByPlayers = float32 values.MaxBattleKillsRatioByPlayers
+        MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI
         MissionName = values.MissionName
         MissionLength = values.MissionLength
         ColumnSplitInterval = values.ColumnSplitInterval

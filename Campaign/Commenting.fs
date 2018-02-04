@@ -35,7 +35,8 @@ type EventHandlers =
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
-type Commentator (missionLogsDir : string, handlers : EventHandlers, world : World, state : WorldState, convoys : ResupplyOrder list, columns : ColumnMovement list) =
+type Commentator (config : Configuration, handlers : EventHandlers, world : World, state : WorldState, convoys : ResupplyOrder list, columns : ColumnMovement list) =
+    let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
     // retrieve entries from most recent mission
     let files =
         let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
@@ -259,7 +260,7 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                                 else
                                     1.0f
                             let acc = damageInflicted.Value.TryFind killer |> Option.defaultVal 0.0f<E>
-                            damageInflicted := Map.add killer (acc + penalty * battleKill.Vehicle.Cost / (float32 NewWorldState.battleKillFactor)) damageInflicted.Value
+                            damageInflicted := Map.add killer (acc + penalty * battleKill.Vehicle.Cost / float32 config.BattleKillRatio) damageInflicted.Value
                         | None ->
                             ()
                     | Choice3Of3 { KilledByPlayer = None } -> ()
@@ -283,13 +284,13 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
                     let oldBattleDamage =
                         battleDamage.Value.TryFind (battleKill.BattleId, battleKill.Coalition)
                         |> Option.defaultValue 0.0f<E>
-                    let newDamage = oldBattleDamage + battleKill.Vehicle.Cost / (float32 NewWorldState.battleKillFactor)
+                    let newDamage = oldBattleDamage + battleKill.Vehicle.Cost / (float32 config.BattleKillRatio)
                     battleDamage := Map.add (battleKill.BattleId, battleKill.Coalition) newDamage battleDamage.Value
                     let totalValue =
                         GroundAttackVehicle.AllVehicles
                         |> Seq.sumBy (fun vehicle ->
                             (float32(sg.GetRegion(battleKill.BattleId).GetNumVehicles(battleKill.Coalition, vehicle))) * vehicle.Cost)
-                    if newDamage > totalValue * NewWorldState.maxPlayerBattleKills then
+                    if newDamage > totalValue * config.MaxBattleKillsRatioByPlayers then
                         yield battleKill.Coalition.Other, battleKill.BattleId
             }
             |> asyncIterNonMuted (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
@@ -306,7 +307,9 @@ type Commentator (missionLogsDir : string, handlers : EventHandlers, world : Wor
         cancelOnDispose.Cancel()
 
 /// Monitor state.xml, (re-) starting a commentator whenever the file is modified
-type CommentatorRestarter(missionLogsDir : string, campaignDir : string, missionName : string, handlers : EventHandlers, onStateWritten : unit -> unit) =
+type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onStateWritten : unit -> unit) =
+    let missionName = config.MissionName
+    let campaignDir = config.OutputDir
     let missionFile = missionName + ".mission"
     let watcher = new FileSystemWatcher()
     do watcher.Path <- campaignDir
@@ -353,7 +356,7 @@ type CommentatorRestarter(missionLogsDir : string, campaignDir : string, mission
             match state, axisOrders, alliesOrders with
             | Some state, Some axisOrders, Some alliesOrders ->
                 logger.Info("Starting new commentator")
-                let commentator = new Commentator(missionLogsDir, handlers, world, state, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
+                let commentator = new Commentator(config, handlers, world, state, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
                 do! awaitFiles (Set[missionFile])
                 onStateWritten()
                 return! work world (Some commentator)

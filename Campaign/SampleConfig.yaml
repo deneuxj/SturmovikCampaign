@@ -29,6 +29,12 @@
     MaxSimultaneousFerryFlights: 2
     # Max number of vehicles in a battle (per side)
     MaxVehiclesInBattle: 15
+    # Number of in-game tank kills per battle resolution kills
+    BattleKillRatio: 5
+    # Ratio of max in-game tank kills (by players) in battles
+    MaxBattleKillsRatioByPlayers: 1.0
+    # Ratio of max in-game tank kills (by AI) in battles
+    MaxBattleKillsRatioByAI: 0.25
     # Where the textual generated mission file is written; this also the place where the campaign state is kept
     OutputDir: C:\Campaign\Data
     # IL2 data dir

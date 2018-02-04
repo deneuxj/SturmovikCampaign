@@ -573,7 +573,7 @@ type Plugin() =
               OnMaxBattleDamageExceeded = announceBattleKillsExceeded
               OnPlayerPunished = punishPlayer
             }
-        commenter <- Some(new CommentatorRestarter(Path.Combine(config.ServerDataDir, "logs"), config.OutputDir, config.MissionName, handlers, fun() -> x.StartWebHookClient(config)))
+        commenter <- Some(new CommentatorRestarter(config, handlers, fun() -> x.StartWebHookClient(config)))
         logger.Info("Commenter set")
 
     interface CampaignServerApi with

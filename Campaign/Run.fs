@@ -727,8 +727,8 @@ module MissionLogParsing =
         let mustConvertCapturedPlanes = config.MaxCapturedPlanes = 0
         let state2, newlyProduced, battleReports =
             newState
-                mustConvertCapturedPlanes
-                dt world state axisOrders.Production alliesOrders.Production
+                config
+                world state axisOrders.Production alliesOrders.Production
                 movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply)
                 missionResults.Blocked (missionResults.StaticDamages @ missionResults.VehicleDamages)
                 missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures

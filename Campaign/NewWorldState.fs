@@ -811,23 +811,14 @@ let applyPlaneFerries (state : WorldState) ferryEvents =
         |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
     { state with Airfields = airfields }
 
-/// Max fraction of a column that AIs can kill in a battle
-let maxAiBattleKills = 0.25f
-
-/// Max fraction of a column that players can kill in a battle
-let maxPlayerBattleKills = 0.5f
-
-/// Number of reported battle kills per actual battle kill
-let battleKillFactor = 5
-
 /// Remove vehicles killed during a battle preamble from a vehicle count map.
-let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed : BattleParticipantKilled list) =
+let decimateColumn (config : Configuration.Configuration) random (numVehicles : Map<GroundAttackVehicle, int>) (killed : BattleParticipantKilled list) =
     // Make it so that every concrete vehicle kill accounts for a fraction of a kill when applied.
     // This makes it harder for players to reach the kill limit.
     // It's a bit of a hack, but the way we do that is to multiply the number of vehicles before processing, then divide them
     let numVehicles =
         numVehicles
-        |> Map.map (fun k num -> num * battleKillFactor)
+        |> Map.map (fun k num -> num * config.BattleKillRatio)
     // Remove no more than 50% of the original total value
     let totalValue =
         numVehicles
@@ -841,7 +832,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
         | [] -> numVehicles, unmatchedAiDamage + unmatchedPlayerDamage, aiDamageSoFar + playerDamageSoFar
         | veh :: rest ->
             if veh.KilledByPlayer.IsNone then
-                if unmatchedAiDamage + aiDamageSoFar >= maxAiBattleKills * totalValue then
+                if unmatchedAiDamage + aiDamageSoFar >= config.MaxBattleKillsRatioByAI * totalValue then
                     // Damage by AI reached the limit, skip
                     damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
                 else
@@ -852,7 +843,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
                     | _ ->
                         damageExact numVehicles (unmatchedAiDamage + veh.Vehicle.Cost) unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
             else
-                if unmatchedPlayerDamage + playerDamageSoFar >= maxPlayerBattleKills * totalValue then
+                if unmatchedPlayerDamage + playerDamageSoFar >= config.MaxBattleKillsRatioByPlayers * totalValue then
                     // Damage by players reached the limit, skip
                     damageExact numVehicles unmatchedAiDamage unmatchedPlayerDamage aiDamageSoFar playerDamageSoFar rest
                 else
@@ -877,7 +868,7 @@ let decimateColumn random (numVehicles : Map<GroundAttackVehicle, int>) (killed 
     let numVehicles =
         damageOther unmatchedDamage (numVehicles |> expandMap |> Array.shuffle random |> List.ofArray)
         |> compactSeq
-        |> Map.map (fun k num -> num / battleKillFactor)
+        |> Map.map (fun k num -> num / config.BattleKillRatio)
     let doneDamage = doneDamage + unmatchedDamage
     doneDamage / totalValue, numVehicles
 
@@ -892,15 +883,15 @@ type BattleParticipants = {
     Region : RegionId
 }
 with
-    member this.Decimate(random : System.Random, preambleKills : BattleParticipantKilled list) =
+    member this.Decimate(config, random : System.Random, preambleKills : BattleParticipantKilled list) =
         let defendersDecimation =
             preambleKills
             |> List.filter (fun killed -> killed.BattleId = this.Region && killed.Coalition = this.DefenderCoalition)
         let attackersDecimation =
             preambleKills
             |> List.filter (fun killed -> killed.BattleId = this.Region && killed.Coalition = this.DefenderCoalition.Other)
-        let damageToDefenders, defenders = decimateColumn random this.Defenders defendersDecimation
-        let damageToAttackers, attackers = decimateColumn random this.Attackers attackersDecimation
+        let damageToDefenders, defenders = decimateColumn config random this.Defenders defendersDecimation
+        let damageToAttackers, attackers = decimateColumn config random this.Attackers attackersDecimation
         { this with
             Defenders = defenders
             Attackers = attackers
@@ -1071,13 +1062,13 @@ type BattleSummary = {
 }
 
 /// Run each battle, update vehicles in targetted regions and flip them if attackers are victorious
-let applyConquests (world : World) (state : WorldState) (battles : BattleParticipants list) (preambleKills : BattleParticipantKilled list) =
+let applyConquests config (world : World) (state : WorldState) (battles : BattleParticipants list) (preambleKills : BattleParticipantKilled list) =
     let random = System.Random()
     let sg = state.FastAccess
     let battleResults =
         battles
         |> List.map (fun battle ->
-            let battle, damageToDefenders, damageToAttackers = battle.Decimate(random, preambleKills)
+            let battle, damageToDefenders, damageToAttackers = battle.Decimate(config, random, preambleKills)
             battle.Region, (battle.RunBattle(random), damageToDefenders, damageToAttackers))
         |> Map.ofList
     let battleReports =
@@ -1219,7 +1210,9 @@ let nextDate (dt : float32<H>) (date : System.DateTime) =
             x
     newDate
 
-let newState (mustConvertCapturedPlanes : bool) (dt : float32<H>) (world : World) (state : WorldState) axisProduction alliesProduction (movements : ColumnMovement list) convoyDepartures supplies blocked damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
+let newState (config : Configuration.Configuration) (world : World) (state : WorldState) axisProduction alliesProduction (movements : ColumnMovement list) convoyDepartures supplies blocked damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
+    let dt = 1.0f<H> * float32 config.MissionLength / 60.0f
+    let mustConvertCapturedPlanes = config.MaxCapturedPlanes = 0
     let state2 =
         state
         |> applyProduction dt world Axis axisProduction
@@ -1230,7 +1223,7 @@ let newState (mustConvertCapturedPlanes : bool) (dt : float32<H>) (world : World
     let state5b = applyPlaneFerries state5 ferryPlanes
     let state6 = applyVehicleDepartures state5b movements columnDepartures
     let battles = buildBattles state6 paradrops
-    let state7, battleReports = applyConquests world state6 battles battleKills
+    let state7, battleReports = applyConquests config world state6 battles battleKills
     let state7b =
         computeCompletedColumnMovements movements columnDepartures blocked damages
         |> applyVehicleArrivals state7
