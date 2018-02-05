@@ -230,6 +230,12 @@ type VehicleDataTypeStore() =
           Model = position.GetModel().Value
         }
 
+    member this.Nets =
+        let position = statics.[T.Vehicles.Nets]
+        { Script = position.GetScript().Value
+          Model = position.GetModel().Value
+        }
+
     member this.RussianSearchLight =
         let light = vehicles.[T.Vehicles.SearchLightRUS]
         { Script = light.GetScript().Value

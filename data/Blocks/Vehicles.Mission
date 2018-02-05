@@ -3336,4 +3336,27 @@ Plane
 }
 
 
+
+Block
+{
+  Name = "Nets";
+  Index = 113;
+  LinkTrId = 0;
+  XPos = 29032.689;
+  YPos = 108.584;
+  ZPos = 20733.411;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_nets_2_5.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_nets_2_5.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
 # end of file
