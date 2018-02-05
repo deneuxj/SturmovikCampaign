@@ -29,7 +29,7 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                     subMaps regState.NumVehicles subtracted
                     |> expandMap
                     |> Array.shuffle (System.Random())
-                let parkingPositions = computeParkingPositions region.Parking parked.Length
+                let parkingPositions = computeRandomParkingPositions region.Parking parked.Length
                 if parked.Length > 0 then
                     let mutable x0 = System.Single.PositiveInfinity
                     let mutable x1 = System.Single.NegativeInfinity

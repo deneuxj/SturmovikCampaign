@@ -36,7 +36,7 @@ let serpentine() =
 let minParkingSpacing = 10.0f
 let maxParkingSpacing = 35.0f
 
-/// Compute positions in an area where a given numbers of vehicles can be parked.
+/// Compute positions in an area where a given numbers of vehicles can be parked. Uses deterministic serpentine.
 let computeParkingPositions (area : Vector2 list) (numVehicles : int) =
     let center =
         let n = float32(List.length area)
@@ -49,3 +49,41 @@ let computeParkingPositions (area : Vector2 list) (numVehicles : int) =
     |> Seq.take numVehicles
     |> Seq.filter (fun v -> v.IsInConvexPolygon area)
     |> List.ofSeq
+
+/// Compute positions in area where a given numbers of vehicles can be parked. Uses random positions
+let computeRandomParkingPositions (area : Vector2 list) (numVehicles : int) =
+    let random = System.Random()
+    let center =
+        let n = float32(List.length area)
+        (List.sum area) / n
+    let maxRadius =
+        area
+        |> Seq.maxBy (fun v -> (center - v).Length())
+    let rec work numTriesLeft (positions : Vector2[]) =
+        let indexed = Seq.indexed positions
+        let filtered =
+            [|
+                for (i, v) in indexed do
+                    let tooClose =
+                        indexed
+                        |> Seq.exists (fun (j, v2) -> i <> j && (v - v2).Length() < 10.0f)
+                    if not tooClose then
+                        yield v
+            |]
+        let extra =
+            Seq.initInfinite (fun _ ->
+                let r = float32(random.NextDouble()) * maxRadius
+                let angle = 2.0 * System.Math.PI * random.NextDouble()
+                let dx = float32(cos angle)
+                let dz = float32(sin angle)
+                center + r * Vector2(dx, dz))
+            |> Seq.truncate 1000
+            |> Seq.filter (fun v -> v.IsInConvexPolygon area)
+            |> Seq.truncate (numVehicles - filtered.Length)
+            |> Array.ofSeq
+        let positions = Array.append filtered extra
+        if extra.Length = 0 || numTriesLeft = 0 then
+            positions
+        else
+            work (numTriesLeft - 1) positions
+    work 100 [||]
