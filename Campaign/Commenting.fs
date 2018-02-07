@@ -150,6 +150,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 |> Seq.cache
             asyncSeqEntries
             |> extractBattleDamages world state battles
+            |> AsyncSeq.filter (fun damage -> damage.KilledByPlayer.IsSome)
         let takeOffsAndLandings =
             asyncSeqEntries
             |> extractTakeOffsAndLandings world state
