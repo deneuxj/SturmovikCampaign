@@ -87,6 +87,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Configuration.fsx" />
+    <None Include="Select.fsx" />
     <None Include="Init.fsx" />
     <None Include="Chess.fsx" />
     <None Include="GenerateMission.fsx" />
