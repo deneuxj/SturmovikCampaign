@@ -720,16 +720,23 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
         world.AntiTankDefenses
         |> List.filter(fun area -> battles.Contains area.DefenseAreaId)
     asyncSeq {
-        let idMapper = ref Map.empty
-        let playerVehicles = ref Map.empty
+        let mutable idMapper = Map.empty
+        let mutable playerVehicles = Map.empty
         for entry in entries do
             match entry with
             | :? ObjectSpawnedEntry as spawned ->
-                idMapper := Map.add spawned.ObjectId spawned.ObjectName !idMapper
+                idMapper <- Map.add spawned.ObjectId spawned.ObjectName idMapper
+                // If the parent object (if any) of a newly spawned object is controlled by a player,
+                // record this sub-object also as controlled by that player.
+                match playerVehicles.TryFind(spawned.ParentId) with
+                | Some turretPlayer ->
+                    playerVehicles <- Map.add spawned.ObjectId turretPlayer playerVehicles
+                | None ->
+                    ()
             | :? PlayerPlaneEntry as entry ->
-                playerVehicles := Map.add entry.VehicleId entry.Name !playerVehicles
+                playerVehicles <- Map.add entry.VehicleId entry.Name playerVehicles
             | :? KillEntry as kill ->
-                match Map.tryFind kill.TargetId !idMapper with
+                match Map.tryFind kill.TargetId idMapper with
                 | Some name ->
                     yield!
                         asyncSeq {
@@ -747,7 +754,7 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
                                                 Coalition = coalition
                                                 BattleId = battle.Home
                                                 Vehicle = vehicle
-                                                KilledByPlayer = playerVehicles.Value.TryFind(kill.AttackerId)
+                                                KilledByPlayer = playerVehicles.TryFind(kill.AttackerId)
                                             }
                         }
                 | None ->
