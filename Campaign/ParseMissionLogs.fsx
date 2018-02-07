@@ -4,11 +4,13 @@
 
 #r "Campaign.dll"
 #r "ploggy"
+#r "NLog"
 
 #load "Configuration.fsx" 
 
 open Configuration
 
+NLog.LogManager.Configuration <- NLog.Config.LoggingConfiguration()
 let entries = Campaign.Run.MissionLogParsing.stage0alt(config)
 
 let missionResults = Campaign.Run.MissionLogParsing.stage1(config, entries)
