@@ -120,8 +120,6 @@ let disciplinePlayers (world : World) (events : AsyncSeq<LogEntry>) =
                             | _ ->
                                 // Some other kind of object. Arbitrarily pick half the cost of an i16
                                 0.5f * PlaneModel.I16.Cost
-                            | None ->
-                                0.0f<E>
                         let cost = cost * damage.Damage
                         let entry =
                             { Time = missionStart.Value + damage.Timestamp
