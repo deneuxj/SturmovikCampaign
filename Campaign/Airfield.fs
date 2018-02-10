@@ -59,6 +59,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
                     | Allies ->
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
+                let totalBombs = state.Supplies / bombCost
                 let planeSpecs : T.Airfield.Planes.Plane list =
                     state.NumPlanes
                     |> Map.map (fun _ number -> number |> floor |> int)
@@ -79,11 +80,20 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                     // Create plane spec
                     |> Map.map (fun plane number ->
                         let model = plane.ScriptModel
+                        let defaultPayload =
+                            if plane.PlaneType = PlaneType.Fighter then
+                                0
+                            else
+                                plane.BombLoads
+                                |> List.tryFind (fun (idx, w) -> w <= totalBombs)
+                                |> Option.map fst
+                                |> Option.defaultValue plane.EmptyPayload
                         newAirfieldPlane("", "", 0, 0, "", "", int number)
                             .SetScript(T.String model.Script)
                             .SetModel(T.String model.Model)
                             .SetStartInAir(T.Integer 2)
-                            .SetAvPayloads(T.String(plane.LoadOuts(state.Supplies / bombCost)))
+                            .SetPayloadId(T.Integer defaultPayload)
+                            .SetAvPayloads(T.String(plane.LoadOuts(totalBombs)))
                     )
                     |> Map.toSeq
                     |> Seq.map snd

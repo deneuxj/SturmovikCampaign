@@ -456,6 +456,38 @@ with
         | SpitfireMkVb -> [(0, 0.0f<K>); (1, 0.0f<K>)]
         |> List.sortBy fst
 
+    member this.EmptyPayload =
+        match this with
+        | Lagg3s29 -> 49
+        | Yak1s69 -> 11
+        | Yak1s127 -> 3
+        | La5 -> 9
+        | I16 -> 22
+        | Mig3 -> 24
+        | P40 -> 36
+        | SpitfireMkVb -> 1
+        | IL2M41 -> 72
+        | IL2M42 ->87
+        | IL2M43 -> 104
+        | Pe2s35 -> 11
+        | Pe2s87 -> 11
+        | Bf109e7 -> 3
+        | Bf109f2 -> 6
+        | Bf109f4 -> 5
+        | Bf109g2 -> 4
+        | Bf109g4 -> 4
+        | Fw190a3 -> 6
+        | Fw190a5 -> 10
+        | Mc202 -> 5
+        | Bf110e -> 9
+        | Bf110g -> 15
+        | Ju87 -> 11
+        | Hs129b2 -> 34
+        | He111h6 -> 13
+        | He111h16 -> 19
+        | Ju88a4 -> 12
+        | Ju52 -> 3
+
     member this.BombLoadsOk =
         this.BombLoads
         |> Seq.pairwise
