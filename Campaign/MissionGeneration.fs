@@ -64,6 +64,8 @@ let setCountries (store : NumericalIdentifiers.IdStore) (world : World) (state :
 
 let createBuildingFires maxFires store (world : World) (state : WorldState) (windDirection : float32) =
     let fires = state.FirePositions(world, maxFires)
+    let isBlackSmoke fireType =
+        fireType <> FireType.VillageSmoke
     seq {
         let mutable bigFirePositions = []
         for pos, alt, size in fires do
@@ -79,8 +81,8 @@ let createBuildingFires maxFires store (world : World) (state : WorldState) (win
                     lazy
                         bigFirePositions
                         |> List.exists (fun pos2 -> (pos2 - pos).Length() < 5000.0f)
-                if fireType <> FireType.CityFire || not tooCloseToOtherFire.Value then
-                    if fireType = FireType.CityFire then
+                if not(isBlackSmoke fireType) || not tooCloseToOtherFire.Value then
+                    if isBlackSmoke fireType then
                         bigFirePositions <- pos :: bigFirePositions
                     yield FireLoop.Create(store, pos, alt, windDirection, fireType)
     }
