@@ -54,6 +54,10 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                                 .SetReturnPlanes(T.Boolean true)
                                 .SetRefuelFriendlies(T.Boolean true)
                                 .SetRearmFriendlies(T.Boolean true)
+                                .SetMaintenanceRadius(T.Integer 3000)
+                                .SetRefuelTime(T.Integer 0)
+                                .SetRearmTime(T.Integer 0)
+
                     match coalition with
                     | Axis ->
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
