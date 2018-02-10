@@ -395,6 +395,7 @@ module MissionFileGeneration =
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
 
         let author = "coconut"
+        let preamble = "Dynamic campaign software by coconut. Pledges available at www.patreon.com/coconutside<br><br>"
         let timeAndDate =
             sprintf "%s<br><br>" (state.Date.ToString("d MMM yyyy HH:mm"))
         let weatherDescription =
@@ -420,7 +421,7 @@ module MissionFileGeneration =
             config.Briefing.Replace("\r\n", "\n").Split('\n')
             |> Array.map (fun s -> s.Trim())
             |> String.concat "<br>"
-        let briefing = timeAndDate + weatherDescription + mainText + "<br><br>" + battles
+        let briefing = preamble + timeAndDate + weatherDescription + mainText + "<br><br>" + battles
         let missionName = config.MissionName
         let missionParams =
             { PlaneSet = config.PlaneSet
@@ -660,7 +661,6 @@ module MissionLogParsing =
         let entriesAsStrings =
             entries
             |> List.map (fun entry -> entry.OriginalString)
-        let entryList = entries
         let entries = AsyncSeq.ofSeq entries
         let shipments =
             let shipmentAxis = extractSuppliesShipped axisOrders.Resupply entries |> AsyncSeq.toList
