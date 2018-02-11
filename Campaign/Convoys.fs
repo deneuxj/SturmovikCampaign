@@ -197,28 +197,26 @@ let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World)
                 match order.Means with
                 | ByRoad | ByRail | BySeaShip | ByRiverShip ->
                     let virtualConvoy =
+                        let bridgeEntitiesAtVertex =
+                            [
+                                for v in pathVertices do
+                                    for e in bridgesOfVertex v do
+                                        match bridgeEntities.TryGetValue(e) with
+                                        | true, e ->
+                                            yield (v, e)
+                                        | false, _ ->
+                                            ()
+                            ]
                         let convoyName = order.MissionLogEventName
                         match order.Means with
                         | ByRoad ->
                             let size =
                                 int (convoy.TransportedSupplies / ResupplyOrder.TruckCapacity)
                                 |> min ColumnMovement.MaxColumnSize
-                            let bridgeEntitiesAtVertex =
-                                [
-                                    for v in pathVertices do
-                                        for e in bridgesOfVertex v do
-                                            match bridgeEntities.TryGetValue(e) with
-                                            | true, e ->
-                                                yield (v, e)
-                                            | false, _ ->
-                                                ()
-                                ]
                             VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, size, coalition.ToCountry, coalition.ToCoalition, convoyName, 0)
                             |> Choice1Of4
                         | ByRail ->
-                            let startV = pathVertices.Head
-                            let endV = pathVertices |> List.last
-                            TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, coalition.ToCountry, convoyName)
+                            TrainWithNotification.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, convoyName)
                             |> Choice2Of4
                         | BySeaShip
                         | ByRiverShip ->
@@ -306,6 +304,16 @@ let createColumns
                 x
             let prevStart = ref initialDelay
             let columnName = order.MissionLogEventName
+            let bridgeEntitiesAtVertex =
+                [
+                    for v in pathVertices do
+                        for e in bridgesOfVertex v do
+                            match bridgeEntities.TryGetValue(e) with
+                            | true, e ->
+                                yield (v, e)
+                            | false, _ ->
+                                ()
+                ]
             match order.TransportType with
             | ColByRoad ->
                 let rankOffset = ref 0
@@ -318,16 +326,6 @@ let createColumns
                                 composition
                                 |> List.ofArray
                                 |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
-                            let bridgeEntitiesAtVertex =
-                                [
-                                    for v in pathVertices do
-                                        for e in bridgesOfVertex v do
-                                            match bridgeEntities.TryGetValue(e) with
-                                            | true, e ->
-                                                yield (v, e)
-                                            | false, _ ->
-                                                ()
-                                ]
                             let column = VirtualConvoy.CreateColumn(store, lcStore, pathVertices, bridgeEntitiesAtVertex, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                             let links = column.CreateLinks()
                             links.Apply(McuUtil.deepContentOf column)
@@ -345,7 +343,7 @@ let createColumns
                             yield McuUtil.groupFromList [ beforeNext ]
                     ]
             | ColByTrain ->
-                let train = TrainWithNotification.Create(store, lcStore, pathVertices.Head.Pos, pathVertices.Head.Ori, (Seq.last pathVertices).Pos, coalition.ToCountry, columnName)
+                let train = TrainWithNotification.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, columnName)
                 Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
                 let links = train.CreateLinks()
                 links.Apply(McuUtil.deepContentOf train)
