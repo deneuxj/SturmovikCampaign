@@ -12,6 +12,7 @@ open System.Numerics
 open VectorExtension
 open SturmovikMission.Blocks.BlocksMissionData
 open FSharp.Control
+open Campaign.AutoOrder
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -54,6 +55,12 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
         [
             for region, regState in Seq.zip world.Regions state.Regions do
                 if regState.Owner = Some coalition && not(List.isEmpty region.Production) then
+                    let vehiclePrio, energyprio =
+                        // Avoid accumulating supplies. Use on tanks instead.
+                        if regState.Products.Supplies >= 50.0f<E> then
+                            1.0f, 0.0f
+                        else
+                            vehiclePrio, energyPrio
                     let energy = dt * regState.ProductionCapacity(region, world.SubBlockSpecs, world.ProductionFactor)
                     let supplies = regState.Products.Supplies + energyPrio * energy
                     let vehicles =
