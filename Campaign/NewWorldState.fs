@@ -700,21 +700,24 @@ let applyDamagesAndResupplies (mustConvertCapturedPlanes : bool) (dt : float32<H
     // Resupplies
     let arrived = computeDelivered orders shipped blocked damages
     let data = (arrived, Map.empty, Map.empty, Map.empty)
-    let state, (_, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
-    let newSupplies = computeSuppliesProduced newSupplies
+    let state, (leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
+    let newSupplies = computeSuppliesProduced newSupplies |> Map.sumUnion leftOver
     // New production
     let data = (newSupplies, storageHealLimit, productionHealLimit, airfieldHealLimit)
-    let state, (_, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
+    let state, (leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
     // Captured planes
-    let state, storageHealLimit, productionHealLimit, airfieldHealLimit =
+    let state, leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit =
         if mustConvertCapturedPlanes then
             let afs, captured = convertCapturedPlanes wg state
             let state = { state with Airfields = afs }
-            let data = (captured, storageHealLimit, productionHealLimit, airfieldHealLimit)
-            let state, (_, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
-            state, storageHealLimit, productionHealLimit, airfieldHealLimit
+            let data = (Map.sumUnion leftOver captured, storageHealLimit, productionHealLimit, airfieldHealLimit)
+            let state, (leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
+            state, leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit
         else
-            state, storageHealLimit, productionHealLimit, airfieldHealLimit
+            state, leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit
+    // New attempt with the left-overs
+    let data = (leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit)
+    let state, (waste, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
     // Cargo deliveries
     let newCargo =
         computeCargoSupplies wg cargo
