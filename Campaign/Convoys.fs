@@ -88,7 +88,7 @@ let getMovementPathVertices (world : World) (state : WorldState) (orders : Movem
                           Speed = convoySpeed
                           Priority = 1
                           SpawnSide = side
-                          Role = Intermediate
+                          Role = Intermediate //BREAKING store this info in the world's paths
                         }
                     )
                 let targetTravelTime = 1.0f // hours
@@ -151,14 +151,15 @@ let selectBridgesAlongPaths (world : World) (state : WorldState) (bridges : Mcu.
                             |> Seq.map (fun bridge -> (Vector2.FromMcu(bridge.Pos) - v.Pos).Length(), bridge)
                             |> Seq.minBy fst
                         if distance < 50.0f then
-                            yield v, nearest
+                            // Extend radius to at least 1000m, to give time to convoy to stop before reaching bridge.
+                            yield { v with Radius = max 1000 v.Radius }, nearest
                     for v1, v2 in path |> Seq.pairwise |> Seq.filter (fun (v1, v2) -> v1.Role = NarrowZoneEdge && v2.Role = NarrowZoneEdge) do
                         let center = 0.5f * (v1.Pos + v2.Pos)
                         let radius = (v1.Pos - center).Length()
                         yield!
                             bridges
                             |> Seq.filter (fun bridge -> (Vector2.FromMcu(bridge.Pos) - center).Length() < radius)
-                            |> Seq.map (fun bridge -> v1, bridge)
+                            |> Seq.map (fun bridge -> v1, bridge) // No need to extend radius, the waypoint is already before the bridge.
             }
             |> Seq.distinct
             |> List.ofSeq
@@ -264,142 +265,126 @@ let splitCompositions random vehicles =
     |> List.ofArray
 
 /// Large columns are split to fit in the maximum size of columns, and each group starts separated by a given interval.
-let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore) lcStore (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) interval maxColumnSplit (missionLength : int) (orders : ColumnMovement list) =
+let createColumns
+        (random : System.Random)
+        (store : NumericalIdentifiers.IdStore)
+        lcStore
+        (world : World)
+        (state : WorldState)
+        (missionBegin : Mcu.McuTrigger)
+        interval
+        maxColumnSplit
+        (missionLength : int)
+        (bridgeEntities : IDictionary<Mcu.HasEntity, Mcu.McuEntity>)
+        (bridgesOfVertex : PathVertex -> Mcu.HasEntity list)
+        (orders : (ColumnMovement * PathVertex list) list) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     [
-        for order in orders do
+        for order, pathVertices in orders do
             let regState = sg.GetRegion(order.Start)
-            let coalition = regState.Owner
-            match coalition with
-            | Some coalition ->
-                let path =
+            let coalition = order.OrderId.Coalition
+            let expectedTravelTime =
+                pathVertices
+                |> Seq.pairwise
+                |> Seq.sumBy (fun (v1, v2) -> (v2.Pos - v1.Pos).Length() / (3.6f * float32 v1.Speed))
+            let initialDelay =
+                let x = newTimer 1
+                let subst = Mcu.substId <| store.GetIdMapper()
+                subst x
+                Mcu.addTargetLink missionBegin x.Index
+                let delayValue =
+                    random.NextDouble()
+                    |> float32
+                    |> (*) ((float32 missionLength) * 60.0f - expectedTravelTime)
+                    |> max 0.0f
+                x.Time <- float delayValue
+                x.Name <- "Initial delay"
+                match pathVertices with
+                | v :: _ -> (v.Pos + Vector2(-100.0f, 0.0f)).AssignTo x.Pos
+                | [] -> ()
+                x
+            let prevStart = ref initialDelay
+            let columnName = order.MissionLogEventName
+            match order.TransportType with
+            | ColByRoad ->
+                let rankOffset = ref 0
+                yield
+                    order.OrderId,
+                    initialDelay,
+                    [
+                        for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
+                            let columnContent =
+                                composition
+                                |> List.ofArray
+                                |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
+                            let bridgeEntitiesAtVertex =
+                                [
+                                    for v in pathVertices do
+                                        for e in bridgesOfVertex v do
+                                            match bridgeEntities.TryGetValue(e) with
+                                            | true, e ->
+                                                yield (v, e)
+                                            | false, _ ->
+                                                ()
+                                ]
+                            let column = VirtualConvoy.CreateColumn(store, lcStore, pathVertices, bridgeEntitiesAtVertex, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                            let links = column.CreateLinks()
+                            links.Apply(McuUtil.deepContentOf column)
+                            Mcu.addTargetLink prevStart.Value column.Api.Start.Index
+                            let beforeNext =
+                                let x = newTimer 1
+                                let subst = Mcu.substId <| store.GetIdMapper()
+                                subst x
+                                x
+                            beforeNext.Time <- interval
+                            Mcu.addTargetLink column.Api.Start beforeNext.Index
+                            prevStart := beforeNext
+                            rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
+                            yield column :> McuUtil.IMcuGroup
+                            yield McuUtil.groupFromList [ beforeNext ]
+                    ]
+            | ColByTrain ->
+                let train = TrainWithNotification.Create(store, lcStore, pathVertices.Head.Pos, pathVertices.Head.Ori, (Seq.last pathVertices).Pos, coalition.ToCountry, columnName)
+                Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
+                let links = train.CreateLinks()
+                links.Apply(McuUtil.deepContentOf train)
+                yield order.OrderId, initialDelay, [ train :> McuUtil.IMcuGroup ]
+            | ColByRiverShip
+            | ColBySeaShip ->
+                let convoySpeed =
                     match order.TransportType with
-                    | ColByRoad -> world.Roads
-                    | ColByTrain -> world.Rails
-                    | ColBySeaShip -> world.SeaWays
-                    | ColByRiverShip -> world.RiverWays
-                    |> Seq.tryPick (fun path -> path.MatchesEndpoints(order.Start, order.Destination))
-                    |> Option.map (fun x -> x.Value)
-                match path with
-                | Some path ->
-                    let convoySpeed =
-                        match order.TransportType with
-                        | ColByRoad -> 20
-                        | ColByTrain -> 50
-                        | ColByRiverShip -> 5
-                        | ColBySeaShip -> 8
-                    let toVertex(v, yori, side) =
-                        { Pos = v
-                          Ori = yori
-                          Speed = convoySpeed
-                          Radius = 100
-                          Priority = 1
-                          SpawnSide = side
-                          Role = Intermediate
-                        }
-                    let travel =
-                        path
-                        |> List.map toVertex
-                    let expectedTravelTime =
-                        let speed =
-                            (float32 convoySpeed) / 3.6f
-                        path
-                        |> Seq.pairwise
-                        |> Seq.sumBy (fun ((v1, _, _), (v2, _, _)) -> (v1 - v2).Length() / speed)
-                        |> (*) 1.5f
-                        |> (*) (ceil (float32 order.Composition.Length / float32 ColumnMovement.MaxColumnSize) |> min (float32 maxColumnSplit))
-                    let initialDelay =
-                        let x = newTimer 1
-                        let subst = Mcu.substId <| store.GetIdMapper()
-                        subst x
-                        Mcu.addTargetLink missionBegin x.Index
-                        let delayValue =
-                            random.NextDouble()
-                            |> float32
-                            |> (*) ((float32 missionLength) * 60.0f - expectedTravelTime)
-                            |> max 0.0f
-                        x.Time <- float delayValue
-                        x.Name <- "Initial delay"
-                        match path with
-                        | (pos, _, _) :: _ -> (pos + Vector2(-100.0f, 0.0f)).AssignTo x.Pos
-                        | [] -> ()
-                        x
-                    let prevStart = ref initialDelay
-                    let columnName = order.MissionLogEventName
+                    | ColBySeaShip -> 8.0f // km/h
+                    | ColByRiverShip -> 5.0f
+                    | _ -> failwith "Unexpected column transport type"
+                let targetTravelTime = 1.0f // hours
+                // select last segment of path, we want the landing party to get as close as possible to the shore
+                let pathVertices =
+                    let rec takeUntilTargetDuration (time, prev) waypoints =
+                        if time < 0.0f then
+                            []
+                        else
+                            match waypoints with
+                            | [] -> []
+                            | (wp : PathVertex) :: rest ->
+                                match prev with
+                                | Some (prev : Vector2)->
+                                    let dist = (prev - wp.Pos).Length() / 1000.0f
+                                    let t = dist / convoySpeed
+                                    wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
+                                | None ->
+                                    wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
+                    pathVertices
+                    |> List.rev
+                    |> takeUntilTargetDuration (targetTravelTime, None)
+                    |> List.rev
+                let waterType =
                     match order.TransportType with
-                    | ColByRoad ->
-                        let rankOffset = ref 0
-                        yield
-                            order.OrderId,
-                            initialDelay,
-                            [
-                                for composition in splitCompositions random order.Composition |> List.truncate maxColumnSplit do
-                                    let columnContent =
-                                        composition
-                                        |> List.ofArray
-                                        |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
-                                    let bridges = [] // TODO
-                                    let column = VirtualConvoy.CreateColumn(store, lcStore, travel, bridges, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
-                                    let links = column.CreateLinks()
-                                    links.Apply(McuUtil.deepContentOf column)
-                                    Mcu.addTargetLink prevStart.Value column.Api.Start.Index
-                                    let beforeNext =
-                                        let x = newTimer 1
-                                        let subst = Mcu.substId <| store.GetIdMapper()
-                                        subst x
-                                        x
-                                    beforeNext.Time <- interval
-                                    Mcu.addTargetLink column.Api.Start beforeNext.Index
-                                    prevStart := beforeNext
-                                    rankOffset := rankOffset.Value + ColumnMovement.MaxColumnSize
-                                    yield column :> McuUtil.IMcuGroup
-                                    yield McuUtil.groupFromList [ beforeNext ]
-                            ]
-                    | ColByTrain ->
-                        let train = TrainWithNotification.Create(store, lcStore, travel.Head.Pos, travel.Head.Ori, (Seq.last travel).Pos, coalition.ToCountry, columnName)
-                        Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
-                        let links = train.CreateLinks()
-                        links.Apply(McuUtil.deepContentOf train)
-                        yield order.OrderId, initialDelay, [ train :> McuUtil.IMcuGroup ]
-                    | ColByRiverShip
-                    | ColBySeaShip ->
-                        let convoySpeed =
-                            match order.TransportType with
-                            | ColBySeaShip -> 8.0f // km/h
-                            | ColByRiverShip -> 5.0f
-                            | _ -> failwith "Unexpected column transport type"
-                        let targetTravelTime = 1.0f // hours
-                        // select last segment of path, we want the landing party to get as close as possible to the shore
-                        let pathVertices =
-                            let rec takeUntilTargetDuration (time, prev) waypoints =
-                                if time < 0.0f then
-                                    []
-                                else
-                                    match waypoints with
-                                    | [] -> []
-                                    | (wp : PathVertex) :: rest ->
-                                        match prev with
-                                        | Some (prev : Vector2)->
-                                            let dist = (prev - wp.Pos).Length() / 1000.0f
-                                            let t = dist / convoySpeed
-                                            wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
-                                        | None ->
-                                            wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
-                            travel
-                            |> List.rev
-                            |> takeUntilTargetDuration (targetTravelTime, None)
-                            |> List.rev
-                        let waterType =
-                            match order.TransportType with
-                            | ColBySeaShip -> Sea
-                            | ColByRiverShip -> River
-                            | _ -> failwith "Unexpected column transport type"
-                        let ships = ShipConvoy.Create(store, lcStore, waterType, pathVertices, coalition.ToCountry, columnName)
-                        ships.MakeAsLandShips(waterType)
-                        Mcu.addTargetLink prevStart.Value ships.Start.Index
-                        yield order.OrderId, initialDelay, [ ships.All ]
-                | None -> ()
-            | None ->
-                ()
+                    | ColBySeaShip -> Sea
+                    | ColByRiverShip -> River
+                    | _ -> failwith "Unexpected column transport type"
+                let ships = ShipConvoy.Create(store, lcStore, waterType, pathVertices, coalition.ToCountry, columnName)
+                ships.MakeAsLandShips(waterType)
+                Mcu.addTargetLink prevStart.Value ships.Start.Index
+                yield order.OrderId, initialDelay, [ ships.All ]
     ]

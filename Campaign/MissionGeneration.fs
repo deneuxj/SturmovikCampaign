@@ -205,7 +205,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                     Some(order, path)
                 | _ ->
                     None)
-        let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State bridgeEntities bridgesOfVertex orders            
+        let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State bridgeEntities bridgesOfVertex orders
         for node, (orderId, convoy) in List.zip convoyPrioNodes.Nodes convoys do
             let start, destroyed, arrived =
                 match convoy with
@@ -236,11 +236,19 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         convoyPrioNodes.All, convoys
     let axisPrio, axisConvoys = mkConvoyNodes Axis
     let alliesPrio, alliesConvoys = mkConvoyNodes Allies
-    let mkColumns orders =
+    let mkColumns coalition =
+        let orders =
+            shortenedPaths
+            |> List.choose (fun (choice, path) ->
+                match choice with
+                | Choice2Of2 order when order.OrderId.Coalition = coalition ->
+                    Some(order, path)
+                | _ ->
+                    None)
         let maxColumnSplit = max 1 (missionParams.MissionLength / missionParams.ColumnSplitInterval - 1)
         orders
-        |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ColumnSplitInterval) maxColumnSplit missionParams.MissionLength
-    let columns = mkColumns (missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
+        |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ColumnSplitInterval) maxColumnSplit missionParams.MissionLength bridgeEntities bridgesOfVertex
+    let columns = mkColumns Axis @ mkColumns Allies
     let arrows =
         let startOfOrder =
             seq {
