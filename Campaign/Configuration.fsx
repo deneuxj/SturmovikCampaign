@@ -12,7 +12,7 @@ NLog.LogManager.Configuration <- NLog.Config.LoggingConfiguration()
 let config =
     { Configuration.Default with
         PlaneSet = PlaneSet.EarlyAccess
-        StrategyFile = "StalingradSummer.mission"
+        StrategyFile = "KubanAutumn.mission"
         OutputDir = @"C:\Users\johann\Documents\FromServer\Expert"
         //OutputDir = @"C:\Users\johann\Documents\AutoMoscow"
         //ServerDataDir = @"C:\Users\johann\Documents\FromServer"
