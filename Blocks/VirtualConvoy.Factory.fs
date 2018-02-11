@@ -15,6 +15,7 @@ open SturmovikMission.Blocks.WhileEnemyClose
 open SturmovikMission.Blocks.Timer
 open SturmovikMission.Blocks.EventReporting
 open SturmovikMission.Blocks.IconDisplay
+open System.Collections.Generic
 
 // Types for each instance type.
 // Those are typically typed ints, but could be typed strings, or any other type suitable for a dictionary key.
@@ -22,6 +23,14 @@ type WaypointInstance = WaypointInstance of int
 type TruckInConvoyInstance = TruckInConvoyInstance of pos: int
 type TimerInstance = TimerInstance of int
 type DamagedTruckInstance = DamagedTruckInstance of pos: int
+type BridgeProxyInstance = BridgeProxyInstance of float32 * float32
+
+/// Path internal nodes can be used to mark areas where there are bridges or other narrow sections.
+/// Narrow sections are located between pairs of waypoints called BeforeBridge and AfterBridge in the scenario.
+/// Bridges may also be located at other waypoints.
+type PathVertexRole =
+    | NarrowZoneEdge
+    | Intermediate
 
 /// <summary>
 /// Type used in the arguments of VirtualConvoy.Create. Denotes one vertex of the path of the virtual convoy.
@@ -33,7 +42,16 @@ type PathVertex =
       Speed : int
       Priority : int
       SpawnSide : SpawnSide
+      Role : PathVertexRole
     }
+
+/// <summary>
+/// Assignment of a bridge to a single path vertex or to a pair of consecutive vertices.
+/// Used to notify a convoy to stop when a bridge is destroyed.
+/// </summary>
+type BridgeAssigment =
+    | AtVertex of PathVertex
+    | BetweenVertices of PathVertex * PathVertex
 
 /// <summary>
 /// A virtual convoy, i.e. a convoy that does not actually exist until an enemy approaches its
@@ -44,6 +62,7 @@ type PathVertex =
 type VirtualConvoy =
     { TheConvoy : Convoy
       TruckInConvoySet : Map<TruckInConvoyInstance, TruckInConvoy>
+      BridgeProxySet : Map<BridgeProxyInstance, ContinuousProximity>
       WaypointSet : Map<WaypointInstance, Waypoint>
       StartDelay : Timer
       DiscardDelay : Timer
@@ -55,6 +74,7 @@ type VirtualConvoy =
       Api : ConvoyApi
 
       TruckInConvoy : Set<int * TruckInConvoyInstance>
+      WaypointOfBridgeProxy : Set<BridgeProxyInstance * WaypointInstance>
       Path : Set<WaypointInstance * WaypointInstance>
       PathStart : WaypointInstance
       PathEnd : WaypointInstance
@@ -81,6 +101,8 @@ with
                 yield this.DepartureReporting.All
                 yield this.IconAttack.All
                 yield this.IconCover.All
+                for kvp in this.BridgeProxySet do
+                    yield kvp.Value.All
             ]
 
     static member MaxConvoySize = 15
@@ -90,8 +112,9 @@ with
     /// </summary>
     /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
     /// <param name="path">Path followed by the convoy.</param>
+    /// <param name="bridges">Map bridges to 
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, bridges : (Mcu.McuEntity * BridgeAssigment) list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
         if convoySize > VirtualConvoy.MaxConvoySize then
             invalidArg "convoySize" "Maximum convoy size exceeded"
         if path.IsEmpty then
@@ -110,6 +133,32 @@ with
                     yield (WaypointInstance i, Waypoint.Create(store, vertex.Pos, vertex.Ori, vertex.Speed, vertex.Priority))
             }
             |> Map.ofSeq
+        let getWaypointAt (v : Vector2) =
+            waypointSet
+            |> Map.toSeq
+            |> Seq.minBy (fun (instance, wp) -> (Vector2.FromMcu(wp.Waypoint.Pos) - v).Length())
+            |> fst
+        let bridgeProxySet, waypointOfBridgeProxy =
+            let aux =
+                seq {
+                    for entity, spec in bridges do
+                        let pos, radius =
+                            match spec with
+                            | AtVertex v -> v.Pos, 300.0f
+                            | BetweenVertices(v1, v2) -> 0.5f * (v1.Pos + v2.Pos), (v2.Pos - v1.Pos).Length()
+                        let proxy = ContinuousProximity.Create(store, pos)
+                        proxy.SetRadius(radius)
+                        proxy.AssignToBridge(entity)
+                        let instance = BridgeProxyInstance(pos.X, pos.Y)
+                        let waypointOfBridgeProxy =
+                            match spec with
+                            | AtVertex v -> getWaypointAt v.Pos
+                            | BetweenVertices(v, _) -> getWaypointAt v.Pos
+                        yield Choice1Of2(instance, proxy)
+                        yield Choice2Of2(instance, waypointOfBridgeProxy)
+                }
+            aux |> Seq.choose (function Choice1Of2 x -> Some x | _ -> None) |> Map.ofSeq,
+            aux |> Seq.choose (function Choice2Of2 x -> Some x | _ -> None) |> Set.ofSeq
         let startDelay = Timer.Create(store, startPos.Pos, 1.0)
         let discardDelay = Timer.Create(store, (List.last path).Pos, 300.0)
         let truckInConvoy =
@@ -173,6 +222,7 @@ with
 
         { TheConvoy = theConvoy
           TruckInConvoySet = truckInConvoySet
+          BridgeProxySet = bridgeProxySet
           WaypointSet = waypointSet
           StartDelay  = startDelay
           DiscardDelay = discardDelay
@@ -187,12 +237,13 @@ with
           PathStart = pathStart
           PathEnd = pathEnd
           TruckDamagedOfTruckInConvoy = damagedNotificationOfTruckInConvoy
+          WaypointOfBridgeProxy = waypointOfBridgeProxy
         }
 
     /// <param name="rankOffset">Long columns are split into groups (by the caller); this is the rank of the first vehicle in the original column</param>
-    static member CreateColumn(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName, rankOffset) =
+    static member CreateColumn(store : NumericalIdentifiers.IdStore, lcStore, path, bridges, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName, rankOffset) =
         let columnContent = Array.ofList columnContent
-        let convoy = VirtualConvoy.Create(store, lcStore, path, columnContent.Length, country, coalition, eventName, rankOffset)
+        let convoy = VirtualConvoy.Create(store, lcStore, path, bridges, columnContent.Length, country, coalition, eventName, rankOffset)
         convoy.IconCover.Icon.IconId <- Mcu.IconIdValue.CoverArmorColumn
         convoy.IconAttack.Icon.IconId <- Mcu.IconIdValue.AttackArmorColumn
         for instance, truck in convoy.TruckInConvoySet |> Map.toSeq do
@@ -257,6 +308,16 @@ with
                 yield this.Api.Blocked, upcast this.DiscardDelay.Start
                 // Req.13
                 yield this.Api.Blocked, upcast this.BlockedReporting.Trigger
+                // Req.14
+                for bridge, wp in this.WaypointOfBridgeProxy do
+                    let wp = this.WaypointSet.[wp]
+                    let bridge = this.BridgeProxySet.[bridge]
+                    yield upcast wp.Waypoint, upcast bridge.Stop
+                // Req.15
+                // Connection already done in construction of ContinuousProxy.AssignToBridge
+                // Req.16
+                for _, bridge in Map.toSeq this.BridgeProxySet do
+                    yield bridge.Near, upcast this.Api.Blocked
             ]
         { Columns = columns
           Objects = objectLinks

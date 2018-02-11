@@ -8268,4 +8268,120 @@ Group
 }
 
 
+
+Group
+{
+  Name = "ContinuousProximity";
+  Index = 684;
+  Desc = "";
+  MCU_Timer
+  {
+    Index = 681;
+    Name = "STOP";
+    Desc = "";
+    Targets = [683];
+    Objects = [];
+    XPos = 16487.778;
+    YPos = 33.474;
+    ZPos = 41223.614;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 683;
+    Name = "";
+    Desc = "";
+    Targets = [686,688];
+    Objects = [];
+    XPos = 16449.185;
+    YPos = 31.406;
+    ZPos = 42155.355;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_CheckZone
+  {
+    Index = 686;
+    Name = "Proximity";
+    Desc = "";
+    Targets = [688,689];
+    Objects = [];
+    XPos = 16968.967;
+    YPos = 31.104;
+    ZPos = 42144.311;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Zone = 200;
+    Cylinder = 1;
+    Closer = 1;
+  }
+  
+
+  MCU_Counter
+  {
+    Index = 687;
+    Name = "START";
+    Desc = "";
+    Targets = [686];
+    Objects = [];
+    XPos = 17232.833;
+    YPos = 21.023;
+    ZPos = 41217.012;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 1;
+    Dropcount = 0;
+  }
+  
+
+  MCU_Counter
+  {
+    Index = 688;
+    Name = "NEAR";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 16972.737;
+    YPos = 21.027;
+    ZPos = 43033.915;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 1;
+    Dropcount = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 689;
+    Name = "1s";
+    Desc = "Stop CZ after it fires";
+    Targets = [683];
+    Objects = [];
+    XPos = 16746.566;
+    YPos = 21.024;
+    ZPos = 41910.602;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1;
+    Random = 100;
+  }
+  
+
+}
+
+
 # end of file

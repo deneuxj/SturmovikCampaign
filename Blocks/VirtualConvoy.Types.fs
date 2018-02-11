@@ -127,6 +127,50 @@ with
           All = McuUtil.groupFromList group
         }
 
+/// A check zone trigger set to a short range (200m). Not started by default. Can only be started once.
+type ContinuousProximity =
+    { Proximity : Mcu.McuProximity
+      Start : Mcu.McuTrigger
+      Stop : Mcu.McuTrigger
+      Near : Mcu.McuTrigger
+      All : McuUtil.IMcuGroup }
+with
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2) =
+        // Instantiate
+        let subst = Mcu.substId <| store.GetIdMapper()
+        let db = blocksData.CreateMcuList()
+        let group = McuUtil.filterByPath ["Waypoint" ; "Convoy"] db |> List.ofSeq
+        for mcu in group do
+            subst mcu
+        // Get key nodes
+        let proximity = getTriggerByName group T.Blocks.Proximity :?> Mcu.McuProximity
+        let start = getTriggerByName group T.Blocks.START
+        let stop = getTriggerByName group T.Blocks.STOP
+        let near = getTriggerByName group T.Blocks.NEAR
+        // Relocate
+        let ref0 = Vector2.FromMcu(proximity.Pos)
+        let dv = pos - ref0
+        for mcu in group do
+            (Vector2.FromMcu(mcu.Pos) + dv).AssignTo mcu.Pos
+        // Result
+        { Proximity = proximity
+          Start = start
+          Stop = stop
+          Near = near
+          All = McuUtil.groupFromList group
+        }
+
+    /// Start proximity 
+    member this.AssignToBridge(bridge : Mcu.McuEntity) =
+        bridge.OnEvents <-
+            { Mcu.Type = int Mcu.EventTypes.OnDamaged
+              Mcu.TarId = this.Start.Index } :: bridge.OnEvents
+
+    /// Set detection radius
+    member this.SetRadius(radius : float32) =
+        this.Proximity.Distance <- int radius
+
+
 type Waypoint =
     { Waypoint : Mcu.McuWaypoint
       All : McuUtil.IMcuGroup

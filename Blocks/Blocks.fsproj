@@ -64,11 +64,11 @@
     <Compile Include="Vehicles.fs" />
     <Compile Include="MapGraphics.fs" />
     <Compile Include="Conjunction.fs" />
-    <Content Include="Proto-VirtualConvoy.txt" />
     <Compile Include="WhileEnemyClose.fs" />
     <Compile Include="Timer.fs" />
     <Compile Include="EventReporting.fs" />
     <Compile Include="IconDisplay.fs" />
+    <Content Include="Proto-VirtualConvoy.txt" />
     <Compile Include="VirtualConvoy.Types.fs" />
     <Compile Include="VirtualConvoy.Factory.fs" />
     <Content Include="Proto-StaticDefenses.txt" />
