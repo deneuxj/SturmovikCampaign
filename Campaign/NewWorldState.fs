@@ -136,6 +136,9 @@ with
 
 /// Create new plane and vehicle instances if enough energy has been accumulated and convert supplies to local Resupplied events.
 let convertProduction (world : World) (state : WorldState) =
+    // Capacity and supply levels or regions including airfields
+    let capacities = computeActualStorageCapacity world state
+    let supplies = computeStorage world state
     let afStates =
         state.Airfields
         |> Seq.map (fun af -> af.AirfieldId, af)
@@ -189,7 +192,9 @@ let convertProduction (world : World) (state : WorldState) =
         | None ->
             ()
         // Supplies -> storage
-        let supplySpaceAvailable = max 0.0f<E> (regState.StorageCapacity(region, world.SubBlockSpecs) - regState.Supplies)
+        let supplySpace = Map.tryFind region.RegionId capacities |> Option.defaultValue 0.0f<E>
+        let supplyLevel = Map.tryFind region.RegionId supplies |> Option.defaultValue 0.0f<E>
+        let supplySpaceAvailable = max 0.0f<E> (supplySpace - supplyLevel)
         let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
         resupplied := { Region = region.RegionId; Energy = transferedEnergy } :: !resupplied
         // Remove produced things from ongoing production
