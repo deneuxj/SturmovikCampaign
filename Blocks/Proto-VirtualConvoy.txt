@@ -15,14 +15,14 @@ type TruckInConvoy {
 }
 TruckInConvoy truck_in_convoy(int)
 
-type DestroyedBridgeProximity {
-    entity Bridge
-    trigger Start
-    trigger Stop
-    trigger Nearby
+type Conjunction {
+    trigger SetA
+    trigger SetB
+    trigger ClearA
+    trigger ClearB
+    trigger AllTrue
 }
-ConvoyApi convoy_of_bridge(DestroyedBridgeProximity)
-bool bridge_waypoint(DestroyedBridgeProximity, Waypoint)
+bool block_cond_at_waypoint(Waypoint, Conjunction)
 
 type Timer {
 	trigger Start
@@ -43,6 +43,8 @@ Notification blocked_notification
 type Waypoint {
 	trigger Waypoint
 }
+bool waypoints_guards_bridge(Waypoint, Entity)
+
 predicate path(Waypoint, Waypoint)
 predicate start
 predicate end
@@ -76,9 +78,9 @@ Icon attack_icon
 11. Arrival is reported in API
 12. Blocked stops the convoy and deactivates it
 13. Blocked convoy is logged
-14. Passed waypoint stops destroyed bridge notification
-15. Destroyed bridge starts notification on proximity
-16. Destroyed bridge proximity blocks convoy
+14. Destroyed bridge enables blocking
+15. Waypoint reached enables blocking
+16. All blocking conditions fulfilled blocks convoy
 
 // Req.1
 targets += (the_api.Start, the_convoy.ActivateGroup)
@@ -128,10 +130,11 @@ targets += (the_api.Blocked, discard_delay.Start)
 targets += (the_api.Blocked, blocked_notification.Trigger)
 
 // Req.14
-targets += for bridge, wp in bridge_waypoint -> (wp.Waypoint, bridge.Stop)
+targets += for wp, bridge in waypoint_guards_bridge ->
+           for cond in block_cond_at_waypoint(wp) -> (bridge.OnKilled, cond.SetA)
 
 // Req.15
-targets += for _, bridge in convoy_of_bridge -> (bridge.Bridge.Damaged, bridge.Start)
+targets += for cond, wp in block_cond_at_waypoint -> (wp.Waypoint, cond.SetB)
 
 // Req.16
-targets += for api, bridge in convoy_of_bridge -> (bridge.Bridge.Near, api.Blocked)
+targets += for cond, _ in block_cond_at_waypoint -> (cond.AllTrue, the_api.Blocked)

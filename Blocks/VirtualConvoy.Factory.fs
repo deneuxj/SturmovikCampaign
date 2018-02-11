@@ -23,7 +23,7 @@ type WaypointInstance = WaypointInstance of int
 type TruckInConvoyInstance = TruckInConvoyInstance of pos: int
 type TimerInstance = TimerInstance of int
 type DamagedTruckInstance = DamagedTruckInstance of pos: int
-type BridgeProxyInstance = BridgeProxyInstance of float32 * float32
+type BridgeDestroyedConjInstance = BridgeDestroyedConjInstance of WaypointInstance * int
 
 /// Path internal nodes can be used to mark areas where there are bridges or other narrow sections.
 /// Narrow sections are located between pairs of waypoints called BeforeBridge and AfterBridge in the scenario.
@@ -62,7 +62,7 @@ type BridgeAssigment =
 type VirtualConvoy =
     { TheConvoy : Convoy
       TruckInConvoySet : Map<TruckInConvoyInstance, TruckInConvoy>
-      BridgeProxySet : Map<BridgeProxyInstance, ContinuousProximity>
+      BridgeDestroyedConjSet : Map<BridgeDestroyedConjInstance, Conjunction>
       WaypointSet : Map<WaypointInstance, Waypoint>
       StartDelay : Timer
       DiscardDelay : Timer
@@ -74,7 +74,7 @@ type VirtualConvoy =
       Api : ConvoyApi
 
       TruckInConvoy : Set<int * TruckInConvoyInstance>
-      WaypointOfBridgeProxy : Set<BridgeProxyInstance * WaypointInstance>
+      BridgeConjunctionAtWaypoint : Set<WaypointInstance * BridgeDestroyedConjInstance>
       Path : Set<WaypointInstance * WaypointInstance>
       PathStart : WaypointInstance
       PathEnd : WaypointInstance
@@ -101,7 +101,7 @@ with
                 yield this.DepartureReporting.All
                 yield this.IconAttack.All
                 yield this.IconCover.All
-                for kvp in this.BridgeProxySet do
+                for kvp in this.BridgeDestroyedConjSet do
                     yield kvp.Value.All
             ]
 
@@ -114,7 +114,7 @@ with
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="bridges">Map bridges to 
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, bridges : (Mcu.McuEntity * BridgeAssigment) list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
         if convoySize > VirtualConvoy.MaxConvoySize then
             invalidArg "convoySize" "Maximum convoy size exceeded"
         if path.IsEmpty then
@@ -138,27 +138,33 @@ with
             |> Map.toSeq
             |> Seq.minBy (fun (instance, wp) -> (Vector2.FromMcu(wp.Waypoint.Pos) - v).Length())
             |> fst
-        let bridgeProxySet, waypointOfBridgeProxy =
-            let aux =
-                seq {
-                    for entity, spec in bridges do
-                        let pos, radius =
-                            match spec with
-                            | AtVertex v -> v.Pos, 300.0f
-                            | BetweenVertices(v1, v2) -> 0.5f * (v1.Pos + v2.Pos), (v2.Pos - v1.Pos).Length()
-                        let proxy = ContinuousProximity.Create(store, pos)
-                        proxy.SetRadius(radius)
-                        proxy.AssignToBridge(entity)
-                        let instance = BridgeProxyInstance(pos.X, pos.Y)
-                        let waypointOfBridgeProxy =
-                            match spec with
-                            | AtVertex v -> getWaypointAt v.Pos
-                            | BetweenVertices(v, _) -> getWaypointAt v.Pos
-                        yield Choice1Of2(instance, proxy)
-                        yield Choice2Of2(instance, waypointOfBridgeProxy)
-                }
-            aux |> Seq.choose (function Choice1Of2 x -> Some x | _ -> None) |> Map.ofSeq,
-            aux |> Seq.choose (function Choice2Of2 x -> Some x | _ -> None) |> Set.ofSeq
+        let conjunctionSet =
+            seq {
+                for v, bridge in bridges do
+                    let wp =
+                        try
+                            getWaypointAt v.Pos
+                            |> Some
+                        with
+                        | _ -> None
+                    match wp with
+                    | Some wp ->
+                        let conj = Conjunction.Create(store, v.Pos + Vector2(0.0f, 100.0f))
+                        let instance = BridgeDestroyedConjInstance(wp, bridge.Index)
+                        bridge.OnEvents <-
+                            { Mcu.Type = int Mcu.EventTypes.OnKilled
+                              Mcu.TarId = conj.SetA.Index }
+                            :: bridge.OnEvents
+                        yield (instance, conj)
+                    | None ->
+                        ()
+            }
+            |> Map.ofSeq
+        let bridgeConjAtWaypoint =
+            conjunctionSet
+            |> Map.toSeq
+            |> Seq.map (fun (BridgeDestroyedConjInstance(wp, _) as conjId, _) -> wp, conjId)
+            |> Set.ofSeq
         let startDelay = Timer.Create(store, startPos.Pos, 1.0)
         let discardDelay = Timer.Create(store, (List.last path).Pos, 300.0)
         let truckInConvoy =
@@ -222,7 +228,7 @@ with
 
         { TheConvoy = theConvoy
           TruckInConvoySet = truckInConvoySet
-          BridgeProxySet = bridgeProxySet
+          BridgeDestroyedConjSet = conjunctionSet
           WaypointSet = waypointSet
           StartDelay  = startDelay
           DiscardDelay = discardDelay
@@ -237,7 +243,7 @@ with
           PathStart = pathStart
           PathEnd = pathEnd
           TruckDamagedOfTruckInConvoy = damagedNotificationOfTruckInConvoy
-          WaypointOfBridgeProxy = waypointOfBridgeProxy
+          BridgeConjunctionAtWaypoint = bridgeConjAtWaypoint
         }
 
     /// <param name="rankOffset">Long columns are split into groups (by the caller); this is the rank of the first vehicle in the original column</param>
@@ -308,16 +314,13 @@ with
                 yield this.Api.Blocked, upcast this.DiscardDelay.Start
                 // Req.13
                 yield this.Api.Blocked, upcast this.BlockedReporting.Trigger
-                // Req.14
-                for bridge, wp in this.WaypointOfBridgeProxy do
+                // Req.14 Done in creation of conjunction
+                // Req.15 and Req.16
+                for wp, conj in this.BridgeConjunctionAtWaypoint do
                     let wp = this.WaypointSet.[wp]
-                    let bridge = this.BridgeProxySet.[bridge]
-                    yield upcast wp.Waypoint, upcast bridge.Stop
-                // Req.15
-                // Connection already done in construction of ContinuousProxy.AssignToBridge
-                // Req.16
-                for _, bridge in Map.toSeq this.BridgeProxySet do
-                    yield bridge.Near, upcast this.Api.Blocked
+                    let conj = this.BridgeDestroyedConjSet.[conj]
+                    yield upcast wp.Waypoint, upcast conj.SetB
+                    yield conj.AllTrue, upcast this.Api.Blocked
             ]
         { Columns = columns
           Objects = objectLinks
