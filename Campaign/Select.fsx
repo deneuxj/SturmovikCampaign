@@ -31,7 +31,7 @@ let rec work (iter : System.Collections.Generic.IEnumerator<string[]>) (retry : 
         let cmd = Console.ReadLine().Trim().ToLower()
         match cmd with
         | "q" -> None
-        | " " -> work iter false
+        | "" -> work iter false
         | _ ->
             match System.Int32.TryParse(cmd) with
             | (true, n) ->
