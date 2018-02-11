@@ -168,8 +168,44 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> createGrounds store
     let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State
     let landingDirections = createLandingDirections store missionData.World missionData.State
-    let mkConvoyNodes orders =
-        let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State orders
+    let moves =
+        [
+            MovementOrder.FromResupplies missionData.AxisOrders.Resupply
+            MovementOrder.FromResupplies missionData.AlliesOrders.Resupply
+            MovementOrder.FromColumns missionData.AxisOrders.Columns
+            MovementOrder.FromColumns missionData.AlliesOrders.Columns
+        ]
+        |> Seq.concat
+    let bridgeEntities, bridgesOfVertex, shortenedPaths =
+        let bridges =
+            bridges
+            |> List.choose (
+                function
+                | :? Mcu.HasEntity as entity -> Some entity
+                | _ -> None)
+        let shortenedPaths = getMovementPathVertices missionData.World missionData.State moves
+        let bridgesAlongPaths = selectBridgesAlongPaths missionData.World missionData.State bridges shortenedPaths
+        let bridgeEntities = makeBridgeEntities store bridgesAlongPaths
+        let bridgesOfVertex =
+            bridgesAlongPaths
+            |> Seq.groupBy fst
+            |> Seq.map (fun (k, vs) -> k, vs |> Seq.map snd |> List.ofSeq)
+            |> dict
+        let bridgesOfVertex v =
+            match bridgesOfVertex.TryGetValue v with
+            | false, _ -> []
+            | true, xs -> xs
+        bridgeEntities, bridgesOfVertex, shortenedPaths
+    let mkConvoyNodes coalition =
+        let orders =
+            shortenedPaths
+            |> List.choose (fun (choice, path) ->
+                match choice with
+                | Choice1Of2 order when order.OrderId.Coalition = coalition ->
+                    Some(order, path)
+                | _ ->
+                    None)
+        let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State bridgeEntities bridgesOfVertex orders            
         for node, (orderId, convoy) in List.zip convoyPrioNodes.Nodes convoys do
             let start, destroyed, arrived =
                 match convoy with
@@ -198,8 +234,8 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 | orderId, Choice3Of4 x -> orderId, x.Start, x.All
                 | orderId, Choice4Of4 x -> orderId, x.Start, x.All)
         convoyPrioNodes.All, convoys
-    let axisPrio, axisConvoys = mkConvoyNodes missionData.AxisOrders.Resupply
-    let alliesPrio, alliesConvoys = mkConvoyNodes missionData.AlliesOrders.Resupply
+    let axisPrio, axisConvoys = mkConvoyNodes Axis
+    let alliesPrio, alliesConvoys = mkConvoyNodes Allies
     let mkColumns orders =
         let maxColumnSplit = max 1 (missionParams.MissionLength / missionParams.ColumnSplitInterval - 1)
         orders

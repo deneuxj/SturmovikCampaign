@@ -1,5 +1,6 @@
 ﻿module Campaign.Convoys
 
+open System.Collections.Generic
 open SturmovikMission.DataProvider
 open System.Numerics
 open VectorExtension
@@ -17,138 +18,236 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
 
+
+/// Data from resupply and column orders needed to build the travel path
+type MovementOrder =
+    { Start : RegionId
+      Destination : RegionId
+      Transport : ColumnTransportType
+      OriginalOrder : Choice<ResupplyOrder, ColumnMovement> }
+with
+    static member FromResupplies(orders : ResupplyOrder seq) =
+        orders
+        |> Seq.choose(fun order ->
+            match order.Means with
+            | ByRoad ->
+                Some { Start = order.Convoy.Start; Destination = order.Convoy.Destination; Transport = ColByRoad; OriginalOrder = Choice1Of2 order }
+            | ByRiverShip ->
+                Some { Start = order.Convoy.Start; Destination = order.Convoy.Destination; Transport = ColByRiverShip; OriginalOrder = Choice1Of2 order }
+            | BySeaShip ->
+                Some { Start = order.Convoy.Start; Destination = order.Convoy.Destination; Transport = ColBySeaShip; OriginalOrder = Choice1Of2 order }
+            | ByRail ->
+                Some { Start = order.Convoy.Start; Destination = order.Convoy.Destination; Transport = ColByTrain; OriginalOrder = Choice1Of2 order }
+            | ByAir _ ->
+                None
+        )
+
+    static member FromColumns(orders : ColumnMovement seq) =
+        orders
+        |> Seq.map(fun order ->
+            { Start = order.Start
+              Destination = order.Destination
+              Transport = order.TransportType
+              OriginalOrder = Choice2Of2 order})
+
+/// Shorten paths so that travel lasts about 1h.
+let getMovementPathVertices (world : World) (state : WorldState) (orders : MovementOrder seq) =
+    let wg = world.FastAccess
+    let fullPaths =
+        seq {
+            for order in orders do
+                let paths =
+                    match order.Transport with
+                    | ColByTrain -> world.Rails
+                    | ColByRoad -> world.Roads
+                    | ColBySeaShip -> world.SeaWays
+                    | ColByRiverShip -> world.RiverWays
+                let fullPath =
+                    paths
+                    |> List.tryPick(fun road -> road.MatchesEndpoints(order.Start, order.Destination))
+                    |> Option.map (fun path -> path.Value)
+                match fullPath with
+                | Some x -> yield (order, x)
+                | None -> ()
+        }
+    let shortenedPaths =
+        seq {
+            for order, path in fullPaths do
+                let convoySpeed = // km/h
+                    match order.Transport with
+                    | ColByRoad -> 50
+                    | ColByTrain -> 70
+                    | ColByRiverShip -> 5
+                    | ColBySeaShip -> 8
+                let pathVertices =
+                    path
+                    |> List.map (fun (v, yori, side) ->
+                        { Pos = v
+                          Ori = yori
+                          Radius = 100
+                          Speed = convoySpeed
+                          Priority = 1
+                          SpawnSide = side
+                          Role = Intermediate
+                        }
+                    )
+                let targetTravelTime = 1.0f // hours
+                let pathVertices =
+                    match order.Transport with
+                    | ColByRiverShip
+                    | ColBySeaShip ->
+                        let rec takeUntilTargetDuration (time, prev) waypoints  =
+                            if time < 0.0f then
+                                []
+                            else
+                                match waypoints with
+                                | [] -> []
+                                | (wp : PathVertex) :: rest ->
+                                    match prev with
+                                    | Some (prev : Vector2)->
+                                        let dist = (prev - wp.Pos).Length() / 1000.0f
+                                        let t = dist / float32 wp.Speed
+                                        wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
+                                    | None ->
+                                        wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
+                        let rec trails xs =
+                            seq {
+                                yield xs
+                                match xs with
+                                | _ :: xs ->
+                                    yield! trails xs
+                                | [] ->
+                                    ()
+                            }
+                        let destinationZone = wg.GetRegion(order.Destination).Boundary
+                        pathVertices
+                        |> trails
+                        |> Seq.map (takeUntilTargetDuration (targetTravelTime, None))
+                        |> Seq.tryFind (fun path ->
+                            // Goes into destination region?
+                            match Seq.tryLast path with
+                            | Some ep ->
+                                ep.Pos.IsInConvexPolygon(destinationZone)
+                            | None ->
+                                false)
+                        |> Option.defaultVal pathVertices
+                    | _ -> pathVertices
+                yield order.OriginalOrder, pathVertices
+        }
+    List.ofSeq shortenedPaths
+
+/// Select bridges along paths, assigning bridges to vertices
+/// Note that one bridge may belong to multiple vertices, and one vertex may have multiple bridges.
+let selectBridgesAlongPaths (world : World) (state : WorldState) (bridges : Mcu.HasEntity list) (paths : ('TChoice * PathVertex list) seq) =
+    match bridges with
+    | [] -> []
+    | _ :: _ ->
+        let bridges =
+            seq {
+                for origin, path in paths do
+                    for v in path |> Seq.filter (fun v -> v.Role = Intermediate) do
+                        let distance, nearest =
+                            bridges
+                            |> Seq.map (fun bridge -> (Vector2.FromMcu(bridge.Pos) - v.Pos).Length(), bridge)
+                            |> Seq.minBy fst
+                        if distance < 50.0f then
+                            yield v, nearest
+                    for v1, v2 in path |> Seq.pairwise |> Seq.filter (fun (v1, v2) -> v1.Role = NarrowZoneEdge && v2.Role = NarrowZoneEdge) do
+                        let center = 0.5f * (v1.Pos + v2.Pos)
+                        let radius = (v1.Pos - center).Length()
+                        yield!
+                            bridges
+                            |> Seq.filter (fun bridge -> (Vector2.FromMcu(bridge.Pos) - center).Length() < radius)
+                            |> Seq.map (fun bridge -> v1, bridge)
+            }
+            |> Seq.distinct
+            |> List.ofSeq
+        bridges
+
+/// Select distinct bridges from vertex-bridge pairs, then create entities
+let makeBridgeEntities (store : NumericalIdentifiers.IdStore) (verticesAndBridges : (PathVertex * Mcu.HasEntity) seq) =
+    let distinctBridges =
+        verticesAndBridges
+        |> Seq.map snd
+        |> Seq.distinct
+        |> List.ofSeq
+
+    let entities =
+        seq {
+            let subst = Mcu.substId <| store.GetIdMapper()
+            for i, bridge in Seq.indexed distinctBridges do
+                let entity = newEntity (i + 1)
+                McuUtil.vecCopy bridge.Pos entity.Pos
+                subst entity
+                Mcu.connectEntity bridge entity
+                yield bridge, entity
+        }
+    dict entities
+
 /// Convoys are created according to resupply orders. A given number of convoys start at mission start, then new convoys start whenever a convoy arrives or gets destroyed.
-let createConvoys store lcStore (world : World) (state : WorldState) (orders : ResupplyOrder list) =
+let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World) (state : WorldState) (bridgeEntities : IDictionary<Mcu.HasEntity, Mcu.McuEntity>) (bridgesOfVertex : PathVertex -> Mcu.HasEntity list) (orders : (ResupplyOrder * PathVertex list) list) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     let convoys =
         [
-            for order in orders do
+            for order, pathVertices in orders do
                 let convoy = order.Convoy
-                let country, coalition =
-                    match sg.GetRegion(convoy.Start).Owner with
-                    | None -> failwithf "Convoy starting from a neutral region '%A'" convoy.Start
-                    | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                    | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
+                let coalition = order.OrderId.Coalition
                 match order.Means with
                 | ByRoad | ByRail | BySeaShip | ByRiverShip ->
-                    let path =
-                        let paths =
-                            match order.Means with
-                            | ByRail -> world.Rails
-                            | ByRoad -> world.Roads
-                            | BySeaShip -> world.SeaWays
-                            | ByRiverShip -> world.RiverWays
-                            | ByAir _ -> failwith "Cannot handle air cargo"
-                        paths
-                        |> List.tryPick(fun road -> road.MatchesEndpoints(convoy.Start, convoy.Destination))
-                        |> Option.map (fun path -> path.Value)
-                    match path with
-                    | Some path ->
-                        let convoySpeed = // km/h
-                            match order.Means with
-                            | ByRoad -> 50
-                            | ByRail -> 70
-                            | ByRiverShip -> 5
-                            | BySeaShip -> 8
-                            | ByAir _ -> 300
-                        let pathVertices =
-                            path
-                            |> List.map (fun (v, yori, side) ->
-                                { Pos = v
-                                  Ori = yori
-                                  Radius = 100
-                                  Speed = convoySpeed
-                                  Priority = 1
-                                  SpawnSide = side
-                                }
-                            )
-                        let targetTravelTime = 1.0f // hours
-                        let pathVertices =
-                            match order.Means with
-                            | ByRiverShip
-                            | BySeaShip ->
-                                let rec takeUntilTargetDuration (time, prev) waypoints  =
-                                    if time < 0.0f then
-                                        []
-                                    else
-                                        match waypoints with
-                                        | [] -> []
-                                        | (wp : PathVertex) :: rest ->
-                                            match prev with
-                                            | Some (prev : Vector2)->
-                                                let dist = (prev - wp.Pos).Length() / 1000.0f
-                                                let t = dist / float32 wp.Speed
-                                                wp :: takeUntilTargetDuration (time - t, Some wp.Pos) rest 
-                                            | None ->
-                                                wp :: takeUntilTargetDuration (time, Some wp.Pos) rest
-                                let rec trails xs =
-                                    seq {
-                                        yield xs
-                                        match xs with
-                                        | _ :: xs ->
-                                            yield! trails xs
-                                        | [] ->
-                                            ()
-                                    }
-                                let destinationZone = wg.GetRegion(convoy.Destination).Boundary
-                                pathVertices
-                                |> trails
-                                |> Seq.map (takeUntilTargetDuration (targetTravelTime, None))
-                                |> Seq.tryFind (fun path ->
-                                    // Goes into destination region?
-                                    match Seq.tryLast path with
-                                    | Some ep ->
-                                        ep.Pos.IsInConvexPolygon(destinationZone)
-                                    | None ->
-                                        false)
-                                |> Option.defaultVal pathVertices
-                            | _ -> pathVertices
-                        let virtualConvoy =
-                            let convoyName = order.MissionLogEventName
-                            match order.Means with
-                            | ByRoad ->
-                                let size =
-                                    int (convoy.TransportedSupplies / ResupplyOrder.TruckCapacity)
-                                    |> min ColumnMovement.MaxColumnSize
-                                VirtualConvoy.Create(store, lcStore, pathVertices, size, country, coalition, convoyName, 0)
-                                |> Choice1Of4
-                            | ByRail ->
-                                let startV = pathVertices.Head
-                                let endV = pathVertices |> List.last
-                                TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, country, convoyName)
-                                |> Choice2Of4
-                            | BySeaShip
-                            | ByRiverShip ->
-                                let waterType =
-                                    match order.Means with
-                                    | BySeaShip -> Sea
-                                    | ByRiverShip -> River
-                                    | _ -> failwith "Unexpected ship transport means"
-                                ShipConvoy.Create(store, lcStore, waterType, pathVertices, country, convoyName)
-                                |> Choice3Of4
-                            | ByAir _ -> failwith "Cannot handle air cargo"
-                        let links =
-                            match virtualConvoy with
-                            | Choice1Of4 x -> x.CreateLinks()
-                            | Choice2Of4 x -> x.CreateLinks()
-                            | Choice3Of4 x -> Links.Links.Empty
-                            | Choice4Of4 _ -> failwith "Cannot handle air cargo"
-                        let mcuGroup =
-                            match virtualConvoy with
-                            | Choice1Of4 x -> x :> McuUtil.IMcuGroup
-                            | Choice2Of4 x -> x :> McuUtil.IMcuGroup
-                            | Choice3Of4 x -> x.All
-                            | Choice4Of4 _ -> failwith "Cannot handle air cargo"
-                        links.Apply(McuUtil.deepContentOf mcuGroup)
-                        yield order.OrderId, pathVertices.Head.Pos, virtualConvoy
-                    | None ->
-                        ()
+                    let virtualConvoy =
+                        let convoyName = order.MissionLogEventName
+                        match order.Means with
+                        | ByRoad ->
+                            let size =
+                                int (convoy.TransportedSupplies / ResupplyOrder.TruckCapacity)
+                                |> min ColumnMovement.MaxColumnSize
+                            let bridgeEntitiesAtVertex =
+                                [
+                                    for v in pathVertices do
+                                        for e in bridgesOfVertex v do
+                                            match bridgeEntities.TryGetValue(e) with
+                                            | true, e ->
+                                                yield (v, e)
+                                            | false, _ ->
+                                                ()
+                                ]
+                            VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, size, coalition.ToCountry, coalition.ToCoalition, convoyName, 0)
+                            |> Choice1Of4
+                        | ByRail ->
+                            let startV = pathVertices.Head
+                            let endV = pathVertices |> List.last
+                            TrainWithNotification.Create(store, lcStore, startV.Pos, startV.Ori, endV.Pos, coalition.ToCountry, convoyName)
+                            |> Choice2Of4
+                        | BySeaShip
+                        | ByRiverShip ->
+                            let waterType =
+                                match order.Means with
+                                | BySeaShip -> Sea
+                                | ByRiverShip -> River
+                                | _ -> failwith "Unexpected ship transport means"
+                            ShipConvoy.Create(store, lcStore, waterType, pathVertices, coalition.ToCountry, convoyName)
+                            |> Choice3Of4
+                        | ByAir _ -> failwith "Cannot handle air cargo"
+                    let links =
+                        match virtualConvoy with
+                        | Choice1Of4 x -> x.CreateLinks()
+                        | Choice2Of4 x -> x.CreateLinks()
+                        | Choice3Of4 x -> Links.Links.Empty
+                        | Choice4Of4 _ -> failwith "Cannot handle air cargo"
+                    let mcuGroup =
+                        match virtualConvoy with
+                        | Choice1Of4 x -> x :> McuUtil.IMcuGroup
+                        | Choice2Of4 x -> x :> McuUtil.IMcuGroup
+                        | Choice3Of4 x -> x.All
+                        | Choice4Of4 _ -> failwith "Cannot handle air cargo"
+                    links.Apply(McuUtil.deepContentOf mcuGroup)
+                    yield order.OrderId, pathVertices.Head.Pos, virtualConvoy
                 | ByAir(afStart, afDestination) ->
                     let airName = order.MissionLogEventName
                     let startPos, startDir = sg.GetAirfield(afStart).Runway
                     let landPos, landDir = sg.GetAirfield(afDestination).Runway
-                    let flight = TransportFlight.Create(store, lcStore, startPos, startDir, landPos, landDir, country, airName)
+                    let flight = TransportFlight.Create(store, lcStore, startPos, startDir, landPos, landDir, coalition.ToCountry, airName)
                     yield order.OrderId, startPos, Choice4Of4 flight
         ]
     let nodes =
@@ -197,6 +296,7 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                           Radius = 100
                           Priority = 1
                           SpawnSide = side
+                          Role = Intermediate
                         }
                     let travel =
                         path
@@ -239,7 +339,8 @@ let createColumns (random : System.Random) (store : NumericalIdentifiers.IdStore
                                         composition
                                         |> List.ofArray
                                         |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
-                                    let column = VirtualConvoy.CreateColumn(store, lcStore, travel, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                                    let bridges = [] // TODO
+                                    let column = VirtualConvoy.CreateColumn(store, lcStore, travel, bridges, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                                     let links = column.CreateLinks()
                                     links.Apply(McuUtil.deepContentOf column)
                                     Mcu.addTargetLink prevStart.Value column.Api.Start.Index
