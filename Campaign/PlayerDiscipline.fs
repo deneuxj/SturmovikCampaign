@@ -72,42 +72,42 @@ with
 
 /// Watch game event logs for friendly fire, and emit bans when abuse is detected
 let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSeq<LogEntry>) =
-    let nameOf = ref Map.empty
-    let coalitionOf = ref Map.empty
-    let damagesOf = ref Map.empty
-    let objects = ref Map.empty
-    let missionStart = ref (DateTime())
     asyncSeq {
+        let mutable nameOf = Map.empty
+        let mutable coalitionOf = Map.empty
+        let mutable damagesOf = Map.empty
+        let mutable objects = Map.empty
+        let mutable missionStart = (DateTime())
         for event in events do
             match event with
             // Reset state
             | :? MissionStartEntry as start ->
-                nameOf := Map.empty
-                coalitionOf := Map.empty
-                damagesOf := Map.empty
-                objects := Map.empty
-                missionStart := start.MissionTime
+                nameOf <- Map.empty
+                coalitionOf <- Map.empty
+                damagesOf <- Map.empty
+                objects <- Map.empty
+                missionStart <- start.MissionTime
             // Map object id to object type and to country
             | :? ObjectSpawnedEntry as spawned ->
-                objects := Map.add spawned.ObjectId spawned.ObjectType objects.Value
-                coalitionOf := Map.add spawned.ObjectId spawned.Country coalitionOf.Value
-                damagesOf := Map.add spawned.ObjectId (ResizeArray<FriendlyDamage>()) damagesOf.Value
+                objects <- Map.add spawned.ObjectId spawned.ObjectType objects
+                coalitionOf <- Map.add spawned.ObjectId spawned.Country coalitionOf
+                damagesOf <- Map.add spawned.ObjectId (ResizeArray<FriendlyDamage>()) damagesOf
             // Map object id to player ids and to country
             | :? PlayerPlaneEntry as entry ->
                 let data =
                     { NickId = string entry.NickId
                       UserId = string entry.UserId
                       Name = entry.Name }
-                nameOf := Map.add entry.VehicleId data nameOf.Value
-                coalitionOf := Map.add entry.VehicleId entry.Country coalitionOf.Value
+                nameOf <- Map.add entry.VehicleId data nameOf
+                coalitionOf <- Map.add entry.VehicleId entry.Country coalitionOf
             // Register friendly damage
             | :? DamageEntry as damage ->
-                match nameOf.Value.TryFind damage.AttackerId with
+                match nameOf.TryFind damage.AttackerId with
                 | Some player ->
-                    match coalitionOf.Value.TryFind(damage.AttackerId), coalitionOf.Value.TryFind(damage.TargetId) with
+                    match coalitionOf.TryFind(damage.AttackerId), coalitionOf.TryFind(damage.TargetId) with
                     | Some countryA, Some countryB when countryA = countryB ->
                         let cost =
-                            match objects.Value.TryFind(damage.TargetId) with
+                            match objects.TryFind(damage.TargetId) with
                             | Some(StaticPlaneType world.PlaneSet plane) ->
                                 plane.Cost
                             | Some(StaticVehicleType tank) ->
@@ -122,10 +122,10 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                                 0.5f * PlaneModel.I16.Cost
                         let cost = cost * damage.Damage
                         let entry =
-                            { Time = missionStart.Value + damage.Timestamp
+                            { Time = missionStart + damage.Timestamp
                               Amount = cost }
                         let record =
-                            damagesOf.Value.[damage.AttackerId]
+                            damagesOf.[damage.AttackerId]
                         record.Add(entry)
                         match FriendlyDamage.Judge(config, record) with
                         | Some penalty ->
