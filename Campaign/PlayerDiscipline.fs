@@ -36,7 +36,7 @@ type FriendlyDamage =
       Amount : float32<E>
     }
 with
-    static member Judge(damages: FriendlyDamage seq) =
+    static member Judge(config : Configuration, damages : FriendlyDamage seq) =
         let threshold = 0.005f * PlaneModel.I16.Cost
         // Accumulate damages, resetting whenever no damage is done for 10s or more
         let accumulatedDamages =
@@ -65,13 +65,13 @@ with
             |> Seq.pairwise
             |> Seq.sumBy (fun (d0, d1) -> if d0 < threshold && d1 >= threshold then 1 else 0)
         logger.Info(sprintf "Someone is up to %d friendly damage excesses" numExcesses)
-        if numExcesses >= 2 then
-            Some(Banned 48)
+        if numExcesses >= config.MaxFriendlyFireEvents then
+            Some(Banned config.FriendlyFireBanDuration)
         else
             None
 
 /// Watch game event logs for friendly fire, and emit bans when abuse is detected
-let disciplinePlayers (world : World) (events : AsyncSeq<LogEntry>) =
+let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSeq<LogEntry>) =
     let nameOf = ref Map.empty
     let coalitionOf = ref Map.empty
     let damagesOf = ref Map.empty
@@ -127,7 +127,7 @@ let disciplinePlayers (world : World) (events : AsyncSeq<LogEntry>) =
                         let record =
                             damagesOf.Value.[damage.AttackerId]
                         record.Add(entry)
-                        match FriendlyDamage.Judge record with
+                        match FriendlyDamage.Judge(config, record) with
                         | Some penalty ->
                             yield {
                                 Player = player

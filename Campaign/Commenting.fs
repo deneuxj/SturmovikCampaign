@@ -296,7 +296,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             }
             |> asyncIterNonMuted (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
         let disciplineTask =
-            disciplinePlayers world asyncSeqEntries
+            disciplinePlayers config world asyncSeqEntries
             |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
         Async.Start(Async.catchLog "live commentator" task, cancelOnDispose.Token)
         Async.Start(Async.catchLog "battle limits notifier" task2, cancelOnDispose.Token)
