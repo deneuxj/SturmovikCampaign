@@ -152,20 +152,35 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
         let columns =
             columns
             |> List.filter (fun column -> column.OrderId.Coalition = coalition)
-            |> List.map (fun column -> column.OrderId.Index, column.Composition)
+            |> List.map (fun column -> column.OrderId, column)
             |> Map.ofList
-        damages
-        |> List.choose (fun event ->
-            match event.Object with
-            | Column { OrderId = { Coalition = owner; Index = orderIndex }; Rank = rank } when owner = coalition ->
-                if event.Data.Amount > 0.25f then
-                    Some(orderIndex, rank)
-                else
-                    None
-            | _ -> None)
-        |> List.choose (fun (order, vehicle) ->
-            columns.TryFind order
-            |> Option.map (fun composition -> composition.[vehicle]))
+        seq {
+            for dmg in Damage.GroupByObject damages do
+                match dmg.Object with
+                | Column colDmg ->
+                    match columns.TryFind colDmg.OrderId with
+                    | Some ({ TransportType = ColByRoad } as order) ->
+                        if dmg.Data.Amount > 0.25f then
+                            yield order.Composition.[colDmg.Rank]
+                    | Some ({ TransportType = ColByRiverShip } as order)
+                    | Some ({ TransportType = ColBySeaShip } as order) ->
+                        if dmg.Data.Amount >= 1.0f then
+                            let subCompo =
+                                if colDmg.Rank = 0 then
+                                    order.Composition.[0..order.Composition.Length/2]
+                                else
+                                    order.Composition.[order.Composition.Length/2..]
+                            for tank in subCompo do
+                                yield tank
+                    | Some ({ TransportType = ColByTrain } as order) ->
+                        if dmg.Data.Amount >= 1.0f then
+                            for t in order.Composition do
+                                yield t
+                    | None ->
+                        ()
+                | _ ->
+                    ()
+        }
         |> Util.compactSeq
     let numParkedTanksDestroyed =
         damages
