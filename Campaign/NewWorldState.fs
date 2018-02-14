@@ -337,7 +337,7 @@ let computeDelivered (orders : ResupplyOrder list) (shipped : SuppliesShipped li
                                 0.0f<E>
                         | ByRiverShip
                         | BySeaShip ->
-                            if vehicle.Rank > 0 && vehicle.Rank < 3 then
+                            if vehicle.Rank >= 0 && vehicle.Rank < 2 && damages >= 1.0f then
                                 ResupplyOrder.ShipCapacity
                             else
                                 0.0f<E>
