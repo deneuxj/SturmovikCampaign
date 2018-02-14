@@ -43,7 +43,9 @@ X Feedback: ship supply
 --- bugs & small improvements ---
 
 ? Generate mission logic for AI transports
+Min-max AI must not order troop movements larger than allowed by transporter capacity
+Tank ship transports must be composed of more landing crafts. No more than 5 tanks per craft.
+Make landing crafts move faster.
 Limit airplane available to bad pilots
 Notify players when their units are under attack (with a delay)
-Log of resupply distribution (repairs, bombs...), production stays suspiciously after factories get destroyed.
 Live commenter sometimes stops working. Improve logging to facilitate filtering noise
