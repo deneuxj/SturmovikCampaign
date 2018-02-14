@@ -14,7 +14,7 @@ type Move =
     { Start : int
       Destination : int
       Force : float32<E>
-      AllowTrains : bool
+      AllowTrains : bool // BREAKING: let min-max decide the kind of transport. Needed because of transport size limits.
     }
 
 type CombinedMove =
@@ -332,6 +332,8 @@ with
 
 let allMoves (neighboursOf : bool * int -> int[]) (state : BoardState) (coalition : CoalitionId) =
     let someCoalition = Some coalition
+    let tankForceThreshold = 10.0f * MediumTank.Cost
+    let defensiveForceThreshold = 5.0f * MediumTank.Cost
     let moves i aggressive =
         seq {
             assert(state.AxisForces.[i] = 0.0f<E> || state.AlliesForces.[i] = 0.0f<E>)
@@ -342,9 +344,21 @@ let allMoves (neighboursOf : bool * int -> int[]) (state : BoardState) (coalitio
                     | Axis -> state.AxisForces.[i]
                     | Allies -> state.AlliesForces.[i]
                 for j in neighboursOf(not aggressive, i) do
-                    if aggressive && state.Owners.[j] <> someCoalition || not aggressive && state.Owners.[j] = someCoalition then
+                    if aggressive && state.Owners.[j] <> someCoalition then
+                        // Invade in full force, leaving home undefended.
                         yield { Start = i; Destination = j; Force = force; AllowTrains = not aggressive }
-                        if force > 10.0f * MediumTank.Cost then
+                        let opposing =
+                            match coalition with
+                            | Allies -> state.AxisForces.[j]
+                            | Axis -> state.AlliesForces.[j]
+                        // Invade with 25% advantage, leave rest to defend home.
+                        if force > 1.25f * opposing && opposing > defensiveForceThreshold then
+                            yield { Start = i; Destination = j; Force = 1.25f * opposing; AllowTrains = not aggressive }
+                    if not aggressive && state.Owners.[j] = someCoalition then
+                        // Move all tanks
+                        yield { Start = i; Destination = j; Force = force; AllowTrains = not aggressive }
+                        // If force is large enough, consider splitting it and moving only half the vehicles
+                        if force > tankForceThreshold then
                             yield { Start = i; Destination = j; Force = 0.5f * force; AllowTrains = not aggressive }
         }
     seq {
