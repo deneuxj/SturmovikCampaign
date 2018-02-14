@@ -1069,7 +1069,7 @@ let computeCompletedColumnMovements (movements : ColumnMovement list) (departure
                 if not(Array.isEmpty arrived) then
                     yield { move with Composition = arrived |> Array.map snd }
             | false, _ ->
-                // If it not depart, then it could not arrive.
+                // If it did not depart, then it could not arrive.
                 ()
     ]
 
