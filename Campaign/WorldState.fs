@@ -298,31 +298,21 @@ with
     /// Check if a side is victorious.
     /// </summary>
     member this.VictoriousSide(world : World) =
-        let getNumRegions coalition =
-            this.Regions
-            |> Seq.filter (fun reg -> reg.Owner = Some coalition)
+        let getNumRegionsWithAF coalition =
+            world.Airfields
+            |> Seq.filter (fun af ->
+                this.Regions
+                |> Seq.filter (fun reg -> reg.RegionId = af.Region && reg.Owner = Some coalition)
+                |> Seq.isEmpty
+                |> not)
             |> Seq.length
-        let getTanks coalition =
-            this.Regions
-            |> List.sumBy (fun regState ->
-                if regState.Owner = Some coalition then
-                    regState.TotalVehicleValue
-                elif regState.Owner = Some coalition.Other then
-                    regState.NumInvadingVehicles
-                    |> Map.toSeq
-                    |> Seq.sumBy (fun (tank, qty) -> tank.Cost * float32 qty)
-                else
-                    0.0f<E>)
-        let axisRegions, alliesRegions = getNumRegions Axis, getNumRegions Allies
-        let axisTanks, alliesTanks = getTanks Axis, getTanks Allies
-        let k = 2.0f
-        // If one side has twice as many tanks as the other, and it controls 3x more regions, it has won
-        if axisRegions >= 3 * alliesRegions && axisTanks > k * alliesTanks then
-            Some Axis
-        elif 3 * axisRegions <= alliesRegions && k * axisTanks < alliesTanks then
+        let numAxis = getNumRegionsWithAF Axis
+        let numAllies = getNumRegionsWithAF Allies
+        if numAxis = 0 then
             Some Allies
-        else
-            None
+        elif numAllies = 0 then
+            Some Axis
+        else None
 
 
 open SturmovikMission.DataProvider.Parsing
