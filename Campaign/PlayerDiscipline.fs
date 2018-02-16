@@ -88,7 +88,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
             asyncSeq {
                 yield {
                     Player = player
-                    Decision = Informed (sprintf "%1f noob points awarded" score)
+                    Decision = Informed (sprintf "%1f wrecking penalty" score)
                 }
                 let old =
                     noobScore.TryFind player
@@ -98,7 +98,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                 if newScore > config.MaxNoobScore then
                     yield {
                         Player = player
-                        Decision = Informed "noob point limit exceeded"
+                        Decision = Informed "wrecking limit exceeded"
                     }
                     yield {
                         Player = player
