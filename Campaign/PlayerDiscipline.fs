@@ -73,11 +73,30 @@ with
 /// Watch game event logs for friendly fire, and emit bans when abuse is detected
 let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSeq<LogEntry>) =
     asyncSeq {
-        let mutable nameOf = Map.empty
-        let mutable coalitionOf = Map.empty
-        let mutable damagesOf = Map.empty
-        let mutable objects = Map.empty
+        let mutable nameOf = Map.empty // Vehicle ID -> player ID
+        let mutable coalitionOf = Map.empty // Vehicle ID -> coalition
+        let mutable damagesOf = Map.empty // Vehicle ID -> friendly fire
+        let mutable objects = Map.empty // Vehicle ID -> object type
         let mutable missionStart = (DateTime())
+        let mutable tookOfAt = Map.empty // Vehicle ID -> take-off time
+        let mutable takenDamageAt = Map.empty // Vehicle ID -> time when took damage from other object
+        let mutable noobScore = Map.empty // player ID -> "noobishness" score (wrecked own plane without causes)
+
+        // Expand "noob score" of a player who's being clumsy by wrecking their own ship or inflicting friendly damage
+        let addNoobScore player score =
+            asyncSeq {
+                let old =
+                    noobScore.TryFind player
+                    |> Option.defaultValue 0.0f
+                let newScore = old + score
+                noobScore <- Map.add player newScore noobScore
+                if newScore > config.MaxNoobScore then
+                    yield {
+                        Player = player
+                        Decision = Banned config.NoobBanDuration
+                    }
+            }
+
         for event in events do
             match event with
             // Reset state
@@ -87,6 +106,9 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                 damagesOf <- Map.empty
                 objects <- Map.empty
                 missionStart <- start.MissionTime
+                tookOfAt <- Map.empty
+                takenDamageAt <- Map.empty
+                noobScore <- Map.empty
             // Map object id to object type and to country
             | :? ObjectSpawnedEntry as spawned ->
                 objects <- Map.add spawned.ObjectId spawned.ObjectType objects
@@ -135,12 +157,35 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                             }
                         | None ->
                             ()
+                        if cost > 0.0f<E> then
+                            yield! addNoobScore player 1.0f
                     | _ ->
                         // Coalition of attacker or target not known
                         ()
                 | None ->
                     // Attacker is not a player
                     ()
+                // Record that object has taken damage.
+                if damage.AttackerId <> -1 then
+                    takenDamageAt <- Map.add damage.TargetId damage.Timestamp takenDamageAt
+                else
+                    match nameOf.TryFind damage.TargetId with
+                    | Some player ->
+                        let extraNoobScore =
+                            // Damage is self-inflicted
+                            if takenDamageAt.TryFind(damage.TargetId).IsNone then
+                                // No damage was ever inflicted by someone else, looks like a player wrecked their own plane
+                                if tookOfAt.TryFind(damage.TargetId).IsNone then
+                                    // Did not even take off, apply extra penaly
+                                    2.0f
+                                else
+                                    1.0f
+                            else
+                                0.0f
+                        if extraNoobScore > 0.0f then
+                            yield! addNoobScore player extraNoobScore
+                    | None ->
+                        ()
             | _ ->
                 // Other kind of event
                 ()

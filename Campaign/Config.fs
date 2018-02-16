@@ -34,6 +34,8 @@ type Configuration = {
     PlaneProduction : float32
     MaxFriendlyFireEvents : int
     FriendlyFireBanDuration : int
+    MaxNoobScore : float32
+    NoobBanDuration : int
     WebHook : string
 }
 with
@@ -68,6 +70,8 @@ with
             WebHook = ""
             MaxFriendlyFireEvents = 2
             FriendlyFireBanDuration = 48
+            MaxNoobScore = 3.0f
+            NoobBanDuration = 3
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
@@ -130,4 +134,6 @@ let loadConfigFile (path : string) =
         WebHook = values.WebHook
         FriendlyFireBanDuration = values.FriendlyFireBanDuration
         MaxFriendlyFireEvents = values.MaxFriendlyFireEvents
+        MaxNoobScore = float32 values.MaxNoobScore
+        NoobBanDuration = values.NoobBanDuration
     }
