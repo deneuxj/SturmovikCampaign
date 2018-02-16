@@ -171,7 +171,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                         | None ->
                             ()
                         if cost > 0.0f<E> then
-                            yield! addNoobScore player 1.0f
+                            yield! addNoobScore player damage.Damage
                     | _ ->
                         // Coalition of attacker or target not known
                         ()
@@ -190,9 +190,9 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                                 // No damage was ever inflicted by someone else, looks like a player wrecked their own plane
                                 if tookOfAt.TryFind(damage.TargetId).IsNone then
                                     // Did not even take off, apply extra penaly
-                                    2.0f
+                                    2.0f * damage.Damage
                                 else
-                                    1.0f
+                                    1.0f * damage.Damage
                             else
                                 0.0f
                         if extraNoobScore > 0.0f then
