@@ -184,17 +184,23 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                 else
                     match nameOf.TryFind damage.TargetId with
                     | Some player ->
-                        let extraNoobScore =
+                        let factor =
                             // Damage is self-inflicted
                             if takenDamageAt.TryFind(damage.TargetId).IsNone then
-                                // No damage was ever inflicted by someone else, looks like a player wrecked their own plane
-                                if tookOfAt.TryFind(damage.TargetId).IsNone then
-                                    // Did not even take off, apply extra penaly
-                                    2.0f * damage.Damage
-                                else
-                                    1.0f * damage.Damage
+                                // No damage was ever inflicted by someone else, looks like a player wrecked their own plane without external cause
+                                match tookOfAt.TryFind(damage.TargetId) with
+                                | None ->
+                                    // Did not even take off, apply extra penalty
+                                    2.0f
+                                | Some t ->
+                                    // 1.0 right after take-off, linear decrease to 0 after 30min
+                                    let delta = float32 (damage.Timestamp - t).TotalMinutes
+                                    1.0f - delta / 30.0f
+                                    |> min 1.0f
+                                    |> max 0.0f
                             else
                                 0.0f
+                        let extraNoobScore = factor * damage.Damage
                         if extraNoobScore > 0.0f then
                             yield! addNoobScore player extraNoobScore
                     | None ->
