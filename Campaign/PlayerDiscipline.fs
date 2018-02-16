@@ -20,6 +20,7 @@ let private logger = LogManager.GetCurrentClassLogger()
 type JudgementDecision =
     | Kicked
     | Banned of hours:int
+    | Informed of string
 
 type UserIds =
     { NickId : string
@@ -85,12 +86,20 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
         // Expand "noob score" of a player who's being clumsy by wrecking their own ship or inflicting friendly damage
         let addNoobScore player score =
             asyncSeq {
+                yield {
+                    Player = player
+                    Decision = Informed (sprintf "%1f noob points awarded" score)
+                }
                 let old =
                     noobScore.TryFind player
                     |> Option.defaultValue 0.0f
                 let newScore = old + score
                 noobScore <- Map.add player newScore noobScore
                 if newScore > config.MaxNoobScore then
+                    yield {
+                        Player = player
+                        Decision = Informed "noob point limit exceeded"
+                    }
                     yield {
                         Player = player
                         Decision = Banned config.NoobBanDuration
@@ -151,6 +160,10 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                         record.Add(entry)
                         match FriendlyDamage.Judge(config, record) with
                         | Some penalty ->
+                            yield {
+                                Player = player
+                                Decision = Informed "Friendly fire limit exceeded"
+                            }
                             yield {
                                 Player = player
                                 Decision = penalty
