@@ -70,8 +70,8 @@
     # Max number of friendly fire incidents. Ban occurs when that number is reached
     MaxFriendlyFireEvents: 2
     # Duration of ban for friendly fire
-    FriendlyFireBanDuration: 48
+    FriendlyFireBanDuration: 1
     # Maximum "noob score". When reached, player is banned for NoobBanDuration. Self-inflicted damage after take-off gives 1.0 pt, before take-off 2.0 pts. Friendly fire gives 1.0 pt
     MaxNoobScore: 3.0
     # Ban duration for excessively clumsy players, in hours. 0 will still give the in-game ban of 15min.
-    NoobBanDuration: 3
+    NoobBanDuration: 1
