@@ -86,24 +86,26 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
         // Expand "noob score" of a player who's being clumsy by wrecking their own ship or inflicting friendly damage
         let addNoobScore player score =
             asyncSeq {
-                yield {
-                    Player = player
-                    Decision = Informed (sprintf "%1f wrecking penalty" score)
-                }
                 let old =
                     noobScore.TryFind player
                     |> Option.defaultValue 0.0f
                 let newScore = old + score
+                // Send notification when the player passes an int boundary (e.g. 1.5 -> 2.1)
+                if floor newScore > floor old then
+                    yield {
+                        Player = player
+                        Decision = Informed (sprintf "%1f wrecking penalty" score)
+                    }
                 noobScore <- Map.add player newScore noobScore
                 if newScore > config.MaxNoobScore then
                     yield {
                         Player = player
                         Decision = Informed "wrecking limit exceeded"
                     }
-                    yield {
-                        Player = player
-                        Decision = Banned config.NoobBanDuration
-                    }
+                    //yield {
+                    //    Player = player
+                    //    Decision = Banned config.NoobBanDuration
+                    //}
             }
 
         for event in events do
