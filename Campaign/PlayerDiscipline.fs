@@ -133,6 +133,9 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                       Name = entry.Name }
                 nameOf <- Map.add entry.VehicleId data nameOf
                 coalitionOf <- Map.add entry.VehicleId entry.Country coalitionOf
+            // Record time of take-off. Self-inflicted damage before take-off grants extra high noob points
+            | :? TakeOffEntry as takeoff ->
+                tookOfAt <- Map.add takeoff.VehicleId takeoff.Timestamp tookOfAt
             // Register friendly damage
             | :? DamageEntry as damage ->
                 match nameOf.TryFind damage.AttackerId with
