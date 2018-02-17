@@ -182,8 +182,8 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                 if damage.AttackerId <> -1 then
                     takenDamageAt <- Map.add damage.TargetId damage.Timestamp takenDamageAt
                 else
-                    match nameOf.TryFind damage.TargetId with
-                    | Some player ->
+                    match objects.TryFind damage.TargetId,  nameOf.TryFind damage.TargetId with
+                    | Some(PlaneObjectType _), Some player ->
                         let factor =
                             // Damage is self-inflicted
                             if takenDamageAt.TryFind(damage.TargetId).IsNone then
@@ -203,7 +203,9 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                         let extraNoobScore = factor * damage.Damage
                         if extraNoobScore > 0.0f then
                             yield! addNoobScore player extraNoobScore
-                    | None ->
+                    | Some _, _ // Player not flying a plane. Other vehicles such as tanks apparently don't report damage taken from AIs, and we don't inflict wreck damage for them.
+                    | None, _ 
+                    | _, None -> // Non player-controlled entity (e.g. AI) took damage from unknown source.
                         ()
             | _ ->
                 // Other kind of event
