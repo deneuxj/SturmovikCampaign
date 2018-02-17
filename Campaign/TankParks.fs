@@ -15,7 +15,7 @@ open Campaign.ParkingArea
 open Campaign.BasicTypes
 
 let createParkedTanks store (world : World) (state : WorldState) inAttackArea (orders : OrderPackage) (coalition : CoalitionId) =
-    let netsModel, netRefPos, netRelPositions =
+    let netsModel, netRelPositions =
         let nets = Vehicles.vehicles.Nets
         let nets =
             { Script = nets.Script
@@ -25,10 +25,18 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
         let positions = nets.PlaneParkingPositions
         match positions with
         | Some positions ->
-            nets, positions.RefPos, positions.Positions |> Seq.map fst |> Array.ofSeq
+            let rels =
+                let center = Vector3(positions.RefPos.X, positions.RefPos.Y, 0.0f)
+                positions.Positions
+                |> Seq.map fst
+                |> Seq.map (fun pos -> pos - center)
+                |> Array.ofSeq
+            nets, rels
         | None ->
             failwith "Could not find Nets in static objects"
-    let random = System.Random()
+    let netFlatPos =
+        netRelPositions
+        |> Array.map (fun v3 -> Vector2(v3.X, v3.Y))
     let country = coalition.ToCountry |> int
     [
         for region, regState in List.zip world.Regions state.Regions do
@@ -43,9 +51,22 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                     subMaps regState.NumVehicles subtracted
                     |> expandMap
                     |> Array.shuffle (System.Random())
-                let parkingPositions = computeRandomParkingPositions region.Parking parked.Length
+                let netPositions = computeRandomParkingPositions netFlatPos region.Parking parked.Length
+                let parkingPositions =
+                    seq {
+                        for center in netPositions do
+                            for dv in netRelPositions do
+                                yield Vector3(center.X, center.Y, 0.0f) + dv
+                    }
                 if parked.Length > 0 then
+                    for pos in netPositions do
+                        let block = newBlockMcu store country netsModel.Model netsModel.Script 1000
+                        pos.AssignTo block.Pos
+                        yield block
+
                     for vehicle, pos in Seq.zip parked parkingPositions do
+                        let rot = pos.Z
+                        let pos = Vector2(pos.X, pos.Y)
                         let model =
                             match vehicle, coalition with
                             | HeavyTank, Axis -> Vehicles.vehicles.GermanStaticHeavyTank
@@ -60,18 +81,8 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                                 [ block; upcast entity ]
                             else
                                 [ newBlockMcu store country model.Model model.Script vehicle.Durability ]
-                        let netGroup, tankRot =
-                            let block = newBlockMcu store country netsModel.Model netsModel.Script 1000
-                            let idx = random.Next(0, netRelPositions.Length)
-                            let dv = netRelPositions.[idx]
-                            let rot = dv.Z
-                            let dv = Vector2(dv.X, dv.Y) - netRefPos
-                            let blockPos = pos - dv
-                            blockPos.AssignTo block.Pos
-                            block, rot
                         for mcu in mcus do
                             pos.AssignTo mcu.Pos
-                            mcu.Ori.Y <- float tankRot
+                            mcu.Ori.Y <- float rot
                         yield! mcus
-                        yield netGroup
     ]

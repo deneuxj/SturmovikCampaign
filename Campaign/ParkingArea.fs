@@ -50,8 +50,8 @@ let computeParkingPositions (area : Vector2 list) (numVehicles : int) =
     |> Seq.filter (fun v -> v.IsInConvexPolygon area)
     |> List.ofSeq
 
-/// Compute positions in area where a given numbers of vehicles can be parked. Uses random positions
-let computeRandomParkingPositions (area : Vector2 list) (numVehicles : int) =
+/// Compute positions in area where a given numbers of vehicles can be parked. Uses randomly located fixed patterns of positions (e.g. positions under nets in a static net group)
+let computeRandomParkingPositions (pattern : Vector2[]) (area : Vector2 list) (numVehicles : int) =
     let random = System.Random()
     let center =
         let n = float32(List.length area)
@@ -59,31 +59,47 @@ let computeRandomParkingPositions (area : Vector2 list) (numVehicles : int) =
     let maxRadius =
         area
         |> Seq.maxBy (fun v -> (center - v).Length())
+    let patterned center =
+        seq {
+            for rel in pattern do
+                yield center + rel
+        }
+    let patternInArea center =
+        patterned center
+        |> Seq.forall (fun v2 -> v2.IsInConvexPolygon area)
     let rec work numTriesLeft (positions : Vector2[]) =
         let indexed = Seq.indexed positions
+        // Positions that don't overlap with other positions
         let filtered =
             [|
-                for (i, v) in indexed do
+                for (i, orig) in indexed do
                     let tooClose =
-                        indexed
-                        |> Seq.exists (fun (j, v2) -> i <> j && (v - v2).Length() < 10.0f)
+                        positions
+                        |> Seq.take i
+                        |> Seq.collect patterned
+                        |> Seq.exists (fun v ->
+                            patterned orig
+                            |> Seq.exists(fun v2 ->
+                                (v - v2).Length() < 10.0f))
                     if not tooClose then
-                        yield v
+                        yield orig
             |]
-        let extra =
-            Seq.initInfinite (fun _ ->
-                let r = float32(random.NextDouble()) * maxRadius
-                let angle = 2.0 * System.Math.PI * random.NextDouble()
-                let dx = float32(cos angle)
-                let dz = float32(sin angle)
-                center + r * Vector2(dx, dz))
-            |> Seq.truncate 1000
-            |> Seq.filter (fun v -> v.IsInConvexPolygon area)
-            |> Seq.truncate (numVehicles - filtered.Length)
-            |> Array.ofSeq
-        let positions = Array.append filtered extra
-        if extra.Length = 0 || numTriesLeft = 0 then
+        if filtered.Length * pattern.Length >= numVehicles || numTriesLeft = 0 then
             positions
         else
+        // New random positions
+            let extra =
+                Seq.initInfinite (fun _ ->
+                    let r = float32(random.NextDouble()) * maxRadius
+                    let angle = 2.0 * System.Math.PI * random.NextDouble()
+                    let dx = float32(cos angle)
+                    let dz = float32(sin angle)
+                    center + r * Vector2(dx, dz))
+                |> Seq.truncate 1000
+                |> Seq.filter patternInArea
+            let positions =
+                Seq.append filtered extra
+                |> Seq.truncate (1 + numVehicles / pattern.Length)
+                |> Array.ofSeq
             work (numTriesLeft - 1) positions
-    work 100 [||]
+    work 50 [||]
