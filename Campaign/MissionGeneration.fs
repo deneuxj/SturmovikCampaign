@@ -385,6 +385,10 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 ]
               member x.SubGroups = []
         }
+    let bridgeEntities =
+        bridgeEntities.Values
+        |> Seq.map (fun (x : Mcu.McuEntity) -> x :> Mcu.McuBase)
+        |> List.ofSeq
     let serverInputMissionEnd = MissionEnd.Create(store)
     let allGroups =
         [ optionStrings
@@ -394,6 +398,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           upcast icons2
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
+          McuUtil.groupFromList bridgeEntities
           McuUtil.groupFromList ground
           McuUtil.groupFromList (spawns |> List.collect snd)
           McuUtil.groupFromList flags
