@@ -149,7 +149,7 @@ let selectBridgesAlongPaths (world : World) (state : WorldState) (bridges : Mcu.
                         if distance < 50.0f then
                             // Extend radius to at least 1000m, to give time to convoy to stop before reaching bridge.
                             yield { v with Radius = max 1000 v.Radius }, nearest
-                    for v1, v2 in path |> Seq.pairwise |> Seq.filter (fun (v1, v2) -> v1.Role = NarrowZoneEdge && v2.Role = NarrowZoneEdge) do
+                    for v1, v2 in path |> Seq.pairwise |> Seq.filter (fun (v1, v2) -> v1.Role = NarrowZoneEntrance && v2.Role = NarrowZoneExit) do
                         let center = 0.5f * (v1.Pos + v2.Pos)
                         let radius = (v1.Pos - center).Length()
                         yield!

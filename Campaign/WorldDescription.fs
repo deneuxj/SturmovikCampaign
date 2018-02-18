@@ -172,8 +172,8 @@ with
             | _ -> Center
         let role (wp : T.MCU_Waypoint) =
             match wp.GetName().Value with
-            | "BeforeBridge"
-            | "AfterBridge" -> NarrowZoneEdge
+            | "BeforeBridge" -> NarrowZoneEntrance
+            | "AfterBridge" -> NarrowZoneExit
             | _ -> Intermediate
         let mkPathVertex(wp : T.MCU_Waypoint) =
             { Pos = Vector2.FromPos wp
@@ -240,6 +240,7 @@ with
                     { v with
                         Ori = if v.Ori < 180.0f then v.Ori + 180.0f else v.Ori - 180.0f
                         SpawnSide = v.SpawnSide.Mirrored
+                        Role = v.Role.Opposite
                     }))
             |> Some
         else
