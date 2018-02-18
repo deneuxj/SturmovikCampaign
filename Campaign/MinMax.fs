@@ -7,6 +7,7 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.BasicTypes
 open NLog
+open Campaign.Orders
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -14,7 +15,7 @@ type Move =
     { Start : int
       Destination : int
       Force : float32<E>
-      AllowTrains : bool // BREAKING: let min-max decide the kind of transport. Needed because of transport size limits.
+      Transport : ColumnTransportType
     }
 
 type CombinedMove =
@@ -110,43 +111,25 @@ with
                 |> dict
             fun i -> m.[i]
         let getSuccessors =
-            // by sea and road
-            let m =
+            let mk t =
                 world.Regions
                 |> List.map (fun region ->
                     region.Neighbours
-                    |> List.filter (fun ngh -> world.Roads @ world.SeaWays @ world.RiverWays |> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
+                    |> List.filter (fun ngh -> world.PathsFor t |> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
                     |> List.map indexOfRegion
                     |> Array.ofList)
                 |> List.indexed
                 |> dict
-            // by train
-            let mt =
-                world.Regions
-                |> List.map (fun region ->
-                    region.Neighbours
-                    |> List.filter (fun ngh -> world.Rails |> List.exists (fun road -> road.MatchesEndpoints(region.RegionId, ngh).IsSome))
-                    |> List.map indexOfRegion
-                    |> Array.ofList)
-                |> List.indexed
-                |> dict
-            let byAll =
-                seq {
-                    for i, _ in Seq.indexed world.Regions do
-                        let vs =
-                            [m.[i]; mt.[i]]
-                            |> Array.concat
-                            |> Array.sort
-                            |> Array.distinct
-                        yield i, vs
-                }
-                |> dict
-            fun (allowTrains, i) ->
-                if allowTrains then
-                    byAll.[i]
-                else
-                    m.[i]
-
+            let roads = mk ColByRoad
+            let trains = mk ColByTrain
+            let rivers = mk ColByRiverShip
+            let sea = mk ColBySeaShip
+            fun t i ->
+                match t with
+                | ColByRoad -> roads.[i]
+                | ColByTrain -> trains.[i]
+                | ColByRiverShip -> rivers.[i]
+                | ColBySeaShip -> sea.[i]
         let valueOfRegion =
             let roots =
                 [
@@ -176,8 +159,12 @@ with
                         None
             let values =
                 let getSuccessors =
-                    fun i -> getSuccessors(true, i)
-                Algo.propagate (getSuccessors >> List.ofArray) update roots
+                    fun i ->
+                        [ColByTrain; ColByRoad; ColByRiverShip; ColBySeaShip]
+                        |> Seq.collect(fun t -> getSuccessors t i)
+                        |> Seq.distinct
+                        |> List.ofSeq
+                Algo.propagate getSuccessors update roots
             for kvp in values do
                 logger.Info(sprintf "%2d %5.2f" kvp.Key kvp.Value)
             fun i -> values.[i]
@@ -330,36 +317,38 @@ with
         }
         |> String.concat "\n"
 
-let allMoves (neighboursOf : bool * int -> int[]) (state : BoardState) (coalition : CoalitionId) =
+let allMoves (neighboursOf : ColumnTransportType * int -> int[]) (state : BoardState) (coalition : CoalitionId) =
     let someCoalition = Some coalition
     let tankForceThreshold = 10.0f * MediumTank.Cost
     let defensiveForceThreshold = 5.0f * MediumTank.Cost
+    let aggressiveTransport = ColumnTransportType.All |> List.filter ((<>) ColByTrain)
     let moves i aggressive =
         seq {
             assert(state.AxisForces.[i] = 0.0f<E> || state.AlliesForces.[i] = 0.0f<E>)
             let hasForces = state.AxisForces.[i] > 0.0f<E> || state.AlliesForces.[i] > 0.0f<E>
+            let means = if aggressive then aggressiveTransport else ColumnTransportType.All
             if state.Owners.[i] = someCoalition && hasForces then
                 let force =
                     match coalition with
                     | Axis -> state.AxisForces.[i]
                     | Allies -> state.AlliesForces.[i]
-                for j in neighboursOf(not aggressive, i) do
-                    if aggressive && state.Owners.[j] <> someCoalition then
-                        // Invade in full force, leaving home undefended.
-                        yield { Start = i; Destination = j; Force = force; AllowTrains = not aggressive }
-                        let opposing =
-                            match coalition with
-                            | Allies -> state.AxisForces.[j]
-                            | Axis -> state.AlliesForces.[j]
-                        // Invade with 25% advantage, leave rest to defend home.
-                        if force > 1.25f * opposing && opposing > defensiveForceThreshold then
-                            yield { Start = i; Destination = j; Force = 1.25f * opposing; AllowTrains = not aggressive }
-                    if not aggressive && state.Owners.[j] = someCoalition then
-                        // Move all tanks
-                        yield { Start = i; Destination = j; Force = force; AllowTrains = not aggressive }
-                        // If force is large enough, consider splitting it and moving only half the vehicles
-                        if force > tankForceThreshold then
-                            yield { Start = i; Destination = j; Force = 0.5f * force; AllowTrains = not aggressive }
+                for transport in means do
+                    let moveableForce =
+                        force
+                        |> min (float32 transport.MaxNumVehicles * MediumTank.Cost)
+                    for j in neighboursOf(transport, i) do
+                        if aggressive && state.Owners.[j] <> someCoalition then
+                            // Invade in full force, leaving home undefended.
+                            yield { Start = i; Destination = j; Force = moveableForce; Transport = transport }
+                            let opposing =
+                                match coalition with
+                                | Allies -> state.AxisForces.[j]
+                                | Axis -> state.AlliesForces.[j]
+                            // Invade with 25% advantage, leave rest to defend home.
+                            if moveableForce > 1.25f * opposing && opposing > defensiveForceThreshold then
+                                yield { Start = i; Destination = j; Force = 1.25f * opposing; Transport = transport }
+                        if not aggressive && state.Owners.[j] = someCoalition then
+                            yield { Start = i; Destination = j; Force = moveableForce; Transport = transport }
         }
     seq {
         for i in 0 .. state.Owners.Length - 1 do

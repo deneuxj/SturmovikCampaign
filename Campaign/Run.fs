@@ -122,7 +122,7 @@ module PlayChess =
             yield "Initially"
             yield board.DisplayString
             yield sprintf "%f" board.Score.Value
-            let minMax cancel n = minMax cancel n neighboursOf
+            let minMax cancel n = minMax cancel n (fun (x, y) -> neighboursOf x y)
             let rec timeBound cancel prev n board =
                 if n >= 100 then
                     prev
@@ -700,6 +700,7 @@ module MissionLogParsing =
               ParaDrops = paraDrops
               FerryPlanes = planeFerryEvents
               BattleKills = battleKills
+              Blocked = blocked
             }
         use missionFile = File.CreateText(Path.Combine(config.OutputDir, Filenames.missionResults))
         serializer.Serialize(missionFile, results)

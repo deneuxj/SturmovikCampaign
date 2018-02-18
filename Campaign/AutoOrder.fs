@@ -329,9 +329,11 @@ let hasPath (start, destination) (paths : Path list) =
 
 /// Try to get a kind of path that connects two regions
 /// Prioritize in that order: trains (if allowed), roads, sea ways
-let tryGetPathKind allowTrains (world : World) (start, destination) =
+let tryGetPathKind transport (world : World) (start, destination) =
     let hasPath = hasPath (start, destination)
-    if allowTrains && hasPath world.Rails then
+    if hasPath (world.PathsFor transport) then
+        Some transport
+    elif hasPath world.Rails then
         Some ColByTrain
     elif hasPath world.Roads then
         Some ColByRoad
@@ -352,7 +354,7 @@ let realizeMove (world : World) (state : WorldState) (move : Move) =
         failwith "Cannot start tank column from neutral zone"
     let content =
         selectVehicles regState move.Force
-    match tryGetPathKind move.AllowTrains world (regStart, regDest) with
+    match tryGetPathKind move.Transport world (regStart, regDest) with
     | Some medium ->
         { OrderId = { Index = -1; Coalition = owner.Value }
           Start = regStart
@@ -366,7 +368,7 @@ let realizeMove (world : World) (state : WorldState) (move : Move) =
 /// Run a minmax search for the best column moves for each coalition.
 let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     let board, neighboursOf = BoardState.Create(world, state)
-    let minMax cancel n = minMax cancel n neighboursOf
+    let minMax cancel n = minMax cancel n (fun (x, y) -> neighboursOf x y)
     let rec timeBound cancel prev n board =
         //printfn "Max depth: %d" n
         let res = minMax cancel n board
