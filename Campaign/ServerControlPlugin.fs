@@ -566,6 +566,13 @@ type Plugin() =
         | Some _ ->
             ()
 
+    member x.StopWebHookClient() =
+        match webHookClient with
+        | None ->
+            ()
+        | Some(x, _) ->
+            x.Dispose()
+
     member x.StartCommenter(config : Configuration) =
         // Stop commenter
         match commenter with
@@ -582,6 +589,13 @@ type Plugin() =
             }
         commenter <- Some(new CommentatorRestarter(config, handlers, fun() -> x.StartWebHookClient(config)))
         logger.Info("Commenter set")
+
+    member x.StopCommenter() =
+        match commenter with
+        | Some commenter ->
+            commenter.Dispose()
+        | None ->
+            ()
 
     interface CampaignServerApi with
         member x.Init(apis) =
@@ -611,10 +625,12 @@ type Plugin() =
                 | Some x -> x
             try
                 let config = loadConfigFile configFile
+                x.StopCommenter()
+                x.StopWebHookClient()
+                let res = Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
                 x.StartWebHookClient(config)
                 x.StartCommenter(config)
-                Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
-                |> Choice1Of2
+                Choice1Of2 res
             with
             | e ->
                 sprintf "Failed to reset campaign: '%s'" e.Message
