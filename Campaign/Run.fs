@@ -498,10 +498,8 @@ module MissionLogParsing =
         ParaDrops : ParaDropResult list
         FerryPlanes : Choice<PlaneFerryOrder, PlaneFerryOrder, PlaneFerryOrder> list
         BattleKills : BattleParticipantKilled list
+        Blocked : VehiclesBlocked list
     }
-    with
-        // BREAKING: add as field
-        member this.Blocked : VehiclesBlocked list= []
 
     let backupFiles config =
         let outputDir = config.OutputDir
@@ -690,6 +688,7 @@ module MissionLogParsing =
         let paraDrops = extractParaDrops world state battles entries |> AsyncSeq.toList
         let planeFerryEvents = extractFerryPlanes (axisOrders.PlaneFerries @ alliesOrders.PlaneFerries) entries |> AsyncSeq.toList
         let battleKills = extractBattleDamages world state battles entries |> AsyncSeq.toList
+        let blocked = extractBlockedVehicles (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entries |> AsyncSeq.toList
         let results =
             { Entries = entriesAsStrings
               Shipments = shipments
