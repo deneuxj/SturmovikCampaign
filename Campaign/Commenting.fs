@@ -81,32 +81,37 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         async {
             match batched with
             | [] ->
-                let! ev = Async.AwaitEvent watcher.Changed
-                let entries2 =
-                    try
-                        [
-                            for line in File.ReadAllLines(ev.FullPath) do
-                                if not(alreadyHandled.Contains line) then
-                                    yield line, LogEntry.Parse(line)
-                                else
-                                    logger.Debug(sprintf "Skipping log line %s" line)
-                        ]
-                    with
-                    | e ->
-                        logger.Warn(sprintf "Failed to parse '%s' because '%s'" ev.FullPath e.Message)
-                        []
-                let alreadyHandled =
-                    entries2
-                    |> Seq.map fst
-                    |> Seq.fold (fun alreadyHandled x -> Set.add x alreadyHandled) alreadyHandled
-                let batched =
-                    entries2
-                    |> List.map snd
-                // We are initially called with a batch corresponding to the initial entries.
-                // If we are in this branch, it means the initial batch has been consumed by now, or it was empty.
-                // In either case, returning Some(None, state) will generate a None, which will be recognized as the signal to start calling the handlers.
-                let notifyStartEmittingMessages = None
-                return Some(notifyStartEmittingMessages, (batched, alreadyHandled))
+                let! ev = Async.AwaitEvent(watcher.Changed, cancelAction=fun() -> logger.Warn("AwaitEvent on game log watcher was cancelled"))
+                match ev with
+                | null ->
+                    logger.Warn("Null value from await on watcher.Changed")
+                    return None
+                | _ ->
+                    let entries2 =
+                        try
+                            [
+                                for line in File.ReadAllLines(ev.FullPath) do
+                                    if not(alreadyHandled.Contains line) then
+                                        yield line, LogEntry.Parse(line)
+                                    else
+                                        logger.Debug(sprintf "Skipping log line %s" line)
+                            ]
+                        with
+                        | e ->
+                            logger.Warn(sprintf "Failed to parse '%s' because '%s'" ev.FullPath e.Message)
+                            []
+                    let alreadyHandled =
+                        entries2
+                        |> Seq.map fst
+                        |> Seq.fold (fun alreadyHandled x -> Set.add x alreadyHandled) alreadyHandled
+                    let batched =
+                        entries2
+                        |> List.map snd
+                    // We are initially called with a batch corresponding to the initial entries.
+                    // If we are in this branch, it means the initial batch has been consumed by now, or it was empty.
+                    // In either case, returning Some(None, state) will generate a None, which will be recognized as the signal to start calling the handlers.
+                    let notifyStartEmittingMessages = None
+                    return Some(notifyStartEmittingMessages, (batched, alreadyHandled))
             | x :: xs ->
                 return Some(Some x, (xs, alreadyHandled))
         }
