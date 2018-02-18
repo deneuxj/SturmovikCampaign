@@ -81,16 +81,12 @@ let getMovementPathVertices (world : World) (state : WorldState) (orders : Movem
                     | ColBySeaShip -> 8
                 let pathVertices =
                     path
-                    |> List.map (fun (v, yori, side) ->
-                        { Pos = v
-                          Ori = yori
-                          Radius = 100
-                          Speed = convoySpeed
-                          Priority = 1
-                          SpawnSide = side
-                          Role = Intermediate //BREAKING store this info in the world's paths
-                        }
-                    )
+                    |> List.map (fun v ->
+                        { v with
+                            Radius = 100
+                            Speed = convoySpeed
+                            Priority = 1
+                        })
                 let targetTravelTime = 1.0f // hours
                 let pathVertices =
                     match order.Transport with

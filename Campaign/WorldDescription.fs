@@ -14,6 +14,7 @@ open Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open SturmovikMission.Blocks.VirtualConvoy.Types
+open SturmovikMission.Blocks.VirtualConvoy.Factory
 
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
@@ -154,7 +155,7 @@ type Path = {
     StartId : RegionId
     EndId : RegionId
     /// Ordered list of path vertices, composed of a location and an orientation. The orientation is important for properly orienting trains and vehicle columns.
-    Locations : (Vector2 * float32 * SpawnSide) list
+    Locations : PathVertex list
 }
 with
     static member ExtractPaths(waypoints : T.MCU_Waypoint list, regions : Region list) =
@@ -162,22 +163,38 @@ with
             waypoints
             |> List.map (fun wp -> wp.GetIndex().Value, wp)
             |> dict
+        let spawnSide (wp : T.MCU_Waypoint) =
+            match wp.GetName().Value with
+            | "EndR"
+            | "StartR" -> Right
+            | "EndL"
+            | "StartL" -> Left
+            | _ -> Center
+        let role (wp : T.MCU_Waypoint) =
+            match wp.GetName().Value with
+            | "BeforeBridge"
+            | "AfterBridge" -> NarrowZoneEdge
+            | _ -> Intermediate
+        let mkPathVertex(wp : T.MCU_Waypoint) =
+            { Pos = Vector2.FromPos wp
+              Ori = float32 (wp.GetYOri().Value)
+              Radius = wp.GetArea().Value
+              Speed = wp.GetSpeed().Value
+              Priority = wp.GetPriority().Value
+              SpawnSide = spawnSide wp
+              Role = role wp
+            }
         let buildPath(start : T.MCU_Waypoint) =
             let rec work (current : T.MCU_Waypoint) path =
                 match current.GetName().Value with
-                | "EndL" -> (current, Left) :: path
-                | "EndR" -> (current, Right) :: path
-                | "End" -> (current, Center) :: path
+                | "End"
+                | "EndR"
+                | "EndL" -> mkPathVertex current :: path
                 | _ ->
                     match current.GetTargets().Value with
                     | [next] ->
-                        let spawnSide =
-                            match current.GetName().Value with
-                            | "StartR" -> Right
-                            | "StartL" -> Left
-                            | _ -> Center
                         match waypointsById.TryGetValue(next) with
-                        | true, next -> work next ((current, spawnSide) :: path)
+                        | true, next -> work next (mkPathVertex current :: path)
                         | false, _ -> failwithf "Failed building path because there is no waypoints with id '%d'" next
                     | [] ->
                         failwithf "Failed to build path because node '%d' has no successor" (current.GetIndex().Value)
@@ -191,7 +208,7 @@ with
             let endRegion =
                 match path with
                 | finish :: reversed ->
-                    match regions |> List.tryFind (fun area -> Vector2.FromPos(fst finish).IsInConvexPolygon(area.Boundary)) with
+                    match regions |> List.tryFind (fun area -> finish.Pos.IsInConvexPolygon(area.Boundary)) with
                     | None -> failwithf "Failed to build path because end node '%d' is not in a region" (start.GetIndex().Value)
                     | Some x -> x
                 | _ ->
@@ -199,7 +216,6 @@ with
             let locations =
                 path
                 |> List.rev
-                |> List.map (fun (wp, side) -> Vector2.FromPos wp, float32(wp.GetYOri().Value), side)
             { StartId = startRegion.RegionId
               EndId = endRegion.RegionId
               Locations = locations
@@ -220,7 +236,11 @@ with
             lazy (
                 this.Locations
                 |> List.rev
-                |> List.map (fun (pos, yori, side) -> pos, (if yori < 180.0f then yori + 180.0f else yori - 180.0f), side.Mirrored))
+                |> List.map (fun v ->
+                    { v with
+                        Ori = if v.Ori < 180.0f then v.Ori + 180.0f else v.Ori - 180.0f
+                        SpawnSide = v.SpawnSide.Mirrored
+                    }))
             |> Some
         else
             None

@@ -298,8 +298,8 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
         let mkRoadTravelArrow(startRegion : RegionId, endRegion : RegionId, color, numVehicles : int) =
             match world.Roads |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
-                let start, _, _ = x.Value.Head
-                let tip, _, _ = List.last x.Value
+                let start = x.Value.Head.Pos
+                let tip = (List.last x.Value).Pos
                 let width =
                     let x = (float32 numVehicles) / 15.0f |> min 1.0f
                     computeArrowWidth x
@@ -310,8 +310,8 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
         let mkRailTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
             match world.Rails |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
-                let start, _, _ = x.Value.Head
-                let tip, _, _ = List.last x.Value
+                let start = x.Value.Head.Pos
+                let tip = (List.last x.Value).Pos
                 let width =
                     let x = (qty / Orders.ResupplyOrder.TrainCapacity) |> min 1.0f
                     computeArrowWidth x
@@ -322,8 +322,8 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
         let mkWaterTravelArrow(startRegion : RegionId, endRegion : RegionId, color, qty) =
             match world.SeaWays @ world.RiverWays |> List.tryPick (fun path -> path.MatchesEndpoints(startRegion, endRegion)) with
             | Some x ->
-                let start, _, _ = x.Value.Head
-                let tip, _, _ = List.last x.Value
+                let start = x.Value.Head.Pos
+                let tip = (List.last x.Value).Pos
                 let width =
                     let x = (qty / Orders.ResupplyOrder.ShipCapacity) |> min 1.0f
                     computeArrowWidth x
