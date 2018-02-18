@@ -90,18 +90,18 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                     noobScore.TryFind player
                     |> Option.defaultValue 0.0f
                 let newScore = old + score
+                noobScore <- Map.add player newScore noobScore
                 // Send notification when the player passes an int boundary (e.g. 1.5 -> 2.1)
                 if floor newScore > floor old then
                     yield {
                         Player = player
-                        Decision = Informed (sprintf "%1f wrecking penalty" score)
+                        Decision = Informed (sprintf "%3.1f wrecking penalty" newScore)
                     }
-                noobScore <- Map.add player newScore noobScore
-                if newScore > config.MaxNoobScore then
-                    yield {
-                        Player = player
-                        Decision = Informed "wrecking limit exceeded"
-                    }
+                //if newScore > config.MaxNoobScore then
+                    //yield {
+                    //    Player = player
+                    //    Decision = Informed "wrecking limit exceeded"
+                    //}
                     //yield {
                     //    Player = player
                     //    Decision = Banned config.NoobBanDuration
@@ -205,6 +205,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                                     |> max 0.0f
                             else
                                 0.0f
+                        logger.Info(sprintf "Wreck penalty: id = %d, factor = %f, damage = %f" damage.TargetId factor damage.Damage)
                         let extraNoobScore = factor * damage.Damage
                         if extraNoobScore > 0.0f then
                             yield! addNoobScore player extraNoobScore
