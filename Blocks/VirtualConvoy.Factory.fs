@@ -148,7 +148,7 @@ with
                         | _ -> None
                     match wp with
                     | Some wp ->
-                        let conj = Conjunction.Create(store, v.Pos + Vector2(0.0f, 100.0f))
+                        let conj = Conjunction.Create(store, v.Pos + Vector2(0.0f, 100.0f)).MakeInitiallyFalse(store)
                         let instance = BridgeDestroyedConjInstance(wp, bridge.Index)
                         bridge.OnEvents <-
                             { Mcu.Type = int Mcu.EventTypes.OnKilled

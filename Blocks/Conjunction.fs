@@ -49,3 +49,20 @@ with
           SomeFalse = someFalse
           All = groupFromList group
         }
+
+    /// Clear A and B at mission start.
+    member this.MakeInitiallyFalse(store : NumericalIdentifiers.IdStore) =
+        let initially = newMissionBegin 1
+        (Vector2.FromMcu(this.ClearA.Pos) - Vector2(0.0f, 100.0f)).AssignTo(initially.Pos)
+        let subst = Mcu.substId <| store.GetIdMapper()
+        subst initially
+        Mcu.addTargetLink initially this.ClearA.Index
+        Mcu.addTargetLink initially this.ClearB.Index
+        { this with
+            All =
+                { new IMcuGroup with
+                      member x.Content: Mcu.McuBase list = upcast initially :: this.All.Content
+                      member x.LcStrings: (int * string) list = this.All.LcStrings
+                      member x.SubGroups: IMcuGroup list = this.All.SubGroups
+                }
+        }
