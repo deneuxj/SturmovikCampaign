@@ -176,6 +176,7 @@ module Support =
                         [ "Mission has ended"
                           "Actions past this point will not affect the campaign"
                           "Note: personal stats keep being collected until the round ends"
+                          "Note: friendly fire and wrecking are still being watched and penalized"
                         ]
                         |> support.ServerControl.MessageAll
                     let! missionLogEntries =
