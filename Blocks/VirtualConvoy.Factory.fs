@@ -29,8 +29,15 @@ type BridgeDestroyedConjInstance = BridgeDestroyedConjInstance of WaypointInstan
 /// Narrow sections are located between pairs of waypoints called BeforeBridge and AfterBridge in the scenario.
 /// Bridges may also be located at other waypoints.
 type PathVertexRole =
-    | NarrowZoneEdge
+    | NarrowZoneEntrance
+    | NarrowZoneExit
     | Intermediate
+with
+    member this.Opposite =
+        match this with
+        | NarrowZoneEntrance -> NarrowZoneExit
+        | NarrowZoneExit -> NarrowZoneEntrance
+        | Intermediate -> Intermediate
 
 /// <summary>
 /// Type used in the arguments of VirtualConvoy.Create. Denotes one vertex of the path of the virtual convoy.
@@ -44,14 +51,6 @@ type PathVertex =
       SpawnSide : SpawnSide
       Role : PathVertexRole
     }
-
-/// <summary>
-/// Assignment of a bridge to a single path vertex or to a pair of consecutive vertices.
-/// Used to notify a convoy to stop when a bridge is destroyed.
-/// </summary>
-type BridgeAssigment =
-    | AtVertex of PathVertex
-    | BetweenVertices of PathVertex * PathVertex
 
 /// <summary>
 /// A virtual convoy, i.e. a convoy that does not actually exist until an enemy approaches its
