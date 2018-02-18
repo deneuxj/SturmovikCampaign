@@ -140,9 +140,9 @@ with
           IconCover = iconCover
           IconAttack = iconAttack
           All = { new McuUtil.IMcuGroup with
-                      member x.Content = (wps |> List.map(fun x -> upcast x)) @ group
+                      member x.Content =  (wps |> List.map(fun x -> upcast x)) @ group
                       member x.LcStrings = []
-                      member x.SubGroups = [ iconCover.All; iconAttack.All ]
+                      member x.SubGroups = (conds.Values |> List.concat |> List.map (fun x -> x.All)) @ [ iconCover.All; iconAttack.All ]
           }
         }
 
