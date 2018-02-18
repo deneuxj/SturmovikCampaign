@@ -523,6 +523,12 @@ type World = {
     /// Weather offset: affects how late or early the weather pattern is.
     WeatherDaysOffset : float
     SubBlockSpecs : SubBlockSpec list
+    /// Fraction of cargo reserved for bombs in supply flights
+    CargoReservedForBombs : float32
+    /// Number of planes of each kind the AI will attempt to put at each airfield when planning transfers.
+    TransferNumPlaneTarget : int
+    /// Target for production: Number of tanks in each frontline region
+    TankTargetNumber : int
 }
 with
     static member Create(planeSet, strategyFile, planeProduction, subBlocksFile : string) =
@@ -589,6 +595,9 @@ with
           RiverWays = riverWays
           WeatherDaysOffset = 0.0
           SubBlockSpecs = subBlockSpecs
+          CargoReservedForBombs = 0.2f
+          TransferNumPlaneTarget = 8
+          TankTargetNumber = 30
         }
 
     member this.GetClosestAirfield(pos : Vector2) =
@@ -614,17 +623,6 @@ with
         |> Seq.filter (fun area -> area.Home = defender)
         |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
 
-    // BREAKING: add as field
-    /// Fraction of cargo in planes reserved for bombs
-    member this.CargoReservedForBombs = 0.2f
-
-    // BREAKING: add as field
-    /// Number of planes of each kind the AI will attempt to put at each airfield when planning transfers.
-    member this.TransferNumPlaneTarget = 8
-
-    // BREAKING: add as field
-    /// Number of tanks per region on the frontline
-    member this.TankTargetNumber = 30
 
 open Util
 
