@@ -198,10 +198,10 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                                     // Did not even take off, apply extra penalty
                                     2.0f
                                 | Some t ->
-                                    // 1.0 right after take-off, linear decrease to 0 after 30min
+                                    // 2.0 right after take-off, linear decrease to 0 after 15min
                                     let delta = float32 (damage.Timestamp - t).TotalMinutes
-                                    1.0f - delta / 30.0f
-                                    |> min 1.0f
+                                    2.0f - delta / 7.5f
+                                    |> min 2.0f
                                     |> max 0.0f
                             else
                                 0.0f
