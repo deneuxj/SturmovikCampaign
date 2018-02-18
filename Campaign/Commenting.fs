@@ -385,8 +385,17 @@ type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onSt
                         return! loadWorld()
                     else
                         use worldFile = File.OpenText(worldPath)
-                        let world = serializer.Deserialize<World>(worldFile)
-                        return world
+                        let world =
+                            try
+                                serializer.Deserialize<World>(worldFile)
+                                |> Some
+                            with
+                            | _ -> None
+                        match world with
+                        | Some world -> return world
+                        | None ->
+                            do! Async.Sleep(15000)
+                            return! loadWorld()
                 }
             let! world = loadWorld()
             return! work world None
