@@ -506,6 +506,7 @@ type SubBlockFile = YamlConfig<sampleSubBlocksFile>
 
 /// Packages all description data.
 type World = {
+    Map : string
     PlaneSet : PlaneSet
     Regions : Region list
     Roads : Path list
@@ -541,6 +542,7 @@ with
             |> List.ofSeq
         let s = Stream.FromFile strategyFile
         let data = T.GroupData(s)
+        let map = data.ListOfOptions.Head.GetGuiMap().Value
         let regions =
             let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
             let ammoStorages = List.concat [ data.GetGroup("Ammo").ListOfBlock; data.GetGroup("Storage").ListOfBlock ]
@@ -581,7 +583,8 @@ with
             let options = List.head data.ListOfOptions
             let h, m, s = options.GetTime().Value
             System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
-        { PlaneSet = planeSet
+        { Map = map
+          PlaneSet = planeSet
           Regions = regions
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
