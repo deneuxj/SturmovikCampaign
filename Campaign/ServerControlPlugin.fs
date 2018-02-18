@@ -20,6 +20,8 @@ open Campaign
 open Campaign.PlayerDiscipline
 
 module Support =
+    open ploggy
+
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
     let findRunningServers(config) =
@@ -313,6 +315,17 @@ module Support =
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
                 let action = status.GetAsync(support, config, serverProc, announceResults, announceWeather, announceWorldState)
+                try
+                    let serializer = FsPickler.CreateXmlSerializer(indent = true)
+                    use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                    use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                    let world = serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
+                    let state = serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile)
+                    // The main intent is to generate the situation map.
+                    announceWorldState(world, state)
+                with
+                | _ -> support.Logging.LogError("Failed to generate situational map")
+
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         let status =
@@ -376,6 +389,37 @@ module Support =
             return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
+
+    /// Build a graphical representation of the strategic situation
+    let mkMapGraphics(world : World, state : WorldState) : MapGraphics.MapPackage =
+        let icons : MapGraphics.MapIcon list =
+            [
+                for reg, regState in List.zip world.Regions state.Regions do
+                    match regState.Owner with
+                    | Some coalition ->
+                        let numTanks = regState.NumVehicles |> Map.toSeq |> Seq.sumBy snd
+                        yield {
+                            Position = reg.Position
+                            Icon = MapGraphics.Base
+                            Color = if coalition = Axis then MapGraphics.Gray else MapGraphics.Red
+                            Label = Some (sprintf "%s (%d tanks, %3.0f supplies)" (string reg.RegionId) numTanks regState.Supplies)
+                            Depth = 0.0f
+                        }
+                    | None ->
+                        ()
+            ]
+        let map =
+            match world.Map with
+            | Contains "stalingrad" -> MapGraphics.Stalingrad
+            | Contains "moscow" -> MapGraphics.Moscow
+            | Contains "vluki" -> MapGraphics.VelikieLuki
+            | Contains "kuban" -> MapGraphics.Kuban
+            | _ -> MapGraphics.Stalingrad
+        { MapGraphics.MapPackage.Default with
+            Name = map
+            Icons = icons
+        }
+
 
 type Plugin() =
     let mutable support : SupportApis option = None
@@ -554,6 +598,11 @@ type Plugin() =
         match webHookClient with
         | Some hook -> postWorldState (queue, hook) arg
         | None -> ()
+        match support with
+        | Some support ->
+            support.MapGraphics.SetPackage(Support.mkMapGraphics(arg))
+        | None ->
+            ()
 
     member x.StartWebHookClient(config : Configuration) =
         let webHookUri = config.WebHook
