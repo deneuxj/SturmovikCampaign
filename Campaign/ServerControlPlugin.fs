@@ -208,7 +208,7 @@ module Support =
                     announceWeather weather
                     let! updatedState =
                         tryOrNotifyPlayers
-                            [ "Bad news, campaign updated failed"
+                            [ "Bad news, campaign update failed"
                               "Campaign is now halted"
                               "Sorry for the inconvenience" ]
                             (fun() -> Campaign.Run.MissionLogParsing.updateState(config, missionResults))
