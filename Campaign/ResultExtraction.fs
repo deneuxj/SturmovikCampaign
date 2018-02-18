@@ -530,7 +530,7 @@ let (|BuildingObjectType|_|) (s : string) =
 let (|StaticPlaneType|_|) (planeSet : PlaneSet) (s : string) =
     PlaneModel.AllModels planeSet
     |> List.tryPick(fun model ->
-        if s.Contains(model.StaticScriptModel.ShortName) then
+        if s.Contains(model.StaticScriptModel(planeSet).ShortName) then
             Some model
         else
             None
