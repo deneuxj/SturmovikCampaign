@@ -197,7 +197,11 @@ type Scheduler(configFile : string) =
 
     member this.ContinueOrReset(doReset) =
         let campaign = Campaign.ServerControlPlugin.Plugin() :> CampaignServerApi
-        campaign.Init { Logging = logging; ServerControl = serverCtl }
+        let gfx =
+            { new ServerRenderingApi with
+                  member this.SetPackage(arg1) = ()
+            }
+        campaign.Init { Logging = logging; ServerControl = serverCtl; MapGraphics = gfx }
         let task =
             if doReset then
                 campaign.Reset(configFile)
