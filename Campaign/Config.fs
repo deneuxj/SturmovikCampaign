@@ -69,9 +69,9 @@ with
             PlaneProduction = 1000.0f
             WebHook = ""
             MaxFriendlyFireEvents = 2
-            FriendlyFireBanDuration = 48
+            FriendlyFireBanDuration = 1
             MaxNoobScore = 3.0f
-            NoobBanDuration = 3
+            NoobBanDuration = 1
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
