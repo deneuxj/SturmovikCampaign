@@ -97,15 +97,15 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                         Player = player
                         Decision = Informed (sprintf "%3.1f wrecking penalty" newScore)
                     }
-                //if newScore > config.MaxNoobScore then
-                    //yield {
-                    //    Player = player
-                    //    Decision = Informed "wrecking limit exceeded"
-                    //}
-                    //yield {
-                    //    Player = player
-                    //    Decision = Banned config.NoobBanDuration
-                    //}
+                if newScore > config.MaxNoobScore then
+                    yield {
+                        Player = player
+                        Decision = Informed "wrecking limit exceeded"
+                    }
+                    yield {
+                        Player = player
+                        Decision = Banned config.NoobBanDuration
+                    }
             }
 
         for event in events do
