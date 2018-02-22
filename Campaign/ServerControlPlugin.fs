@@ -21,6 +21,7 @@ open Campaign.PlayerDiscipline
 
 module Support =
     open ploggy
+    open System.Numerics
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -408,6 +409,33 @@ module Support =
                     | None ->
                         ()
             ]
+        let sg = state.FastAccess
+        let areas : MapGraphics.MapArea list =
+            [
+                let segments = MapGraphics.Segment.CreateSegments(world, state)
+                let loops = MapGraphics.Segment.MakeLoops(state, segments)
+                for loop in loops do
+                    let color =
+                        match loop with
+                        | x :: _ ->
+                            match sg.GetRegion(x.Region).Owner with
+                            | Some Axis -> Some(Vector3(0.5f, 0.5f, 0.5f))
+                            | Some Allies -> Some(Vector3(1.0f, 0.0f, 0.0f))
+                            | None -> None
+                        | [] ->
+                            None
+                    match color with
+                    | Some color ->
+                        let boundary =
+                            [
+                                for segment in loop do
+                                    yield fst segment.Edge
+                                    yield snd segment.Edge
+                            ]
+                        yield { Boundaries = boundary; Color = color }
+                    | None ->
+                        ()
+            ]
         let map =
             match world.Map with
             | Contains "stalingrad" -> MapGraphics.Stalingrad
@@ -418,6 +446,7 @@ module Support =
         { MapGraphics.MapPackage.Default with
             Name = map
             Icons = icons
+            Areas = areas
         }
 
 

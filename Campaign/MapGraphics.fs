@@ -38,12 +38,108 @@ let getRepresentative (world : World) =
 type SegmentType =
     | OuterBorder of RegionId
     | InnerBorder of RegionId * RegionId
+with
+    member this.Region =
+        match this with
+        | OuterBorder r
+        | InnerBorder(r, _)  -> r
 
 /// Segment data.
 type Segment = {
     Kind : SegmentType
     Edge : Vector2 * Vector2
 }
+with
+    member this.Region = this.Kind.Region
+
+    /// Build segments at the border of regions
+    static member CreateSegments(world : World, state : WorldState) =
+        let wg = world.FastAccess
+        let sg = state.FastAccess
+        let segments =
+            [
+                let dist2 =
+                    let dist = 1000.0f
+                    dist * dist
+                for region in world.Regions do
+                    let state = sg.GetRegion(region.RegionId)
+                    let getCycled vertices =
+                        match vertices with
+                        | [] -> []
+                        | x :: _ -> vertices @ [x]
+                    let boundary = getCycled region.Boundary
+                    for (u1, u2) in Seq.pairwise boundary do
+                        let sharedEdges =
+                            seq {
+                                for next in region.Neighbours do
+                                    let nextRegion = wg.GetRegion(next)
+                                    let boundary2 = getCycled nextRegion.Boundary
+                                    let haveShared =
+                                        boundary2
+                                        |> Seq.pairwise
+                                        |> Seq.exists (fun (v1, v2) ->
+                                            (u2 - v1).LengthSquared() < dist2 &&
+                                            (u1 - v2).LengthSquared() < dist2
+                                        )
+                                    if haveShared then
+                                        yield {
+                                            Kind = InnerBorder(region.RegionId, next)
+                                            Edge = (u1, u2)
+                                        }
+                            }
+                        if Seq.isEmpty sharedEdges then
+                            yield {
+                                Kind = OuterBorder region.RegionId
+                                Edge = (u1, u2)
+                            }
+                        else
+                            yield Seq.head sharedEdges
+            ]
+        segments
+
+    /// Turn a list of segments to lits of loops, i.e. list of connected segments.
+    static member MakeLoops(state : WorldState, segments : Segment list) =
+        let sg = state.FastAccess
+        let rec pullString (bit : Segment) (working : Segment list) loop =
+            match working with
+            | [] -> bit :: loop, []
+            | _ :: _ ->
+                let owner = sg.GetRegion(bit.Region).Owner
+                let next =
+                    working
+                    |> List.tryFind (fun next ->
+                        let nextOwner = sg.GetRegion(next.Region).Owner
+                        let isBorder =
+                            match next.Kind with
+                            | OuterBorder _ -> true
+                            | InnerBorder(_, other) -> sg.GetRegion(other).Owner <> owner
+                        let isClose = ((fst next.Edge) - (snd bit.Edge)).Length() < 1000.0f
+                        isClose && nextOwner = owner && isBorder)
+                match next with
+                | Some next ->
+                    let working =
+                        working
+                        |> List.filter ((<>) next)
+                    pullString next working (bit :: loop)
+                | None ->
+                    bit :: loop, working
+        let rec work (working : Segment list) (loops : Segment list list) =
+            match working with
+            | [] -> loops
+            | start :: working ->
+                let proceed =
+                    match start.Kind with
+                    | OuterBorder _ ->
+                        true
+                    | InnerBorder(r1, r2) ->
+                        sg.GetRegion(r1).Owner <> sg.GetRegion(r2).Owner
+                if proceed then
+                    let loop, working = pullString start working []
+                    let loop = List.rev loop
+                    work working (loop :: loops)
+                else
+                    work working loops
+        work segments []
 
 type SturmovikMission.Blocks.MapGraphics.MapIcons with
     /// Render region boundaries
