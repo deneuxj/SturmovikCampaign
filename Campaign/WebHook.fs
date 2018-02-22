@@ -32,14 +32,17 @@ let toChat (client : WebClient, hookUri : System.Uri) message =
             None
     let responseHeaders =
         client.ResponseHeaders
-    let retryAfter =
+    let responseHeaders =
         seq {
             for i in 0..responseHeaders.Count-1 do
                 yield (responseHeaders.GetKey(i), responseHeaders.Get(i))
         }
-        |> Seq.tryFind(fun (k, v) -> k = "Retry-After")
-    match retryAfter with
-    | Some(_, delay) ->
+        |> Map.ofSeq
+    match responseHeaders.TryFind("retry-after") with
+    | Some delay ->
+        logger.Info(sprintf "Discord rate-limiting us, retry-after %s ms" delay)
+        for kvp in responseHeaders do
+            logger.Debug(sprintf "Header from discord: %s: %s" kvp.Key kvp.Value)
         match System.Int32.TryParse(delay) with
         | true, delay -> delay
         | false, _ -> 0
@@ -51,6 +54,7 @@ let startQueue() =
         let rec loop() =
             async {
                 let! msg = msg.Receive()
+                logger.Info(sprintf "Mailbox processor received message to send to Discord")
                 let delay = msg()
                 do! Async.Sleep(max delay 1000)
                 return! loop()
