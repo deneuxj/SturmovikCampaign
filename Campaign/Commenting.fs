@@ -183,10 +183,12 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 for event in AsyncSeq.mergeChoice3 takeOffsAndLandings damages battleDamages do
                     match event with
                     | Choice1Of3((TookOff { PlayerName = Some player; Coalition = coalition }) as tookOff) ->
+                        logger.Info("Take off event")
                         damageInflicted := Map.add player 0.0f<E> damageInflicted.Value
                         coalitionOf := Map.add player coalition coalitionOf.Value
                         yield tookOff, 0.0f<E>
                     | Choice1Of3((Landed { PlayerName = Some player }) as landed) ->
+                        logger.Info("Landed event")
                         let damage = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
                         damageInflicted := Map.remove player damageInflicted.Value
                         yield landed, damage
@@ -275,9 +277,11 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 async {
                     match event with
                     | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
+                        logger.Info(sprintf "%s took off" player)
                         let afCoalition = sg.GetRegion(wg.GetAirfield(x.Airfield).Region).Owner
                         return! handlers.OnTookOff(player, coalition, x.Airfield, afCoalition, x.Plane, x.Cargo)
                     | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
+                        logger.Info(sprintf "%s landed" player)
                         let afCoalition = sg.GetRegion(wg.GetAirfield(x.Airfield).Region).Owner
                         return! handlers.OnLanded(player, coalition, x.Airfield, afCoalition, x.Plane, x.Cargo, x.Health, damage)
                     | _ ->
