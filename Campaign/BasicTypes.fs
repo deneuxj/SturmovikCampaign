@@ -74,7 +74,7 @@ type ReferencePositions =
 
 open SturmovikMission.DataProvider.Parsing
 
-let private defaultDurability = 10000
+let private defaultDurability = 7000
 
 /// A static block model substring and a list of sub-block identifiers
 type SubBlockSpec = {
