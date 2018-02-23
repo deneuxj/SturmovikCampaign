@@ -86,7 +86,7 @@ module Support =
             | ExtractResults -> "extract results"
             | CampaignOver _ -> "terminate campaign"
             | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
-        member this.GetAsync(support : SupportApis, config, serverProc : Process option, announceResults, announceWeather, announceWorldState) =
+        member this.GetAsync(support : SupportApis, config, serverProc : Process option, announceResults, announceWeather, announceWorldState, updateMap) =
             let tryOrNotifyPlayers errorMessage action =
                 async {
                     let result =
@@ -248,6 +248,7 @@ module Support =
                         Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR, battleResults)
                         announceResults(axisAAR, alliesAAR, battleResults)
                         announceWorldState(world, newState)
+                        updateMap(world, newState)
                         return serverProc, DecideOrders
                 }
             | CampaignOver _ ->
@@ -278,7 +279,18 @@ module Support =
             else
                 GenerateMission
 
-    let start(support : SupportApis, config, status, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage) =
+    let loadWorldThenDo (support : SupportApis, config) action =
+        try
+            let serializer = FsPickler.CreateXmlSerializer(indent = true)
+            use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+            use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+            let world = serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
+            let state = serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile)
+            action(world, state)
+        with
+        | _ -> support.Logging.LogError("Failed to generate situational map")
+
+    let start(support : SupportApis, config, status, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -315,18 +327,7 @@ module Support =
                                 | inner -> inner
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
-                let action = status.GetAsync(support, config, serverProc, announceResults, announceWeather, announceWorldState)
-                try
-                    let serializer = FsPickler.CreateXmlSerializer(indent = true)
-                    use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
-                    use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
-                    let world = serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
-                    let state = serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile)
-                    // The main intent is to generate the situation map.
-                    announceWorldState(world, state)
-                with
-                | _ -> support.Logging.LogError("Failed to generate situational map")
-
+                let action = status.GetAsync(support, config, serverProc, announceResults, announceWeather, announceWorldState, updateMap)
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         let status =
@@ -366,7 +367,7 @@ module Support =
             | _ -> None
         work status proc
 
-    let reset(support : SupportApis, config : Configuration, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage) =
+    let reset(support : SupportApis, config : Configuration, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap) =
         async {
             // Delete log files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -386,8 +387,9 @@ module Support =
             ignore <| Campaign.Run.WeatherComputation.run(config, startDate)
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
+            loadWorldThenDo (support, config) updateMap
             // Start campaign
-            return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
+            return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
@@ -627,6 +629,8 @@ type Plugin() =
         match webHookClient with
         | Some hook -> postWorldState (queue, hook) arg
         | None -> ()
+
+    let updateMap arg =
         match support with
         | Some support ->
             support.MapGraphics.SetPackage(Support.mkMapGraphics(arg))
@@ -689,7 +693,7 @@ type Plugin() =
                 let config = loadConfigFile configFile
                 x.StartWebHookClient(config)
                 x.StartCommenter(config)
-                Support.start(support, config, None, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
+                Support.start(support, config, None, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
                 |> Choice1Of2
             with
             | e ->
@@ -705,7 +709,7 @@ type Plugin() =
                 let config = loadConfigFile configFile
                 x.StopCommenter()
                 x.StopWebHookClient()
-                let res = Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage)
+                let res = Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
                 x.StartWebHookClient(config)
                 x.StartCommenter(config)
                 Choice1Of2 res
