@@ -65,7 +65,7 @@ with
             accumulatedDamages
             |> Seq.pairwise
             |> Seq.sumBy (fun (d0, d1) -> if d0 < threshold && d1 >= threshold then 1 else 0)
-        logger.Info(sprintf "Someone is up to %d friendly damage excesses" numExcesses)
+        logger.Debug(sprintf "Someone is up to %d friendly damage excesses" numExcesses)
         if numExcesses >= config.MaxFriendlyFireEvents then
             Some(Banned config.FriendlyFireBanDuration)
         else
@@ -205,7 +205,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                                     |> max 0.0f
                             else
                                 0.0f
-                        logger.Info(sprintf "Wreck penalty: id = %d, factor = %f, damage = %f" damage.TargetId factor damage.Damage)
+                        logger.Debug(sprintf "Wreck penalty: id = %d, factor = %f, damage = %f" damage.TargetId factor damage.Damage)
                         let extraNoobScore = factor * damage.Damage
                         if extraNoobScore > 0.0f then
                             yield! addNoobScore player extraNoobScore
