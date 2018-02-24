@@ -3,3 +3,5 @@
 **/obj/
 .nuget/
 packages/
+SturmovikCampaign-*.zip
+SturmovikCampaign-*/
