@@ -1,5 +1,5 @@
 ﻿// SturmovikCampaign, a dynamic persistent campaign for IL-2 Sturmovik: Battle of Stalingrad
-// Copyright (C) 2018 Johann Deneu <johann.deneux@gmail.com>
+// Copyright (C) 2018 Johann Deneux <johann.deneux@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
