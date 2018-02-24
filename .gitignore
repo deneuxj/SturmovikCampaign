@@ -5,3 +5,4 @@
 packages/
 SturmovikCampaign-*.zip
 SturmovikCampaign-*/
+Campaign/Configuration.fsx
