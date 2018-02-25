@@ -272,7 +272,7 @@ type TookOff = {
     PlaneId : int
     Airfield : AirfieldId
     Plane : PlaneModel
-    Cargo : float32<E>
+    Cargo : float32<K>
     BombLoad : float32<K>
     PlayerName : string option
     Coalition : CoalitionId option
@@ -283,15 +283,12 @@ type Landed = {
     Airfield : AirfieldId
     Plane : PlaneModel
     Health : float32
-    Cargo : float32<E> // FIXME: Measure cargo in K instead.
+    Cargo : float32<K>
     PlayerName : string option
     Coalition : CoalitionId option
 }
 with
     static member MaxDistanceFromAirfield = 5000.0f
-    /// Amount of supplies when cargo is used for supplies and repairs
-    member this.SuppliesCargo =
-        cargoCost * this.Cargo / bombCost
 
 let (|TookOff|Landed|) =
     function
@@ -324,7 +321,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     | None -> 1.0f
                 let cargoAmount =
                     cargo.Value.TryFind vehicle
-                    |> Option.defaultVal 0.0f<E>
+                    |> Option.defaultVal 0.0f<K>
                 cargo := cargo.Value.Remove vehicle
                 ongoingFlight := ongoingFlight.Value.Remove vehicle
                 Some { PlaneId = vehicle; Airfield = af; Plane = plane; Health = health; Cargo = cargoAmount; PlayerName = None; Coalition = sg.GetRegion(wg.GetAirfield(af).Region).Owner }
@@ -358,7 +355,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 | PlaneObjectType plane when plane.Roles.Contains CargoTransporter ->
                     let modmask, payload = plane.CargoPayload
                     if playerPlane.Payload = payload then
-                        cargo := Map.add playerPlane.VehicleId (plane.CargoCapacity * bombCost) cargo.Value
+                        cargo := Map.add playerPlane.VehicleId plane.CargoCapacity cargo.Value
                 | _ ->
                     ()
                 match playerPlane.VehicleType with
@@ -377,7 +374,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 | Some plane ->
                     let cargo =
                         cargo.Value.TryFind takeOff.VehicleId
-                        |> Option.defaultVal 0.0f<E>
+                        |> Option.defaultVal 0.0f<K>
                     let bombLoad =
                         bombLoad.Value.TryFind takeOff.VehicleId
                         |> Option.defaultVal 0.0f<K>
@@ -417,7 +414,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                                 health
                         let cargoAmount =
                             cargo.Value.TryFind landing.VehicleId
-                            |> Option.defaultVal 0.0f<E>
+                            |> Option.defaultVal 0.0f<K>
                         cargo := cargo.Value.Remove landing.VehicleId
                         let pilot, coalition =
                             match planePilot.Value.TryFind landing.VehicleId with

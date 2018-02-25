@@ -377,7 +377,7 @@ let computeSuppliesProduced (newSupplies : Resupplied list) =
 /// Compute supplies delivered by air cargo in each region
 let computeCargoSupplies (wg : WorldFastAccess) (landed : Landed list) =
     landed
-    |> List.map (fun landed -> wg.GetAirfield(landed.Airfield).Region, landed.SuppliesCargo)
+    |> List.map (fun landed -> wg.GetAirfield(landed.Airfield).Region, landed.Cargo)
     |> List.groupBy fst
     |> List.map (fun (af, xs) -> af, xs |> List.sumBy snd)
     |> Map.ofList
@@ -749,19 +749,18 @@ let applyDamagesAndResupplies (mustConvertCapturedPlanes : bool) (dt : float32<H
     // Cargo deliveries
     let newCargo =
         computeCargoSupplies wg cargo
-        |> Map.map (fun _ qty -> qty * (1.0f - world.CargoReservedForBombs))
+        |> Map.map (fun _ qty -> bombCost * qty * (1.0f - world.CargoReservedForBombs))
     let data = (newCargo, storageHealLimit, productionHealLimit, airfieldHealLimit)
     let state, (cargoLeft, _, _, _) = applyResupplies dt world state data
     // Bombs
     let bombCargo =
         computeCargoSupplies wg cargo
         |> Map.map (fun r qty ->
+            let supplies = qty * bombCost
             let suppliesLeft =
                 Map.tryFind r cargoLeft
                 |> Option.defaultValue 0.0f<E>
-            let bombsLeft = bombCost * suppliesLeft / cargoCost
-            let qty = bombCost * qty / cargoCost
-            bombsLeft + qty * world.CargoReservedForBombs)
+            suppliesLeft + supplies * world.CargoReservedForBombs)
     let state = distributeCargo world state bombCargo
     state
 
@@ -782,7 +781,7 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
                 oldPlaneValue - 1.0f |> max 0.0f
             let newPlanes =
                 Map.add takeOff.Plane newPlaneValue af.NumPlanes
-            Map.add takeOff.Airfield { af with NumPlanes = newPlanes; Supplies = af.Supplies - takeOff.Cargo - takeOff.BombLoad * bombCost } airfields
+            Map.add takeOff.Airfield { af with NumPlanes = newPlanes; Supplies = af.Supplies - takeOff.Cargo * bombCost - takeOff.BombLoad * bombCost } airfields
         ) airfields
     let airfieldsAfterLandings =
         landings

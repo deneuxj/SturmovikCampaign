@@ -39,9 +39,9 @@ let private logger = NLog.LogManager.GetCurrentClassLogger()
 
 type EventHandlers =
     // player name, coalition, airfield, coalition of airfield, plane, cargo
-    { OnTookOff : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<E> -> Async<unit>
+    { OnTookOff : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<K> -> Async<unit>
       // playername, coalition of player, airfield, coalition of airfield, plane, cargo, health, damages inflicted
-      OnLanded : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<E> * float32 * float32<E> -> Async<unit>
+      OnLanded : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<K> * float32 * float32<E> -> Async<unit>
       // Region name, attacker coalition
       OnMaxBattleDamageExceeded : string * CoalitionId -> Async<unit>
       // A player was banned or kicked

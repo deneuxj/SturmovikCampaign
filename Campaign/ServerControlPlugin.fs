@@ -495,13 +495,13 @@ type Plugin() =
         | Some hook -> postMessage (queue, hook) message
         | None -> ()
 
-    let announceTakeOffToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, afCoalition : CoalitionId option, plane : PlaneModel, cargo : float32<E>) =
+    let announceTakeOffToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, afCoalition : CoalitionId option, plane : PlaneModel, cargo : float32<K>) =
         match support with
         | Some support ->
             async {
                 let atEnemy = Some coalition.Other = afCoalition
                 let cargo =
-                    if cargo > 0.0f<E> then
+                    if cargo > 0.0f<K> then
                         sprintf " with %3.0fkg of cargo" (cargo / bombCost)
                     else
                         ""
@@ -535,7 +535,7 @@ type Plugin() =
         | None ->
             async { return () }
 
-    let announceLandingToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, afCoalition : CoalitionId option, plane : PlaneModel, cargo : float32<E>, health : float32, damageInflicted : float32<E>) =
+    let announceLandingToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, afCoalition : CoalitionId option, plane : PlaneModel, cargo : float32<K>, health : float32, damageInflicted : float32<E>) =
         match support with
         | Some support ->
             async {
@@ -550,8 +550,8 @@ type Plugin() =
                             sprintf "%s \"landed\" back at %s" player airfield.AirfieldName
                         else
                             let cargo =
-                                if cargo > 0.0f<E> then
-                                    sprintf " with %3.0fkg of cargo" (cargo / bombCost)
+                                if cargo > 0.0f<K> then
+                                    sprintf " with %3.0fkg of cargo" cargo
                                 else
                                     ""
                             let intro =
@@ -575,7 +575,7 @@ type Plugin() =
                             intro + difficulty + cargo
                     else
                         if damageInflicted = 0.0f<E> then
-                            if cargo > 0.0f<E> then
+                            if cargo > 0.0f<K> then
                                 sprintf "The enemy welcomes %s and his cargo" player
                             elif health > 0.9f then
                                 sprintf "%s has defected to the enemy at %s" player airfield.AirfieldName
