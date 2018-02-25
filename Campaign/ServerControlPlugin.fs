@@ -343,6 +343,7 @@ module Support =
                                 | inner -> inner
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
+                loadWorldThenDo(support, config) updateMap
                 let action = status.GetAsync(support, config, serverProc, announceResults, announceWeather, announceWorldState, updateMap)
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
