@@ -711,3 +711,9 @@ type DefenseArea with
             numFlak * cannonCost + numMg * heavyMachineGunCost // OK even for light machine guns, because there are actually four times as meany as MaxNumGuns (each light machine gun counts as 25% of a machine gun)
 
 let bombCost = 100.0f<E> / 1000.0f<K>
+
+type World
+with
+    member this.RegionAmmoCost(regionId : RegionId) =
+        this.AntiAirDefenses @ this.AntiTankDefenses
+        |> Seq.sumBy(fun area -> if area.Home = regionId then area.AmmoCost else 0.0f<E>)

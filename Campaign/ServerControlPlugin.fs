@@ -411,23 +411,50 @@ module Support =
 
     /// Build a graphical representation of the strategic situation
     let mkMapGraphics(world : World, state : WorldState) : MapGraphics.MapPackage =
+        let sg = state.FastAccess
+        let wg = world.FastAccess
         let icons : MapGraphics.MapIcon list =
             [
                 for reg, regState in List.zip world.Regions state.Regions do
                     match regState.Owner with
                     | Some coalition ->
                         let numTanks = regState.NumVehicles |> Map.toSeq |> Seq.sumBy snd
+                        let needs = world.RegionAmmoCost(reg.RegionId)
                         yield {
                             Position = reg.Position
                             Icon = MapGraphics.Base
                             Color = if coalition = Axis then MapGraphics.Gray else MapGraphics.Red
-                            Label = Some (sprintf "%s (%d tanks, %3.0f supplies)" (string reg.RegionId) numTanks regState.Supplies)
+                            Label = Some (sprintf "%s (%1.0f%%)" (string reg.RegionId) (100.0f * regState.Supplies / needs))
+                            Description = Some (sprintf "%d tanks" numTanks)
+                            Depth = 0.0f
+                        }
+                    | None ->
+                        ()
+                for bf, defending in Campaign.Battlefield.identifyBattleAreas world state do
+                    let bf = wg.GetAntiTankDefenses(bf)
+                    yield {
+                        Position = bf.Position.Pos
+                        Icon = MapGraphics.Clash
+                        Color = if defending = Axis then MapGraphics.Red else MapGraphics.Gray
+                        Label = None
+                        Description = None
+                        Depth = 0.0f
+                    }
+                for af, afState in List.zip world.Airfields state.Airfields do
+                    match sg.GetRegion(af.Region).Owner with
+                    | Some coalition ->
+                        let numPlanes = afState.NumPlanes |> Map.toSeq |> Seq.sumBy snd
+                        yield {
+                            Position = af.Pos
+                            Icon = MapGraphics.Airfield
+                            Color = if coalition = Axis then MapGraphics.Gray else MapGraphics.Red
+                            Label = None
+                            Description = Some (sprintf "%1.0f Kg %d planes" (afState.Supplies / bombCost) (int numPlanes))
                             Depth = 0.0f
                         }
                     | None ->
                         ()
             ]
-        let sg = state.FastAccess
         let areas : MapGraphics.MapArea list =
             [
                 let segments = MapGraphics.Segment.CreateSegments(world, state)
