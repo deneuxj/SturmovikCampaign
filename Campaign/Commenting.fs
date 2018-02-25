@@ -219,7 +219,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                                 | Production(region, idx) ->
                                     let pro = wg.GetRegion(region).Production.[idx]
                                     let lostDueToDamage =
-                                        0.5f * pro.Production(world.SubBlockSpecs, world.ProductionFactor) * pro.RepairCost(world.SubBlockSpecs) * damage.Data.Amount / healLimit
+                                        0.5f * pro.Production(world.SubBlockSpecs, world.ProductionFactor) * pro.RepairCost(world.SubBlockSpecs) * damage.Data.Amount / world.RepairSpeed
                                     pro.RepairCost(world.SubBlockSpecs) + pro.Storage world.SubBlockSpecs + lostDueToDamage / damage.Data.Amount
                                 | Storage(region, idx) ->
                                     let sto = wg.GetRegion(region).Storage.[idx]

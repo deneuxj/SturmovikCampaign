@@ -547,6 +547,8 @@ type World = {
     TransferNumPlaneTarget : int
     /// Target for production: Number of tanks in each frontline region
     TankTargetNumber : int
+    /// Max amount of repairs per hour
+    RepairSpeed : float32<E/H>
 }
 with
     static member Create(planeSet, strategyFile, planeProduction, subBlocksFile : string) =
@@ -618,6 +620,7 @@ with
           CargoReservedForBombs = 0.2f
           TransferNumPlaneTarget = 8
           TankTargetNumber = 30
+          RepairSpeed = 10.0f<E/H>
         }
 
     member this.GetClosestAirfield(pos : Vector2) =
@@ -708,4 +711,3 @@ type DefenseArea with
             numFlak * cannonCost + numMg * heavyMachineGunCost // OK even for light machine guns, because there are actually four times as meany as MaxNumGuns (each light machine gun counts as 25% of a machine gun)
 
 let bombCost = 100.0f<E> / 1000.0f<K>
-let healLimit = 200.0f<E/H>

@@ -527,7 +527,7 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
 let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newSupplies, storageHealLimit, productionHealLimit, airfieldHealLimit) =
     let wg = WorldFastAccess.Create world
     let regionNeeds = state.GetAmmoCostPerRegion world
-    let healRate = healLimit
+    let healRate = world.RepairSpeed
 
     // Repair and resupply regions
     let regionsAfterSupplies =
