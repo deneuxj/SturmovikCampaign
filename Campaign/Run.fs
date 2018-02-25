@@ -86,20 +86,24 @@ module Init =
             |> Seq.map (fun (region, canons) -> region, canons |> Seq.maxBy snd |> snd)
             |> Map.ofSeq
 
-        logger.Info(sprintf "%20s | %13s | %12s | %12s" "region" "Prod - cap" "AA" "AT")
-        for region in world.Regions do
-            let (RegionId regionName) = region.RegionId
-            let aa = Map.tryFind region.RegionId antiAirUsage |> fun x -> defaultArg x 0
-            let at = Map.tryFind region.RegionId antiTankUsage |> fun x -> defaultArg x 0
-            let cap = Map.tryFind region.RegionId capacity |> fun x -> defaultArg x 0.0f<E>
-            let prod = Map.tryFind region.RegionId production |> fun x -> defaultArg x 0.0f<E/H>
-            logger.Info(sprintf "%20s | %6.1f - %3.0f | %4d - %5.1f | %4d - %5.1f" regionName prod cap aa (100.0f * float32 aa / (cap / cannonCost)) at (100.0f * float32 at / (cap / cannonCost)))
+        let description =
+            [
+                yield sprintf "%20s | %13s | %12s | %12s" "region" "Prod - cap" "AA" "AT"
+                for region in world.Regions do
+                    let (RegionId regionName) = region.RegionId
+                    let aa = Map.tryFind region.RegionId antiAirUsage |> fun x -> defaultArg x 0
+                    let at = Map.tryFind region.RegionId antiTankUsage |> fun x -> defaultArg x 0
+                    let cap = Map.tryFind region.RegionId capacity |> fun x -> defaultArg x 0.0f<E>
+                    let prod = world.ProductionFactor * (Map.tryFind region.RegionId production |> fun x -> defaultArg x 0.0f<E/H>)
+                    yield sprintf "%20s | %6.1f - %3.0f | %4d - %5.1f | %4d - %5.1f" regionName prod cap aa (100.0f * float32 aa / (cap / cannonCost)) at (100.0f * float32 at / (cap / cannonCost))
+            ]
+            |> String.concat "\n"
 
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let outputDir = config.OutputDir
         use worldFile = File.CreateText(Path.Combine(outputDir, Filenames.world))
         serializer.Serialize(worldFile, world)
-        world.StartDate
+        world.StartDate, description
 
     let createState(config : Configuration) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)

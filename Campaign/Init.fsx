@@ -8,7 +8,7 @@
 
 open SturmovikMission.DataProvider
 
-let startDate =
+let startDate, description =
     try
         Campaign.Run.Init.createWorld Configuration.config
     with
@@ -17,6 +17,7 @@ let startDate =
         |> String.concat "\n"
         |> printfn "%s"
         raise e
+printfn "%s" description
 Campaign.Run.WeatherComputation.run(Configuration.config, startDate)
 Campaign.Run.Init.createState Configuration.config
 Campaign.Run.OrderDecision.run Configuration.config

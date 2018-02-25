@@ -399,7 +399,7 @@ module Support =
                 with
                 | _ -> ()
             // Initial campaign state
-            let startDate = Campaign.Run.Init.createWorld config
+            let startDate, _ = Campaign.Run.Init.createWorld config
             ignore <| Campaign.Run.WeatherComputation.run(config, startDate)
             Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
