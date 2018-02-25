@@ -420,5 +420,13 @@ with
         | _ ->
             None
 
+    /// <summary>
+    /// Cost of fully repairing something. Depends on the building's capacity (production or storage).
+    /// </summary>
     member this.RepairCost(subBlocksSpecs) =
-        this.Production(subBlocksSpecs, 1.0f) * 40.0f<H> + this.Storage(subBlocksSpecs) + 0.1f<E> * float32 (this.Durability subBlocksSpecs)
+        match this.Production(subBlocksSpecs, 1.0f), this.Storage(subBlocksSpecs) with
+        | prod, _ when prod > 0.0f<E/H> -> prod * 10.0f<H>
+        | _, storage when storage > 0.0f<E> -> storage
+        | _ -> 100.0f<E>
+        |> max 60.0f<E> // Assuming repair speed of 10.0f<E/H>, that's at least 6 hours to repair anything.
+        |> min 240.0f<E> // At most 24 hours to repair anything.
