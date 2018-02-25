@@ -81,7 +81,7 @@ with
             ServerSdsFile = @"nul"
             ScriptPath = @"nul"
             ThinkTime = 30
-            DesiredProduction = 6000.0f
+            DesiredProduction = 300.0f
             PlaneProduction = 1000.0f
             WebHook = ""
             MaxFriendlyFireEvents = 2
