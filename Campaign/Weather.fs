@@ -188,7 +188,7 @@ let getWeather random (t : System.DateTime) =
     let hLcl = (10.0 + temperature / 1.5) * 100.0 * (1.0 - 0.5 * humidity)
     let thickness = 100.0 + 500.0 * humidity
     { CloudDensity = humidity
-      CloudHeight = hLcl
+      CloudHeight = min hLcl 500.0
       CloudThickness = thickness
       Precipitation = humidity
       Wind = { Speed = windSpeed; Direction = windDirection }
