@@ -188,7 +188,7 @@ let getWeather random (t : System.DateTime) =
     let hLcl = (10.0 + temperature / 1.5) * 100.0 * (1.0 - 0.5 * humidity)
     let hLcl =
         if humidity > 0.75 then
-            min hLcl 500.0
+            min hLcl 700.0
         else
             hLcl
     let thickness = 100.0 + 500.0 * humidity
