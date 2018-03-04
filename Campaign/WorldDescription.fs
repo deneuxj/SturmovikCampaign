@@ -213,19 +213,19 @@ with
                         | true, next -> work next (mkPathVertex current :: path)
                         | false, _ -> failwithf "Failed building path because there is no waypoints with id '%d'" next
                     | [] ->
-                        failwithf "Failed to build path because node '%d' has no successor" (current.GetIndex().Value)
+                        failwithf "Failed to build path because node '%d' at (%4.0f, %4.0f) has no successor" (current.GetIndex().Value) (current.GetXPos().Value) (current.GetZPos().Value)
                     | _ :: _ ->
-                        failwithf "Failed to build path because node '%d' has too many successors" (current.GetIndex().Value)
+                        failwithf "Failed to build path because node '%d' at (%4.0f, %4.0f) has too many successors" (current.GetIndex().Value) (current.GetXPos().Value) (current.GetZPos().Value)
             let path = work start []
             let startRegion =
                 match regions |> List.tryFind (fun area -> Vector2.FromPos(start).IsInConvexPolygon(area.Boundary)) with
-                | None -> failwithf "Failed to build path because start node '%d' is not in a region" (start.GetIndex().Value)
+                | None -> failwithf "Failed to build path because start node '%d' at (%4.0f, %4.0f) is not in a region" (start.GetIndex().Value) (start.GetXPos().Value) (start.GetZPos().Value)
                 | Some x -> x
             let endRegion =
                 match path with
                 | finish :: reversed ->
                     match regions |> List.tryFind (fun area -> finish.Pos.IsInConvexPolygon(area.Boundary)) with
-                    | None -> failwithf "Failed to build path because end node '%d' is not in a region" (start.GetIndex().Value)
+                    | None -> failwithf "Failed to build path because end node '%d' at (%4.0f, %4.0f) is not in a region" (start.GetIndex().Value) (start.GetXPos().Value) (start.GetZPos().Value)
                     | Some x -> x
                 | _ ->
                     failwith "Failed to build path because it has no end node"
