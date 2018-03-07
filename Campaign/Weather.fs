@@ -190,7 +190,7 @@ let getWeather random (t : System.DateTime) =
         if humidity > 0.75 then
             max hLcl 700.0
         else
-            hLcl
+            max hLcl 200.0
     let thickness = 100.0 + 500.0 * humidity
     { CloudDensity = humidity
       CloudHeight = hLcl
