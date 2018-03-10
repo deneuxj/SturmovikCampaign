@@ -1,0 +1,45 @@
+﻿# Region numbers
+#    | Stalingrad = 0
+#    | VelikieLuki = 1
+#    | Moscow = 2
+#    | Kuban = 3
+
+# Static plane models, see Vehicles.mission
+#     | Axis:
+#             GermanStaBf109
+#             GermanStaBf109Net
+#             GermanStaBf109Open
+#             GermanStaBf109e7
+#             GermanStaBf109e7Net
+#             GermanStaBf109e7Open
+#             GermanStaAttacker
+#             GermanStaJu87
+#             GermanStaJu87Net
+#             GermanStaBomber
+#             GermanStaHe111h6
+#             GermanStaTransport
+#     | Allies:
+#             RussianStaI16
+#             RussianStaI16Net
+#             RussianStaLagg3
+#             RussianStaLagg3Net
+#             RussianStaLagg3W1
+#             RussianStaLagg3W2
+#             RussianStaMig3
+#             RussianStaMig3Net
+#             RussianStaYak1
+#             RussianStaYak1Net
+#             RussianStaYak1Open
+#             RussianStaAttacker
+#             RussianStaBomber
+
+PlaneSet:
+    Name: Stalingrad
+    Regions: [0, 1, 3]
+    StartDate: "1-Jan-1942"
+    Planes:
+        - Model: Bf109e7
+          Static: 3
+        - Model: Bf109f2
+          Static: 2
+          Mods: [[0], [1,99]]

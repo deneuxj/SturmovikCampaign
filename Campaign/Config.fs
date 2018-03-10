@@ -17,11 +17,17 @@
 module Campaign.Configuration
 
 open Campaign.BasicTypes
-open PlaneModel
+open Campaign.PlaneSet
+
 open FSharp.Configuration
+open System.IO
+open SturmovikMission.Blocks.Util.String
+open NLog
+
+let private logger = LogManager.GetCurrentClassLogger()
 
 type Configuration = {
-    PlaneSet : PlaneModel.PlaneSet
+    PlaneSet : PlaneSet
     StrategyFile : string
     Seed : int option
     WeatherDayMaxOffset : int
@@ -57,7 +63,7 @@ type Configuration = {
 with
     static member Default =
         {
-            PlaneSet = PlaneSet.Moscow
+            PlaneSet = PlaneSet.Default
             StrategyFile = "StrategySmall1.mission"
             Seed = None // Some 0
             WeatherDayMaxOffset = 15
@@ -110,14 +116,17 @@ let loadConfigFile (path : string) =
     let config = ConfigFile()
     config.Load(path)
     let values = config.Campaign
+    let planeSet =
+        try
+            let file = PlaneSetFile()
+            file.Load(Path.Combine(values.InstallPath, "planeSet-" + values.PlaneSet + ".yaml"))
+            PlaneSet.FromYaml(file.PlaneSet)
+        with
+        | e ->
+            logger.Error(sprintf "Failed to load planeset '%s': %s" values.PlaneSet e.Message)
+            PlaneSet.Default
     {
-        PlaneSet =
-            match values.PlaneSet with
-            | "Moscow" -> PlaneSet.Moscow
-            | "VelikieLuki" -> PlaneSet.VelikieLuki
-            | "EarlyAccess" -> PlaneSet.EarlyAccess
-            | "Stalingrad" -> PlaneSet.Stalingrad
-            | x -> failwithf "Invalid PlaneSet value: '%s'" x
+        PlaneSet = planeSet
         StrategyFile = values.StrategyFile
         Seed =
             match values.Seed with

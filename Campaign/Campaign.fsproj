@@ -54,6 +54,7 @@
     <Compile Include="Util.fs" />
     <Compile Include="BasicTypes.fs" />
     <Compile Include="PlaneModel.fs" />
+    <Compile Include="PlaneSet.fs" />
     <Compile Include="Config.fs" />
     <Compile Include="WorldDescription.fs" />
     <Compile Include="WorldState.fs" />
@@ -86,6 +87,9 @@
     <None Include="SampleConfig.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Content Include="PlaneSet-Moscow.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="Configuration.fsx" />
     <None Include="Select.fsx" />
     <None Include="Init.fsx" />
