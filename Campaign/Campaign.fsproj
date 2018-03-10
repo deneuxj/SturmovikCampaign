@@ -90,6 +90,18 @@
     <Content Include="PlaneSet-Moscow.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="PlaneSet-VLuki.yaml">
+      <Link>PlaneSet-VLuki.yaml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="PlaneSet-Stalingrad.yaml">
+      <Link>PlaneSet-Stalingrad.yaml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="PlaneSet-Kuban.yaml">
+      <Link>PlaneSet-Kuban.yaml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Configuration.fsx" />
     <None Include="Select.fsx" />
     <None Include="Init.fsx" />
