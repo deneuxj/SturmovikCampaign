@@ -90,6 +90,7 @@ with
 /// Watch game event logs for friendly fire, and emit bans when abuse is detected
 let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSeq<LogEntry>) =
     asyncSeq {
+        let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
         let mutable nameOf = Map.empty // Vehicle ID -> player ID
         let mutable coalitionOf = Map.empty // Vehicle ID -> coalition
         let mutable damagesOf = Map.empty // Vehicle ID -> friendly fire

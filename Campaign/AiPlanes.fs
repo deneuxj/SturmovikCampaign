@@ -258,7 +258,7 @@ with
 let mkAllAttackers (world : World) (state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
-    let attackers = PlaneModel.AllModels(world.PlaneSet) |> Seq.filter (fun plane -> plane.Roles.Contains GroundAttacker)
+    let attackers = world.PlaneSet.AllModels |> Seq.filter (fun plane -> plane.Roles.Contains GroundAttacker)
     seq {
         for af, afState in List.zip world.Airfields state.Airfields do
             for af2, afState2 in List.zip world.Airfields state.Airfields do

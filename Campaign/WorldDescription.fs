@@ -28,7 +28,7 @@ open SturmovikMission.DataProvider.Parsing
 
 open Util
 open Campaign.BasicTypes
-open Campaign.PlaneModel
+open Campaign.PlaneSet
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.VirtualConvoy.Factory
 

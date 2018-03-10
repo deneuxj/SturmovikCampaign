@@ -155,7 +155,7 @@ let createLandingDirections store (world : World) (state : WorldState) =
 
 let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
-        let modelScript = model.StaticScriptModel(world.PlaneSet)
+        let modelScript = world.PlaneSet.StaticPlaneModel model
         let mcus =
             let durability =
                 match model.PlaneType with

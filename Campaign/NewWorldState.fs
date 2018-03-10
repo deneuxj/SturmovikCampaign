@@ -99,7 +99,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                 if Some af.AirfieldId = rear then
                     let planeType = AutoOrder.pickPlaneToProduce coalition world state
                     // Pick the plane model of that type that has smallest number at the rear airfield
-                    let candidates = PlaneModel.AllPlanesOfType(world.PlaneSet, planeType, coalition) |> Array.shuffle random
+                    let candidates = world.PlaneSet.AllPlanesOfType(planeType, coalition) |> Array.shuffle random
                     let plane =
                         try
                             candidates
@@ -115,8 +115,8 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                         | Some _ -> plane
                         | None ->
                             try
-                                PlaneModel.AllModels world.PlaneSet
-                                |> List.minBy (fun _ -> random.NextDouble())
+                                world.PlaneSet.AllModels
+                                |> Seq.minBy (fun _ -> random.NextDouble())
                                 |> Some
                             with
                             | _ -> None

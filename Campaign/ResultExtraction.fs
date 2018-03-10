@@ -31,18 +31,19 @@ open Campaign.WorldState
 open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open Campaign.PlaneSet
 open Util
 open FSharp.Control
 open SturmovikMission.Blocks.Vehicles
 
 /// Match the object type strings in log events with plane models.
-let (|PlaneObjectType|_|) (s : string) =
+let planeObjectType (planeSet : PlaneSet) (s : string) =
     match s with
     | null -> None
     | s -> Some s
     |> Option.bind (fun s ->
-        PlaneModel.AllModels PlaneSet.All
-        |> List.tryFind (fun model -> s.ToLower().Contains(model.MissionLogName)))
+        planeSet.AllModels
+        |> Seq.tryFind (fun model -> s.ToLower().Contains(model.MissionLogName)))
 
 /// A region shipped supplies
 type SuppliesShipped = {
@@ -296,6 +297,7 @@ let (|TookOff|Landed|) =
     | Choice2Of2 x -> Landed x
 
 let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : AsyncSeq<LogEntry>) =
+    let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
     let tookOff (x : TookOff) = Choice1Of2 x
@@ -541,9 +543,9 @@ let (|BuildingObjectType|_|) (s : string) =
     |> function true -> Some s | false -> None
 
 let (|StaticPlaneType|_|) (planeSet : PlaneSet) (s : string) =
-    PlaneModel.AllModels planeSet
-    |> List.tryPick(fun model ->
-        if s.Contains(model.StaticScriptModel(planeSet).ShortName) then
+    planeSet.AllModels
+    |> Seq.tryPick(fun model ->
+        if s.Contains(planeSet.StaticPlaneModel(model).ShortName) then
             Some model
         else
             None
@@ -666,7 +668,8 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
             | _ -> () // Ignored log entry
     }
 
-let extractVehicleDamages (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : AsyncSeq<LogEntry>) =
+let extractVehicleDamages (world : World) (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : AsyncSeq<LogEntry>) =
+    let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
     asyncSeq {
         let idMapper = ref Map.empty
         for entry in entries do

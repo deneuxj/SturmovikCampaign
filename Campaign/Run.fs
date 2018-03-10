@@ -690,7 +690,7 @@ module MissionLogParsing =
             |> Damage.GroupByObject
             |> List.ofSeq
         let vehicleDamages =
-            extractVehicleDamages (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entries
+            extractVehicleDamages world (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entries
             |> AsyncSeq.toBlockingSeq
             |> Damage.GroupByObject
             |> List.ofSeq

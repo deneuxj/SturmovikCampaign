@@ -116,15 +116,15 @@ let createParaTrooperDrops (world : World) store lcStore (battlefields : (Defens
     |> List.concat
 
 
-let addMultiplayerPlaneConfigs (planeSet : PlaneModel.PlaneSet) (options : T.Options) =
+let addMultiplayerPlaneConfigs (planeSet : PlaneSet.PlaneSet) (options : T.Options) =
     let configs =
-        PlaneModel.AllModels(planeSet)
-        |> List.map (fun model -> T.String(model.ScriptModel.Script))
-    options.SetMultiplayerPlaneConfig(configs)
+        planeSet.AllModels
+        |> Seq.map (fun model -> T.String(model.ScriptModel.Script))
+    options.SetMultiplayerPlaneConfig(List.ofSeq configs)
 
 
 type MissionGenerationParameters = {
-    PlaneSet : PlaneSet
+    PlaneSet : PlaneSet.PlaneSet
     MaxCapturedPlanes : int
     Author : string
     MissionName : string

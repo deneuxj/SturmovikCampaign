@@ -23,6 +23,7 @@ open SturmovikMission.Blocks
 open System
 open FSharp.Configuration
 open NLog
+open Util
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -59,7 +60,7 @@ with
 
     static member TryFromYaml(data : PlaneSetFile.PlaneSet_Type.Planes_Item_Type) =
         let plane =
-            PlaneModel.AllModels(PlaneSet.All)
+            PlaneModel.AllModels
             |> List.tryFind(fun plane -> plane.PlaneName = data.Model)
         let idx = data.Static
         plane
@@ -200,3 +201,24 @@ with
         this.Planes.TryFind plane
         |> Option.map (fun data -> data.Cost)
         |> Option.defaultValue 1.0f<E>
+
+    member this.AllPlanesOfType(typ : PlaneType, coalition : CoalitionId) =
+        this.AllModels
+        |> Seq.filter (fun model -> model.PlaneType = typ && model.Coalition = coalition)
+        |> Array.ofSeq
+
+    member this.RandomPlaneOfType(typ : PlaneType, coalition : CoalitionId) =
+        this.AllPlanesOfType(typ, coalition)
+        |> Array.shuffle (System.Random())
+        |> Seq.tryHead
+
+    member this.RandomPlaneWithRole(role : PlaneRole, coalition : CoalitionId) =
+        this.AllModels
+        |> Seq.filter (fun model -> model.Roles.Contains(role) && model.Coalition = coalition)
+        |> Array.ofSeq
+        |> Array.shuffle (System.Random())
+        |> Seq.tryHead
+
+type PlaneType
+with
+    member this.Random(planeSet : PlaneSet, coalition) = planeSet.RandomPlaneOfType(this, coalition)

@@ -36,13 +36,6 @@ type PlaneRole =
 
 let private basePlaneCost = 500.0f<E>
 
-type PlaneSet =
-    | Moscow
-    | Stalingrad
-    | VelikieLuki
-    | EarlyAccess
-    | All
-
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
     | Bf109e7
@@ -106,113 +99,6 @@ with
         | He111h6 -> Vehicles.vehicles.GermanBomber2
         | He111h16 -> Vehicles.vehicles.GermanBomber3
         | Hs129b2 -> Vehicles.vehicles.GermanAttacker4
-
-    member this.StaticScriptModel(planeset) =
-        match planeset with
-        | Moscow ->
-            match this with
-            | Bf109e7 -> Vehicles.vehicles.GermanStaBf109e7
-            | Bf109f2 -> Vehicles.vehicles.GermanStaBf109e7Net
-            | Bf109f4 -> Vehicles.vehicles.GermanStaBf109
-            | Mc202 -> Vehicles.vehicles.GermanStaBf109e7Open
-            | Bf110e -> Vehicles.vehicles.GermanStaAttacker
-            | Ju88a4 -> Vehicles.vehicles.GermanStaBomber
-            | Ju87 -> Vehicles.vehicles.GermanStaJu87
-            | Ju52 -> Vehicles.vehicles.GermanStaTransport
-            | He111h6 -> Vehicles.vehicles.GermanStaHe111h6
-            | I16 -> Vehicles.vehicles.RussianStaI16
-            | IL2M41 -> Vehicles.vehicles.RussianStaAttacker
-            | Mig3 -> Vehicles.vehicles.RussianStaMig3
-            | P40 -> Vehicles.vehicles.RussianStaMig3Net
-            | Pe2s35 -> Vehicles.vehicles.RussianStaBomber
-            | _ -> this.StaticScriptModel(All)
-        | Stalingrad ->
-            match this with
-            | Bf109e7 -> Vehicles.vehicles.GermanStaBf109e7
-            | Bf109f2 -> Vehicles.vehicles.GermanStaBf109e7Net
-            | Bf109f4 -> Vehicles.vehicles.GermanStaBf109
-            | Mc202 -> Vehicles.vehicles.GermanStaBf109e7Open
-            | Bf110e -> Vehicles.vehicles.GermanStaAttacker
-            | Ju88a4 -> Vehicles.vehicles.GermanStaBomber
-            | Ju87 -> Vehicles.vehicles.GermanStaJu87
-            | Ju52 -> Vehicles.vehicles.GermanStaTransport
-            | He111h6 -> Vehicles.vehicles.GermanStaHe111h6
-            | Hs129b2 -> Vehicles.vehicles.GermanStaJu87Net
-            | I16 -> Vehicles.vehicles.RussianStaI16
-            | Yak1s69 -> Vehicles.vehicles.RussianStaYak1
-            | Lagg3s29 -> Vehicles.vehicles.RussianStaLagg3
-            | P40 -> Vehicles.vehicles.RussianStaMig3Net
-            | IL2M42 -> Vehicles.vehicles.RussianStaAttacker
-            | Pe2s87 -> Vehicles.vehicles.RussianStaBomber
-            | _ -> this.StaticScriptModel(All)
-        | VelikieLuki ->
-            match this with
-            | Bf109e7 -> Vehicles.vehicles.GermanStaBf109e7
-            | Bf109f4 -> Vehicles.vehicles.GermanStaBf109
-            | Bf109g2 -> Vehicles.vehicles.GermanStaBf109Net
-            | Fw190a3 -> Vehicles.vehicles.GermanStaBf109e7Open
-            | Bf110g -> Vehicles.vehicles.GermanStaAttacker
-            | He111h6 -> Vehicles.vehicles.GermanStaHe111h6
-            | Hs129b2 -> Vehicles.vehicles.GermanStaJu87Net
-            | Ju52 -> Vehicles.vehicles.GermanStaTransport
-            | Ju87 -> Vehicles.vehicles.GermanStaJu87
-            | Ju88a4 -> Vehicles.vehicles.GermanStaBomber
-            | Yak1s69 -> Vehicles.vehicles.RussianStaYak1
-            | Lagg3s29 -> Vehicles.vehicles.RussianStaLagg3
-            | La5 -> Vehicles.vehicles.RussianStaLagg3W1
-            | I16 -> Vehicles.vehicles.RussianStaI16
-            | IL2M42 -> Vehicles.vehicles.RussianStaAttacker
-            | Pe2s87 -> Vehicles.vehicles.RussianStaBomber
-            | _ -> this.StaticScriptModel(All)
-        | EarlyAccess ->
-            match this with
-            | Bf109g4 -> Vehicles.vehicles.GermanStaBf109e7Net
-            | Bf109g2 -> Vehicles.vehicles.GermanStaBf109Net
-            | Fw190a5 -> Vehicles.vehicles.GermanStaBf109e7Open
-            | Bf110g -> Vehicles.vehicles.GermanStaAttacker
-            | Ju87 -> Vehicles.vehicles.GermanStaJu87
-            | Ju88a4 -> Vehicles.vehicles.GermanStaBomber
-            | He111h16 -> Vehicles.vehicles.GermanStaHe111h6
-            | Ju52 -> Vehicles.vehicles.GermanStaTransport
-            | Hs129b2 -> Vehicles.vehicles.GermanStaJu87Net
-            | IL2M43 -> Vehicles.vehicles.RussianStaAttacker
-            | Lagg3s29 -> Vehicles.vehicles.RussianStaLagg3
-            | Yak1s127 -> Vehicles.vehicles.RussianStaYak1Net
-            | La5 -> Vehicles.vehicles.RussianStaLagg3W1
-            | P40 -> Vehicles.vehicles.RussianStaMig3Net
-            | SpitfireMkVb -> Vehicles.vehicles.RussianStaLagg3Net
-            | _ -> this.StaticScriptModel(All)
-        | All ->
-            match this with
-            | Bf109e7 -> Vehicles.vehicles.GermanStaBf109e7
-            | Bf109f2 -> Vehicles.vehicles.GermanStaBf109e7Net
-            | Bf109g4 -> Vehicles.vehicles.GermanStaBf109e7Net
-            | Bf109f4 -> Vehicles.vehicles.GermanStaBf109
-            | Bf109g2 -> Vehicles.vehicles.GermanStaBf109Net
-            | Mc202 -> Vehicles.vehicles.GermanStaBf109e7Open
-            | Fw190a3 -> Vehicles.vehicles.GermanStaBf109e7Open
-            | Fw190a5 -> Vehicles.vehicles.GermanStaBf109e7Open
-            | Bf110e -> Vehicles.vehicles.GermanStaAttacker
-            | Bf110g -> Vehicles.vehicles.GermanStaAttacker
-            | Ju88a4 -> Vehicles.vehicles.GermanStaBomber
-            | Ju87 -> Vehicles.vehicles.GermanStaJu87
-            | Ju52 -> Vehicles.vehicles.GermanStaTransport
-            | He111h6 -> Vehicles.vehicles.GermanStaHe111h6
-            | He111h16 -> Vehicles.vehicles.GermanStaHe111h6
-            | Hs129b2 -> Vehicles.vehicles.GermanStaJu87Net
-            | I16 -> Vehicles.vehicles.RussianStaI16
-            | Yak1s69 -> Vehicles.vehicles.RussianStaYak1
-            | Yak1s127 -> Vehicles.vehicles.RussianStaYak1Net
-            | Lagg3s29 -> Vehicles.vehicles.RussianStaLagg3
-            | P40 -> Vehicles.vehicles.RussianStaMig3Net
-            | IL2M41 -> Vehicles.vehicles.RussianStaAttacker
-            | IL2M42 -> Vehicles.vehicles.RussianStaAttacker
-            | IL2M43 -> Vehicles.vehicles.RussianStaAttacker
-            | Pe2s35 -> Vehicles.vehicles.RussianStaBomber
-            | Pe2s87 -> Vehicles.vehicles.RussianStaBomber
-            | La5 -> Vehicles.vehicles.RussianStaLagg3W1
-            | Mig3 -> Vehicles.vehicles.RussianStaMig3
-            | SpitfireMkVb -> Vehicles.vehicles.RussianStaLagg3Net
 
     member this.Cost =
         match this with
@@ -643,78 +529,37 @@ with
         | He111h16 -> [ LevelBomber; CargoTransporter ]
         |> Set.ofList
 
-    static member AllModels(planeSet) =
-        match planeSet with
-        | Moscow ->
-            [ Bf109e7
-              Bf109f2
-              Bf109f4
-              Mc202
-              Bf110e
-              Ju88a4
-              Ju87
-              Ju52
-              He111h6
-              I16
-              IL2M41
-              Mig3
-              P40
-              Pe2s35 ]
-        | Stalingrad ->
-            [ Bf109e7
-              Bf109f4
-              Bf109g2
-              Mc202
-              Bf110e
-              Ju88a4
-              Ju87
-              Ju52
-              He111h6
-              Hs129b2
-              I16
-              IL2M42
-              Yak1s69
-              Lagg3s29
-              P40
-              Pe2s87 ]
-        | VelikieLuki ->
-            [ Bf109e7
-              Bf109f4
-              Bf109g2
-              Fw190a3
-              Bf110g
-              Ju87
-              Ju88a4
-              He111h6
-              Hs129b2
-              Ju52
-              Yak1s69
-              Lagg3s29
-              La5
-              I16
-              IL2M42
-              Pe2s87 ]
-        | EarlyAccess ->
-            [ Bf109g4
-              Bf109g2
-              Fw190a5
-              Bf110g
-              Ju87
-              Ju88a4
-              He111h16
-              Ju52
-              Yak1s127
-              Lagg3s29
-              La5
-              P40
-              IL2M43
-              Pe2s87
-              SpitfireMkVb
-              Hs129b2 ]
-        | All ->
-            [ Moscow; Stalingrad; VelikieLuki; EarlyAccess ]
-            |> List.collect PlaneModel.AllModels
-            |> List.distinct
+    static member AllModels =
+        [ Bf109e7
+          Bf109f2
+          Bf109f4
+          Bf109g2
+          Bf109g4
+          Fw190a3
+          Fw190a5
+          Mc202
+          Bf110e
+          Bf110g
+          Ju88a4
+          Ju52
+          I16
+          IL2M41
+          IL2M42
+          IL2M43
+          Mig3
+          P40
+          Yak1s69
+          Yak1s127
+          La5
+          Lagg3s29
+          SpitfireMkVb
+          Pe2s35
+          Pe2s87
+          Ju87
+          He111h6
+          He111h16
+          Hs129b2
+        ]
 
     static member PlaneTypeShares(coalition) =
         match coalition with
@@ -723,23 +568,3 @@ with
         |> List.zip [ Fighter; Attacker; Bomber; Transport ]
         |> Map.ofList
 
-    static member AllPlanesOfType(planeSet : PlaneSet, typ : PlaneType, coalition : CoalitionId) =
-        PlaneModel.AllModels planeSet
-        |> Seq.filter (fun model -> model.PlaneType = typ && model.Coalition = coalition)
-        |> Array.ofSeq
-
-    static member RandomPlaneOfType(planeSet : PlaneSet, typ : PlaneType, coalition : CoalitionId) =
-        PlaneModel.AllPlanesOfType(planeSet, typ, coalition)
-        |> Array.shuffle (System.Random())
-        |> Seq.tryHead
-
-    static member RandomPlaneWithRole(planeSet : PlaneSet, role : PlaneRole, coalition : CoalitionId) =
-        PlaneModel.AllModels planeSet
-        |> Seq.filter (fun model -> model.Roles.Contains(role) && model.Coalition = coalition)
-        |> Array.ofSeq
-        |> Array.shuffle (System.Random())
-        |> Seq.tryHead
-
-type PlaneType
-with
-    member this.Random(planeSet, coalition) = PlaneModel.RandomPlaneOfType(planeSet, this, coalition)

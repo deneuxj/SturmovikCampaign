@@ -180,7 +180,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             |> extractStaticDamages world
         let vehicleDamages =
             asyncSeqEntries
-            |> extractVehicleDamages columns convoys
+            |> extractVehicleDamages world columns convoys
         let damages = AsyncSeq.merge staticDamages vehicleDamages
         let wg = world.FastAccess
         let sg = state.FastAccess

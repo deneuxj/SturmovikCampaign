@@ -587,7 +587,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                     | PlaneType.Transport -> numTransports
                 let random = new System.Random()
                 let numPlanes =
-                    PlaneModel.AllModels world.PlaneSet
+                    world.PlaneSet.AllModels
                     |> Seq.filter (fun plane -> plane.Coalition = owner)
                     |> Seq.map (fun plane -> plane.PlaneType, Array.init (int <| getNumPlanes plane.PlaneType) (fun _ -> plane))
                     |> Seq.groupBy fst
