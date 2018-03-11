@@ -1420,7 +1420,7 @@ Group
     Index = 118;
     LinkTrId = 119;
     XPos = 16373.178;
-    YPos = 100.913;
+    YPos = 100.690;
     ZPos = 24731.090;
     XOri = 0.94;
     YOri = 0.00;
@@ -1452,7 +1452,7 @@ Group
     Targets = [];
     Objects = [];
     XPos = 16373.178;
-    YPos = 101.113;
+    YPos = 100.890;
     ZPos = 24731.090;
     XOri = 0.00;
     YOri = 0.00;
@@ -1494,7 +1494,7 @@ Group
     ZOri = 0.00;
     AttackGround = 0;
     AttackAir = 1;
-    AttackGTargets = 0;
+    AttackGTargets = 1;
     AttackArea = 7500;
     Time = 59940;
     Priority = 2;
@@ -8272,14 +8272,14 @@ Group
 Group
 {
   Name = "ContinuousProximity";
-  Index = 684;
+  Index = 679;
   Desc = "";
   MCU_Timer
   {
-    Index = 681;
+    Index = 680;
     Name = "STOP";
     Desc = "";
-    Targets = [683];
+    Targets = [681];
     Objects = [];
     XPos = 16487.778;
     YPos = 33.474;
@@ -8294,10 +8294,10 @@ Group
 
   MCU_Deactivate
   {
-    Index = 683;
+    Index = 681;
     Name = "";
     Desc = "";
-    Targets = [686,688];
+    Targets = [683,684];
     Objects = [];
     XPos = 16449.185;
     YPos = 31.406;
@@ -8310,10 +8310,10 @@ Group
 
   MCU_CheckZone
   {
-    Index = 686;
+    Index = 683;
     Name = "Proximity";
     Desc = "";
-    Targets = [688,689];
+    Targets = [684,686];
     Objects = [];
     XPos = 16968.967;
     YPos = 31.104;
@@ -8332,7 +8332,7 @@ Group
     Index = 687;
     Name = "START";
     Desc = "";
-    Targets = [686];
+    Targets = [683];
     Objects = [];
     XPos = 17232.833;
     YPos = 21.023;
@@ -8347,7 +8347,7 @@ Group
 
   MCU_Counter
   {
-    Index = 688;
+    Index = 684;
     Name = "NEAR";
     Desc = "";
     Targets = [];
@@ -8365,10 +8365,10 @@ Group
 
   MCU_Timer
   {
-    Index = 689;
+    Index = 686;
     Name = "1s";
     Desc = "Stop CZ after it fires";
-    Targets = [683];
+    Targets = [681];
     Objects = [];
     XPos = 16746.566;
     YPos = 21.024;
