@@ -6,15 +6,15 @@ open System.IO
 open VectorExtension
 
 [<Literal>]
-let dataDir = __SOURCE_DIRECTORY__ + "/../data"
+let private dataDir = __SOURCE_DIRECTORY__ + "/../data"
 [<Literal>]
-let sampleFile = dataDir + "/Sample.Mission"
+let private sampleFile = dataDir + "/Sample.Mission"
 [<Literal>]
-let blocksFile = dataDir + "/Blocks/Blocks.Mission"
+let private blocksFile = dataDir + "/Blocks/Blocks.Mission"
 [<Literal>]
-let vehiclesFile = dataDir + "/Blocks/Vehicles.mission"
+let private vehiclesFile = dataDir + "/Blocks/Vehicles.mission"
 [<Literal>]
-let libFiles = blocksFile + ";" + vehiclesFile
+let private libFiles = blocksFile + ";" + vehiclesFile
 type T = SturmovikMissionTypes.Provider<sampleFile, libFiles>
 
 let blocksData =
