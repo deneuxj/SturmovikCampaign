@@ -1249,22 +1249,39 @@ let nextDate (dt : float32<H>) (date : System.DateTime) =
             x
     newDate
 
-let newState (config : Configuration.Configuration) (world : World) (state : WorldState) axisProduction alliesProduction (movements : ColumnMovement list) convoyDepartures supplies blocked damages tookOff landed columnDepartures paradrops ferryPlanes battleKills windOri =
+type MissionResults = {
+    Entries : string list
+    Shipments : SuppliesShipped list
+    StaticDamages : Damage list
+    VehicleDamages : Damage list
+    TakeOffs : TookOff list
+    Landings : Landed list
+    ColumnDepartures : ColumnLeft list
+    ParaDrops : ParaDropResult list
+    FerryPlanes : Choice<PlaneFerryOrder, PlaneFerryOrder, PlaneFerryOrder> list
+    BattleKills : BattleParticipantKilled list
+    Blocked : VehiclesBlocked list
+}
+with
+    member this.Damages = this.StaticDamages @ this.VehicleDamages
+
+let newState (config : Configuration.Configuration) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (results : MissionResults) windOri =
     let dt = 1.0f<H> * float32 config.MissionLength / 60.0f
     let mustConvertCapturedPlanes = config.MaxCapturedPlanes = 0
+    let columnOrders = axisOrders.Columns @ alliesOrders.Columns
     let state2 =
         state
-        |> applyProduction dt world Axis axisProduction
-        |> applyProduction dt world Allies alliesProduction
+        |> applyProduction dt world Axis axisOrders.Production
+        |> applyProduction dt world Allies alliesOrders.Production
     let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
-    let state4 = applyDamagesAndResupplies mustConvertCapturedPlanes dt world state3 convoyDepartures blocked damages supplies newSupplies landed
-    let state5 = applyPlaneTransfers state4 tookOff landed
-    let state5b = applyPlaneFerries state5 ferryPlanes
-    let state6 = applyVehicleDepartures state5b movements columnDepartures
-    let battles = buildBattles state6 paradrops
-    let state7, battleReports = applyConquests config world state6 battles battleKills
+    let state4 = applyDamagesAndResupplies mustConvertCapturedPlanes dt world state3 results.Shipments results.Blocked results.Damages (axisOrders.Resupply @ alliesOrders.Resupply) newSupplies results.Landings
+    let state5 = applyPlaneTransfers state4 results.TakeOffs results.Landings
+    let state5b = applyPlaneFerries state5 results.FerryPlanes
+    let state6 = applyVehicleDepartures state5b columnOrders results.ColumnDepartures
+    let battles = buildBattles state6 results.ParaDrops
+    let state7, battleReports = applyConquests config world state6 battles results.BattleKills
     let state7b =
-        computeCompletedColumnMovements movements columnDepartures blocked damages
+        computeCompletedColumnMovements columnOrders results.ColumnDepartures results.Blocked results.Damages
         |> applyVehicleArrivals state7
     let state8 = updateRunways world state7b windOri
     { state8 with Date = nextDate dt state8.Date; AttackingSide = state8.AttackingSide.Other }, newlyProduced, battleReports

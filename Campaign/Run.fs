@@ -506,21 +506,6 @@ module MissionLogParsing =
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
-    // BREAKING: move this to NewWorldState, use as argument to newState
-    type MissionResults = {
-        Entries : string list
-        Shipments : SuppliesShipped list
-        StaticDamages : Damage list
-        VehicleDamages : Damage list
-        TakeOffs : TookOff list
-        Landings : Landed list
-        ColumnDepartures : ColumnLeft list
-        ParaDrops : ParaDropResult list
-        FerryPlanes : Choice<PlaneFerryOrder, PlaneFerryOrder, PlaneFerryOrder> list
-        BattleKills : BattleParticipantKilled list
-        Blocked : VehiclesBlocked list
-    }
-
     let backupFiles config =
         let outputDir = config.OutputDir
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -757,17 +742,13 @@ module MissionLogParsing =
                 serializer.Deserialize<Weather.WeatherState>(weatherFile)
             with
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
-        let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
-        let movements = axisOrders.Columns @ alliesOrders.Columns
-        let mustConvertCapturedPlanes = config.MaxCapturedPlanes = 0
         let state2, newlyProduced, battleReports =
             newState
                 config
-                world state axisOrders.Production alliesOrders.Production
-                movements missionResults.Shipments (axisOrders.Resupply @ alliesOrders.Resupply)
-                missionResults.Blocked (missionResults.StaticDamages @ missionResults.VehicleDamages)
-                missionResults.TakeOffs missionResults.Landings missionResults.ColumnDepartures
-                missionResults.ParaDrops missionResults.FerryPlanes missionResults.BattleKills (float32 weather.Wind.Direction)
+                world state
+                axisOrders alliesOrders
+                missionResults
+                (float32 weather.Wind.Direction)
         newlyProduced, battleReports, (state, state2)
 
     let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =
