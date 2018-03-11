@@ -1,6 +1,6 @@
 ﻿Campaign:
-    # Can be Stalingrad, Moscow, VelikieLuki, EarlyAccess
-    PlaneSet: Stalingrad
+    # Can be auto or the name of a plane set
+    PlaneSet: auto
     # Name of file describing the scenario
     StrategyFile: StalingradSummer.Mission
     # Seed for the random generator; affects weather

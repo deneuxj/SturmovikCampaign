@@ -16,12 +16,14 @@
 
 module Campaign.Configuration
 
-open Campaign.BasicTypes
-open Campaign.PlaneSet
 
 open FSharp.Configuration
 open System.IO
-open SturmovikMission.Blocks.Util.String
+open Util
+open SturmovikMission.DataProvider.Parsing
+open SturmovikMission.Blocks.BlocksMissionData
+open Campaign.PlaneSet
+
 open NLog
 
 let private logger = LogManager.GetCurrentClassLogger()
@@ -108,8 +110,24 @@ with
     "
         }
 
+/// Get the region and date of a scenario
+let extractRegionAndDate (strategyFile : string) =
+    let s = Stream.FromFile strategyFile
+    let data = T.GroupData(s)
+    let options = data.ListOfOptions.Head
+    let date = options.GetDate()
+    let date = System.DateTime(date.Year, date.Month, date.Day)
+    let region =
+        match options.GetGuiMap().Value.ToLowerInvariant() with
+        | Contains "stalingrad" -> Region.Stalingrad
+        | Contains "moscow" -> Region.Moscow
+        | Contains "vluki" -> Region.VelikieLuki
+        | Contains "kuban" -> Region.Kuban
+        | other -> failwithf "No region for '%s'" other
+    region, date
+
 [<Literal>]
-let sampleFile = __SOURCE_DIRECTORY__ + @"\SampleConfig.yaml"
+let private sampleFile = __SOURCE_DIRECTORY__ + @"\SampleConfig.yaml"
 type ConfigFile = YamlConfig<sampleFile>
 
 let loadConfigFile (path : string) =
@@ -117,14 +135,21 @@ let loadConfigFile (path : string) =
     config.Load(path)
     let values = config.Campaign
     let planeSet =
-        try
-            let file = PlaneSetFile()
-            file.Load(Path.Combine(values.InstallPath, "planeSet-" + values.PlaneSet + ".yaml"))
-            PlaneSet.FromYaml(file.PlaneSet)
-        with
-        | e ->
-            logger.Error(sprintf "Failed to load planeset '%s': %s" values.PlaneSet e.Message)
-            PlaneSet.Default
+        match values.PlaneSet with
+        | null | "" | "auto" ->
+            let region, date = extractRegionAndDate(Path.Combine(values.InstallPath, values.StrategyFile))
+            loadPlaneSets values.InstallPath
+            |> tryPickPlaneSet region date
+            |> Option.defaultValue (PlaneSet.Default)
+        | planeSetName ->
+            try
+                let file = PlaneSetFile()
+                file.Load(Path.Combine(values.InstallPath, "planeSet-" + planeSetName + ".yaml"))
+                PlaneSet.FromYaml(file.PlaneSet)
+            with
+            | e ->
+                logger.Error(sprintf "Failed to load planeset '%s': %s" values.PlaneSet e.Message)
+                PlaneSet.Default
     {
         PlaneSet = planeSet
         StrategyFile = values.StrategyFile

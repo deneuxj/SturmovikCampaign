@@ -24,6 +24,7 @@ open System
 open FSharp.Configuration
 open NLog
 open Util
+open System.IO
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -222,3 +223,30 @@ with
 type PlaneType
 with
     member this.Random(planeSet : PlaneSet, coalition) = planeSet.RandomPlaneOfType(this, coalition)
+
+/// <summary>
+/// Try to find the earliest planeset matching a given region and start date.
+/// </summary>
+let tryPickPlaneSet (region : Region) (date : DateTime) (planeSets : PlaneSet seq) =
+    planeSets
+    |> Seq.filter (fun planeSet -> planeSet.Regions |> List.exists ((=) region))
+    |> Seq.filter (fun planeSet -> planeSet.StartDate <= date)
+    |> try
+        Seq.minBy (fun planeSet -> planeSet.StartDate) >> Some
+       with _ -> fun _ -> None
+
+/// <summary>
+/// Load all plane sets from a directory. Planeset filenames must start with "PlaneSet-" and have extension ".yaml".
+/// Plane sets must include at least one plane for each coalition.
+/// </summary>
+let loadPlaneSets (planeSetDir : string) =
+    seq {
+        for file in Directory.EnumerateFiles(planeSetDir, "PlaneSet-*.yaml") do
+            let data = PlaneSetFile()
+            data.Load(file)
+            let planeSet = PlaneSet.FromYaml(data.PlaneSet)
+            let hasAxis = planeSet.AllModels |> Seq.exists (fun plane -> plane.Coalition = Axis)
+            let hasAllies = planeSet.AllModels |> Seq.exists (fun plane -> plane.Coalition = Allies)
+            if hasAxis && hasAllies then
+                yield planeSet
+    }
