@@ -45,6 +45,8 @@
     ServerSdsFile: sds\campaign.sds
     # Where this file resides
     InstallPath: C:\Campaign\Bin
+    # Whether to purge old mission logs
+    PurgeLogs: true
     # Max think time for column movement planning
     ThinkTime: 60
     # Total production of all factories in an average region. Used to compute production factor to adjust production per factory building on the map.

@@ -552,6 +552,19 @@ module MissionLogParsing =
         ]
         |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
 
+    let purgeLogs(missionLogsDir : string) =
+        let now = System.DateTime.UtcNow
+        let old = System.TimeSpan(2, 0, 0, 0) // Two days
+        for file in Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt") do
+            let created = File.GetCreationTimeUtc(file)
+            if now - created > old then
+                logger.Info(sprintf "Purging old log '%s'" (Path.GetFileName(file)))
+                try
+                    File.Delete(file)
+                with
+                | e ->
+                    logger.Warn(sprintf "Failed to purge old log '%s': %s" (Path.GetFileName(file)) e.Message)
+
     let getEntries(missionLogsDir : string, missionName : string, startDate : System.DateTime) =
         do
             Plogger.Init()
@@ -637,6 +650,8 @@ module MissionLogParsing =
                 serializer.Deserialize<WorldState>(stateFile)
             with
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
+        if config.PurgeLogs then
+            purgeLogs(missionLogsDir)
         getEntries(missionLogsDir, config.MissionName, state.Date)
 
     /// Retrieve mission log entries from an existing results.xml file

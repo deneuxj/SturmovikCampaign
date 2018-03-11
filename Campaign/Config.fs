@@ -49,6 +49,7 @@ type Configuration = {
     MaxBattleKillsRatioByAI: float32
     OutputDir : string
     ServerDataDir : string
+    PurgeLogs : bool
     ServerBinDir : string
     ServerSdsFile : string
     ScriptPath : string
@@ -85,6 +86,7 @@ with
             ColumnSplitInterval = 60
             OutputDir = @"nul"
             ServerDataDir = @"nul"
+            PurgeLogs = true
             ServerBinDir = @"nul"
             ServerSdsFile = @"nul"
             ScriptPath = @"nul"
@@ -186,4 +188,5 @@ let loadConfigFile (path : string) =
         MaxFriendlyFireEvents = values.MaxFriendlyFireEvents
         MaxNoobScore = float32 values.MaxNoobScore
         NoobBanDuration = values.NoobBanDuration
+        PurgeLogs = values.PurgeLogs
     }
