@@ -60,9 +60,10 @@ with
           StaticPlaneIndex = 0 }
 
     static member TryFromYaml(data : PlaneSetFile.PlaneSet_Type.Planes_Item_Type) =
+        let model = data.Model.ToLowerInvariant()
         let plane =
             PlaneModel.AllModels
-            |> List.tryFind(fun plane -> plane.PlaneName = data.Model)
+            |> List.tryFind(fun plane -> plane.PlaneName.ToLowerInvariant() = model)
         let idx = data.Static
         plane
         |> Option.map(fun plane -> plane, { PlaneData.Default with StaticPlaneIndex = idx })
