@@ -58,7 +58,7 @@ PlaneSet:
           Static: 10
         - Model: I16
           Static: 0
-        - Model: IL2M41
+        - Model: IL2Mod41
           Static: 11
         - Model: Mig3
           Static: 6

@@ -58,7 +58,7 @@ PlaneSet:
           Static: 8
         - Model: I16
           Static: 0
-        - Model: IL2M42
+        - Model: IL2Mod42
           Static: 11
         - Model: Yak1s69
           Static: 8
