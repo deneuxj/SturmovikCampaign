@@ -26,7 +26,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
-    <StartArguments>C:\Users\johann\Documents\SturmovikCampaign\Campaign\bin\Debug\test.yaml</StartArguments>
+    <StartArguments>-r C:\Users\johann\Documents\SturmovikCampaign\Campaign\bin\Debug\test.yaml</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
