@@ -487,8 +487,9 @@ module MissionFileGeneration =
         p.UseShellExecute <- false
         let proc = Process.Start(p)
         proc.WaitForExit()
-        // Remove text Mission file, it slows down mission loading.
-        swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".Mission")))
+        // Remove text or binary Mission file, depending on which one to use
+        let ext = if config.UseTextMissionFile then ".msnbin" else ".mission"
+        swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ext)))
         logger.Info(sprintf "Resaver exited with code %d" proc.ExitCode)
         proc.ExitCode
 

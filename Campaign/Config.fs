@@ -31,6 +31,7 @@ let private logger = LogManager.GetCurrentClassLogger()
 type Configuration = {
     PlaneSet : PlaneSet
     StrategyFile : string
+    UseTextMissionFile : bool
     Seed : int option
     WeatherDayMaxOffset : int
     MaxFires : int
@@ -68,6 +69,7 @@ with
         {
             PlaneSet = PlaneSet.Default
             StrategyFile = "StrategySmall1.mission"
+            UseTextMissionFile = true
             Seed = None // Some 0
             WeatherDayMaxOffset = 15
             MaxFires = 20
@@ -155,6 +157,7 @@ let loadConfigFile (path : string) =
     {
         PlaneSet = planeSet
         StrategyFile = values.StrategyFile
+        UseTextMissionFile = values.UseTextMissionFile
         Seed =
             match values.Seed with
             | -1 -> None
