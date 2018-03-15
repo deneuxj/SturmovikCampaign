@@ -355,17 +355,13 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 planePilot := planePilot.Value.Add(playerPlane.VehicleId, (playerPlane.Name, coalition))
                 match playerPlane.VehicleType with
                 | PlaneObjectType plane when plane.Roles.Contains CargoTransporter ->
-                    let modmask, payload = plane.CargoPayload
-                    if playerPlane.Payload = payload then
+                    if playerPlane.Bombs = 0 then
                         cargo := Map.add playerPlane.VehicleId plane.CargoCapacity cargo.Value
                 | _ ->
                     ()
                 match playerPlane.VehicleType with
                 | PlaneObjectType model ->
-                    let weight =
-                        model.BombLoads
-                        |> List.tryPick (fun (loadout, weight) -> if loadout = playerPlane.Payload then Some weight else None)
-                        |> Option.defaultVal 0.0f<K>
+                    let weight = min model.BombCapacity ((float32 playerPlane.Bombs) * 250.0f<K>)
                     bombLoad := Map.add playerPlane.VehicleId weight bombLoad.Value
                 | _ ->
                     ()
