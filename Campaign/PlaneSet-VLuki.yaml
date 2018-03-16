@@ -46,7 +46,7 @@ PlaneSet:
           Static: 4
         - Model: Bf110g
           Static: 6
-        - Model: Ju88a4
+        - Model: Ju88
           Static: 9
         - Model: Ju87
           Static: 7
