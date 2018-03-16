@@ -594,9 +594,9 @@ module MissionLogParsing =
                             else
                                 logger.Debug(sprintf "Reached start of new mission, discarding current because too short")
                                 previous
-                    let expectedMissionFile = sprintf "%s.msnbin" missionName
-                    let actualMissionFile = start.MissionFile.Split('/') |> Seq.last
-                    if start.MissionTime = startDate && actualMissionFile.ToLower() = expectedMissionFile.ToLower() then
+                    let expectedMissionFile = missionName.ToLower()
+                    let actualMissionFile = Path.GetFileNameWithoutExtension(start.MissionFile.Split('/') |> Seq.last).ToLower()
+                    if start.MissionTime = startDate && actualMissionFile = expectedMissionFile then
                         logger.Info(sprintf "Start collecting from %s" file)
                         previous, [entry] // Start new list
                     else
