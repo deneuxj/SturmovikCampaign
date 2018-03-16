@@ -20,6 +20,7 @@ open SturmovikMission.Blocks
 
 open Campaign.BasicTypes
 open Util
+open System.Numerics
 
 type PlaneType  =
     | Fighter
@@ -43,6 +44,7 @@ type PlaneModel =
     | Bf109f4
     | Bf109g2
     | Bf109g4
+    | Bf109g6
     | Fw190a3
     | Fw190a5
     | Mc202
@@ -55,10 +57,13 @@ type PlaneModel =
     | IL2M42
     | IL2M43
     | Mig3
+    | P39
     | P40
     | Yak1s69
     | Yak1s127
+    | Yak7bs36
     | La5
+    | La5fns2
     | Lagg3s29
     | SpitfireMkVb
     | Pe2s35
@@ -67,6 +72,7 @@ type PlaneModel =
     | He111h6
     | He111h16
     | Hs129b2
+    | A20
 with
     member this.ScriptModel =
         match this with
@@ -99,6 +105,11 @@ with
         | He111h6 -> Vehicles.vehicles.GermanBomber2
         | He111h16 -> Vehicles.vehicles.GermanBomber3
         | Hs129b2 -> Vehicles.vehicles.GermanAttacker4
+        | Bf109g6 -> Vehicles.vehicles.GermanFighter9
+        | La5fns2 -> Vehicles.vehicles.RussianFighter9
+        | P39 -> Vehicles.vehicles.RussianFighter10
+        | Yak7bs36 -> Vehicles.vehicles.RussianFighter11
+        | A20 -> Vehicles.vehicles.RussianBomber3
 
     member this.Cost =
         match this with
@@ -106,6 +117,7 @@ with
         | Bf109f4
         | Bf109g2
         | Bf109g4
+        | Bf109g6
         | Fw190a3
         | Fw190a5
         | Bf109f2 -> (5.0f / 3.0f) * basePlaneCost
@@ -125,10 +137,14 @@ with
         | Lagg3s29
         | Yak1s69
         | Yak1s127
+        | Yak7bs36
         | La5
+        | La5fns2
+        | P39
         | SpitfireMkVb
         | Mig3 -> (5.0f / 3.0f) * basePlaneCost
         | P40 -> basePlaneCost
+        | A20
         | Pe2s87
         | Pe2s35 -> (7.5f / 3.0f) * basePlaneCost
 
@@ -139,6 +155,7 @@ with
         | Bf109f4
         | Bf109g2
         | Bf109g4
+        | Bf109g6
         | Fw190a3
         | Fw190a5
         | Mc202 -> 500.0f<K>
@@ -153,14 +170,18 @@ with
         | Ju52 -> 0.0f<K>
         | Yak1s69
         | Yak1s127
+        | Yak7bs36
         | Lagg3s29
         | La5
+        | La5fns2
         | I16 -> 200.0f<K>
         | IL2M42
         | IL2M43
         | IL2M41 -> 600.0f<K>
         | Mig3 -> 200.0f<K>
+        | P39
         | P40 -> 500.0f<K>
+        | A20 -> 1800.0f<K>
         | Pe2s87
         | Pe2s35 -> 1000.0f<K>
 
@@ -169,7 +190,7 @@ with
         let modmask, payload =
             match this with
             | PlaneModel.Bf109e7 -> 5, 2
-            | PlaneModel.Bf109f2 | PlaneModel.Bf109f4 | PlaneModel.Bf109g2 | PlaneModel.Bf109g4 -> 8, 2 // SC250-1
+            | PlaneModel.Bf109f2 | PlaneModel.Bf109f4 | PlaneModel.Bf109g2 | PlaneModel.Bf109g4 | PlaneModel.Bf109g6-> 17, 2 // SC250-1
             | PlaneModel.Fw190a3 -> 9, 3 // SC500-1
             | PlaneModel.Fw190a5 -> 73, 9 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500 + SC500-1 + SC50-4"
             | PlaneModel.I16 -> 9, 2 // "0,1-SHKAS-AP-1000 + 2,3-SHKAS-AP-1800 + FAB100M-2"
@@ -177,6 +198,7 @@ with
             | PlaneModel.Lagg3s29 -> 17, 14 // "0-UB-APHE-200 + 1-SHVAK-APHE-160 + FAB100M-2"
             | PlaneModel.Mc202 -> 9 , 2 // "0,1-BREDA12-APHE-800 + T100-2"
             | PlaneModel.Mig3 -> 5, 6 // "0,1-SHKAS-AP-1500 + 2-BS-APHE-300 + FAB100M-2"
+            | PlaneModel.P39 -> 5, 12 // FAB250
             | PlaneModel.P40 -> 33, 8 // "0,1,2,3,4,5-M250-AP-1410 + FAB500M-1"
             | PlaneModel.Yak1s127 -> 5, 2 // "0-UB-APHE-220 + 1-SHVAK-APHE-140 + FAB100M-2"
             | PlaneModel.Yak1s69 -> 17, 10 // "0,1-SHKAS-AP-1500 + 2-SHVAK-APHE-120 + FAB100M-2"
@@ -187,6 +209,8 @@ with
             | PlaneModel.IL2M42 -> 33, 44 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-8"
             | PlaneModel.IL2M43 -> 33, 41 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-4"
             | PlaneModel.Pe2s35 -> 5, 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
+            | PlaneModel.Pe2s87 -> 5, 5
+            | PlaneModel.A20 -> 5, 4
             | PlaneModel.Hs129b2 -> 1, 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
             | _ -> 1, 0
         modmask, payload
@@ -237,6 +261,7 @@ with
         | Bf109f4
         | Bf109g2
         | Bf109g4
+        | Bf109g6
         | Fw190a3
         | Fw190a5
         | Mc202
@@ -253,12 +278,16 @@ with
         | IL2M42
         | IL2M43
         | La5
+        | La5fns2
         | Mig3
         | Yak1s69
         | Yak1s127
+        | Yak7bs36
         | Lagg3s29
         | SpitfireMkVb
+        | P39
         | P40
+        | A20
         | Pe2s87
         | Pe2s35 -> Allies
 
@@ -269,16 +298,20 @@ with
         | Bf109f4
         | Bf109g2
         | Bf109g4
+        | Bf109g6
         | Fw190a3
         | Fw190a5
         | Mc202
         | I16
         | P40
         | La5
+        | La5fns2
         | Yak1s69
         | Yak1s127
+        | Yak7bs36
         | Lagg3s29
         | SpitfireMkVb
+        | P39
         | Mig3 -> Fighter
         | Hs129b2
         | Bf110e
@@ -290,6 +323,7 @@ with
         | Ju88a4
         | He111h6
         | He111h16
+        | A20
         | Pe2s87
         | Pe2s35 -> Bomber
         | Ju52 -> Transport
@@ -301,6 +335,7 @@ with
         | Bf109f4 -> "bf109f4"
         | Bf109g2 -> "bf109g2"
         | Bf109g4 -> "bf109g4"
+        | Bf109g6 -> "bf109g6"
         | Fw190a3 -> "fw190a3"
         | Fw190a5 -> "fw190a5"
         | Mc202 -> "mc202"
@@ -317,13 +352,17 @@ with
         | IL2M42 -> "il2mod42"
         | IL2M43 -> "il2mod43"
         | La5 -> "la5s8"
+        | La5fns2 -> "la5fns2"
         | Lagg3s29 -> "lagg3s29"
         | Mig3 -> "mig3"
+        | P39 -> "p39"
         | P40 -> "p40"
+        | A20 -> "a20"
         | Pe2s35 -> "pe2s35"
         | Pe2s87 -> "pe2s87"
         | Yak1s69 -> "yak1s69"
         | Yak1s127 -> "yak1s127"
+        | Yak7bs36 -> "yak7bs36"
         | SpitfireMkVb -> "spitfireMkVb"
 
     /// <summary>
@@ -336,6 +375,7 @@ with
         | Bf109f4 -> "bf 109 f-4"
         | Bf109g2 -> "bf 109 g-2"
         | Bf109g4 -> "bf 109 g-4"
+        | Bf109g6 -> "bf 109 g-6"
         | Fw190a3 -> "fw 190 a-3"
         | Fw190a5 -> "fw 190 a-5"
         | Mc202 -> "mc 202"
@@ -351,14 +391,18 @@ with
         | IL2M41 -> "il-2 mod.1941"
         | IL2M42 -> "il-2 mod.1942"
         | IL2M43 -> "il-2 mod.1943"
-        | La5 -> "la-5"
+        | La5 -> "la-5 ser.8"
+        | La5fns2 -> "la-5fn ser.2"
         | Lagg3s29 -> "lagg-3 ser.29"
         | Mig3 -> "mig-3"
+        | P39 -> "p-39"
         | P40 -> "p-40"
+        | A20 -> "a-20"
         | Pe2s35 -> "pe-2 ser.35"
         | Pe2s87 -> "pe-2 ser.87"
         | Yak1s69 -> "yak-1 ser.69"
         | Yak1s127 -> "yak-1 ser.127"
+        | Yak7bs36 -> "yak-7b ser.36"
         | SpitfireMkVb -> "spitfire mk.vb"
 
     member this.BombLoads =
@@ -384,7 +428,7 @@ with
                         yield (n + offset, x)
             ]
         match this with
-        | Bf109e7 | Bf109f4 | Bf109g2 | Bf109g4 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
+        | Bf109e7 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
         | Bf109f2 -> xTimes [0; 4] [(1, 200.0f<K>); (2, 250.0f<K>)]
         | Mc202 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | Fw190a3 -> [(1, 200.0f<K>); (2, 250.0f<K>); (3, 500.0f<K>)]
@@ -423,12 +467,16 @@ with
         | Pe2s35 -> [(1, 400.0f<K>); (2, 600.0f<K>); (3, 500.0f<K>); (4, 1000.0f<K>); (5, 1000.0f<K>); (6, 1000.0f<K>); (8, 400.0f<K>); (9, 600.0f<K>); (10, 500.0f<K>)]
         | Pe2s87 -> [(1, 400.0f<K>); (2, 600.0f<K>); (3, 500.0f<K>); (4, 1000.0f<K>); (5, 1000.0f<K>); (6, 1000.0f<K>); (8, 400.0f<K>); (9, 600.0f<K>); (10, 500.0f<K>)]
         | La5 -> [(1, 100.0f<K>); (2, 200.0f<K>); (4, 100.0f<K>); (5, 200.0f<K>); (7, 100.0f<K>); (8, 200.0f<K>)]
+        | La5fns2 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | Lagg3s29 -> vTimes [(7, 7, 100.0f<K>); (14, 7, 200.0f<K>)]
         | Mig3 -> [(5, 100.0f<K>); (6, 200.0f<K>); (13, 100.0f<K>); (14, 200.0f<K>); (21, 100.0f<K>); (22, 200.0f<K>)]
+        | P39 -> [(6, 100.0f<K>); (12, 250.0f<K>)]
         | P40 -> times 4 [(4, 250.0f<K>); (8, 500.0f<K>); (28, 250.0f<K>); (32, 500.0f<K>)]
         | Yak1s69 -> [(9, 100.0f<K>); (10, 200.0f<K>)]
         | Yak1s127 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
+        | Yak7bs36 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | SpitfireMkVb -> [(0, 0.0f<K>); (1, 0.0f<K>)]
+        | A20 -> [(1, 800.0f<K>); (2, 1600.0f<K>); (3, 2000.0f<K>); (4, 1000.0f<K>); (5, 1800.0f<K>)]
         |> List.sortBy fst
 
     member this.EmptyPayload =
@@ -436,14 +484,18 @@ with
         | Lagg3s29 -> 49
         | Yak1s69 -> 11
         | Yak1s127 -> 3
+        | Yak7bs36 ->3
         | La5 -> 9
+        | La5fns2 -> 9
         | I16 -> 22
         | Mig3 -> 24
+        | P39 -> 18
         | P40 -> 36
         | SpitfireMkVb -> 1
         | IL2M41 -> 72
         | IL2M42 ->87
         | IL2M43 -> 104
+        | A20 -> 6
         | Pe2s35 -> 11
         | Pe2s87 -> 11
         | Bf109e7 -> 3
@@ -451,6 +503,7 @@ with
         | Bf109f4 -> 5
         | Bf109g2 -> 4
         | Bf109g4 -> 4
+        | Bf109g6 -> 8
         | Fw190a3 -> 6
         | Fw190a5 -> 10
         | Mc202 -> 5
@@ -502,7 +555,8 @@ with
         | Bf109f2
         | Bf109f4
         | Bf109g2
-        | Bf109g4 -> [ GroundAttacker; Interceptor ; Patroller ]
+        | Bf109g4 
+        | Bf109g6 -> [ GroundAttacker; Interceptor ; Patroller ]
         | Fw190a3
         | Fw190a5 -> [ GroundAttacker; Interceptor ]
         | Mc202 -> [ Patroller ]
@@ -515,13 +569,17 @@ with
         | IL2M42
         | IL2M43 -> [ GroundAttacker ]
         | Mig3 -> [ Interceptor ]
+        | P39
         | P40 -> [ GroundAttacker; Interceptor ]
         | Yak1s69 
         | Yak1s127
+        | Yak7bs36
         | La5
+        | La5fns2
         | SpitfireMkVb
         | Lagg3s29 -> [ Interceptor ; Patroller ]
         | Ju87 -> [ GroundAttacker ]
+        | A20
         | Pe2s35
         | Pe2s87 -> [ GroundAttacker; LevelBomber; CargoTransporter ]
         | Hs129b2 -> [ GroundAttacker ]
@@ -535,6 +593,7 @@ with
           Bf109f4
           Bf109g2
           Bf109g4
+          Bf109g6
           Fw190a3
           Fw190a5
           Mc202
@@ -547,12 +606,16 @@ with
           IL2M42
           IL2M43
           Mig3
+          P39
           P40
           Yak1s69
           Yak1s127
+          Yak7bs36
           La5
+          La5fns2
           Lagg3s29
           SpitfireMkVb
+          A20
           Pe2s35
           Pe2s87
           Ju87
