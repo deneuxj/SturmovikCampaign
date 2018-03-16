@@ -47,9 +47,9 @@ Vehicle
   Name = "TruckGER";
   Index = 2;
   LinkTrId = 0;
-  XPos = 29047.756;
+  XPos = 28964.559;
   YPos = 108.584;
-  ZPos = 20058.919;
+  ZPos = 20057.799;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -78,9 +78,9 @@ Vehicle
   Name = "CarGER";
   Index = 3;
   LinkTrId = 0;
-  XPos = 29047.657;
+  XPos = 28964.460;
   YPos = 108.584;
-  ZPos = 20049.064;
+  ZPos = 20047.944;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -109,9 +109,9 @@ Vehicle
   Name = "MobileAntiAirGER";
   Index = 4;
   LinkTrId = 0;
-  XPos = 29047.423;
+  XPos = 28964.226;
   YPos = 108.584;
-  ZPos = 20067.753;
+  ZPos = 20066.633;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -140,9 +140,9 @@ Vehicle
   Name = "MediumTankGER";
   Index = 5;
   LinkTrId = 0;
-  XPos = 29047.315;
+  XPos = 28964.118;
   YPos = 108.584;
-  ZPos = 20076.928;
+  ZPos = 20075.808;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -171,9 +171,9 @@ Vehicle
   Name = "HeavyTankGER";
   Index = 6;
   LinkTrId = 0;
-  XPos = 29047.458;
+  XPos = 28964.261;
   YPos = 108.584;
-  ZPos = 20085.138;
+  ZPos = 20084.018;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -202,9 +202,9 @@ Vehicle
   Name = "RocketArtilleryGER";
   Index = 7;
   LinkTrId = 0;
-  XPos = 29047.351;
+  XPos = 28964.154;
   YPos = 108.584;
-  ZPos = 20093.920;
+  ZPos = 20092.800;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -233,9 +233,9 @@ Vehicle
   Name = "AntiTankGER";
   Index = 8;
   LinkTrId = 0;
-  XPos = 29046.845;
+  XPos = 28963.648;
   YPos = 108.584;
-  ZPos = 20103.018;
+  ZPos = 20101.898;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -264,9 +264,9 @@ Vehicle
   Name = "FlakGER";
   Index = 9;
   LinkTrId = 0;
-  XPos = 29046.845;
+  XPos = 28963.648;
   YPos = 108.584;
-  ZPos = 20112.871;
+  ZPos = 20111.751;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -295,9 +295,9 @@ Vehicle
   Name = "AntiAirGER";
   Index = 10;
   LinkTrId = 0;
-  XPos = 29046.561;
+  XPos = 28963.364;
   YPos = 108.584;
-  ZPos = 20121.881;
+  ZPos = 20120.761;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -326,9 +326,9 @@ Vehicle
   Name = "CarRUS";
   Index = 11;
   LinkTrId = 0;
-  XPos = 29032.804;
+  XPos = 28949.607;
   YPos = 108.584;
-  ZPos = 20048.891;
+  ZPos = 20047.771;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -357,9 +357,9 @@ Vehicle
   Name = "TruckRUS";
   Index = 12;
   LinkTrId = 0;
-  XPos = 29032.698;
+  XPos = 28949.501;
   YPos = 108.584;
-  ZPos = 20058.856;
+  ZPos = 20057.736;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -388,9 +388,9 @@ Vehicle
   Name = "MobileAntiAirRUS";
   Index = 13;
   LinkTrId = 0;
-  XPos = 29032.380;
+  XPos = 28949.183;
   YPos = 108.584;
-  ZPos = 20067.814;
+  ZPos = 20066.694;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -419,9 +419,9 @@ Vehicle
   Name = "HeavyTankRUS";
   Index = 14;
   LinkTrId = 0;
-  XPos = 29031.744;
+  XPos = 28948.547;
   YPos = 108.584;
-  ZPos = 20084.988;
+  ZPos = 20083.868;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -450,9 +450,9 @@ Vehicle
   Name = "MediumTankRUS";
   Index = 15;
   LinkTrId = 0;
-  XPos = 29032.009;
+  XPos = 28948.812;
   YPos = 108.584;
-  ZPos = 20076.507;
+  ZPos = 20075.387;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -481,9 +481,9 @@ Vehicle
   Name = "RocketArtilleryRUS";
   Index = 16;
   LinkTrId = 0;
-  XPos = 29032.242;
+  XPos = 28949.045;
   YPos = 108.584;
-  ZPos = 20093.461;
+  ZPos = 20092.341;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -512,9 +512,9 @@ Vehicle
   Name = "AntiTankRUS";
   Index = 17;
   LinkTrId = 0;
-  XPos = 29031.817;
+  XPos = 28948.620;
   YPos = 108.584;
-  ZPos = 20102.207;
+  ZPos = 20101.087;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -543,9 +543,9 @@ Vehicle
   Name = "FlakRUS";
   Index = 18;
   LinkTrId = 0;
-  XPos = 29031.278;
+  XPos = 28948.081;
   YPos = 108.584;
-  ZPos = 20112.911;
+  ZPos = 20111.791;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -574,9 +574,9 @@ Vehicle
   Name = "AntiAirRUS";
   Index = 19;
   LinkTrId = 0;
-  XPos = 29031.172;
+  XPos = 28947.975;
   YPos = 108.584;
-  ZPos = 20121.498;
+  ZPos = 20120.378;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1122,8 +1122,8 @@ Plane
   Time = 60;
   DamageReport = 50;
   DamageThreshold = 1;
-  PayloadId = 0;
-  WMMask = 1;
+  PayloadId = 5;
+  WMMask = 101;
   AiRTBDecision = 0;
   DeleteAfterDeath = 1;
   Spotter = -1;
@@ -1522,9 +1522,9 @@ Vehicle
   Name = "LightArmorRUS";
   Index = 48;
   LinkTrId = 0;
-  XPos = 29031.250;
+  XPos = 28948.053;
   YPos = 108.584;
-  ZPos = 20133.070;
+  ZPos = 20131.950;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1553,9 +1553,9 @@ Vehicle
   Name = "LightArmorGER";
   Index = 49;
   LinkTrId = 0;
-  XPos = 29046.821;
+  XPos = 28963.624;
   YPos = 108.584;
-  ZPos = 20132.711;
+  ZPos = 20131.591;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1630,9 +1630,9 @@ Vehicle
   Name = "SearchLightGER";
   Index = 52;
   LinkTrId = 0;
-  XPos = 29046.089;
+  XPos = 28962.892;
   YPos = 108.584;
-  ZPos = 20144.091;
+  ZPos = 20142.971;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -1661,9 +1661,9 @@ Vehicle
   Name = "SearchLightRUS";
   Index = 53;
   LinkTrId = 0;
-  XPos = 29031.046;
+  XPos = 28947.849;
   YPos = 108.584;
-  ZPos = 20143.662;
+  ZPos = 20142.542;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -2700,9 +2700,9 @@ Vehicle
   Name = "LandLightGER";
   Index = 90;
   LinkTrId = 0;
-  XPos = 29046.015;
+  XPos = 28962.818;
   YPos = 108.584;
-  ZPos = 20155.631;
+  ZPos = 20154.511;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -2731,9 +2731,9 @@ Vehicle
   Name = "LandLightRUS";
   Index = 91;
   LinkTrId = 0;
-  XPos = 29031.091;
+  XPos = 28947.894;
   YPos = 108.584;
-  ZPos = 20155.631;
+  ZPos = 20154.511;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -2762,9 +2762,9 @@ Vehicle
   Name = "MgAAGER";
   Index = 92;
   LinkTrId = 0;
-  XPos = 29046.101;
+  XPos = 28962.904;
   YPos = 108.584;
-  ZPos = 20166.959;
+  ZPos = 20165.839;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -2793,9 +2793,9 @@ Vehicle
   Name = "MgAARUS";
   Index = 93;
   LinkTrId = 0;
-  XPos = 29030.988;
+  XPos = 28947.791;
   YPos = 108.584;
-  ZPos = 20166.729;
+  ZPos = 20165.609;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -3340,7 +3340,7 @@ Plane
 Block
 {
   Name = "Nets";
-  Index = 113;
+  Index = 111;
   LinkTrId = 0;
   XPos = 29032.689;
   YPos = 108.584;
@@ -3356,6 +3356,196 @@ Block
   DamageReport = 50;
   DamageThreshold = 1;
   DeleteAfterDeath = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter9GER";
+  Index = 112;
+  LinkTrId = 0;
+  XPos = 29099.037;
+  YPos = 110.134;
+  ZPos = 20078.870;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 13.70;
+  Script = "LuaScripts\WorldObjects\Planes\bf109g6.txt";
+  Model = "graphics\planes\bf109g6\bf109g6.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 2;
+  WMMask = 10001;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter9RUS";
+  Index = 113;
+  LinkTrId = 0;
+  XPos = 29055.223;
+  YPos = 110.084;
+  ZPos = 20077.486;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 13.00;
+  Script = "LuaScripts\WorldObjects\Planes\la5fns2.txt";
+  Model = "graphics\planes\la5fns2\la5fns2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 9;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter10RUS";
+  Index = 114;
+  LinkTrId = 0;
+  XPos = 29040.678;
+  YPos = 110.414;
+  ZPos = 20076.861;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 5.00;
+  Script = "LuaScripts\WorldObjects\Planes\p39l1.txt";
+  Model = "graphics\planes\p39l1\p39l1.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 12;
+  WMMask = 101;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fighter11RUS";
+  Index = 115;
+  LinkTrId = 0;
+  XPos = 29029.346;
+  YPos = 109.724;
+  ZPos = 20076.504;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 10.80;
+  Script = "LuaScripts\WorldObjects\Planes\yak7bs36.txt";
+  Model = "graphics\planes\yak7bs36\yak7bs36.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 3;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bomber3RUS";
+  Index = 116;
+  LinkTrId = 0;
+  XPos = 29066.285;
+  YPos = 110.654;
+  ZPos = 20223.110;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 2.90;
+  Script = "LuaScripts\WorldObjects\Planes\a20b.txt";
+  Model = "graphics\planes\a20b\a20b.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 4;
+  WMMask = 101;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
 }
 
 

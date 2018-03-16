@@ -362,6 +362,30 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.RussianFighter9 =
+        let fighter = planes.[T.Vehicles.fighter9RUS]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.GermanFighter9 =
+        let fighter = planes.[T.Vehicles.fighter9GER]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.RussianFighter10 =
+        let fighter = planes.[T.Vehicles.fighter10RUS]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.RussianFighter11 =
+        let fighter = planes.[T.Vehicles.fighter11RUS]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
     member this.RussianAttacker1 =
         let fighter = planes.[T.Vehicles.attacker1RUS]
         { Script = fighter.GetScript().Value
@@ -424,6 +448,12 @@ type VehicleDataTypeStore() =
 
     member this.GermanBomber2 =
         let fighter = planes.[T.Vehicles.bomber2GER]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.RussianBomber3 =
+        let fighter = planes.[T.Vehicles.bomber3RUS]
         { Script = fighter.GetScript().Value
           Model = fighter.GetModel().Value
         }
