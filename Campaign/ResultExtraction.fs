@@ -36,6 +36,8 @@ open Util
 open FSharp.Control
 open SturmovikMission.Blocks.Vehicles
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
+
 /// Match the object type strings in log events with plane models.
 let planeObjectType (planeSet : PlaneSet) (s : string) =
     match s with
@@ -383,7 +385,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     ongoingFlight := ongoingFlight.Value.Add(takeOff.VehicleId, af.AirfieldId)
                     yield tookOff { PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane; Cargo = cargo; BombLoad = bombLoad; PlayerName = pilot; Coalition = coalition }
                 | None ->
-                    ()
+                    logger.Warn(sprintf "Landed: Unknwon type of plane '%d'" takeOff.VehicleId)
             | :? LandingEntry as landing ->
                 let pos = Vector2(landing.Position.X, landing.Position.Z)
                 let af = world.GetClosestAirfield(pos)
