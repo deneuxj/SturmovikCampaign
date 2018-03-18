@@ -103,7 +103,7 @@ module Support =
             | CampaignOver _ -> "terminate campaign"
             | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
         member this.GetAsync(support : SupportApis, config, serverProc : Process option, announceResults, announceWeather, announceWorldState, updateMap) =
-            let tryOrNotifyPlayers errorMessage action =
+            let tryOrNotifyPlayers errorMessage onError action =
                 async {
                     let result =
                         try
@@ -115,6 +115,7 @@ module Support =
                     | Choice2Of2 e ->
                         do! support.ServerControl.MessageAll errorMessage
                         do! Async.Sleep(5000)
+                        onError()
                         raise(Exception("See inner exception", e))
                     | _ ->
                         ()
@@ -136,6 +137,7 @@ module Support =
                     let exitStatus = Campaign.Run.MissionFileGeneration.run config
                     if exitStatus <> 0 then
                         do! support.ServerControl.MessageAll ["Failed to generate next mission"]
+                        killServer(config, serverProc)
                         return serverProc, Failed(sprintf "Resaver failed, exit status %d" exitStatus, None, this)
                     else
                         do! support.ServerControl.MessageAll ["Next mission ready"]
@@ -199,27 +201,19 @@ module Support =
                         ]
                         |> support.ServerControl.MessageAll
                     let! missionLogEntries =
-                        try
-                            tryOrNotifyPlayers
-                                [ "Bad news, mission log entries were not found"
-                                  "Campaign is now halted"
-                                  "Sorry for the inconvenience" ]
-                                (fun() -> Campaign.Run.MissionLogParsing.stage0 config)
-                        with
-                        | exc ->
-                            killServer(config, serverProc)
-                            raise exc
+                        tryOrNotifyPlayers
+                            [ "Bad news, mission log entries were not found"
+                              "Campaign is now halted"
+                              "Sorry for the inconvenience" ]
+                            (fun() -> killServer(config, serverProc))
+                            (fun() -> Campaign.Run.MissionLogParsing.stage0 config)
                     let! missionResults =
-                        try
-                            tryOrNotifyPlayers
-                                [ "Bad news, result extraction failed"
-                                  "Campaign is now halted"
-                                  "Sorry for the inconvenience" ]
-                                (fun() -> Campaign.Run.MissionLogParsing.stage1(config, missionLogEntries))
-                        with
-                        | exc ->
-                            killServer(config, serverProc)
-                            raise exc
+                        tryOrNotifyPlayers
+                            [ "Bad news, result extraction failed"
+                              "Campaign is now halted"
+                              "Sorry for the inconvenience" ]
+                            (fun() -> killServer(config, serverProc))
+                            (fun() -> Campaign.Run.MissionLogParsing.stage1(config, missionLogEntries))
                     Campaign.Run.MissionLogParsing.backupFiles config
                     support.Logging.LogInfo "Make weather..."
                     let date = Campaign.Run.WeatherComputation.getNextDateFromState config
@@ -230,6 +224,7 @@ module Support =
                             [ "Bad news, campaign update failed"
                               "Campaign is now halted"
                               "Sorry for the inconvenience" ]
+                            (fun() -> killServer(config, serverProc))
                             (fun() -> Campaign.Run.MissionLogParsing.updateState(config, missionResults))
                     let newProduction, battleResults, ((oldState, newState) as states) = updatedState
                     let world =
@@ -238,7 +233,9 @@ module Support =
                             use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
                             serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
                         with
-                        | e -> failwithf "Failed to read world data. Reason was: '%s'" e.Message
+                        | e ->
+                            killServer(config, serverProc)
+                            failwithf "Failed to read world data. Reason was: '%s'" e.Message
                     match newState.VictoriousSide(world) with
                     | Some Allies ->
                         do!
