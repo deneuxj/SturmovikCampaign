@@ -250,6 +250,9 @@ module AsyncSeq =
         |> AsyncSeq.mergeAll
 
 module Async =
+    open System.IO
+    open System.ComponentModel
+
     let catchLog label task =
         async {
             try
@@ -259,3 +262,83 @@ module Async =
                 printfn "Task '%s' failed: %s at\n%s" label e.Message e.StackTrace
                 return()
         }
+
+    /// <summary>
+    /// Try to run a task, catch ay raised exception and return is an error
+    /// </summary>
+    let tryTask task =
+        async {
+            try
+                let! res = task
+                return Result.Ok res
+            with e -> return Result.Error e
+        }
+
+    type Attempt<'S, 'R> =
+    | KeepTrying of 'S
+    | GiveUp of 'S
+    | Completed of 'R
+
+    /// <summary>
+    /// Repeatedly try a task until it completes or gives up.
+    /// </summary>
+    /// <param name="wait">Task to run between invocations of task. Typical use would be to wait</param>
+    /// <param name="exch">Task run instead of wait when the task raises an exception</param>
+    /// <param name="task">Task to run. It must return some state if it failed to complete. In that case this state is passed to the task in the next try.</param>
+    /// <param name="state">Initial value of state to pass to the task</param>
+    let keepTrying (wait : 'S2 -> Async<'S1>) (exch : 'S1 -> System.Exception -> Async<'S1>) (task : 'S1 -> Async<Attempt<'S2, 'R>>) state =
+        let rec work state =
+            async {
+                let! res = tryTask (task state)
+                match res with
+                | Result.Ok(GiveUp partial) ->
+                    return Result.Error partial
+                | Result.Ok(Completed result) ->
+                    return Result.Ok result
+                | Result.Ok(KeepTrying s) ->
+                    let! s = wait s
+                    return! work s
+                | Result.Error e ->
+                    let! s = exch state e
+                    return! work s
+            }
+        work state
+
+    /// <summary>
+    /// Repeatedly try to perform an action on a list of items. Return true if all items were successfully processed.
+    /// </summary>
+    let keepTryingPaced retries wait action (items : 'F list) =
+        let failed files =
+            seq {
+                for file in files do
+                    let failed =
+                        try
+                            action(file)
+                            None
+                        with
+                        | :? System.IO.IOException -> Some file
+                    match failed with
+                    | Some file -> yield file
+                    | None -> ()
+            }
+        let attempt (retries, items) =
+            async {
+                if Seq.isEmpty items then
+                    return Completed()
+                elif retries <= 0 then
+                    return GiveUp(0, items)
+                else
+                    let failed = List.ofSeq (failed items)
+                    return KeepTrying(retries - 1, failed)
+            }
+        let exch s _ =
+            async {
+                do! Async.Sleep(wait)
+                return s
+            }
+        let wait s =
+            async {
+                do! Async.Sleep(wait)
+                return s
+            }
+        keepTrying wait exch attempt (retries, items)
