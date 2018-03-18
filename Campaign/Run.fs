@@ -469,26 +469,52 @@ module MissionFileGeneration =
 
         let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer")
         let langs = ["eng"; "fra"; "rus"; "ger"; "spa"; "pol"]
-        let swallow f = try f() with | _ -> ()
+
         // Remove old files from multiplayer directory
-        swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".Mission")))
-        swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".list")))
-        for lang in langs do
-            swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + "." + lang)))
-        swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ".msnbin")))
+        let filesToDelete =
+            [
+                yield Path.Combine(mpDir, missionName + ".Mission")
+                yield Path.Combine(mpDir, missionName + ".list")
+                for lang in langs do
+                    yield Path.Combine(mpDir, missionName + "." + lang)
+                yield Path.Combine(mpDir, missionName + ".msnbin")
+            ]
+        let deletionResult = Async.RunSynchronously(Async.keepTryingPaced 600 100 (fun f -> if File.Exists(f) then File.Delete(f)) filesToDelete)
+        match deletionResult with
+        | Result.Error (_, files) ->
+            failwithf "Failed to delete the following files: %s" (String.concat ", " files)
+        | Result.Ok () ->
+            ()
+
         // Copy new files to multiplayer directory
-        File.Copy(Path.Combine(config.OutputDir, missionName + ".Mission"), Path.Combine(mpDir, missionName + ".Mission"))
-        for lang in langs do
-            // Mission.eng -> Mission.lang: we use the english text for all languagues. Better than not having any text at all.
-            File.Copy(Path.Combine(config.OutputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + "." + lang))
+        let filesToCopy =
+            [
+                yield (Path.Combine(config.OutputDir, missionName + ".Mission"), Path.Combine(mpDir, missionName + ".Mission"))
+                // Mission.eng -> Mission.lang: we use the english text for all languagues. Better than not having any text at all.
+                for lang in langs do
+                    yield (Path.Combine(config.OutputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + "." + lang))
+            ]
+        let copyResult = Async.RunSynchronously(Async.keepTryingPaced 5 1000 (fun (x, y) -> File.Copy(x, y)) filesToCopy)
+        match copyResult with
+        | Result.Error (_, files) ->
+            let msg =
+                files
+                |> List.map (fun (src, dest) -> sprintf "%s -> %s" src dest)
+                |> String.concat ", "
+            failwithf "Failed to copy the following files: %s" msg
+        | Result.Ok () ->
+            ()
+
         let resaverDir = Path.Combine(config.ServerBinDir, "resaver")
         let p = ProcessStartInfo(sprintf "\"%s\"" (Path.Combine(resaverDir, "MissionResaver.exe")), sprintf "-d \"%s\" -f \"%s\"" config.ServerDataDir (Path.Combine(mpDir, missionName + ".Mission")))
         p.WorkingDirectory <- resaverDir
         p.UseShellExecute <- false
         let proc = Process.Start(p)
         proc.WaitForExit()
+
         // Remove text or binary Mission file, depending on which one to use
         let ext = if config.UseTextMissionFile then ".msnbin" else ".mission"
+        let swallow f = try f() with | _ -> ()
         swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ext)))
         logger.Info(sprintf "Resaver exited with code %d" proc.ExitCode)
         proc.ExitCode
