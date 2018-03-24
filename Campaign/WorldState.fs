@@ -72,8 +72,8 @@ with
 
     member this.Durability =
         match this with
-        | HeavyTank -> 12500
-        | MediumTank -> 10000
+        | HeavyTank -> 15000
+        | MediumTank -> 15000
         | LightArmor -> 5000
 
     static member AllVehicles = [ HeavyTank; MediumTank; LightArmor ]

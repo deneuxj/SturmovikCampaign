@@ -4,48 +4,51 @@
       storage: 100.0
       production: 0.0
       is_airfield: false
-      durability: 7000
+      durability: 25000
     - pattern: arf_barak
       sub_blocks: "[1]"
       storage: 100.0
       production: 0.0
       is_airfield: false
+      durability: 10000
     - pattern: "arf_dugouts_2"
       sub_blocks: "[2..5]"
       storage: 100.0
-      durability: 8500
+      durability: 25000
     - pattern: "arf_dugouts_3"
       sub_blocks: "[0..6]"
       storage: 100.0
-      durability: 8500
+      durability: 25000
     - pattern: "arf_ammo_1"
       sub_blocks: "[0] @ [2..10]"
       storage: 100.0
       is_airfield: true
-      durability: 3000
+      durability: 10000
     - pattern: "arf_ammo_2"
       sub_blocks: "[0..9]"
       storage: 125.0
       is_airfield: true
-      durability: 3000
+      durability: 10000
     - pattern: "arf_ammo_3"
       sub_blocks: "[3..10]"
       storage: 50.0
       is_airfield: true
-      durability: 3000
+      durability: 10000
     - pattern: "arf_ammo_4"
       sub_blocks: "[2..8]"
       storage: 75.0
       is_airfield: true
-      durability: 3000
+      durability: 10000
     - pattern: "arf_sklad"
       sub_blocks: "[1]"
       storage: 300.0
       is_airfield: true
+      durability: 10000
     - pattern: "arf_saray"
       sub_blocks: "[1]"
       storage: 200.0
       is_airfield: true
+      durability: 10000
     - pattern: "industrial_200x140_01"
       sub_blocks: "[0..12]"
       production: 25.0
@@ -67,12 +70,15 @@
     - pattern: "industrial_block_fuel35m_300x100"
       sub_blocks: "[0..7]"
       production: 25.0
+      durability: 9000
     - pattern: "industrial_block_fuel25m_300x100"
       sub_blocks: "[0..6]"
       production: 25.0
+      durability: 9000
     - pattern: "industrial_block_bigwarehouse_300x100"
       sub_blocks: "[1..4] @ [6..7]"
       production: 25.0
+      durability: 50000
     - pattern: "industrial_block_midwarehouse_200x140"
       sub_blocks: "[0..8]"
       production: 25.0
@@ -91,18 +97,23 @@
     - pattern: "industrial_block_fuel_300x100"
       sub_blocks: "[2..3] @ [16..19]"
       production: 25.0
+      durability: 9000
     - pattern: "industrial_cornerl_01"
       sub_blocks: "[0..8]"
       production: 25.0
+      durability: 50000
     - pattern: "industrial_cornerl_02"
       sub_blocks: "[0..9]"
       production: 25.0
+      durability: 50000
     - pattern: "industrial_cornerr_01"
       sub_blocks: "[0..6]"
       production: 25.0
+      durability: 50000
     - pattern: "industrial_cornerr_02"
       sub_blocks: "[0..10]"
       production: 25.0
+      durability: 50000
     - pattern: "industrial_object_oil"
       sub_blocks: "[1]"
       production: 25.0
@@ -122,46 +133,52 @@
       sub_blocks: "[0..1]"
       storage: 1200.0
       is_airfield: true
+      durability: 25000
     - pattern: "arf_hangars_2"
       sub_blocks: "[0..1]"
       storage: 1200.0
       is_airfield: true
+      durability: 25000
     - pattern: "arf_hangars_3"
       sub_blocks: "[0]"
       storage: 600.0
       is_airfield: true
+      durability: 25000
     - pattern: "arf_hangararc"
       sub_blocks: "[1]"
       storage: 1000.0
       is_airfield: true
+      durability: 50000
     - pattern: "arf_hangarbox"
       sub_blocks: "[1]"
       storage: 1000.0
       is_airfield: true
+      durability: 50000
     - pattern: "arf_gsm_1"
       sub_blocks: "[2..4]"
       storage: 100.0
       is_airfield: true
-      durability: 3000
+      durability: 5000
     - pattern: "arf_gsm_2"
       sub_blocks: "[1; 2]"
       storage: 75.0
       is_airfield: true
-      durability: 3000
+      durability: 5000
     - pattern: "meh_01"
       sub_blocks: "[0..7]"
       production: 10.0
+      durability: 10000
     - pattern: "port_up_crane"
       sub_blocks: "[0; 2]"
       production: 5.0
     - pattern: "port_up_group_cargo_190x15"
       sub_blocks: "[0..15]"
       production: 10.0
-      durability: 1000
+      durability: 5000
     - pattern: "port_up_group_cargo_50x25"
       sub_blocks: "[0..7]"
       production: 5.0
-      durability: 1000
+      durability: 5000
     - pattern: "port_up_group_smallsklad"
       sub_blocks: "[0..1]"
       production: 5.0
@@ -177,58 +194,71 @@
     - pattern: "port_up_unit_bags"
       sub_blocks: "[1]"
       production: 0.5
-      durability: 1000
+      durability: 5000
     - pattern: "port_up_unit_container"
       sub_blocks: "[1]"
       production: 1.0
-      durability: 1000
+      durability: 5000
     - pattern: "port_up_unit_woodbox_1x4"
       sub_blocks: "[1]"
       production: 0.5
-      durability: 1000
+      durability: 5000
     - pattern: "port_up_unit_woodbox_2x24"
       sub_blocks: "[1]"
       production: 2.0
-      durability: 1000
+      durability: 5000
     - pattern: "rwstation_b"
       sub_blocks: "[0..1] @ [3..7] @ [9..16]"
       production: 15.0
+      durability: 50000
     - pattern: "rwstation_s1"
       sub_blocks: "[0; 2; 3] @ [5] @ [7..10]"
       production: 10.0
+      durability: 50000
     - pattern: "rwstation_s2"
       sub_blocks: "[0; 2; 3] @ [6..8]"
       production: 10.0
+      durability: 50000
     - pattern: "scot_01"
       sub_blocks: "[0..4] @ [15..21]"
       production: 20.0
+      durability: 10000
     - pattern: "sklad_01"
       sub_blocks: "[0..14]"
       production: 20.0
+      durability: 10000
     - pattern: "town_lrg_01"
       sub_blocks: "[0..6] @ [9..10] @ [12]"
       production: 2.0
+      durability: 50000
     - pattern: "town_lrg_02"
       sub_blocks: "[0..4] @ [6..9]"
       production: 2.0
+      durability: 50000
     - pattern: "town_lrg_03"
       sub_blocks: "[0..6] @ [8..13]"
       production: 2.0
+      durability: 50000
     - pattern: "town_lrg_04"
       sub_blocks: "[0..4] @ [8..9] @ [11] @ [13..20]"
       production: 2.0
+      durability: 50000
     - pattern: "town_lrg_05"
       sub_blocks: "[0..3] @ [5] @ [7..9]"
       production: 2.0
+      durability: 50000
     - pattern: "town_lrg_06"
       sub_blocks: "[0..7] @ [9]"
       production: 2.0
+      durability: 50000
     - pattern: "town_lrg_corner_01"
       sub_blocks: "[0; 2] @ [4..7]"
       production: 1.0
+      durability: 50000
     - pattern: "town_lrg_corner_02"
       sub_blocks: "[0..6] @ [8]"
       production: 1.0
+      durability: 50000
     - pattern: "watertower"
       sub_blocks: "[0]"
       production: 5.0
