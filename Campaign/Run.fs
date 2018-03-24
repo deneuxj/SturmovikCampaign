@@ -680,7 +680,8 @@ module MissionLogParsing =
                                 logger.Debug(sprintf "Reached start of new mission, discarding current because too short")
                                 previous
                     let expectedMissionFile = missionName.ToLower()
-                    let actualMissionFile = Path.GetFileNameWithoutExtension(start.MissionFile.Split('/') |> Seq.last).ToLower()
+                    let actualMissionFile = Path.GetFileNameWithoutExtension(start.MissionFile.Split('/', '\\') |> Seq.last).ToLower()
+                    let actualMissionFile = Regex.Replace(actualMissionFile, "_\d$", "")
                     if start.MissionTime = startDate && actualMissionFile = expectedMissionFile then
                         logger.Info(sprintf "Start collecting from %s" file)
                         previous, [entry] // Start new list
