@@ -494,11 +494,11 @@ module MissionFileGeneration =
             ]
             let! result = retry1s copy files
             handleResult snd "duplicate localization files" result
-            // Copy localization files from _1 to _2
+            // Copy mission and localization files from _1 to _2
             let copyLoc =
                 async {
                     let files = [
-                        for lang in "eng" :: langs do
+                        for lang in "Mission" :: "eng" :: langs do
                             yield (Path.Combine(localMpDir, missionName + "_1." + lang), Path.Combine(localMpDir, missionName + "_2." + lang))
                     ]
                     let! result = retry1s copy files
