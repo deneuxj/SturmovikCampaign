@@ -21,6 +21,9 @@
     # Max number of captured planes available for spawning (per airfield)
     MaxCapturedPlanes: 0
     # Base name of generated mission file
+    # Each round two files are generated. They are named after the parameter below, with _1 and _2 appended.
+    # You should set your sds file to use a mission rotation with two missions, using these names.
+    # This avoids issues with locked mission files that typically arise when replacing the old mission file while DServer is running and sending files to players currently connecting.
     MissionName: DynCampaign
     # Length of mission, in minutes
     MissionLength: 180

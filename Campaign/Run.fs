@@ -465,59 +465,118 @@ module MissionFileGeneration =
               AxisOrders = allAxisOrders
               AlliesOrders = allAlliesOrders
             }
-        writeMissionFile missionParams missionData (Path.Combine(config.OutputDir, missionName + ".Mission"))
-
-        let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer")
-        let langs = ["eng"; "fra"; "rus"; "ger"; "spa"; "pol"]
-
-        // Remove old files from multiplayer directory
-        let filesToDelete =
-            [
-                yield Path.Combine(mpDir, missionName + ".Mission")
-                yield Path.Combine(mpDir, missionName + ".list")
+        async {
+            // Retry an operation for at most 1 minute at 1s interval
+            let copy(x, y) =
+                if File.Exists(y) then
+                    File.Delete(y)
+                File.Copy(x, y)
+            let retry1s h items = Async.keepTryingPaced 60 1000 h items
+            let handleResult sel msg res =
+                match res with
+                | Result.Error (_, files) ->
+                    failwithf "Failed to %s: %s" msg (String.concat "," (files |> List.map sel))
+                | Result.Ok () ->
+                    ()
+            // Create Multiplayer/Dogfight directory if it doesn't already exist
+            let mkdir d = if not (Directory.Exists(d)) then Directory.CreateDirectory(d) |> ignore
+            let! result = retry1s mkdir [Path.Combine(config.OutputDir, "Multiplayer", "Dogfight")]
+            handleResult id "make directory" result
+            let localMpDir = Path.Combine(config.OutputDir, "Multiplayer", "Dogfight")
+            // Write mission file
+            let! result = retry1s (writeMissionFile missionParams missionData) [Path.Combine(localMpDir, missionName + "_1.Mission")]
+            handleResult id "write mission file" result
+            // Duplicate localization from English
+            let langs = ["fra"; "rus"; "ger"; "spa"; "pol"]
+            let files = [
                 for lang in langs do
-                    yield Path.Combine(mpDir, missionName + "." + lang)
-                yield Path.Combine(mpDir, missionName + ".msnbin")
+                    yield (Path.Combine(localMpDir, missionName + "_1.eng"), Path.Combine(localMpDir, missionName + "_1." + lang))
             ]
-        let deletionResult = Async.RunSynchronously(Async.keepTryingPaced 600 100 (fun f -> if File.Exists(f) then File.Delete(f)) filesToDelete)
-        match deletionResult with
-        | Result.Error (_, files) ->
-            failwithf "Failed to delete the following files: %s" (String.concat ", " files)
-        | Result.Ok () ->
-            ()
-
-        // Copy new files to multiplayer directory
-        let filesToCopy =
-            [
-                yield (Path.Combine(config.OutputDir, missionName + ".Mission"), Path.Combine(mpDir, missionName + ".Mission"))
-                // Mission.eng -> Mission.lang: we use the english text for all languagues. Better than not having any text at all.
-                for lang in langs do
-                    yield (Path.Combine(config.OutputDir, missionName + ".eng"), Path.Combine(mpDir, missionName + "." + lang))
-            ]
-        let copyResult = Async.RunSynchronously(Async.keepTryingPaced 5 1000 (fun (x, y) -> File.Copy(x, y)) filesToCopy)
-        match copyResult with
-        | Result.Error (_, files) ->
-            let msg =
-                files
-                |> List.map (fun (src, dest) -> sprintf "%s -> %s" src dest)
-                |> String.concat ", "
-            failwithf "Failed to copy the following files: %s" msg
-        | Result.Ok () ->
-            ()
-
-        let resaverDir = Path.Combine(config.ServerBinDir, "resaver")
-        let p = ProcessStartInfo(sprintf "\"%s\"" (Path.Combine(resaverDir, "MissionResaver.exe")), sprintf "-d \"%s\" -f \"%s\"" config.ServerDataDir (Path.Combine(mpDir, missionName + ".Mission")))
-        p.WorkingDirectory <- resaverDir
-        p.UseShellExecute <- false
-        let proc = Process.Start(p)
-        proc.WaitForExit()
-
-        // Remove text or binary Mission file, depending on which one to use
-        let ext = if config.UseTextMissionFile then ".msnbin" else ".mission"
-        let swallow f = try f() with | _ -> ()
-        swallow (fun () -> File.Delete (Path.Combine(mpDir, missionName + ext)))
-        logger.Info(sprintf "Resaver exited with code %d" proc.ExitCode)
-        proc.ExitCode
+            let! result = retry1s copy files
+            handleResult snd "duplicate localization files" result
+            // Copy localization files from _1 to _2
+            let copyLoc =
+                async {
+                    let files = [
+                        for lang in "eng" :: langs do
+                            yield (Path.Combine(localMpDir, missionName + "_1." + lang), Path.Combine(localMpDir, missionName + "_2." + lang))
+                    ]
+                    let! result = retry1s copy files
+                    handleResult snd "copy localization files from _1 to _2" result
+                }
+            // Run resaver
+            let resave missionFile =
+                let resaverDir = Path.Combine(config.ServerBinDir, "resaver")
+                let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d \"%s\" -f \"%s\"" config.OutputDir missionFile)
+                p.WorkingDirectory <- resaverDir
+                p.UseShellExecute <- true
+                let proc = Process.Start(p)
+                proc.WaitForExit()
+                logger.Info(sprintf "Resaver exited with code %d" proc.ExitCode)
+                if proc.ExitCode <> 0 then
+                    failwith "Resaver failed"
+            if config.UseTextMissionFile then
+                resave (Path.Combine(localMpDir, missionName + "_1.Mission"))
+                // Delete msnbin file
+                let! result = retry1s File.Delete [Path.Combine(localMpDir, missionName + "_1.msnbin")]
+                handleResult id "delete" result
+                // Translate list file from _1 to _2
+                let handle (file_in, file_out) =
+                    let regex = System.Text.RegularExpressions.Regex("(filename=\".*)_1([.].*\",)")
+                    let replaced =
+                        [
+                            for line in File.ReadAllLines(file_in) do
+                                yield regex.Replace(line, @"$1_2$2")
+                        ]
+                    File.WriteAllLines(file_out, replaced)
+                let listFile = (Path.Combine(localMpDir, missionName + "_1.list"), Path.Combine(localMpDir, missionName + "_2.list")) 
+                let! result = retry1s handle [listFile]
+                handleResult snd "translate second list file" result
+                // Copy localization files from _1 to _2
+                do! copyLoc
+            else
+                resave (Path.Combine(localMpDir, missionName + "_1.Mission"))
+                // Copy localization files from _1 to _2
+                do! copyLoc
+                resave (Path.Combine(localMpDir, missionName + "_2.Mission"))
+            // Publish to DServer
+            let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer", "Dogfight")
+            let langs = ["eng"; "fra"; "rus"; "ger"; "spa"; "pol"]
+            let suffixes = ["_1"; "_2"]
+            // Remove old files from multiplayer directory
+            let filesToDelete =
+                [
+                    for suffix in "" :: suffixes do
+                        yield Path.Combine(mpDir, missionName + suffix + ".Mission")
+                        yield Path.Combine(mpDir, missionName + suffix + ".msnbin")
+                        yield Path.Combine(mpDir, missionName + suffix + ".list")
+                        for lang in langs do
+                            yield Path.Combine(mpDir, missionName + suffix + "." + lang)
+                        yield Path.Combine(mpDir, missionName + suffix + ".msnbin")
+                ]
+            let! result = retry1s (fun f -> if File.Exists(f) then File.Delete(f)) filesToDelete
+            handleResult id "delete old mission files" result
+            // Copy new files to multiplayer directory
+            let filesToCopy =
+                [
+                    let ext = if config.UseTextMissionFile then ".Mission" else ".msnbin"
+                    for suffix in suffixes do
+                        yield (Path.Combine(localMpDir, missionName + suffix + ext), Path.Combine(mpDir, missionName + suffix + ext))
+                        yield (Path.Combine(localMpDir, missionName + suffix + ".list"), Path.Combine(mpDir, missionName + suffix + ".list"))
+                        for lang in langs do
+                            yield (Path.Combine(localMpDir, missionName + suffix + "." + lang), Path.Combine(mpDir, missionName + suffix + "." + lang))
+                ]
+            let! result = retry1s (fun (x, y) -> File.Copy(x, y)) filesToCopy
+            match result with
+            | Result.Error (_, files) ->
+                let msg =
+                    files
+                    |> List.map (fun (src, dest) -> sprintf "%s -> %s" src dest)
+                    |> String.concat ", "
+                failwithf "Failed to publish the following files: %s" msg
+            | Result.Ok () ->
+                ()
+        }
 
 module MissionLogParsing =
     open Campaign.WorldDescription

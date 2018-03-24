@@ -105,14 +105,9 @@ module Support =
         member this.GetAsync(support : SupportApis, config, serverProc : Process option, announceResults, announceWeather, announceWorldState, updateMap) =
             let tryOrNotifyPlayers errorMessage onError action =
                 async {
-                    let result =
-                        try
-                            action()
-                            |> Choice1Of2
-                        with
-                        | e -> Choice2Of2 e
+                    let! result = Async.tryTask action
                     match result with
-                    | Choice2Of2 e ->
+                    | Result.Error e ->
                         do! support.ServerControl.MessageAll errorMessage
                         do! Async.Sleep(5000)
                         onError()
@@ -121,8 +116,8 @@ module Support =
                         ()
                     return
                         match result with
-                        | Choice1Of2 x -> x
-                        | Choice2Of2 _ -> failwith "Unreachable"
+                        | Result.Ok x -> x
+                        | Result.Error _ -> failwith "Unreachable"
                 }
             match this with
             | DecideOrders ->
@@ -134,14 +129,13 @@ module Support =
             | GenerateMission ->
                 async {
                     support.Logging.LogInfo "Generate mission..."
-                    let exitStatus = Campaign.Run.MissionFileGeneration.run config
-                    if exitStatus <> 0 then
-                        do! support.ServerControl.MessageAll ["Failed to generate next mission"]
-                        killServer(config, serverProc)
-                        return serverProc, Failed(sprintf "Resaver failed, exit status %d" exitStatus, None, this)
-                    else
-                        do! support.ServerControl.MessageAll ["Next mission ready"]
-                        return serverProc, KillOrSkip
+                    do!
+                        tryOrNotifyPlayers
+                            ["Failed to generate next mission"]
+                            (fun() -> killServer(config, serverProc))
+                            (Campaign.Run.MissionFileGeneration.run config)
+                    do! support.ServerControl.MessageAll ["Next mission ready"]
+                    return serverProc, KillOrSkip
                 }
             | KillOrSkip ->
                 async {
@@ -206,14 +200,14 @@ module Support =
                               "Campaign is now halted"
                               "Sorry for the inconvenience" ]
                             (fun() -> killServer(config, serverProc))
-                            (fun() -> Campaign.Run.MissionLogParsing.stage0 config)
+                            (async { return Campaign.Run.MissionLogParsing.stage0 config })
                     let! missionResults =
                         tryOrNotifyPlayers
                             [ "Bad news, result extraction failed"
                               "Campaign is now halted"
                               "Sorry for the inconvenience" ]
                             (fun() -> killServer(config, serverProc))
-                            (fun() -> Campaign.Run.MissionLogParsing.stage1(config, missionLogEntries))
+                            (async { return Campaign.Run.MissionLogParsing.stage1(config, missionLogEntries) })
                     Campaign.Run.MissionLogParsing.backupFiles config
                     support.Logging.LogInfo "Make weather..."
                     let date = Campaign.Run.WeatherComputation.getNextDateFromState config
@@ -225,7 +219,7 @@ module Support =
                               "Campaign is now halted"
                               "Sorry for the inconvenience" ]
                             (fun() -> killServer(config, serverProc))
-                            (fun() -> Campaign.Run.MissionLogParsing.updateState(config, missionResults))
+                            (async { return Campaign.Run.MissionLogParsing.updateState(config, missionResults) })
                     let newProduction, battleResults, ((oldState, newState) as states) = updatedState
                     let world =
                         try
