@@ -385,7 +385,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     ongoingFlight := ongoingFlight.Value.Add(takeOff.VehicleId, af.AirfieldId)
                     yield tookOff { PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane; Cargo = cargo; BombLoad = bombLoad; PlayerName = pilot; Coalition = coalition }
                 | None ->
-                    logger.Warn(sprintf "Landed: Unknwon type of plane '%d'" takeOff.VehicleId)
+                    logger.Warn(sprintf "TookOff: Unknwon type of plane '%d'" takeOff.VehicleId)
             | :? LandingEntry as landing ->
                 let pos = Vector2(landing.Position.X, landing.Position.Z)
                 let af = world.GetClosestAirfield(pos)
@@ -420,7 +420,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                             match planePilot.Value.TryFind landing.VehicleId with
                             | None -> None, None
                             | Some(pilot, coalition) -> Some pilot, coalition
-                        yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = health; Cargo = cargoAmount; PlayerName = pilot; Coalition = coalition }
+                        yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = repairedHealth; Cargo = cargoAmount; PlayerName = pilot; Coalition = coalition }
                     | None -> ()
             | :? RoundEndEntry as roundEnd ->
                 // register all ongoing flights as landed back at starting airfield
