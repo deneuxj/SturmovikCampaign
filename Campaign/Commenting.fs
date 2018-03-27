@@ -336,9 +336,10 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
 type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onStateWritten : unit -> unit) =
     let missionName = config.MissionName
     let campaignDir = config.OutputDir
-    let missionFile = missionName + ".mission"
+    let missionDir = Path.Combine(campaignDir, "Multiplayer", "Dogfight")
+    let missionFile = missionName + "_1.mission"
     let watcher = new FileSystemWatcher()
-    do watcher.Path <- campaignDir
+    do watcher.Path <- missionDir
        watcher.Filter <- missionFile
        watcher.NotifyFilter <- NotifyFilters.LastWrite
     let serializer = FsPickler.CreateXmlSerializer()
@@ -396,7 +397,7 @@ type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onSt
     let prepare =
         async {
             let worldPath = Path.Combine(campaignDir, "world.xml")
-            let missionPath = Path.Combine(campaignDir, missionFile)
+            let missionPath = Path.Combine(missionDir, missionFile)
             let rec loadWorld() =
                 async {
                     // Wait until the mission file exists. When that file exists, we know that world.xml is ready to be read.
