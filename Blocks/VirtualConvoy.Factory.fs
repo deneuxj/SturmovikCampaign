@@ -98,6 +98,7 @@ with
                     yield kvp.Value.All
                 yield this.Api.All
                 yield this.DepartureReporting.All
+                yield this.BlockedReporting.All
                 yield this.IconAttack.All
                 yield this.IconCover.All
                 for kvp in this.BridgeDestroyedConjSet do
