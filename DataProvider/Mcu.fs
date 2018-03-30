@@ -374,7 +374,8 @@ type HasEntity =
 /// <param name="getNewId">Function that provides the new id given an old id.</param>
 /// <param name="mcu">The MCU whose ids are changed. Instance is mutated.</param>
 let substId (getNewId : int -> int) (mcu : McuBase) =
-    mcu.Index <- getNewId mcu.Index
+    let newIndex = getNewId mcu.Index
+    mcu.Index <- newIndex
     mcu.Path <-
         mcu.Path
         |> List.map (fun (name, idx) -> (name, getNewId idx))
