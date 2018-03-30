@@ -7,4 +7,4 @@
 
 open Configuration
 
-Campaign.Run.MissionFileGeneration.run Configuration.config
+Async.RunSynchronously(Campaign.Run.MissionFileGeneration.run Configuration.config)
