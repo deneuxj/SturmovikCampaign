@@ -72,7 +72,7 @@ let newEntity idx =
         T.String "",
         T.Boolean true,
         T.Integer idx,
-        T.Integer -1,
+        T.Integer 0,
         T.String "",
         T.VectorOfIntegers [],
         T.VectorOfIntegers [],
