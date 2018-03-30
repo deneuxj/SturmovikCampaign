@@ -42,7 +42,6 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
         fun x -> m.[x]
     [
         for airfield, state in Seq.zip world.Airfields state.Airfields do
-            let subst = Mcu.substId <| store.GetIdMapper()
             match getOwner airfield.Region with
             | None -> ()
             | Some coalition ->
@@ -128,6 +127,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                 let entity = newEntity 2
                 entity.MisObjID <- 1
                 let mcu = af.CreateMcu()
+                let subst = Mcu.substId <| store.GetIdMapper()
                 subst mcu
                 subst entity
                 let runwayStartPos =
