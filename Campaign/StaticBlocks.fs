@@ -25,6 +25,7 @@ open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.BasicTypes
 
+
 let inline createBlocksGen mkDamaged (random : System.Random) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (inAttackArea : Vector2 -> bool) (blocks : ^T list) =
     let tryGetRegionAt(v : Vector2) =
         world.Regions
@@ -70,8 +71,11 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                 // This fixes a bug where bridges located in the space between two neighbouring regions were culled.
                 let mcu =
                     createMcu block
+                    :?> Mcu.HasEntity
+                mcu.LinkTrId <- 0
+                mcu.Name <- "GapBlock"
                 subst mcu
-                yield mcu
+                yield mcu :> Mcu.McuBase
             | None ->
                 ()
             | Some region ->
@@ -82,8 +86,11 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                     // No strategic value, health is not tracked, show without damage
                     let mcu =
                         createMcu block
+                        :?> Mcu.HasEntity
                     subst mcu
-                    yield mcu
+                    mcu.LinkTrId <- 0
+                    mcu.Name <- sprintf "NoStrategicBlock-%d" mcu.Index
+                    yield upcast mcu
                 | Some health ->
                     // Has health and strategic value, show damage if any
                     let health = float health
@@ -120,6 +127,7 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                     subst damagedBlock
                     // Give an entity if located in an area attacked by AIs, so that AIs will target the block.
                     if inAttackArea (Vector2.FromMcu damagedBlock.Pos) then
+                        damagedBlock.Name <- "TargetedStrategicBlock"
                         let subst2 = Mcu.substId <| store.GetIdMapper()
                         let entity = newEntity 1
                         McuUtil.vecCopy damagedBlock.Pos entity.Pos
@@ -127,6 +135,8 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                         subst2 entity
                         Mcu.connectEntity damagedBlock entity
                         yield upcast entity
+                    else
+                        damagedBlock.Name <- "StrategicBlock"
                     // Result
                     yield upcast damagedBlock
     ]
