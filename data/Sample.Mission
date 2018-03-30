@@ -174,14 +174,14 @@ MCU_TR_Entity
     OnReport
     {
       Type = 3;
-      CmdId = 11;
-      TarId = 10;
+      CmdId = 10;
+      TarId = 11;
     }
     OnReport
     {
       Type = 4;
       CmdId = 8;
-      TarId = 11;
+      TarId = 10;
     }
   }
 }
@@ -190,7 +190,7 @@ MCU_TR_Entity
 
 MCU_CMD_AttackTarget
 {
-  Index = 10;
+  Index = 11;
   Name = "command Attack";
   Desc = "";
   Targets = [];
@@ -345,6 +345,7 @@ MCU_CMD_ForceComplete
   YOri = 0.00;
   ZOri = 0.00;
   Priority = 2;
+  EmergencyOrdnanceDrop = 0;
 }
 
 
@@ -388,7 +389,7 @@ MCU_CMD_Land
 
 MCU_CMD_TakeOff
 {
-  Index = 11;
+  Index = 10;
   Name = "command Take off";
   Desc = "";
   Targets = [];
@@ -399,6 +400,7 @@ MCU_CMD_TakeOff
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
+  NoTaxiTakeoff = 0;
 }
 
 
@@ -1663,7 +1665,7 @@ MCU_TR_Entity
     OnEvent
     {
       Type = 13;
-      TarId = 11;
+      TarId = 10;
     }
   }
 }
@@ -2099,9 +2101,9 @@ Airfield
   Name = "Airfield";
   Index = 104;
   LinkTrId = 105;
-  XPos = 24753.409;
-  YPos = 149.094;
-  ZPos = 26266.402;
+  XPos = 24751.749;
+  YPos = 149.092;
+  ZPos = 26264.742;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
@@ -2176,9 +2178,9 @@ MCU_TR_Entity
   Desc = "";
   Targets = [];
   Objects = [];
-  XPos = 24753.409;
-  YPos = 149.294;
-  ZPos = 26266.402;
+  XPos = 24751.749;
+  YPos = 149.292;
+  ZPos = 26264.742;
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
