@@ -15,6 +15,8 @@ open SturmovikMission.Blocks.Util.String
 
 type Train = {
     Start : Mcu.McuTrigger
+    StopTravel : Mcu.McuTrigger
+    ResumeTravel : Mcu.McuTrigger
     Arrived : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
     Blocked : Mcu.McuTrigger
@@ -35,6 +37,8 @@ with
             subst mcu
         // Get key nodes
         let start = getTriggerByName group T.Blocks.START
+        let stopTravel = getTriggerByName group T.Blocks.StopTravel
+        let resumeTravel = getTriggerByName group T.Blocks.ResumeTravel
         let arrived = getTriggerByName group T.Blocks.ARRIVED
         let killed = getTriggerByName group T.Blocks.KILLED
         let blocked = getTriggerByName group T.Blocks.BLOCKED
@@ -134,6 +138,8 @@ with
                 | x -> x
             )
         { Start = start
+          StopTravel = stopTravel
+          ResumeTravel = resumeTravel
           Arrived = arrived
           Killed = killed
           Blocked = blocked
@@ -200,6 +206,7 @@ with
                 yield this.TheTrain.Arrived, upcast this.TheTrain.IconAttack.Hide
                 yield this.TheTrain.Arrived, upcast this.TheTrain.IconCover.Hide
                 yield this.TheTrain.Blocked, upcast this.Blocked.Trigger
+                yield this.TheTrain.Blocked, upcast this.TheTrain.StopTravel
             ]
         { Links.Columns = []
           Links.Objects = []

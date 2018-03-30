@@ -2476,7 +2476,7 @@ Group
     Index = 208;
     LinkTrId = 209;
     XPos = 17585.456;
-    YPos = 99.973;
+    YPos = 100.372;
     ZPos = 28787.857;
     XOri = 359.87;
     YOri = 0.00;
@@ -2506,7 +2506,7 @@ Group
     Targets = [];
     Objects = [];
     XPos = 17585.456;
-    YPos = 100.173;
+    YPos = 100.572;
     ZPos = 28787.857;
     XOri = 0.00;
     YOri = 0.00;
@@ -2740,6 +2740,42 @@ Group
     ZOri = 0.00;
     Counter = 1;
     Dropcount = 0;
+  }
+  
+
+  MCU_CMD_Formation
+  {
+    Index = 692;
+    Name = "StopTravel";
+    Desc = "";
+    Targets = [];
+    Objects = [209];
+    XPos = 17566.928;
+    YPos = 104.258;
+    ZPos = 28812.392;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  FormationType = 9;
+  FormationDensity = 1;
+  }
+  
+
+  MCU_CMD_Formation
+  {
+    Index = 694;
+    Name = "ResumeTravel";
+    Desc = "";
+    Targets = [];
+    Objects = [209];
+    XPos = 17582.247;
+    YPos = 103.893;
+    ZPos = 28812.515;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  FormationType = 11;
+  FormationDensity = 1;
   }
   
 
