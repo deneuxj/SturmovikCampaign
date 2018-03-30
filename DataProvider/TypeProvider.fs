@@ -836,6 +836,9 @@ let watchFile path signal =
 type MissionTypes(config: TypeProviderConfig) as this =
     inherit TypeProviderForNamespaces()
 
+    let logger = NLog.LogManager.GetCurrentClassLogger()
+    do logger.Info("MissionTypes type provider for namespace created")
+
     let asm = System.Reflection.Assembly.GetExecutingAssembly()
     let ns = "SturmovikMissionTypes"
 
@@ -932,6 +935,8 @@ type MissionTypes(config: TypeProviderConfig) as this =
         let libs = libs.Split(';') |> Array.filter(fun lib -> not(System.String.IsNullOrWhiteSpace(lib))) |> Array.map resolve
         let invokeCodeImpl = invokeCodeImpl :?> InvokeCodeImplementation
 
+        logger.Info(sprintf "Provider invoked with sample '%s' and libs %s" sample (libs |> Seq.map (sprintf "'%s'") |> String.concat ", "))
+
         if not(System.IO.File.Exists(sample)) then
             failwithf "Cannot open sample file '%s' for reading (runtime assembly is '%s')" sample config.RuntimeAssembly
         // Check if modifications were made to input files
@@ -944,6 +949,7 @@ type MissionTypes(config: TypeProviderConfig) as this =
             ]
         // If so, remove the entry from the cache, invalidate the top provided and build it again.
         if modifs <> modifs2 then
+            logger.Info("Building new provider")
             cache.Remove((typeName, sample, libs, invokeCodeImpl)) |> ignore
             this.Invalidate()
             let ty, _ = getProvider(typeName, sample, libs, invokeCodeImpl)
@@ -954,10 +960,17 @@ type MissionTypes(config: TypeProviderConfig) as this =
                     watchFile lib this.Invalidate
             ty
         else
+            logger.Info("Input files not changed, reusing previously built provider")
             ty
     )
 
     do this.AddNamespace(ns, [provider])
 
 [<assembly:TypeProviderAssembly>]
-do()
+do
+    let config = NLog.Config.LoggingConfiguration()
+    let traceTarget = new NLog.Targets.TraceTarget("SturmovikMission")
+    let eventTarget = new NLog.Targets.EventLogTarget(Source=NLog.Layouts.SimpleLayout("SturmovikMission"))
+    config.LoggingRules.Add(NLog.Config.LoggingRule("*", NLog.LogLevel.Info, traceTarget))
+    config.LoggingRules.Add(NLog.Config.LoggingRule("*", NLog.LogLevel.Info, eventTarget))
+    NLog.LogManager.Configuration <- config
