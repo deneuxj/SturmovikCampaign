@@ -280,7 +280,7 @@ let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (stat
     let lightsOn(lights : Mcu.McuEntity list) =
         let subst = Mcu.substId <| store.GetIdMapper()
         let prio = T.Integer 0
-        let lowPrio = T.MCU_CMD_ForceComplete(T.String "Switch lights on", T.Integer 1, T.String "LightsOn", T.VectorOfIntegers[], prio, T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
+        let lowPrio = T.MCU_CMD_ForceComplete(T.String "Switch lights on", T.Boolean false, T.Integer 1, T.String "LightsOn", T.VectorOfIntegers[], prio, T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
         subst lowPrio
         for light in lights do
             Mcu.addObjectLink lowPrio light.Index
