@@ -25,6 +25,8 @@ type Convoy =
       DeactivateGroup : Mcu.McuTrigger
       DeleteLeadCar : Mcu.McuTrigger
       Discard : Mcu.McuTrigger
+      StopTravel : Mcu.McuTrigger
+      Resumetravel : Mcu.McuTrigger
       All : McuUtil.IMcuGroup
     }
 with
@@ -47,6 +49,8 @@ with
         | _ ->
             ()
         let center = Vector2.FromMcu(leadCar.Pos)
+        let stopTravel = getByName "StopTravel"
+        let resumeTravel = getByName "ResumeTravel"
         // Rotate and translate
         let rot = ori - float32 leadCar.Ori.Y
         let diff = pos - center
@@ -62,6 +66,8 @@ with
           DeactivateGroup = getByName T.Blocks.DeactivateGroup
           DeleteLeadCar = getByName T.Blocks.DeleteLeadCar
           Discard = getByName T.Blocks.Discard
+          StopTravel = stopTravel
+          Resumetravel = resumeTravel
           All = McuUtil.groupFromList group
         }
 

@@ -312,6 +312,7 @@ with
                 yield upcast this.WaypointSet.[this.PathEnd].Waypoint, upcast this.Api.Arrived
                 // Req.12
                 yield this.Api.Blocked, upcast this.DiscardDelay.Start
+                yield this.Api.Blocked, upcast this.TheConvoy.StopTravel
                 // Req.13
                 yield this.Api.Blocked, upcast this.BlockedReporting.Trigger
                 // Req.14 Done in creation of conjunction
