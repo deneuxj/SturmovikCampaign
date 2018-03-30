@@ -813,6 +813,24 @@ let buildLibraries (pdb : IProvidedDataBuilder) (namedValueTypes : (string * Ast
     |> List.ofArray
 
 
+/// <summary>
+/// Start a background async that waits for a file to change
+/// </summary>
+/// <param name="path">Path to file to watch</param>
+/// <param name="signal">Action to perform when the watched file changes</param>
+let watchFile path signal =
+    let watcher = new FileSystemWatcher(Path.GetDirectoryName(path), Path.GetFileName(path))
+    watcher.NotifyFilter <- NotifyFilters.LastWrite
+    let wait =
+        async {
+            let! change = Async.AwaitEvent watcher.Changed
+            signal()
+            watcher.Dispose()
+        }
+    watcher.EnableRaisingEvents <- true
+    Async.Start wait
+
+
 [<TypeProvider>]
 /// Entry point of the type provider.
 type MissionTypes(config: TypeProviderConfig) as this =
@@ -929,6 +947,11 @@ type MissionTypes(config: TypeProviderConfig) as this =
             cache.Remove((typeName, sample, libs, invokeCodeImpl)) |> ignore
             this.Invalidate()
             let ty, _ = getProvider(typeName, sample, libs, invokeCodeImpl)
+            // Invalidate the type provider whenever the sample file or one of the library files is modified
+            if config.IsInvalidationSupported then
+                watchFile sample this.Invalidate
+                for lib in libs do
+                    watchFile lib this.Invalidate
             ty
         else
             ty
