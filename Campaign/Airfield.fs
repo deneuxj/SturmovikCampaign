@@ -114,7 +114,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                             .SetPayloadId(T.Integer defaultPayload)
                             .SetAvPayloads(T.String(plane.LoadOuts(totalBombs)))
                             .SetAvMods(T.String("0..99"))
-                            .SetAvSkins(T.String("0..99"))
+                            //.SetAvSkins(T.String("0..99"))
                     )
                     |> Map.toSeq
                     |> Seq.map snd
