@@ -49,4 +49,5 @@ Make landing crafts move faster.
 Limit airplane available to bad pilots
 Notify players when their units are under attack (with a delay)
 X Live commenter sometimes stops working. Improve logging to facilitate filtering noise
-Destroying bridges does not stop convoys.
+X Destroying bridges does not stop convoys.
+Destroyed bridges do not prevent tank battles in next mission if mission ends before tanks reach the destroyed bridge.
