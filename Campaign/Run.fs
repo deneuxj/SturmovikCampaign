@@ -456,6 +456,7 @@ module MissionFileGeneration =
               MaxSimultaneousFerryFlights = config.MaxSimultaneousFerryFlights
               StrategyMissionFile = Path.Combine(config.ScriptPath, config.StrategyFile)
               MaxVehiclesInBattle = config.MaxVehiclesInBattle
+              MaxBuildingIcons = config.MaxBuildingIcons
             }
         let missionData =
             { World = world

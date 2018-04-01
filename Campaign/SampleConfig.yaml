@@ -12,6 +12,8 @@
     WeatherDayMaxOffset: 7
     # Max number of fires (on destroyed storage/factories)
     MaxFires: 20
+    # Max number of spotted building icons (per type and coalition)
+    MaxBuildingIcons: 10
     # Max number of convoys in mission (per side)
     MaxConvoys: 8
     # Max number of attacker planes (per side)

@@ -63,6 +63,7 @@ type Configuration = {
     MaxNoobScore : float32
     NoobBanDuration : int
     WebHook : string
+    MaxBuildingIcons : int
 }
 with
     static member Default =
@@ -100,6 +101,7 @@ with
             FriendlyFireBanDuration = 1
             MaxNoobScore = 3.0f
             NoobBanDuration = 1
+            MaxBuildingIcons = 10
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
@@ -164,6 +166,7 @@ let loadConfigFile (path : string) =
             | x -> Some x
         WeatherDayMaxOffset = values.WeatherDayMaxOffset
         MaxFires = values.MaxFires
+        MaxBuildingIcons = values.MaxBuildingIcons
         MaxConvoys = values.MaxConvoys
         MaxSimultaneousConvoys = values.MaxSimultaneousConvoys
         MaxSimultaneousFerryFlights = values.MaxSimultaneousFerryFlights

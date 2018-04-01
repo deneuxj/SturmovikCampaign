@@ -136,6 +136,7 @@ type MissionGenerationParameters = {
     MaxVehiclesInBattle : int
     StrategyMissionFile : string
     MaxFires : int
+    MaxBuildingIcons : int
 }
 
 
@@ -166,7 +167,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let staticDefenses = ArtilleryGroup.Create(missionData.Random, store, lcStore, includeSearchLights, missionBegin, missionData.World, missionData.State, missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
     let icons = MapIcons.CreateRegions(store, lcStore, missionData.World, missionData.State)
     let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, missionData.World, missionData.State)
-    let spotting = createStorageIcons store lcStore missionBegin missionData.World missionData.State
+    let spotting = createStorageIcons missionParams.MaxBuildingIcons store lcStore missionBegin missionData.World missionData.State
     let blocks =
         let allBlocks = strategyMissionData.ListOfBlock
         let parkedPlanes =

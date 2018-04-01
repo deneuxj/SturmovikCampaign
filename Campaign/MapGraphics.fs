@@ -500,27 +500,67 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
             ]
         arrowIcons
 
-/// Create icons for filled storage areas that appear when the storage area has been spotted by a plane.
-let createStorageIcons store lcStore missionBegin (world : World) (state : WorldState) =
+let clusteredBuildings getBuildings (world : World) (state : WorldState) =
     [
         for region, regState in List.zip world.Regions state.Regions do
             match regState.Owner with
             | Some owner ->
                 let classes =
-                    region.Storage
-                    |> Algo.computePartition (fun sto1 sto2 -> (sto1.Pos.Pos - sto2.Pos.Pos).Length() < 1000.0f)
-                for group in classes do
-                    match group with
-                    | sto :: _ ->
-                        let icon = IconDisplay.Create(store, lcStore, sto.Pos.Pos, "", owner.Other.ToCoalition, Mcu.IconIdValue.AttackBuildings)
-                        icon.Show.Time <- 300.0 // Delay icon by 5 minutes
-                        let wec = Proximity.Create(store, owner.Other.ToCoalition, 2500, sto.Pos.Pos)
-                        Mcu.addTargetLink wec.Out icon.Show.Index
-                        Mcu.addTargetLink missionBegin wec.Start.Index
-                        yield icon.All
-                        yield wec.All
-                    | [] ->
-                        ()
+                    getBuildings(region, regState)
+                    |> Algo.computePartition (fun (sto1, _) (sto2, _) -> (sto1.Pos.Pos - sto2.Pos.Pos).Length() < 1000.0f)
+                    |> List.map (fun x -> x, owner)
+                yield! classes
             | None ->
+                ()
+    ]
+
+/// Create icons for storage areas and factories that appear after being spotted by a plane.
+let createStorageIcons maxItems store lcStore missionBegin (world : World) (state : WorldState) =
+    // Clusters of production and storage buildings
+    let clusters =
+        [
+            yield!
+                clusteredBuildings (fun (region : Region, regState : RegionState) -> List.zip region.Storage regState.StorageHealth) world state
+                |> List.map (fun x -> "storage", x)
+            yield!
+                clusteredBuildings (fun (region : Region, regState : RegionState) -> List.zip region.Production regState.ProductionHealth) world state
+                |> List.map (fun x -> "production", x)
+        ]
+    // Retain the maxItems buildings with highest storage or production capacity in each kind (storage, production) and coalition
+    let clusters =
+        clusters
+        |> Seq.groupBy (fun (kind, (_, coalition)) -> (kind, coalition))
+        |> Seq.collect (fun ((kind, _), clusters) ->
+            clusters
+            |> Seq.sortByDescending (fun (_, (buildings, _)) ->
+                let buildings, healths =
+                    List.map fst buildings,
+                    List.map snd buildings
+                match kind with
+                | "storage" ->
+                    buildingsStorageCapacity world.SubBlockSpecs buildings healths
+                    |> float32
+                | "production" ->
+                    buildingsProductionCapacity world.SubBlockSpecs 1.0f buildings healths
+                    |> float32
+                | _ -> failwith "Unknown building kind")
+            |> Seq.truncate maxItems)
+        |> Seq.map (fun (_, (buildings, owner)) -> owner, buildings |> List.map fst)
+    // Build icons
+    [
+        for owner, group in clusters do
+            match group with
+            | sto :: _ ->
+                let iconA, iconB = IconDisplay.CreatePair(store, lcStore, sto.Pos.Pos, "", owner.Other.ToCoalition, Mcu.IconIdValue.CoverBuildings)
+                iconA.Show.Time <- 300.0 // Delay icon by 5 minutes
+                iconB.Show.Time <- 300.0
+                let wec = Proximity.Create(store, owner.Other.ToCoalition, 2500, sto.Pos.Pos)
+                Mcu.addTargetLink wec.Out iconA.Show.Index
+                Mcu.addTargetLink wec.Out iconB.Show.Index
+                Mcu.addTargetLink missionBegin wec.Start.Index
+                yield iconA.All
+                yield iconB.All
+                yield wec.All
+            | [] ->
                 ()
     ]
