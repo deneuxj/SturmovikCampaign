@@ -48,14 +48,16 @@ with
         let conds =
             seq {
                 for v, entity in bridges do
-                    let conj = Conjunction.Create(store, v.Pos + Vector2(0.0f, 100.0f))
-                    // Link bridge destruction to conjA
+                    let conj = Conjunction.Create(store, v.Pos + Vector2(0.0f, 100.0f)).MakeInitiallyFalse(store)
+                    // Link bridge destruction to conjA and to blocked
                     entity.OnEvents <-
                         { Mcu.Type = int Mcu.EventTypes.OnKilled
                           Mcu.TarId = conj.SetA.Index }
                         :: entity.OnEvents
-                    // Link conj result to block signal
-                    Mcu.addTargetLink conj.AllTrue blocked.Index
+                    // Non-passed destroyed bridge reports convoy as blocked
+                    Mcu.addTargetLink conj.SetA blocked.Index
+                    // Link conj result to stop train
+                    Mcu.addTargetLink conj.AllTrue stopTravel.Index
                     // Result
                     yield v, conj
             }
@@ -71,10 +73,15 @@ with
             let subst = Mcu.substId <| store.GetIdMapper()
             [
                 for idx, (v, _) in Seq.indexed(Seq.pairwise path) do
-                    let waypoint = newWaypoint (idx + 1) v.Pos v.Ori v.Radius v.Speed v.Priority
+                    let waypoint = newWaypoint (2 * idx + 1) v.Pos v.Ori v.Radius v.Speed v.Priority
+                    let passedDisable = newDeactivate (2 * idx + 2)
+                    subst passedDisable
                     subst waypoint
+                    (Vector2.FromMcu waypoint.Pos + Vector2(100.0f, 0.0f)).AssignTo passedDisable.Pos
                     // Object-link to train
                     Mcu.addObjectLink waypoint train.LinkTrId
+                    // PassedDisable
+                    Mcu.addTargetLink waypoint passedDisable.Index
                     // Target-link to conjunctions, if any
                     match getConjOfVertex v with
                     | [] -> ()
@@ -82,6 +89,7 @@ with
                         waypoint.Radius <- max waypoint.Radius 1000 // Make sure the train has enough time to stop before getting to the destroyed bridge
                         for conj in conds do
                             Mcu.addTargetLink waypoint conj.SetB.Index
+                            Mcu.addTargetLink passedDisable conj.SetA.Index
                         yield waypoint
             ]
         // start -> first intermediate waypoint
@@ -170,6 +178,7 @@ with
                 yield this.Started.All
                 yield this.Arrived.All
                 yield this.Destroyed.All
+                yield this.Blocked.All
             ]
 
     static member Create(store, lcStore, path : PathVertex list, bridges, country, eventName) =
@@ -206,9 +215,9 @@ with
                 yield this.TheTrain.Arrived, upcast this.TheTrain.IconAttack.Hide
                 yield this.TheTrain.Arrived, upcast this.TheTrain.IconCover.Hide
                 yield this.TheTrain.Blocked, upcast this.Blocked.Trigger
-                yield this.TheTrain.Blocked, upcast this.TheTrain.StopTravel
             ]
         { Links.Columns = []
           Links.Objects = []
           Links.Targets = targets
+          Links.Events = []
         }

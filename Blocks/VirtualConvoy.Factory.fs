@@ -63,6 +63,7 @@ type VirtualConvoy =
       TruckInConvoySet : Map<TruckInConvoyInstance, TruckInConvoy>
       BridgeDestroyedConjSet : Map<BridgeDestroyedConjInstance, Conjunction>
       WaypointSet : Map<WaypointInstance, Waypoint>
+      BridgeAtWaypoint : Map<WaypointInstance, Mcu.McuEntity>
       StartDelay : Timer
       DiscardDelay : Timer
       TruckDamagedSet : Map<DamagedTruckInstance, EventReporting>
@@ -138,7 +139,7 @@ with
             |> Map.toSeq
             |> Seq.minBy (fun (instance, wp) -> (Vector2.FromMcu(wp.Waypoint.Pos) - v).Length())
             |> fst
-        let conjunctionSet =
+        let bridgeAtWaypoint =
             seq {
                 for v, bridge in bridges do
                     let wp =
@@ -148,16 +149,20 @@ with
                         with
                         | _ -> None
                     match wp with
-                    | Some wp ->
-                        let conj = Conjunction.Create(store, v.Pos + Vector2(0.0f, 100.0f)).MakeInitiallyFalse(store)
-                        let instance = BridgeDestroyedConjInstance(wp, bridge.Index)
-                        bridge.OnEvents <-
-                            { Mcu.Type = int Mcu.EventTypes.OnKilled
-                              Mcu.TarId = conj.SetA.Index }
-                            :: bridge.OnEvents
-                        yield (instance, conj)
-                    | None ->
-                        ()
+                    | Some wp -> yield (wp, bridge)
+                    | None -> ()
+            }
+            |> Map.ofSeq
+        let conjunctionSet =
+            seq {
+                for wp, bridge in Map.toSeq bridgeAtWaypoint do
+                    let conj = Conjunction.Create(store, Vector2.FromMcu bridge.Pos + Vector2(0.0f, 100.0f)).MakeInitiallyFalse(store)
+                    let instance = BridgeDestroyedConjInstance(wp, bridge.Index)
+                    bridge.OnEvents <-
+                        { Mcu.Type = int Mcu.EventTypes.OnKilled
+                          Mcu.TarId = conj.SetA.Index }
+                        :: bridge.OnEvents
+                    yield (instance, conj)
             }
             |> Map.ofSeq
         let bridgeConjAtWaypoint =
@@ -229,6 +234,7 @@ with
         { TheConvoy = theConvoy
           TruckInConvoySet = truckInConvoySet
           BridgeDestroyedConjSet = conjunctionSet
+          BridgeAtWaypoint = bridgeAtWaypoint
           WaypointSet = waypointSet
           StartDelay  = startDelay
           DiscardDelay = discardDelay
@@ -312,18 +318,32 @@ with
                 yield upcast this.WaypointSet.[this.PathEnd].Waypoint, upcast this.Api.Arrived
                 // Req.12
                 yield this.Api.Blocked, upcast this.DiscardDelay.Start
-                yield this.Api.Blocked, upcast this.TheConvoy.StopTravel
                 // Req.13
                 yield this.Api.Blocked, upcast this.BlockedReporting.Trigger
-                // Req.14 Done in creation of conjunction
-                // Req.15 and Req.16
                 for wp, conj in this.BridgeConjunctionAtWaypoint do
                     let wp = this.WaypointSet.[wp]
                     let conj = this.BridgeDestroyedConjSet.[conj]
+                    // Req.12
+                    yield wp.PassedDisable, upcast conj.SetA
+                    // Req.13
+                    yield conj.SetA, upcast this.Api.Blocked
+                    // Req.14
                     yield upcast wp.Waypoint, upcast conj.SetB
-                    yield conj.AllTrue, upcast this.Api.Blocked
+                    // Req.15
+                    yield conj.AllTrue, upcast this.TheConvoy.StopTravel
+            ]
+        let events =
+            [
+                for wp, conj in this.BridgeConjunctionAtWaypoint do
+                    match this.BridgeAtWaypoint.TryFind(wp) with
+                    | Some bridge ->
+                        let conj = this.BridgeDestroyedConjSet.[conj]
+                        // Req.12
+                        yield bridge, Mcu.EventTypes.OnKilled, conj.SetA :> Mcu.McuBase
+                    | None -> ()
             ]
         { Columns = columns
           Objects = objectLinks
           Targets = targetLinks
+          Events = events
         }

@@ -4,6 +4,7 @@
 	trigger DeactivateGroup
 	trigger DeleteLeadCar
 	trigger Discard
+    trigger StopTravel
 }
 Convoy the_convoy
 
@@ -42,8 +43,13 @@ Notification blocked_notification
 
 type Waypoint {
 	trigger Waypoint
+    trigger PassedDisable
 }
-bool waypoints_guards_bridge(Waypoint, Entity)
+bool waypoints_guards_bridge(Waypoint, Bridge)
+
+type Bridge {
+    trigger Destroyed
+}
 
 predicate path(Waypoint, Waypoint)
 predicate start
@@ -76,11 +82,11 @@ Icon attack_icon
 9. Truck destruction accounted for in api
 10. Start of convoy is logged
 11. Arrival is reported in API
-12. Blocked stops the convoy and deactivates it
-13. Blocked convoy is logged
-14. Destroyed bridge enables blocking
-15. Waypoint reached enables blocking
-16. All blocking conditions fulfilled blocks convoy
+12. Non-passed destroyed bridge sets conjunction part A
+13. Non-passed destroyed bridge reports convoy as blocked
+14. Reached bridge sets conjunction part B
+15. Conjunction fulfilled stops train
+16. Conjunction fulfilled discards train
 
 // Req.1
 targets += (the_api.Start, the_convoy.ActivateGroup)
@@ -121,20 +127,18 @@ targets += for (_, truck) in truck_in_convoy -> (truck.Damaged, the_api.Destroye
 target += (the_api.Start, start_notification.Trigger)
 
 // Req.11
-target +=(end.Waypoint, the_api.Arrived)
+target += (end.Waypoint, the_api.Arrived)
 
 // Req.12
-targets += (the_api.Blocked, discard_delay.Start)
+target += for wp, bridge in waypoint_guards_bridge
+          for cond in block_cond_at_waypoint(wp) -> (bridge.Destroyed, cond.SetA)
+target += for wp, cond in block_cond_at_waypoint -> (wp.PassedDisable, cond.SetA)
 
 // Req.13
-targets += (the_api.Blocked, blocked_notification.Trigger)
+target += for wp, cond in block_cond_at_waypoint -> (cond.SetA, the_ai.Blocked)
 
 // Req.14
-targets += for wp, bridge in waypoint_guards_bridge ->
-           for cond in block_cond_at_waypoint(wp) -> (bridge.OnKilled, cond.SetA)
+target += for wp, cond in block_cond_at_waypoint -> (wp.Waypoint, cond.SetB)
 
 // Req.15
-targets += for cond, wp in block_cond_at_waypoint -> (wp.Waypoint, cond.SetB)
-
-// Req.16
-targets += for cond, _ in block_cond_at_waypoint -> (cond.AllTrue, the_api.Blocked)
+target += for _, cond in block_cond_at_waypoint -> (cond.AllTrue, the_convoy.StopTravel)

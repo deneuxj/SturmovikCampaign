@@ -130,4 +130,5 @@ with
         { Columns = []
           Objects = []
           Targets = targetLinks
+          Events = []
         }

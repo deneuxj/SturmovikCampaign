@@ -6,12 +6,14 @@ type Links =
     { Columns : (Mcu.McuEntity * Mcu.McuEntity * int) list
       Objects : (Mcu.McuTrigger * Mcu.McuBase) list
       Targets : (Mcu.McuTrigger * Mcu.McuBase) list
+      Events : (Mcu.McuEntity * Mcu.EventTypes * Mcu.McuBase) list
     }
 with
     static member Empty =
         { Columns = []
           Objects = []
           Targets = []
+          Events = []
         }
 
     member this.Apply(mcus: Mcu.McuBase list) =
@@ -37,3 +39,6 @@ with
         // Set target links
         for source, target in this.Targets do
             Mcu.addTargetLink source target.Index
+        // Set target links from events
+        for source, event, target in this.Events do
+            source.OnEvents <- { Mcu.EventConnection.Type = int event; Mcu.TarId = target.Index } :: source.OnEvents

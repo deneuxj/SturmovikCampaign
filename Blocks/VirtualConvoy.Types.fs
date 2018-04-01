@@ -136,6 +136,7 @@ with
 
 type Waypoint =
     { Waypoint : Mcu.McuWaypoint
+      PassedDisable : Mcu.McuTrigger // A "deactivate" MCU triggered when the waypoint is reached
       All : McuUtil.IMcuGroup
     }
 with
@@ -147,8 +148,8 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let getByName = getTriggerByName group
         let waypoint = getWaypointByName group "Waypoint"
+        let passed = getTriggerByName group "PastDisable"
         // Orientation of waypoint
         waypoint.Ori.Y <- float ori 
         waypoint.Speed <- speed
@@ -160,6 +161,7 @@ with
             pos2.AssignTo(mcu.Pos)
         // Result
         { Waypoint = waypoint
+          PassedDisable = passed
           All = McuUtil.groupFromList group
         }
 
