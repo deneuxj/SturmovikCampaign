@@ -356,7 +356,8 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
         ]
         let capitals = [
             for region, regState in List.zip world.Regions state.Regions do
-                let capital = mkIcon store lcStore 0 (106, 0, 0) (region.Position + Vector2(0.1f * length, 0.5f * length))
+                let pos = region.Parking |> Seq.sum |> ((*) (1.0f / float32 region.Parking.Length))
+                let capital = mkIcon store lcStore 0 (106, 0, 0) (pos + Vector2(0.1f * length, 0.5f * length))
                 let (RegionId name) = region.RegionId
                 let name =
                     if region.Production.IsEmpty then
@@ -373,6 +374,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                         sprintf "%s (%d)" name numVehicles
                     else
                         name
+                capital.IconId <- Mcu.IconIdValue.Waypoint
                 yield capital, label
         ]
         let lcStrings =
