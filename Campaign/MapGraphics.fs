@@ -356,7 +356,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
         ]
         let capitals = [
             for region, regState in List.zip world.Regions state.Regions do
-                let pos = region.Parking |> Seq.sum |> ((*) (1.0f / float32 region.Parking.Length))
+                let pos = region.Position // region.Parking |> Seq.sum |> ((*) (1.0f / float32 region.Parking.Length))
                 let capital = mkIcon store lcStore 0 (106, 0, 0) (pos + Vector2(0.1f * length, 0.5f * length))
                 let (RegionId name) = region.RegionId
                 let name =
