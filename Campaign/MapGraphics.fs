@@ -507,7 +507,7 @@ let clusteredBuildings getBuildings (world : World) (state : WorldState) =
             | Some owner ->
                 let classes =
                     getBuildings(region, regState)
-                    |> Algo.computePartition (fun (sto1, _) (sto2, _) -> (sto1.Pos.Pos - sto2.Pos.Pos).Length() < 1000.0f)
+                    |> Algo.computePartition (fun (sto1, _) (sto2, _) -> (sto1.Pos.Pos - sto2.Pos.Pos).Length() < 3000.0f)
                     |> List.map (fun x -> x, owner)
                 yield! classes
             | None ->
