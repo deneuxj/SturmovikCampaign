@@ -545,13 +545,13 @@ let createStorageIcons maxItems store lcStore missionBegin (world : World) (stat
                     |> float32
                 | _ -> failwith "Unknown building kind")
             |> Seq.truncate maxItems)
-        |> Seq.map (fun (_, (buildings, owner)) -> owner, buildings |> List.map fst)
+        |> Seq.map (fun (label, (buildings, owner)) -> label, owner, buildings |> List.map fst)
     // Build icons
     [
-        for owner, group in clusters do
+        for label, owner, group in clusters do
             match group with
             | sto :: _ ->
-                let iconA, iconB = IconDisplay.CreatePair(store, lcStore, sto.Pos.Pos, "", owner.ToCoalition, Mcu.IconIdValue.CoverBuildings)
+                let iconA, iconB = IconDisplay.CreatePair(store, lcStore, sto.Pos.Pos, label, owner.ToCoalition, Mcu.IconIdValue.CoverBuildings)
                 iconA.Show.Time <- 300.0 // Delay icon by 5 minutes
                 iconB.Show.Time <- 300.0
                 let wec = Proximity.Create(store, owner.Other.ToCoalition, 2500, sto.Pos.Pos)
