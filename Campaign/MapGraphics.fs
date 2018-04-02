@@ -551,7 +551,7 @@ let createStorageIcons maxItems store lcStore missionBegin (world : World) (stat
         for owner, group in clusters do
             match group with
             | sto :: _ ->
-                let iconA, iconB = IconDisplay.CreatePair(store, lcStore, sto.Pos.Pos, "", owner.Other.ToCoalition, Mcu.IconIdValue.CoverBuildings)
+                let iconA, iconB = IconDisplay.CreatePair(store, lcStore, sto.Pos.Pos, "", owner.ToCoalition, Mcu.IconIdValue.CoverBuildings)
                 iconA.Show.Time <- 300.0 // Delay icon by 5 minutes
                 iconB.Show.Time <- 300.0
                 let wec = Proximity.Create(store, owner.Other.ToCoalition, 2500, sto.Pos.Pos)
