@@ -74,7 +74,7 @@ with
         match this with
         | HeavyTank -> 15000
         | MediumTank -> 15000
-        | LightArmor -> 5000
+        | LightArmor -> 10000
 
     static member AllVehicles = [ HeavyTank; MediumTank; LightArmor ]
 
