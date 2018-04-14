@@ -305,7 +305,7 @@ module Async =
         work state
 
     /// <summary>
-    /// Repeatedly try to perform an action on a list of items. Return true if all items were successfully processed.
+    /// Repeatedly try to perform an action on a list of items. Return number of tries and list of failed items wrapped in Error, or OK if successful.
     /// </summary>
     let keepTryingPaced retries wait action (items : 'F list) =
         let failed files =
