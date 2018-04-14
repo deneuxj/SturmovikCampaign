@@ -49,11 +49,14 @@ with
     /// </summary>
     /// <param name="store">Provides unique ids for MCUs</param>
     /// <param name="lcStore">Provides unique ids for text</param>
+    /// <param name="numShips">Number of cargo ships, including leader</param>
     /// <param name="path">Waypoints the convoy will sail along</param>
     /// <param name="country">Country owning the ships</param>
     /// <param name="eventName">Base event name for convoy start, arrival and destruction.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, waterType : WaterType, path : PathVertex list, country : Mcu.CountryValue, eventName) =
-        // Instantiate
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, numShips : int, waterType : WaterType, path : PathVertex list, country : Mcu.CountryValue, eventName) =
+        if numShips < 1 then
+            invalidArg "numShips" "Ship convoys must have at least one ship"
+        // Instantiate leader, escort and group logic
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("ShipConvoy").CreateMcuList()
         for mcu in group do
@@ -61,13 +64,45 @@ with
         // Get key nodes
         let start = getTriggerByName group T.Blocks.START
         let arrived = getTriggerByName group T.Blocks.ARRIVED
-        let killed = getTriggerByName group T.Blocks.KILLED
+        let killed = getTriggerByName group T.Blocks.KILLED :?> Mcu.McuCounter
         let wp1 = getWaypointByName group T.Blocks.WP1
         let destWp = getWaypointByName group T.Blocks.Destination
         let escort1 = getVehicleByName group T.Blocks.Escort1
         let escort2 = getVehicleByName group T.Blocks.Escort2
         let ship1 = getVehicleByName group T.Blocks.Cargo1
-        let ship2 = getVehicleByName group T.Blocks.Cargo2
+        let ship1Entity = getEntityByIndex ship1.LinkTrId group
+        // Adjust killed count
+        killed.Count <- 2 + numShips
+        // Instantiate convoy members
+        let shipGroups =
+            List.init (numShips - 1) (fun i ->
+                // Instantiate
+                let subst = Mcu.substId <| store.GetIdMapper()
+                let group = blocksData.GetGroup("ShipConvoyMember").CreateMcuList()
+                for mcu in group do
+                    subst mcu
+                // Get key nodes
+                let ship = getVehicleByName group T.Blocks.Cargo2
+                let entity = getEntityByIndex ship.LinkTrId group
+                let shipKilled = getTriggerByName group T.Blocks.Cargo2Killed
+                // Link ship killed to group killed counter
+                Mcu.addTargetLink shipKilled killed.Index
+                // Link ship to leader
+                Mcu.addTargetLink entity ship1Entity.Index
+                // Position
+                let leadPos = Vector2.FromMcu(ship1.Pos)
+                let dv = leadPos - Vector2.FromMcu(ship.Pos)
+                let newPos = leadPos - (1.0f + float32 i) * dv
+                newPos.AssignTo(ship.Pos)
+                newPos.AssignTo(entity.Pos)
+                let newPos = Vector2.FromMcu(shipKilled.Pos) - (float32 i) * dv
+                newPos.AssignTo(shipKilled.Pos)
+                // Result
+                group)
+        let ships =
+            shipGroups
+            |> List.map (fun group -> getVehicleByName group T.Blocks.Cargo2)
+        let group = group @ List.concat shipGroups
         // Override model escort
         do
             let model =
@@ -77,7 +112,7 @@ with
                 escort.Model <- model.Model
                 escort.Country <- Some country
         // Override model of cargo ships
-        for ship in [ ship1; ship2 ] do
+        for ship in ship1 :: ships do
             let model =
                 ShipConvoy.CargoModel(waterType)
             ship.Model <- model.Model
@@ -147,7 +182,7 @@ with
         let arrivedEvent = EventReporting.Create(store, country, Vector2.FromMcu destWp.Pos + Vector2(0.0f, 100.0f), arrivedEventName)
         let destroyedEvents =
             [
-                for rank, ship in Seq.indexed [ ship1; ship2 ] do
+                for rank, ship in Seq.indexed (ship1 :: ships) do
                     let destroyedEventName = sprintf "%s-K-%d" eventName rank
                     let destroyedEvent = EventReporting.Create(store, country, Vector2.FromMcu ship.Pos + Vector2(0.0f, 100.0f), destroyedEventName)
                     let entity = getEntityByIndex ship.LinkTrId group
@@ -172,7 +207,7 @@ with
           Killed = killed
           IconCover = iconCover
           IconAttack = iconAttack
-          Ships = [ ship1; ship2 ]
+          Ships = ship1 :: ships
           Escort = [ escort1; escort2 ]
           All = { new McuUtil.IMcuGroup with
                       member x.Content = group @ midWps

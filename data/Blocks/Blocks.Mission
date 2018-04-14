@@ -7669,7 +7669,7 @@ Group
     Index = 630;
     LinkTrId = 631;
     XPos = 40153.123;
-    YPos = 21.027;
+    YPos = 24.372;
     ZPos = 22408.277;
     XOri = 0.00;
     YOri = 0.00;
@@ -7699,7 +7699,7 @@ Group
     Targets = [];
     Objects = [];
     XPos = 40153.123;
-    YPos = 21.227;
+    YPos = 24.572;
     ZPos = 22408.277;
     XOri = 0.00;
     YOri = 0.00;
@@ -7719,65 +7719,11 @@ Group
 
   Ship
   {
-    Name = "Cargo2";
-    Index = 634;
-    LinkTrId = 635;
-    XPos = 39838.066;
-    YPos = 36.122;
-    ZPos = 22410.117;
-    XOri = 1.43;
-    YOri = 0.00;
-    ZOri = 353.15;
-    Script = "LuaScripts\WorldObjects\Ships\largecargoshiptype1.txt";
-    Model = "graphics\ships\largecargoshiptype1\largecargoshiptype1.mgm";
-    Desc = "";
-    Country = 0;
-    Vulnerable = 1;
-    Engageable = 1;
-    LimitAmmo = 1;
-    AILevel = 2;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-    Spotter = -1;
-    BeaconChannel = 0;
-    Callsign = 0;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 635;
-    Name = "Cargo1 entity";
-    Desc = "";
-    Targets = [631];
-    Objects = [];
-    XPos = 39838.066;
-    YPos = 36.322;
-    ZPos = 22410.117;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 0;
-    MisObjID = 634;
-    OnEvents
-    {
-      OnEvent
-      {
-        Type = 13;
-        TarId = 637;
-      }
-    }
-  }
-  
-
-  Ship
-  {
     Name = "Escort1";
     Index = 638;
     LinkTrId = 639;
     XPos = 40616.340;
-    YPos = 21.076;
+    YPos = 24.372;
     ZPos = 22405.046;
     XOri = 0.00;
     YOri = 0.00;
@@ -7807,7 +7753,7 @@ Group
     Targets = [];
     Objects = [];
     XPos = 40616.340;
-    YPos = 21.276;
+    YPos = 24.572;
     ZPos = 22405.046;
     XOri = 0.00;
     YOri = 0.00;
@@ -7831,7 +7777,7 @@ Group
     Index = 642;
     LinkTrId = 643;
     XPos = 40421.806;
-    YPos = 21.031;
+    YPos = 24.372;
     ZPos = 22404.515;
     XOri = 0.00;
     YOri = 0.00;
@@ -7861,7 +7807,7 @@ Group
     Targets = [639];
     Objects = [];
     XPos = 40421.806;
-    YPos = 21.231;
+    YPos = 24.572;
     ZPos = 22404.515;
     XOri = 0.00;
     YOri = 0.00;
@@ -7997,24 +7943,6 @@ Group
     XPos = 40146.842;
     YPos = 21.035;
     ZPos = 22714.208;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Counter = 1;
-    Dropcount = 0;
-  }
-  
-
-  MCU_Counter
-  {
-    Index = 637;
-    Name = "CargoKilled";
-    Desc = "";
-    Targets = [657];
-    Objects = [];
-    XPos = 39834.919;
-    YPos = 21.035;
-    ZPos = 22704.877;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -8505,6 +8433,87 @@ Group
     ZOri = 0.00;
     Time = 1;
     Random = 100;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "ShipConvoyMember";
+  Index = 700;
+  Desc = "";
+  Ship
+  {
+    Name = "Cargo2";
+    Index = 701;
+    LinkTrId = 702;
+    XPos = 39897.392;
+    YPos = 31.631;
+    ZPos = 22412.815;
+    XOri = 1.43;
+    YOri = 0.00;
+    ZOri = 353.15;
+    Script = "LuaScripts\WorldObjects\Ships\largecargoshiptype1.txt";
+    Model = "graphics\ships\largecargoshiptype1\largecargoshiptype1.mgm";
+    Desc = "";
+    Country = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 702;
+    Name = "Cargo1 entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 39897.392;
+    YPos = 31.831;
+    ZPos = 22412.815;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 0;
+    MisObjID = 701;
+    OnEvents
+    {
+      OnEvent
+      {
+        Type = 13;
+        TarId = 704;
+      }
+    }
+  }
+  
+
+  MCU_Counter
+  {
+    Index = 704;
+    Name = "Cargo2Killed";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 39894.245;
+    YPos = 21.035;
+    ZPos = 22707.575;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 1;
+    Dropcount = 0;
   }
   
 
