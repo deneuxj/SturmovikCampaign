@@ -111,6 +111,9 @@ with
         | ColByRoad -> 15
         | ColByTrain -> 30
 
+// Max number of tanks per transport ship
+let shipVehicleCapacity = 5
+
 type Campaign.WorldDescription.World
 with
     member this.PathsFor(medium : ColumnTransportType) =

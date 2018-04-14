@@ -237,7 +237,8 @@ let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World)
                                 | BySeaShip -> Sea
                                 | ByRiverShip -> River
                                 | _ -> failwith "Unexpected ship transport means"
-                            ShipConvoy.Create(store, lcStore, waterType, pathVertices, coalition.ToCountry, convoyName)
+                            let numShips = int <| ceil (order.Convoy.TransportedSupplies / ResupplyOrder.ShipCapacity)
+                            ShipConvoy.Create(store, lcStore, numShips, waterType, pathVertices, coalition.ToCountry, convoyName)
                             |> Choice3Of4
                         | ByAir _ -> failwith "Cannot handle air cargo"
                     let links =
@@ -393,7 +394,8 @@ let createColumns
                     | ColBySeaShip -> Sea
                     | ColByRiverShip -> River
                     | _ -> failwith "Unexpected column transport type"
-                let ships = ShipConvoy.Create(store, lcStore, waterType, pathVertices, coalition.ToCountry, columnName)
+                let numShips = int <| ceil ((float32 order.Composition.Length) / (float32 shipVehicleCapacity))
+                let ships = ShipConvoy.Create(store, lcStore, numShips, waterType, pathVertices, coalition.ToCountry, columnName)
                 ships.MakeAsLandShips(waterType)
                 Mcu.addTargetLink prevStart.Value ships.Start.Index
                 yield order.OrderId, initialDelay, [ ships.All ]
