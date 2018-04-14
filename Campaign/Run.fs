@@ -569,7 +569,15 @@ module MissionFileGeneration =
                         yield Path.Combine(mpDir, missionName + suffix + ".msnbin")
                 ]
             let! result = retry1s (fun f -> if File.Exists(f) then File.Delete(f)) filesToDelete
-            handleResult id "delete old mission files" result
+            // Files may be locked by server, so it's not always fatal if the operation fails
+            match result with
+            | Result.Error (_, files) ->
+                let msg =
+                    files
+                    |> String.concat ", "
+                logger.Warn(sprintf "Failed to delete the following files: %s" msg)
+            | Result.Ok () ->
+                ()
             // Copy new files to multiplayer directory
             let filesToCopy =
                 [
