@@ -73,6 +73,10 @@ module Support =
             si.WorkingDirectory <- Path.GetDirectoryName(exePath)
             si.UseShellExecute <- false
             let proc = Process.Start(si)
+            try
+                proc.PriorityClass <- ProcessPriorityClass.High
+            with
+            | _ -> logger.Warn("Failed to raise priority of DServer to High")
             logger.Info(sprintf "%s [%d] started." proc.ProcessName proc.Id)
             Some proc
         with

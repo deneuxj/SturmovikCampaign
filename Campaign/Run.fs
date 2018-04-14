@@ -512,6 +512,11 @@ module MissionFileGeneration =
                 p.WorkingDirectory <- resaverDir
                 p.UseShellExecute <- true
                 let proc = Process.Start(p)
+                try
+                    // Lower priority to avoid interfering with a running instance of DServer
+                    proc.PriorityClass <- ProcessPriorityClass.BelowNormal
+                with
+                | _ -> logger.Warn("Failed to lower priority of Resaver to BelowNormal")
                 proc.WaitForExit()
                 logger.Info(sprintf "Resaver exited with code %d" proc.ExitCode)
                 if proc.ExitCode <> 0 then
