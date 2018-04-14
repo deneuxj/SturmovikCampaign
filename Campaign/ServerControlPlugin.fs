@@ -38,6 +38,7 @@ open Campaign.PlayerDiscipline
 module Support =
     open ploggy
     open System.Numerics
+    open Util.Async
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -138,6 +139,20 @@ module Support =
                             ["Failed to generate next mission"]
                             (fun() -> killServer(config, serverProc))
                             (Campaign.Run.MissionFileGeneration.run config)
+                    let! ok =
+                        tryTask(
+                            tryOrNotifyPlayers
+                                ["Failed to publish next mission file"
+                                 "Will retry after shutting down server"]
+                                (fun() -> killServer(config, serverProc))
+                                (Campaign.Run.MissionFileGeneration.publish config))
+                    match ok with
+                    | Error _ ->
+                        killServer(config, serverProc)
+                        do! Async.Sleep(5000)
+                        do! Campaign.Run.MissionFileGeneration.publish config
+                    | Ok _ ->
+                        ()
                     do! support.ServerControl.MessageAll ["Next mission ready"]
                     return serverProc, KillOrSkip
                 }

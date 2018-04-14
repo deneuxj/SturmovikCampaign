@@ -363,6 +363,15 @@ module MissionFileGeneration =
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
+    let private retry1s h items = Async.keepTryingPaced 60 1000 h items
+
+    let private handleResult sel msg res =
+        match res with
+        | Result.Error (_, files) ->
+            failwithf "Failed to %s: %s" msg (String.concat "," (files |> List.map sel))
+        | Result.Ok () ->
+            ()
+
     let run(config : Configuration) =
         let random =
             match config.Seed with
@@ -472,13 +481,6 @@ module MissionFileGeneration =
                 if File.Exists(y) then
                     File.Delete(y)
                 File.Copy(x, y)
-            let retry1s h items = Async.keepTryingPaced 60 1000 h items
-            let handleResult sel msg res =
-                match res with
-                | Result.Error (_, files) ->
-                    failwithf "Failed to %s: %s" msg (String.concat "," (files |> List.map sel))
-                | Result.Ok () ->
-                    ()
             // Create Multiplayer/Dogfight directory if it doesn't already exist
             let mkdir d = if not (Directory.Exists(d)) then Directory.CreateDirectory(d) |> ignore
             let! result = retry1s mkdir [Path.Combine(config.OutputDir, "Multiplayer", "Dogfight")]
@@ -545,7 +547,13 @@ module MissionFileGeneration =
                 // Copy localization files from _1 to _2
                 do! copyLoc
                 resave (Path.Combine(localMpDir, missionName + "_2.Mission"))
-            // Publish to DServer
+        }
+
+    // Publish mission files to DServer
+    let publish(config : Configuration) =
+        async {
+            let missionName = config.MissionName
+            let localMpDir = Path.Combine(config.OutputDir, "Multiplayer", "Dogfight")
             let mpDir = Path.Combine(config.ServerDataDir, "Multiplayer", "Dogfight")
             let langs = ["eng"; "fra"; "rus"; "ger"; "spa"; "pol"]
             let suffixes = ["_1"; "_2"]
