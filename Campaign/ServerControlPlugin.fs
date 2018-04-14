@@ -396,19 +396,14 @@ module Support =
 
     let reset(support : SupportApis, config : Configuration, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap) =
         async {
-            // Delete log files
+            // Delete log and campaign files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
-            for file in Directory.EnumerateFiles(logDir, "*.txt") do
-                try
-                    File.Delete(file)
-                with
-                | _ -> ()
-            // Delete campaign files
-            for file in Directory.EnumerateFiles(config.OutputDir) do
-                try
-                    File.Delete(file)
-                with
-                | _ -> ()
+            let logs = List.ofSeq(Directory.EnumerateFiles(logDir, "*.txt"))
+            let campaignFiles = List.ofSeq(Directory.EnumerateFiles(config.OutputDir))
+            let! result = Async.keepTryingPaced 10 6 (fun file -> if File.Exists(file) then File.Delete(file)) (logs @ campaignFiles)
+            match result with
+            | Ok _ -> ()
+            | Error(_, files) -> failwithf "Failed to delete: %s" (String.concat ", " files)
             // Initial campaign state
             let startDate, _ = Campaign.Run.Init.createWorld config
             ignore <| Campaign.Run.WeatherComputation.run(config, startDate)
@@ -763,10 +758,15 @@ type Plugin() =
                 let config = loadConfigFile configFile
                 x.StopCommenter()
                 x.StopWebHookClient()
-                let res = Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
-                x.StartWebHookClient(config)
-                x.StartCommenter(config)
-                Choice1Of2 res
+                let task = Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
+                let task =
+                    task.ContinueWith(fun nextTask ->
+                        async {
+                            x.StartWebHookClient(config)
+                            x.StartCommenter(config)
+                            return nextTask
+                        })
+                Choice1Of2 task
             with
             | e ->
                 sprintf "Failed to reset campaign: '%s'" e.Message
