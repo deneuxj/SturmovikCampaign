@@ -63,7 +63,7 @@ with
         let model = data.Model.ToLowerInvariant()
         let plane =
             PlaneModel.AllModels
-            |> List.tryFind(fun plane -> plane.PlaneName.ToLowerInvariant() = model)
+            |> List.tryFind(fun plane -> model.Contains(plane.PlaneName.ToLowerInvariant()))
         let idx = data.Static
         plane
         |> Option.map(fun plane -> plane, { PlaneData.Default with StaticPlaneIndex = idx; Cost = plane.Cost })
