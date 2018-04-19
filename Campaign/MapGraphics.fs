@@ -374,7 +374,6 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                         sprintf "%s (%d)" name numVehicles
                     else
                         name
-                capital.IconId <- Mcu.IconIdValue.OffensivePatrol // Work-around bug in 3.001: Need to pick an icon type for the label to be visible.
                 yield capital, label
         ]
         let lcStrings =
