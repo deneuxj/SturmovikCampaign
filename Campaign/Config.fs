@@ -70,7 +70,7 @@ with
         {
             PlaneSet = PlaneSet.Default
             StrategyFile = "StrategySmall1.mission"
-            UseTextMissionFile = true
+            UseTextMissionFile = false
             Seed = None // Some 0
             WeatherDayMaxOffset = 15
             MaxFires = 20
