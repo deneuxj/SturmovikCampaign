@@ -5,6 +5,8 @@ Create a directory where to host the plug-in for SturmovikServerControl, e.g. C:
 
 Create a directory where to host the campaign database, e.g. C:\Campaign\Data\
 
+Create a directory where the mission files will be generated, inside the campaign database directory: C:\Campaign\Data\Multiplayer\Dogfight.
+
 Extract campaign plugin in C:\Campaign\Bin\
 
 Copy C:\Campaign\Bin\SampleConfig.yaml to some other file (e.g. Config.yaml)
@@ -13,7 +15,7 @@ Edit Config.yaml to suit your needs
 
 Create a SDS configuration file for dserver, set the mission length duration to MissionLength in Config.yaml + 10min
 For the default three hours that (180 + 10) * 60 = 11400.
-Set the mission to run to DynCampaign.
+Set a rotation of two missions: DynCampaign_1 and DynCampaign_2.
 Set lockPayloads = 1.
 
 Set the name of the SDS configuration file in Config.yaml, see ServerSdsFile.
@@ -26,6 +28,8 @@ In the server instance you want to use:
       CampaignPluginAssembly: C:\Campaign\Bin\Campaign.dll
       CampaignPluginType: Campaign.ServerControlPlugin.Plugin
       CampaignPluginConfig: C:\Campaign\Bin\Config.yaml
+
+Note: Casing is sensitive in the value of CampaignPluginType.
 
 If it's running, close DServer.exe.
 
