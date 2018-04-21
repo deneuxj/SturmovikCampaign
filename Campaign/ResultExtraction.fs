@@ -537,6 +537,20 @@ with
                   ByPlayer = None
                 }
             })
+    static member GroupByObjectAndPlayer(xs) =
+        xs
+        |> Seq.groupBy (fun damage -> damage.Object, damage.Data.ByPlayer)
+        |> Seq.map (fun ((damageObject, player), damages) ->
+            { Object = damageObject
+              Data =
+                { Amount =
+                    damages
+                    |> Seq.map (fun dam -> dam.Data.Amount)
+                    |> Seq.sum
+                  ByPlayer = player
+                }
+            })
+
 
 let (|BuildingObjectType|_|) (s : string) =
     let low = s.ToLower()
@@ -570,6 +584,7 @@ let (|StaticVehicleType|_|) (s : string) =
             None)
 
 let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
+    let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
     let wg = WorldFastAccess.Create(world)
     let tryFindContainingRegion (pos : Vector2) =
         world.Regions
@@ -583,11 +598,11 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
             | :? PlayerPlaneEntry as entry ->
                 pilots := Map.add entry.VehicleId entry.Name pilots.Value
             | :? ObjectSpawnedEntry as spawned ->
-                idMapper := Map.add spawned.ObjectId (spawned.ObjectType, spawned.ObjectName, spawned.SubGroup) !idMapper
+                idMapper := Map.add spawned.ObjectId (spawned.ObjectType, spawned.ObjectName, spawned.SubGroup, spawned.Country) !idMapper
             | :? DamageEntry as damage ->
                 let damagePos = Vector2(damage.Position.X, damage.Position.Z)
                 match Map.tryFind damage.TargetId !idMapper with
-                | Some(BuildingObjectType buildingType, _, subGroup) ->
+                | Some(BuildingObjectType buildingType, _, subGroup, _) ->
                     // Damage to buildings: storage or production
                     match tryFindContainingRegion damagePos with
                     | Some region ->
@@ -627,7 +642,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                                 yield { Object = damaged; Data = data }
                         | None -> () // No known building nearby
                     | None -> () // Outside of know regions
-                | Some(StaticPlaneType world.PlaneSet planeModel, _, _) ->
+                | Some(StaticPlaneType world.PlaneSet planeModel, _, _, _) ->
                     let closestAirfield =
                         world.Airfields
                         |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())
@@ -636,7 +651,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         let player = pilots.Value.TryFind damage.AttackerId
                         let data = { Amount = damage.Damage; ByPlayer = player }
                         yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = data }
-                | Some(StaticVehicleType vehicleModel, _, _) ->
+                | Some(StaticVehicleType vehicleModel, _, _, _) ->
                     match tryFindContainingRegion damagePos with
                     | Some region ->
                         let player = pilots.Value.TryFind damage.AttackerId
@@ -644,7 +659,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         yield { Object = Vehicle(region.RegionId, vehicleModel); Data = data }
                     | None ->
                         ()
-                | Some(_, (CannonObjectName as gunType), _) | Some (_, (HeavyMachineGunAAName as gunType), _) | Some (_, (LightMachineGunAAName as gunType), _) ->
+                | Some(_, (CannonObjectName as gunType), _, _) | Some (_, (HeavyMachineGunAAName as gunType), _, _) | Some (_, (LightMachineGunAAName as gunType), _, _) ->
                     let defenseArea =
                         world.AntiAirDefenses @ world.AntiTankDefenses
                         |> List.tryFind (fun area -> damagePos.IsInConvexPolygon(area.Boundary))
@@ -664,6 +679,19 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                             yield { Object = objType; Data = data }
                         | None ->
                             ()
+                    | None ->
+                        ()
+                | Some(PlaneObjectType plane, _, _, country)->
+                    let coalition =
+                        match country with
+                        | Country.Germany | Country.OtherAxis -> Some Axis
+                        | Country.USSR | Country.OtherAllies -> Some Allies
+                        | _ -> None
+                    match coalition with
+                    | Some coalition ->
+                        let player = pilots.Value.TryFind damage.AttackerId
+                        let data = { Amount = damage.Damage; ByPlayer = player }
+                        yield { Object = ActivePlane(coalition, plane); Data = data }
                     | None ->
                         ()
                 | _ -> () // Ignored object type
@@ -697,21 +725,7 @@ let extractVehicleDamages (world : World) (tanks : ColumnMovement list) (convoys
                     | None ->
                         match convoyDamage.Value with
                         | Some(order, rank) -> yield { Object = Convoy { OrderId = order.OrderId; Rank = rank }; Data = CommonDamageData.FromValue 1.0f }
-                        | None ->
-                            match objectType with
-                            | PlaneObjectType plane ->
-                                let coalition =
-                                    match country with
-                                    | Country.Germany | Country.OtherAxis -> Some Axis
-                                    | Country.USSR | Country.OtherAllies -> Some Allies
-                                    | _ -> None
-                                match coalition with
-                                | Some coalition ->
-                                    yield { Object = ActivePlane(coalition, plane); Data = CommonDamageData.FromValue 1.0f }
-                                | None ->
-                                    ()
-                            | _ ->
-                                ()
+                        | None -> ()
                 | None ->
                     ()
             | _ -> ()

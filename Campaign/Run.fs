@@ -796,12 +796,12 @@ module MissionLogParsing =
         let staticDamages =
             extractStaticDamages world entries
             |> AsyncSeq.toBlockingSeq
-            |> Damage.GroupByObject
+            |> Damage.GroupByObjectAndPlayer
             |> List.ofSeq
         let vehicleDamages =
             extractVehicleDamages world (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entries
             |> AsyncSeq.toBlockingSeq
-            |> Damage.GroupByObject
+            |> Damage.GroupByObjectAndPlayer
             |> List.ofSeq
         let takeOffs, landings =
             let both =

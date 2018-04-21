@@ -1263,7 +1263,10 @@ type MissionResults = {
     Blocked : VehiclesBlocked list
 }
 with
-    member this.Damages = this.StaticDamages @ this.VehicleDamages
+    member this.Damages =
+        this.StaticDamages @ this.VehicleDamages
+        |> Damage.GroupByObject
+        |> List.ofSeq
 
 let newState (config : Configuration.Configuration) (world : World) (state : WorldState) (axisOrders : OrderPackage) (alliesOrders : OrderPackage) (results : MissionResults) windOri =
     let dt = 1.0f<H> * float32 config.MissionLength / 60.0f
