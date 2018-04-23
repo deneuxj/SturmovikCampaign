@@ -58,6 +58,7 @@
     <Compile Include="Config.fs" />
     <Compile Include="WorldDescription.fs" />
     <Compile Include="WorldState.fs" />
+    <Compile Include="PlayerHangar.fs" />
     <Compile Include="Weather.fs" />
     <Compile Include="AiPlanes.fs" />
     <Compile Include="Orders.fs" />
