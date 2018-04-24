@@ -529,6 +529,19 @@ type Plugin() =
         | Some hook -> postMessage (queue, hook) message
         | None -> ()
 
+    let announceToTeam (coalition : CoalitionId, messages : string list) =
+        match support with
+        | Some support ->
+            async {
+                let team =
+                    match coalition with
+                    | Axis -> support.ServerControl.GetAxisTeam()
+                    | Allies -> support.ServerControl.GetAlliesTeam()
+                return! support.ServerControl.MessageTeam(team, messages)
+            }
+        | None ->
+            async.Zero()
+
     let announceTakeOffToTeam (player : string, coalition : CoalitionId, airfield : AirfieldId, afCoalition : CoalitionId option, plane : PlaneModel, cargo : float32<K>) =
         match support with
         | Some support ->
@@ -628,22 +641,12 @@ type Plugin() =
             }
 
     let announceBattleKillsExceeded (region : string, coalition : CoalitionId) =
-        match support with
-        | Some support ->
-            async {
-                let team =
-                    match coalition with
-                    | Axis -> support.ServerControl.GetAxisTeam()
-                    | Allies -> support.ServerControl.GetAlliesTeam()
-                let msg = sprintf "Max battle damage inflicted at %s, further kills will be ignored" region
-                return! support.ServerControl.MessageTeam(team, [msg])
-            }
-        | None ->
-            async {
-                return()
-            }
+        async {
+            let msg = sprintf "Max battle damage inflicted at %s, further kills will be ignored" region
+            return! announceToTeam(coalition, [msg])
+        }
 
-    let punishPlayer (penalty : Judgement) =
+    let getPlayerId(user : UserIds) =
         match support with
         | Some support ->
             async {
@@ -651,29 +654,57 @@ type Plugin() =
                     support.ServerControl.GetPlayerList
                 let player =
                     players
-                    |> Seq.tryFind (fun p -> p.GetName() = penalty.Player.Name)
-                match player, penalty.Decision with
-                | Some player, Informed txt ->
-                    logger.Info(sprintf "Warn player '%s': '%s'" penalty.Player.Name txt)
-                    do! support.ServerControl.MessagePlayer(player, [txt])
-                    do! Async.Sleep(5000)
-                | Some player, Banned hours ->
-                    logger.Info(sprintf "Ban player '%s' for %d hours" penalty.Player.Name hours)
-                    do! support.ServerControl.MessageAll([sprintf "%s was banned for %d hours" penalty.Player.Name hours])
-                    do! Async.Sleep(5000)
-                    do! support.ServerControl.BanPlayer(player, hours)
-                | Some player, Kicked ->
-                    do! support.ServerControl.MessageAll([sprintf "%s was kicked" penalty.Player.Name])
-                    do! Async.Sleep(5000)
-                    do! support.ServerControl.KickPlayer(player)
-                | None, _ ->
-                    // Player not found
+                    |> Seq.tryFind (fun p -> p.GetName() = user.Name)
+                return player
+            }
+        | None ->
+            async.Return None
+
+    let informPlayer(user : UserIds, messages : string list) =
+        match support with
+        | Some support ->
+            async {
+                let! player = getPlayerId user
+                match player with
+                | Some player ->
+                    do! support.ServerControl.MessagePlayer(player, messages)
+                | None ->
                     ()
             }
         | None ->
+            async.Zero()
+
+    let punishPlayer (penalty : Judgement) =
+        match support with
+        | Some support ->
             async {
-                return ()
+                match penalty.Decision with
+                | Informed txt ->
+                    logger.Info(sprintf "Warn player '%s': '%s'" penalty.Player.Name txt)
+                    do! informPlayer(penalty.Player, [txt])
+                    do! Async.Sleep(5000)
+                | Banned hours ->
+                    logger.Info(sprintf "Ban player '%s' for %d hours" penalty.Player.Name hours)
+                    do! support.ServerControl.MessageAll([sprintf "%s was banned for %d hours" penalty.Player.Name hours])
+                    do! Async.Sleep(5000)
+                    let! player = getPlayerId penalty.Player
+                    match player with
+                    | Some player ->
+                        do! support.ServerControl.BanPlayer(player, hours)
+                    | None ->
+                        ()
+                | Kicked ->
+                    do! support.ServerControl.MessageAll([sprintf "%s was kicked" penalty.Player.Name])
+                    do! Async.Sleep(5000)
+                    let! player = getPlayerId penalty.Player
+                    match player with
+                    | Some player ->
+                        do! support.ServerControl.KickPlayer(player)
+                    | None ->
+                        ()
             }
+        | None ->
+            async.Zero()
 
     let announceWorldState arg =
         match webHookClient with
@@ -718,6 +749,8 @@ type Plugin() =
               OnLanded = announceLandingToTeam
               OnMaxBattleDamageExceeded = announceBattleKillsExceeded
               OnPlayerPunished = punishPlayer
+              OnMessagesToCoalition = announceToTeam
+              OnMessagesToPlayer = informPlayer
             }
         commenter <- Some(new CommentatorRestarter(config, handlers, fun() -> x.StartWebHookClient(config)))
         logger.Info("Commenter set")

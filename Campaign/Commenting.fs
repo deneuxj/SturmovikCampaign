@@ -31,6 +31,7 @@ open Campaign.WorldState
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.PlayerDiscipline
+open Campaign.PlayerHangar
 open MBrace.FsPickler
 open Campaign.Orders
 open SturmovikMission.Blocks.Util.String
@@ -46,12 +47,16 @@ type EventHandlers =
       OnMaxBattleDamageExceeded : string * CoalitionId -> Async<unit>
       // A player was banned or kicked
       OnPlayerPunished : Judgement -> Async<unit>
+      // Send messages to a player
+      OnMessagesToPlayer : UserIds * string list -> Async<unit>
+      // Send messages to a coalition
+      OnMessagesToCoalition : CoalitionId * string list -> Async<unit>
     }
 
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
-type Commentator (config : Configuration, handlers : EventHandlers, world : World, state : WorldState, convoys : ResupplyOrder list, columns : ColumnMovement list) =
+type Commentator (config : Configuration, handlers : EventHandlers, world : World, state : WorldState, hangars : Map<string, PlayerHangar>, convoys : ResupplyOrder list, columns : ColumnMovement list) =
     let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
     // retrieve entries from most recent mission
     let files =
@@ -323,9 +328,24 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         let disciplineTask =
             disciplinePlayers config world asyncSeqEntries
             |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
+        let hangarTask =
+            checkPlaneAvailability world state hangars asyncSeqEntries
+            |> asyncIterNonMuted (
+                function
+                | Overview(user, messages)
+                | Warning(user, messages) ->
+                    handlers.OnMessagesToPlayer(user, messages)
+                | Announce(coalition, messages) ->
+                    handlers.OnMessagesToCoalition(coalition, messages)
+                | Violation(user) ->
+                    handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
+                | Status _ ->
+                    async.Zero()
+                )
         Async.Start(Async.catchLog "live commentator" task, cancelOnDispose.Token)
         Async.Start(Async.catchLog "battle limits notifier" task2, cancelOnDispose.Token)
         Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
+        Async.Start(Async.catchLog "plane availability checker" hangarTask, cancelOnDispose.Token)
     do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =
@@ -380,10 +400,14 @@ type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onSt
                 | exc ->
                     logger.Error(sprintf "Failed to parse alliesOrders.xml: %s" exc.Message)
                     None
+            let hangars =
+                tryLoadHangars (Path.Combine(campaignDir, "hangars.xml"))
+                |> Option.defaultValue Map.empty
+                |> guidToStrings
             match state, axisOrders, alliesOrders with
             | Some state, Some axisOrders, Some alliesOrders ->
                 logger.Info("Starting new commentator")
-                let commentator = new Commentator(config, handlers, world, state, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
+                let commentator = new Commentator(config, handlers, world, state, hangars, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
                 do! awaitFiles (Set[missionFile])
                 onStateWritten()
                 return! work world (Some commentator)
