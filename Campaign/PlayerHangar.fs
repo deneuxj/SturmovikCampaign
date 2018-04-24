@@ -21,6 +21,8 @@ open PlaneModel
 open System
 open BasicTypes
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
+
 /// <summary>
 /// The planes that a player took to an airfield. That player is allowed to take off in any of these planes, if the airfield has it available.
 /// </summary>
@@ -100,3 +102,36 @@ with
             for kvp in hangar.Planes do
                 yield kvp.Key.PlaneName
         ]
+
+open MBrace.FsPickler
+open System.IO
+
+
+let tryLoadHangars path =
+    let serializer = FsPickler.CreateXmlSerializer()
+    try
+        use file = File.OpenText(path)
+        serializer.Deserialize<Map<Guid, PlayerHangar>>(file) |> Some
+    with
+    | exc ->
+        logger.Error(sprintf "Failed to parse state.xml: %s" exc.Message)
+        None
+
+
+let saveHangars path (hangars : Map<Guid, PlayerHangar>) =
+    let serializer = FsPickler.CreateXmlSerializer()
+    use file = File.CreateText(path)
+    serializer.Serialize(file, hangars)
+
+
+let guidToStrings hangars =
+    hangars
+    |> Map.toSeq
+    |> Seq.map (fun (k : Guid, v) -> string k, v)
+    |> Map.ofSeq
+
+let stringsToGuids hangars =
+    hangars
+    |> Map.toSeq
+    |> Seq.map (fun (k : string, v) -> Guid(k), v)
+    |> Map.ofSeq

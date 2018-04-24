@@ -237,11 +237,14 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                 ()
     }
 
+
 type PlaneAvailabilityMessage =
     | Overview of UserIds * string list
     | Warning of UserIds * string list
     | Announce of CoalitionId * string list
     | Violation of UserIds
+    | Status of Map<string, PlayerHangar>
+
 
 let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (events : AsyncSeq<LogEntry>) =
     let wg = world.FastAccess
@@ -311,6 +314,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                             rogues <- Set.remove user.UserId rogues
                 | _ -> // Vehicle other than plane
                     ()
+                yield Status(hangars)
             | :? TakeOffEntry as entry ->
                 match playerOf.TryFind entry.VehicleId with
                 | None -> ()
@@ -336,5 +340,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     hangars <- Map.add user.UserId hangar hangars
                     landedAt <- Map.remove entry.VehicleId landedAt
                 | _ -> ()
+                yield Status(hangars)
             | _ -> ()
+            yield Status(hangars)
     }

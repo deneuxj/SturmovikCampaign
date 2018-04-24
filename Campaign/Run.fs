@@ -33,6 +33,7 @@ module Filenames =
     let alliesAAR = "alliesAAR.xml"
     let missionResults = "results.xml"
     let battles = "battles.xml"
+    let hangars = "hangars.xml"
 
 module Init =
     open SturmovikMission.Blocks.BlocksMissionData
@@ -607,10 +608,13 @@ module MissionLogParsing =
     open Campaign.NewWorldState
     open Campaign.Orders
     open Campaign.AfterActionReport
+    open Campaign.PlayerHangar
+    open Campaign.PlayerDiscipline
     open MBrace.FsPickler
     open System.IO
     open ploggy
     open System.Text.RegularExpressions
+    open SturmovikMission.Blocks.Util.String
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -642,6 +646,7 @@ module MissionLogParsing =
           Filenames.weather
           Filenames.missionResults
           Filenames.battles
+          Filenames.hangars
         ]
         |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
 
@@ -834,6 +839,32 @@ module MissionLogParsing =
         use missionFile = File.CreateText(Path.Combine(config.OutputDir, Filenames.missionResults))
         serializer.Serialize(missionFile, results)
         results
+
+    let updateHangars(config, entries) =
+        let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        let world, state =
+            try
+                use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+                serializer.Deserialize<World>(worldFile),
+                serializer.Deserialize<WorldState>(stateFile)
+            with
+            | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
+        let hangars =
+            match tryLoadHangars (Path.Combine(config.OutputDir, Filenames.hangars)) with
+            | Some hangars ->
+                hangars
+                |> guidToStrings
+            | None -> Map.empty
+        let hangars2 =
+            AsyncSeq.ofSeq entries
+            |> checkPlaneAvailability world state hangars
+            |> AsyncSeq.toBlockingSeq
+            |> Seq.choose (function Status x -> Some x | _ -> None)
+            |> Seq.tryLast
+            |> Option.defaultValue hangars
+            |> stringsToGuids
+        saveHangars (Path.Combine(config.OutputDir, Filenames.hangars)) hangars2
 
     let updateState(config, missionResults) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)

@@ -232,6 +232,7 @@ module Support =
                     let date = Campaign.Run.WeatherComputation.getNextDateFromState config
                     let weather = Campaign.Run.WeatherComputation.run(config, date)
                     announceWeather weather
+                    Campaign.Run.MissionLogParsing.updateHangars(config, missionLogEntries)
                     let! updatedState =
                         tryOrNotifyPlayers
                             [ "Bad news, campaign update failed"
