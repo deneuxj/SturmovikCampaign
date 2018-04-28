@@ -361,6 +361,9 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 match playerOf.TryFind entry.VehicleId with
                 | Some user when rogues.Contains user.UserId ->
                     yield Violation(user)
+                    landedAt <- Map.remove entry.VehicleId landedAt
+                    rogues <- Set.remove user.UserId rogues
+                    playerOf <- Map.remove entry.VehicleId playerOf
                 | _ ->
                     ()
 

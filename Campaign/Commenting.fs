@@ -342,7 +342,8 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 | Announce(coalition, messages) ->
                     handlers.OnMessagesToCoalition(coalition, messages)
                 | Violation(user) ->
-                    handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
+                    handlers.OnMessagesToPlayer(user, ["Kicking for stealing planes not enabled yet, consider yourself lucky"])
+                    // handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
                 | Status _ ->
                     async.Zero()
                 )
