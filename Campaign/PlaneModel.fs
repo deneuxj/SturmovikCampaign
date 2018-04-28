@@ -234,9 +234,6 @@ with
     member this.CargoPayload =
         match this with
         | PlaneModel.Ju52 -> 1, 0
-        | PlaneModel.He111h16 -> 1, 19
-        | PlaneModel.He111h6 -> 1, 13
-        | PlaneModel.Pe2s35 | PlaneModel.Pe2s87 -> 1, 11
         | _ -> 1, 0
 
     /// The mod mask and payload ID suitable for a given role
@@ -581,10 +578,10 @@ with
         | Ju87 -> [ GroundAttacker ]
         | A20
         | Pe2s35
-        | Pe2s87 -> [ GroundAttacker; LevelBomber; CargoTransporter ]
+        | Pe2s87 -> [ GroundAttacker; LevelBomber ]
         | Hs129b2 -> [ GroundAttacker ]
         | He111h6
-        | He111h16 -> [ LevelBomber; CargoTransporter ]
+        | He111h16 -> [ LevelBomber ]
         |> Set.ofList
 
     static member AllModels =
