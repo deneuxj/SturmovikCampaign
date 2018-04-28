@@ -119,7 +119,7 @@ let tryLoadHangars path =
 
 
 let saveHangars path (hangars : Map<Guid, PlayerHangar>) =
-    let serializer = FsPickler.CreateXmlSerializer()
+    let serializer = FsPickler.CreateXmlSerializer(indent=true)
     use file = File.CreateText(path)
     serializer.Serialize(file, hangars)
 
