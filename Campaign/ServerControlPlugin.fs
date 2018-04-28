@@ -549,7 +549,7 @@ type Plugin() =
                 let atEnemy = Some coalition.Other = afCoalition
                 let cargo =
                     if cargo > 0.0f<K> then
-                        sprintf " with %3.0fkg of cargo" (cargo / bombCost)
+                        sprintf " with %3.0fkg of cargo" cargo
                     else
                         ""
                 let planeType =
