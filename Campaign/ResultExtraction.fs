@@ -309,12 +309,18 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
         let damages = ref Map.empty
         let cargo = ref Map.empty
         let bombLoad = ref Map.empty
+        // Number of bombs at take off
+        let mutable initBombs = Map.empty
         // Map object ID to starting airfield
         let ongoingFlight = ref Map.empty
         // Map human player (NickId) to vehicle id
         let playerPilot = ref Map.empty
         // Map plane id to name of human player and coalition
         let planePilot = ref Map.empty
+        // When a plane that took of with bombs lands, wait until the player ends the mission before registering the landing.
+        // When the player leaves the plane, one can check the amount of bombs. If identical to the value at take off,
+        // register as a cargo mission.
+        let mutable delayedLanding = Map.empty 
         // Function to send back a plane to starting airfield. Used for planes still in the air when the round ends or if a player disconnects while flying.
         let sendPlaneBack vehicle af =
             match planeIds.Value.TryFind vehicle with
@@ -355,6 +361,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     | _ -> failwithf "Unknown country value %d" (int playerPlane.Country)
                 playerPilot := playerPilot.Value.Add(playerPlane.NickId, playerPlane.VehicleId)
                 planePilot := planePilot.Value.Add(playerPlane.VehicleId, (playerPlane.Name, coalition))
+                initBombs <- initBombs.Add(playerPlane.VehicleId, playerPlane.Bombs)
                 match playerPlane.VehicleType with
                 | PlaneObjectType plane when plane.Roles.Contains CargoTransporter ->
                     let modmask, payload = plane.CargoPayload
@@ -424,8 +431,29 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                             match planePilot.Value.TryFind landing.VehicleId with
                             | None -> None, None
                             | Some(pilot, coalition) -> Some pilot, coalition
-                        yield landed { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = repairedHealth; Cargo = cargoAmount; PlayerName = pilot; Coalition = coalition }
+                        let ev = { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = repairedHealth; Cargo = cargoAmount; PlayerName = pilot; Coalition = coalition }
+                        match initBombs.TryFind(landing.VehicleId) with
+                        | Some n when n > 0 ->
+                            delayedLanding <- delayedLanding.Add(landing.VehicleId, ev)
+                        | _ ->
+                            yield landed ev 
                     | None -> ()
+            | :? PlayerMissionEndEntry as entry ->
+                match delayedLanding.TryFind(entry.VehicleId) with
+                | Some ev ->
+                    match initBombs.TryFind(entry.VehicleId) with
+                    | Some n when n > 0 ->
+                        let load = bombLoad.Value.TryFind(entry.VehicleId) |> Option.defaultValue 0.0f<K>
+                        if entry.Bombs = n then
+                            yield landed { ev with Cargo = load }
+                        else
+                            yield landed ev
+                    | _ ->
+                        yield landed ev
+                | _ -> ()
+                delayedLanding <- delayedLanding.Remove(entry.VehicleId)
+                initBombs <- initBombs.Remove(entry.VehicleId)
+                bombLoad := bombLoad.Value.Remove(entry.VehicleId)
             | :? RoundEndEntry as roundEnd ->
                 // register all ongoing flights as landed back at starting airfield
                 for vehicle, af in ongoingFlight.Value |> Map.toSeq do
