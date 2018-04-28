@@ -19,5 +19,6 @@ let startDate, description =
         raise e
 printfn "%s" description
 Campaign.Run.WeatherComputation.run(Configuration.config, startDate)
-Campaign.Run.Init.createState Configuration.config
+let descrState = Campaign.Run.Init.createState Configuration.config
+printfn "%s" (String.concat "\n" descrState)
 Campaign.Run.OrderDecision.run Configuration.config

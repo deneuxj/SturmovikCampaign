@@ -408,7 +408,7 @@ module Support =
             // Initial campaign state
             let startDate, _ = Campaign.Run.Init.createWorld config
             ignore <| Campaign.Run.WeatherComputation.run(config, startDate)
-            Campaign.Run.Init.createState config
+            ignore <| Campaign.Run.Init.createState config
             Campaign.Run.OrderDecision.run config
             loadWorldThenDo (support, config) updateMap
             // Start campaign

@@ -114,10 +114,21 @@ module Init =
         let weather = serializer.Deserialize<Weather.WeatherState>(weatherFile)
 
         let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile), float32 weather.Wind.Direction)
-
         let outputDir = config.OutputDir
         use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
         serializer.Serialize(stateFile, state)
+
+        let description =
+            [
+                for coalition in [Axis; Allies] do
+                    let prod =
+                        Seq.zip world.Regions state.Regions
+                        |> Seq.filter(fun (_, reg) -> reg.Owner = Some coalition)
+                        |> Seq.sumBy(fun (reg, regState) -> regState.ProductionCapacity(reg, world.SubBlockSpecs, world.ProductionFactor))
+                    yield sprintf "%s: %5.0f" (string coalition) prod
+            ]
+
+        description
 
 module PlayChess =
     open MBrace.FsPickler
