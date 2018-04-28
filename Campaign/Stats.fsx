@@ -54,7 +54,7 @@ let landed =
 let planesDamaged =
     seq {
         for result in results do
-            for damage in result.VehicleDamages do
+            for damage in result.Damages do
                 match damage.Object with
                 | ParkedPlane(_, model) -> yield (model, damage.Data.Amount)
                 | _ -> ()
