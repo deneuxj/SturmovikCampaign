@@ -239,7 +239,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
 
 
 type PlaneAvailabilityMessage =
-    | Overview of UserIds * string list
+    | Overview of UserIds * delay:int * string list
     | Warning of UserIds * string list
     | Announce of CoalitionId * string list
     | Violation of UserIds
@@ -257,7 +257,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
     let emptyHangar (playerId : string) = { Player = Guid(playerId); Reserve = 0.0f<E>; Airfields = Map.empty }
     asyncSeq {
         let mutable playerOf = Map.empty // Vehicle ID -> UserIds
-        let mutable objects = Map.empty // Vehicle ID -> object type
+        let mutable planes = Map.empty // Vehicle ID -> plane model
         let mutable airfields =
             state.Airfields
             |> Seq.map (fun afs -> afs.AirfieldId, afs)
@@ -266,14 +266,39 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
         let mutable rogues = Set.empty // set of User ID, players that spawned in a plane not available to them
         let mutable healthOf = Map.empty // Vehicle ID -> health
         let mutable landedAt = Map.empty // Vehicle ID -> Airfield
-        for event in events do
-            match event with
-            | :? PlayerPlaneEntry as entry ->
+
+        let checkoutPlane(af : Airfield, plane, availableAtAirfield, user, vehicle) =
+            asyncSeq {
+                let afs = airfields.[af.AirfieldId]
+                let afs = { afs with NumPlanes = Map.add plane (availableAtAirfield - 1.0f) afs.NumPlanes }
+                match sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner with
+                | Some coalition ->
+                    yield Announce(coalition,
+                        [sprintf "%s at %s is authorized to take off in a %s" user.Name af.AirfieldId.AirfieldName plane.PlaneName])
+                | None ->
+                    logger.Warn(sprintf "Player spawned in a %s at neutral airfield %s" plane.PlaneName af.AirfieldId.AirfieldName)
+                airfields <- Map.add af.AirfieldId afs airfields
+                rogues <- Set.remove user.UserId rogues
+                landedAt <- Map.add vehicle af landedAt
+                planes <- Map.add vehicle plane planes
+            }
+
+        let startFlight(entry : PlayerPlaneEntry) =
+            asyncSeq {
                 let user = { NickId = string entry.NickId; UserId = string entry.UserId; Name = entry.Name }
                 playerOf <- Map.add entry.VehicleId user playerOf
                 healthOf <- Map.add entry.VehicleId 1.0f healthOf
                 let pos = Vector2(entry.Position.X, entry.Position.Z)
                 let af = world.GetClosestAirfield(pos)
+                let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar user.UserId)
+                let descr =
+                    if rearAirfields.Contains(Some af.AirfieldId) then
+                        ["You are at the rear airfield, all planes are available to you"]
+                    else
+                        match hangar.ShowAvailablePlanes(af.AirfieldId) with
+                        | [] -> [sprintf "You do not have any planes at %s" af.AirfieldId.AirfieldName]
+                        | planes -> (sprintf "You have the following planes at %s:" af.AirfieldId.AirfieldName) :: planes
+                yield Overview(user, 30, descr)
                 match entry.VehicleType with
                 | PlaneObjectType plane ->
                     let availableAtAirfield =
@@ -290,7 +315,6 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         rogues <- Set.add user.UserId rogues
                     else if not (rearAirfields.Contains (Some af.AirfieldId)) then
                         // Not a rear airfield: player hangar restrictions apply
-                        let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar user.UserId)
                         match hangar.TryRemovePlane(af.AirfieldId, plane, 1.0f) with
                         | None ->
                             yield Warning(user,
@@ -301,46 +325,80 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                                 ] @ hangar.ShowAvailablePlanes(af.AirfieldId))
                             rogues <- Set.add user.UserId rogues
                         | Some hangar ->
-                            let afs = airfields.[af.AirfieldId]
-                            let afs = { afs with NumPlanes = Map.add plane (availableAtAirfield - 1.0f) afs.NumPlanes }
-                            match sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner with
-                            | Some coalition ->
-                                yield Announce(coalition,
-                                    [sprintf "%s at %s is authorized to take off in a %s" entry.Name af.AirfieldId.AirfieldName plane.PlaneName])
-                            | None ->
-                                logger.Warn(sprintf "Player spawned in a %s at neutral airfield %s" plane.PlaneName af.AirfieldId.AirfieldName)
-                            airfields <- Map.add af.AirfieldId afs airfields
+                            yield! checkoutPlane(af, plane, availableAtAirfield, user, entry.VehicleId)
                             hangars <- Map.add user.UserId hangar hangars
-                            rogues <- Set.remove user.UserId rogues
+                    else
+                        yield! checkoutPlane(af, plane, availableAtAirfield, user, entry.VehicleId)
                 | _ -> // Vehicle other than plane
                     ()
+            }
+
+        let endFlight(user, plane, af : Airfield, vehicle) =
+            asyncSeq {
+                let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar user.UserId)
+                let health = healthOf.TryFind vehicle |> Option.defaultValue 1.0f
+                let hangar = hangar.AddPlane(af.AirfieldId, plane, health)
+                let descr =
+                    match hangar.ShowAvailablePlanes(af.AirfieldId) with
+                    | [] -> [sprintf "You do not have any planes at %s" af.AirfieldId.AirfieldName]
+                    | planes -> (sprintf "You now have the following planes at %s:" af.AirfieldId.AirfieldName):: planes
+                yield Overview(user, 0, descr)
+                hangars <- Map.add user.UserId hangar hangars
+                landedAt <- Map.remove vehicle landedAt
+                rogues <- Set.remove user.UserId rogues
+                playerOf <- Map.remove vehicle playerOf
+                healthOf <- Map.remove vehicle healthOf
+                planes <- Map.remove vehicle planes
+            }
+
+        for event in events do
+            match event with
+            | :? PlayerPlaneEntry as entry ->
+                yield! startFlight(entry)
                 yield Status(hangars)
+
             | :? TakeOffEntry as entry ->
                 match playerOf.TryFind entry.VehicleId with
-                | None -> ()
                 | Some user when rogues.Contains user.UserId ->
                     yield Violation(user)
-                | Some _ -> ()
+                | _ ->
+                    ()
+
             | :? DamageEntry as entry ->
                 let oldHealth = healthOf.TryFind entry.TargetId |> Option.defaultValue 1.0f
                 let health = oldHealth - entry.Damage
                 healthOf <- Map.add entry.TargetId health healthOf
+
             | :? KillEntry as entry ->
                 healthOf <- Map.add entry.TargetId 0.0f healthOf
+
             | :? LandingEntry as entry ->
                 let pos = Vector2(entry.Position.X, entry.Position.Z)
                 let af = world.GetClosestAirfield(pos)
                 landedAt <- Map.add entry.VehicleId af landedAt
+
             | :? PlayerMissionEndEntry as entry ->
-                match playerOf.TryFind(entry.VehicleId), objects.TryFind(entry.VehicleId), landedAt.TryFind(entry.VehicleId) with
+                match playerOf.TryFind(entry.VehicleId), planes.TryFind(entry.VehicleId), landedAt.TryFind(entry.VehicleId) with
                 | Some user, Some plane, Some af ->
-                    let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar user.UserId)
-                    let health = healthOf.TryFind entry.VehicleId |> Option.defaultValue 1.0f
-                    let hangar = hangar.AddPlane(af.AirfieldId, plane, health)
-                    hangars <- Map.add user.UserId hangar hangars
-                    landedAt <- Map.remove entry.VehicleId landedAt
-                | _ -> ()
+                    yield! endFlight(user, plane, af, entry.VehicleId)
+                | _ ->
+                    ()
                 yield Status(hangars)
+
+            | :? LeaveEntry as entry ->
+                let vehicleAndUser =
+                    playerOf
+                    |> Map.toSeq
+                    |> Seq.tryFind (fun (_, user) -> user.UserId = string entry.UserId)
+                match vehicleAndUser with
+                | Some(vehicle, user) ->
+                    match planes.TryFind(vehicle), landedAt.TryFind(vehicle) with
+                    | Some plane, Some af ->
+                        yield! endFlight(user, plane, af, vehicle)
+                    | _ ->
+                        ()
+                | None ->
+                    ()
+
             | _ -> ()
-            yield Status(hangars)
     }

@@ -332,7 +332,11 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             checkPlaneAvailability world state hangars asyncSeqEntries
             |> asyncIterNonMuted (
                 function
-                | Overview(user, messages)
+                | Overview(user, delay, messages) ->
+                    async {
+                        do! Async.Sleep(delay * 1000)
+                        return! handlers.OnMessagesToPlayer(user, messages)
+                    }
                 | Warning(user, messages) ->
                     handlers.OnMessagesToPlayer(user, messages)
                 | Announce(coalition, messages) ->
