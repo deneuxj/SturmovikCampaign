@@ -291,16 +291,16 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 let pos = Vector2(entry.Position.X, entry.Position.Z)
                 let af = world.GetClosestAirfield(pos)
                 let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar user.UserId)
-                let descr =
-                    if rearAirfields.Contains(Some af.AirfieldId) then
-                        ["You are at the rear airfield, all planes are available to you"]
-                    else
-                        match hangar.ShowAvailablePlanes(af.AirfieldId) with
-                        | [] -> [sprintf "You do not have any planes at %s" af.AirfieldId.AirfieldName]
-                        | planes -> (sprintf "You have the following planes at %s:" af.AirfieldId.AirfieldName) :: planes
-                yield Overview(user, 30, descr)
                 match entry.VehicleType with
                 | PlaneObjectType plane ->
+                    let descr =
+                        if rearAirfields.Contains(Some af.AirfieldId) then
+                            ["You are at the rear airfield, all planes are available to you"]
+                        else
+                            match hangar.ShowAvailablePlanes(af.AirfieldId) with
+                            | [] -> [sprintf "You do not have any planes at %s" af.AirfieldId.AirfieldName]
+                            | planes -> (sprintf "You have the following planes at %s:" af.AirfieldId.AirfieldName) :: planes
+                    yield Overview(user, 30, descr)
                     let availableAtAirfield =
                         airfields.TryFind af.AirfieldId
                         |> Option.map (fun afs -> afs.NumPlanes)
