@@ -233,7 +233,7 @@ let tryPickPlaneSet (region : Region) (date : DateTime) (planeSets : PlaneSet se
     |> Seq.filter (fun planeSet -> planeSet.Regions |> List.exists ((=) region))
     |> Seq.filter (fun planeSet -> planeSet.StartDate <= date)
     |> try
-        Seq.minBy (fun planeSet -> planeSet.StartDate) >> Some
+        Seq.maxBy (fun planeSet -> planeSet.StartDate) >> Some
        with _ -> fun _ -> None
 
 /// <summary>
