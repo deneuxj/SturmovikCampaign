@@ -293,14 +293,6 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar user.UserId)
                 match entry.VehicleType with
                 | PlaneObjectType plane ->
-                    let descr =
-                        if rearAirfields.Contains(Some af.AirfieldId) then
-                            ["You are at the rear airfield, all planes are available to you"]
-                        else
-                            match hangar.ShowAvailablePlanes(af.AirfieldId) with
-                            | [] -> [sprintf "You do not have any planes at %s" af.AirfieldId.AirfieldName]
-                            | planes -> (sprintf "You have the following planes at %s:" af.AirfieldId.AirfieldName) :: planes
-                    yield Overview(user, 30, descr)
                     let availableAtAirfield =
                         airfields.TryFind af.AirfieldId
                         |> Option.map (fun afs -> afs.NumPlanes)
@@ -313,10 +305,17 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                             false
                         else
                             match plane.PlaneType with
-                            | Fighter -> availableAtAirfield < 15.0f
-                            | Attacker -> availableAtAirfield < 10.0f
-                            | Bomber -> availableAtAirfield < 7.0f
+                            | Fighter -> availableAtAirfield < 10.0f
+                            | Attacker -> availableAtAirfield < 7.0f
+                            | Bomber -> availableAtAirfield < 5.0f
                             | Transport -> false
+
+                    let descr =
+                        match hangar.ShowAvailablePlanes(af.AirfieldId) with
+                        | [] -> [sprintf "You do not have any reserved planes at %s" af.AirfieldId.AirfieldName]
+                        | planes -> (sprintf "You have the following planes reserved at %s:" af.AirfieldId.AirfieldName) :: planes
+                    yield Overview(user, 30, descr)
+
                     if availableAtAirfield < 1.0f then
                         yield Warning(user,
                             [
