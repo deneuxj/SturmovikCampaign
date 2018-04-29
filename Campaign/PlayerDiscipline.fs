@@ -306,6 +306,17 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         |> Option.map (fun afs -> afs.NumPlanes)
                         |> Option.bind (fun planes -> planes.TryFind plane)
                         |> Option.defaultValue 0.0f
+                    let isRestricted =
+                        if rearAirfields.Contains(Some af.AirfieldId) then
+                            false
+                        elif sg.GetRegion(af.Region).HasInvaders then
+                            false
+                        else
+                            match plane.PlaneType with
+                            | Fighter -> availableAtAirfield < 15.0f
+                            | Attacker -> availableAtAirfield < 10.0f
+                            | Bomber -> availableAtAirfield < 7.0f
+                            | Transport -> false
                     if availableAtAirfield < 1.0f then
                         yield Warning(user,
                             [
@@ -313,8 +324,8 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                                 "CANCEL your flight, or you will be KICKED"
                             ])
                         rogues <- Set.add user.UserId rogues
-                    else if not (rearAirfields.Contains (Some af.AirfieldId)) then
-                        // Not a rear airfield: player hangar restrictions apply
+                    else if isRestricted then
+                        // Player hangar restrictions apply
                         match hangar.TryRemovePlane(af.AirfieldId, plane, 1.0f) with
                         | None ->
                             yield Warning(user,
