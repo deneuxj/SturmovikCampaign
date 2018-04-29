@@ -35,7 +35,7 @@
 #             RussianStaBomber
 
 PlaneSet:
-    Name: Kuban
+    Name: KubanLate
     Regions: [3]
     StartDate: "1-Aug-1943"
     Planes:
