@@ -64,6 +64,9 @@
     <Compile Include="Orders.fs" />
     <Compile Include="MinMax.fs" />
     <Compile Include="AutoOrder.fs" />
+    <Compile Include="ResultExtraction.fs" />
+    <Compile Include="NewWorldState.fs" />
+    <Compile Include="AfterActionReport.fs" />
     <Compile Include="MapGraphics.fs" />
     <Compile Include="ParkingArea.fs" />
     <Compile Include="PlaneFerry.fs" />
@@ -74,9 +77,6 @@
     <Compile Include="Convoys.fs" />
     <Compile Include="TankParks.fs" />
     <Compile Include="MissionGeneration.fs" />
-    <Compile Include="ResultExtraction.fs" />
-    <Compile Include="NewWorldState.fs" />
-    <Compile Include="AfterActionReport.fs" />
     <Compile Include="PlayerDiscipline.fs" />
     <Compile Include="Commenting.fs" />
     <Compile Include="WebHook.fs" />

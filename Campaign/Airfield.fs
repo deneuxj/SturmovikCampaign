@@ -31,18 +31,18 @@ open Campaign.WorldDescription
 open Campaign.PlaneModel
 open Campaign.BasicTypes
 open Campaign.WorldState
+open Campaign.NewWorldState
 
 
 let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) =
-    let getOwner =
-        let m =
-            state.Regions
-            |> Seq.map(fun region -> region.RegionId, region.Owner)
-            |> dict
-        fun x -> m.[x]
+    let sg = state.FastAccess
+    let rearAirfields =
+        [Axis; Allies]
+        |> Seq.choose (fun coalition -> tryFindRearAirfield world coalition state)
+        |> Set.ofSeq
     [
         for airfield, state in Seq.zip world.Airfields state.Airfields do
-            match getOwner airfield.Region with
+            match sg.GetRegion(airfield.Region).Owner with
             | None -> ()
             | Some coalition ->
                 let af =
@@ -122,7 +122,12 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                 let planes =
                     T.Airfield.Planes()
                         .SetPlane(planeSpecs)
-                let afName = sprintf "%s (%d Kg)" (af.GetName().Value) (state.Supplies / bombCost |> float32 |> ceil |> int)
+                let afName =
+                    if rearAirfields.Contains(airfield.AirfieldId) || sg.GetRegion(airfield.Region).HasInvaders then
+                        airfield.AirfieldId.AirfieldName.ToUpper()
+                    else
+                        airfield.AirfieldId.AirfieldName
+                let afName = sprintf "%s (%d Kg)" afName (state.Supplies / bombCost |> float32 |> ceil |> int)
                 let af = af.SetPlanes(planes).SetIndex(T.Integer 1).SetLinkTrId(T.Integer 2).SetName(T.String afName)
                 let entity = newEntity 2
                 entity.MisObjID <- 1
