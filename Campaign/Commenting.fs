@@ -32,6 +32,7 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.PlayerDiscipline
 open Campaign.PlayerHangar
+open Campaign.WatchLogs
 open MBrace.FsPickler
 open Campaign.Orders
 open SturmovikMission.Blocks.Util.String
@@ -58,6 +59,8 @@ type EventHandlers =
 /// </summary>
 type Commentator (config : Configuration, handlers : EventHandlers, world : World, state : WorldState, hangars : Map<string, PlayerHangar>, convoys : ResupplyOrder list, columns : ColumnMovement list) =
     let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
+    // Stop notifications when we are disposed
+    let cancelOnDispose = new System.Threading.CancellationTokenSource()
     // retrieve entries from most recent mission
     let files =
         let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
@@ -81,93 +84,33 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             |> Seq.sortBy snd
             |> Seq.map fst
         sorted
-        |> List.ofSeq
-    let initialEntries =
-        seq {
-            for file in files do
-                yield! File.ReadAllLines(file)
-        }
-        |> Seq.choose (fun line ->
-            try
-                (line, LogEntry.Parse(line))
-                |> Some
-            with _ -> None)
-        |> List.ofSeq
-    let watcher = new FileSystemWatcher()
-    do watcher.Path <- missionLogsDir
-       watcher.Filter <- "missionReport*.txt"
-       watcher.NotifyFilter <- NotifyFilters.LastWrite
-    // An AsyncSeq built from new file notifications: generate log entries
-    let rec getEntry (batched, alreadyHandled : Set<string>) = 
-        async {
-            match batched with
-            | [] ->
-                let! ev = Async.AwaitEvent(watcher.Changed, cancelAction=fun() -> logger.Warn("AwaitEvent on game log watcher was cancelled"))
-                match ev with
-                | null ->
-                    logger.Warn("Null value from await on watcher.Changed")
-                    return None
-                | _ ->
-                    let entries2 =
-                        try
-                            [
-                                for line in File.ReadAllLines(ev.FullPath) do
-                                    if not(alreadyHandled.Contains line) then
-                                        yield line, LogEntry.Parse(line)
-                                    else
-                                        logger.Debug(sprintf "Skipping log line %s" line)
-                            ]
-                        with
-                        | e ->
-                            logger.Warn(sprintf "Failed to parse '%s' because '%s'" ev.FullPath e.Message)
-                            []
-                    let alreadyHandled =
-                        entries2
-                        |> Seq.map fst
-                        |> Seq.fold (fun alreadyHandled x -> Set.add x alreadyHandled) alreadyHandled
-                    let batched =
-                        entries2
-                        |> List.map snd
-                    // We are initially called with a batch corresponding to the initial entries.
-                    // If we are in this branch, it means the initial batch has been consumed by now, or it was empty.
-                    // In either case, returning Some(None, state) will generate a None, which will be recognized as the signal to start calling the handlers.
-                    let notifyStartEmittingMessages = None
-                    return Some(notifyStartEmittingMessages, (batched, alreadyHandled))
-            | x :: xs ->
-                return Some(Some x, (xs, alreadyHandled))
-        }
+        |> Array.ofSeq
     let asyncSeqEntries =
-        AsyncSeq.unfoldAsync getEntry (initialEntries |> List.map snd, initialEntries |> List.map fst |> Set.ofList)
-    let startEmitting =
-        asyncSeqEntries
-        |> AsyncSeq.filter (Option.isNone)
-        |> AsyncSeq.map (fun _ -> ())
-    let asyncSeqEntries =
-        asyncSeqEntries
-        |> AsyncSeq.choose id
+        resumeWatchlogs(missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
     let asyncIterNonMuted f xs =
-        let work =
-            AsyncSeq.mergeChoice startEmitting xs
-            |> AsyncSeq.foldAsync (fun muted item ->
-                async {
-                    match item with
-                    | Choice1Of2() ->
-                        // Unmute
-                        return false
-                    | Choice2Of2 x->
-                        if not muted then
-                            logger.Trace(sprintf "Do: %A" x)
-                            do! f x
-                        else
-                            logger.Trace(sprintf "Muted: %A" x)
-                        return muted
-                }) true
-        async {
-            let! _ = work
-            return ()
-        }
-    // Stop notifications when we are disposed
-    let cancelOnDispose = new System.Threading.CancellationTokenSource()
+        AsyncSeq.mergeChoice xs asyncSeqEntries
+        |> AsyncSeq.map (fun x -> printfn "%A" x; x)
+        |> AsyncSeq.skipWhile(
+            function
+            | Choice1Of2 _ -> true
+            | Choice2Of2(Old _) -> true
+            | Choice2Of2(Fresh _) -> false)
+        |> AsyncSeq.choose(
+            function
+            | Choice1Of2 x -> Some x
+            | Choice2Of2 _ -> None)
+        |> AsyncSeq.iterAsyncParallelThrottled 8 f
+    let asyncSeqEntries =
+        asyncSeqEntries
+        |> AsyncSeq.choose (fun line ->
+            try
+                let x = LogEntry.Parse(string line)
+                Some x
+            with
+            | _ ->
+                logger.Error(sprintf "Failed to parse '%s'" (string line))
+                None)
+        |> AsyncSeq.filter (function null -> false | _ -> true)
     // Notify of interesting take-offs and landings
     do
         let battleDamages =
@@ -351,10 +294,8 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         Async.Start(Async.catchLog "battle limits notifier" task2, cancelOnDispose.Token)
         Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
         Async.Start(Async.catchLog "plane availability checker" hangarTask, cancelOnDispose.Token)
-    do watcher.EnableRaisingEvents <- true
 
     member this.Dispose() =
-        watcher.Dispose()
         cancelOnDispose.Cancel()
 
 /// Monitor state.xml, (re-) starting a commentator whenever the file is modified
