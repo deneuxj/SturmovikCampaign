@@ -478,6 +478,7 @@ module MissionFileGeneration =
               StrategyMissionFile = Path.Combine(config.ScriptPath, config.StrategyFile)
               MaxVehiclesInBattle = config.MaxVehiclesInBattle
               MaxBuildingIcons = config.MaxBuildingIcons
+              BattleKillRatio = config.BattleKillRatio
             }
         let missionData =
             { World = world

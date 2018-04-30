@@ -44,7 +44,7 @@ type Battlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[], region) =
+    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[], region, numDefenders, numAttackers) =
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float yori)
@@ -169,7 +169,7 @@ with
             )
         // Icons
         let title =
-            sprintf "Battle %s (%d:%d)" region attackers.Length defenders.Length
+            sprintf "Battle %s (%d:%d)" region numAttackers numDefenders
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, center, title, defendingCoalition.ToCoalition, Mcu.IconIdValue.CoverArmorColumn)
         // Result
         { Supporters = support
@@ -234,7 +234,7 @@ let identifyBattleAreas (world : World) (state : WorldState) =
     }
 
 /// Generate battlefields from invasions in column movement orders.
-let generateBattlefields maxVehicles random store lcStore (world : World) (state : WorldState) =
+let generateBattlefields maxVehicles killRatio random store lcStore (world : World) (state : WorldState) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     [
@@ -248,13 +248,19 @@ let generateBattlefields maxVehicles random store lcStore (world : World) (state
             let defendingVehicles =
                 regState.NumVehicles
                 |> expandMap
+            let numDefending = defendingVehicles.Length
+            let defendingVehicles =
+                defendingVehicles
                 |> Array.shuffle random
                 |> Array.truncate maxVehicles
                 |> compactSeq
             let attackingVehicles =
                 regState.NumInvadingVehicles
                 |> expandMap
+            let numAttacking =  attackingVehicles.Length
+            let attackingVehicles =
+                attackingVehicles
                 |> Array.shuffle random
                 |> Array.truncate maxVehicles
-            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, string bf.Home)
+            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, string bf.Home, numDefending * killRatio, numAttacking * killRatio)
     ]
