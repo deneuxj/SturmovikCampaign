@@ -41,8 +41,7 @@ type JudgementDecision =
     | Informed of string
 
 type UserIds =
-    { NickId : string
-      UserId : string
+    { UserId : string
       Name : string }
 
 type Judgement =
@@ -147,8 +146,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
             // Map object id to player ids and to country
             | :? PlayerPlaneEntry as entry ->
                 let data =
-                    { NickId = string entry.NickId
-                      UserId = string entry.UserId
+                    { UserId = string entry.UserId
                       Name = entry.Name }
                 nameOf <- Map.add entry.VehicleId data nameOf
                 coalitionOf <- Map.add entry.VehicleId entry.Country coalitionOf
@@ -243,7 +241,7 @@ type PlaneAvailabilityMessage =
     | Warning of UserIds * string list
     | Announce of CoalitionId * string list
     | Violation of UserIds
-    | Status of Map<string, PlayerHangar>
+    | Status of Map<string, PlayerHangar> * Map<AirfieldId, AirfieldState>
 
 
 let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (events : AsyncSeq<LogEntry>) =
@@ -254,7 +252,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
         |> Seq.map (fun coalition -> tryFindRearAirfield world coalition state)
         |> Set.ofSeq
     let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
-    let emptyHangar (playerId : string) = { Player = Guid(playerId); Reserve = 0.0f<E>; Airfields = Map.empty }
+    let emptyHangar (playerId : string, playerName : string) = { Player = Guid(playerId); PlayerName = playerName; Reserve = 0.0f<E>; Airfields = Map.empty }
     asyncSeq {
         let mutable playerOf = Map.empty // Vehicle ID -> UserIds
         let mutable planes = Map.empty // Vehicle ID -> plane model
@@ -285,12 +283,13 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
 
         let startFlight(entry : PlayerPlaneEntry) =
             asyncSeq {
-                let user = { NickId = string entry.NickId; UserId = string entry.UserId; Name = entry.Name }
+                let user = { UserId = string entry.UserId; Name = entry.Name }
                 playerOf <- Map.add entry.VehicleId user playerOf
                 healthOf <- Map.add entry.VehicleId 1.0f healthOf
                 let pos = Vector2(entry.Position.X, entry.Position.Z)
                 let af = world.GetClosestAirfield(pos)
-                let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar user.UserId)
+                let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
+                let hangar = { hangar with PlayerName = user.Name }
                 match entry.VehicleType with
                 | PlaneObjectType plane ->
                     let availableAtAirfield =
@@ -345,7 +344,8 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
 
         let endFlight(user, plane, af : Airfield, vehicle) =
             asyncSeq {
-                let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar user.UserId)
+                let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
+                let hangar = { hangar with PlayerName = user.Name }
                 let health = healthOf.TryFind vehicle |> Option.defaultValue 1.0f
                 let hangar = hangar.AddPlane(af.AirfieldId, plane, health)
                 let descr =
@@ -365,7 +365,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
             match event with
             | :? PlayerPlaneEntry as entry ->
                 yield! startFlight(entry)
-                yield Status(hangars)
+                yield Status(hangars, airfields)
 
             | :? TakeOffEntry as entry ->
                 match playerOf.TryFind entry.VehicleId with
@@ -396,7 +396,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     yield! endFlight(user, plane, af, entry.VehicleId)
                 | _ ->
                     ()
-                yield Status(hangars)
+                yield Status(hangars, airfields)
 
             | :? LeaveEntry as entry ->
                 let vehicleAndUser =

@@ -872,7 +872,7 @@ module MissionLogParsing =
             AsyncSeq.ofSeq entries
             |> checkPlaneAvailability world state hangars
             |> AsyncSeq.toBlockingSeq
-            |> Seq.choose (function Status x -> Some x | _ -> None)
+            |> Seq.choose (function Status(x, _) -> Some x | _ -> None)
             |> Seq.tryLast
             |> Option.defaultValue hangars
             |> stringsToGuids

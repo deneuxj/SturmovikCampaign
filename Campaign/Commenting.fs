@@ -36,6 +36,7 @@ open Campaign.WatchLogs
 open MBrace.FsPickler
 open Campaign.Orders
 open SturmovikMission.Blocks.Util.String
+open Campaign.ChatCommands
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -111,6 +112,9 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 logger.Error(sprintf "Failed to parse '%s'" (string line))
                 None)
         |> AsyncSeq.filter (function null -> false | _ -> true)
+    let asyncCommands =
+        watchCommands(Path.Combine(config.ServerDataDir), cancelOnDispose.Token)
+        |> AsyncSeq.map (fun line -> ChatCommand.Parse(world, line))
     // Notify of interesting take-offs and landings
     do
         let battleDamages =
@@ -273,6 +277,30 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
         let hangarTask =
             checkPlaneAvailability world state hangars asyncSeqEntries
+            |> AsyncSeq.mergeChoice asyncCommands
+            |> AsyncSeq.scan (fun (_, hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, AirfieldState>) item ->
+                match item with
+                | Choice1Of2 (Result.Ok cmd) ->
+                    let userIds =
+                        hangars
+                        |> Map.toSeq
+                        |> Seq.map snd
+                        |> Seq.filter (fun hangar -> hangar.PlayerName = cmd.Player)
+                        |> List.ofSeq
+                    match userIds with
+                    | [hangar] ->
+                        let uid = { UserId = string hangar.Player; Name = hangar.PlayerName }
+                        Some(Overview(uid, 0, cmd.Interpret(hangars, airfields))), hangars, airfields
+                    | _ ->
+                        Some(Announce(Allies, [sprintf "Unknown user %s" cmd.Player])), hangars, airfields
+                | Choice1Of2 (Result.Error err) ->
+                    Some(Announce(Allies, [err])), hangars, airfields
+                | Choice2Of2 (Status(hangars, airfields) as x) ->
+                    Some x, hangars, airfields
+                | Choice2Of2 x ->
+                    Some x, hangars, airfields
+            ) (None, Map.empty, Map.empty)
+            |> AsyncSeq.choose (function (Some x, _, _) -> Some x | _ -> None)
             |> asyncIterNonMuted (
                 function
                 | Overview(user, delay, messages) ->

@@ -79,6 +79,7 @@
     <Compile Include="MissionGeneration.fs" />
     <Compile Include="PlayerDiscipline.fs" />
     <Compile Include="WatchLogs.fs" />
+    <Compile Include="ChatCommands.fs" />
     <Compile Include="Commenting.fs" />
     <Compile Include="WebHook.fs" />
     <Compile Include="Run.fs" />
@@ -155,6 +156,9 @@
   <ItemGroup>
     <Reference Include="DataProvider">
       <HintPath>..\..\SturmovikMission-git\DataProvider\bin\Debug\DataProvider.dll</HintPath>
+    </Reference>
+    <Reference Include="Fastenshtein">
+      <HintPath>..\packages\Fastenshtein.1.0.0.2\lib\net40-client\Fastenshtein.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Configuration">
       <HintPath>..\packages\FSharp.Configuration.1.3.1\lib\net45\FSharp.Configuration.dll</HintPath>

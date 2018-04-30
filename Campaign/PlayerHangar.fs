@@ -65,6 +65,7 @@ with
 /// </summary>
 type PlayerHangar =
     { Player : Guid
+      PlayerName : string
       Reserve : float32<E>
       Airfields : Map<AirfieldId, AirfieldHangar> }
 with
