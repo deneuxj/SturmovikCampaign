@@ -116,15 +116,17 @@ with
             ]
         | ShowAirfieldsWithPlane plane ->
             let airfields =
-                airfields
+                tryGetHangarByPlayerName this.Player hangars
+                |> Option.map (fun h -> h.Airfields)
+                |> Option.defaultValue Map.empty
                 |> Map.filter (fun afId planes ->
-                    Map.exists (fun plane2 qty -> plane2 = plane && qty >= 1.0f) planes.NumPlanes)
+                    Map.exists (fun plane2 qty -> plane2 = plane && qty >= 1.0f) planes.Planes)
                 |> Map.toSeq
                 |> Seq.map fst
                 |> Seq.map (fun id -> id.AirfieldName)
                 |> String.concat ", "
             [
-                yield "Airfields with " + plane.PlaneName
+                yield "Airfields with reserved " + plane.PlaneName
                 yield match airfields with
                         | "" -> "None"
                         | x -> x
