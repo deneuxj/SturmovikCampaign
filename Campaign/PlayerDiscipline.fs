@@ -238,7 +238,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
 
 type PlaneAvailabilityMessage =
     | Overview of UserIds * delay:int * string list
-    | Warning of UserIds * string list
+    | Warning of UserIds * delay:int * string list
     | Announce of CoalitionId * string list
     | Violation of UserIds
     | Status of Map<string, PlayerHangar> * Map<AirfieldId, AirfieldState>
@@ -313,10 +313,10 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         match hangar.ShowAvailablePlanes(af.AirfieldId) with
                         | [] -> [sprintf "You do not have any reserved planes at %s" af.AirfieldId.AirfieldName]
                         | planes -> (sprintf "You have the following planes reserved at %s:" af.AirfieldId.AirfieldName) :: planes
-                    yield Overview(user, 30, descr)
+                    yield Overview(user, 15, descr)
 
                     if availableAtAirfield < 1.0f then
-                        yield Warning(user,
+                        yield Warning(user, 15,
                             [
                                 sprintf "There are no %s available at %s" plane.PlaneName af.AirfieldId.AirfieldName
                                 "CANCEL your flight, or you will be KICKED"
@@ -326,7 +326,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         // Player hangar restrictions apply
                         match hangar.TryRemovePlane(af.AirfieldId, plane, 1.0f) with
                         | None ->
-                            yield Warning(user,
+                            yield Warning(user, 15,
                                 [
                                     sprintf "The staff at %s won't let you take a %s" af.AirfieldId.AirfieldName plane.PlaneName
                                     "It has been assigned to another pilot"

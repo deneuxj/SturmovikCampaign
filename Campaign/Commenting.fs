@@ -308,8 +308,11 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                         do! Async.Sleep(delay * 1000)
                         return! handlers.OnMessagesToPlayer(user, messages)
                     }
-                | Warning(user, messages) ->
-                    handlers.OnMessagesToPlayer(user, messages)
+                | Warning(user, delay, messages) ->
+                    async {
+                        do! Async.Sleep(delay * 1000)
+                        return! handlers.OnMessagesToPlayer(user, messages)
+                    }
                 | Announce(coalition, messages) ->
                     handlers.OnMessagesToCoalition(coalition, messages)
                 | Violation(user) ->
