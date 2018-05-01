@@ -40,7 +40,7 @@ with
             Result.Ok (ShowReservedPlanesAtAirfield af.AirfieldId)
 
         | ReLit "sp" _ ->
-            Result.Error "Usage: <sp airfield"
+            Result.Error "Usage: !sp airfield"
 
         | ReLit "sa" (ReId (w, EOF _)) ->
             let w = w.Trim().ToLower()
@@ -51,7 +51,7 @@ with
             Result.Ok (ShowAirfieldsWithPlane plane)
 
         | ReLit "sp" _ ->
-            Result.Error "Usage: <sa plane"
+            Result.Error "Usage: !sa plane"
 
         | ReLit "cash" _ ->
             Result.Ok ShowCashReserve
@@ -65,17 +65,17 @@ with
 
         | ReLit "give" _ ->
             Result.Error "Not implemented"
-            //Result.Error "Usage: <give \"player\" amount"
+            //Result.Error "Usage: !give \"player\" amount"
 
         | ReLit "gift" _ ->
             Result.Error "Not implemented"
-            //Result.Error "Usage: <gift \"player\" amount"
+            //Result.Error "Usage: !gift \"player\" amount"
 
         | ReString(x, _) ->
             Result.Error (sprintf "Unknown command %s" x)
 
         | _ ->
-            Result.Error "Improperly formatted command. Usage: <command arguments, where command can be sp, sa, cash or give"
+            Result.Error "Improperly formatted command. Usage: !command arguments, where command can be sp, sa, cash or give"
 
 let tryGetHangarByPlayerName playerName hangars =
     hangars

@@ -119,7 +119,7 @@ type Command =
 /// </summary>
 /// <param name="path">Path to the directory containing the chatlogs.</param>
 let watchCommands(path, cancelToken) =
-    let cmdRe = Regex(".*\[\"(.*)\".*\]: <(.*)")
+    let cmdRe = Regex(".*\[\"(.*)\".*\]: !(.*)")
     let lines = watchLogs(false, path, "*.chatlog", None, cancelToken)
     let commands =
         lines

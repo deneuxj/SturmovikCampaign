@@ -457,12 +457,14 @@ module MissionFileGeneration =
                 |> List.tryFind(fun (k, _) -> windDirection < k * 22.5)
                 |> Option.map snd
                 |> Option.defaultVal "south"
-            sprintf "<b>Weather<b><br>Temperature: %2.0fC, Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" weather.Temperature cover weather.Wind.Speed windOrigin
+            sprintf "<b>Weather</b><br>Temperature: %2.0fC, Cloud cover: %s, Wind %3.1f m/s from %s<br><br>" weather.Temperature cover weather.Wind.Speed windOrigin
         let mainText =
             config.Briefing.Replace("\r\n", "\n").Split('\n')
             |> Array.map (fun s -> s.Trim())
             |> String.concat "<br>"
-        let briefing = preamble + timeAndDate + weatherDescription + mainText + "<br><br>" + battles
+        let commandsHelp =
+            "<b>Commands</b><br>!sp airfield - Show reserved planes at airfield<br>!sa plane - Show airfields with reserved plane<br>!cash - Show cash reserve<br><br>"
+        let briefing = preamble + timeAndDate + weatherDescription + mainText + "<br><br>" + commandsHelp + battles
         let missionName = config.MissionName
         let missionParams =
             { PlaneSet = config.PlaneSet
