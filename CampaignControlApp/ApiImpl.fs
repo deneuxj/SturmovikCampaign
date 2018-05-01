@@ -22,6 +22,7 @@ open CampaignServerControl.Api
 open Campaign.BasicTypes
 open Campaign.Configuration
 open SdsFile
+open System.Threading
 
 type Logging() =
     let logger = NLog.LogManager.GetLogger("Remote.Plugin")
@@ -70,10 +71,19 @@ type ServerControl(config : Configuration) =
             |> bindString
             |> Option.defaultValue "password"
         new RConClient.ClientMessageQueue(hostname, port, login, password)
-    do ()
+    let repeatedCutChatLog =
+        async {
+            while true do
+                do! Async.Sleep(10000)
+                let! _ = rcon.Run(lazy rcon.Client.CutChatLog())
+                ()
+        }
+    let cancel = new CancellationTokenSource()
+    do Async.Start(repeatedCutChatLog, cancel.Token)
 
     interface System.IDisposable with
         member this.Dispose(): unit = 
+            cancel.Cancel()
             rcon.Dispose()
 
     interface ServerControlApi with
