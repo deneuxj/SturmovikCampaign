@@ -17,7 +17,7 @@ let private farInThePast = DateTime(0L)
 /// <param name="path">Path to the directory containing the logs</param>
 /// <param name="filter">Filter matching log files.</param>
 /// <param name="firstFile">Optional name of a file whose lines to return first.</param>
-let watchLogs(path, filter, firstFile, cancelToken : CancellationToken) =
+let watchLogs(cleanLogs : bool, path, filter, firstFile, cancelToken : CancellationToken) =
     let currentFile =
         firstFile
         |> Option.map (fun f -> (f, 0, farInThePast))
@@ -34,17 +34,29 @@ let watchLogs(path, filter, firstFile, cancelToken : CancellationToken) =
                     | Some(file, skip, lastRead) ->
                         let lastModified = File.GetLastWriteTime(file)
                         if lastModified > lastRead then
-                            let lines =
-                                File.ReadAllLines(file)
-                            lines.[skip..], Some(file, lines.Length, lastModified)
+                            try
+                                let lines =
+                                    File.ReadAllLines(file)
+                                lines.[skip..], Some(file, lines.Length, lastModified)
+                            with
+                            | _ -> [||], currentFile
                         else
-                            [||], Some(file, skip, lastRead)
+                            [||], currentFile
                     | None ->
-                        [||], None
+                        [||], currentFile
                 for line in lines do
                     yield line
                 match newFiles.TryDequeue() with
                 | true, newFile ->
+                    if cleanLogs then
+                        match currentFile with
+                        | Some(file, _, _) ->
+                            try
+                                File.Delete(file)
+                            with
+                            | _ -> ()
+                        | None ->
+                            ()
                     yield! do1(Some(newFile, 0, farInThePast))
                 | false, _ ->
                     if not cancelToken.IsCancellationRequested then
@@ -86,7 +98,7 @@ let resumeWatchlogs(path, filter, existingFiles, cancelToken) =
                 yield! File.ReadAllLines(existingFiles.[i])
         |]
     let freshLines =
-        watchLogs(path, filter, firstToWatch, cancelToken)
+        watchLogs(false, path, filter, firstToWatch, cancelToken)
     asyncSeq {
         for line in oldLines do
             yield Old line
@@ -106,8 +118,8 @@ type Command =
 /// </summary>
 /// <param name="path">Path to the directory containing the chatlogs.</param>
 let watchCommands(path, cancelToken) =
-    let cmdRe = Regex(".*\[\"(.*)\"\]: <(.*)")
-    let lines = watchLogs(path, "*.chatlog", None, cancelToken)
+    let cmdRe = Regex(".*\[\"(.*)\".*\]: <(.*)")
+    let lines = watchLogs(true, path, "*.chatlog", None, cancelToken)
     let commands =
         lines
         |> AsyncSeq.choose (fun line ->

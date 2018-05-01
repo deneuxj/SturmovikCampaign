@@ -90,7 +90,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         resumeWatchlogs(missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
     let asyncIterNonMuted f xs =
         AsyncSeq.mergeChoice xs asyncSeqEntries
-        |> AsyncSeq.map (fun x -> printfn "%A" x; x)
+        |> AsyncSeq.map (fun x -> logger.Debug(sprintf "%A" x); x)
         |> AsyncSeq.skipWhile(
             function
             | Choice1Of2 _ -> true
@@ -113,7 +113,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 None)
         |> AsyncSeq.filter (function null -> false | _ -> true)
     let asyncCommands =
-        watchCommands(Path.Combine(config.ServerDataDir), cancelOnDispose.Token)
+        watchCommands(Path.Combine(config.ServerDataDir, "chatlogs"), cancelOnDispose.Token)
         |> AsyncSeq.map (fun line -> ChatCommand.Parse(world, line))
     // Notify of interesting take-offs and landings
     do
@@ -280,21 +280,21 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             |> AsyncSeq.mergeChoice asyncCommands
             |> AsyncSeq.scan (fun (_, hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, AirfieldState>) item ->
                 match item with
-                | Choice1Of2 (Result.Ok cmd) ->
+                | Choice1Of2 cmd ->
                     let userIds =
                         hangars
                         |> Map.toSeq
                         |> Seq.map snd
                         |> Seq.filter (fun hangar -> hangar.PlayerName = cmd.Player)
                         |> List.ofSeq
-                    match userIds with
-                    | [hangar] ->
-                        let uid = { UserId = string hangar.Player; Name = hangar.PlayerName }
-                        Some(Overview(uid, 0, cmd.Interpret(hangars, airfields))), hangars, airfields
-                    | _ ->
-                        Some(Announce(Allies, [sprintf "Unknown user %s" cmd.Player])), hangars, airfields
-                | Choice1Of2 (Result.Error err) ->
-                    Some(Announce(Allies, [err])), hangars, airfields
+                    let uid =
+                        match userIds with
+                        | [hangar] ->
+                            { UserId = string hangar.Player; Name = hangar.PlayerName }
+                        | _ ->
+                            // Use a fake Guid, OK because the player name can be used instead.
+                            { UserId = string (Guid("00000000-0000-0000-0000-000000000000")); Name = cmd.Player }
+                    Some(Overview(uid, 0, cmd.Interpret(hangars, airfields))), hangars, airfields
                 | Choice2Of2 (Status(hangars, airfields) as x) ->
                     Some x, hangars, airfields
                 | Choice2Of2 x ->
