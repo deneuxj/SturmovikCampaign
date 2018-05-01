@@ -14,6 +14,7 @@ let private farInThePast = DateTime(0L)
 /// Monitor a directory containing logs, and return every new line in the most recent log file.
 /// Also returns an action that stops monitoring.
 /// </summary>
+/// <param name="cleanLogs">If true, delete old log files whenever a new log file is created.</param>
 /// <param name="path">Path to the directory containing the logs</param>
 /// <param name="filter">Filter matching log files.</param>
 /// <param name="firstFile">Optional name of a file whose lines to return first.</param>
@@ -119,7 +120,7 @@ type Command =
 /// <param name="path">Path to the directory containing the chatlogs.</param>
 let watchCommands(path, cancelToken) =
     let cmdRe = Regex(".*\[\"(.*)\".*\]: <(.*)")
-    let lines = watchLogs(true, path, "*.chatlog", None, cancelToken)
+    let lines = watchLogs(false, path, "*.chatlog", None, cancelToken)
     let commands =
         lines
         |> AsyncSeq.choose (fun line ->
