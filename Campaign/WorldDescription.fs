@@ -658,6 +658,7 @@ type WorldFastAccess = {
     GetRegionStorageNumSubBlocks : RegionId -> int -> int
     GetRegionProductionNumSubBlocks : RegionId -> int -> int
     GetAirfieldStorageNumSubBlocks : AirfieldId -> int -> int
+    World : World
 }
 with
     static member Create(world : World) =
@@ -691,6 +692,7 @@ with
                 let location = afId.AirfieldName
                 let af = getAirfield afId
                 numSubBlocks location af.Storage idx
+          World = world
         }
 
 type World

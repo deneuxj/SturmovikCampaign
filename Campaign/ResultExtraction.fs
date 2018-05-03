@@ -353,12 +353,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 let newDamage = oldDamage + damage.Damage
                 damages := Map.add damage.TargetId newDamage !damages
             | :? PlayerPlaneEntry as playerPlane ->
-                let coalition =
-                    match playerPlane.Country with
-                    | Country.Germany | Country.OtherAxis -> Some Axis
-                    | Country.USSR | Country.OtherAllies -> Some Allies
-                    | Country.None | Country.Neutral -> None // Should not happen
-                    | _ -> failwithf "Unknown country value %d" (int playerPlane.Country)
+                let coalition = CoalitionId.FromLogEntry playerPlane.Country
                 playerPilot := playerPilot.Value.Add(playerPlane.NickId, playerPlane.VehicleId)
                 planePilot := planePilot.Value.Add(playerPlane.VehicleId, (playerPlane.Name, coalition))
                 initBombs <- initBombs.Add(playerPlane.VehicleId, playerPlane.Bombs)
@@ -533,6 +528,41 @@ with
         | ActivePlane(coalition, _) ->
             Some coalition
 
+    /// Full reward for destroying this
+    member this.Value(wg : WorldFastAccess, sg : WorldStateFastAccess) =
+        match this with
+        | Storage(region, idx) ->
+            let building =
+                wg.GetRegion(region).Storage.[idx]
+            building.Storage(wg.World.SubBlockSpecs) + building.RepairCost(wg.World.SubBlockSpecs)
+        | Production(region, idx) ->
+            let building =
+                wg.GetRegion(region).Production.[idx]
+            let repairCost = building.RepairCost(wg.World.SubBlockSpecs)
+            let timeToRepair = repairCost / wg.World.RepairSpeed
+            let productionLoss = 0.5f * building.Production(wg.World.SubBlockSpecs, wg.World.ProductionFactor) * timeToRepair
+            repairCost + productionLoss
+        | Airfield(afId, idx) ->
+            let building =
+                wg.GetAirfield(afId).Storage.[idx]
+            building.Storage(wg.World.SubBlockSpecs) + building.RepairCost(wg.World.SubBlockSpecs)
+        | Cannon _ ->
+            cannonCost
+        | HeavyMachineGun _ ->
+            heavyMachineGunCost
+        | LightMachineGun _ ->
+            lightMachineGunCost
+        | Convoy _ ->
+            float32 shipVehicleCapacity * GroundAttackVehicle.MediumTankCost
+        | Column _ ->
+            GroundAttackVehicle.MediumTankCost
+        | Vehicle(_, vehicle) ->
+            vehicle.Cost
+        | ParkedPlane(_, plane)
+        | ActivePlane(_, plane) ->
+            plane.Cost
+
+
 type CommonDamageData = {
     Amount : float32
     ByPlayer : string option
@@ -565,6 +595,7 @@ with
                   ByPlayer = None
                 }
             })
+
     static member GroupByObjectAndPlayer(xs) =
         xs
         |> Seq.groupBy (fun damage -> damage.Object, damage.Data.ByPlayer)
@@ -578,6 +609,9 @@ with
                   ByPlayer = player
                 }
             })
+
+    member this.Value(wg, sg) =
+        this.Object.Value(wg, sg) * this.Data.Amount
 
 
 let (|BuildingObjectType|_|) (s : string) =

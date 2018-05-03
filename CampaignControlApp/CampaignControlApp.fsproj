@@ -97,6 +97,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\plog\ploggy\ploggy.csproj">
+      <Name>ploggy</Name>
+      <Project>{c23498b3-892d-4f98-a8e4-00fbc6b97ed0}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\..\sturmovikservercontrol\CampaignServerControl\CampaignServerControl.fsproj">
       <Name>CampaignServerControl</Name>
       <Project>{641f10fc-c185-4c95-881d-cc2bec4b95fc}</Project>

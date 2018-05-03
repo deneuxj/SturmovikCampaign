@@ -244,7 +244,7 @@ type PlaneAvailabilityMessage =
     | Status of Map<string, PlayerHangar> * Map<AirfieldId, AirfieldState>
 
 
-let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (events : AsyncSeq<LogEntry>) =
+let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (damages : AsyncSeq<Damage>) (events : AsyncSeq<LogEntry>) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     let rearAirfields =
@@ -263,7 +263,9 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
         let mutable hangars = hangars // User ID -> player hangar
         let mutable rogues = Set.empty // set of User ID, players that spawned in a plane not available to them
         let mutable healthOf = Map.empty // Vehicle ID -> health
-        let mutable landedAt = Map.empty // Vehicle ID -> Airfield
+        let mutable landedAt = Map.empty // Vehicle ID -> (Airfield, actually landed : bool)
+        let mutable coalitionOf = Map.empty // Player name -> Coalition
+        let mutable rewards = Map.empty // Map player name to rewards, gathered during current flight, to be collected upon landing
 
         let checkoutPlane(af : Airfield, plane, availableAtAirfield, user, vehicle) =
             asyncSeq {
@@ -277,7 +279,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     logger.Warn(sprintf "Player spawned in a %s at neutral airfield %s" plane.PlaneName af.AirfieldId.AirfieldName)
                 airfields <- Map.add af.AirfieldId afs airfields
                 rogues <- Set.remove user.UserId rogues
-                landedAt <- Map.add vehicle af landedAt
+                landedAt <- Map.add vehicle (af, false) landedAt
                 planes <- Map.add vehicle plane planes
             }
 
@@ -286,6 +288,11 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 let user = { UserId = string entry.UserId; Name = entry.Name }
                 playerOf <- Map.add entry.VehicleId user playerOf
                 healthOf <- Map.add entry.VehicleId 1.0f healthOf
+                match CoalitionId.FromLogEntry(entry.Country) with
+                | Some x ->
+                    coalitionOf <- coalitionOf.Add(user.Name, x)
+                | None ->
+                    ()
                 let pos = Vector2(entry.Position.X, entry.Position.Z)
                 let af = world.GetClosestAirfield(pos)
                 let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
@@ -342,7 +349,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     ()
             }
 
-        let endFlight(user, plane, af : Airfield, vehicle) =
+        let endFlight(user, plane, af : Airfield, vehicle, collectRewards) =
             asyncSeq {
                 let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
                 let hangar = { hangar with PlayerName = user.Name }
@@ -351,6 +358,19 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 let oldNumPlanes = airfield.NumPlanes.TryFind plane |> Option.defaultValue 0.0f
                 let airfield = { airfield with NumPlanes = airfield.NumPlanes.Add(plane, oldNumPlanes + health) }
                 let hangar = hangar.AddPlane(af.AirfieldId, plane, health)
+                let coalition = coalitionOf.TryFind(user.Name)
+                let collectedReward =
+                    if collectRewards && sg.GetRegion(af.Region).Owner = coalition then
+                        rewards.TryFind(user.Name) |> Option.defaultValue 0.0f<E> |> max 0.0f<E>
+                    else
+                        0.0f<E>
+                if collectRewards then
+                    match coalition with
+                    | Some coalition ->
+                        yield Announce(coalition, [ sprintf "%s has collected a reward of %0.0f" user.Name collectedReward ])
+                    | None ->
+                        ()
+                let hangar = { hangar with Reserve = hangar.Reserve + collectedReward }
                 let descr =
                     match hangar.ShowAvailablePlanes(af.AirfieldId) with
                     | [] -> [sprintf "You do not have any planes at %s" af.AirfieldId.AirfieldName]
@@ -363,60 +383,87 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 playerOf <- playerOf.Remove(vehicle)
                 healthOf <- healthOf.Remove(vehicle)
                 planes <- planes.Remove(vehicle)
+                coalitionOf <- coalitionOf.Remove(user.Name)
+                rewards <- rewards.Remove(user.Name)
             }
 
-        for event in events do
-            match event with
-            | :? PlayerPlaneEntry as entry ->
-                yield! startFlight(entry)
-                yield Status(hangars, airfields)
+        let handleLogEvent(event : LogEntry) =
+            asyncSeq {
+                match event with
+                | :? PlayerPlaneEntry as entry ->
+                    yield! startFlight(entry)
+                    yield Status(hangars, airfields)
 
-            | :? TakeOffEntry as entry ->
-                match playerOf.TryFind entry.VehicleId with
-                | Some user when rogues.Contains user.UserId ->
-                    yield Violation(user)
-                    landedAt <- Map.remove entry.VehicleId landedAt
-                    rogues <- Set.remove user.UserId rogues
-                    playerOf <- Map.remove entry.VehicleId playerOf
-                | _ ->
-                    ()
-
-            | :? DamageEntry as entry ->
-                let oldHealth = healthOf.TryFind entry.TargetId |> Option.defaultValue 1.0f
-                let health = oldHealth - entry.Damage
-                healthOf <- Map.add entry.TargetId health healthOf
-
-            | :? KillEntry as entry ->
-                healthOf <- Map.add entry.TargetId 0.0f healthOf
-
-            | :? LandingEntry as entry ->
-                let pos = Vector2(entry.Position.X, entry.Position.Z)
-                let af = world.GetClosestAirfield(pos)
-                landedAt <- Map.add entry.VehicleId af landedAt
-
-            | :? PlayerMissionEndEntry as entry ->
-                match playerOf.TryFind(entry.VehicleId), planes.TryFind(entry.VehicleId), landedAt.TryFind(entry.VehicleId) with
-                | Some user, Some plane, Some af ->
-                    yield! endFlight(user, plane, af, entry.VehicleId)
-                | _ ->
-                    ()
-                yield Status(hangars, airfields)
-
-            | :? LeaveEntry as entry ->
-                let vehicleAndUser =
-                    playerOf
-                    |> Map.toSeq
-                    |> Seq.tryFind (fun (_, user) -> user.UserId = string entry.UserId)
-                match vehicleAndUser with
-                | Some(vehicle, user) ->
-                    match planes.TryFind(vehicle), landedAt.TryFind(vehicle) with
-                    | Some plane, Some af ->
-                        yield! endFlight(user, plane, af, vehicle)
+                | :? TakeOffEntry as entry ->
+                    match playerOf.TryFind entry.VehicleId with
+                    | Some user when rogues.Contains user.UserId ->
+                        yield Violation(user)
+                        landedAt <- Map.remove entry.VehicleId landedAt
+                        rogues <- Set.remove user.UserId rogues
+                        playerOf <- Map.remove entry.VehicleId playerOf
                     | _ ->
                         ()
-                | None ->
-                    ()
-                yield Status(hangars, airfields)
 
-            | _ -> ()
+                | :? DamageEntry as entry ->
+                    let oldHealth = healthOf.TryFind entry.TargetId |> Option.defaultValue 1.0f
+                    let health = oldHealth - entry.Damage
+                    healthOf <- Map.add entry.TargetId health healthOf
+
+                | :? KillEntry as entry ->
+                    healthOf <- Map.add entry.TargetId 0.0f healthOf
+
+                | :? LandingEntry as entry ->
+                    let pos = Vector2(entry.Position.X, entry.Position.Z)
+                    let af = world.GetClosestAirfield(pos)
+                    landedAt <- Map.add entry.VehicleId (af, true) landedAt
+
+                | :? PlayerMissionEndEntry as entry ->
+                    match playerOf.TryFind(entry.VehicleId), planes.TryFind(entry.VehicleId), landedAt.TryFind(entry.VehicleId) with
+                    | Some user, Some plane, Some (af, reallyLanded) ->
+                        yield! endFlight(user, plane, af, entry.VehicleId, reallyLanded)
+                    | _ ->
+                        ()
+                    yield Status(hangars, airfields)
+
+                | :? LeaveEntry as entry ->
+                    let vehicleAndUser =
+                        playerOf
+                        |> Map.toSeq
+                        |> Seq.tryFind (fun (_, user) -> user.UserId = string entry.UserId)
+                    match vehicleAndUser with
+                    | Some(vehicle, user) ->
+                        match planes.TryFind(vehicle), landedAt.TryFind(vehicle) with
+                        | Some plane, Some (af, _) ->
+                            yield! endFlight(user, plane, af, vehicle, false)
+                        | _ ->
+                            ()
+                    | None ->
+                        ()
+                    yield Status(hangars, airfields)
+
+                | _ -> ()
+            }
+
+        let handleDamage(damage : Damage) =
+            match damage.Data.ByPlayer with
+            | None -> ()
+            | Some player ->
+                let reward = rewards.TryFind(player) |> Option.defaultValue 0.0f<E>
+                let factor =
+                    match coalitionOf.TryFind(player) with
+                    | Some coalition ->
+                        if Some coalition = damage.Object.Coalition(wg, sg) then
+                            -1.0f
+                        else
+                            1.0f
+                    | None ->
+                        0.0f
+                rewards <- rewards.Add(player, reward + factor * damage.Value(wg, sg))
+
+        for choice in AsyncSeq.mergeChoice events damages do
+            match choice with
+            | Choice1Of2 event ->
+                yield! handleLogEvent(event)
+            | Choice2Of2 damage ->
+                handleDamage(damage)
     }

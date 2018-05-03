@@ -39,6 +39,16 @@ type K
 type CoalitionId = Axis | Allies
 with
     /// <summary>
+    /// Convert from a country value from a log entry.
+    /// </summary>
+    static member FromLogEntry(country : ploggy.Country) =
+        match country with
+        | ploggy.Country.Germany | ploggy.Country.OtherAxis -> Some Axis
+        | ploggy.Country.USSR | ploggy.Country.OtherAllies -> Some Allies
+        | ploggy.Country.None | ploggy.Country.Neutral -> None // Should not happen
+        | _ -> failwithf "Unknown country value %d" (int country)
+
+    /// <summary>
     /// Convert to a numerical country value suitable for use in mission files.
     /// </summary>
     member this.ToCountry =

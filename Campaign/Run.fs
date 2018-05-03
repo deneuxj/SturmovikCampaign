@@ -854,7 +854,7 @@ module MissionLogParsing =
         serializer.Serialize(missionFile, results)
         results
 
-    let updateHangars(config, entries) =
+    let updateHangars(config, results : MissionResults, entries) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state =
             try
@@ -872,7 +872,7 @@ module MissionLogParsing =
             | None -> Map.empty
         let hangars2 =
             AsyncSeq.ofSeq entries
-            |> checkPlaneAvailability world state hangars
+            |> checkPlaneAvailability world state hangars (AsyncSeq.ofSeq results.Damages)
             |> AsyncSeq.toBlockingSeq
             |> Seq.choose (function Status(x, _) -> Some x | _ -> None)
             |> Seq.tryLast

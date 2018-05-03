@@ -276,7 +276,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             disciplinePlayers config world asyncSeqEntries
             |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
         let hangarTask =
-            checkPlaneAvailability world state hangars asyncSeqEntries
+            checkPlaneAvailability world state hangars damages asyncSeqEntries
             |> AsyncSeq.mergeChoice asyncCommands
             |> AsyncSeq.scan (fun (_, hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, AirfieldState>) item ->
                 match item with
