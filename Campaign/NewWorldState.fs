@@ -1068,10 +1068,11 @@ let computeCompletedColumnMovements (movements : ColumnMovement list) (departure
                                     | ColByTrain -> 0, 1.0f
                                     | ColByRiverShip
                                     | ColBySeaShip ->
-                                        if i <= group.Vehicles.Length / 2 then
-                                            0, 1.0f
+                                        let numShips = move.NumShips
+                                        if numShips > 0 then
+                                            i % numShips, 1.0f
                                         else
-                                            1, 1.0f
+                                            0, 1.0f
                                 let vehicle = { OrderId = move.OrderId; Rank = rank }
                                 match Map.tryFind vehicle damageMap with
                                 | Some amount when amount >= damageThreshold -> ()

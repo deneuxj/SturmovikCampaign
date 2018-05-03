@@ -195,6 +195,10 @@ with
         | Some x, Some y -> x <> y
         | _ -> false
 
+    /// Return the number of ships needed to transport the composition of this column.
+    member this.NumShips =
+        Util.divUp this.Composition.Length shipVehicleCapacity
+
     // The maximum number of vehicles following the leader in a column.
     static member MaxColumnSize = SturmovikMission.Blocks.VirtualConvoy.Factory.VirtualConvoy.MaxConvoySize
 
