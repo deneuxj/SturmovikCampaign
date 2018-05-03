@@ -347,18 +347,22 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
                 let hangar = { hangar with PlayerName = user.Name }
                 let health = healthOf.TryFind vehicle |> Option.defaultValue 1.0f
+                let airfield = airfields.[af.AirfieldId]
+                let oldNumPlanes = airfield.NumPlanes.TryFind plane |> Option.defaultValue 0.0f
+                let airfield = { airfield with NumPlanes = airfield.NumPlanes.Add(plane, oldNumPlanes + health) }
                 let hangar = hangar.AddPlane(af.AirfieldId, plane, health)
                 let descr =
                     match hangar.ShowAvailablePlanes(af.AirfieldId) with
                     | [] -> [sprintf "You do not have any planes at %s" af.AirfieldId.AirfieldName]
-                    | planes -> (sprintf "You now have the following planes at %s:" af.AirfieldId.AirfieldName):: planes
+                    | planes -> (sprintf "You now have the following planes at %s:" af.AirfieldId.AirfieldName) :: planes
                 yield Overview(user, 0, descr)
-                hangars <- Map.add user.UserId hangar hangars
-                landedAt <- Map.remove vehicle landedAt
-                rogues <- Set.remove user.UserId rogues
-                playerOf <- Map.remove vehicle playerOf
-                healthOf <- Map.remove vehicle healthOf
-                planes <- Map.remove vehicle planes
+                airfields <- airfields.Add(af.AirfieldId, airfield)
+                hangars <- hangars.Add(user.UserId, hangar)
+                landedAt <- landedAt.Remove(vehicle)
+                rogues <- rogues.Remove(user.UserId)
+                playerOf <- playerOf.Remove(vehicle)
+                healthOf <- healthOf.Remove(vehicle)
+                planes <- planes.Remove(vehicle)
             }
 
         for event in events do
@@ -412,6 +416,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         ()
                 | None ->
                     ()
+                yield Status(hangars, airfields)
 
             | _ -> ()
     }

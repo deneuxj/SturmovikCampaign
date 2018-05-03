@@ -6,7 +6,6 @@
 
 #load "Configuration.fsx" 
 
-open Configuration
 open System
 open MBrace.FsPickler
 open Campaign.NewWorldState
@@ -18,7 +17,7 @@ let serializer = FsPickler.CreateXmlSerializer(indent = true)
 
 let results =
     seq {
-        for file in IO.Directory.EnumerateFiles(config.OutputDir, "results*.xml") do
+        for file in IO.Directory.EnumerateFiles(@"C:\Users\johann\Documents\FromServer\Expert", "results*.xml") do
             use file = IO.File.OpenText(file)
             yield serializer.Deserialize<MissionResults>(file)
     }
