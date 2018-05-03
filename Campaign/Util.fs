@@ -111,6 +111,12 @@ let subMaps (m1 : Map<_, int>) (m2 : Map<_, int>) =
         Map.add k count m1
     ) m1
 
+/// X divided by Y, rounded up
+let divUp x y =
+    assert(x >= 0)
+    assert(y > 0)
+    (x / y) + (if x % y = 0 then 0 else 1)
+
 /// Extensions to Option module
 module Option =
     let defaultVal x y = defaultArg y x
