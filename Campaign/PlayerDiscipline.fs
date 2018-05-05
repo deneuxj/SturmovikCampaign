@@ -428,14 +428,14 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                             sprintf "Welcome back %s" userIds.Name
                             sprintf "You cash reserve is %0.0f" hangar.Reserve
                         ])
-                    for kvp in hangar.Airfields do
-                        yield Overview(userIds, delay,
-                            [
-                                sprintf "Your reserved planes at %s:" kvp.Key.AirfieldName
-                                (match hangar.ShowAvailablePlanes(kvp.Key) with
-                                    | [] -> "None"
-                                    | planes -> String.concat ", " planes)
-                            ])
+                    yield Overview(userIds, delay,
+                        [
+                            for kvp in hangar.Airfields do
+                                let planes = match hangar.ShowAvailablePlanes(kvp.Key) with
+                                                | [] -> "None"
+                                                | planes -> String.concat ", " planes
+                                yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
+                        ])
                 | None ->
                     let userIds : UserIds = { UserId = userId; Name = "" }
                     yield Overview(userIds, delay,
