@@ -371,11 +371,6 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     | None ->
                         ()
                 let hangar = { hangar with Reserve = hangar.Reserve + collectedReward }
-                let descr =
-                    match hangar.ShowAvailablePlanes(af.AirfieldId) with
-                    | [] -> [sprintf "You do not have any planes at %s" af.AirfieldId.AirfieldName]
-                    | planes -> (sprintf "You now have the following planes at %s:" af.AirfieldId.AirfieldName) :: planes
-                yield Overview(user, 0, descr)
                 airfields <- airfields.Add(af.AirfieldId, airfield)
                 hangars <- hangars.Add(user.UserId, hangar)
                 landedAt <- landedAt.Remove(vehicle)
@@ -387,9 +382,41 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 rewards <- rewards.Remove(user.Name)
             }
 
+        let showHangar(userId : string, delay) =
+            asyncSeq {
+                match hangars.TryFind(userId) with
+                | Some hangar ->
+                    let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
+                    yield Overview(userIds, 60,
+                        [
+                            sprintf "Welcome back %s" userIds.Name
+                            sprintf "You cash reserve is %0.0f" hangar.Reserve
+                        ])
+                    for kvp in hangar.Airfields do
+                        yield Overview(userIds, delay,
+                            [
+                                sprintf "Your reserved planes at %s:" kvp.Key.AirfieldName
+                                (match hangar.ShowAvailablePlanes(kvp.Key) with
+                                    | [] -> "None"
+                                    | planes -> String.concat ", " planes)
+                            ])
+                | None ->
+                    let userIds : UserIds = { UserId = userId; Name = "" }
+                    yield Overview(userIds, delay,
+                        [
+                            "Welcome new player"
+                            "Please choose an airfield with its name in UPPER CASE for your first spawn"
+                            "Spawning at another airfield requires you to land an undamaged plane there first"
+                            "Only then can you take off from that airfield, with that exact plane model"
+                        ])
+            }
+
         let handleLogEvent(event : LogEntry) =
             asyncSeq {
                 match event with
+                | :? JoinEntry as entry ->
+                    yield! showHangar(string entry.UserId, 60)
+
                 | :? PlayerPlaneEntry as entry ->
                     yield! startFlight(entry)
                     yield Status(hangars, airfields)
@@ -421,6 +448,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     match playerOf.TryFind(entry.VehicleId), planes.TryFind(entry.VehicleId), landedAt.TryFind(entry.VehicleId) with
                     | Some user, Some plane, Some (af, reallyLanded) ->
                         yield! endFlight(user, plane, af, entry.VehicleId, reallyLanded)
+                        yield! showHangar(user.UserId, 5)
                     | _ ->
                         ()
                     yield Status(hangars, airfields)
