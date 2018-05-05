@@ -467,7 +467,13 @@ module MissionFileGeneration =
                 "<b>Commands</b><br>!sp airfield - Show reserved planes at airfield<br>!sa plane - Show airfields with reserved plane<br>!cash - Show cash reserve<br><br>"
             else
                 ""
-        let briefing = preamble + timeAndDate + weatherDescription + mainText + "<br><br>" + commandsHelp + battles
+        let spawnRestrictions =
+            ["You can spawn at any airfield named in ALL CAPS."
+             "You can also spawn at other airfields, if you have landed <b>that</b> plane (undamaged) there earlier,"
+             "or if you have gathered enough rewards to buy the right to fly a new plane."
+             sprintf "A fighter costs around %0.0f, an attacker %0.0f and a bomber %0.0f.<br><br>" Bf109f4.Cost Bf110e.Cost Ju88a4.Cost]
+            |> String.concat " "
+        let briefing = preamble + timeAndDate + weatherDescription + spawnRestrictions + mainText + "<br><br>" + commandsHelp + battles
         let missionName = config.MissionName
         let missionParams =
             { PlaneSet = config.PlaneSet
