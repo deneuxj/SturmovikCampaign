@@ -64,6 +64,7 @@ type Configuration = {
     NoobBanDuration : int
     WebHook : string
     MaxBuildingIcons : int
+    ChatLogCommandsEnabled : bool
 }
 with
     static member Default =
@@ -102,6 +103,7 @@ with
             MaxNoobScore = 3.0f
             NoobBanDuration = 1
             MaxBuildingIcons = 10
+            ChatLogCommandsEnabled = false
             Briefing = @"
     This mission is part of a dynamic campaign, where the events from one mission affect the following missions.
 
@@ -195,4 +197,5 @@ let loadConfigFile (path : string) =
         MaxNoobScore = float32 values.MaxNoobScore
         NoobBanDuration = values.NoobBanDuration
         PurgeLogs = values.PurgeLogs
+        ChatLogCommandsEnabled = values.ChatLogCommandsEnabled
     }

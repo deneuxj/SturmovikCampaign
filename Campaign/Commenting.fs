@@ -113,8 +113,11 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 None)
         |> AsyncSeq.filter (function null -> false | _ -> true)
     let asyncCommands =
-        watchCommands(Path.Combine(config.ServerDataDir, "chatlogs"), cancelOnDispose.Token)
-        |> AsyncSeq.map (fun line -> ChatCommand.Parse(world, line))
+        if config.ChatLogCommandsEnabled then
+            watchCommands(Path.Combine(config.ServerDataDir, "chatlogs"), cancelOnDispose.Token)
+            |> AsyncSeq.map (fun line -> ChatCommand.Parse(world, line))
+        else
+            AsyncSeq.empty
     // Notify of interesting take-offs and landings
     do
         let battleDamages =

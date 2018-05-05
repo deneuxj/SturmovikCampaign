@@ -463,7 +463,10 @@ module MissionFileGeneration =
             |> Array.map (fun s -> s.Trim())
             |> String.concat "<br>"
         let commandsHelp =
-            "<b>Commands</b><br>!sp airfield - Show reserved planes at airfield<br>!sa plane - Show airfields with reserved plane<br>!cash - Show cash reserve<br><br>"
+            if config.ChatLogCommandsEnabled then
+                "<b>Commands</b><br>!sp airfield - Show reserved planes at airfield<br>!sa plane - Show airfields with reserved plane<br>!cash - Show cash reserve<br><br>"
+            else
+                ""
         let briefing = preamble + timeAndDate + weatherDescription + mainText + "<br><br>" + commandsHelp + battles
         let missionName = config.MissionName
         let missionParams =

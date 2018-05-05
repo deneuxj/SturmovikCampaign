@@ -48,6 +48,9 @@
     OutputDir: C:\Campaign\Data
     # IL2 data dir
     ServerDataDir: C:\il2\data
+    # If true, enable chatlog commands: Players can type in commands in the chat to interact with the campaign software.
+    # Disabled by default, as this requires the frequent sent of cutchatlog commands to DServer, which appears to make it crash.
+    ChatLogCommandsEnabled: false
     # IL2 bin dir
     ServerBinDir: C:\il2\bin
     # SDS file, relative to data dir
