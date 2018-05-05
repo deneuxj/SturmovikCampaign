@@ -266,6 +266,20 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
         let mutable landedAt = Map.empty // Vehicle ID -> (Airfield, actually landed : bool)
         let mutable coalitionOf = Map.empty // Player name -> Coalition
         let mutable rewards = Map.empty // Map player name to rewards, gathered during current flight, to be collected upon landing
+        let mutable tookOffFrom = Map.empty // Vehicle ID -> TookOff
+        let mutable regionNeeds = AutoOrder.computeSupplyNeeds world state
+
+        let computeSupplyRewardFactor regStart regEnd =
+            // Only give a positive reward if the transfer contributed to improve the overall picture
+            if regionNeeds.[regEnd] > regionNeeds.[regStart] then
+                // Reward long flights better than short flights
+                let distance = wg.GetRegion(regStart).Position - wg.GetRegion(regEnd).Position
+                let distance = distance.Length()
+                distance / 70000.0f
+                |> min 1.0f
+                |> max 0.0f
+            else
+                0.0f
 
         let checkoutPlane(af : Airfield, plane, availableAtAirfield, user, vehicle) =
             asyncSeq {
@@ -281,6 +295,22 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 rogues <- Set.remove user.UserId rogues
                 landedAt <- Map.add vehicle (af, false) landedAt
                 planes <- Map.add vehicle plane planes
+            }
+
+        let handledSupplyMissionStart(user : UserIds, regStart : RegionId, coalition : CoalitionId) =
+            asyncSeq {
+                let bestDestinations =
+                    state.Regions
+                    |> Seq.filter (fun region -> region.Owner = Some coalition)
+                    |> Seq.sortByDescending (fun regState -> computeSupplyRewardFactor regStart regState.RegionId)
+                    |> Seq.filter(fun regState -> computeSupplyRewardFactor regStart regState.RegionId > 0.0f)
+                    |> Seq.truncate 3
+                    |> List.ofSeq
+                match bestDestinations with
+                | [] ->
+                    yield Overview(user, 15, ["This airfield is not a good place to start a supply mission from"])
+                | _ :: _ as x ->
+                    yield Overview(user, 15, ["The following regions would benefit from resupplies: " + (x |> List.map (fun r -> string r.RegionId) |> String.concat ", ")])
             }
 
         let startFlight(entry : PlayerPlaneEntry) =
@@ -299,6 +329,12 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 let hangar = { hangar with PlayerName = user.Name }
                 match entry.VehicleType with
                 | PlaneObjectType plane ->
+                    // If spawning in a Ju52 or other cargo transporter, suggest destinations
+                    let bigBombLoad = lazy(plane.BombLoads |> Seq.exists (fun (loadout, weight) -> loadout = entry.Payload && weight >= 1000.0f<K>))
+                    if plane.Roles.Contains(CargoTransporter) || bigBombLoad.Value then
+                        match CoalitionId.FromLogEntry(entry.Country) with
+                        | Some coalition -> yield! handledSupplyMissionStart(user, af.Region, coalition)
+                        | None -> ()
                     let availableAtAirfield =
                         airfields.TryFind af.AirfieldId
                         |> Option.map (fun afs -> afs.NumPlanes)
@@ -488,10 +524,52 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         0.0f
                 rewards <- rewards.Add(player, reward + factor * damage.Value(wg, sg))
 
-        for choice in AsyncSeq.mergeChoice events damages do
+        let handleSupplyMission(landed : Landed) =
+            asyncSeq {
+                match tookOffFrom.TryFind(landed.PlaneId), playerOf.TryFind(landed.PlaneId) with
+                | _, None
+                | None, _ ->
+                    ()
+                | Some (tko : TookOff), Some userIds ->
+                    let reward = landed.Cargo * bombCost
+                    let regStart = wg.GetAirfield(tko.Airfield).Region
+                    let regEnd = wg.GetAirfield(landed.Airfield).Region
+                    let factor =
+                        let coalitionStart = tko.Coalition
+                        let coalitionEnd = landed.Coalition
+                        if coalitionStart = coalitionEnd then
+                            computeSupplyRewardFactor regStart regEnd
+                        else
+                            // Delivering goods to the enemy: negative reward!
+                            -1.0f
+                    let hangar =
+                        hangars.TryFind(userIds.UserId)
+                        |> Option.defaultValue (emptyHangar(userIds.UserId, userIds.Name))
+                    let reward = factor * reward
+                    let hangar = { hangar with Reserve = hangar.Reserve + reward }
+                    hangars <- hangars.Add(userIds.UserId, hangar)
+                    match landed.Coalition with
+                    | Some coalition ->
+                        yield Announce(coalition,
+                            [ sprintf "%s has received a reward of %0.0f for their supply mission" userIds.Name reward ])
+                    | None ->
+                        ()
+                    // Update region needs
+                    regionNeeds <- regionNeeds
+                                        .Add(regStart, regionNeeds.[regStart] + landed.Cargo * bombCost)
+                                        .Add(regEnd, regionNeeds.[regEnd] - landed.Cargo * bombCost)
+                    yield Status(hangars, airfields)
+            }
+
+        let takeOffsAndLandings = extractTakeOffsAndLandings world state events
+        for choice in AsyncSeq.mergeChoice3 events damages takeOffsAndLandings do
             match choice with
-            | Choice1Of2 event ->
+            | Choice1Of3 event ->
                 yield! handleLogEvent(event)
-            | Choice2Of2 damage ->
+            | Choice2Of3 damage ->
                 handleDamage(damage)
+            | Choice3Of3(TookOff tko) ->
+                tookOffFrom <- tookOffFrom.Add(tko.PlaneId, tko)
+            | Choice3Of3(Landed landed) ->
+                yield! handleSupplyMission landed
     }
