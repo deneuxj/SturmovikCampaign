@@ -69,7 +69,9 @@ let mkPlaneSpecs totalBombs (planes : PlaneModel[]) =
                                 .SetStartInAir(T.Integer 2)
             for j in 0 .. maxIndex do
                 if (j &&& mask) <> 0 then
-                    yield  planeSpec.SetSetIndex(T.Integer j)
+                    yield planeSpec.SetSetIndex(T.Integer j)
+                else
+                    yield planeSpec.SetNumber(T.Integer 0).SetSetIndex(T.Integer j)
     ]
 
 let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionStarted : Mcu.McuTrigger) =
