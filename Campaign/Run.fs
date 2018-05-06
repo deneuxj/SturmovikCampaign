@@ -641,6 +641,18 @@ module MissionLogParsing =
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
+    /// Quickly replay a sequence of events.
+    /// This is needed to correctly reconstuct results which depend on ordering of events, e.g. collection of rewards for actions during flights
+    let replayQuick (events : LogEntry seq) =
+        asyncSeq {
+            for ev in events do
+                match ev with
+                | :? VersionEntry -> () // Skip those useless entries
+                | _ ->
+                    yield ev
+                    do! Async.Sleep 10
+        }
+
     let backupFiles config =
         let outputDir = config.OutputDir
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -880,8 +892,8 @@ module MissionLogParsing =
                 |> guidToStrings
             | None -> Map.empty
         let hangars2 =
-            AsyncSeq.ofSeq entries
-            |> checkPlaneAvailability world state hangars (AsyncSeq.ofSeq results.Damages)
+            replayQuick entries
+            |> checkPlaneAvailability world state hangars
             |> AsyncSeq.toBlockingSeq
             |> Seq.choose (function Status(x, _) -> Some x | _ -> None)
             |> Seq.tryLast

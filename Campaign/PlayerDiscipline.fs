@@ -245,7 +245,7 @@ type PlaneAvailabilityMessage =
     | PlanesAtAirfield of AirfieldId * Map<PlaneModel, float32>
 
 
-let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (damages : AsyncSeq<Damage>) (events : AsyncSeq<LogEntry>) =
+let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (events : AsyncSeq<LogEntry>) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     let rearAirfields =
@@ -567,6 +567,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
             }
 
         let takeOffsAndLandings = extractTakeOffsAndLandings world state events
+        let damages = extractStaticDamages world events
         for choice in AsyncSeq.mergeChoice3 events damages takeOffsAndLandings do
             match choice with
             | Choice1Of3 event ->

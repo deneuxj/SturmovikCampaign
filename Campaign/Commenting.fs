@@ -40,6 +40,7 @@ open Campaign.ChatCommands
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
+
 type EventHandlers =
     // player name, coalition, airfield, coalition of airfield, plane, cargo
     { OnTookOff : string * CoalitionId * AirfieldId * CoalitionId option * PlaneModel * float32<K> -> Async<unit>
@@ -278,10 +279,12 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             }
             |> asyncIterNonMuted (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
         let disciplineTask =
-            disciplinePlayers config world asyncSeqEntries
+            asyncSeqEntries
+            |> disciplinePlayers config world 
             |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
         let hangarTask =
-            checkPlaneAvailability world state hangars damages asyncSeqEntries
+            asyncSeqEntries
+            |> checkPlaneAvailability world state hangars 
             |> AsyncSeq.mergeChoice asyncCommands
             |> AsyncSeq.scan (fun (_, hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, AirfieldState>) item ->
                 match item with
