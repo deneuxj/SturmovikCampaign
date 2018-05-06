@@ -290,6 +290,9 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 | Some coalition ->
                     yield Announce(coalition,
                         [sprintf "%s at %s is authorized to take off in a %s" user.Name af.AirfieldId.AirfieldName plane.PlaneName])
+                    if availableAtAirfield < 2.0f then
+                        yield Announce(coalition,
+                            [sprintf "%s are no longer available at %s" plane.PlaneName af.AirfieldId.AirfieldName])
                 | None ->
                     logger.Warn(sprintf "Player spawned in a %s at neutral airfield %s" plane.PlaneName af.AirfieldId.AirfieldName)
                 if availableAtAirfield < 2.0f then
@@ -411,6 +414,12 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         ()
                 let hangar = { hangar with Reserve = hangar.Reserve + collectedReward }
                 if oldNumPlanes < 1.0f && oldNumPlanes + health > 1.0f then
+                    match coalition with
+                    | Some coalition ->
+                        yield Announce(coalition,
+                            [sprintf "%s are available again at %s" plane.PlaneName af.AirfieldId.AirfieldName])
+                    | None ->
+                        ()
                     yield PlanesAtAirfield(af.AirfieldId, airfield.NumPlanes)
                 airfields <- airfields.Add(af.AirfieldId, airfield)
                 hangars <- hangars.Add(user.UserId, hangar)
