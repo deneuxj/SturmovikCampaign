@@ -181,6 +181,12 @@ type ServerControl(config : Configuration) =
                 do! Async.Sleep 1000
             }
 
+        member this.ServerInput(name): Async<unit> = 
+            async {
+                let! _ = rcon.Run(lazy rcon.Client.ServerInput(name))
+                do! Async.Sleep 1000
+            }
+
 let rec insertTask ((date, _, _) as task) tasks =
     match tasks with
     | [] -> [SomeTask task]

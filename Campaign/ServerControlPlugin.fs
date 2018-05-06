@@ -674,6 +674,13 @@ type Plugin() =
         | None ->
             async.Zero()
 
+    let serverInput(name) =
+        match support with
+        | Some support ->
+            support.ServerControl.ServerInput(name)
+        | None ->
+            async.Zero()
+
     let punishPlayer (penalty : Judgement) =
         match support with
         | Some support ->
@@ -751,6 +758,7 @@ type Plugin() =
               OnPlayerPunished = punishPlayer
               OnMessagesToCoalition = announceToTeam
               OnMessagesToPlayer = informPlayer
+              OnPlaneSetChanged = fun (afId, index) -> serverInput (sprintf "%s-%d" afId.AirfieldName index)
             }
         commenter <- Some(new CommentatorRestarter(config, handlers, fun() -> x.StartWebHookClient(config)))
         logger.Info("Commenter set")

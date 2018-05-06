@@ -242,6 +242,7 @@ type PlaneAvailabilityMessage =
     | Announce of CoalitionId * string list
     | Violation of UserIds
     | Status of Map<string, PlayerHangar> * Map<AirfieldId, AirfieldState>
+    | PlanesAtAirfield of AirfieldId * Map<PlaneModel, float32>
 
 
 let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (damages : AsyncSeq<Damage>) (events : AsyncSeq<LogEntry>) =
@@ -291,6 +292,8 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         [sprintf "%s at %s is authorized to take off in a %s" user.Name af.AirfieldId.AirfieldName plane.PlaneName])
                 | None ->
                     logger.Warn(sprintf "Player spawned in a %s at neutral airfield %s" plane.PlaneName af.AirfieldId.AirfieldName)
+                if availableAtAirfield < 2.0f then
+                    yield PlanesAtAirfield(af.AirfieldId, afs.NumPlanes)
                 airfields <- Map.add af.AirfieldId afs airfields
                 rogues <- Set.remove user.UserId rogues
                 landedAt <- Map.add vehicle (af, false) landedAt
@@ -407,6 +410,8 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     | None ->
                         ()
                 let hangar = { hangar with Reserve = hangar.Reserve + collectedReward }
+                if oldNumPlanes < 1.0f && oldNumPlanes + health > 1.0f then
+                    yield PlanesAtAirfield(af.AirfieldId, airfield.NumPlanes)
                 airfields <- airfields.Add(af.AirfieldId, airfield)
                 hangars <- hangars.Add(user.UserId, hangar)
                 landedAt <- landedAt.Remove(vehicle)

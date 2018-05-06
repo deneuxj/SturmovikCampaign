@@ -34,7 +34,45 @@ open Campaign.WorldState
 open Campaign.NewWorldState
 
 
-let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) =
+let maxPlaneSpawns = 8
+
+/// Select up to a maximum number of planes that will be available for spawn at an airfield
+/// Returns an array where the rank can be used to identify planes
+let selectPlaneSpawns (maxSpawns : int) (coalition : CoalitionId) (numPlanes : Map<PlaneModel, int>) =
+    numPlanes
+    |> Map.toSeq
+    |> Seq.sortByDescending(fun (plane, qty) ->
+        plane.Roles.Contains(CargoTransporter),
+        plane.Coalition = coalition,
+        qty)
+    |> Seq.map fst
+    |> Seq.truncate maxSpawns
+    |> Array.ofSeq
+
+let mkPlaneSpecs totalBombs (planes : PlaneModel[]) =
+    let maxIndex = 1 <<< (planes.Length)
+    [
+        for i, plane in Seq.indexed planes do
+            let mask = 1 <<< i
+            let model = plane.ScriptModel
+            let defaultPayload =
+                if plane.PlaneType = PlaneType.Fighter then
+                    0
+                else
+                    plane.BombLoads
+                    |> List.tryFind (fun (idx, w) -> w <= totalBombs)
+                    |> Option.map fst
+                    |> Option.defaultValue plane.EmptyPayload
+            let planeSpec = newAirfieldPlane("0..99", plane.LoadOuts(totalBombs), 0, defaultPayload, "", plane.PlaneName, -1)
+                                .SetScript(T.String model.Script)
+                                .SetModel(T.String model.Model)
+                                .SetStartInAir(T.Integer 2)
+            for j in 0 .. maxIndex do
+                if (j &&& mask) <> 0 then
+                    yield  planeSpec.SetSetIndex(T.Integer j)
+    ]
+
+let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionStarted : Mcu.McuTrigger) =
     let sg = state.FastAccess
     let rearAirfields =
         [Axis; Allies]
@@ -79,7 +117,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                     | Allies ->
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
                 let totalBombs = state.Supplies / bombCost
-                let planeSpecs : T.Airfield.Planes.Plane list =
+                let spawnPlanes =
                     state.NumPlanes
                     |> Map.map (fun _ number -> number |> floor |> int)
                     // Limit number of captured planes available for spawning
@@ -96,29 +134,11 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                     ) ([], maxCapturedPlanes)
                     |> fst
                     |> Util.compactSeq
-                    // Create plane spec
-                    |> Map.map (fun plane number ->
-                        let model = plane.ScriptModel
-                        let defaultPayload =
-                            if plane.PlaneType = PlaneType.Fighter then
-                                0
-                            else
-                                plane.BombLoads
-                                |> List.tryFind (fun (idx, w) -> w <= totalBombs)
-                                |> Option.map fst
-                                |> Option.defaultValue plane.EmptyPayload
-                        newAirfieldPlane("", "", 0, 0, "", "", int number)
-                            .SetScript(T.String model.Script)
-                            .SetModel(T.String model.Model)
-                            .SetStartInAir(T.Integer 2)
-                            .SetPayloadId(T.Integer defaultPayload)
-                            .SetAvPayloads(T.String(plane.LoadOuts(totalBombs)))
-                            .SetAvMods(T.String("0..99"))
-                            //.SetAvSkins(T.String("0..99"))
-                    )
-                    |> Map.toSeq
-                    |> Seq.map snd
-                    |> List.ofSeq
+                    |> Map.filter (fun _ qty -> qty > 0)
+                    |> selectPlaneSpawns maxPlaneSpawns coalition
+                let planeSpecs : T.Airfield.Planes.Plane list =
+                    spawnPlanes
+                    |> mkPlaneSpecs totalBombs
                 let planes =
                     T.Airfield.Planes()
                         .SetPlane(planeSpecs)
@@ -140,8 +160,29 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                     |> Option.map (fun chart -> chart.GetPoints() |> Seq.find (fun point -> point.GetType().Value = 2))
                     |> Option.map (fun point -> Vector2(point.GetX().Value |> float32, point.GetY().Value |> float32).Rotate(af.GetYOri().Value |> float32) + Vector2.FromPos(af))
                     |> Option.map (fun pos -> pos, coalition)
+                let serverInputs =
+                    let maxIndex = 1 <<< spawnPlanes.Length
+                    [
+                        for i in 0..(maxIndex - 1) do
+                            let subst = Mcu.substId <| store.GetIdMapper()
+                            let input = newServerInput 0 (sprintf "%s-%d" airfield.AirfieldId.AirfieldName i)
+                            let alpha = 2.0f * float32(System.Math.PI * (if maxIndex = 0 then 0.0 else (float i) / (float maxIndex)))
+                            let pos = Vector2.FromPos(af) + 200.0f * Vector2(cos alpha, sin alpha)
+                            pos.AssignTo(input.Pos)
+                            let behave = newBehaviour 1 32 0 0 false (float i)  false false false false false
+                            let pos = Vector2.FromPos(af) + 100.0f * Vector2(cos alpha, sin alpha)
+                            pos.AssignTo(behave.Pos)
+                            subst input
+                            subst behave
+                            Mcu.addObjectLink behave entity.Index
+                            Mcu.addTargetLink input behave.Index
+                            if i = maxIndex - 1 then
+                                Mcu.addTargetLink missionStarted behave.Index
+                            yield input :> Mcu.McuBase
+                            yield behave :> Mcu.McuBase
+                    ]
                 match runwayStartPos with
-                | Some x -> yield (x, [ mcu; upcast entity ])
+                | Some x -> yield (x, [ mcu; upcast entity ] @ serverInputs)
                 | None -> ()
     ]
 

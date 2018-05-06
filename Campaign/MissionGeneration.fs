@@ -184,7 +184,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let ground =
         strategyMissionData.ListOfGround
         |> createGrounds store
-    let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State
+    let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State missionBegin
     let landingDirections = createLandingDirections store missionData.World missionData.State
     let moves =
         [
