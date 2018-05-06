@@ -40,6 +40,17 @@ open Campaign.ChatCommands
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
+/// Quickly replay a sequence of events.
+/// This is needed to correctly reconstuct results which depend on ordering of events, e.g. collection of rewards for actions during flights
+let replayQuick (events : LogEntry seq) =
+    asyncSeq {
+        for ev in events do
+            match ev with
+            | :? VersionEntry -> () // Skip those useless entries
+            | _ ->
+                yield ev
+                do! Async.Sleep 10
+    }
 
 type EventHandlers =
     // player name, coalition, airfield, coalition of airfield, plane, cargo
@@ -90,7 +101,13 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         sorted
         |> Array.ofSeq
     let asyncSeqEntries =
-        resumeWatchlogs(missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
+        let replayQuick ss =
+            ss
+            |> Seq.map (LogEntry.Parse)
+            |> Seq.filter (function null -> false | _ -> true)
+            |> replayQuick
+            |> AsyncSeq.map (fun entry -> Old(entry.OriginalString))
+        resumeWatchlogs(replayQuick, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
     let asyncIterNonMuted f xs =
         AsyncSeq.mergeChoice xs asyncSeqEntries
         |> AsyncSeq.map (fun x -> logger.Debug(sprintf "%A" x); x)

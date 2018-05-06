@@ -85,10 +85,14 @@ with
 /// Return all lines in all existing file logs, and then start monitoring new lines in new files.
 /// The last file in the existing file logs is considered to be a new file.
 /// </summary>
+/// <param name="replayQuick">Function that turns the list of old entries into an AsyncSeq.
+/// If the result of this function is meant to be consumed by Async.mergeChoice, one should avoid using a list whose content can be consumed at once.
+/// In that case, prefer an asyncSeq that sleeps between each element yield.
+/// </param>
 /// <param name="path">Path to the directory containing the logs.</param>
 /// <param name="filter">Filter identifying log files.</param>
 /// <param name="existingFiles">Array of existing files; the last one is considered to be a new file, and its content is returned as fresh.</param>
-let resumeWatchlogs(path, filter, existingFiles, cancelToken) =
+let resumeWatchlogs(replayQuick, path, filter, existingFiles, cancelToken) =
     let firstToWatch =
         match existingFiles with
         | [||] -> None
@@ -101,8 +105,7 @@ let resumeWatchlogs(path, filter, existingFiles, cancelToken) =
     let freshLines =
         watchLogs(false, path, filter, firstToWatch, cancelToken)
     asyncSeq {
-        for line in oldLines do
-            yield Old line
+        yield! replayQuick oldLines
         for line in freshLines do
             yield Fresh line
     }
