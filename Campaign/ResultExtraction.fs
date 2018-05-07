@@ -429,15 +429,15 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                         let ev = { PlaneId = landing.VehicleId; Airfield = af.AirfieldId; Plane = plane; Health = repairedHealth; Cargo = cargoAmount; PlayerName = pilot; Coalition = coalition }
                         match initBombs.TryFind(landing.VehicleId) with
                         | Some n when n > 0 ->
-                            delayedLanding <- delayedLanding.Add(landing.VehicleId, ev)
+                            delayedLanding <- delayedLanding.Add(landing.VehicleId, (ev, sg.GetRegion(af.Region).Owner = coalition && health > 0.0f))
                         | _ ->
                             yield landed ev 
                     | None -> ()
             | :? PlayerMissionEndEntry as entry ->
                 match delayedLanding.TryFind(entry.VehicleId) with
-                | Some ev ->
+                | Some (ev, deliveredCargo) ->
                     match initBombs.TryFind(entry.VehicleId) with
-                    | Some n when n > 0 ->
+                    | Some n when n > 0 && deliveredCargo ->
                         let load = bombLoad.Value.TryFind(entry.VehicleId) |> Option.defaultValue 0.0f<K>
                         if entry.Bombs = n then
                             yield landed { ev with Cargo = load }
