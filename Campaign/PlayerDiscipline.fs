@@ -577,6 +577,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
 
         let takeOffsAndLandings = extractTakeOffsAndLandings world state events
         let damages = extractStaticDamages world events
+        yield Status(hangars, airfields)
         for choice in AsyncSeq.mergeChoice3 events damages takeOffsAndLandings do
             match choice with
             | Choice1Of3 event ->

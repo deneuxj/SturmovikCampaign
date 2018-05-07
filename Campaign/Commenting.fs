@@ -67,6 +67,8 @@ type EventHandlers =
       OnMessagesToCoalition : CoalitionId * string list -> Async<unit>
       // Update planeset at airfield
       OnPlaneSetChanged : AirfieldId * int -> Async<unit>
+      // Update player hangars
+      OnHangarsUpdated : Map<string, PlayerHangar> -> Async<unit>
     }
 
 /// <summary>
@@ -365,8 +367,8 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                         handlers.OnPlaneSetChanged(afId, planeSetIndex)
                     | None ->
                         async.Zero()
-                | Status _ ->
-                    async.Zero()
+                | Status(hangars, _) ->
+                    handlers.OnHangarsUpdated(hangars)
                 )
         Async.Start(Async.catchLog "live commentator" task, cancelOnDispose.Token)
         Async.Start(Async.catchLog "battle limits notifier" task2, cancelOnDispose.Token)

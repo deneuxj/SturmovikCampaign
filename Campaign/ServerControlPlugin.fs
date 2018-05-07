@@ -507,6 +507,33 @@ type Plugin() =
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
     let mutable commenter : CommentatorRestarter option = None
     let mutable queue = startQueue()
+    let setHangars, getHangars, disposeHangars =
+        let mutable hangars : Map<string, PlayerHangar.PlayerHangar> = Map.empty
+        let hangarsLock = new System.Threading.SemaphoreSlim(1, 1)
+        let setF(x) =
+            async {
+                try
+                    do! Async.AwaitTask(hangarsLock.WaitAsync())
+                    let hangarsByPlayerName =
+                        x
+                        |> Map.toSeq
+                        |> Seq.map snd
+                        |> Seq.map (fun (h : PlayerHangar.PlayerHangar) -> h.PlayerName, h)
+                        |> Map.ofSeq
+                    hangars <- hangarsByPlayerName
+                finally
+                    hangarsLock.Release() |> ignore
+            }
+        let getF =
+            async {
+                try
+                    do! Async.AwaitTask(hangarsLock.WaitAsync())
+                    return hangars
+                finally
+                    hangarsLock.Release() |> ignore
+            }
+        setF, getF, hangarsLock.Dispose
+
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     let onCampaignOver victors =
@@ -725,6 +752,19 @@ type Plugin() =
         | None ->
             ()
 
+    member this.Dispose() =
+        match webHookClient with
+        | None ->
+            ()
+        | Some(x, _) ->
+            x.Dispose()
+        match commenter with
+        | Some commenter ->
+            commenter.Dispose()
+        | None ->
+            ()
+        disposeHangars()
+
     member x.StartWebHookClient(config : Configuration) =
         let webHookUri = config.WebHook
         // Create WebClient for web hook, if not already done
@@ -759,6 +799,7 @@ type Plugin() =
               OnMessagesToCoalition = announceToTeam
               OnMessagesToPlayer = informPlayer
               OnPlaneSetChanged = fun (afId, index) -> serverInput (sprintf "%s-%d" afId.AirfieldName index)
+              OnHangarsUpdated = setHangars
             }
         commenter <- Some(new CommentatorRestarter(config, handlers, fun() -> x.StartWebHookClient(config)))
         logger.Info("Commenter set")
@@ -813,3 +854,29 @@ type Plugin() =
             | e ->
                 sprintf "Failed to reset campaign: '%s'" e.Message
                 |> Choice2Of2
+
+        member x.GetPlayerCashReserve(player) =
+            async {
+                let! hangars = getHangars
+                return hangars.TryFind(player) |> Option.map (fun h -> h.Reserve / 1.0f<E>) |> Option.defaultValue 0.0f
+            }
+
+        member x.GetPlayerReservedPlanes(player) =
+            async {
+                let! hangars = getHangars
+                let airfields =
+                    hangars.TryFind(player)
+                    |> Option.map (fun h -> h.Airfields)
+                    |> Option.defaultValue Map.empty
+                    |> Map.map (fun _ af ->
+                        af.Planes
+                        // Replace planes by plane names in keys
+                        |> Map.toSeq
+                        |> Seq.map (fun (plane, qty) -> plane.PlaneName, qty)
+                        |> Map.ofSeq)
+                    // Replace airfield IDs by airfield names in keys
+                    |> Map.toSeq
+                    |> Seq.map (fun (af, planes) -> af.AirfieldName, planes)
+                    |> Map.ofSeq
+                return airfields
+            }
