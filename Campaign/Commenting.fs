@@ -69,6 +69,8 @@ type EventHandlers =
       OnPlaneSetChanged : AirfieldId * int -> Async<unit>
       // Update player hangars
       OnHangarsUpdated : Map<string, PlayerHangar> -> Async<unit>
+      // A player entered
+      OnPlayerEntered : Guid -> Async<unit>
     }
 
 /// <summary>
@@ -330,6 +332,11 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             |> AsyncSeq.choose (function (Some x, _, _) -> Some x | _ -> None)
             |> asyncIterNonMuted (
                 function
+                | PlayerEntered(userId) ->
+                    async {
+                        do! Async.Sleep(15000)
+                        return! handlers.OnPlayerEntered(userId)
+                    }
                 | Overview(user, delay, messages) ->
                     async {
                         do! Async.Sleep(delay * 1000)

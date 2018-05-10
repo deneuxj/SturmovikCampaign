@@ -237,6 +237,7 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
 
 
 type PlaneAvailabilityMessage =
+    | PlayerEntered of Guid
     | Overview of UserIds * delay:int * string list
     | Warning of UserIds * delay:int * string list
     | Announce of CoalitionId * string list
@@ -500,6 +501,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
             asyncSeq {
                 match event with
                 | :? JoinEntry as entry ->
+                    yield PlayerEntered(entry.UserId)
                     yield! showHangar(string entry.UserId, 20)
 
                 | :? PlayerPlaneEntry as entry ->

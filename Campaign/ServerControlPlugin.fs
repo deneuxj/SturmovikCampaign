@@ -701,6 +701,21 @@ type Plugin() =
         | None ->
             async.Zero()
 
+    let showPinToPlayer(userId : Guid) =
+        match support with
+        | Some support ->
+            async {
+                let! player = support.ServerControl.TryGetPlayerByUserId(userId)
+                let! pin = support.ServerControl.TryGetPlayerPin(userId)
+                match player, pin with
+                | Some player, Some pin ->
+                    do! support.ServerControl.MessagePlayer(player, ["Your PIN: " + pin])
+                | _ ->
+                    ()
+            }
+        | None ->
+            async.Zero()
+
     let serverInput(name) =
         match support with
         | Some support ->
@@ -800,6 +815,7 @@ type Plugin() =
               OnMessagesToPlayer = informPlayer
               OnPlaneSetChanged = fun (afId, index) -> serverInput (sprintf "%s-%d" afId.AirfieldName index)
               OnHangarsUpdated = setHangars
+              OnPlayerEntered = showPinToPlayer
             }
         commenter <- Some(new CommentatorRestarter(config, handlers, fun() -> x.StartWebHookClient(config)))
         logger.Info("Commenter set")
