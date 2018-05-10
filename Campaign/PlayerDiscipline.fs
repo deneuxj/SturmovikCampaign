@@ -212,8 +212,8 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                                 // No damage was ever inflicted by someone else, looks like a player wrecked their own plane without external cause
                                 match tookOfAt.TryFind(damage.TargetId) with
                                 | None ->
-                                    // Did not even take off, apply extra penalty
-                                    2.0f
+                                    // Did not take off, no penalty as planes are only checked out on take off
+                                    0.0f
                                 | Some t ->
                                     // 2.0 right after take-off, linear decrease to 0 after 15min
                                     let delta = float32 (damage.Timestamp - t).TotalMinutes
