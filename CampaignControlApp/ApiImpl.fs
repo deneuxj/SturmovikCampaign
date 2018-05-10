@@ -187,6 +187,10 @@ type ServerControl(config : Configuration) =
                 do! Async.Sleep 1000
             }
 
+        member this.TryGetPlayerByUserId(_) = async.Return None
+
+        member this.TryGetPlayerPin(_) = async.Return None
+
 let rec insertTask ((date, _, _) as task) tasks =
     match tasks with
     | [] -> [SomeTask task]
