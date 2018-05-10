@@ -420,6 +420,17 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                                     // Update airfield. No update to hangar, as planes are free here.
                                     yield! checkoutPlane(af, plane, user, entry.VehicleId, None)
                                 })
+                    // If player ends mission or disconnects before take off: Clean up maps
+                    let cancelFlight = 
+                        asyncSeq {
+                            uponTakeoff.Remove(entry.VehicleId) |> ignore
+                            playerOf.Remove(entry.VehicleId) |> ignore
+                            planes.Remove(entry.VehicleId) |> ignore
+                            rewards.Remove(user.Name) |> ignore
+                            healthOf.Remove(entry.VehicleId) |> ignore
+                        }
+                    uponMissionEnded <- uponMissionEnded.Add(entry.VehicleId, cancelFlight)
+                    uponDisconnect <- uponDisconnect.Add(user, cancelFlight)
                 | _ -> // Vehicle other than plane
                     ()
             }
