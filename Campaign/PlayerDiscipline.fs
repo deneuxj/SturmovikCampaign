@@ -30,6 +30,7 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.PlayerHangar
 open Campaign.NewWorldState
+open SturmovikMission.Blocks.Vehicles
 open MBrace.FsPickler
 open NLog
 
@@ -250,6 +251,32 @@ type PlaneAvailabilityMessage =
 let private emptyHangar (playerId : string, playerName : string) =
     { Player = Guid(playerId); PlayerName = playerName; Reserve = 0.0f<E>; Airfields = Map.empty }
 
+// For objects whose damage is tracked anonymously by the result extraction system, list object type and cost
+// Missing: ships
+let valuedObjects =
+    [
+        ("_PzKpfw III Ausf.L", GroundAttackVehicle.HeavyTankCost)
+        ("_T-34-76 STZ", GroundAttackVehicle.HeavyTankCost)
+        ("GAZ-AA", Orders.ResupplyOrder.TruckCapacity)
+        ("GAZ-M", Orders.ResupplyOrder.TruckCapacity)
+        ("Locomotive_E", Orders.ResupplyOrder.TrainCapacity)
+        ("Locomotive_G8", Orders.ResupplyOrder.TrainCapacity)
+        ("Opel Blitz", Orders.ResupplyOrder.TruckCapacity)
+        ("PzKpfw III Ausf.H", GroundAttackVehicle.HeavyTankCost)
+        ("PzKpfw IV Ausf.F1", GroundAttackVehicle.MediumTankCost)
+        ("Sd Kfz 10 Flak 38", GroundAttackVehicle.LightArmorCost)
+        ("Sd Kfz 251 Wurfrahmen 40", GroundAttackVehicle.LightArmorCost)
+        ("T-34-76", GroundAttackVehicle.HeavyTankCost)
+        ("T-70", GroundAttackVehicle.MediumTankCost)
+        ("wagon_tankb", Orders.ResupplyOrder.TrainCapacity / 8.0f)
+        ("zis-3", Orders.ResupplyOrder.TruckCapacity)
+        ("zis-5 72-k", GroundAttackVehicle.LightArmorCost)
+        ("zis-5", Orders.ResupplyOrder.TruckCapacity)
+        ("zis-6 bm-13", GroundAttackVehicle.LightArmorCost)
+    ]
+    |> Seq.map (fun (k, v) -> k.ToLowerInvariant(), v)
+    |> dict
+
 let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (events : AsyncSeq<LogEntry>) =
     let wg = world.FastAccess
     let sg = state.FastAccess
@@ -262,6 +289,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
     asyncSeq {
         let mutable playerOf = Map.empty // Vehicle ID -> UserIds
         let mutable planes = Map.empty // Vehicle ID -> plane model
+        let mutable otherTargets = Map.empty // Vehicle ID -> value and coalition
         let mutable airfields =
             state.Airfields
             |> Seq.map (fun afs -> afs.AirfieldId, afs)
@@ -522,6 +550,17 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     yield PlayerEntered(entry.UserId)
                     yield! showHangar(string entry.UserId, 20)
 
+                | :? ObjectSpawnedEntry as entry ->
+                    match valuedObjects.TryGetValue(entry.ObjectType.ToLowerInvariant()) with
+                    | true, value ->
+                        match CoalitionId.FromLogEntry(entry.Country) with
+                        | Some coalition ->
+                            otherTargets <- otherTargets.Add(entry.ObjectId, (value, coalition))
+                        | None ->
+                            ()
+                    | false, _ ->
+                        ()
+
                 | :? PlayerPlaneEntry as entry ->
                     yield! startFlight(entry)
                     yield Status(hangars, airfields)
@@ -535,9 +574,24 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         ()
 
                 | :? DamageEntry as entry ->
-                    let oldHealth = healthOf.TryFind entry.TargetId |> Option.defaultValue 1.0f
-                    let health = oldHealth - entry.Damage
-                    healthOf <- Map.add entry.TargetId health healthOf
+                    if planes.ContainsKey(entry.TargetId) then
+                        let oldHealth = healthOf.TryFind entry.TargetId |> Option.defaultValue 1.0f
+                        let health = oldHealth - entry.Damage
+                        healthOf <- Map.add entry.TargetId health healthOf
+                    else
+                        // Reward players damaging moving trucks, tanks, trains
+                        match otherTargets.TryFind(entry.TargetId), playerOf.TryFind(entry.AttackerId) with
+                        | Some (value, coalition), Some player when coalitionOf.ContainsKey(player.Name) ->
+                            let reward = value * entry.Damage
+                            let k =
+                                if coalition = coalitionOf.[player.Name] then
+                                    -1.0f
+                                else
+                                    1.0f
+                            let oldRewards = rewards.TryFind(player.Name) |> Option.defaultValue 0.0f<E>
+                            rewards <- rewards.Add(player.Name, oldRewards + k * reward)
+                        | _ ->
+                            ()
 
                 | :? KillEntry as entry ->
                     healthOf <- Map.add entry.TargetId 0.0f healthOf
