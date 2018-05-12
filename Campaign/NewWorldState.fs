@@ -1240,10 +1240,17 @@ let updateRunways (world : World) (state : WorldState) (windDirection : float32)
     { state with Airfields = afStates
     }
 
-let eveningStop = 20
-let morningStart = 5
+let winterEveningStop = 20
+let winterMorningStart = 5
+let summerEveningStop = 22
+let summerMorningStart = 4
 
 let nextDate (dt : float32<H>) (date : System.DateTime) =
+    let morningStart, eveningStop =
+        if date.Month >= 4 && date.Month <= 10 then
+            summerMorningStart, summerEveningStop
+        else
+            winterMorningStart, winterEveningStop
     let h = floor(float32 dt)
     let mins = 60.0f * ((float32 dt) - h)
     let newDate =
