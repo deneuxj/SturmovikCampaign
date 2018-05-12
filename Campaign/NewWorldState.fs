@@ -122,7 +122,12 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                             | _ -> None
                     match plane with
                     | Some model ->
-                        let produced = world.PlaneProduction * dt / model.Cost
+                        let fallOff =
+                            2.0 - (state.Date - world.StartDate).TotalDays / 7.0
+                            |> max 0.0
+                            |> min 1.0
+                            |> float32
+                        let produced = fallOff * world.PlaneProduction * dt / model.Cost
                         let oldValue = afs.NumPlanes |> Map.tryFind model |> Option.defaultVal 0.0f
                         let newValue = oldValue + produced
                         yield { afs with
@@ -132,7 +137,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                         // Another weird case: No plane at all in the given plane set and coalition. Don't produce any plane.
                         yield afs
                 else
-                    // Weird case: No rear airfield. Don't produce any plane.
+                    // Not the rear airfield. Don't produce any plane.
                     yield afs
         ]
     { state with Regions = regions; Airfields = airfields }
