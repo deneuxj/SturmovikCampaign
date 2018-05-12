@@ -101,7 +101,8 @@ with
         let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}
         [
             for kvp in hangar.Planes do
-                yield kvp.Key.PlaneName
+                if kvp.Value >= 1.0f then
+                    yield kvp.Key.PlaneName
         ]
 
 open MBrace.FsPickler
