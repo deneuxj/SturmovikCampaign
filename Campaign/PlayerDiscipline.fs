@@ -315,8 +315,6 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 let afs = { afs with NumPlanes = Map.add plane availableAfterTakeOff afs.NumPlanes }
                 match sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner with
                 | Some coalition ->
-                    yield Announce(coalition,
-                        [sprintf "%s at %s is authorized to take off in a %s" user.Name af.AirfieldId.AirfieldName plane.PlaneName])
                     if availableAtAirfield < 2.0f then
                         yield Announce(coalition,
                             [sprintf "%s are no longer available at %s" plane.PlaneName af.AirfieldId.AirfieldName])
@@ -407,6 +405,10 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                                         sprintf "There is no %s reserved for you, but you can spend %0.0f to reserve one" plane.PlaneName (hangar.Reserve - hangar2.Reserve)
                                         "Proceed to take off if you wish to do so"
                                     ])
+                            else
+                                yield Overview(user, 15,
+                                    [sprintf "You are authorized to take off in a %s" plane.PlaneName])
+
                             uponTakeoff <- uponTakeoff.Add(entry.VehicleId,
                                 asyncSeq {
                                     // Update airfield and hangar
@@ -414,6 +416,10 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                                 })
                             hangars <- Map.add user.UserId hangar hangars
                     else
+                        yield Overview(user, 15,
+                            [sprintf "There are no restrictions on %s at this airfield" plane.PlaneName
+                             "You are authorized to take off"
+                            ])
                         // Player hangar restrictions don't apply
                         uponTakeoff <- uponTakeoff.Add(entry.VehicleId,
                                 asyncSeq {
