@@ -494,8 +494,6 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
         |> Seq.map (fun region -> RegionId(region.GetName().Value))
         |> Set.ofSeq
 
-    let getRegion = wg.GetRegion
-
     let distanceFromStrongRegions =
         if strongRegions.IsEmpty then
             // No region explicitly marked as strong, use factories instead.
@@ -573,6 +571,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                     x * (1.0f - (float32 hops) / (float32 cutoffHops)) |> max 0.0f
                 let maxPlanes =
                     airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
+                    |> (*) 3
                     |> float32
                 let planeTypeShares = PlaneModel.PlaneTypeShares(owner)
                 let numFighters = maxPlanes * planeTypeShares.[PlaneType.Fighter] |> scale |> round
