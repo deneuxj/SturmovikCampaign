@@ -311,24 +311,44 @@ with
         |> min 1.0f
 
     /// <summary>
+    /// Max duration of conflict, in days.
+    /// </summary>
+    member this.MaxConflictDuration = 14.0f
+
+    /// <summary>
     /// Check if a side is victorious.
     /// </summary>
     member this.VictoriousSide(world : World) =
-        let getNumRegionsWithAF coalition =
-            world.Airfields
-            |> Seq.filter (fun af ->
+        if float32 (this.Date - world.StartDate).TotalDays > this.MaxConflictDuration then
+            let numAxis, numAllies =
                 this.Regions
-                |> Seq.filter (fun reg -> reg.RegionId = af.Region && reg.Owner = Some coalition)
-                |> Seq.isEmpty
-                |> not)
-            |> Seq.length
-        let numAxis = getNumRegionsWithAF Axis
-        let numAllies = getNumRegionsWithAF Allies
-        if numAxis = 0 then
-            Some Allies
-        elif numAllies = 0 then
-            Some Axis
-        else None
+                |> List.fold (fun (numAxis, numAllies) regState ->
+                    match regState.Owner with
+                    | Some Axis -> (numAxis + 1, numAllies)
+                    | Some Allies -> (numAxis, numAllies + 1)
+                    | None -> (numAxis, numAllies)) (0, 0)
+            if numAxis > numAllies then
+                Some Axis
+            elif numAxis < numAllies then
+                Some Allies
+            else
+                None
+        else
+            let getNumRegionsWithAF coalition =
+                world.Airfields
+                |> Seq.filter (fun af ->
+                    this.Regions
+                    |> Seq.filter (fun reg -> reg.RegionId = af.Region && reg.Owner = Some coalition)
+                    |> Seq.isEmpty
+                    |> not)
+                |> Seq.length
+            let numAxis = getNumRegionsWithAF Axis
+            let numAllies = getNumRegionsWithAF Allies
+            if numAxis = 0 then
+                Some Allies
+            elif numAllies = 0 then
+                Some Axis
+            else None
 
 
 open SturmovikMission.DataProvider.Parsing
