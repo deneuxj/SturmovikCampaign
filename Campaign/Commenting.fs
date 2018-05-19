@@ -350,8 +350,11 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 | Announce(coalition, messages) ->
                     handlers.OnMessagesToCoalition(coalition, messages)
                 | Violation(user) ->
-                    handlers.OnMessagesToPlayer(user, ["Kicking for stealing planes not enabled yet, consider yourself lucky"])
-                    // handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
+                    async {
+                        do! handlers.OnMessagesToPlayer(user, ["You are being kicked for plane theft. This is not a ban, you are welcome back."])
+                        do! Async.Sleep(10000)
+                        do! handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
+                    }
                 | PlanesAtAirfield(afId, numPlanes) ->
                     // State of airfield at start of mission
                     let afs = sg.GetAirfield(afId)
