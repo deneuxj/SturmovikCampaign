@@ -335,6 +335,16 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     yield Overview(user, 15, ["The following regions would benefit from resupplies: " + (x |> List.map (fun r -> string r.RegionId) |> String.concat ", ")])
             }
 
+        /// Throw away rewards, clear maps
+        let cancelFlight(vehicleId, userName) =
+            asyncSeq {
+                uponTakeoff.Remove(vehicleId) |> ignore
+                playerOf.Remove(vehicleId) |> ignore
+                planes.Remove(vehicleId) |> ignore
+                rewards.Remove(userName) |> ignore
+                healthOf.Remove(vehicleId) |> ignore
+            }
+
         /// Remove a plane from an airfield, and optionally from the player's hangar (if the airfield is restricted)
         let checkoutPlane(af : Airfield, plane, user, vehicle, hangar : PlayerHangar.PlayerHangar option) =
             asyncSeq {
@@ -367,7 +377,10 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         let afs = { afs with NumPlanes = Map.add plane (availableAtAirfield + health) afs.NumPlanes }
                         airfields <- Map.add af.AirfieldId afs airfields
                         yield Status(hangars, airfields)
+                        yield! cancelFlight(vehicle, user.Name)
                     })
+                // If ending a mission before landing, clean maps and discard rewards. This handler is removed during a successful landing
+                uponMissionEnded <- uponMissionEnded.Add(vehicle, cancelFlight(vehicle, user.Name))
             }
 
         // Check if a player is spawning at a restricted airfield, if so check that they can, and prepare the update of airfield and hangars that will happen on take off
@@ -456,16 +469,8 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                                     yield! checkoutPlane(af, plane, user, entry.VehicleId, None)
                                 })
                     // If player ends mission or disconnects before take off: Clean up maps
-                    let cancelFlight = 
-                        asyncSeq {
-                            uponTakeoff.Remove(entry.VehicleId) |> ignore
-                            playerOf.Remove(entry.VehicleId) |> ignore
-                            planes.Remove(entry.VehicleId) |> ignore
-                            rewards.Remove(user.Name) |> ignore
-                            healthOf.Remove(entry.VehicleId) |> ignore
-                        }
-                    uponMissionEnded <- uponMissionEnded.Add(entry.VehicleId, cancelFlight)
-                    uponDisconnect <- uponDisconnect.Add(user, cancelFlight)
+                    uponMissionEnded <- uponMissionEnded.Add(entry.VehicleId, cancelFlight(entry.VehicleId, user.Name))
+                    uponDisconnect <- uponDisconnect.Add(user, cancelFlight(entry.VehicleId, user.Name))
                 | _ -> // Vehicle other than plane
                     ()
             }
