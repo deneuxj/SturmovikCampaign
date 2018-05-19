@@ -298,7 +298,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         columns
         |> List.collect (fun (_, start, group) -> (McuUtil.groupFromList [start]) :: group)
     let battles =
-        Battlefield.generateBattlefields missionParams.BattleKillRatio missionParams.MaxVehiclesInBattle missionData.Random store lcStore missionData.World missionData.State
+        Battlefield.generateBattlefields missionParams.MaxVehiclesInBattle missionParams.BattleKillRatio missionData.Random store lcStore missionData.World missionData.State
     for bf in battles do
         for start in bf.Starts do
             Mcu.addTargetLink missionBegin start.Index
