@@ -427,12 +427,20 @@ module Support =
                     | Some coalition ->
                         let numTanks = regState.NumVehicles |> Map.toSeq |> Seq.sumBy snd
                         let needs = world.RegionAmmoCost(reg.RegionId)
+                        let description =
+                            sprintf "%d tanks, %0.0f production (%0.0f max), %0.0f ammo (%0.0f storage, %0.0f capacity)"
+                                numTanks
+                                (regState.ProductionCapacity(reg, world.SubBlockSpecs, world.ProductionFactor))
+                                (reg.GetProductionCapacity(world.SubBlockSpecs, world.ProductionFactor))
+                                regState.Supplies
+                                (regState.StorageCapacity(reg, world.SubBlockSpecs))
+                                (reg.GetStorageCapacity(world.SubBlockSpecs))
                         yield {
                             Position = reg.Position
                             Icon = MapGraphics.Base
                             Color = if coalition = Axis then MapGraphics.Gray else MapGraphics.Red
                             Label = Some (sprintf "%s (%1.0f%%)" (string reg.RegionId) (100.0f * regState.Supplies / needs))
-                            Description = Some (sprintf "%d tanks" numTanks)
+                            Description = Some description
                             Depth = 0.0f
                         }
                     | None ->

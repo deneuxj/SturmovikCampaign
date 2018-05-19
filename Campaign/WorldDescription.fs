@@ -166,6 +166,14 @@ with
             |> Option.defaultVal []
         { this with Parking = parking }
 
+    member this.GetProductionCapacity(subBlockSpecs, factor) =
+        this.Production
+        |> List.sumBy (fun prod -> prod.Production(subBlockSpecs, factor))
+
+    member this.GetStorageCapacity(subBlockSpecs) =
+        this.Storage
+        |> List.sumBy (fun sto -> sto.Storage(subBlockSpecs))
+
 /// Paths link regions to their neighbours. Road and rail convoys travel along those. Those are extracted from waypoints in groups Roads and Trains respectively in the strategy mission.
 type Path = {
     StartId : RegionId
