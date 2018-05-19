@@ -447,12 +447,16 @@ module Support =
                         ()
                 for bf, defending in Campaign.Battlefield.identifyBattleAreas world state do
                     let bf = wg.GetAntiTankDefenses(bf)
+                    let numAttackers = sg.GetRegion(bf.Home).NumInvadingVehicles |> Map.toSeq |> Seq.sumBy snd
+                    let numDefenders = sg.GetRegion(bf.Home).NumVehicles |> Map.toSeq |> Seq.sumBy snd
+                    let label = sprintf "%d : %d" numAttackers numDefenders
+                    let description = sprintf "Attackers: %d, Defenders: %d" numAttackers numDefenders
                     yield {
                         Position = bf.Position.Pos
                         Icon = MapGraphics.Clash
                         Color = if defending = Axis then MapGraphics.Red else MapGraphics.Gray
-                        Label = None
-                        Description = None
+                        Label = Some label
+                        Description = Some description
                         Depth = 0.0f
                     }
                 for af, afState in List.zip world.Airfields state.Airfields do
