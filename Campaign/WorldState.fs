@@ -350,6 +350,14 @@ with
                 Some Axis
             else None
 
+    member this.HasNightTime(missionDuration) =
+        let start = this.Date
+        let finish = this.Date + System.TimeSpan(missionDuration, 0, 0)
+        let sunrise = System.DateTime(this.Date.Year, this.Date.Month, this.Date.Day, 8, 0, 0)
+        let sunset = System.DateTime(this.Date.Year, this.Date.Month, this.Date.Day, 19, 0, 0)
+        // sunset, sunrise, sunset of next morning
+        [sunrise; sunset; sunrise + System.TimeSpan(24, 0, 0)]
+        |> List.exists (fun suntime -> suntime >= start && suntime <= finish)
 
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu
