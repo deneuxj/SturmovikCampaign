@@ -99,6 +99,45 @@ let newMissionBegin idx =
         T.Float 0.0,
         T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
 
+let newServerInput idx name =
+    T.MCU_TR_ServerInput(
+        T.String "",
+        T.Boolean true,
+        T.Integer idx,
+        T.String name,
+        T.VectorOfIntegers[],
+        T.VectorOfIntegers[],
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
+
+let newBehaviour idx filter aiLevel country engageable param limitAmmo rearmFriendlies refuelFriendlies repairFriendlies vulnerable =
+    T.MCU_CMD_Behaviour(
+        T.Integer aiLevel,
+        T.Integer country,
+        T.String "",
+        T.Boolean engageable,
+        T.Integer filter,
+        T.Float param,
+        T.Integer idx,
+        T.Boolean limitAmmo,
+        T.String "",
+        T.VectorOfIntegers[],
+        T.Boolean rearmFriendlies,
+        T.Boolean refuelFriendlies,
+        T.Boolean repairFriendlies,
+        T.VectorOfIntegers[],
+        T.Boolean vulnerable,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0,
+        T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
+
 let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, number) =
     T.Airfield.Planes.Plane(
         T.Integer 2,
