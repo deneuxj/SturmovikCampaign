@@ -410,10 +410,10 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                     |> max 0.0f<E>
                 yield { regState with Supplies = newStored }
         ]
-    let applyDamage numSubBlocks health =
+    let applyDamage health =
         Option.map (fun damages ->
             damages
-            |> Seq.sumBy (fun data -> data.Amount / float32 numSubBlocks)
+            |> Seq.sumBy (fun data -> data.Amount)
             |> (-) health
             |> max 0.0f)
         >> Option.defaultVal health
@@ -437,9 +437,8 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                     let numSubBlocks = wg.GetAirfieldStorageNumSubBlocks af.AirfieldId
                     afState.StorageHealth
                     |> List.mapi (fun idx health ->
-                        let numSubBlocks = numSubBlocks idx
                         Map.tryFind (Airfield(afState.AirfieldId, idx)) damages
-                        |> applyDamage numSubBlocks health)
+                        |> applyDamage health)
                 let afState = { afState with
                                     NumPlanes = planes
                                     StorageHealth = storeHealth }
@@ -462,17 +461,15 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                     let numSubBlocks = wg.GetRegionProductionNumSubBlocks region.RegionId
                     regState.ProductionHealth
                     |> List.mapi (fun idx health ->
-                        let numSubBlocks = numSubBlocks idx
                         Map.tryFind (Production(region.RegionId, idx)) damages
-                        |> applyDamage numSubBlocks health)
+                        |> applyDamage health)
                 let capacityBeforeDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let storeHealth =
                     let numSubBlocks = wg.GetRegionStorageNumSubBlocks region.RegionId
                     regState.StorageHealth
                     |> List.mapi (fun idx health ->
-                        let numSubBlocks = numSubBlocks idx
                         Map.tryFind (Storage(region.RegionId, idx)) damages
-                        |> applyDamage numSubBlocks health)
+                        |> applyDamage health)
                 let regState = { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth }
                 let capacityAfterDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let factor =

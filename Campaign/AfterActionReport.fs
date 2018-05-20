@@ -216,7 +216,7 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
             match event.Object with
             | Production(region, idx) ->
                 if sg1.GetRegion(region).Owner = Some coalition then
-                    Some (wg.GetRegion(region).Production.[idx], event.Data.Amount / float32 (wg.GetRegionProductionNumSubBlocks region idx))
+                    Some (wg.GetRegion(region).Production.[idx], event.Data.Amount)
                 else
                     None
             | _ -> None)
@@ -227,7 +227,7 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
             match event.Object with
             | Storage(region, idx) ->
                 if sg1.GetRegion(region).Owner = Some coalition then
-                    Some (wg.GetRegion(region).Storage.[idx], event.Data.Amount / float32 (wg.GetRegionStorageNumSubBlocks region idx))
+                    Some (wg.GetRegion(region).Storage.[idx], event.Data.Amount)
                 else
                     None
             | _ -> None)
