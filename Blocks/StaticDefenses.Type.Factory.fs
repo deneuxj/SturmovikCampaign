@@ -64,15 +64,26 @@ with
                                 canon.SwitchToSearchLight()
                             else
                                 canon
-                    yield CanonInstance(numLightMachineGunsPerHeavyMachineGun * i), canon
+                    yield canon
                     // Extra German MG instances, to balance for the Russian MG which has 4x the firepower.
                     match specialty, isFlak, coalition with
                     | AntiAirMg, false, Mcu.CoalitionValue.Axis ->
                         for extra in 0..(numLightMachineGunsPerHeavyMachineGun  - 1) do
-                            yield CanonInstance(numLightMachineGunsPerHeavyMachineGun * i + extra), Canon.Create(AntiAirMg, random, store, boundary, yori, false, Mcu.CountryValue.Germany)
+                            yield Canon.Create(AntiAirMg, random, store, boundary, yori, false, Mcu.CountryValue.Germany)
                     | _ ->
                         ()
+                // For AA, add machine-guns for protection from short-range straffing by fighters
+                let num =
+                    let k = if coalition = Mcu.CoalitionValue.Axis then numLightMachineGunsPerHeavyMachineGun else 1
+                    (groupSize / 4 |> max 1) * k
+                match specialty with
+                | AntiAirCanon ->
+                    for _ in 1..num do
+                        yield Canon.Create(AntiAirMg, random, store, boundary, yori, false, country)
+                | _ ->
+                    ()
             }
+            |> Seq.mapi (fun i x -> CanonInstance i, x)
             |> Map.ofSeq
         let positions =
             [
