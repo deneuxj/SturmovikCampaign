@@ -160,8 +160,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     lcStore.SetNextId 3
     let getId = store.GetIdMapper()
     let missionBegin = newMissionBegin (getId 1)
-    let includeSearchLights =
-        missionData.State.Date.Hour <= 8 || missionData.State.Date.Hour + missionParams.MissionLength / 60 >= 18
+    let includeSearchLights = missionData.State.HasNightTime(missionParams.MissionLength)
     let inAttackArea(pos : Vector2) =
         missionData.AxisOrders.Attacks @ missionData.AlliesOrders.Attacks
         |> List.exists (fun attack -> (attack.Target - pos).Length() < 3000.0f)
@@ -310,7 +309,8 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         createParkedPlanes store missionData.World missionData.State inAttackArea
         |> McuUtil.groupFromList
     let parkedTanks =
-        createParkedTanks store missionData.World missionData.State inAttackArea missionData.AxisOrders Axis @ createParkedTanks store missionData.World missionData.State inAttackArea missionData.AlliesOrders Allies
+        [Axis; Allies]
+        |> List.collect (createParkedTanks store lcStore missionData.World missionData.State inAttackArea includeSearchLights missionData.AxisOrders)
         |> McuUtil.groupFromList
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
     setCountries store missionData.World missionData.State flags

@@ -29,8 +29,12 @@ open Campaign.Orders
 open Util
 open Campaign.ParkingArea
 open Campaign.BasicTypes
+open SturmovikMission.Blocks.StaticDefenses.Factory
+open SturmovikMission.DataProvider
+open SturmovikMission.DataProvider
+open SturmovikMission.DataProvider
 
-let createParkedTanks store (world : World) (state : WorldState) inAttackArea (orders : OrderPackage) (coalition : CoalitionId) =
+let createParkedTanks store lcStore (world : World) (state : WorldState) inAttackArea withSearchLights (orders : OrderPackage) (coalition : CoalitionId) =
     let netsModel, netRelPositions =
         let nets = Vehicles.vehicles.Nets
         let nets =
@@ -75,6 +79,14 @@ let createParkedTanks store (world : World) (state : WorldState) inAttackArea (o
                                 yield Vector3(center.X, center.Y, 0.0f) + dv
                     }
                 if parked.Length > 0 then
+                    // Add machine guns among tanks for anti-air defense
+                    let aaDefenses =
+                        let boundary = region.Parking
+                        StaticDefenseGroup.Create(StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, 8, coalition.ToCountry, coalition.ToCoalition)
+                    let links = aaDefenses.CreateLinks()
+                    links.Apply(McuUtil.deepContentOf(aaDefenses))
+                    yield! McuUtil.deepContentOf(aaDefenses)
+
                     for pos in netPositions do
                         let block = newBlockMcu store country netsModel.Model netsModel.Script 1000
                         pos.AssignTo block.Pos
