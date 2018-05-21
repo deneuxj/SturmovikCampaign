@@ -187,7 +187,7 @@ module WeatherComputation =
                 serializer.Deserialize<WorldState>(stateFile)
             with
             | e -> failwithf "Failed to read state data. Reason was: '%s'" e.Message
-        let date = nextDate (1.0f<H> * float32 config.MissionLength / 60.0f) state.Date
+        let date = nextDate config.LongWorkDay (1.0f<H> * float32 config.MissionLength / 60.0f) state.Date
         date
 
     let run(config : Configuration, date : System.DateTime) =

@@ -41,6 +41,7 @@ type Configuration = {
     MaxCapturedPlanes : int
     MissionName : string
     MissionLength : int
+    LongWorkDay : bool
     ColumnSplitInterval : int
     MaxSimultaneousConvoys : int
     MaxSimultaneousFerryFlights : int
@@ -87,6 +88,7 @@ with
             MaxBattleKillsRatioByAI = 0.25f
             MissionName = "AutoGenMission2"
             MissionLength = 180
+            LongWorkDay = false
             ColumnSplitInterval = 60
             OutputDir = @"nul"
             ServerDataDir = @"nul"
@@ -181,6 +183,7 @@ let loadConfigFile (path : string) =
         MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI
         MissionName = values.MissionName
         MissionLength = values.MissionLength
+        LongWorkDay = values.LongWorkDay
         ColumnSplitInterval = values.ColumnSplitInterval
         OutputDir = values.OutputDir
         ServerDataDir = values.ServerDataDir

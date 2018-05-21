@@ -30,6 +30,8 @@
     MissionName: DynCampaign
     # Length of mission, in minutes
     MissionLength: 180
+    # If early morning and late evening night time should be included in missions. Searchlights give a nice ambience, but they heavily affects gameplay, as AA is inactive after searchlights are destroyed.
+    LongWorkDay: false
     # Interval between group of vehicles in a column (for columns larger than 15 tanks)
     ColumnSplitInterval: 60
     # Max number of convoys active simultaneously (per side)

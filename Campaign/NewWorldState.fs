@@ -1237,24 +1237,34 @@ let updateRunways (world : World) (state : WorldState) (windDirection : float32)
     { state with Airfields = afStates
     }
 
-let winterEveningStop = 20
-let winterMorningStart = 5
-let summerEveningStop = 22
-let summerMorningStart = 4
+type WorkingDay =
+    { MorningStart : int
+      EveningStop : int }
 
-let nextDate (dt : float32<H>) (date : System.DateTime) =
-    let morningStart, eveningStop =
+let shortWinterWorkingDay = { MorningStart = 9; EveningStop = 17 }
+let longWinterWorkingDay = { MorningStart = 6; EveningStop = 17 }
+let shortSummerWorkingDay = { MorningStart = 8; EveningStop = 18 }
+let longSummerWorkingDay = { MorningStart = 6; EveningStop = 18 }
+
+let nextDate (longDay : bool) (dt : float32<H>) (date : System.DateTime) =
+    let workingDay =
         if date.Month >= 4 && date.Month <= 10 then
-            summerMorningStart, summerEveningStop
+            if longDay then
+                longSummerWorkingDay
+            else
+                shortSummerWorkingDay
         else
-            winterMorningStart, winterEveningStop
+            if longDay then
+                longWinterWorkingDay
+            else
+                shortWinterWorkingDay
     let h = floor(float32 dt)
     let mins = 60.0f * ((float32 dt) - h)
     let newDate =
         let x = date + System.TimeSpan(int h, int mins, 0)
-        if x.Hour >= eveningStop then
+        if x.Hour >= workingDay.EveningStop then
             let x2 = x.AddDays(1.0)
-            System.DateTime(x2.Year, x2.Month, x2.Day, morningStart, 0, 0)
+            System.DateTime(x2.Year, x2.Month, x2.Day, workingDay.MorningStart, 0, 0)
         else
             x
     newDate
@@ -1297,4 +1307,4 @@ let newState (config : Configuration.Configuration) (world : World) (state : Wor
         computeCompletedColumnMovements columnOrders results.ColumnDepartures results.Blocked results.Damages
         |> applyVehicleArrivals state7
     let state8 = updateRunways world state7b windOri
-    { state8 with Date = nextDate dt state8.Date; AttackingSide = state8.AttackingSide.Other }, newlyProduced, battleReports
+    { state8 with Date = nextDate config.LongWorkDay dt state8.Date; AttackingSide = state8.AttackingSide.Other }, newlyProduced, battleReports
