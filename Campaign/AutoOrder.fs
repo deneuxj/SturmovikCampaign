@@ -491,25 +491,27 @@ let computeProductionPriorities (coalition : CoalitionId) (world : World) (state
 
     let vehicleToProduce, vehicleNeed =
         // vehicle need is dictated by number of regions on the front line
-        let numHeavy, numMedium, numLight, target =
+        let target =
             state.Regions
             |> Seq.filter (fun state -> // Regions at the front
                 let region = wg.GetRegion state.RegionId
                 region.Neighbours
                 |> Seq.exists (fun ngh -> sg.GetRegion(ngh).Owner <> Some coalition))
-            |> Seq.map (fun state ->
-                let numHeavy, numMedium, numLight =
-                    state.GetNumVehicles(coalition, HeavyTank),
-                    state.GetNumVehicles(coalition, MediumTank),
-                    state.GetNumVehicles(coalition, LightArmor)
+            |> Seq.sumBy (fun state ->
                 let desiredValue = 3.0f * GroundAttackVehicle.HeavyTankCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.LightArmorCost
                 let desiredValue = (float32 world.TankTargetNumber / 15.0f) * desiredValue
-                numHeavy, numMedium, numLight, desiredValue)
-            |> Seq.fold (fun (t1, t2, t3, t4) (n1, n2, n3, n4) -> (t1 + n1, t2 + n2, t3 + n3, t4 + n4)) (0, 0, 0, 0.0f<E>)
+                desiredValue)
         let available =
             state.Regions
             |> Seq.sumBy (fun reg -> reg.TotalVehicleValue)
         let need = target - available
+        // Choice of vehicle type depends of current vehicle type balance
+        let getNumVehicles(v) =
+            state.Regions
+            |> Seq.sumBy (fun reg -> reg.GetNumVehicles(coalition, v))
+        let numLight = getNumVehicles(LightArmor)
+        let numMedium = getNumVehicles(MediumTank)
+        let numHeavy = getNumVehicles(HeavyTank)
         let vehicle =
             if numMedium = 0 then
                 MediumTank
