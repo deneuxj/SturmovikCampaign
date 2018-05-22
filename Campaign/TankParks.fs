@@ -34,7 +34,7 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider
 
-let createParkedTanks store lcStore (world : World) (state : WorldState) inAttackArea withSearchLights (orders : OrderPackage) (coalition : CoalitionId) =
+let createParkedTanks store lcStore (world : World) (state : WorldState) inAttackArea withSearchLights (missionBegin : Mcu.McuTrigger) (orders : OrderPackage) (coalition : CoalitionId) =
     let netsModel, netRelPositions =
         let nets = Vehicles.vehicles.Nets
         let nets =
@@ -85,6 +85,7 @@ let createParkedTanks store lcStore (world : World) (state : WorldState) inAttac
                         StaticDefenseGroup.Create(StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, 8, coalition.ToCountry, coalition.ToCoalition)
                     let links = aaDefenses.CreateLinks()
                     links.Apply(McuUtil.deepContentOf(aaDefenses))
+                    Mcu.addTargetLink missionBegin aaDefenses.Api.Start.Index
                     yield! McuUtil.deepContentOf(aaDefenses)
 
                     for pos in netPositions do
