@@ -350,9 +350,13 @@ with
                 Some Axis
             else None
 
+    /// <summary>
+    /// Check if this mission's time interval overlaps with night time.
+    /// </summary>
+    /// <param name="missionDuration">Mission duration, in minutes</param>
     member this.HasNightTime(missionDuration) =
         let start = this.Date
-        let finish = this.Date + System.TimeSpan(missionDuration, 0, 0)
+        let finish = this.Date + System.TimeSpan(missionDuration / 60, missionDuration % 60, 0)
         let sunrise = System.DateTime(this.Date.Year, this.Date.Month, this.Date.Day, 8, 0, 0)
         let sunset = System.DateTime(this.Date.Year, this.Date.Month, this.Date.Day, 19, 0, 0)
         // sunset, sunrise, sunset of next morning
