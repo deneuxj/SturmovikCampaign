@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ploggy", "..\plog\ploggy\pl
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CampaignControlApp", "CampaignControlApp\CampaignControlApp.fsproj", "{E610D140-B7DA-4216-94DD-F34A29D79C5A}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "WorldCheck", "WorldCheck\WorldCheck.fsproj", "{B91591AC-BBFB-4665-A935-E6FF3308040F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{E610D140-B7DA-4216-94DD-F34A29D79C5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E610D140-B7DA-4216-94DD-F34A29D79C5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E610D140-B7DA-4216-94DD-F34A29D79C5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B91591AC-BBFB-4665-A935-E6FF3308040F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B91591AC-BBFB-4665-A935-E6FF3308040F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B91591AC-BBFB-4665-A935-E6FF3308040F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B91591AC-BBFB-4665-A935-E6FF3308040F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
