@@ -25,7 +25,7 @@ Each path is bidirectional, so you don't need (and must not) define another iden
 The speed, altitude and radius of waypoints do not matter.
 The direction matters, and should be a tangent of the road/railway at the location of the waypoint.
 Roads must be put in a group called "Roads", railways must be in "Trains".
-Each bridge should be preceded by a waypoint named "BeforeBridge" and followed by a waypoint named "AfterBridge" (Not implemented yet, so you need not bother for now).
+Each bridge should be preceded by a waypoint named "BeforeBridge" and followed by a waypoint named "AfterBridge".
 Make sure you place the waypoints on the actual location of the road. You need to use the terrain view in the editor, as the GUI map is often misaligned.
 Consecutive waypoints should be separated by at most 20km (direct line).
 Waypoints of roads should be adjusted to match the ground's altitude.
