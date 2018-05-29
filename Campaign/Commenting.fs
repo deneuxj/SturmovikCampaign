@@ -124,7 +124,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             function
             | Choice1Of2 x -> Some x
             | Choice2Of2 _ -> None)
-        |> AsyncSeq.iterAsyncParallelThrottled 8 f
+        |> AsyncSeq.iterAsync f
     let asyncSeqEntries =
         asyncSeqEntries
         |> AsyncSeq.choose (fun line ->
