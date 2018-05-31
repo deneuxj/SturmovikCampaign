@@ -15,7 +15,7 @@ type RespawningTank = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, startPos : Vector2, destinationPos : Vector2) =
+    static member Create(store : NumericalIdentifiers.IdStore, startPos : Vector2, destinationPos : Vector2, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("RespawningTank").CreateMcuList()
@@ -33,6 +33,11 @@ with
             let rel = Vector2.FromMcu(mcu.Pos) - refPos
             (rel.Rotate(dr) + startPos).AssignTo mcu.Pos
             mcu.Ori.Y <- mcu.Ori.Y + float dr
+        // Set the country of anything that can have a country
+        for mcu in group do
+            match mcu with
+            | :? Mcu.HasEntity as citizen -> citizen.Country <- Some country
+            | _ -> ()
         // Return
         { Start = start
           Tank = tank
@@ -49,7 +54,7 @@ type RespawningCanon = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, startPos : Vector2, targetPos : Vector2) =
+    static member Create(store : NumericalIdentifiers.IdStore, startPos : Vector2, targetPos : Vector2, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("RespawningArtillery").CreateMcuList()
@@ -68,6 +73,11 @@ with
             let rel = Vector2.FromMcu(mcu.Pos) - refPos
             (rel.Rotate(dr) + startPos).AssignTo mcu.Pos
             mcu.Ori.Y <- mcu.Ori.Y + float dr
+        // Set the country of anything that can have a country
+        for mcu in group do
+            match mcu with
+            | :? Mcu.HasEntity as citizen -> citizen.Country <- Some country
+            | _ -> ()
         // Return
         { Start = start
           Canon = canon
@@ -105,6 +115,11 @@ type PlayerTankSpawn =
         let subst = Mcu.substId <| store.GetIdMapper()
         for mcu in group do
             subst mcu
+        // Set the country of anything that can have a country
+        for mcu in group do
+            match mcu with
+            | :? Mcu.HasEntity as citizen -> citizen.Country <- Some country
+            | _ -> ()
         { TankSpawn = spawn
           All = McuUtil.groupFromList group
         }
