@@ -107,17 +107,15 @@ with
             ]
         // Build an attacking tank
         let buildTank name (model : VehicleTypeData) =
-            let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack))
+            let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack), defendingCoalition.Other.ToCountry)
             tank.Tank.Name <- sprintf "B-%s-A-%s" region name
             model.AssignTo(tank.Tank)
-            tank.Tank.Country <- Some defendingCoalition.Other.ToCountry
             tank |> Choice1Of2
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCanon(model : VehicleTypeData, wallModel : VehicleTypeData) =
-            let arty = RespawningCanon.Create(store, getRandomPos(AttackBack), getRandomPos(DefenseBack))
+            let arty = RespawningCanon.Create(store, getRandomPos(AttackBack), getRandomPos(DefenseBack), defendingCoalition.Other.ToCountry)
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
-            arty.Canon.Country <- Some defendingCoalition.Other.ToCountry
             arty |> Choice2Of2
         // Instantiate attacker blocks
         let attackers, support =
@@ -138,13 +136,12 @@ with
         // Instantiate defender blocks
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCanon (location, model : VehicleTypeData, name , wallModel : VehicleTypeData) =
-            let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack))
+            let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack), defendingCoalition.ToCountry)
             match name with
             | Some name -> arty.Canon.Name <- sprintf "B-%s-D-%s" region name
             | None -> ()
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
-            arty.Canon.Country <- Some defendingCoalition.ToCountry
             arty
         let defenders =
             defenders
