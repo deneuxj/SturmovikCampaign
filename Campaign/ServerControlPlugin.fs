@@ -34,6 +34,7 @@ open Campaign.PlaneModel
 open Campaign.WorldState
 open Campaign
 open Campaign.PlayerDiscipline
+open Util
 
 module Support =
     open ploggy
@@ -519,6 +520,8 @@ type Plugin() =
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
     let mutable commenter : CommentatorRestarter option = None
     let mutable queue = startQueue()
+    let mutable config = None
+
     let setHangars, getHangars, disposeHangars =
         let mutable hangars : Map<string, PlayerHangar.PlayerHangar> = Map.empty
         let hangarsLock = new System.Threading.SemaphoreSlim(1, 1)
@@ -850,10 +853,11 @@ type Plugin() =
                 | None -> invalidOp "Must call Init first"
                 | Some x -> x
             try
-                let config = loadConfigFile configFile
-                x.StartWebHookClient(config)
-                x.StartCommenter(config)
-                Support.start(support, config, None, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
+                let cnf = loadConfigFile configFile
+                config <- Some cnf
+                x.StartWebHookClient(cnf)
+                x.StartCommenter(cnf)
+                Support.start(support, cnf, None, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
                 |> Choice1Of2
             with
             | e ->
@@ -866,15 +870,16 @@ type Plugin() =
                 | None -> invalidOp "Must call Init first"
                 | Some x -> x
             try
-                let config = loadConfigFile configFile
+                let cnf = loadConfigFile configFile
+                config <- Some cnf
                 x.StopCommenter()
                 x.StopWebHookClient()
-                let task = Support.reset(support, config, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
+                let task = Support.reset(support, cnf, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
                 let task =
                     task.ContinueWith(fun nextTask ->
                         async {
-                            x.StartWebHookClient(config)
-                            x.StartCommenter(config)
+                            x.StartWebHookClient(cnf)
+                            x.StartCommenter(cnf)
                             return nextTask
                         })
                 Choice1Of2 task
@@ -907,4 +912,29 @@ type Plugin() =
                     |> Seq.map (fun (af, planes) -> af.AirfieldName, planes)
                     |> Map.ofSeq
                 return airfields
+            }
+        
+        member x.GetData(dataKind) =
+            async {
+                match dataKind with
+                | "TimeLeft" ->
+                    match config with
+                    | None ->
+                        return Error "Campaign not currently running"
+                    | Some config ->
+                        let ret =
+                            try
+                                let loopState =
+                                    Support.ExecutionState.Restore(config)
+                                match loopState with
+                                | Support.WaitForMissionEnd(t) ->
+                                    Ok((t - DateTime.UtcNow) :> obj)
+                                | _ ->
+                                    Error "Mission currently not running"
+                            with
+                            | _ ->
+                                Error "Failed to read campaign loop state"
+                        return ret
+                | _ ->
+                    return Error "Unsupported data request"
             }
