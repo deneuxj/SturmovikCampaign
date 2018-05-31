@@ -334,26 +334,38 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 function
                 | PlayerEntered(userId) ->
                     async {
-                        do! Async.Sleep(15000)
-                        return! handlers.OnPlayerEntered(userId)
+                        Async.Start(
+                            async {
+                                do! Async.Sleep(15000)
+                                return! handlers.OnPlayerEntered(userId)
+                            })
                     }
                 | Overview(user, delay, messages) ->
                     async {
-                        do! Async.Sleep(delay * 1000)
-                        return! handlers.OnMessagesToPlayer(user, messages)
+                        Async.Start(
+                            async {
+                                do! Async.Sleep(delay * 1000)
+                                return! handlers.OnMessagesToPlayer(user, messages)
+                            })
                     }
                 | Warning(user, delay, messages) ->
                     async {
-                        do! Async.Sleep(delay * 1000)
-                        return! handlers.OnMessagesToPlayer(user, messages)
+                        Async.Start(
+                            async {
+                                do! Async.Sleep(delay * 1000)
+                                return! handlers.OnMessagesToPlayer(user, messages)
+                            })
                     }
                 | Announce(coalition, messages) ->
                     handlers.OnMessagesToCoalition(coalition, messages)
                 | Violation(user) ->
                     async {
                         do! handlers.OnMessagesToPlayer(user, ["You are being kicked for plane theft. This is not a ban, you are welcome back."])
-                        do! Async.Sleep(10000)
-                        do! handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
+                        Async.Start(
+                            async {
+                                do! Async.Sleep(10000)
+                                do! handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
+                            })
                     }
                 | PlanesAtAirfield(afId, numPlanes) ->
                     // State of airfield at start of mission
