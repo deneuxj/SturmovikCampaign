@@ -398,7 +398,12 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         Async.Start(Async.catchLog "plane availability checker" hangarTask, cancelOnDispose.Token)
 
     member this.Dispose() =
+        logger.Info("Commentator disposed")
         cancelOnDispose.Cancel()
+
+    interface IDisposable with
+        member this.Dispose() = this.Dispose()
+
 
 /// Monitor state.xml, (re-) starting a commentator whenever the file is modified
 type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onStateWritten : unit -> unit) =
@@ -419,11 +424,8 @@ type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onSt
                 let! ev = Async.AwaitEvent watcher.Changed
                 return! awaitFiles (Set.remove ev.Name remaining)
         }
-    let rec work world commentator =
+    let rec work world =
         async {
-            match commentator with
-            | Some (commentator : Commentator) -> commentator.Dispose()
-            | None -> ()
             let state =
                 try
                     use stateFile = File.OpenText(Path.Combine(campaignDir, "state.xml"))
@@ -455,15 +457,15 @@ type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onSt
             match state, axisOrders, alliesOrders with
             | Some state, Some axisOrders, Some alliesOrders ->
                 logger.Info("Starting new commentator")
-                let commentator = new Commentator(config, handlers, world, state, hangars, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
+                use commentator = new Commentator(config, handlers, world, state, hangars, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
                 do! awaitFiles (Set[missionFile])
                 onStateWritten()
-                return! work world (Some commentator)
+                return! work world
             | _ ->
                 logger.Info(sprintf "Waiting until next change to %s" missionFile)
                 do! awaitFiles (Set[missionFile])
                 onStateWritten()
-                return! work world None
+                return! work world
         }
     // Load world, then repeatedly monitor for new state and order files
     let prepare =
@@ -491,7 +493,7 @@ type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onSt
                             return! loadWorld()
                 }
             let! world = loadWorld()
-            return! work world None
+            return! work world
         }
     // Stop notifications when we are disposed
     let cancelOnDispose = new System.Threading.CancellationTokenSource()
