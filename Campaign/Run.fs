@@ -238,125 +238,130 @@ module OrderDecision =
         // Decide column movements
         let columnOrders =
             if state.Regions |> List.exists (fun region -> region.HasInvaders) then
-                []
+                Continue []
             else
                 decideColumnMovements world state config.ThinkTime
-        let axisColumns =
-            columnOrders
-            |> List.filter (fun order -> order.OrderId.Coalition = Axis)
-        let alliesColumns =
-            columnOrders
-            |> List.filter (fun order -> order.OrderId.Coalition = Allies)
-        let pickReinforcements coalition =
-            // Don't send reinforcements from regions that are already involved in a move picked by minmax
-            let noStart =
-                match coalition with
-                | Axis -> axisColumns
-                | Allies -> alliesColumns
-                |> List.map (fun order -> order.Start) |> Set.ofList
-            allTankReinforcements world state coalition
-            |> Array.filter (fun move -> not(noStart.Contains(move.Start)))
-            |> Array.truncate(5) // Pick at random among the 5 best choices
-            |> Array.shuffle (System.Random())
-            |> function
-                | [||] -> []
-                | arr -> [arr.[0]]
-        let axisColumns = axisColumns @ pickReinforcements Axis
-        let alliesColumns = alliesColumns @ pickReinforcements Allies
-
-        // Decide resupply convoy movements
-        let mkConvoys coalition =
-            createAllConvoyOrders coalition (world, state)
-            |> List.filter (fun order ->
-                match order.Means with
-                | ByRoad ->
-                    // Remove road convoys that take the same road as a tank column
-                    let orderEndPoints = order.Convoy.EndPoints
+        match columnOrders with
+        | Continue columnOrders ->
+            let axisColumns =
+                columnOrders
+                |> List.filter (fun order -> order.OrderId.Coalition = Axis)
+            let alliesColumns =
+                columnOrders
+                |> List.filter (fun order -> order.OrderId.Coalition = Allies)
+            let pickReinforcements coalition =
+                // Don't send reinforcements from regions that are already involved in a move picked by minmax
+                let noStart =
                     match coalition with
                     | Axis -> axisColumns
                     | Allies -> alliesColumns
-                    |> List.exists (fun column ->
-                        let columnEndPoints =
-                            [ column.Start; column.Destination ]
-                            |> List.sort
-                        orderEndPoints = columnEndPoints)
-                    |> not
-                | ByRail | ByAir _ | BySeaShip | ByRiverShip ->
-                    true)
-            |> List.filter (fun order ->
-                // Remove excessively small convoys. From a player's perspective it's underwhelming to find convoys composed of two trucks.
-                match order.Means with
-                | ByRoad ->
-                    order.Convoy.TransportedSupplies >= ResupplyOrder.TruckCapacity * 6.0f
-                | ByRail | ByAir _ | BySeaShip | ByRiverShip ->
-                    true)
-            |> prioritizeConvoys world state
-            |> List.truncate config.MaxConvoys
-        let axisConvoys = mkConvoys Axis
-        let alliesConvoys = mkConvoys Allies
+                    |> List.map (fun order -> order.Start) |> Set.ofList
+                allTankReinforcements world state coalition
+                |> Array.filter (fun move -> not(noStart.Contains(move.Start)))
+                |> Array.truncate(5) // Pick at random among the 5 best choices
+                |> Array.shuffle (System.Random())
+                |> function
+                    | [||] -> []
+                    | arr -> [arr.[0]]
+            let axisColumns = axisColumns @ pickReinforcements Axis
+            let alliesColumns = alliesColumns @ pickReinforcements Allies
 
-        // Air patrols
-        let mkPatrols coalition =
-            mkAllPatrols world state coalition
-            |> prioritizeAiPatrols world state
-            |> Seq.fold (fun (starts, filtered) (af, patrol) ->
-                if Set.contains af.AirfieldId starts then
-                    (starts, filtered)
+            // Decide resupply convoy movements
+            let mkConvoys coalition =
+                createAllConvoyOrders coalition (world, state)
+                |> List.filter (fun order ->
+                    match order.Means with
+                    | ByRoad ->
+                        // Remove road convoys that take the same road as a tank column
+                        let orderEndPoints = order.Convoy.EndPoints
+                        match coalition with
+                        | Axis -> axisColumns
+                        | Allies -> alliesColumns
+                        |> List.exists (fun column ->
+                            let columnEndPoints =
+                                [ column.Start; column.Destination ]
+                                |> List.sort
+                            orderEndPoints = columnEndPoints)
+                        |> not
+                    | ByRail | ByAir _ | BySeaShip | ByRiverShip ->
+                        true)
+                |> List.filter (fun order ->
+                    // Remove excessively small convoys. From a player's perspective it's underwhelming to find convoys composed of two trucks.
+                    match order.Means with
+                    | ByRoad ->
+                        order.Convoy.TransportedSupplies >= ResupplyOrder.TruckCapacity * 6.0f
+                    | ByRail | ByAir _ | BySeaShip | ByRiverShip ->
+                        true)
+                |> prioritizeConvoys world state
+                |> List.truncate config.MaxConvoys
+            let axisConvoys = mkConvoys Axis
+            let alliesConvoys = mkConvoys Allies
+
+            // Air patrols
+            let mkPatrols coalition =
+                mkAllPatrols world state coalition
+                |> prioritizeAiPatrols world state
+                |> Seq.fold (fun (starts, filtered) (af, patrol) ->
+                    if Set.contains af.AirfieldId starts then
+                        (starts, filtered)
+                    else
+                        (Set.add af.AirfieldId starts, patrol :: filtered)
+                ) (Set.empty, [])
+                |> snd
+                |> List.rev
+                |> List.truncate config.MaxPatrols
+            let axisPatrols, alliesPatrols =
+                if not weather.IsOvercast || weather.CloudHeight > 3500.0 then
+                    mkPatrols Axis, mkPatrols Allies
                 else
-                    (Set.add af.AirfieldId starts, patrol :: filtered)
-            ) (Set.empty, [])
-            |> snd
-            |> List.rev
-            |> List.truncate config.MaxPatrols
-        let axisPatrols, alliesPatrols =
-            if not weather.IsOvercast || weather.CloudHeight > 3500.0 then
-                mkPatrols Axis, mkPatrols Allies
-            else
-                [], []
+                    [], []
 
-        // Air attacks
-        let mkAttacks() =
-            let random = System.Random()
-            let attacks = 
-                mkAllAttackers world state
-                |> Array.ofSeq
-                |> Array.shuffle random
-            match attacks with
-            | [||] -> []
-            | _ ->
-                let attack, numPlanes = attacks.[0]
-                List.init (min config.MaxAttackers numPlanes) (fun _ ->
-                    let offset = 500.0f * Vector2(random.NextDouble() |> float32, random.NextDouble() |> float32)
-                    { attack with
-                        Start = attack.Start + offset
-                    }
-                )
-        let axisAttacks, alliesAttacks =
-            if not weather.IsOvercast || weather.CloudHeight > 2500.0 then
-                let allAttacks = mkAttacks()
-                allAttacks |> List.filter (fun attack -> attack.Coalition = Axis), allAttacks |> List.filter (fun attack -> attack.Coalition = Allies)
-            else
-                [], []
+            // Air attacks
+            let mkAttacks() =
+                let random = System.Random()
+                let attacks = 
+                    mkAllAttackers world state
+                    |> Array.ofSeq
+                    |> Array.shuffle random
+                match attacks with
+                | [||] -> []
+                | _ ->
+                    let attack, numPlanes = attacks.[0]
+                    List.init (min config.MaxAttackers numPlanes) (fun _ ->
+                        let offset = 500.0f * Vector2(random.NextDouble() |> float32, random.NextDouble() |> float32)
+                        { attack with
+                            Start = attack.Start + offset
+                        }
+                    )
+            let axisAttacks, alliesAttacks =
+                if not weather.IsOvercast || weather.CloudHeight > 2500.0 then
+                    let allAttacks = mkAttacks()
+                    allAttacks |> List.filter (fun attack -> attack.Coalition = Axis), allAttacks |> List.filter (fun attack -> attack.Coalition = Allies)
+                else
+                    [], []
 
-        // Ferry flights
-        let axisFerryFlights, alliesFerryFlights =
-            if weather.Wind.Speed < 7.0 then
-                decidePlaneTransfers world state Axis, decidePlaneTransfers world state Allies
-            else
-                [], []
+            // Ferry flights
+            let axisFerryFlights, alliesFerryFlights =
+                if weather.Wind.Speed < 7.0 then
+                    decidePlaneTransfers world state Axis, decidePlaneTransfers world state Allies
+                else
+                    [], []
 
-        // Production
-        let axisProduction = computeProductionPriorities Axis world state
-        let alliesProduction = computeProductionPriorities Allies world state
+            // Production
+            let axisProduction = computeProductionPriorities Axis world state
+            let alliesProduction = computeProductionPriorities Allies world state
 
-        // Write orders to disk
-        let outputDir = config.OutputDir
-        use axisOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.axisOrders))
-        let package = { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks; Production = axisProduction; PlaneFerries = axisFerryFlights }.Renumber()
-        serializer.Serialize(axisOrderFiles, package )
-        use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.alliesOrders))
-        let package = { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols; Attacks = alliesAttacks; Production = alliesProduction; PlaneFerries = alliesFerryFlights }.Renumber()
-        serializer.Serialize(alliesOrderFiles, package )
+            // Write orders to disk
+            let outputDir = config.OutputDir
+            use axisOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.axisOrders))
+            let package = { Resupply = axisConvoys; Columns = axisColumns; Patrols = axisPatrols; Attacks = axisAttacks; Production = axisProduction; PlaneFerries = axisFerryFlights }.Renumber()
+            serializer.Serialize(axisOrderFiles, package )
+            use alliesOrderFiles = File.CreateText(Path.Combine(outputDir, Filenames.alliesOrders))
+            let package = { Resupply = alliesConvoys; Columns = alliesColumns; Patrols = alliesPatrols; Attacks = alliesAttacks; Production = alliesProduction; PlaneFerries = alliesFerryFlights }.Renumber()
+            serializer.Serialize(alliesOrderFiles, package)
+        | _ ->
+            ()
+        columnOrders
 
 module MissionFileGeneration =
     open Campaign.WorldDescription

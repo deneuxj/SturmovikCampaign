@@ -129,8 +129,17 @@ module Support =
             | DecideOrders ->
                 async {
                     support.Logging.LogInfo "Deciding orders..."
-                    Campaign.Run.OrderDecision.run config
-                    return serverProc, GenerateMission
+                    let decision = Campaign.Run.OrderDecision.run config
+                    match decision with
+                    | AutoOrder.Continue _ ->
+                        return serverProc, GenerateMission
+                    | AutoOrder.Surrender(coalition, reason) ->
+                        do!
+                            [ "Campaign is over"
+                              sprintf "%s have surrendered due to %s" (string coalition) reason
+                            ]
+                            |> support.ServerControl.MessageAll
+                        return serverProc, CampaignOver(coalition.Other)
                 }
             | GenerateMission ->
                 async {

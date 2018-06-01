@@ -381,6 +381,10 @@ let realizeMove (world : World) (state : WorldState) (move : Move) =
     | None ->
         failwithf "Cannot realize move between %s and %s" (string regStart) (string regDest)
 
+type CoalitionsDecision =
+    | Surrender of CoalitionId * string
+    | Continue of ColumnMovement list
+
 /// Run a minmax search for the best column moves for each coalition.
 let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     let board, neighboursOf = BoardState.Create(world, state)
@@ -396,8 +400,16 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
         use cancellation = new CancellationTokenSource()
         cancellation.CancelAfter(thinkTime * 1000)
         timeBound cancellation.Token ({ Axis = None; Allies = None }, Ongoing 0.0f) 1 board
-    minMax board
-    |> fun ({ Axis = m1; Allies = m2 }, _) -> (Option.toList m1 @ Option.toList m2) |> List.map (realizeMove world state)
+    let moves, mark =
+        minMax board
+    match mark with
+    | Defeat(coalition, _, reason) ->
+        Surrender(coalition, reason)
+    | _ ->
+        let { Axis = m1; Allies = m2 } = moves
+        (Option.toList m1 @ Option.toList m2)
+        |> List.map (realizeMove world state)
+        |> Continue
 
 /// Move tanks from a rear region (where they typically are in excess) closer to the front line (where they typically are in need)
 let allTankReinforcements (world : World) (state : WorldState) (coalition : CoalitionId) =
