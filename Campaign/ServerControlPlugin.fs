@@ -419,10 +419,15 @@ module Support =
             let startDate, _ = Campaign.Run.Init.createWorld config
             ignore <| Campaign.Run.WeatherComputation.run(config, startDate)
             ignore <| Campaign.Run.Init.createState config
-            Campaign.Run.OrderDecision.run config
-            loadWorldThenDo (support, config) updateMap
-            // Start campaign
-            return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
+            let decision = Campaign.Run.OrderDecision.run config
+            match decision with
+            | AutoOrder.Surrender(side, reason) ->
+                logger.Error(sprintf "%s surrendered immediately after reset because '%s'" (string side) reason)
+                return ScheduledTask.NoTask
+            | _ ->
+                loadWorldThenDo (support, config) updateMap
+                // Start campaign
+                return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
