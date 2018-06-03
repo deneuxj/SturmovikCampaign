@@ -90,7 +90,7 @@ with
             None
 
 /// Watch game event logs for friendly fire, and emit bans when abuse is detected
-let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSeq<LogEntry>) =
+let disciplinePlayers (config : Configuration) (world : World) (state : WorldState) (events : AsyncSeq<LogEntry>) =
     asyncSeq {
         let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
         let mutable nameOf = Map.empty // Vehicle ID -> player ID
@@ -168,7 +168,24 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                                 tank.Cost
                             | Some(BuildingObjectType model) ->
                                 let model = { Script = ""; Model = model; Pos = Unchecked.defaultof<OrientedPosition> }
-                                model.Storage(world.SubBlockSpecs) + model.Production(world.SubBlockSpecs, 1.0f) * 24.0f<H>
+                                let cost = model.Storage(world.SubBlockSpecs) + model.Production(world.SubBlockSpecs, 1.0f) * 24.0f<H>
+                                // Because static buildings sometimes bind to the wrong country, verify ownership of the containing region
+                                if cost > 0.0f<E> then
+                                    let pos = Vector2(damage.Position.X, damage.Position.Z)
+                                    match world.TryGetRegionWhere(pos) with
+                                    | Some region ->
+                                        match state.GetRegion(region.RegionId).Owner with
+                                        | Some coalition ->
+                                            if int coalition.ToCountry = int countryA then
+                                                cost
+                                            else
+                                                0.0f<E>
+                                        | None ->
+                                            0.0f<E>
+                                    | None ->
+                                        0.0f<E>
+                                else
+                                    0.0f<E>
                             | Some(PlaneObjectType model) ->
                                 model.Cost
                             | _ ->

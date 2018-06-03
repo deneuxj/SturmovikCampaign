@@ -301,7 +301,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             |> asyncIterNonMuted (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
         let disciplineTask =
             asyncSeqEntries
-            |> disciplinePlayers config world 
+            |> disciplinePlayers config world state
             |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
         let hangarTask =
             asyncSeqEntries
