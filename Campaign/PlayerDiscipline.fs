@@ -193,8 +193,6 @@ let disciplinePlayers (config : Configuration) (world : World) (events : AsyncSe
                             }
                         | None ->
                             ()
-                        if cost > 0.0f<E> then
-                            yield! addNoobScore player damage.Damage
                     | _ ->
                         // Coalition of attacker or target not known
                         ()
