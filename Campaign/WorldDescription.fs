@@ -635,6 +635,11 @@ with
         this.Airfields
         |> List.minBy(fun af -> (af.Pos - pos).LengthSquared())
 
+    member this.TryGetRegionWhere(pos : Vector2) =
+        this.Regions
+        |> List.tryFind (fun region ->
+            pos.IsInConvexPolygon(region.Boundary))
+
     member this.GetBattlefield(attacker : RegionId option, defender : RegionId) =
         let attackerPos =
             match attacker with
