@@ -29,6 +29,8 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open AiPlanes
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
+
 /// Compute the full-health storage capacity of each region, including airfields'
 let computeStorageCapacity (world : World) =
     let afCapacity =
@@ -395,6 +397,7 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
         if cancel.IsCancellationRequested || n >= 100 then
             prev
         else
+            logger.Info(sprintf "Board value at depth %d: %A" n res)
             timeBound cancel res (n + 1) board
     let minMax board =
         use cancellation = new CancellationTokenSource()
