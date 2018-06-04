@@ -457,9 +457,12 @@ type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onSt
             match state, axisOrders, alliesOrders with
             | Some state, Some axisOrders, Some alliesOrders ->
                 logger.Info("Starting new commentator")
-                use commentator = new Commentator(config, handlers, world, state, hangars, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
-                do! awaitFiles (Set[missionFile])
-                onStateWritten()
+                let commentator = new Commentator(config, handlers, world, state, hangars, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
+                try
+                    do! awaitFiles (Set[missionFile])
+                    onStateWritten()
+                finally
+                    commentator.Dispose()
                 return! work world
             | _ ->
                 logger.Info(sprintf "Waiting until next change to %s" missionFile)
