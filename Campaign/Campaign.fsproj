@@ -152,6 +152,10 @@
     <None Include="Scripts\load-project-debug.fsx" />
     <None Include="Scripts\load-references-release.fsx" />
     <None Include="Scripts\load-project-release.fsx" />
+    <None Include="NLog.xsd" />
+    <Content Include="NLog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">
@@ -179,6 +183,9 @@
     <Reference Include="NLog">
       <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
     </Reference>
+    <Reference Include="ploggy">
+      <HintPath>..\packages\ploggy.1.1.1.1\lib\net45\ploggy.dll</HintPath>
+    </Reference>
     <Reference Include="SharpYaml">
       <HintPath>..\packages\FSharp.Configuration.1.3.1\lib\net45\SharpYaml.dll</HintPath>
     </Reference>
@@ -202,11 +209,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\plog\ploggy\ploggy.csproj">
-      <Name>ploggy</Name>
-      <Project>{c23498b3-892d-4f98-a8e4-00fbc6b97ed0}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <ProjectReference Include="..\..\SturmovikMission-git\Blocks\Blocks.fsproj">
       <Name>Blocks</Name>
       <Project>{6f0be45c-721f-49fb-bfda-73eb7a6d07ba}</Project>
