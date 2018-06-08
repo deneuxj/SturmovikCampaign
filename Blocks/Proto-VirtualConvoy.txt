@@ -1,0 +1,144 @@
+﻿type Convoy {
+	entity LeadCarEntity
+	trigger ActivateGroup
+	trigger DeactivateGroup
+	trigger DeleteLeadCar
+	trigger Discard
+    trigger StopTravel
+}
+Convoy the_convoy
+
+type TruckInConvoy {
+	entity Entity
+	trigger Damaged
+	trigger Delete
+	trigger Discard
+}
+TruckInConvoy truck_in_convoy(int)
+
+type Conjunction {
+    trigger SetA
+    trigger SetB
+    trigger ClearA
+    trigger ClearB
+    trigger AllTrue
+}
+bool block_cond_at_waypoint(Waypoint, Conjunction)
+
+type Timer {
+	trigger Start
+	trigger Stop
+	trigger Elapsed
+}
+Timer start_delay
+Timer discard_delay
+
+type Notification {
+	trigger Trigger
+	trigger Disable
+}
+Notification death_notification_of_truck(TruckInConvoy)
+Notification start_notification_of_convoy
+Notification blocked_notification
+
+type Waypoint {
+	trigger Waypoint
+    trigger PassedDisable
+}
+bool waypoints_guards_bridge(Waypoint, Bridge)
+
+type Bridge {
+    trigger Destroyed
+}
+
+predicate path(Waypoint, Waypoint)
+predicate start
+predicate end
+
+type ConvoyApi {
+	trigger Start // 1x counter
+	trigger Destroyed // This is a non-wraping counter set to (num of trucks in convoy) + 1
+	trigger Arrived
+	trigger Blocked
+}
+ConvoyApi the_api
+
+type Icon {
+	trigger Show
+	trigger Hide
+}
+Icon cover_icon
+Icon attack_icon
+
+// Requirements
+1. Convoy activated when started
+2. Convoy starts moving when started
+3. Convoy moves to next waypoint when waypoint reached
+4. Convoy is discarded after reaching its destination
+5. Damaged truck produces a notification in the log
+6. Icon is shown when convoy starts
+7. Icon is hidden when convoy is destroyed
+8. Icon is hidden when convoy arrives
+9. Truck destruction accounted for in api
+10. Start of convoy is logged
+11. Arrival is reported in API
+12. Non-passed destroyed bridge sets conjunction part A
+13. Non-passed destroyed bridge reports convoy as blocked
+14. Reached bridge sets conjunction part B
+15. Conjunction fulfilled stops train
+16. Conjunction fulfilled discards train
+
+// Req.1
+targets += (the_api.Start, the_convoy.ActivateGroup)
+columns += for (position, truck) in truck_in_convoy -> (truck.Entity, the_convoy.LeadCarEntity, position)
+
+// Req.2
+targets += (the_api.Start, start_delay.Start)
+targets += (start_delay.Elapsed, start.Waypoint)
+objects += for wp in path -> (the_convoy.LeadCarEntity, wp.Waypoint)
+
+// Req.3
+targets += for wp1, wp2 in path -> (wp1.Waypoint, wp2.Waypoint)
+
+// Req.4
+targets += (end.Waypoint, discard_delay.Start)
+targets += (discard_delay.Elapsed, the_convoy.Discard)
+targets += for (_, truck) in truck_in_convoy -> (the_convoy.Discard, truck.Discard)
+
+// Req.5
+targets += for note in truck, note in death_notification_of_truck -> (truck.Damaged, note.Trigger)
+
+// Req.6
+targets += (the_api.Start, cover_icon.Show)
+targets += (the_api.Start, attack_icon.Show)
+
+// Req.7
+targets += (the_api.Destroyed, cover_icon.Hide)
+targets += (the_api.Destroyed, attack_icon.Hide)
+
+// Req.8
+targets += (end.Waypoint, cover_icon.Hide)
+targets += (end.Waypoint, attack_icon.Hide)
+
+// Req.9
+targets += for (_, truck) in truck_in_convoy -> (truck.Damaged, the_api.Destroyed)
+
+// Req.10
+target += (the_api.Start, start_notification.Trigger)
+
+// Req.11
+target += (end.Waypoint, the_api.Arrived)
+
+// Req.12
+target += for wp, bridge in waypoint_guards_bridge
+          for cond in block_cond_at_waypoint(wp) -> (bridge.Destroyed, cond.SetA)
+target += for wp, cond in block_cond_at_waypoint -> (wp.PassedDisable, cond.SetA)
+
+// Req.13
+target += for wp, cond in block_cond_at_waypoint -> (cond.SetA, the_ai.Blocked)
+
+// Req.14
+target += for wp, cond in block_cond_at_waypoint -> (wp.Waypoint, cond.SetB)
+
+// Req.15
+target += for _, cond in block_cond_at_waypoint -> (cond.AllTrue, the_convoy.StopTravel)
