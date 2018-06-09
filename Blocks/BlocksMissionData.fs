@@ -8,13 +8,14 @@ open VectorExtension
 [<Literal>]
 let private dataDir = __SOURCE_DIRECTORY__ + "/../data"
 [<Literal>]
-let private sampleFile = dataDir + "/Sample.Mission"
+let private sampleFile = __SOURCE_DIRECTORY__ + "/Sample.Mission"
 [<Literal>]
 let private blocksFile = dataDir + "/Blocks/Blocks.Mission"
 [<Literal>]
 let private vehiclesFile = dataDir + "/Blocks/Vehicles.mission"
 [<Literal>]
 let private libFiles = blocksFile + ";" + vehiclesFile
+
 type T = SturmovikMissionTypes.Provider<sampleFile, libFiles>
 
 let blocksData =
