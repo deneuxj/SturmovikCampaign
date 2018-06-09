@@ -4,12 +4,11 @@
 ./*.suo
 devenv*.vspx
 *.userprefs
-D.nuget/
+.nuget/
 packages/
 SturmovikCampaign-*.zip
 SturmovikCampaign-*/
 Campaign/Configuration.fsx
-ataProvider/Scripts/*.fsx
 data/Blocks/*.fra
 data/Blocks/*.ger
 data/Blocks/*.rus
@@ -24,3 +23,4 @@ data/*.pol
 data/*.spa
 data/*.list
 data/*.msnbin
+*/Sample.Mission
