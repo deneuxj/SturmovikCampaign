@@ -267,22 +267,28 @@ let private emptyHangar (playerId : string, playerName : string) =
     { Player = Guid(playerId); PlayerName = playerName; Reserve = 0.0f<E>; Airfields = Map.empty }
 
 // For objects whose damage is tracked anonymously by the result extraction system, list object type and cost
-// Missing: ships
 let valuedObjects =
     [
         ("_PzKpfw III Ausf.L", GroundAttackVehicle.HeavyTankCost)
         ("_T-34-76 STZ", GroundAttackVehicle.HeavyTankCost)
+        ("Destroyer Type 7", 5.0f * GroundAttackVehicle.HeavyTankCost)
         ("GAZ-AA", Orders.ResupplyOrder.TruckCapacity)
         ("GAZ-M", Orders.ResupplyOrder.TruckCapacity)
+        ("Landing Boat type A", float32 Orders.shipVehicleCapacity * GroundAttackVehicle.MediumTankCost)
+        ("Large Cargo Ship type 1", Orders.ResupplyOrder.ShipCapacity)
+        ("Large Tanker Ship type 1", Orders.ResupplyOrder.ShipCapacity)
         ("Locomotive_E", Orders.ResupplyOrder.TrainCapacity)
         ("Locomotive_G8", Orders.ResupplyOrder.TrainCapacity)
         ("Opel Blitz", Orders.ResupplyOrder.TruckCapacity)
         ("PzKpfw III Ausf.H", GroundAttackVehicle.HeavyTankCost)
         ("PzKpfw IV Ausf.F1", GroundAttackVehicle.MediumTankCost)
+        ("River Cargo Ship type Georgia AAA", Orders.ResupplyOrder.ShipCapacity)
         ("Sd Kfz 10 Flak 38", GroundAttackVehicle.LightArmorCost)
         ("Sd Kfz 251 Wurfrahmen 40", GroundAttackVehicle.LightArmorCost)
         ("T-34-76", GroundAttackVehicle.HeavyTankCost)
         ("T-70", GroundAttackVehicle.MediumTankCost)
+        ("Torpedo Boat type S-38", 2.0f * GroundAttackVehicle.HeavyTankCost)
+        ("Torpedo Boat G-5 series 11-bis 213", 2.0f * GroundAttackVehicle.HeavyTankCost)
         ("wagon_tankb", Orders.ResupplyOrder.TrainCapacity / 8.0f)
         ("zis-3", Orders.ResupplyOrder.TruckCapacity)
         ("zis-5 72-k", GroundAttackVehicle.LightArmorCost)
