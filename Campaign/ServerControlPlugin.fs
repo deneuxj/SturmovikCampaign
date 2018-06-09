@@ -131,7 +131,6 @@ module Support =
                     support.Logging.LogInfo "Deciding orders..."
                     let decision = Campaign.Run.OrderDecision.run config
                     match decision with
-                    | _  // WORK-AROUND: Currently, there is a bug causing a side to surrender when it should not. Always continue and generate next mission until that's fixed.
                     | AutoOrder.Continue _ ->
                         return serverProc, GenerateMission
                     | AutoOrder.Surrender(coalition, reason) ->
