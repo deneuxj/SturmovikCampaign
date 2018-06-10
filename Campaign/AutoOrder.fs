@@ -406,7 +406,7 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     let moves, mark =
         minMax board
     match mark with
-    | Defeat(coalition, _, reason) ->
+    | Defeat(coalition, depth, reason) when (state.Date - world.StartDate).TotalDays >= 7.0 && depth <= 4 ->
         Surrender(coalition, reason)
     | _ ->
         let { Axis = m1; Allies = m2 } = moves
