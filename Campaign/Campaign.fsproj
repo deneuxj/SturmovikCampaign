@@ -105,7 +105,9 @@
       <Link>PlaneSet-Kuban.yaml</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="PlaneSet-KubanLate.yaml" />
+    <None Include="PlaneSet-KubanLate.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Configuration.fsx" />
     <None Include="Select.fsx" />
     <None Include="Init.fsx" />
