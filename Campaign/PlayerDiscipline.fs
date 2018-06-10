@@ -410,7 +410,8 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                 let user = { UserId = string entry.UserId; Name = entry.Name }
                 playerOf <- Map.add entry.VehicleId user playerOf
                 healthOf <- Map.add entry.VehicleId 1.0f healthOf
-                match CoalitionId.FromLogEntry(entry.Country) with
+                let coalition = CoalitionId.FromLogEntry(entry.Country)
+                match coalition with
                 | Some x ->
                     coalitionOf <- coalitionOf.Add(user.Name, x)
                 | None ->
@@ -424,7 +425,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     // If spawning in a Ju52 or other cargo transporter, suggest destinations
                     let bigBombLoad = lazy(plane.BombLoads |> Seq.exists (fun (loadout, weight) -> loadout = entry.Payload && weight >= 1000.0f<K>))
                     if plane.Roles.Contains(CargoTransporter) || bigBombLoad.Value then
-                        match CoalitionId.FromLogEntry(entry.Country) with
+                        match coalition with
                         | Some coalition -> yield! handledSupplyMissionStart(user, af.Region, coalition)
                         | None -> ()
                     let availableAtAirfield =
@@ -433,7 +434,13 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                         |> Option.bind (fun planes -> planes.TryFind plane)
                         |> Option.defaultValue 0.0f
                     let isRestricted =
-                        if rearAirfields.Contains(Some af.AirfieldId) then
+                        let numOwned =
+                            state.Regions
+                            |> Seq.filter (fun region -> region.Owner = coalition)
+                            |> Seq.length
+                        if numOwned * 4 <= state.Regions.Length then
+                            false
+                        elif rearAirfields.Contains(Some af.AirfieldId) then
                             false
                         elif sg.GetRegion(af.Region).HasInvaders then
                             false
