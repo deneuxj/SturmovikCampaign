@@ -211,9 +211,10 @@ let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (Airfiel
     // Do not assign multiple patrols to the same region at the same altitude
     |> Seq.distinctBy (fun (_, patrol) -> patrol.ProtectedRegion, patrol.Altitude)
 
-// A ground attack flight composed of two planes
+// A ground attack flight composed of multiple planes
 type AiAttack =
     { Plane : PlaneModel
+      NumPlanes : int
       Coalition : CoalitionId
       Start : Vector2
       Target : Vector2
@@ -223,13 +224,14 @@ type AiAttack =
     }
 with
     member this.ToPatrolBlock(store, lcStore) =
+        let numPlanes = this.NumPlanes
         let landOrder =
             match this.Landing with
             | None -> NoLanding
             | Some x -> Land x
         let blocks =
             [
-                for i in 0..1 do
+                for i in 1..numPlanes do
                     let block = Attacker.Create(store, lcStore, this.Start + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Target, landOrder)
                     let modmask, payload = this.Plane.PayloadForRole(this.Role)
                     block.Plane.Country <- Some this.Coalition.ToCountry
@@ -238,21 +240,39 @@ with
                     block.Plane.PayloadId <- Some payload
                     yield block
             ]
-        let bothKilled = SturmovikMission.Blocks.Conjunction.Conjunction.Create(store, this.Start + Vector2(200.0f, 200.0f))
-        Mcu.addTargetLink blocks.[0].Killed bothKilled.SetA.Index
-        Mcu.addTargetLink blocks.[1].Killed bothKilled.SetB.Index
-        Mcu.addTargetLink blocks.[0].Spawned bothKilled.ClearA.Index
-        Mcu.addTargetLink blocks.[1].Spawned bothKilled.ClearB.Index
+        let conjKilled =
+            [|
+                for i in 1..numPlanes-1 do
+                    let thisKilled = SturmovikMission.Blocks.Conjunction.Conjunction.Create(store, this.Start + (float32 i) * Vector2(200.0f, 200.0f))
+                    Mcu.addTargetLink blocks.[i].Killed thisKilled.SetA.Index
+                    Mcu.addTargetLink blocks.[i].Spawned thisKilled.ClearA.Index
+                    yield thisKilled
+            |]
+        for prev, curr in Seq.pairwise conjKilled do
+            Mcu.addTargetLink prev.AllTrue curr.SetB.Index
+            Mcu.addTargetLink prev.SomeFalse curr.ClearB.Index
+        match conjKilled with
+        | [||] -> ()
+        | _ ->
+            let first = conjKilled.[0]
+            Mcu.addTargetLink blocks.[0].Killed first.SetB.Index
+            Mcu.addTargetLink blocks.[0].Spawned first.ClearB.Index
+        let allKilled, someSpawned =
+            match conjKilled with
+            | [||] ->
+                blocks.[0].Killed, blocks.[0].Spawned
+            | _ ->
+                let last = conjKilled.[conjKilled.Length - 1]
+                last.AllTrue, last.SomeFalse
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, 0.1f * (this.Start + 9.0f * this.Target), sprintf "Attackers at %d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
-        Mcu.addTargetLink bothKilled.AllTrue icon1.Hide.Index
-        Mcu.addTargetLink bothKilled.AllTrue icon2.Hide.Index
-        for i in 0..1 do
-            Mcu.addTargetLink blocks.[i].Spawned icon1.Show.Index
-            Mcu.addTargetLink blocks.[i].Spawned icon2.Show.Index
+        Mcu.addTargetLink allKilled icon1.Hide.Index
+        Mcu.addTargetLink allKilled icon2.Hide.Index
+        Mcu.addTargetLink someSpawned icon1.Show.Index
+        Mcu.addTargetLink someSpawned icon2.Show.Index
         { new McuUtil.IMcuGroup with
               member x.Content = []
               member x.LcStrings = []
-              member x.SubGroups = [ blocks.[0].All; blocks.[1].All; bothKilled.All; icon1.All; icon2.All ]
+              member x.SubGroups = (blocks |> List.map (fun blk -> blk.All)) @ (conjKilled |> Seq.map (fun conj -> conj.All) |> Seq.toList) @ [ icon1.All; icon2.All ]
         }, blocks
 
 let mkAllAttackers (world : World) (state : WorldState) =
@@ -286,9 +306,10 @@ let mkAllAttackers (world : World) (state : WorldState) =
                                             Target = af2.Pos
                                             Altitude = 2000.0f
                                             Plane = attacker
+                                            NumPlanes = 3
                                             Coalition = coalition
                                             Role = GroundAttacker
-                                        }, 3
+                                        }
                                 | Allies ->
                                     if attacker.Coalition = coalition && afState2.Supplies / bombCost > bombLoad * minPlanes then
                                         yield {
@@ -297,9 +318,10 @@ let mkAllAttackers (world : World) (state : WorldState) =
                                             Target = af.Pos
                                             Altitude = 2000.0f
                                             Plane = attacker
+                                            NumPlanes = 3
                                             Coalition = coalition
                                             Role = GroundAttacker
-                                        }, 3
+                                        }
             // Storage raids
             let storages =
                 let cache = new System.Collections.Generic.Dictionary<_, _>()
@@ -328,8 +350,9 @@ let mkAllAttackers (world : World) (state : WorldState) =
                                             Target = supplyGroup.Head.Pos.Pos
                                             Altitude = 2000.0f
                                             Plane = attacker
+                                            NumPlanes = 1
                                             Coalition = coalition
                                             Role = GroundAttacker
-                                        }, 1
+                                        }
             | None -> ()
     }

@@ -326,13 +326,14 @@ module OrderDecision =
                 match attacks with
                 | [||] -> []
                 | _ ->
-                    let attack, numPlanes = attacks.[0]
-                    List.init (min config.MaxAttackers numPlanes) (fun _ ->
-                        let offset = 500.0f * Vector2(random.NextDouble() |> float32, random.NextDouble() |> float32)
-                        { attack with
-                            Start = attack.Start + offset
-                        }
-                    )
+                    attacks // Keep attacks up to max number of attacker planes
+                    |> Seq.fold (fun (outAttacks, totalPlanes) attack ->
+                        if totalPlanes >= config.MaxAttackers then
+                            (outAttacks, totalPlanes)
+                        else
+                            let numPlanes = min attack.NumPlanes (config.MaxAttackers - totalPlanes)
+                            ({ attack with NumPlanes = numPlanes } :: outAttacks, totalPlanes + numPlanes)) ([], 0)
+                    |> fst
             let axisAttacks, alliesAttacks =
                 if not weather.IsOvercast || weather.CloudHeight > 2500.0 then
                     let allAttacks = mkAttacks()
