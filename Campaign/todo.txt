@@ -43,11 +43,7 @@ X Feedback: ship supply
 --- bugs & small improvements ---
 
 ? Generate mission logic for AI transports
-X Min-max AI must not order troop movements larger than allowed by transporter capacity
-Tank ship transports must be composed of more landing crafts. No more than 5 tanks per craft.
 Make landing crafts move faster.
-Limit airplane available to bad pilots
 Notify players when their units are under attack (with a delay)
-X Live commenter sometimes stops working. Improve logging to facilitate filtering noise
-X Destroying bridges does not stop convoys.
-Destroyed bridges do not prevent tank battles in next mission if mission ends before tanks reach the destroyed bridge.
+? Destroyed bridges do not prevent tank battles in next mission if mission ends before tanks reach the destroyed bridge.
+Blocked, non-destroyed truck/train convoys must start the next convoy when discarded.
