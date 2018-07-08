@@ -331,6 +331,11 @@ with
                     yield upcast wp.Waypoint, upcast conj.SetB
                     // Req.15
                     yield conj.AllTrue, upcast this.TheConvoy.StopTravel
+                    // Req.16
+                    yield conj.AllTrue, upcast this.DiscardDelay.Start
+                // Req.17
+                yield this.TheConvoy.Discard, upcast this.IconAttack.Hide
+                yield this.TheConvoy.Discard, upcast this.IconCover.Hide
             ]
         let events =
             [

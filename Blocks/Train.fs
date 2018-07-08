@@ -137,6 +137,9 @@ with
             | Mcu.CountryValue.Russia -> Mcu.CoalitionValue.Allies
             | _ -> invalidArg "country" "Must be Germany or Russia"
         let iconCover, iconAttack = IconDisplay.CreatePair(store, lcStore, iconPos, "", coalition, Mcu.IconIdValue.CoverTrains)
+        // Hide icon when train is blocked and stopped
+        Mcu.addTargetLink stopTravel iconCover.Hide.Index
+        Mcu.addTargetLink stopTravel iconAttack.Hide.Index
         // result
         let group : Mcu.McuBase list =
             group

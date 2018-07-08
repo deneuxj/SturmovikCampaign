@@ -85,8 +85,9 @@ Icon attack_icon
 12. Non-passed destroyed bridge sets conjunction part A
 13. Non-passed destroyed bridge reports convoy as blocked
 14. Reached bridge sets conjunction part B
-15. Conjunction fulfilled stops train
-16. Conjunction fulfilled discards train
+15. Conjunction fulfilled stops convoy
+16. Conjunction fulfilled discards convoy
+17. Convoy discarded hides icon
 
 // Req.1
 targets += (the_api.Start, the_convoy.ActivateGroup)
