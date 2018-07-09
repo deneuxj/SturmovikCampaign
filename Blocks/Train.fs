@@ -45,7 +45,7 @@ with
         let blocked = getTriggerByName group T.Blocks.BLOCKED
         let completed = getTriggerByName group T.Blocks.COMPLETED
         let destWp = getWaypointByName group T.Blocks.Destination
-        let discard = getWaypointByName group T.Blocks.DELAYED_DISCARD
+        let discard = getTriggerByName group T.Blocks.DELAYED_DISCARD
         let train = getVehicleByName group T.Blocks.Train
         // Logic to stop and block train when it reaches a destroyed bridge
         let conds =
