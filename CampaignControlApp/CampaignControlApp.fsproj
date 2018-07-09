@@ -116,6 +116,11 @@
       <Project>{641f10fc-c185-4c95-881d-cc2bec4b95fc}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\Blocks\Blocks.fsproj">
+      <Name>Blocks</Name>
+      <Project>{6f0be45c-721f-49fb-bfda-73eb7a6d07ba}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\Campaign\Campaign.fsproj">
       <Name>Campaign</Name>
       <Project>{cdaff307-1fce-40e7-ae1e-fd4a813d1bca}</Project>
