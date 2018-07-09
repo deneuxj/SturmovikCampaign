@@ -77,6 +77,7 @@ with
         killed.Count <- 2 + numShips
         // Instantiate convoy members
         let shipGroups =
+            let random = System.Random()
             List.init (numShips - 1) (fun i ->
                 // Instantiate
                 let subst = Mcu.substId <| store.GetIdMapper()
@@ -94,7 +95,15 @@ with
                 // Position
                 let leadPos = Vector2.FromMcu(ship1.Pos)
                 let dv = leadPos - Vector2.FromMcu(ship.Pos)
-                let newPos = leadPos - (1.0f + float32 i) * dv
+                let side = dv.Rotate(90.0f)
+                // Move ships to a random amount to the side, to avoid making them easy targets
+                let offSide =
+                    let mag =
+                        match waterType with
+                        | Sea -> 500.0f
+                        | River -> 50.0f
+                    2.0f * mag * float32(random.NextDouble() - 0.5) * side
+                let newPos = leadPos - (1.0f + float32 i) * dv + offSide
                 newPos.AssignTo(ship.Pos)
                 newPos.AssignTo(entity.Pos)
                 let newPos = Vector2.FromMcu(shipKilled.Pos) - (float32 i) * dv
