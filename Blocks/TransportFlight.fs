@@ -13,6 +13,7 @@ type TransportFlight = {
     Start : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
     Arrived : Mcu.McuTrigger
+    Completed : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
 }
 with
@@ -29,6 +30,7 @@ with
         let plane1 = getVehicleByName group T.Blocks.Transport1
         let killed = getTriggerByName group T.Blocks.Killed
         let arrived = getTriggerByName group T.Blocks.Landed
+        let completed = getTriggerByName group T.Blocks.COMPLETED
         // Position of all nodes
         let refPoint = Vector2.FromMcu plane1.Pos
         let dPos = takeOffPos - refPoint
@@ -77,5 +79,6 @@ with
         { Start = start
           Killed = killed
           Arrived = arrived
+          Completed = completed
           All = all
         }

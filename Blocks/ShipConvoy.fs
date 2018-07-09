@@ -20,6 +20,7 @@ type ShipConvoy = {
     Start : Mcu.McuTrigger
     Arrived : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
+    Completed : Mcu.McuTrigger
     IconCover : IconDisplay
     IconAttack : IconDisplay
     Ships : Mcu.HasEntity list
@@ -70,6 +71,7 @@ with
         let escort1 = getVehicleByName group T.Blocks.Escort1
         let escort2 = getVehicleByName group T.Blocks.Escort2
         let ship1 = getVehicleByName group T.Blocks.Cargo1
+        let completed = getTriggerByName group T.Blocks.COMPLETED
         let ship1Entity = getEntityByIndex ship1.LinkTrId group
         // Adjust killed count
         killed.Count <- 2 + numShips
@@ -205,6 +207,7 @@ with
         { Start = start
           Arrived = arrived
           Killed = killed
+          Completed = completed
           IconCover = iconCover
           IconAttack = iconAttack
           Ships = ship1 :: ships

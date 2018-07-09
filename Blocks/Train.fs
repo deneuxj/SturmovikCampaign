@@ -20,6 +20,7 @@ type Train = {
     Arrived : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
     Blocked : Mcu.McuTrigger
+    Completed : Mcu.McuTrigger
     IconCover : IconDisplay
     IconAttack : IconDisplay
     All : McuUtil.IMcuGroup
@@ -37,12 +38,14 @@ with
             subst mcu
         // Get key nodes
         let start = getTriggerByName group T.Blocks.START
-        let stopTravel = getTriggerByName group T.Blocks.StopTravel
-        let resumeTravel = getTriggerByName group T.Blocks.ResumeTravel
+        let stopTravel = getTriggerByName group T.Blocks.STOP
+        let resumeTravel = getTriggerByName group T.Blocks.RESUME
         let arrived = getTriggerByName group T.Blocks.ARRIVED
         let killed = getTriggerByName group T.Blocks.KILLED
         let blocked = getTriggerByName group T.Blocks.BLOCKED
+        let completed = getTriggerByName group T.Blocks.COMPLETED
         let destWp = getWaypointByName group T.Blocks.Destination
+        let discard = getWaypointByName group T.Blocks.DELAYED_DISCARD
         let train = getVehicleByName group T.Blocks.Train
         // Logic to stop and block train when it reaches a destroyed bridge
         let conds =
@@ -58,6 +61,8 @@ with
                     Mcu.addTargetLink conj.SetA blocked.Index
                     // Link conj result to stop train
                     Mcu.addTargetLink conj.AllTrue stopTravel.Index
+                    Mcu.addTargetLink conj.AllTrue discard.Index
+                    Mcu.addTargetLink conj.AllTrue completed.Index
                     // Result
                     yield v, conj
             }
@@ -154,6 +159,7 @@ with
           Arrived = arrived
           Killed = killed
           Blocked = blocked
+          Completed = completed
           IconCover = iconCover
           IconAttack = iconAttack
           All = { new McuUtil.IMcuGroup with

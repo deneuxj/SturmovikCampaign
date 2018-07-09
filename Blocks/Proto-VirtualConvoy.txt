@@ -81,8 +81,9 @@ Icon attack_icon
 8. Icon is hidden when convoy arrives
 9. Truck destruction accounted for in api
 10. Start of convoy is logged
-11. Arrival is reported in API
+11. DEPRECATED
 12. Non-passed destroyed bridge sets conjunction part A
+12b. Passed bridge does not set conjunction part A when destroyed
 13. Non-passed destroyed bridge reports convoy as blocked
 14. Reached bridge sets conjunction part B
 15. Conjunction fulfilled stops convoy

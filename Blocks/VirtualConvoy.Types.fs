@@ -168,22 +168,19 @@ with
 type ConvoyApi =
     { Start : Mcu.McuTrigger
       Destroyed : Mcu.McuTrigger
-      Arrived : Mcu.McuTrigger
-      Blocked : Mcu.McuTrigger // e.g. because of a destroyed bridge
+      Completed : Mcu.McuTrigger // Destroyed, arrived, blocked at destroyed bridge
       All : McuUtil.IMcuGroup
     }
 with
     static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, numTrucks : int) =
         // Create all nodes
         let start = newCounter 1
-        let destroyed = newCounter 2
-        let arrived = newCounter 3
-        let blocked = newCounter 4
-        Vector2(0.0f, 50.0f).AssignTo(destroyed.Pos)
-        Vector2(0.0f, 100.0f).AssignTo(arrived.Pos)
-        Vector2(0.0f, 150.0f).AssignTo(blocked.Pos)
+        let completed = newCounter 2
+        let destroyed = newCounter 3
+        Vector2(0.0f, 50.0f).AssignTo(completed.Pos)
+        Vector2(0.0f, 100.0f).AssignTo(destroyed.Pos)
         destroyed.Count <- numTrucks
-        let group : Mcu.McuBase list = [ start; destroyed; arrived; blocked ]
+        let group : Mcu.McuBase list = [ start; destroyed; completed ]
         // Position
         for mcu in group do
             let pos2 = Vector2.FromMcu(mcu.Pos) + pos
@@ -192,10 +189,11 @@ with
         let subst = Mcu.substId <| store.GetIdMapper()
         for mcu in group do
             subst mcu
+        // destroyed -> completed
+        Mcu.addTargetLink destroyed completed.Index
         // Result
         { Start = start
           Destroyed = destroyed
-          Arrived = arrived
-          Blocked = blocked
+          Completed = completed
           All = McuUtil.groupFromList group
         }

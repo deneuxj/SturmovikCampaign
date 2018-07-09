@@ -224,19 +224,18 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                     None)
         let convoyPrioNodes, convoys = createConvoys store lcStore missionData.World missionData.State bridgeEntities bridgesOfVertex orders
         for node, (orderId, convoy) in List.zip convoyPrioNodes.Nodes convoys do
-            let start, destroyed, arrived =
+            let start, completed =
                 match convoy with
                 | Choice1Of4 trucks ->
-                    trucks.Api.Start, trucks.Api.Destroyed, trucks.Api.Arrived
+                    trucks.Api.Start, trucks.Api.Completed
                 | Choice2Of4 train ->
-                    train.TheTrain.Start, train.TheTrain.Killed, train.TheTrain.Arrived
+                    train.TheTrain.Start, train.TheTrain.Completed
                 | Choice3Of4 ships ->
-                    ships.Start, ships.Killed, ships.Arrived
+                    ships.Start, ships.Completed
                 | Choice4Of4 flight ->
-                    flight.Start, flight.Killed, flight.Arrived
+                    flight.Start, flight.Completed
             Mcu.addTargetLink node.Do start.Index
-            Mcu.addTargetLink destroyed convoyPrioNodes.Try.Index
-            Mcu.addTargetLink arrived convoyPrioNodes.Try.Index
+            Mcu.addTargetLink completed convoyPrioNodes.Try.Index
         for i, node in Seq.indexed convoyPrioNodes.Nodes do
             if i < missionParams.MaxSimultaneousConvoys then
                 Mcu.addTargetLink missionBegin node.Do.Index

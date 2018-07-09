@@ -314,19 +314,13 @@ with
                     yield this.TruckInConvoySet.[truck].Damaged, upcast this.Api.Destroyed
                 // Req.10
                 yield this.Api.Start, upcast this.DepartureReporting.Trigger
-                // Req.11
-                yield upcast this.WaypointSet.[this.PathEnd].Waypoint, upcast this.Api.Arrived
-                // Req.12
-                yield this.Api.Blocked, upcast this.DiscardDelay.Start
-                // Req.13
-                yield this.Api.Blocked, upcast this.BlockedReporting.Trigger
                 for wp, conj in this.BridgeConjunctionAtWaypoint do
                     let wp = this.WaypointSet.[wp]
                     let conj = this.BridgeDestroyedConjSet.[conj]
-                    // Req.12
+                    // Req.12b (Req.12 is implemented in construction of this.BridgeDestroyedConjSet)
                     yield wp.PassedDisable, upcast conj.SetA
                     // Req.13
-                    yield conj.SetA, upcast this.Api.Blocked
+                    yield conj.SetA, upcast this.BlockedReporting.Trigger
                     // Req.14
                     yield upcast wp.Waypoint, upcast conj.SetB
                     // Req.15

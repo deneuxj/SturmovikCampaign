@@ -45,5 +45,3 @@ X Feedback: ship supply
 ? Generate mission logic for AI transports
 Make landing crafts move faster.
 Notify players when their units are under attack (with a delay)
-? Destroyed bridges do not prevent tank battles in next mission if mission ends before tanks reach the destroyed bridge.
-Blocked, non-destroyed truck/train convoys must start the next convoy when discarded.
