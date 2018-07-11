@@ -659,6 +659,10 @@ with
         |> Seq.filter (fun area -> area.Home = defender)
         |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
 
+    member this.RegionHasAirfields(region : RegionId) =
+        this.Airfields
+        |> Seq.exists (fun af -> af.Region = region)
+
 
 open Util
 

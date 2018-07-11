@@ -345,7 +345,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
                     state.Regions
                     |> Seq.filter (fun region -> region.Owner = Some coalition)
                     |> Seq.sortByDescending (fun regState -> computeSupplyRewardFactor regStart regState.RegionId)
-                    |> Seq.filter(fun regState -> computeSupplyRewardFactor regStart regState.RegionId > 0.0f)
+                    |> Seq.filter(fun regState -> world.RegionHasAirfields(regState.RegionId) && computeSupplyRewardFactor regStart regState.RegionId > 0.0f)
                     |> Seq.truncate 3
                     |> List.ofSeq
                 match bestDestinations with
