@@ -113,6 +113,8 @@ type RegionState = {
     Supplies : float32<E>
     NumVehicles : Map<GroundAttackVehicle, int>
     NumInvadingVehicles : Map<GroundAttackVehicle, int>
+    /// Number of vehicles that are parked and exposed to attacks. Must be a subset of NumVehicles.
+    NumExposedVehicles : Map<GroundAttackVehicle, int>
 }
 with
     member this.GetNumVehicles(vehicle : GroundAttackVehicle) =
@@ -593,6 +595,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
               Products = { Supplies = 0.0f<E>; Vehicles = Map.empty; Planes = Map.empty }
               Supplies = supplies
               NumVehicles = vehicles
+              NumExposedVehicles = Map.empty
               NumInvadingVehicles = Map.empty
             }
         )

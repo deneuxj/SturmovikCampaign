@@ -1193,12 +1193,19 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
         )
     { state with Regions = regions }
 
+/// Reset the exposed vehicles in each region.
+let resetExposedVehicles (state : WorldState) =
+    { state with
+        Regions = state.Regions |> List.map (fun regState -> { regState with NumExposedVehicles = Map.empty })
+    }
+
 /// Add vehicles that have arrived in a region to that region. Must be called after applyConquests.
 let applyVehicleArrivals (state : WorldState) (movements : ColumnMovement list) =
     let arrived =
         movements
         |> Seq.groupBy (fun move -> move.Destination)
         |> Map.ofSeq
+    let state = resetExposedVehicles state
     let regions =
         state.Regions
         |> List.map (fun region ->
@@ -1215,10 +1222,12 @@ let applyVehicleArrivals (state : WorldState) (movements : ColumnMovement list) 
                         { region with
                             Owner = Some column.OrderId.Coalition
                             NumVehicles = comp
+                            NumExposedVehicles = comp
                         }
                     | Some coalition when column.OrderId.Coalition = coalition ->
                         { region with
                             NumVehicles = Util.addMaps region.NumVehicles comp
+                            NumExposedVehicles = comp
                         }
                     | Some coalition ->
                         { region with

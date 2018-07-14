@@ -563,3 +563,28 @@ let createStorageIcons maxItems store lcStore missionBegin (world : World) (stat
             | [] ->
                 ()
     ]
+
+
+/// Create icons for tank parks.
+let createTankParkIcons store lcStore missionBegin (world : World) (state : WorldState) =
+    // Build icons
+    [
+        for reg, regState in List.zip world.Regions state.Regions do
+            if not regState.NumExposedVehicles.IsEmpty && not reg.Parking.IsEmpty then
+                match regState.Owner with
+                | Some owner ->
+                    let pos = reg.Parking.[0]
+                    let label = "tank park"
+                    let iconA, iconB = IconDisplay.CreatePair(store, lcStore, pos, label, owner.ToCoalition, Mcu.IconIdValue.CoverArmorColumn)
+                    iconA.Show.Time <- 300.0 // Delay icon by 5 minutes
+                    iconB.Show.Time <- 300.0
+                    let wec = Proximity.Create(store, owner.Other.ToCoalition, 2500, pos)
+                    Mcu.addTargetLink wec.Out iconA.Show.Index
+                    Mcu.addTargetLink wec.Out iconB.Show.Index
+                    Mcu.addTargetLink missionBegin wec.Start.Index
+                    yield iconA.All
+                    yield iconB.All
+                    yield wec.All
+                | None ->
+                    ()
+    ]

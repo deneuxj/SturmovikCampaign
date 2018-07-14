@@ -60,7 +60,7 @@ let createParkedTanks store lcStore (world : World) (state : WorldState) inAttac
     let country = coalition.ToCountry |> int
     [
         for region, regState in List.zip world.Regions state.Regions do
-            if regState.Owner = Some coalition && not(List.isEmpty region.Parking) && not regState.HasInvaders then
+            if regState.Owner = Some coalition && not(List.isEmpty region.Parking) && not regState.HasInvaders && not regState.NumExposedVehicles.IsEmpty then
                 let subtracted =
                     orders.Columns
                     |> List.filter (fun order -> order.Start = region.RegionId)
@@ -68,7 +68,7 @@ let createParkedTanks store lcStore (world : World) (state : WorldState) inAttac
                     |> Array.concat
                     |> compactSeq
                 let parked =
-                    subMaps regState.NumVehicles subtracted
+                    subMaps regState.NumExposedVehicles subtracted
                     |> expandMap
                     |> Array.shuffle (System.Random())
                 let netPositions = computeRandomParkingPositions netFlatPos region.Parking parked.Length
