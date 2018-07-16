@@ -695,9 +695,9 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         match closest with
                         | Some(damaged, _, building) ->
                             let significantSubBlocks = building.SubBlocks(world.SubBlockSpecs)
-                            if List.contains subGroup significantSubBlocks then
+                            if Array.contains subGroup significantSubBlocks then
                                 let damageAmount =
-                                    damage.Damage / float32 (List.length significantSubBlocks)
+                                    damage.Damage / float32 (Array.length significantSubBlocks)
                                 let player =
                                     pilots.Value.TryFind damage.AttackerId
                                 let data = { Amount = damageAmount; ByPlayer = player }

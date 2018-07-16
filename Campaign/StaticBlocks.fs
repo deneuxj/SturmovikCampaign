@@ -100,10 +100,10 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                         |> setDamaged (
                             mkDamaged (
                                 let subBlocks = building.SubBlocks(world.SubBlockSpecs)
-                                let numSubs = List.length subBlocks |> float
+                                let numSubs = subBlocks.Length |> float
                                 let subDamage = 1.0 / numSubs
                                 subBlocks
-                                |> List.fold (fun (items, damage) sub ->
+                                |> Array.fold (fun (items, damage) sub ->
                                     if damage > 0.5 * subDamage then
                                         (sub, T.Float 1.0) :: items, damage - subDamage
                                     else

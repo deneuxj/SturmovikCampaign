@@ -105,7 +105,7 @@ let private defaultDurability = 25000
 /// A static block model substring and a list of sub-block identifiers
 type SubBlockSpec = {
     Pattern : string
-    SubBlocks : int list
+    SubBlocks : int[]
     Production : float32<E/H>
     Storage : float32<E>
     IsAirfield : bool
@@ -150,7 +150,7 @@ with
                 x :: parseAll s
             | Some(x, s) -> parseError s
         { Pattern = pattern
-          SubBlocks = Stream.FromString subBlocks |> parseAll|> List.concat
+          SubBlocks = Stream.FromString subBlocks |> parseAll|> List.concat |> Array.ofList
           Production = 1.0f<E/H> * float32 production
           Storage = 1.0f<E> * float32 storage
           IsAirfield = isAirfield
@@ -180,7 +180,7 @@ with
                 Some spec.SubBlocks
             else
                 None)
-        |> Option.defaultValue []
+        |> Option.defaultValue [||]
 
     member this.Production(subBlocksSpecs, factor : float32) =
         subBlocksSpecs

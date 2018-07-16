@@ -147,14 +147,14 @@ with
     member this.AddStorage(blocks : T.Block list, subBlockSpecs) =
         let storage =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Storage subBlockSpecs > 0.0f<E> && not (block.IsAirfieldStorage subBlockSpecs) && not (block.SubBlocks(subBlockSpecs).IsEmpty))
+            |> List.filter (fun block -> block.Storage subBlockSpecs > 0.0f<E> && not (block.IsAirfieldStorage subBlockSpecs) && block.SubBlocks(subBlockSpecs).Length > 0)
         { this with Storage = this.Storage @ storage
         }
 
     member this.AddProduction(blocks : T.Block list, subBlockSpecs) =
         let factories =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Production(subBlockSpecs, 1.0f) > 0.0f<E/H> && not (block.SubBlocks(subBlockSpecs).IsEmpty))
+            |> List.filter (fun block -> block.Production(subBlockSpecs, 1.0f) > 0.0f<E/H> && block.SubBlocks(subBlockSpecs).Length > 0)
         { this with Production = this.Production @ factories
         }
 
@@ -682,7 +682,7 @@ with
         let numSubBlocks location (buildings : StaticGroup list) idx =
             try
                 buildings.[idx].SubBlocks world.SubBlockSpecs
-                |> List.length
+                |> Array.length
             with
             | _ ->
                 logger.Warn(sprintf "Bad damage index %d at %s" idx location)
