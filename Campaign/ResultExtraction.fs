@@ -496,9 +496,9 @@ type VehicleInColumn = {
 
 /// Something got bombed or strafed
 type DamagedObject =
-    | Production of RegionId * int
-    | Storage of RegionId * int
-    | Airfield of AirfieldId * int
+    | Production of RegionId * group:int * building:int
+    | Storage of RegionId * group:int * building:int
+    | Airfield of AirfieldId * group:int * building:int
     | Cannon of DefenseAreaId
     | HeavyMachineGun of DefenseAreaId
     | LightMachineGun of DefenseAreaId
@@ -510,11 +510,11 @@ type DamagedObject =
 with
     member this.Coalition(wg : WorldFastAccess, sg : WorldStateFastAccess) =
         match this with
-        | Storage(region, _)
+        | Storage(region, _, _)
         | Vehicle(region, _)
-        | Production(region, _) -> sg.GetRegion(region).Owner
+        | Production(region, _, _) -> sg.GetRegion(region).Owner
         | ParkedPlane(af, _)
-        | Airfield(af, _) -> sg.GetRegion(wg.GetAirfield(af).Region).Owner
+        | Airfield(af, _, _) -> sg.GetRegion(wg.GetAirfield(af).Region).Owner
         | Cannon def
         | HeavyMachineGun def
         | LightMachineGun def ->
@@ -530,22 +530,40 @@ with
 
     /// Full reward for destroying this
     member this.Value(wg : WorldFastAccess, sg : WorldStateFastAccess) =
+        /// Compute value of storage of one building in a group
+        let computeStorageValue (group : StaticGroup, building : int) =
+            let buildings = group.SubBlocks wg.World.SubBlockSpecs
+            /// Check if building is an important one (i.e. it's not a dog house, hay stack, tractor...)
+            match Array.tryFind ((=) building) buildings with
+            | Some _ ->
+                let groupSize = Array.length buildings
+                (group.Storage(wg.World.SubBlockSpecs) + group.RepairCost(wg.World.SubBlockSpecs)) / (float32 groupSize)
+            | None ->
+                0.0f<E>
+
         match this with
-        | Storage(region, idx) ->
-            let building =
-                wg.GetRegion(region).Storage.[idx]
-            building.Storage(wg.World.SubBlockSpecs) + building.RepairCost(wg.World.SubBlockSpecs)
-        | Production(region, idx) ->
-            let building =
-                wg.GetRegion(region).Production.[idx]
-            let repairCost = building.RepairCost(wg.World.SubBlockSpecs)
-            let timeToRepair = repairCost / wg.World.RepairSpeed
-            let productionLoss = 0.5f * building.Production(wg.World.SubBlockSpecs, wg.World.ProductionFactor) * timeToRepair
-            repairCost + productionLoss
-        | Airfield(afId, idx) ->
-            let building =
-                wg.GetAirfield(afId).Storage.[idx]
-            building.Storage(wg.World.SubBlockSpecs) + building.RepairCost(wg.World.SubBlockSpecs)
+        | Storage(region, group, building) ->
+            let group =
+                wg.GetRegion(region).Storage.[group]
+            computeStorageValue(group, building)
+        | Airfield(afId, group, building) ->
+            let group =
+                wg.GetAirfield(afId).Storage.[group]
+            computeStorageValue(group, building)
+        | Production(region, group, building) ->
+            let group =
+                wg.GetRegion(region).Production.[group]
+            let buildings = group.SubBlocks wg.World.SubBlockSpecs
+            match Array.tryFind ((=) building) buildings with
+            | Some _ ->
+                let groupSize = Array.length buildings
+                let groupSize = float32 groupSize
+                let repairCost = group.RepairCost(wg.World.SubBlockSpecs) / groupSize
+                let timeToRepair = repairCost / wg.World.RepairSpeed
+                let productionLoss = 0.5f * group.Production(wg.World.SubBlockSpecs, wg.World.ProductionFactor) / groupSize * timeToRepair
+                repairCost + productionLoss
+            | None ->
+                0.0f<E>
         | Cannon _ ->
             cannonCost
         | HeavyMachineGun _ ->
@@ -675,14 +693,14 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                             airfields
                             |> List.map (fun af ->
                                 af.Storage
-                                |> List.mapi (fun i sto -> Airfield(af.AirfieldId, i), sto))
+                                |> List.mapi (fun i sto -> Airfield(af.AirfieldId, i, subGroup), sto))
                             |> List.concat
                         let matchingStorageBuildings =
                             region.Storage
-                            |> List.mapi (fun i sto -> Storage(region.RegionId, i), sto)
+                            |> List.mapi (fun i sto -> Storage(region.RegionId, i, subGroup), sto)
                         let matchingProductionBuildings =
                             region.Production
-                            |> List.mapi (fun i pro -> Production(region.RegionId, i), pro)
+                            |> List.mapi (fun i pro -> Production(region.RegionId, i, subGroup), pro)
                         let closest =
                             try
                                 matchingAirfieldBuildings @ matchingProductionBuildings @ matchingStorageBuildings
@@ -696,11 +714,9 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         | Some(damaged, _, building) ->
                             let significantSubBlocks = building.SubBlocks(world.SubBlockSpecs)
                             if Array.contains subGroup significantSubBlocks then
-                                let damageAmount =
-                                    damage.Damage / float32 (Array.length significantSubBlocks)
                                 let player =
                                     pilots.Value.TryFind damage.AttackerId
-                                let data = { Amount = damageAmount; ByPlayer = player }
+                                let data = { Amount = damage.Damage; ByPlayer = player }
                                 yield { Object = damaged; Data = data }
                         | None -> () // No known building nearby
                     | None -> () // Outside of know regions

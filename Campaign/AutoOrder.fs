@@ -61,7 +61,7 @@ let computeActualStorageCapacity (world : World) (state : WorldState) =
             for af, afState in List.zip world.Airfields state.Airfields do
                 let capacity =
                     List.zip af.Storage afState.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> health * building.Storage world.SubBlockSpecs)
+                    |> Seq.sumBy (fun (building, health) -> Array.avg health * building.Storage world.SubBlockSpecs)
                 yield af.Region, capacity
         }
     let regCapacity =
@@ -69,7 +69,7 @@ let computeActualStorageCapacity (world : World) (state : WorldState) =
             for reg, regState in List.zip world.Regions state.Regions do
                 let capacity =
                     List.zip reg.Storage regState.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> health * building.Storage world.SubBlockSpecs)
+                    |> Seq.sumBy (fun (building, health) -> Array.avg health * building.Storage world.SubBlockSpecs)
                 yield reg.RegionId, capacity
         }
     Seq.concat [ afCapacity; regCapacity ]
@@ -107,7 +107,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     |> min (afs.StorageCapacity(af, world.SubBlockSpecs))
                 let repairs =
                     Seq.zip af.Storage afs.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> (1.0f - health) * building.RepairCost(world.SubBlockSpecs))
+                    |> Seq.sumBy (fun (building, health) -> (1.0f - Array.avg health) * building.RepairCost(world.SubBlockSpecs))
                 yield af.Region, bombNeed + repairs - afs.Supplies
         }
     // Ammo needs. Can be negative.
@@ -129,7 +129,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                     min (capacity - regState.Supplies) costs
                 let repairs =
                     List.zip reg.Production regState.ProductionHealth
-                    |> List.sumBy (fun (building, health) -> (1.0f - health) *  building.RepairCost(world.SubBlockSpecs))
+                    |> List.sumBy (fun (building, health) -> (1.0f - Array.avg health) *  building.RepairCost(world.SubBlockSpecs))
                 yield region, cost + repairs
         }
     Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]

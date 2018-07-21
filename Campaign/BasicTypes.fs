@@ -171,7 +171,7 @@ with
                   Altitude = block |> getAlt |> valueOf |> float32 }
         }
 
-    /// List of sub-block numbers that represent objects with significant storage or production capabilities
+    /// Array of sub-block numbers that represent objects with significant storage or production capabilities
     /// When adding buildings here, one must also remember to update the code in ResultExtraction, active pattern BuildingObjectType
     member this.SubBlocks(subBlocksSpecs) =
         subBlocksSpecs

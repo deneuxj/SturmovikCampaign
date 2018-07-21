@@ -214,20 +214,24 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
         damages
         |> List.choose (fun event ->
             match event.Object with
-            | Production(region, idx) ->
+            | Production(region, idx, _) ->
                 if sg1.GetRegion(region).Owner = Some coalition then
-                    Some (wg.GetRegion(region).Production.[idx], event.Data.Amount)
+                    let group = wg.GetRegion(region).Production.[idx]
+                    let groupSize = group.SubBlocks(world.SubBlockSpecs).Length
+                    Some (group, event.Data.Amount / float32 groupSize)
                 else
                     None
             | _ -> None)
-        |> List.sumBy (fun (building, damage) -> building.Production(world.SubBlockSpecs, world.ProductionFactor) * damage)
+        |> List.sumBy (fun (group, damage) -> group.Production(world.SubBlockSpecs, world.ProductionFactor) * damage)
     let storageDamage =
         damages
         |> List.choose (fun event ->
             match event.Object with
-            | Storage(region, idx) ->
+            | Storage(region, idx, _) ->
                 if sg1.GetRegion(region).Owner = Some coalition then
-                    Some (wg.GetRegion(region).Storage.[idx], event.Data.Amount)
+                    let group = wg.GetRegion(region).Storage.[idx]
+                    let groupSize = group.SubBlocks(world.SubBlockSpecs).Length
+                    Some (group, event.Data.Amount / float32 groupSize)
                 else
                     None
             | _ -> None)

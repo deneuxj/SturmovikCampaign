@@ -672,21 +672,20 @@ type WorldFastAccess = {
     GetAntiAirDefenses : DefenseAreaId -> DefenseArea
     GetAntiTankDefenses : DefenseAreaId -> DefenseArea
     GetAirfield : AirfieldId -> Airfield
-    GetRegionStorageNumSubBlocks : RegionId -> int -> int
-    GetRegionProductionNumSubBlocks : RegionId -> int -> int
-    GetAirfieldStorageNumSubBlocks : AirfieldId -> int -> int
+    GetRegionStorageSubBlocks : RegionId -> int -> int[]
+    GetRegionProductionSubBlocks : RegionId -> int -> int[]
+    GetAirfieldStorageSubBlocks : AirfieldId -> int -> int[]
     World : World
 }
 with
     static member Create(world : World) =
-        let numSubBlocks location (buildings : StaticGroup list) idx =
+        let subBlocks location (buildings : StaticGroup list) idx =
             try
                 buildings.[idx].SubBlocks world.SubBlockSpecs
-                |> Array.length
             with
             | _ ->
                 logger.Warn(sprintf "Bad damage index %d at %s" idx location)
-                1
+                [||]
 
         let getRegion = mkGetStuffFast world.Regions (fun r -> r.RegionId)
         let getAirfield = mkGetStuffFast world.Airfields (fun af -> af.AirfieldId)
@@ -694,21 +693,21 @@ with
           GetAntiAirDefenses = mkGetStuffFast world.AntiAirDefenses (fun r -> r.DefenseAreaId)
           GetAntiTankDefenses = mkGetStuffFast world.AntiTankDefenses (fun r -> r.DefenseAreaId)
           GetAirfield = getAirfield
-          GetRegionStorageNumSubBlocks =
+          GetRegionStorageSubBlocks =
             fun region idx ->
                 let location = string region + " (storage)"
                 let region = getRegion region
-                numSubBlocks location region.Storage idx
-          GetRegionProductionNumSubBlocks =
+                subBlocks location region.Storage idx
+          GetRegionProductionSubBlocks =
             fun region idx ->
                 let location = string region + " (production)"
                 let region = getRegion region
-                numSubBlocks location region.Production idx
-          GetAirfieldStorageNumSubBlocks =
+                subBlocks location region.Production idx
+          GetAirfieldStorageSubBlocks =
             fun afId idx ->
                 let location = afId.AirfieldName
                 let af = getAirfield afId
-                numSubBlocks location af.Storage idx
+                subBlocks location af.Storage idx
           World = world
         }
 

@@ -193,19 +193,21 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                         | Some player ->
                             let acc = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
                             let coalition = coalitionOf.Value.TryFind player |> Option.bind id
+                            // Cost of full damage to item (vehicle, building in group...)
                             let cost =
                                 match damage.Object with
-                                | Production(region, idx) ->
+                                | Production(region, idx, _) ->
                                     let pro = wg.GetRegion(region).Production.[idx]
-                                    let lostDueToDamage =
-                                        0.5f * pro.Production(world.SubBlockSpecs, world.ProductionFactor) * pro.RepairCost(world.SubBlockSpecs) * damage.Data.Amount / world.RepairSpeed
-                                    pro.RepairCost(world.SubBlockSpecs) + pro.Storage world.SubBlockSpecs + lostDueToDamage / damage.Data.Amount
-                                | Storage(region, idx) ->
+                                    let numSubs = pro.SubBlocks(world.SubBlockSpecs).Length
+                                    pro.RepairCost(world.SubBlockSpecs) / (float32 numSubs)
+                                | Storage(region, idx, _) ->
                                     let sto = wg.GetRegion(region).Storage.[idx]
-                                    sto.RepairCost(world.SubBlockSpecs) + sto.Storage world.SubBlockSpecs
-                                | Airfield(af, idx) ->
+                                    let numSubs = sto.SubBlocks(world.SubBlockSpecs).Length
+                                    (sto.RepairCost(world.SubBlockSpecs) + sto.Storage world.SubBlockSpecs) / (float32 numSubs)
+                                | Airfield(af, idx, _) ->
                                     let sto = wg.GetAirfield(af).Storage.[idx]
-                                    sto.RepairCost(world.SubBlockSpecs) + sto.Storage world.SubBlockSpecs
+                                    let numSubs = sto.SubBlocks(world.SubBlockSpecs).Length
+                                    (sto.RepairCost(world.SubBlockSpecs) + sto.Storage world.SubBlockSpecs) / (float32 numSubs)
                                 | Convoy vehicle ->
                                     match convoys.TryFind(vehicle.OrderId) with
                                     | Some order ->

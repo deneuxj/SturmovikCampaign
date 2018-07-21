@@ -136,6 +136,14 @@ module Array =
                     yield (x, y)
         }
 
+    let avg (arr : _[]) =
+        let len = float32 arr.Length
+        if len = 0.0f then
+            invalidArg "arr" "must not be empty"
+        else
+            (Array.sum arr) / len
+
+
 module Map =
     let getKeys m =
         m

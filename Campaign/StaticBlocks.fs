@@ -50,7 +50,7 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                 |> Seq.map (fun (block, health) -> (block.Pos.Pos - v).LengthSquared(), health)
                 |> Seq.minBy fst
             with
-            | _ -> 10.0f, 1.0f
+            | _ -> System.Single.PositiveInfinity, [||]
         if dist < 1.0f then
             Some health
         else
@@ -91,27 +91,17 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                     mcu.LinkTrId <- 0
                     mcu.Name <- sprintf "NoStrategicBlock-%d" mcu.Index
                     yield upcast mcu
-                | Some health ->
+                | Some healths ->
                     // Has health and strategic value, show damage if any
-                    let health = float health
                     let building = StaticGroup.FromBlock block
                     let damagedBlock =
                         block
                         |> setDamaged (
                             mkDamaged (
                                 let subBlocks = building.SubBlocks(world.SubBlockSpecs)
-                                let numSubs = subBlocks.Length |> float
-                                let subDamage = 1.0 / numSubs
-                                subBlocks
-                                |> Array.fold (fun (items, damage) sub ->
-                                    if damage > 0.5 * subDamage then
-                                        (sub, T.Float 1.0) :: items, damage - subDamage
-                                    else
-                                        items, damage
-                                    ) ([], 1.0 - health)
-                                |> fst
-                                |> List.rev
-                                |> Map.ofList))
+                                Array.zip subBlocks healths
+                                |> Seq.map (fun (idx, h) -> (idx, T.Float (float h)))
+                                |> Map.ofSeq))
                         |> setDurability (StaticGroup.FromBlock(block).Durability(world.SubBlockSpecs) |> T.Integer)
                         |> setIndex (T.Integer 1)
                         |> setLinkTrId (T.Integer 0) // No entity

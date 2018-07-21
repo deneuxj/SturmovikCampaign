@@ -89,26 +89,34 @@ type ProductionAssignment = {
 let buildingsStorageCapacity subBlockSpecs buildings healths =
     List.zip buildings healths
     |> List.sumBy(fun (building : StaticGroup, health) ->
-        if health < 0.5f then
-            0.0f<E>
-        else
-            building.Storage subBlockSpecs)
+        let h =
+            health
+            |> Array.sumBy (fun h ->
+                if h < 0.5f then
+                    0.0f
+                else
+                    h)
+        h * building.Storage subBlockSpecs)
 
 /// Total production capacity of a list of buildings
 let buildingsProductionCapacity subBlockSpecs prodFactor buildings healths =
     List.zip buildings healths
     |> List.sumBy(fun (building : StaticGroup, health) ->
-        if health < 0.5f then
-            0.0f<E/H>
-        else
-            building.Production(subBlockSpecs, prodFactor))
+        let h =
+            health
+            |> Array.sumBy (fun h ->
+                if h < 0.5f then
+                    0.0f
+                else
+                    h)
+        h * building.Production(subBlockSpecs, prodFactor))
 
 /// State of a region.
 type RegionState = {
     RegionId : RegionId
     Owner : CoalitionId option
-    StorageHealth : float32 list
-    ProductionHealth : float32 list
+    StorageHealth : float32[] list
+    ProductionHealth : float32[] list
     Products : ProductionAssignment
     Supplies : float32<E>
     NumVehicles : Map<GroundAttackVehicle, int>
@@ -159,7 +167,7 @@ type DefenseAreaState = {
 type AirfieldState = {
     AirfieldId : AirfieldId
     NumPlanes : Map<PlaneModel, float32> // float because we are talking airplane damages into account. Two half-damaged planes make one usable one.
-    StorageHealth : float32 list
+    StorageHealth : float32[] list
     Supplies : float32<E>
     Runway : Vector2 * float32
     AiSpawnPos : Vector2 * float32
@@ -590,8 +598,8 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                     1.0f<E> * supplies, vehicles
             { RegionId = region.RegionId
               Owner = owner
-              StorageHealth = region.Storage |> List.map (fun _ -> 1.0f)
-              ProductionHealth = region.Production |> List.map (fun _ -> 1.0f)
+              StorageHealth = region.Storage |> List.map (fun sto -> sto.SubBlocks world.SubBlockSpecs |> Array.map (fun _ -> 1.0f))
+              ProductionHealth = region.Production |> List.map (fun pro -> pro.SubBlocks world.SubBlockSpecs |> Array.map (fun _ -> 1.0f))
               Products = { Supplies = 0.0f<E>; Vehicles = Map.empty; Planes = Map.empty }
               Supplies = supplies
               NumVehicles = vehicles
@@ -646,7 +654,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                 Map.empty, 0.0f<E>
         { AirfieldId = airfield.AirfieldId
           NumPlanes = numPlanes
-          StorageHealth = airfield.Storage |> List.map (fun _ -> 1.0f)
+          StorageHealth = airfield.Storage |> List.map (fun sto -> sto.SubBlocks world.SubBlockSpecs |> Array.map (fun _ -> 1.0f))
           Supplies = supplies
           Runway = Vector2.Zero, 0.0f
           AiSpawnPos = Vector2.Zero, 0.0f
@@ -670,18 +678,18 @@ type WorldState with
         let damagedRegionStorage =
             List.zip (world.Regions |> List.map (fun region -> region.Storage)) (this.Regions |> List.map (fun region -> region.StorageHealth))
             |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
-            |> List.filter (fun (_, health) -> health < 0.5f)
-            |> List.map (fun (building, health) -> building.Storage world.SubBlockSpecs * (1.0f - health), (building, health))
+            |> List.filter (fun (_, health) -> Array.avg health < 0.5f)
+            |> List.map (fun (building, health) -> building.Storage world.SubBlockSpecs * (1.0f - Array.avg health), (building, health))
         let damagedRegionProduction =
             List.zip (world.Regions |> List.map (fun region -> region.Production)) (this.Regions |> List.map (fun region -> region.ProductionHealth))
             |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
-            |> List.filter (fun (_, health) -> health < 0.5f)
-            |> List.map (fun (building, health) -> 24.0f<H> * (building.Production(world.SubBlockSpecs, world.ProductionFactor)) * (1.0f - health), (building, health))
+            |> List.filter (fun (_, health) -> Array.avg health < 0.5f)
+            |> List.map (fun (building, health) -> 24.0f<H> * (building.Production(world.SubBlockSpecs, world.ProductionFactor)) * (1.0f - Array.avg health), (building, health))
         let damagedAirfieldStorage =
             List.zip (world.Airfields |> List.map (fun airfield -> airfield.Storage)) (this.Airfields |> List.map (fun airfield -> airfield.StorageHealth))
             |> List.collect (fun (buildings, healths) -> List.zip buildings healths)
-            |> List.filter (fun (_, health) -> health < 0.5f)
-            |> List.map (fun (building, health) -> building.Storage world.SubBlockSpecs * (1.0f - health), (building, health))
+            |> List.filter (fun (_, health) -> Array.avg health < 0.5f)
+            |> List.map (fun (building, health) -> building.Storage world.SubBlockSpecs * (1.0f - Array.avg health), (building, health))
         List.concat [ damagedRegionStorage; damagedRegionProduction; damagedAirfieldStorage ]
         |> List.sortByDescending fst
         |> List.truncate maxNumFires

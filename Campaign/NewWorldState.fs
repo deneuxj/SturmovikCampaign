@@ -263,31 +263,47 @@ let convertProduction (world : World) (state : WorldState) =
      newAxisVehicles.Value,
      newAlliesVehicles.Value)
 
-/// Consume supplies to heal buildings
-/// healths : List of health levels
-/// buildings : List of building descriptions, must match healths
-/// energy : input energy
-/// healLimit : max amount of input energy that can be used for healing
-let computeHealing(subBlocksSpecs, healths, buildings, energy, healLimit) =
-    let energyPerBuilding =
-        buildings
-        |> List.map (fun (x : StaticGroup) -> x.RepairCost(subBlocksSpecs))
-    let prodHealing, energy, healLimit =
-        List.zip healths energyPerBuilding
-        |> List.fold (fun (healings, available, healLimit) (health, healthCost : float32<E>) ->
+/// Consume supplies to heal buildings in a group
+/// healths : Array of healths for the buildings in the group
+/// cost : Cost of repairing the entire group
+/// available : Supplies available for repairs
+/// healLimit : Maximum amount of supplies allowed to be used for healing
+let healBuildings(healths : float32[], cost : float32<E>, available : float32<E>, healLimit : float32<E>) =
+    let costPerBuilding = lazy (cost / float32 healths.Length)
+    let reversedHealths, available, healLimit =
+        healths
+        |> Array.fold (fun (healths, available, healLimit) h ->
             let spend =
-                ((1.0f - health) * healthCost)
+                ((1.0f - h) * costPerBuilding.Value)
                 |> min available
                 |> min healLimit
-            (spend / healthCost) :: healings, available - spend, healLimit - spend
+            let repaired = spend / costPerBuilding.Value
+            (h + repaired) :: healths, available - spend, healLimit - spend) ([], available, healLimit)
+    let healths =
+        reversedHealths
+        |> List.rev
+        |> Array.ofList
+    healths, available, healLimit
+
+/// Consume supplies to heal buildings
+/// groupHealths : List of health levels for each group
+/// groupDescriptions : List of building group descriptions, must match healths
+/// energy : input energy
+/// healLimit : max amount of input energy that can be used for healing
+let computeHealing(subBlocksSpecs, groupHealths : float32[] list, groupDescriptions, energy, healLimit) =
+    let energyPerGroup =
+        groupDescriptions
+        |> List.map (fun (x : StaticGroup) -> x.RepairCost(subBlocksSpecs))
+    let healths, energy, healLimit =
+        List.zip groupHealths energyPerGroup
+        |> List.fold (fun (groups, available, healLimit) (healths, healthCost : float32<E>) ->
+            let healths, available, healLimit = healBuildings(healths, healthCost, available, healLimit)
+            healths :: groups, available, healLimit
         ) ([], energy, healLimit)
     assert(healLimit >= 0.0f<E>)
     assert(energy >= 0.0f<E>)
-    let prodHealing = List.rev prodHealing
-    let prodHealth =
-        List.zip healths prodHealing
-        |> List.map (fun (health, healing) -> health + healing |> max 0.0f |> min 1.0f)
-    prodHealth, energy, healLimit
+    let healths = List.rev healths
+    healths, energy, healLimit
 
 /// Compute how many supplies were removed from each region's stores
 let computeShipped (orders : ResupplyOrder list) (shipped : SuppliesShipped list) =
@@ -392,12 +408,22 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
     let wg = WorldFastAccess.Create world
 
     let shipped = computeShipped orders shipped
+
     let damages =
         let data =
             damages
             |> Seq.groupBy (fun dmg -> dmg.Object)
             |> Seq.map (fun (victim, damages) -> victim, damages |> Seq.map (fun dmg -> dmg.Data))
         Map.ofSeq data
+
+    let applyDamage health =
+        Option.map (fun damages ->
+            damages
+            |> Seq.sumBy (fun data -> data.Amount)
+            |> (-) health
+            |> max 0.0f)
+        >> Option.defaultVal health
+
     let regionsAfterShipping =
         [
             for regState in state.Regions do
@@ -410,13 +436,6 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                     |> max 0.0f<E>
                 yield { regState with Supplies = newStored }
         ]
-    let applyDamage health =
-        Option.map (fun damages ->
-            damages
-            |> Seq.sumBy (fun data -> data.Amount)
-            |> (-) health
-            |> max 0.0f)
-        >> Option.defaultVal health
     let airfieldsAfterDamages =
         [
             for afState in state.Airfields do
@@ -434,11 +453,15 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                             qty)
                 let capacityBeforeDamages = afState.StorageCapacity(af, world.SubBlockSpecs)
                 let storeHealth =
-                    let numSubBlocks = wg.GetAirfieldStorageNumSubBlocks af.AirfieldId
+                    let subBlocksOf = wg.GetAirfieldStorageSubBlocks af.AirfieldId
                     afState.StorageHealth
-                    |> List.mapi (fun idx health ->
-                        Map.tryFind (Airfield(afState.AirfieldId, idx)) damages
-                        |> applyDamage health)
+                    |> List.mapi (fun group health ->
+                        let buildings = subBlocksOf group
+                        // For each building in the group, apply all damage that affects it
+                        buildings
+                        |> Array.map2 (fun h idx ->
+                            Map.tryFind (Airfield(afState.AirfieldId, group, idx)) damages
+                            |> applyDamage h) health)
                 let afState = { afState with
                                     NumPlanes = planes
                                     StorageHealth = storeHealth }
@@ -458,18 +481,24 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
             for regState in regionsAfterShipping do
                 let region = wg.GetRegion regState.RegionId
                 let prodHealth =
-                    let numSubBlocks = wg.GetRegionProductionNumSubBlocks region.RegionId
+                    let subBlocksOf = wg.GetRegionProductionSubBlocks region.RegionId
                     regState.ProductionHealth
-                    |> List.mapi (fun idx health ->
-                        Map.tryFind (Production(region.RegionId, idx)) damages
-                        |> applyDamage health)
+                    |> List.mapi (fun group health ->
+                        let buildings = subBlocksOf group
+                        buildings
+                        |> Array.map2 (fun h idx ->
+                            Map.tryFind (Production(region.RegionId, group, idx)) damages
+                            |> applyDamage h) health)
                 let capacityBeforeDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let storeHealth =
-                    let numSubBlocks = wg.GetRegionStorageNumSubBlocks region.RegionId
+                    let subBlocksOf = wg.GetRegionStorageSubBlocks region.RegionId
                     regState.StorageHealth
-                    |> List.mapi (fun idx health ->
-                        Map.tryFind (Storage(region.RegionId, idx)) damages
-                        |> applyDamage health)
+                    |> List.mapi (fun group health ->
+                        let buildings = subBlocksOf group
+                        buildings
+                        |> Array.map2 (fun h idx ->
+                            Map.tryFind (Storage(region.RegionId, group, idx)) damages
+                            |> applyDamage h) health)
                 let regState = { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth }
                 let capacityAfterDamages = regState.StorageCapacity(region, world.SubBlockSpecs)
                 let factor =
