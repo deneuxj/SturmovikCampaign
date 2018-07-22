@@ -19,5 +19,5 @@ To build from source, you will need to acquire a number of dependencies manually
 
 Other dependencies are managed via NuGet, and should be retrieved automatically by Visual Studio 2017. You'll need to have F# support enabled in Visual Studio, by the way.
 
-To get the campaign running, see Installation.txt.
-To add or modify a campaigns scenario, see howto-create-campaign-map.txt.
+To get the campaign running, see Campaign/Installation.txt.
+To add or modify a campaigns scenario, see Campaign/howto-create-campaign-map.txt.
