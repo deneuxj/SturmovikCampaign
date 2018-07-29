@@ -46,20 +46,20 @@ module Init =
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
-    let createWorld(config : Configuration) =
+    let createWorld(config : Configuration, scenario : string) =
+        let subBlocksFile = Path.Combine(config.ScriptPath, "SubBlocks.yaml")
+        let world0 = World.Create(scenario, config.PlaneSet scenario, Path.Combine(config.ScriptPath, scenario + ".Mission"), 1.0f<E/H> * config.PlaneProduction, subBlocksFile)
+        let totalProduction =
+            world0.Regions
+            |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(world0.SubBlockSpecs, 1.0f)))
+        let desiredProduction = config.DesiredProduction * 1.0f<E/H> * float32 world0.Regions.Length
+        let factor = desiredProduction / totalProduction
         let random =
             match config.Seed with
             | Some n ->
                 System.Random(n)
             | None ->
                 System.Random()
-        let subBlocksFile = Path.Combine(config.ScriptPath, "SubBlocks.yaml")
-        let world0 = World.Create(config.PlaneSet, Path.Combine(config.ScriptPath, config.StrategyFile), 1.0f<E/H> * config.PlaneProduction, subBlocksFile)
-        let totalProduction =
-            world0.Regions
-            |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(world0.SubBlockSpecs, 1.0f)))
-        let desiredProduction = config.DesiredProduction * 1.0f<E/H> * float32 world0.Regions.Length
-        let factor = desiredProduction / totalProduction
         let world = { world0 with WeatherDaysOffset = (float config.WeatherDayMaxOffset) * (random.NextDouble() - 0.5); ProductionFactor = factor }
 
         let capacity =
@@ -113,7 +113,7 @@ module Init =
         use weatherFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.weather))
         let weather = serializer.Deserialize<Weather.WeatherState>(weatherFile)
 
-        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, config.StrategyFile), float32 weather.Wind.Direction)
+        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, world.Scenario + ".Mission"), float32 weather.Wind.Direction)
         let outputDir = config.OutputDir
         use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
         serializer.Serialize(stateFile, state)
@@ -482,7 +482,7 @@ module MissionFileGeneration =
         let briefing = preamble + timeAndDate + weatherDescription + spawnRestrictions + mainText + "<br><br>" + commandsHelp + battles
         let missionName = config.MissionName
         let missionParams =
-            { PlaneSet = config.PlaneSet
+            { PlaneSet = config.PlaneSet world.Scenario
               MaxCapturedPlanes = config.MaxCapturedPlanes
               Author = author
               MissionName = config.MissionName
@@ -492,7 +492,7 @@ module MissionFileGeneration =
               MaxFires = config.MaxFires
               MaxSimultaneousConvoys = config.MaxSimultaneousConvoys
               MaxSimultaneousFerryFlights = config.MaxSimultaneousFerryFlights
-              StrategyMissionFile = Path.Combine(config.ScriptPath, config.StrategyFile)
+              StrategyMissionFile = Path.Combine(config.ScriptPath, world.Scenario + ".Mission")
               MaxVehiclesInBattle = config.MaxVehiclesInBattle
               MaxBuildingIcons = config.MaxBuildingIcons
               BattleKillRatio = config.BattleKillRatio

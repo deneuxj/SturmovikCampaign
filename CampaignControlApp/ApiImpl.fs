@@ -231,7 +231,7 @@ type Scheduler(configFile : string) =
         }
     let cancel = new System.Threading.CancellationTokenSource()
 
-    member this.ContinueOrReset(doReset) =
+    member this.ContinueOrReset(scenario : string option) =
         let campaign = Campaign.ServerControlPlugin.Plugin() :> CampaignServerApi
         let gfx =
             { new ServerRenderingApi with
@@ -239,9 +239,10 @@ type Scheduler(configFile : string) =
             }
         campaign.Init { Logging = logging; ServerControl = serverCtl; MapGraphics = gfx }
         let task =
-            if doReset then
-                campaign.Reset(configFile)
-            else
+            match scenario with
+            | Some scenario ->
+                campaign.Reset(configFile, scenario)
+            | None ->
                 campaign.StartOrResume(configFile)
         match task with
         | Choice1Of2 task ->

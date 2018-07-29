@@ -405,7 +405,7 @@ module Support =
             | _ -> None
         work status proc
 
-    let reset(support : SupportApis, config : Configuration, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap) =
+    let reset(support : SupportApis, scenario : string, config : Configuration, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap) =
         async {
             // Delete log and campaign files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -416,7 +416,7 @@ module Support =
             | Ok _ -> ()
             | Error(_, files) -> failwithf "Failed to delete: %s" (String.concat ", " files)
             // Initial campaign state
-            let startDate, _ = Campaign.Run.Init.createWorld config
+            let startDate, _ = Campaign.Run.Init.createWorld(config, scenario)
             ignore <| Campaign.Run.WeatherComputation.run(config, startDate)
             ignore <| Campaign.Run.Init.createState config
             let decision = Campaign.Run.OrderDecision.run config
@@ -878,7 +878,7 @@ type Plugin() =
                 sprintf "Failed to start or resume campaign: '%s'" e.Message
                 |> Choice2Of2
 
-        member x.Reset configFile =
+        member x.Reset(configFile, scenario) =
             let support =
                 match support with
                 | None -> invalidOp "Must call Init first"
@@ -888,7 +888,7 @@ type Plugin() =
                 config <- Some cnf
                 x.StopCommenter()
                 x.StopWebHookClient()
-                let task = Support.reset(support, cnf, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
+                let task = Support.reset(support, scenario, cnf, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
                 let task =
                     task.ContinueWith(fun nextTask ->
                         async {

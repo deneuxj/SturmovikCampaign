@@ -16,21 +16,27 @@
 
 open ApiImpl
 open NLog
+open SturmovikMission.DataProvider
 
 type Options =
     { ConfigFile : string
-      DoReset : bool
+      ResetScenario : string option
     }
 with
     static member Create(argv : string[]) =
         let config =
             { ConfigFile = "config.yaml"
-              DoReset = false }
-        argv
-        |> Array.fold (fun config arg ->
-            match arg with
-            | "-r" | "--reset" -> { config with DoReset = true }
-            | path -> { config with ConfigFile = path }) config
+              ResetScenario = None }
+        let rec parse config args =
+            match args with
+            | [] -> config
+            | "-r" :: scenario :: rest ->
+                parse { config with ResetScenario = Some scenario } rest
+            | ["-r"] ->
+                failwithf "Command line option -r must be followed by a scenario name"
+            | path :: rest ->
+                parse { config with ConfigFile = path } rest
+        parse config (List.ofArray argv)
 
 [<EntryPoint>]
 let main argv = 
@@ -56,7 +62,7 @@ configuration file. Pass -r to reset the campaign.
     else
         let options = Options.Create(argv)
         use scheduler = new Scheduler(options.ConfigFile)
-        scheduler.ContinueOrReset(options.DoReset)
+        scheduler.ContinueOrReset(options.ResetScenario)
         printfn "Press a key to exit."
         System.Console.ReadKey(false) |> ignore
         scheduler.Cancel()

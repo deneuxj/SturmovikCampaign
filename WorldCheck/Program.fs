@@ -22,9 +22,10 @@ let main argv =
     let subBlocksFile = "SubBlocks.yaml"
     let exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
     let planeSet = PlaneSet.Default
+    let scenario = Path.GetFileNameWithoutExtension(missionFile)
     let world =
         try
-            World.Create(planeSet, missionFile, 1.0f<E/H>, Path.Combine(exePath, subBlocksFile))
+            World.Create(scenario, planeSet, missionFile, 1.0f<E/H>, Path.Combine(exePath, subBlocksFile))
         with
         | e -> failwithf "Error in mission file: %s" e.Message
 

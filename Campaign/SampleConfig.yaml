@@ -1,8 +1,6 @@
 ﻿Campaign:
     # Can be auto or the name of a plane set
     PlaneSet: auto
-    # Name of file describing the scenario
-    StrategyFile: StalingradSummer.Mission
     # Whether to use the textual mission file (slow but better compatibility with new versions of the game)
     # Otherwise the binary file is used (fast, but new versions of the game often change that format)
     UseTextMissionFile: false

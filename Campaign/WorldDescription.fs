@@ -530,6 +530,7 @@ type SubBlockFile = YamlConfig<sampleSubBlocksFile>
 
 /// Packages all description data.
 type World = {
+    Scenario : string
     Map : string
     PlaneSet : PlaneSet
     Regions : Region list
@@ -559,7 +560,7 @@ type World = {
     RepairSpeed : float32<E/H>
 }
 with
-    static member Create(planeSet, strategyFile, planeProduction, subBlocksFile : string) =
+    static member Create(scenario, planeSet, strategyFile, planeProduction, subBlocksFile : string) =
         let subBlocks = SubBlockFile()
         subBlocks.Load(subBlocksFile)
         let subBlockSpecs =
@@ -610,6 +611,7 @@ with
             let h, m, s = options.GetTime().Value
             System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
         { Map = map
+          Scenario = scenario
           PlaneSet = planeSet
           Regions = regions
           AntiAirDefenses = antiAirDefenses
