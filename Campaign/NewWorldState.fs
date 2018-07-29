@@ -1256,7 +1256,7 @@ let applyVehicleArrivals (state : WorldState) (movements : ColumnMovement list) 
                     | Some coalition when column.OrderId.Coalition = coalition ->
                         { region with
                             NumVehicles = Util.addMaps region.NumVehicles comp
-                            NumExposedVehicles = comp
+                            NumExposedVehicles = Util.addMaps region.NumExposedVehicles comp
                         }
                     | Some coalition ->
                         { region with
