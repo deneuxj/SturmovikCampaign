@@ -692,7 +692,7 @@ module MissionLogParsing =
                 | e ->
                     logger.Warn(sprintf "Failed to purge old log '%s': %s" (Path.GetFileName(file)) e.Message)
 
-    let getEntries(missionLogsDir : string, missionName : string, startDate : System.DateTime) =
+    let getEntries(missionLogsDir : string, missionName : string, startDate : System.DateTime, minMissionDurationMinutes) =
         do
             Plogger.Init()
 
@@ -700,9 +700,10 @@ module MissionLogParsing =
             logger.Info(sprintf "Looking for logs in %s" missionLogsDir)
             // entries to remove from the log
             let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
-            let missionHasPassed30Min (entry : LogEntry) =
-                true
-                //entry.Timestamp > System.TimeSpan(0, 30, 0)
+            let missionIsComplete (entry : LogEntry) =
+                match entry with
+                | :? MissionEndEntry -> true
+                | _ -> entry.Timestamp > System.TimeSpan(0, minMissionDurationMinutes, 0)
             seq {
                 let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
                 let r = Regex(@"(missionReport\(.*\))\[([0-9]+)\]\.txt")
@@ -724,12 +725,12 @@ module MissionLogParsing =
             |> Seq.fold (fun (previous, current) (entry, file) ->  // Keep the latest mission reports with the proper mission start date
                 match current, entry with
                 | _, (:? MissionStartEntry as start) ->
-                    // Move current to previous if it's non empty and has lasted long enough (30 minutes)
+                    // Move current to previous if it's non empty and has lasted long enough
                     let previous =
                         match current with
                         | [] -> previous
                         | (last : LogEntry) :: _ ->
-                            if missionHasPassed30Min last then
+                            if missionIsComplete last then
                                 logger.Debug(sprintf "Reached start of new mission, moving current to previous")
                                 current
                             else
@@ -758,10 +759,10 @@ module MissionLogParsing =
                     logger.Debug(sprintf "Collected %s" file)
                     previous, entry :: current // Recording, update current
             ) ([], [])
-            |> function // current if it's longer than 30 min, previous otherwise
+            |> function // current if mission is complete, previous otherwise
                 | (previous, []) -> previous
                 | (previous, ((last :: _) as current)) ->
-                    if missionHasPassed30Min last then
+                    if missionIsComplete last then
                         current
                     else
                         logger.Debug("Discarded short sequence")
@@ -780,7 +781,7 @@ module MissionLogParsing =
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         if config.PurgeLogs then
             purgeLogs(missionLogsDir)
-        getEntries(missionLogsDir, config.MissionName, state.Date)
+        getEntries(missionLogsDir, config.MissionName, state.Date, config.MissionLength)
 
     /// Retrieve mission log entries from an existing results.xml file
     let stage0alt(config : Configuration) =
