@@ -647,6 +647,7 @@ module MissionLogParsing =
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
+    /// Make a dated copy of all current state files
     let backupFiles config =
         let outputDir = config.OutputDir
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -679,6 +680,7 @@ module MissionLogParsing =
         ]
         |> List.iter (fun filename -> Path.GetFileNameWithoutExtension(filename) |> backupFile)
 
+    /// Delete logs that are older than two days
     let purgeLogs(missionLogsDir : string) =
         let now = System.DateTime.UtcNow
         let old = System.TimeSpan(2, 0, 0, 0) // Two days
@@ -692,6 +694,7 @@ module MissionLogParsing =
                 | e ->
                     logger.Warn(sprintf "Failed to purge old log '%s': %s" (Path.GetFileName(file)) e.Message)
 
+    /// Select the logs corresponding to a given mission and return the entries they contain.
     let getEntries(missionLogsDir : string, missionName : string, startDate : System.DateTime, minMissionDurationMinutes) =
         do
             Plogger.Init()
@@ -759,17 +762,23 @@ module MissionLogParsing =
                     logger.Debug(sprintf "Collected %s" file)
                     previous, entry :: current // Recording, update current
             ) ([], [])
-            |> function // current if mission is complete, previous otherwise
-                | (previous, []) -> previous
+            |> function // Keep latest complete mission
+                | (previous, []) ->
+                    // Current list is empty, keep previous
+                    previous
                 | (previous, ((last :: _) as current)) ->
+                    // Current list is not empty, check if mission is complete
                     if missionIsComplete last then
+                        // If so use it
                         current
                     else
+                        // Otherwise keep previous
                         logger.Debug("Discarded short sequence")
                         previous
             |> List.rev
         entries
 
+    /// Get mission log entries from the game logs
     let stage0(config : Configuration) =
         let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
         let state =
@@ -803,6 +812,7 @@ module MissionLogParsing =
         results.Entries
         |> List.map LogEntry.Parse
 
+    /// Extract results from log entries
     let stage1(config : Configuration, entries : LogEntry list) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state, axisOrders, alliesOrders =
@@ -870,6 +880,7 @@ module MissionLogParsing =
         serializer.Serialize(missionFile, results)
         results
 
+    /// Update player reserved planes and rewards
     let updateHangars(config, results : MissionResults, entries) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state =
@@ -896,6 +907,7 @@ module MissionLogParsing =
             |> stringsToGuids
         saveHangars (Path.Combine(config.OutputDir, Filenames.hangars)) hangars2
 
+    /// Compute new campaign state
     let updateState(config, missionResults) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, state, axisOrders, alliesOrders, weather =
@@ -921,6 +933,7 @@ module MissionLogParsing =
                 (float32 weather.Wind.Direction)
         newlyProduced, battleReports, (state, state2)
 
+    /// Build the after-action reports, solely used for presentation to players
     let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, axisOrders, alliesOrders =
@@ -938,6 +951,7 @@ module MissionLogParsing =
         let aarAllies = buildReport world state1 state2 tookOff landed damages alliesOrders.Columns newSupplies newAlliesVehicles Allies
         aarAxis, aarAllies
 
+    /// Dump new state to files
     let stage2 config (state, state2, aarAxis, aarAllies, battles) =
         let outputDir = config.OutputDir
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
