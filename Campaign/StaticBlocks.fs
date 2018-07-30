@@ -100,7 +100,7 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                             mkDamaged (
                                 let subBlocks = building.SubBlocks(world.SubBlockSpecs)
                                 Array.zip subBlocks healths
-                                |> Seq.map (fun (idx, h) -> (idx, T.Float (float h)))
+                                |> Seq.map (fun (idx, h) -> (idx, T.Float (1.0 - float h)))
                                 |> Map.ofSeq))
                         |> setDurability (StaticGroup.FromBlock(block).Durability(world.SubBlockSpecs) |> T.Integer)
                         |> setIndex (T.Integer 1)
