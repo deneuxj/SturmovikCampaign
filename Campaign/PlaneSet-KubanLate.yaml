@@ -39,6 +39,8 @@ PlaneSet:
     Regions: [3]
     StartDate: "1-Aug-1943"
     Planes:
+        - Model: Bf109g2
+          Static: 2
         - Model: Bf109g4
           Static: 1
         - Model: Bf109g6
