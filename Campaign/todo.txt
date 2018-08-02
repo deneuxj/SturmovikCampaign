@@ -33,7 +33,6 @@ X Mission building: battles
 X Feedback: battle results
 X Campaign logic: battle results affect capture mechanism
 Feedback: bridge destroyed
-Mission building: No convoy, train or column over destroyed bridges.
 Order: level bombing
 Order: paratrooper drop
 Order: air supply
@@ -45,3 +44,5 @@ X Feedback: ship supply
 ? Generate mission logic for AI transports
 Make landing crafts move faster.
 Notify players when their units are under attack (with a delay)
+Only factories in rear most region are active.
+Asymetric scenario: One side has production, other side has tank force initial advantage, and veteran bonus.
