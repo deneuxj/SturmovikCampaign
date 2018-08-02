@@ -704,9 +704,11 @@ module MissionLogParsing =
             // entries to remove from the log
             let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
             let missionIsComplete (entry : LogEntry) =
+                // 90% of the duration to allow for clock skew between real time and mission time
+                let duration = 90 * minMissionDurationMinutes / 100
                 match entry with
                 | :? MissionEndEntry -> true
-                | _ -> entry.Timestamp > System.TimeSpan(0, minMissionDurationMinutes, 0)
+                | _ -> entry.Timestamp > System.TimeSpan(duration / 60, duration % 60, 0)
             seq {
                 let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
                 let r = Regex(@"(missionReport\(.*\))\[([0-9]+)\]\.txt")

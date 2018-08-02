@@ -9,7 +9,7 @@
 
 open Configuration
 
-let entries = Campaign.Run.MissionLogParsing.stage0alt(config)
+let entries = Campaign.Run.MissionLogParsing.stage0(config)
 
 let missionResults = Campaign.Run.MissionLogParsing.stage1(config, entries)
 
