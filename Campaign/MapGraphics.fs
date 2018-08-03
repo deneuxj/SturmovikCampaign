@@ -359,11 +359,6 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                 let pos = region.Position // region.Parking |> Seq.sum |> ((*) (1.0f / float32 region.Parking.Length))
                 let capital = mkIcon store lcStore 0 (106, 0, 0) (pos + Vector2(0.1f * length, 0.5f * length))
                 let (RegionId name) = region.RegionId
-                let name =
-                    if region.Production.IsEmpty then
-                        name
-                    else
-                        name.ToUpper()
                 let label =
                     // Show number of vehicles beside the region's name
                     let numVehicles =
