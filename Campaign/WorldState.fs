@@ -89,6 +89,11 @@ type ProductionAssignment = {
 let buildingsStorageCapacity subBlockSpecs buildings healths =
     List.zip buildings healths
     |> List.sumBy(fun (building : StaticGroup, health) ->
+        let groupSize =
+            building.SubBlocks subBlockSpecs
+            |> Array.length
+            |> float32
+            |> max 1.0f
         let h =
             health
             |> Array.sumBy (fun h ->
@@ -96,12 +101,17 @@ let buildingsStorageCapacity subBlockSpecs buildings healths =
                     0.0f
                 else
                     h)
-        h * building.Storage subBlockSpecs)
+        h / groupSize * building.Storage subBlockSpecs)
 
 /// Total production capacity of a list of buildings
 let buildingsProductionCapacity subBlockSpecs prodFactor buildings healths =
     List.zip buildings healths
     |> List.sumBy(fun (building : StaticGroup, health) ->
+        let groupSize =
+            building.SubBlocks subBlockSpecs
+            |> Array.length
+            |> float32
+            |> max 1.0f
         let h =
             health
             |> Array.sumBy (fun h ->
@@ -109,7 +119,7 @@ let buildingsProductionCapacity subBlockSpecs prodFactor buildings healths =
                     0.0f
                 else
                     h)
-        h * building.Production(subBlockSpecs, prodFactor))
+        h / groupSize * building.Production(subBlockSpecs, prodFactor))
 
 /// State of a region.
 type RegionState = {

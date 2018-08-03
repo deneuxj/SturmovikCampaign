@@ -59,17 +59,13 @@ let computeActualStorageCapacity (world : World) (state : WorldState) =
     let afCapacity =
         seq {
             for af, afState in List.zip world.Airfields state.Airfields do
-                let capacity =
-                    List.zip af.Storage afState.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> Array.avg health * building.Storage world.SubBlockSpecs)
+                let capacity = buildingsStorageCapacity world.SubBlockSpecs af.Storage afState.StorageHealth
                 yield af.Region, capacity
         }
     let regCapacity =
         seq {
             for reg, regState in List.zip world.Regions state.Regions do
-                let capacity =
-                    List.zip reg.Storage regState.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> Array.avg health * building.Storage world.SubBlockSpecs)
+                let capacity = buildingsStorageCapacity world.SubBlockSpecs reg.Storage regState.StorageHealth
                 yield reg.RegionId, capacity
         }
     Seq.concat [ afCapacity; regCapacity ]
