@@ -409,18 +409,16 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         let remainingTime =
             async {
                 let timePassed =
+                    // Get timestamp of last entry
                     files
-                    |> Array.tryLast
-                    |> Option.map (fun file ->
-                        File.ReadLines(file)
-                        |> Seq.map (LogEntry.Parse)
-                        |> Seq.choose (
-                            function
-                            | null -> None
-                            | :? VersionEntry -> None
-                            | entry -> Some entry.Timestamp)
-                        |> Seq.tryLast
-                        |> Option.defaultValue (System.TimeSpan()))
+                    |> Seq.collect (File.ReadLines)
+                    |> Seq.rev
+                    |> Seq.map (LogEntry.Parse)
+                    |> Seq.tryPick (
+                        function
+                        | null -> None
+                        | :? VersionEntry -> None
+                        | entry -> Some entry.Timestamp)
                     |> Option.defaultValue (System.TimeSpan())
                 let t =
                     System.TimeSpan.FromMinutes(float config.MissionLength) - timePassed
