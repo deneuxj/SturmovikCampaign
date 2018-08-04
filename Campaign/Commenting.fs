@@ -394,10 +394,34 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                 | Status(hangars, _) ->
                     handlers.OnHangarsUpdated(hangars)
                 )
+        let rec remainingTime (t : System.TimeSpan) =
+            async {
+                let msg =
+                    [sprintf "Time left in mission: %d hours %d minutes" t.Hours t.Minutes]
+                do! handlers.OnMessagesToCoalition(Axis, msg)
+                do! handlers.OnMessagesToCoalition(Allies, msg)
+                let quarter = System.TimeSpan(0, 15, 0)
+                if t > quarter then
+                    return! remainingTime (t - quarter)
+            }
+        let remainingTime =
+            async {
+                let! timePassed =
+                    asyncSeqEntries
+                    |> AsyncSeq.tryLast
+                let timePassed =
+                    match timePassed with
+                    | None -> System.TimeSpan()
+                    | Some entry -> entry.Timestamp
+                let t =
+                    System.TimeSpan.FromMinutes(float config.MissionLength) - timePassed
+                return! remainingTime t
+            }
         Async.Start(Async.catchLog "live commentator" task, cancelOnDispose.Token)
         Async.Start(Async.catchLog "battle limits notifier" task2, cancelOnDispose.Token)
         Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
         Async.Start(Async.catchLog "plane availability checker" hangarTask, cancelOnDispose.Token)
+        Async.Start(Async.catchLog "remaining time notifier" remainingTime, cancelOnDispose.Token)
 
     member this.Dispose() =
         logger.Info("Commentator disposed")
