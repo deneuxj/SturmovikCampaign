@@ -398,21 +398,30 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             async {
                 let msg =
                     [sprintf "Time left in mission: %d hours %d minutes" t.Hours t.Minutes]
+                logger.Info(msg)
                 do! handlers.OnMessagesToCoalition(Axis, msg)
                 do! handlers.OnMessagesToCoalition(Allies, msg)
                 let quarter = System.TimeSpan(0, 15, 0)
                 if t > quarter then
+                    do! Async.Sleep (int quarter.TotalMilliseconds)
                     return! remainingTime (t - quarter)
             }
         let remainingTime =
             async {
-                let! timePassed =
-                    asyncSeqEntries
-                    |> AsyncSeq.tryLast
                 let timePassed =
-                    match timePassed with
-                    | None -> System.TimeSpan()
-                    | Some entry -> entry.Timestamp
+                    files
+                    |> Array.tryLast
+                    |> Option.map (fun file ->
+                        File.ReadLines(file)
+                        |> Seq.map (LogEntry.Parse)
+                        |> Seq.choose (
+                            function
+                            | null -> None
+                            | :? VersionEntry -> None
+                            | entry -> Some entry.Timestamp)
+                        |> Seq.tryLast
+                        |> Option.defaultValue (System.TimeSpan()))
+                    |> Option.defaultValue (System.TimeSpan())
                 let t =
                     System.TimeSpan.FromMinutes(float config.MissionLength) - timePassed
                 return! remainingTime t
