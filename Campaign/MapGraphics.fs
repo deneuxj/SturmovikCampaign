@@ -565,7 +565,7 @@ let createTankParkIcons store lcStore missionBegin (world : World) (state : Worl
     // Build icons
     [
         for reg, regState in List.zip world.Regions state.Regions do
-            if not regState.NumExposedVehicles.IsEmpty && not reg.Parking.IsEmpty then
+            if not regState.NumExposedVehicles.IsEmpty && not reg.Parking.IsEmpty && not regState.HasInvaders then
                 match regState.Owner with
                 | Some owner ->
                     let pos = reg.Parking.[0]
