@@ -492,6 +492,7 @@ module MissionFileGeneration =
               MaxFires = config.MaxFires
               MaxSimultaneousConvoys = config.MaxSimultaneousConvoys
               MaxSimultaneousFerryFlights = config.MaxSimultaneousFerryFlights
+              MaxStaticPlanes = config.MaxStaticPlanes
               StrategyMissionFile = Path.Combine(config.ScriptPath, world.Scenario + ".Mission")
               MaxVehiclesInBattle = config.MaxVehiclesInBattle
               MaxBuildingIcons = config.MaxBuildingIcons

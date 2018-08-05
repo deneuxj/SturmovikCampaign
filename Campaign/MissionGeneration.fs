@@ -134,6 +134,7 @@ type MissionGenerationParameters = {
     MaxSimultaneousConvoys : int
     MaxSimultaneousFerryFlights : int
     MaxVehiclesInBattle : int
+    MaxStaticPlanes : int
     StrategyMissionFile : string
     MaxFires : int
     MaxBuildingIcons : int
@@ -307,7 +308,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         createParaTrooperDrops missionData.World store lcStore (Battlefield.identifyBattleAreas missionData.World missionData.State)
         |> List.map (fun p -> p.All)
     let parkedPlanes =
-        createParkedPlanes store missionData.World missionData.State inAttackArea
+        createParkedPlanes store missionData.World missionData.State missionParams.MaxStaticPlanes inAttackArea
         |> McuUtil.groupFromList
     let parkedTanks =
         [Axis; Allies]

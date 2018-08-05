@@ -203,7 +203,7 @@ let createLandingDirections store (world : World) (state : WorldState) =
                 ()
     ]
 
-let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
+let createParkedPlanes store (world : World) (state : WorldState) (maxStaticPlanes : int) inAttackArea =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
         let modelScript = world.PlaneSet.StaticPlaneModel model
         let mcus =
@@ -227,10 +227,11 @@ let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
     let wg = world.FastAccess
     let sg = state.FastAccess
 
-    [
-        // Random distribution of planes among fitting parking slots
-        let rnd = System.Random()
-        for afs in state.Airfields do
+    // Random distribution of planes among fitting parking slots
+    let rnd = System.Random()
+
+    let mkParkedPlanesAtAirfield(afs : AirfieldState) =
+        [|
             let af = wg.GetAirfield afs.AirfieldId
             let reg = sg.GetRegion af.Region
             match reg.Owner with
@@ -272,11 +273,22 @@ let createParkedPlanes store (world : World) (state : WorldState) inAttackArea =
                     for i in 0..(int qty - 1) do
                         match assign plane with
                         | Some spot ->
-                            yield! mkParkedPlane(plane, spot, int country)
+                            yield fun() -> mkParkedPlane(plane, spot, int country)
                         | None ->
                             ()
             | None ->
                 ()
+        |]
+
+    [
+        for afs in state.Airfields do
+            let planes =
+                mkParkedPlanesAtAirfield afs
+                |> Array.shuffle rnd
+                |> Seq.truncate maxStaticPlanes
+                |> Seq.collect (fun f -> f())
+                |> List.ofSeq
+            yield! planes
     ]
 
 let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) (group : Mcu.McuBase list) =
