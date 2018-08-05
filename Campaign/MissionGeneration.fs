@@ -135,6 +135,7 @@ type MissionGenerationParameters = {
     MaxSimultaneousFerryFlights : int
     MaxVehiclesInBattle : int
     MaxStaticPlanes : int
+    EnablePlayerTanks : bool
     StrategyMissionFile : string
     MaxFires : int
     MaxBuildingIcons : int
@@ -299,7 +300,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         columns
         |> List.collect (fun (_, start, group) -> (McuUtil.groupFromList [start]) :: group)
     let battles =
-        Battlefield.generateBattlefields missionParams.MaxVehiclesInBattle missionParams.BattleKillRatio missionData.Random store lcStore missionData.World missionData.State
+        Battlefield.generateBattlefields missionParams.EnablePlayerTanks missionParams.MaxVehiclesInBattle missionParams.BattleKillRatio missionData.Random store lcStore missionData.World missionData.State
     for bf in battles do
         for start in bf.Starts do
             Mcu.addTargetLink missionBegin start.Index

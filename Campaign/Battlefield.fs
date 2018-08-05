@@ -44,7 +44,7 @@ type Battlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[], region, numDefenders, numAttackers) =
+    static member Create(random : System.Random, store, lcStore, includePlayerSpawns : bool, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[], region, numDefenders, numAttackers) =
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float yori)
@@ -82,29 +82,32 @@ with
             |> Seq.find (fun v -> v.IsInConvexPolygon(boundary))
         // Player spawns
         let players =
-            [
-                let defendersExist =
-                    defenders
-                    |> Map.toSeq
-                    |> Seq.exists (fun (_, qty) -> qty > 0)
-                if defendersExist && attackers.Length > 0 then
-                    let numDefendingHeavy =
+            if includePlayerSpawns then
+                [
+                    let defendersExist =
                         defenders
-                        |> Map.tryFind HeavyTank
-                        |> Option.defaultVal 1
-                    yield PlayerTankSpawn.Ceate(store, getRandomPos(DefenseBack), yori, defendingCoalition.ToCountry, numDefendingHeavy)
-                    let numAttackingHeavy =
-                        attackers
-                        |> Seq.filter (function HeavyTank -> true | _ -> false)
-                        |> Seq.length
-                        |> max 1
-                    let mirrored =
-                        if yori < 180.0f then
-                            yori + 180.0f
-                        else
-                            yori - 180.0f
-                    yield PlayerTankSpawn.Ceate(store, getRandomPos(AttackBack), mirrored, defendingCoalition.Other.ToCountry, numAttackingHeavy)
-            ]
+                        |> Map.toSeq
+                        |> Seq.exists (fun (_, qty) -> qty > 0)
+                    if defendersExist && attackers.Length > 0 then
+                        let numDefendingHeavy =
+                            defenders
+                            |> Map.tryFind HeavyTank
+                            |> Option.defaultVal 1
+                        yield PlayerTankSpawn.Ceate(store, getRandomPos(DefenseBack), yori, defendingCoalition.ToCountry, numDefendingHeavy)
+                        let numAttackingHeavy =
+                            attackers
+                            |> Seq.filter (function HeavyTank -> true | _ -> false)
+                            |> Seq.length
+                            |> max 1
+                        let mirrored =
+                            if yori < 180.0f then
+                                yori + 180.0f
+                            else
+                                yori - 180.0f
+                        yield PlayerTankSpawn.Ceate(store, getRandomPos(AttackBack), mirrored, defendingCoalition.Other.ToCountry, numAttackingHeavy)
+                ]
+            else
+                []
         // Build an attacking tank
         let buildTank name (model : VehicleTypeData) =
             let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack), defendingCoalition.Other.ToCountry)
@@ -231,7 +234,7 @@ let identifyBattleAreas (world : World) (state : WorldState) =
     }
 
 /// Generate battlefields from invasions in column movement orders.
-let generateBattlefields maxVehicles killRatio random store lcStore (world : World) (state : WorldState) =
+let generateBattlefields enablePlayerTanks maxVehicles killRatio random store lcStore (world : World) (state : WorldState) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     [
@@ -259,5 +262,5 @@ let generateBattlefields maxVehicles killRatio random store lcStore (world : Wor
                 attackingVehicles
                 |> Array.shuffle random
                 |> Array.truncate maxVehicles
-            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, string bf.Home, numDefending * killRatio, numAttacking * killRatio)
+            yield Battlefield.Create(random, store, lcStore, enablePlayerTanks, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, string bf.Home, numDefending * killRatio, numAttacking * killRatio)
     ]

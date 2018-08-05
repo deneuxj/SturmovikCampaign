@@ -65,6 +65,7 @@ type Configuration = {
     MaxBattleKillsRatioByPlayers: float32
     MaxBattleKillsRatioByAI: float32
     MaxStaticPlanes : int
+    EnablePlayerTanks : bool
     OutputDir : string
     ServerDataDir : string
     PurgeLogs : bool
@@ -102,6 +103,7 @@ with
             MaxBattleKillsRatioByPlayers = 1.0f
             MaxBattleKillsRatioByAI = 0.25f
             MaxStaticPlanes = 6
+            EnablePlayerTanks = true
             MissionName = "AutoGenMission2"
             MissionLength = 180
             LongWorkDay = false
@@ -183,6 +185,7 @@ let loadConfigFile (path : string) =
         MaxBattleKillsRatioByPlayers = float32 values.MaxBattleKillsRatioByPlayers
         MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI
         MaxStaticPlanes = values.MaxStaticPlanes
+        EnablePlayerTanks = values.EnablePlayerTanks
         MissionName = values.MissionName
         MissionLength = values.MissionLength
         LongWorkDay = values.LongWorkDay
