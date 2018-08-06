@@ -36,7 +36,7 @@ with
                 yield this.EnemyClose.All
             ]
 
-    static member Create(specialty : DefenseSpecialty, includeSearchLights : bool, random : System.Random, store, lcStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+    static member Create(settings : CanonGenerationSettings, specialty : DefenseSpecialty, includeSearchLights : bool, random : System.Random, store, lcStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let center =
             let n = max 1 (List.length boundary)
             let k = 1.0f / float32 n
@@ -58,7 +58,7 @@ with
                         | AntiAirMg -> i <= max (numSearchLights + 1) (groupSize / 4)
                         | AntiAirCanon -> i <= max (numSearchLights + 1) (groupSize / 2)
                     let canon =
-                        Canon.Create(specialty, random, store, boundary, yori, isFlak, country)
+                        Canon.Create(settings, specialty, random, store, boundary, yori, isFlak, country)
                         |> fun canon ->
                             if i <= numSearchLights then
                                 canon.SwitchToSearchLight()
@@ -69,7 +69,7 @@ with
                     match specialty, isFlak, coalition with
                     | AntiAirMg, false, Mcu.CoalitionValue.Axis ->
                         for extra in 0..(numLightMachineGunsPerHeavyMachineGun  - 1) do
-                            yield Canon.Create(AntiAirMg, random, store, boundary, yori, false, Mcu.CountryValue.Germany)
+                            yield Canon.Create(settings, AntiAirMg, random, store, boundary, yori, false, Mcu.CountryValue.Germany)
                     | _ ->
                         ()
                 // For AA, add machine-guns for protection from short-range straffing by fighters
@@ -79,7 +79,7 @@ with
                 match specialty with
                 | AntiAirCanon ->
                     for _ in 1..num do
-                        yield Canon.Create(AntiAirMg, random, store, boundary, yori, false, country)
+                        yield Canon.Create(settings, AntiAirMg, random, store, boundary, yori, false, country)
                 | _ ->
                     ()
             }

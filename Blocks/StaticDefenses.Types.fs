@@ -87,6 +87,14 @@ let LightMachineGunAAName = "MGAA-L"
 [<Literal>]
 let HeavyMachineGunAAName = "MGAA-H"
 
+type CanonGenerationSettings =
+    { SkillLevel : int
+      RepairDelaySeconds : int // Non positive value means "no repair"
+    }
+with
+    static member Default = { SkillLevel = 2; RepairDelaySeconds = -1 }
+    static member Strong = { SkillLevel = 3; RepairDelaySeconds = 60 }
+
 type Canon = {
     Cannon : Mcu.McuEntity
     Show : Mcu.McuTrigger
@@ -94,7 +102,7 @@ type Canon = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(specialty : DefenseSpecialty, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32 , isFlak : bool, country : Mcu.CountryValue) =
+    static member Create(settings : CanonGenerationSettings, specialty : DefenseSpecialty, random : System.Random, store : NumericalIdentifiers.IdStore, boundary : Vector2 list, yori : float32 , isFlak : bool, country : Mcu.CountryValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.GetGroup(specialty.GroupName)
@@ -105,6 +113,7 @@ with
         let cannon = getVehicleByName db "CANNON"
         let show = getTriggerByName db "SHOW"
         let hide = getTriggerByName db "HIDE"
+        let repairDelay = getTriggerByName db "RepairDelay" :?> Mcu.McuTimer
         let attackOrder =
             try
                 getTriggerByName db "AttackAirTargets"
@@ -144,10 +153,12 @@ with
             attackOrder.AttackArea <- range
         | _ ->
             ()
-        // Set AI level to low, otherwise it's way too good (see https://forum.il2sturmovik.com/topic/32578-bravery-being-out-range/?p=544344)
-        //cannon.AILevel <- Some 1
-        // Set AI level to normal, at low airfields are too easy to attack
-        cannon.AILevel <- Some 2
+        // Settings
+        cannon.AILevel <- Some settings.SkillLevel
+        repairDelay.Time <- max 0.0 (float settings.RepairDelaySeconds)
+        if settings.RepairDelaySeconds > 0 then
+            let killed = getTriggerByName db "Killed"
+            Mcu.addTargetLink killed repairDelay.Index
         // Result
         { Cannon = McuUtil.getEntityByIndex cannon.LinkTrId db
           Show = show

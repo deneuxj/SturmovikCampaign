@@ -23,6 +23,9 @@ open Campaign.WorldDescription
 open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.WorldState
+open System.Numerics
+open VectorExtension
+open SturmovikMission.Blocks.StaticDefenses.Types
 
 type ArtilleryGroup = {
     All : Mcu.McuBase list
@@ -62,7 +65,17 @@ with
                             | None -> failwithf "No owner found for group of anti-air defenses '%A'" area.DefenseAreaId
                             | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                             | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
-                        let group = StaticDefenseGroup.Create(area.Role, includeSearchLights, random, store, lcStore, area.Boundary, area.Position.Rotation, numUnits, country, coalition)
+                        // Defense areas close to airfield spawns are made stronger
+                        let settings =
+                            world.Airfields
+                            |> Seq.filter (fun af -> af.Region = area.Home)
+                            |> Seq.exists (fun af ->
+                                af.Spawn
+                                |> Seq.exists (fun spawn -> (Vector2.FromPos(spawn) - area.Position.Pos).Length() < 2500.0f))
+                            |> function
+                                | true -> CanonGenerationSettings.Strong
+                                | false -> CanonGenerationSettings.Default
+                        let group = StaticDefenseGroup.Create(settings, area.Role, includeSearchLights, random, store, lcStore, area.Boundary, area.Position.Rotation, numUnits, country, coalition)
                         let links = group.CreateLinks()
                         let mcus = McuUtil.deepContentOf group
                         links.Apply(mcus)

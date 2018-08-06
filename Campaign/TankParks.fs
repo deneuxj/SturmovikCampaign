@@ -33,6 +33,7 @@ open SturmovikMission.Blocks.StaticDefenses.Factory
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider
+open SturmovikMission.Blocks.StaticDefenses.Types
 
 let createParkedTanks store lcStore (world : World) (state : WorldState) inAttackArea withSearchLights (missionBegin : Mcu.McuTrigger) (orders : OrderPackage) (coalition : CoalitionId) =
     let netsModel, netRelPositions =
@@ -82,7 +83,7 @@ let createParkedTanks store lcStore (world : World) (state : WorldState) inAttac
                     // Add machine guns among tanks for anti-air defense
                     let aaDefenses =
                         let boundary = region.Parking
-                        StaticDefenseGroup.Create(StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, 8, coalition.ToCountry, coalition.ToCoalition)
+                        StaticDefenseGroup.Create(CanonGenerationSettings.Default, StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, 8, coalition.ToCountry, coalition.ToCoalition)
                     let links = aaDefenses.CreateLinks()
                     links.Apply(McuUtil.deepContentOf(aaDefenses))
                     Mcu.addTargetLink missionBegin aaDefenses.Api.Start.Index
