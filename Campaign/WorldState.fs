@@ -572,6 +572,8 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
     let cutoffHops = 4
     let regions =
         let supplyNeeds = computeFullDefenseNeeds world
+        if List.length world.Regions <> List.length supplyNeeds then
+            failwith "Some of the regions lack defense areas"
         List.zip world.Regions supplyNeeds
         |> List.map (fun (region, (_, needs)) ->
             let owner = getOwner region.RegionId
