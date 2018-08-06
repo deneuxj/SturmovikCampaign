@@ -646,6 +646,7 @@ module MissionLogParsing =
     open ploggy
     open System.Text.RegularExpressions
     open SturmovikMission.Blocks.Util.String
+    open SturmovikMission.Blocks.Links
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -696,6 +697,10 @@ module MissionLogParsing =
                 | e ->
                     logger.Warn(sprintf "Failed to purge old log '%s': %s" (Path.GetFileName(file)) e.Message)
 
+    type RecordType =
+    | Skip
+    | Recording of LogEntry list * startTime:System.DateTime * lastFile:string
+
     /// Select the logs corresponding to a given mission and return the entries they contain.
     let getEntries(missionLogsDir : string, missionName : string, startDate : System.DateTime, minMissionDurationMinutes) =
         do
@@ -705,12 +710,13 @@ module MissionLogParsing =
             logger.Info(sprintf "Looking for logs in %s" missionLogsDir)
             // entries to remove from the log
             let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
-            let missionIsComplete (entry : LogEntry) =
+            let missionIsComplete (startTime : System.DateTime, file : string) =
+                let endTime = File.GetCreationTimeUtc(file)
                 // 90% of the duration to allow for clock skew between real time and mission time
-                let duration = 90 * minMissionDurationMinutes / 100
-                match entry with
-                | :? MissionEndEntry -> true
-                | _ -> entry.Timestamp > System.TimeSpan(duration / 60, duration % 60, 0)
+                let duration = 0.9 * float minMissionDurationMinutes
+                let actualDuration = endTime - startTime
+                logger.Info (sprintf "Mission actual length: %d minutes" (int actualDuration.TotalMinutes))
+                actualDuration > System.TimeSpan.FromMinutes(duration)
             seq {
                 let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
                 let r = Regex(@"(missionReport\(.*\))\[([0-9]+)\]\.txt")
@@ -728,18 +734,17 @@ module MissionLogParsing =
                     for line in File.ReadAllLines(file) do
                         yield LogEntry.Parse(line), file
             }
-            |> Seq.filter (fun (entry, _) -> not (timeLessEntryTypes.Contains(entry.EntryType)))
             |> Seq.fold (fun (previous, current) (entry, file) ->  // Keep the latest mission reports with the proper mission start date
                 match current, entry with
                 | _, (:? MissionStartEntry as start) ->
                     // Move current to previous if it's non empty and has lasted long enough
                     let previous =
                         match current with
-                        | [] -> previous
-                        | (last : LogEntry) :: _ ->
-                            if missionIsComplete last then
+                        | Skip -> previous
+                        | Recording(currentEntries, startTime, _) ->
+                            if missionIsComplete(startTime, file) then
                                 logger.Debug(sprintf "Reached start of new mission, moving current to previous")
-                                current
+                                currentEntries
                             else
                                 logger.Debug(sprintf "Reached start of new mission, discarding current because too short")
                                 previous
@@ -748,7 +753,7 @@ module MissionLogParsing =
                     let actualMissionFile = Regex.Replace(actualMissionFile, "_\d$", "")
                     if start.MissionTime = startDate && actualMissionFile = expectedMissionFile then
                         logger.Info(sprintf "Start collecting from %s" file)
-                        previous, [entry] // Start new list
+                        previous, Recording([entry], File.GetCreationTimeUtc(file), file) // Start new list
                     else
                         let reason =
                             if start.MissionTime <> startDate then
@@ -758,27 +763,29 @@ module MissionLogParsing =
                             else
                                 "???"
                         logger.Warn(sprintf "Stopped collecting at %s because %s" file reason)
-                        previous, [] // Start new skip
-                | [], _ ->
+                        previous, Skip // Start new skip
+                | Skip, _ ->
                     logger.Debug(sprintf "Skipped %s" file)
-                    previous, [] // Skip, looking for next mission start that has the right time
-                | _ :: _, _ ->
+                    previous, Skip // Skip, looking for next mission start that has the right time
+                | Recording(currentEntries, startTime, _), _ ->
                     logger.Debug(sprintf "Collected %s" file)
-                    previous, entry :: current // Recording, update current
-            ) ([], [])
+                    previous, Recording(entry :: currentEntries, startTime, file) // Recording, update current
+            ) ([], Skip)
             |> function // Keep latest complete mission
-                | (previous, []) ->
-                    // Current list is empty, keep previous
+                | previous, Skip ->
                     previous
-                | (previous, ((last :: _) as current)) ->
+                | previous, Recording(currentEntries, startDate, lastFile) ->
                     // Current list is not empty, check if mission is complete
-                    if missionIsComplete last then
+                    if missionIsComplete(startDate, lastFile) then
                         // If so use it
-                        current
+                        currentEntries
                     else
+                        let actualDuration = File.GetCreationTimeUtc(lastFile) - startDate
+                        logger.Warn(sprintf "Last set of mission logs is incomplete (%d minutes)" (int actualDuration.TotalMinutes))
                         // Otherwise keep previous
                         logger.Debug("Discarded short sequence")
                         previous
+            |> List.filter (fun entry -> not (timeLessEntryTypes.Contains(entry.EntryType)))
             |> List.rev
         entries
 
