@@ -24,12 +24,15 @@ let watchLogs(cleanLogs : bool, path, filter, firstFile, cancelToken : Cancellat
         |> Option.map (fun f -> (f, 0, farInThePast))
     // let stackTrace = StackTrace(true)
     asyncSeq {
+        // Watch for newly created files, add them in a queue
         let newFiles = ConcurrentQueue<string>()
         let w = new FileSystemWatcher(path, filter)
         w.Created.Add(fun ev -> newFiles.Enqueue(ev.FullPath))
         w.EnableRaisingEvents <- true
+        // Process lines from the current log, then move on to the next log file, if any
         let rec do1(currentFile : (string * int * DateTime) option) =
             asyncSeq {
+                // Check for new lines from the current log
                 let lines, currentFile =
                     match currentFile with
                     | Some(file, skip, lastRead) ->
@@ -45,8 +48,10 @@ let watchLogs(cleanLogs : bool, path, filter, firstFile, cancelToken : Cancellat
                             [||], currentFile
                     | None ->
                         [||], currentFile
+                // Report these lines
                 for line in lines do
                     yield line
+                // Check for new log file
                 match newFiles.TryDequeue() with
                 | true, newFile ->
                     // Make sure we don't try to read a newly created log file while it's being created
@@ -63,6 +68,7 @@ let watchLogs(cleanLogs : bool, path, filter, firstFile, cancelToken : Cancellat
                             ()
                     yield! do1(Some(newFile, 0, farInThePast))
                 | false, _ ->
+                    // No new file, sleep for 1s and try again
                     if not cancelToken.IsCancellationRequested then
                         do! Async.Sleep(1000)
                         yield! do1(currentFile)
