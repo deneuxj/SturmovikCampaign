@@ -154,7 +154,13 @@ with
         | _ ->
             ()
         // Settings
-        cannon.AILevel <- Some settings.SkillLevel
+        let skillLevel =
+            // Limit skill level to normal for flak
+            if isFlak then
+                min settings.SkillLevel 2
+            else
+                settings.SkillLevel
+        cannon.AILevel <- Some skillLevel
         repairDelay.Time <- max 0.0 (float settings.RepairDelaySeconds)
         if settings.RepairDelaySeconds > 0 then
             let killed = getTriggerByName db "Killed"
