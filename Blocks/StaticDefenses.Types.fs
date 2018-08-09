@@ -89,11 +89,12 @@ let HeavyMachineGunAAName = "MGAA-H"
 
 type CanonGenerationSettings =
     { SkillLevel : int
-      RepairDelaySeconds : int // Non positive value means "no repair"
+      RepairDelaySeconds : float // Non positive value means "no repair"
+      RepairDelayDelta : float  // Maximum deviation from delay
     }
 with
-    static member Default = { SkillLevel = 2; RepairDelaySeconds = -1 }
-    static member Strong = { SkillLevel = 3; RepairDelaySeconds = 60 }
+    static member Default = { SkillLevel = 2; RepairDelaySeconds = -1.0; RepairDelayDelta = 0.0 }
+    static member Strong = { SkillLevel = 3; RepairDelaySeconds = 180.0; RepairDelayDelta = 120.0 }
 
 type Canon = {
     Cannon : Mcu.McuEntity
@@ -161,8 +162,14 @@ with
             else
                 settings.SkillLevel
         cannon.AILevel <- Some skillLevel
-        repairDelay.Time <- max 0.0 (float settings.RepairDelaySeconds)
-        if settings.RepairDelaySeconds > 0 then
+        let delay =
+            let x = random.NextDouble()
+            let x  = 2.0 * (x - 0.5)
+            let x = x * x * x
+            let offset = settings.RepairDelayDelta * x
+            settings.RepairDelaySeconds + offset
+        repairDelay.Time <- max 0.0 delay
+        if settings.RepairDelaySeconds > 0.0 then
             let killed = getTriggerByName db "Killed"
             Mcu.addTargetLink killed repairDelay.Index
         // Result
