@@ -67,9 +67,10 @@ with
                             | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
                         // Defense areas close to airfield spawns are made stronger
                         let settings =
-                            world.Airfields
-                            |> Seq.filter (fun af -> af.Region = area.Home)
-                            |> Seq.exists (fun af ->
+                            state.RearAirfield(world, owner.Value)
+                            |> Option.map wg.GetAirfield
+                            |> Option.filter (fun af -> af.Region = area.Home)
+                            |> Option.exists (fun af ->
                                 af.Spawn
                                 |> Seq.exists (fun spawn -> (Vector2.FromPos(spawn) - area.Position.Pos).Length() < 2500.0f))
                             |> function

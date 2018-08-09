@@ -264,6 +264,31 @@ with
           GetAirfield = mkGetStuffFast state.Airfields (fun af -> af.AirfieldId)
         }
 
+/// Try to find the airfield that is furthest away from any enemy region.
+let private tryFindRearAirfield (world : World) (coalition : CoalitionId) (state : WorldState) =
+    let wg = world.FastAccess
+    let sg = WorldStateFastAccess.Create state
+    let furthest =
+        try
+            List.zip world.Airfields state.Airfields
+            |> Seq.filter (fun (af, afs) -> sg.GetRegion(af.Region).Owner = Some coalition)
+            |> Seq.maxBy(fun (af, afs) ->
+                let distance =
+                    try
+                        List.zip world.Regions state.Regions
+                        |> Seq.filter(fun (region, regs) -> regs.Owner = Some (coalition.Other))
+                        |> Seq.map (fun (region, _) -> (region.Position - af.Pos).LengthSquared())
+                        |> Seq.min
+                    with
+                    | _ -> 0.0f
+                distance)
+            |> fst
+            |> fun af -> af.AirfieldId
+            |> Some
+        with
+        | _ -> None
+    furthest
+
 type WorldState
 with
     member this.FastAccess = WorldStateFastAccess.Create(this)
@@ -389,6 +414,9 @@ with
         // sunset, sunrise, sunset of next morning
         [sunrise; sunset; sunrise + System.TimeSpan(24, 0, 0)]
         |> List.exists (fun suntime -> suntime >= start && suntime <= finish)
+
+    member this.RearAirfield(world, coalition) =
+        tryFindRearAirfield world coalition this
 
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu

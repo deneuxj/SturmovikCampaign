@@ -271,7 +271,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
     let sg = state.FastAccess
     let rearAirfields =
         [Axis; Allies]
-        |> Seq.map (fun coalition -> tryFindRearAirfield world coalition state)
+        |> Seq.map (fun coalition -> state.RearAirfield(world, coalition))
         |> Set.ofSeq
     let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
     // For objects whose damage is tracked anonymously by the result extraction system, list object type and cost

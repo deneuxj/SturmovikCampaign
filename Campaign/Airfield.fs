@@ -78,7 +78,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
     let sg = state.FastAccess
     let rearAirfields =
         [Axis; Allies]
-        |> Seq.choose (fun coalition -> tryFindRearAirfield world coalition state)
+        |> Seq.choose (fun coalition -> state.RearAirfield(world, coalition))
         |> Set.ofSeq
     [
         for airfield, state in Seq.zip world.Airfields state.Airfields do

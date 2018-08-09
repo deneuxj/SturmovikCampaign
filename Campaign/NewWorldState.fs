@@ -32,31 +32,6 @@ open Campaign.AutoOrder
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
-/// Try to find the airfield that is furthest away from any enemy region.
-let tryFindRearAirfield (world : World) (coalition : CoalitionId) (state : WorldState) =
-    let wg = world.FastAccess
-    let sg = state.FastAccess
-    let furthest =
-        try
-            List.zip world.Airfields state.Airfields
-            |> Seq.filter (fun (af, afs) -> sg.GetRegion(af.Region).Owner = Some coalition)
-            |> Seq.maxBy(fun (af, afs) ->
-                let distance =
-                    try
-                        List.zip world.Regions state.Regions
-                        |> Seq.filter(fun (region, regs) -> regs.Owner = Some (coalition.Other))
-                        |> Seq.map (fun (region, _) -> (region.Position - af.Pos).LengthSquared())
-                        |> Seq.min
-                    with
-                    | _ -> 0.0f
-                distance)
-            |> fst
-            |> fun af -> af.AirfieldId
-            |> Some
-        with
-        | _ -> None
-    furthest
-
 /// Add production units according to production priorities
 let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) (priorities : ProductionPriorities) (state : WorldState) =
     let wg = WorldFastAccess.Create world
@@ -94,7 +69,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
     let airfields =
         [
             let random = System.Random()
-            let rear = tryFindRearAirfield world coalition state
+            let rear = state.RearAirfield(world, coalition)
             for af, afs in List.zip world.Airfields state.Airfields do
                 if Some af.AirfieldId = rear then
                     let planeType = AutoOrder.pickPlaneToProduce coalition world state
