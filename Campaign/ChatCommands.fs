@@ -92,7 +92,7 @@ with
         | Result.Error err -> { Player = rawCmd.Author; Command = Invalid err }
         | Result.Ok cmd -> { Player = rawCmd.Author; Command = cmd }
 
-    member this.Interpret(hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, AirfieldState>) =
+    member this.Interpret(hangars : Map<string, PlayerHangar>) =
         match this.Command with
         | ShowReservedPlanesAtAirfield afId ->
             let planes =

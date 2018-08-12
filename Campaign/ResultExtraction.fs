@@ -638,7 +638,7 @@ let (|BuildingObjectType|_|) (s : string) =
     |> List.exists (fun prefix -> low.StartsWith(prefix))
     |> function true -> Some s | false -> None
 
-let (|StaticPlaneType|_|) (planeSet : PlaneSet) (s : string) =
+let staticPlaneType (planeSet : PlaneSet) (s : string) =
     planeSet.AllModels
     |> Seq.tryPick(fun model ->
         if s.Contains(planeSet.StaticPlaneModel(model).ShortName) then
@@ -663,8 +663,52 @@ let (|StaticVehicleType|_|) (s : string) =
         else
             None)
 
+let tryIdentifyBuilding (world : World) (pos : Vector2) (subGroup : int) =
+    let tryFindContainingRegion (pos : Vector2) =
+        world.Regions
+        |> List.tryFind(fun r ->
+            pos.IsInConvexPolygon(r.Boundary))
+    match tryFindContainingRegion pos with
+    | Some region ->
+        let airfields =
+            world.Airfields
+            |> List.filter (fun af -> af.Pos.IsInConvexPolygon(region.Boundary))
+        let matchingAirfieldBuildings =
+            airfields
+            |> List.map (fun af ->
+                af.Storage
+                |> List.mapi (fun i sto -> Airfield(af.AirfieldId, i, subGroup), sto))
+            |> List.concat
+        let matchingStorageBuildings =
+            region.Storage
+            |> List.mapi (fun i sto -> Storage(region.RegionId, i, subGroup), sto)
+        let matchingProductionBuildings =
+            region.Production
+            |> List.mapi (fun i pro -> Production(region.RegionId, i, subGroup), pro)
+        let closest =
+            try
+                matchingAirfieldBuildings @ matchingProductionBuildings @ matchingStorageBuildings
+                |> Seq.map (fun (x, building) -> x, (building.Pos.Pos - pos).Length(), building)
+                |> Seq.filter (fun (_, dist, _) -> dist < 100.0f)
+                |> Seq.minBy (fun (_, dist, _) -> dist)
+                |> Some
+            with
+            | _ -> None
+        match closest with
+        | Some(damaged, _, building) ->
+            let significantSubBlocks = building.SubBlocks(world.SubBlockSpecs)
+            if Array.contains subGroup significantSubBlocks then
+                Some damaged
+            else
+                None
+        | None ->
+            None
+    | None ->
+        None
+
 let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
     let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
+    let (|StaticPlaneType|_|) = staticPlaneType world.PlaneSet
     let wg = WorldFastAccess.Create(world)
     let tryFindContainingRegion (pos : Vector2) =
         world.Regions
@@ -684,43 +728,14 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                 match Map.tryFind damage.TargetId !idMapper with
                 | Some(BuildingObjectType buildingType, _, subGroup, _) ->
                     // Damage to buildings: storage or production
-                    match tryFindContainingRegion damagePos with
-                    | Some region ->
-                        let airfields =
-                            world.Airfields
-                            |> List.filter (fun af -> af.Pos.IsInConvexPolygon(region.Boundary))
-                        let matchingAirfieldBuildings =
-                            airfields
-                            |> List.map (fun af ->
-                                af.Storage
-                                |> List.mapi (fun i sto -> Airfield(af.AirfieldId, i, subGroup), sto))
-                            |> List.concat
-                        let matchingStorageBuildings =
-                            region.Storage
-                            |> List.mapi (fun i sto -> Storage(region.RegionId, i, subGroup), sto)
-                        let matchingProductionBuildings =
-                            region.Production
-                            |> List.mapi (fun i pro -> Production(region.RegionId, i, subGroup), pro)
-                        let closest =
-                            try
-                                matchingAirfieldBuildings @ matchingProductionBuildings @ matchingStorageBuildings
-                                |> Seq.map (fun (x, building) -> x, (building.Pos.Pos - damagePos).Length(), building)
-                                |> Seq.filter (fun (_, dist, _) -> dist < 100.0f)
-                                |> Seq.minBy (fun (_, dist, _) -> dist)
-                                |> Some
-                            with
-                            | _ -> None
-                        match closest with
-                        | Some(damaged, _, building) ->
-                            let significantSubBlocks = building.SubBlocks(world.SubBlockSpecs)
-                            if Array.contains subGroup significantSubBlocks then
-                                let player =
-                                    pilots.Value.TryFind damage.AttackerId
-                                let data = { Amount = damage.Damage; ByPlayer = player }
-                                yield { Object = damaged; Data = data }
-                        | None -> () // No known building nearby
-                    | None -> () // Outside of know regions
-                | Some(StaticPlaneType world.PlaneSet planeModel, _, _, _) ->
+                    match tryIdentifyBuilding world damagePos subGroup with
+                    | Some damaged ->
+                        let player =
+                            pilots.Value.TryFind damage.AttackerId
+                        let data = { Amount = damage.Damage; ByPlayer = player }
+                        yield { Object = damaged; Data = data }
+                    | None -> () // No known building nearby
+                | Some(StaticPlaneType planeModel, _, _, _) ->
                     let closestAirfield =
                         world.Airfields
                         |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())

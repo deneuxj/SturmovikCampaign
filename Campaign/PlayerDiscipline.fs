@@ -23,6 +23,7 @@ open Util
 open ploggy
 open System.Numerics
 open FSharp.Control
+open SturmovikMission.Blocks.StaticDefenses.Types
 open Campaign.ResultExtraction
 open Campaign.WorldDescription
 open Campaign.WorldState
@@ -33,6 +34,8 @@ open Campaign.NewWorldState
 open SturmovikMission.Blocks.Vehicles
 open MBrace.FsPickler
 open NLog
+open SturmovikMission.Blocks.Util
+open System.ServiceModel.Channels
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -93,6 +96,7 @@ with
 let disciplinePlayers (config : Configuration) (world : World) (state : WorldState) (events : AsyncSeq<LogEntry>) =
     asyncSeq {
         let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
+        let (|StaticPlaneType|_|) = staticPlaneType world.PlaneSet
         let mutable nameOf = Map.empty // Vehicle ID -> player ID
         let mutable coalitionOf = Map.empty // Vehicle ID -> coalition
         let mutable damagesOf = Map.empty // Vehicle ID -> friendly fire
@@ -162,7 +166,7 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                     | Some countryA, Some countryB when countryA = countryB ->
                         let cost =
                             match objects.TryFind(damage.TargetId) with
-                            | Some(StaticPlaneType world.PlaneSet plane) ->
+                            | Some(StaticPlaneType plane) ->
                                 plane.Cost
                             | Some(StaticVehicleType tank) ->
                                 tank.Cost
@@ -258,7 +262,7 @@ type PlaneAvailabilityMessage =
     | Warning of UserIds * delay:int * string list
     | Announce of CoalitionId * string list
     | Violation of UserIds
-    | Status of Map<string, PlayerHangar> * Map<AirfieldId, AirfieldState>
+    | Status of Map<string, PlayerHangar> * Map<AirfieldId, Map<PlaneModel, float32>>
     | PlanesAtAirfield of AirfieldId * Map<PlaneModel, float32>
 
 
@@ -266,70 +270,276 @@ type PlaneAvailabilityMessage =
 let private emptyHangar (playerId : string, playerName : string) =
     { Player = Guid(playerId); PlayerName = playerName; Reserve = 0.0f<E>; Airfields = Map.empty }
 
-let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (events : AsyncSeq<LogEntry>) =
-    let wg = world.FastAccess
-    let sg = state.FastAccess
-    let rearAirfields =
-        [Axis; Allies]
-        |> Seq.map (fun coalition -> state.RearAirfield(world, coalition))
-        |> Set.ofSeq
-    let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
-    // For objects whose damage is tracked anonymously by the result extraction system, list object type and cost
-    let valuedObjects =
-        [
-            ("_PzKpfw III Ausf.L", GroundAttackVehicle.HeavyTankCost)
-            ("_T-34-76 STZ", GroundAttackVehicle.HeavyTankCost)
-            ("Destroyer Type 7", 5.0f * GroundAttackVehicle.HeavyTankCost)
-            ("GAZ-AA", Orders.ResupplyOrder.TruckCapacity)
-            ("GAZ-M", Orders.ResupplyOrder.TruckCapacity)
-            ("Landing Boat type A", float32 Orders.shipVehicleCapacity * GroundAttackVehicle.MediumTankCost)
-            ("Large Cargo Ship type 1", Orders.ResupplyOrder.ShipCapacity)
-            ("Large Tanker Ship type 1", Orders.ResupplyOrder.ShipCapacity)
-            ("Locomotive_E", Orders.ResupplyOrder.TrainCapacity)
-            ("Locomotive_G8", Orders.ResupplyOrder.TrainCapacity)
-            ("Opel Blitz", Orders.ResupplyOrder.TruckCapacity)
-            ("PzKpfw III Ausf.H", GroundAttackVehicle.HeavyTankCost)
-            ("PzKpfw IV Ausf.F1", GroundAttackVehicle.MediumTankCost)
-            ("River Cargo Ship type Georgia AAA", Orders.ResupplyOrder.ShipCapacity)
-            ("Sd Kfz 10 Flak 38", GroundAttackVehicle.LightArmorCost)
-            ("Sd Kfz 251 Wurfrahmen 40", GroundAttackVehicle.LightArmorCost)
-            ("T-34-76", GroundAttackVehicle.HeavyTankCost)
-            ("T-70", GroundAttackVehicle.MediumTankCost)
-            ("Torpedo Boat type S-38", 2.0f * GroundAttackVehicle.HeavyTankCost)
-            ("Torpedo Boat G-5 series 11-bis 213", 2.0f * GroundAttackVehicle.HeavyTankCost)
-            ("wagon_tankb", Orders.ResupplyOrder.TrainCapacity / 8.0f)
-            ("zis-3", Orders.ResupplyOrder.TruckCapacity)
-            ("zis-5 72-k", GroundAttackVehicle.LightArmorCost)
-            ("zis-5", Orders.ResupplyOrder.TruckCapacity)
-            ("zis-6 bm-13", GroundAttackVehicle.LightArmorCost)
-        ]
-        |> Seq.map (fun (k, v) -> k.ToLowerInvariant(), v)
-        |> dict
+type Command =
+    | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * funds:float32<E> * AirfieldId
+    | PlaneCheckIn of user:UserIds * PlaneModel * health:float32 * AirfieldId
+    | DeliverSupplies of float32<E> * RegionId
+    | RewardPlayer of user:UserIds * float32<E>
+    | PunishThief of user:UserIds * PlaneModel * AirfieldId
+    | Message of PlaneAvailabilityMessage
 
-    asyncSeq {
-        let mutable playerOf = Map.empty // Vehicle ID -> UserIds
-        let mutable planes = Map.empty // Vehicle ID -> plane model
-        let mutable otherTargets = Map.empty // Vehicle ID -> value and coalition
-        let mutable airfields =
+// It is not possible to identify static objects before they are damaged, because their position vector
+// is null in the spawn log entry. The information for static objects is stored in StaticObject
+// and resolved to Production, Storage, AirfieldBuilding or nothing when damage entries are handled.
+
+type ObjectInstance =
+    | StaticObject of objectType:string * subGroup:int option
+    | Production of StaticGroup * int
+    | Storage of StaticGroup * int
+    | AirfieldBuilding of StaticGroup * int
+    | StaticPlane of PlaneModel
+    | StaticTank of GroundAttackVehicle
+    | DynamicPlane of PlaneModel
+    | CargoShip
+    | BigEscortShip
+    | SmallEscortShip
+    | LandingShip
+    | Artillery
+    | LightMachineGun
+    | HeavyMachineGun
+    | DynamicTank of GroundAttackVehicle
+    | ConvoyTruck
+    | TrainWagon
+    | Locomotive
+
+type Context =
+    { World : WorldFastAccess
+      State : WorldStateFastAccess
+      Binding : Map<int, CoalitionId * ObjectInstance>
+      Hangars : Map<string, PlayerHangar>
+      Airfields : Map<AirfieldId, Map<PlaneModel, float32>>
+      RearAirfields : Set<AirfieldId>
+      RegionNeeds : Map<RegionId, float32<E>>
+    }
+with
+    static member Create(world : World, state : WorldState, hangars : Map<string, PlayerHangar>) =
+        let rearAirfields =
+            [Axis; Allies]
+            |> List.choose (fun coalition -> state.RearAirfield(world, coalition))
+            |> Set.ofList
+        let needs = AutoOrder.computeSupplyNeeds world state
+        let airfields =
             state.Airfields
-            |> Seq.map (fun afs -> afs.AirfieldId, afs)
+            |> Seq.map (fun afs -> afs.AirfieldId, afs.NumPlanes)
             |> Map.ofSeq
-        let mutable hangars = hangars // User ID -> player hangar
-        let mutable uponTakeoff = Map.empty // Vehicle ID -> action to perform on take off (checkout plane, kick user)
-        let mutable uponDisconnect = Map.empty // User ID -> action to perform (return plane at starting airfield without benefits for the player)
-        let mutable uponMissionEnded = Map.empty // Vehicle ID -> action to perform when player ends mission.
-        let mutable healthOf = Map.empty // Vehicle ID -> health
-        let mutable coalitionOf = Map.empty // Player name -> Coalition
-        let mutable rewards = Map.empty // Map player name to rewards, gathered during current flight, to be collected upon landing
-        let mutable tookOffFrom = Map.empty // Vehicle ID -> TookOff
-        let mutable regionNeeds = AutoOrder.computeSupplyNeeds world state
+        {
+            World = world.FastAccess
+            State = state.FastAccess
+            Binding = Map.empty
+            Hangars = hangars
+            Airfields = airfields
+            RearAirfields = rearAirfields
+            RegionNeeds = needs
+        }
 
-        // Compute the reward factor of a supply mission. Depends on respective region needs and the distance between them.
+    /// Bind a vehicle ID to a coalition and a type of object
+    member this.HandleBinding(spawn : ObjectSpawnedEntry) =
+        let (|PlaneObjectType|_|) = planeObjectType this.World.World.PlaneSet
+        let (|StaticPlaneType|_|) = staticPlaneType this.World.World.PlaneSet
+        let entity =
+            match spawn.ObjectType, spawn.ObjectName with
+            | PlaneObjectType plane, _ -> DynamicPlane plane
+            | StaticPlaneType plane, _ -> StaticPlane plane
+            | StaticVehicleType vehicle, _ -> StaticTank vehicle
+            | _, CannonObjectName -> Artillery
+            | _, HeavyMachineGunAAName -> HeavyMachineGun
+            | _, LightMachineGunAAName -> LightMachineGun
+            | "PzKpfw III Ausf.H", _
+            | "_PzKpfw III Ausf.L", _
+            | "T-34-76", _
+            | "_T-34-76 STZ", _ -> DynamicTank HeavyTank
+            | "Destroyer Type 7", _ -> BigEscortShip
+            | "Opel Blitz", _
+            | "GAZ-AA", _
+            | "GAZ-M", _ -> ConvoyTruck
+            | "Landing Boat type A", _ -> LandingShip
+            | "River Cargo Ship type Georgia AAA", _
+            | "Large Cargo Ship type 1", _
+            | "Large Tanker Ship type 1", _ -> CargoShip
+            | "Locomotive_E", _
+            | "Locomotive_G8", _ -> Locomotive
+            | "T-70", _
+            | "PzKpfw IV Ausf.F1", _ -> DynamicTank MediumTank
+            | "Sd Kfz 10 Flak 38", _
+            | "Sd Kfz 251 Wurfrahmen 40", _ -> DynamicTank LightArmor
+            | "Torpedo Boat type S-38", _
+            | "Torpedo Boat G-5 series 11-bis 213", _ -> SmallEscortShip
+            | "wagon_tankb", _ -> TrainWagon
+            | "zis-3", _ -> ConvoyTruck
+            | "zis-5 72-k", _ -> DynamicTank LightArmor
+            | "zis-5", _ -> ConvoyTruck
+            | "zis-6 bm-13", _ -> DynamicTank LightArmor
+            | _ ->
+                StaticObject(spawn.ObjectType, if spawn.SubGroup >= 0 then Some spawn.SubGroup else None)
+        let binding =
+            match CoalitionId.FromLogEntry spawn.Country with
+            | None -> this.Binding
+            | Some coalition -> this.Binding.Add(spawn.ObjectId, (coalition, entity))
+        { this with Binding = binding}
+
+    /// Attempt to resolve static objects using a damage entry
+    member this.ResolveBindings(damage : DamageEntry) =
+        let binding =
+            match this.Binding.TryFind(damage.TargetId) with
+            | Some(coalition, StaticObject(objectType, Some groupIdx)) ->
+                let damagePos = Vector2(damage.Position.X, damage.Position.Z)
+                match tryIdentifyBuilding this.World.World damagePos groupIdx with
+                | Some(Airfield(af, i, _)) ->
+                    let sto = this.World.GetAirfield(af).Storage.[i]
+                    this.Binding.Add(damage.TargetId, (coalition, AirfieldBuilding(sto, groupIdx)))
+                | Some(DamagedObject.Storage(reg, i, _)) ->
+                    let sto = this.World.GetRegion(reg).Storage.[i]
+                    this.Binding.Add(damage.TargetId, (coalition, Storage(sto, groupIdx)))
+                | Some(DamagedObject.Production(reg, i, _)) ->
+                    let pro = this.World.GetRegion(reg).Production.[i]
+                    this.Binding.Add(damage.TargetId, (coalition, Production(pro, groupIdx)))
+                | _ ->
+                    this.Binding
+            | _ ->
+                this.Binding
+        { this with Binding = binding }
+
+    /// Execute a command.
+    /// Commands are typically created by PlayerFlightData instances, when they hand game log entries.
+    member this.Execute(command : Command) =
+        match command with
+        | PlaneCheckOut(user, plane, health, cost, af) ->
+            let coalition =
+                this.State.GetRegion(this.World.GetAirfield(af).Region).Owner
+            let hangar =
+                this.Hangars.TryFind(user.UserId)
+                |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
+            let planes =
+                this.Airfields.TryFind(af)
+                |> Option.defaultValue(Map.empty)
+            let oldQty =
+                planes.TryFind(plane)
+                |> Option.defaultValue(0.0f)
+            let newQty = oldQty - 1.0f
+            if newQty >= 0.0f then
+                let hangar = hangar.RemovePlane(af, plane, health, cost)
+                let hangars = this.Hangars.Add(user.UserId, hangar)
+                let airfields = this.Airfields.Add(af, planes.Add(plane, newQty))
+                { this with Hangars = hangars; Airfields = airfields },
+                [
+                    yield Status(hangars, airfields)
+                    yield PlanesAtAirfield(af, airfields.[af])
+                    match coalition, newQty with
+                    | Some coalition, x when int x <= 0 ->
+                        yield Announce(coalition, [ sprintf "%s took the last %s from %s" user.Name plane.PlaneName af.AirfieldName ])
+                    | Some coalition, x ->
+                        yield Announce(coalition, [ sprintf "%s took off in a %s from %s (%d left)" user.Name plane.PlaneName af.AirfieldName (int x)])
+                    | None, _ ->
+                        logger.Warn(sprintf "Plane checkout from a neutral region from %s" af.AirfieldName)
+                ]
+            else
+                logger.Info(sprintf "%s is denied take off from %s due to lack of planes" user.Name af.AirfieldName)
+                this,
+                [
+                    Warning(user, 30, ["You are going to be kicked for taking off in a plane after the last was taken"
+                                       "Sorry about the inconvenience"])
+                    Violation user
+                ]
+
+        | PlaneCheckIn(user, plane, health, af) ->
+            let hangar =
+                this.Hangars.TryFind(user.UserId)
+                |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
+            let hangar = hangar.AddPlane(af, plane, health)
+            let hangars = this.Hangars.Add(user.UserId, hangar)
+            let planes =
+                this.Airfields.TryFind(af)
+                |> Option.defaultValue(Map.empty)
+            let oldQty =
+                planes.TryFind(plane)
+                |> Option.defaultValue(0.0f)
+            let planes =
+                planes.Add(plane, oldQty + health)
+            let airfields = this.Airfields.Add(af, planes)
+            { this with Hangars = hangars; Airfields = airfields },
+            [
+                yield Status(hangars, airfields)
+                yield PlanesAtAirfield(af, airfields.[af])
+                if oldQty < 1.0f && oldQty + health >= 1.0f then
+                    match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
+                    | Some coalition ->
+                        yield Announce(coalition, [sprintf "%s available at %s again" plane.PlaneName af.AirfieldName])
+                    | None ->
+                        ()
+            ]
+
+        | DeliverSupplies(supplies, region) ->
+            let oldNeeds =
+                this.RegionNeeds.TryFind(region)
+                |> Option.defaultValue 0.0f<E>
+            let newNeeds = oldNeeds - supplies
+            { this with RegionNeeds = this.RegionNeeds.Add(region, newNeeds) }, []
+
+        | RewardPlayer(user, reward) ->
+            let hangar =
+                this.Hangars.TryFind(user.UserId)
+                |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
+            let hangar = { hangar with Reserve = hangar.Reserve + reward }
+            let hangars = this.Hangars.Add(user.UserId, hangar)
+            { this with Hangars = hangars },
+            [
+                Overview(user, 15, [sprintf "You have been awarded %1.0f" reward])
+                Status(hangars, this.Airfields)
+            ]
+
+        | PunishThief(user, plane, af) ->
+            this,
+            [
+                Warning(user, 30, ["You are going to be kicked for taking off in a plane you cannot afford"
+                                   "Sorry about the inconvenience"])
+                Violation user
+            ]
+
+        | Message m ->
+            this, [m]
+
+    member this.TryCheckoutPlane(user: UserIds, af: AirfieldId, plane: PlaneModel) =
+        let hangar =
+            this.Hangars.TryFind(user.UserId)
+            |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
+        hangar.TryRemovePlane(af, plane, 1.0f)
+
+    member this.GetClosestAirfield(v : Vector2) =
+        this.State.State.Airfields
+        |> Seq.minBy (fun afs -> let pos, _ = afs.Runway in (pos - v).Length())
+        |> fun afs -> afs.AirfieldId
+
+    member this.IsSpawnRestricted(af : AirfieldId, plane : PlaneModel, coalition : CoalitionId) =
+        let availableAtAirfield =
+            this.State.GetAirfield af
+            |> fun afs -> afs.NumPlanes
+            |> fun planes -> planes.TryFind plane
+            |> Option.defaultValue 0.0f
+        let isRestricted =
+            let numOwned =
+                this.State.State.Regions
+                |> Seq.filter (fun region -> region.Owner = Some coalition)
+                |> Seq.length
+            if numOwned * 4 <= this.State.State.Regions.Length then
+                false
+            elif this.RearAirfields.Contains(af) then
+                false
+            elif this.State.GetRegion(this.World.GetAirfield(af).Region).HasInvaders then
+                false
+            else
+                match plane.PlaneType with
+                | Fighter -> availableAtAirfield < 10.0f
+                | Attacker -> availableAtAirfield < 7.0f
+                | Bomber -> availableAtAirfield < 5.0f
+                | Transport -> false
+        isRestricted
+
+    member this.SupplyFlightFactor(start : AirfieldId, destination : AirfieldId) =
         let computeSupplyRewardFactor regStart regEnd =
             // Only give a positive reward if the transfer contributed to improve the overall picture
-            if regionNeeds.[regEnd] > regionNeeds.[regStart] then
+            if this.RegionNeeds.[regEnd] > this.RegionNeeds.[regStart] then
                 // Reward long flights better than short flights
-                let distance = wg.GetRegion(regStart).Position - wg.GetRegion(regEnd).Position
+                let distance = this.World.GetRegion(regStart).Position - this.World.GetRegion(regEnd).Position
                 let distance = distance.Length()
                 distance / 70000.0f
                 |> min 1.0f
@@ -338,412 +548,395 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
             else
                 0.0f
 
-        // Notify pilot of good destinations for a supply mission
-        let handledSupplyMissionStart(user : UserIds, regStart : RegionId, coalition : CoalitionId) =
-            asyncSeq {
-                let bestDestinations =
-                    state.Regions
-                    |> Seq.filter (fun region -> region.Owner = Some coalition)
-                    |> Seq.sortByDescending (fun regState -> computeSupplyRewardFactor regStart regState.RegionId)
-                    |> Seq.filter(fun regState -> world.RegionHasAirfields(regState.RegionId) && computeSupplyRewardFactor regStart regState.RegionId > 0.0f)
-                    |> Seq.truncate 3
-                    |> List.ofSeq
-                match bestDestinations with
-                | [] ->
-                    yield Overview(user, 15, ["This airfield is not a good place to start a supply mission from"])
-                | _ :: _ as x ->
-                    yield Overview(user, 15, ["The following regions would benefit from resupplies: " + (x |> List.map (fun r -> string r.RegionId) |> String.concat ", ")])
-            }
+        let regStart = this.World.GetAirfield(start).Region
+        let regEnd = this.World.GetAirfield(destination).Region
+        let factor =
+            let coalitionStart = this.State.GetRegion(regStart).Owner
+            let coalitionEnd = this.State.GetRegion(regEnd).Owner
+            if coalitionStart = coalitionEnd then
+                computeSupplyRewardFactor regStart regEnd
+            else
+                // Delivering goods to the enemy: negative reward!
+                -1.0f
+        factor
 
-        /// Throw away rewards, clear maps
-        let cancelFlight(vehicleId, userName) =
-            asyncSeq {
-                uponTakeoff.Remove(vehicleId) |> ignore
-                playerOf.Remove(vehicleId) |> ignore
-                planes.Remove(vehicleId) |> ignore
-                rewards.Remove(userName) |> ignore
-                healthOf.Remove(vehicleId) |> ignore
-            }
+type PlayerFlightState =
+    | Spawned
+    | Aborted
+    | InFlight
+    | Landed of AirfieldId option
+    | Disconnected
+    | MissionEnded
+    | StolePlane
 
-        /// Remove a plane from an airfield, and optionally from the player's hangar (if the airfield is restricted)
-        let checkoutPlane(af : Airfield, plane, user, vehicle, hangar : PlayerHangar.PlayerHangar option) =
-            asyncSeq {
-                let afs = airfields.[af.AirfieldId]
-                let availableAtAirfield = afs.NumPlanes.TryFind(plane) |> Option.defaultValue 0.0f
-                let availableAfterTakeOff = max (availableAtAirfield - 1.0f) 0.0f
-                let afs = { afs with NumPlanes = Map.add plane availableAfterTakeOff afs.NumPlanes }
-                match sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner with
-                | Some coalition ->
-                    if availableAtAirfield < 2.0f then
-                        yield Announce(coalition,
-                            [sprintf "%s are no longer available at %s" plane.PlaneName af.AirfieldId.AirfieldName])
-                | None ->
-                    logger.Warn(sprintf "Player spawned in a %s at neutral airfield %s" plane.PlaneName af.AirfieldId.AirfieldName)
-                if availableAtAirfield < 2.0f then
-                    yield PlanesAtAirfield(af.AirfieldId, afs.NumPlanes)
-                match hangar with
-                | Some hangar ->
-                    hangars <- hangars.Add(user.UserId, hangar)
-                | None ->
-                    ()
-                airfields <- Map.add af.AirfieldId afs airfields
-                planes <- Map.add vehicle plane planes
-                // On disconnect before landing, return what's left of the plane
-                uponDisconnect <- uponDisconnect.Add(user,
-                    asyncSeq {
-                        let afs = airfields.[af.AirfieldId]
-                        let availableAtAirfield = afs.NumPlanes.TryFind(plane) |> Option.defaultValue 0.0f
-                        let health = healthOf.TryFind vehicle |> Option.defaultValue 1.0f
-                        let afs = { afs with NumPlanes = Map.add plane (availableAtAirfield + health) afs.NumPlanes }
-                        airfields <- Map.add af.AirfieldId afs airfields
-                        yield Status(hangars, airfields)
-                        yield! cancelFlight(vehicle, user.Name)
-                    })
-                // If ending a mission before landing, clean maps and discard rewards. This handler is removed during a successful landing
-                uponMissionEnded <- uponMissionEnded.Add(vehicle, cancelFlight(vehicle, user.Name))
-            }
-
-        // Check if a player is spawning at a restricted airfield, if so check that they can, and prepare the update of airfield and hangars that will happen on take off
-        let startFlight(entry : PlayerPlaneEntry) =
-            asyncSeq {
-                let user = { UserId = string entry.UserId; Name = entry.Name }
-                playerOf <- Map.add entry.VehicleId user playerOf
-                healthOf <- Map.add entry.VehicleId 1.0f healthOf
-                let coalition = CoalitionId.FromLogEntry(entry.Country)
-                match coalition with
-                | Some x ->
-                    coalitionOf <- coalitionOf.Add(user.Name, x)
-                | None ->
-                    ()
-                let pos = Vector2(entry.Position.X, entry.Position.Z)
-                let af = world.GetClosestAirfield(pos)
-                let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
-                let hangar = { hangar with PlayerName = user.Name }
-                match entry.VehicleType with
-                | PlaneObjectType plane ->
-                    // If spawning in a Ju52 or other cargo transporter, suggest destinations
-                    let bigBombLoad = lazy(plane.BombLoads |> Seq.exists (fun (loadout, weight) -> loadout = entry.Payload && weight >= 1000.0f<K>))
-                    if plane.Roles.Contains(CargoTransporter) || bigBombLoad.Value then
-                        match coalition with
-                        | Some coalition -> yield! handledSupplyMissionStart(user, af.Region, coalition)
-                        | None -> ()
-                    let availableAtAirfield =
-                        airfields.TryFind af.AirfieldId
-                        |> Option.map (fun afs -> afs.NumPlanes)
-                        |> Option.bind (fun planes -> planes.TryFind plane)
-                        |> Option.defaultValue 0.0f
-                    let isRestricted =
-                        let numOwned =
-                            state.Regions
-                            |> Seq.filter (fun region -> region.Owner = coalition)
-                            |> Seq.length
-                        if numOwned * 4 <= state.Regions.Length then
-                            false
-                        elif rearAirfields.Contains(Some af.AirfieldId) then
-                            false
-                        elif sg.GetRegion(af.Region).HasInvaders then
-                            false
-                        else
-                            match plane.PlaneType with
-                            | Fighter -> availableAtAirfield < 10.0f
-                            | Attacker -> availableAtAirfield < 7.0f
-                            | Bomber -> availableAtAirfield < 5.0f
-                            | Transport -> false
-
-                    let descr =
-                        match hangar.ShowAvailablePlanes(af.AirfieldId) with
-                        | [] -> [sprintf "You do not have any reserved planes at %s" af.AirfieldId.AirfieldName]
-                        | planes -> (sprintf "You have the following planes reserved at %s:" af.AirfieldId.AirfieldName) :: planes
-                    yield Overview(user, 15, descr)
-
-                    if isRestricted then
-                        // Player hangar restrictions apply
-                        match hangar.TryRemovePlane(af.AirfieldId, plane, 1.0f) with
+type PlayerFlightData =
+    { Player : UserIds
+      Vehicle : int
+      State : PlayerFlightState
+      Health : float32
+      Coalition : CoalitionId
+      Plane : PlaneModel
+      Cargo : float32<K>
+      InitialBombs : float32<K>
+      NumBombs : int
+      Reward : float32<E>
+      StartAirfield : AirfieldId
+    }
+with
+    // Check if entry is a player joining a plane, show best destinations for supply flights
+    static member TryCreate(context : Context, entry : PlayerPlaneEntry) =
+        match context.Binding.TryFind(entry.VehicleId) with
+        | Some(coalition, DynamicPlane plane) ->
+            let cargo =
+                if plane.Roles.Contains CargoTransporter then
+                    let modmask, payload = plane.CargoPayload
+                    if entry.Payload = payload then
+                        plane.CargoCapacity
+                    else
+                        0.0f<K>
+                else
+                    0.0f<K>
+            let weight =
+                plane.BombLoads
+                |> List.tryPick (fun (loadout, weight) -> if loadout = entry.Payload then Some weight else None)
+                |> Option.defaultVal 0.0f<K>
+            let af = context.GetClosestAirfield(Vector2(entry.Position.X, entry.Position.Z))
+            let user = { UserId = string entry.UserId; Name = entry.Name }
+            let supplyInfo =
+                seq {
+                    let bestDestinations =
+                        context.World.World.Airfields
+                        |> Seq.filter (fun af -> context.State.GetRegion(af.Region).Owner = Some coalition)
+                        |> Seq.choose (fun afDest ->
+                            match context.SupplyFlightFactor(af, afDest.AirfieldId) with
+                            | x when x > 0.0f -> Some(afDest, x)
+                            | _ -> None)
+                        |> Seq.sortByDescending snd
+                        |> Seq.truncate 3
+                        |> Seq.map fst
+                        |> List.ofSeq
+                    match bestDestinations with
+                    | [] ->
+                        yield Overview(user, 15, ["This airfield is not a good place to start a supply mission from"])
+                    | _ :: _ as x ->
+                        yield Overview(user, 15, ["The following regions would benefit from resupplies: " + (x |> List.map (fun af -> af.AirfieldId.AirfieldName) |> String.concat ", ")])
+                }
+            let planeInfo =
+                [
+                    if context.IsSpawnRestricted(af, plane, coalition) then
+                        match context.TryCheckoutPlane(user, af, plane) with
                         | None ->
-                            yield Warning(user, 15,
-                                [
-                                    sprintf "The staff at %s won't let you take a %s" af.AirfieldId.AirfieldName plane.PlaneName
-                                    "It has been assigned to another pilot"
-                                    "CANCEL your flight or you will be KICKED"
-                                ] @ hangar.ShowAvailablePlanes(af.AirfieldId))
-                            uponTakeoff <- uponTakeoff.Add(entry.VehicleId, asyncSeq { yield Violation user })
-                        | Some hangar2 ->
-                            if hangar2.Reserve < hangar.Reserve then
-                                yield Overview(user, 15,
-                                    [
-                                        sprintf "There is no %s reserved for you, but you can spend %0.0f to reserve one" plane.PlaneName (hangar.Reserve - hangar2.Reserve)
-                                        "Proceed to take off if you wish to do so"
-                                    ])
+                            yield Overview(user, 0, [sprintf "You are not allowed to take off in a %s this plane at %s" plane.PlaneName af.AirfieldName])
+                        | Some hangar ->
+                            let fundsBefore =
+                                context.Hangars.TryFind(user.UserId)
+                                |> Option.map(fun h -> h.Reserve)
+                                |> Option.defaultValue 0.0f<E>
+                            let cost = fundsBefore - hangar.Reserve
+                            if cost > 0.0f<E> then
+                                yield Overview(user, 0, [sprintf "It will cost you %0.0f to take off in a %s from %s" cost plane.PlaneName af.AirfieldName])
                             else
-                                yield Overview(user, 15,
-                                    [sprintf "You are authorized to take off in a %s" plane.PlaneName])
-
-                            uponTakeoff <- uponTakeoff.Add(entry.VehicleId,
-                                asyncSeq {
-                                    // Update airfield and hangar
-                                    yield! checkoutPlane(af, plane, user, entry.VehicleId, Some hangar2)
-                                })
-                            hangars <- Map.add user.UserId hangar hangars
+                                yield Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName])
                     else
-                        yield Overview(user, 15,
-                            [sprintf "There are no restrictions on %s at this airfield" plane.PlaneName
-                             "You are authorized to take off"
-                            ])
-                        // Player hangar restrictions don't apply
-                        uponTakeoff <- uponTakeoff.Add(entry.VehicleId,
-                                asyncSeq {
-                                    // Update airfield. No update to hangar, as planes are free here.
-                                    yield! checkoutPlane(af, plane, user, entry.VehicleId, None)
-                                })
-                    // If player ends mission or disconnects before take off: Clean up maps
-                    uponMissionEnded <- uponMissionEnded.Add(entry.VehicleId, cancelFlight(entry.VehicleId, user.Name))
-                    uponDisconnect <- uponDisconnect.Add(user, cancelFlight(entry.VehicleId, user.Name))
-                | _ -> // Vehicle other than plane
-                    ()
-            }
+                        yield Overview(user, 0, [sprintf "You are cleared to take off in any plane from %s" af.AirfieldName])
+                ]
+            let supplyCommands =
+                if cargo > 0.0f<K> || weight > 1000.0f<K> then
+                    List.ofSeq supplyInfo
+                else
+                    []
+            Some {
+                Player = user
+                Vehicle = entry.VehicleId
+                State = Spawned
+                Health = 1.0f
+                Coalition = coalition
+                Plane = plane
+                Cargo = cargo
+                NumBombs = entry.Bombs
+                InitialBombs = weight
+                Reward = 0.0f<E>
+                StartAirfield = af
+            }, List.concat [supplyCommands; planeInfo]
+        | Some _
+        | None ->
+            None, []
 
-        // A player ended their mission. Update the airfield and the player's hangar, optionally including rewards.
-        let endFlight(user, plane, af : Airfield, vehicle) =
-            asyncSeq {
-                let hangar = hangars.TryFind user.UserId |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
-                let hangar = { hangar with PlayerName = user.Name }
-                let health = healthOf.TryFind vehicle |> Option.defaultValue 1.0f
-                let airfield = airfields.[af.AirfieldId]
-                let oldNumPlanes = airfield.NumPlanes.TryFind plane |> Option.defaultValue 0.0f
-                let airfield = { airfield with NumPlanes = airfield.NumPlanes.Add(plane, oldNumPlanes + health) }
-                let hangar = hangar.AddPlane(af.AirfieldId, plane, health)
-                let coalition = coalitionOf.TryFind(user.Name)
-                // Compute reward
-                let collectedReward =
-                    if sg.GetRegion(af.Region).Owner = coalition then
-                        rewards.TryFind(user.Name) |> Option.defaultValue 0.0f<E> |> max 0.0f<E>
-                    else
-                        0.0f<E>
-                // Public announce to coalition
-                match coalition with
-                | Some coalition ->
-                    yield Announce(coalition, [ sprintf "%s has collected a reward of %0.0f" user.Name collectedReward ])
+    // Handle first take off after spawn
+    member this.HandleTakeOff(context : Context, takeOff : TakeOffEntry) =
+        let af = this.StartAirfield
+        if not(context.IsSpawnRestricted(af, this.Plane, this.Coalition)) then
+            // Spawning in that plane at that airfield is unrestricted
+            { this with State = InFlight },
+            [ PlaneCheckOut(this.Player, this.Plane, this.Health, 0.0f<E>, af) ]
+        else
+            let fundsBefore =
+                context.Hangars.TryFind(this.Player.UserId)
+                |> Option.map(fun h -> h.Reserve)
+                |> Option.defaultValue 0.0f<E>
+            match context.TryCheckoutPlane(this.Player, af, this.Plane) with
+            | None ->
+                { this with State = StolePlane },
+                [ PunishThief(this.Player, this.Plane, af) ]
+            | Some hangar ->
+                let cost = fundsBefore - hangar.Reserve
+                { this with State = InFlight },
+                [ PlaneCheckOut(this.Player, this.Plane, this.Health, cost, af) ]
+
+    // Handle take off after landing
+    member this.HandleTakeOffAgain() =
+        { this with State = InFlight }, []
+
+    // Diminish health by received damage amount
+    member this.HandleReceivedDamage(context : Context, damage : DamageEntry) =
+        { this with Health = this.Health - damage.Damage }, []
+
+    // Increase reward depending on target and amount of damage
+    member this.HandleInflictedDamage(context : Context, damage : DamageEntry) =
+        let value =
+            match context.Binding.TryFind(damage.TargetId) with
+            | Some(_, StaticPlane _) ->
+                0.0f<E>
+            | Some(_, DynamicPlane plane) ->
+                plane.Cost / 5.0f
+            | Some(_, AirfieldBuilding(group, idx))
+            | Some(_, Storage(group, idx)) ->
+                let specs = context.World.World.SubBlockSpecs
+                let buildings = group.SubBlocks specs
+                if Array.exists ((=) idx) buildings then
+                    (group.RepairCost specs + group.Storage specs) / float32 buildings.Length
+                else
+                    0.0f<E>
+            | Some(_, Production(group, idx)) ->
+                let specs = context.World.World.SubBlockSpecs
+                let buildings = group.SubBlocks specs
+                if Array.exists ((=) idx) buildings then
+                    (group.RepairCost specs) / float32 buildings.Length
+                else
+                    0.0f<E>
+            | Some(_, CargoShip) ->
+                Orders.ResupplyOrder.ShipCapacity
+            | Some(_, BigEscortShip) ->
+                Orders.ResupplyOrder.ShipCapacity
+            | Some(_, SmallEscortShip) ->
+                Orders.ResupplyOrder.ShipCapacity / 3.0f
+            | Some(_, LandingShip) ->
+                float32 Orders.shipVehicleCapacity * GroundAttackVehicle.MediumTankCost
+            | Some(_, Artillery) ->
+                cannonCost
+            | Some(_, LightMachineGun) ->
+                lightMachineGunCost
+            | Some(_, HeavyMachineGun) ->
+                heavyMachineGunCost
+            | Some(_, StaticTank tank)
+            | Some(_, DynamicTank tank) ->
+                tank.Cost
+            | Some(_, ConvoyTruck) ->
+                Orders.ResupplyOrder.TruckCapacity
+            | Some(_, TrainWagon) ->
+                Orders.ResupplyOrder.TrainCapacity / 8.0f
+            | Some(_, Locomotive) ->
+                Orders.ResupplyOrder.TrainCapacity / 8.0f
+            | Some(_, StaticObject _) ->
+                0.0f<E>
+            | None ->
+                0.0f<E>
+        let factor =
+            match context.Binding.TryFind(damage.TargetId) with
+            | Some (coalition, _) ->
+                if coalition = this.Coalition then
+                    -1.0f
+                else
+                    1.0f
+            | None ->
+                0.0f
+        let productionLoss =
+            match context.Binding.TryFind(damage.TargetId) with
+            | Some(_, Production(group, idx)) ->
+                let specs = context.World.World.SubBlockSpecs
+                let buildings = group.SubBlocks specs
+                if Array.exists ((=) idx) buildings then
+                    let timeToRepair =
+                        (group.RepairCost specs) / float32 buildings.Length / context.World.World.RepairSpeed
+                    0.5f * group.Production(specs, context.World.World.ProductionFactor) / float32 buildings.Length * timeToRepair
+                else
+                    0.0f<E>
+            | _ ->
+                0.0f<E>
+        let reward = factor * (damage.Damage * value + productionLoss)
+        { this with Reward = this.Reward + reward }, []
+
+    // Set health to 0
+    member this.HandleKilled(context : Context, killed : KillEntry) =
+        { this with Health = 0.0f }, []
+
+    // Check airfield where we landed, change state to landed
+    member this.HandleLanding(context : Context, landing : LandingEntry) =
+        let pos = Vector2(landing.Position.X, landing.Position.Z)
+        let af = context.GetClosestAirfield(pos)
+        let af = context.World.GetAirfield(af)
+        let afCheckout =
+            if (af.Pos - pos).Length() < 3000.0f then
+                Some af.AirfieldId
+            else
+                None
+        // Calculate reward from cargo, reward is secured later at mission end
+        let delivered, reward =
+            match afCheckout with
+            | Some af -> this.Cargo, this.Cargo * bombCost * context.SupplyFlightFactor(this.StartAirfield, af)
+            | None -> 0.0f<K>, 0.0f<E>
+        let cmds =
+            [
+                match afCheckout with
+                | Some af ->
+                    let reg = context.World.GetAirfield(af).Region
+                    yield DeliverSupplies(delivered * bombCost, reg)
+                    yield Message(Announce(this.Coalition, [sprintf "%s has delivered %0.0f Kg of cargo to %s" this.Player.Name delivered af.AirfieldName]))
                 | None ->
                     ()
-                // Update hangar
-                let hangar = { hangar with Reserve = hangar.Reserve + collectedReward }
-                // Notify airfield change
-                if oldNumPlanes < 1.0f && oldNumPlanes + health > 1.0f then
-                    match coalition with
-                    | Some coalition ->
-                        yield Announce(coalition,
-                            [sprintf "%s are available again at %s" plane.PlaneName af.AirfieldId.AirfieldName])
+            ]
+        { this with State = Landed(afCheckout); Cargo = this.Cargo - delivered; Reward = this.Reward + reward }, cmds
+
+    // Check in what's left of the plane, award reward
+    member this.HandleMissionEnd(context : Context, af : AirfieldId option, bombs : int option) =
+        match af, this.Health with
+        | Some af, health when health > 0.0f ->
+            let suppliesTransfered =
+                match bombs with
+                | Some bombs when bombs = this.NumBombs -> this.InitialBombs
+                | _ -> 0.0f<K>
+            let supplyReward = context.SupplyFlightFactor(this.StartAirfield, af) * suppliesTransfered
+            { this with State = MissionEnded },
+            [
+                PlaneCheckIn(this.Player, this.Plane, health, af)
+                DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
+                RewardPlayer(this.Player, supplyReward * bombCost + this.Reward)
+            ]
+        | _ ->
+            { this with State = MissionEnded }, []
+
+    // Player disconnected, return plane to start airfield if undamaged
+    member this.HandlePrematureMissionEnd(context : Context) =
+        { this with State = MissionEnded },
+        [
+            if this.Health >= 1.0f then
+                yield PlaneCheckIn(this.Player, this.Plane, 1.0f, this.StartAirfield)
+        ]
+
+    // Player ended mission before taking off, cancel mission
+    member this.HandleAbortionBeforeTakeOff(context) =
+        { this with State = MissionEnded }, []
+
+    // Player disconnected, mark as mission ended
+    member this.HandleDisconnection(context) =
+        { this with State = MissionEnded }, []
+
+    member this.HandleEntry (context : Context, entry : LogEntry) =
+        match this.State, entry with
+        | Spawned, (:? TakeOffEntry as takeOff) when takeOff.VehicleId = this.Vehicle ->
+            this.HandleTakeOff(context, takeOff)
+        | Landed _, (:? TakeOffEntry as takeOff) when takeOff.VehicleId = this.Vehicle ->
+            this.HandleTakeOffAgain()
+        | _, (:? TakeOffEntry as takeOff) when takeOff.VehicleId = this.Vehicle ->
+            logger.Warn(sprintf "Spurious take off event for %s in %s id %d" this.Player.Name this.Plane.PlaneName this.Vehicle)
+            this, []
+        | _, (:? DamageEntry as damage) when damage.AttackerId = this.Vehicle ->
+            this.HandleInflictedDamage(context, damage)
+        | _, (:? DamageEntry as damage) when damage.TargetId = this.Vehicle ->
+            this.HandleReceivedDamage(context, damage)
+        | _, (:? KillEntry as killed) when killed.TargetId = this.Vehicle ->
+            this.HandleKilled(context, killed)
+        | InFlight, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
+            this.HandleLanding(context, landing)
+        | _, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
+            logger.Warn(sprintf "Spurious landing event for %s in %s id %d" this.Player.Name this.Plane.PlaneName this.Vehicle)
+            this, []
+        | Landed af, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
+            this.HandleMissionEnd(context, af, Some finish.Bombs)
+        | Landed af, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
+            this.HandleMissionEnd(context, af, None)
+        | InFlight, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
+            this.HandlePrematureMissionEnd(context)
+        | InFlight, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
+            this.HandlePrematureMissionEnd(context)
+        | Spawned, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
+            this.HandleAbortionBeforeTakeOff(context)
+        | Spawned, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
+            this.HandleAbortionBeforeTakeOff(context)
+        | MissionEnded, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
+            this, []
+        | _, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
+            this.HandleDisconnection(context)
+        | _ ->
+            this, []
+
+
+let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
+
+    let showHangar(hangar : PlayerHangar, delay) =
+        asyncSeq {
+            let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
+            yield Overview(userIds, delay,
+                [
+                    sprintf "Welcome back %s" userIds.Name
+                    sprintf "Your cash reserve is %0.0f" hangar.Reserve
+                ])
+            yield Overview(userIds, delay,
+                [
+                    for kvp in hangar.Airfields do
+                        let planes = match hangar.ShowAvailablePlanes(kvp.Key) with
+                                        | [] -> "None"
+                                        | planes -> String.concat ", " planes
+                        yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
+                ])
+        }
+
+    asyncSeq {
+        let mutable context = Context.Create(world, state, hangars)
+        let mutable players : Map<int, PlayerFlightData> = Map.empty
+
+        for entry in entries do
+            // Handle special entries
+            match entry with
+            | :? JoinEntry as joined ->
+                yield PlayerEntered(joined.UserId)
+            | :? ObjectSpawnedEntry as spawned ->
+                context <- context.HandleBinding(spawned)
+            | :? DamageEntry as damage ->
+                context <- context.ResolveBindings(damage)
+            | :? PlayerPlaneEntry as plane ->
+                match PlayerFlightData.TryCreate(context, plane) with
+                | Some data, msgs ->
+                    players <- players.Add(data.Vehicle, data)
+                    yield! AsyncSeq.ofSeq msgs
+                    match context.Hangars.TryFind(data.Player.UserId) with
+                    | Some hangar ->
+                        yield! showHangar(hangar, 15)
                     | None ->
                         ()
-                    yield PlanesAtAirfield(af.AirfieldId, airfield.NumPlanes)
-                // Update state
-                airfields <- airfields.Add(af.AirfieldId, airfield)
-                hangars <- hangars.Add(user.UserId, hangar)
-                playerOf <- playerOf.Remove(vehicle)
-                healthOf <- healthOf.Remove(vehicle)
-                planes <- planes.Remove(vehicle)
-                coalitionOf <- coalitionOf.Remove(user.Name)
-                rewards <- rewards.Remove(user.Name)
-            }
+                | None, msgs ->
+                    yield! AsyncSeq.ofSeq msgs
+            | _ -> ()
 
-        let showHangar(userId : string, delay) =
-            asyncSeq {
-                match hangars.TryFind(userId) with
-                | Some hangar ->
-                    let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
-                    yield Overview(userIds, 60,
-                        [
-                            sprintf "Welcome back %s" userIds.Name
-                            sprintf "You cash reserve is %0.0f" hangar.Reserve
-                        ])
-                    yield Overview(userIds, delay,
-                        [
-                            for kvp in hangar.Airfields do
-                                let planes = match hangar.ShowAvailablePlanes(kvp.Key) with
-                                                | [] -> "None"
-                                                | planes -> String.concat ", " planes
-                                yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
-                        ])
-                | None ->
-                    let userIds : UserIds = { UserId = userId; Name = "" }
-                    yield Overview(userIds, delay,
-                        [
-                            "Welcome new player"
-                            "Please choose an airfield with its name in UPPER CASE for your first spawn"
-                            "Spawning at another airfield requires you to land an undamaged plane there first"
-                            "Only then can you take off from that airfield, with that exact plane model"
-                        ])
-            }
+            // Update player data and context
+            let players2 = players |> Map.map(fun vehicleId data -> data.HandleEntry(context, entry))
+            players <-
+                players2
+                |> Map.map (fun _ (player, _) -> player)
+                |> Map.filter (fun _ player ->
+                    match player.State with
+                    | MissionEnded -> false
+                    | _ -> true)
 
-        let handleLogEvent(event : LogEntry) =
-            asyncSeq {
-                match event with
-                | :? JoinEntry as entry ->
-                    yield PlayerEntered(entry.UserId)
-                    yield! showHangar(string entry.UserId, 20)
+            let context2, msgs =
+                players2
+                |> Map.toSeq
+                |> Seq.collect (snd >> snd) // Turn into a command seq
+                |> Seq.fold (fun (context : Context, msgs) cmd ->
+                    let context, msgs2 = context.Execute(cmd)
+                    context, msgs2 @ msgs) (context, [])
+            context <- context2
 
-                | :? ObjectSpawnedEntry as entry ->
-                    match valuedObjects.TryGetValue(entry.ObjectType.ToLowerInvariant()) with
-                    | true, value ->
-                        match CoalitionId.FromLogEntry(entry.Country) with
-                        | Some coalition ->
-                            otherTargets <- otherTargets.Add(entry.ObjectId, (value, coalition))
-                        | None ->
-                            ()
-                    | false, _ ->
-                        ()
-
-                | :? PlayerPlaneEntry as entry ->
-                    yield! startFlight(entry)
-                    yield Status(hangars, airfields)
-
-                | :? TakeOffEntry as entry ->
-                    match uponTakeoff.TryFind(entry.VehicleId) with
-                    | Some action ->
-                        yield! action
-                        uponTakeoff <- uponTakeoff.Remove(entry.VehicleId)
-                    | None ->
-                        ()
-
-                | :? DamageEntry as entry ->
-                    if planes.ContainsKey(entry.TargetId) then
-                        let oldHealth = healthOf.TryFind entry.TargetId |> Option.defaultValue 1.0f
-                        let health = oldHealth - entry.Damage
-                        healthOf <- Map.add entry.TargetId health healthOf
-                    else
-                        // Reward players damaging moving trucks, tanks, trains
-                        match otherTargets.TryFind(entry.TargetId), playerOf.TryFind(entry.AttackerId) with
-                        | Some (value, coalition), Some player when coalitionOf.ContainsKey(player.Name) ->
-                            let reward = value * entry.Damage
-                            let k =
-                                if coalition = coalitionOf.[player.Name] then
-                                    -1.0f
-                                else
-                                    1.0f
-                            let oldRewards = rewards.TryFind(player.Name) |> Option.defaultValue 0.0f<E>
-                            rewards <- rewards.Add(player.Name, oldRewards + k * reward)
-                        | _ ->
-                            ()
-
-                | :? KillEntry as entry ->
-                    healthOf <- Map.add entry.TargetId 0.0f healthOf
-
-                | :? LandingEntry as entry ->
-                    let pos = Vector2(entry.Position.X, entry.Position.Z)
-                    let af = world.GetClosestAirfield(pos)
-                    if (af.Pos - pos).Length() < 3000.0f then
-                        // Consider that a successful landing. We will still check the health, though.
-                        uponMissionEnded <- uponMissionEnded.Add(entry.VehicleId,
-                            asyncSeq {
-                                match playerOf.TryFind(entry.VehicleId), planes.TryFind(entry.VehicleId) with
-                                | Some user, Some plane ->
-                                    yield! endFlight(user, plane, af, entry.VehicleId)
-                                    yield! showHangar(user.UserId, 5)
-                                | _ ->
-                                    ()
-                                yield Status(hangars, airfields)
-                            })
-
-                | :? PlayerMissionEndEntry as entry ->
-                    // Cancel disconnection action
-                    match playerOf.TryFind(entry.VehicleId) with
-                    | Some user ->
-                        uponDisconnect <- uponDisconnect.Remove(user)
-                    | None ->
-                        ()
-                    // Execute registered action, if any
-                    match uponMissionEnded.TryFind(entry.VehicleId) with
-                    | Some action ->
-                        yield! action
-                        uponMissionEnded <- uponMissionEnded.Remove(entry.VehicleId)
-                    | _ ->
-                        ()
-
-                | :? LeaveEntry as entry ->
-                    let user =
-                        playerOf
-                        |> Map.toSeq
-                        |> Seq.tryFind (fun (_, user) -> user.UserId = string entry.UserId)
-                        |> Option.map snd
-                    match user with
-                    | Some user ->
-                        match uponDisconnect.TryFind(user) with
-                        | Some action ->
-                            yield! action
-                            uponDisconnect <- uponDisconnect.Remove(user)
-                        | None ->
-                            ()
-                    | None ->
-                        ()
-                    yield Status(hangars, airfields)
-
-                | _ -> ()
-            }
-
-        let handleDamage(damage : Damage) =
-            match damage.Data.ByPlayer with
-            | None -> ()
-            | Some player ->
-                let reward = rewards.TryFind(player) |> Option.defaultValue 0.0f<E>
-                let factor =
-                    match coalitionOf.TryFind(player) with
-                    | Some coalition ->
-                        if Some coalition = damage.Object.Coalition(wg, sg) then
-                            -1.0f
-                        else
-                            1.0f
-                    | None ->
-                        0.0f
-                rewards <- rewards.Add(player, reward + factor * damage.Value(wg, sg))
-
-        let handleSupplyMission(landed : Landed) =
-            asyncSeq {
-                match tookOffFrom.TryFind(landed.PlaneId), playerOf.TryFind(landed.PlaneId) with
-                | _, None
-                | None, _ ->
-                    ()
-                | Some (tko : TookOff), Some userIds ->
-                    let reward = landed.Cargo * bombCost
-                    let regStart = wg.GetAirfield(tko.Airfield).Region
-                    let regEnd = wg.GetAirfield(landed.Airfield).Region
-                    let factor =
-                        let coalitionStart = tko.Coalition
-                        let coalitionEnd = landed.Coalition
-                        if coalitionStart = coalitionEnd then
-                            computeSupplyRewardFactor regStart regEnd
-                        else
-                            // Delivering goods to the enemy: negative reward!
-                            -1.0f
-                    let hangar =
-                        hangars.TryFind(userIds.UserId)
-                        |> Option.defaultValue (emptyHangar(userIds.UserId, userIds.Name))
-                    let reward = factor * reward
-                    let hangar = { hangar with Reserve = hangar.Reserve + reward }
-                    hangars <- hangars.Add(userIds.UserId, hangar)
-                    match landed.Coalition with
-                    | Some coalition ->
-                        yield Announce(coalition,
-                            [ sprintf "%s has received a reward of %0.0f for their supply mission" userIds.Name reward ])
-                    | None ->
-                        ()
-                    // Update region needs
-                    regionNeeds <- regionNeeds
-                                        .Add(regStart, regionNeeds.[regStart] + landed.Cargo * bombCost)
-                                        .Add(regEnd, regionNeeds.[regEnd] - landed.Cargo * bombCost)
-                    yield Status(hangars, airfields)
-            }
-
-        let takeOffsAndLandings = extractTakeOffsAndLandings world state events
-        let damages = extractStaticDamages world events
-        yield Status(hangars, airfields)
-        for choice in AsyncSeq.mergeChoice3 events damages takeOffsAndLandings do
-            match choice with
-            | Choice1Of3 event ->
-                yield! handleLogEvent(event)
-            | Choice2Of3 damage ->
-                handleDamage(damage)
-            | Choice3Of3(TookOff tko) ->
-                tookOffFrom <- tookOffFrom.Add(tko.PlaneId, tko)
-            | Choice3Of3(Landed landed) ->
-                yield! handleSupplyMission landed
+            // Yield messages generated while updating player data
+            yield! AsyncSeq.ofSeq msgs
     }

@@ -257,11 +257,13 @@ type WorldState = {
 type WorldStateFastAccess = {
     GetRegion : RegionId -> RegionState
     GetAirfield : AirfieldId -> AirfieldState
+    State : WorldState
 }
 with
     static member Create(state : WorldState) =
         { GetRegion = mkGetStuffFast state.Regions (fun r -> r.RegionId)
           GetAirfield = mkGetStuffFast state.Airfields (fun af -> af.AirfieldId)
+          State = state
         }
 
 /// Try to find the airfield that is furthest away from any enemy region.

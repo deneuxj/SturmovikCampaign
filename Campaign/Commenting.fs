@@ -142,7 +142,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             |> AsyncSeq.map (fun line -> ChatCommand.Parse(world, line))
         else
             AsyncSeq.empty
-    // Notify of interesting take-offs and landings
+
     do
         let battleDamages =
             let battles =
@@ -151,139 +151,14 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             asyncSeqEntries
             |> extractBattleDamages world state battles
             |> AsyncSeq.filter (fun damage -> damage.KilledByPlayer.IsSome)
-        let takeOffsAndLandings =
-            asyncSeqEntries
-            |> extractTakeOffsAndLandings world state
         let staticDamages =
             asyncSeqEntries
             |> extractStaticDamages world
         let vehicleDamages =
             asyncSeqEntries
             |> extractVehicleDamages world columns convoys
-        let damages = AsyncSeq.merge staticDamages vehicleDamages
         let wg = world.FastAccess
         let sg = state.FastAccess
-        let task =
-            asyncSeq {
-                let damageInflicted = ref Map.empty
-                let coalitionOf = ref Map.empty
-                let convoys =
-                    convoys
-                    |> Seq.map (fun convoy -> convoy.OrderId, convoy)
-                    |> Map.ofSeq
-                let columns =
-                    columns
-                    |> Seq.map (fun column -> column.OrderId, column)
-                    |> Map.ofSeq
-                for event in AsyncSeq.mergeChoice3 takeOffsAndLandings damages battleDamages do
-                    match event with
-                    | Choice1Of3((TookOff { PlayerName = Some player; Coalition = coalition }) as tookOff) ->
-                        logger.Info("Take off event")
-                        damageInflicted := Map.add player 0.0f<E> damageInflicted.Value
-                        coalitionOf := Map.add player coalition coalitionOf.Value
-                        yield tookOff, 0.0f<E>
-                    | Choice1Of3((Landed { PlayerName = Some player }) as landed) ->
-                        logger.Info("Landed event")
-                        let damage = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
-                        damageInflicted := Map.remove player damageInflicted.Value
-                        yield landed, damage
-                    | Choice1Of3(TookOff { PlayerName = None }) | Choice1Of3(Landed { PlayerName = None }) -> ()
-                    | Choice2Of3 damage ->
-                        match damage.Data.ByPlayer with
-                        | Some player ->
-                            let acc = damageInflicted.Value.TryFind player |> Option.defaultVal 0.0f<E>
-                            let coalition = coalitionOf.Value.TryFind player |> Option.bind id
-                            // Cost of full damage to item (vehicle, building in group...)
-                            let cost =
-                                match damage.Object with
-                                | Production(region, idx, _) ->
-                                    let pro = wg.GetRegion(region).Production.[idx]
-                                    let numSubs = pro.SubBlocks(world.SubBlockSpecs).Length
-                                    pro.RepairCost(world.SubBlockSpecs) / (float32 numSubs)
-                                | Storage(region, idx, _) ->
-                                    let sto = wg.GetRegion(region).Storage.[idx]
-                                    let numSubs = sto.SubBlocks(world.SubBlockSpecs).Length
-                                    (sto.RepairCost(world.SubBlockSpecs) + sto.Storage world.SubBlockSpecs) / (float32 numSubs)
-                                | Airfield(af, idx, _) ->
-                                    let sto = wg.GetAirfield(af).Storage.[idx]
-                                    let numSubs = sto.SubBlocks(world.SubBlockSpecs).Length
-                                    (sto.RepairCost(world.SubBlockSpecs) + sto.Storage world.SubBlockSpecs) / (float32 numSubs)
-                                | Convoy vehicle ->
-                                    match convoys.TryFind(vehicle.OrderId) with
-                                    | Some order ->
-                                        match order.Means with
-                                        | ByRiverShip
-                                        | BySeaShip -> ResupplyOrder.ShipCapacity
-                                        | ByAir(_, _) -> order.Convoy.TransportedSupplies
-                                        | ByRail -> order.Convoy.TransportedSupplies
-                                        | ByRoad -> ResupplyOrder.TruckCapacity
-                                    | None ->
-                                        0.0f<E>
-                                | Column vehicle ->
-                                    match columns.TryFind(vehicle.OrderId) with
-                                    | Some order ->
-                                        match order.TransportType with
-                                        | ColByRiverShip
-                                        | ColBySeaShip ->
-                                            order.Composition
-                                            |> Seq.sumBy (fun x -> x.Cost)
-                                            |> fun x -> x * 0.5f
-                                        | ColByTrain ->
-                                            order.Composition
-                                            |> Seq.sumBy (fun x -> x.Cost)
-                                        | ColByRoad ->
-                                            order.Composition.[vehicle.Rank].Cost
-                                    | None ->
-                                        0.0f<E>
-                                | ParkedPlane(_, plane) ->
-                                    plane.Cost
-                                | Cannon _ ->
-                                    cannonCost
-                                | LightMachineGun _ ->
-                                    lightMachineGunCost
-                                | HeavyMachineGun _ ->
-                                    heavyMachineGunCost
-                                | Vehicle(_, vehicle) ->
-                                    vehicle.Cost
-                                | ActivePlane(_, plane) ->
-                                    plane.Cost
-                            // friendly-fire modifier: -1 coefficient
-                            let penalty =
-                                if coalition = damage.Object.Coalition(wg, sg) then
-                                    -1.0f
-                                else
-                                    1.0f
-                            damageInflicted := Map.add player (acc + penalty * damage.Data.Amount * cost) damageInflicted.Value
-                        | None ->
-                            ()
-                    | Choice3Of3 ({ KilledByPlayer = Some killer } as battleKill) ->
-                        match coalitionOf.Value.TryFind(killer) |> Option.bind id with
-                        | Some coalition ->
-                            let penalty =
-                                if coalition = battleKill.Coalition then
-                                    -1.0f
-                                else
-                                    1.0f
-                            let acc = damageInflicted.Value.TryFind killer |> Option.defaultVal 0.0f<E>
-                            damageInflicted := Map.add killer (acc + penalty * battleKill.Vehicle.Cost / float32 config.BattleKillRatio) damageInflicted.Value
-                        | None ->
-                            ()
-                    | Choice3Of3 { KilledByPlayer = None } -> ()
-                }
-            |> asyncIterNonMuted(fun (event, damage) ->
-                async {
-                    match event with
-                    | TookOff ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                        logger.Info(sprintf "%s took off" player)
-                        let afCoalition = sg.GetRegion(wg.GetAirfield(x.Airfield).Region).Owner
-                        return! handlers.OnTookOff(player, coalition, x.Airfield, afCoalition, x.Plane, x.Cargo)
-                    | Landed ({PlayerName = Some player; Coalition = Some coalition} as x) ->
-                        logger.Info(sprintf "%s landed" player)
-                        let afCoalition = sg.GetRegion(wg.GetAirfield(x.Airfield).Region).Owner
-                        return! handlers.OnLanded(player, coalition, x.Airfield, afCoalition, x.Plane, x.Cargo, x.Health, damage)
-                    | _ ->
-                        return ()
-                })
         let task2 =
             asyncSeq {
                 let battleDamage = ref Map.empty
@@ -309,7 +184,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             asyncSeqEntries
             |> checkPlaneAvailability world state hangars 
             |> AsyncSeq.mergeChoice asyncCommands
-            |> AsyncSeq.scan (fun (_, hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, AirfieldState>) item ->
+            |> AsyncSeq.scan (fun (_, hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, Map<PlaneModel, float32>>) item ->
                 match item with
                 | Choice1Of2 cmd ->
                     let userIds =
@@ -325,7 +200,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                         | _ ->
                             // Use a fake Guid, OK because the player name can be used instead.
                             { UserId = string (Guid("00000000-0000-0000-0000-000000000000")); Name = cmd.Player }
-                    Some(Overview(uid, 0, cmd.Interpret(hangars, airfields))), hangars, airfields
+                    Some(Overview(uid, 0, cmd.Interpret(hangars))), hangars, airfields
                 | Choice2Of2 (Status(hangars, airfields) as x) ->
                     Some x, hangars, airfields
                 | Choice2Of2 x ->
@@ -424,7 +299,6 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                     System.TimeSpan.FromMinutes(float config.MissionLength) - timePassed
                 return! remainingTime t
             }
-        Async.Start(Async.catchLog "live commentator" task, cancelOnDispose.Token)
         Async.Start(Async.catchLog "battle limits notifier" task2, cancelOnDispose.Token)
         Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
         Async.Start(Async.catchLog "plane availability checker" hangarTask, cancelOnDispose.Token)

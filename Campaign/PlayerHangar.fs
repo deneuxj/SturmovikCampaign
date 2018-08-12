@@ -96,6 +96,16 @@ with
             let afs = Map.add af hangar this.Airfields
             Some { this with Reserve = reserve; Airfields = afs }
 
+    /// <summary>
+    /// Remove planes from an airfield, and decrease cash reserve.
+    /// </summary>
+    member this.RemovePlane(af, plane, qty, cost) =
+        let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}
+        let hangar, _ = hangar.RemovePlane(plane, qty)
+        let reserve = this.Reserve - cost
+        let afs = Map.add af hangar this.Airfields
+        { this with Reserve = reserve; Airfields = afs }
+
     /// Get the available planes at an airfield
     member this.ShowAvailablePlanes(af) =
         let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}

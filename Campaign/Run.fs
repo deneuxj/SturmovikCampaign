@@ -864,7 +864,7 @@ module MissionLogParsing =
                 extractTakeOffsAndLandings world state entries
                 |> AsyncSeq.toList
             both |> List.choose (function TookOff x -> Some x | _ -> None),
-            both |> List.choose (function Landed x -> Some x | _ -> None)
+            both |> List.choose (function ResultExtraction.Landed x -> Some x | _ -> None)
         let movements = axisOrders.Columns @ alliesOrders.Columns
         let columnDepartures = extractColumnDepartures movements entries |> AsyncSeq.toList
         let battles =
