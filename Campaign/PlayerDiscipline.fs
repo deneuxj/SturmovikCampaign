@@ -808,9 +808,18 @@ with
             let supplyReward = context.SupplyFlightFactor(this.StartAirfield, af) * suppliesTransfered
             { this with State = MissionEnded },
             [
-                PlaneCheckIn(this.Player, this.Plane, health, af)
-                DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
-                RewardPlayer(this.Player, supplyReward * bombCost + this.Reward)
+                yield PlaneCheckIn(this.Player, this.Plane, health, af)
+                yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
+                yield RewardPlayer(this.Player, supplyReward * bombCost + this.Reward)
+                // Try to show PIN
+                match
+                    (try
+                        Message(PlayerEntered(Guid(this.Player.UserId)))
+                        |> Some
+                     with _ -> None)
+                    with
+                    | Some m -> yield m
+                    | None -> ()
             ]
         | _ ->
             { this with State = MissionEnded }, []
