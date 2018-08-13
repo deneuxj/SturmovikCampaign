@@ -310,9 +310,10 @@ type Context =
       Airfields : Map<AirfieldId, Map<PlaneModel, float32>>
       RearAirfields : Set<AirfieldId>
       RegionNeeds : Map<RegionId, float32<E>>
+      MaxCash : float32<E>
     }
 with
-    static member Create(world : World, state : WorldState, hangars : Map<string, PlayerHangar>) =
+    static member Create(world : World, state : WorldState, hangars : Map<string, PlayerHangar>, maxCash : int) =
         let rearAirfields =
             [Axis; Allies]
             |> List.choose (fun coalition -> state.RearAirfield(world, coalition))
@@ -330,6 +331,7 @@ with
             Airfields = airfields
             RearAirfields = rearAirfields
             RegionNeeds = needs
+            MaxCash = 1.0f<E> * float32 maxCash
         }
 
     /// Bind a vehicle ID to a coalition and a type of object
@@ -479,7 +481,8 @@ with
             let hangar =
                 this.Hangars.TryFind(user.UserId)
                 |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
-            let hangar = { hangar with Reserve = hangar.Reserve + reward }
+            let reserve = min this.MaxCash (hangar.Reserve + reward)
+            let hangar = { hangar with Reserve = reserve }
             let hangars = this.Hangars.Add(user.UserId, hangar)
             { this with Hangars = hangars },
             [
@@ -880,7 +883,7 @@ with
             this, []
 
 
-let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
+let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
 
     let showHangar(hangar : PlayerHangar, delay) =
         asyncSeq {
@@ -901,7 +904,7 @@ let checkPlaneAvailability (world : World) (state : WorldState) (hangars : Map<s
         }
 
     asyncSeq {
-        let mutable context = Context.Create(world, state, hangars)
+        let mutable context = Context.Create(world, state, hangars, maxCash)
         let mutable players : Map<int, PlayerFlightData> = Map.empty
 
         for entry in entries do

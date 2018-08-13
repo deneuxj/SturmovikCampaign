@@ -908,9 +908,13 @@ module MissionLogParsing =
                 hangars
                 |> guidToStrings
             | None -> Map.empty
+        // Restrict cash reserves to maximum allowed in configuration
+        let hangars =
+            hangars
+            |> Map.map (fun player hangar -> { hangar with Reserve = min hangar.Reserve (1.0f<E> * float32 config.MaxCash) })
         let hangars2 =
             AsyncSeq.ofSeq entries
-            |> checkPlaneAvailability world state hangars
+            |> checkPlaneAvailability config.MaxCash world state hangars
             |> AsyncSeq.toBlockingSeq
             |> Seq.choose (function Status(x, _) -> Some x | _ -> None)
             |> Seq.tryLast

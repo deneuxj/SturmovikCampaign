@@ -206,7 +206,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                     |> Array.collect(File.ReadAllLines)
                     |> Array.choose(LogEntry.Parse >> Option.ofObj)
                     |> AsyncSeq.ofSeq
-                    |> checkPlaneAvailability world state hangars
+                    |> checkPlaneAvailability config.MaxCash world state hangars
                     |> AsyncSeq.fold (fun acc ->
                         function
                         | PlanesAtAirfield(af, planes) -> Map.add af planes acc
@@ -217,7 +217,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         initAirfieldPlanesets()
         let hangarTask =
             asyncSeqEntries
-            |> checkPlaneAvailability world state hangars 
+            |> checkPlaneAvailability config.MaxCash world state hangars 
             |> AsyncSeq.mergeChoice asyncCommands
             |> AsyncSeq.scan (fun (_, hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, Map<PlaneModel, float32>>) item ->
                 match item with
