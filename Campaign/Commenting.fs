@@ -257,7 +257,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                             spawnPlanes
                             |> Array.fold(fun (res, index) plane ->
                                 let qty = numPlanes.TryFind(plane) |> Option.defaultValue 0.0f
-                                if qty > 1.0f then
+                                if qty >= 1.0f then
                                     (res ||| index, index <<< 1)
                                 else
                                     (res, index <<< 1)) (0, 1)
