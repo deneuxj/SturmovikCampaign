@@ -173,6 +173,48 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             asyncSeqEntries
             |> disciplinePlayers config world state
             |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
+        let updateAirfieldPlaneset(afId, numPlanes : Map<PlaneModel, float32>) =
+            // State of airfield at start of mission
+            let afs = sg.GetAirfield(afId)
+            match sg.GetRegion(wg.GetAirfield(afId).Region).Owner with
+            | Some coalition ->
+                // Compute plane index: For each plane initially found in the spawn, check if it's now available.
+                // If so, include it in the plane index, which is a bit mask.
+                let planeSetIndex =
+                    let origNumPlanes = afs.NumPlanes |> Map.map (fun _ qty -> int(floor(qty)))
+                    let spawnPlanes = Airfield.selectPlaneSpawns Airfield.maxPlaneSpawns coalition origNumPlanes
+                    spawnPlanes
+                    |> Array.fold(fun (res, index) plane ->
+                        let qty = numPlanes.TryFind(plane) |> Option.defaultValue 0.0f
+                        if qty >= 1.0f then
+                            (res ||| index, index <<< 1)
+                        else
+                            (res, index <<< 1)) (0, 1)
+                    |> fst
+                logger.Info(sprintf "Change to planeset %d at %s" planeSetIndex afId.AirfieldName)
+                handlers.OnPlaneSetChanged(afId, planeSetIndex)
+            | None ->
+                async.Zero()
+        let initAirfieldPlanesets() =
+            async {
+                let airfields0 =
+                    state.Airfields
+                    |> List.map (fun afs -> afs.AirfieldId, afs.NumPlanes)
+                    |> Map.ofList
+                let! airfields =
+                    files
+                    |> Array.collect(File.ReadAllLines)
+                    |> Array.choose(LogEntry.Parse >> Option.ofObj)
+                    |> AsyncSeq.ofSeq
+                    |> checkPlaneAvailability world state hangars
+                    |> AsyncSeq.fold (fun acc ->
+                        function
+                        | PlanesAtAirfield(af, planes) -> Map.add af planes acc
+                        | _ -> acc) airfields0
+                for (af, planes) in Map.toSeq airfields do
+                    do! updateAirfieldPlaneset(af, planes)
+            } |> Async.RunSynchronously
+        initAirfieldPlanesets()
         let hangarTask =
             asyncSeqEntries
             |> checkPlaneAvailability world state hangars 
@@ -238,27 +280,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                             })
                     }
                 | PlanesAtAirfield(afId, numPlanes) ->
-                    // State of airfield at start of mission
-                    let afs = sg.GetAirfield(afId)
-                    match sg.GetRegion(wg.GetAirfield(afId).Region).Owner with
-                    | Some coalition ->
-                        // Compute plane index: For each plane initially found in the spawn, check if it's now available.
-                        // If so, include it in the plane index, which is a bit mask.
-                        let planeSetIndex =
-                            let origNumPlanes = afs.NumPlanes |> Map.map (fun _ qty -> int(floor(qty)))
-                            let spawnPlanes = Airfield.selectPlaneSpawns Airfield.maxPlaneSpawns coalition origNumPlanes
-                            spawnPlanes
-                            |> Array.fold(fun (res, index) plane ->
-                                let qty = numPlanes.TryFind(plane) |> Option.defaultValue 0.0f
-                                if qty >= 1.0f then
-                                    (res ||| index, index <<< 1)
-                                else
-                                    (res, index <<< 1)) (0, 1)
-                            |> fst
-                        logger.Info(sprintf "Change to planeset %d at %s" planeSetIndex afId.AirfieldName)
-                        handlers.OnPlaneSetChanged(afId, planeSetIndex)
-                    | None ->
-                        async.Zero()
+                    updateAirfieldPlaneset(afId, numPlanes)
                 | Status(hangars, _) ->
                     handlers.OnHangarsUpdated(hangars)
                 )
