@@ -22,7 +22,7 @@ open System.Runtime.InteropServices
 
 module Constants =
     [<Literal>]
-    let version = "1.25.10.0"
+    let version = "1.26.0.0"
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
