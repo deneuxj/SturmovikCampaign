@@ -150,12 +150,6 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
             asyncSeqEntries
             |> extractBattleDamages world state battles
             |> AsyncSeq.filter (fun damage -> damage.KilledByPlayer.IsSome)
-        let staticDamages =
-            asyncSeqEntries
-            |> extractStaticDamages world
-        let vehicleDamages =
-            asyncSeqEntries
-            |> extractVehicleDamages world columns convoys
         let wg = world.FastAccess
         let sg = state.FastAccess
         let task2 =
@@ -261,7 +255,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                                 else
                                     (res, index <<< 1)) (0, 1)
                             |> fst
-                        logger.Debug(sprintf "Change to planeset %d at %s" planeSetIndex afId.AirfieldName)
+                        logger.Info(sprintf "Change to planeset %d at %s" planeSetIndex afId.AirfieldName)
                         handlers.OnPlaneSetChanged(afId, planeSetIndex)
                     | None ->
                         async.Zero()
