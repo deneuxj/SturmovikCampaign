@@ -909,7 +909,7 @@ module MissionLogParsing =
                 |> guidToStrings
             | None -> Map.empty
         let hangars2 =
-            Commenting.replayQuick entries
+            AsyncSeq.ofSeq entries
             |> checkPlaneAvailability world state hangars
             |> AsyncSeq.toBlockingSeq
             |> Seq.choose (function Status(x, _) -> Some x | _ -> None)

@@ -105,16 +105,15 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
         sorted
         |> Array.ofSeq
     let asyncSeqEntries =
-        let replayQuick ss =
+        let handleOldEntries ss =
             ss
             |> Seq.map (LogEntry.Parse)
             |> Seq.filter (function null -> false | _ -> true)
-            |> replayQuick
-            |> AsyncSeq.map (fun entry -> Old(entry.OriginalString))
-        resumeWatchlogs(replayQuick, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
+            |> Seq.map (fun entry -> Old(entry.OriginalString))
+            |> AsyncSeq.ofSeq
+        resumeWatchlogs(handleOldEntries, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
     let asyncIterNonMuted f xs =
         AsyncSeq.mergeChoice xs asyncSeqEntries
-        |> AsyncSeq.map (fun x -> logger.Debug(sprintf "%A" x); x)
         |> AsyncSeq.skipWhile(
             function
             | Choice1Of2 _ -> true
