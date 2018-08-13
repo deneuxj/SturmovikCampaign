@@ -436,8 +436,8 @@ with
                 logger.Info(sprintf "%s is denied take off from %s due to lack of planes" user.Name af.AirfieldName)
                 this,
                 [
-                    Warning(user, 30, ["You are going to be kicked for taking off in a plane after the last was taken"
-                                       "Sorry about the inconvenience"])
+                    Warning(user, 0, ["You are going to be kicked for taking off in a plane after the last was taken"
+                                      "Sorry about the inconvenience"])
                     Violation user
                 ]
 
@@ -626,7 +626,7 @@ with
                     if context.IsSpawnRestricted(af, plane, coalition) then
                         match context.TryCheckoutPlane(user, af, plane) with
                         | None ->
-                            yield Overview(user, 0, [sprintf "You are not allowed to take off in a %s this plane at %s" plane.PlaneName af.AirfieldName])
+                            yield Overview(user, 0, [sprintf "You are not allowed to take off in a %s at %s" plane.PlaneName af.AirfieldName])
                         | Some hangar ->
                             let fundsBefore =
                                 context.Hangars.TryFind(user.UserId)
