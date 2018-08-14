@@ -430,7 +430,7 @@ with
                     | Some coalition, x when int x <= 0 ->
                         yield Announce(coalition, [ sprintf "%s took the last %s from %s" user.Name plane.PlaneName af.AirfieldName ])
                     | Some coalition, x ->
-                        yield Announce(coalition, [ sprintf "%s took off in a %s from %s (%d left)" user.Name plane.PlaneName af.AirfieldName (int x)])
+                        yield Announce(coalition, [ sprintf "%s entered a %s from %s (%d left)" user.Name plane.PlaneName af.AirfieldName (int x)])
                     | None, _ ->
                         logger.Warn(sprintf "Plane checkout from a neutral region from %s" af.AirfieldName)
                 ]
@@ -461,7 +461,14 @@ with
                 if oldQty < 1.0f && oldQty + health >= 1.0f then
                     match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
                     | Some coalition ->
-                        yield Announce(coalition, [sprintf "%s available at %s again" plane.PlaneName af.AirfieldName])
+                        let origNumPlanes =
+                            this.State.GetAirfield(af).NumPlanes
+                            |> Map.map (fun _ -> int)
+                        let spawnPlanes = Airfield.selectPlaneSpawns Airfield.maxPlaneSpawns coalition origNumPlanes
+                        if Array.exists ((=) plane) spawnPlanes then
+                            yield Announce(coalition, [sprintf "%s available at %s again" plane.PlaneName af.AirfieldName])
+                        else
+                            yield Announce(coalition, [sprintf "%s will be available at %s in the next mission" plane.PlaneName af.AirfieldName])
                     | None ->
                         ()
             ]
@@ -793,11 +800,11 @@ with
         let cmds =
             [
                 match afCheckout with
-                | Some af ->
+                | Some af when delivered > 0.0f<K>->
                     let reg = context.World.GetAirfield(af).Region
                     yield DeliverSupplies(delivered * bombCost, reg)
                     yield Message(Announce(this.Coalition, [sprintf "%s has delivered %0.0f Kg of cargo to %s" this.Player.Name delivered af.AirfieldName]))
-                | None ->
+                | _ ->
                     ()
             ]
         { this with State = Landed(afCheckout); Cargo = this.Cargo - delivered; Reward = this.Reward + reward }, cmds
