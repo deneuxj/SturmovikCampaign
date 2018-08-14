@@ -57,6 +57,15 @@ with
         | Allies -> Mcu.CountryValue.Russia
 
     /// <summary>
+    /// Convert a country value from a MCU in a mission to a CoalitionId option.
+    /// </summary>
+    static member FromCountry(country : Mcu.CoalitionValue) =
+        match country with
+        | Mcu.CoalitionValue.Allies -> Some Allies
+        | Mcu.CoalitionValue.Axis -> Some Axis
+        | _ -> None
+
+    /// <summary>
     /// Convert to a numerical coalition value suitable for use in mission files.
     /// </summary>
     member this.ToCoalition =

@@ -120,7 +120,7 @@ with
     static member Create(world : World, state : WorldState, hangars : Map<string, PlayerHangar>, maxCash : int, moneyBackFactor : float32) =
         let rearAirfields =
             [Axis; Allies]
-            |> List.choose (fun coalition -> state.RearAirfield(world, coalition))
+            |> List.choose (fun coalition -> world.RearAirfields.TryFind coalition)
             |> Set.ofList
         let needs = AutoOrder.computeSupplyNeeds world state
         let airfields =

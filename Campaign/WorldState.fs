@@ -266,31 +266,6 @@ with
           State = state
         }
 
-/// Try to find the airfield that is furthest away from any enemy region.
-let private tryFindRearAirfield (world : World) (coalition : CoalitionId) (state : WorldState) =
-    let wg = world.FastAccess
-    let sg = WorldStateFastAccess.Create state
-    let furthest =
-        try
-            List.zip world.Airfields state.Airfields
-            |> Seq.filter (fun (af, afs) -> sg.GetRegion(af.Region).Owner = Some coalition)
-            |> Seq.maxBy(fun (af, afs) ->
-                let distance =
-                    try
-                        List.zip world.Regions state.Regions
-                        |> Seq.filter(fun (region, regs) -> regs.Owner = Some (coalition.Other))
-                        |> Seq.map (fun (region, _) -> (region.Position - af.Pos).LengthSquared())
-                        |> Seq.min
-                    with
-                    | _ -> 0.0f
-                distance)
-            |> fst
-            |> fun af -> af.AirfieldId
-            |> Some
-        with
-        | _ -> None
-    furthest
-
 type WorldState
 with
     member this.FastAccess = WorldStateFastAccess.Create(this)
@@ -416,9 +391,6 @@ with
         // sunset, sunrise, sunset of next morning
         [sunrise; sunset; sunrise + System.TimeSpan(24, 0, 0)]
         |> List.exists (fun suntime -> suntime >= start && suntime <= finish)
-
-    member this.RearAirfield(world, coalition) =
-        tryFindRearAirfield world coalition this
 
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu
@@ -553,6 +525,16 @@ let computeFullDefenseNeeds (world : World) =
     |> List.groupBy fst
     |> List.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
 
+/// Get the difference of the total production of the Allies' side minus to the Axis side (for production factor of 1.0)
+let computeProductionDifference subBlockSpecs (regions : Region list) =
+    let computeAbsProd(coalition) =
+        regions
+        |> Seq.filter (fun region -> region.InitialOwner = Some coalition)
+        |> Seq.sumBy (fun region -> region.GetProductionCapacity(subBlockSpecs, 1.0f))
+    let axis = computeAbsProd(Axis)
+    let allies = computeAbsProd(Allies)
+    allies - axis
+
 /// Build the initial state
 let mkInitialState(world : World, strategyFile : string, windDirection : float32) =
     let data = T.GroupData(Stream.FromFile strategyFile)
@@ -601,6 +583,18 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
     // regions further from factories than this value are unsupplied.
     let cutoffHops = 4
     let regions =
+        let axisExtraVehicles, alliesExtraVehicles =
+            let prodDiff = world.ProductionFactor * computeProductionDifference world.SubBlockSpecs world.Regions
+            let week = 7.0f * 24.0f<H>
+            if prodDiff > 0.0f<E/H> then
+                prodDiff * week, 0.0f<E>
+            else
+                0.0f<E>, -prodDiff * week
+        let extraVehicles =
+            [(Axis, axisExtraVehicles); (Allies, alliesExtraVehicles)]
+            |> Map.ofList
+            |> Map.map (fun _ amount -> amount / (3.0f * GroundAttackVehicle.LightArmorCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.HeavyTankCost))
+            |> Map.map (fun _ k -> Map.ofList [(HeavyTank, 3.0f * k); (MediumTank, 9.0f * k); (LightArmor, 3.0f)])
         let supplyNeeds = computeFullDefenseNeeds world
         if List.length world.Regions <> List.length supplyNeeds then
             failwith "Some of the regions lack defense areas"
@@ -637,6 +631,14 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                     let vehicles =
                         [(HeavyTank, scale 3.0f |> ceilint); (MediumTank, scale 9.0f |> ceilint); (LightArmor, scale 3.0f |> ceilint)]
                         |> Map.ofList
+                    let vehicles =
+                        if Some region.RegionId = wg.RearRegions.TryFind(owner) then
+                            vehicles
+                            |> Map.map (fun _ -> float32)
+                            |> Map.sumUnion extraVehicles.[owner]
+                            |> Map.map (fun _ -> int)
+                        else
+                            vehicles
                     1.0f<E> * supplies, vehicles
             { RegionId = region.RegionId
               Owner = owner

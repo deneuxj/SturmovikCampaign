@@ -246,3 +246,4 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                 // Other kind of event
                 ()
     }
+

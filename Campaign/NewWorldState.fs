@@ -69,7 +69,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
     let airfields =
         [
             let random = System.Random()
-            let rear = state.RearAirfield(world, coalition)
+            let rear = world.RearAirfields.TryFind(coalition)
             for af, afs in List.zip world.Airfields state.Airfields do
                 if Some af.AirfieldId = rear then
                     let planeType = AutoOrder.pickPlaneToProduce coalition world state

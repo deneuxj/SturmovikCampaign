@@ -55,10 +55,13 @@ type Region = {
     Production : StaticGroup list
     /// Area where tanks are parked
     Parking : Vector2 list
+    /// Side who owns the region initially
+    InitialOwner : CoalitionId option
 }
 with
     static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list) =
         let extractOne (region : T.MCU_TR_InfluenceArea) =
+            let coalition = CoalitionId.FromCountry (enum(region.GetCountry().Value))
             { RegionId = RegionId(region.GetName().Value)
               Position = Vector2.FromPos(region)
               Boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
@@ -66,6 +69,7 @@ with
               Storage = []
               Production = []
               Parking = []
+              InitialOwner = coalition
             }
         let withBoundaries =
             regions
@@ -530,6 +534,32 @@ open FSharp.Configuration
 let sampleSubBlocksFile = __SOURCE_DIRECTORY__ + @"\SubBlocks.yaml"
 type SubBlockFile = YamlConfig<sampleSubBlocksFile>
 
+/// Try to find the airfield that is furthest away from any enemy region.
+let private tryFindRearAirfield (regions : Region list) (airfields : Airfield list) (coalition : CoalitionId) =
+    let regionById =
+        regions
+        |> List.map (fun region -> region.RegionId, region)
+        |> Map.ofList
+    let furthest =
+        try
+            airfields
+            |> Seq.filter (fun af -> regionById.[af.Region].InitialOwner = Some coalition)
+            |> Seq.maxBy(fun af ->
+                let distance =
+                    try
+                        regions
+                        |> Seq.filter(fun region -> region.InitialOwner = Some (coalition.Other))
+                        |> Seq.map (fun region -> (region.Position - af.Pos).LengthSquared())
+                        |> Seq.min
+                    with
+                    | _ -> 0.0f
+                distance)
+            |> fun af -> af.AirfieldId
+            |> Some
+        with
+        | _ -> None
+    furthest
+
 /// Packages all description data.
 type World = {
     Scenario : string
@@ -543,8 +573,7 @@ type World = {
     AntiAirDefenses : DefenseArea list
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
-    // Deprecated
-    MaxTankNeeds : float32<E>
+    RearAirfields : Map<CoalitionId, AirfieldId>
     PlaneProduction : float32<E/H>
     ProductionFactor : float32
     /// Date of the first mission.
@@ -608,6 +637,13 @@ with
                 Airfield.ExtractAirfields(afs, staticPlanes, caponiers, afStorages, regions, subBlockSpecs)
             | _ :: _->
                 Airfield.ExtractAirfields(afs, planes, caponiers, afStorages, regions, subBlockSpecs)
+        let rearAirfields =
+            [Axis; Allies]
+            |> List.choose (fun coalition ->
+                match tryFindRearAirfield regions airfields coalition with
+                | Some x -> Some(coalition, x)
+                | None -> None)
+            |> Map.ofList
         let date =
             let options = List.head data.ListOfOptions
             let h, m, s = options.GetTime().Value
@@ -619,7 +655,7 @@ with
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
-          MaxTankNeeds = 0.0f<E>
+          RearAirfields = rearAirfields
           PlaneProduction = planeProduction
           ProductionFactor = 1.0f
           StartDate = date
@@ -667,7 +703,6 @@ with
         this.Airfields
         |> Seq.exists (fun af -> af.Region = region)
 
-
 open Util
 
 /// Provides fast access to world description data by index.
@@ -676,6 +711,7 @@ type WorldFastAccess = {
     GetAntiAirDefenses : DefenseAreaId -> DefenseArea
     GetAntiTankDefenses : DefenseAreaId -> DefenseArea
     GetAirfield : AirfieldId -> Airfield
+    RearRegions : Map<CoalitionId, RegionId>
     GetRegionStorageSubBlocks : RegionId -> int -> int[]
     GetRegionProductionSubBlocks : RegionId -> int -> int[]
     GetAirfieldStorageSubBlocks : AirfieldId -> int -> int[]
@@ -697,6 +733,7 @@ with
           GetAntiAirDefenses = mkGetStuffFast world.AntiAirDefenses (fun r -> r.DefenseAreaId)
           GetAntiTankDefenses = mkGetStuffFast world.AntiTankDefenses (fun r -> r.DefenseAreaId)
           GetAirfield = getAirfield
+          RearRegions = world.RearAirfields |> Map.map (fun _ af -> (getAirfield af).Region)
           GetRegionStorageSubBlocks =
             fun region idx ->
                 let location = string region + " (storage)"
