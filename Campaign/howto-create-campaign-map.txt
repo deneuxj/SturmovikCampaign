@@ -18,6 +18,10 @@ Set region owners. Each coalition must own at least one region with factories.
 In the initial world state, regions which have "***" in their Description are fully supplied. Those are the "strong bases".
 Other regions are supplied depending on their distance to the nearest strong base.
 
+2b. Define safe zones
+Use influence areas. There must be one for the Allies and one for the Axis. In these zones, enemies are not allowed to enter and attack planes.
+Each zone must be named "SafeZone", and all zones must be in a group named "SafeZones".
+
 3. Define roads and railways
 Each road path must start with a waypoint named "StartR" or "StartL" and finish with another one named "EndR" or "EndL".
 Each rail path must start with a waypoint named "Start" and finish with another one named "End".
@@ -80,6 +84,7 @@ Strictly speaking, only one battle area is really needed, but having multiple pr
 9. Define airfield spawn points
 Use fakefields for planes. Both types (sideways and runway) can be used. They must be in a group named "Aifield spawns"
 Do not create the entity.
+Each safe heaven must contain at least one spawn.
 Do create the chart. It's needed for picking spawn points according to wind, and also for AIs that are landing.
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 These alternative waypoints should all have the same name (typically the name of the airfield).

@@ -458,25 +458,27 @@ with
             spawns
             |> List.groupBy (fun spawn -> spawn.GetName().Value)
             |> List.map (fun (name, spawns) -> spawns)
-            |> List.map(fun spawns ->
+            |> List.choose(fun spawns ->
                 let spawn = spawns.Head
                 let pos = Vector2.FromPos(spawn)
                 let region =
-                    try
-                        regions
-                        |> List.find(fun region -> pos.IsInConvexPolygon(region.Boundary))
-                    with
-                    | _ -> failwithf "Airfield '%s' is not in any region" (spawn.GetName().Value)
-                { AirfieldId = AirfieldId(spawn.GetName().Value)
-                  Region = region.RegionId
-                  Pos = pos
-                  Rotation = float32(spawn.GetYOri().Value)
-                  ParkedFighters = []
-                  ParkedAttackers = []
-                  ParkedBombers = []
-                  Storage = []
-                  Spawn = spawns
-                }
+                    regions
+                    |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary))
+                match region with
+                | Some region ->
+                    Some {
+                        AirfieldId = AirfieldId(spawn.GetName().Value)
+                        Region = region.RegionId
+                        Pos = pos
+                        Rotation = float32(spawn.GetYOri().Value)
+                        ParkedFighters = []
+                        ParkedAttackers = []
+                        ParkedBombers = []
+                        Storage = []
+                        Spawn = spawns
+                    }
+                | None ->
+                    None
             )
         let airfields =
             parkedPlanes

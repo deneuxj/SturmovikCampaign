@@ -127,6 +127,10 @@
       <Link>MoscowAutumn1.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\MoscowAutumn2.Mission">
+      <Link>MoscowAutumn2.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\MoscowWinter.Mission">
       <Link>MoscowWinter.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
