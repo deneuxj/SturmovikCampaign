@@ -435,13 +435,9 @@ with
                         logger.Warn(sprintf "Plane checkout from a neutral region from %s" af.AirfieldName)
                 ]
             else
-                logger.Info(sprintf "%s is denied take off from %s due to lack of planes" user.Name af.AirfieldName)
+                logger.Error(sprintf "%s should have been denied take off from %s due to lack of planes" user.Name af.AirfieldName)
                 this,
-                [
-                    Warning(user, 0, ["You are going to be kicked for taking off in a plane after the last was taken"
-                                      "Sorry about the inconvenience"])
-                    Violation user
-                ]
+                []
 
         | PlaneCheckIn(user, plane, health, af) ->
             let hangar =
@@ -564,7 +560,7 @@ with
         factor
 
 type PlayerFlightState =
-    | Spawned
+    | Spawned of cost:float32<E> option // Cost of taking off in the plane, None if player can't afford it, or plane is not available at airfield
     | Aborted
     | InFlight
     | Landed of AirfieldId option
@@ -620,28 +616,42 @@ with
                         |> List.ofSeq
                     match bestDestinations with
                     | [] ->
-                        yield Overview(user, 15, ["This airfield is not a good place to start a supply mission from"])
+                        yield Message(Overview(user, 15, ["This airfield is not a good place to start a supply mission from"]))
                     | _ :: _ as x ->
-                        yield Overview(user, 15, ["The following regions would benefit from resupplies: " + (x |> List.map (fun af -> af.AirfieldId.AirfieldName) |> String.concat ", ")])
+                        yield Message(Overview(user, 15, ["The following regions would benefit from resupplies: " + (x |> List.map (fun af -> af.AirfieldId.AirfieldName) |> String.concat ", ")]))
                 }
+            let cost =
+                if context.IsSpawnRestricted(af, plane, coalition) then
+                    match context.TryCheckoutPlane(user, af, plane), context.Airfields.[af].TryFind plane with
+                    | _, None
+                    | None, _ -> None
+                    | Some hangar, Some qty when qty >= 1.0f ->
+                        let fundsBefore =
+                            context.Hangars.TryFind(user.UserId)
+                            |> Option.map(fun h -> h.Reserve)
+                            |> Option.defaultValue 0.0f<E>
+                        Some(fundsBefore - hangar.Reserve)
+                    | _ -> None
+                else
+                    Some 0.0f<E>
             let planeInfo =
                 [
-                    if context.IsSpawnRestricted(af, plane, coalition) then
-                        match context.TryCheckoutPlane(user, af, plane) with
-                        | None ->
-                            yield Overview(user, 0, [sprintf "You are not allowed to take off in a %s at %s" plane.PlaneName af.AirfieldName])
-                        | Some hangar ->
-                            let fundsBefore =
-                                context.Hangars.TryFind(user.UserId)
-                                |> Option.map(fun h -> h.Reserve)
-                                |> Option.defaultValue 0.0f<E>
-                            let cost = fundsBefore - hangar.Reserve
-                            if cost > 0.0f<E> then
-                                yield Overview(user, 0, [sprintf "It will cost you %0.0f to take off in a %s from %s" cost plane.PlaneName af.AirfieldName])
-                            else
-                                yield Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName])
-                    else
-                        yield Overview(user, 0, [sprintf "You are cleared to take off in any plane from %s" af.AirfieldName])
+                    let (|LowQty|Enough|) =
+                        function
+                        | None -> LowQty
+                        | Some x when x < 1.0f -> LowQty
+                        | _ -> Enough
+                    match cost, context.Airfields.[af].TryFind plane with
+                    | _, LowQty ->
+                        yield Message(Warning(user, 0, [sprintf "%s is no longer available at %s, do not take off" plane.PlaneName af.AirfieldName]))
+                    | None, _ ->
+                        yield Message(Warning(user, 0, [sprintf "You are not allowed to take off in a %s at %s" plane.PlaneName af.AirfieldName]))
+                    | Some 0.0f<E>, Enough ->
+                        yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
+                        yield PlaneCheckOut(user, plane, 1.0f, 0.0f<E>, af)
+                    | Some cost, Enough ->
+                        yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to take off in a %s from %s" cost plane.PlaneName af.AirfieldName]))
+                        yield PlaneCheckOut(user, plane, 1.0f, cost, af)
                 ]
             let supplyCommands =
                 if cargo > 0.0f<K> || weight > 1000.0f<K> then
@@ -651,7 +661,7 @@ with
             Some {
                 Player = user
                 Vehicle = entry.VehicleId
-                State = Spawned
+                State = Spawned cost
                 Health = 1.0f
                 Coalition = coalition
                 Plane = plane
@@ -667,24 +677,16 @@ with
 
     // Handle first take off after spawn
     member this.HandleTakeOff(context : Context, takeOff : TakeOffEntry) =
-        let af = this.StartAirfield
-        if not(context.IsSpawnRestricted(af, this.Plane, this.Coalition)) then
-            // Spawning in that plane at that airfield is unrestricted
+        match this.State with
+        | Spawned(Some cost) ->
             { this with State = InFlight },
-            [ PlaneCheckOut(this.Player, this.Plane, this.Health, 0.0f<E>, af) ]
-        else
-            let fundsBefore =
-                context.Hangars.TryFind(this.Player.UserId)
-                |> Option.map(fun h -> h.Reserve)
-                |> Option.defaultValue 0.0f<E>
-            match context.TryCheckoutPlane(this.Player, af, this.Plane) with
-            | None ->
-                { this with State = StolePlane },
-                [ PunishThief(this.Player, this.Plane, af) ]
-            | Some hangar ->
-                let cost = fundsBefore - hangar.Reserve
-                { this with State = InFlight },
-                [ PlaneCheckOut(this.Player, this.Plane, this.Health, cost, af) ]
+            []
+        | Spawned None ->
+            { this with State = StolePlane },
+            [ PunishThief(this.Player, this.Plane, this.StartAirfield) ]
+        | unexpected ->
+            logger.Warn(sprintf "Unexpected state during take off %A" unexpected)
+            this, []
 
     // Handle take off after landing
     member this.HandleTakeOffAgain() =
@@ -811,6 +813,7 @@ with
             let supplyReward = context.SupplyFlightFactor(this.StartAirfield, af) * suppliesTransfered
             { this with State = MissionEnded },
             [
+                assert(this.State <> MissionEnded)
                 yield PlaneCheckIn(this.Player, this.Plane, health, af)
                 yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
                 yield RewardPlayer(this.Player, supplyReward * bombCost + this.Reward)
@@ -829,6 +832,7 @@ with
 
     // Player disconnected, return plane to start airfield if undamaged
     member this.HandlePrematureMissionEnd(context : Context) =
+        assert(this.State <> MissionEnded)
         { this with State = MissionEnded },
         [
             if this.Health >= 1.0f then
@@ -836,8 +840,13 @@ with
         ]
 
     // Player ended mission before taking off, cancel mission
-    member this.HandleAbortionBeforeTakeOff(context) =
-        { this with State = MissionEnded }, []
+    member this.HandleAbortionBeforeTakeOff(context, doCheckIn) =
+        assert(this.State <> MissionEnded)
+        { this with State = MissionEnded },
+        [
+            if doCheckIn then
+                yield PlaneCheckIn(this.Player, this.Plane, this.Health, this.StartAirfield)
+        ]
 
     // Player disconnected, mark as mission ended
     member this.HandleDisconnection(context) =
@@ -845,7 +854,7 @@ with
 
     member this.HandleEntry (context : Context, entry : LogEntry) =
         match this.State, entry with
-        | Spawned, (:? TakeOffEntry as takeOff) when takeOff.VehicleId = this.Vehicle ->
+        | Spawned _, (:? TakeOffEntry as takeOff) when takeOff.VehicleId = this.Vehicle ->
             this.HandleTakeOff(context, takeOff)
         | Landed _, (:? TakeOffEntry as takeOff) when takeOff.VehicleId = this.Vehicle ->
             this.HandleTakeOffAgain()
@@ -871,10 +880,10 @@ with
             this.HandlePrematureMissionEnd(context)
         | InFlight, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this.HandlePrematureMissionEnd(context)
-        | Spawned, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
-            this.HandleAbortionBeforeTakeOff(context)
-        | Spawned, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
-            this.HandleAbortionBeforeTakeOff(context)
+        | Spawned cost, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
+            this.HandleAbortionBeforeTakeOff(context, cost.IsSome)
+        | Spawned cost, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
+            this.HandleAbortionBeforeTakeOff(context, cost.IsSome)
         | MissionEnded, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this, []
         | _, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
@@ -908,6 +917,7 @@ let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars
         let mutable players : Map<int, PlayerFlightData> = Map.empty
 
         for entry in entries do
+            let mutable cmds0 = []
             // Handle special entries
             match entry with
             | :? JoinEntry as joined ->
@@ -918,17 +928,23 @@ let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars
                 context <- context.ResolveBindings(damage)
             | :? PlayerPlaneEntry as plane ->
                 match PlayerFlightData.TryCreate(context, plane) with
-                | Some data, msgs ->
+                | Some data, cmds ->
                     players <- players.Add(data.Vehicle, data)
-                    yield! AsyncSeq.ofSeq msgs
+                    cmds0 <- cmds
                     match context.Hangars.TryFind(data.Player.UserId) with
                     | Some hangar ->
                         yield! showHangar(hangar, 15)
                     | None ->
                         ()
-                | None, msgs ->
-                    yield! AsyncSeq.ofSeq msgs
+                | None, cmds ->
+                    cmds0 <- cmds
             | _ -> ()
+
+            // Execute commands gathered from player data creation
+            for cmd in cmds0 do
+                let ctx, msgs = context.Execute(cmd)
+                yield! AsyncSeq.ofSeq msgs
+                context <- ctx
 
             // Update player data and context
             let players2 = players |> Map.map(fun vehicleId data -> data.HandleEntry(context, entry))
