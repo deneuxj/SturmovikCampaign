@@ -418,26 +418,22 @@ with
                 planes.TryFind(plane)
                 |> Option.defaultValue(0.0f)
             let newQty = oldQty - 1.0f
-            if newQty >= 0.0f then
-                let hangar = hangar.RemovePlane(af, plane, health, cost)
-                let hangars = this.Hangars.Add(user.UserId, hangar)
-                let airfields = this.Airfields.Add(af, planes.Add(plane, newQty))
-                { this with Hangars = hangars; Airfields = airfields },
-                [
-                    yield Status(hangars, airfields)
+            let hangar = hangar.RemovePlane(af, plane, health, cost)
+            let hangars = this.Hangars.Add(user.UserId, hangar)
+            let airfields = this.Airfields.Add(af, planes.Add(plane, max 0.0f newQty))
+            { this with Hangars = hangars; Airfields = airfields },
+            [
+                yield Status(hangars, airfields)
+                if oldQty >= 1.0f && newQty < 1.0f then
                     yield PlanesAtAirfield(af, airfields.[af])
-                    match coalition, newQty with
-                    | Some coalition, x when int x <= 0 ->
-                        yield Announce(coalition, [ sprintf "%s took the last %s from %s" user.Name plane.PlaneName af.AirfieldName ])
-                    | Some coalition, x ->
-                        yield Announce(coalition, [ sprintf "%s entered a %s from %s (%d left)" user.Name plane.PlaneName af.AirfieldName (int x)])
-                    | None, _ ->
-                        logger.Warn(sprintf "Plane checkout from a neutral region from %s" af.AirfieldName)
-                ]
-            else
-                logger.Error(sprintf "%s should have been denied take off from %s due to lack of planes" user.Name af.AirfieldName)
-                this,
-                []
+                match coalition, newQty with
+                | Some coalition, x when int x <= 0 ->
+                    yield Announce(coalition, [ sprintf "%s took the last %s from %s" user.Name plane.PlaneName af.AirfieldName ])
+                | Some coalition, x ->
+                    yield Announce(coalition, [ sprintf "%s entered a %s from %s (%d left)" user.Name plane.PlaneName af.AirfieldName (int x)])
+                | None, _ ->
+                    logger.Warn(sprintf "Plane checkout from a neutral region from %s" af.AirfieldName)
+            ]
 
         | PlaneCheckIn(user, plane, health, af) ->
             let hangar =
@@ -451,14 +447,15 @@ with
             let oldQty =
                 planes.TryFind(plane)
                 |> Option.defaultValue(0.0f)
+            let newQty = oldQty + health
             let planes =
                 planes.Add(plane, oldQty + health)
             let airfields = this.Airfields.Add(af, planes)
             { this with Hangars = hangars; Airfields = airfields },
             [
                 yield Status(hangars, airfields)
-                yield PlanesAtAirfield(af, airfields.[af])
-                if oldQty < 1.0f && oldQty + health >= 1.0f then
+                if oldQty < 1.0f && newQty >= 1.0f then
+                    yield PlanesAtAirfield(af, airfields.[af])
                     match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
                     | Some coalition ->
                         let origNumPlanes =
@@ -643,20 +640,13 @@ with
                     Some 0.0f<E>
             let planeInfo =
                 [
-                    let (|LowQty|Enough|) =
-                        function
-                        | None -> LowQty
-                        | Some x when x < 1.0f -> LowQty
-                        | _ -> Enough
-                    match cost, context.Airfields.[af].TryFind plane with
-                    | _, LowQty ->
-                        yield Message(Warning(user, 0, [sprintf "%s is no longer available at %s, do not take off" plane.PlaneName af.AirfieldName]))
-                    | None, _ ->
+                    match cost with
+                    | None ->
                         yield Message(Warning(user, 0, [sprintf "You are not allowed to take off in a %s at %s" plane.PlaneName af.AirfieldName]))
-                    | Some 0.0f<E>, Enough ->
+                    | Some 0.0f<E> ->
                         yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, 0.0f<E>, af)
-                    | Some cost, Enough ->
+                    | Some cost ->
                         yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to take off in a %s from %s" cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, cost, af)
                 ]
