@@ -919,6 +919,11 @@ let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars
             match entry with
             | :? JoinEntry as joined ->
                 yield PlayerEntered(joined.UserId)
+                match context.Hangars.TryFind(string joined.UserId) with
+                | Some hangar ->
+                    yield! showHangar(hangar, 15)
+                | None ->
+                    ()
             | :? ObjectSpawnedEntry as spawned ->
                 context <- context.HandleBinding(spawned)
             | :? DamageEntry as damage ->
@@ -928,11 +933,6 @@ let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars
                 | Some data, cmds ->
                     players <- players.Add(data.Vehicle, data)
                     cmds0 <- cmds
-                    match context.Hangars.TryFind(data.Player.UserId) with
-                    | Some hangar ->
-                        yield! showHangar(hangar, 15)
-                    | None ->
-                        ()
                 | None, cmds ->
                     cmds0 <- cmds
             | _ -> ()
