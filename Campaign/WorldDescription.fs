@@ -527,6 +527,21 @@ with
             ) airfields
         airfields
 
+type SafeZone = {
+    Boundary : Vector2 list
+    Owner : CoalitionId
+}
+with
+    static member Create(area : T.MCU_TR_InfluenceArea) =
+        let owner =
+            match CoalitionId.FromCountry (enum(area.GetCountry().Value)) with
+            | Some coalition ->
+                coalition
+            | None ->
+                failwith "Safe zone must not be neutral"
+        { Boundary = area.GetBoundary().Value |> List.map Vector2.FromPair
+          Owner = owner
+        }
 
 open FSharp.Configuration
 
@@ -574,6 +589,7 @@ type World = {
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
     RearAirfields : Map<CoalitionId, AirfieldId>
+    SafeZones : Map<CoalitionId, SafeZone>
     PlaneProduction : float32<E/H>
     ProductionFactor : float32
     /// Date of the first mission.
@@ -644,6 +660,11 @@ with
                 | Some x -> Some(coalition, x)
                 | None -> None)
             |> Map.ofList
+        let safeZones =
+            data.GetGroup("SafeZones").ListOfMCU_TR_InfluenceArea
+            |> List.map SafeZone.Create
+            |> List.map (fun zone -> zone.Owner, zone)
+            |> Map.ofList
         let date =
             let options = List.head data.ListOfOptions
             let h, m, s = options.GetTime().Value
@@ -656,6 +677,7 @@ with
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
           RearAirfields = rearAirfields
+          SafeZones = safeZones
           PlaneProduction = planeProduction
           ProductionFactor = 1.0f
           StartDate = date
