@@ -86,6 +86,26 @@ module Support =
             logger.Error(sprintf "Failed to start DServer.exe: %s" e.Message)
             None
 
+    let loadWorldThenDo (support : SupportApis, config) action =
+        try
+            let serializer = FsPickler.CreateXmlSerializer(indent = true)
+            use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+            use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
+            let world = serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
+            let state = serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile)
+            action(world, state)
+        with
+        | _ -> support.Logging.LogError("Failed to generate situational map")
+
+    type Notifications = {
+        AnnounceResults : AfterActionReport.ReportData * AfterActionReport.ReportData * NewWorldState.BattleSummary list -> unit
+        AnnounceWeather : Weather.WeatherState -> unit
+        AnnounceWorldState : World * WorldState -> unit
+        UpdateMap : World * WorldState -> unit
+        StartCommentator : unit -> unit
+        StopCommentator : unit -> unit
+    }
+
     type ExecutionState =
         | DecideOrders
         | GenerateMission
@@ -108,7 +128,7 @@ module Support =
             | ExtractResults -> "extract results"
             | CampaignOver _ -> "terminate campaign"
             | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
-        member this.GetAsync(support : SupportApis, config, serverProc : Process option, announceResults, announceWeather, announceWorldState, updateMap) =
+        member this.GetAsync(support : SupportApis, config, serverProc : Process option, notifications : Notifications) =
             let tryOrNotifyPlayers errorMessage onError action =
                 async {
                     let! result = Async.tryTask action
@@ -185,6 +205,7 @@ module Support =
                     | _ ->
                         do! support.ServerControl.MessageAll ["Rotating missions now"]
                         do! support.ServerControl.SkipMission
+                        notifications.StartCommentator()
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
@@ -202,6 +223,7 @@ module Support =
                     | None ->
                         return None, Failed("Failed to start server", None, this)
                     | Some _ ->
+                        notifications.StartCommentator()
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
@@ -216,6 +238,7 @@ module Support =
             | ExtractResults ->
                 async {
                     support.Logging.LogInfo "Extract results..."
+                    notifications.StopCommentator()
                     do!
                         [ "Mission has ended"
                           "Actions past this point will not affect the campaign"
@@ -241,7 +264,7 @@ module Support =
                     support.Logging.LogInfo "Make weather..."
                     let date = Campaign.Run.WeatherComputation.getNextDateFromState config
                     let weather = Campaign.Run.WeatherComputation.run(config, date)
-                    announceWeather weather
+                    notifications.AnnounceWeather weather
                     Campaign.Run.MissionLogParsing.updateHangars(config, missionResults, missionLogEntries)
                     let! updatedState =
                         tryOrNotifyPlayers
@@ -283,9 +306,9 @@ module Support =
                             |> support.ServerControl.MessageAll
                         let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, missionResults.TakeOffs, missionResults.Landings, missionResults.StaticDamages @ missionResults.VehicleDamages, newProduction)
                         Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR, battleResults)
-                        announceResults(axisAAR, alliesAAR, battleResults)
-                        announceWorldState(world, newState)
-                        updateMap(world, newState)
+                        notifications.AnnounceResults(axisAAR, alliesAAR, battleResults)
+                        notifications.AnnounceWorldState(world, newState)
+                        notifications.UpdateMap(world, newState)
                         return serverProc, DecideOrders
                 }
             | CampaignOver _ ->
@@ -316,18 +339,7 @@ module Support =
             else
                 GenerateMission
 
-    let loadWorldThenDo (support : SupportApis, config) action =
-        try
-            let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
-            use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
-            let world = serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
-            let state = serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile)
-            action(world, state)
-        with
-        | _ -> support.Logging.LogError("Failed to generate situational map")
-
-    let start(support : SupportApis, config, status, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap) =
+    let start(support : SupportApis, config, status, onCampaignOver, postMessage, notifications) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -364,8 +376,8 @@ module Support =
                                 | inner -> inner
                             return work (Failed(exc.Message, Some exc.StackTrace, status)) None
                     }
-                loadWorldThenDo(support, config) updateMap
-                let action = status.GetAsync(support, config, serverProc, announceResults, announceWeather, announceWorldState, updateMap)
+                loadWorldThenDo(support, config) notifications.UpdateMap
+                let action = status.GetAsync(support, config, serverProc, notifications)
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         let status =
@@ -405,7 +417,7 @@ module Support =
             | _ -> None
         work status proc
 
-    let reset(support : SupportApis, scenario : string, config : Configuration, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap) =
+    let reset(support : SupportApis, scenario : string, config : Configuration, onCampaignOver, postMessage, notifications) =
         async {
             // Delete log and campaign files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
@@ -425,9 +437,9 @@ module Support =
                 logger.Error(sprintf "%s surrendered immediately after reset because '%s'" (string side) reason)
                 return ScheduledTask.NoTask
             | _ ->
-                loadWorldThenDo (support, config) updateMap
+                loadWorldThenDo (support, config) notifications.UpdateMap
                 // Start campaign
-                return start(support, config, Some GenerateMission, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
+                return start(support, config, Some GenerateMission, onCampaignOver, postMessage, notifications)
         }
         |> ScheduledTask.SomeTaskNow "generate mission"
 
@@ -532,7 +544,7 @@ module Support =
 type Plugin() =
     let mutable support : SupportApis option = None
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
-    let mutable commenter : CommentatorRestarter option = None
+    let mutable commenter : Commentator option = None
     let mutable queue = startQueue()
     let mutable config = None
 
@@ -846,7 +858,7 @@ type Plugin() =
               OnHangarsUpdated = setHangars
               OnPlayerEntered = showPinToPlayer
             }
-        commenter <- Some(new CommentatorRestarter(config, handlers, fun() -> x.StartWebHookClient(config)))
+        commenter <- Some(new Commentator(config, handlers))
         logger.Info("Commenter set")
 
     member x.StopCommenter() =
@@ -870,8 +882,15 @@ type Plugin() =
                 let cnf = loadConfigFile configFile
                 config <- Some cnf
                 x.StartWebHookClient(cnf)
-                x.StartCommenter(cnf)
-                Support.start(support, cnf, None, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
+                let notifications : Support.Notifications =
+                    { AnnounceResults = announceResults
+                      AnnounceWeather = announceWeather
+                      AnnounceWorldState = announceWorldState
+                      UpdateMap = updateMap
+                      StartCommentator = fun() -> x.StartCommenter(cnf)
+                      StopCommentator = x.StopCommenter
+                    }
+                Support.start(support, cnf, None, onCampaignOver, postMessage, notifications)
                 |> Choice1Of2
             with
             | e ->
@@ -888,12 +907,19 @@ type Plugin() =
                 config <- Some cnf
                 x.StopCommenter()
                 x.StopWebHookClient()
-                let task = Support.reset(support, scenario, cnf, onCampaignOver, announceResults, announceWeather, announceWorldState, postMessage, updateMap)
+                let notifications : Support.Notifications =
+                    { AnnounceResults = announceResults
+                      AnnounceWeather = announceWeather
+                      AnnounceWorldState = announceWorldState
+                      UpdateMap = updateMap
+                      StartCommentator = fun() -> x.StartCommenter(cnf)
+                      StopCommentator = x.StopCommenter
+                    }
+                let task = Support.reset(support, scenario, cnf, onCampaignOver, postMessage, notifications)
                 let task =
                     task.ContinueWith(fun nextTask ->
                         async {
                             x.StartWebHookClient(cnf)
-                            x.StartCommenter(cnf)
                             return nextTask
                         })
                 Choice1Of2 task

@@ -76,8 +76,25 @@ type EventHandlers =
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
-type Commentator (config : Configuration, handlers : EventHandlers, world : World, state : WorldState, hangars : Map<string, PlayerHangar>, convoys : ResupplyOrder list, columns : ColumnMovement list) =
+type Commentator (config : Configuration, handlers : EventHandlers) =
     let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
+    let campaignDir = config.OutputDir
+
+    let world, state =
+        let serializer = FsPickler.CreateXmlSerializer()
+        try
+            use worldFile = File.OpenText(Path.Combine(campaignDir, "world.xml"))
+            use stateFile = File.OpenText(Path.Combine(campaignDir, "state.xml"))
+            serializer.Deserialize<World>(worldFile),
+            serializer.Deserialize<WorldState>(stateFile)
+        with
+        | _ -> failwith "Failed to load world and state"
+
+    let hangars =
+        tryLoadHangars (Path.Combine(campaignDir, "hangars.xml"))
+        |> Option.defaultValue Map.empty
+        |> guidToStrings
+
     // Stop notifications when we are disposed
     let cancelOnDispose = new System.Threading.CancellationTokenSource()
     // retrieve entries from most recent mission
@@ -92,9 +109,21 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
                     None
                 else
                     Some(path, (m.Groups.[1].ToString(), System.Int32.Parse(m.Groups.[2].ToString()))))
+        let groupHasCorrectDate group =
+            let _, files = group
+            files
+            |> Seq.collect (fun (path, _) ->
+                File.ReadAllLines(path)
+                |> Seq.choose (LogEntry.Parse >> Option.ofObj))
+            |> Seq.exists (
+                function
+                | :? MissionStartEntry as start ->
+                    start.MissionTime = state.Date
+                | _ -> false)
         let lastGroup =
             filtered
             |> Seq.groupBy (snd >> fst)
+            |> Seq.filter groupHasCorrectDate
             |> Seq.tryLast
             |> Option.map snd
             |> Option.defaultVal Seq.empty
@@ -326,105 +355,3 @@ type Commentator (config : Configuration, handlers : EventHandlers, world : Worl
     interface IDisposable with
         member this.Dispose() = this.Dispose()
 
-
-/// Monitor state.xml, (re-) starting a commentator whenever the file is modified
-type CommentatorRestarter(config : Configuration, handlers : EventHandlers, onStateWritten : unit -> unit) =
-    let missionName = config.MissionName
-    let campaignDir = config.OutputDir
-    let missionDir = Path.Combine(campaignDir, "Multiplayer", "Dogfight")
-    let missionFile = missionName + "_1.mission"
-    let watcher = new FileSystemWatcher()
-    do watcher.Path <- missionDir
-       watcher.Filter <- missionFile
-       watcher.NotifyFilter <- NotifyFilters.LastWrite
-    let serializer = FsPickler.CreateXmlSerializer()
-    let rec awaitFiles remaining =
-        async {
-            if Set.isEmpty remaining then
-                return ()
-            else
-                let! ev = Async.AwaitEvent watcher.Changed
-                return! awaitFiles (Set.remove ev.Name remaining)
-        }
-    let rec work world =
-        async {
-            let state =
-                try
-                    use stateFile = File.OpenText(Path.Combine(campaignDir, "state.xml"))
-                    serializer.Deserialize<WorldState>(stateFile) |> Some
-                with
-                | exc ->
-                    logger.Error(sprintf "Failed to parse state.xml: %s" exc.Message)
-                    None
-            let axisOrders =
-                try
-                    use ordersFile = File.OpenText(Path.Combine(campaignDir, "axisOrders.xml"))
-                    serializer.Deserialize<OrderPackage>(ordersFile) |> Some
-                with
-                | exc ->
-                    logger.Error(sprintf "Failed to parse axisOrders.xml: %s" exc.Message)
-                    None
-            let alliesOrders =
-                try
-                    use ordersFile = File.OpenText(Path.Combine(campaignDir, "alliesOrders.xml"))
-                    serializer.Deserialize<OrderPackage>(ordersFile) |> Some
-                with
-                | exc ->
-                    logger.Error(sprintf "Failed to parse alliesOrders.xml: %s" exc.Message)
-                    None
-            let hangars =
-                tryLoadHangars (Path.Combine(campaignDir, "hangars.xml"))
-                |> Option.defaultValue Map.empty
-                |> guidToStrings
-            match state, axisOrders, alliesOrders with
-            | Some state, Some axisOrders, Some alliesOrders ->
-                logger.Info("Starting new commentator")
-                let commentator = new Commentator(config, handlers, world, state, hangars, axisOrders.Resupply @ alliesOrders.Resupply, axisOrders.Columns @ alliesOrders.Columns)
-                try
-                    do! awaitFiles (Set[missionFile])
-                    onStateWritten()
-                finally
-                    commentator.Dispose()
-                return! work world
-            | _ ->
-                logger.Info(sprintf "Waiting until next change to %s" missionFile)
-                do! awaitFiles (Set[missionFile])
-                onStateWritten()
-                return! work world
-        }
-    // Load world, then repeatedly monitor for new state and order files
-    let prepare =
-        async {
-            let worldPath = Path.Combine(campaignDir, "world.xml")
-            let missionPath = Path.Combine(missionDir, missionFile)
-            let rec loadWorld() =
-                async {
-                    // Wait until the mission file exists. When that file exists, we know that world.xml is ready to be read.
-                    if not (File.Exists(missionPath)) then
-                        do! Async.Sleep 5000
-                        return! loadWorld()
-                    else
-                        use worldFile = File.OpenText(worldPath)
-                        let world =
-                            try
-                                serializer.Deserialize<World>(worldFile)
-                                |> Some
-                            with
-                            | _ -> None
-                        match world with
-                        | Some world -> return world
-                        | None ->
-                            do! Async.Sleep(15000)
-                            return! loadWorld()
-                }
-            let! world = loadWorld()
-            return! work world
-        }
-    // Stop notifications when we are disposed
-    let cancelOnDispose = new System.Threading.CancellationTokenSource()
-    do Async.Start(prepare, cancelOnDispose.Token)
-    do watcher.EnableRaisingEvents <- true
-
-    member this.Dispose() =
-        watcher.Dispose()
-        cancelOnDispose.Cancel()
