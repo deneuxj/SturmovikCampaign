@@ -52,28 +52,28 @@ let watchLogs(cleanLogs : bool, path, filter, firstFile, cancelToken : Cancellat
                 for line in lines do
                     yield line
                 // Check for new log file
-                match newFiles.TryDequeue() with
-                | true, newFile ->
-                    // Make sure we don't try to read a newly created log file while it's being created
-                    while newFiles.IsEmpty do
-                        do! Async.Sleep(1000)
-                    if cleanLogs then
-                        match currentFile with
-                        | Some(file, _, _) ->
-                            try
-                                File.Delete(file)
-                            with
-                            | _ -> ()
-                        | None ->
-                            ()
-                    yield! do1(Some(newFile, 0, farInThePast))
-                | false, _ ->
-                    // No new file, sleep for 1s and try again
-                    if not cancelToken.IsCancellationRequested then
+                if cancelToken.IsCancellationRequested then
+                    w.Dispose()
+                else
+                    match newFiles.TryDequeue() with
+                    | true, newFile ->
+                        // Make sure we don't try to read a newly created log file while it's being created
+                        while newFiles.IsEmpty do
+                            do! Async.Sleep(1000)
+                        if cleanLogs then
+                            match currentFile with
+                            | Some(file, _, _) ->
+                                try
+                                    File.Delete(file)
+                                with
+                                | _ -> ()
+                            | None ->
+                                ()
+                        yield! do1(Some(newFile, 0, farInThePast))
+                    | false, _ ->
+                        // No new file, sleep for 1s and try again
                         do! Async.Sleep(1000)
                         yield! do1(currentFile)
-                    else
-                        w.Dispose()
             }
         yield! do1 currentFile
     }
