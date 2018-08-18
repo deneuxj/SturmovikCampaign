@@ -22,6 +22,7 @@ open CampaignServerControl.Api
 open System
 open System.Diagnostics
 open System.IO
+open FSharp.Control
 open MBrace.FsPickler
 open Campaign.BasicTypes
 open Campaign.Run
@@ -34,12 +35,13 @@ open Campaign.PlaneModel
 open Campaign.WorldState
 open Campaign
 open Campaign.PlayerDiscipline
-open Util
+open Campaign.WatchLogs
 
 module Support =
     open ploggy
     open System.Numerics
     open Util.Async
+    open System.Threading
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -145,6 +147,33 @@ module Support =
                         | Result.Ok x -> x
                         | Result.Error _ -> failwith "Unreachable"
                 }
+
+            let waitForMissionStart(cancel) =
+                async {
+                    let! startMission =
+                        watchLogs(false, Path.Combine(config.ServerDataDir, "logs"), "missionReport*.txt", None, cancel)
+                        |> AsyncSeq.choose (LogEntry.Parse >> Option.ofObj)
+                        |> AsyncSeq.tryFind (
+                            function
+                            | :? MissionStartEntry -> true
+                            | _ -> false)
+                    return startMission
+                }
+
+            // start commentator after DServer is finished loading the mission
+            let timelyCommentatorStart() =
+                async {
+                    let! result =
+                        use token = new CancellationTokenSource()
+                        token.CancelAfter(60000)
+                        Util.Async.tryTask(waitForMissionStart(token.Token))
+                    match result with
+                    | Error e -> logger.Warn(sprintf "Waiting for mission start failed: %s" e.Message)
+                    | Ok(Some (:? MissionStartEntry as entry)) -> logger.Info(sprintf "Mission start detected: %s at %s on %s" entry.MissionFile (entry.MissionTime.ToShortTimeString()) (entry.MissionTime.ToShortDateString()))
+                    | Ok _ -> logger.Info("Mission start detected")
+                    notifications.StartCommentator()
+                }
+
             match this with
             | DecideOrders ->
                 async {
@@ -205,13 +234,14 @@ module Support =
                     | _ ->
                         do! support.ServerControl.MessageAll ["Rotating missions now"]
                         do! support.ServerControl.SkipMission
-                        notifications.StartCommentator()
+                        do! timelyCommentatorStart()
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
             | KillServer ->
                 async {
                     support.Logging.LogInfo "Kill server..."
+                    notifications.StopCommentator()
                     killServer(config, serverProc)
                     return None, StartServer
                 }
@@ -223,6 +253,7 @@ module Support =
                     | None ->
                         return None, Failed("Failed to start server", None, this)
                     | Some _ ->
+                        do! timelyCommentatorStart()
                         notifications.StartCommentator()
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
                         return serverProc, WaitForMissionEnd expectedMissionEnd
@@ -233,7 +264,17 @@ module Support =
                     if System.DateTime.UtcNow >= time then
                         return serverProc, ExtractResults
                     else
-                        return serverProc, WaitForMissionEnd time
+                        match findRunningServers(config) with
+                        | [||] ->
+                            return None, StartServer
+                        | [| serverProc |] ->
+                            notifications.StopCommentator()
+                            do! Async.Sleep(10000)
+                            notifications.StartCommentator()
+                            return (Some serverProc), WaitForMissionEnd time
+                        | _ ->
+                            support.Logging.LogError("Found multiple servers running, kill them all")
+                            return None, KillServer
                 }
             | ExtractResults ->
                 async {
