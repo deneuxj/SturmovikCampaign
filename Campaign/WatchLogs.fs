@@ -55,8 +55,8 @@ let watchLogs(cleanLogs : bool, path, filter, firstFile, cancelToken : Cancellat
                 match newFiles.TryDequeue() with
                 | true, newFile ->
                     // Make sure we don't try to read a newly created log file while it's being created
-                    if newFiles.IsEmpty then
-                        do! Async.Sleep(60000)
+                    while newFiles.IsEmpty do
+                        do! Async.Sleep(1000)
                     if cleanLogs then
                         match currentFile with
                         | Some(file, _, _) ->
