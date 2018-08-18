@@ -278,7 +278,7 @@ module Async =
         }
 
     /// <summary>
-    /// Try to run a task, catch ay raised exception and return is an error
+    /// Try to run a task, catch any raised exception and return it as an error
     /// </summary>
     let tryTask task =
         async {
