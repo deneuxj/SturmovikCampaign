@@ -571,7 +571,7 @@ with
                 distance / 70000.0f
                 |> min 1.0f
                 |> max 0.0f
-                |> (*) 25.0f // Adjust because cargo rewards should be worth about the same as the damage they can inflict when used as bombs, not how much they cost to produce.
+                |> (*) 5.0f // Adjust because cargo rewards should be worth about the same as the damage they can inflict when used as bombs, not how much they cost to produce.
             else
                 0.0f
 
