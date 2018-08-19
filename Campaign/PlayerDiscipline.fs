@@ -651,7 +651,7 @@ with
                         yield PlaneCheckOut(user, plane, 1.0f, cost, af)
                 ]
             let supplyCommands =
-                if cargo > 0.0f<K> || weight > 1000.0f<K> then
+                if cargo > 0.0f<K> || weight >= 500.0f<K> then
                     List.ofSeq supplyInfo
                 else
                     []
