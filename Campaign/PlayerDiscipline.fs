@@ -255,7 +255,6 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                 ()
     }
 
-
 type PlaneAvailabilityMessage =
     | PlayerEntered of Guid
     | Overview of UserIds * delay:int * string list
@@ -265,6 +264,23 @@ type PlaneAvailabilityMessage =
     | Status of Map<string, PlayerHangar> * Map<AirfieldId, Map<PlaneModel, float32>>
     | PlanesAtAirfield of AirfieldId * Map<PlaneModel, float32>
 
+let showHangar(hangar : PlayerHangar, delay) =
+    [
+        let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
+        yield Overview(userIds, delay,
+            [
+                sprintf "Welcome back %s" userIds.Name
+                sprintf "Your cash reserve is %0.0f" hangar.Reserve
+            ])
+        yield Overview(userIds, delay,
+            [
+                for kvp in hangar.Airfields do
+                    let planes = match hangar.ShowAvailablePlanes(kvp.Key) with
+                                    | [] -> "None"
+                                    | planes -> String.concat ", " planes
+                    yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
+            ])
+    ]
 
 // Create an empty hangar for a player
 let private emptyHangar (playerId : string, playerName : string) =
@@ -275,6 +291,7 @@ type Command =
     | PlaneCheckIn of user:UserIds * PlaneModel * health:float32 * AirfieldId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * float32<E>
+    | InformPlayerHangar of UserIds
     | PunishThief of user:UserIds * PlaneModel * AirfieldId
     | Message of PlaneAvailabilityMessage
 
@@ -489,6 +506,13 @@ with
                 Overview(user, 15, [sprintf "You have been awarded %1.0f" reward])
                 Status(hangars, this.Airfields)
             ]
+
+        | InformPlayerHangar(user) ->
+            let hangar =
+                this.Hangars.TryFind(user.UserId)
+                |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
+            this,
+            showHangar(hangar, 5)
 
         | PunishThief(user, plane, af) ->
             this,
@@ -891,24 +915,6 @@ with
 
 let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
 
-    let showHangar(hangar : PlayerHangar, delay) =
-        asyncSeq {
-            let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
-            yield Overview(userIds, delay,
-                [
-                    sprintf "Welcome back %s" userIds.Name
-                    sprintf "Your cash reserve is %0.0f" hangar.Reserve
-                ])
-            yield Overview(userIds, delay,
-                [
-                    for kvp in hangar.Airfields do
-                        let planes = match hangar.ShowAvailablePlanes(kvp.Key) with
-                                        | [] -> "None"
-                                        | planes -> String.concat ", " planes
-                        yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
-                ])
-        }
-
     asyncSeq {
         let mutable context = Context.Create(world, state, hangars, maxCash)
         let mutable players : Map<int, PlayerFlightData> = Map.empty
@@ -921,7 +927,7 @@ let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars
                 yield PlayerEntered(joined.UserId)
                 match context.Hangars.TryFind(string joined.UserId) with
                 | Some hangar ->
-                    yield! showHangar(hangar, 15)
+                    yield! AsyncSeq.ofSeq(showHangar(hangar, 15))
                 | None ->
                     ()
             | :? ObjectSpawnedEntry as spawned ->
