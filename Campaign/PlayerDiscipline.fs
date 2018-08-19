@@ -835,7 +835,8 @@ with
             { this with State = MissionEnded },
             [
                 assert(this.State <> MissionEnded)
-                yield PlaneCheckIn(this.Player, this.Plane, health, af)
+                let healthUp = ceil(health * 10.0f) / 10.0f
+                yield PlaneCheckIn(this.Player, this.Plane, healthUp, af)
                 yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
                 yield RewardPlayer(this.Player, supplyReward * bombCost + this.Reward)
                 // Try to show PIN
