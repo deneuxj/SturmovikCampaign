@@ -251,9 +251,9 @@ let private mkHangarTask asyncIterNonMuted (config : Configuration, wg : WorldFa
             }
         | Announce(coalition, messages) ->
             handlers.OnMessagesToCoalition(coalition, messages)
-        | Violation(user) ->
+        | Violation(user, reason) ->
             async {
-                do! handlers.OnMessagesToPlayer(user, ["You are being kicked for plane theft. This is not a ban, you are welcome back."])
+                do! handlers.OnMessagesToPlayer(user, [sprintf "You are being kicked for %s. This is not a ban, you are welcome back." reason])
                 Async.Start(
                     async {
                         do! Async.Sleep(10000)

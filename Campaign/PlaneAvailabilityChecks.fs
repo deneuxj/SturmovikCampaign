@@ -29,6 +29,7 @@ open Campaign.PlayerHangar
 open Campaign.PlaneModel
 open Campaign.WorldState
 open Campaign.ResultExtraction
+open System.Runtime.Serialization
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -38,7 +39,7 @@ type PlaneAvailabilityMessage =
     | Overview of UserIds * delay:int * string list
     | Warning of UserIds * delay:int * string list
     | Announce of CoalitionId * string list
-    | Violation of UserIds
+    | Violation of UserIds * string
     | Status of Map<string, PlayerHangar> * Map<AirfieldId, Map<PlaneModel, float32>>
     | PlanesAtAirfield of AirfieldId * Map<PlaneModel, float32>
 
@@ -299,9 +300,7 @@ with
         | PunishThief(user, plane, af) ->
             this,
             [
-                Warning(user, 30, ["You are going to be kicked for taking off in a plane you cannot afford"
-                                   "Sorry about the inconvenience"])
-                Violation user
+                Violation(user, "taking off in a plane you cannot afford")
             ]
 
         | Message m ->
@@ -374,7 +373,7 @@ type PlayerFlightState =
     | Spawned of cost:float32<E> option // Cost of taking off in the plane, None if player can't afford it, or plane is not available at airfield
     | Aborted
     | InFlight
-    | Landed of AirfieldId option
+    | Landed of AirfieldId option * TimeSpan
     | Disconnected
     | MissionEnded
     | StolePlane
@@ -592,9 +591,10 @@ with
                 None
         // Calculate reward from cargo, reward is secured later at mission end
         let delivered, reward =
-            match afCheckout with
-            | Some af -> this.Cargo, this.Cargo * bombCost * context.SupplyFlightFactor(this.StartAirfield, af)
-            | None -> 0.0f<K>, 0.0f<E>
+            match afCheckout, this.Health with
+            | Some af, x when x > 0.0f -> this.Cargo, this.Cargo * bombCost * context.SupplyFlightFactor(this.StartAirfield, af)
+            | Some _, _
+            | None, _ -> 0.0f<K>, 0.0f<E>
         let cmds =
             [
                 match afCheckout with
@@ -602,10 +602,38 @@ with
                     let reg = context.World.GetAirfield(af).Region
                     yield DeliverSupplies(delivered * bombCost, reg)
                     yield Message(Announce(this.Coalition, [sprintf "%s has delivered %0.0f Kg of cargo to %s" this.Player.Name delivered af.AirfieldName]))
-                | _ ->
-                    ()
+                | _ -> ()
             ]
-        { this with State = Landed(afCheckout); Cargo = this.Cargo - delivered; Reward = this.Reward + reward }, cmds
+        { this with State = Landed(afCheckout, landing.Timestamp); Cargo = this.Cargo - delivered; Reward = this.Reward + reward }, cmds
+
+    // Announce landing of healthy planes, kick players delivering planes to the enemy.
+    member this.AnnounceLanding(context : Context, af : AirfieldId option) =
+        let cmds =
+            [
+                match af with
+                | Some af ->
+                    if this.Health > 0.0f then
+                        yield Message(
+                            Announce(
+                                this.Coalition,
+                                [sprintf "%s is back at %s" this.Player.Name af.AirfieldName]))
+                    let afCoalition =
+                        context.State.GetRegion(context.World.GetAirfield(af).Region).Owner
+                    if afCoalition = Some this.Coalition.Other then
+                        yield Message(
+                            Announce(
+                                this.Coalition.Other,
+                                [sprintf "%s (an enemy!) has landed at %s" this.Player.Name af.AirfieldName]))
+                        if this.Health > 0.5f then
+                            yield Message(Violation(this.Player, "landing on an enemy airfield"))
+                | None ->
+                    if this.Health > 0.0f then
+                        yield Message(
+                            Announce(
+                                this.Coalition,
+                                [sprintf "%s landed in the rough" this.Player.Name]))
+            ]
+        this, cmds
 
     // Check in what's left of the plane, award reward
     member this.HandleMissionEnd(context : Context, af : AirfieldId option, bombs : int option) =
@@ -679,9 +707,9 @@ with
         | _, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
             logger.Warn(sprintf "Spurious landing event for %s in %s id %d" this.Player.Name this.Plane.PlaneName this.Vehicle)
             this, []
-        | Landed af, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
+        | Landed(af, _), (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
             this.HandleMissionEnd(context, af, Some finish.Bombs)
-        | Landed af, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
+        | Landed(af, _), (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this.HandleMissionEnd(context, af, None)
         | InFlight, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
             this.HandlePrematureMissionEnd(context)
@@ -697,6 +725,15 @@ with
             this.HandleDisconnection(context)
         | _ ->
             this, []
+
+        // Wait a second after landing to properly handle crashes when announcing landings
+        |> fun (this2, cmds) ->
+            match this2.State with
+            | Landed(af, ts) when (entry.Timestamp - ts).TotalSeconds > 1.0 ->
+                this.AnnounceLanding(context, af)
+            | _ ->
+                this2, cmds
+
 
 /// Monitor events and check that players don't take off in planes they are not allowed to fly according to player hangars.
 /// Also send information about player hangars.
