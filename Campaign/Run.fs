@@ -711,7 +711,7 @@ module MissionLogParsing =
             // entries to remove from the log
             let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
             let missionIsComplete (startTime : System.DateTime, file : string) =
-                let endTime = File.GetCreationTimeUtc(file)
+                let endTime = File.GetLastWriteTimeUtc(file)
                 // 90% of the duration to allow for clock skew between real time and mission time
                 let duration = 0.9 * float minMissionDurationMinutes
                 let actualDuration = endTime - startTime
@@ -753,7 +753,7 @@ module MissionLogParsing =
                     let actualMissionFile = Regex.Replace(actualMissionFile, "_\d$", "")
                     if start.MissionTime = startDate && actualMissionFile = expectedMissionFile then
                         logger.Info(sprintf "Start collecting from %s" file)
-                        previous, Recording([entry], File.GetCreationTimeUtc(file), file) // Start new list
+                        previous, Recording([entry], File.GetLastWriteTimeUtc(file), file) // Start new list
                     else
                         let reason =
                             if start.MissionTime <> startDate then
@@ -780,7 +780,7 @@ module MissionLogParsing =
                         // If so use it
                         currentEntries
                     else
-                        let actualDuration = File.GetCreationTimeUtc(lastFile) - startDate
+                        let actualDuration = File.GetLastWriteTimeUtc(lastFile) - startDate
                         logger.Warn(sprintf "Last set of mission logs is incomplete (%d minutes)" (int actualDuration.TotalMinutes))
                         // Otherwise keep previous
                         logger.Debug("Discarded short sequence")
