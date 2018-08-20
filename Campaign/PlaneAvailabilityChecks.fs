@@ -420,7 +420,7 @@ with
                         |> Seq.filter (fun af -> context.State.GetRegion(af.Region).Owner = Some coalition)
                         |> Seq.choose (fun afDest ->
                             match context.SupplyFlightFactor(af, afDest.AirfieldId) with
-                            | x when x > 0.0f -> Some(afDest, x)
+                            | x when x > 1.0f -> Some(afDest, x)
                             | _ -> None)
                         |> Seq.sortByDescending snd
                         |> Seq.truncate 3
