@@ -32,6 +32,7 @@ open Campaign.ResultExtraction
 
 let private logger = LogManager.GetCurrentClassLogger()
 
+/// Messages sent to the live commenter
 type PlaneAvailabilityMessage =
     | PlayerEntered of Guid
     | Overview of UserIds * delay:int * string list
@@ -41,6 +42,7 @@ type PlaneAvailabilityMessage =
     | Status of Map<string, PlayerHangar> * Map<AirfieldId, Map<PlaneModel, float32>>
     | PlanesAtAirfield of AirfieldId * Map<PlaneModel, float32>
 
+/// Show hangar to its player
 let showHangar(hangar : PlayerHangar, delay) =
     [
         let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
@@ -52,17 +54,19 @@ let showHangar(hangar : PlayerHangar, delay) =
         yield Overview(userIds, delay,
             [
                 for kvp in hangar.Airfields do
-                    let planes = match hangar.ShowAvailablePlanes(kvp.Key) with
-                                    | [] -> "None"
-                                    | planes -> String.concat ", " planes
-                    yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
+                    match hangar.ShowAvailablePlanes(kvp.Key) with
+                    | [] -> ()
+                    | planes ->
+                        let planes = String.concat ", " planes
+                        yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
             ])
     ]
 
-// Create an empty hangar for a player
+/// Create an empty hangar for a player
 let private emptyHangar (playerId : string, playerName : string) =
     { Player = Guid(playerId); PlayerName = playerName; Reserve = 0.0f<E>; Airfields = Map.empty }
 
+/// Commands sent during state transitions in PlayerStateData to the main asyncSeq computation
 type Command =
     | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * funds:float32<E> * AirfieldId
     | PlaneCheckIn of user:UserIds * PlaneModel * health:float32 * AirfieldId
@@ -96,6 +100,7 @@ type ObjectInstance =
     | TrainWagon
     | Locomotive
 
+/// Keeps track of information needed for the state transitions in PlayerFlightData
 type Context =
     { World : WorldFastAccess
       State : WorldStateFastAccess
@@ -364,6 +369,7 @@ with
                 -1.0f
         factor
 
+/// States in the PlayerFlightData state machine
 type PlayerFlightState =
     | Spawned of cost:float32<E> option // Cost of taking off in the plane, None if player can't afford it, or plane is not available at airfield
     | Aborted
@@ -373,6 +379,7 @@ type PlayerFlightState =
     | MissionEnded
     | StolePlane
 
+/// The state of a player and their plane, and where they are in the flight sequence
 type PlayerFlightData =
     { Player : UserIds
       Vehicle : int
@@ -691,7 +698,8 @@ with
         | _ ->
             this, []
 
-
+/// Monitor events and check that players don't take off in planes they are not allowed to fly according to player hangars.
+/// Also send information about player hangars.
 let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
 
     asyncSeq {
