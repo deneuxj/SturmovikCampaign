@@ -839,6 +839,7 @@ with
                 yield PlaneCheckIn(this.Player, this.Plane, healthUp, af)
                 yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
                 yield RewardPlayer(this.Player, supplyReward * bombCost + this.Reward)
+                yield InformPlayerHangar(this.Player)
                 // Try to show PIN
                 match
                     (try
