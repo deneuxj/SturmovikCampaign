@@ -27,6 +27,13 @@ type PlaneType  =
     | Attacker
     | Bomber
     | Transport
+with
+    override this.ToString() =
+        match this with
+        | Fighter -> "fighter"
+        | Attacker -> "attacker"
+        | Bomber -> "bomber"
+        | Transport -> "transport plane"
 
 type PlaneRole =
     | Interceptor

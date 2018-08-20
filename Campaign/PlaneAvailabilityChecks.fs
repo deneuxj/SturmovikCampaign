@@ -484,7 +484,12 @@ with
         match this.State with
         | Spawned(Some cost) ->
             { this with State = InFlight },
-            []
+            [
+                yield Message(
+                        Announce(
+                            this.Coalition,
+                            [sprintf "%s has taken off from %s in a %s" this.Player.Name this.StartAirfield.AirfieldName (string this.Plane.PlaneType)]))
+            ]
         | Spawned None ->
             { this with State = StolePlane },
             [ PunishThief(this.Player, this.Plane, this.StartAirfield) ]
