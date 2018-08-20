@@ -640,7 +640,7 @@ module MissionLogParsing =
     open Campaign.Orders
     open Campaign.AfterActionReport
     open Campaign.PlayerHangar
-    open Campaign.PlayerDiscipline
+    open Campaign.PlaneAvailabilityChecks
     open MBrace.FsPickler
     open System.IO
     open ploggy

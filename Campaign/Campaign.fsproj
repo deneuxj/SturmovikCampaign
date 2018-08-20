@@ -78,6 +78,7 @@
     <Compile Include="TankParks.fs" />
     <Compile Include="MissionGeneration.fs" />
     <Compile Include="PlayerDiscipline.fs" />
+    <Compile Include="PlaneAvailabilityChecks.fs" />
     <Compile Include="WatchLogs.fs" />
     <Compile Include="ChatCommands.fs" />
     <Compile Include="Commenting.fs" />

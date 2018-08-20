@@ -23,21 +23,18 @@ open Campaign.BasicTypes
 open Campaign.Configuration
 open Util
 open ploggy
-open System.Numerics
 open FSharp.Control
+open Campaign.BasicTypes
 open Campaign.ResultExtraction
 open Campaign.WorldDescription
 open Campaign.WorldState
-open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.PlayerDiscipline
 open Campaign.PlayerHangar
 open Campaign.WatchLogs
 open MBrace.FsPickler
-open Campaign.Orders
-open SturmovikMission.Blocks.Util.String
+open Campaign.PlaneAvailabilityChecks
 open Campaign.ChatCommands
-open NLog.Common
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
