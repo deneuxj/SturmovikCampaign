@@ -732,7 +732,11 @@ module MissionLogParsing =
                     |> Seq.map fst
                 for file in ordered do
                     for line in File.ReadAllLines(file) do
-                        yield LogEntry.Parse(line), file
+                        let entry = LogEntry.Parse(line)
+                        match entry with
+                        | null -> ()
+                        | entry when entry.IsValid() -> yield entry, file
+                        | invalid -> ()
             }
             |> Seq.fold (fun (previous, current) (entry, file) ->  // Keep the latest mission reports with the proper mission start date
                 match current, entry with

@@ -140,6 +140,8 @@ with
         let (|StaticPlaneType|_|) = staticPlaneType this.World.World.PlaneSet
         let entity =
             match spawn.ObjectType, spawn.ObjectName with
+            | null, _
+            | _, null -> failwith "Null field in spawn log entry"
             | PlaneObjectType plane, _ -> DynamicPlane plane
             | StaticPlaneType plane, _ -> StaticPlane plane
             | StaticVehicleType vehicle, _ -> StaticTank vehicle

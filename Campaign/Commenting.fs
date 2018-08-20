@@ -344,7 +344,10 @@ type Commentator (config : Configuration, handlers : EventHandlers) =
         |> AsyncSeq.choose (fun line ->
             try
                 let x = LogEntry.Parse(string line)
-                Some x
+                match x with
+                | null -> failwith "null LogEntry"
+                | x when x.IsValid() -> Some x
+                | invalid -> failwith "non-null invalid LogEntry"
             with
             | _ ->
                 logger.Error(sprintf "Failed to parse '%s'" (string line))
