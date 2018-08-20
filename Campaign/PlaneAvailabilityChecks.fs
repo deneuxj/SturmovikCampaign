@@ -735,9 +735,9 @@ with
 
         // Wait a second after landing to properly handle crashes when announcing landings
         |> fun (this2, cmds) ->
-            match this2.State with
+            match this.State with // "this": Check old value, we might have just switched to MissionEnded
             | Landed(af, ts) when (entry.Timestamp - ts).TotalSeconds > 1.0 ->
-                this.AnnounceLanding(context, af)
+                this2.AnnounceLanding(context, af) // "this2": Use updated health value
             | _ ->
                 this2, cmds
 
