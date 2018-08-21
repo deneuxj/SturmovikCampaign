@@ -738,7 +738,8 @@ with
         |> fun (this2, cmds) ->
             match this.State with // "this": Check old value, we might have just switched to MissionEnded
             | Landed(af, Some ts) when (entry.Timestamp - ts).TotalSeconds > 1.0 ->
-                this2.AnnounceLanding(context, af) // "this2": Use updated health value
+                let this2, cmds2 = this2.AnnounceLanding(context, af) // "this2": Use updated health value
+                this2, cmds @ cmds2
             | _ ->
                 this2, cmds
 
