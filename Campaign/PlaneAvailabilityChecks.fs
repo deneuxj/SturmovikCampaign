@@ -375,7 +375,7 @@ type PlayerFlightState =
     | Spawned of cost:float32<E> option // Cost of taking off in the plane, None if player can't afford it, or plane is not available at airfield
     | Aborted
     | InFlight
-    | Landed of AirfieldId option * TimeSpan
+    | Landed of AirfieldId option * TimeSpan option
     | Disconnected
     | MissionEnded
     | StolePlane
@@ -611,7 +611,7 @@ with
                     yield Message(Announce(this.Coalition, [sprintf "%s has delivered %0.0f Kg of cargo to %s" this.Player.Name delivered af.AirfieldName]))
                 | _ -> ()
             ]
-        { this with State = Landed(afCheckout, landing.Timestamp); Cargo = this.Cargo - delivered; Reward = this.Reward + reward }, cmds
+        { this with State = Landed(afCheckout, Some landing.Timestamp); Cargo = this.Cargo - delivered; Reward = this.Reward + reward }, cmds
 
     // Announce landing of healthy planes, kick players delivering planes to the enemy.
     member this.AnnounceLanding(context : Context, af : AirfieldId option) =
@@ -620,19 +620,20 @@ with
                 match af with
                 | Some af ->
                     if this.Health > 0.0f then
-                        yield Message(
-                            Announce(
-                                this.Coalition,
-                                [sprintf "%s is back at %s" this.Player.Name af.AirfieldName]))
-                    let afCoalition =
-                        context.State.GetRegion(context.World.GetAirfield(af).Region).Owner
-                    if afCoalition = Some this.Coalition.Other then
-                        yield Message(
-                            Announce(
-                                this.Coalition.Other,
-                                [sprintf "%s (an enemy!) has landed at %s" this.Player.Name af.AirfieldName]))
-                        if this.Health > 0.5f then
-                            yield Message(Violation(this.Player, "landing on an enemy airfield"))
+                        let afCoalition =
+                            context.State.GetRegion(context.World.GetAirfield(af).Region).Owner
+                        if afCoalition = Some this.Coalition.Other then
+                            yield Message(
+                                Announce(
+                                    this.Coalition.Other,
+                                    [sprintf "%s (an enemy!) has landed at %s" this.Player.Name af.AirfieldName]))
+                            if this.Health > 0.5f then
+                                yield Message(Violation(this.Player, "landing on an enemy airfield"))
+                        else
+                            yield Message(
+                                Announce(
+                                    this.Coalition,
+                                    [sprintf "%s is back at %s" this.Player.Name af.AirfieldName]))
                 | None ->
                     if this.Health > 0.0f then
                         yield Message(
@@ -640,7 +641,7 @@ with
                                 this.Coalition,
                                 [sprintf "%s landed in the rough" this.Player.Name]))
             ]
-        this, cmds
+        { this with State = Landed(af, None) }, cmds
 
     // Check in what's left of the plane, award reward
     member this.HandleMissionEnd(context : Context, af : AirfieldId option, bombs : int option) =
@@ -736,7 +737,7 @@ with
         // Wait a second after landing to properly handle crashes when announcing landings
         |> fun (this2, cmds) ->
             match this.State with // "this": Check old value, we might have just switched to MissionEnded
-            | Landed(af, ts) when (entry.Timestamp - ts).TotalSeconds > 1.0 ->
+            | Landed(af, Some ts) when (entry.Timestamp - ts).TotalSeconds > 1.0 ->
                 this2.AnnounceLanding(context, af) // "this2": Use updated health value
             | _ ->
                 this2, cmds
