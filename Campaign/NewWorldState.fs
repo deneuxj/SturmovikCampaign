@@ -946,9 +946,9 @@ with
     member this.RunBattle(random : System.Random) =
         match this.Defenders, this.Attackers with
         | _, numAttackers when numAttackers.IsEmpty ->
-            this.DefenderCoalition, this.Defenders, 0.0f
+            this, 0.0f
         | numDefenders, _ when numDefenders.IsEmpty ->
-            this.DefenderCoalition.Other, this.Attackers, 0.0f
+            this, 0.0f
         | _ ->
             // Lists of vehicle type and health. Health is simply the cost of the vehicle.
             let attackers =
@@ -1004,7 +1004,33 @@ with
                 |> Seq.map (fun (vehicle, healths) -> vehicle, healths |> Seq.sumBy snd)
                 |> Map.ofSeq
                 |> Map.map (fun vehicle healthTotal -> (healthTotal / float32 vehicle.Cost) |> floor |> int)
-            victor, remainingVictors, damages
+            let participants =
+                if victor = this.DefenderCoalition then
+                    { this with Defenders = remainingVictors; Attackers = Map.empty }
+                else
+                    { this with Attackers = remainingVictors; Defenders = Map.empty }
+            participants, damages
+
+    member this.Victors =
+        if Map.isSumNull this.Attackers then
+            Some this.DefenderCoalition
+        elif Map.isSumNull this.Defenders then
+            Some this.DefenderCoalition.Other
+        else
+            None
+
+/// Active pattern to classify the status/result of a battle
+let (|BattleEnded|BattleContinues|NoBattle|) (x : BattleParticipants) =
+    match x.Victors with
+    | None ->
+        if Map.isSumNull x.Defenders then
+            NoBattle
+        else
+            BattleContinues
+    | Some victors when victors = x.DefenderCoalition ->
+        BattleEnded(victors, x.Defenders)
+    | Some victors ->
+        BattleEnded(victors, x.Attackers)
 
 /// Build a battle for each region with invaders
 let buildBattles (state : WorldState) (paras : ParaDropResult list) =
@@ -1122,7 +1148,7 @@ let applyConquests config (world : World) (state : WorldState) (battles : Battle
         |> List.filter (fun battle -> not battle.Attackers.IsEmpty)
         |> List.choose (fun battle ->
             match battleResults.TryFind battle.Region with
-            | Some ((victors, survivors, damage), damageToDefenders, damageToAttackers) ->
+            | Some ((BattleEnded(victors, survivors), damage), damageToDefenders, damageToAttackers) ->
                 Some {
                     Region = battle.Region
                     Participants = battle
@@ -1132,14 +1158,16 @@ let applyConquests config (world : World) (state : WorldState) (battles : Battle
                     DamageToDefendersFromAir = damageToDefenders
                     DamageToAttackersFromAir = damageToAttackers
                 }
+            | Some _
             | None ->
                 None)
     let regions =
         [
             for region in state.Regions do
                 match Map.tryFind region.RegionId battleResults with
-                | Some((newOwner, survivors, damages), _, _) ->
+                | Some((BattleEnded(newOwner, survivors), damages), _, _) ->
                     yield { region with Owner = Some newOwner; NumVehicles = survivors; NumInvadingVehicles = Map.empty; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
+                | Some _
                 | None ->
                     yield region
         ]
@@ -1147,13 +1175,14 @@ let applyConquests config (world : World) (state : WorldState) (battles : Battle
         [
             for af, afState in List.zip world.Airfields state.Airfields do
                 match Map.tryFind af.Region battleResults with
-                | Some((newOwner, survivors, damages), _, _) ->
+                | Some((BattleEnded(newOwner, survivors), damages), _, _) ->
                     let factor =
                         match sg.GetRegion(af.Region).Owner with
                         | Some owner when owner <> newOwner -> 1.5f<E> // Previous owners sabotaged some of their planes.
                         | Some _ -> 1.0f<E> // Previous owners defended their planes, but some got damaged in the battle.
                         | None -> 0.0f<E> // No battle took place, region was neutral.
                     yield afState.ApplyDamage (factor * damages)
+                | Some _
                 | None ->
                     yield afState
         ]
