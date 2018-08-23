@@ -345,7 +345,7 @@ module Support =
                               "Next mission is being generated..."
                             ]
                             |> support.ServerControl.MessageAll
-                        let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, missionResults.TakeOffs, missionResults.Landings, missionResults.StaticDamages @ missionResults.VehicleDamages, newProduction)
+                        let axisAAR, alliesAAR = Campaign.Run.MissionLogParsing.buildAfterActionReports(config, oldState, newState, missionResults.TakeOffs, missionResults.Landings, missionResults.StaticDamages @ missionResults.VehicleDamages, newProduction, battleResults)
                         Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR, battleResults)
                         notifications.AnnounceResults(axisAAR, alliesAAR, battleResults)
                         notifications.AnnounceWorldState(world, newState)

@@ -953,7 +953,7 @@ module MissionLogParsing =
         newlyProduced, battleReports, (state, state2)
 
     /// Build the after-action reports, solely used for presentation to players
-    let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced) =
+    let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced, battleReports) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
         let world, axisOrders, alliesOrders =
             try
@@ -966,8 +966,8 @@ module MissionLogParsing =
             with
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         let newSupplies, newAxisVehicles, newAlliesVehicles = newlyProduced
-        let aarAxis = buildReport world state1 state2 tookOff landed damages axisOrders.Columns newSupplies newAxisVehicles Axis
-        let aarAllies = buildReport world state1 state2 tookOff landed damages alliesOrders.Columns newSupplies newAlliesVehicles Allies
+        let aarAxis = buildReport world state1 state2 tookOff landed damages axisOrders.Columns newSupplies newAxisVehicles battleReports Axis
+        let aarAllies = buildReport world state1 state2 tookOff landed damages alliesOrders.Columns newSupplies newAlliesVehicles battleReports Allies
         aarAxis, aarAllies
 
     /// Dump new state to files

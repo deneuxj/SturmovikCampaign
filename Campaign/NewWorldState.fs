@@ -1019,6 +1019,13 @@ with
         else
             None
 
+    static member ComputeLosses(before : BattleParticipants, after : BattleParticipants) =
+        assert(before.DefenderCoalition = after.DefenderCoalition)
+        let diffAttackers = Util.subMaps before.Attackers after.Attackers
+        let diffDefenders = Util.subMaps before.Defenders after.Defenders
+        [(before.DefenderCoalition, diffDefenders); (before.DefenderCoalition.Other, diffAttackers)]
+        |> Map.ofSeq
+
 /// Active pattern to classify the status/result of a battle
 let (|BattleEnded|BattleContinues|NoBattle|) (x : BattleParticipants) =
     match x.Victors with
@@ -1128,6 +1135,7 @@ type BattleSummary = {
     Participants : BattleParticipants
     Victors : CoalitionId
     Survivors : Map<GroundAttackVehicle, int>
+    Losses : Map<CoalitionId, Map<GroundAttackVehicle, int>>
     DamageToDefendersFromAir : float32
     DamageToAttackersFromAir : float32
     CollateralDamage : float32
@@ -1140,20 +1148,23 @@ let applyConquests config (world : World) (state : WorldState) (battles : Battle
     let battleResults =
         battles
         |> List.map (fun battle ->
-            let battle, damageToDefenders, damageToAttackers = battle.Decimate(config, random, preambleKills)
-            battle.Region, (battle.RunBattle(random), damageToDefenders, damageToAttackers))
+            let battle2, damageToDefenders, damageToAttackers = battle.Decimate(config, random, preambleKills)
+            let afterBattle, collateral = battle2.RunBattle(random)
+            let losses = BattleParticipants.ComputeLosses(battle, afterBattle)
+            battle2.Region, (afterBattle, collateral, losses, damageToDefenders, damageToAttackers))
         |> Map.ofList
     let battleReports =
         battles
         |> List.filter (fun battle -> not battle.Attackers.IsEmpty)
         |> List.choose (fun battle ->
             match battleResults.TryFind battle.Region with
-            | Some ((BattleEnded(victors, survivors), damage), damageToDefenders, damageToAttackers) ->
+            | Some (BattleEnded(victors, survivors), damage, losses, damageToDefenders, damageToAttackers) ->
                 Some {
                     Region = battle.Region
                     Participants = battle
                     Victors = victors
                     Survivors = survivors
+                    Losses = losses
                     CollateralDamage = damage
                     DamageToDefendersFromAir = damageToDefenders
                     DamageToAttackersFromAir = damageToAttackers
@@ -1165,7 +1176,7 @@ let applyConquests config (world : World) (state : WorldState) (battles : Battle
         [
             for region in state.Regions do
                 match Map.tryFind region.RegionId battleResults with
-                | Some((BattleEnded(newOwner, survivors), damages), _, _) ->
+                | Some(BattleEnded(newOwner, survivors), damages, _, _, _) ->
                     yield { region with Owner = Some newOwner; NumVehicles = survivors; NumInvadingVehicles = Map.empty; Supplies = max 0.0f<E> (region.Supplies - 1.0f<E> * damages) }
                 | Some _
                 | None ->
@@ -1175,7 +1186,7 @@ let applyConquests config (world : World) (state : WorldState) (battles : Battle
         [
             for af, afState in List.zip world.Airfields state.Airfields do
                 match Map.tryFind af.Region battleResults with
-                | Some((BattleEnded(newOwner, survivors), damages), _, _) ->
+                | Some(BattleEnded(newOwner, survivors), damages, _, _, _) ->
                     let factor =
                         match sg.GetRegion(af.Region).Owner with
                         | Some owner when owner <> newOwner -> 1.5f<E> // Previous owners sabotaged some of their planes.

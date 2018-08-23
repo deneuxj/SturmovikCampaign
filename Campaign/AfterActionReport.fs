@@ -117,7 +117,7 @@ let regionsOwnedBy (state : WorldState) (coalition : CoalitionId) =
     |> List.map (fun region -> region.RegionId)
     |> Set.ofList
 
-let buildReport (world : World) (oldState : WorldState) (newState : WorldState) (tookOff : TookOff list) (landed : Landed list) (damages : Damage list) (columns : ColumnMovement list) (newSupplies : Resupplied list) (newVehicles : NewVehiclesSummary) (coalition : CoalitionId) =
+let buildReport (world : World) (oldState : WorldState) (newState : WorldState) (tookOff : TookOff list) (landed : Landed list) (damages : Damage list) (columns : ColumnMovement list) (newSupplies : Resupplied list) (newVehicles : NewVehiclesSummary) (battleReports : BattleSummary list) (coalition : CoalitionId) =
     let wg = WorldFastAccess.Create world
     let sg1 = WorldStateFastAccess.Create oldState
     let sg2 = WorldStateFastAccess.Create newState
@@ -210,6 +210,10 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
         |> List.map (fun (model, damages) -> model, damages |> List.sumBy snd)
         |> Map.ofList
         |> Map.map (fun _ damaged -> damaged |> ceil |> int)
+    let numTanksDestroyed =
+        battleReports
+        |> Seq.map (fun report -> report.Losses.TryFind coalition |> Option.defaultValue Map.empty)
+        |> Seq.fold Util.addMaps numParkedTanksDestroyed
     let productionDamage =
         damages
         |> List.choose (fun event ->
@@ -247,7 +251,7 @@ let buildReport (world : World) (oldState : WorldState) (newState : WorldState) 
       PlanesDamaged = numPlanesLandedDamaged
       PlanesCaptured = planesCaptured
       PlanesProduced = newVehicles.Planes
-      VehiclesLost = Util.addMaps tanksIntercepted numParkedTanksDestroyed
+      VehiclesLost = Util.addMaps tanksIntercepted numTanksDestroyed
       VehiclesProduced = newVehicles.Tanks
       FactoriesDestroyed = productionDamage
       SupplyProduced = newSupplies
