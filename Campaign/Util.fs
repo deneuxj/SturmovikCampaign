@@ -168,6 +168,12 @@ module Map =
         }
         |> Map.ofSeq
 
+    let isSumNull m1 =
+        m1
+        |> Map.toSeq
+        |> Seq.sumBy snd
+        |> ((=) 0)
+
  module Seq =
     /// <summary>
     /// Split a sequence at elements where a predicate evaluates to true.
