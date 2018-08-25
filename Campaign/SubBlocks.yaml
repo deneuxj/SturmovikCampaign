@@ -7,17 +7,21 @@
       durability: 25000
     - pattern: arf_barak
       sub_blocks: "[1]"
-      storage: 100.0
+      storage: 20.0
       production: 0.0
       is_airfield: false
       durability: 10000
+    - pattern: "arf_dugouts_1"
+      sub_blocks: "[2..4]"
+      storage: 150.0
+      durability: 25000
     - pattern: "arf_dugouts_2"
       sub_blocks: "[2..5]"
-      storage: 100.0
+      storage: 200.0
       durability: 25000
     - pattern: "arf_dugouts_3"
       sub_blocks: "[0..6]"
-      storage: 100.0
+      storage: 400.0
       durability: 25000
     - pattern: "arf_ammo_1"
       sub_blocks: "[0] @ [2..10]"
