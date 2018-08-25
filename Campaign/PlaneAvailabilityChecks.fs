@@ -439,11 +439,12 @@ with
                     | _, None
                     | None, _ -> None
                     | Some hangar, Some qty when qty >= 1.0f ->
+                        let factor = getPriceFactor af plane qty context.Hangars
                         let fundsBefore =
                             context.Hangars.TryFind(user.UserId)
                             |> Option.map(fun h -> h.Reserve)
                             |> Option.defaultValue 0.0f<E>
-                        Some(fundsBefore - hangar.Reserve)
+                        Some(factor * (fundsBefore - hangar.Reserve))
                     | _ -> None
                 else
                     Some 0.0f<E>
