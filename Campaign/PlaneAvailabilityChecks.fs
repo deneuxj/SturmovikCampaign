@@ -113,9 +113,10 @@ type Context =
       RearAirfields : Set<AirfieldId>
       RegionNeeds : Map<RegionId, float32<E>>
       MaxCash : float32<E>
+      MoneyBackFactor : float32
     }
 with
-    static member Create(world : World, state : WorldState, hangars : Map<string, PlayerHangar>, maxCash : int) =
+    static member Create(world : World, state : WorldState, hangars : Map<string, PlayerHangar>, maxCash : int, moneyBackFactor : float32) =
         let rearAirfields =
             [Axis; Allies]
             |> List.choose (fun coalition -> state.RearAirfield(world, coalition))
@@ -134,6 +135,7 @@ with
             RearAirfields = rearAirfields
             RegionNeeds = needs
             MaxCash = 1.0f<E> * float32 maxCash
+            MoneyBackFactor = moneyBackFactor
         }
 
     /// Bind a vehicle ID to a coalition and a type of object
@@ -780,10 +782,10 @@ with
 
 /// Monitor events and check that players don't take off in planes they are not allowed to fly according to player hangars.
 /// Also send information about player hangars.
-let checkPlaneAvailability maxCash (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
+let checkPlaneAvailability maxCash moneyBackFactor (world : World) (state : WorldState) (hangars : Map<string, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
 
     asyncSeq {
-        let mutable context = Context.Create(world, state, hangars, maxCash)
+        let mutable context = Context.Create(world, state, hangars, maxCash, moneyBackFactor)
         let mutable players : Map<int, PlayerFlightData> = Map.empty
 
         for entry in entries do
