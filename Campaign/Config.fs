@@ -104,7 +104,7 @@ with
             MaxBattleKillsRatioByPlayers = 1.0f
             MaxBattleKillsRatioByAI = 0.25f
             MaxStaticPlanes = 6
-            MaxCash = 3000
+            MaxCash = 10000
             EnablePlayerTanks = true
             MissionName = "AutoGenMission2"
             MissionLength = 180

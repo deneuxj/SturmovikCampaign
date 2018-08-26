@@ -47,7 +47,7 @@
     # Max static planes per airfield
     MaxStaticPlanes: 6
     # Max amount of cash a player can hold
-    MaxCash: 3000
+    MaxCash: 10000
     # Control whether player-driven tank spawns should be included in battles
     EnablePlayerTanks: true
     # Where the textual generated mission file is written; this also the place where the campaign state is kept
