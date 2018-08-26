@@ -51,14 +51,14 @@ with
         let qty = max qty 0.0f
         let oldQty = this.Planes.TryFind(plane) |> Option.defaultValue 0.0f
         let newQty = oldQty - qty
-        let credit, newQty =
+        let cost, newQty =
             if newQty >= 0.0f then
                 0.0f<E>, newQty
             else
-                costFactor * newQty * plane.Cost, 0.0f
+                costFactor * plane.Cost, oldQty
         let newQty = max newQty 0.0f
         let planes = Map.add plane newQty this.Planes
-        { this with Planes = planes }, credit
+        { this with Planes = planes }, cost
 
 /// <summary>
 /// The planes that a player has at each airfield, and a reserve that can be used to spawn in planes that a player does not own.
@@ -88,9 +88,9 @@ with
     /// <param name="plane">Plane model that took off.</param>
     member this.TryRemovePlane(af, plane, qty, costFactor) =
         let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}
-        let hangar, credit = hangar.RemovePlane(plane, qty, costFactor)
-        let reserve = this.Reserve + credit
-        if credit = 0.0f<E> || reserve >= 0.0f<E> then
+        let hangar, cost = hangar.RemovePlane(plane, qty, costFactor)
+        let reserve = this.Reserve - cost
+        if cost = 0.0f<E> || reserve >= 0.0f<E> then
             let afs = Map.add af hangar this.Airfields
             Some { this with Reserve = reserve; Airfields = afs }
         else

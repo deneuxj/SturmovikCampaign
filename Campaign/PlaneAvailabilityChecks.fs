@@ -69,8 +69,10 @@ let private emptyHangar (playerId : string, playerName : string) =
 
 /// Commands sent during state transitions in PlayerStateData to the main asyncSeq computation
 type Command =
-    | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * funds:float32<E> * AirfieldId
+    | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlaneCheckIn of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
+    | PlayerBorrowedPlane of user:UserIds * float32<E>
+    | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * AirfieldId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * float32<E>
     | InformPlayerHangar of UserIds
@@ -207,7 +209,7 @@ with
     /// Commands are typically created by PlayerFlightData instances, when they hand game log entries.
     member this.Execute(command : Command) =
         match command with
-        | PlaneCheckOut(user, plane, health, cost, af) ->
+        | PlaneCheckOut(user, plane, health, isBorrowed, af) ->
             let coalition =
                 this.State.GetRegion(this.World.GetAirfield(af).Region).Owner
             let hangar =
@@ -220,7 +222,11 @@ with
                 planes.TryFind(plane)
                 |> Option.defaultValue(0.0f)
             let newQty = oldQty - 1.0f
-            let hangar = hangar.RemovePlane(af, plane, health, cost)
+            let hangar =
+                if not isBorrowed then
+                    hangar.RemovePlane(af, plane, health, 0.0f<E>)
+                else
+                    hangar
             let hangars = this.Hangars.Add(user.UserId, hangar)
             let airfields = this.Airfields.Add(af, planes.Add(plane, max 0.0f newQty))
             { this with Hangars = hangars; Airfields = airfields },
@@ -236,6 +242,31 @@ with
                 | None, _ ->
                     logger.Warn(sprintf "Plane checkout from a neutral region from %s" af.AirfieldName)
             ]
+
+        | PlayerBorrowedPlane(user, cost) ->
+            let hangar =
+                this.Hangars.TryFind(user.UserId)
+                |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
+            let hangar = { hangar with Reserve = hangar.Reserve - cost }
+            let hangars = this.Hangars.Add(user.UserId, hangar)
+            this,
+            [ Overview(user, 0, [ sprintf "You have spent %0.0f to borrow a plane" cost ]) ]
+
+        | PlayerReturnedBorrowedPlane(user, plane, af) ->
+            let qty =
+                this.Airfields.TryFind(af)
+                |> Option.defaultValue Map.empty
+                |> Map.tryFind plane
+                |> Option.defaultValue 0.0f
+            let factor = getPriceFactor af plane qty this.Hangars
+            let moneyBack = plane.Cost * factor
+            let hangar =
+                this.Hangars.TryFind(user.UserId)
+                |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
+            let hangar = { hangar with Reserve = hangar.Reserve + moneyBack }
+            let hangars = this.Hangars.Add(user.UserId, hangar)
+            this,
+            [ Overview(user, 0, [ sprintf "You got %0.0f back for bringing back the %s you borrowed" moneyBack plane.PlaneName ]) ]
 
         | PlaneCheckIn(user, plane, health, isBorrowed, af) ->
             let planes =
@@ -256,19 +287,10 @@ with
                     hangar.AddPlane(af, plane, health)
                 else
                     hangar
-            let moneyBack =
-                if isBorrowed then
-                    let factor = getPriceFactor af plane oldQty this.Hangars
-                    plane.Cost * factor * 0.75f * health
-                else
-                    0.0f<E>
-            let hangar = { hangar with Reserve = hangar.Reserve + moneyBack }
             let hangars = this.Hangars.Add(user.UserId, hangar)
             { this with Hangars = hangars; Airfields = airfields },
             [
                 yield Status(hangars, airfields)
-                if moneyBack > 0.0f<E> then
-                    yield Overview(user, 0, [sprintf "You got %0.0f back for bringing back the %s you borrowed" moneyBack plane.PlaneName])
                 if oldQty < 1.0f && newQty >= 1.0f then
                     yield PlanesAtAirfield(af, airfields.[af])
                     match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
@@ -456,10 +478,10 @@ with
                         yield Message(Warning(user, 0, [sprintf "You are not allowed to take off in a %s at %s" plane.PlaneName af.AirfieldName]))
                     | Some 0.0f<E> ->
                         yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
-                        yield PlaneCheckOut(user, plane, 1.0f, 0.0f<E>, af)
+                        yield PlaneCheckOut(user, plane, 1.0f, false, af)
                     | Some cost ->
                         yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to borrow a %s from %s" cost plane.PlaneName af.AirfieldName]))
-                        yield PlaneCheckOut(user, plane, 1.0f, cost, af)
+                        yield PlaneCheckOut(user, plane, 1.0f, true, af)
                 ]
             let supplyCommands =
                 if cargo > 0.0f<K> || weight >= 500.0f<K> then
@@ -490,6 +512,7 @@ with
         | Spawned(Some cost) ->
             { this with State = InFlight },
             [
+                yield PlayerBorrowedPlane(this.Player, cost)
                 yield Message(
                         Announce(
                             this.Coalition,
@@ -659,6 +682,8 @@ with
             [
                 assert(this.State <> MissionEnded)
                 let healthUp = ceil(health * 10.0f) / 10.0f
+                if this.IsBorrowed then
+                    yield PlayerReturnedBorrowedPlane(this.Player, this.Plane, af)
                 yield PlaneCheckIn(this.Player, this.Plane, healthUp, this.IsBorrowed, af)
                 yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
                 yield RewardPlayer(this.Player, supplyReward * bombCost + this.Reward)
