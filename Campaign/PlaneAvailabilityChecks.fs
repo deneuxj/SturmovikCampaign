@@ -322,29 +322,15 @@ with
         |> fun afs -> afs.AirfieldId
 
     member this.IsSpawnRestricted(af : AirfieldId, plane : PlaneModel, coalition : CoalitionId) =
-        let availableAtAirfield =
-            this.State.GetAirfield af
-            |> fun afs -> afs.NumPlanes
-            |> fun planes -> planes.TryFind plane
-            |> Option.defaultValue 0.0f
-        let isRestricted =
+        let isFree =
             let numOwned =
                 this.State.State.Regions
                 |> Seq.filter (fun region -> region.Owner = Some coalition)
                 |> Seq.length
-            if numOwned * 4 <= this.State.State.Regions.Length then
-                false
-            elif this.RearAirfields.Contains(af) then
-                false
-            elif this.State.GetRegion(this.World.GetAirfield(af).Region).HasInvaders then
-                false
-            else
-                match plane.PlaneType with
-                | Fighter -> availableAtAirfield < 10.0f
-                | Attacker -> availableAtAirfield < 7.0f
-                | Bomber -> availableAtAirfield < 5.0f
-                | Transport -> false
-        isRestricted
+            (numOwned * 4 <= this.State.State.Regions.Length ||
+             this.RearAirfields.Contains(af) ||
+             this.State.GetRegion(this.World.GetAirfield(af).Region).HasInvaders)
+        not isFree
 
     member this.SupplyFlightFactor(start : AirfieldId, destination : AirfieldId) =
         let computeSupplyRewardFactor regStart regEnd =
