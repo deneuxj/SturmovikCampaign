@@ -90,11 +90,11 @@ with
         let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}
         let hangar, credit = hangar.RemovePlane(plane, qty)
         let reserve = this.Reserve + credit
-        if reserve < 0.0f<E> then
-            None
-        else
+        if credit = 0.0f<E> || reserve >= 0.0f<E> then
             let afs = Map.add af hangar this.Airfields
             Some { this with Reserve = reserve; Airfields = afs }
+        else
+            None
 
     /// <summary>
     /// Remove planes from an airfield, and decrease cash reserve.
