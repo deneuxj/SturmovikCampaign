@@ -47,7 +47,7 @@ with
     /// If the player doesn't have "enough plane", i.e. no plane, or a damaged plane, the player has to pay for the plane using their reserve.
     /// </summary>
     /// <param name="qty">Health of the plane. Not necessarily 1.0f, as players can land damages planes and take off again in the same plane without respawning.
-    member this.RemovePlane(plane, qty) =
+    member this.RemovePlane(plane, qty, costFactor) =
         let qty = max qty 0.0f
         let oldQty = this.Planes.TryFind(plane) |> Option.defaultValue 0.0f
         let newQty = oldQty - qty
@@ -55,7 +55,7 @@ with
             if newQty >= 0.0f then
                 0.0f<E>, newQty
             else
-                newQty * plane.Cost, 0.0f
+                costFactor * newQty * plane.Cost, 0.0f
         let newQty = max newQty 0.0f
         let planes = Map.add plane newQty this.Planes
         { this with Planes = planes }, credit
@@ -86,9 +86,9 @@ with
     /// </summary>
     /// <param name="af">Airfield the player took off from</param>
     /// <param name="plane">Plane model that took off.</param>
-    member this.TryRemovePlane(af, plane, qty) =
+    member this.TryRemovePlane(af, plane, qty, costFactor) =
         let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}
-        let hangar, credit = hangar.RemovePlane(plane, qty)
+        let hangar, credit = hangar.RemovePlane(plane, qty, costFactor)
         let reserve = this.Reserve + credit
         if credit = 0.0f<E> || reserve >= 0.0f<E> then
             let afs = Map.add af hangar this.Airfields
@@ -101,7 +101,7 @@ with
     /// </summary>
     member this.RemovePlane(af, plane, qty, cost) =
         let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}
-        let hangar, _ = hangar.RemovePlane(plane, qty)
+        let hangar, _ = hangar.RemovePlane(plane, qty, 0.0f)
         let reserve = this.Reserve - cost
         let afs = Map.add af hangar this.Airfields
         { this with Reserve = reserve; Airfields = afs }

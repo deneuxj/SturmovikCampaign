@@ -309,10 +309,12 @@ with
             this, [m]
 
     member this.TryCheckoutPlane(user: UserIds, af: AirfieldId, plane: PlaneModel) =
+        let qty = this.Airfields.[af].TryFind plane |> Option.defaultValue 0.0f
+        let factor = getPriceFactor af plane qty this.Hangars
         let hangar =
             this.Hangars.TryFind(user.UserId)
             |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
-        hangar.TryRemovePlane(af, plane, 1.0f)
+        hangar.TryRemovePlane(af, plane, 1.0f, factor)
 
     member this.GetClosestAirfield(v : Vector2) =
         this.State.State.Airfields
@@ -439,12 +441,11 @@ with
                     | _, None
                     | None, _ -> None
                     | Some hangar, Some qty when qty >= 1.0f ->
-                        let factor = getPriceFactor af plane qty context.Hangars
                         let fundsBefore =
                             context.Hangars.TryFind(user.UserId)
                             |> Option.map(fun h -> h.Reserve)
                             |> Option.defaultValue 0.0f<E>
-                        Some(factor * (fundsBefore - hangar.Reserve))
+                        Some(fundsBefore - hangar.Reserve)
                     | _ -> None
                 else
                     Some 0.0f<E>
