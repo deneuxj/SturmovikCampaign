@@ -140,6 +140,12 @@ with
     member this.HandleBinding(spawn : ObjectSpawnedEntry) =
         let (|PlaneObjectType|_|) = planeObjectType this.World.World.PlaneSet
         let (|StaticPlaneType|_|) = staticPlaneType this.World.World.PlaneSet
+        let (|Named|_|) (pat : string) (x : string) =
+            if x.ToLowerInvariant().Contains(pat.ToLowerInvariant()) then
+                Some()
+            else
+                None
+
         let entity =
             match spawn.ObjectType, spawn.ObjectName with
             | null, _
@@ -150,31 +156,31 @@ with
             | _, CannonObjectName -> Artillery
             | _, HeavyMachineGunAAName -> HeavyMachineGun
             | _, LightMachineGunAAName -> LightMachineGun
-            | "PzKpfw III Ausf.H", _
-            | "_PzKpfw III Ausf.L", _
-            | "T-34-76", _
-            | "_T-34-76 STZ", _ -> DynamicTank HeavyTank
-            | "Destroyer Type 7", _ -> BigEscortShip
-            | "Opel Blitz", _
-            | "GAZ-AA", _
-            | "GAZ-M", _ -> ConvoyTruck
-            | "Landing Boat type A", _ -> LandingShip
-            | "River Cargo Ship type Georgia AAA", _
-            | "Large Cargo Ship type 1", _
-            | "Large Tanker Ship type 1", _ -> CargoShip
-            | "Locomotive_E", _
-            | "Locomotive_G8", _ -> Locomotive
-            | "T-70", _
-            | "PzKpfw IV Ausf.F1", _ -> DynamicTank MediumTank
-            | "Sd Kfz 10 Flak 38", _
-            | "Sd Kfz 251 Wurfrahmen 40", _ -> DynamicTank LightArmor
-            | "Torpedo Boat type S-38", _
-            | "Torpedo Boat G-5 series 11-bis 213", _ -> SmallEscortShip
-            | "wagon_tankb", _ -> TrainWagon
-            | "zis-3", _ -> ConvoyTruck
-            | "zis-5 72-k", _ -> DynamicTank LightArmor
-            | "zis-5", _ -> ConvoyTruck
-            | "zis-6 bm-13", _ -> DynamicTank LightArmor
+            | Named "PzKpfw III Ausf.H", _
+            | Named "_PzKpfw III Ausf.L", _
+            | Named "T-34-76 STZ", _
+            | Named "_T-34-76 STZ", _ -> DynamicTank HeavyTank
+            | Named "Destroyer Type 7", _ -> BigEscortShip
+            | Named "Opel Blitz", _
+            | Named "GAZ-AA", _
+            | Named "GAZ-M", _ -> ConvoyTruck
+            | Named "Landing Boat type A", _ -> LandingShip
+            | Named "River Cargo Ship type Georgia AAA", _
+            | Named "Large Cargo Ship type 1", _
+            | Named "Large Tanker Ship type 1", _ -> CargoShip
+            | Named "Locomotive_E", _
+            | Named "Locomotive_G8", _ -> Locomotive
+            | Named "T-70", _
+            | Named "PzKpfw IV Ausf.F1", _ -> DynamicTank MediumTank
+            | Named "Sd Kfz 10 Flak 38", _
+            | Named "Sd Kfz 251 Wurfrahmen 40", _ -> DynamicTank LightArmor
+            | Named "Torpedo Boat type S-38", _
+            | Named "Torpedo Boat G-5 series 11-bis 213", _ -> SmallEscortShip
+            | Named "wagon_tankb", _ -> TrainWagon
+            | Named "zis-3", _ -> ConvoyTruck
+            | Named "ZiS-5 72-K", _ -> DynamicTank LightArmor
+            | Named "zis-5", _ -> ConvoyTruck
+            | Named "ZiS-6 BM-13", _ -> DynamicTank LightArmor
             | _ ->
                 StaticObject(spawn.ObjectType, if spawn.SubGroup >= 0 then Some spawn.SubGroup else None)
         let binding =
