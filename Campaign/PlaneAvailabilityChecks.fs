@@ -520,7 +520,8 @@ with
         | Spawned(Some cost) ->
             { this with State = InFlight },
             [
-                yield PlayerBorrowedPlane(this.Player, cost)
+                if this.IsBorrowed then
+                    yield PlayerBorrowedPlane(this.Player, cost)
                 yield Message(
                         Announce(
                             this.Coalition,
