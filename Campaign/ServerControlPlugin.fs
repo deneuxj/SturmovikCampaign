@@ -603,7 +603,7 @@ type CampaignData(config : Configuration, support : SupportApis) =
                             support.Logging.LogError(sprintf "Failed to read state file %s" stateFile)
                             None
                     match date with
-                    | Some date -> yield date
+                    | Some date -> yield date.ToString(Run.Filenames.dateFormat)
                     | None -> ()
             ]
         )
@@ -612,7 +612,7 @@ type CampaignData(config : Configuration, support : SupportApis) =
     let tryGetMissionResults(date : DateTime) =
         try
             let dateString =
-                date.ToString("yyyy-MM-dd_HH-mm-ss")
+                date.ToString(Run.Filenames.dateFormat)
             let resultFilename = Path.Combine(dataDir, sprintf "results_%s.xml" dateString)
             let axisOrdersFilename = Path.Combine(dataDir, sprintf "axisOrders_%s.xml" dateString)
             let alliesOrdersFilename = Path.Combine(dataDir, sprintf "alliesOrders_%s.xml" dateString)
@@ -1089,7 +1089,7 @@ type Plugin() =
                         let dateString = s.Substring("Mission_".Length)
                         let date =
                             try
-                                Some(DateTime.ParseExact(dateString, "yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture))
+                                Some(DateTime.ParseExact(dateString, Run.Filenames.dateFormat, CultureInfo.InvariantCulture))
                             with
                             | _ -> None
                         match date with
@@ -1097,6 +1097,13 @@ type Plugin() =
                         | None -> return Error "Invalid mission date"
                     | None ->
                         return errNoCampaign
+                | "Help" ->
+                    return Ok
+                        ([
+                            "TimeLeft - return time left in mission, in minutes"
+                            "MissionDates - return date strings of completed missions"
+                            "Mission_<mission date string> - return mission results"
+                        ] :> obj)
                 | _ ->
-                    return Error "Unsupported data request"
+                    return Error "Unsupported data request. See Help for list of commands"
             }

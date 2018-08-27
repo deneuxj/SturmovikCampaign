@@ -34,6 +34,8 @@ module Filenames =
     let missionResults = "results.xml"
     let battles = "battles.xml"
     let hangars = "hangars.xml"
+    /// Format of date used in backup files
+    let dateFormat = "yyyy-MM-dd_HH-mm-ss"
 
 module Init =
     open SturmovikMission.Blocks.BlocksMissionData
@@ -663,7 +665,7 @@ module MissionLogParsing =
         let backupFile name =
             let backupName =
                 let dateString =
-                    state.Date.ToString("yyyy-MM-dd_HH-mm-ss")
+                    state.Date.ToString(Filenames.dateFormat)
                 sprintf "%s_%s.xml" name dateString
             let backupDest = Path.Combine(outputDir, backupName)
             if File.Exists backupDest then
