@@ -36,6 +36,8 @@ open Campaign.WorldState
 open Campaign
 open Campaign.PlayerDiscipline
 open Campaign.WatchLogs
+open Campaign.NewWorldState
+open System.Globalization
 
 module Support =
     open ploggy
@@ -581,6 +583,53 @@ module Support =
             Areas = areas
         }
 
+/// Access to campaign data, for server JSON API
+type CampaignData(config : Configuration, support : SupportApis) =
+    let dataDir = config.OutputDir
+    let serializer = new XmlSerializer()
+
+    // List of mission dates, used to identify individual missions
+    let missionDates =
+        lazy(
+            [
+                for stateFile in Directory.EnumerateFiles(dataDir, "state*.xml") do
+                    let date =
+                        try
+                            use file = File.OpenText(stateFile)
+                            let state = serializer.Deserialize<WorldState>(file)
+                            Some state.Date
+                        with
+                        | e ->
+                            support.Logging.LogError(sprintf "Failed to read state file %s" stateFile)
+                            None
+                    match date with
+                    | Some date -> yield date
+                    | None -> ()
+            ]
+        )
+
+    // Get orders and mission results by date
+    let tryGetMissionResults(date : DateTime) =
+        try
+            let dateString =
+                date.ToString("yyyy-MM-dd_HH-mm-ss")
+            let resultFilename = Path.Combine(dataDir, sprintf "results_%s.xml" dateString)
+            let axisOrdersFilename = Path.Combine(dataDir, sprintf "axisOrders_%s.xml" dateString)
+            let alliesOrdersFilename = Path.Combine(dataDir, sprintf "alliesOrders_%s.xml" dateString)
+            let results = serializer.Deserialize<MissionResults>(File.OpenText(resultFilename))
+            let axisOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(axisOrdersFilename))
+            let alliesOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(alliesOrdersFilename))
+            Ok ((
+                (Axis, axisOrders),
+                (Allies, alliesOrders),
+                (results.Shipments, results.ColumnDepartures, results.Blocked, results.Damages, results.TakeOffs, results.Landings, results.BattleKills, results.FerryPlanes, results.ParaDrops)) :> obj)
+        with
+        | _ -> Error "Failed to retrieve mission results"
+
+    member this.GetMissionDates() = missionDates.Value
+
+    member this.TryGetMissionResults(date) = tryGetMissionResults(date)
+
 
 type Plugin() =
     let mutable support : SupportApis option = None
@@ -588,6 +637,7 @@ type Plugin() =
     let mutable commenter : Commentator option = None
     let mutable queue = startQueue()
     let mutable config = None
+    let mutable campaignData = None
 
     let setHangars, getHangars, disposeHangars =
         let mutable hangars : Map<string, PlayerHangar.PlayerHangar> = Map.empty
@@ -873,6 +923,13 @@ type Plugin() =
         | Some _ ->
             ()
 
+    member x.SetCampaignData(config : Configuration) =
+        match support with
+        | Some support ->
+            campaignData <- Some(CampaignData(config, support))
+        | None ->
+            invalidOp "Must set support API before setting campaign data"
+
     member x.StopWebHookClient() =
         match webHookClient with
         | None ->
@@ -922,6 +979,7 @@ type Plugin() =
             try
                 let cnf = loadConfigFile configFile
                 config <- Some cnf
+                x.SetCampaignData(cnf)
                 x.StartWebHookClient(cnf)
                 let notifications : Support.Notifications =
                     { AnnounceResults = announceResults
@@ -946,6 +1004,7 @@ type Plugin() =
             try
                 let cnf = loadConfigFile configFile
                 config <- Some cnf
+                x.SetCampaignData(cnf)
                 x.StopCommenter()
                 x.StopWebHookClient()
                 let notifications : Support.Notifications =
@@ -996,12 +1055,13 @@ type Plugin() =
             }
         
         member x.GetData(dataKind) =
+            let errNoCampaign = Error "Campaign not currently running"
             async {
                 match dataKind with
                 | "TimeLeft" ->
                     match config with
                     | None ->
-                        return Error "Campaign not currently running"
+                        return errNoCampaign
                     | Some config ->
                         let ret =
                             try
@@ -1009,13 +1069,34 @@ type Plugin() =
                                     Support.ExecutionState.Restore(config)
                                 match loopState with
                                 | Support.WaitForMissionEnd(t) ->
-                                    Ok((t - DateTime.UtcNow) :> obj)
+                                    Ok((t - DateTime.UtcNow).TotalMinutes :> obj)
                                 | _ ->
                                     Error "Mission currently not running"
                             with
                             | _ ->
                                 Error "Failed to read campaign loop state"
                         return ret
+
+                | "MissionDates" ->
+                    match campaignData with
+                    | None ->
+                        return errNoCampaign
+                    | Some data ->
+                        return Ok(data.GetMissionDates() :> obj)
+                | s when s.StartsWith "Mission_" ->
+                    match campaignData with
+                    | Some data ->
+                        let dateString = s.Substring("Mission_".Length)
+                        let date =
+                            try
+                                Some(DateTime.ParseExact(dateString, "yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture))
+                            with
+                            | _ -> None
+                        match date with
+                        | Some d ->return data.TryGetMissionResults(d)
+                        | None -> return Error "Invalid mission date"
+                    | None ->
+                        return errNoCampaign
                 | _ ->
                     return Error "Unsupported data request"
             }
