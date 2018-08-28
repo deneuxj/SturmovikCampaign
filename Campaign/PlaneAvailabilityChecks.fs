@@ -257,7 +257,7 @@ with
                 |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
             let hangar = { hangar with Reserve = hangar.Reserve - cost }
             let hangars = this.Hangars.Add(user.UserId, hangar)
-            this,
+            { this with Hangars = hangars },
             [ Overview(user, 0, [ sprintf "You have spent %0.0f to borrow a plane" cost ]) ]
 
         | PlayerReturnedBorrowedPlane(user, plane, af) ->
@@ -273,7 +273,7 @@ with
                 |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
             let hangar = { hangar with Reserve = hangar.Reserve + moneyBack }
             let hangars = this.Hangars.Add(user.UserId, hangar)
-            this,
+            { this with Hangars = hangars },
             [ Overview(user, 0, [ sprintf "You got %0.0f back for bringing back the %s you borrowed" moneyBack plane.PlaneName ]) ]
 
         | PlaneCheckIn(user, plane, health, isBorrowed, af) ->
