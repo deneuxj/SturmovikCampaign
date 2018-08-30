@@ -114,6 +114,7 @@ type Context =
       RegionNeeds : Map<RegionId, float32<E>>
       MaxCash : float32<E>
       MoneyBackFactor : float32
+      MaxReservedPlanes : int
     }
 with
     static member Create(world : World, state : WorldState, hangars : Map<string, PlayerHangar>, maxCash : int, moneyBackFactor : float32) =
@@ -136,6 +137,7 @@ with
             RegionNeeds = needs
             MaxCash = 1.0f<E> * float32 maxCash
             MoneyBackFactor = moneyBackFactor
+            MaxReservedPlanes = 2
         }
 
     /// Bind a vehicle ID to a coalition and a type of object
@@ -291,7 +293,7 @@ with
                 this.Hangars.TryFind(user.UserId)
                 |> Option.defaultValue(emptyHangar(user.UserId, user.Name))
             let hangar =
-                if not isBorrowed then
+                if not isBorrowed && this.GetNumReservedPlanes(user, af, plane) <= float32 this.MaxReservedPlanes then
                     hangar.AddPlane(af, plane, health)
                 else
                     hangar
@@ -299,6 +301,8 @@ with
             { this with Hangars = hangars; Airfields = airfields },
             [
                 yield Status(hangars, airfields)
+                if not isBorrowed && this.GetNumReservedPlanes(user, af, plane) > float32 this.MaxReservedPlanes then
+                    yield Overview(user, 0, [sprintf "You have reached the limit on number of %s reserved at %s" plane.PlaneName af.AirfieldName])
                 if oldQty < 1.0f && newQty >= 1.0f then
                     yield PlanesAtAirfield(af, airfields.[af])
                     match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
