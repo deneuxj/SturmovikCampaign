@@ -351,6 +351,14 @@ with
         | Message m ->
             this, [m]
 
+    member this.GetNumPlanesAt(af : AirfieldId, plane : PlaneModel) =
+        this.Airfields.[af].TryFind plane |> Option.defaultValue 0.0f
+
+    member this.GetPlanePrice(af : AirfieldId, plane : PlaneModel) =
+        let qty = this.GetNumPlanesAt(af, plane)
+        let factor = getPriceFactor af plane qty this.Hangars
+        factor * plane.Cost
+
     member this.TryCheckoutPlane(user: UserIds, af: AirfieldId, plane: PlaneModel) =
         let qty = this.Airfields.[af].TryFind plane |> Option.defaultValue 0.0f
         let factor = getPriceFactor af plane qty this.Hangars
@@ -358,6 +366,14 @@ with
             this.Hangars.TryFind(user.UserId)
             |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
         hangar.TryRemovePlane(af, plane, 1.0f, factor)
+
+    member this.GetNumReservedPlanes(user : UserIds, af : AirfieldId, plane : PlaneModel) =
+        let hangar =
+            this.Hangars.TryFind(user.UserId)
+            |> Option.defaultValue (emptyHangar(user.UserId, user.Name))
+        hangar.Airfields.TryFind(af)
+        |> Option.bind (fun planes -> planes.Planes.TryFind plane)
+        |> Option.defaultValue 0.0f
 
     member this.GetClosestAirfield(v : Vector2) =
         this.State.State.Airfields
@@ -467,23 +483,22 @@ with
                 }
             let cost =
                 if context.IsSpawnRestricted(af, plane, coalition) then
-                    match context.TryCheckoutPlane(user, af, plane), context.Airfields.[af].TryFind plane with
-                    | _, None
-                    | None, _ -> None
-                    | Some hangar, Some qty when qty >= 1.0f ->
+                    match context.TryCheckoutPlane(user, af, plane) with
+                    | None -> None
+                    | Some hangar ->
                         let fundsBefore =
                             context.Hangars.TryFind(user.UserId)
                             |> Option.map(fun h -> h.Reserve)
                             |> Option.defaultValue 0.0f<E>
                         Some(fundsBefore - hangar.Reserve)
-                    | _ -> None
                 else
                     Some 0.0f<E>
             let planeInfo =
                 [
                     match cost with
                     | None ->
-                        yield Message(Warning(user, 0, [sprintf "You are not allowed to take off in a %s at %s" plane.PlaneName af.AirfieldName]))
+                        let price = context.GetPlanePrice(af, plane)
+                        yield Message(Warning(user, 0, [sprintf "You are not allowed to take off in a %s which costs %0.0f at %s" plane.PlaneName price af.AirfieldName]))
                     | Some 0.0f<E> ->
                         yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
