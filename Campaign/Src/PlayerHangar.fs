@@ -66,6 +66,7 @@ with
 type PlayerHangar =
     { Player : Guid
       PlayerName : string
+      Coalition : CoalitionId
       Reserve : float32<E>
       Airfields : Map<AirfieldId, AirfieldHangar> }
 with
@@ -145,14 +146,14 @@ let tryLoadHangars path =
     let serializer = FsPickler.CreateXmlSerializer()
     try
         use file = File.OpenText(path)
-        serializer.Deserialize<Map<Guid, PlayerHangar>>(file) |> Some
+        serializer.Deserialize<Map<Guid * CoalitionId, PlayerHangar>>(file) |> Some
     with
     | exc ->
         logger.Error(sprintf "Failed to parse state.xml: %s" exc.Message)
         None
 
 
-let saveHangars path (hangars : Map<Guid, PlayerHangar>) =
+let saveHangars path (hangars : Map<Guid * CoalitionId, PlayerHangar>) =
     let serializer = FsPickler.CreateXmlSerializer(indent=true)
     use file = File.CreateText(path)
     serializer.Serialize(file, hangars)
@@ -161,11 +162,11 @@ let saveHangars path (hangars : Map<Guid, PlayerHangar>) =
 let guidToStrings hangars =
     hangars
     |> Map.toSeq
-    |> Seq.map (fun (k : Guid, v) -> string k, v)
+    |> Seq.map (fun ((k : Guid, coalition : CoalitionId), v) -> (string k, coalition), v)
     |> Map.ofSeq
 
 let stringsToGuids hangars =
     hangars
     |> Map.toSeq
-    |> Seq.map (fun (k : string, v) -> Guid(k), v)
+    |> Seq.map (fun ((k : string, coalition), v) -> (Guid(k), coalition), v)
     |> Map.ofSeq

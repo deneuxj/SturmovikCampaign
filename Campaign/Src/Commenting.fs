@@ -66,7 +66,7 @@ type EventHandlers =
       // Update planeset at airfield
       OnPlaneSetChanged : AirfieldId * int -> Async<unit>
       // Update player hangars
-      OnHangarsUpdated : Map<string, PlayerHangar> -> Async<unit>
+      OnHangarsUpdated : Map<string * CoalitionId, PlayerHangar> -> Async<unit>
       // A player entered
       OnPlayerEntered : Guid -> Async<unit>
     }
@@ -200,7 +200,7 @@ let private mkHangarTask asyncIterNonMuted (config : Configuration, wg : WorldFa
     asyncSeqEntries
     |> checkPlaneAvailability config.MaxCash config.MoneyBackFactor world state hangars 
     |> AsyncSeq.mergeChoice asyncCommands
-    |> AsyncSeq.scan (fun (_, hangars : Map<string, PlayerHangar>, airfields : Map<AirfieldId, Map<PlaneModel, float32>>) item ->
+    |> AsyncSeq.scan (fun (_, hangars : Map<string * CoalitionId, PlayerHangar>, airfields : Map<AirfieldId, Map<PlaneModel, float32>>) item ->
         match item with
         | Choice1Of2 cmd ->
             let userIds =

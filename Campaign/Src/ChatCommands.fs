@@ -77,11 +77,11 @@ with
         | _ ->
             Result.Error "Improperly formatted command. Usage: !command arguments, where command can be sp, sa, cash or give"
 
-let tryGetHangarByPlayerName playerName hangars =
+let getHangarsByPlayerName playerName hangars =
     hangars
     |> Map.toSeq
     |> Seq.map snd
-    |> Seq.tryFind (fun (hangar : PlayerHangar) -> hangar.PlayerName = playerName)
+    |> Seq.filter (fun (hangar : PlayerHangar) -> hangar.PlayerName = playerName)
 
 type ChatCommand =
     { Player : string
@@ -92,16 +92,16 @@ with
         | Result.Error err -> { Player = rawCmd.Author; Command = Invalid err }
         | Result.Ok cmd -> { Player = rawCmd.Author; Command = cmd }
 
-    member this.Interpret(hangars : Map<string, PlayerHangar>) =
+    member this.Interpret(hangars : Map<string * CoalitionId, PlayerHangar>) =
         match this.Command with
         | ShowReservedPlanesAtAirfield afId ->
             let planes =
-                tryGetHangarByPlayerName this.Player hangars
-                |> Option.map (fun h ->
+                getHangarsByPlayerName this.Player hangars
+                |> Seq.fold (fun planes h ->
                     h.Airfields.TryFind(afId)
                     |> Option.map (fun af -> af.Planes)
-                    |> Option.defaultValue Map.empty)
-                |> Option.defaultValue Map.empty
+                    |> Option.defaultValue Map.empty
+                    |> Util.Map.sumUnion planes) Map.empty
                 |> Map.toSeq
                 |> Seq.filter (fun (_, qty) -> qty >= 1.0f)
                 |> Seq.map fst
@@ -116,7 +116,9 @@ with
             ]
         | ShowAirfieldsWithPlane plane ->
             let airfields =
-                tryGetHangarByPlayerName this.Player hangars
+                getHangarsByPlayerName this.Player hangars
+                |> Seq.filter (fun h -> h.Coalition = plane.Coalition)
+                |> Seq.tryHead
                 |> Option.map (fun h -> h.Airfields)
                 |> Option.defaultValue Map.empty
                 |> Map.filter (fun afId planes ->
@@ -132,11 +134,13 @@ with
                         | x -> x
             ]
         | ShowCashReserve ->
-            let reserve =
-                tryGetHangarByPlayerName this.Player hangars
-                |> Option.map (fun h -> h.Reserve)
-                |> Option.defaultValue 0.0f<E>
-            [ sprintf "Your cash reserve is %0.0f" reserve ]
+            [
+                let reserves =
+                    getHangarsByPlayerName this.Player hangars
+                    |> Seq.map (fun h -> h.Coalition, h.Reserve)
+                for coalition, reserve in reserves do
+                    yield sprintf "Your cash reserve is %0.0f (%s)" reserve (string coalition)
+            ]
         | GiftCashReserve _ ->
             [ "Gifts not implemented yet" ]
         | Invalid err->
