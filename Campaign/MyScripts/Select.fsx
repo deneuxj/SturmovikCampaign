@@ -1,7 +1,7 @@
 ﻿// List dates in campaign dir, select one, remove all other dates, make remaining date current
 // Use that to e.g. test extracting results from a specific date.
 
-#I "bin/Debug"
+#I "../bin/Debug"
 #r "Campaign.dll"
 #r "DataProvider.dll"
 

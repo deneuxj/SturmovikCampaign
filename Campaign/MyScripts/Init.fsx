@@ -1,6 +1,6 @@
 ﻿// Create the world description data and the initial state
 
-#I "bin/Debug"
+#I "../bin/Debug"
 #r "Campaign.dll"
 #r "DataProvider.dll"
 

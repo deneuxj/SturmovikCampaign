@@ -8,7 +8,6 @@ devenv*.vspx
 packages/
 SturmovikCampaign-*.zip
 SturmovikCampaign-*/
-Campaign/Configuration.fsx
 data/Blocks/*.fra
 data/Blocks/*.ger
 data/Blocks/*.rus

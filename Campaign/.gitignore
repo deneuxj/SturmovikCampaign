@@ -14,3 +14,4 @@ data/*.pol
 data/*.spa
 data/*.list
 data/*.msnbin
+MyScripts/Configuration.fsx

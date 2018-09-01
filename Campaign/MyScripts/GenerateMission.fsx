@@ -1,5 +1,5 @@
 ﻿// Generate a mission given a world state
-#I "bin/Debug"
+#I "../bin/Debug"
 
 #r "Campaign.dll"
 
