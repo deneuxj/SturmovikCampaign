@@ -161,7 +161,7 @@ with
 
 
 [<Literal>]
-let private sampleFile = __SOURCE_DIRECTORY__ + @"\SampleConfig.yaml"
+let private sampleFile = __SOURCE_DIRECTORY__ + @"\Config\SampleConfig.yaml"
 type ConfigFile = YamlConfig<sampleFile>
 
 let loadConfigFile (path : string) =

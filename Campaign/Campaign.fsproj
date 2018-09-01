@@ -85,30 +85,13 @@
     <Compile Include="WebHook.fs" />
     <Compile Include="Run.fs" />
     <Compile Include="ServerControlPlugin.fs" />
-    <None Include="SubBlocks.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="SampleConfig.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Content Include="PlaneSet-Moscow.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <None Include="PlaneSet-VLuki.yaml">
-      <Link>PlaneSet-VLuki.yaml</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="PlaneSet-Stalingrad.yaml">
-      <Link>PlaneSet-Stalingrad.yaml</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="PlaneSet-Kuban.yaml">
-      <Link>PlaneSet-Kuban.yaml</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="PlaneSet-KubanLate.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Include="Config\SubBlocks.yaml" />
+    <None Include="Config\SampleConfig.yaml" />
+    <None Include="Config\PlaneSet-Moscow.yaml" />
+    <None Include="Config\PlaneSet-KubanLate.yaml" />
+    <None Include="Config\PlaneSet-VLuki.yaml" />
+    <None Include="Config\PlaneSet-Stalingrad.yaml" />
+    <None Include="Config\PlaneSet-Kuban.yaml" />
     <None Include="Configuration.fsx" />
     <None Include="Select.fsx" />
     <None Include="Init.fsx" />

@@ -29,7 +29,7 @@ open System.IO
 let private logger = LogManager.GetCurrentClassLogger()
 
 [<Literal>]
-let private sampleFile = __SOURCE_DIRECTORY__ + @"\PlaneSet-Moscow.yaml"
+let private sampleFile = __SOURCE_DIRECTORY__ + @"\Config\PlaneSet-Moscow.yaml"
 type PlaneSetFile = YamlConfig<sampleFile>
 
 /// <summary>

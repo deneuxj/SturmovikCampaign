@@ -546,7 +546,7 @@ with
 open FSharp.Configuration
 
 [<Literal>]
-let sampleSubBlocksFile = __SOURCE_DIRECTORY__ + @"\SubBlocks.yaml"
+let sampleSubBlocksFile = __SOURCE_DIRECTORY__ + @"\Config\SubBlocks.yaml"
 type SubBlockFile = YamlConfig<sampleSubBlocksFile>
 
 /// Try to find the airfield that is furthest away from any enemy region.
