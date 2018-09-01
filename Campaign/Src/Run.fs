@@ -920,7 +920,7 @@ module MissionLogParsing =
             |> Map.map (fun player hangar -> { hangar with Reserve = min hangar.Reserve (1.0f<E> * float32 config.MaxCash) })
         let hangars2 =
             AsyncSeq.ofSeq entries
-            |> checkPlaneAvailability config.MaxCash config.MoneyBackFactor world state hangars
+            |> checkPlaneAvailability (Limits.FromConfig config) world state hangars
             |> AsyncSeq.toBlockingSeq
             |> Seq.choose (function Status(x, _) -> Some x | _ -> None)
             |> Seq.tryLast

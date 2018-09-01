@@ -103,6 +103,21 @@ type ObjectInstance =
     | TrainWagon
     | Locomotive
 
+type Limits =
+    {
+      MaxCash : float32<E>
+      MoneyBackFactor : float32
+      MaxReservedPlanes : int
+      MaxTotalReservedPlanes : int
+    }
+with
+    static member FromConfig(config : Campaign.Configuration.Configuration) =
+        { MaxCash = 1.0f<E> * float32 config.MaxCash
+          MoneyBackFactor = config.MoneyBackFactor
+          MaxReservedPlanes = config.MaxReservedPlanes
+          MaxTotalReservedPlanes = config.MaxTotalReservedPlanes
+        }
+
 /// Keeps track of information needed for the state transitions in PlayerFlightData
 type Context =
     { World : WorldFastAccess
@@ -112,12 +127,10 @@ type Context =
       Airfields : Map<AirfieldId, Map<PlaneModel, float32>>
       RearAirfields : Set<AirfieldId>
       RegionNeeds : Map<RegionId, float32<E>>
-      MaxCash : float32<E>
-      MoneyBackFactor : float32
-      MaxReservedPlanes : int
+      Limits : Limits
     }
 with
-    static member Create(world : World, state : WorldState, hangars : Map<string * CoalitionId, PlayerHangar>, maxCash : int, moneyBackFactor : float32) =
+    static member Create(world : World, state : WorldState, hangars : Map<string * CoalitionId, PlayerHangar>, limits : Limits) =
         let rearAirfields =
             [Axis; Allies]
             |> List.choose (fun coalition -> world.RearAirfields.TryFind coalition)
@@ -135,9 +148,7 @@ with
             Airfields = airfields
             RearAirfields = rearAirfields
             RegionNeeds = needs
-            MaxCash = 1.0f<E> * float32 maxCash
-            MoneyBackFactor = moneyBackFactor
-            MaxReservedPlanes = 2
+            Limits = limits
         }
 
     /// Bind a vehicle ID to a coalition and a type of object
@@ -294,7 +305,10 @@ with
                 let airfields = this.Airfields.Add(af, planes)
                 let hangar = this.GetHangar(user, coalition)
                 let hangar =
-                    if userCoalition = coalition && not isBorrowed && this.GetNumReservedPlanes(user, af, plane) <= float32 this.MaxReservedPlanes then
+                    if userCoalition = coalition &&
+                        not isBorrowed &&
+                        this.GetNumReservedPlanes(user, af, plane) <= float32 this.Limits.MaxReservedPlanes &&
+                        this.GetTotalNumReservedPlanes(user, userCoalition) <= float32 this.Limits.MaxTotalReservedPlanes then
                         hangar.AddPlane(af, plane, health)
                     else
                         hangar
@@ -302,7 +316,7 @@ with
                 { this with Hangars = hangars; Airfields = airfields },
                 [
                     yield Status(hangars, airfields)
-                    if not isBorrowed && this.GetNumReservedPlanes(user, af, plane) > float32 this.MaxReservedPlanes then
+                    if not isBorrowed && this.GetNumReservedPlanes(user, af, plane) > float32 this.Limits.MaxReservedPlanes then
                         yield Overview(user, 0, [sprintf "You have reached the limit on number of %s reserved at %s" plane.PlaneName af.AirfieldName])
                     if oldQty < 1.0f && newQty >= 1.0f then
                         yield PlanesAtAirfield(af, airfields.[af])
@@ -331,7 +345,7 @@ with
 
         | RewardPlayer(user, coalition, reward) ->
             let hangar = this.GetHangar(user, coalition)
-            let reserve = min this.MaxCash (hangar.Reserve + reward)
+            let reserve = min this.Limits.MaxCash (hangar.Reserve + reward)
             let hangar = { hangar with Reserve = reserve }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
@@ -381,6 +395,14 @@ with
             |> Option.defaultValue 0.0f
         | None ->
             0.0f
+
+    member this.GetTotalNumReservedPlanes(user : UserIds, coalition : CoalitionId) : float32 =
+        let hangar = this.GetHangar(user, coalition)
+        hangar.Airfields
+        |> Map.toSeq
+        |> Seq.map snd
+        |> Seq.collect (fun ah -> ah.Planes |> Map.toSeq)
+        |> Seq.sumBy snd
 
     member this.GetClosestAirfield(v : Vector2) =
         this.State.State.Airfields
@@ -812,10 +834,10 @@ with
 
 /// Monitor events and check that players don't take off in planes they are not allowed to fly according to player hangars.
 /// Also send information about player hangars.
-let checkPlaneAvailability maxCash moneyBackFactor (world : World) (state : WorldState) (hangars : Map<string * CoalitionId, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
+let checkPlaneAvailability (limits : Limits) (world : World) (state : WorldState) (hangars : Map<string * CoalitionId, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
 
     asyncSeq {
-        let mutable context = Context.Create(world, state, hangars, maxCash, moneyBackFactor)
+        let mutable context = Context.Create(world, state, hangars, limits)
         let mutable players : Map<int, PlayerFlightData> = Map.empty
 
         for entry in entries do

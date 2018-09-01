@@ -153,12 +153,13 @@ let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, 
             sg.State.Airfields
             |> List.map (fun afs -> afs.AirfieldId, afs.NumPlanes)
             |> Map.ofList
+        let limits  = Limits.FromConfig config
         let! airfields =
             files
             |> Array.collect(File.ReadAllLines)
             |> Array.choose(LogEntry.Parse >> Option.ofObj)
             |> AsyncSeq.ofSeq
-            |> checkPlaneAvailability config.MaxCash config.MoneyBackFactor wg.World sg.State hangars
+            |> checkPlaneAvailability limits wg.World sg.State hangars
             |> AsyncSeq.fold (fun acc ->
                 function
                 | PlanesAtAirfield(af, planes) -> Map.add af planes acc
@@ -198,7 +199,7 @@ let private mkHangarTask asyncIterNonMuted (config : Configuration, wg : WorldFa
     let world = wg.World
     let state = sg.State
     asyncSeqEntries
-    |> checkPlaneAvailability config.MaxCash config.MoneyBackFactor world state hangars 
+    |> checkPlaneAvailability (Limits.FromConfig config) world state hangars 
     |> AsyncSeq.mergeChoice asyncCommands
     |> AsyncSeq.scan (fun (_, hangars : Map<string * CoalitionId, PlayerHangar>, airfields : Map<AirfieldId, Map<PlaneModel, float32>>) item ->
         match item with

@@ -66,6 +66,8 @@ type Configuration = {
     MaxBattleKillsRatioByAI: float32
     MaxStaticPlanes : int
     MaxCash : int
+    MaxReservedPlanes : int // Per type and airfield
+    MaxTotalReservedPlanes : int // All types, all airfields
     MoneyBackFactor : float32
     EnablePlayerTanks : bool
     OutputDir : string
@@ -106,6 +108,8 @@ with
             MaxBattleKillsRatioByAI = 0.25f
             MaxStaticPlanes = 6
             MaxCash = 10000
+            MaxReservedPlanes = 2
+            MaxTotalReservedPlanes = 6
             MoneyBackFactor = 0.75f
             EnablePlayerTanks = true
             MissionName = "AutoGenMission2"
@@ -190,6 +194,8 @@ let loadConfigFile (path : string) =
         MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI
         MaxStaticPlanes = values.MaxStaticPlanes
         MaxCash = values.MaxCash
+        MaxReservedPlanes = values.MaxReservedPlanes
+        MaxTotalReservedPlanes = values.MaxTotalReservedPlanes
         MoneyBackFactor = float32 values.MoneyBackFactor
         EnablePlayerTanks = values.EnablePlayerTanks
         MissionName = values.MissionName

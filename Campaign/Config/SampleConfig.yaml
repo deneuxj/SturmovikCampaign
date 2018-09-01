@@ -48,6 +48,10 @@
     MaxStaticPlanes: 6
     # Max amount of cash a player can hold
     MaxCash: 10000
+    # Max number of reserved planes of a type at an airfield
+    MaxReservedPlanes: 2
+    # Max total number of reserved Planes
+    MaxTotalReservedPlanes: 6
     # Part of plane rental money returned
     MoneyBackFactor : 0.75
     # Control whether player-driven tank spawns should be included in battles
