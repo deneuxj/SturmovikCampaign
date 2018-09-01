@@ -326,6 +326,7 @@ module Support =
                         | e ->
                             killServer(config, serverProc)
                             failwithf "Failed to read world data. Reason was: '%s'" e.Message
+                    Campaign.Run.MissionLogParsing.wipeReservations(config, world, oldState, newState)
                     match newState.VictoriousSide(world) with
                     | Some Allies ->
                         do!

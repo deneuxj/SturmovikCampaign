@@ -954,6 +954,29 @@ module MissionLogParsing =
                 (float32 weather.Wind.Direction)
         newlyProduced, battleReports, (state, state2)
 
+    /// Wipe plane reservations in regions that have changed owners
+    let wipeReservations (config : Configuration, world : World, state : WorldState, state2 : WorldState) =
+        match tryLoadHangars (Path.Combine(config.OutputDir, Filenames.hangars)) with
+        | Some hangars ->
+            let wg = world.FastAccess
+            let conqueredRegions =
+                List.zip state.Regions state2.Regions
+                |> Seq.filter (fun (reg1, reg2) -> reg1.Owner <> reg2.Owner)
+                |> Seq.map (fun (reg, _) -> reg.RegionId)
+                |> Set.ofSeq
+
+            let hangars2 =
+                hangars
+                |> Map.map (fun _ h ->
+                    { h with
+                        Airfields =
+                            h.Airfields
+                            |> Map.filter (fun af _ -> not(conqueredRegions.Contains(wg.GetAirfield(af).Region)))
+                    })
+            saveHangars (Path.Combine(config.OutputDir, Filenames.hangars)) hangars2
+        | None ->
+            ()
+
     /// Build the after-action reports, solely used for presentation to players
     let buildAfterActionReports(config, state1, state2, tookOff, landed, damages, newlyProduced, battleReports) =
         let serializer = FsPickler.CreateXmlSerializer(indent = true)
