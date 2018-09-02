@@ -548,7 +548,7 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                     Map.tryFind region.RegionId productionHealLimit
                     |> Option.defaultValue (healRate * dt)
                 let prodHealth, energy, productionHealLimit =
-                    region.Production, energy, productionHealLimit
+                    regState.ProductionHealth, energy, productionHealLimit
                     //computeHealing(
                     //    world.SubBlockSpecs,
                     //    regState.ProductionHealth,
