@@ -548,12 +548,13 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                     Map.tryFind region.RegionId productionHealLimit
                     |> Option.defaultValue (healRate * dt)
                 let prodHealth, energy, productionHealLimit =
-                    computeHealing(
-                        world.SubBlockSpecs,
-                        regState.ProductionHealth,
-                        region.Production,
-                        energy,
-                        productionHealLimit)
+                    region.Production, energy, productionHealLimit
+                    //computeHealing(
+                    //    world.SubBlockSpecs,
+                    //    regState.ProductionHealth,
+                    //    region.Production,
+                    //    energy,
+                    //    productionHealLimit)
                 // Second prio: fill up region supplies
                 let storeCapacity = regState.StorageCapacity(region, world.SubBlockSpecs)
                 // Consume energy to fill up supplies up to what's needed
