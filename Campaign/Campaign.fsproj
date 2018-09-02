@@ -85,13 +85,27 @@
     <Compile Include="Src\WebHook.fs" />
     <Compile Include="Src\Run.fs" />
     <Compile Include="Src\ServerControlPlugin.fs" />
-    <None Include="Config\SubBlocks.yaml" />
-    <None Include="Config\SampleConfig.yaml" />
-    <None Include="Config\PlaneSet-Moscow.yaml" />
-    <None Include="Config\PlaneSet-KubanLate.yaml" />
-    <None Include="Config\PlaneSet-VLuki.yaml" />
-    <None Include="Config\PlaneSet-Stalingrad.yaml" />
-    <None Include="Config\PlaneSet-Kuban.yaml" />
+    <None Include="Config\SubBlocks.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\SampleConfig.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\PlaneSet-Moscow.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\PlaneSet-KubanLate.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\PlaneSet-VLuki.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\PlaneSet-Stalingrad.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\PlaneSet-Kuban.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="MyScripts\Configuration.fsx" />
     <None Include="MyScripts\Select.fsx" />
     <None Include="MyScripts\Init.fsx" />
