@@ -59,10 +59,10 @@ with
     /// <summary>
     /// Convert a country value from a MCU in a mission to a CoalitionId option.
     /// </summary>
-    static member FromCountry(country : Mcu.CoalitionValue) =
+    static member FromCountry(country : Mcu.CountryValue) =
         match country with
-        | Mcu.CoalitionValue.Allies -> Some Allies
-        | Mcu.CoalitionValue.Axis -> Some Axis
+        | Mcu.CountryValue.Russia -> Some Allies
+        | Mcu.CountryValue.Germany -> Some Axis
         | _ -> None
 
     /// <summary>

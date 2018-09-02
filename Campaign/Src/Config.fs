@@ -150,13 +150,13 @@ with
         match this.PlaneSetName with
         | null | "" | "auto" ->
             let region, date = extractRegionAndDate(Path.Combine(this.ScriptPath, scenario) + ".Mission")
-            loadPlaneSets this.ScriptPath
+            loadPlaneSets (Path.Combine(this.ScriptPath, "Config"))
             |> tryPickPlaneSet region date
             |> Option.defaultValue (PlaneSet.Default)
         | planeSetName ->
             try
                 let file = PlaneSetFile()
-                file.Load(Path.Combine(this.ScriptPath, "planeSet-" + planeSetName + ".yaml"))
+                file.Load(Path.Combine(this.ScriptPath, "Config", "planeSet-" + planeSetName + ".yaml"))
                 PlaneSet.FromYaml(file.PlaneSet)
             with
             | e ->
