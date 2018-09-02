@@ -664,9 +664,12 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                 let scale (x : float32) =
                     x * (1.0f - (float32 hops) / (float32 cutoffHops)) |> max 0.0f
                 let maxPlanes =
-                    airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
-                    |> (*) 3
-                    |> float32
+                    if world.RearAirfields.TryFind(owner) = Some airfield.AirfieldId then
+                        100.0f
+                    else
+                        airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
+                        |> (*) 3
+                        |> float32
                 let planeTypeShares = PlaneModel.PlaneTypeShares(owner)
                 let numFighters = maxPlanes * planeTypeShares.[PlaneType.Fighter] |> scale |> round
                 let numAttackers = maxPlanes * planeTypeShares.[PlaneType.Attacker] |> scale |> round
