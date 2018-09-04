@@ -38,6 +38,7 @@ open Campaign.PlayerDiscipline
 open Campaign.WatchLogs
 open Campaign.NewWorldState
 open System.Globalization
+open Newtonsoft.Json
 
 module Support =
     open ploggy
@@ -588,6 +589,11 @@ module Support =
 type CampaignData(config : Configuration, support : SupportApis) =
     let dataDir = config.OutputDir
     let serializer = new XmlSerializer()
+    // Turn a value into a Json value, i.e. replace types by dictionaries, arrays...
+    let toJsonType(x) =
+        let toJson(x : obj) = JsonConvert.SerializeObject(x)
+        let fromJson(s : string) = JsonConvert.DeserializeObject(s)
+        x |> toJson |> fromJson
 
     // List of mission dates, used to identify individual missions
     let missionDates =
@@ -620,10 +626,12 @@ type CampaignData(config : Configuration, support : SupportApis) =
             let results = serializer.Deserialize<MissionResults>(File.OpenText(resultFilename))
             let axisOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(axisOrdersFilename))
             let alliesOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(alliesOrdersFilename))
-            Ok ((
+            let data =
                 (Axis, axisOrders),
                 (Allies, alliesOrders),
-                (results.Shipments, results.ColumnDepartures, results.Blocked, results.Damages, results.TakeOffs, results.Landings, results.BattleKills, results.FerryPlanes, results.ParaDrops)) :> obj)
+                (results.Shipments, results.ColumnDepartures, results.Blocked, results.Damages, results.TakeOffs, results.Landings, results.BattleKills, results.FerryPlanes, results.ParaDrops)
+            let data = toJsonType data
+            Ok data
         with
         | _ -> Error "Failed to retrieve mission results"
 
