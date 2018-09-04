@@ -49,21 +49,115 @@ let selectPlaneSpawns (maxSpawns : int) (coalition : CoalitionId) (numPlanes : M
     |> Seq.truncate maxSpawns
     |> Array.ofSeq
 
-let mkPlaneSpecs totalBombs (planes : PlaneModel[]) =
+let private bombLoadsCosts xs =
+    xs
+    |> List.map (fun (ident, weight : float32<K>) -> (ident, weight * bombCost))
+
+let private isSorted xs =
+    xs
+    |> Seq.pairwise
+    |> Seq.forall(fun ((l1, _), (l2, _)) -> l1 < l2)
+
+/// Combine the content of two loadout value lists
+let combine xs ys =
+    assert(isSorted xs)
+    assert(isSorted ys)
+    let rec work xs ys res =
+        match xs, ys with
+        | [], y :: ys -> work xs ys (y :: res)
+        | x :: xs, [] -> work xs ys (x :: res)
+        | [], [] -> List.rev res
+        | (id1, x) :: xs2, (id2, y) :: ys2 ->
+            if id1 < id2 then
+                work xs2 ys ((id1, x) :: res)
+            elif id2 < id1 then
+                work xs ys2 ((id2, y) :: res)
+            else
+                assert(id1 = id2)
+                work xs2 ys2 ((id1, x + y) :: res)
+    work xs ys []
+
+type private CurrentInterval =
+    | Opened of int * int
+    | NoInterval of int
+    | Start
+
+/// Given available supplies and a list of loadouts with their costs, make a weapon loadout constraint
+let mkLoadoutString supplies loadouts =
+    assert(isSorted loadouts)
+
+    let repr a b =
+        if a = b then
+            string a
+        else
+            sprintf "%d..%d" a b
+
+    let rec ranges interval loadouts =
+        seq {
+            match interval, loadouts with
+            | Opened(left, _), [] ->
+                // Close interval at "infinity"
+                yield repr left 999
+            | NoInterval prev, [] ->
+                // Open and close interval after previous
+                yield repr (prev + 1) 999
+            | Start, [] ->
+                // Special case of empty loadouts, means "no restriction"
+                yield repr 0 999
+            | Opened(left, prev), (x, cost) :: loadouts ->
+                if cost <= supplies then
+                    // Keep growing interval
+                    yield! ranges (Opened(left, x)) loadouts 
+                else
+                    assert(cost > supplies)
+                    // Close interval
+                    yield repr left prev
+                    // Look for next interval to open
+                    yield! ranges (NoInterval x) loadouts
+            | NoInterval prev, (x, cost) :: loadouts ->
+                if x > prev + 1 then
+                    // Open interval
+                    yield! ranges (Opened(prev + 1, x - 1)) ((x, cost) :: loadouts)
+                else if cost <= supplies then
+                    // Open interval
+                    yield! ranges (Opened(x, x)) loadouts
+                else
+                    // Look for next interval to open
+                    yield! ranges (NoInterval(x)) loadouts
+            | Start, (x, cost) :: loadouts ->
+                if x > 0 then
+                    yield repr 0 (x - 1)
+                if cost <= supplies then
+                    // Open interval
+                    yield! ranges (Opened(x, x)) loadouts
+                else
+                    // Look for next interval to open
+                    yield! ranges (NoInterval(x)) loadouts
+        }
+    ranges Start loadouts
+    |> String.concat "/"
+
+/// Create plane specifications, which includes locking loadouts that aren't available due to limited supplies
+let mkPlaneSpecs supplies (planes : PlaneModel[]) =
     let maxIndex = 1 <<< (planes.Length)
     [
         for i, plane in Seq.indexed planes do
             let mask = 1 <<< i
             let model = plane.ScriptModel
+            let loadouts =
+                plane.BombLoads
+                |> bombLoadsCosts
+                |> combine plane.SpecialLoadsCosts
             let defaultPayload =
                 if plane.PlaneType = PlaneType.Fighter then
                     0
                 else
-                    plane.BombLoads
-                    |> List.tryFind (fun (idx, w) -> w <= totalBombs)
+                    loadouts
+                    |> List.tryFind (fun (idx, w) -> w <= supplies)
                     |> Option.map fst
                     |> Option.defaultValue plane.EmptyPayload
-            let planeSpec = newAirfieldPlane("0..99", plane.LoadOuts(totalBombs), 0, defaultPayload, "", plane.PlaneName, -1)
+            let constr = mkLoadoutString supplies loadouts
+            let planeSpec = newAirfieldPlane("0..99", constr, 0, defaultPayload, "", plane.PlaneName, -1)
                                 .SetScript(T.String model.Script)
                                 .SetModel(T.String model.Model)
                                 .SetStartInAir(T.Integer 2)
@@ -118,7 +212,6 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
                     | Allies ->
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
-                let totalBombs = state.Supplies / bombCost
                 let spawnPlanes =
                     state.NumPlanes
                     |> Map.map (fun _ number -> number |> floor |> int)
@@ -140,7 +233,7 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                     |> selectPlaneSpawns maxPlaneSpawns coalition
                 let planeSpecs : T.Airfield.Planes.Plane list =
                     spawnPlanes
-                    |> mkPlaneSpecs totalBombs
+                    |> mkPlaneSpecs state.Supplies
                 let planes =
                     T.Airfield.Planes()
                         .SetPlane(planeSpecs)
