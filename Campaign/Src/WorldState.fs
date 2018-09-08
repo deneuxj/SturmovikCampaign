@@ -388,7 +388,7 @@ with
         let set = 13.0 + 0.5 * dayLength
         let sunrise = System.DateTime(this.Date.Year, this.Date.Month, this.Date.Day, int rise, 0, 0)
         let sunset = System.DateTime(this.Date.Year, this.Date.Month, this.Date.Day, int set, 0, 0)
-        // sunset, sunrise, sunset of next morning
+        // sunrise, sunset, sunrise of next morning
         [sunrise; sunset; sunrise + System.TimeSpan(24, 0, 0)]
         |> List.exists (fun suntime -> suntime >= start && suntime <= finish)
 
