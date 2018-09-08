@@ -123,6 +123,7 @@ type Context =
     { World : WorldFastAccess
       State : WorldStateFastAccess
       Binding : Map<int, CoalitionId * ObjectInstance>
+      ObjectHealth : Map<int, float32>
       Hangars : Map<string * CoalitionId, PlayerHangar>
       Airfields : Map<AirfieldId, Map<PlaneModel, float32>>
       RearAirfields : Set<AirfieldId>
@@ -144,6 +145,7 @@ with
             World = world.FastAccess
             State = state.FastAccess
             Binding = Map.empty
+            ObjectHealth = Map.empty
             Hangars = hangars
             Airfields = airfields
             RearAirfields = rearAirfields
@@ -225,6 +227,19 @@ with
             | _ ->
                 this.Binding
         { this with Binding = binding }
+
+    member this.GetObjectHealth(idx : int) =
+        this.ObjectHealth
+        |> Map.tryFind idx
+        |> Option.defaultValue 1.0f
+
+    member this.HandleDamage(damage : DamageEntry) =
+        let oldHealth = this.GetObjectHealth(damage.TargetId)
+        let newHealth = oldHealth - damage.Damage
+        { this with ObjectHealth = this.ObjectHealth.Add(damage.TargetId, newHealth) }
+
+    member this.HandleKill(kill : KillEntry) =
+        { this with ObjectHealth = this.ObjectHealth.Add(kill.TargetId, 0.0f) }
 
     /// Execute a command.
     /// Commands are typically created by PlayerFlightData instances, when they hand game log entries.
@@ -594,8 +609,15 @@ with
 
     // Increase reward depending on target and amount of damage
     member this.HandleInflictedDamage(context : Context, damage : DamageEntry) =
+        this.AccumulateDamageReward(context, damage.TargetId, damage.Damage)
+
+    member this.HandleKill(context : Context, kill : KillEntry) =
+        let targetHealth = context.GetObjectHealth(kill.TargetId)
+        this.AccumulateDamageReward(context, kill.TargetId, targetHealth)
+
+    member this.AccumulateDamageReward(context : Context, target : int, damage : float32) =
         let value =
-            match context.Binding.TryFind(damage.TargetId) with
+            match context.Binding.TryFind(target) with
             | Some(_, StaticPlane _) ->
                 0.0f<E>
             | Some(_, DynamicPlane plane) ->
@@ -643,7 +665,7 @@ with
             | None ->
                 0.0f<E>
         let factor =
-            match context.Binding.TryFind(damage.TargetId) with
+            match context.Binding.TryFind(target) with
             | Some (coalition, _) ->
                 if coalition = this.Coalition then
                     -1.0f
@@ -652,7 +674,7 @@ with
             | None ->
                 0.0f
         let productionLoss =
-            match context.Binding.TryFind(damage.TargetId) with
+            match context.Binding.TryFind(target) with
             | Some(_, Production(group, idx)) ->
                 let specs = context.World.World.SubBlockSpecs
                 let buildings = group.SubBlocks specs
@@ -664,7 +686,7 @@ with
                     0.0f<E>
             | _ ->
                 0.0f<E>
-        let reward = factor * (damage.Damage * value + productionLoss)
+        let reward = factor * (damage * value + productionLoss)
         { this with Reward = this.Reward + reward }, []
 
     // Set health to 0
@@ -798,6 +820,8 @@ with
             this.HandleReceivedDamage(context, damage)
         | _, (:? KillEntry as killed) when killed.TargetId = this.Vehicle ->
             this.HandleKilled(context, killed)
+        | _, (:? KillEntry as kill) when kill.AttackerId = this.Vehicle ->
+            this.HandleKill(context, kill)
         | InFlight, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
             this.HandleLanding(context, landing)
         | _, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
@@ -888,6 +912,13 @@ let checkPlaneAvailability (limits : Limits) (world : World) (state : WorldState
                 |> Seq.fold (fun (context : Context, msgs) cmd ->
                     let context, msgs2 = context.Execute(cmd)
                     context, msgs2 @ msgs) (context, [])
+
+            // Update context with kill entries
+            let context2 =
+                match entry with
+                | :? KillEntry as kill -> context2.HandleKill(kill)
+                | _ -> context2
+
             context <- context2
 
             // Yield messages generated while updating player data
