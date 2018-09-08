@@ -96,6 +96,7 @@ with
                 let leadPos = Vector2.FromMcu(ship1.Pos)
                 let dv = leadPos - Vector2.FromMcu(ship.Pos)
                 let side = dv.Rotate(90.0f)
+                let side = side / side.Length()
                 // Move ships to a random amount to the side, to avoid making them easy targets
                 let offSide =
                     let mag =
