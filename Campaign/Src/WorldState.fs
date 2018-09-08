@@ -615,7 +615,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                     let supplies =
                         region.Storage
                         |> Seq.sumBy (fun storage -> storage.Storage world.SubBlockSpecs)
-                        |> if region.Production.IsEmpty then min needs else id
+                        |> min needs
                         |> float32
                         |> scale
                     let ceilint = ceil >> int
