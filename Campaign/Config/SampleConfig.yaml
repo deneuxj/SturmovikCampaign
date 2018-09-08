@@ -46,6 +46,8 @@
     MaxBattleKillsRatioByAI: 0.25
     # Max static planes per airfield
     MaxStaticPlanes: 6
+    # Whether spawn restrictions are in place
+    SpawnRestrictions: true
     # Max amount of cash a player can hold
     MaxCash: 10000
     # Max number of reserved planes of a type at an airfield

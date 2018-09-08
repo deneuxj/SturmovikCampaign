@@ -109,6 +109,7 @@ type Limits =
       MoneyBackFactor : float32
       MaxReservedPlanes : int
       MaxTotalReservedPlanes : int
+      SpawnsAreRestricted : bool
     }
 with
     static member FromConfig(config : Campaign.Configuration.Configuration) =
@@ -116,6 +117,7 @@ with
           MoneyBackFactor = config.MoneyBackFactor
           MaxReservedPlanes = config.MaxReservedPlanes
           MaxTotalReservedPlanes = config.MaxTotalReservedPlanes
+          SpawnsAreRestricted = config.SpawnsAreRestricted
         }
 
 /// Keeps track of information needed for the state transitions in PlayerFlightData
@@ -427,10 +429,12 @@ with
     member this.IsSpawnRestricted(af : AirfieldId, plane : PlaneModel, coalition : CoalitionId) =
         let isFree =
             let numOwned =
-                this.State.State.Regions
-                |> Seq.filter (fun region -> region.Owner = Some coalition)
-                |> Seq.length
-            (numOwned * 4 <= this.State.State.Regions.Length ||
+                lazy
+                    this.State.State.Regions
+                    |> Seq.filter (fun region -> region.Owner = Some coalition)
+                    |> Seq.length
+            (not this.Limits.SpawnsAreRestricted ||
+             numOwned.Value * 4 <= this.State.State.Regions.Length ||
              this.RearAirfields.Contains(af) ||
              this.State.GetRegion(this.World.GetAirfield(af).Region).HasInvaders)
         not isFree
