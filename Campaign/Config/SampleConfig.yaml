@@ -95,6 +95,8 @@
 
     # If non-empty, webhook URL of a discord channel where comments extracted from the ongoing mission log entries will be posted.
     WebHook: ""
+    # User ID to use in "hey @user something went wrong with the server"
+    DiscordUserId: ""
     # Max number of friendly fire incidents. Ban occurs when that number is reached
     MaxFriendlyFireEvents: 2
     # Duration of ban for friendly fire

@@ -86,6 +86,7 @@ type Configuration = {
     MaxNoobScore : float32
     NoobBanDuration : int
     WebHook : string
+    DiscordUserId : string
     MaxBuildingIcons : int
     ChatLogCommandsEnabled : bool
 }
@@ -128,6 +129,7 @@ with
             DesiredProduction = 300.0f
             PlaneProduction = 1000.0f
             WebHook = ""
+            DiscordUserId = ""
             MaxFriendlyFireEvents = 2
             FriendlyFireBanDuration = 1
             MaxNoobScore = 3.0f
@@ -215,6 +217,7 @@ let loadConfigFile (path : string) =
         PlaneProduction = float32 values.PlaneProduction
         Briefing = values.Briefing
         WebHook = values.WebHook
+        DiscordUserId = values.DiscordUserId
         FriendlyFireBanDuration = values.FriendlyFireBanDuration
         MaxFriendlyFireEvents = values.MaxFriendlyFireEvents
         MaxNoobScore = float32 values.MaxNoobScore

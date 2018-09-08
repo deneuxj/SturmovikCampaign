@@ -390,7 +390,7 @@ module Support =
             | Failed(msg, _, _) ->
                 support.Logging.LogInfo(sprintf "Execution aborted due to failure: %s" msg)
                 status.Save(config)
-                postMessage "Hey @coconut something went wrong, check the server"
+                postMessage (sprintf "Hey <@!%s> something went wrong, check the server" config.DiscordUserId)
                 NoTask
             | CampaignOver(victorious) ->
                 match victorious with
