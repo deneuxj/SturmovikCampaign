@@ -50,8 +50,7 @@ let showHangar(hangar : PlayerHangar, delay) =
         let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
         yield Overview(userIds, delay,
             [
-                sprintf "Welcome back %s" userIds.Name
-                sprintf "Your cash reserve is %0.0f" hangar.Reserve
+                sprintf "Welcome back %s %s" hangar.Rank userIds.Name
             ])
         yield Overview(userIds, delay,
             [
@@ -291,7 +290,7 @@ with
             let hangar = { hangar with Reserve = hangar.Reserve - cost }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
-            [ Overview(user, 0, [ sprintf "You have spent %0.0f to borrow a plane" cost ]) ]
+            [ Overview(user, 0, [ sprintf "You have have spent %0.0f" cost ]) ]
 
         | PlayerReturnedBorrowedPlane(user, plane, af) ->
             match this.GetAirfieldCoalition(af) with
@@ -307,7 +306,7 @@ with
                 let hangar = { hangar with Reserve = hangar.Reserve + moneyBack }
                 let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
                 { this with Hangars = hangars },
-                [ Overview(user, 0, [ sprintf "You got %0.0f back for bringing back the %s you borrowed" moneyBack plane.PlaneName ]) ]
+                [ Overview(user, 0, [ sprintf "You got %0.0f back for bringing back the %s you requisitioned" moneyBack plane.PlaneName ]) ]
             | None ->
                 logger.Error("Attempt to return borrowed plane to neutral region")
                 this, []
@@ -587,15 +586,16 @@ with
                     match cost with
                     | Denied ->
                         let price = context.GetPlanePrice(af, plane)
-                        yield Message(Warning(user, 0, [sprintf "You are not allowed to take off in a %s which costs %0.0f at %s" plane.PlaneName price af.AirfieldName]))
+                        yield Message(Warning(user, 0, [sprintf "Your rank does not allow to requisition a %s at %s" plane.PlaneName af.AirfieldName]))
                     | Free ->
                         yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
                     | Rent cost ->
-                        yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to borrow a %s from %s" cost plane.PlaneName af.AirfieldName]))
+                        yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to requisition a %s from %s" cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, true, af)
                     | Buy cost ->
-                        yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to take a %s from %s" cost plane.PlaneName af.AirfieldName]))
+                        if cost > 0.0f<E> then
+                            yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to take a %s from %s" cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
                 ]
             let supplyCommands =
