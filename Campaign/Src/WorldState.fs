@@ -24,6 +24,7 @@ open Campaign.WorldDescription
 open Util
 open Campaign.BasicTypes
 open Campaign.PlaneModel
+open Campaign.Configuration
 open System.Numerics
 open VectorExtension
 
@@ -536,27 +537,14 @@ let computeProductionDifference subBlockSpecs (regions : Region list) =
     allies - axis
 
 /// Build the initial state
-let mkInitialState(world : World, strategyFile : string, windDirection : float32) =
-    let data = T.GroupData(Stream.FromFile strategyFile)
+let mkInitialState(config : Configuration, world : World, windDirection : float32) =
+    let campaignMission = System.IO.Path.Combine(config.ScriptPath, world.Scenario + ".Mission")
+    let data = T.GroupData(Stream.FromFile campaignMission)
     
     let wg = WorldFastAccess.Create(world)
     
-    let getOwner =
-        let ownedByRussia =
-            data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
-            |> Seq.filter (fun region -> region.GetCountry().Value = int CountryValue.Russia)
-            |> Seq.map (fun region -> RegionId(region.GetName().Value))
-            |> Set.ofSeq
-        let ownedByGermany =
-            data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
-            |> Seq.filter (fun region -> region.GetCountry().Value = int CountryValue.Germany)
-            |> Seq.map (fun region -> RegionId(region.GetName().Value))
-            |> Set.ofSeq
-        fun x ->
-            match ownedByRussia.Contains(x), ownedByGermany.Contains(x) with
-            | true, _ -> Some Allies
-            | _, true -> Some Axis
-            | false, false -> None
+    let getOwner x =
+        wg.GetRegion(x).InitialOwner
 
     // Set of regions explicitly marked as strong, i.e. they have full supplies and vehicles
     let strongRegions =
@@ -665,7 +653,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
                     x * (1.0f - (float32 hops) / (float32 cutoffHops)) |> max 0.0f
                 let maxPlanes =
                     if world.RearAirfields.TryFind(owner) = Some airfield.AirfieldId then
-                        100.0f
+                        float32 config.RearAirfieldPlanes
                     else
                         airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
                         |> (*) 3
@@ -714,7 +702,7 @@ let mkInitialState(world : World, strategyFile : string, windDirection : float32
     }
 
 type WorldState with
-    static member Create(world : World, strategyFile : string, windDirection : float32) = mkInitialState(world, strategyFile, windDirection)
+    static member Create(config : Configuration, world : World, windDirection : float32) = mkInitialState(config, world, windDirection)
 
     /// <summary>
     /// Get positions of the most damaged buildings (storage and production).

@@ -81,6 +81,7 @@ type Configuration = {
     ThinkTime : int
     DesiredProduction : float32
     PlaneProduction : float32
+    RearAirfieldPlanes : int
     MaxFriendlyFireEvents : int
     FriendlyFireBanDuration : int
     MaxNoobScore : float32
@@ -128,6 +129,7 @@ with
             ThinkTime = 30
             DesiredProduction = 300.0f
             PlaneProduction = 1000.0f
+            RearAirfieldPlanes = 1000
             WebHook = ""
             DiscordUserId = ""
             MaxFriendlyFireEvents = 2
@@ -215,6 +217,7 @@ let loadConfigFile (path : string) =
         ThinkTime = values.ThinkTime
         DesiredProduction = float32 values.DesiredProduction
         PlaneProduction = float32 values.PlaneProduction
+        RearAirfieldPlanes = values.RearAirfieldPlanes
         Briefing = values.Briefing
         WebHook = values.WebHook
         DiscordUserId = values.DiscordUserId
