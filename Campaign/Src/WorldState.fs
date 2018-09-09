@@ -538,19 +538,15 @@ let computeProductionDifference subBlockSpecs (regions : Region list) =
 
 /// Build the initial state
 let mkInitialState(config : Configuration, world : World, windDirection : float32) =
-    let campaignMission = System.IO.Path.Combine(config.ScriptPath, world.Scenario + ".Mission")
-    let data = T.GroupData(Stream.FromFile campaignMission)
-    
     let wg = WorldFastAccess.Create(world)
-    
     let getOwner x =
         wg.GetRegion(x).InitialOwner
 
     // Set of regions explicitly marked as strong, i.e. they have full supplies and vehicles
     let strongRegions =
-        data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
-        |> Seq.filter (fun region -> region.GetDesc().Value.Contains "***")
-        |> Seq.map (fun region -> RegionId(region.GetName().Value))
+        world.Regions
+        |> Seq.filter (fun reg -> reg.IsStrong)
+        |> Seq.map (fun reg -> reg.RegionId)
         |> Set.ofSeq
 
     let distanceFromStrongRegions =
