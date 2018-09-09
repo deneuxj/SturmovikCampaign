@@ -66,6 +66,7 @@ type Configuration = {
     MaxBattleKillsRatioByAI: float32
     MaxStaticPlanes : int
     MaxCash : int
+    InitialCash : int
     MaxReservedPlanes : int // Per type and airfield
     MaxTotalReservedPlanes : int // All types, all airfields
     SpawnsAreRestricted : bool
@@ -110,6 +111,7 @@ with
             MaxBattleKillsRatioByPlayers = 1.0f
             MaxBattleKillsRatioByAI = 0.25f
             MaxStaticPlanes = 6
+            InitialCash = 5000
             MaxCash = 10000
             MaxReservedPlanes = 2
             MaxTotalReservedPlanes = 6
@@ -201,6 +203,7 @@ let loadConfigFile (path : string) =
         MaxStaticPlanes = values.MaxStaticPlanes
         SpawnsAreRestricted = values.SpawnRestrictions
         MaxCash = values.MaxCash
+        InitialCash = values.InitialCash
         MaxReservedPlanes = values.MaxReservedPlanes
         MaxTotalReservedPlanes = values.MaxTotalReservedPlanes
         MoneyBackFactor = float32 values.MoneyBackFactor

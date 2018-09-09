@@ -64,8 +64,8 @@ let showHangar(hangar : PlayerHangar, delay) =
     ]
 
 /// Create an empty hangar for a player
-let private emptyHangar (playerId : string, playerName, coalition) =
-    { Player = Guid(playerId); PlayerName = playerName; Coalition = coalition; Reserve = 0.0f<E>; Airfields = Map.empty }
+let private emptyHangar (playerId : string, playerName, coalition, cash) =
+    { Player = Guid(playerId); PlayerName = playerName; Coalition = coalition; Reserve = cash; Airfields = Map.empty }
 
 /// Commands sent during state transitions in PlayerStateData to the main asyncSeq computation
 type Command =
@@ -105,6 +105,7 @@ type ObjectInstance =
 
 type Limits =
     {
+      InitialCash : float32<E>
       MaxCash : float32<E>
       MoneyBackFactor : float32
       MaxReservedPlanes : int
@@ -113,7 +114,8 @@ type Limits =
     }
 with
     static member FromConfig(config : Campaign.Configuration.Configuration) =
-        { MaxCash = 1.0f<E> * float32 config.MaxCash
+        { InitialCash = 1.0f<E> * float32 config.InitialCash
+          MaxCash = 1.0f<E> * float32 config.MaxCash
           MoneyBackFactor = config.MoneyBackFactor
           MaxReservedPlanes = config.MaxReservedPlanes
           MaxTotalReservedPlanes = config.MaxTotalReservedPlanes
@@ -470,7 +472,7 @@ with
 
     member this.GetHangar(user : UserIds, coalition) =
         this.Hangars.TryFind((user.UserId, coalition))
-        |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition))
+        |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash))
 
 /// States in the PlayerFlightData state machine
 type PlayerFlightState =

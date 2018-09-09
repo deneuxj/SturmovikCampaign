@@ -50,6 +50,8 @@
     SpawnRestrictions: true
     # Max amount of cash a player can hold
     MaxCash: 10000
+    # Initial amount of cash for each player
+    InitialCash: 500
     # Max number of reserved planes of a type at an airfield
     MaxReservedPlanes: 2
     # Max total number of reserved Planes
