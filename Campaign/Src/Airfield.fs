@@ -168,7 +168,7 @@ let mkPlaneSpecs supplies (planes : PlaneModel[]) =
                     yield planeSpec.SetNumber(T.Integer 0).SetSetIndex(T.Integer j)
     ]
 
-let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionStarted : Mcu.McuTrigger) =
+let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionStarted : Mcu.McuTrigger) =
     let sg = state.FastAccess
     let rearAirfields =
         [Axis; Allies]
@@ -238,8 +238,11 @@ let createAirfieldSpawns (maxCapturedPlanes : int) (store : NumericalIdentifiers
                     T.Airfield.Planes()
                         .SetPlane(planeSpecs)
                 let afName =
-                    if rearAirfields.Contains(airfield.AirfieldId) || sg.GetRegion(airfield.Region).HasInvaders then
-                        airfield.AirfieldId.AirfieldName.ToUpper()
+                    if restrictionsAreActive then
+                        if rearAirfields.Contains(airfield.AirfieldId) || sg.GetRegion(airfield.Region).HasInvaders then
+                            airfield.AirfieldId.AirfieldName.ToUpper()
+                        else
+                            sprintf "%s (RESTRICTED)" airfield.AirfieldId.AirfieldName
                     else
                         airfield.AirfieldId.AirfieldName
                 let afName = sprintf "%s (%d Kg)" afName (state.Supplies / bombCost |> float32 |> ceil |> int)
