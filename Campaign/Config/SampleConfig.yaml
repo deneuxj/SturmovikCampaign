@@ -84,7 +84,7 @@
     # Amount of production (resource units per hour) for planes. 500.0f gives one i16 or bf109e7 per hour.
     PlaneProduction: 2000.0
     # Initial number of planes at rear airfield
-    RearAirfieldPlanes: 1000
+    RearAirfieldPlanes: 5000
     # Fixed part of the mission briefing
     Briefing: |
         This mission is part of a dynamic campaign where the events from one mission affect the following missions.

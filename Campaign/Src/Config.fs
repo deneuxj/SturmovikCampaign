@@ -133,7 +133,7 @@ with
             ThinkTime = 30
             DesiredProduction = 300.0f
             PlaneProduction = 1000.0f
-            RearAirfieldPlanes = 1000
+            RearAirfieldPlanes = 5000
             WebHook = ""
             DiscordUserId = ""
             MaxFriendlyFireEvents = 2
