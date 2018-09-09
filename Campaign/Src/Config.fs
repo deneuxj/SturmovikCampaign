@@ -69,6 +69,7 @@ type Configuration = {
     InitialCash : int
     MaxReservedPlanes : int // Per type and airfield
     MaxTotalReservedPlanes : int // All types, all airfields
+    RearAirfieldCostFactor : float32
     SpawnsAreRestricted : bool
     MoneyBackFactor : float32
     EnablePlayerTanks : bool
@@ -116,6 +117,7 @@ with
             MaxReservedPlanes = 2
             MaxTotalReservedPlanes = 6
             SpawnsAreRestricted = true
+            RearAirfieldCostFactor = 0.125f
             MoneyBackFactor = 0.75f
             EnablePlayerTanks = true
             MissionName = "AutoGenMission2"
@@ -207,6 +209,7 @@ let loadConfigFile (path : string) =
         MaxReservedPlanes = values.MaxReservedPlanes
         MaxTotalReservedPlanes = values.MaxTotalReservedPlanes
         MoneyBackFactor = float32 values.MoneyBackFactor
+        RearAirfieldCostFactor = float32 values.RearAirfieldCostFactor
         EnablePlayerTanks = values.EnablePlayerTanks
         MissionName = values.MissionName
         MissionLength = values.MissionLength

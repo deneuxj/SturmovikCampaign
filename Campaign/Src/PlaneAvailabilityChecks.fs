@@ -30,6 +30,7 @@ open Campaign.PlaneModel
 open Campaign.WorldState
 open Campaign.ResultExtraction
 open System.Runtime.Serialization
+open System.ServiceModel
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -71,7 +72,7 @@ let private emptyHangar (playerId : string, playerName, coalition, cash) =
 type Command =
     | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlaneCheckIn of user:UserIds * userCoalition:CoalitionId * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
-    | PlayerBorrowedPlane of user:UserIds * CoalitionId * float32<E>
+    | PlayerPayed of user:UserIds * CoalitionId * float32<E>
     | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * AirfieldId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * CoalitionId * float32<E>
@@ -111,6 +112,7 @@ type Limits =
       MaxReservedPlanes : int
       MaxTotalReservedPlanes : int
       SpawnsAreRestricted : bool
+      RearAirfieldCostFactor : float32
     }
 with
     static member FromConfig(config : Campaign.Configuration.Configuration) =
@@ -120,6 +122,7 @@ with
           MaxReservedPlanes = config.MaxReservedPlanes
           MaxTotalReservedPlanes = config.MaxTotalReservedPlanes
           SpawnsAreRestricted = config.SpawnsAreRestricted
+          RearAirfieldCostFactor = config.RearAirfieldCostFactor
         }
 
 /// Keeps track of information needed for the state transitions in PlayerFlightData
@@ -283,7 +286,7 @@ with
                 logger.Error("Attempt to check out plane from neutral region")
                 this, []
 
-        | PlayerBorrowedPlane(user, coalition, cost) ->
+        | PlayerPayed(user, coalition, cost) ->
             let hangar : PlayerHangar = this.GetHangar(user, coalition)
             let hangar = { hangar with Reserve = hangar.Reserve - cost }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
@@ -474,9 +477,30 @@ with
         this.Hangars.TryFind((user.UserId, coalition))
         |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash))
 
+type TransactionCost =
+    | Rent of float32<E>
+    | Buy of float32<E>
+    | Denied
+    | Free
+with
+    member this.IsRental =
+        match this with
+        | Rent _ -> true
+        | _ -> false
+
+    member this.IsDeniedCase =
+        match this with
+        | Denied -> true
+        | _ -> false
+
+    member this.Amount =
+        match this with
+        | Rent x | Buy x -> x
+        | Denied | Free -> 0.0f<E>
+
 /// States in the PlayerFlightData state machine
 type PlayerFlightState =
-    | Spawned of cost:float32<E> option // Cost of taking off in the plane, None if player can't afford it, or plane is not available at airfield
+    | Spawned of TransactionCost
     | Aborted
     | InFlight
     | Landed of AirfieldId option * TimeSpan option
@@ -541,26 +565,38 @@ with
             let cost =
                 if context.IsSpawnRestricted(af, plane, coalition) then
                     match context.TryCheckoutPlane(user, af, plane) with
-                    | None -> None
+                    | None -> Denied
                     | Some hangar ->
                         let fundsBefore =
                             context.GetHangar(user, coalition)
                             |> fun h -> h.Reserve
-                        Some(fundsBefore - hangar.Reserve)
+                        Rent(fundsBefore - hangar.Reserve)
+                elif context.RearAirfields.Contains(af) then
+                    match plane.Cost * context.Limits.RearAirfieldCostFactor with
+                    | 0.0f<E> -> Free
+                    | price ->
+                        let available = context.GetHangar(user, coalition)
+                        if available.Reserve >= price then
+                            Buy price
+                        else
+                            Denied
                 else
-                    Some 0.0f<E>
+                    Free
             let planeInfo =
                 [
                     match cost with
-                    | None ->
+                    | Denied ->
                         let price = context.GetPlanePrice(af, plane)
                         yield Message(Warning(user, 0, [sprintf "You are not allowed to take off in a %s which costs %0.0f at %s" plane.PlaneName price af.AirfieldName]))
-                    | Some 0.0f<E> ->
+                    | Free ->
                         yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
-                    | Some cost ->
+                    | Rent cost ->
                         yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to borrow a %s from %s" cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, true, af)
+                    | Buy cost ->
+                        yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to take a %s from %s" cost plane.PlaneName af.AirfieldName]))
+                        yield PlaneCheckOut(user, plane, 1.0f, false, af)
                 ]
             let supplyCommands =
                 if cargo > 0.0f<K> || weight >= 500.0f<K> then
@@ -572,7 +608,7 @@ with
                 Vehicle = entry.VehicleId
                 State = Spawned cost
                 Health = 1.0f
-                IsBorrowed = Option.defaultValue 0.0f<E> cost > 0.0f<E>
+                IsBorrowed = cost.IsRental
                 Coalition = coalition
                 Plane = plane
                 Cargo = cargo
@@ -588,19 +624,19 @@ with
     // Handle first take off after spawn
     member this.HandleTakeOff(context : Context, takeOff : TakeOffEntry) =
         match this.State with
-        | Spawned(Some cost) ->
+        | Spawned Denied ->
+            { this with State = StolePlane },
+            [ PunishThief(this.Player, this.Plane, this.StartAirfield) ]
+        | Spawned(cost) ->
             { this with State = InFlight },
             [
                 if this.IsBorrowed then
-                    yield PlayerBorrowedPlane(this.Player, this.Coalition, cost)
+                    yield PlayerPayed(this.Player, this.Coalition, cost.Amount)
                 yield Message(
                         Announce(
                             this.Coalition,
                             [sprintf "%s has taken off from %s in a %s" this.Player.Name this.StartAirfield.AirfieldName (string this.Plane.PlaneType)]))
             ]
-        | Spawned None ->
-            { this with State = StolePlane },
-            [ PunishThief(this.Player, this.Plane, this.StartAirfield) ]
         | unexpected ->
             logger.Warn(sprintf "Unexpected state during take off %A" unexpected)
             this, []
@@ -842,9 +878,9 @@ with
         | InFlight, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this.HandlePrematureMissionEnd(context)
         | Spawned cost, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
-            this.HandleAbortionBeforeTakeOff(context, cost.IsSome)
+            this.HandleAbortionBeforeTakeOff(context, not cost.IsDeniedCase)
         | Spawned cost, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
-            this.HandleAbortionBeforeTakeOff(context, cost.IsSome)
+            this.HandleAbortionBeforeTakeOff(context, not cost.IsDeniedCase)
         | MissionEnded, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this, []
         | _, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
