@@ -123,7 +123,7 @@ with
           MaxTotalReservedPlanes = config.MaxTotalReservedPlanes
           SpawnsAreRestricted = config.SpawnsAreRestricted
           RearAirfieldCostFactor = config.RearAirfieldCostFactor
-          PlaneRentalAllowed = true
+          PlaneRentalAllowed = config.PlaneRentalAllowed
         }
 
     member this.ShowCashReserves = this.PlaneRentalAllowed
