@@ -711,7 +711,7 @@ with
                 heavyMachineGunCost
             | Some(_, StaticTank tank)
             | Some(_, DynamicTank tank) ->
-                tank.Cost
+                tank.Cost / 10.0f
             | Some(_, ConvoyTruck) ->
                 Orders.ResupplyOrder.TruckCapacity
             | Some(_, TrainWagon) ->
