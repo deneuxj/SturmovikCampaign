@@ -579,11 +579,12 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
             |> Map.ofList
             |> Map.map (fun _ amount -> amount / (3.0f * GroundAttackVehicle.LightArmorCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.HeavyTankCost))
             |> Map.map (fun _ k -> Map.ofList [(HeavyTank, 3.0f * k); (MediumTank, 9.0f * k); (LightArmor, 3.0f)])
-        let supplyNeeds = computeFullDefenseNeeds world
-        if List.length world.Regions <> List.length supplyNeeds then
-            failwith "Some of the regions lack defense areas"
-        List.zip world.Regions supplyNeeds
-        |> List.map (fun (region, (_, needs)) ->
+        let supplyNeeds =
+            computeFullDefenseNeeds world
+            |> Map.ofList
+        world.Regions
+        |> List.map (fun region ->
+            let needs = supplyNeeds.TryFind(region.RegionId) |> Option.defaultValue 0.0f<E>
             let owner = getOwner region.RegionId
             let supplies, vehicles =
                 match owner with
