@@ -121,6 +121,16 @@ type PlayerHangar =
       Airfields : Map<AirfieldId, AirfieldHangar> }
 with
     /// <summary>
+    /// Check if there is a reserved plane of a given model at a given airfield.
+    /// </summary>
+    /// <param name="af">The airfield</param>
+    /// <param name="plane">The plane model</param>
+    member this.HasReservedPlane(af, plane) =
+        this.Airfields.TryFind(af)
+        |> Option.bind (fun h -> h.Planes.TryFind(plane))
+        |> Option.exists (fun qty -> qty >= 1.0f)
+
+    /// <summary>
     /// Add a plane to an airfield, normally after landing there.
     /// </summary>
     /// <param name="af">Airfield where the player landed.</param>
@@ -130,22 +140,6 @@ with
         let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}
         let hangar = hangar.AddPlane(plane, qty)
         { this with Airfields = Map.add af hangar this.Airfields }
-
-    /// <summary>
-    /// Try to remove a plane from an airfield, normally after taking off from there.
-    /// If the player has insufficient reserve, return None. The campaign system will notify the player and cancel that flight.
-    /// </summary>
-    /// <param name="af">Airfield the player took off from</param>
-    /// <param name="plane">Plane model that took off.</param>
-    member this.TryRemovePlane(af, plane, qty, costFactor) =
-        let hangar = this.Airfields.TryFind(af) |> Option.defaultValue {Airfield = af; Planes = Map.empty}
-        let hangar, cost = hangar.RemovePlane(plane, qty, costFactor)
-        let reserve = this.Reserve - cost
-        if cost = 0.0f<E> || reserve >= 0.0f<E> then
-            let afs = Map.add af hangar this.Airfields
-            Some { this with Reserve = reserve; Airfields = afs }
-        else
-            None
 
     /// <summary>
     /// Remove planes from an airfield, and decrease cash reserve.

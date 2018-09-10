@@ -405,16 +405,6 @@ with
         let factor = getPriceFactor af plane qty this.Hangars
         factor * plane.Cost
 
-    member this.TryCheckoutPlane(user: UserIds, af: AirfieldId, plane: PlaneModel) =
-        match this.GetAirfieldCoalition(af) with
-        | Some coalition ->
-            let qty = this.Airfields.[af].TryFind plane |> Option.defaultValue 0.0f
-            let factor = getPriceFactor af plane qty this.Hangars
-            let hangar = this.GetHangar(user, coalition)
-            hangar.TryRemovePlane(af, plane, 1.0f, factor)
-        | None ->
-            None
-
     member this.GetNumReservedPlanes(user : UserIds, af : AirfieldId, plane : PlaneModel) =
         match this.GetAirfieldCoalition(af) with
         | Some coalition ->
@@ -571,13 +561,15 @@ with
                 }
             let cost =
                 if context.IsSpawnRestricted(af, plane, coalition) then
-                    match context.TryCheckoutPlane(user, af, plane) with
-                    | None -> Denied
-                    | Some hangar ->
-                        let fundsBefore =
-                            context.GetHangar(user, coalition)
-                            |> fun h -> h.Reserve
-                        Rent(fundsBefore - hangar.Reserve)
+                    let hangar = context.GetHangar(user, coalition)
+                    if hangar.HasReservedPlane(af, plane) then
+                        Free
+                    else
+                        let price = context.GetPlanePrice(af, plane)
+                        if price = 0.0f<E> || price <= hangar.Reserve then
+                            Rent price
+                        else
+                            Denied
                 elif context.RearAirfields.Contains(af) then
                     match plane.Cost * context.Limits.RearAirfieldCostFactor with
                     | 0.0f<E> -> Free
@@ -597,18 +589,21 @@ with
                     cost
             let planeInfo =
                 [
+                    let rank = context.GetHangar(user, coalition).Rank
                     match cost with
                     | Denied ->
-                        yield Message(Warning(user, 0, [sprintf "Your rank does not allow to requisition a %s at %s" plane.PlaneName af.AirfieldName]))
+                        yield Message(Warning(user, 0,
+                                        [sprintf "%s %s, your rank does not allow to requisition a %s at %s" rank user.Name plane.PlaneName af.AirfieldName
+                                         "You will be KICKED if you take off"]))
                     | Free ->
-                        yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
+                        yield Message(Overview(user, 0, [sprintf "%s %s, you are cleared to take off in a %s from %s" rank user.Name plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
                     | Rent cost ->
-                        yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to requisition a %s from %s" cost plane.PlaneName af.AirfieldName]))
+                        yield Message(Overview(user, 0, [sprintf "%s %s, it will cost you %0.0f to requisition a %s from %s" rank user.Name cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, true, af)
                     | Buy cost ->
                         if cost > 0.0f<E> then
-                            yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to take a %s from %s" cost plane.PlaneName af.AirfieldName]))
+                            yield Message(Overview(user, 0, [sprintf "%s %s, it will cost you %0.0f to take a %s from %s" rank user.Name cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
                 ]
             let supplyCommands =
