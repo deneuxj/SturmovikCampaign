@@ -107,6 +107,7 @@ type Limits =
     {
       InitialCash : float32<E>
       MaxCash : float32<E>
+      PlaneRentalAllowed : bool
       MoneyBackFactor : float32
       MaxReservedPlanes : int
       MaxTotalReservedPlanes : int
@@ -122,7 +123,10 @@ with
           MaxTotalReservedPlanes = config.MaxTotalReservedPlanes
           SpawnsAreRestricted = config.SpawnsAreRestricted
           RearAirfieldCostFactor = config.RearAirfieldCostFactor
+          PlaneRentalAllowed = true
         }
+
+    member this.ShowCashReserves = this.PlaneRentalAllowed
 
 /// Keeps track of information needed for the state transitions in PlayerFlightData
 type Context =
@@ -371,8 +375,9 @@ with
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
             [
-                Overview(user, 15, [sprintf "You have been awarded %1.0f" reward])
-                Status(hangars, this.Airfields)
+                if this.Limits.ShowCashReserves then
+                    yield Overview(user, 15, [sprintf "You have been awarded %1.0f" reward])
+                yield Status(hangars, this.Airfields)
             ]
 
         | InformPlayerHangar(user, coalition) ->
@@ -581,11 +586,16 @@ with
                             Denied
                 else
                     Free
+            // Deny rental if it's not allowed in the limits
+            let cost =
+                if not context.Limits.PlaneRentalAllowed && cost.IsRental then
+                    Denied
+                else
+                    cost
             let planeInfo =
                 [
                     match cost with
                     | Denied ->
-                        let price = context.GetPlanePrice(af, plane)
                         yield Message(Warning(user, 0, [sprintf "Your rank does not allow to requisition a %s at %s" plane.PlaneName af.AirfieldName]))
                     | Free ->
                         yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
