@@ -48,6 +48,22 @@
     MaxStaticPlanes: 6
     # Whether spawn restrictions are in place
     SpawnRestrictions: true
+    # Max number of fighter spawns at rear airfield (per player)
+    FreshFighterSpawns: 6
+    # Max number of attacker spawns at rear airfield (per player)
+    FreshAttackerSpawns: 3
+    # Max number of bomber spawns at rear airfield (per player)
+    FreshBomberSpawns: 2
+    # Max number of transport spawns at rear airfield (per player)
+    FreshTransportSpawns: 1
+    # Number of new fresh fighter spawns each new mission (per player)
+    FreshFighterRefill: 2
+    # Number of new fresh attacker spawns each new mission (per player)
+    FreshAttackerRefill: 1
+    # Number of new fresh bomber spawns each new mission (per player)
+    FreshBomberRefill: 1
+    # Number of new fresh transport spawns each new mission (per player)
+    FreshTransportRefill: 1
     # Whether players can spend cash reserve to borrow planes they haven't reserved
     PlaneRentalAllowed: true
     # Cost factor for buying planes from the rear airfield

@@ -71,6 +71,14 @@ type Configuration = {
     MaxTotalReservedPlanes : int // All types, all airfields
     RearAirfieldCostFactor : float32
     SpawnsAreRestricted : bool
+    FreshFighterSpawns : int
+    FreshAttackerSpawns : int
+    FreshBomberSpawns : int
+    FreshTransportSpawns : int
+    FreshFighterRefill : int
+    FreshAttackerRefill : int
+    FreshBomberRefill : int
+    FreshTransportRefill : int
     PlaneRentalAllowed : bool
     MoneyBackFactor : float32
     EnablePlayerTanks : bool
@@ -118,6 +126,14 @@ with
             MaxReservedPlanes = 2
             MaxTotalReservedPlanes = 6
             SpawnsAreRestricted = true
+            FreshFighterSpawns = 6
+            FreshAttackerSpawns = 3
+            FreshBomberSpawns = 2
+            FreshTransportSpawns = 1
+            FreshFighterRefill = 2
+            FreshAttackerRefill = 1
+            FreshBomberRefill = 1
+            FreshTransportRefill = 1
             PlaneRentalAllowed = true
             RearAirfieldCostFactor = 0.125f
             MoneyBackFactor = 0.75f
@@ -206,6 +222,14 @@ let loadConfigFile (path : string) =
         MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI
         MaxStaticPlanes = values.MaxStaticPlanes
         SpawnsAreRestricted = values.SpawnRestrictions
+        FreshFighterSpawns = values.FreshFighterSpawns
+        FreshAttackerSpawns = values.FreshAttackerSpawns
+        FreshBomberSpawns = values.FreshBomberSpawns
+        FreshTransportSpawns = values.FreshTransportSpawns
+        FreshFighterRefill = values.FreshFighterRefill
+        FreshAttackerRefill = values.FreshAttackerRefill
+        FreshBomberRefill = values.FreshBomberRefill
+        FreshTransportRefill = values.FreshTransportRefill
         PlaneRentalAllowed = values.PlaneRentalAllowed
         MaxCash = values.MaxCash
         InitialCash = values.InitialCash

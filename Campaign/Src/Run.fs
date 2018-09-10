@@ -923,7 +923,7 @@ module MissionLogParsing =
         let hangars =
             hangars
             |> Map.map (fun player hangar -> { hangar with Reserve = min hangar.Reserve (1.0f<E> * float32 config.MaxCash) })
-        let hangars2 =
+        let hangars =
             AsyncSeq.ofSeq entries
             |> checkPlaneAvailability (Limits.FromConfig config) world state hangars
             |> AsyncSeq.toBlockingSeq
@@ -931,7 +931,22 @@ module MissionLogParsing =
             |> Seq.tryLast
             |> Option.defaultValue hangars
             |> stringsToGuids
-        saveHangars (Path.Combine(config.OutputDir, Filenames.hangars)) hangars2
+        // Refill fresh spawns
+        let hangars =
+            hangars
+            |> Map.map (fun _ h ->
+                let freshSpawns =
+                    h.FreshSpawns
+                    |> Map.map (fun planeType qty ->
+                        match planeType with
+                        | Fighter -> qty + config.FreshFighterRefill |> min config.FreshFighterSpawns
+                        | Attacker -> qty + config.FreshAttackerRefill |> min config.FreshAttackerSpawns
+                        | Bomber -> qty + config.FreshBomberRefill |> min config.FreshBomberSpawns
+                        | Transport -> qty + config.FreshTransportRefill |> min config.FreshTransportSpawns
+                    )
+                { h with FreshSpawns = freshSpawns }
+            )
+        saveHangars (Path.Combine(config.OutputDir, Filenames.hangars)) hangars
 
     /// Compute new campaign state
     let updateState(config, missionResults) =

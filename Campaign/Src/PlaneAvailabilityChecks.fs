@@ -65,14 +65,15 @@ let showHangar(hangar : PlayerHangar, delay) =
     ]
 
 /// Create an empty hangar for a player
-let private emptyHangar (playerId : string, playerName, coalition, cash) =
-    { Player = Guid(playerId); PlayerName = playerName; Coalition = coalition; Reserve = cash; Airfields = Map.empty }
+let private emptyHangar (playerId : string, playerName, coalition, cash, freshSpawns) =
+    { Player = Guid(playerId); PlayerName = playerName; Coalition = coalition; Reserve = cash; Airfields = Map.empty; FreshSpawns = freshSpawns }
 
 /// Commands sent during state transitions in PlayerStateData to the main asyncSeq computation
 type Command =
     | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlaneCheckIn of user:UserIds * userCoalition:CoalitionId * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlayerPayed of user:UserIds * CoalitionId * float32<E>
+    | PlayerFreshSpawn of user:UserIds * CoalitionId * PlaneType
     | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * originalCost:float32<E> * AirfieldId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * CoalitionId * float32<E>
@@ -115,9 +116,13 @@ type Limits =
       SpawnsAreRestricted : bool
       RearAirfieldCostFactor : float32
       MaxRentalGain : float32<E>
+      FreshSpawns : Map<PlaneType, int>
     }
 with
     static member FromConfig(config : Campaign.Configuration.Configuration) =
+        let freshSpawns =
+            [(Fighter, config.FreshFighterSpawns); (Attacker, config.FreshAttackerSpawns); (Bomber, config.FreshBomberSpawns); (Transport, config.FreshTransportSpawns)]
+            |> Map.ofList
         { InitialCash = 1.0f<E> * float32 config.InitialCash
           MaxCash = 1.0f<E> * float32 config.MaxCash
           MoneyBackFactor = config.MoneyBackFactor
@@ -127,6 +132,7 @@ with
           RearAirfieldCostFactor = config.RearAirfieldCostFactor
           PlaneRentalAllowed = config.PlaneRentalAllowed
           MaxRentalGain = PlaneModel.basePlaneCost / 5.0f
+          FreshSpawns = freshSpawns
         }
 
     member this.ShowCashReserves = this.PlaneRentalAllowed
@@ -299,6 +305,15 @@ with
             { this with Hangars = hangars },
             [ Overview(user, 0, [ sprintf "You have have spent %0.0f" cost ]) ]
 
+        | PlayerFreshSpawn(user, coalition, planeType) ->
+            let hangar : PlayerHangar = this.GetHangar(user, coalition)
+            let oldSpawns = hangar.FreshSpawns.TryFind(planeType) |> Option.defaultValue 0
+            let newSpawns = oldSpawns - 1 |> max 0
+            let hangar = { hangar with FreshSpawns = hangar.FreshSpawns.Add(planeType, newSpawns) }
+            let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
+            { this with Hangars = hangars },
+            []
+
         | PlayerReturnedBorrowedPlane(user, plane, cost, af) ->
             match this.GetAirfieldCoalition(af) with
             | Some coalition ->
@@ -391,7 +406,7 @@ with
         | PunishThief(user, plane, af) ->
             this,
             [
-                Violation(user, "taking off in a plane you cannot afford")
+                Violation(user, "unauthorized take off")
             ]
 
         | Message m ->
@@ -471,13 +486,23 @@ with
         this.State.GetRegion(this.World.GetAirfield(af).Region).Owner
 
     member this.GetHangar(user : UserIds, coalition) =
+        let freshSpawns = this.Limits.FreshSpawns
         this.Hangars.TryFind((user.UserId, coalition))
-        |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash))
+        |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash, freshSpawns))
+
+    member this.GetFreshSpawnAlternatives(planeTypes : Set<PlaneType>, af : AirfieldId) =
+        let planes = this.State.GetAirfield(af).NumPlanes
+        planes
+        |> Map.filter (fun plane qty -> qty >= 1.0f && planeTypes.Contains(plane.PlaneType))
+        |> Map.toSeq
+        |> Seq.map fst
+
 
 type TransactionCost =
     | Rent of float32<E>
     | Buy of float32<E>
-    | Denied
+    | Denied of reason:string
+    | FreshSpawn of PlaneType
     | Free
 with
     member this.IsRental =
@@ -487,13 +512,13 @@ with
 
     member this.IsDeniedCase =
         match this with
-        | Denied -> true
+        | Denied _ -> true
         | _ -> false
 
     member this.Amount =
         match this with
         | Rent x | Buy x -> x
-        | Denied | Free -> 0.0f<E>
+        | Denied _ | Free | FreshSpawn _ -> 0.0f<E>
 
 /// States in the PlayerFlightData state machine
 type PlayerFlightState =
@@ -560,8 +585,8 @@ with
                         yield Message(Overview(user, 15, ["The following regions would benefit from resupplies: " + (x |> List.map (fun af -> af.AirfieldId.AirfieldName) |> String.concat ", ")]))
                 }
             let cost =
+                let hangar = context.GetHangar(user, coalition)
                 if context.IsSpawnRestricted(af, plane, coalition) then
-                    let hangar = context.GetHangar(user, coalition)
                     if hangar.HasReservedPlane(af, plane) then
                         Free
                     else
@@ -569,33 +594,54 @@ with
                         if price = 0.0f<E> || price <= hangar.Reserve then
                             Rent price
                         else
-                            Denied
+                            Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
                 elif context.RearAirfields.Contains(af) then
-                    match plane.Cost * context.Limits.RearAirfieldCostFactor with
-                    | 0.0f<E> -> Free
-                    | price ->
+                    let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0
+                    match numFreshSpawnsLeft, plane.Cost * context.Limits.RearAirfieldCostFactor with
+                    | 0, _ ->
+                        let alts =
+                            hangar.FreshSpawns
+                            |> Map.toSeq
+                            |> Seq.filter (fun (_, qty) -> qty >= 1)
+                            |> Seq.map fst
+                            |> Set.ofSeq
+                            |> fun planeTypes -> context.GetFreshSpawnAlternatives(planeTypes, af)
+                            |> List.ofSeq
+                        match alts with
+                        | [] ->
+                            Denied "You have exhausted all your fresh spawns"
+                        | planes ->
+                            let planes =
+                                planes
+                                |> List.map (fun plane -> plane.PlaneName)
+                                |> String.concat ", "
+                            Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instad: %s" planes)
+                    | _, 0.0f<E> ->
+                        FreshSpawn plane.PlaneType
+                    | _, price ->
                         let available = context.GetHangar(user, coalition)
                         if available.Reserve >= price then
                             Buy price
                         else
-                            Denied
+                            Denied "Your rank is insufficient to use that plane from the rear airfield"
                 else
                     Free
             // Deny rental if it's not allowed in the limits
             let cost =
                 if not context.Limits.PlaneRentalAllowed && cost.IsRental then
-                    Denied
+                    Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
                 else
                     cost
             let planeInfo =
                 [
                     let rank = context.GetHangar(user, coalition).Rank
                     match cost with
-                    | Denied ->
+                    | Denied reason ->
                         yield Message(Warning(user, 0,
-                                        [sprintf "%s %s, your rank does not allow to requisition a %s at %s" rank user.Name plane.PlaneName af.AirfieldName
+                                        [sprintf "%s %s, you are not allowed to take off in a %s at %s" rank user.Name plane.PlaneName af.AirfieldName
+                                         reason
                                          "You will be KICKED if you take off"]))
-                    | Free ->
+                    | Free | FreshSpawn _ ->
                         yield Message(Overview(user, 0, [sprintf "%s %s, you are cleared to take off in a %s from %s" rank user.Name plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
                     | Rent cost ->
@@ -635,7 +681,7 @@ with
     // Handle first take off after spawn
     member this.HandleTakeOff(context : Context, takeOff : TakeOffEntry) =
         match this.State with
-        | Spawned Denied ->
+        | Spawned(Denied _) ->
             { this with State = StolePlane },
             [ PunishThief(this.Player, this.Plane, this.StartAirfield) ]
         | Spawned(cost) ->
@@ -643,6 +689,12 @@ with
             [
                 if this.IsBorrowed then
                     yield PlayerPayed(this.Player, this.Coalition, cost.Amount)
+
+                match cost with
+                | FreshSpawn planeType ->
+                    yield PlayerFreshSpawn(this.Player, this.Coalition, planeType)
+                | _ -> ()
+
                 yield Message(
                         Announce(
                             this.Coalition,
