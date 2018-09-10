@@ -119,7 +119,7 @@ type PlayerHangar =
       Coalition : CoalitionId
       Reserve : float32<E>
       // Number of fresh spawns left, i.e. free spawns in non-reserved planes
-      FreshSpawns : Map<PlaneType, int>
+      FreshSpawns : Map<PlaneType, float32>
       Airfields : Map<AirfieldId, AirfieldHangar> }
 with
     /// <summary>

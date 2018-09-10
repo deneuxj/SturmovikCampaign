@@ -116,12 +116,13 @@ type Limits =
       SpawnsAreRestricted : bool
       RearAirfieldCostFactor : float32
       MaxRentalGain : float32<E>
-      FreshSpawns : Map<PlaneType, int>
+      FreshSpawns : Map<PlaneType, float32>
     }
 with
     static member FromConfig(config : Campaign.Configuration.Configuration) =
         let freshSpawns =
             [(Fighter, config.FreshFighterSpawns); (Attacker, config.FreshAttackerSpawns); (Bomber, config.FreshBomberSpawns); (Transport, config.FreshTransportSpawns)]
+            |> List.map (fun (planeType, qty) -> (planeType, float32 qty))
             |> Map.ofList
         { InitialCash = 1.0f<E> * float32 config.InitialCash
           MaxCash = 1.0f<E> * float32 config.MaxCash
@@ -307,8 +308,8 @@ with
 
         | PlayerFreshSpawn(user, coalition, planeType) ->
             let hangar : PlayerHangar = this.GetHangar(user, coalition)
-            let oldSpawns = hangar.FreshSpawns.TryFind(planeType) |> Option.defaultValue 0
-            let newSpawns = oldSpawns - 1 |> max 0
+            let oldSpawns = hangar.FreshSpawns.TryFind(planeType) |> Option.defaultValue 0.0f
+            let newSpawns = oldSpawns - 1.0f |> max 0.0f
             let hangar = { hangar with FreshSpawns = hangar.FreshSpawns.Add(planeType, newSpawns) }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
@@ -596,20 +597,20 @@ with
                         else
                             Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
                 elif context.RearAirfields.Contains(af) then
-                    let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0
+                    let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0.0f
                     match numFreshSpawnsLeft, plane.Cost * context.Limits.RearAirfieldCostFactor with
-                    | 0, _ ->
+                    | x, _ when x < 1.0f ->
                         let alts =
                             hangar.FreshSpawns
                             |> Map.toSeq
-                            |> Seq.filter (fun (_, qty) -> qty >= 1)
+                            |> Seq.filter (fun (_, qty) -> qty >= 1.0f)
                             |> Seq.map fst
                             |> Set.ofSeq
                             |> fun planeTypes -> context.GetFreshSpawnAlternatives(planeTypes, af)
                             |> List.ofSeq
                         match alts with
                         | [] ->
-                            Denied "You have exhausted all your fresh spawns"
+                            Denied "You have exhausted all your fresh spawns; They refill partially every new mission"
                         | planes ->
                             let planes =
                                 planes

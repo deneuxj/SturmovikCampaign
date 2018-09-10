@@ -939,10 +939,10 @@ module MissionLogParsing =
                     h.FreshSpawns
                     |> Map.map (fun planeType qty ->
                         match planeType with
-                        | Fighter -> qty + config.FreshFighterRefill |> min config.FreshFighterSpawns
-                        | Attacker -> qty + config.FreshAttackerRefill |> min config.FreshAttackerSpawns
-                        | Bomber -> qty + config.FreshBomberRefill |> min config.FreshBomberSpawns
-                        | Transport -> qty + config.FreshTransportRefill |> min config.FreshTransportSpawns
+                        | Fighter -> qty + config.FreshFighterRefill |> min (float32 config.FreshFighterSpawns)
+                        | Attacker -> qty + config.FreshAttackerRefill |> min (float32 config.FreshAttackerSpawns)
+                        | Bomber -> qty + config.FreshBomberRefill |> min (float32 config.FreshBomberSpawns)
+                        | Transport -> qty + config.FreshTransportRefill |> min (float32 config.FreshTransportSpawns)
                     )
                 { h with FreshSpawns = freshSpawns }
             )

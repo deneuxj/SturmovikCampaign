@@ -55,15 +55,15 @@
     # Max number of bomber spawns at rear airfield (per player)
     FreshBomberSpawns: 2
     # Max number of transport spawns at rear airfield (per player)
-    FreshTransportSpawns: 1
+    FreshTransportSpawns: 3
     # Number of new fresh fighter spawns each new mission (per player)
-    FreshFighterRefill: 2
+    FreshFighterRefill: 2.0
     # Number of new fresh attacker spawns each new mission (per player)
-    FreshAttackerRefill: 1
+    FreshAttackerRefill: 1.0
     # Number of new fresh bomber spawns each new mission (per player)
-    FreshBomberRefill: 1
+    FreshBomberRefill: 0.7
     # Number of new fresh transport spawns each new mission (per player)
-    FreshTransportRefill: 1
+    FreshTransportRefill: 1.0
     # Whether players can spend cash reserve to borrow planes they haven't reserved
     PlaneRentalAllowed: true
     # Cost factor for buying planes from the rear airfield
