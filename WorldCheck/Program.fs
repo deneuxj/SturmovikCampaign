@@ -29,6 +29,8 @@ let main argv =
         with
         | e -> failwithf "Error in mission file: %s" e.Message
 
+    let config = Campaign.Configuration.Configuration.Default
+
     let capacity =
         world.Regions
         |> Seq.map (fun region -> region.RegionId, region.Storage |> Seq.sumBy (fun sto -> sto.Storage world.SubBlockSpecs))
@@ -49,7 +51,7 @@ let main argv =
 
     let state =
         try
-            WorldState.mkInitialState(world, missionFile, 0.0f)
+            WorldState.mkInitialState(config, world, 0.0f)
         with
         | e -> failwithf "Error in campaign init: %s" e.Message
 

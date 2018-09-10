@@ -23,6 +23,56 @@ open BasicTypes
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
+let alliesRanks =
+    [| "private"
+       "efreitor"
+       "junior sergeant"
+       "sergeant"
+       "senior sergeant"
+       "starshina"
+       "praporshchik"
+       "senior-praporshchik"
+       "junior lieutenant"
+       "lieutenant"
+       "senior lieutenant"
+       "captain"
+       "major"
+       "podpolkovnik"
+       "polkovnik"
+       "major general"
+       "lieutenant general"
+       "general-polkovnik"
+       "marshal"
+       "chief marshal"
+       "marshal of the Soviet Union"
+       "generalissimus of the Soviet Union"
+    |]
+
+let axisRanks =
+    [| "flieger"
+       "gefreiter"
+       "obergefreiter"
+       "hauptgefreiter"
+       "stabsgefreiter"
+       "oberstabsgefreiter"
+       "unteroffizer"
+       "stabsunteroffizer"
+       "feldwebel"
+       "oberfeldwebel"
+       "hauptfeldwebel"
+       "stabsfeldwebel"
+       "oberstabsfeldwebel"
+       "fahnenjunker"
+       "faehnrich"
+       "oberfaehnrich"
+       "leutnant"
+       "oberleutnant"
+       "hauptmann"
+       "stabshauptmann"
+       "major"
+       "oberstleutnant"
+    |]
+
 /// <summary>
 /// The planes that a player took to an airfield. That player is allowed to take off in any of these planes, if the airfield has it available.
 /// </summary>
@@ -115,6 +165,18 @@ with
                 if kvp.Value >= 1.0f then
                     yield kvp.Key.PlaneName
         ]
+
+    /// Return the rank corresponding to the reserve
+    member this.Rank =
+        if this.Reserve < 0.0f<E> then
+            "traitor"
+        else
+            let ranks =
+                match this.Coalition with
+                | Axis -> axisRanks
+                | Allies -> alliesRanks
+            let idx = int(this.Reserve / 500.0f<E>) |> max 0 |> min (ranks.Length - 1)
+            sprintf "%s (%d)" ranks.[idx] idx
 
 /// Get the total amount of planes of a given model at a given airfield
 let getTotalPlanesReservedAtAirfield af plane hangars =

@@ -66,8 +66,12 @@ type Configuration = {
     MaxBattleKillsRatioByAI: float32
     MaxStaticPlanes : int
     MaxCash : int
+    InitialCash : int
     MaxReservedPlanes : int // Per type and airfield
     MaxTotalReservedPlanes : int // All types, all airfields
+    RearAirfieldCostFactor : float32
+    SpawnsAreRestricted : bool
+    PlaneRentalAllowed : bool
     MoneyBackFactor : float32
     EnablePlayerTanks : bool
     OutputDir : string
@@ -80,11 +84,13 @@ type Configuration = {
     ThinkTime : int
     DesiredProduction : float32
     PlaneProduction : float32
+    RearAirfieldPlanes : int
     MaxFriendlyFireEvents : int
     FriendlyFireBanDuration : int
     MaxNoobScore : float32
     NoobBanDuration : int
     WebHook : string
+    DiscordUserId : string
     MaxBuildingIcons : int
     ChatLogCommandsEnabled : bool
 }
@@ -107,9 +113,13 @@ with
             MaxBattleKillsRatioByPlayers = 1.0f
             MaxBattleKillsRatioByAI = 0.25f
             MaxStaticPlanes = 6
+            InitialCash = 5000
             MaxCash = 10000
             MaxReservedPlanes = 2
             MaxTotalReservedPlanes = 6
+            SpawnsAreRestricted = true
+            PlaneRentalAllowed = true
+            RearAirfieldCostFactor = 0.125f
             MoneyBackFactor = 0.75f
             EnablePlayerTanks = true
             MissionName = "AutoGenMission2"
@@ -125,7 +135,9 @@ with
             ThinkTime = 30
             DesiredProduction = 300.0f
             PlaneProduction = 1000.0f
+            RearAirfieldPlanes = 5000
             WebHook = ""
+            DiscordUserId = ""
             MaxFriendlyFireEvents = 2
             FriendlyFireBanDuration = 1
             MaxNoobScore = 3.0f
@@ -193,10 +205,14 @@ let loadConfigFile (path : string) =
         MaxBattleKillsRatioByPlayers = float32 values.MaxBattleKillsRatioByPlayers
         MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI
         MaxStaticPlanes = values.MaxStaticPlanes
+        SpawnsAreRestricted = values.SpawnRestrictions
+        PlaneRentalAllowed = values.PlaneRentalAllowed
         MaxCash = values.MaxCash
+        InitialCash = values.InitialCash
         MaxReservedPlanes = values.MaxReservedPlanes
         MaxTotalReservedPlanes = values.MaxTotalReservedPlanes
         MoneyBackFactor = float32 values.MoneyBackFactor
+        RearAirfieldCostFactor = float32 values.RearAirfieldCostFactor
         EnablePlayerTanks = values.EnablePlayerTanks
         MissionName = values.MissionName
         MissionLength = values.MissionLength
@@ -210,8 +226,10 @@ let loadConfigFile (path : string) =
         ThinkTime = values.ThinkTime
         DesiredProduction = float32 values.DesiredProduction
         PlaneProduction = float32 values.PlaneProduction
+        RearAirfieldPlanes = values.RearAirfieldPlanes
         Briefing = values.Briefing
         WebHook = values.WebHook
+        DiscordUserId = values.DiscordUserId
         FriendlyFireBanDuration = values.FriendlyFireBanDuration
         MaxFriendlyFireEvents = values.MaxFriendlyFireEvents
         MaxNoobScore = float32 values.MaxNoobScore

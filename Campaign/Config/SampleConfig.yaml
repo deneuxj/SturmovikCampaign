@@ -46,8 +46,16 @@
     MaxBattleKillsRatioByAI: 0.25
     # Max static planes per airfield
     MaxStaticPlanes: 6
+    # Whether spawn restrictions are in place
+    SpawnRestrictions: true
+    # Whether players can spend cash reserve to borrow planes they haven't reserved
+    PlaneRentalAllowed: true
+    # Cost factor for buying planes from the rear airfield
+    RearAirfieldCostFactor: 0.125
     # Max amount of cash a player can hold
     MaxCash: 10000
+    # Initial amount of cash for each player
+    InitialCash: 5000
     # Max number of reserved planes of a type at an airfield
     MaxReservedPlanes: 2
     # Max total number of reserved Planes
@@ -77,6 +85,8 @@
     DesiredProduction: 300.0
     # Amount of production (resource units per hour) for planes. 500.0f gives one i16 or bf109e7 per hour.
     PlaneProduction: 2000.0
+    # Initial number of planes at rear airfield
+    RearAirfieldPlanes: 5000
     # Fixed part of the mission briefing
     Briefing: |
         This mission is part of a dynamic campaign where the events from one mission affect the following missions.
@@ -93,6 +103,8 @@
 
     # If non-empty, webhook URL of a discord channel where comments extracted from the ongoing mission log entries will be posted.
     WebHook: ""
+    # User ID to use in "hey @user something went wrong with the server"
+    DiscordUserId: ""
     # Max number of friendly fire incidents. Ban occurs when that number is reached
     MaxFriendlyFireEvents: 2
     # Duration of ban for friendly fire

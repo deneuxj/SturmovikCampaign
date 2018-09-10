@@ -13,6 +13,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "WorldCheck", "WorldCheck\Wo
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Blocks", "Blocks\Blocks.fsproj", "{6F0BE45C-721F-49FB-BFDA-73EB7A6D07BA}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{DA0FF71F-9790-4F20-9516-A839D66ED86E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{6F0BE45C-721F-49FB-BFDA-73EB7A6D07BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F0BE45C-721F-49FB-BFDA-73EB7A6D07BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F0BE45C-721F-49FB-BFDA-73EB7A6D07BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA0FF71F-9790-4F20-9516-A839D66ED86E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA0FF71F-9790-4F20-9516-A839D66ED86E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA0FF71F-9790-4F20-9516-A839D66ED86E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA0FF71F-9790-4F20-9516-A839D66ED86E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

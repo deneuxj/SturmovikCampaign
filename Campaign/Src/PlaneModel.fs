@@ -42,7 +42,29 @@ type PlaneRole =
     | LevelBomber
     | CargoTransporter
 
-let private basePlaneCost = 500.0f<E>
+let basePlaneCost = 500.0f<E>
+
+//// times 2 [(4, x); (10, y)] -> [(4, x); (5, x); (10, y); (11, y)]
+let private times N xs =
+    [
+        for (n, x) in xs do
+            for c in 0..(N - 1) do
+                yield (n + c, x)
+    ]
+//// vTimes [(3, 10, x)] -> [(10, x); (11, x); (12, x)]
+let private vTimes xs =
+    [
+        for (n, N, x) in xs do
+            for c in 0..(N - 1) do
+                yield (n + c, x)
+    ]
+/// xTimes [10; 20] [(1, x); (2, y)] -> [(11, x); (12, y); (21, x); (22, y)]
+let private xTimes offsets xs =
+    [
+        for offset in offsets do
+            for (n, x) in xs do
+                yield (n + offset, x)
+    ]
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
@@ -410,27 +432,6 @@ with
         | SpitfireMkVb -> "spitfire mk.vb"
 
     member this.BombLoads =
-        // times 2 [(4, x); (10, y)] -> [(4, x); (5, x); (10, y); (11, y)]
-        let times N xs =
-            [
-                for (n, x) in xs do
-                    for c in 0..(N - 1) do
-                        yield (n + c, x)
-            ]
-        // vTimes [(3, 10, x)] -> [(10, x); (11, x); (12, x)]
-        let vTimes xs =
-            [
-                for (n, N, x) in xs do
-                    for c in 0..(N - 1) do
-                        yield (n + c, x)
-            ]
-        /// xTimes [10; 20] [(1, x); (2, y)] -> [(11, x); (12, y); (21, x); (22, y)]
-        let xTimes offsets xs =
-            [
-                for offset in offsets do
-                    for (n, x) in xs do
-                        yield (n + offset, x)
-            ]
         match this with
         | Bf109e7 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
         | Bf109f2 -> xTimes [0; 4] [(1, 200.0f<K>); (2, 250.0f<K>)]
@@ -483,6 +484,23 @@ with
         | A20 -> [(1, 800.0f<K>); (2, 1600.0f<K>); (3, 2000.0f<K>); (4, 1000.0f<K>); (5, 1800.0f<K>)]
         |> List.sortBy fst
 
+    member this.SpecialLoadsCosts =
+        // rockets
+        let r82 = 50.0f<E> / 8.0f
+        let r132 = 100.0f<E> / 8.0f
+
+        match this with
+        | Lagg3s29 -> times 28 [21, 6.0f * r82]
+        | Yak1s69 -> times 4 [1, 2.0f * r82] @ times 4 [5, 6.0f * r82]
+        | I16 -> xTimes [3; 14] (times 4 [(0, 4.0f * r82); (4, 6.0f * r82)])
+        | Mig3 -> xTimes [1; 9; 17] (times 4 [0, 6.0f * r82])
+        | P40 -> times 24 [12, 4.0f * r82]
+        | IL2M41 -> xTimes [20; 40] (times 16 [0, 8.0f * r82]) @ times 16 [56, 8.0f * r132]
+        | IL2M42 -> xTimes [29; 52] (times 19 [0, 8.0f * r82]) @ times 16 [71, 8.0f * r132]
+        | IL2M43 -> xTimes [29; 49] (times 16 [0, 4.0f * r82]) @ times 16 [65, 4.0f * r132] @ times 8 [85, 4.0f * r82] @ times 4 [93, 4.0f * r132]
+        | Pe2s35 | Pe2s87 -> times 4 [7, 10.0f * r132]
+        | _ -> []
+
     member this.EmptyPayload =
         match this with
         | Lagg3s29 -> 49
@@ -519,39 +537,6 @@ with
         | He111h16 -> 19
         | Ju88a4 -> 12
         | Ju52 -> 3
-
-    member this.BombLoadsOk =
-        this.BombLoads
-        |> Seq.pairwise
-        |> Seq.forall(fun ((l1, w1), (l2, w2)) -> l1 < l2)
-
-    member this.LoadOuts(maxWeight : float32<K>) =
-        let rec work (loadout : int) (weights : (int * float32<K>) list) =
-            seq {
-                match weights with
-                | [] ->
-                    yield sprintf "%d..999" loadout
-                | (loadout2, w) :: rest ->
-                    if loadout < loadout2 then
-                        if w <= maxWeight then
-                            yield! work loadout rest
-                        else if loadout + 1 = loadout2 then
-                            yield sprintf "%d" loadout
-                            yield! work (loadout2 + 1) rest
-                        else
-                            yield sprintf "%d..%d" loadout (loadout2 - 1)
-                            yield! work (loadout2 + 1) rest
-                    else if loadout = loadout2 then
-                        if w <= maxWeight then
-                            yield! work loadout rest
-                        else
-                            yield! work (loadout + 1) rest
-                    else
-                        failwith "loadout is larger than loadout2"
-            }
-        assert(this.BombLoadsOk)
-        work 0 this.BombLoads
-        |> String.concat "/"
 
     member this.Roles =
         match this with

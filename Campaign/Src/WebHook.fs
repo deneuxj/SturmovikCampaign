@@ -44,7 +44,7 @@ let toChat (client : WebClient, hookUri : System.Uri) message =
             |> Some
         with
         | e ->
-            logger.Debug(sprintf "Sending chat entry to web hook failed with '%s'" e.Message)
+            logger.Error(sprintf "Sending chat entry to web hook failed with '%s'" e.Message)
             None
     let responseHeaders =
         client.ResponseHeaders
@@ -56,7 +56,7 @@ let toChat (client : WebClient, hookUri : System.Uri) message =
         |> Map.ofSeq
     match responseHeaders.TryFind("retry-after") with
     | Some delay ->
-        logger.Info(sprintf "Discord rate-limiting us, retry-after %s ms" delay)
+        logger.Warn(sprintf "Discord rate-limiting us, retry-after %s ms" delay)
         for kvp in responseHeaders do
             logger.Debug(sprintf "Header from discord: %s: %s" kvp.Key kvp.Value)
         match System.Int32.TryParse(delay) with

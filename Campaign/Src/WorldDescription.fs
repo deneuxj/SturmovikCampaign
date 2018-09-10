@@ -57,6 +57,8 @@ type Region = {
     Parking : Vector2 list
     /// Side who owns the region initially
     InitialOwner : CoalitionId option
+    /// A strong region initially has full numbers of tanks, planes and supplies
+    IsStrong : bool
 }
 with
     static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list) =
@@ -70,6 +72,7 @@ with
               Production = []
               Parking = []
               InitialOwner = coalition
+              IsStrong = region.GetDesc().Value.Contains("***")
             }
         let withBoundaries =
             regions

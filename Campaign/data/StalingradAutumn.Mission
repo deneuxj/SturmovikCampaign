@@ -12670,6 +12670,206 @@ Group
   }
   
 
+  MCU_TR_InfluenceArea
+  {
+    Index = 3762;
+    Name = "AAA-4";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 132720.284;
+    YPos = 82.420;
+    ZPos = 185976.817;
+    XOri = 0.00;
+    YOri = 339.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      132627, 185825;
+      132707, 185799;
+      132810, 186136;
+      132718, 186152;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3763;
+    Name = "AAA-4";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 134046.560;
+    YPos = 82.420;
+    ZPos = 185749.033;
+    XOri = 0.00;
+    YOri = 201.94;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      134011, 185924;
+      133935, 185888;
+      134089, 185571;
+      134168, 185622;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3764;
+    Name = "AAA-4";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 135334.980;
+    YPos = 82.420;
+    ZPos = 233327.084;
+    XOri = 0.00;
+    YOri = 13.88;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      135318, 233201;
+      135411, 233235;
+      135336, 233454;
+      135245, 233420;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3765;
+    Name = "AAA-4";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 135366.365;
+    YPos = 82.420;
+    ZPos = 234744.248;
+    XOri = 0.00;
+    YOri = 303.27;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      135242, 234718;
+      135305, 234642;
+      135486, 234785;
+      135424, 234860;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3766;
+    Name = "AAA-4";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 153786.475;
+    YPos = 82.420;
+    ZPos = 264188.880;
+    XOri = 0.00;
+    YOri = 250.91;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      153690, 264272;
+      153668, 264175;
+      153892, 264119;
+      153913, 264214;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3767;
+    Name = "AAA-4";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 153704.618;
+    YPos = 82.420;
+    ZPos = 263046.727;
+    XOri = 0.00;
+    YOri = 79.17;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      153812, 262979;
+      153820, 263077;
+      153590, 263101;
+      153583, 263004;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3768;
+    Name = "AAA-4";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 158152.866;
+    YPos = 82.420;
+    ZPos = 281677.361;
+    XOri = 0.00;
+    YOri = 170.30;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      158219, 281786;
+      158120, 281792;
+      158101, 281561;
+      158198, 281556;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3769;
+    Name = "AAA-4";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 158226.998;
+    YPos = 82.420;
+    ZPos = 282671.466;
+    XOri = 0.00;
+    YOri = 110.65;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      158354, 282669;
+      158310, 282758;
+      158101, 282658;
+      158145, 282571;
+    }
+  }
+  
+
 }
 
 
@@ -55880,6 +56080,50 @@ Group
     ZOri = 0.00;
     Model = "graphics\blocks\arf_hangars_1.mgm";
     Script = "LuaScripts\WorldObjects\Blocks\arf_hangars_1.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 3770;
+    LinkTrId = 0;
+    XPos = 158225.688;
+    YPos = 29.813;
+    ZPos = 282846.488;
+    XOri = 0.00;
+    YOri = 294.80;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_hangars_3.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_hangars_3.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+  }
+  
+
+  Block
+  {
+    Name = "Block";
+    Index = 3772;
+    LinkTrId = 0;
+    XPos = 157913.977;
+    YPos = 29.813;
+    ZPos = 281695.269;
+    XOri = 0.00;
+    YOri = 356.49;
+    ZOri = 0.00;
+    Model = "graphics\blocks\arf_hangars_2.mgm";
+    Script = "LuaScripts\WorldObjects\Blocks\arf_hangars_2.txt";
     Country = 0;
     Desc = "";
     Durability = 25000;

@@ -115,7 +115,7 @@ module Init =
         use weatherFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.weather))
         let weather = serializer.Deserialize<Weather.WeatherState>(weatherFile)
 
-        let state = WorldState.Create(world, Path.Combine(config.ScriptPath, world.Scenario + ".Mission"), float32 weather.Wind.Direction)
+        let state = WorldState.Create(config, world, float32 weather.Wind.Direction)
         let outputDir = config.OutputDir
         use stateFile = File.CreateText(Path.Combine(outputDir, Filenames.state))
         serializer.Serialize(stateFile, state)
@@ -476,11 +476,15 @@ module MissionFileGeneration =
             else
                 ""
         let spawnRestrictions =
-            ["You can spawn at any airfield named in ALL CAPS."
-             "You can also spawn at other airfields, if you have landed <b>that</b> plane (undamaged) there earlier,"
-             "or if you have gathered enough rewards to buy the right to fly a new plane."
-             sprintf "A fighter costs around %0.0f, an attacker %0.0f and a bomber %0.0f.<br><br>" Bf109f4.Cost Bf110e.Cost Ju88a4.Cost]
-            |> String.concat " "
+            if config.SpawnsAreRestricted then
+                ["You can spawn at any airfield named in ALL CAPS."
+                 "You can also spawn at other airfields, if you have landed <b>that</b> plane (undamaged) there earlier,"
+                 "or if you have gathered enough rewards to rent a plane."
+                 sprintf "The base cost of a fighter is around %0.0f, an attacker %0.0f and a bomber %0.0f.<br><br>" Bf109f4.Cost Bf110e.Cost Ju88a4.Cost
+                 "The cost of rental depends on the number of planes. The fewer they are, the more they cost."]
+                |> String.concat " "
+            else
+                ""
         let briefing = preamble + timeAndDate + weatherDescription + spawnRestrictions + mainText + "<br><br>" + commandsHelp + battles
         let missionName = config.MissionName
         let missionParams =
@@ -500,6 +504,7 @@ module MissionFileGeneration =
               MaxVehiclesInBattle = config.MaxVehiclesInBattle
               MaxBuildingIcons = config.MaxBuildingIcons
               BattleKillRatio = config.BattleKillRatio
+              SpawnsAreRestricted = config.SpawnsAreRestricted
             }
         let missionData =
             { World = world

@@ -276,7 +276,7 @@ type TookOff = {
     Airfield : AirfieldId
     Plane : PlaneModel
     Cargo : float32<K>
-    BombLoad : float32<K>
+    WeaponCost : float32<E>
     PlayerName : string option
     Coalition : CoalitionId option
 }
@@ -308,7 +308,8 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
         let planeIds = ref Map.empty
         let damages = ref Map.empty
         let cargo = ref Map.empty
-        let bombLoad = ref Map.empty
+        let weaponCost = ref Map.empty
+        let bombWeight = ref Map.empty
         // Number of bombs at take off
         let mutable initBombs = Map.empty
         // Map object ID to starting airfield
@@ -366,11 +367,17 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     ()
                 match playerPlane.VehicleType with
                 | PlaneObjectType model ->
-                    let weight =
+                    let bombLoadWeight =
                         model.BombLoads
                         |> List.tryPick (fun (loadout, weight) -> if loadout = playerPlane.Payload then Some weight else None)
                         |> Option.defaultVal 0.0f<K>
-                    bombLoad := Map.add playerPlane.VehicleId weight bombLoad.Value
+                    let loadoutCost =
+                        model.SpecialLoadsCosts
+                        |> List.tryPick (fun (loadout, cost) -> if loadout = playerPlane.Payload then Some cost else None)
+                        |> Option.defaultValue 0.0f<E>
+                    let cost = bombLoadWeight * bombCost + loadoutCost
+                    weaponCost := Map.add playerPlane.VehicleId cost weaponCost.Value
+                    bombWeight := bombWeight.Value.Add(playerPlane.VehicleId, bombLoadWeight)
                 | _ ->
                     ()
             | :? TakeOffEntry as takeOff ->
@@ -381,15 +388,15 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     let cargo =
                         cargo.Value.TryFind takeOff.VehicleId
                         |> Option.defaultVal 0.0f<K>
-                    let bombLoad =
-                        bombLoad.Value.TryFind takeOff.VehicleId
-                        |> Option.defaultVal 0.0f<K>
+                    let weapons =
+                        weaponCost.Value.TryFind takeOff.VehicleId
+                        |> Option.defaultVal 0.0f<E>
                     let pilot, coalition =
                         match planePilot.Value.TryFind takeOff.VehicleId with
                         | None -> None, None
                         | Some(pilot, coalition) -> Some pilot, coalition
                     ongoingFlight := ongoingFlight.Value.Add(takeOff.VehicleId, af.AirfieldId)
-                    yield tookOff { PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane; Cargo = cargo; BombLoad = bombLoad; PlayerName = pilot; Coalition = coalition }
+                    yield tookOff { PlaneId = takeOff.VehicleId; Airfield = af.AirfieldId; Plane = plane; Cargo = cargo; WeaponCost = weapons; PlayerName = pilot; Coalition = coalition }
                 | None ->
                     logger.Warn(sprintf "TookOff: Unknwon type of plane '%d'" takeOff.VehicleId)
             | :? LandingEntry as landing ->
@@ -438,7 +445,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 | Some (ev, deliveredCargo) ->
                     match initBombs.TryFind(entry.VehicleId) with
                     | Some n when n > 0 && deliveredCargo ->
-                        let load = bombLoad.Value.TryFind(entry.VehicleId) |> Option.defaultValue 0.0f<K>
+                        let load = bombWeight.Value.TryFind(entry.VehicleId) |> Option.defaultValue 0.0f<K>
                         if entry.Bombs = n then
                             yield landed { ev with Cargo = load }
                         else
@@ -448,7 +455,8 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 | _ -> ()
                 delayedLanding <- delayedLanding.Remove(entry.VehicleId)
                 initBombs <- initBombs.Remove(entry.VehicleId)
-                bombLoad := bombLoad.Value.Remove(entry.VehicleId)
+                weaponCost := weaponCost.Value.Remove(entry.VehicleId)
+                bombWeight := bombWeight.Value.Remove(entry.VehicleId)
             | :? RoundEndEntry as roundEnd ->
                 // register all ongoing flights as landed back at starting airfield
                 for vehicle, af in ongoingFlight.Value |> Map.toSeq do

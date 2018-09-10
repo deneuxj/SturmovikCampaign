@@ -258,27 +258,25 @@ let healBuildings(healths : float32[], cost : float32<E>, available : float32<E>
         reversedHealths
         |> List.rev
         |> Array.ofList
-    healths, available, healLimit
+    healths, available
 
 /// Consume supplies to heal buildings
 /// groupHealths : List of health levels for each group
 /// groupDescriptions : List of building group descriptions, must match healths
 /// energy : input energy
-/// healLimit : max amount of input energy that can be used for healing
 let computeHealing(subBlocksSpecs, groupHealths : float32[] list, groupDescriptions, energy, healLimit) =
     let energyPerGroup =
         groupDescriptions
         |> List.map (fun (x : StaticGroup) -> x.RepairCost(subBlocksSpecs))
-    let healths, energy, healLimit =
+    let healths, energy =
         List.zip groupHealths energyPerGroup
-        |> List.fold (fun (groups, available, healLimit) (healths, healthCost : float32<E>) ->
-            let healths, available, healLimit = healBuildings(healths, healthCost, available, healLimit)
-            healths :: groups, available, healLimit
-        ) ([], energy, healLimit)
-    assert(healLimit >= 0.0f<E>)
+        |> List.fold (fun (groups, available) (healths, healthCost : float32<E>) ->
+            let healths, available = healBuildings(healths, healthCost, available, healLimit)
+            healths :: groups, available
+        ) ([], energy)
     assert(energy >= 0.0f<E>)
     let healths = List.rev healths
-    healths, energy, healLimit
+    healths, energy
 
 /// Compute how many supplies were removed from each region's stores
 let computeShipped (orders : ResupplyOrder list) (shipped : SuppliesShipped list) =
@@ -530,10 +528,10 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
         Airfields = airfieldsAfterDamages }
 
 /// Transfer supplies and apply repairs
-let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newSupplies, storageHealLimit, productionHealLimit, airfieldHealLimit) =
+let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSupplies =
     let wg = WorldFastAccess.Create world
     let regionNeeds = state.GetAmmoCostPerRegion world
-    let healRate = world.RepairSpeed
+    let healLimit = world.RepairSpeed * dt
 
     // Repair and resupply regions
     let regionsAfterSupplies =
@@ -544,17 +542,13 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                     Map.tryFind region.RegionId newSupplies
                     |> Option.defaultValue 0.0f<E>
                 // Highest prio: repair production
-                let productionHealLimit =
-                    Map.tryFind region.RegionId productionHealLimit
-                    |> Option.defaultValue (healRate * dt)
-                let prodHealth, energy, productionHealLimit =
-                    regState.ProductionHealth, energy, productionHealLimit
-                    //computeHealing(
-                    //    world.SubBlockSpecs,
-                    //    regState.ProductionHealth,
-                    //    region.Production,
-                    //    energy,
-                    //    productionHealLimit)
+                let prodHealth, energy =
+                    computeHealing(
+                        world.SubBlockSpecs,
+                        regState.ProductionHealth,
+                        region.Production,
+                        energy,
+                        healLimit)
                 // Second prio: fill up region supplies
                 let storeCapacity = regState.StorageCapacity(region, world.SubBlockSpecs)
                 // Consume energy to fill up supplies up to what's needed
@@ -570,52 +564,36 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                 let supplies = regState.Supplies + toSupplies
                 let energy = energy - toSupplies
                 // Last: repair storage
-                let storageHealLimit =
-                    Map.tryFind region.RegionId storageHealLimit
-                    |> Option.defaultValue (healRate * dt)
-                let storeHealth, energy, storageHealLimit =
+                let storeHealth, energy =
                     computeHealing(
                         world.SubBlockSpecs,
                         regState.StorageHealth,
                         region.Storage,
                         energy,
-                        storageHealLimit)
+                        healLimit)
                 yield
                     { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies },
-                    (energy,
-                     storageHealLimit,
-                     productionHealLimit)
+                    energy
         ]
     let newSupplies =
         regionsAfterSupplies
-        |> List.map (fun (regState, (energy, _, _)) -> regState.RegionId, energy)
-        |> Map.ofList
-    let storageHealLimit =
-        regionsAfterSupplies
-        |> List.map (fun (regState, (_, x, _)) -> regState.RegionId, x)
-        |> Map.ofList
-    let productionHealLimit =
-        regionsAfterSupplies
-        |> List.map (fun (regState, (_, _, x)) -> regState.RegionId, x)
+        |> List.map (fun (regState, energy) -> regState.RegionId, energy)
         |> Map.ofList
     let regionsAfterSupplies =
         regionsAfterSupplies
         |> List.map fst
     // Distribute supplies between regions and airfields
-    let airfieldsDistribution, regSupplies, airfieldHealLimit =
-        let x, regSupplies, airfieldHealLimit =
+    let airfieldsDistribution, regSupplies =
+        let x, regSupplies =
             state.Airfields
-            |> List.fold (fun (airfields, regionEnergies, airfieldHealLimit) afState ->
+            |> List.fold (fun (airfields, regionEnergies) afState ->
                 let af = wg.GetAirfield(afState.AirfieldId)
                 // take from what's left of incoming supplies
                 let energy =
                     Map.tryFind af.Region regionEnergies
                     |> fun x -> defaultArg x 0.0f<E>
                 // repair airfield storage
-                let healLimit =
-                    Map.tryFind af.AirfieldId airfieldHealLimit
-                    |> Option.defaultValue (healRate * dt)
-                let storeHealth, energy, healLimit =
+                let storeHealth, energy =
                     computeHealing(world.SubBlockSpecs, afState.StorageHealth, af.Storage, energy, healLimit)
                 let afState = { afState with StorageHealth = storeHealth }
                 // fill storage
@@ -635,9 +613,9 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
                 // result
                 let afState = { afState with Supplies = afState.Supplies + toAfSupplies - backToRegion }
                 let energy = energy + backToRegion
-                afState :: airfields, Map.add af.Region energy regionEnergies, Map.add afState.AirfieldId healLimit airfieldHealLimit
-            ) ([], newSupplies, airfieldHealLimit)
-        List.rev x, regSupplies, airfieldHealLimit
+                afState :: airfields, Map.add af.Region energy regionEnergies
+            ) ([], newSupplies)
+        List.rev x, regSupplies
     let regionsAfterDistribution =
         [
             for regState, region in List.zip regionsAfterSupplies world.Regions do
@@ -660,7 +638,7 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) (newS
     { state with
         Regions = regionsAfterDistribution |> List.map fst
         Airfields = airfieldsDistribution },
-    (regSupplies, storageHealLimit, productionHealLimit, airfieldHealLimit)
+    regSupplies
 
 /// Distribute cargo to airfields
 let distributeCargo (world : World) (state : WorldState) (cargo : Map<RegionId, float32<E>>) =
@@ -734,31 +712,27 @@ let applyDamagesAndResupplies (mustConvertCapturedPlanes : bool) (dt : float32<H
     let state = applyDamages world state shipped damages orders
     // Resupplies
     let arrived = computeDelivered orders shipped blocked damages
-    let data = (arrived, Map.empty, Map.empty, Map.empty)
-    let state, (leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
+    let state, leftOver = applyResupplies dt world state arrived
     let newSupplies = computeSuppliesProduced newSupplies |> Map.sumUnion leftOver
     // New production
-    let data = (newSupplies, storageHealLimit, productionHealLimit, airfieldHealLimit)
-    let state, (leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
+    let state, leftOver = applyResupplies dt world state newSupplies
     // Captured planes
-    let state, leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit =
+    let state, leftOver =
         if mustConvertCapturedPlanes then
             let afs, captured = convertCapturedPlanes wg state
             let state = { state with Airfields = afs }
-            let data = (Map.sumUnion leftOver captured, storageHealLimit, productionHealLimit, airfieldHealLimit)
-            let state, (leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
-            state, leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit
+            let energy = Map.sumUnion leftOver captured
+            let state, leftOver = applyResupplies dt world state energy
+            state, leftOver
         else
-            state, leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit
+            state, leftOver
     // New attempt with the left-overs
-    let data = (leftOver, storageHealLimit, productionHealLimit, airfieldHealLimit)
-    let state, (waste, storageHealLimit, productionHealLimit, airfieldHealLimit) = applyResupplies dt world state data
+    let state, waste = applyResupplies dt world state leftOver
     // Cargo deliveries
     let newCargo =
         computeCargoSupplies wg cargo
         |> Map.map (fun _ qty -> bombCost * qty * (1.0f - world.CargoReservedForBombs))
-    let data = (newCargo, storageHealLimit, productionHealLimit, airfieldHealLimit)
-    let state, (cargoLeft, _, _, _) = applyResupplies dt world state data
+    let state, cargoLeft = applyResupplies dt world state newCargo
     // Bombs
     let bombCargo =
         computeCargoSupplies wg cargo
@@ -788,7 +762,7 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
                 oldPlaneValue - 1.0f |> max 0.0f
             let newPlanes =
                 Map.add takeOff.Plane newPlaneValue af.NumPlanes
-            Map.add takeOff.Airfield { af with NumPlanes = newPlanes; Supplies = af.Supplies - takeOff.Cargo * bombCost - takeOff.BombLoad * bombCost } airfields
+            Map.add takeOff.Airfield { af with NumPlanes = newPlanes; Supplies = af.Supplies - takeOff.Cargo * bombCost - takeOff.WeaponCost } airfields
         ) airfields
     let airfieldsAfterLandings =
         landings

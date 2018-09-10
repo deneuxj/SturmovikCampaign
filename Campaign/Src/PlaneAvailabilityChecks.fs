@@ -30,6 +30,8 @@ open Campaign.PlaneModel
 open Campaign.WorldState
 open Campaign.ResultExtraction
 open System.Runtime.Serialization
+open System.ServiceModel
+open Campaign
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -49,8 +51,7 @@ let showHangar(hangar : PlayerHangar, delay) =
         let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
         yield Overview(userIds, delay,
             [
-                sprintf "Welcome back %s" userIds.Name
-                sprintf "Your cash reserve is %0.0f" hangar.Reserve
+                sprintf "Welcome back %s %s" hangar.Rank userIds.Name
             ])
         yield Overview(userIds, delay,
             [
@@ -64,15 +65,15 @@ let showHangar(hangar : PlayerHangar, delay) =
     ]
 
 /// Create an empty hangar for a player
-let private emptyHangar (playerId : string, playerName, coalition) =
-    { Player = Guid(playerId); PlayerName = playerName; Coalition = coalition; Reserve = 0.0f<E>; Airfields = Map.empty }
+let private emptyHangar (playerId : string, playerName, coalition, cash) =
+    { Player = Guid(playerId); PlayerName = playerName; Coalition = coalition; Reserve = cash; Airfields = Map.empty }
 
 /// Commands sent during state transitions in PlayerStateData to the main asyncSeq computation
 type Command =
     | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlaneCheckIn of user:UserIds * userCoalition:CoalitionId * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
-    | PlayerBorrowedPlane of user:UserIds * CoalitionId * float32<E>
-    | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * AirfieldId
+    | PlayerPayed of user:UserIds * CoalitionId * float32<E>
+    | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * originalCost:float32<E> * AirfieldId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * CoalitionId * float32<E>
     | InformPlayerHangar of UserIds * CoalitionId
@@ -105,24 +106,37 @@ type ObjectInstance =
 
 type Limits =
     {
+      InitialCash : float32<E>
       MaxCash : float32<E>
+      PlaneRentalAllowed : bool
       MoneyBackFactor : float32
       MaxReservedPlanes : int
       MaxTotalReservedPlanes : int
+      SpawnsAreRestricted : bool
+      RearAirfieldCostFactor : float32
+      MaxRentalGain : float32<E>
     }
 with
     static member FromConfig(config : Campaign.Configuration.Configuration) =
-        { MaxCash = 1.0f<E> * float32 config.MaxCash
+        { InitialCash = 1.0f<E> * float32 config.InitialCash
+          MaxCash = 1.0f<E> * float32 config.MaxCash
           MoneyBackFactor = config.MoneyBackFactor
           MaxReservedPlanes = config.MaxReservedPlanes
           MaxTotalReservedPlanes = config.MaxTotalReservedPlanes
+          SpawnsAreRestricted = config.SpawnsAreRestricted
+          RearAirfieldCostFactor = config.RearAirfieldCostFactor
+          PlaneRentalAllowed = config.PlaneRentalAllowed
+          MaxRentalGain = PlaneModel.basePlaneCost / 5.0f
         }
+
+    member this.ShowCashReserves = this.PlaneRentalAllowed
 
 /// Keeps track of information needed for the state transitions in PlayerFlightData
 type Context =
     { World : WorldFastAccess
       State : WorldStateFastAccess
       Binding : Map<int, CoalitionId * ObjectInstance>
+      ObjectHealth : Map<int, float32>
       Hangars : Map<string * CoalitionId, PlayerHangar>
       Airfields : Map<AirfieldId, Map<PlaneModel, float32>>
       RearAirfields : Set<AirfieldId>
@@ -144,6 +158,7 @@ with
             World = world.FastAccess
             State = state.FastAccess
             Binding = Map.empty
+            ObjectHealth = Map.empty
             Hangars = hangars
             Airfields = airfields
             RearAirfields = rearAirfields
@@ -226,6 +241,19 @@ with
                 this.Binding
         { this with Binding = binding }
 
+    member this.GetObjectHealth(idx : int) =
+        this.ObjectHealth
+        |> Map.tryFind idx
+        |> Option.defaultValue 1.0f
+
+    member this.HandleDamage(damage : DamageEntry) =
+        let oldHealth = this.GetObjectHealth(damage.TargetId)
+        let newHealth = oldHealth - damage.Damage
+        { this with ObjectHealth = this.ObjectHealth.Add(damage.TargetId, newHealth) }
+
+    member this.HandleKill(kill : KillEntry) =
+        { this with ObjectHealth = this.ObjectHealth.Add(kill.TargetId, 0.0f) }
+
     /// Execute a command.
     /// Commands are typically created by PlayerFlightData instances, when they hand game log entries.
     member this.Execute(command : Command) =
@@ -264,14 +292,14 @@ with
                 logger.Error("Attempt to check out plane from neutral region")
                 this, []
 
-        | PlayerBorrowedPlane(user, coalition, cost) ->
+        | PlayerPayed(user, coalition, cost) ->
             let hangar : PlayerHangar = this.GetHangar(user, coalition)
             let hangar = { hangar with Reserve = hangar.Reserve - cost }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
-            [ Overview(user, 0, [ sprintf "You have spent %0.0f to borrow a plane" cost ]) ]
+            [ Overview(user, 0, [ sprintf "You have have spent %0.0f" cost ]) ]
 
-        | PlayerReturnedBorrowedPlane(user, plane, af) ->
+        | PlayerReturnedBorrowedPlane(user, plane, cost, af) ->
             match this.GetAirfieldCoalition(af) with
             | Some coalition ->
                 let qty =
@@ -280,12 +308,12 @@ with
                     |> Map.tryFind plane
                     |> Option.defaultValue 0.0f
                 let factor = getPriceFactor af plane qty this.Hangars
-                let moneyBack = plane.Cost * factor
+                let moneyBack = plane.Cost * factor |> min (this.Limits.MaxRentalGain + cost)
                 let hangar = this.GetHangar(user, coalition)
                 let hangar = { hangar with Reserve = hangar.Reserve + moneyBack }
                 let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
                 { this with Hangars = hangars },
-                [ Overview(user, 0, [ sprintf "You got %0.0f back for bringing back the %s you borrowed" moneyBack plane.PlaneName ]) ]
+                [ Overview(user, 0, [ sprintf "You got %0.0f back for bringing back the %s you requisitioned" moneyBack plane.PlaneName ]) ]
             | None ->
                 logger.Error("Attempt to return borrowed plane to neutral region")
                 this, []
@@ -350,8 +378,9 @@ with
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
             [
-                Overview(user, 15, [sprintf "You have been awarded %1.0f" reward])
-                Status(hangars, this.Airfields)
+                if this.Limits.ShowCashReserves then
+                    yield Overview(user, 15, [sprintf "You have been awarded %1.0f" reward])
+                yield Status(hangars, this.Airfields)
             ]
 
         | InformPlayerHangar(user, coalition) ->
@@ -412,10 +441,12 @@ with
     member this.IsSpawnRestricted(af : AirfieldId, plane : PlaneModel, coalition : CoalitionId) =
         let isFree =
             let numOwned =
-                this.State.State.Regions
-                |> Seq.filter (fun region -> region.Owner = Some coalition)
-                |> Seq.length
-            (numOwned * 4 <= this.State.State.Regions.Length ||
+                lazy
+                    this.State.State.Regions
+                    |> Seq.filter (fun region -> region.Owner = Some coalition)
+                    |> Seq.length
+            (not this.Limits.SpawnsAreRestricted ||
+             numOwned.Value * 4 <= this.State.State.Regions.Length ||
              this.RearAirfields.Contains(af) ||
              this.State.GetRegion(this.World.GetAirfield(af).Region).HasInvaders)
         not isFree
@@ -451,11 +482,32 @@ with
 
     member this.GetHangar(user : UserIds, coalition) =
         this.Hangars.TryFind((user.UserId, coalition))
-        |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition))
+        |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash))
+
+type TransactionCost =
+    | Rent of float32<E>
+    | Buy of float32<E>
+    | Denied
+    | Free
+with
+    member this.IsRental =
+        match this with
+        | Rent _ -> true
+        | _ -> false
+
+    member this.IsDeniedCase =
+        match this with
+        | Denied -> true
+        | _ -> false
+
+    member this.Amount =
+        match this with
+        | Rent x | Buy x -> x
+        | Denied | Free -> 0.0f<E>
 
 /// States in the PlayerFlightData state machine
 type PlayerFlightState =
-    | Spawned of cost:float32<E> option // Cost of taking off in the plane, None if player can't afford it, or plane is not available at airfield
+    | Spawned of TransactionCost
     | Aborted
     | InFlight
     | Landed of AirfieldId option * TimeSpan option
@@ -468,7 +520,7 @@ type PlayerFlightData =
     { Player : UserIds
       Vehicle : int
       State : PlayerFlightState
-      IsBorrowed : bool
+      CheckoutCost : TransactionCost
       Health : float32
       Coalition : CoalitionId
       Plane : PlaneModel
@@ -520,26 +572,44 @@ with
             let cost =
                 if context.IsSpawnRestricted(af, plane, coalition) then
                     match context.TryCheckoutPlane(user, af, plane) with
-                    | None -> None
+                    | None -> Denied
                     | Some hangar ->
                         let fundsBefore =
                             context.GetHangar(user, coalition)
                             |> fun h -> h.Reserve
-                        Some(fundsBefore - hangar.Reserve)
+                        Rent(fundsBefore - hangar.Reserve)
+                elif context.RearAirfields.Contains(af) then
+                    match plane.Cost * context.Limits.RearAirfieldCostFactor with
+                    | 0.0f<E> -> Free
+                    | price ->
+                        let available = context.GetHangar(user, coalition)
+                        if available.Reserve >= price then
+                            Buy price
+                        else
+                            Denied
                 else
-                    Some 0.0f<E>
+                    Free
+            // Deny rental if it's not allowed in the limits
+            let cost =
+                if not context.Limits.PlaneRentalAllowed && cost.IsRental then
+                    Denied
+                else
+                    cost
             let planeInfo =
                 [
                     match cost with
-                    | None ->
-                        let price = context.GetPlanePrice(af, plane)
-                        yield Message(Warning(user, 0, [sprintf "You are not allowed to take off in a %s which costs %0.0f at %s" plane.PlaneName price af.AirfieldName]))
-                    | Some 0.0f<E> ->
+                    | Denied ->
+                        yield Message(Warning(user, 0, [sprintf "Your rank does not allow to requisition a %s at %s" plane.PlaneName af.AirfieldName]))
+                    | Free ->
                         yield Message(Overview(user, 0, [sprintf "You are cleared to take off in a %s from %s" plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
-                    | Some cost ->
-                        yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to borrow a %s from %s" cost plane.PlaneName af.AirfieldName]))
+                    | Rent cost ->
+                        yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to requisition a %s from %s" cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, true, af)
+                    | Buy cost ->
+                        if cost > 0.0f<E> then
+                            yield Message(Overview(user, 0, [sprintf "It will cost you %0.0f to take a %s from %s" cost plane.PlaneName af.AirfieldName]))
+                        yield PlaneCheckOut(user, plane, 1.0f, false, af)
                 ]
             let supplyCommands =
                 if cargo > 0.0f<K> || weight >= 500.0f<K> then
@@ -551,7 +621,7 @@ with
                 Vehicle = entry.VehicleId
                 State = Spawned cost
                 Health = 1.0f
-                IsBorrowed = Option.defaultValue 0.0f<E> cost > 0.0f<E>
+                CheckoutCost = cost
                 Coalition = coalition
                 Plane = plane
                 Cargo = cargo
@@ -564,22 +634,25 @@ with
         | None ->
             None, []
 
+    member this.IsBorrowed =
+        this.CheckoutCost.IsRental
+
     // Handle first take off after spawn
     member this.HandleTakeOff(context : Context, takeOff : TakeOffEntry) =
         match this.State with
-        | Spawned(Some cost) ->
+        | Spawned Denied ->
+            { this with State = StolePlane },
+            [ PunishThief(this.Player, this.Plane, this.StartAirfield) ]
+        | Spawned(cost) ->
             { this with State = InFlight },
             [
                 if this.IsBorrowed then
-                    yield PlayerBorrowedPlane(this.Player, this.Coalition, cost)
+                    yield PlayerPayed(this.Player, this.Coalition, cost.Amount)
                 yield Message(
                         Announce(
                             this.Coalition,
                             [sprintf "%s has taken off from %s in a %s" this.Player.Name this.StartAirfield.AirfieldName (string this.Plane.PlaneType)]))
             ]
-        | Spawned None ->
-            { this with State = StolePlane },
-            [ PunishThief(this.Player, this.Plane, this.StartAirfield) ]
         | unexpected ->
             logger.Warn(sprintf "Unexpected state during take off %A" unexpected)
             this, []
@@ -594,8 +667,15 @@ with
 
     // Increase reward depending on target and amount of damage
     member this.HandleInflictedDamage(context : Context, damage : DamageEntry) =
+        this.AccumulateDamageReward(context, damage.TargetId, damage.Damage)
+
+    member this.HandleKill(context : Context, kill : KillEntry) =
+        let targetHealth = context.GetObjectHealth(kill.TargetId)
+        this.AccumulateDamageReward(context, kill.TargetId, targetHealth)
+
+    member this.AccumulateDamageReward(context : Context, target : int, damage : float32) =
         let value =
-            match context.Binding.TryFind(damage.TargetId) with
+            match context.Binding.TryFind(target) with
             | Some(_, StaticPlane _) ->
                 0.0f<E>
             | Some(_, DynamicPlane plane) ->
@@ -631,7 +711,7 @@ with
                 heavyMachineGunCost
             | Some(_, StaticTank tank)
             | Some(_, DynamicTank tank) ->
-                tank.Cost
+                tank.Cost / 10.0f
             | Some(_, ConvoyTruck) ->
                 Orders.ResupplyOrder.TruckCapacity
             | Some(_, TrainWagon) ->
@@ -643,7 +723,7 @@ with
             | None ->
                 0.0f<E>
         let factor =
-            match context.Binding.TryFind(damage.TargetId) with
+            match context.Binding.TryFind(target) with
             | Some (coalition, _) ->
                 if coalition = this.Coalition then
                     -1.0f
@@ -652,7 +732,7 @@ with
             | None ->
                 0.0f
         let productionLoss =
-            match context.Binding.TryFind(damage.TargetId) with
+            match context.Binding.TryFind(target) with
             | Some(_, Production(group, idx)) ->
                 let specs = context.World.World.SubBlockSpecs
                 let buildings = group.SubBlocks specs
@@ -664,7 +744,7 @@ with
                     0.0f<E>
             | _ ->
                 0.0f<E>
-        let reward = factor * (damage.Damage * value + productionLoss)
+        let reward = factor * (damage * value + productionLoss)
         { this with Reward = this.Reward + reward }, []
 
     // Set health to 0
@@ -743,7 +823,7 @@ with
                 assert(this.State <> MissionEnded)
                 let healthUp = ceil(health * 10.0f) / 10.0f
                 if this.IsBorrowed && isCorrectCoalition then
-                    yield PlayerReturnedBorrowedPlane(this.Player, this.Plane, af)
+                    yield PlayerReturnedBorrowedPlane(this.Player, this.Plane, this.CheckoutCost.Amount, af)
                 yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, healthUp, this.IsBorrowed, af)
                 yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
                 yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward)
@@ -798,6 +878,8 @@ with
             this.HandleReceivedDamage(context, damage)
         | _, (:? KillEntry as killed) when killed.TargetId = this.Vehicle ->
             this.HandleKilled(context, killed)
+        | _, (:? KillEntry as kill) when kill.AttackerId = this.Vehicle ->
+            this.HandleKill(context, kill)
         | InFlight, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
             this.HandleLanding(context, landing)
         | _, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
@@ -812,9 +894,9 @@ with
         | InFlight, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this.HandlePrematureMissionEnd(context)
         | Spawned cost, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
-            this.HandleAbortionBeforeTakeOff(context, cost.IsSome)
+            this.HandleAbortionBeforeTakeOff(context, not cost.IsDeniedCase)
         | Spawned cost, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
-            this.HandleAbortionBeforeTakeOff(context, cost.IsSome)
+            this.HandleAbortionBeforeTakeOff(context, not cost.IsDeniedCase)
         | MissionEnded, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this, []
         | _, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
@@ -888,6 +970,13 @@ let checkPlaneAvailability (limits : Limits) (world : World) (state : WorldState
                 |> Seq.fold (fun (context : Context, msgs) cmd ->
                     let context, msgs2 = context.Execute(cmd)
                     context, msgs2 @ msgs) (context, [])
+
+            // Update context with kill entries
+            let context2 =
+                match entry with
+                | :? KillEntry as kill -> context2.HandleKill(kill)
+                | _ -> context2
+
             context <- context2
 
             // Yield messages generated while updating player data

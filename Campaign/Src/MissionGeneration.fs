@@ -140,6 +140,7 @@ type MissionGenerationParameters = {
     MaxFires : int
     MaxBuildingIcons : int
     BattleKillRatio : int
+    SpawnsAreRestricted : bool
 }
 
 
@@ -187,7 +188,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let ground =
         strategyMissionData.ListOfGround
         |> createGrounds store
-    let spawns = createAirfieldSpawns missionParams.MaxCapturedPlanes store missionData.World missionData.State missionBegin
+    let spawns = createAirfieldSpawns missionParams.SpawnsAreRestricted missionParams.MaxCapturedPlanes store missionData.World missionData.State missionBegin
     let landingDirections = createLandingDirections store missionData.World missionData.State
     let moves =
         [
