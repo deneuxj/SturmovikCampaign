@@ -31,6 +31,7 @@ open Campaign.WorldState
 open Campaign.ResultExtraction
 open System.Runtime.Serialization
 open System.ServiceModel
+open Campaign
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -72,7 +73,7 @@ type Command =
     | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlaneCheckIn of user:UserIds * userCoalition:CoalitionId * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlayerPayed of user:UserIds * CoalitionId * float32<E>
-    | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * AirfieldId
+    | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * originalCost:float32<E> * AirfieldId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * CoalitionId * float32<E>
     | InformPlayerHangar of UserIds * CoalitionId
@@ -113,6 +114,7 @@ type Limits =
       MaxTotalReservedPlanes : int
       SpawnsAreRestricted : bool
       RearAirfieldCostFactor : float32
+      MaxRentalGain : float32<E>
     }
 with
     static member FromConfig(config : Campaign.Configuration.Configuration) =
@@ -124,6 +126,7 @@ with
           SpawnsAreRestricted = config.SpawnsAreRestricted
           RearAirfieldCostFactor = config.RearAirfieldCostFactor
           PlaneRentalAllowed = config.PlaneRentalAllowed
+          MaxRentalGain = PlaneModel.basePlaneCost / 5.0f
         }
 
     member this.ShowCashReserves = this.PlaneRentalAllowed
@@ -296,7 +299,7 @@ with
             { this with Hangars = hangars },
             [ Overview(user, 0, [ sprintf "You have have spent %0.0f" cost ]) ]
 
-        | PlayerReturnedBorrowedPlane(user, plane, af) ->
+        | PlayerReturnedBorrowedPlane(user, plane, cost, af) ->
             match this.GetAirfieldCoalition(af) with
             | Some coalition ->
                 let qty =
@@ -305,7 +308,7 @@ with
                     |> Map.tryFind plane
                     |> Option.defaultValue 0.0f
                 let factor = getPriceFactor af plane qty this.Hangars
-                let moneyBack = plane.Cost * factor
+                let moneyBack = plane.Cost * factor |> min (this.Limits.MaxRentalGain + cost)
                 let hangar = this.GetHangar(user, coalition)
                 let hangar = { hangar with Reserve = hangar.Reserve + moneyBack }
                 let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
@@ -517,7 +520,7 @@ type PlayerFlightData =
     { Player : UserIds
       Vehicle : int
       State : PlayerFlightState
-      IsBorrowed : bool
+      CheckoutCost : TransactionCost
       Health : float32
       Coalition : CoalitionId
       Plane : PlaneModel
@@ -618,7 +621,7 @@ with
                 Vehicle = entry.VehicleId
                 State = Spawned cost
                 Health = 1.0f
-                IsBorrowed = cost.IsRental
+                CheckoutCost = cost
                 Coalition = coalition
                 Plane = plane
                 Cargo = cargo
@@ -630,6 +633,9 @@ with
         | Some _
         | None ->
             None, []
+
+    member this.IsBorrowed =
+        this.CheckoutCost.IsRental
 
     // Handle first take off after spawn
     member this.HandleTakeOff(context : Context, takeOff : TakeOffEntry) =
@@ -817,7 +823,7 @@ with
                 assert(this.State <> MissionEnded)
                 let healthUp = ceil(health * 10.0f) / 10.0f
                 if this.IsBorrowed && isCorrectCoalition then
-                    yield PlayerReturnedBorrowedPlane(this.Player, this.Plane, af)
+                    yield PlayerReturnedBorrowedPlane(this.Player, this.Plane, this.CheckoutCost.Amount, af)
                 yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, healthUp, this.IsBorrowed, af)
                 yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
                 yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward)

@@ -42,7 +42,7 @@ type PlaneRole =
     | LevelBomber
     | CargoTransporter
 
-let private basePlaneCost = 500.0f<E>
+let basePlaneCost = 500.0f<E>
 
 //// times 2 [(4, x); (10, y)] -> [(4, x); (5, x); (10, y); (11, y)]
 let private times N xs =
