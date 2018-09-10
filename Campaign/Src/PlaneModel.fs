@@ -427,7 +427,7 @@ with
         | Pe2s35 -> "pe-2 ser.35"
         | Pe2s87 -> "pe-2 ser.87"
         | Yak1s69 -> "yak-1 ser.69"
-        | Yak1s127 -> "yak-1 ser.127"
+        | Yak1s127 -> "yak-1b ser.127"
         | Yak7bs36 -> "yak-7b ser.36"
         | SpitfireMkVb -> "spitfire mk.vb"
 
