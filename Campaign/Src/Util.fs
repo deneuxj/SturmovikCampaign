@@ -117,6 +117,19 @@ let divUp x y =
     assert(y > 0)
     (x / y) + (if x % y = 0 then 0 else 1)
 
+/// Get approximate sunrise and sunset times for a day (northern hemisphere)
+let suntimes(date : System.DateTime) =
+    let longestDay = 16.0
+    let shortestDay = 9.0
+    let t = 2.0 * System.Math.PI * (date - System.DateTime(date.Year, 6, 22, 12, 0, 0)).TotalDays / 365.0
+    let t2 = 0.5 * (cos(t) + 1.0)
+    let dayLength = (1.0 - t2) * shortestDay + t2 * longestDay
+    let rise = 13.0 - 0.5 * dayLength
+    let set = 13.0 + 0.5 * dayLength
+    let sunrise = System.DateTime(date.Year, date.Month, date.Day, int rise, 0, 0)
+    let sunset = System.DateTime(date.Year, date.Month, date.Day, int set, 0, 0)
+    sunrise, sunset
+
 /// Extensions to Option module
 module Option =
     let defaultVal x y = defaultArg y x

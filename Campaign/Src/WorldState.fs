@@ -380,18 +380,9 @@ with
     member this.HasNightTime(missionDuration) =
         let start = this.Date
         let finish = this.Date + System.TimeSpan(missionDuration / 60, missionDuration % 60, 0)
-        let longestDay = 16.0
-        let shortestDay = 9.0
-        let t = 2.0 * System.Math.PI * (this.Date - System.DateTime(this.Date.Year, 6, 22, 12, 0, 0)).TotalDays / 365.0
-        let t2 = 0.5 * (cos(t) + 1.0)
-        let dayLength = (t2 - 1.0) * shortestDay + t2 * longestDay
-        let rise = 13.0 - 0.5 * dayLength
-        let set = 13.0 + 0.5 * dayLength
-        let sunrise = System.DateTime(this.Date.Year, this.Date.Month, this.Date.Day, int rise, 0, 0)
-        let sunset = System.DateTime(this.Date.Year, this.Date.Month, this.Date.Day, int set, 0, 0)
-        // sunrise, sunset, sunrise of next morning
-        [sunrise; sunset; sunrise + System.TimeSpan(24, 0, 0)]
-        |> List.exists (fun suntime -> suntime >= start && suntime <= finish)
+        let sunrise, sunset = suntimes this.Date
+        [(sunset - System.TimeSpan(24, 0, 0), sunrise); (sunset, sunrise + System.TimeSpan(24, 0, 0))]
+        |> List.exists (fun (sunset, sunrise) -> not(start > sunrise || finish < sunset))
 
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.DataProvider.Mcu
