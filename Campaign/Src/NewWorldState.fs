@@ -376,6 +376,42 @@ let computeCargoSupplies (wg : WorldFastAccess) (landed : Landed list) =
     |> List.map (fun (af, xs) -> af, xs |> List.sumBy snd)
     |> Map.ofList
 
+/// Remove supplies consummed by guns defending the region
+let applyConsumption (dt : float32<H>) (world : World) (state : WorldState) =
+    let sg = state.FastAccess
+
+    let frontRegions =
+        computeFrontLine false world state.Regions
+        |> Seq.collect (fun (regA, regB) -> [regA; regB])
+        |> Set.ofSeq
+
+    let distanceToFront =
+        computeDistance false (fun world -> world.Roads @ world.Rails) (fun region -> sg.GetRegion(region).Owner) (frontRegions.Contains) world
+
+    let needs =
+        computeFullDefenseNeeds world
+        |> Map.ofList
+
+    let operationCosts = state.GetOperatingCostPerRegion world
+
+    let regions =
+        [
+            for region, regState in List.zip world.Regions state.Regions do
+                let forcesK = regState.Supplies / needs.[region.RegionId] |> min 1.0f
+                let fullCost = operationCosts.[region.RegionId]
+                let distanceFactor =
+                    match distanceToFront.TryFind region.RegionId with
+                    | None -> 0.0f
+                    | Some 0 -> 1.0f
+                    | Some 1 -> 0.5f
+                    | Some _ -> 0.0f
+                let cost = fullCost * distanceFactor * forcesK
+                let supplies = regState.Supplies - dt * cost |> max 0.0f<E>
+                yield { regState with Supplies = supplies }
+        ]
+
+    { state with Regions = regions }
+
 /// Remove shipped supplies from region of origin, apply damages due to attacks
 let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped list) (damages : Damage list) (orders : ResupplyOrder list) =
     let wg = WorldFastAccess.Create world
@@ -1325,7 +1361,8 @@ let newState (config : Configuration.Configuration) (world : World) (state : Wor
         |> applyProduction dt world Axis axisOrders.Production
         |> applyProduction dt world Allies alliesOrders.Production
     let state3, ((newSupplies, newAxisVehicles, newAlliesVehicles) as newlyProduced) = convertProduction world state2
-    let state4 = applyDamagesAndResupplies mustConvertCapturedPlanes dt world state3 results.Shipments results.Blocked results.Damages (axisOrders.Resupply @ alliesOrders.Resupply) newSupplies results.Landings
+    let state3b = applyConsumption dt world state3
+    let state4 = applyDamagesAndResupplies mustConvertCapturedPlanes dt world state3b results.Shipments results.Blocked results.Damages (axisOrders.Resupply @ alliesOrders.Resupply) newSupplies results.Landings
     let state5 = applyPlaneTransfers state4 results.TakeOffs results.Landings
     let state5b = applyPlaneFerries state5 results.FerryPlanes
     let state6 = applyVehicleDepartures state5b columnOrders results.ColumnDepartures

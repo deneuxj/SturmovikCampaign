@@ -785,14 +785,28 @@ let cannonCost = 50.0f<E>
 let heavyMachineGunCost = cannonCost / 4.0f
 let lightMachineGunCost = heavyMachineGunCost / (float32 SturmovikMission.Blocks.StaticDefenses.Factory.numLightMachineGunsPerHeavyMachineGun)
 
+let cannonConsumption = cannonCost / 10.0f<H>
+let heavyMachineGunConsumption = heavyMachineGunCost / 10.0f<H>
+let lightMachineGunConsumption = lightMachineGunCost / 10.0f<H>
+
 type DefenseArea with
+    /// Value of guns in a fully defended region
     member this.AmmoCost =
         match this.Role with
         | AntiTank | AntiAirCanon -> float32 this.MaxNumGuns * cannonCost
         | AntiAirMg ->
             let numFlak = 0.25f * float32 this.MaxNumGuns
             let numMg = 0.75f * float32 this.MaxNumGuns
-            numFlak * cannonCost + numMg * heavyMachineGunCost // OK even for light machine guns, because there are actually four times as meany as MaxNumGuns (each light machine gun counts as 25% of a machine gun)
+            numFlak * cannonCost + numMg * heavyMachineGunCost
+
+    /// Cost of operating a fully defended region on the front
+    member this.OperationCost =
+        match this.Role with
+        | AntiTank | AntiAirCanon -> float32 this.MaxNumGuns * cannonConsumption
+        | AntiAirMg ->
+            let numFlak = 0.25f * float32 this.MaxNumGuns
+            let numMg = 0.75f * float32 this.MaxNumGuns
+            numFlak * cannonConsumption + numMg * heavyMachineGunConsumption
 
 let bombCost = 100.0f<E> / 1000.0f<K>
 

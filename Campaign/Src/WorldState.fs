@@ -318,6 +318,39 @@ with
             |> Map.ofSeq
         Map.sumUnion aaCosts atCosts
 
+    member this.GetOperatingCostPerRegion(world : World) =
+        let sg = this.FastAccess
+        let aaCosts =
+            seq {
+                for area in world.AntiAirDefenses do
+                    yield area.Home, area.OperationCost
+            }
+            |> Seq.groupBy fst
+            |> Seq.map (fun (reg, costs) -> reg, costs |> Seq.sumBy snd)
+            |> Map.ofSeq
+        let atCosts =
+            seq {
+                for region, regState in List.zip world.Regions this.Regions do
+                    let areas =
+                        region.Neighbours
+                        |> Seq.filter (fun ngh ->
+                            match sg.GetRegion(ngh).Owner, regState.Owner with
+                            | Some x, Some y when x <> y -> true
+                            | _ -> false
+                        )
+                        |> Seq.map (fun ngh ->
+                            let area = world.GetBattlefield(Some ngh, region.RegionId)
+                            area.DefenseAreaId, area)
+                        |> Map.ofSeq
+                    let cost =
+                        areas
+                        |> Map.toSeq
+                        |> Seq.sumBy (fun (_, area) -> area.OperationCost)
+                    yield region.RegionId, cost
+            }
+            |> Map.ofSeq
+        Map.sumUnion aaCosts atCosts
+
     member this.GetAmmoFillLevel(world : World, bf : DefenseArea) =
         let region = bf.Home
         let regState = this.GetRegion(region)
