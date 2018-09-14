@@ -785,9 +785,9 @@ let cannonCost = 50.0f<E>
 let heavyMachineGunCost = cannonCost / 4.0f
 let lightMachineGunCost = heavyMachineGunCost / (float32 SturmovikMission.Blocks.StaticDefenses.Factory.numLightMachineGunsPerHeavyMachineGun)
 
-let cannonConsumption = cannonCost / 10.0f<H>
-let heavyMachineGunConsumption = heavyMachineGunCost / 10.0f<H>
-let lightMachineGunConsumption = lightMachineGunCost / 10.0f<H>
+let cannonConsumption = cannonCost / 100.0f<H>
+let heavyMachineGunConsumption = heavyMachineGunCost / 100.0f<H>
+let lightMachineGunConsumption = lightMachineGunCost / 100.0f<H>
 
 type DefenseArea with
     /// Value of guns in a fully defended region
