@@ -55,17 +55,21 @@ let main argv =
         with
         | e -> failwithf "Error in campaign init: %s" e.Message
 
+    let operationCosts =
+        state.GetOperatingCostPerRegion(world)
+
     let sg = state.FastAccess
 
     let description =
         [
-            yield sprintf "%20s | %14s | %14s" "region" "Prod - cap" "AA"
+            yield sprintf "%20s | %14s | %14s | %14s" "region" "Prod - sto" "AA - %%"  "op cost - %%"
             for region in world.Regions do
                 let (RegionId regionName) = region.RegionId
-                let aa = Map.tryFind region.RegionId antiAirUsage |> fun x -> defaultArg x 0
-                let cap = Map.tryFind region.RegionId capacity |> fun x -> defaultArg x 0.0f<E>
-                let prod = world.ProductionFactor * (Map.tryFind region.RegionId production |> fun x -> defaultArg x 0.0f<E/H>)
-                yield sprintf "%20s | %6.1f - %5.0f | %4d - %5.1f%%" regionName prod cap aa (100.0f * float32 aa / (cap / cannonCost))
+                let aa = Map.tryFind region.RegionId antiAirUsage |> Option.defaultValue 0
+                let opCost = Map.tryFind region.RegionId operationCosts |> Option.defaultValue 0.0f<E/H>
+                let cap = Map.tryFind region.RegionId capacity |> Option.defaultValue 0.0f<E>
+                let prod = world.ProductionFactor * (Map.tryFind region.RegionId production |> Option.defaultValue 0.0f<E/H>)
+                yield sprintf "%20s | %6.1f - %5.0f | %4d - %5.1f%% | %6.1f - %3.0f%%" regionName prod cap aa (100.0f * float32 aa / (cap / cannonCost)) opCost (100.0f * opCost / prod)
             for coalition in [Axis; Allies] do
                 let totalProd =
                     production
