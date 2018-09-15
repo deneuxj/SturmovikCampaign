@@ -263,7 +263,7 @@ with
             let regionValue = this.ValueOfRegion i
             if axisForce > alliesForce then
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
-                this.AxisForces.[i] <- axisForce - alliesForce
+                this.AxisForces.[i] <- sqrt(axisForce * axisForce - alliesForce * alliesForce)
                 this.AlliesForces.[i] <- 0.0f<E>
                 this.Owners.[i] <- Some Axis
                 if this.HasRegionFactory i then
@@ -274,7 +274,7 @@ with
             elif axisForce < alliesForce then
                 restore := (i, axisForce, alliesForce, oldOwner) :: !restore
                 this.AxisForces.[i] <- 0.0f<E>
-                this.AlliesForces.[i] <- alliesForce - axisForce
+                this.AlliesForces.[i] <- sqrt(alliesForce * alliesForce - axisForce * axisForce)
                 this.Owners.[i] <- Some Allies
                 if this.HasRegionFactory i then
                     if oldOwner <> Some Allies then
