@@ -42,7 +42,16 @@ let selectPlaneSpawns (maxSpawns : int) (coalition : CoalitionId) (numPlanes : M
     numPlanes
     |> Map.toSeq
     |> Seq.sortByDescending(fun (plane, qty) ->
-        plane.Roles.Contains(CargoTransporter),
+        // As we have only 8 slots, we prioritize transports, bombers, then attackers and last fighters.
+        // There usually aren't more than a couple types of bombers and attackers, but there can be quite a few fighters types.
+        // This can lead to attackers or bombers to be dropped from the selection, which is more problematic than dropping a type of fighter.
+        let rank1 =
+            match plane.PlaneType with
+            | Fighter -> 0
+            | Attacker -> 1
+            | Bomber -> 2
+            | Transport -> 3
+        rank1,
         plane.Coalition = coalition,
         qty)
     |> Seq.map fst
