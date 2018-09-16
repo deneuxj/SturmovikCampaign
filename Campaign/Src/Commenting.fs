@@ -132,7 +132,10 @@ let private updateAirfieldPlaneset(wg : WorldFastAccess, sg : WorldStateFastAcce
         // Compute plane index: For each plane initially found in the spawn, check if it's now available.
         // If so, include it in the plane index, which is a bit mask.
         let planeSetIndex =
-            let origNumPlanes = afs.NumPlanes |> Map.map (fun _ qty -> int(floor(qty)))
+            let origNumPlanes =
+                afs.NumPlanes
+                |> Map.map (fun _ qty -> int(floor(qty)))
+                |> Map.filter (fun _ qty -> qty < Airfield.dynamicPlaneSpawnCutOff)
             let spawnPlanes = Airfield.selectPlaneSpawns Airfield.maxPlaneSpawns coalition origNumPlanes
             spawnPlanes
             |> Array.fold(fun (res, index) plane ->

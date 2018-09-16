@@ -33,8 +33,11 @@ open Campaign.BasicTypes
 open Campaign.WorldState
 open Campaign.NewWorldState
 
-
+/// Maximum number of plane types that can fit into the dynamic availability update system.
 let maxPlaneSpawns = 8
+
+/// Maximum number of planes under which a plane's availability is updated dynamically during a mission.
+let dynamicPlaneSpawnCutOff = 100
 
 /// Select up to a maximum number of planes that will be available for spawn at an airfield
 /// Returns an array where the rank can be used to identify planes
@@ -147,34 +150,45 @@ let mkLoadoutString supplies loadouts =
     |> String.concat "/"
 
 /// Create plane specifications, which includes locking loadouts that aren't available due to limited supplies
-let mkPlaneSpecs supplies (planes : PlaneModel[]) =
+let mkPlaneSpecs supplies (planes : PlaneModel[]) (planesInAllSets : PlaneModel list) =
     let maxIndex = 1 <<< (planes.Length)
+
+    let mkPlaneSpec (plane : PlaneModel) =
+        let model = plane.ScriptModel
+        let loadouts =
+            plane.BombLoads
+            |> bombLoadsCosts
+            |> combine plane.SpecialLoadsCosts
+        let defaultPayload =
+            if plane.PlaneType = PlaneType.Fighter then
+                0
+            else
+                loadouts
+                |> List.tryFind (fun (idx, w) -> w <= supplies)
+                |> Option.map fst
+                |> Option.defaultValue plane.EmptyPayload
+        let constr = mkLoadoutString supplies loadouts
+        let planeSpec = newAirfieldPlane("0..99", constr, 0, defaultPayload, "", plane.PlaneName, -1)
+                            .SetScript(T.String model.Script)
+                            .SetModel(T.String model.Model)
+                            .SetStartInAir(T.Integer 2)
+        planeSpec
+
     [
+        // Planes whose availability is updated dynamically during the mission by changing the planeset
         for i, plane in Seq.indexed planes do
             let mask = 1 <<< i
-            let model = plane.ScriptModel
-            let loadouts =
-                plane.BombLoads
-                |> bombLoadsCosts
-                |> combine plane.SpecialLoadsCosts
-            let defaultPayload =
-                if plane.PlaneType = PlaneType.Fighter then
-                    0
-                else
-                    loadouts
-                    |> List.tryFind (fun (idx, w) -> w <= supplies)
-                    |> Option.map fst
-                    |> Option.defaultValue plane.EmptyPayload
-            let constr = mkLoadoutString supplies loadouts
-            let planeSpec = newAirfieldPlane("0..99", constr, 0, defaultPayload, "", plane.PlaneName, -1)
-                                .SetScript(T.String model.Script)
-                                .SetModel(T.String model.Model)
-                                .SetStartInAir(T.Integer 2)
+            let planeSpec = mkPlaneSpec plane
             for j in 0 .. maxIndex do
                 if (j &&& mask) <> 0 then
                     yield planeSpec.SetSetIndex(T.Integer j)
                 else
                     yield planeSpec.SetNumber(T.Integer 0).SetSetIndex(T.Integer j)
+        // Other planes, present in all planesets
+        for plane in planesInAllSets do
+            let planeSpec = mkPlaneSpec plane
+            for j in 0 .. maxIndex do
+                yield planeSpec.SetSetIndex(T.Integer j)
     ]
 
 let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionStarted : Mcu.McuTrigger) =
@@ -221,7 +235,7 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
                     | Allies ->
                         spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
-                let spawnPlanes =
+                let availablePlanes =
                     state.NumPlanes
                     |> Map.map (fun _ number -> number |> floor |> int)
                     // Limit number of captured planes available for spawning
@@ -239,10 +253,18 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                     |> fst
                     |> Util.compactSeq
                     |> Map.filter (fun _ qty -> qty > 0)
+                let spawnPlanes =
+                    availablePlanes
+                    |> Map.filter (fun _ qty -> qty < dynamicPlaneSpawnCutOff)
                     |> selectPlaneSpawns maxPlaneSpawns coalition
+                let staticSpawnPlanes =
+                    availablePlanes
+                    |> Map.filter (fun _ qty -> qty >= dynamicPlaneSpawnCutOff)
+                    |> Map.toSeq
+                    |> Seq.map fst
+                    |> List.ofSeq
                 let planeSpecs : T.Airfield.Planes.Plane list =
-                    spawnPlanes
-                    |> mkPlaneSpecs state.Supplies
+                    mkPlaneSpecs state.Supplies spawnPlanes staticSpawnPlanes
                 let planes =
                     T.Airfield.Planes()
                         .SetPlane(planeSpecs)
