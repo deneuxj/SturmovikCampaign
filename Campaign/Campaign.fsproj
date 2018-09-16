@@ -114,6 +114,7 @@
     <None Include="MyScripts\ParseMissionLogs.fsx" />
     <None Include="MyScripts\Stats.fsx" />
     <None Include="MyScripts\ShowSupplies.fsx" />
+    <None Include="MyScripts\Scratch.fsx" />
     <None Include="data\KubanAutumn.Mission">
       <Link>KubanAutumn.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
