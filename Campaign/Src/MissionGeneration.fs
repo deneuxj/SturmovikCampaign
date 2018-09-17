@@ -50,6 +50,7 @@ open Campaign.StaticBlocks
 open Campaign.Airfield
 open Campaign.Convoys
 open Campaign.TankParks
+open SturmovikMission.Blocks.Spotter
 
 
 /// Set the country of entity owners in a list of Mcus depending on the region where they are located.
@@ -411,6 +412,17 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         bridgeEntities.Values
         |> Seq.map (fun (x : Mcu.McuEntity) -> x :> Mcu.McuBase)
         |> List.ofSeq
+    let spotters =
+        [
+            for regState, region in List.zip missionData.State.Regions missionData.World.Regions do
+                match regState.Owner with
+                | Some coalition ->
+                    let spotter = Spotter.Create(store, lcStore, region.Position, coalition.ToCountry, string region.RegionId)
+                    Mcu.addTargetLink missionBegin spotter.Start.Index
+                    yield spotter.All
+                | None ->
+                    ()
+        ]
     let serverInputMissionEnd = MissionEnd.Create(store)
     let allGroups =
         [ optionStrings
@@ -432,5 +444,5 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           alliesPrio
           axisPlaneFerries
           alliesPlaneFerries
-          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections
+          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections @ spotters
     McuOutput.writeMissionFiles "eng" filename options allGroups
