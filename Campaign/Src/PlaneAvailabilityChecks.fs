@@ -366,14 +366,7 @@ with
                         yield PlanesAtAirfield(af, airfields.[af])
                         match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
                         | Some coalition ->
-                            let origNumPlanes =
-                                this.State.GetAirfield(af).NumPlanes
-                                |> Map.map (fun _ -> int)
-                            let spawnPlanes = Airfield.selectPlaneSpawns Airfield.maxPlaneSpawns coalition origNumPlanes
-                            if Array.exists ((=) plane) spawnPlanes then
-                                yield Announce(coalition, [sprintf "%s available at %s again" plane.PlaneName af.AirfieldName])
-                            else
-                                yield Announce(coalition, [sprintf "%s will be available at %s in the next mission" plane.PlaneName af.AirfieldName])
+                            yield Announce(coalition, [sprintf "%s available at %s again" plane.PlaneName af.AirfieldName])
                         | None ->
                             ()
                 ]

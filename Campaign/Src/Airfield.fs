@@ -36,30 +36,28 @@ open Campaign.NewWorldState
 /// Maximum number of plane types that can fit into the dynamic availability update system.
 let maxPlaneSpawns = 8
 
-/// Maximum number of planes under which a plane's availability is updated dynamically during a mission.
-let dynamicPlaneSpawnCutOff = 100
-
-/// Select up to a maximum number of planes that will be available for spawn at an airfield
-/// Returns an array where the rank can be used to identify planes
-let selectPlaneSpawns (maxSpawns : int) (coalition : CoalitionId) (numPlanes : Map<PlaneModel, int>) =
-    numPlanes
-    |> Map.toSeq
-    |> Seq.sortByDescending(fun (plane, qty) ->
-        // As we have only 8 slots, we prioritize transports, bombers, then attackers and last fighters.
-        // There usually aren't more than a couple types of bombers and attackers, but there can be quite a few fighters types.
-        // This can lead to attackers or bombers to be dropped from the selection, which is more problematic than dropping a type of fighter.
-        let rank1 =
-            match plane.PlaneType with
-            | Fighter -> 0
-            | Attacker -> 1
-            | Bomber -> 2
-            | Transport -> 3
-        rank1,
-        plane.Coalition = coalition,
-        qty)
-    |> Seq.map fst
-    |> Seq.truncate maxSpawns
-    |> Array.ofSeq
+/// Split planes in two groups. The first group's availability is managed dynamically during a mission's run, the second group has a constan infinite amount throughout the mission.
+let splitPlaneSpawns coalitionFilter (numPlanes : Map<PlaneModel, int>) =
+    let dynPlanes, staPlanes =
+        numPlanes
+        |> Map.toSeq
+        |> Seq.filter (fun (plane, _) ->
+            match coalitionFilter with
+            | None -> true
+            | Some coalition -> plane.Coalition = coalition)
+        |> Seq.filter (fun (_, qty) -> qty > 0)
+        |> Seq.sortBy snd
+        |> Seq.mapi (fun i (plane, _) -> (i, plane))
+        |> List.ofSeq
+        |> List.partition (fun (i, plane) -> i < maxPlaneSpawns)
+    let dynPlanes =
+        dynPlanes
+        |> Seq.map snd
+        |> Array.ofSeq
+    let staPlanes =
+        staPlanes
+        |> List.map snd
+    dynPlanes, staPlanes
 
 let private bombLoadsCosts xs =
     xs
@@ -253,16 +251,13 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                     |> fst
                     |> Util.compactSeq
                     |> Map.filter (fun _ qty -> qty > 0)
-                let spawnPlanes =
-                    availablePlanes
-                    |> Map.filter (fun _ qty -> qty < dynamicPlaneSpawnCutOff)
-                    |> selectPlaneSpawns maxPlaneSpawns coalition
-                let staticSpawnPlanes =
-                    availablePlanes
-                    |> Map.filter (fun _ qty -> qty >= dynamicPlaneSpawnCutOff)
-                    |> Map.toSeq
-                    |> Seq.map fst
-                    |> List.ofSeq
+                let spawnPlanes, staticSpawnPlanes =
+                    let coalitionFilter =
+                        if maxCapturedPlanes = 0 then
+                            Some coalition
+                        else
+                            None
+                    splitPlaneSpawns coalitionFilter availablePlanes
                 let planeSpecs : T.Airfield.Planes.Plane list =
                     mkPlaneSpecs state.Supplies spawnPlanes staticSpawnPlanes
                 let planes =

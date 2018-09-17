@@ -124,7 +124,7 @@ let inline private asyncIterNonMuted asyncSeqEntries f xs =
         | Choice2Of2 _ -> None)
     |> AsyncSeq.iterAsync f
 
-let private updateAirfieldPlaneset(wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, afId, numPlanes : Map<PlaneModel, float32>) =
+let private updateAirfieldPlaneset(allowCapturedPlanes, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, afId, numPlanes : Map<PlaneModel, float32>) =
     // State of airfield at start of mission
     let afs = sg.GetAirfield(afId)
     match sg.GetRegion(wg.GetAirfield(afId).Region).Owner with
@@ -135,8 +135,13 @@ let private updateAirfieldPlaneset(wg : WorldFastAccess, sg : WorldStateFastAcce
             let origNumPlanes =
                 afs.NumPlanes
                 |> Map.map (fun _ qty -> int(floor(qty)))
-                |> Map.filter (fun _ qty -> qty < Airfield.dynamicPlaneSpawnCutOff)
-            let spawnPlanes = Airfield.selectPlaneSpawns Airfield.maxPlaneSpawns coalition origNumPlanes
+            let spawnPlanes, _ =
+                let coalitionFilter =
+                    if allowCapturedPlanes then
+                        None
+                    else
+                        Some coalition
+                Airfield.splitPlaneSpawns coalitionFilter origNumPlanes
             spawnPlanes
             |> Array.fold(fun (res, index) plane ->
                 let qty = numPlanes.TryFind(plane) |> Option.defaultValue 0.0f
@@ -168,7 +173,7 @@ let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, 
                 | PlanesAtAirfield(af, planes) -> Map.add af planes acc
                 | _ -> acc) airfields0
         for (af, planes) in Map.toSeq airfields do
-            do! updateAirfieldPlaneset(wg, sg, handlers, af, planes)
+            do! updateAirfieldPlaneset(config.MaxCapturedPlanes > 0, wg, sg, handlers, af, planes)
     } |> Async.RunSynchronously
 
 let private mkBattleDamageTask asyncIterNonMuted (config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, asyncSeqEntries) : Async<unit> =
@@ -265,7 +270,7 @@ let private mkHangarTask asyncIterNonMuted (config : Configuration, wg : WorldFa
                     })
             }
         | PlanesAtAirfield(afId, numPlanes) ->
-            updateAirfieldPlaneset(wg, sg, handlers, afId, numPlanes)
+            updateAirfieldPlaneset(config.MaxCapturedPlanes > 0, wg, sg, handlers, afId, numPlanes)
         | Status(hangars, _) ->
             handlers.OnHangarsUpdated(hangars)
         )
