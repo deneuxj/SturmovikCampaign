@@ -51,7 +51,7 @@ let showHangar(hangar : PlayerHangar, delay) =
         let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
         yield Overview(userIds, delay,
             [
-                sprintf "Welcome back %s %s" hangar.Rank userIds.Name
+                sprintf "Welcome back %s" hangar.RankedName
             ])
         yield Overview(userIds, delay,
             [
@@ -291,9 +291,9 @@ with
                     if oldQty >= 1.0f && newQty < 1.0f then
                         yield PlanesAtAirfield(af, airfields.[af])
                     if int newQty <= 0 then
-                        yield Announce(coalition, [ sprintf "%s took the last %s from %s" user.Name plane.PlaneName af.AirfieldName ])
+                        yield Announce(coalition, [ sprintf "%s took the last %s from %s" hangar.RankedName plane.PlaneName af.AirfieldName ])
                     else
-                        yield Announce(coalition, [ sprintf "%s entered a %s from %s (%d left)" user.Name plane.PlaneName af.AirfieldName (int newQty)])
+                        yield Announce(coalition, [ sprintf "%s entered a %s from %s (%d left)" hangar.RankedName plane.PlaneName af.AirfieldName (int newQty)])
                 ]
             | None ->
                 logger.Error("Attempt to check out plane from neutral region")
@@ -635,22 +635,22 @@ with
                     cost
             let planeInfo =
                 [
-                    let rank = context.GetHangar(user, coalition).Rank
+                    let rank = context.GetHangar(user, coalition).RankedName
                     match cost with
                     | Denied reason ->
                         yield Message(Warning(user, 0,
-                                        [sprintf "%s %s, you are not allowed to take off in a %s at %s" rank user.Name plane.PlaneName af.AirfieldName
+                                        [sprintf "%s, you are not allowed to take off in a %s at %s" rank plane.PlaneName af.AirfieldName
                                          reason
                                          "You will be KICKED if you take off"]))
                     | Free | FreshSpawn _ ->
-                        yield Message(Overview(user, 0, [sprintf "%s %s, you are cleared to take off in a %s from %s" rank user.Name plane.PlaneName af.AirfieldName]))
+                        yield Message(Overview(user, 0, [sprintf "%s, you are cleared to take off in a %s from %s" rank plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
                     | Rent cost ->
-                        yield Message(Overview(user, 0, [sprintf "%s %s, it will cost you %0.0f to requisition a %s from %s" rank user.Name cost plane.PlaneName af.AirfieldName]))
+                        yield Message(Overview(user, 0, [sprintf "%s, it will cost you %0.0f to requisition a %s from %s" rank cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, true, af)
                     | Buy cost ->
                         if cost > 0.0f<E> then
-                            yield Message(Overview(user, 0, [sprintf "%s %s, it will cost you %0.0f to take a %s from %s" rank user.Name cost plane.PlaneName af.AirfieldName]))
+                            yield Message(Overview(user, 0, [sprintf "%s, it will cost you %0.0f to take a %s from %s" rank cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
                 ]
             let supplyCommands =
@@ -696,10 +696,11 @@ with
                     yield PlayerFreshSpawn(this.Player, this.Coalition, planeType)
                 | _ -> ()
 
+                let rank = context.GetHangar(this.Player, this.Coalition)
                 yield Message(
                         Announce(
                             this.Coalition,
-                            [sprintf "%s has taken off from %s in a %s" this.Player.Name this.StartAirfield.AirfieldName (string this.Plane.PlaneType)]))
+                            [sprintf "%s has taken off from %s in a %s" rank this.StartAirfield.AirfieldName (string this.Plane.PlaneType)]))
             ]
         | unexpected ->
             logger.Warn(sprintf "Unexpected state during take off %A" unexpected)
@@ -821,13 +822,15 @@ with
                 | Some af when delivered > 0.0f<K>->
                     let reg = context.World.GetAirfield(af).Region
                     yield DeliverSupplies(delivered * bombCost, reg)
-                    yield Message(Announce(this.Coalition, [sprintf "%s has delivered %0.0f Kg of cargo to %s" this.Player.Name delivered af.AirfieldName]))
+                    let rank = context.GetHangar(this.Player, this.Coalition).RankedName
+                    yield Message(Announce(this.Coalition, [sprintf "%s has delivered %0.0f Kg of cargo to %s" rank delivered af.AirfieldName]))
                 | _ -> ()
             ]
         { this with State = Landed(afCheckout, Some landing.Timestamp); Cargo = this.Cargo - delivered; Reward = this.Reward + reward }, cmds
 
     // Announce landing of healthy planes, kick players delivering planes to the enemy.
     member this.AnnounceLanding(context : Context, af : AirfieldId option) =
+        let rank = context.GetHangar(this.Player, this.Coalition).RankedName
         let cmds =
             [
                 match af with
@@ -839,20 +842,31 @@ with
                             yield Message(
                                 Announce(
                                     this.Coalition.Other,
-                                    [sprintf "%s (an enemy!) has landed at %s" this.Player.Name af.AirfieldName]))
+                                    [sprintf "%s (an enemy!) has landed at %s" rank af.AirfieldName]))
                             if this.Health > 0.5f then
                                 yield Message(Violation(this.Player, "landing on an enemy airfield"))
                         else
                             yield Message(
                                 Announce(
                                     this.Coalition,
-                                    [sprintf "%s is back at %s" this.Player.Name af.AirfieldName]))
+                                    [sprintf "%s is back at %s" rank af.AirfieldName]))
+                    else
+                        yield Message(
+                            Announce(
+                                this.Coalition,
+                                [sprintf "%s has crashed near %s" rank af.AirfieldName]))
+
                 | None ->
                     if this.Health > 0.0f then
                         yield Message(
                             Announce(
                                 this.Coalition,
-                                [sprintf "%s landed in the rough" this.Player.Name]))
+                                [sprintf "%s landed in the rough" rank]))
+                    else
+                        yield Message(
+                            Announce(
+                                this.Coalition,
+                                [sprintf "%s has crashed" rank]))
             ]
         { this with State = Landed(af, None) }, cmds
 

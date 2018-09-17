@@ -174,6 +174,10 @@ with
             let idx = int(this.Reserve / 500.0f<E>) |> max 0 |> min (ranks.Length - 1)
             sprintf "%s (%d)" ranks.[idx] idx
 
+    member this.RankedName =
+        sprintf "%s %s" this.Rank this.PlayerName
+
+
 /// Get the total amount of planes of a given model at a given airfield
 let getTotalPlanesReservedAtAirfield af plane hangars =
     hangars
