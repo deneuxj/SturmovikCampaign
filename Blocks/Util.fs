@@ -1,5 +1,15 @@
 ﻿namespace SturmovikMission.Blocks.Util
 
+module Mcu =
+    open SturmovikMission.DataProvider
+
+    /// Return the opposite country
+    let otherCountry (country : Mcu.CountryValue) =
+        match country with
+        | Mcu.CountryValue.Germany -> Mcu.CountryValue.Russia
+        | Mcu.CountryValue.Russia -> Mcu.CountryValue.Germany
+        | _ -> failwith "unknown country value"
+
 module String =
     // scanf from http://www.fssnip.net/4I/title/sscanf-parsing-with-format-strings
     open System

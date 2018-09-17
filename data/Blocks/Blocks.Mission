@@ -8970,4 +8970,178 @@ Group
 }
 
 
+
+Group
+{
+  Name = "Spotter";
+  Index = 737;
+  Desc = "";
+  MCU_CheckZone
+  {
+    Index = 730;
+    Name = "PROBE";
+    Desc = "";
+    Targets = [731];
+    Objects = [];
+    XPos = 36449.190;
+    YPos = 77.001;
+    ZPos = 12978.492;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Zone = 4000;
+    Cylinder = 1;
+    Closer = 1;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 731;
+    Name = "DETECTED";
+    Desc = "";
+    Targets = [733,734];
+    Objects = [];
+    XPos = 35956.059;
+    YPos = 74.805;
+    ZPos = 13347.094;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_TR_Subtitle
+  {
+    Index = 732;
+    Name = "MESSAGE_ALLIES";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 35622.325;
+    YPos = 72.436;
+    ZPos = 13730.640;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    SubtitleInfo
+    {
+      Duration = 30;
+      FontSize = 20;
+      HAlign = 2;
+      VAlign = 0;
+      RColor = 255;
+      GColor = 0;
+      BColor = 0;
+      LCText = 7;
+    }
+    
+    Coalitions = [1];
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 733;
+    Name = "";
+    Desc = "";
+    Targets = [730];
+    Objects = [];
+    XPos = 35951.078;
+    YPos = 75.827;
+    ZPos = 12988.454;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 734;
+    Name = "CONTINUE";
+    Desc = "";
+    Targets = [735];
+    Objects = [];
+    XPos = 36200.134;
+    YPos = 74.210;
+    ZPos = 13601.131;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 300;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 735;
+    Name = "";
+    Desc = "";
+    Targets = [730];
+    Objects = [];
+    XPos = 36409.341;
+    YPos = 74.062;
+    ZPos = 13406.867;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 736;
+    Name = "START";
+    Desc = "";
+    Targets = [730];
+    Objects = [];
+    XPos = 36742.827;
+    YPos = 75.551;
+    ZPos = 12548.241;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_TR_Subtitle
+  {
+    Index = 738;
+    Name = "MESSAGE_AXIS";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 35535.428;
+    YPos = 72.436;
+    ZPos = 13631.488;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    SubtitleInfo
+    {
+      Duration = 30;
+      FontSize = 20;
+      HAlign = 2;
+      VAlign = 0;
+      RColor = 255;
+      GColor = 0;
+      BColor = 0;
+      LCText = 8;
+    }
+    
+    Coalitions = [2];
+  }
+  
+
+}
+
+
 # end of file
