@@ -696,7 +696,7 @@ with
                     yield PlayerFreshSpawn(this.Player, this.Coalition, planeType)
                 | _ -> ()
 
-                let rank = context.GetHangar(this.Player, this.Coalition)
+                let rank = context.GetHangar(this.Player, this.Coalition).RankedName
                 yield Message(
                         Announce(
                             this.Coalition,
