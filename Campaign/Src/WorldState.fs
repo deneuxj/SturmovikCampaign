@@ -595,9 +595,9 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
             let prodDiff = world.ProductionFactor * computeProductionDifference world.SubBlockSpecs world.Regions
             let week = 7.0f * 24.0f<H>
             if prodDiff > 0.0f<E/H> then
-                prodDiff * week, 0.0f<E>
+                0.2f * prodDiff * week, 0.0f<E>
             else
-                0.0f<E>, -prodDiff * week
+                0.0f<E>, 0.2f * -prodDiff * week
         let extraVehicles =
             [(Axis, axisExtraVehicles); (Allies, alliesExtraVehicles)]
             |> Map.ofList
