@@ -8974,7 +8974,7 @@ Group
 Group
 {
   Name = "Spotter";
-  Index = 737;
+  Index = 729;
   Desc = "";
   MCU_CheckZone
   {
@@ -9015,7 +9015,7 @@ Group
 
   MCU_TR_Subtitle
   {
-    Index = 732;
+    Index = 735;
     Name = "MESSAGE_ALLIES";
     Desc = "";
     Targets = [];
@@ -9029,8 +9029,8 @@ Group
     Enabled = 1;
     SubtitleInfo
     {
-      Duration = 30;
-      FontSize = 20;
+      Duration = 60;
+      FontSize = 30;
       HAlign = 2;
       VAlign = 0;
       RColor = 255;
@@ -9064,7 +9064,7 @@ Group
     Index = 734;
     Name = "CONTINUE";
     Desc = "";
-    Targets = [735];
+    Targets = [738];
     Objects = [];
     XPos = 36200.134;
     YPos = 74.210;
@@ -9079,7 +9079,7 @@ Group
 
   MCU_Activate
   {
-    Index = 735;
+    Index = 738;
     Name = "";
     Desc = "";
     Targets = [730];
@@ -9095,7 +9095,7 @@ Group
 
   MCU_Timer
   {
-    Index = 736;
+    Index = 740;
     Name = "START";
     Desc = "";
     Targets = [730];
@@ -9113,7 +9113,7 @@ Group
 
   MCU_TR_Subtitle
   {
-    Index = 738;
+    Index = 741;
     Name = "MESSAGE_AXIS";
     Desc = "";
     Targets = [];
@@ -9127,8 +9127,8 @@ Group
     Enabled = 1;
     SubtitleInfo
     {
-      Duration = 30;
-      FontSize = 20;
+      Duration = 60;
+      FontSize = 30;
       HAlign = 2;
       VAlign = 0;
       RColor = 255;
