@@ -176,9 +176,23 @@ let convertProduction (world : World) (state : WorldState) =
         let remainingPlanes =
             // Retain only the new production choices. 0.1f instead of 0.0f to avoid float precision loss issues
             Map.filter (fun _ energy -> energy > 0.1f<E>) remainingPlanes
+
+        // Supplies -> storage
+        let supplySpace = Map.tryFind region.RegionId capacities |> Option.defaultValue 0.0f<E>
+        let supplyLevel = Map.tryFind region.RegionId supplies |> Option.defaultValue 0.0f<E>
+        let supplySpaceAvailable = max 0.0f<E> (supplySpace - supplyLevel)
+        let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
+        resupplied := { Region = region.RegionId; Energy = transferedEnergy } :: !resupplied
+
+        // Use left-over supplies for light tanks
+        let suppliesLeft = regState.Products.Supplies - transferedEnergy
+        let vehicleProducts = regState.Products.Vehicles
+        let lightEnergy = vehicleProducts.TryFind(LightArmor) |> Option.defaultValue 0.0f<E>
+        let vehicleProducts = vehicleProducts.Add(LightArmor, lightEnergy + suppliesLeft)
+
         // Freshly produced vehicles
         let newVehicles, remainingVehicles =
-            regState.Products.Vehicles
+            vehicleProducts
             |> Map.toSeq
             |> Seq.fold (fun (newVehicles, remainingVehicles) (vehicle, energy) ->
                 assert(energy >= 0.0f<E>)
@@ -186,6 +200,7 @@ let convertProduction (world : World) (state : WorldState) =
                 let energyLeft = energy - numNewVehicles * vehicle.Cost
                 (vehicle, int numNewVehicles) :: newVehicles, Map.add vehicle energyLeft remainingVehicles
             ) ([], Map.empty)
+
         // Record plane and tank production
         match regState.Owner with
         | Some Axis ->
@@ -194,15 +209,8 @@ let convertProduction (world : World) (state : WorldState) =
             newAlliesVehicles := newAlliesVehicles.Value.AddPlanes(newPlanes).AddTanks(newVehicles)
         | None ->
             ()
-        // Supplies -> storage
-        let supplySpace = Map.tryFind region.RegionId capacities |> Option.defaultValue 0.0f<E>
-        let supplyLevel = Map.tryFind region.RegionId supplies |> Option.defaultValue 0.0f<E>
-        let supplySpaceAvailable = max 0.0f<E> (supplySpace - supplyLevel)
-        let transferedEnergy = min supplySpaceAvailable regState.Products.Supplies
-        resupplied := { Region = region.RegionId; Energy = transferedEnergy } :: !resupplied
         // Remove produced things from ongoing production
-        let suppliesLeft = regState.Products.Supplies - transferedEnergy
-        let assignment = { regState.Products with Planes = remainingPlanes; Vehicles = remainingVehicles; Supplies = suppliesLeft }
+        let assignment = { regState.Products with Planes = remainingPlanes; Vehicles = remainingVehicles; Supplies = 0.0f<E> }
         // Add produced vehicles to region
         let numVehicles =
             newVehicles
