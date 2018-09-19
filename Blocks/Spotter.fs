@@ -43,7 +43,7 @@ with
         let message =
             match country with
             | Mcu.CountryValue.Germany -> 
-                McuUtil.getTriggerByName group T.Blocks.MESSAGE_ALLIES
+                McuUtil.getTriggerByName group T.Blocks.MESSAGE_AXIS
             | _
             | Mcu.CountryValue.Russia -> 
                 McuUtil.getTriggerByName group T.Blocks.MESSAGE_ALLIES
