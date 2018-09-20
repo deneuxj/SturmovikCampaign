@@ -12,10 +12,7 @@ It's a simpler replacement for SturmovikServerControl which does not provide any
 ### How do I get set up? ###
 
 To build from source, you will need to acquire a number of dependencies manually:
-* [TickDelayMonitoring](https://bitbucket.org/johdex/tickdelaymonitoring)
 * [SturmovikServerControl](https://bitbucket.org/johdex/sturmovikservercontrol)
-* [SturmovikMission](https://github.com/deneuxj/SturmovikMission)
-* [plog](https://bitbucket.org/johdex/plog)
 
 Other dependencies are managed via NuGet, and should be retrieved automatically by Visual Studio 2017. You'll need to have F# support enabled in Visual Studio, by the way.
 
