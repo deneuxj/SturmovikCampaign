@@ -461,6 +461,8 @@ with
         )
 
     static member inline ExtractAirfields(spawns : T.Airfield list, parkedPlanes : ^Plane list, caponiers : StaticGroup list, storage : T.Block list, regions : Region list, subBlocksSpecs) =
+        if List.isEmpty spawns then
+            invalidArg "spawns" "List must not be empty"
         let airfields =
             spawns
             |> List.groupBy (fun spawn -> spawn.GetName().Value)
@@ -632,17 +634,46 @@ with
             |> List.map (fun area -> area.AddStorage(ammoStorages, subBlockSpecs))
             |> List.map (fun area -> area.AddProduction(factories, subBlockSpecs))
             |> List.map (fun area -> area.SetParking parkings)
+        // List of regions must not be empty
+        if List.isEmpty regions then
+            failwith "Extracted list of regions is empty"
+
+        // List of roads should typically never be empty.
         let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
+        if List.isEmpty roads then
+            logger.Error("Extracted list of roads is empty")
+
+        // List of roads should normally not be empty, but it's not completely unrealistic if it is.
         let rails = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
+        if List.isEmpty rails then
+            logger.Warn("Extracted list of rails is empty")
+
+        // Not uncommon that sea ways are empty, e.g. on a map without coasts.
         let seaWays = Path.ExtractPaths(data.GetGroup("Sea").ListOfMCU_Waypoint, regions)
+        if List.isEmpty seaWays then
+            logger.Info("Extracted list of sea ways is empty")
+
+        // Not uncommon river ways are empty, e.g. on a map without large rivers.
         let riverWays = Path.ExtractPaths(data.GetGroup("River").ListOfMCU_Waypoint, regions)
+        if List.isEmpty riverWays then
+            logger.Info("Extracted list of river ways is empty")
+
         let defenses = data.GetGroup("Defenses")
+        // Anti-air defenses should typically not be empty
         let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
+        if List.isEmpty antiAirDefenses then
+            logger.Warn("Extracted list of AA defenses is empty")
+
         let battlefieldZones = data.GetGroup("Battles")
         let battlefields = battlefieldZones.ListOfMCU_TR_InfluenceArea
         let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(battlefields, regions, roads)
+
+        // Airfield spawns cannot be empty
         let afs = data.GetGroup("Airfield spawns").ListOfAirfield
+        if List.isEmpty afs then
+            failwith "Extracted list of airfield spawns is empty"
+
         let planes = data.GetGroup("Parked planes").ListOfPlane
         let afStorages = data.GetGroup("Airfield storage").ListOfBlock @ data.GetGroup("Static").ListOfBlock
         let airfields =
