@@ -167,6 +167,18 @@ with
           IsAirfield = isAirfield
           Durability = if durability > 0 then durability else defaultDurability }
 
+
+    member this.RepairCost =
+        match this.Production, this.Storage with
+        | prod, _ when prod > 0.0f<E/H> ->
+            prod * 120.0f<H>
+            |> max 960.0f<E> // Assuming repair speed of 10.0f<E/H>, that's at least 96 hours to repair factories.
+        | _, storage when storage > 0.0f<E> ->
+            storage
+            |> max 60.0f<E> // Assuming repair speed of 10.0f<E/H>, that's at least 6 hours to repair storage.
+            |> min 120.0f<E> // At most 12 hours to repair storage.
+        | _ -> 100.0f<E>
+
 /// A group of buildings or some other static objects.
 type StaticGroup = {
     Model : string
@@ -181,6 +193,10 @@ with
                   Rotation = block |> getYOri |> valueOf |> float32 
                   Altitude = block |> getAlt |> valueOf |> float32 }
         }
+
+    member this.TryFind(subBlocksSpecs) =
+        subBlocksSpecs
+        |> List.tryFind (fun spec -> this.Model.Contains(spec.Pattern))
 
     /// Array of sub-block numbers that represent objects with significant storage or production capabilities
     /// When adding buildings here, one must also remember to update the code in ResultExtraction, active pattern BuildingObjectType
@@ -445,12 +461,6 @@ with
     /// Cost of fully repairing something. Depends on the building's capacity (production or storage).
     /// </summary>
     member this.RepairCost(subBlocksSpecs) =
-        match this.Production(subBlocksSpecs, 1.0f), this.Storage(subBlocksSpecs) with
-        | prod, _ when prod > 0.0f<E/H> ->
-            prod * 120.0f<H>
-            |> max 960.0f<E> // Assuming repair speed of 10.0f<E/H>, that's at least 96 hours to repair factories.
-        | _, storage when storage > 0.0f<E> ->
-            storage
-            |> max 60.0f<E> // Assuming repair speed of 10.0f<E/H>, that's at least 6 hours to repair storage.
-            |> min 120.0f<E> // At most 12 hours to repair storage.
-        | _ -> 100.0f<E>
+        this.TryFind(subBlocksSpecs)
+        |> Option.map (fun x -> x.RepairCost)
+        |> Option.defaultValue 100.0f<E>

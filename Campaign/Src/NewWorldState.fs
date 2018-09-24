@@ -577,6 +577,11 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
     let regionNeeds = state.GetAmmoCostPerRegion world
     let healLimit = world.RepairSpeed * dt
 
+    // Subtract an amount from energy reserve first, and then from funds for repairs first
+    let subtract amount (energy, forRepairs) =
+        let fromEnergy = min energy amount
+        (energy - fromEnergy, forRepairs - (amount - fromEnergy))
+
     // Repair and resupply regions
     let regionsAfterSupplies =
         [
@@ -585,13 +590,15 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
                 let energy =
                     Map.tryFind region.RegionId newSupplies
                     |> Option.defaultValue 0.0f<E>
+                let forRepairs = min energy (healLimit * 5.0f)
+                let energy = energy - forRepairs
                 // Highest prio: repair production
-                let prodHealth, energy =
+                let prodHealth, forRepairs =
                     computeHealing(
                         world.SubBlockSpecs,
                         regState.ProductionHealth,
                         region.Production,
-                        energy,
+                        forRepairs,
                         healLimit)
                 // Second prio: fill up region supplies
                 let storeCapacity = regState.StorageCapacity(region, world.SubBlockSpecs)
@@ -603,21 +610,21 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
                 let fillTarget = min needs storeCapacity
                 let toSupplies =
                     fillTarget - regState.Supplies
-                    |> min energy
+                    |> min (energy + forRepairs)
                     |> max 0.0f<E>
                 let supplies = regState.Supplies + toSupplies
-                let energy = energy - toSupplies
+                let energy, forRepairs = subtract toSupplies (energy, forRepairs)
                 // Last: repair storage
-                let storeHealth, energy =
+                let storeHealth, forRepairs =
                     computeHealing(
                         world.SubBlockSpecs,
                         regState.StorageHealth,
                         region.Storage,
-                        energy,
+                        forRepairs,
                         healLimit)
                 yield
                     { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies },
-                    energy
+                    (energy, forRepairs)
         ]
     let newSupplies =
         regionsAfterSupplies
@@ -633,12 +640,12 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
             |> List.fold (fun (airfields, regionEnergies) afState ->
                 let af = wg.GetAirfield(afState.AirfieldId)
                 // take from what's left of incoming supplies
-                let energy =
+                let energy, forRepairs =
                     Map.tryFind af.Region regionEnergies
-                    |> fun x -> defaultArg x 0.0f<E>
+                    |> Option.defaultValue (0.0f<E>, 0.0f<E>)
                 // repair airfield storage
-                let storeHealth, energy =
-                    computeHealing(world.SubBlockSpecs, afState.StorageHealth, af.Storage, energy, healLimit)
+                let storeHealth, forRepairs =
+                    computeHealing(world.SubBlockSpecs, afState.StorageHealth, af.Storage, forRepairs, healLimit)
                 let afState = { afState with StorageHealth = storeHealth }
                 // fill storage
                 let bombNeeds =
@@ -648,8 +655,8 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
                 let toAfSupplies =
                     fillTarget - afState.Supplies
                     |> max 0.0f<E>
-                    |> min energy
-                let energy = energy - toAfSupplies
+                    |> min (energy + forRepairs)
+                let energy, forRepairs = subtract toAfSupplies (energy, forRepairs)
                 // what goes over the bomb storage fill target goes back to the region
                 let backToRegion =
                     afState.Supplies + toAfSupplies - fillTarget
@@ -657,18 +664,18 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
                 // result
                 let afState = { afState with Supplies = afState.Supplies + toAfSupplies - backToRegion }
                 let energy = energy + backToRegion
-                afState :: airfields, Map.add af.Region energy regionEnergies
+                afState :: airfields, Map.add af.Region (energy, forRepairs) regionEnergies
             ) ([], newSupplies)
         List.rev x, regSupplies
     let regionsAfterDistribution =
         [
             for regState, region in List.zip regionsAfterSupplies world.Regions do
                 // Energy back from airfields; excess is returned
-                let backFromAf =
+                let backFromAf, forRepairs =
                     regSupplies.TryFind regState.RegionId
-                    |> Option.defaultValue 0.0f<E>
+                    |> Option.defaultValue (0.0f<E>, 0.0f<E>)
                 let newEnergy =
-                    backFromAf + regState.Supplies
+                    backFromAf + regState.Supplies + forRepairs
                     |> min (regState.StorageCapacity(region, world.SubBlockSpecs))
                 let transferred = newEnergy - regState.Supplies
                 yield
