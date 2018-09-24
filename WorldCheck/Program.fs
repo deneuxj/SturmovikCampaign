@@ -77,6 +77,13 @@ let main argv =
                     |> Map.toSeq
                     |> Seq.sumBy snd
                 yield sprintf "Total production for %s: %0.0f" (string coalition) totalProd
+            let avgProd =
+                let total =
+                    production
+                    |> Map.toSeq
+                    |> Seq.sumBy snd
+                total / float32 world.Regions.Length
+            yield sprintf "Average producton per region: %0.0f" avgProd
         ]
 
     for line in description do
