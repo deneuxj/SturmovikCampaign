@@ -41,11 +41,6 @@ let alliesRanks =
        "polkovnik"
        "major general"
        "lieutenant general"
-       "general-polkovnik"
-       "marshal"
-       "chief marshal"
-       "marshal of the Soviet Union"
-       "generalissimus of the Soviet Union"
     |]
 
 let axisRanks =
@@ -167,11 +162,19 @@ with
         if this.Reserve < 0.0f<E> then
             "traitor"
         else
+            let minX, maxX = 500.0f, 50000.0f
             let ranks =
                 match this.Coalition with
                 | Axis -> axisRanks
                 | Allies -> alliesRanks
-            let idx = int(this.Reserve / 500.0f<E>) |> max 0 |> min (ranks.Length - 1)
+            let idx =
+                if this.Reserve <= 1.0f<E> * minX then
+                    0
+                else
+                    let step = (log(maxX) - log(minX)) / float32 ranks.Length
+                    let x = (log(float32 this.Reserve) - log(minX)) / step
+                    int x
+                |> max 0 |> min (ranks.Length - 1)
             sprintf "%s (%d)" ranks.[idx] idx
 
     member this.RankedName =
