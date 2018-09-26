@@ -98,7 +98,7 @@
     # Max think time for column movement planning
     ThinkTime: 60
     # Total production of all factories in an average region. Used to compute production factor to adjust production per factory building on the map.
-    DesiredProduction: 100.0
+    DesiredProduction: 150.0
     # Amount of production (resource units per hour) for planes. 500.0f gives one i16 or bf109e7 per hour.
     PlaneProduction: 2000.0
     # Initial number of planes at rear airfield
