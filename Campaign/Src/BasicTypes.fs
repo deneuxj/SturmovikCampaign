@@ -174,9 +174,9 @@ with
             prod * 120.0f<H>
             |> max 960.0f<E> // Assuming repair speed of 10.0f<E/H>, that's at least 96 hours to repair factories.
         | _, storage when storage > 0.0f<E> ->
-            storage
+            4.0f * storage
             |> max 60.0f<E> // Assuming repair speed of 10.0f<E/H>, that's at least 6 hours to repair storage.
-            |> min 120.0f<E> // At most 12 hours to repair storage.
+            |> min 240.0f<E> // At most 24 hours to repair storage.
         | _ -> 100.0f<E>
 
 /// A group of buildings or some other static objects.
