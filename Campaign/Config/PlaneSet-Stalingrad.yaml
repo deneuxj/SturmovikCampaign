@@ -60,8 +60,6 @@ PlaneSet:
           Static: 0
         - Model: IL2Mod42
           Static: 11
-        - Model: IL2Mod41
-          Static: 9
         - Model: P40
           Static: 7
         - Model: Yak1s69
@@ -70,5 +68,3 @@ PlaneSet:
           Static: 2
         - Model: Pe2s87
           Static: 12
-        - Model: SpitfireMkVb
-          Static: 6
