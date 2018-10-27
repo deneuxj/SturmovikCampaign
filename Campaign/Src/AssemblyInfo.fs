@@ -22,7 +22,7 @@ open System.Runtime.InteropServices
 
 module Constants =
     [<Literal>]
-    let version = "1.30.4.0"
+    let version = "1.30.5.0"
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
@@ -32,7 +32,7 @@ module Constants =
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("")>]
 [<assembly: AssemblyProduct("Campaign")>]
-[<assembly: AssemblyCopyright("Copyright © Johann Deneux 2017")>]
+[<assembly: AssemblyCopyright("Copyright © Johann Deneux 2018")>]
 [<assembly: AssemblyTrademark("")>]
 [<assembly: AssemblyCulture("")>]
 
