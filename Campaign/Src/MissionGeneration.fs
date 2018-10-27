@@ -199,6 +199,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             MovementOrder.FromColumns missionData.AlliesOrders.Columns
         ]
         |> Seq.concat
+#if BRIDGE_LOGIC_ENABLED
     let bridgeEntities, bridgesOfVertex, shortenedPaths =
         let bridges =
             bridges
@@ -219,6 +220,11 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             | false, _ -> []
             | true, xs -> xs
         bridgeEntities, bridgesOfVertex, shortenedPaths
+#else
+    let shortenedPaths = getMovementPathVertices missionData.World missionData.State moves
+    let bridgeEntities = dict []
+    let bridgesOfVertex _ = []
+#endif
     let mkConvoyNodes coalition =
         let orders =
             shortenedPaths
