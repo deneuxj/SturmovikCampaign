@@ -29,6 +29,7 @@ open VectorExtension
 open SturmovikMission.Blocks.BlocksMissionData
 open FSharp.Control
 open Campaign.AutoOrder
+open Util
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -1264,9 +1265,24 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
     { state with Regions = regions }
 
 /// Reset the exposed vehicles in each region.
+/// Up to the max size of a road column vehicles can remain unexposed.
 let resetExposedVehicles (state : WorldState) =
+    let convoySize = ColByRoad.MaxNumVehicles
     { state with
-        Regions = state.Regions |> List.map (fun regState -> { regState with NumExposedVehicles = Map.empty })
+        Regions =
+            state.Regions
+            |> List.map (fun regState ->
+                let exposed =
+                    regState.NumVehicles
+                    |> expandMap
+                    |> Array.shuffle (System.Random())
+                    |> fun arr ->
+                        if Array.length arr <= convoySize then
+                            arr
+                        else
+                            Array.skip convoySize arr
+                    |> compactSeq
+                { regState with NumExposedVehicles = exposed })
     }
 
 /// Add vehicles that have arrived in a region to that region. Must be called after applyConquests.
