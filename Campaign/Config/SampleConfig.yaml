@@ -1,6 +1,8 @@
 ﻿Campaign:
     # Can be auto or the name of a plane set
     PlaneSet: auto
+    # List of campaign scenarios to run in sequence. If empty, automatic start of campaigns is Disabled.
+    PlayList: [MoscowAutumn2, MoscowWinter, StalingradSummer, StalingradAutumn, KubanSpring, KubanAutumn]
     # Whether to use the textual mission file (slow but better compatibility with new versions of the game)
     # Otherwise the binary file is used (fast, but new versions of the game often change that format)
     UseTextMissionFile: false

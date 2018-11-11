@@ -107,11 +107,12 @@ module Support =
         AnnounceWeather : Weather.WeatherState -> unit
         AnnounceWorldState : World * WorldState -> unit
         UpdateMap : World * WorldState -> unit
-        StartCommentator : unit -> unit
-        StopCommentator : unit -> unit
+        StartBackground : unit -> unit
+        StopBackground : unit -> unit
     }
 
     type ExecutionState =
+        | Reset of campaign: string
         | DecideOrders
         | GenerateMission
         | KillOrSkip
@@ -121,6 +122,7 @@ module Support =
         | ExtractResults
         | CampaignOver of victorious: CoalitionId
         | Failed of message:string * stackTrace:string option * ExecutionState
+        | Halted
     with
         member this.Description =
             match this with
@@ -133,6 +135,9 @@ module Support =
             | ExtractResults -> "extract results"
             | CampaignOver _ -> "terminate campaign"
             | Failed(_, _, inner) -> sprintf "failed to %s" inner.Description
+            | Halted -> "halted"
+            | Reset _ -> "reset"
+
         member this.GetAsync(support : SupportApis, config, serverProc : Process option, notifications : Notifications) =
             let tryOrNotifyPlayers errorMessage onError action =
                 async {
@@ -174,7 +179,7 @@ module Support =
                     | Error e -> logger.Warn(sprintf "Waiting for mission start failed: %s" e.Message)
                     | Ok(Some (:? MissionStartEntry as entry)) -> logger.Info(sprintf "Mission start detected: %s at %s on %s" entry.MissionFile (entry.MissionTime.ToShortTimeString()) (entry.MissionTime.ToShortDateString()))
                     | Ok _ -> logger.Info("Mission start detected")
-                    notifications.StartCommentator()
+                    notifications.StartBackground()
                 }
 
             match this with
@@ -244,7 +249,7 @@ module Support =
             | KillServer ->
                 async {
                     support.Logging.LogInfo "Kill server..."
-                    notifications.StopCommentator()
+                    notifications.StopBackground()
                     killServer(config, serverProc)
                     return None, StartServer
                 }
@@ -257,7 +262,7 @@ module Support =
                         return None, Failed("Failed to start server", None, this)
                     | Some _ ->
                         do! timelyCommentatorStart()
-                        notifications.StartCommentator()
+                        notifications.StartBackground()
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
@@ -271,9 +276,9 @@ module Support =
                         | [||] ->
                             return None, StartServer
                         | [| serverProc |] ->
-                            notifications.StopCommentator()
+                            notifications.StopBackground()
                             do! Async.Sleep(10000)
-                            notifications.StartCommentator()
+                            notifications.StartBackground()
                             return (Some serverProc), WaitForMissionEnd time
                         | _ ->
                             support.Logging.LogError("Found multiple servers running, kill them all")
@@ -282,7 +287,7 @@ module Support =
             | ExtractResults ->
                 async {
                     support.Logging.LogInfo "Extract results..."
-                    notifications.StopCommentator()
+                    notifications.StopBackground()
                     do!
                         [ "Mission has ended"
                           "Actions past this point will not affect the campaign"
@@ -358,12 +363,32 @@ module Support =
                 }
             | CampaignOver _ ->
                 async {
-                    support.Logging.LogInfo "Cannot continue campaign that is over."
-                    return serverProc, KillServer
+                    let world =
+                        try
+                            let serializer = FsPickler.CreateXmlSerializer(indent = true)
+                            use worldFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.world))
+                            serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
+                        with
+                        | e ->
+                            killServer(config, serverProc)
+                            failwithf "Failed to read world data. Reason was: '%s'" e.Message
+                    let finishedCampaign = world.Scenario
+                    match config.PlayList with
+                    | [] ->
+                        notifications.StopBackground()
+                        killServer(config, serverProc)
+                        return None, Halted
+                    | mission0 :: _ ->
+                        let nextCampaign =
+                            config.PlayList
+                            |> Seq.pairwise
+                            |> Seq.tryFind (fun (curr, next) -> curr = finishedCampaign)
+                            |> Option.map snd
+                            |> Option.defaultValue mission0
+                        return None, Reset nextCampaign
                 }
-            | Failed(msg, stackTrace, state) ->
+            | Failed _ | Halted | Reset _ ->
                 async {
-                    support.Logging.LogInfo "Failed!"
                     return serverProc, this
                 }
 
@@ -384,7 +409,7 @@ module Support =
             else
                 GenerateMission
 
-    let start(support : SupportApis, config, status, onCampaignOver, postMessage, notifications) =
+    let rec start(support : SupportApis, config, status, onCampaignOver, postMessage, notifications : Notifications) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -402,6 +427,11 @@ module Support =
                 status.Save(config)
                 onCampaignOver victorious
                 NoTask
+            | Halted ->
+                NoTask
+            | Reset nextCampaign ->
+                notifications.StopBackground()
+                reset(support, nextCampaign, config, onCampaignOver, postMessage, notifications)
             | _ ->
                 let step action =
                     async {
@@ -425,6 +455,7 @@ module Support =
                 let action = status.GetAsync(support, config, serverProc, notifications)
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
+        notifications.StopBackground()
         let status =
             status
             |> Option.defaultVal (ExecutionState.Restore(config))
@@ -460,10 +491,12 @@ module Support =
             match findRunningServers(config) with
             | [| proc |] -> Some proc
             | _ -> None
+        notifications.StartBackground()
         work status proc
 
-    let reset(support : SupportApis, scenario : string, config : Configuration, onCampaignOver, postMessage, notifications) =
+    and reset(support : SupportApis, scenario : string, config : Configuration, onCampaignOver, postMessage, notifications : Notifications) =
         async {
+            notifications.StopBackground()
             // Delete log and campaign files
             let logDir = Path.Combine(config.ServerDataDir, "logs")
             let logs = List.ofSeq(Directory.EnumerateFiles(logDir, "*.txt"))
@@ -486,7 +519,7 @@ module Support =
                 // Start campaign
                 return start(support, config, Some GenerateMission, onCampaignOver, postMessage, notifications)
         }
-        |> ScheduledTask.SomeTaskNow "generate mission"
+        |> ScheduledTask.SomeTaskNow "after reset"
 
     /// Build a graphical representation of the strategic situation
     let mkMapGraphics(world : World, state : WorldState) : MapGraphics.MapPackage =
@@ -975,6 +1008,15 @@ type Plugin() =
         | None ->
             ()
 
+    member x.GetNotifications(cnf : Configuration) : Support.Notifications =
+        { AnnounceResults = announceResults
+          AnnounceWeather = announceWeather
+          AnnounceWorldState = announceWorldState
+          UpdateMap = updateMap
+          StartBackground = fun() -> x.StartCommenter(cnf); x.StartWebHookClient(cnf)
+          StopBackground = fun() ->  x.StopWebHookClient(); x.StopCommenter()
+        }
+
     interface CampaignServerApi with
         member x.Init(apis) =
             support <- Some apis
@@ -989,16 +1031,7 @@ type Plugin() =
                 let cnf = loadConfigFile configFile
                 config <- Some cnf
                 x.SetCampaignData(cnf)
-                x.StartWebHookClient(cnf)
-                let notifications : Support.Notifications =
-                    { AnnounceResults = announceResults
-                      AnnounceWeather = announceWeather
-                      AnnounceWorldState = announceWorldState
-                      UpdateMap = updateMap
-                      StartCommentator = fun() -> x.StartCommenter(cnf)
-                      StopCommentator = x.StopCommenter
-                    }
-                Support.start(support, cnf, None, onCampaignOver, postMessage, notifications)
+                Support.start(support, cnf, None, onCampaignOver, postMessage, x.GetNotifications(cnf))
                 |> Choice1Of2
             with
             | e ->
@@ -1014,17 +1047,7 @@ type Plugin() =
                 let cnf = loadConfigFile configFile
                 config <- Some cnf
                 x.SetCampaignData(cnf)
-                x.StopCommenter()
-                x.StopWebHookClient()
-                let notifications : Support.Notifications =
-                    { AnnounceResults = announceResults
-                      AnnounceWeather = announceWeather
-                      AnnounceWorldState = announceWorldState
-                      UpdateMap = updateMap
-                      StartCommentator = fun() -> x.StartCommenter(cnf)
-                      StopCommentator = x.StopCommenter
-                    }
-                let task = Support.reset(support, scenario, cnf, onCampaignOver, postMessage, notifications)
+                let task = Support.reset(support, scenario, cnf, onCampaignOver, postMessage, x.GetNotifications(cnf))
                 let task =
                     task.ContinueWith(fun nextTask ->
                         async {

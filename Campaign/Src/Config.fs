@@ -45,6 +45,7 @@ let extractRegionAndDate (strategyFile : string) =
     region, date
 
 type Configuration = {
+    PlayList : string list
     PlaneSetName : string
     UseTextMissionFile : bool
     Seed : int option
@@ -105,6 +106,7 @@ type Configuration = {
 with
     static member Default =
         {
+            PlayList = []
             PlaneSetName = ""
             UseTextMissionFile = false
             Seed = None // Some 0
@@ -201,6 +203,7 @@ let loadConfigFile (path : string) =
     config.Load(path)
     let values = config.Campaign
     {
+        PlayList = values.PlayList |> List.ofSeq
         PlaneSetName = values.PlaneSet
         UseTextMissionFile = values.UseTextMissionFile
         Seed =
