@@ -36,6 +36,7 @@ with
         let wideCx = getComplexTriggerByName group T.Blocks.WideDrop
         let msgPrecise = getTriggerByName group T.Blocks.SubtitlePrecise
         let msgWide = getTriggerByName group T.Blocks.SubtitleWide
+        let friendlyNear = getTriggerByName group T.Blocks.FRIENDLY_NEAR :?> Mcu.McuProximity
         // Correct positions
         let ref = Vector2.FromMcu precise.Pos
         let dv = pos - ref
@@ -47,6 +48,7 @@ with
             mcu.Ori.Y <- angle % 360.0
         McuUtil.vecCopy preciseCx.Pos wideCx.Pos
         // Correct countries
+        friendlyNear.PlaneCoalitions <- [ McuUtil.coalitionOf country ]
         preciseCx.Countries <- [ country ]
         wideCx.Countries <- [ country ]
         for mcu in group do

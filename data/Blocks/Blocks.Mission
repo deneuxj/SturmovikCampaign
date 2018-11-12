@@ -6198,7 +6198,7 @@ Group
     CheckPlanes = 1;
     EventsFilterSpawned = 0;
     EventsFilterEnteredSimple = 0;
-    EventsFilterEnteredAlive = 1;
+    EventsFilterEnteredAlive = 0;
     EventsFilterLeftSimple = 0;
     EventsFilterLeftAlive = 0;
     EventsFilterFinishedSimple = 0;
@@ -6224,11 +6224,6 @@ Group
       {
         Type = 78;
         TarId = 515;
-      }
-      OnEvent
-      {
-        Type = 59;
-        TarId = 516;
       }
     }
   }
@@ -6558,7 +6553,7 @@ Group
     Index = 538;
     LinkTrId = 539;
     XPos = 36944.793;
-    YPos = 98.736;
+    YPos = 98.550;
     ZPos = 24408.353;
     XOri = 0.02;
     YOri = 21.20;
@@ -6602,7 +6597,7 @@ Group
     Targets = [];
     Objects = [];
     XPos = 36944.793;
-    YPos = 98.936;
+    YPos = 98.750;
     ZPos = 24408.353;
     XOri = 0.00;
     YOri = 0.00;
@@ -6625,7 +6620,7 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Color = 2;
+    Color = 1;
   }
   
 
@@ -6920,6 +6915,61 @@ Group
     ZOri = 0.00;
     Enabled = 1;
     MisObjID = 556;
+  }
+  
+
+  MCU_CheckZone
+  {
+    Index = 742;
+    Name = "FRIENDLY_NEAR";
+    Desc = "";
+    Targets = [516];
+    Objects = [];
+    XPos = 36947.824;
+    YPos = 98.519;
+    ZPos = 24408.314;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Zone = 1500;
+    Cylinder = 1;
+    Closer = 1;
+    PlaneCoalitions = [2];
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 743;
+    Name = "Trigger Timer";
+    Desc = "";
+    Targets = [742];
+    Objects = [];
+    XPos = 36950.834;
+    YPos = 98.610;
+    ZPos = 24408.376;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 60;
+    Random = 100;
+  }
+  
+
+  MCU_TR_MissionBegin
+  {
+    Index = 744;
+    Name = "Translator Mission Begin";
+    Desc = "";
+    Targets = [743];
+    Objects = [];
+    XPos = 36953.586;
+    YPos = 98.615;
+    ZPos = 24408.207;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
   }
   
 
