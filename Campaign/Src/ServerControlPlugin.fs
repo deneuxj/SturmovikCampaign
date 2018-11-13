@@ -106,6 +106,7 @@ module Support =
         AnnounceResults : AfterActionReport.ReportData * AfterActionReport.ReportData * NewWorldState.BattleSummary list -> unit
         AnnounceWeather : Weather.WeatherState -> unit
         AnnounceWorldState : World * WorldState -> unit
+        AnnounceCampaignOver : CoalitionId -> unit
         UpdateMap : World * WorldState -> unit
         StartBackground : unit -> unit
         StopBackground : unit -> unit
@@ -361,8 +362,15 @@ module Support =
                         notifications.UpdateMap(world, newState)
                         return serverProc, DecideOrders
                 }
-            | CampaignOver _ ->
+            | CampaignOver victorious ->
                 async {
+                    notifications.AnnounceCampaignOver victorious
+                    match victorious with
+                    | Axis -> "Axis has won"
+                    | Allies -> "Allies have won"
+                    |> sprintf "Campaign is over, %s the battle!"
+                    |> support.Logging.LogInfo
+
                     let world =
                         try
                             let serializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -409,7 +417,7 @@ module Support =
             else
                 GenerateMission
 
-    let rec start(support : SupportApis, config, status, onCampaignOver, postMessage, notifications : Notifications) =
+    let rec start(support : SupportApis, config, status, postMessage, notifications : Notifications) =
         let rec work (status : ExecutionState) (serverProc : Process option) =
             match status with
             | Failed(msg, _, _) ->
@@ -417,21 +425,11 @@ module Support =
                 status.Save(config)
                 postMessage (sprintf "Hey <@%s> something went wrong, check the server" config.DiscordUserId)
                 NoTask
-            | CampaignOver(victorious) ->
-                match victorious with
-                | Axis -> "Axis has won"
-                | Allies -> "Allies have won"
-                |> sprintf "Campaign is over, %s the battle!"
-                |> support.Logging.LogInfo
-                killServer(config, serverProc)
-                status.Save(config)
-                onCampaignOver victorious
-                NoTask
             | Halted ->
                 NoTask
             | Reset nextCampaign ->
                 notifications.StopBackground()
-                reset(support, nextCampaign, config, onCampaignOver, postMessage, notifications)
+                reset(support, nextCampaign, config, postMessage, notifications)
             | _ ->
                 let step action =
                     async {
@@ -494,7 +492,7 @@ module Support =
         notifications.StartBackground()
         work status proc
 
-    and reset(support : SupportApis, scenario : string, config : Configuration, onCampaignOver, postMessage, notifications : Notifications) =
+    and reset(support : SupportApis, scenario : string, config : Configuration, postMessage, notifications : Notifications) =
         async {
             notifications.StopBackground()
             // Delete log and campaign files
@@ -517,7 +515,7 @@ module Support =
             | _ ->
                 loadWorldThenDo (support, config) notifications.UpdateMap
                 // Start campaign
-                return start(support, config, Some GenerateMission, onCampaignOver, postMessage, notifications)
+                return start(support, config, Some GenerateMission, postMessage, notifications)
         }
         |> ScheduledTask.SomeTaskNow "after reset"
 
@@ -1012,6 +1010,7 @@ type Plugin() =
         { AnnounceResults = announceResults
           AnnounceWeather = announceWeather
           AnnounceWorldState = announceWorldState
+          AnnounceCampaignOver = onCampaignOver
           UpdateMap = updateMap
           StartBackground = fun() -> x.StartCommenter(cnf); x.StartWebHookClient(cnf)
           StopBackground = fun() ->  x.StopWebHookClient(); x.StopCommenter()
@@ -1031,7 +1030,7 @@ type Plugin() =
                 let cnf = loadConfigFile configFile
                 config <- Some cnf
                 x.SetCampaignData(cnf)
-                Support.start(support, cnf, None, onCampaignOver, postMessage, x.GetNotifications(cnf))
+                Support.start(support, cnf, None, postMessage, x.GetNotifications(cnf))
                 |> Choice1Of2
             with
             | e ->
@@ -1047,7 +1046,7 @@ type Plugin() =
                 let cnf = loadConfigFile configFile
                 config <- Some cnf
                 x.SetCampaignData(cnf)
-                let task = Support.reset(support, scenario, cnf, onCampaignOver, postMessage, x.GetNotifications(cnf))
+                let task = Support.reset(support, scenario, cnf, postMessage, x.GetNotifications(cnf))
                 let task =
                     task.ContinueWith(fun nextTask ->
                         async {
