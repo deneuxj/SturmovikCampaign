@@ -40,10 +40,13 @@ PlaneSet:
     Planes:
         - Model: Bf109e7
           Static: 3
+          Factor: 1.0
         - Model: Bf109f2
           Static: 2
+          Factor: 1.5
         - Model: Bf109f4
           Static: 0
+          Factor: 2.0
         - Model: Mc202
           Static: 5
         - Model: Bf110e
@@ -62,7 +65,9 @@ PlaneSet:
           Static: 11
         - Model: Mig3
           Static: 6
+          Factor: 1.5
         - Model: P40
           Static: 7
+          Factor: 1.5
         - Model: Pe2s35
           Static: 12

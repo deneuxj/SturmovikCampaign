@@ -42,6 +42,7 @@ PlaneSet:
           Static: 1
         - Model: Bf109g2
           Static: 0
+          Factor: 0.75
         - Model: Bf110g
           Static: 6
         - Model: Fw190a3

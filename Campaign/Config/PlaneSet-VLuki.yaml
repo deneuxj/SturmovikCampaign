@@ -40,6 +40,7 @@ PlaneSet:
     Planes:
         - Model: Bf109e7
           Static: 3
+          Factor: 0.75
         - Model: Bf109f4
           Static: 0
         - Model: Bf109g2
@@ -58,6 +59,7 @@ PlaneSet:
           Static: 8
         - Model: I16
           Static: 0
+          Factor: 0.75
         - Model: IL2Mod42
           Static: 11
         - Model: Yak1s69

@@ -41,10 +41,12 @@ PlaneSet:
     Planes:
         - Model: Bf109g2
           Static: 2
+          Factor: 0.75
         - Model: Bf109g4
           Static: 1
         - Model: Bf109g6
           Static: 0
+          Factor: 1.5
         - Model: Bf110g
           Static: 6
         - Model: Fw190a5
@@ -65,10 +67,12 @@ PlaneSet:
           Static: 10
         - Model: Lagg3s29
           Static: 2
+          Factor: 0.75
         - Model: La5fns2
           Static: 3
         - Model: P40
           Static: 7
+          Factor: 0.75
         - Model: SpitfireMkVb
           Static: 6
         - Model: IL2Mod43

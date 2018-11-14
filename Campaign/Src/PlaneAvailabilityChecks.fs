@@ -491,6 +491,11 @@ with
         |> Map.toSeq
         |> Seq.map fst
 
+    member this.GetRearValueFactor(plane : PlaneModel) =
+        this.World.World.PlaneSet.Planes.TryFind(plane)
+        |> Option.map (fun data -> data.RearValueFactor)
+        |> Option.defaultValue 1.0f
+
 
 type TransactionCost =
     | Rent of float32<E>
@@ -591,8 +596,9 @@ with
                             Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
                 elif context.RearAirfields.Contains(af) then
                     let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0.0f
+                    let rearValueFactor = context.GetRearValueFactor(plane)
                     match numFreshSpawnsLeft, plane.Cost * context.Limits.RearAirfieldCostFactor with
-                    | x, _ when x < 1.0f ->
+                    | x, _ when x < rearValueFactor ->
                         let alts =
                             hangar.FreshSpawns
                             |> Map.toSeq
@@ -600,6 +606,7 @@ with
                             |> Seq.map fst
                             |> Set.ofSeq
                             |> fun planeTypes -> context.GetFreshSpawnAlternatives(planeTypes, af)
+                            |> Seq.filter (fun plane -> x >= context.GetRearValueFactor(plane))
                             |> List.ofSeq
                         match alts with
                         | [] ->
@@ -609,7 +616,7 @@ with
                                 planes
                                 |> List.map (fun plane -> plane.PlaneName)
                                 |> String.concat ", "
-                            Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instad: %s" planes)
+                            Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instead: %s" planes)
                     | _, 0.0f<E> ->
                         FreshSpawn plane.PlaneType
                     | _, price ->

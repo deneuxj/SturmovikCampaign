@@ -50,12 +50,15 @@ with
 /// </summary>
 type PlaneData = {
     Cost : float32<E>
+    // Amount to remove from individual plane quotas when checking out from the rear base
+    RearValueFactor : float32
     AllowedMods : ModRange list
     StaticPlaneIndex : int
 }
 with
     static member Default =
         { Cost = 500.0f<E>
+          RearValueFactor = 1.0f
           AllowedMods = [Interval(0, 99)]
           StaticPlaneIndex = 0 }
 
@@ -65,8 +68,9 @@ with
             PlaneModel.AllModels
             |> List.tryFind(fun plane -> model.Contains(plane.PlaneName.ToLowerInvariant()))
         let idx = data.Static
+        let factor = float32 data.Factor
         plane
-        |> Option.map(fun plane -> plane, { PlaneData.Default with StaticPlaneIndex = idx; Cost = plane.Cost })
+        |> Option.map(fun plane -> plane, { PlaneData.Default with StaticPlaneIndex = idx; Cost = plane.Cost; RearValueFactor = factor })
 
 /// <summary>
 /// Region where a plane set can be used.

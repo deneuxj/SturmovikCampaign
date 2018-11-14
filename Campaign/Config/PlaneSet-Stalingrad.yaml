@@ -40,12 +40,14 @@ PlaneSet:
     Planes:
         - Model: Bf109e7
           Static: 3
+          Factor: 0.75
         - Model: Bf109f4
           Static: 0
         - Model: Bf109g2
           Static: 1
         - Model: Mc202
           Static: 5
+          Factor: 0.75
         - Model: Bf110e
           Static: 6
         - Model: Ju88
@@ -58,6 +60,7 @@ PlaneSet:
           Static: 10
         - Model: I16
           Static: 0
+          Factor: 0.75
         - Model: IL2Mod42
           Static: 11
         - Model: P40
