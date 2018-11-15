@@ -400,17 +400,17 @@ module Support =
                     return serverProc, this
                 }
 
-        member this.Save(config) =
+        member this.Save(config, ?filename) =
             let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            let statusFile = Path.Combine(config.OutputDir, "loopState.xml")
+            let statusFile = Path.Combine(config.OutputDir, defaultArg filename "loopState.xml")
             if File.Exists(statusFile) then
                 File.Delete(statusFile)
             use s = File.CreateText(statusFile)
             serializer.Serialize(s, this)
 
-        static member Restore(config) =
+        static member Restore(config, ?filename) =
             let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            let statusFile = Path.Combine(config.OutputDir, "loopState.xml")
+            let statusFile = Path.Combine(config.OutputDir, defaultArg filename "loopState.xml")
             if File.Exists(statusFile) then
                 use s = File.OpenText(statusFile)
                 serializer.Deserialize<ExecutionState>(s)
