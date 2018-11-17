@@ -40,7 +40,7 @@ type Battlefield =
       Attackers : RespawningTank list // Moving tanks
       Defenders : RespawningCanon list // Static tanks, defensive artillery and anti-tank canons
       PlayerSpawns : PlayerTankSpawn list
-      Icons : IconDisplay list
+      Icons : BattleIcons list
       All : McuUtil.IMcuGroup
     }
 with
@@ -170,7 +170,8 @@ with
         // Icons
         let title =
             sprintf "Battle %s (%d:%d)" region numAttackers numDefenders
-        let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, center, title, defendingCoalition.ToCoalition, Mcu.IconIdValue.CoverArmorColumn)
+        let icon1 = BattleIcons.Create(store, lcStore, center, yori, numAttackers, numDefenders, Defenders defendingCoalition.ToCoalition)
+        let icon2 = BattleIcons.Create(store, lcStore, center, yori, numAttackers, numDefenders, Attackers defendingCoalition.Other.ToCoalition)
         // Result
         { Supporters = support
           Attackers = attackers
@@ -205,8 +206,6 @@ with
                 yield s.Start
             for d in this.Defenders do
                 yield d.Start
-            for i in this.Icons do
-                yield upcast i.Show
         ]
 
 /// Identify regions with invaders, pick a battle area

@@ -123,4 +123,107 @@ type PlayerTankSpawn =
         { TankSpawn = spawn
           All = McuUtil.groupFromList group
         }
-        
+
+type BattleSide =
+    | Attackers of Mcu.CoalitionValue
+    | Defenders of Mcu.CoalitionValue
+with
+    member this.Side =
+        match this with
+        | Attackers side | Defenders side -> side
+
+type BattleIcons =
+    { Position : Vector2
+      Rotation : float32
+      All : McuUtil.IMcuGroup
+    }
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, position : Vector2, yori : float32, numAttackers : int, numDefenders : int, side : BattleSide) =
+        // Instantiate
+        let subst = Mcu.substId <| store.GetIdMapper()
+        let substLc = Mcu.substLCId <| lcStore.GetIdMapper()
+        let group = blocksData.GetGroup("BattleIcons").CreateMcuList()
+        for mcu in group do
+            subst mcu
+            substLc mcu
+        // Key nodes
+        let iconAttackers = McuUtil.getTriggerByName group T.Blocks.NumAttackers
+        let iconDefenders = McuUtil.getTriggerByName group T.Blocks.NumDefenders
+        // Position
+        let xmin =
+            group
+            |> Seq.map (fun mcu -> mcu.Pos.X)
+            |> Seq.min
+            |> float32
+        let ymin =
+            group
+            |> Seq.map (fun mcu -> mcu.Pos.Z)
+            |> Seq.min
+            |> float32
+        let xmax =
+            group
+            |> Seq.map (fun mcu -> mcu.Pos.X)
+            |> Seq.max
+            |> float32
+        let ymax =
+            group
+            |> Seq.map (fun mcu -> mcu.Pos.Z)
+            |> Seq.max
+            |> float32
+        let center = 0.5f * Vector2(xmin + xmax, ymin + ymax)
+        for mcu in group do
+            let rel = Vector2.FromMcu mcu.Pos - center
+            let newPos = rel.Rotate(yori) + position
+            newPos.AssignTo mcu.Pos
+        // Coalition visibility
+        for mcu in group do
+            match mcu with
+            | :? Mcu.McuIcon as icon ->
+                icon.Coalitions <- [ side.Side ]
+            | _ -> ()
+        // Colors
+        match side with
+        | Attackers _ ->
+            for mcu in group do
+                match mcu with
+                | :? Mcu.McuIcon as icon ->
+                    if icon.LineType = Mcu.LineTypeValue.Defence then
+                        icon.Red <- 10
+                        icon.Green <- 0
+                        icon.Blue <- 0
+                    elif icon.IconId = Mcu.IconIdValue.AttackArmorColumn then
+                        icon.IconId <- Mcu.IconIdValue.CoverArmorColumn
+                | _ -> ()
+        | Defenders _ ->
+            ()
+        // Num participants
+        let labels =
+            [
+                for mcu in group do
+                    match mcu with
+                    | :? Mcu.McuIcon as icon ->
+                        if List.contains icon.Index iconAttackers.Targets then
+                            match icon.IconLC with
+                            | Some data ->
+                                yield data.LCName, string numAttackers
+                                yield data.LCDesc, "Number of attacking vehicles"
+                            | None ->
+                                ()
+                        if List.contains icon.Index iconDefenders.Targets then
+                            match icon.IconLC with
+                            | Some data ->
+                                yield data.LCName, string numDefenders
+                                yield data.LCDesc, "Number of defending vehicles"
+                            | None ->
+                                ()
+                        icon.Coalitions <- [ side.Side ]
+                    | _ -> ()
+            ]
+        // Result
+        { Position = position
+          Rotation = yori
+          All = { new McuUtil.IMcuGroup with
+                    member x.Content = group
+                    member x.LcStrings = labels
+                    member x.SubGroups = []
+                }
+        }
