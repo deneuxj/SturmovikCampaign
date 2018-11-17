@@ -108,6 +108,8 @@ module Support =
         AnnounceWorldState : World * WorldState -> unit
         AnnounceCampaignOver : CoalitionId -> unit
         UpdateMap : World * WorldState -> unit
+        StartCommenter : unit -> unit
+        StopCommenter : unit -> unit
         StartBackground : unit -> unit
         StopBackground : unit -> unit
     }
@@ -180,7 +182,7 @@ module Support =
                     | Error e -> logger.Warn(sprintf "Waiting for mission start failed: %s" e.Message)
                     | Ok(Some (:? MissionStartEntry as entry)) -> logger.Info(sprintf "Mission start detected: %s at %s on %s" entry.MissionFile (entry.MissionTime.ToShortTimeString()) (entry.MissionTime.ToShortDateString()))
                     | Ok _ -> logger.Info("Mission start detected")
-                    notifications.StartBackground()
+                    notifications.StartCommenter()
                 }
 
             match this with
@@ -250,7 +252,6 @@ module Support =
             | KillServer ->
                 async {
                     support.Logging.LogInfo "Kill server..."
-                    notifications.StopBackground()
                     killServer(config, serverProc)
                     return None, StartServer
                 }
@@ -263,7 +264,6 @@ module Support =
                         return None, Failed("Failed to start server", None, this)
                     | Some _ ->
                         do! timelyCommentatorStart()
-                        notifications.StartBackground()
                         let expectedMissionEnd = System.DateTime.UtcNow + System.TimeSpan(600000000L * int64 config.MissionLength)
                         return serverProc, WaitForMissionEnd expectedMissionEnd
                 }
@@ -277,9 +277,7 @@ module Support =
                         | [||] ->
                             return None, StartServer
                         | [| serverProc |] ->
-                            notifications.StopBackground()
                             do! Async.Sleep(10000)
-                            notifications.StartBackground()
                             return (Some serverProc), WaitForMissionEnd time
                         | _ ->
                             support.Logging.LogError("Found multiple servers running, kill them all")
@@ -288,7 +286,7 @@ module Support =
             | ExtractResults ->
                 async {
                     support.Logging.LogInfo "Extract results..."
-                    notifications.StopBackground()
+                    notifications.StopCommenter()
                     do!
                         [ "Mission has ended"
                           "Actions past this point will not affect the campaign"
@@ -428,7 +426,6 @@ module Support =
             | Halted ->
                 NoTask
             | Reset nextCampaign ->
-                notifications.StopBackground()
                 reset(support, nextCampaign, config, postMessage, notifications)
             | _ ->
                 let step action =
@@ -912,8 +909,10 @@ type Plugin() =
           AnnounceWorldState = announceWorldState
           AnnounceCampaignOver = onCampaignOver
           UpdateMap = updateMap
-          StartBackground = fun() -> x.StartCommenter(cnf); x.StartWebHookClient(cnf)
-          StopBackground = fun() ->  x.StopWebHookClient(); x.StopCommenter()
+          StartCommenter = fun() -> x.StartCommenter(cnf)
+          StopCommenter = fun() -> x.StopCommenter() 
+          StartBackground = fun() -> x.StartWebHookClient(cnf)
+          StopBackground = fun() ->  x.StopWebHookClient()
         }
 
     interface CampaignServerApi with
