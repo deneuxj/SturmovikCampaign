@@ -605,33 +605,31 @@ with
                     let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0.0f
                     let rearValueFactor = context.GetRearValueFactor(plane)
                     match numFreshSpawnsLeft, plane.Cost * context.Limits.RearAirfieldCostFactor with
-                    | x, _ when x < rearValueFactor ->
-                        let alts =
-                            hangar.FreshSpawns
-                            |> Map.toSeq
-                            |> Seq.filter (fun (_, qty) -> qty >= 1.0f)
-                            |> Seq.map fst
-                            |> Set.ofSeq
-                            |> fun planeTypes -> context.GetFreshSpawnAlternatives(planeTypes, af)
-                            |> Seq.filter (fun plane -> x >= context.GetRearValueFactor(plane))
-                            |> List.ofSeq
-                        match alts with
-                        | [] ->
-                            Denied "You have exhausted all your fresh spawns; They refill partially every new mission"
-                        | planes ->
-                            let planes =
-                                planes
-                                |> List.map (fun plane -> plane.PlaneName)
-                                |> String.concat ", "
-                            Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instead: %s" planes)
-                    | _, 0.0f<E> ->
+                    | x, _ when x >= rearValueFactor ->
                         FreshSpawn plane.PlaneType
-                    | _, price ->
+                    | x, price ->
                         let available = context.GetHangar(user, coalition)
                         if available.Reserve >= price then
                             Buy price
                         else
-                            Denied "Your rank is insufficient to use that plane from the rear airfield"
+                            let alts =
+                                hangar.FreshSpawns
+                                |> Map.toSeq
+                                |> Seq.filter (fun (_, qty) -> qty >= 1.0f)
+                                |> Seq.map fst
+                                |> Set.ofSeq
+                                |> fun planeTypes -> context.GetFreshSpawnAlternatives(planeTypes, af)
+                                |> Seq.filter (fun plane -> x >= context.GetRearValueFactor(plane))
+                                |> List.ofSeq
+                            match alts with
+                            | [] ->
+                                Denied "You have exhausted all your fresh spawns; They refill partially every new mission"
+                            | planes ->
+                                let planes =
+                                    planes
+                                    |> List.map (fun plane -> plane.PlaneName)
+                                    |> String.concat ", "
+                                Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instead: %s" planes)
                 else
                     Free
             // Deny rental if it's not allowed in the limits
