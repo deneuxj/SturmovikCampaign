@@ -451,6 +451,7 @@ module Support =
                 ScheduledTask.SomeTaskNow "next campaign state" (step action)
 
         notifications.StopBackground()
+        notifications.StopCommenter()
         let status =
             status
             |> Option.defaultVal (ExecutionState.Restore(config))
@@ -472,6 +473,7 @@ module Support =
                 if System.DateTime.UtcNow < time then
                     if findRunningServers(config).Length > 0 then
                         support.Logging.LogInfo "Resume waiting"
+                        notifications.StartCommenter()
                         status // deadline not passed, and server running -> resume waiting
                     else
                         support.Logging.LogInfo "Restart server"
