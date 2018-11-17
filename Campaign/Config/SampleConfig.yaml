@@ -68,8 +68,8 @@
     FreshTransportRefill: 1.0
     # Whether players can spend cash reserve to borrow planes they haven't reserved
     PlaneRentalAllowed: true
-    # Cost factor for buying planes from the rear airfield
-    RearAirfieldCostFactor: 0.125
+    # Cost factor for buying planes from the rear airfield.
+    RearAirfieldCostFactor: 1000000000.0
     # Max amount of cash a player can hold
     MaxCash: 10000
     # Initial amount of cash for each player
