@@ -80,7 +80,7 @@ type Command =
     | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlaneCheckIn of user:UserIds * userCoalition:CoalitionId * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlayerPayed of user:UserIds * CoalitionId * float32<E>
-    | PlayerFreshSpawn of user:UserIds * CoalitionId * PlaneType
+    | PlayerFreshSpawn of user:UserIds * CoalitionId * PlaneType * float32
     | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * originalCost:float32<E> * AirfieldId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * CoalitionId * float32<E>
@@ -313,10 +313,10 @@ with
             { this with Hangars = hangars },
             [ Overview(user, 0, [ sprintf "You have have spent %0.0f" cost ]) ]
 
-        | PlayerFreshSpawn(user, coalition, planeType) ->
+        | PlayerFreshSpawn(user, coalition, planeType, factor) ->
             let hangar : PlayerHangar = this.GetHangar(user, coalition)
             let oldSpawns = hangar.FreshSpawns.TryFind(planeType) |> Option.defaultValue 0.0f
-            let newSpawns = oldSpawns - 1.0f |> max 0.0f
+            let newSpawns = oldSpawns - factor |> max 0.0f
             let hangar = { hangar with FreshSpawns = hangar.FreshSpawns.Add(planeType, newSpawns) }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
@@ -508,7 +508,7 @@ type TransactionCost =
     | Rent of float32<E>
     | Buy of float32<E>
     | Denied of reason:string
-    | FreshSpawn of PlaneType
+    | FreshSpawn of PlaneType * float32
     | Free
 with
     member this.IsRental =
@@ -606,7 +606,7 @@ with
                     let rearValueFactor = context.GetRearValueFactor(plane)
                     match numFreshSpawnsLeft, plane.Cost * context.Limits.RearAirfieldCostFactor with
                     | x, _ when x >= rearValueFactor ->
-                        FreshSpawn plane.PlaneType
+                        FreshSpawn(plane.PlaneType, rearValueFactor)
                     | x, price ->
                         let available = context.GetHangar(user, coalition)
                         if available.Reserve >= price then
@@ -697,8 +697,8 @@ with
                     yield PlayerPayed(this.Player, this.Coalition, cost.Amount)
 
                 match cost with
-                | FreshSpawn planeType ->
-                    yield PlayerFreshSpawn(this.Player, this.Coalition, planeType)
+                | FreshSpawn(planeType, factor) ->
+                    yield PlayerFreshSpawn(this.Player, this.Coalition, planeType, factor)
                 | _ -> ()
 
                 let rank = context.GetHangar(this.Player, this.Coalition).RankedName
