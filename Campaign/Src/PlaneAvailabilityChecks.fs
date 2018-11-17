@@ -49,9 +49,16 @@ type PlaneAvailabilityMessage =
 let showHangar(hangar : PlayerHangar, delay) =
     [
         let userIds = { UserId = string hangar.Player; Name = hangar.PlayerName }
+        let getNumFreshSpawns planeType =
+            hangar.FreshSpawns.TryFind(planeType) |> Option.defaultValue 0.0f
+        let numFighters = getNumFreshSpawns PlaneType.Fighter
+        let numAttackers = getNumFreshSpawns PlaneType.Attacker
+        let numBombers = getNumFreshSpawns PlaneType.Bomber
+        let numTransports = getNumFreshSpawns PlaneType.Transport
         yield Overview(userIds, delay,
             [
                 sprintf "Welcome back %s" hangar.RankedName
+                sprintf "Fresh spawns at rear AF: F:%0.1f A:%0.1f B:%0.1f T:%0.1f" numFighters numAttackers numBombers numTransports
             ])
         yield Overview(userIds, delay,
             [
