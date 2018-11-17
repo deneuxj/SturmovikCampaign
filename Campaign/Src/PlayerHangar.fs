@@ -160,7 +160,7 @@ with
     /// Return the rank corresponding to the reserve
     member this.Rank =
         if this.Reserve < 0.0f<E> then
-            "traitor"
+            ""
         else
             let minX, maxX = 500.0f, 50000.0f
             let ranks =
