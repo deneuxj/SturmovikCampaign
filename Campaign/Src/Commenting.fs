@@ -38,18 +38,6 @@ open Campaign.ChatCommands
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
-/// Quickly replay a sequence of events.
-/// This is needed to correctly reconstuct results which depend on ordering of events, e.g. collection of rewards for actions during flights
-let replayQuick (events : LogEntry seq) =
-    asyncSeq {
-        for ev in events do
-            match ev with
-            | :? VersionEntry -> () // Skip those useless entries
-            | _ ->
-                yield ev
-                do! Async.Sleep 10
-    }
-
 type EventHandlers =
     {
       // Region name, attacker coalition
