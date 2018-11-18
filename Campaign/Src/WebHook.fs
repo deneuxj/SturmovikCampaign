@@ -94,6 +94,22 @@ let postWorldState channel (world : World, state : WorldState) =
         state.Regions
         |> Seq.filter (fun region -> region.Owner = Some coalition)
         |> Seq.sumBy(fun region -> region.ProductionCapacity(wg.GetRegion(region.RegionId), world.SubBlockSpecs, world.ProductionFactor))
+    let countSupplies coalition =
+        state.Regions
+        |> Seq.filter (fun region -> region.Owner = Some coalition)
+        |> Seq.sumBy(fun region -> region.Supplies)
+    let countAfSupplies coalition =
+        state.Airfields
+        |> Seq.filter (fun af -> sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner = Some coalition)
+        |> Seq.sumBy (fun af -> af.Supplies)
+    let countStorage coalition =
+        state.Regions
+        |> Seq.filter (fun region -> region.Owner = Some coalition)
+        |> Seq.sumBy(fun region -> region.StorageCapacity(wg.GetRegion(region.RegionId), world.SubBlockSpecs))
+    let countAfStorage coalition =
+        state.Airfields
+        |> Seq.filter (fun af -> sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner = Some coalition)
+        |> Seq.sumBy(fun af -> af.StorageCapacity(wg.GetAirfield(af.AirfieldId), world.SubBlockSpecs))
     let countPlanes coalition =
         state.Airfields
         |> Seq.filter (fun af -> sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner = Some coalition)
@@ -127,9 +143,13 @@ let postWorldState channel (world : World, state : WorldState) =
     let send = postMessage channel
     sprintf "New mission started, in-game time is %s." (state.Date.ToString("HH:mm")) |> send
     sprintf "Axis production: %5.0f units per hour." (countProduction Axis) |> send
+    sprintf "Axis region supplies: %5.0f units out of %5.0f storage available." (countSupplies Axis) (countStorage Axis) |> send
+    sprintf "Axis airfield supplies: %5.0f units out of %5.0f storage available." (countAfSupplies Axis) (countAfStorage Axis) |> send
     sprintf "Axis planes:\n%s\n" (countPlanes Axis |> showPlanes) |> send
     sprintf "Axis tanks:\n%s\n" (countTanks Axis |> showTanks) |> send
     sprintf "Allies production: %5.0f units per hour." (countProduction Allies) |> send
+    sprintf "Allies region supplies: %5.0f units out of %5.0f storage available." (countSupplies Allies) (countStorage Allies) |> send
+    sprintf "Allies airfield supplies: %5.0f units out of %5.0f storage available." (countAfSupplies Allies) (countAfStorage Allies) |> send
     sprintf "Allies planes:\n%s\n" (countPlanes Allies |> showPlanes) |> send
     sprintf "Allies tanks:\n%s\n" (countTanks Allies |> showTanks) |> send
 
