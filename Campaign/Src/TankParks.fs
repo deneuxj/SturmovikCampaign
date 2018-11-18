@@ -83,7 +83,17 @@ let createParkedTanks store lcStore (world : World) (state : WorldState) inAttac
                     // Add machine guns among tanks for anti-air defense
                     let aaDefenses =
                         let boundary = region.Parking
-                        StaticDefenseGroup.Create(CanonGenerationSettings.Default, StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, 8, coalition.ToCountry, coalition.ToCoalition)
+                        StaticDefenseGroup.Create(CanonGenerationSettings.Default, StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, parked.Length, coalition.ToCountry, coalition.ToCoalition)
+                    let links = aaDefenses.CreateLinks()
+                    links.Apply(McuUtil.deepContentOf(aaDefenses))
+                    Mcu.addTargetLink missionBegin aaDefenses.Api.Start.Index
+                    yield! McuUtil.deepContentOf(aaDefenses)
+
+                    // Add flak too
+                    let aaDefenses =
+                        let numCanons = parked.Length / 4 |> max 2
+                        let boundary = region.Parking
+                        StaticDefenseGroup.Create(CanonGenerationSettings.Default, StaticDefenses.Types.AntiAirCanon, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, numCanons, coalition.ToCountry, coalition.ToCoalition)
                     let links = aaDefenses.CreateLinks()
                     links.Apply(McuUtil.deepContentOf(aaDefenses))
                     Mcu.addTargetLink missionBegin aaDefenses.Api.Start.Index
