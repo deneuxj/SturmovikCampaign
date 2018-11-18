@@ -470,9 +470,6 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                         // - A -> B; C -> B (reinforcements into battle, not properly handled by campaign update)
                         alliesMove.Destination = axisMove.Start && alliesMove.Start = axisMove.Destination ||
                         alliesMove.Destination = axisMove.Destination
-                    | None, None ->
-                        // At least one side must make a move
-                        true
                     | _ ->
                         false
                 if skip then
