@@ -375,6 +375,16 @@ with
     /// Check if a side is victorious.
     /// </summary>
     member this.VictoriousSide(world : World) =
+        let hasLostRearAirfield coalition =
+            world.RearAirfields.TryFind coalition
+            |> Option.map (fun af ->
+                world.Airfields
+                |> List.exists (fun af2 ->
+                    af2.AirfieldId = af
+                    &&
+                    this.Regions
+                    |> List.exists (fun regState -> regState.RegionId = af2.Region && regState.Owner = Some coalition.Other)))
+            |> Option.defaultValue false
         if float32 (this.Date - world.StartDate).TotalDays > this.MaxConflictDuration then
             let numAxis, numAllies =
                 this.Regions
@@ -390,21 +400,26 @@ with
             else
                 None
         else
-            let getNumRegionsWithAF coalition =
-                world.Airfields
-                |> Seq.filter (fun af ->
-                    this.Regions
-                    |> Seq.filter (fun reg -> reg.RegionId = af.Region && reg.Owner = Some coalition)
-                    |> Seq.isEmpty
-                    |> not)
-                |> Seq.length
-            let numAxis = getNumRegionsWithAF Axis
-            let numAllies = getNumRegionsWithAF Allies
-            if numAxis = 0 then
-                Some Allies
-            elif numAllies = 0 then
-                Some Axis
-            else None
+            match hasLostRearAirfield Axis, hasLostRearAirfield Allies with
+            | true, false -> Some Allies
+            | false, true -> Some Axis
+            | true, true -> Some Allies // Unfair, but also unlikely
+            | false, false ->
+                let getNumRegionsWithAF coalition =
+                    world.Airfields
+                    |> Seq.filter (fun af ->
+                        this.Regions
+                        |> Seq.filter (fun reg -> reg.RegionId = af.Region && reg.Owner = Some coalition)
+                        |> Seq.isEmpty
+                        |> not)
+                    |> Seq.length
+                let numAxis = getNumRegionsWithAF Axis
+                let numAllies = getNumRegionsWithAF Allies
+                if numAxis = 0 then
+                    Some Allies
+                elif numAllies = 0 then
+                    Some Axis
+                else None
 
     /// <summary>
     /// Check if this mission's time interval overlaps with night time.

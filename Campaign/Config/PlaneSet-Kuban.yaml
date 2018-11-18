@@ -57,8 +57,10 @@ PlaneSet:
           Static: 11
         - Model: He111h16
           Static: 10
-        - Model: Yak1s69
-          Static: 10
+        - Model: Lagg3s29
+          Static: 2
+        - Model: La5
+          Static: 8
         - Model: Yak7bs36
           Static: 10
         - Model: SpitfireMkVb
