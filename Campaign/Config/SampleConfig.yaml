@@ -51,7 +51,7 @@
     # Whether spawn restrictions are in place
     SpawnRestrictions: true
     # Max number of fighter spawns at rear airfield (per player)
-    FreshFighterSpawns: 10
+    FreshFighterSpawns: 5
     # Max number of attacker spawns at rear airfield (per player)
     FreshAttackerSpawns: 5
     # Max number of bomber spawns at rear airfield (per player)
@@ -123,7 +123,7 @@
     WebHook: ""
     # User ID to use in "hey @user something went wrong with the server"
     DiscordUserId: ""
-    # Max number of friendly fire incidents. Ban occurs when that number is reached
+    # Max number of friendly fire incidents. Ban occurs when that number is exceeded
     MaxFriendlyFireEvents: 2
     # Duration of ban for friendly fire
     FriendlyFireBanDuration: 1
