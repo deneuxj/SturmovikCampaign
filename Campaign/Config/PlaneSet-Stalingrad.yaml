@@ -73,5 +73,3 @@ PlaneSet:
           Static: 2
         - Model: Pe2s87
           Static: 12
-        - Model: SpitfireMkVb
-          Static: 6
