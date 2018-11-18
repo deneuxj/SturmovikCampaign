@@ -1593,7 +1593,7 @@ Group
       {
         Type = 0;
         CmdId = 129;
-        TarId = 128;
+        TarId = 753;
       }
     }
   }
@@ -1940,6 +1940,24 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 753;
+    Name = "start attack delay";
+    Desc = "";
+    Targets = [128];
+    Objects = [];
+    XPos = 16374.906;
+    YPos = 100.888;
+    ZPos = 24729.163;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 15;
+    Random = 100;
   }
   
 
@@ -9340,7 +9358,7 @@ Group
 
   MCU_Activate
   {
-    Index = 752;
+    Index = 751;
     Name = "NumDefenders";
     Desc = "";
     Targets = [750];
@@ -9356,7 +9374,7 @@ Group
 
   MCU_Activate
   {
-    Index = 753;
+    Index = 752;
     Name = "NumAttackers";
     Desc = "";
     Targets = [749];
