@@ -61,6 +61,9 @@ configuration file. Pass -r to reset the campaign.
         2
     else
         let options = Options.Create(argv)
+        let victory = Campaign.ServerControlPlugin.Support.CampaignOver Campaign.BasicTypes.CoalitionId.Axis
+        let config = Campaign.Configuration.loadConfigFile options.ConfigFile
+        victory.Save(config, "victoryLoopState.xml")
         use scheduler = new Scheduler(options.ConfigFile)
         scheduler.ContinueOrReset(options.ResetScenario)
         printfn "Press a key to exit."
