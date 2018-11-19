@@ -759,6 +759,9 @@ with
         this.Airfields
         |> Seq.exists (fun af -> af.Region = region)
 
+    // BREAKING: Set from config file upon world creation
+    member this.MaxTanksInParks = 16
+
 open Util
 
 /// Provides fast access to world description data by index.
@@ -819,6 +822,12 @@ let lightMachineGunCost = heavyMachineGunCost / (float32 SturmovikMission.Blocks
 let cannonConsumption = cannonCost / 100.0f<H>
 let heavyMachineGunConsumption = heavyMachineGunCost / 100.0f<H>
 let lightMachineGunConsumption = lightMachineGunCost / 100.0f<H>
+
+// Number of cannons to defend tanks in tank parks
+let numCannonsPerTank = 0.25f
+
+// NUmber of machin guns to defend tanks in tank parks
+let numMgPerTank = 1.0f
 
 type DefenseArea with
     /// Value of guns in a fully defended region
