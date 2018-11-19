@@ -620,11 +620,9 @@ module Support =
 type CampaignData(config : Configuration, support : SupportApis) =
     let dataDir = config.OutputDir
     let serializer = new XmlSerializer()
-    // Turn a value into a Json value, i.e. replace types by dictionaries, arrays...
-    let toJsonType(x) =
-        let toJson(x : obj) = JsonConvert.SerializeObject(x)
-        let fromJson(s : string) = JsonConvert.DeserializeObject(s)
-        x |> toJson |> fromJson
+    let wg =
+        let worldFilename = Path.Combine(dataDir, "world.xml")
+        serializer.Deserialize<World>(File.OpenText(worldFilename)).FastAccess
 
     // List of mission dates, used to identify individual missions
     let missionDates =
@@ -658,17 +656,51 @@ type CampaignData(config : Configuration, support : SupportApis) =
             let axisOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(axisOrdersFilename))
             let alliesOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(alliesOrdersFilename))
             let data =
-                (Axis, axisOrders),
-                (Allies, alliesOrders),
-                (results.Shipments, results.ColumnDepartures, results.Blocked, results.Damages, results.TakeOffs, results.Landings, results.BattleKills, results.FerryPlanes, results.ParaDrops)
-            let data = toJsonType data
+                [("AxisOrders", axisOrders :> obj)
+                 ("AlliesOrders", upcast alliesOrders)
+                 ("Shipments", upcast results.Shipments)
+                 ("ColumnDepartures", upcast results.ColumnDepartures)
+                 ("Blocked", upcast results.Blocked)
+                 ("Damages", upcast results.Damages)
+                 ("TakeOffs", upcast results.TakeOffs)
+                 ("Landings", upcast results.Landings)
+                 ("BattleKills", upcast results.BattleKills)
+                 ("FerryPlanes", upcast results.FerryPlanes)
+                 ("ParaDrops", upcast results.ParaDrops)]
+                |> Map.ofList
+            let data = JsonConvert.SerializeObject(data)
             Ok data
         with
         | _ -> Error "Failed to retrieve mission results"
 
+    let extractRegion (region : RegionState) =
+        [ "Supplies", box region.Supplies
+          "Storage", box <| region.StorageCapacity(wg.GetRegion(region.RegionId), wg.World.SubBlockSpecs)
+          "Production", box <| region.ProductionCapacity(wg.GetRegion(region.RegionId), wg.World.SubBlockSpecs, wg.World.ProductionFactor)
+          "Tanks", region.NumVehicles |> Map.toSeq |> Seq.sumBy snd |> box
+        ]
+        |> Map.ofList
+
+    let tryGetState(date : DateTime) =
+        try
+            let dateString =
+                date.ToString(Run.Filenames.dateFormat)
+            let stateFilename = Path.Combine(dataDir, sprintf "state_%s.xml" dateString)
+            let state = serializer.Deserialize<WorldState>(File.OpenText(stateFilename))
+            let data =
+                [("Regions", state.Regions |> List.map extractRegion)
+                ]
+                |> Map.ofList
+            let data = JsonConvert.SerializeObject(data)
+            Ok data
+        with
+        | _ -> Error "Failed to retrieve campaign state"
+
     member this.GetMissionDates() = missionDates.Value
 
     member this.TryGetMissionResults(date) = tryGetMissionResults(date)
+
+    member this.TryGetState(date) = tryGetState(date)
 
 
 type Plugin() =
@@ -1020,7 +1052,7 @@ type Plugin() =
                                     Support.ExecutionState.Restore(config)
                                 match loopState with
                                 | Support.WaitForMissionEnd(t) ->
-                                    Ok((t - DateTime.UtcNow).TotalMinutes :> obj)
+                                    Ok((t - DateTime.UtcNow).TotalMinutes |> JsonConvert.SerializeObject)
                                 | _ ->
                                     Error "Mission currently not running"
                             with
@@ -1033,7 +1065,7 @@ type Plugin() =
                     | None ->
                         return errNoCampaign
                     | Some data ->
-                        return Ok(data.GetMissionDates() :> obj)
+                        return Ok(data.GetMissionDates() |> JsonConvert.SerializeObject)
                 | s when s.StartsWith "Mission_" ->
                     match campaignData with
                     | Some data ->
@@ -1048,13 +1080,28 @@ type Plugin() =
                         | None -> return Error "Invalid mission date"
                     | None ->
                         return errNoCampaign
+                | s when s.StartsWith "State_" ->
+                    match campaignData with
+                    | Some data ->
+                        let dateString = s.Substring("State_".Length)
+                        let date =
+                            try
+                                Some(DateTime.ParseExact(dateString, Run.Filenames.dateFormat, CultureInfo.InvariantCulture))
+                            with
+                            | _ -> None
+                        match date with
+                        | Some d ->return data.TryGetState(d)
+                        | None -> return Error "Invalid mission date"
+                    | None ->
+                        return errNoCampaign
                 | "Help" ->
                     return Ok
                         ([
                             "TimeLeft - return time left in mission, in minutes"
                             "MissionDates - return date strings of completed missions"
                             "Mission_<mission date string> - return mission results"
-                        ] :> obj)
+                            "State_<mission date string> - return campaign state"
+                        ] |> JsonConvert.SerializeObject)
                 | _ ->
                     return Error "Unsupported data request. See Help for list of commands"
             }
