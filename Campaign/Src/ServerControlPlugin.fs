@@ -668,7 +668,6 @@ type CampaignData(config : Configuration, support : SupportApis) =
                  ("FerryPlanes", upcast results.FerryPlanes)
                  ("ParaDrops", upcast results.ParaDrops)]
                 |> Map.ofList
-            let data = JsonConvert.SerializeObject(data)
             Ok data
         with
         | _ -> Error "Failed to retrieve mission results"
@@ -688,10 +687,9 @@ type CampaignData(config : Configuration, support : SupportApis) =
             let stateFilename = Path.Combine(dataDir, sprintf "state_%s.xml" dateString)
             let state = serializer.Deserialize<WorldState>(File.OpenText(stateFilename))
             let data =
-                [("Regions", state.Regions |> List.map extractRegion)
+                [("Regions", state.Regions |> List.map extractRegion :> obj)
                 ]
                 |> Map.ofList
-            let data = JsonConvert.SerializeObject(data)
             Ok data
         with
         | _ -> Error "Failed to retrieve campaign state"
@@ -1052,7 +1050,7 @@ type Plugin() =
                                     Support.ExecutionState.Restore(config)
                                 match loopState with
                                 | Support.WaitForMissionEnd(t) ->
-                                    Ok((t - DateTime.UtcNow).TotalMinutes |> JsonConvert.SerializeObject)
+                                    Ok(["Minutes", box (t - DateTime.UtcNow).TotalMinutes] |> Map.ofList)
                                 | _ ->
                                     Error "Mission currently not running"
                             with
@@ -1065,7 +1063,7 @@ type Plugin() =
                     | None ->
                         return errNoCampaign
                     | Some data ->
-                        return Ok(data.GetMissionDates() |> JsonConvert.SerializeObject)
+                        return Ok(["Dates", data.GetMissionDates() :> obj] |> Map.ofList)
                 | s when s.StartsWith "Mission_" ->
                     match campaignData with
                     | Some data ->
@@ -1096,12 +1094,14 @@ type Plugin() =
                         return errNoCampaign
                 | "Help" ->
                     return Ok
-                        ([
-                            "TimeLeft - return time left in mission, in minutes"
-                            "MissionDates - return date strings of completed missions"
-                            "Mission_<mission date string> - return mission results"
-                            "State_<mission date string> - return campaign state"
-                        ] |> JsonConvert.SerializeObject)
+                        (["Commands",
+                            [
+                                "TimeLeft - return time left in mission, in minutes"
+                                "MissionDates - return date strings of completed missions"
+                                "Mission_<mission date string> - return mission results"
+                                "State_<mission date string> - return campaign state"
+                            ] :> obj
+                        ] |> Map.ofList)
                 | _ ->
                     return Error "Unsupported data request. See Help for list of commands"
             }
