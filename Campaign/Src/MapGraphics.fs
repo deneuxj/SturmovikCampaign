@@ -319,16 +319,12 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
             l0.Targets <- [l1.Index]
             h0.Targets <- [h1.Index]
             [ l0; l1; h0; h1 ]
-        let supplies = AutoOrder.computeStorage world state
         let fullCapacities = AutoOrder.computeStorageCapacity world
         let actualCapacities = AutoOrder.computeActualStorageCapacity world state
         let icons = [
             let fills = state.GetAmmoFillLevelPerRegion(world, missionLength)
             for region in world.Regions do
-                let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f
-                let supplies =
-                    Map.tryFind region.RegionId supplies
-                    |> Option.defaultVal 0.0f<E>
+                let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f |> max 0.0f |> min 1.0f
                 let capacity =
                     Map.tryFind region.RegionId actualCapacities
                     |> Option.defaultVal 0.0f<E>

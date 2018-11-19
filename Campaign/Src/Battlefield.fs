@@ -241,7 +241,7 @@ let generateBattlefields missionLength enablePlayerTanks maxVehicles killRatio r
         for bf, defending in identifyBattleAreas world state do
             let bf = wg.GetAntiTankDefenses(bf)
             let regState = sg.GetRegion(bf.Home)
-            let fill = ammoFill.TryFind(bf.Home) |> Option.defaultValue 0.0f
+            let fill = ammoFill.TryFind(bf.Home) |> Option.defaultValue 0.0f |> max 0.0f |> min 1.0f
             let numGuns =
                 fill * (float32 bf.MaxNumGuns)
                 |> ceil

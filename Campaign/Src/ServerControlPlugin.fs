@@ -537,7 +537,7 @@ module Support =
                                 regState.Supplies
                                 (regState.StorageCapacity(reg, world.SubBlockSpecs))
                                 (reg.GetStorageCapacity(world.SubBlockSpecs))
-                        let fill = fills.TryFind(reg.RegionId) |> Option.defaultValue 0.0f
+                        let fill = fills.TryFind(reg.RegionId) |> Option.defaultValue 0.0f |> max 0.0f |> min 1.0f
                         yield {
                             Position = reg.Position
                             Icon = MapGraphics.Base

@@ -82,7 +82,7 @@ let createParkedTanks store lcStore (missionLength : float32<H>) (maxTanksInPark
                                 yield Vector3(center.X, center.Y, 0.0f) + dv
                     }
                 if parked.Length > 0 then
-                    let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f
+                    let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f |> max 0.0f |> min 1.0f
                     // Add machine guns among tanks for anti-air defense
                     let aaDefenses =
                         let boundary = region.Parking
