@@ -673,7 +673,9 @@ type CampaignData(config : Configuration, support : SupportApis) =
         | _ -> Error "Failed to retrieve mission results"
 
     let extractRegion (region : RegionState) =
-        [ "Supplies", box region.Supplies
+        [ "Owner", region.Owner |> Option.map string |> Option.defaultValue "None" :> obj
+          "Name", string region.RegionId :> obj
+          "Supplies", box region.Supplies
           "Storage", box <| region.StorageCapacity(wg.GetRegion(region.RegionId), wg.World.SubBlockSpecs)
           "Production", box <| region.ProductionCapacity(wg.GetRegion(region.RegionId), wg.World.SubBlockSpecs, wg.World.ProductionFactor)
           "Tanks", region.NumVehicles |> Map.toSeq |> Seq.sumBy snd |> box
