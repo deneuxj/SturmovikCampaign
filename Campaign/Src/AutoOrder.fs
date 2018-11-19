@@ -91,7 +91,7 @@ let computeStorage (world : World) (state : WorldState) =
     |> Map.ofSeq
 
 /// Compute the additional supply needs of each region. Can be negative if the region has more resources it needs for itself.
-let computeSupplyNeeds (world : World) (state : WorldState) =
+let computeSupplyNeeds (missionDuration : float32<H>) (world : World) (state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
     // Bombs and repairs at airfields. Needs can be negative.
@@ -107,7 +107,7 @@ let computeSupplyNeeds (world : World) (state : WorldState) =
                 yield af.Region, bombNeed + repairs - afs.Supplies
         }
     // Ammo needs. Can be negative.
-    let regionAmmoCost = state.GetAmmoCostPerRegion(world)
+    let regionAmmoCost = state.GetSupplyNeeds(world, missionDuration)
     let regionCanonNeeds =
         regionAmmoCost
         |> Map.map (fun region cost -> cost - sg.GetRegion(region).Supplies)
@@ -170,7 +170,7 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
 
 
 /// Create convoy orders from regions owned by a coalition to neighbour regions that have bigger needs.
-let createConvoyOrders (minTransfer : float32<E>) (maxTransfer : float32<E>) (getPaths : World -> (Path * 'D) list) (coalition : CoalitionId) (world : World, state : WorldState) =
+let createConvoyOrders (missionLength : float32<H>) (minTransfer : float32<E>) (maxTransfer : float32<E>) (getPaths : World -> (Path * 'D) list) (coalition : CoalitionId) (world : World, state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
     let distances = computeDistanceFromFactories (getPaths >> List.map fst) getOwner world coalition
@@ -179,7 +179,7 @@ let createConvoyOrders (minTransfer : float32<E>) (maxTransfer : float32<E>) (ge
         |> List.choose (fun (path, data) -> if path.MatchesEndpoints(start, destination).IsSome then Some data else None)
     let capacities = computeStorageCapacity world
     let storages = computeStorage world state
-    let needs = computeSupplyNeeds world state
+    let needs = computeSupplyNeeds missionLength world state
     let forwardedNeeds = computeForwardedNeeds world state needs
     let tryFind x y = Map.tryFind x y |> Option.defaultVal 0.0f<E>
     [
@@ -223,26 +223,28 @@ let createConvoyOrders (minTransfer : float32<E>) (maxTransfer : float32<E>) (ge
     ]
 
 
-let createRoadConvoyOrders coalition =
-    createConvoyOrders (6.0f * ResupplyOrder.TruckCapacity) (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads |> List.map (fun x -> x, ())) coalition
+let createRoadConvoyOrders missionLength coalition =
+    createConvoyOrders missionLength (6.0f * ResupplyOrder.TruckCapacity) (float32 ColumnMovement.MaxColumnSize * ResupplyOrder.TruckCapacity) (fun world -> world.Roads |> List.map (fun x -> x, ())) coalition
     >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRoad; Convoy = convoy })
 
 
-let createRailConvoyOrders coalition =
-    createConvoyOrders (0.0f<E>) (ResupplyOrder.TrainCapacity) (fun world -> world.Rails |> List.map (fun x -> x, ())) coalition
+let createRailConvoyOrders missionLength coalition =
+    createConvoyOrders missionLength (0.0f<E>) (ResupplyOrder.TrainCapacity) (fun world -> world.Rails |> List.map (fun x -> x, ())) coalition
     >> List.mapi (fun i (convoy, ()) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByRail; Convoy = convoy })
 
-let createShipConvoyOrders coalition =
+let createShipConvoyOrders missionLength coalition =
     createConvoyOrders
+        missionLength
         (0.0f<E>)
         (2.0f * ResupplyOrder.ShipCapacity)
         (fun world -> (world.SeaWays |> List.map (fun x -> x, BySeaShip)) @ (world.RiverWays |> List.map (fun x -> x, ByRiverShip)))
         coalition
     >> List.mapi (fun i (convoy, means) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = means; Convoy = convoy })
 
-let createAirConvoyOrders coalition =
+let createAirConvoyOrders missionLength coalition =
     let exactCapacity = (PlaneModel.Ju52.CargoCapacity * bombCost)
     createConvoyOrders
+        missionLength
         exactCapacity
         exactCapacity
         (fun world ->
@@ -255,13 +257,12 @@ let createAirConvoyOrders coalition =
         coalition
     >> List.mapi (fun i (convoy, (af1, af2)) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = ByAir(af1, af2); Convoy = convoy })
 
-let createAllConvoyOrders coalition x =
-    createShipConvoyOrders coalition x @ createRoadConvoyOrders coalition x @ createRailConvoyOrders coalition x @ createAirConvoyOrders coalition x
+let createAllConvoyOrders missionLength coalition x =
+    createShipConvoyOrders missionLength coalition x @ createRoadConvoyOrders missionLength coalition x @ createRailConvoyOrders missionLength coalition x @ createAirConvoyOrders missionLength coalition x
 
 /// Prioritize convoys according to needs of destination
-let prioritizeConvoys (world : World) (state : WorldState) (orders : ResupplyOrder list) =
-    let needs =
-        computeSupplyNeeds world state
+let prioritizeConvoys (missionLength : float32<H>) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
+    let needs = state.GetSupplyNeeds(world, missionLength)
     let remaining =
         state.Regions
         |> List.map (fun regState -> regState.RegionId, regState.Supplies)
@@ -485,12 +486,12 @@ let pickPlaneToProduce (coalition : CoalitionId) (world : World) (state : WorldS
     mostNeeded
 
 /// Decide what vehicles and planes to produce, and how important they are.
-let computeProductionPriorities (coalition : CoalitionId) (world : World) (state : WorldState) =
+let computeProductionPriorities (missionLength : float32<H>) (coalition : CoalitionId) (world : World) (state : WorldState) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
 
     let supplyNeed =
-        let allNeeds = computeSupplyNeeds world state
+        let allNeeds = computeSupplyNeeds missionLength world state
         state.Regions
         |> Seq.sumBy (fun state ->
             if state.Owner = Some coalition then

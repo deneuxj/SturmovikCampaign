@@ -158,12 +158,12 @@ type Context =
       Limits : Limits
     }
 with
-    static member Create(world : World, state : WorldState, hangars : Map<string * CoalitionId, PlayerHangar>, limits : Limits) =
+    static member Create(missionLength : float32<H>, world : World, state : WorldState, hangars : Map<string * CoalitionId, PlayerHangar>, limits : Limits) =
         let rearAirfields =
             [Axis; Allies]
             |> List.choose (fun coalition -> world.RearAirfields.TryFind coalition)
             |> Set.ofList
-        let needs = AutoOrder.computeSupplyNeeds world state
+        let needs = AutoOrder.computeSupplyNeeds missionLength world state
         let airfields =
             state.Airfields
             |> Seq.map (fun afs -> afs.AirfieldId, afs.NumPlanes)
@@ -983,10 +983,10 @@ with
 
 /// Monitor events and check that players don't take off in planes they are not allowed to fly according to player hangars.
 /// Also send information about player hangars.
-let checkPlaneAvailability (limits : Limits) (world : World) (state : WorldState) (hangars : Map<string * CoalitionId, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
+let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world : World) (state : WorldState) (hangars : Map<string * CoalitionId, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
 
     asyncSeq {
-        let mutable context = Context.Create(world, state, hangars, limits)
+        let mutable context = Context.Create(missionLength, world, state, hangars, limits)
         let mutable players : Map<int, PlayerFlightData> = Map.empty
 
         for entry in entries do

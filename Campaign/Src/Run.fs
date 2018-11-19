@@ -270,7 +270,7 @@ module OrderDecision =
 
             // Decide resupply convoy movements
             let mkConvoys coalition =
-                createAllConvoyOrders coalition (world, state)
+                createAllConvoyOrders config.MissionLengthH coalition (world, state)
                 |> List.filter (fun order ->
                     match order.Means with
                     | ByRoad ->
@@ -294,7 +294,7 @@ module OrderDecision =
                         order.Convoy.TransportedSupplies >= ResupplyOrder.TruckCapacity * 6.0f
                     | ByRail | ByAir _ | BySeaShip | ByRiverShip ->
                         true)
-                |> prioritizeConvoys world state
+                |> prioritizeConvoys config.MissionLengthH world state
                 |> List.truncate config.MaxConvoys
             let axisConvoys = mkConvoys Axis
             let alliesConvoys = mkConvoys Allies
@@ -302,7 +302,7 @@ module OrderDecision =
             // Air patrols
             let mkPatrols coalition =
                 mkAllPatrols world state coalition
-                |> prioritizeAiPatrols world state
+                |> prioritizeAiPatrols config.MissionLengthH world state
                 |> Seq.fold (fun (starts, filtered) (af, patrol) ->
                     if Set.contains af.AirfieldId starts then
                         (starts, filtered)
@@ -351,8 +351,8 @@ module OrderDecision =
                     [], []
 
             // Production
-            let axisProduction = computeProductionPriorities Axis world state
-            let alliesProduction = computeProductionPriorities Allies world state
+            let axisProduction = computeProductionPriorities config.MissionLengthH Axis world state
+            let alliesProduction = computeProductionPriorities config.MissionLengthH Allies world state
 
             // Write orders to disk
             let outputDir = config.OutputDir
@@ -929,7 +929,7 @@ module MissionLogParsing =
             |> Map.map (fun player hangar -> { hangar with Reserve = min hangar.Reserve (1.0f<E> * float32 config.MaxCash) })
         let hangars =
             AsyncSeq.ofSeq entries
-            |> checkPlaneAvailability (Limits.FromConfig config) world state hangars
+            |> checkPlaneAvailability config.MissionLengthH (Limits.FromConfig config) world state hangars
             |> AsyncSeq.toBlockingSeq
             |> Seq.choose (function Status(x, _) -> Some x | _ -> None)
             |> Seq.tryLast

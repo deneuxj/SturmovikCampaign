@@ -165,6 +165,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     lcStore.SetNextId 3
     let getId = store.GetIdMapper()
     let missionBegin = newMissionBegin (getId 1)
+    let missionLength = 1.0f<H> * float32 missionParams.MissionLength / 60.0f
     let includeSearchLights = missionData.State.HasNightTime(missionParams.MissionLength)
     let inAttackArea(pos : Vector2) =
         missionData.AxisOrders.Attacks @ missionData.AlliesOrders.Attacks
@@ -309,7 +310,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         columns
         |> List.collect (fun (_, start, group) -> (McuUtil.groupFromList [start]) :: group)
     let battles =
-        Battlefield.generateBattlefields missionParams.EnablePlayerTanks missionParams.MaxVehiclesInBattle missionParams.BattleKillRatio missionData.Random store lcStore missionData.World missionData.State
+        Battlefield.generateBattlefields missionLength missionParams.EnablePlayerTanks missionParams.MaxVehiclesInBattle missionParams.BattleKillRatio missionData.Random store lcStore missionData.World missionData.State
     for bf in battles do
         for start in bf.Starts do
             Mcu.addTargetLink missionBegin start.Index

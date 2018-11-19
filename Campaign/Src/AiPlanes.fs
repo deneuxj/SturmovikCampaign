@@ -179,12 +179,10 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                             ()
     }
 
-let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (Airfield * AiPatrol) seq) =
+let prioritizeAiPatrols (missionLength : float32<H>) (world : World) (state : WorldState) (patrols : (Airfield * AiPatrol) seq) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
-    let defenseNeeds =
-        computeFullDefenseNeeds world
-        |> Map.ofList
+    let regionSupplyLevels = state.GetAmmoFillLevelPerRegion(world, missionLength)
     let random = System.Random()
     patrols
     // So taht it's not always the same type of plane that gets to do patrols when an airfield has multiple types of fighters available.
@@ -203,7 +201,7 @@ let prioritizeAiPatrols (world : World) (state : WorldState) (patrols : (Airfiel
             let productionAssets =
                 assets.ProductionCapacity(wg.GetRegion(region), world.SubBlockSpecs, world.ProductionFactor) * 24.0f<H>
             let vulnerability =
-                1.0f - assets.Supplies / (max 1.0f<E> (defenseNeeds.TryFind region |> Option.defaultVal 0.0f<E>))
+                1.0f - (regionSupplyLevels.TryFind region |> Option.defaultValue 0.0f)
                 |> max 0.0f
             vulnerability * (tankAssets + productionAssets + planeAssets), (af.Pos - wg.GetRegion(region).Position).Length()
         | None ->

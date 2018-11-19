@@ -23,6 +23,7 @@ open Util
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.Blocks.BlocksMissionData
 open Campaign.PlaneSet
+open Campaign.BasicTypes
 
 open NLog
 
@@ -195,6 +196,7 @@ with
                 logger.Error(sprintf "Failed to load planeset '%s': %s" planeSetName e.Message)
                 PlaneSet.Default
 
+    member this.MissionLengthH = 1.0f<H> * float32 this.MissionLength / 60.0f
 
 [<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SampleConfig.yaml"

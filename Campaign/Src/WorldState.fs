@@ -316,7 +316,20 @@ with
                     yield region.RegionId, cost
             }
             |> Map.ofSeq
-        Map.sumUnion aaCosts atCosts
+        let tankParkCosts =
+            seq {
+                for region, regState in List.zip world.Regions this.Regions do
+                    let numTanks =
+                        regState.NumExposedVehicles
+                        |> Map.toSeq
+                        |> Seq.sumBy snd
+                        |> min world.MaxTanksInParks
+                        |> float32
+                    yield region.RegionId, numTanks * numCannonsPerTank * cannonCost + numTanks * numMgPerTank * heavyMachineGunCost
+            }
+            |> Map.ofSeq
+        [ aaCosts; atCosts; tankParkCosts ]
+        |> List.fold Map.sumUnion Map.empty
 
     member this.GetOperatingCostPerRegion(world : World) =
         let sg = this.FastAccess
@@ -364,20 +377,27 @@ with
         [ aaCosts; atCosts; tankParkCosts ]
         |> List.fold Map.sumUnion Map.empty
 
-    member this.GetAmmoFillLevel(world : World, bf : DefenseArea) =
-        let region = bf.Home
-        let regState = this.GetRegion(region)
-        let aaCost =
-            seq {
-                for area in world.AntiAirDefenses do
-                    if area.Home = region then
-                        yield area.AmmoCost
-            }
-            |> Seq.sum
-        let atCost = bf.AmmoCost
-        regState.Supplies / (aaCost + atCost)
-        |> max 0.0f
-        |> min 1.0f
+    member this.GetSupplyNeeds(world : World, missionLength : float32<H>) =
+        let costs = this.GetAmmoCostPerRegion(world)
+        let operation = this.GetOperatingCostPerRegion(world)
+        seq {
+            for region in this.Regions do
+                let cost = costs.TryFind region.RegionId |> Option.defaultValue 0.0f<E>
+                let operation = operation.TryFind region.RegionId |> Option.defaultValue 0.0f<E/H>
+                let total = cost + operation * missionLength
+                yield region.RegionId, total
+        }
+        |> Map.ofSeq
+
+    member this.GetAmmoFillLevelPerRegion(world : World, missionLength : float32<H>) =
+        let needs = this.GetSupplyNeeds(world, missionLength)
+        seq {
+            for region in this.Regions do
+                let needs = needs.TryFind(region.RegionId) |> Option.defaultValue 0.0f<E>
+                if needs > 0.0f<E> then
+                    yield region.RegionId, region.Supplies / needs
+        }
+        |> Map.ofSeq
 
     /// <summary>
     /// Max duration of conflict, in days.

@@ -233,15 +233,17 @@ let identifyBattleAreas (world : World) (state : WorldState) =
     }
 
 /// Generate battlefields from invasions in column movement orders.
-let generateBattlefields enablePlayerTanks maxVehicles killRatio random store lcStore (world : World) (state : WorldState) =
+let generateBattlefields missionLength enablePlayerTanks maxVehicles killRatio random store lcStore (world : World) (state : WorldState) =
     let wg = world.FastAccess
     let sg = state.FastAccess
+    let ammoFill = state.GetAmmoFillLevelPerRegion(world, missionLength)
     [
         for bf, defending in identifyBattleAreas world state do
             let bf = wg.GetAntiTankDefenses(bf)
             let regState = sg.GetRegion(bf.Home)
+            let fill = ammoFill.TryFind(bf.Home) |> Option.defaultValue 0.0f
             let numGuns =
-                state.GetAmmoFillLevel(world, bf) * (float32 bf.MaxNumGuns)
+                fill * (float32 bf.MaxNumGuns)
                 |> ceil
                 |> int
             let defendingVehicles =
