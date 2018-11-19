@@ -172,7 +172,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> List.exists (fun attack -> (attack.Target - pos).Length() < 3000.0f)
     let staticDefenses = ArtilleryGroup.Create(missionData.Random, store, lcStore, includeSearchLights, missionBegin, missionData.World, missionData.State, missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
     let icons = MapIcons.CreateRegions(store, lcStore, missionData.World, missionData.State)
-    let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, missionData.World, missionData.State)
+    let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, missionLength, missionData.World, missionData.State)
     let spotting =
         createStorageIcons missionParams.MaxBuildingIcons store lcStore missionBegin missionData.World missionData.State
         @ createTankParkIcons store lcStore missionBegin missionData.World missionData.State

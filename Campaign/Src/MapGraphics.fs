@@ -306,7 +306,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
         }
 
     /// Create health bars for each region showing supply and damage levels.
-    static member CreateSupplyLevels(store, lcStore, world, state) =
+    static member CreateSupplyLevels(store, lcStore, missionLength, world, state) =
         let length = 2000.0f
         let renderSupplyBar (pos : Vector2) health color =
             let mkIcon = mkIcon store lcStore
@@ -323,11 +323,9 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
         let fullCapacities = AutoOrder.computeStorageCapacity world
         let actualCapacities = AutoOrder.computeActualStorageCapacity world state
         let icons = [
-            for region, regState in List.zip world.Regions state.Regions do
-                let needs =
-                    world.AntiAirDefenses @ world.AntiTankDefenses
-                    |> List.filter (fun area -> area.Home = region.RegionId)
-                    |> List.sumBy (fun area -> area.AmmoCost)
+            let fills = state.GetAmmoFillLevelPerRegion(world, missionLength)
+            for region in world.Regions do
+                let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f
                 let supplies =
                     Map.tryFind region.RegionId supplies
                     |> Option.defaultVal 0.0f<E>
@@ -338,12 +336,8 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                     Map.tryFind region.RegionId fullCapacities
                     |> Option.defaultVal 0.0f<E>
                 let color =
-                    let k =
-                        supplies / needs
-                        |> max 0.0f
-                        |> min 1.0f
-                    let red = 200.0f * (1.0f - k)
-                    let green = 255.0f * k
+                    let red = 200.0f * (1.0f - fill)
+                    let green = 255.0f * fill
                     (int red, int green, 0)
                 let health =
                     if fullCapacity = 0.0f<E> then

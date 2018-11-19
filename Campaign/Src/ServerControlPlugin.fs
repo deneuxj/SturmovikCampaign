@@ -519,16 +519,16 @@ module Support =
         |> ScheduledTask.SomeTaskNow "after reset"
 
     /// Build a graphical representation of the strategic situation
-    let mkMapGraphics(world : World, state : WorldState) : MapGraphics.MapPackage =
+    let mkMapGraphics(missionLength : float32<H>) (world : World, state : WorldState) : MapGraphics.MapPackage =
         let sg = state.FastAccess
         let wg = world.FastAccess
+        let fills = state.GetAmmoFillLevelPerRegion(world, missionLength)
         let icons : MapGraphics.MapIcon list =
             [
                 for reg, regState in List.zip world.Regions state.Regions do
                     match regState.Owner with
                     | Some coalition ->
                         let numTanks = regState.NumVehicles |> Map.toSeq |> Seq.sumBy snd
-                        let needs = world.RegionAmmoCost(reg.RegionId)
                         let description =
                             sprintf "%d tanks, %0.0f production (%0.0f max), %0.0f ammo (%0.0f storage, %0.0f capacity)"
                                 numTanks
@@ -537,11 +537,12 @@ module Support =
                                 regState.Supplies
                                 (regState.StorageCapacity(reg, world.SubBlockSpecs))
                                 (reg.GetStorageCapacity(world.SubBlockSpecs))
+                        let fill = fills.TryFind(reg.RegionId) |> Option.defaultValue 0.0f
                         yield {
                             Position = reg.Position
                             Icon = MapGraphics.Base
                             Color = if coalition = Axis then MapGraphics.Gray else MapGraphics.Red
-                            Label = Some (sprintf "%s (%1.0f%%)" (string reg.RegionId) (100.0f * regState.Supplies / needs))
+                            Label = Some (sprintf "%s (%1.0f%%)" (string reg.RegionId) (100.0f * fill))
                             Description = Some description
                             Depth = 0.0f
                         }
@@ -833,10 +834,10 @@ type Plugin() =
         | Some hook -> postWorldState (queue, hook) arg
         | None -> ()
 
-    let updateMap arg =
+    let updateMap (cnf : Configuration) arg =
         match support with
         | Some support ->
-            support.MapGraphics.SetPackage(Support.mkMapGraphics(arg))
+            support.MapGraphics.SetPackage(Support.mkMapGraphics cnf.MissionLengthH arg)
         | None ->
             ()
 
@@ -910,7 +911,7 @@ type Plugin() =
           AnnounceWeather = announceWeather
           AnnounceWorldState = announceWorldState
           AnnounceCampaignOver = onCampaignOver
-          UpdateMap = updateMap
+          UpdateMap = updateMap cnf
           StartCommenter = fun() -> x.StartCommenter(cnf)
           StopCommenter = fun() -> x.StopCommenter() 
           StartBackground = fun() -> x.StartWebHookClient(cnf)
