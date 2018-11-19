@@ -35,7 +35,7 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.StaticDefenses.Types
 
-let createParkedTanks store lcStore (maxTanksInParks : int)(world : World) (state : WorldState) inAttackArea withSearchLights (missionBegin : Mcu.McuTrigger) (orders : OrderPackage) (coalition : CoalitionId) =
+let createParkedTanks store lcStore (missionLength : float32<H>) (maxTanksInParks : int)(world : World) (state : WorldState) inAttackArea withSearchLights (missionBegin : Mcu.McuTrigger) (orders : OrderPackage) (coalition : CoalitionId) =
     let netsModel, netRelPositions =
         let nets = Vehicles.vehicles.Nets
         let nets =
@@ -58,6 +58,7 @@ let createParkedTanks store lcStore (maxTanksInParks : int)(world : World) (stat
     let netFlatPos =
         netRelPositions
         |> Array.map (fun v3 -> Vector2(v3.X, v3.Y))
+    let fills = state.GetAmmoFillLevelPerRegion(world, missionLength)
     let country = coalition.ToCountry |> int
     [
         for region, regState in List.zip world.Regions state.Regions do
@@ -81,12 +82,13 @@ let createParkedTanks store lcStore (maxTanksInParks : int)(world : World) (stat
                                 yield Vector3(center.X, center.Y, 0.0f) + dv
                     }
                 if parked.Length > 0 then
+                    let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f
                     // Add machine guns among tanks for anti-air defense
                     let aaDefenses =
                         let boundary = region.Parking
                         // Respawn after 20min +- 15s
                         let settings = { CanonGenerationSettings.Default with RepairDelay = Some (1200.0, 15.0) }
-                        let num = numMgPerTank * float32 parked.Length |> int |> max 4 |> min 10
+                        let num = numMgPerTank * float32 parked.Length |> max 4.0f |> min 10.0f |> ((*) fill) |> int
                         StaticDefenseGroup.Create(settings, StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, num, coalition.ToCountry, coalition.ToCoalition)
                     let links = aaDefenses.CreateLinks()
                     links.Apply(McuUtil.deepContentOf(aaDefenses))
@@ -95,7 +97,7 @@ let createParkedTanks store lcStore (maxTanksInParks : int)(world : World) (stat
 
                     // Add flak too
                     let aaDefenses =
-                        let num = numCannonsPerTank * float32 parked.Length |> int |> max 2 |> min 6
+                        let num = numCannonsPerTank * float32 parked.Length |> max 2.0f |> min 6.0f |> ((*) fill) |> int
                         let boundary = region.Parking
                         StaticDefenseGroup.Create(CanonGenerationSettings.Default, StaticDefenses.Types.AntiAirCanon, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, num, coalition.ToCountry, coalition.ToCoalition)
                     let links = aaDefenses.CreateLinks()
