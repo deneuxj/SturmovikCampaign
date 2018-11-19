@@ -38,6 +38,8 @@
     MaxSimultaneousConvoys: 2
     # Max number of ferry flights active simultaneously (per side)
     MaxSimultaneousFerryFlights: 2
+    # Maximum number of tanks in each park
+    MaxTanksInParks: 15
     # Max number of vehicles in a battle (per side)
     MaxVehiclesInBattle: 15
     # Number of in-game tank kills per battle resolution kills

@@ -61,6 +61,7 @@ type Configuration = {
     ColumnSplitInterval : int
     MaxSimultaneousConvoys : int
     MaxSimultaneousFerryFlights : int
+    MaxTanksInParks : int
     MaxVehiclesInBattle : int
     BattleKillRatio: int
     MaxBattleKillsRatioByPlayers: float32
@@ -119,6 +120,7 @@ with
             MaxPatrols = 6
             MaxAttackers = 3
             MaxCapturedPlanes = 3
+            MaxTanksInParks = 16
             BattleKillRatio = 5
             MaxBattleKillsRatioByPlayers = 1.0f
             MaxBattleKillsRatioByAI = 0.25f
@@ -220,6 +222,7 @@ let loadConfigFile (path : string) =
         MaxPatrols = values.MaxPatrols
         MaxAttackers = values.MaxAttackers
         MaxCapturedPlanes = values.MaxCapturedPlanes
+        MaxTanksInParks = values.MaxTanksInParks
         BattleKillRatio = values.BattleKillRatio
         MaxBattleKillsRatioByPlayers = float32 values.MaxBattleKillsRatioByPlayers
         MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI

@@ -142,6 +142,7 @@ type MissionGenerationParameters = {
     MaxBuildingIcons : int
     BattleKillRatio : int
     SpawnsAreRestricted : bool
+    MaxTanksInParks : int
 }
 
 
@@ -321,7 +322,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> McuUtil.groupFromList
     let parkedTanks =
         [Axis; Allies]
-        |> List.collect (createParkedTanks store lcStore missionData.World missionData.State inAttackArea includeSearchLights missionBegin missionData.AxisOrders)
+        |> List.collect (createParkedTanks store lcStore missionParams.MaxTanksInParks missionData.World missionData.State inAttackArea includeSearchLights missionBegin missionData.AxisOrders)
         |> McuUtil.groupFromList
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
     setCountries store missionData.World missionData.State flags

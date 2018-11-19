@@ -35,7 +35,7 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.StaticDefenses.Types
 
-let createParkedTanks store lcStore (world : World) (state : WorldState) inAttackArea withSearchLights (missionBegin : Mcu.McuTrigger) (orders : OrderPackage) (coalition : CoalitionId) =
+let createParkedTanks store lcStore (maxTanksInParks : int)(world : World) (state : WorldState) inAttackArea withSearchLights (missionBegin : Mcu.McuTrigger) (orders : OrderPackage) (coalition : CoalitionId) =
     let netsModel, netRelPositions =
         let nets = Vehicles.vehicles.Nets
         let nets =
@@ -72,6 +72,7 @@ let createParkedTanks store lcStore (world : World) (state : WorldState) inAttac
                     subMaps regState.NumExposedVehicles subtracted
                     |> expandMap
                     |> Array.shuffle (System.Random())
+                    |> Array.truncate maxTanksInParks
                 let netPositions = computeRandomParkingPositions netFlatPos region.Parking parked.Length
                 let parkingPositions =
                     seq {

@@ -508,6 +508,7 @@ module MissionFileGeneration =
               MaxBuildingIcons = config.MaxBuildingIcons
               BattleKillRatio = config.BattleKillRatio
               SpawnsAreRestricted = config.SpawnsAreRestricted
+              MaxTanksInParks = config.MaxTanksInParks
             }
         let missionData =
             { World = world
