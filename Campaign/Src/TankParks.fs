@@ -85,7 +85,8 @@ let createParkedTanks store lcStore (world : World) (state : WorldState) inAttac
                         let boundary = region.Parking
                         // Respawn after 20min +- 15s
                         let settings = { CanonGenerationSettings.Default with RepairDelay = Some (1200.0, 15.0) }
-                        StaticDefenseGroup.Create(settings, StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, parked.Length, coalition.ToCountry, coalition.ToCoalition)
+                        let num = parked.Length |> max 4 |> min 10
+                        StaticDefenseGroup.Create(settings, StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, num, coalition.ToCountry, coalition.ToCoalition)
                     let links = aaDefenses.CreateLinks()
                     links.Apply(McuUtil.deepContentOf(aaDefenses))
                     Mcu.addTargetLink missionBegin aaDefenses.Api.Start.Index
@@ -93,9 +94,9 @@ let createParkedTanks store lcStore (world : World) (state : WorldState) inAttac
 
                     // Add flak too
                     let aaDefenses =
-                        let numCanons = parked.Length / 4 |> max 2
+                        let num = parked.Length / 4 |> max 2 |> min 6
                         let boundary = region.Parking
-                        StaticDefenseGroup.Create(CanonGenerationSettings.Default, StaticDefenses.Types.AntiAirCanon, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, numCanons, coalition.ToCountry, coalition.ToCoalition)
+                        StaticDefenseGroup.Create(CanonGenerationSettings.Default, StaticDefenses.Types.AntiAirCanon, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, num, coalition.ToCountry, coalition.ToCoalition)
                     let links = aaDefenses.CreateLinks()
                     links.Apply(McuUtil.deepContentOf(aaDefenses))
                     Mcu.addTargetLink missionBegin aaDefenses.Api.Start.Index
