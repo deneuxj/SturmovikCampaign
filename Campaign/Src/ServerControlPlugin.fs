@@ -986,7 +986,25 @@ type Plugin() =
                     |> Map.ofSeq
                 return airfields
             }
-        
+
+        member x.GetPlayerFreshSpawns(player) =
+            async {
+                let! hangars = getHangars
+                let freshSpawns =
+                    hangars.TryFind(player)
+                    |> Option.map (fun h -> h.FreshSpawns)
+                    |> Option.map (fun m ->
+                        m
+                        |> Map.toSeq
+                        |> Seq.map (fun (planeType, qty) ->
+                            string planeType, qty
+                        )
+                        |> Map.ofSeq
+                    )
+                    |> Option.defaultValue Map.empty
+                return freshSpawns
+            }
+
         member x.GetData(dataKind) =
             let errNoCampaign = Error "Campaign not currently running"
             async {
