@@ -46,7 +46,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
     let regions =
         [
             for region, regState in Seq.zip world.Regions state.Regions do
-                if regState.Owner = Some coalition && not(List.isEmpty region.Production) then
+                if regState.Owner = Some coalition && not(List.isEmpty region.Production) && not regState.HasInvaders then
                     let vehiclePrio, energyprio =
                         // Avoid accumulating supplies. Use on tanks instead.
                         if regState.Products.Supplies >= 50.0f<E> then
