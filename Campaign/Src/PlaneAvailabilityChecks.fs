@@ -638,6 +638,14 @@ with
                     Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
                 else
                     cost
+            // Deny if loadout is not OK
+            let cost =
+                let afs = context.State.GetAirfield(af)
+                let payload = plane.GetPayLoadCost(entry.Payload, bombCost)
+                if afs.Supplies < payload then
+                    Denied "Airfield supplies are no longer sufficient to provide this loadout"
+                else
+                    cost
             let planeInfo =
                 [
                     let rank = context.GetHangar(user, coalition).RankedName
