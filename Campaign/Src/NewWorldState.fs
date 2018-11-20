@@ -397,17 +397,15 @@ let applyConsumption (dt : float32<H>) (world : World) (state : WorldState) =
     let distanceToFront =
         computeDistance false (fun world -> world.Roads @ world.Rails) (fun region -> sg.GetRegion(region).Owner) (frontRegions.Contains) world
 
-    let needs =
-        computeFullDefenseNeeds world
-        |> Map.ofList
+    let fills = state.GetAmmoFillLevelPerRegion(world, dt)
 
     let operationCosts = state.GetOperatingCostPerRegion world
 
     let regions =
         [
             for region, regState in List.zip world.Regions state.Regions do
-                let forcesK = regState.Supplies / needs.[region.RegionId] |> min 1.0f
-                let fullCost = operationCosts.[region.RegionId]
+                let forcesK = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f |> min 1.0f |> max 0.0f
+                let fullCost = operationCosts.TryFind(region.RegionId) |> Option.defaultValue 0.0f<E/H>
                 let distanceFactor =
                     match distanceToFront.TryFind region.RegionId with
                     | None -> 0.0f
@@ -415,6 +413,7 @@ let applyConsumption (dt : float32<H>) (world : World) (state : WorldState) =
                     | Some 1 -> 0.5f
                     | Some _ -> 0.0f
                 let cost = fullCost * distanceFactor * forcesK
+                assert(cost >= 0.0f<E/H>)
                 let supplies = regState.Supplies - dt * cost |> max 0.0f<E>
                 yield { regState with Supplies = supplies }
         ]
