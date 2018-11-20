@@ -501,6 +501,18 @@ with
         | Pe2s35 | Pe2s87 -> times 4 [7, 10.0f * r132]
         | _ -> []
 
+    member this.GetPayLoadCost(payload, bombCost) =
+        let bombLoadWeight =
+            this.BombLoads
+            |> List.tryPick (fun (loadout, weight) -> if loadout = payload then Some weight else None)
+            |> Option.defaultVal 0.0f<K>
+        let loadoutCost =
+            this.SpecialLoadsCosts
+            |> List.tryPick (fun (loadout, cost) -> if loadout = payload then Some cost else None)
+            |> Option.defaultValue 0.0f<E>
+        let cost = bombLoadWeight * bombCost + loadoutCost
+        cost
+
     member this.EmptyPayload =
         match this with
         | Lagg3s29 -> 49

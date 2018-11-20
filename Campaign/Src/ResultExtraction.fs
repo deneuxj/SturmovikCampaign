@@ -371,11 +371,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                         model.BombLoads
                         |> List.tryPick (fun (loadout, weight) -> if loadout = playerPlane.Payload then Some weight else None)
                         |> Option.defaultVal 0.0f<K>
-                    let loadoutCost =
-                        model.SpecialLoadsCosts
-                        |> List.tryPick (fun (loadout, cost) -> if loadout = playerPlane.Payload then Some cost else None)
-                        |> Option.defaultValue 0.0f<E>
-                    let cost = bombLoadWeight * bombCost + loadoutCost
+                    let cost = model.GetPayLoadCost(playerPlane.Payload, bombCost)
                     weaponCost := Map.add playerPlane.VehicleId cost weaponCost.Value
                     bombWeight := bombWeight.Value.Add(playerPlane.VehicleId, bombLoadWeight)
                 | _ ->
