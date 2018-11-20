@@ -408,7 +408,7 @@ with
     /// Check if a side is victorious.
     /// </summary>
     member this.VictoriousSide(world : World) =
-        let hasLostRearAirfield coalition =
+        let isRearAirfieldAttacked coalition =
             world.RearAirfields.TryFind coalition
             |> Option.map (fun af ->
                 world.Airfields
@@ -416,7 +416,7 @@ with
                     af2.AirfieldId = af
                     &&
                     this.Regions
-                    |> List.exists (fun regState -> regState.RegionId = af2.Region && regState.Owner = Some coalition.Other)))
+                    |> List.exists (fun regState -> regState.RegionId = af2.Region && regState.HasInvaders)))
             |> Option.defaultValue false
         if float32 (this.Date - world.StartDate).TotalDays > this.MaxConflictDuration then
             let numAxis, numAllies =
@@ -433,7 +433,7 @@ with
             else
                 None
         else
-            match hasLostRearAirfield Axis, hasLostRearAirfield Allies with
+            match isRearAirfieldAttacked Axis, isRearAirfieldAttacked Allies with
             | true, false -> Some Allies
             | false, true -> Some Axis
             | true, true -> Some Allies // Unfair, but also unlikely

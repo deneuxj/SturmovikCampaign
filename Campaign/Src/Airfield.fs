@@ -197,8 +197,10 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
         |> Set.ofSeq
     [
         for airfield, state in Seq.zip world.Airfields state.Airfields do
-            match sg.GetRegion(airfield.Region).Owner with
+            let region = sg.GetRegion(airfield.Region)
+            match region.Owner with
             | None -> ()
+            | Some _ when region.HasInvaders -> ()
             | Some coalition ->
                 let af =
                     let spawn =
