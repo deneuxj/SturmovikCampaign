@@ -261,34 +261,38 @@ with
             let alliesForce = this.AlliesForces.[i]
             let oldOwner = this.Owners.[i]
             let regionValue = this.ValueOfRegion i
-            if axisForce > alliesForce then
-                restore := (i, axisForce, alliesForce, oldOwner) :: !restore
-                this.AxisForces.[i] <- 1.0f<E> * floor(float32 <| sqrt(axisForce * axisForce - alliesForce * alliesForce))
-                this.AlliesForces.[i] <- 0.0f<E>
-                this.Owners.[i] <- Some Axis
-                if this.HasRegionFactory i then
-                    if oldOwner = Some Allies then
-                        this.Score.NumAlliesFactories <- this.Score.NumAlliesFactories - 1
-                    if oldOwner <> Some Axis then
-                        this.Score.NumAxisFactories <- this.Score.NumAxisFactories + 1
-            elif axisForce < alliesForce then
-                restore := (i, axisForce, alliesForce, oldOwner) :: !restore
-                this.AxisForces.[i] <- 0.0f<E>
-                this.AlliesForces.[i] <- 1.0f<E> * floor(float32 <| sqrt(alliesForce * alliesForce - axisForce * axisForce))
-                this.Owners.[i] <- Some Allies
-                if this.HasRegionFactory i then
-                    if oldOwner <> Some Allies then
-                        this.Score.NumAlliesFactories <- this.Score.NumAlliesFactories + 1
-                    if oldOwner = Some Axis then
-                        this.Score.NumAxisFactories <- this.Score.NumAxisFactories - 1
-            elif axisForce > 0.0f<E> || alliesForce > 0.0f<E> then // Equal forces, it's a draw
-                restore := (i, axisForce, alliesForce, oldOwner) :: !restore
-                this.AxisForces.[i] <- 0.0f<E>
-                this.AlliesForces.[i] <- 0.0f<E>
-            else
-                failwith "Encountered move without forces"
-            this.Score.TotalAxisForces <- this.Score.TotalAxisForces - min axisForce alliesForce
-            this.Score.TotalAlliesForces <- this.Score.TotalAlliesForces - min axisForce alliesForce
+            let axisLoss, alliesLoss =
+                if axisForce > alliesForce then
+                    restore := (i, axisForce, alliesForce, oldOwner) :: !restore
+                    this.AxisForces.[i] <- 1.0f<E> * floor(float32 <| sqrt(axisForce * axisForce - alliesForce * alliesForce))
+                    this.AlliesForces.[i] <- 0.0f<E>
+                    this.Owners.[i] <- Some Axis
+                    if this.HasRegionFactory i then
+                        if oldOwner = Some Allies then
+                            this.Score.NumAlliesFactories <- this.Score.NumAlliesFactories - 1
+                        if oldOwner <> Some Axis then
+                            this.Score.NumAxisFactories <- this.Score.NumAxisFactories + 1
+                    axisForce - this.AxisForces.[i], alliesForce
+                elif axisForce < alliesForce then
+                    restore := (i, axisForce, alliesForce, oldOwner) :: !restore
+                    this.AxisForces.[i] <- 0.0f<E>
+                    this.AlliesForces.[i] <- 1.0f<E> * floor(float32 <| sqrt(alliesForce * alliesForce - axisForce * axisForce))
+                    this.Owners.[i] <- Some Allies
+                    if this.HasRegionFactory i then
+                        if oldOwner <> Some Allies then
+                            this.Score.NumAlliesFactories <- this.Score.NumAlliesFactories + 1
+                        if oldOwner = Some Axis then
+                            this.Score.NumAxisFactories <- this.Score.NumAxisFactories - 1
+                    axisForce, this.AlliesForces.[i] - alliesForce
+                elif axisForce > 0.0f<E> || alliesForce > 0.0f<E> then // Equal forces, it's a draw
+                    restore := (i, axisForce, alliesForce, oldOwner) :: !restore
+                    this.AxisForces.[i] <- 0.0f<E>
+                    this.AlliesForces.[i] <- 0.0f<E>
+                    axisForce, alliesForce
+                else
+                    failwith "Encountered move without forces"
+            this.Score.TotalAxisForces <- this.Score.TotalAxisForces - axisLoss
+            this.Score.TotalAlliesForces <- this.Score.TotalAlliesForces - alliesLoss
             this.Score.Territory <-
                 match oldOwner, this.Owners.[i] with
                 | None, Some Axis -> this.Score.Territory - regionValue
