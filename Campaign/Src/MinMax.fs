@@ -90,6 +90,8 @@ type BoardState =
       Score : ScoreComponents
       ValueOfRegion : int -> float32<E>
       HasRegionFactory : int -> bool
+      AxisRearRegion : int
+      AlliesRearRegion : int
     }
 with
     static member Create(world : World, state : WorldState) =
@@ -206,6 +208,11 @@ with
             owners
             |> Array.mapi (fun i coalition -> if coalition = Some Allies && hasFactory i then 1 else 0)
             |> Array.sum
+        let coalitionRear coalition =
+            world.RearAirfields.TryFind(coalition)
+            |> Option.map (fun af -> world.Airfields |> List.find (fun airfield -> airfield.AirfieldId = af))
+            |> Option.map (fun af -> indexOfRegion af.Region)
+            |> Option.defaultValue -1
         { Names = names
           Owners = owners
           AxisForces = axisForces
@@ -220,6 +227,8 @@ with
             }
           ValueOfRegion = valueOfRegion
           HasRegionFactory = hasFactory
+          AxisRearRegion = coalitionRear Axis
+          AlliesRearRegion = coalitionRear Allies
         }, getSuccessors
 
     member this.Clone() =
@@ -442,6 +451,12 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                     (((axisMove, None), []), Defeat(Allies, depth, "No factories")) |> BoardEvaluation.Min soFar
                 elif board.Score.TotalAlliesForces = 0.0f<E> then
                     (((axisMove, None), []), Defeat(Allies, depth, "No forces")) |> BoardEvaluation.Min soFar
+                elif
+                    match axisMove with
+                    | Some move -> move.Destination = board.AlliesRearRegion
+                    | None -> false
+                    then
+                    (((axisMove, None), []), Defeat(Allies, depth, "Rear airfield under attack")) |> BoardEvaluation.Min soFar
                 else if cancel.IsCancellationRequested then
                     soFar
                 else if BoardEvaluation.Lt(snd soFar, beta) then
@@ -484,6 +499,12 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                         ((alliesMove, []), Defeat(Axis, depth, "No factories")) |> BoardEvaluation.Max soFar
                     elif board.Score.TotalAxisForces = 0.0f<E> then
                         ((alliesMove, []), Defeat(Axis, depth, "No forces")) |> BoardEvaluation.Max soFar
+                    elif
+                        match alliesMove with
+                        | Some move -> move.Destination = board.AxisRearRegion
+                        | None -> false
+                        then
+                        ((alliesMove, []), Defeat(Axis, depth, "Rear airfield under attack")) |> BoardEvaluation.Max soFar
                     else if BoardEvaluation.Lt(alpha, snd soFar) then
                         soFar
                     else if cancel.IsCancellationRequested then
