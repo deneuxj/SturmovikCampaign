@@ -2046,7 +2046,7 @@ Group
     Name = "TriggerNotification";
     Desc = "";
     Targets = [];
-    Objects = [755];
+    Objects = [170];
     XPos = 16674.063;
     YPos = 97.906;
     ZPos = 28870.289;
@@ -2082,7 +2082,7 @@ Group
     Name = "ResetNotification";
     Desc = "";
     Targets = [];
-    Objects = [755];
+    Objects = [170];
     XPos = 16673.528;
     YPos = 97.906;
     ZPos = 28888.205;
@@ -2097,8 +2097,8 @@ Group
   Block
   {
     Name = "Notification";
-    Index = 754;
-    LinkTrId = 755;
+    Index = 174;
+    LinkTrId = 170;
     XPos = 16686.299;
     YPos = 97.537;
     ZPos = 28877.469;
@@ -2118,7 +2118,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 755;
+    Index = 170;
     Name = "Block entity";
     Desc = "";
     Targets = [];
@@ -2130,7 +2130,7 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 754;
+    MisObjID = 174;
     OnEvents
     {
       OnEvent
@@ -4958,14 +4958,14 @@ Group
     ZOri = 10.40;
     Script = "LuaScripts\WorldObjects\Planes\bf109f4.txt";
     Model = "graphics\planes\bf109f4\bf109f4.mgm";
-    Country = 201;
+    Country = 0;
     Desc = "";
     Skin = "";
     AILevel = 3;
     CoopStart = 0;
     NumberInFormation = 0;
     Vulnerable = 1;
-    Engageable = 1;
+    Engageable = 0;
     LimitAmmo = 1;
     StartInAir = 0;
     Callsign = 12;
@@ -5039,7 +5039,7 @@ Group
     Index = 420;
     Name = "Spawned";
     Desc = "";
-    Targets = [424];
+    Targets = [755];
     Objects = [];
     XPos = 36467.660;
     YPos = 183.180;
@@ -5277,6 +5277,76 @@ Group
     ZOri = 0.00;
     Time = 0;
     Random = 100;
+  }
+  
+
+  MCU_CMD_Behaviour
+  {
+    Index = 754;
+    Name = "SetGerman";
+    Desc = "";
+    Targets = [];
+    Objects = [417];
+    XPos = 36359.369;
+    YPos = 52.051;
+    ZPos = 36260.597;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Filter = 18;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    RepairFriendlies = 0;
+    RearmFriendlies = 0;
+    RefuelFriendlies = 0;
+    AILevel = 2;
+    Country = 201;
+    FloatParam = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 755;
+    Name = "1s";
+    Desc = "";
+    Targets = [424];
+    Objects = [];
+    XPos = 36553.031;
+    YPos = 55.933;
+    ZPos = 36247.875;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1;
+    Random = 100;
+  }
+  
+
+  MCU_CMD_Behaviour
+  {
+    Index = 756;
+    Name = "SetRussian";
+    Desc = "";
+    Targets = [];
+    Objects = [417];
+    XPos = 36415.600;
+    YPos = 52.051;
+    ZPos = 36259.262;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Filter = 18;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    RepairFriendlies = 0;
+    RearmFriendlies = 0;
+    RefuelFriendlies = 0;
+    AILevel = 2;
+    Country = 101;
+    FloatParam = 0;
   }
   
 
