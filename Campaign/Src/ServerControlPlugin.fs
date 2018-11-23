@@ -668,6 +668,7 @@ type CampaignData(config : Configuration, support : SupportApis) =
                  ("FerryPlanes", upcast results.FerryPlanes)
                  ("ParaDrops", upcast results.ParaDrops)]
                 |> Map.ofList
+                |> JsonConvert.SerializeObject
             Ok data
         with
         | _ -> Error "Failed to retrieve mission results"
@@ -692,6 +693,7 @@ type CampaignData(config : Configuration, support : SupportApis) =
                 [("Regions", state.Regions |> List.map extractRegion :> obj)
                 ]
                 |> Map.ofList
+                |> JsonConvert.SerializeObject
             Ok data
         with
         | _ -> Error "Failed to retrieve campaign state"
@@ -1037,11 +1039,11 @@ type Plugin() =
                 return freshSpawns
             }
 
-        member x.GetData(dataKind) =
+        member x.GetData(dataKind, args) =
             let errNoCampaign = Error "Campaign not currently running"
             async {
-                match dataKind with
-                | "TimeLeft" ->
+                match dataKind, args with
+                | "TimeLeft", _ ->
                     match config with
                     | None ->
                         return errNoCampaign
@@ -1052,7 +1054,7 @@ type Plugin() =
                                     Support.ExecutionState.Restore(config)
                                 match loopState with
                                 | Support.WaitForMissionEnd(t) ->
-                                    Ok(["Minutes", box (t - DateTime.UtcNow).TotalMinutes] |> Map.ofList)
+                                    Ok(["Minutes", box (t - DateTime.UtcNow).TotalMinutes] |> Map.ofList |> JsonConvert.SerializeObject)
                                 | _ ->
                                     Error "Mission currently not running"
                             with
@@ -1060,16 +1062,15 @@ type Plugin() =
                                 Error "Failed to read campaign loop state"
                         return ret
 
-                | "MissionDates" ->
+                | "MissionDates", _ ->
                     match campaignData with
                     | None ->
                         return errNoCampaign
                     | Some data ->
-                        return Ok(["Dates", data.GetMissionDates() :> obj] |> Map.ofList)
-                | s when s.StartsWith "Mission_" ->
+                        return Ok(["Dates", data.GetMissionDates() :> obj] |> Map.ofList |> JsonConvert.SerializeObject)
+                | "Mission", [dateString] ->
                     match campaignData with
                     | Some data ->
-                        let dateString = s.Substring("Mission_".Length)
                         let date =
                             try
                                 Some(DateTime.ParseExact(dateString, Run.Filenames.dateFormat, CultureInfo.InvariantCulture))
@@ -1080,10 +1081,9 @@ type Plugin() =
                         | None -> return Error "Invalid mission date"
                     | None ->
                         return errNoCampaign
-                | s when s.StartsWith "State_" ->
+                | "State", [dateString] ->
                     match campaignData with
                     | Some data ->
-                        let dateString = s.Substring("State_".Length)
                         let date =
                             try
                                 Some(DateTime.ParseExact(dateString, Run.Filenames.dateFormat, CultureInfo.InvariantCulture))
@@ -1094,16 +1094,16 @@ type Plugin() =
                         | None -> return Error "Invalid mission date"
                     | None ->
                         return errNoCampaign
-                | "Help" ->
+                | "Help", _ ->
                     return Ok
                         (["Commands",
                             [
                                 "TimeLeft - return time left in mission, in minutes"
                                 "MissionDates - return date strings of completed missions"
-                                "Mission_<mission date string> - return mission results"
-                                "State_<mission date string> - return campaign state"
+                                "Mission <mission date string> - return mission results"
+                                "State <mission date string> - return campaign state"
                             ] :> obj
-                        ] |> Map.ofList)
+                        ] |> Map.ofList |> JsonConvert.SerializeObject)
                 | _ ->
                     return Error "Unsupported data request. See Help for list of commands"
             }
