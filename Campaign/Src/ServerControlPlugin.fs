@@ -628,7 +628,7 @@ type CampaignData(config : Configuration, support : SupportApis) =
     let missionDates =
         lazy(
             [
-                for stateFile in Directory.EnumerateFiles(dataDir, "state*.xml") do
+                for stateFile in Directory.EnumerateFiles(dataDir, "state_*.xml") do
                     let date =
                         try
                             use file = File.OpenText(stateFile)
