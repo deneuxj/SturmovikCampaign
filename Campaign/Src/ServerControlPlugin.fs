@@ -1077,7 +1077,7 @@ type Plugin() =
                             with
                             | _ -> None
                         match date with
-                        | Some d ->return data.TryGetMissionResults(d)
+                        | Some d -> return data.TryGetMissionResults(d)
                         | None -> return Error "Invalid mission date"
                     | None ->
                         return errNoCampaign
