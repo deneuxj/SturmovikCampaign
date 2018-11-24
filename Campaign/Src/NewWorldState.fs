@@ -593,7 +593,6 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
                 let energy =
                     Map.tryFind region.RegionId newSupplies
                     |> Option.defaultValue 0.0f<E>
-                // FIXME: This must be factorized across calls to applyResupplies, or each delivery will provide a full round of repairs.
                 let forRepairs = min energy repairPool
                 let energy = energy - forRepairs
                 // Highest prio: repair production
@@ -765,36 +764,30 @@ let applyDamagesAndResupplies (mustConvertCapturedPlanes : bool) (dt : float32<H
     let wg = world.FastAccess
     // Damages
     let state = applyDamages world state shipped damages orders
-    // Resupplies
+    // Accumulate all supplies from deliveries, production, captured planes, cargo deliveries
     let arrived = computeDelivered orders shipped blocked damages
-    let state, leftOver = applyResupplies dt world state arrived
-    let newSupplies = computeSuppliesProduced newSupplies |> Map.sumUnion leftOver
-    // New production
-    let state, leftOver = applyResupplies dt world state newSupplies
-    // Captured planes
-    let state, leftOver =
+    let newSupplies = computeSuppliesProduced newSupplies
+    let captured, state =
         if mustConvertCapturedPlanes then
             let afs, captured = convertCapturedPlanes wg state
             let state = { state with Airfields = afs }
-            let energy = Map.sumUnion leftOver captured
-            let state, leftOver = applyResupplies dt world state energy
-            state, leftOver
+            let energy = captured
+            energy, state
         else
-            state, leftOver
-    // New attempt with the left-overs
-    let state, waste = applyResupplies dt world state leftOver
-    // Cargo deliveries
+            Map.empty, state
     let newCargo =
         computeCargoSupplies wg cargo
         |> Map.map (fun _ qty -> bombCost * qty * (1.0f - world.CargoReservedForBombs))
-    let state, cargoLeft = applyResupplies dt world state newCargo
+    let total = [ arrived; newSupplies; captured; newCargo ] |> List.fold Map.sumUnion Map.empty
+    // Resupply and repair regions
+    let state, leftOver = applyResupplies dt world state total
     // Bombs
     let bombCargo =
         computeCargoSupplies wg cargo
         |> Map.map (fun r qty ->
             let supplies = qty * bombCost
             let suppliesLeft =
-                Map.tryFind r cargoLeft
+                Map.tryFind r leftOver
                 |> Option.defaultValue 0.0f<E>
             suppliesLeft + supplies * world.CargoReservedForBombs)
     let state = distributeCargo world state bombCargo
