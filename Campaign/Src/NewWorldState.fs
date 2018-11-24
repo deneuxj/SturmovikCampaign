@@ -263,6 +263,8 @@ let healBuildings(healths : float32[], cost : float32<E>, available : float32<E>
                 |> min healLimit
             let repaired = spend / costPerBuilding.Value
             (h + repaired) :: healths, available - spend, healLimit - spend) ([], available, healLimit)
+    assert (available >= 0.0f<E>)
+    assert (healLimit >= 0.0f<E>)
     let healths =
         reversedHealths
         |> List.rev
@@ -574,10 +576,11 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
 /// Transfer supplies and apply repairs
 let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSupplies =
     let wg = WorldFastAccess.Create world
-    let regionNeeds = state.GetAmmoCostPerRegion world
+    let regionNeeds = state.GetSupplyNeeds(world, dt)
     let healLimit = world.RepairSpeed * dt
+    let repairPool = world.RegionRepairSpeed * dt
 
-    // Subtract an amount from energy reserve first, and then from funds for repairs first
+    // Subtract an amount from energy reserve first, and then from funds for repairs
     let subtract amount (energy, forRepairs) =
         let fromEnergy = min energy amount
         (energy - fromEnergy, forRepairs - (amount - fromEnergy))
@@ -590,7 +593,8 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
                 let energy =
                     Map.tryFind region.RegionId newSupplies
                     |> Option.defaultValue 0.0f<E>
-                let forRepairs = min energy (healLimit * 5.0f)
+                // FIXME: This must be factorized across calls to applyResupplies, or each delivery will provide a full round of repairs.
+                let forRepairs = min energy repairPool
                 let energy = energy - forRepairs
                 // Highest prio: repair production
                 let prodHealth, forRepairs =

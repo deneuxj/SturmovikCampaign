@@ -608,7 +608,7 @@ type World = {
     TransferNumPlaneTarget : int
     /// Target for production: Number of tanks in each frontline region
     TankTargetNumber : int
-    /// Max amount of repairs per hour
+    /// Max amount of repairs per building group per hour
     RepairSpeed : float32<E/H>
 }
 with
@@ -759,8 +759,11 @@ with
         this.Airfields
         |> Seq.exists (fun af -> af.Region = region)
 
-    // BREAKING: Set from config file upon world creation
+    // BREAKING. Max number of tanks exposed in a park
     member this.MaxTanksInParks = 16
+
+    // BREAKING. Max amount of repair, per region, per hour.
+    member this.RegionRepairSpeed = this.RepairSpeed * 2.5f
 
 open Util
 
