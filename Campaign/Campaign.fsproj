@@ -67,11 +67,12 @@
     <Compile Include="Src\ResultExtraction.fs" />
     <Compile Include="Src\NewWorldState.fs" />
     <Compile Include="Src\AfterActionReport.fs" />
+    <Compile Include="Src\StaticDefenseOptimization.fs" />
     <Compile Include="Src\MapGraphics.fs" />
     <Compile Include="Src\ParkingArea.fs" />
     <Compile Include="Src\PlaneFerry.fs" />
     <Compile Include="Src\Battlefield.fs" />
-    <Compile Include="Src\ArtilleryGroup.fs" />
+    <Compile Include="Src\AntiAirDefenses.fs" />
     <Compile Include="Src\StaticBlocks.fs" />
     <Compile Include="Src\Airfield.fs" />
     <Compile Include="Src\Convoys.fs" />

@@ -10,6 +10,8 @@
     Seed: 42
     # Max deviation of the weather with respect of standard weather for start date
     WeatherDayMaxOffset: 7
+    # Max number of AA cannons over the entire map
+    MaxAACannons: 200
     # Max number of fires (on destroyed storage/factories)
     MaxFires: 20
     # Max number of spotted building icons (per type and coalition)

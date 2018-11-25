@@ -51,6 +51,7 @@ type Configuration = {
     UseTextMissionFile : bool
     Seed : int option
     WeatherDayMaxOffset : int
+    MaxAACannons : int
     MaxFires : int
     MaxConvoys : int
     MaxAttackers : int
@@ -113,6 +114,7 @@ with
             UseTextMissionFile = false
             Seed = None // Some 0
             WeatherDayMaxOffset = 15
+            MaxAACannons = 200
             MaxFires = 20
             MaxConvoys = 10
             MaxSimultaneousConvoys = 2
@@ -215,6 +217,7 @@ let loadConfigFile (path : string) =
             | -1 -> None
             | x -> Some x
         WeatherDayMaxOffset = values.WeatherDayMaxOffset
+        MaxAACannons = values.MaxAACannons
         MaxFires = values.MaxFires
         MaxBuildingIcons = values.MaxBuildingIcons
         MaxConvoys = values.MaxConvoys

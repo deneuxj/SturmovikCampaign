@@ -29,13 +29,13 @@ open Campaign.Orders
 open Util
 open Campaign.ParkingArea
 open Campaign.BasicTypes
-open SturmovikMission.Blocks.StaticDefenses.Factory
+open Campaign.StaticDefenseOptimization
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.StaticDefenses.Types
 
-let createParkedTanks store lcStore (missionLength : float32<H>) (maxTanksInParks : int)(world : World) (state : WorldState) inAttackArea withSearchLights (missionBegin : Mcu.McuTrigger) (orders : OrderPackage) (coalition : CoalitionId) =
+let createParkedTanks store (missionLength : float32<H>) (maxTanksInParks : int)(world : World) (state : WorldState) inAttackArea withSearchLights (orders : OrderPackage) (coalition : CoalitionId) =
     let netsModel, netRelPositions =
         let nets = Vehicles.vehicles.Nets
         let nets =
@@ -89,26 +89,37 @@ let createParkedTanks store lcStore (missionLength : float32<H>) (maxTanksInPark
                         // Respawn after 20min +- 15s
                         let settings = { CanonGenerationSettings.Default with RepairDelay = Some (1200.0, 15.0) }
                         let num = numMgPerTank * float32 parked.Length |> max 4.0f |> min 10.0f |> ((*) fill) |> int
-                        StaticDefenseGroup.Create(settings, StaticDefenses.Types.AntiAirMg, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, num, coalition.ToCountry, coalition.ToCoalition)
-                    let links = aaDefenses.CreateLinks()
-                    links.Apply(McuUtil.deepContentOf(aaDefenses))
-                    Mcu.addTargetLink missionBegin aaDefenses.Api.Start.Index
-                    yield! McuUtil.deepContentOf(aaDefenses)
+                        { Priority = 1.0f
+                          Number = num
+                          Boundary = boundary
+                          Rotation = 0.0f
+                          Settings = settings
+                          Specialty = AntiAirMg
+                          IncludeSearchLights = withSearchLights
+                          Country = coalition.ToCountry
+                        }
+                    yield Choice2Of2 aaDefenses
 
                     // Add flak too
                     let aaDefenses =
                         let num = numCannonsPerTank * float32 parked.Length |> max 2.0f |> min 6.0f |> ((*) fill) |> int
                         let boundary = region.Parking
-                        StaticDefenseGroup.Create(CanonGenerationSettings.Default, StaticDefenses.Types.AntiAirCanon, withSearchLights, System.Random(), store, lcStore, boundary, 0.0f, num, coalition.ToCountry, coalition.ToCoalition)
-                    let links = aaDefenses.CreateLinks()
-                    links.Apply(McuUtil.deepContentOf(aaDefenses))
-                    Mcu.addTargetLink missionBegin aaDefenses.Api.Start.Index
-                    yield! McuUtil.deepContentOf(aaDefenses)
+                        let settings = CanonGenerationSettings.Default
+                        { Priority = if num <= 5 then 1.0f else 1.0f + (float32 num - 5.0f) / 10.0f
+                          Number = num
+                          Boundary = boundary
+                          Rotation = 0.0f
+                          Settings = settings
+                          Specialty = AntiAirCanon
+                          IncludeSearchLights = withSearchLights
+                          Country = coalition.ToCountry
+                        }
+                    yield Choice2Of2 aaDefenses
 
                     for pos in netPositions do
                         let block = newBlockMcu store country netsModel.Model netsModel.Script 1000
                         pos.AssignTo block.Pos
-                        yield block
+                        yield Choice1Of2 block
 
                     for vehicle, pos in Seq.zip parked parkingPositions do
                         let rot = pos.Z
@@ -130,5 +141,5 @@ let createParkedTanks store lcStore (missionLength : float32<H>) (maxTanksInPark
                         for mcu in mcus do
                             pos.AssignTo mcu.Pos
                             mcu.Ori.Y <- float rot
-                        yield! mcus
+                            yield Choice1Of2 mcu
     ]

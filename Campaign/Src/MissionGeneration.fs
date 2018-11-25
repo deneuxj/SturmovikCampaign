@@ -45,12 +45,13 @@ open Campaign.Orders
 open Campaign.MapGraphics
 open Campaign.BasicTypes
 open Campaign.PlaneModel
-open Campaign.ArtilleryGroup
+open Campaign.AntiAirDefenses
 open Campaign.StaticBlocks
 open Campaign.Airfield
 open Campaign.Convoys
 open Campaign.TankParks
 open SturmovikMission.Blocks.Spotter
+open SturmovikMission.DataProvider.McuUtil
 
 
 /// Set the country of entity owners in a list of Mcus depending on the region where they are located.
@@ -143,6 +144,7 @@ type MissionGenerationParameters = {
     BattleKillRatio : int
     SpawnsAreRestricted : bool
     MaxTanksInParks : int
+    MaxAACannons : int
 }
 
 
@@ -158,6 +160,7 @@ type MissionData = {
 
 let writeMissionFile (missionParams : MissionGenerationParameters) (missionData : MissionData) (filename : string) =
     let wg = WorldFastAccess.Create(missionData.World)
+    let random = System.Random()
     let strategyMissionData = T.GroupData(Parsing.Stream.FromFile missionParams.StrategyMissionFile)
     let options = strategyMissionData.ListOfOptions.Head
     let store = NumericalIdentifiers.IdStore()
@@ -170,7 +173,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let inAttackArea(pos : Vector2) =
         missionData.AxisOrders.Attacks @ missionData.AlliesOrders.Attacks
         |> List.exists (fun attack -> (attack.Target - pos).Length() < 3000.0f)
-    let staticDefenses = ArtilleryGroup.Create(missionData.Random, store, lcStore, includeSearchLights, missionBegin, missionData.World, missionData.State, missionData.AxisOrders.Columns @ missionData.AlliesOrders.Columns)
+    let staticDefenses = mkAADefenses(includeSearchLights, missionData.World, missionData.State)
     let icons = MapIcons.CreateRegions(store, lcStore, missionData.World, missionData.State)
     let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, missionLength, missionData.World, missionData.State)
     let spotting =
@@ -323,8 +326,19 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> McuUtil.groupFromList
     let parkedTanks =
         [Axis; Allies]
-        |> List.collect (createParkedTanks store lcStore missionLength missionParams.MaxTanksInParks missionData.World missionData.State inAttackArea includeSearchLights missionBegin missionData.AxisOrders)
+        |> List.collect (createParkedTanks store missionLength missionParams.MaxTanksInParks missionData.World missionData.State inAttackArea includeSearchLights missionData.AxisOrders)
+    let parkedTanksAA =
+        parkedTanks
+        |> List.choose (function Choice2Of2 x -> Some x | _ -> None)
+    let parkedTanks =
+        parkedTanks
+        |> List.choose (function Choice1Of2 x -> Some x | _ -> None)
         |> McuUtil.groupFromList
+    let retainedAA =
+        parkedTanksAA @ staticDefenses
+        |> StaticDefenseOptimization.select random missionParams.MaxAACannons
+        |> StaticDefenseOptimization.instantiateAll store lcStore random missionBegin
+        |> List.map (fun grp -> grp :> IMcuGroup)
     let flags = strategyMissionData.GetGroup("Windsocks").CreateMcuList()
     setCountries store missionData.World missionData.State flags
     let ndbs = strategyMissionData.GetGroup("NDBs").CreateMcuList()
@@ -435,7 +449,6 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let allGroups =
         [ optionStrings
           McuUtil.groupFromList [missionBegin]
-          upcast staticDefenses
           upcast icons
           upcast icons2
           McuUtil.groupFromList blocks
@@ -452,5 +465,5 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           alliesPrio
           axisPlaneFerries
           alliesPlaneFerries
-          serverInputMissionEnd.All ] @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections @ spotters
+          serverInputMissionEnd.All ] @ retainedAA @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections @ spotters
     McuOutput.writeMissionFiles "eng" filename options allGroups
