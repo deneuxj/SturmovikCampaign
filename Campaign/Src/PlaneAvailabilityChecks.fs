@@ -642,7 +642,7 @@ with
             let cost =
                 let afs = context.State.GetAirfield(af)
                 let payload = plane.GetPayLoadCost(entry.Payload, bombCost)
-                if afs.Supplies < payload then
+                if payload > 0.0f<E> && afs.Supplies < payload then
                     Denied "Airfield supplies are no longer sufficient to provide this loadout"
                 else
                     cost
