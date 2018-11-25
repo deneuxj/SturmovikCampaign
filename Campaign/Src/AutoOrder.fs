@@ -385,8 +385,8 @@ type CoalitionsDecision =
     | Continue of ColumnMovement list
 
 /// Run a minmax search for the best column moves for each coalition.
-let decideColumnMovements (world : World) (state : WorldState) thinkTime =
-    let board, neighboursOf = BoardState.Create(world, state)
+let decideColumnMovements dt isLongDay (world : World) (state : WorldState) thinkTime =
+    let board, neighboursOf = BoardState.Create(world, state, isLongDay, dt)
     let minMax cancel n = minMax cancel n (fun (x, y) -> neighboursOf x y)
     let rec timeBound cancel prev n board =
         //printfn "Max depth: %d" n

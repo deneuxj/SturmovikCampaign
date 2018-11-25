@@ -51,6 +51,7 @@ type ScoreComponents =
       mutable NumAlliesFactories : int
       mutable TotalAxisForces : float32<E>
       mutable TotalAlliesForces : float32<E>
+      mutable AttackingSide : CoalitionId
     }
 with
     member this.Value =
@@ -75,6 +76,7 @@ with
         this.NumAlliesFactories <- score.NumAlliesFactories
         this.TotalAxisForces <- score.TotalAxisForces
         this.TotalAlliesForces <- score.TotalAlliesForces
+        this.AttackingSide <- score.AttackingSide
 
     member this.Clone() =
         let ret =
@@ -94,7 +96,17 @@ type BoardState =
       AlliesRearRegion : int
     }
 with
-    static member Create(world : World, state : WorldState) =
+    static member Create(world : World, state : WorldState, longDay, dt) =
+        let attackers =
+            let missionStarts =
+                Seq.unfold (fun (current : System.DateTime) ->
+                    let nextTime = nextDate longDay dt current
+                    Some (current, nextTime)
+                ) world.StartDate
+            let turnNr =
+                missionStarts
+                |> Seq.findIndex (fun time -> time >= state.Date)
+            if turnNr % 2 = 0 then Axis else Allies
         let owners =
             state.Regions
             |> List.map (fun region -> region.Owner)
@@ -224,6 +236,7 @@ with
                 NumAlliesFactories = numAlliesFactories
                 TotalAxisForces = Array.sum axisForces
                 TotalAlliesForces = Array.sum alliesForces
+                AttackingSide = attackers
             }
           ValueOfRegion = valueOfRegion
           HasRegionFactory = hasFactory
@@ -312,6 +325,7 @@ with
                 | Some Axis, Some Axis
                 | Some Allies, Some Allies -> this.Score.Territory
                 | Some _, None -> failwith "Region cannot be captured by neutral coalition"
+        this.Score.AttackingSide <- this.Score.AttackingSide.Other
         !restore, oldScore
 
     member this.UndoMove(combined : CombinedMove, restore : _ list, oldScore : ScoreComponents) =
@@ -336,6 +350,7 @@ with
 
     member this.DisplayString =
         seq {
+            yield sprintf "Attackers: %s" (string this.Score.AttackingSide)
             for i, (name, (owner, allies, axis)) in Seq.indexed (Seq.zip this.Names (Seq.zip3 this.Owners this.AlliesForces this.AxisForces)) do
                 let owner =
                     match owner with
@@ -352,7 +367,7 @@ let allMoves (neighboursOf : ColumnTransportType * int -> int[]) (state : BoardS
     let defensiveForceThreshold = 5.0f * MediumTank.Cost
     let aggressiveTransport = ColumnTransportType.All |> List.filter ((<>) ColByTrain)
     let moves i aggressive =
-        seq {
+        [
             assert(state.AxisForces.[i] = 0.0f<E> || state.AlliesForces.[i] = 0.0f<E>)
             let hasForces = state.AxisForces.[i] > 0.0f<E> || state.AlliesForces.[i] > 0.0f<E>
             let means = if aggressive then aggressiveTransport else ColumnTransportType.All
@@ -378,13 +393,15 @@ let allMoves (neighboursOf : ColumnTransportType * int -> int[]) (state : BoardS
                                 yield { Start = i; Destination = j; Force = 1.25f * opposing; Transport = transport }
                         if not aggressive && state.Owners.[j] = someCoalition then
                             yield { Start = i; Destination = j; Force = moveableForce; Transport = transport }
-        }
-    seq {
-        for i in 0 .. state.Owners.Length - 1 do
-            yield! moves i true
+        ]
+    let doAggressiveMoves = state.Score.AttackingSide = coalition
+    [
+        if doAggressiveMoves then
+            for i in 0 .. state.Owners.Length - 1 do
+                yield! moves i true
         for i in 0 .. state.Owners.Length - 1 do
             yield! moves i false
-    }
+    ]
 
 type BoardEvaluation =
     | Defeat of CoalitionId * int * string
@@ -439,14 +456,12 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
         let alliesMoves =
             allMoves neighboursOf board Allies
             |> List.ofSeq
-        let axisMovesIt = axisMoves.GetEnumerator()
         let ((axis, allies), deepMoves), value =
-            let rec workAxis soFar =
-                let axisMove =
-                    if axisMovesIt.MoveNext() then
-                        Some axisMovesIt.Current
-                    else
-                        None
+            let rec workAxis axisMoves soFar =
+                let axisMove, axisMoves =
+                    match axisMoves with
+                    | [] -> None, []
+                    | x :: xs -> Some x, xs
                 if board.Score.NumAlliesFactories = 0 then
                     (((axisMove, None), []), Defeat(Allies, depth, "No factories")) |> BoardEvaluation.Min soFar
                 elif board.Score.TotalAlliesForces = 0.0f<E> then
@@ -468,7 +483,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                     let cont =
                         match axisMove with
                         | Some _ ->
-                            workAxis
+                            workAxis axisMoves
                         | None ->
                             id
                     (((axisMove, alliesResponse), deepMoves), value)
@@ -535,7 +550,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                         ((alliesMove, deepMoves), value)
                         |> BoardEvaluation.Max soFar
                         |> cont
-            workAxis (((None, None), []), Defeat(Axis, 0, "Avoid axis no moves"))
+            workAxis axisMoves (((None, None), []), Defeat(Axis, 0, "Avoid axis no moves"))
         { Axis = axis; Allies = allies } :: deepMoves, value
     let moves, score = bestMoveAtDepth (Defeat(Allies, 0, "Initial beta")) 0
     if cancel.IsCancellationRequested then

@@ -1328,38 +1328,6 @@ let updateRunways (world : World) (state : WorldState) (windDirection : float32)
     { state with Airfields = afStates
     }
 
-type WorkingDay =
-    { MorningStart : int
-      EveningStop : int }
-
-let shortWinterWorkingDay = { MorningStart = 9; EveningStop = 17 }
-let longWinterWorkingDay = { MorningStart = 6; EveningStop = 17 }
-let shortSummerWorkingDay = { MorningStart = 8; EveningStop = 18 }
-let longSummerWorkingDay = { MorningStart = 6; EveningStop = 18 }
-
-let nextDate (longDay : bool) (dt : float32<H>) (date : System.DateTime) =
-    let workingDay =
-        if date.Month >= 4 && date.Month <= 10 then
-            if longDay then
-                longSummerWorkingDay
-            else
-                shortSummerWorkingDay
-        else
-            if longDay then
-                longWinterWorkingDay
-            else
-                shortWinterWorkingDay
-    let h = floor(float32 dt)
-    let mins = 60.0f * ((float32 dt) - h)
-    let newDate =
-        let x = date + System.TimeSpan(int h, int mins, 0)
-        if x.Hour >= workingDay.EveningStop then
-            let x2 = x.AddDays(1.0)
-            System.DateTime(x2.Year, x2.Month, x2.Day, workingDay.MorningStart, 0, 0)
-        else
-            x
-    newDate
-
 type MissionResults = {
     Entries : string list
     Shipments : SuppliesShipped list
