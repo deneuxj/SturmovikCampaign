@@ -1039,6 +1039,11 @@ type Plugin() =
                 return freshSpawns
             }
 
+        member x.GiftReservedPlane(giver, recipient, plane, airfield) =
+            async {
+                return Error "Operation not implemented yet"
+            }
+
         member x.GetData(dataKind, args) =
             let errNoCampaign = Error "Campaign not currently running"
             async {
