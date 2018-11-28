@@ -997,6 +997,8 @@ let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world
         let mutable context = Context.Create(missionLength, world, state, hangars, limits)
         let mutable players : Map<int, PlayerFlightData> = Map.empty
 
+        yield Status(context.Hangars , context.Airfields)
+
         for entry in entries do
             let mutable cmds0 = []
             // Handle special entries
