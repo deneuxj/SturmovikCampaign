@@ -39,6 +39,7 @@ open Campaign.WatchLogs
 open Campaign.NewWorldState
 open System.Globalization
 open Newtonsoft.Json
+open System.Threading
 
 module Support =
     open ploggy
@@ -740,6 +741,30 @@ type Plugin() =
             }
         setF, getF, hangarsLock.Dispose
 
+    let postInjectedData, takeInjectedData, disposeDataInjection =
+        let semaphore = new System.Threading.SemaphoreSlim(0)
+        let queue = System.Collections.Concurrent.ConcurrentQueue<string>()
+        let post(data) =
+            queue.Enqueue(data)
+            semaphore.Release() |> ignore
+        let take() =
+            async {
+                do! Async.AwaitTask(semaphore.WaitAsync())
+                match queue.TryDequeue() with
+                | true, data -> return Some data
+                | false, _ -> return None
+            }
+        post, take, semaphore.Dispose
+
+    let injectedData =
+        asyncSeq {
+            while true do
+                let! data = takeInjectedData()
+                match data with
+                | Some data -> yield data
+                | None -> ()
+        }
+
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     let onCampaignOver victors =
@@ -887,6 +912,7 @@ type Plugin() =
         | None ->
             ()
         disposeHangars()
+        disposeDataInjection()
 
     member x.StartWebHookClient(config : Configuration) =
         let webHookUri = config.WebHook
@@ -930,7 +956,7 @@ type Plugin() =
               OnHangarsUpdated = setHangars
               OnPlayerEntered = showPinToPlayer
             }
-        commenter <- Some(new Commentator(config, handlers))
+        commenter <- Some(new Commentator(config, handlers, injectedData))
         logger.Info("Commenter set")
 
     member x.StopCommenter() =
@@ -1041,7 +1067,27 @@ type Plugin() =
 
         member x.GiftReservedPlane(giver, recipient, plane, airfield) =
             async {
-                return Error "Operation not implemented yet"
+                let af = AirfieldId airfield
+                match PlaneModel.tryGetPlaneByName plane with
+                | Some plane ->
+                    let! hangars = getHangars
+                    let hasPlane =
+                        hangars.TryFind giver
+                        |> Option.map (fun hangar -> hangar.HasReservedPlane(af, plane))
+                        |> Option.defaultValue false
+                    if hasPlane then
+                        let planeGift : PlaneAvailabilityChecks.PlaneGift =
+                            { Giver = giver
+                              Recipient = recipient
+                              Plane = plane
+                              Airfield = af
+                            }
+                        postInjectedData (string planeGift)
+                        return Ok "Gift sent"
+                    else
+                        return Error "No such plane to gift"
+                | None ->
+                    return Error "Invalid plane name"
             }
 
         member x.GetData(dataKind, args) =

@@ -302,10 +302,10 @@ let mkTimeTask(config : Configuration, handlers, files) =
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
-type Commentator (config : Configuration, handlers : EventHandlers) =
+type Commentator (config : Configuration, handlers : EventHandlers, injectedData : AsyncSeq<string>) =
     let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
     let campaignDir = config.OutputDir
-
+    let extraLogsName = Path.Combine(campaignDir, "extraLogs.txt")
     let world, state =
         let serializer = FsPickler.CreateXmlSerializer()
         try
@@ -336,7 +336,7 @@ type Commentator (config : Configuration, handlers : EventHandlers) =
         resumeWatchlogs(handleOldEntries, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
     let asyncIterNonMuted action xs = asyncIterNonMuted asyncSeqEntries action xs
 
-    // The log entries fed to the tasks
+    // The log entries before artificial entry injection
     let asyncSeqEntries =
         asyncSeqEntries
         |> AsyncSeq.choose (fun line ->
@@ -351,6 +351,50 @@ type Commentator (config : Configuration, handlers : EventHandlers) =
                 logger.Error(sprintf "Failed to parse '%s'" (string line))
                 None)
         |> AsyncSeq.filter (function null -> false | _ -> true)
+
+    // The artificial log entries produced earlier in the mission
+    let oldArtificialEntries =
+        File.ReadAllLines(extraLogsName)
+        |> Seq.map (LogEntry.Parse)
+        |> Seq.filter (function
+            | null -> false
+            | x when not (x.IsValid()) -> false
+            | _ -> true)
+        |> List.ofSeq
+
+    // The log entries fed to the tasks
+    let asyncSeqEntries =
+        AsyncSeq.mergeChoice asyncSeqEntries injectedData
+        |> AsyncSeq.scan (fun (ticks, oldArtificialEntries) entry ->
+            match entry with
+            | Choice1Of2 entry ->
+                // Split the old artificial entries depending on their tick value
+                // The mature ones, i.e. the ones older than entry will be yielded with the entry, ahead of it.
+                // Both the mature and future lists are sorted with younger events first.
+                let matured, future =
+                    oldArtificialEntries
+                    |> List.partition (fun (x : LogEntry) -> x.Timestamp <= entry.Timestamp)
+                Some(entry.Timestamp.Ticks / 200000L, entry :: matured), future
+            | Choice2Of2 data ->
+                let ticks =
+                    ticks
+                    |> Option.map fst
+                    |> Option.defaultValue 0L
+                let entry = ArtificialEntry(ticks, data)
+                // Append the new artificial entry to the log, so that it's handled again if the commenter is interrupted and restarted while the mission runs.
+                try
+                    File.AppendAllLines(extraLogsName, [entry.OriginalString])
+                with
+                | exc -> logger.Error(sprintf "Failed to append '%s' to extraLogs.txt: '%s'" entry.OriginalString exc.Message)
+                let matured, future =
+                    oldArtificialEntries
+                    |> List.partition (fun (x : LogEntry) -> x.Timestamp <= entry.Timestamp)
+                Some(ticks, (entry :> LogEntry) :: matured), future
+        ) (None, List.rev oldArtificialEntries)
+        |> AsyncSeq.choose (function
+            | Some (_, entries), _ -> Some (List.rev entries)
+            | None, _ -> None)
+        |> AsyncSeq.collect (fun xs -> AsyncSeq.ofSeq xs)
 
     // The commands typed by players in the game chat
     let asyncCommands =

@@ -35,6 +35,36 @@ open Campaign
 
 let private logger = LogManager.GetCurrentClassLogger()
 
+type PlaneGift =
+    { Giver : string
+      Recipient : string option
+      Airfield : AirfieldId
+      Plane : PlaneModel
+    }
+with
+    override this.ToString() =
+        sprintf "'%s' to %s a '%s' at '%s'" this.Giver (this.Recipient |> Option.map (sprintf "'%s'") |> Option.defaultValue "all") this.Plane.PlaneName this.Airfield.AirfieldName
+
+    static member TryFromString(s) =
+        let m = System.Text.RegularExpressions.Regex.Match(s, "'(.*)' to (all|'.*') a '(.*)' at '(.*)'")
+        if m.Success then
+            let planeName = m.Groups.[3].Value
+            match PlaneModel.AllModels |> List.tryFind (fun plane -> plane.PlaneName = planeName) with
+            | Some plane ->
+                Some {
+                    Giver = m.Groups.[1].Value
+                    Recipient =
+                        match m.Groups.[2].Value with
+                        | "all" -> None
+                        | s -> Some (s.Substring(1, s.Length - 2))
+                    Plane = plane
+                    Airfield = AirfieldId(m.Groups.[4].Value)
+                }
+            | None ->
+                None
+        else
+            None
+
 /// Messages sent to the live commenter
 type PlaneAvailabilityMessage =
     | PlayerEntered of Guid
@@ -87,6 +117,7 @@ type Command =
     | InformPlayerHangar of UserIds * CoalitionId
     | PunishThief of user:UserIds * PlaneModel * AirfieldId
     | Message of PlaneAvailabilityMessage
+    | PlaneGifted of PlaneGift
 
 // It is not possible to identify static objects before they are damaged, because their position vector
 // is null in the spawn log entry. The information for static objects is stored in StaticObject
@@ -380,6 +411,42 @@ with
             | None ->
                 this, []
 
+        | PlaneGifted(gift) ->
+            let coalition =
+                try
+                    this.GetAirfieldCoalition(gift.Airfield)
+                with
+                | _ -> None
+            match coalition with
+            | Some coalition ->
+                let hangarOut = this.TryGetHangar(gift.Giver, coalition)
+                let hangarIn =
+                    gift.Recipient
+                    |> Option.bind (fun recipient -> this.TryGetHangar(recipient, coalition))
+                let newHangars, messages =
+                    match hangarOut, hangarIn, gift.Recipient with
+                    | Some (hangarOut : PlayerHangar), Some hangarIn, Some recipient ->
+                        [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)
+                         hangarIn.AddPlane(gift.Airfield, gift.Plane, 1.0f)],
+                        [Announce(coalition, [sprintf "%s has gifted a %s to %s at %s" gift.Giver gift.Plane.PlaneName recipient gift.Airfield.AirfieldName])]
+                    | None, _, _ ->
+                        [], []
+                    | Some _, None, Some recipient ->
+                        [], [Announce(coalition, [sprintf "%s's gift of a %s to %s at %s failed" gift.Giver gift.Plane.PlaneName recipient gift.Airfield.AirfieldName])]
+                    | Some (hangarOut : PlayerHangar), None, None ->
+                        [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)],
+                        [Announce(coalition, [sprintf "%s has gifted a %s to the public at %s" gift.Giver gift.Plane.PlaneName gift.Airfield.AirfieldName])]
+                    | Some _, Some _, None ->
+                        [], [] // Should not happen
+                let hangars =
+                    newHangars
+                    |> List.fold (fun hangars h -> hangars |> Map.add ((string h.Player), coalition) h) this.Hangars
+                { this with Hangars = hangars },
+                messages
+            | None ->
+                this,
+                []
+
         | DeliverSupplies(supplies, region) ->
             let oldNeeds =
                 this.RegionNeeds.TryFind(region)
@@ -490,6 +557,12 @@ with
         let freshSpawns = this.Limits.FreshSpawns
         this.Hangars.TryFind((user.UserId, coalition))
         |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash, freshSpawns))
+
+    member this.TryGetHangar(playerName : string, coalition : CoalitionId) =
+        this.Hangars
+        |> Map.toSeq
+        |> Seq.tryFind (fun ((_, coalition2), hangar) -> coalition2 = coalition && hangar.PlayerName = playerName)
+        |> Option.map snd
 
     member this.GetFreshSpawnAlternatives(planeTypes : Set<PlaneType>, af : AirfieldId) =
         let planes = this.State.GetAirfield(af).NumPlanes
@@ -1022,6 +1095,12 @@ let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world
                     cmds0 <- cmds
                 | None, cmds ->
                     cmds0 <- cmds
+            | :? ArtificialEntry as artificial ->
+                match PlaneGift.TryFromString artificial.Data with
+                | Some gift ->
+                    cmds0 <- PlaneGifted gift :: cmds0
+                | None ->
+                    ()
             | _ -> ()
 
             // Execute commands gathered from player data creation

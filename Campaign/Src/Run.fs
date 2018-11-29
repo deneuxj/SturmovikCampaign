@@ -34,6 +34,7 @@ module Filenames =
     let missionResults = "results.xml"
     let battles = "battles.xml"
     let hangars = "hangars.xml"
+    let extraLogs = "extraLogs.txt"
     /// Format of date used in backup files
     let dateFormat = "yyyy-MM-dd_HH-mm-ss"
 
@@ -818,7 +819,24 @@ module MissionLogParsing =
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         if config.PurgeLogs then
             purgeLogs(missionLogsDir)
-        getEntries(missionLogsDir, config.MissionName, state.Date, config.MissionLength)
+        let regularEntries =
+            getEntries(missionLogsDir, config.MissionName, state.Date, config.MissionLength)
+        let extraLogEntries =
+            try
+                File.ReadAllLines(Path.Combine(config.OutputDir, Filenames.extraLogs))
+                |> Seq.map (LogEntry.Parse)
+                |> Seq.filter (function
+                    | null -> false
+                    | entry when entry.IsValid() -> true
+                    | invalid -> false)
+                |> List.ofSeq
+            with
+            | exc ->
+                logger.Error(sprintf "Failed to read extra logs: '%s'" exc.Message)
+                []
+
+        regularEntries @ extraLogEntries
+        |> List.sortBy (fun entry -> entry.Timestamp)
 
     /// Retrieve mission log entries from an existing results.xml file
     let stage0alt(config : Configuration) =
@@ -1033,3 +1051,4 @@ module MissionLogParsing =
         serializer.Serialize(aarAlliesFile, aarAllies)
         use battlesFile = File.CreateText(Path.Combine(outputDir, Filenames.battles))
         serializer.Serialize(battlesFile, battles)
+        File.Delete(Path.Combine(outputDir, Filenames.extraLogs))

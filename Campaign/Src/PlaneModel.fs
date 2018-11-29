@@ -632,3 +632,6 @@ with
         |> List.zip [ Fighter; Attacker; Bomber; Transport ]
         |> Map.ofList
 
+let tryGetPlaneByName name =
+    PlaneModel.AllModels
+    |> List.tryFind (fun plane -> plane.PlaneName = name)
