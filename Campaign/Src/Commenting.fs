@@ -354,13 +354,16 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
 
     // The artificial log entries produced earlier in the mission
     let oldArtificialEntries =
-        File.ReadAllLines(extraLogsName)
-        |> Seq.map (LogEntry.Parse)
-        |> Seq.filter (function
-            | null -> false
-            | x when not (x.IsValid()) -> false
-            | _ -> true)
-        |> List.ofSeq
+        if File.Exists(extraLogsName) then
+            File.ReadAllLines(extraLogsName)
+            |> Seq.map (LogEntry.Parse)
+            |> Seq.filter (function
+                | null -> false
+                | x when not (x.IsValid()) -> false
+                | _ -> true)
+            |> List.ofSeq
+        else
+            []
 
     // The log entries fed to the tasks
     let asyncSeqEntries =
