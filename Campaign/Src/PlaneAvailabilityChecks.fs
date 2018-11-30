@@ -31,36 +31,47 @@ open Campaign.WorldState
 open Campaign.ResultExtraction
 open System.Runtime.Serialization
 open System.ServiceModel
+open System.Text.RegularExpressions
 open Campaign
 
 let private logger = LogManager.GetCurrentClassLogger()
 
 type PlaneGift =
-    { Giver : string
-      Recipient : string option
+    { GiverGuid : string
+      Recipient : (string * string) option
       Airfield : AirfieldId
       Plane : PlaneModel
     }
 with
     override this.ToString() =
-        sprintf "'%s' to %s a '%s' at '%s'" this.Giver (this.Recipient |> Option.map (sprintf "'%s'") |> Option.defaultValue "all") this.Plane.PlaneName this.Airfield.AirfieldName
+        let recipient =
+            match this.Recipient with
+            | None -> "all"
+            | Some (guid, name) -> sprintf "'%s' a.k.a '%s'" guid name
+        sprintf "PLANEGIFT: '%s' to %s a '%s' at '%s'" this.GiverGuid recipient this.Plane.PlaneName this.Airfield.AirfieldName
 
     static member TryFromString(s) =
-        let m = System.Text.RegularExpressions.Regex.Match(s, "'(.*)' to (all|'.*') a '(.*)' at '(.*)'")
+        let m = Regex.Match(s, "PLANEGIFT: '(.*)' to (all|'.*' a[.]k[.]a '.*') a '(.*)' at '(.*)'")
         if m.Success then
             let planeName = m.Groups.[3].Value
-            match PlaneModel.AllModels |> List.tryFind (fun plane -> plane.PlaneName = planeName) with
-            | Some plane ->
+            let recipient =
+                match m.Groups.[2].Value with
+                | "all" -> Ok None
+                | s ->
+                    let m2 = Regex.Match(s, "'(.*)' a[.]k[.]a '(.*)'")
+                    if m2.Success then
+                        Ok(Some(m2.Groups.[1].Value, m2.Groups.[1].Value))
+                    else
+                        Error()
+            match recipient, PlaneModel.AllModels |> List.tryFind (fun plane -> plane.PlaneName = planeName) with
+            | Ok(recipient), Some plane ->
                 Some {
-                    Giver = m.Groups.[1].Value
-                    Recipient =
-                        match m.Groups.[2].Value with
-                        | "all" -> None
-                        | s -> Some (s.Substring(1, s.Length - 2))
+                    GiverGuid = m.Groups.[1].Value
+                    Recipient = recipient
                     Plane = plane
                     Airfield = AirfieldId(m.Groups.[4].Value)
                 }
-            | None ->
+            | _, None | Error _, _->
                 None
         else
             None
@@ -419,25 +430,24 @@ with
                 | _ -> None
             match coalition with
             | Some coalition ->
-                let hangarOut = this.TryGetHangar(gift.Giver, coalition)
+                let hangarOut = this.TryGetHangar(gift.GiverGuid, coalition)
                 let hangarIn =
                     gift.Recipient
-                    |> Option.bind (fun recipient -> this.TryGetHangar(recipient, coalition))
+                    |> Option.map (fun (guid, name) -> this.GetHangar( { UserId = guid; Name = name }, coalition))
                 let newHangars, messages =
-                    match hangarOut, hangarIn, gift.Recipient with
-                    | Some (hangarOut : PlayerHangar), Some hangarIn, Some recipient ->
+                    match hangarOut, hangarIn with
+                    | None, _ ->
+                        // Could not find giver
+                        [], []
+                    | Some (hangarOut : PlayerHangar), Some hangarIn ->
+                        // Gift to an individual
                         [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)
                          hangarIn.AddPlane(gift.Airfield, gift.Plane, 1.0f)],
-                        [Announce(coalition, [sprintf "%s has gifted a %s to %s at %s" gift.Giver gift.Plane.PlaneName recipient gift.Airfield.AirfieldName])]
-                    | None, _, _ ->
-                        [], []
-                    | Some _, None, Some recipient ->
-                        [], [Announce(coalition, [sprintf "%s's gift of a %s to %s at %s failed" gift.Giver gift.Plane.PlaneName recipient gift.Airfield.AirfieldName])]
-                    | Some (hangarOut : PlayerHangar), None, None ->
+                        [Announce(coalition, [sprintf "%s has gifted a %s to %s at %s" hangarOut.PlayerName gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])]
+                    | Some (hangarOut : PlayerHangar), None ->
+                        // Gift to public
                         [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)],
-                        [Announce(coalition, [sprintf "%s has gifted a %s to the public at %s" gift.Giver gift.Plane.PlaneName gift.Airfield.AirfieldName])]
-                    | Some _, Some _, None ->
-                        [], [] // Should not happen
+                        [Announce(coalition, [sprintf "%s has gifted a %s to the public at %s" hangarOut.PlayerName gift.Plane.PlaneName gift.Airfield.AirfieldName])]
                 let hangars =
                     newHangars
                     |> List.fold (fun hangars h -> hangars |> Map.add ((string h.Player), coalition) h) this.Hangars
@@ -558,11 +568,8 @@ with
         this.Hangars.TryFind((user.UserId, coalition))
         |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash, freshSpawns))
 
-    member this.TryGetHangar(playerName : string, coalition : CoalitionId) =
-        this.Hangars
-        |> Map.toSeq
-        |> Seq.tryFind (fun ((_, coalition2), hangar) -> coalition2 = coalition && hangar.PlayerName = playerName)
-        |> Option.map snd
+    member this.TryGetHangar(playerGuid : string, coalition : CoalitionId) =
+        this.Hangars.TryFind((playerGuid, coalition))
 
     member this.GetFreshSpawnAlternatives(planeTypes : Set<PlaneType>, af : AirfieldId) =
         let planes = this.State.GetAirfield(af).NumPlanes

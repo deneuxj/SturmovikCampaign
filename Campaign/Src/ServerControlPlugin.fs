@@ -1077,7 +1077,7 @@ type Plugin() =
                         |> Option.defaultValue false
                     if hasPlane then
                         let planeGift : PlaneAvailabilityChecks.PlaneGift =
-                            { Giver = giver
+                            { GiverGuid = giver
                               Recipient = recipient
                               Plane = plane
                               Airfield = af
