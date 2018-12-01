@@ -18,6 +18,7 @@ module Campaign.Run
 
 open System.IO
 
+open Campaign.WatchLogs
 open Campaign.BasicTypes
 open Campaign.Configuration
 open PlaneModel
@@ -907,7 +908,15 @@ module MissionLogParsing =
             |> Seq.cache
         let paraDrops = extractParaDrops world state battles entries |> AsyncSeq.toList
         let planeFerryEvents = extractFerryPlanes (axisOrders.PlaneFerries @ alliesOrders.PlaneFerries) entries |> AsyncSeq.toList
-        let battleKills = extractBattleDamages world state battles entries |> AsyncSeq.toList
+        let battleKills =
+            let entries =
+                entries
+                |> AsyncSeq.map LogData.Old
+            extractBattleDamages world state battles entries
+            |> AsyncSeq.choose (function
+                | Choice1Of2 () -> None
+                | Choice2Of2 x -> Some x)
+            |> AsyncSeq.toList
         let blocked = extractBlockedVehicles (axisOrders.Columns @ alliesOrders.Columns) (axisOrders.Resupply @ alliesOrders.Resupply) entries |> AsyncSeq.toList
         let results =
             { Entries = entriesAsStrings
@@ -949,6 +958,7 @@ module MissionLogParsing =
             |> Map.map (fun player hangar -> { hangar with Reserve = min hangar.Reserve (1.0f<E> * float32 config.MaxCash) })
         let hangars =
             AsyncSeq.ofSeq entries
+            |> AsyncSeq.map LogData.Old
             |> checkPlaneAvailability config.MissionLengthH (Limits.FromConfig config) world state hangars
             |> AsyncSeq.toBlockingSeq
             |> Seq.choose (function Status(x, _) -> Some x | _ -> None)

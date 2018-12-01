@@ -81,14 +81,26 @@ let watchLogs(cleanLogs : bool, path, filter, firstFile, cancelToken : Cancellat
 /// <summary>
 /// Indicate if a line from a log comes from an old file, or from a file created since log monitoring started.
 /// </summary>
-type LogData =
-    | Old of string
-    | Fresh of string
+type LogData<'T when 'T :> obj> =
+    | Old of 'T
+    | Fresh of 'T
 with
     override this.ToString() =
         match this with
         | Old x
+        | Fresh x -> x :> obj
+        |> string
+
+    member this.Data =
+        match this with
+        | Old x
         | Fresh x -> x
+
+module LogData =
+    let map f data =
+        match data with
+        | Old x -> Old(f x)
+        | Fresh x -> Fresh(f x)
 
 /// <summary>
 /// Return all lines in all existing file logs, and then start monitoring new lines in new files.

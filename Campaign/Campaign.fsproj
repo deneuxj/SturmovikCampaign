@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="Src\AssemblyInfo.fs" />
     <Compile Include="Src\Util.fs" />
+    <Compile Include="Src\WatchLogs.fs" />
     <Compile Include="Src\BasicTypes.fs" />
     <Compile Include="Src\PlaneModel.fs" />
     <Compile Include="Src\PlaneSet.fs" />
@@ -80,8 +81,6 @@
     <Compile Include="Src\MissionGeneration.fs" />
     <Compile Include="Src\PlayerDiscipline.fs" />
     <Compile Include="Src\PlaneAvailabilityChecks.fs" />
-    <Compile Include="Src\WatchLogs.fs" />
-    <Compile Include="Src\ChatCommands.fs" />
     <Compile Include="Src\Commenting.fs" />
     <Compile Include="Src\WebHook.fs" />
     <Compile Include="Src\Run.fs" />

@@ -32,6 +32,7 @@ open Campaign.Orders
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.PlaneSet
+open Campaign.WatchLogs
 open Util
 open FSharp.Control
 open SturmovikMission.Blocks.Vehicles
@@ -837,7 +838,7 @@ type BattleParticipantKilled = {
 }
 
 /// Extract damages caused to vehicles in a battle. Used to compute battle bonuses.
-let extractBattleDamages (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : AsyncSeq<LogEntry>) =
+let extractBattleDamages (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : AsyncSeq<LogData<LogEntry>>) =
     let defenders =
         battles
         |> dict
@@ -851,8 +852,16 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
     asyncSeq {
         let mutable idMapper = Map.empty
         let mutable playerVehicles = Map.empty
+        let mutable isMuted = true
         for entry in entries do
-            match entry with
+            
+            match isMuted, entry with
+            | true, Fresh _ ->
+                isMuted <- false
+                yield Choice1Of2()
+            | false, _ | _, Old _ -> ()
+
+            match entry.Data with
             | :? ObjectSpawnedEntry as spawned ->
                 idMapper <- Map.add spawned.ObjectId spawned.ObjectName idMapper
                 // If the parent object (if any) of a newly spawned object is controlled by a player,
@@ -879,7 +888,7 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
                                                 | "D" -> defenders.[battle.DefenseAreaId]
                                                 | "A" -> defenders.[battle.DefenseAreaId].Other
                                                 | _ -> failwithf "Unknown side '%s'" side
-                                            yield {
+                                            yield Choice2Of2 {
                                                 Coalition = coalition
                                                 BattleId = battle.Home
                                                 Vehicle = vehicle

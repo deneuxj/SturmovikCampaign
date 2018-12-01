@@ -34,7 +34,6 @@ open Campaign.PlayerHangar
 open Campaign.WatchLogs
 open MBrace.FsPickler
 open Campaign.PlaneAvailabilityChecks
-open Campaign.ChatCommands
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -94,21 +93,6 @@ let private findLogFiles(stateDate, missionLogsDir) =
         |> Array.ofSeq
     files
 
-/// Skip elements in an asyncSeq xs for as long as old mission log entries are yielded, then iterate over items in xs
-// This is used when starting a commenter while a mission is ongoing to avoid reacting to the old mission log entries
-let inline private asyncIterNonMuted asyncSeqEntries f xs =
-    AsyncSeq.mergeChoice xs asyncSeqEntries
-    |> AsyncSeq.skipWhile(
-        function
-        | Choice1Of2 _ -> true
-        | Choice2Of2(Old _) -> true
-        | Choice2Of2(Fresh _) -> false)
-    |> AsyncSeq.choose(
-        function
-        | Choice1Of2 x -> Some x
-        | Choice2Of2 _ -> None)
-    |> AsyncSeq.iterAsync f
-
 let private updateAirfieldPlaneset(allowCapturedPlanes, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, afId, numPlanes : Map<PlaneModel, float32>) =
     // State of airfield at start of mission
     let afs = sg.GetAirfield(afId)
@@ -154,7 +138,7 @@ let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, 
         let! airfields =
             files
             |> Array.collect(File.ReadAllLines)
-            |> Array.choose(LogEntry.Parse >> Option.ofObj)
+            |> Array.choose(LogEntry.Parse >> Option.ofObj >> Option.map LogData.Fresh)
             |> AsyncSeq.ofSeq
             |> checkPlaneAvailability config.MissionLengthH limits wg.World sg.State hangars
             |> AsyncSeq.fold (fun acc ->
@@ -165,7 +149,7 @@ let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, 
             do! updateAirfieldPlaneset(config.MaxCapturedPlanes > 0, wg, sg, handlers, af, planes)
     } |> Async.RunSynchronously
 
-let private mkBattleDamageTask asyncIterNonMuted (config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, asyncSeqEntries) : Async<unit> =
+let private mkBattleDamageTask (config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, asyncSeqEntries) : Async<unit> =
     let world = wg.World
     let state = sg.State
     let battleDamages =
@@ -174,82 +158,83 @@ let private mkBattleDamageTask asyncIterNonMuted (config : Configuration, wg : W
             |> Seq.cache
         asyncSeqEntries
         |> extractBattleDamages world state battles
-        |> AsyncSeq.filter (fun damage -> damage.KilledByPlayer.IsSome)
+        |> AsyncSeq.filter (function
+            | Choice1Of2 _ -> true
+            | Choice2Of2 damage -> damage.KilledByPlayer.IsSome)
     asyncSeq {
-        let battleDamage = ref Map.empty
+        let mutable battleDamage = Map.empty
+        let mutable isMuted = true
         for battleKill in battleDamages do
-            let oldBattleDamage =
-                battleDamage.Value.TryFind (battleKill.BattleId, battleKill.Coalition)
-                |> Option.defaultValue 0.0f<E>
-            let newDamage = oldBattleDamage + battleKill.Vehicle.Cost / (float32 config.BattleKillRatio)
-            battleDamage := Map.add (battleKill.BattleId, battleKill.Coalition) newDamage battleDamage.Value
-            let totalValue =
-                GroundAttackVehicle.AllVehicles
-                |> Seq.sumBy (fun vehicle ->
-                    (float32(sg.GetRegion(battleKill.BattleId).GetNumVehicles(battleKill.Coalition, vehicle))) * vehicle.Cost)
-            if newDamage > totalValue * config.MaxBattleKillsRatioByPlayers then
-                yield battleKill.Coalition.Other, battleKill.BattleId
+            match battleKill with
+            | Choice1Of2 () -> isMuted <- false
+            | Choice2Of2 battleKill ->
+                let oldBattleDamage =
+                    battleDamage.TryFind (battleKill.BattleId, battleKill.Coalition)
+                    |> Option.defaultValue 0.0f<E>
+                let newDamage = oldBattleDamage + battleKill.Vehicle.Cost / (float32 config.BattleKillRatio)
+                battleDamage <- battleDamage.Add ((battleKill.BattleId, battleKill.Coalition), newDamage)
+                let totalValue =
+                    GroundAttackVehicle.AllVehicles
+                    |> Seq.sumBy (fun vehicle ->
+                        (float32(sg.GetRegion(battleKill.BattleId).GetNumVehicles(battleKill.Coalition, vehicle))) * vehicle.Cost)
+                if not isMuted && newDamage > totalValue * config.MaxBattleKillsRatioByPlayers then
+                    yield battleKill.Coalition.Other, battleKill.BattleId
     }
-    |> asyncIterNonMuted (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
+    |> AsyncSeq.iterAsync (fun (coalition, region) -> handlers.OnMaxBattleDamageExceeded(string region, coalition))
 
-let private mkHangarTask asyncIterNonMuted (config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, hangars, handlers, asyncCommands, asyncSeqEntries) =
+let private mkHangarTask (config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, hangars, handlers, asyncSeqEntries) =
     let world = wg.World
     let state = sg.State
     asyncSeqEntries
     |> checkPlaneAvailability config.MissionLengthH (Limits.FromConfig config) world state hangars 
-    |> AsyncSeq.mergeChoice asyncCommands
-    |> AsyncSeq.scan (fun (_, hangars : Map<string * CoalitionId, PlayerHangar>, airfields : Map<AirfieldId, Map<PlaneModel, float32>>) item ->
-        match item with
-        | Choice1Of2 cmd ->
-            let userIds =
-                hangars
-                |> Map.toSeq
-                |> Seq.map snd
-                |> Seq.filter (fun hangar -> hangar.PlayerName = cmd.Player)
-                |> List.ofSeq
-            let uid =
-                match userIds with
-                | [hangar] ->
-                    { UserId = string hangar.Player; Name = hangar.PlayerName }
-                | _ ->
-                    // Use a fake Guid, OK because the player name can be used instead.
-                    { UserId = string (Guid("00000000-0000-0000-0000-000000000000")); Name = cmd.Player }
-            Some(Overview(uid, 0, cmd.Interpret(hangars))), hangars, airfields
-        | Choice2Of2 (Status(hangars, airfields) as x) ->
-            Some x, hangars, airfields
-        | Choice2Of2 x ->
-            Some x, hangars, airfields
-    ) (None, Map.empty, Map.empty)
-    |> AsyncSeq.choose (function (Some x, _, _) -> Some x | _ -> None)
-    |> asyncIterNonMuted (
-        function
-        | PlayerEntered(userId) ->
+    |> AsyncSeq.foldAsync (fun isMuted msg ->
+        match isMuted, msg with
+        | _, Unmute ->
+            async {
+                return false
+            }
+        | true, PlayerEntered _
+        | true, Overview _
+        | true, Warning _
+        | true, Announce _
+        | true, Violation _
+        | true, PlanesAtAirfield _ ->
+            async {
+                return true
+            }
+        | false, PlayerEntered(userId) ->
             async {
                 Async.Start(
                     async {
                         do! Async.Sleep(15000)
                         return! handlers.OnPlayerEntered(userId)
                     })
+                return false
             }
-        | Overview(user, delay, messages) ->
+        | false, Overview(user, delay, messages) ->
             async {
                 Async.Start(
                     async {
                         do! Async.Sleep(delay * 1000)
                         return! handlers.OnMessagesToPlayer(user, messages)
                     })
+                return false
             }
-        | Warning(user, delay, messages) ->
+        | false, Warning(user, delay, messages) ->
             async {
                 Async.Start(
                     async {
                         do! Async.Sleep(delay * 1000)
                         return! handlers.OnMessagesToPlayer(user, messages)
                     })
+                return false
             }
-        | Announce(coalition, messages) ->
-            handlers.OnMessagesToCoalition(coalition, messages)
-        | Violation(user, reason) ->
+        | false, Announce(coalition, messages) ->
+            async {
+                do! handlers.OnMessagesToCoalition(coalition, messages)
+                return false
+            }
+        | false, Violation(user, reason) ->
             async {
                 do! handlers.OnMessagesToPlayer(user, [sprintf "You are being kicked for %s. This is not a ban, you are welcome back." reason])
                 Async.Start(
@@ -257,12 +242,24 @@ let private mkHangarTask asyncIterNonMuted (config : Configuration, wg : WorldFa
                         do! Async.Sleep(10000)
                         do! handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
                     })
+                return false
             }
-        | PlanesAtAirfield(afId, numPlanes) ->
-            updateAirfieldPlaneset(config.MaxCapturedPlanes > 0, wg, sg, handlers, afId, numPlanes)
-        | Status(hangars, _) ->
-            handlers.OnHangarsUpdated(hangars)
-        )
+        | false, PlanesAtAirfield(afId, numPlanes) ->
+            async {
+                do! updateAirfieldPlaneset(config.MaxCapturedPlanes > 0, wg, sg, handlers, afId, numPlanes)
+                return false
+            }
+        | _, Status(hangars, _) ->
+            async {
+                do! handlers.OnHangarsUpdated(hangars)
+                return isMuted
+            }
+        ) true
+    |> fun task ->
+        async {
+            let! _ = task
+            return()
+        }
 
 let mkTimeTask(config : Configuration, handlers, files) =
     let rec remainingTime (t : System.TimeSpan) =
@@ -324,34 +321,6 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
     // Stop notifications when we are disposed
     let cancelOnDispose = new System.Threading.CancellationTokenSource()
 
-    // retrieve entries from most recent mission
-    let files = findLogFiles(state.Date, missionLogsDir)
-    let asyncSeqEntries =
-        let handleOldEntries ss =
-            ss
-            |> Seq.map (LogEntry.Parse)
-            |> Seq.filter (function null -> false | _ -> true)
-            |> Seq.map (fun entry -> Old(entry.OriginalString))
-            |> AsyncSeq.ofSeq
-        resumeWatchlogs(handleOldEntries, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
-    let asyncIterNonMuted action xs = asyncIterNonMuted asyncSeqEntries action xs
-
-    // The log entries before artificial entry injection
-    let asyncSeqEntries =
-        asyncSeqEntries
-        |> AsyncSeq.choose (fun line ->
-            try
-                let x = LogEntry.Parse(string line)
-                match x with
-                | null -> failwith "null LogEntry"
-                | x when x.IsValid() -> Some x
-                | invalid -> failwith "non-null invalid LogEntry"
-            with
-            | _ ->
-                logger.Error(sprintf "Failed to parse '%s'" (string line))
-                None)
-        |> AsyncSeq.filter (function null -> false | _ -> true)
-
     // The artificial log entries produced earlier in the mission
     let oldArtificialEntries =
         if File.Exists(extraLogsName) then
@@ -365,19 +334,41 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
         else
             []
 
+    // retrieve entries from most recent mission
+    let files = findLogFiles(state.Date, missionLogsDir)
+    let asyncSeqEntries =
+        let handleOldEntries ss =
+            ss
+            |> Seq.map (LogEntry.Parse)
+            |> Seq.filter (function null -> false | _ -> true)
+            |> Seq.append oldArtificialEntries
+            |> Seq.sortBy (fun entry -> entry.Timestamp)
+            |> Seq.map (fun entry -> Old(entry.OriginalString))
+            |> AsyncSeq.ofSeq
+        resumeWatchlogs(handleOldEntries, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
+
+    // The log entries before live artificial entry injection
+    let asyncSeqEntries =
+        asyncSeqEntries
+        |> AsyncSeq.choose (fun line ->
+            try
+                let entry = line |> LogData.map LogEntry.Parse
+                match entry.Data with
+                | null -> failwith "null LogEntry"
+                | x when x.IsValid() -> Some entry
+                | invalid -> failwith "non-null invalid LogEntry"
+            with
+            | _ ->
+                logger.Error(sprintf "Failed to parse '%s'" (string line))
+                None)
+
     // The log entries fed to the tasks
     let asyncSeqEntries =
         AsyncSeq.mergeChoice asyncSeqEntries injectedData
-        |> AsyncSeq.scan (fun (ticks, oldArtificialEntries) entry ->
+        |> AsyncSeq.scan (fun ticks entry ->
             match entry with
             | Choice1Of2 entry ->
-                // Split the old artificial entries depending on their tick value
-                // The mature ones, i.e. the ones older than entry will be yielded with the entry, ahead of it.
-                // Both the mature and future lists are sorted with younger events first.
-                let matured, future =
-                    oldArtificialEntries
-                    |> List.partition (fun (x : LogEntry) -> x.Timestamp <= entry.Timestamp)
-                Some(entry.Timestamp.Ticks / 200000L, entry :: matured), future
+                Some(entry.Data.Timestamp.Ticks / 200000L, entry)
             | Choice2Of2 data ->
                 let ticks =
                     ticks
@@ -389,38 +380,24 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
                     File.AppendAllLines(extraLogsName, [entry.OriginalString])
                 with
                 | exc -> logger.Error(sprintf "Failed to append '%s' to extraLogs.txt: '%s'" entry.OriginalString exc.Message)
-                let matured, future =
-                    oldArtificialEntries
-                    |> List.partition (fun (x : LogEntry) -> x.Timestamp <= entry.Timestamp)
-                Some(ticks, (entry :> LogEntry) :: matured), future
-        ) (None, List.rev oldArtificialEntries)
-        |> AsyncSeq.choose (function
-            | Some (_, entries), _ -> Some (List.rev entries)
-            | None, _ -> None)
-        |> AsyncSeq.collect (fun xs -> AsyncSeq.ofSeq xs)
-
-    // The commands typed by players in the game chat
-    let asyncCommands =
-        if config.ChatLogCommandsEnabled then
-            watchCommands(Path.Combine(config.ServerDataDir, "chatlogs"), cancelOnDispose.Token)
-            |> AsyncSeq.map (fun line -> ChatCommand.Parse(world, line))
-        else
-            AsyncSeq.empty
+                Some(ticks, Fresh (entry :> LogEntry))
+        ) None
+        |> AsyncSeq.choose (Option.map snd)
 
     let wg = world.FastAccess
     let sg = state.FastAccess
 
     do
-        let battleLimitsTask = mkBattleDamageTask asyncIterNonMuted (config, wg, sg, handlers, asyncSeqEntries)
+        let battleLimitsTask = mkBattleDamageTask (config, wg, sg, handlers, asyncSeqEntries)
 
         let disciplineTask =
             asyncSeqEntries
             |> disciplinePlayers config world state
-            |> asyncIterNonMuted (fun penalty -> handlers.OnPlayerPunished penalty)
+            |> AsyncSeq.iterAsync (fun penalty -> handlers.OnPlayerPunished penalty)
 
         initAirfieldPlanesets(config, wg, sg, handlers, hangars, files)
 
-        let hangarTask = mkHangarTask asyncIterNonMuted (config, wg, sg, hangars, handlers, asyncCommands, asyncSeqEntries)
+        let hangarTask = mkHangarTask (config, wg, sg, hangars, handlers, asyncSeqEntries)
 
         let remainingTime = mkTimeTask(config, handlers, files)
 

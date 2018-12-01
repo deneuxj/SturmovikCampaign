@@ -17,6 +17,7 @@
 module Campaign.PlayerDiscipline
 
 open System
+open Campaign.WatchLogs
 open Campaign.BasicTypes
 open Campaign.Configuration
 open Util
@@ -85,7 +86,7 @@ with
             None
 
 /// Watch game event logs for friendly fire, and emit bans when abuse is detected
-let disciplinePlayers (config : Configuration) (world : World) (state : WorldState) (events : AsyncSeq<LogEntry>) =
+let disciplinePlayers (config : Configuration) (world : World) (state : WorldState) (events : AsyncSeq<LogData<LogEntry>>) =
     asyncSeq {
         let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
         let (|StaticPlaneType|_|) = staticPlaneType world.PlaneSet
@@ -97,9 +98,10 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
         let mutable tookOfAt = Map.empty // Vehicle ID -> take-off time
         let mutable takenDamageAt = Map.empty // Vehicle ID -> time when took damage from other object
         let mutable noobScore = Map.empty // player ID -> "noobishness" score (wrecked own plane without causes)
+        let mutable isMuted = true
 
         // Expand "noob score" of a player who's being clumsy by wrecking their own ship or inflicting friendly damage
-        let addNoobScore player score =
+        let addNoobScore isMuted player score =
             asyncSeq {
                 let old =
                     noobScore.TryFind player
@@ -112,7 +114,7 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                         Player = player
                         Decision = Informed (sprintf "%3.1f wrecking penalty" newScore)
                     }
-                if newScore > config.MaxNoobScore then
+                if not isMuted && newScore > config.MaxNoobScore then
                     yield {
                         Player = player
                         Decision = Informed "wrecking limit exceeded"
@@ -124,7 +126,12 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
             }
 
         for event in events do
-            match event with
+            match isMuted, event with
+            | true, Fresh _ ->
+                isMuted <- false
+            | false, _ | true, Old _ -> ()
+
+            match event.Data with
             // Reset state
             | :? MissionStartEntry as start ->
                 nameOf <- Map.empty
@@ -194,18 +201,19 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                         let record =
                             damagesOf.[damage.AttackerId]
                         record.Add(entry)
-                        match FriendlyDamage.Judge(config, record) with
-                        | Some penalty ->
-                            yield {
-                                Player = player
-                                Decision = Informed "Friendly fire limit exceeded"
-                            }
-                            yield {
-                                Player = player
-                                Decision = penalty
-                            }
-                        | None ->
-                            ()
+                        if not isMuted then 
+                            match FriendlyDamage.Judge(config, record) with
+                            | Some penalty ->
+                                yield {
+                                    Player = player
+                                    Decision = Informed "Friendly fire limit exceeded"
+                                }
+                                yield {
+                                    Player = player
+                                    Decision = penalty
+                                }
+                            | None ->
+                                ()
                     | _ ->
                         // Coalition of attacker or target not known
                         ()
@@ -237,7 +245,7 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                         logger.Debug(sprintf "Wreck penalty: id = %d, factor = %f, damage = %f" damage.TargetId factor damage.Damage)
                         let extraNoobScore = factor * damage.Damage
                         if extraNoobScore > 0.0f then
-                            yield! addNoobScore player extraNoobScore
+                            yield! addNoobScore isMuted player extraNoobScore
                     | Some _, _ // Player not flying a plane. Other vehicles such as tanks apparently don't report damage taken from AIs, and we don't inflict wreck damage for them.
                     | None, _ 
                     | _, None -> // Non player-controlled entity (e.g. AI) took damage from unknown source.

@@ -28,6 +28,7 @@ open Campaign.WorldDescription
 open Campaign.PlayerHangar
 open Campaign.PlaneModel
 open Campaign.WorldState
+open Campaign.WatchLogs
 open Campaign.ResultExtraction
 open System.Runtime.Serialization
 open System.ServiceModel
@@ -78,6 +79,7 @@ with
 
 /// Messages sent to the live commenter
 type PlaneAvailabilityMessage =
+    | Unmute
     | PlayerEntered of Guid
     | Overview of UserIds * delay:int * string list
     | Warning of UserIds * delay:int * string list
@@ -1079,18 +1081,27 @@ with
 
 /// Monitor events and check that players don't take off in planes they are not allowed to fly according to player hangars.
 /// Also send information about player hangars.
-let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world : World) (state : WorldState) (hangars : Map<string * CoalitionId, PlayerHangar>) (entries : AsyncSeq<LogEntry>) =
+let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world : World) (state : WorldState) (hangars : Map<string * CoalitionId, PlayerHangar>) (entries : AsyncSeq<LogData<LogEntry>>) =
 
     asyncSeq {
         let mutable context = Context.Create(missionLength, world, state, hangars, limits)
         let mutable players : Map<int, PlayerFlightData> = Map.empty
+        let mutable muted = true
 
         yield Status(context.Hangars , context.Airfields)
 
         for entry in entries do
             let mutable cmds0 = []
+
+            // Signal to unmute when we encounter the first fresh log data
+            match muted, entry with
+            | true, Fresh _ ->
+                muted <- false
+                yield Unmute
+            | _ -> ()
+
             // Handle special entries
-            match entry with
+            match entry.Data with
             | :? JoinEntry as joined ->
                 yield PlayerEntered(joined.UserId)
                 for coalition in [Axis; Allies] do
@@ -1125,7 +1136,7 @@ let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world
                 context <- ctx
 
             // Update player data and context
-            let players2 = players |> Map.map(fun vehicleId data -> data.HandleEntry(context, entry))
+            let players2 = players |> Map.map(fun vehicleId data -> data.HandleEntry(context, entry.Data))
             players <-
                 players2
                 |> Map.map (fun _ (player, _) -> player)
@@ -1144,7 +1155,7 @@ let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world
 
             // Update context with kill entries
             let context2 =
-                match entry with
+                match entry.Data with
                 | :? KillEntry as kill -> context2.HandleKill(kill)
                 | _ -> context2
 
