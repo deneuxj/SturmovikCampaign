@@ -440,10 +440,13 @@ with
                         // Could not find giver
                         [], []
                     | Some (hangarOut : PlayerHangar), Some hangarIn ->
+                        let giverUserId = { UserId = string hangarOut.Player; Name = hangarOut.PlayerName }
+                        let recipientUserId = { UserId = string hangarIn.Player; Name = hangarIn.PlayerName }
                         // Gift to an individual
                         [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)
                          hangarIn.AddPlane(gift.Airfield, gift.Plane, 1.0f)],
-                        [Announce(coalition, [sprintf "%s has gifted a %s to %s at %s" hangarOut.PlayerName gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])]
+                        [Overview (giverUserId, 0, [sprintf "You have gifted a %s to %s at %s" gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])
+                         Overview (recipientUserId, 0, [sprintf "You have been gifted a %s at %s by %s" gift.Plane.PlaneName gift.Airfield.AirfieldName hangarOut.PlayerName])]
                     | Some (hangarOut : PlayerHangar), None ->
                         // Gift to public
                         [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)],
@@ -451,8 +454,9 @@ with
                 let hangars =
                     newHangars
                     |> List.fold (fun hangars h -> hangars |> Map.add ((string h.Player), coalition) h) this.Hangars
+                let status = Status(hangars, this.Airfields)
                 { this with Hangars = hangars },
-                messages
+                status :: messages
             | None ->
                 this,
                 []
