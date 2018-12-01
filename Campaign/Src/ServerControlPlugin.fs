@@ -715,7 +715,7 @@ type Plugin() =
     let mutable campaignData = None
 
     let setHangars, getHangars, disposeHangars =
-        let mutable hangars : Map<string, PlayerHangar.PlayerHangar> = Map.empty
+        let mutable hangars : Map<string * CoalitionId, PlayerHangar.PlayerHangar> = Map.empty
         let hangarsLock = new System.Threading.SemaphoreSlim(1, 1)
         let setF(x) =
             async {
@@ -725,9 +725,12 @@ type Plugin() =
                         x
                         |> Map.toSeq
                         |> Seq.map snd
-                        |> Seq.map (fun (h : PlayerHangar.PlayerHangar) -> h.PlayerName, h)
+                        |> Seq.map (fun (h : PlayerHangar.PlayerHangar) -> (h.PlayerName, h.Coalition), h)
                         |> Map.ofSeq
                     hangars <- hangarsByPlayerName
+                    match support with
+                    | Some s -> s.Logging.LogInfo (sprintf "Hangars updated by plugin: %A" hangars)
+                    | None -> ()
                 finally
                     hangarsLock.Release() |> ignore
             }
@@ -735,6 +738,9 @@ type Plugin() =
             async {
                 try
                     do! Async.AwaitTask(hangarsLock.WaitAsync())
+                    match support with
+                    | Some s -> s.Logging.LogInfo "Hangars read by plugin"
+                    | None -> ()
                     return hangars
                 finally
                     hangarsLock.Release() |> ignore
@@ -1024,25 +1030,41 @@ type Plugin() =
         member x.GetPlayerCashReserve(player) =
             async {
                 let! hangars = getHangars
-                return hangars.TryFind(player) |> Option.map (fun h -> h.Reserve / 1.0f<E>) |> Option.defaultValue 0.0f
+                let cashPerCoalition =
+                    [ Axis; Allies ]
+                    |> List.map (fun coalition ->
+                        string coalition,
+                        hangars.TryFind((player, coalition))
+                        |> Option.map (fun h -> h.Reserve / 1.0f<E>)
+                        |> Option.defaultValue 0.0f)
+                    |> Map.ofList
+                return cashPerCoalition
             }
 
         member x.GetPlayerReservedPlanes(player) =
             async {
                 let! hangars = getHangars
                 let airfields =
-                    hangars.TryFind(player)
-                    |> Option.map (fun h -> h.Airfields)
-                    |> Option.defaultValue Map.empty
-                    |> Map.map (fun _ af ->
-                        af.Planes
-                        // Replace planes by plane names in keys
-                        |> Map.toSeq
-                        |> Seq.map (fun (plane, qty) -> plane.PlaneName, qty)
-                        |> Map.ofSeq)
-                    // Replace airfield IDs by airfield names in keys
+                    [ Axis; Allies ]
+                    |> List.choose (fun coalition ->
+                        hangars.TryFind(player, coalition)
+                        |> Option.map (fun h ->
+                            h.Airfields
+                            |> Map.toSeq
+                            |> Seq.collect (fun (af, afHangar) ->
+                                afHangar.Planes
+                                |> Map.toSeq
+                                |> Seq.map (fun (plane, qty) -> (af, plane), qty))
+                            |> Map.ofSeq)) // Nested maps to one map from airfield and plane to quantity
+                    |> List.fold Map.sumUnion Map.empty // Union across coalitions
                     |> Map.toSeq
-                    |> Seq.map (fun (af, planes) -> af.AirfieldName, planes)
+                    |> Seq.map (fun ((af, plane), qty) -> af.AirfieldName, plane.PlaneName, qty) // Turn airfield and plane IDs to strings
+                    |> Seq.groupBy (fun (af, _, _) -> af) // Recreate nested maps: top-level, group by airfield
+                    |> Seq.map (fun (af, grp) ->
+                        af,
+                        grp
+                        |> Seq.map (fun (_, plane, qty) -> plane, qty) // Second level, group by plane
+                        |> Map.ofSeq)
                     |> Map.ofSeq
                 return airfields
             }
@@ -1051,17 +1073,21 @@ type Plugin() =
             async {
                 let! hangars = getHangars
                 let freshSpawns =
-                    hangars.TryFind(player)
-                    |> Option.map (fun h -> h.FreshSpawns)
-                    |> Option.map (fun m ->
-                        m
-                        |> Map.toSeq
-                        |> Seq.map (fun (planeType, qty) ->
-                            string planeType, qty
+                    [ Axis; Allies]
+                    |> List.map (fun coalition ->
+                        string coalition,
+                        hangars.TryFind(player, coalition)
+                        |> Option.map (fun h -> h.FreshSpawns)
+                        |> Option.map (fun m ->
+                            m
+                            |> Map.toSeq
+                            |> Seq.map (fun (planeType, qty) ->
+                                string planeType, qty
+                            )
+                            |> Map.ofSeq
                         )
-                        |> Map.ofSeq
-                    )
-                    |> Option.defaultValue Map.empty
+                        |> Option.defaultValue Map.empty)
+                    |> Map.ofList
                 return freshSpawns
             }
 
@@ -1072,9 +1098,12 @@ type Plugin() =
                 | Some plane ->
                     let! hangars = getHangars
                     let hasPlane =
-                        hangars.TryFind giver
-                        |> Option.map (fun hangar -> hangar.HasReservedPlane(af, plane))
-                        |> Option.defaultValue false
+                        [ Axis; Allies ]
+                        |> List.exists (fun coalition ->
+                            hangars.TryFind (giver, coalition)
+                            |> Option.map (fun hangar -> hangar.HasReservedPlane(af, plane))
+                            |> Option.defaultValue false
+                        )
                     if hasPlane then
                         let planeGift : PlaneAvailabilityChecks.PlaneGift =
                             { GiverGuid = giver
