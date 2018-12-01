@@ -438,17 +438,20 @@ with
                     match hangarOut, hangarIn with
                     | None, _ ->
                         // Could not find giver
+                        logger.Error(sprintf "Could not find giver with %s" gift.GiverGuid)
                         [], []
                     | Some (hangarOut : PlayerHangar), Some hangarIn ->
+                        // Gift to an individual
                         let giverUserId = { UserId = string hangarOut.Player; Name = hangarOut.PlayerName }
                         let recipientUserId = { UserId = string hangarIn.Player; Name = hangarIn.PlayerName }
-                        // Gift to an individual
+                        logger.Info(sprintf "Gift from %s to %s" hangarOut.PlayerName hangarIn.PlayerName)
                         [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)
                          hangarIn.AddPlane(gift.Airfield, gift.Plane, 1.0f)],
                         [Overview (giverUserId, 0, [sprintf "You have gifted a %s to %s at %s" gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])
                          Overview (recipientUserId, 0, [sprintf "You have been gifted a %s at %s by %s" gift.Plane.PlaneName gift.Airfield.AirfieldName hangarOut.PlayerName])]
                     | Some (hangarOut : PlayerHangar), None ->
                         // Gift to public
+                        logger.Info(sprintf "Gift from %s to the public" hangarOut.PlayerName)
                         [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)],
                         [Announce(coalition, [sprintf "%s has gifted a %s to the public at %s" hangarOut.PlayerName gift.Plane.PlaneName gift.Airfield.AirfieldName])]
                 let hangars =
@@ -458,6 +461,7 @@ with
                 { this with Hangars = hangars },
                 status :: messages
             | None ->
+                logger.Error(sprintf "Failed gift attempt at neutral airfield %s" gift.Airfield.AirfieldName)
                 this,
                 []
 
