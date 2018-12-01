@@ -468,7 +468,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                     (((axisMove, None), []), Defeat(Allies, depth, "No forces")) |> BoardEvaluation.Min soFar
                 elif
                     match axisMove with
-                    | Some move -> move.Destination = board.AlliesRearRegion
+                    | Some move -> move.Destination = board.AlliesRearRegion && 2.0f * board.AlliesForces.[move.Destination] < move.Force
                     | None -> false
                     then
                     (((axisMove, None), []), Defeat(Allies, depth, "Rear airfield under attack")) |> BoardEvaluation.Min soFar
@@ -516,7 +516,7 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                         ((alliesMove, []), Defeat(Axis, depth, "No forces")) |> BoardEvaluation.Max soFar
                     elif
                         match alliesMove with
-                        | Some move -> move.Destination = board.AxisRearRegion
+                        | Some move -> move.Destination = board.AxisRearRegion && 2.0f * board.AxisForces.[move.Destination] < move.Force
                         | None -> false
                         then
                         ((alliesMove, []), Defeat(Axis, depth, "Rear airfield under attack")) |> BoardEvaluation.Max soFar

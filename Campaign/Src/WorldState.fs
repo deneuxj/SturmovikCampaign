@@ -416,7 +416,23 @@ with
                     af2.AirfieldId = af
                     &&
                     this.Regions
-                    |> List.exists (fun regState -> regState.RegionId = af2.Region && regState.HasInvaders)))
+                    |> List.exists (fun regState ->
+                        if regState.Owner = Some coalition.Other then
+                            true
+                        elif regState.RegionId = af2.Region && regState.HasInvaders then
+                            let attackingForce =
+                                regState.NumInvadingVehicles
+                                |> Map.fold (fun total vehicle num ->
+                                    total + vehicle.Cost * float32 num
+                                ) 0.0f<E>
+                            let defendingForce =
+                                regState.NumVehicles
+                                |> Map.fold (fun total vehicle num ->
+                                    total + vehicle.Cost * float32 num
+                                ) 0.0f<E>
+                            attackingForce > defendingForce
+                        else
+                            false)))
             |> Option.defaultValue false
         if float32 (this.Date - world.StartDate).TotalDays > this.MaxConflictDuration then
             let numAxis, numAllies =
