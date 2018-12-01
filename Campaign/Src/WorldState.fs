@@ -417,20 +417,23 @@ with
                     &&
                     this.Regions
                     |> List.exists (fun regState ->
-                        if regState.Owner = Some coalition.Other then
-                            true
-                        elif regState.RegionId = af2.Region && regState.HasInvaders then
-                            let attackingForce =
-                                regState.NumInvadingVehicles
-                                |> Map.fold (fun total vehicle num ->
-                                    total + vehicle.Cost * float32 num
-                                ) 0.0f<E>
-                            let defendingForce =
-                                regState.NumVehicles
-                                |> Map.fold (fun total vehicle num ->
-                                    total + vehicle.Cost * float32 num
-                                ) 0.0f<E>
-                            attackingForce > defendingForce
+                        if regState.RegionId = af2.Region then
+                            if regState.Owner = Some coalition.Other then
+                                true
+                            elif regState.HasInvaders then
+                                let attackingForce =
+                                    regState.NumInvadingVehicles
+                                    |> Map.fold (fun total vehicle num ->
+                                        total + vehicle.Cost * float32 num
+                                    ) 0.0f<E>
+                                let defendingForce =
+                                    regState.NumVehicles
+                                    |> Map.fold (fun total vehicle num ->
+                                        total + vehicle.Cost * float32 num
+                                    ) 0.0f<E>
+                                attackingForce > defendingForce
+                            else
+                                false
                         else
                             false)))
             |> Option.defaultValue false
