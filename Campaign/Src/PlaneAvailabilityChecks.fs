@@ -46,19 +46,19 @@ with
     override this.ToString() =
         let recipient =
             match this.Recipient with
-            | None -> "all"
-            | Some (guid, name) -> sprintf "'%s' a.k.a '%s'" guid name
-        sprintf "PLANEGIFT: '%s' to %s a '%s' at '%s'" this.GiverGuid recipient this.Plane.PlaneName this.Airfield.AirfieldName
+            | None -> "ALL"
+            | Some (guid, name) -> sprintf "'%s'/'%s'" guid (name.Replace("'", ""))
+        sprintf "PLANEGIFT:'%s' RECIPIENT:%s PLANE:'%s' AIRFIELD:'%s'" this.GiverGuid recipient this.Plane.PlaneName this.Airfield.AirfieldName
 
     static member TryFromString(s) =
-        let m = Regex.Match(s, "PLANEGIFT: '(.*)' to (all|'.*' a[.]k[.]a '.*') a '(.*)' at '(.*)'")
+        let m = Regex.Match(s, "PLANEGIFT:'(.*)' RECIPIENT:(ALL|'.*'/'.*') PLANE:'(.*)' AIRFIELD:'(.*)'")
         if m.Success then
             let planeName = m.Groups.[3].Value
             let recipient =
                 match m.Groups.[2].Value with
-                | "all" -> Ok None
+                | "ALL" -> Ok None
                 | s ->
-                    let m2 = Regex.Match(s, "'(.*)' a[.]k[.]a '(.*)'")
+                    let m2 = Regex.Match(s, "'(.*)'/'(.*)'")
                     if m2.Success then
                         Ok(Some(m2.Groups.[1].Value, m2.Groups.[1].Value))
                     else
