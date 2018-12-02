@@ -186,77 +186,79 @@ let private mkBattleDamageTask (config : Configuration, wg : WorldFastAccess, sg
 let private mkHangarTask (config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, hangars, handlers, asyncSeqEntries) =
     let world = wg.World
     let state = sg.State
+
     asyncSeqEntries
-    |> checkPlaneAvailability config.MissionLengthH (Limits.FromConfig config) world state hangars 
-    |> AsyncSeq.scanAsync (fun isMuted msg ->
-        match isMuted, msg with
-        | _, Unmute ->
-            async {
-                return false
-            }
-        | true, PlayerEntered _
-        | true, Overview _
-        | true, Warning _
-        | true, Announce _
-        | true, Violation _
-        | true, PlanesAtAirfield _ ->
-            async {
-                return true
-            }
-        | false, PlayerEntered(userId) ->
-            async {
-                Async.Start(
-                    async {
-                        do! Async.Sleep(15000)
-                        return! handlers.OnPlayerEntered(userId)
-                    })
-                return false
-            }
-        | false, Overview(user, delay, messages) ->
-            async {
-                Async.Start(
-                    async {
-                        do! Async.Sleep(delay * 1000)
-                        return! handlers.OnMessagesToPlayer(user, messages)
-                    })
-                return false
-            }
-        | false, Warning(user, delay, messages) ->
-            async {
-                Async.Start(
-                    async {
-                        do! Async.Sleep(delay * 1000)
-                        return! handlers.OnMessagesToPlayer(user, messages)
-                    })
-                return false
-            }
-        | false, Announce(coalition, messages) ->
-            async {
-                do! handlers.OnMessagesToCoalition(coalition, messages)
-                return false
-            }
-        | false, Violation(user, reason) ->
-            async {
-                do! handlers.OnMessagesToPlayer(user, [sprintf "You are being kicked for %s. This is not a ban, you are welcome back." reason])
-                Async.Start(
-                    async {
-                        do! Async.Sleep(10000)
-                        do! handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
-                    })
-                return false
-            }
-        | false, PlanesAtAirfield(afId, numPlanes) ->
-            async {
-                do! updateAirfieldPlaneset(config.MaxCapturedPlanes > 0, wg, sg, handlers, afId, numPlanes)
-                return false
-            }
-        | _, Status(hangars, _) ->
-            async {
-                do! handlers.OnHangarsUpdated(hangars)
-                return isMuted
-            }
-        ) true
-    |> AsyncSeq.iter ignore
+    |> checkPlaneAvailability config.MissionLengthH (Limits.FromConfig config) world state hangars
+    |> AsyncSeq.scan (fun (isMuted, _) msg ->
+        logger.Debug(
+            // Hide details of complex Status and Airfields messages
+            let msg =
+                match msg with
+                | Status(_, _) -> Status(Map.empty, Map.empty)
+                | PlanesAtAirfield(af, _) -> PlanesAtAirfield(af, Map.empty) 
+                | x -> x
+            sprintf "hangar task received message %A (isMuted = %s)" msg (string isMuted))
+        let muteMask, action =
+            match isMuted, msg with
+            | _, Unmute ->
+                false, async { return() }
+            | true, PlayerEntered _
+            | true, Overview _
+            | true, Warning _
+            | true, Announce _
+            | true, Violation _
+            | true, PlanesAtAirfield _ ->
+                true, async { return()}
+            | false, PlayerEntered(userId) ->
+                true,
+                async {
+                    Async.Start(
+                        async {
+                            do! Async.Sleep(15000)
+                            return! handlers.OnPlayerEntered(userId)
+                        })
+                    return()
+                }
+            | false, Overview(user, delay, messages) ->
+                true,
+                async {
+                    Async.Start(
+                        async {
+                            do! Async.Sleep(delay * 1000)
+                            return! handlers.OnMessagesToPlayer(user, messages)
+                        })
+                    return ()
+                }
+            | false, Warning(user, delay, messages) ->
+                true,
+                async {
+                    Async.Start(
+                        async {
+                            do! Async.Sleep(delay * 1000)
+                            return! handlers.OnMessagesToPlayer(user, messages)
+                        })
+                    return ()
+                }
+            | false, Announce(coalition, messages) ->
+                true, handlers.OnMessagesToCoalition(coalition, messages)
+            | false, Violation(user, reason) ->
+                true,
+                async {
+                    do! handlers.OnMessagesToPlayer(user, [sprintf "You are being kicked for %s. This is not a ban, you are welcome back." reason])
+                    Async.Start(
+                        async {
+                            do! Async.Sleep(10000)
+                            do! handlers.OnPlayerPunished({ Player = user; Decision = Kicked })
+                        })
+                    return ()
+                }
+            | false, PlanesAtAirfield(afId, numPlanes) ->
+                true, updateAirfieldPlaneset(config.MaxCapturedPlanes > 0, wg, sg, handlers, afId, numPlanes)
+            | _, Status(hangars, _) ->
+                true, handlers.OnHangarsUpdated(hangars)
+        isMuted && muteMask, action
+        ) (true, async { return() })
+    |> AsyncSeq.iterAsync snd
 
 let mkTimeTask(config : Configuration, handlers, files) =
     let rec remainingTime (t : System.TimeSpan) =
@@ -327,21 +329,20 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
                 | null -> false
                 | x when not (x.IsValid()) -> false
                 | _ -> true)
-            |> List.ofSeq
+            |> Array.ofSeq
         else
-            []
+            [||]
 
     // retrieve entries from most recent mission
     let files = findLogFiles(state.Date, missionLogsDir)
     let asyncSeqEntries =
         let handleOldEntries ss =
             ss
-            |> Seq.map (LogEntry.Parse)
-            |> Seq.filter (function null -> false | _ -> true)
-            |> Seq.append oldArtificialEntries
-            |> Seq.sortBy (fun entry -> entry.Timestamp)
-            |> Seq.map (fun entry -> Old(entry.OriginalString))
-            |> List.ofSeq
+            |> Array.map (LogEntry.Parse)
+            |> Array.filter (function null -> false | _ -> true)
+            |> Array.append oldArtificialEntries
+            |> Array.sortBy (fun entry -> entry.Timestamp)
+            |> Array.map (fun entry -> Old(entry.OriginalString))
             |> AsyncSeq.ofSeq
         resumeWatchlogs(handleOldEntries, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
 
@@ -391,7 +392,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
                 Some(ticks, Fresh (entry :> LogEntry))
         ) None
         |> AsyncSeq.choose (Option.map snd)
-        |> AsyncSeq.cache
+//        |> AsyncSeq.cache
 
     let wg = world.FastAccess
     let sg = state.FastAccess
@@ -410,8 +411,8 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
 
         let remainingTime = mkTimeTask(config, handlers, files)
 
-        Async.Start(Async.catchLog "battle limits notifier" battleLimitsTask, cancelOnDispose.Token)
-        Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
+//        Async.Start(Async.catchLog "battle limits notifier" battleLimitsTask, cancelOnDispose.Token)
+//        Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
         Async.Start(Async.catchLog "plane availability checker" hangarTask, cancelOnDispose.Token)
         Async.Start(Async.catchLog "remaining time notifier" remainingTime, cancelOnDispose.Token)
 

@@ -1105,6 +1105,7 @@ let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world
         yield Status(context.Hangars , context.Airfields)
 
         for entry in entries do
+            logger.Debug(sprintf "checkPlaneAvailability sees entry %A" entry)
             let mutable cmds0 = []
 
             // Signal to unmute when we encounter the first fresh log data
