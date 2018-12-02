@@ -39,6 +39,8 @@ open SturmovikMission.Blocks.Vehicles
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
+let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
+
 /// Match the object type strings in log events with plane models.
 let planeObjectType (planeSet : PlaneSet) (s : string) =
     match s with

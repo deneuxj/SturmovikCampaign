@@ -724,7 +724,6 @@ module MissionLogParsing =
         let entries =
             logger.Info(sprintf "Looking for logs in %s" missionLogsDir)
             // entries to remove from the log
-            let timeLessEntryTypes = Set.ofList [ LogEntryType.LogVersion; LogEntryType.PosChanged; LogEntryType.Join; LogEntryType.Leave ]
             let missionIsComplete (startTime : System.DateTime, file : string) =
                 let endTime = File.GetLastWriteTimeUtc(file)
                 // 90% of the duration to allow for clock skew between real time and mission time
