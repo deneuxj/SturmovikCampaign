@@ -707,6 +707,8 @@ type CampaignData(config : Configuration, support : SupportApis) =
 
 
 type Plugin() =
+    let logger = NLog.LogManager.GetCurrentClassLogger()
+
     let mutable support : SupportApis option = None
     let mutable webHookClient : (System.Net.WebClient * System.Uri) option = None
     let mutable commenter : Commentator option = None
@@ -728,9 +730,6 @@ type Plugin() =
                         |> Seq.map (fun (h : PlayerHangar.PlayerHangar) -> (h.PlayerName, h.Coalition), h)
                         |> Map.ofSeq
                     hangars <- hangarsByPlayerName
-                    match support with
-                    | Some s -> s.Logging.LogInfo (sprintf "Hangars updated by plugin: %A" hangars)
-                    | None -> ()
                 finally
                     hangarsLock.Release() |> ignore
             }
@@ -738,9 +737,6 @@ type Plugin() =
             async {
                 try
                     do! Async.AwaitTask(hangarsLock.WaitAsync())
-                    match support with
-                    | Some s -> s.Logging.LogInfo "Hangars read by plugin"
-                    | None -> ()
                     return hangars
                 finally
                     hangarsLock.Release() |> ignore
@@ -767,11 +763,13 @@ type Plugin() =
             while true do
                 let! data = takeInjectedData()
                 match data with
-                | Some data -> yield data
-                | None -> ()
+                | Some data ->
+                    logger.Debug(sprintf "Injected data taken '%s'" data)
+                    yield data
+                | None ->
+                    logger.Warn("takeInjectedData return null")
         }
-
-    let logger = NLog.LogManager.GetCurrentClassLogger()
+        |> AsyncSeq.cache
 
     let onCampaignOver victors =
         match webHookClient with
@@ -1105,14 +1103,24 @@ type Plugin() =
                             |> Option.defaultValue false
                         )
                     if hasPlane then
+                        let giverGuid =
+                            [ Axis; Allies ]
+                            |> List.pick (fun coalition ->
+                                hangars.TryFind (giver, coalition)
+                                |> Option.map (fun hangar -> string hangar.Player)
+                            )
                         let planeGift : PlaneAvailabilityChecks.PlaneGift =
-                            { GiverGuid = giver
+                            { GiverGuid = giverGuid
                               Recipient = recipient
                               Plane = plane
                               Airfield = af
                             }
-                        postInjectedData (string planeGift)
-                        return Ok "Gift sent"
+                        match giverGuid, recipient with
+                        | x, Some (y, _) when x = y ->
+                            return Error "You cannot gift a plane to yourself"
+                        | _ ->
+                            postInjectedData (string planeGift)
+                            return Ok "Gift sent"
                     else
                         return Error "No such plane to gift"
                 | None ->

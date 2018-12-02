@@ -52,30 +52,38 @@ with
         sprintf "PLANEGIFT:'%s' RECIPIENT:%s PLANE:'%s' AIRFIELD:'%s'" this.GiverGuid recipient this.Plane.PlaneName this.Airfield.AirfieldName
 
     static member TryFromString(s) =
-        let m = Regex.Match(s, "PLANEGIFT:'(.*)' RECIPIENT:(ALL|'.*'/'.*') PLANE:'(.*)' AIRFIELD:'(.*)'")
-        if m.Success then
-            let planeName = m.Groups.[3].Value
-            let recipient =
-                match m.Groups.[2].Value with
-                | "ALL" -> Ok None
-                | s ->
-                    let m2 = Regex.Match(s, "'(.*)'/'(.*)'")
-                    if m2.Success then
-                        Ok(Some(m2.Groups.[1].Value, m2.Groups.[1].Value))
-                    else
-                        Error()
-            match recipient, PlaneModel.AllModels |> List.tryFind (fun plane -> plane.PlaneName = planeName) with
-            | Ok(recipient), Some plane ->
-                Some {
-                    GiverGuid = m.Groups.[1].Value
-                    Recipient = recipient
-                    Plane = plane
-                    Airfield = AirfieldId(m.Groups.[4].Value)
-                }
-            | _, None | Error _, _->
-                None
-        else
+        match s with
+        | null ->
+            logger.Error "Attempt to parse PlaneGift from null string"
             None
+        | _ ->
+            let m = Regex.Match(s, "PLANEGIFT:'(.*)' RECIPIENT:(ALL|'.*'/'.*') PLANE:'(.*)' AIRFIELD:'(.*)'")
+            if m.Success then
+                let planeName = m.Groups.[3].Value
+                let recipient =
+                    match m.Groups.[2].Value with
+                    | "ALL" -> Ok None
+                    | s ->
+                        let m2 = Regex.Match(s, "'(.*)'/'(.*)'")
+                        if m2.Success then
+                            Ok(Some(m2.Groups.[1].Value, m2.Groups.[1].Value))
+                        else
+                            logger.Error(sprintf "Failed to parse PlaneGift recipient'%s'" s)
+                            Error()
+                match recipient, PlaneModel.AllModels |> List.tryFind (fun plane -> plane.PlaneName = planeName) with
+                | Ok(recipient), Some plane ->
+                    logger.Debug(sprintf "Successfully parsed PlaneGift '%s'" s)
+                    Some {
+                        GiverGuid = m.Groups.[1].Value
+                        Recipient = recipient
+                        Plane = plane
+                        Airfield = AirfieldId(m.Groups.[4].Value)
+                    }
+                | _, None | Error _, _->
+                    None
+            else
+                logger.Error(sprintf "Failed to parse PlaneGift '%s'" s)
+                None
 
 /// Messages sent to the live commenter
 type PlaneAvailabilityMessage =
@@ -386,6 +394,7 @@ with
                 this, []
 
         | PlaneCheckIn(user, userCoalition, plane, health, isBorrowed, af) ->
+            logger.Info (sprintf "Plane check in by %s of a %s at %s, health %3.0f" user.Name plane.PlaneName af.AirfieldName (health * 100.0f))
             match this.GetAirfieldCoalition(af) with
             | Some coalition ->
                 let planes =
@@ -407,6 +416,7 @@ with
                         hangar.AddPlane(af, plane, health)
                     else
                         hangar
+                logger.Debug (sprintf "Hangar after check in: %A" hangar)
                 let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
                 { this with Hangars = hangars; Airfields = airfields },
                 [
@@ -422,6 +432,7 @@ with
                             ()
                 ]
             | None ->
+                logger.Warn (sprintf "%s checked in at neutral airfield" user.Name)
                 this, []
 
         | PlaneGifted(gift) ->
@@ -440,17 +451,20 @@ with
                     match hangarOut, hangarIn with
                     | None, _ ->
                         // Could not find giver
-                        logger.Error(sprintf "Could not find giver with %s" gift.GiverGuid)
+                        logger.Error(sprintf "Could not find giver with GUID %s" gift.GiverGuid)
                         [], []
                     | Some (hangarOut : PlayerHangar), Some hangarIn ->
-                        // Gift to an individual
                         let giverUserId = { UserId = string hangarOut.Player; Name = hangarOut.PlayerName }
                         let recipientUserId = { UserId = string hangarIn.Player; Name = hangarIn.PlayerName }
-                        logger.Info(sprintf "Gift from %s to %s" hangarOut.PlayerName hangarIn.PlayerName)
-                        [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)
-                         hangarIn.AddPlane(gift.Airfield, gift.Plane, 1.0f)],
-                        [Overview (giverUserId, 0, [sprintf "You have gifted a %s to %s at %s" gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])
-                         Overview (recipientUserId, 0, [sprintf "You have been gifted a %s at %s by %s" gift.Plane.PlaneName gift.Airfield.AirfieldName hangarOut.PlayerName])]
+                        if hangarOut.Player = hangarIn.Player then
+                            [], [ Overview(giverUserId, 0, ["You cannot gift a plane to yourself"]) ]
+                        else
+                            // Gift to an individual
+                            logger.Info(sprintf "Gift from %s to %s" hangarOut.PlayerName hangarIn.PlayerName)
+                            [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)
+                             hangarIn.AddPlane(gift.Airfield, gift.Plane, 1.0f)],
+                            [Overview (giverUserId, 0, [sprintf "You have gifted a %s to %s at %s" gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])
+                             Overview (recipientUserId, 0, [sprintf "You have been gifted a %s at %s by %s" gift.Plane.PlaneName gift.Airfield.AirfieldName hangarOut.PlayerName])]
                     | Some (hangarOut : PlayerHangar), None ->
                         // Gift to public
                         logger.Info(sprintf "Gift from %s to the public" hangarOut.PlayerName)

@@ -91,6 +91,7 @@ let private findLogFiles(stateDate, missionLogsDir) =
             |> Seq.map fst
         sorted
         |> Array.ofSeq
+    logger.Debug(sprintf "Found pre-existing log files: %A" files)
     files
 
 let private updateAirfieldPlaneset(allowCapturedPlanes, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, afId, numPlanes : Map<PlaneModel, float32>) =
@@ -187,7 +188,7 @@ let private mkHangarTask (config : Configuration, wg : WorldFastAccess, sg : Wor
     let state = sg.State
     asyncSeqEntries
     |> checkPlaneAvailability config.MissionLengthH (Limits.FromConfig config) world state hangars 
-    |> AsyncSeq.foldAsync (fun isMuted msg ->
+    |> AsyncSeq.scanAsync (fun isMuted msg ->
         match isMuted, msg with
         | _, Unmute ->
             async {
@@ -255,11 +256,7 @@ let private mkHangarTask (config : Configuration, wg : WorldFastAccess, sg : Wor
                 return isMuted
             }
         ) true
-    |> fun task ->
-        async {
-            let! _ = task
-            return()
-        }
+    |> AsyncSeq.iter ignore
 
 let mkTimeTask(config : Configuration, handlers, files) =
     let rec remainingTime (t : System.TimeSpan) =
@@ -344,6 +341,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
             |> Seq.append oldArtificialEntries
             |> Seq.sortBy (fun entry -> entry.Timestamp)
             |> Seq.map (fun entry -> Old(entry.OriginalString))
+            |> List.ofSeq
             |> AsyncSeq.ofSeq
         resumeWatchlogs(handleOldEntries, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
 
@@ -355,7 +353,9 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
                 let entry = line |> LogData.map LogEntry.Parse
                 match entry.Data with
                 | null -> failwith "null LogEntry"
-                | x when x.IsValid() -> Some entry
+                | x when x.IsValid() ->
+                    logger.Debug(sprintf "Parsed valid log entry %A" x)
+                    Some entry
                 | invalid -> failwith "non-null invalid LogEntry"
             with
             | _ ->
@@ -366,9 +366,17 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
     let asyncSeqEntries =
         AsyncSeq.mergeChoice asyncSeqEntries injectedData
         |> AsyncSeq.scan (fun ticks entry ->
+            logger.Debug(sprintf "Seeing merge log entry %A" entry)
             match entry with
             | Choice1Of2 entry ->
-                Some(entry.Data.Timestamp.Ticks / 200000L, entry)
+                let ticks =
+                    if timeLessEntryTypes.Contains entry.Data.EntryType then
+                        ticks
+                        |> Option.map fst
+                        |> Option.defaultValue 0L
+                    else
+                        entry.Data.Timestamp.Ticks / 200000L
+                Some(ticks, entry)
             | Choice2Of2 data ->
                 let ticks =
                     ticks
@@ -383,6 +391,7 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
                 Some(ticks, Fresh (entry :> LogEntry))
         ) None
         |> AsyncSeq.choose (Option.map snd)
+        |> AsyncSeq.cache
 
     let wg = world.FastAccess
     let sg = state.FastAccess
