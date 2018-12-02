@@ -77,7 +77,7 @@
       <HintPath>..\packages\NUnit.3.10.1\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="ploggy">
-      <HintPath>..\packages\ploggy.1.2.0\lib\net45\ploggy.dll</HintPath>
+      <HintPath>..\packages\ploggy.1.2.2\lib\net45\ploggy.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

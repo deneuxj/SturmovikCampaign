@@ -88,7 +88,7 @@
       <HintPath>..\packages\SturmovikMission.DataProvider.4.2.0.1\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="ploggy">
-      <HintPath>..\packages\ploggy.1.2.0\lib\net45\ploggy.dll</HintPath>
+      <HintPath>..\packages\ploggy.1.2.2\lib\net45\ploggy.dll</HintPath>
     </Reference>
     <Reference Include="RConClient">
       <HintPath>..\packages\Sturmovik.RConClient.1.5.0.0\lib\net45\RConClient.dll</HintPath>
