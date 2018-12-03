@@ -827,10 +827,10 @@ let heavyMachineGunConsumption = heavyMachineGunCost / 100.0f<H>
 let lightMachineGunConsumption = lightMachineGunCost / 100.0f<H>
 
 // Number of cannons to defend tanks in tank parks
-let numCannonsPerTank = 0.25f
+let numCannonsPerTank = 0.125f
 
 // NUmber of machin guns to defend tanks in tank parks
-let numMgPerTank = 1.0f
+let numMgPerTank = 0.25f
 
 type DefenseArea with
     /// Value of guns in a fully defended region
