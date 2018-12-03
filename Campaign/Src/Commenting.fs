@@ -298,7 +298,7 @@ let mkTimeTask(config : Configuration, handlers, files) =
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
-type Commentator (config : Configuration, handlers : EventHandlers, injectedData : AsyncSeq<string>) =
+type Commentator (config : Configuration, handlers : EventHandlers, getInjectedData : Async<string option>) =
     let missionLogsDir = Path.Combine(config.ServerDataDir, "logs")
     let campaignDir = config.OutputDir
     let extraLogsName = Path.Combine(campaignDir, "extraLogs.txt")
@@ -362,6 +362,10 @@ type Commentator (config : Configuration, handlers : EventHandlers, injectedData
             | _ ->
                 logger.Error(sprintf "Failed to parse '%s'" (string line))
                 None)
+
+    let injectedData =
+        AsyncSeq.initInfiniteAsync (fun _ -> getInjectedData)
+        |> AsyncSeq.choose id
 
     // The log entries fed to the tasks
     let asyncSeqEntries =

@@ -758,19 +758,6 @@ type Plugin() =
             }
         post, take, semaphore.Dispose
 
-    let injectedData =
-        asyncSeq {
-            while true do
-                let! data = takeInjectedData()
-                match data with
-                | Some data ->
-                    logger.Debug(sprintf "Injected data taken '%s'" data)
-                    yield data
-                | None ->
-                    logger.Warn("takeInjectedData return null")
-        }
-        |> AsyncSeq.cache
-
     let onCampaignOver victors =
         match webHookClient with
         | Some hook -> onCampaignOver (queue, hook) victors
@@ -960,7 +947,7 @@ type Plugin() =
               OnHangarsUpdated = setHangars
               OnPlayerEntered = showPinToPlayer
             }
-        commenter <- Some(new Commentator(config, handlers, injectedData))
+        commenter <- Some(new Commentator(config, handlers, takeInjectedData()))
         logger.Info("Commenter set")
 
     member x.StopCommenter() =
