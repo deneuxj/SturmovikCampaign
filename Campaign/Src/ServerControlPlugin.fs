@@ -174,6 +174,8 @@ module Support =
                             with
                             | _ -> false
                         )
+                        |> AsyncSeq.pairwise
+                        |> AsyncSeq.map fst
                         |> AsyncSeq.collect (File.ReadAllLines >> AsyncSeq.ofSeq)
                         |> AsyncSeq.choose (LogEntry.Parse >> Option.ofObj)
                         |> AsyncSeq.tryFind (
