@@ -44,7 +44,7 @@ with
                 boundary
                 |> Seq.sum
             k * sum
-        let antiTankCanonSet =
+        let cannonSet =
             let numSearchLights =
                 if includeSearchLights then
                     max 1 (groupSize / 10)
@@ -72,16 +72,6 @@ with
                             yield Canon.Create(settings, AntiAirMg, random, store, boundary, yori, false, Mcu.CountryValue.Germany)
                     | _ ->
                         ()
-                // For AA, add machine-guns for protection from short-range straffing by fighters
-                let num =
-                    let k = if coalition = Mcu.CoalitionValue.Axis then numLightMachineGunsPerHeavyMachineGun else 1
-                    (groupSize / 4 |> max 1) * k
-                match specialty with
-                | AntiAirCanon ->
-                    for _ in 1..num do
-                        yield Canon.Create(settings, AntiAirMg, random, store, boundary, yori, false, country)
-                | _ ->
-                    ()
             }
             |> Seq.mapi (fun i x -> CanonInstance i, x)
             |> Map.ofSeq
@@ -101,7 +91,7 @@ with
                     let subst = Mcu.substId <| store.GetIdMapper()
                     subst mcu
                     mcu
-                for canon in antiTankCanonSet do
+                for canon in cannonSet do
                     yield newBlock canon.Value.Cannon.Pos canon.Value.Cannon.Ori
             ]
         let enemyClose =
@@ -121,7 +111,7 @@ with
             wec
         // Result
         let api = Api.Create(store, center)
-        { CanonSet = antiTankCanonSet
+        { CanonSet = cannonSet
           EnemyClose = enemyClose
           Decorations = positions
           Api = api
