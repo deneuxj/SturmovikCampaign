@@ -131,26 +131,3 @@ let resumeWatchlogs(replayQuick, path, filter, existingFiles, cancelToken) =
             yield Fresh line
     }
 
-/// <summary>
-/// A command typed in the chat by a player.
-/// </summary>
-type Command =
-    { Author : string
-      Command : string }
-
-/// <summary>
-/// Extract commands from the chat.
-/// </summary>
-/// <param name="path">Path to the directory containing the chatlogs.</param>
-let watchCommands(path, cancelToken) =
-    let cmdRe = Regex(".*\[\"(.*)\".*\]: !(.*)")
-    let lines = watchLogs(false, path, "*.chatlog", None, cancelToken)
-    let commands =
-        lines
-        |> AsyncSeq.choose (fun line ->
-            let m = cmdRe.Match(line)
-            if m.Success && (string m.Groups.[1] <> "#") then
-                Some { Author = string m.Groups.[1]; Command = string m.Groups.[2] }
-            else
-                None)
-    commands
