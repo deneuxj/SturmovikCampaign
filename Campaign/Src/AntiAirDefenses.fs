@@ -66,15 +66,26 @@ let mkAADefenses (includeSearchLights, world : World, state : WorldState) =
                         |> Option.exists (fun af ->
                             af.Spawn
                             |> Seq.exists (fun spawn -> (Vector2.FromPos(spawn) - area.Position.Pos).Length() < 2500.0f))
-                    yield {
-                        Priority = if isHighPrio then 10.0f else 1.0f
-                        Number = numUnits
-                        Boundary = area.Boundary
-                        Rotation = area.Position.Rotation
-                        Settings = if isHighPrio then CanonGenerationSettings.Strong else CanonGenerationSettings.Default
-                        Specialty = area.Role
-                        IncludeSearchLights = includeSearchLights
-                        Country = country
-                    }
+                    let nest =
+                        { Priority = if isHighPrio then 10.0f else 1.0f
+                          Number = numUnits
+                          Boundary = area.Boundary
+                          Rotation = area.Position.Rotation
+                          Settings = if isHighPrio then CanonGenerationSettings.Strong else CanonGenerationSettings.Default
+                          Specialty = area.Role
+                          IncludeSearchLights = includeSearchLights
+                          Country = country
+                        }
+                    yield nest
+                    // Add machine guns to protect from low-level attacks
+                    match area.Role with
+                    | AntiAirCanon ->
+                        yield
+                            { nest with
+                                Number = (nest.Number / 4) |> max 1
+                                IncludeSearchLights = false
+                                Specialty = AntiAirMg
+                            }
+                    | _ -> ()
         ]
     nests
