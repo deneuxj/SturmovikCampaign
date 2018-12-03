@@ -87,15 +87,14 @@ let createParkedTanks store (missionLength : float32<H>) (maxTanksInParks : int)
                     let aaDefenses =
                         let boundary = region.Parking
                         // Respawn after 20min +- 15s
-                        let settings = { CanonGenerationSettings.Default with RepairDelay = Some (1200.0, 15.0) }
                         let num = numMgPerTank * float32 parked.Length |> max 4.0f |> min 10.0f |> ((*) fill) |> int
                         { Priority = 1.0f
                           Number = num
                           Boundary = boundary
                           Rotation = 0.0f
-                          Settings = settings
+                          Settings = CanonGenerationSettings.Default
                           Specialty = AntiAirMg
-                          IncludeSearchLights = withSearchLights
+                          IncludeSearchLights = false
                           Country = coalition.ToCountry
                         }
                     yield Choice2Of2 aaDefenses
@@ -104,12 +103,11 @@ let createParkedTanks store (missionLength : float32<H>) (maxTanksInParks : int)
                     let aaDefenses =
                         let num = numCannonsPerTank * float32 parked.Length |> max 2.0f |> min 6.0f |> ((*) fill) |> int
                         let boundary = region.Parking
-                        let settings = CanonGenerationSettings.Default
                         { Priority = if num <= 5 then 1.0f else 1.0f + (float32 num - 5.0f) / 10.0f
                           Number = num
                           Boundary = boundary
                           Rotation = 0.0f
-                          Settings = settings
+                          Settings = CanonGenerationSettings.Default
                           Specialty = AntiAirCanon
                           IncludeSearchLights = withSearchLights
                           Country = coalition.ToCountry
