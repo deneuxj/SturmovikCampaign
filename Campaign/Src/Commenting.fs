@@ -395,8 +395,8 @@ type Commentator (config : Configuration, handlers : EventHandlers, getInjectedD
                 | exc -> logger.Error(sprintf "Failed to append '%s' to extraLogs.txt: '%s'" entry.OriginalString exc.Message)
                 Some(ticks, Fresh (entry :> LogEntry))
         ) None
+        |> AsyncSeq.cache
         |> AsyncSeq.choose (Option.map snd)
-//        |> AsyncSeq.cache
 
     let wg = world.FastAccess
     let sg = state.FastAccess
