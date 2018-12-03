@@ -160,10 +160,21 @@ module Support =
                         | Result.Error _ -> failwith "Unreachable"
                 }
 
-            let waitForMissionStart(cancel) =
+            let waitForMissionStart() =
                 async {
+                    let refTime = DateTime.UtcNow
+                    let missionLogs = Path.Combine(config.ServerDataDir, "logs")
                     let! startMission =
-                        watchLogs(false, Path.Combine(config.ServerDataDir, "logs"), "missionReport*.txt", None, cancel)
+                        Directory.EnumerateFilesAsync(missionLogs, "missionReport*.txt")
+                        |> AsyncSeq.map (fun filename -> Path.Combine(missionLogs, filename))
+                        |> AsyncSeq.filter (fun path ->
+                            try
+                                let lastModified = File.GetLastWriteTimeUtc(path)
+                                lastModified > refTime
+                            with
+                            | _ -> false
+                        )
+                        |> AsyncSeq.collect (File.ReadAllLines >> AsyncSeq.ofSeq)
                         |> AsyncSeq.choose (LogEntry.Parse >> Option.ofObj)
                         |> AsyncSeq.tryFind (
                             function
@@ -176,9 +187,7 @@ module Support =
             let timelyCommentatorStart() =
                 async {
                     let! result =
-                        use token = new CancellationTokenSource()
-                        token.CancelAfter(60000)
-                        Util.Async.tryTask(waitForMissionStart(token.Token))
+                        Util.Async.tryTask(waitForMissionStart())
                     match result with
                     | Error e -> logger.Warn(sprintf "Waiting for mission start failed: %s" e.Message)
                     | Ok(Some (:? MissionStartEntry as entry)) -> logger.Info(sprintf "Mission start detected: %s at %s on %s" entry.MissionFile (entry.MissionTime.ToShortTimeString()) (entry.MissionTime.ToShortDateString()))

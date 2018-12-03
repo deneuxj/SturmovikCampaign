@@ -55,44 +55,52 @@ type EventHandlers =
       OnPlayerEntered : Guid -> Async<unit>
     }
 
-let private findLogFiles(stateDate, missionLogsDir) =
-    let files =
-        let unordered = Directory.EnumerateFiles(missionLogsDir, "missionReport*.txt")
-        let r = Regex(@"(missionReport\(.*\))\[([0-9]+)\]\.txt")
-        let filtered =
-            unordered
-            |> Seq.choose(fun path ->
-                let m = r.Match(Path.GetFileName(path))
-                if not m.Success then
-                    None
+let private tryGetMissionLogBaseName(stateDate, missionLogsDir) =
+    let now = DateTime.UtcNow
+    let fileInGoodGroup =
+        Directory.EnumerateFilesAsync(missionLogsDir, "missionReport*.txt")
+        |> AsyncSeq.scan (fun state filename ->
+            let path = Path.Combine(missionLogsDir, filename)
+            match state with
+            | Choice1Of2 validGroup ->
+                let validGroup =
+                    match Regex.Match(filename, @"missionReport\(.*\)\[0\].txt") with
+                    | m when m.Success ->
+                        // First file in a group, check if it corresponds to the correct date
+                        File.ReadAllLines(path)
+                        |> Seq.choose (LogEntry.Parse >> Option.ofObj)
+                        |> Seq.exists (
+                            function
+                            | :? MissionStartEntry as start -> start.MissionTime = stateDate
+                            | _ -> false)
+                    | _ -> validGroup
+                if validGroup then
+                    let fileInfo = FileInfo(path)
+                    if fileInfo.LastWriteTimeUtc > now then
+                        Choice2Of2 filename
+                    else
+                        Choice1Of2 true
                 else
-                    Some(path, (m.Groups.[1].ToString(), System.Int32.Parse(m.Groups.[2].ToString()))))
-        let groupHasCorrectDate group =
-            let _, files = group
-            files
-            |> Seq.collect (fun (path, _) ->
-                File.ReadAllLines(path)
-                |> Seq.choose (LogEntry.Parse >> Option.ofObj))
-            |> Seq.exists (
-                function
-                | :? MissionStartEntry as start ->
-                    start.MissionTime = stateDate
-                | _ -> false)
-        let lastGroup =
-            filtered
-            |> Seq.groupBy (snd >> fst)
-            |> Seq.filter groupHasCorrectDate
-            |> Seq.tryLast
-            |> Option.map snd
-            |> Option.defaultVal Seq.empty
-        let sorted =
-            lastGroup
-            |> Seq.sortBy snd
-            |> Seq.map fst
-        sorted
-        |> Array.ofSeq
-    logger.Debug(sprintf "Found pre-existing log files: %A" files)
-    files
+                    Choice1Of2 false
+            | Choice2Of2 _ ->
+                state
+        ) (Choice1Of2 false)
+        |> AsyncSeq.tryPick (function Choice2Of2 filename -> Some filename | _ -> None)
+    async {
+        let! filename = fileInGoodGroup
+        match filename with
+        | Some filename ->
+            match Regex.Match(filename, @"(missionReport\(.*\))\[\d+\].txt") with
+            | m when m.Success ->
+                return Some m.Groups.[1].Value
+            | _ ->
+                logger.Error("Unexpected string mismatch when getting mission log basename")
+                return None
+        | None ->
+            logger.Error("Unexpected early termination of getMissionLogBaseName without finding a good mission")
+            return None
+    }
+
 
 let private updateAirfieldPlaneset(allowCapturedPlanes, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, afId, numPlanes : Map<PlaneModel, float32>) =
     // State of airfield at start of mission
@@ -129,7 +137,7 @@ let private updateAirfieldPlaneset(allowCapturedPlanes, wg : WorldFastAccess, sg
     | false, None ->
         async.Zero()
 
-let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, hangars, files) =
+let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, hangars, entries) =
     async {
         let airfields0 =
             sg.State.Airfields
@@ -137,10 +145,8 @@ let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, 
             |> Map.ofList
         let limits  = Limits.FromConfig config
         let! airfields =
-            files
-            |> Array.collect(File.ReadAllLines)
-            |> Array.choose(LogEntry.Parse >> Option.ofObj >> Option.map LogData.Fresh)
-            |> AsyncSeq.ofSeq
+            entries
+            |> AsyncSeq.takeWhile (function Old _ -> true | Fresh _ -> false)
             |> checkPlaneAvailability config.MissionLengthH limits wg.World sg.State hangars
             |> AsyncSeq.fold (fun acc ->
                 function
@@ -148,7 +154,7 @@ let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, 
                 | _ -> acc) airfields0
         for (af, planes) in Map.toSeq airfields do
             do! updateAirfieldPlaneset(config.MaxCapturedPlanes > 0, wg, sg, handlers, af, planes)
-    } |> Async.RunSynchronously
+    }
 
 let private mkBattleDamageTask (config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, asyncSeqEntries) : Async<unit> =
     let world = wg.World
@@ -260,34 +266,48 @@ let private mkHangarTask (config : Configuration, wg : WorldFastAccess, sg : Wor
         ) (true, async { return() })
     |> AsyncSeq.iterAsync snd
 
-let mkTimeTask(config : Configuration, handlers, files) =
+let mkTimeTask(config : Configuration, handlers, entries : AsyncSeq<LogData<LogEntry>>) =
+    let resolutions =
+        [ TimeSpan(0, 15, 0); TimeSpan(0, 5, 0); TimeSpan(0, 1, 0); TimeSpan(0, 0, 30); TimeSpan(0, 0, 10); TimeSpan(0, 0, 1); TimeSpan() ]
     let rec remainingTime (t : System.TimeSpan) =
         async {
             let msg =
-                [sprintf "Time left in mission: %d hours %d minutes" t.Hours t.Minutes]
+                let times =
+                    [
+                        if t.Hours > 0 then
+                            yield sprintf "%d hours" t.Hours
+                        if t.Minutes > 0 then
+                            yield sprintf "%d minutes" t.Minutes
+                        if t.Hours = 0 && t.Minutes = 0 then
+                            yield sprintf "%d seconds" t.Seconds
+                    ]
+                    |> String.concat " "
+                [ sprintf "Time left in mission: %s" times ]
             logger.Info(msg)
             do! handlers.OnMessagesToCoalition(Axis, msg)
             do! handlers.OnMessagesToCoalition(Allies, msg)
-            let quarter = System.TimeSpan(0, 15, 0)
-            if t > quarter then
-                do! Async.Sleep (int quarter.TotalMilliseconds)
-                return! remainingTime (t - quarter)
+            let resolution =
+                resolutions
+                |> List.pairwise
+                |> List.tryFind (fun (tooBig, smallEnough) -> t <= tooBig && t > smallEnough)
+                |> Option.map snd
+            match resolution with
+            | Some resolution ->
+                do! Async.Sleep (int resolution.TotalMilliseconds)
+                let timeLeft = t - resolution
+                return! remainingTime timeLeft
+            | None ->
+                return()
         }
 
     let remainingTime =
         async {
-            let timePassed =
+            let! timePassed =
                 // Get timestamp of last entry
-                files
-                |> Seq.collect (File.ReadLines)
-                |> Seq.rev
-                |> Seq.map (LogEntry.Parse)
-                |> Seq.tryPick (
-                    function
-                    | null -> None
-                    | :? VersionEntry -> None
-                    | entry -> Some entry.Timestamp)
-                |> Option.defaultValue (System.TimeSpan())
+                entries
+                |> AsyncSeq.takeWhile (function Old _ -> true | Fresh _ -> false)
+                |> AsyncSeq.fold (fun latest entry ->
+                    max entry.Data.Timestamp latest) (TimeSpan())
             let t =
                 System.TimeSpan.FromMinutes(float config.MissionLength) - timePassed
             return! remainingTime t
@@ -333,47 +353,58 @@ type Commentator (config : Configuration, handlers : EventHandlers, getInjectedD
         else
             [||]
 
-    // retrieve entries from most recent mission
-    let files = findLogFiles(state.Date, missionLogsDir)
-    let asyncSeqEntries =
-        let handleOldEntries ss =
-            ss
-            |> Array.map (LogEntry.Parse)
-            |> Array.filter (function null -> false | _ -> true)
-            |> Array.append oldArtificialEntries
-            |> Array.sortBy (fun entry -> entry.Timestamp)
-            |> Array.map (fun entry -> Old(entry.OriginalString))
-            |> AsyncSeq.ofSeq
-        resumeWatchlogs(handleOldEntries, missionLogsDir, "missionReport*.txt", files, cancelOnDispose.Token)
-
     // The log entries before live artificial entry injection
-    let asyncSeqEntries =
-        asyncSeqEntries
-        |> AsyncSeq.choose (fun line ->
-            try
-                let entry = line |> LogData.map LogEntry.Parse
-                match entry.Data with
-                | null -> failwith "null LogEntry"
-                | x when x.IsValid() ->
-                    logger.Debug(sprintf "Parsed valid log entry %A" x)
-                    Some entry
-                | invalid -> failwith "non-null invalid LogEntry"
-            with
-            | _ ->
-                logger.Error(sprintf "Failed to parse '%s'" (string line))
-                None)
+    let entries =
+        asyncSeq {
+            let! baseName = tryGetMissionLogBaseName(state.Date, missionLogsDir)
+            match baseName with
+            | Some baseName ->
+                let now = DateTime.UtcNow
+                let logFiles =
+                    watchLogs missionLogsDir baseName now
+                    |> AsyncSeq.pairwise // Return 2nd must recent file
+                    |> AsyncSeq.map fst  //
+                for file in logFiles do
+                    logger.Debug(sprintf "Parsing log file %A" file)
+                    for line in File.ReadAllLines(Path.Combine(missionLogsDir, file.Data)) do
+                        let entry =
+                            try
+                                match LogEntry.Parse line with
+                                | null -> None
+                                | x when not (x.IsValid()) -> None
+                                | x -> Some x
+                            with
+                            | exc ->
+                                logger.Error(sprintf "Failed to parse '%s': '%s'" line exc.Message)
+                                None
+                        match entry, file with
+                        | Some entry, Old _ -> yield Old entry
+                        | Some entry, Fresh _ -> yield Fresh entry
+                        | None, _ -> ()
+            | None ->
+                logger.Error("Commenter not started")
+        }
+        |> AsyncSeq.cache
 
     let injectedData =
-        AsyncSeq.initInfiniteAsync (fun _ -> getInjectedData)
-        |> AsyncSeq.choose id
+        let liveEntries =
+            AsyncSeq.initInfiniteAsync (fun _ -> getInjectedData)
+            |> AsyncSeq.choose (Option.bind (LogEntry.Parse >> Option.ofObj))
+            |> AsyncSeq.map Fresh
 
-    // The log entries fed to the tasks
-    let asyncSeqEntries =
-        AsyncSeq.mergeChoice asyncSeqEntries injectedData
+        let oldEntries =
+            oldArtificialEntries
+            |> Array.map Old
+            |> AsyncSeq.ofSeq
+
+        AsyncSeq.append oldEntries liveEntries
+
+    let mergedEntries =
+        AsyncSeq.mergeChoice entries injectedData
         |> AsyncSeq.scan (fun ticks entry ->
             logger.Debug(sprintf "Seeing merge log entry %A" entry)
             match entry with
-            | Choice1Of2 entry ->
+            | Choice1Of2 entry | Choice2Of2 ((Old _) as entry) ->
                 let ticks =
                     if timeLessEntryTypes.Contains entry.Data.EntryType then
                         ticks
@@ -382,43 +413,43 @@ type Commentator (config : Configuration, handlers : EventHandlers, getInjectedD
                     else
                         entry.Data.Timestamp.Ticks / 200000L
                 Some(ticks, entry)
-            | Choice2Of2 data ->
+            | Choice2Of2 (Fresh entry) ->
                 let ticks =
                     ticks
                     |> Option.map fst
                     |> Option.defaultValue 0L
-                let entry = ArtificialEntry(ticks, data)
                 // Append the new artificial entry to the log, so that it's handled again if the commenter is interrupted and restarted while the mission runs.
                 try
                     File.AppendAllLines(extraLogsName, [entry.OriginalString])
                 with
                 | exc -> logger.Error(sprintf "Failed to append '%s' to extraLogs.txt: '%s'" entry.OriginalString exc.Message)
-                Some(ticks, Fresh (entry :> LogEntry))
+                Some(ticks, Fresh entry)
         ) None
-        |> AsyncSeq.cache
         |> AsyncSeq.choose (Option.map snd)
 
     let wg = world.FastAccess
     let sg = state.FastAccess
 
     do
-        let battleLimitsTask = mkBattleDamageTask (config, wg, sg, handlers, asyncSeqEntries)
+        let battleLimitsTask = mkBattleDamageTask (config, wg, sg, handlers, entries)
 
         let disciplineTask =
-            asyncSeqEntries
+            entries
             |> disciplinePlayers config world state
             |> AsyncSeq.iterAsync (fun penalty -> handlers.OnPlayerPunished penalty)
 
-        initAirfieldPlanesets(config, wg, sg, handlers, hangars, files)
+        let hangarTask = mkHangarTask (config, wg, sg, hangars, handlers, mergedEntries)
 
-        let hangarTask = mkHangarTask (config, wg, sg, hangars, handlers, asyncSeqEntries)
+        let remainingTime = mkTimeTask(config, handlers, entries)
 
-        let remainingTime = mkTimeTask(config, handlers, files)
-
-//        Async.Start(Async.catchLog "battle limits notifier" battleLimitsTask, cancelOnDispose.Token)
-//        Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
-        Async.Start(Async.catchLog "plane availability checker" hangarTask, cancelOnDispose.Token)
-        Async.Start(Async.catchLog "remaining time notifier" remainingTime, cancelOnDispose.Token)
+        async {
+            do! initAirfieldPlanesets(config, wg, sg, handlers, hangars, entries)
+            Async.Start(Async.catchLog "battle limits notifier" battleLimitsTask, cancelOnDispose.Token)
+            Async.Start(Async.catchLog "abuse detector" disciplineTask, cancelOnDispose.Token)
+            Async.Start(Async.catchLog "plane availability checker" hangarTask, cancelOnDispose.Token)
+            Async.Start(Async.catchLog "remaining time notifier" remainingTime, cancelOnDispose.Token)
+        }
+        |> Async.Start
 
     member this.Dispose() =
         logger.Info("Commentator disposed")
