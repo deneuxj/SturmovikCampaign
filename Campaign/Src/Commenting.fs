@@ -268,7 +268,7 @@ let private mkHangarTask (config : Configuration, wg : WorldFastAccess, sg : Wor
 
 let mkTimeTask(config : Configuration, handlers, entries : AsyncSeq<LogData<LogEntry>>) =
     let resolutions =
-        [ TimeSpan(0, 15, 0); TimeSpan(0, 5, 0); TimeSpan(0, 1, 0); TimeSpan(0, 0, 30); TimeSpan(0, 0, 10); TimeSpan(0, 0, 1); TimeSpan() ]
+        [ TimeSpan(0, 15, 0); TimeSpan(0, 5, 0); TimeSpan(0, 1, 0); TimeSpan(0, 0, 30); TimeSpan(0, 0, 10); TimeSpan(0, 0, 1); ]
     let rec remainingTime (t : System.TimeSpan) =
         async {
             let msg =
@@ -288,9 +288,7 @@ let mkTimeTask(config : Configuration, handlers, entries : AsyncSeq<LogData<LogE
             do! handlers.OnMessagesToCoalition(Allies, msg)
             let resolution =
                 resolutions
-                |> List.pairwise
-                |> List.tryFind (fun (tooBig, smallEnough) -> t <= tooBig && t > smallEnough)
-                |> Option.map snd
+                |> List.tryFind (fun res -> t > res)
             match resolution with
             | Some resolution ->
                 do! Async.Sleep (int resolution.TotalMilliseconds)
