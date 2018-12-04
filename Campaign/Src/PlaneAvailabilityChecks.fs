@@ -989,8 +989,10 @@ with
 
     // Check in what's left of the plane, award reward
     member this.HandleMissionEnd(context : Context, af : AirfieldId option, bombs : int option) =
-        match af, this.Health with
-        | Some af, health when health > 0.0f ->
+        match this.State, af, this.Health with
+        | Spawned(Denied _ ), _, _ ->
+            { this with State = MissionEnded }, []
+        | Landed _, Some af, health when health > 0.0f ->
             let suppliesTransfered =
                 match bombs with
                 | Some bombs when bombs = this.NumBombs -> this.InitialBombs
@@ -1025,8 +1027,13 @@ with
         assert(this.State <> MissionEnded)
         { this with State = MissionEnded },
         [
-            if this.Health >= 1.0f then
+            match this.State with
+            | Spawned(Denied _) ->
+                ()
+            | _ when this.Health >= 1.0f ->
                 yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, 1.0f, this.IsBorrowed, this.StartAirfield)
+            | _ ->
+                ()
         ]
 
     // Player ended mission before taking off, cancel mission
