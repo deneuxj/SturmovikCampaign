@@ -225,16 +225,10 @@ module Map =
 
     /// Return the remaining elements in an enumerator as a seq
     let unroll (it : IEnumerator<'T>) =
-        let rec loop() =
-            seq {
-                match it.MoveNext2() with
-                | Some x ->
-                    yield x
-                    yield! loop()
-                | None ->
-                    ()
-            }
-        loop()
+        seq {
+            while it.MoveNext() do
+                yield it.Current
+        }
 
     /// Merge operation similar to the one used in merge sort, but allows the two sequences to be of different types.
     let mergeOrdered keyA keyB (seqA : 'T1 seq) (seqB : 'T2 seq) =

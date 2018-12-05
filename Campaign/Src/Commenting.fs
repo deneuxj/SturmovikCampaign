@@ -313,6 +313,58 @@ let mkTimeTask(config : Configuration, handlers, entries : AsyncSeq<LogData<LogE
 
     remainingTime
 
+let injectOldAndFresh entries oldArtificialEntries getInjectedData storeInjectedData =
+        let mergedOldEntries =
+            let oldRegularEntries =
+                entries
+                |> AsyncSeq.takeWhile (function Old _ -> true | Fresh _ -> false)
+                |> AsyncSeq.map (fun x -> x.Data)
+                |> AsyncSeq.toBlockingSeq
+            let getTimestamp (ev : LogEntry) = ev.Timestamp
+            Seq.mergeOrdered getTimestamp getTimestamp oldRegularEntries oldArtificialEntries
+            |> Seq.map (function Choice1Of2 x | Choice2Of2 x -> Old x)
+            |> AsyncSeq.ofSeq
+
+        let freshEntries : AsyncSeq<LogEntry> =
+            entries
+            |> AsyncSeq.skipWhile (function Old _ -> true | _ -> false)
+            |> AsyncSeq.map (fun x -> x.Data)
+
+        let injectedData =
+            AsyncSeq.initInfiniteAsync (fun _ -> getInjectedData())
+            |> AsyncSeq.choose (Option.map (fun data -> ArtificialEntry(0L, data)))
+
+        let mergedFreshEntries =
+            AsyncSeq.mergeChoice freshEntries injectedData
+            |> AsyncSeq.scan (fun ticks entry ->
+                logger.Debug(sprintf "Seeing merge log entry %A" entry)
+                match entry with
+                | Choice1Of2 entry ->
+                    let ticks =
+                        if timeLessEntryTypes.Contains entry.EntryType then
+                            ticks
+                            |> Option.map fst
+                            |> Option.defaultValue 0L
+                        else
+                            entry.Timestamp.Ticks / 200000L
+                    Some(ticks, Fresh entry)
+                | Choice2Of2 entry ->
+                    let ticks =
+                        ticks
+                        |> Option.map fst
+                        |> Option.defaultValue 0L
+                    let entry = ArtificialEntry(ticks, entry.Data)
+                    // Append the new artificial entry to the log, so that it's handled again if the commenter is interrupted and restarted while the mission runs.
+                    try
+                        storeInjectedData entry
+                    with
+                    | exc -> logger.Error(sprintf "Failed to append '%s' to extraLogs.txt: '%s'" entry.OriginalString exc.Message)
+                    Some(ticks, Fresh (entry :> LogEntry))
+            ) None
+            |> AsyncSeq.choose (Option.map snd)
+
+        AsyncSeq.append mergedOldEntries mergedFreshEntries
+
 /// <summary>
 /// Watch the log directory, and report new events as they appear in the log files
 /// </summary>
@@ -337,19 +389,6 @@ type Commentator (config : Configuration, handlers : EventHandlers, getInjectedD
 
     // Stop notifications when we are disposed
     let cancelOnDispose = new System.Threading.CancellationTokenSource()
-
-    // The artificial log entries produced earlier in the mission
-    let oldArtificialEntries =
-        if File.Exists(extraLogsName) then
-            File.ReadAllLines(extraLogsName)
-            |> Seq.map (LogEntry.Parse)
-            |> Seq.filter (function
-                | null -> false
-                | x when not (x.IsValid()) -> false
-                | _ -> true)
-            |> Array.ofSeq
-        else
-            [||]
 
     // The log entries before live artificial entry injection
     let entries =
@@ -384,46 +423,23 @@ type Commentator (config : Configuration, handlers : EventHandlers, getInjectedD
         }
         |> AsyncSeq.cache
 
-    let injectedData =
-        let liveEntries =
-            AsyncSeq.initInfiniteAsync (fun _ -> getInjectedData)
-            |> AsyncSeq.choose (Option.bind (LogEntry.Parse >> Option.ofObj))
-            |> AsyncSeq.map Fresh
+    let mergedEntries = 
+        let oldArtificialEntries =
+            if File.Exists(extraLogsName) then
+                File.ReadAllLines(extraLogsName)
+                |> Seq.map (LogEntry.Parse)
+                |> Seq.filter (function
+                    | null -> false
+                    | x when not (x.IsValid()) -> false
+                    | _ -> true)
+                |> Array.ofSeq
+            else
+                [||]
 
-        let oldEntries =
-            oldArtificialEntries
-            |> Array.map Old
-            |> AsyncSeq.ofSeq
+        let store (entry : ArtificialEntry) =
+            File.AppendAllLines(extraLogsName, [entry.OriginalString])
 
-        AsyncSeq.append oldEntries liveEntries
-
-    let mergedEntries =
-        AsyncSeq.mergeChoice entries injectedData
-        |> AsyncSeq.scan (fun ticks entry ->
-            logger.Debug(sprintf "Seeing merge log entry %A" entry)
-            match entry with
-            | Choice1Of2 entry | Choice2Of2 ((Old _) as entry) ->
-                let ticks =
-                    if timeLessEntryTypes.Contains entry.Data.EntryType then
-                        ticks
-                        |> Option.map fst
-                        |> Option.defaultValue 0L
-                    else
-                        entry.Data.Timestamp.Ticks / 200000L
-                Some(ticks, entry)
-            | Choice2Of2 (Fresh entry) ->
-                let ticks =
-                    ticks
-                    |> Option.map fst
-                    |> Option.defaultValue 0L
-                // Append the new artificial entry to the log, so that it's handled again if the commenter is interrupted and restarted while the mission runs.
-                try
-                    File.AppendAllLines(extraLogsName, [entry.OriginalString])
-                with
-                | exc -> logger.Error(sprintf "Failed to append '%s' to extraLogs.txt: '%s'" entry.OriginalString exc.Message)
-                Some(ticks, Fresh entry)
-        ) None
-        |> AsyncSeq.choose (Option.map snd)
+        injectOldAndFresh entries oldArtificialEntries (fun () -> getInjectedData) store
 
     let wg = world.FastAccess
     let sg = state.FastAccess
