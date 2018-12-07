@@ -2692,4 +2692,48 @@ MCU_TR_Entity
 }
 
 
+
+MCU_ModifierAddVal
+{
+  Index = 124;
+  Name = "Modifier Add Value";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 25157.335;
+  YPos = 149.887;
+  ZPos = 28938.326;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  ParamIndex = 15;
+  Data0 = 15;
+  Data1 = 0;
+  Data2 = 0;
+  Data3 = 0;
+}
+
+
+
+MCU_ModifierSetVal
+{
+  Index = 125;
+  Name = "Modifier Set Value";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 24678.291;
+  YPos = 149.887;
+  ZPos = 28822.428;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  ParamIndex = 15;
+  Data0 = 15;
+  Data1 = 0;
+  Data2 = 0;
+  Data3 = 0;
+}
+
+
 # end of file

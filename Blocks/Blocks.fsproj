@@ -89,7 +89,6 @@
     <Compile Include="Battlefield.fs" />
     <Compile Include="LandingTee.fs" />
     <Compile Include="Spotter.fs" />
-    <None Include="App.config" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -107,7 +106,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">
-      <HintPath>..\packages\SturmovikMission.DataProvider.4.2.0.1\lib\net45\DataProvider.dll</HintPath>
+      <HintPath>..\packages\SturmovikMission.DataProvider.4.3.1\lib\net45\DataProvider.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.3.4\lib\net45\FSharp.Core.dll</HintPath>
@@ -115,7 +114,7 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="mscorlib" />
     <Reference Include="NLog">
-      <HintPath>..\packages\SturmovikMission.DataProvider.4.2.0.1\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\packages\NLog.4.5.11\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
