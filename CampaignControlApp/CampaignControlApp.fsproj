@@ -9,11 +9,12 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>CampaignControlApp</RootNamespace>
     <AssemblyName>CampaignControlApp</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <UseStandardResourceNames>true</UseStandardResourceNames>
     <TargetFSharpCoreVersion>4.4.1.0</TargetFSharpCoreVersion>
     <Name>CampaignControlApp</Name>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -61,7 +62,6 @@
     <Compile Include="ApiImpl.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
-    <Content Include="packages.config" />
     <None Include="SampleSds.sds">
       <Link>SampleSds.sds</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -69,6 +69,7 @@
     <Content Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="packages.config" />
     <None Include="NLog.xsd" />
     <None Include="Sample.Mission" />
   </ItemGroup>
