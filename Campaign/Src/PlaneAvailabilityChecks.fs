@@ -696,15 +696,14 @@ with
                 }
             let cost =
                 let hangar = context.GetHangar(user, coalition)
-                if context.IsSpawnRestricted(af, plane, coalition) then
-                    if hangar.HasReservedPlane(af, plane) then
-                        Free
+                if hangar.HasReservedPlane(af, plane) then
+                    Free
+                elif context.IsSpawnRestricted(af, plane, coalition) then
+                    let price = context.GetPlanePrice(af, plane)
+                    if price = 0.0f<E> || price <= hangar.Reserve then
+                        Rent price
                     else
-                        let price = context.GetPlanePrice(af, plane)
-                        if price = 0.0f<E> || price <= hangar.Reserve then
-                            Rent price
-                        else
-                            Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
+                        Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
                 elif context.RearAirfields.Contains(af) then
                     let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0.0f
                     let rearValueFactor = context.GetRearValueFactor(plane)
