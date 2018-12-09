@@ -524,7 +524,9 @@ module Support =
                 logger.Error(sprintf "%s surrendered immediately after reset because '%s'" (string side) reason)
                 return ScheduledTask.NoTask
             | _ ->
-                loadWorldThenDo (support, config) notifications.UpdateMap
+                loadWorldThenDo (support, config) (fun (world, state) ->
+                    notifications.UpdateMap(world, state)
+                    notifications.AnnounceWorldState(world, state))
                 // Start campaign
                 return start(support, config, Some GenerateMission, postMessage, notifications)
         }
