@@ -154,7 +154,7 @@ module PlayChess =
             with
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
         seq {
-            let board, neighboursOf = BoardState.Create(world, state, false, 1.0f<H>)
+            let board, neighboursOf = BoardState.Create(world, state)
             yield "Initially"
             yield board.DisplayString
             yield sprintf "%f" board.Score.Value
@@ -245,7 +245,7 @@ module OrderDecision =
                 Continue []
             else
                 let dt = 1.0f<H> * float32 config.MissionLength / 60.0f
-                decideColumnMovements dt config.LongWorkDay world state config.ThinkTime
+                decideColumnMovements world state config.ThinkTime
         match columnOrders with
         | Continue columnOrders ->
             let axisColumns =

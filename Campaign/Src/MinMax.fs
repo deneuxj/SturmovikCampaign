@@ -96,7 +96,7 @@ type BoardState =
       AlliesRearRegion : int
     }
 with
-    static member Create(world : World, state : WorldState, longDay, dt) =
+    static member Create(world : World, state : WorldState) =
         let attackers = state.AttackingSide
         let owners =
             state.Regions
