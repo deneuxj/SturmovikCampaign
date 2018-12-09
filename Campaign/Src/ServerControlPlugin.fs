@@ -580,12 +580,13 @@ module Support =
                     match sg.GetRegion(af.Region).Owner with
                     | Some coalition ->
                         let numPlanes = afState.NumPlanes |> Map.toSeq |> Seq.sumBy snd
+                        let capacity = afState.StorageCapacity(af, world.SubBlockSpecs) / bombCost
                         yield {
                             Position = af.Pos
                             Icon = MapGraphics.Airfield
                             Color = if coalition = Axis then MapGraphics.Gray else MapGraphics.Red
                             Label = None
-                            Description = Some (sprintf "%1.0f Kg %d planes" (afState.Supplies / bombCost) (int numPlanes))
+                            Description = Some (sprintf "%1.0f/%1.0f Kg %d planes" (afState.Supplies / bombCost) capacity (int numPlanes))
                             Depth = 0.0f
                         }
                     | None ->
