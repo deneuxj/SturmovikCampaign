@@ -424,7 +424,7 @@ with
         | SpitfireMkIXe -> "spitfireMkIXe"
 
     /// <summary>
-    /// Substring of the TYPE: field in the mission log
+    /// Substring of the TYPE: field in the mission log, in lower case
     /// </summary>
     member this.MissionLogName =
         match this with
@@ -458,7 +458,7 @@ with
         | Mig3 -> "mig-3"
         | P39 -> "p-39"
         | P40 -> "p-40"
-        | P47 -> "p-47"
+        | P47 -> "p-47d-28"
         | A20 -> "a-20"
         | Pe2s35 -> "pe-2 ser.35"
         | Pe2s87 -> "pe-2 ser.87"
