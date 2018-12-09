@@ -97,16 +97,7 @@ type BoardState =
     }
 with
     static member Create(world : World, state : WorldState, longDay, dt) =
-        let attackers =
-            let missionStarts =
-                Seq.unfold (fun (current : System.DateTime) ->
-                    let nextTime = nextDate longDay dt current
-                    Some (current, nextTime)
-                ) world.StartDate
-            let turnNr =
-                missionStarts
-                |> Seq.findIndex (fun time -> time >= state.Date)
-            if turnNr % 2 = 0 then Axis else Allies
+        let attackers = state.AttackingSide
         let owners =
             state.Regions
             |> List.map (fun region -> region.Owner)
