@@ -168,7 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">
-      <HintPath>..\packages\SturmovikMission.DataProvider.5.0.0\lib\net45\DataProvider.dll</HintPath>
+      <HintPath>..\packages\SturmovikMission.DataProvider.5.1.0\lib\net45\DataProvider.dll</HintPath>
     </Reference>
     <Reference Include="Fastenshtein">
       <HintPath>..\packages\Fastenshtein.1.0.0.5\lib\net40-client\Fastenshtein.dll</HintPath>
@@ -186,7 +186,7 @@
       <HintPath>..\packages\FsPickler.4.6\lib\net45\FsPickler.dll</HintPath>
     </Reference>
     <Reference Include="McuLibrary">
-      <HintPath>..\packages\SturmovikMission.DataProvider.5.0.0\lib\net45\McuLibrary.dll</HintPath>
+      <HintPath>..\packages\SturmovikMission.DataProvider.5.1.0\lib\net45\McuLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="mscorlib" />

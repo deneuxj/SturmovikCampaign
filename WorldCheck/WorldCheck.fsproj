@@ -68,13 +68,13 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">
-      <HintPath>..\packages\SturmovikMission.DataProvider.5.0.0\lib\net45\DataProvider.dll</HintPath>
+      <HintPath>..\packages\SturmovikMission.DataProvider.5.1.0\lib\net45\DataProvider.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.3.4\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="McuLibrary">
-      <HintPath>..\packages\SturmovikMission.DataProvider.5.0.0\lib\net45\McuLibrary.dll</HintPath>
+      <HintPath>..\packages\SturmovikMission.DataProvider.5.1.0\lib\net45\McuLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="mscorlib" />
