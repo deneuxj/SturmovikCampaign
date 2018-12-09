@@ -274,12 +274,17 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                         if rearAirfields.Contains(airfield.AirfieldId) || sg.GetRegion(airfield.Region).HasInvaders then
                             shortName.ToUpper()
                         else
-                            sprintf "%s (R)" shortName
+                            sprintf "%s RESTRICTED" shortName
                     else
                         airfield.AirfieldId.AirfieldName
-                let capacity = state.StorageCapacity(airfield, world.SubBlockSpecs) / bombCost / 1000.0f<K>
-                let amount = state.Supplies / bombCost / 1000.0f<K>
-                let afName = sprintf "%s (%1.1f / %1.1f T)" afName amount capacity
+                let amountSpec =
+                    let capacity = state.StorageCapacity(airfield, world.SubBlockSpecs) / bombCost / 1000.0f<K>
+                    let amount = state.Supplies / bombCost / 1000.0f<K>
+                    if amount >= capacity * 0.9f then
+                        sprintf "(%1.1f T)" amount
+                    else
+                        sprintf "(%1.1f/%1.1f T)" amount capacity
+                let afName = sprintf "%s %s" afName amountSpec
                 let af = af.SetPlanes(planes).SetIndex(T.Integer 1).SetLinkTrId(T.Integer 2).SetName(T.String afName)
                 let entity = newEntity 2
                 entity.MisObjID <- 1
