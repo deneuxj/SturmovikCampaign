@@ -6,7 +6,7 @@ Options
   LCDesc = 1;
   LCAuthor = 2;
   PlayerConfig = "";
-  Time = 7:30:0;
+  Time = 8:30:0;
   Date = 19.11.1942;
   HMap = "graphics\landscape\height.hini";
   Textures = "graphics\landscape\textures.tini";
@@ -3878,6 +3878,196 @@ Plane
   DamageThreshold = 1;
   PayloadId = 4;
   WMMask = 101;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bf109g14";
+  Index = 117;
+  LinkTrId = 0;
+  XPos = 28874.353;
+  YPos = 110.134;
+  ZPos = 19974.244;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 13.70;
+  Script = "LuaScripts\WorldObjects\Planes\bf109g14.txt";
+  Model = "graphics\planes\bf109g14\bf109g14.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bf109k4";
+  Index = 118;
+  LinkTrId = 0;
+  XPos = 28874.240;
+  YPos = 110.144;
+  ZPos = 19991.594;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.45;
+  Script = "LuaScripts\WorldObjects\Planes\bf109k4.txt";
+  Model = "graphics\planes\bf109k4\bf109k4.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fw190a8";
+  Index = 119;
+  LinkTrId = 0;
+  XPos = 28873.945;
+  YPos = 110.354;
+  ZPos = 20009.312;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.20;
+  Script = "LuaScripts\WorldObjects\Planes\fw190a8.txt";
+  Model = "graphics\planes\fw190a8\fw190a8.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "p47d28";
+  Index = 120;
+  LinkTrId = 0;
+  XPos = 28849.869;
+  YPos = 110.234;
+  ZPos = 19974.063;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.80;
+  Script = "LuaScripts\WorldObjects\Planes\p47d28.txt";
+  Model = "graphics\planes\p47d28\p47d28.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "spitfiremkixe";
+  Index = 121;
+  LinkTrId = 0;
+  XPos = 28851.198;
+  YPos = 110.264;
+  ZPos = 19992.667;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.30;
+  Script = "LuaScripts\WorldObjects\Planes\spitfiremkixe.txt";
+  Model = "graphics\planes\spitfiremkixe\spitfiremkixe.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
   AiRTBDecision = 0;
   DeleteAfterDeath = 1;
   Spotter = -1;

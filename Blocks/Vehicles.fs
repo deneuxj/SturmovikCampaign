@@ -719,4 +719,34 @@ type VehicleDataTypeStore() =
     member this.MkShip() =
         ships.[T.Vehicles.CargoShip].CreateMcu() :?> Mcu.HasEntity
 
+    member this.bf109g14 =
+        let fighter = planes.[T.Vehicles.bf109g14]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.bf109k4 =
+        let fighter = planes.[T.Vehicles.bf109k4]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.fw190a8 =
+        let fighter = planes.[T.Vehicles.fw190a8]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.p47d28 =
+        let fighter = planes.[T.Vehicles.p47d28]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.spitfiremkixe =
+        let fighter = planes.[T.Vehicles.spitfiremkixe]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
 let vehicles = VehicleDataTypeStore()

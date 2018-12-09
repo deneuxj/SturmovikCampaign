@@ -74,8 +74,11 @@ type PlaneModel =
     | Bf109g2
     | Bf109g4
     | Bf109g6
+    | Bf109g14
+    | Bf109k4
     | Fw190a3
     | Fw190a5
+    | Fw190a8
     | Mc202
     | Bf110e
     | Bf110g
@@ -88,6 +91,7 @@ type PlaneModel =
     | Mig3
     | P39
     | P40
+    | P47
     | Yak1s69
     | Yak1s127
     | Yak7bs36
@@ -95,6 +99,7 @@ type PlaneModel =
     | La5fns2
     | Lagg3s29
     | SpitfireMkVb
+    | SpitfireMkIXe
     | Pe2s35
     | Pe2s87
     | Ju87
@@ -112,7 +117,11 @@ with
         | Bf109g2 -> Vehicles.vehicles.GermanFighter5
         | Fw190a3 -> Vehicles.vehicles.GermanFighter6
         | Fw190a5 -> Vehicles.vehicles.GermanFighter7
+        | Fw190a8 -> Vehicles.vehicles.fw190a8
         | Bf109g4 -> Vehicles.vehicles.GermanFighter8
+        | Bf109g6 -> Vehicles.vehicles.GermanFighter9
+        | Bf109g14 -> Vehicles.vehicles.bf109g14
+        | Bf109k4 -> Vehicles.vehicles.bf109k4
         | Bf110e -> Vehicles.vehicles.GermanAttacker1
         | Bf110g -> Vehicles.vehicles.GermanAttacker3
         | Ju88a4 -> Vehicles.vehicles.GermanBomber1
@@ -122,21 +131,22 @@ with
         | IL2M42 -> Vehicles.vehicles.RussianAttacker2
         | IL2M43 -> Vehicles.vehicles.RussianAttacker3
         | Mig3 -> Vehicles.vehicles.RussianFighter2
+        | P39 -> Vehicles.vehicles.RussianFighter10
         | P40 -> Vehicles.vehicles.RussianFighter3
+        | P47 -> Vehicles.vehicles.p47d28
         | Yak1s69 -> Vehicles.vehicles.RussianFighter4
         | Yak1s127 -> Vehicles.vehicles.RussianFighter7
         | La5 -> Vehicles.vehicles.RussianFighter6
         | Lagg3s29 -> Vehicles.vehicles.RussianFighter5
         | SpitfireMkVb -> Vehicles.vehicles.RussianFighter8
+        | SpitfireMkIXe -> Vehicles.vehicles.spitfiremkixe
         | Pe2s35 -> Vehicles.vehicles.RussianBomber1
         | Pe2s87 -> Vehicles.vehicles.RussianBomber2
         | Ju87 -> Vehicles.vehicles.GermanAttacker2
         | He111h6 -> Vehicles.vehicles.GermanBomber2
         | He111h16 -> Vehicles.vehicles.GermanBomber3
         | Hs129b2 -> Vehicles.vehicles.GermanAttacker4
-        | Bf109g6 -> Vehicles.vehicles.GermanFighter9
         | La5fns2 -> Vehicles.vehicles.RussianFighter9
-        | P39 -> Vehicles.vehicles.RussianFighter10
         | Yak7bs36 -> Vehicles.vehicles.RussianFighter11
         | A20 -> Vehicles.vehicles.RussianBomber3
 
@@ -150,6 +160,7 @@ with
         | Fw190a3
         | Fw190a5
         | Bf109f2 -> (5.0f / 3.0f) * basePlaneCost
+        | Bf109g14 | Bf109k4 | Fw190a8 -> 2.0f * basePlaneCost
         | Mc202 -> 1.33f * basePlaneCost
         | Ju87 -> 2.0f * basePlaneCost
         | Hs129b2
@@ -176,6 +187,7 @@ with
         | A20
         | Pe2s87
         | Pe2s35 -> (7.5f / 3.0f) * basePlaneCost
+        | P47 | SpitfireMkIXe -> 2.0f * basePlaneCost
 
     member this.BombCapacity =
         match this with
@@ -185,8 +197,11 @@ with
         | Bf109g2
         | Bf109g4
         | Bf109g6
+        | Bf109g14
+        | Bf109k4
         | Fw190a3
         | Fw190a5
+        | Fw190a8
         | Mc202 -> 500.0f<K>
         | Bf110g
         | Bf110e -> 1250.0f<K>
@@ -209,10 +224,12 @@ with
         | IL2M41 -> 600.0f<K>
         | Mig3 -> 200.0f<K>
         | P39
-        | P40 -> 500.0f<K>
+        | P40
+        | P47 -> 500.0f<K>
         | A20 -> 1800.0f<K>
         | Pe2s87
         | Pe2s35 -> 1000.0f<K>
+        | SpitfireMkIXe -> 500.0f<K>
 
     /// The mod mask and payload ID suitable for ground attack
     member this.AttackPayload =
@@ -288,8 +305,11 @@ with
         | Bf109g2
         | Bf109g4
         | Bf109g6
+        | Bf109g14
+        | Bf109k4
         | Fw190a3
         | Fw190a5
+        | Fw190a8
         | Mc202
         | Bf110e
         | Bf110g
@@ -311,8 +331,10 @@ with
         | Yak7bs36
         | Lagg3s29
         | SpitfireMkVb
+        | SpitfireMkIXe
         | P39
         | P40
+        | P47
         | A20
         | Pe2s87
         | Pe2s35 -> Allies
@@ -325,11 +347,15 @@ with
         | Bf109g2
         | Bf109g4
         | Bf109g6
+        | Bf109g14
+        | Bf109k4
         | Fw190a3
         | Fw190a5
+        | Fw190a8
         | Mc202
         | I16
         | P40
+        | P47
         | La5
         | La5fns2
         | Yak1s69
@@ -337,6 +363,7 @@ with
         | Yak7bs36
         | Lagg3s29
         | SpitfireMkVb
+        | SpitfireMkIXe
         | P39
         | Mig3 -> Fighter
         | Hs129b2
@@ -362,8 +389,11 @@ with
         | Bf109g2 -> "bf109g2"
         | Bf109g4 -> "bf109g4"
         | Bf109g6 -> "bf109g6"
+        | Bf109g14 -> "bf109g14"
+        | Bf109k4 -> "bf109k4"
         | Fw190a3 -> "fw190a3"
         | Fw190a5 -> "fw190a5"
+        | Fw190a8 -> "fw190a8"
         | Mc202 -> "mc202"
         | Bf110e -> "bf110e"
         | Bf110g -> "bf110g"
@@ -383,6 +413,7 @@ with
         | Mig3 -> "mig3"
         | P39 -> "p39"
         | P40 -> "p40"
+        | P47 -> "p47"
         | A20 -> "a20"
         | Pe2s35 -> "pe2s35"
         | Pe2s87 -> "pe2s87"
@@ -390,6 +421,7 @@ with
         | Yak1s127 -> "yak1s127"
         | Yak7bs36 -> "yak7bs36"
         | SpitfireMkVb -> "spitfireMkVb"
+        | SpitfireMkIXe -> "spitfireMkIXe"
 
     /// <summary>
     /// Substring of the TYPE: field in the mission log
@@ -402,8 +434,11 @@ with
         | Bf109g2 -> "bf 109 g-2"
         | Bf109g4 -> "bf 109 g-4"
         | Bf109g6 -> "bf 109 g-6"
+        | Bf109g14 -> "bf 109 g-14"
+        | Bf109k4 -> "bf 109 k-4"
         | Fw190a3 -> "fw 190 a-3"
         | Fw190a5 -> "fw 190 a-5"
+        | Fw190a8 -> "fw 190 a-8"
         | Mc202 -> "mc.202"
         | Bf110e -> "bf 110 e"
         | Bf110g -> "bf 110 g"
@@ -423,6 +458,7 @@ with
         | Mig3 -> "mig-3"
         | P39 -> "p-39"
         | P40 -> "p-40"
+        | P47 -> "p-47"
         | A20 -> "a-20"
         | Pe2s35 -> "pe-2 ser.35"
         | Pe2s87 -> "pe-2 ser.87"
@@ -430,11 +466,14 @@ with
         | Yak1s127 -> "yak-1b ser.127"
         | Yak7bs36 -> "yak-7b ser.36"
         | SpitfireMkVb -> "spitfire mk.vb"
+        | SpitfireMkIXe -> "spitfire mk.ixe"
+
 
     member this.BombLoads =
         match this with
         | Bf109e7 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
         | Bf109f2 -> xTimes [1; 4] [(0, 200.0f<K>); (1, 250.0f<K>)]
+        | Bf109g14 | Bf109k4 | Fw190a8 | P47 | SpitfireMkIXe -> [] // UNKNOWN
         | Mc202 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | Fw190a3 -> [(1, 200.0f<K>); (2, 250.0f<K>); (3, 500.0f<K>)]
         | Fw190a5 -> [(1, 200.0f<K>); (2, 250.0f<K>); (3, 500.0f<K>); (6, 200.0f<K>); (7, 400.0f<K>); (8, 450.0f<K>); (9, 700.0f<K>)]
@@ -549,6 +588,7 @@ with
         | He111h16 -> 19
         | Ju88a4 -> 12
         | Ju52 -> 3
+        | Bf109g14 | Bf109k4 | Fw190a8 | P47 | SpitfireMkIXe -> 0 // UNKNOWN
 
     member this.Roles =
         match this with
@@ -557,9 +597,12 @@ with
         | Bf109f4
         | Bf109g2
         | Bf109g4 
-        | Bf109g6 -> [ GroundAttacker; Interceptor ; Patroller ]
+        | Bf109g6
+        | Bf109g14
+        | Bf109k4 -> [ GroundAttacker; Interceptor ; Patroller ]
         | Fw190a3
-        | Fw190a5 -> [ GroundAttacker; Interceptor ]
+        | Fw190a5
+        | Fw190a8 -> [ GroundAttacker; Interceptor ]
         | Mc202 -> [ Patroller ]
         | Bf110e
         | Bf110g -> [ GroundAttacker; Interceptor ]
@@ -571,7 +614,8 @@ with
         | IL2M43 -> [ GroundAttacker ]
         | Mig3 -> [ Interceptor ]
         | P39
-        | P40 -> [ GroundAttacker; Interceptor ]
+        | P40
+        | P47 -> [ GroundAttacker; Interceptor ]
         | Yak1s69 
         | Yak1s127
         | Yak7bs36
@@ -579,6 +623,7 @@ with
         | La5fns2
         | SpitfireMkVb
         | Lagg3s29 -> [ Interceptor ; Patroller ]
+        | SpitfireMkIXe -> [ GroundAttacker; Interceptor ; Patroller ]
         | Ju87 -> [ GroundAttacker ]
         | A20
         | Pe2s35
@@ -595,8 +640,11 @@ with
           Bf109g2
           Bf109g4
           Bf109g6
+          Bf109g14
+          Bf109k4
           Fw190a3
           Fw190a5
+          Fw190a8
           Mc202
           Bf110e
           Bf110g
@@ -609,6 +657,7 @@ with
           Mig3
           P39
           P40
+          P47
           Yak1s69
           Yak1s127
           Yak7bs36
@@ -616,6 +665,7 @@ with
           La5fns2
           Lagg3s29
           SpitfireMkVb
+          SpitfireMkIXe
           A20
           Pe2s35
           Pe2s87
