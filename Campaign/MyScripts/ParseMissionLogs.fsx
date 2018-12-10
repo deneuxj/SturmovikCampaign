@@ -4,6 +4,7 @@
 
 #r "Campaign.dll"
 #r "System.Numerics.Vectors.dll"
+#r "McuLibrary"
 #r "DataProvider.dll"
 #r "ploggy"
 
