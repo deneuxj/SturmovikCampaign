@@ -142,10 +142,12 @@ with
                                 |> List.map (fun plane -> plane.PlaneName)
                                 |> String.concat ", "
                             Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instead: %s" planes)
-                elif context.GetNumPlanesAt(af, plane) - context.GetNumReservedPlanes(coalition, af, plane) > 1.0f then
-                    FromPublic
                 else
-                    Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
+                    match context.GetNumPlanesAt(af, plane) - context.GetNumReservedPlanes(coalition, af, plane) with
+                    | numExtra when numExtra >= 1.0f ->
+                        FromPublic
+                    | _ ->
+                        Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
             // Deny if loadout is not OK
             let cost =
                 let afs = context.State.GetAirfield(af)
@@ -163,11 +165,22 @@ with
                                         [sprintf "%s, you are not allowed to take off in a %s at %s" rank plane.PlaneName af.AirfieldName
                                          reason
                                          "You will be KICKED if you take off"]))
-                    | FromPublic | FromReserved | FreshSpawn _ ->
-                        yield Message(Overview(user, 0, [sprintf "%s, you are cleared to take off in a %s from %s" rank plane.PlaneName af.AirfieldName]))
+                    | FromReserved | FreshSpawn _ ->
+                        yield Message(Overview(user, 0, [sprintf "%s, you are cleared to take off in your %s from %s" rank plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, af)
                         if cost = FromReserved then
                             yield RemoveReservedPlane(user, plane, af, coalition)
+                    | FromPublic ->
+                        yield Message(Overview(user, 0,
+                                        [ sprintf "%s, you are cleared to take off in a %s from %s" rank plane.PlaneName af.AirfieldName 
+                                          "This is not one of your reserved planes."
+                                          "You should consider taking off from the REAR airfield to reserve a new plane."
+                                        ]))
+                        yield PlaneCheckOut(user, plane, af)
+                        let numExtra = context.GetNumPlanesAt(af, plane) - context.GetNumReservedPlanes(coalition, af, plane)
+                        if numExtra < 3.0f then
+                            yield Message(Announce(coalition,
+                                            [ sprintf "%s has taken a scarcely available %s at %s" user.Name plane.PlaneName af.AirfieldName ]))
                 ]
             let supplyCommands =
                 if cargo > 0.0f<K> || weight >= 500.0f<K> then
