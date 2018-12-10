@@ -31,14 +31,20 @@ open Campaign.PlaneChecksContext
 
 let private logger = LogManager.GetCurrentClassLogger()
 
-type TransactionCost =
+type PlaneOwnershipType =
     | Denied of reason:string
-    | FreshSpawn of PlaneType * float32
-    | Free
+    | FreshSpawn of factor:float32
+    | FromReserved
+    | FromPublic
 with
     member this.IsDeniedCase =
         match this with
         | Denied _ -> true
+        | _ -> false
+
+    member this.GrantsReservationOnLanding =
+        match this with
+        | FromReserved | FreshSpawn _ -> true
         | _ -> false
 
 /// States in the PlayerFlightData state machine
@@ -56,7 +62,7 @@ type PlayerFlightData =
     { Player : UserIds
       Vehicle : int
       State : PlayerFlightState
-      CheckoutCost : TransactionCost
+      CheckoutCost : PlaneOwnershipType
       Health : float32
       Coalition : CoalitionId
       Plane : PlaneModel
@@ -107,16 +113,16 @@ with
                 }
             let cost =
                 let hangar = context.GetHangar(user, coalition)
-                if hangar.HasReservedPlane(af, plane) then
-                    Free
-                elif context.IsSpawnRestricted(af, plane, coalition) then
-                    Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
+                if not context.Limits.SpawnsAreRestricted then
+                    FromPublic
+                elif hangar.HasReservedPlane(af, plane) then
+                    FromReserved
                 elif context.RearAirfields.Contains(af) then
                     let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0.0f
                     let rearValueFactor = context.GetRearValueFactor(plane)
                     match numFreshSpawnsLeft with
                     | x when x >= rearValueFactor ->
-                        FreshSpawn(plane.PlaneType, rearValueFactor)
+                        FreshSpawn(rearValueFactor)
                     | x ->
                         let alts =
                             hangar.FreshSpawns
@@ -136,8 +142,10 @@ with
                                 |> List.map (fun plane -> plane.PlaneName)
                                 |> String.concat ", "
                             Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instead: %s" planes)
+                elif context.GetNumPlanesAt(af, plane) - context.GetNumReservedPlanes(coalition, af, plane) > 1.0f then
+                    FromPublic
                 else
-                    Free
+                    Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
             // Deny if loadout is not OK
             let cost =
                 let afs = context.State.GetAirfield(af)
@@ -155,10 +163,10 @@ with
                                         [sprintf "%s, you are not allowed to take off in a %s at %s" rank plane.PlaneName af.AirfieldName
                                          reason
                                          "You will be KICKED if you take off"]))
-                    | Free | FreshSpawn _ ->
+                    | FromPublic | FromReserved | FreshSpawn _ ->
                         yield Message(Overview(user, 0, [sprintf "%s, you are cleared to take off in a %s from %s" rank plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, af)
-                        if cost = Free then
+                        if cost = FromReserved then
                             yield RemoveReservedPlane(user, plane, af, coalition)
                 ]
             let supplyCommands =
@@ -194,8 +202,8 @@ with
             { this with State = InFlight },
             [
                 match this.CheckoutCost with
-                | FreshSpawn(planeType, factor) ->
-                    yield PlayerFreshSpawn(this.Player, this.Coalition, planeType, factor)
+                | FreshSpawn(factor) ->
+                    yield PlayerFreshSpawn(this.Player, this.Coalition, this.Plane.PlaneType, factor)
                 | _ -> ()
 
                 let rank = context.GetHangar(this.Player, this.Coalition).RankedName
@@ -387,7 +395,7 @@ with
             [
                 let healthUp = ceil(health * 10.0f) / 10.0f
                 yield PlaneCheckIn(this.Player, this.Plane, healthUp, af)
-                if isCorrectCoalition then
+                if isCorrectCoalition && this.CheckoutCost.GrantsReservationOnLanding then
                     yield AddReservedPlane(this.Player, this.Plane, healthUp, af, this.Coalition)
                 // Try to show PIN
                 match
@@ -419,18 +427,19 @@ with
                 ()
             | { Health = health } when health >= 1.0f ->
                 yield PlaneCheckIn(this.Player, this.Plane, 1.0f, this.StartAirfield)
-                yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
+                if this.CheckoutCost.GrantsReservationOnLanding then
+                    yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
             | _ ->
                 ()
         ]
 
     // Player ended mission before taking off, cancel mission
-    member this.HandleAbortionBeforeTakeOff(context, doCheckIn) =
+    member this.HandleAbortionBeforeTakeOff(context) =
         assert(this.State <> MissionEnded)
         { this with State = MissionEnded },
         [
             yield PlaneCheckIn(this.Player, this.Plane, this.Health, this.StartAirfield)
-            if doCheckIn then
+            if this.CheckoutCost.GrantsReservationOnLanding then
                 yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
         ]
 
@@ -469,9 +478,9 @@ with
         | InFlight, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this.HandlePrematureMissionEnd(context)
         | Spawned, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
-            this.HandleAbortionBeforeTakeOff(context, not this.CheckoutCost.IsDeniedCase)
+            this.HandleAbortionBeforeTakeOff(context)
         | Spawned, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
-            this.HandleAbortionBeforeTakeOff(context, not this.CheckoutCost.IsDeniedCase)
+            this.HandleAbortionBeforeTakeOff(context)
         | MissionEnded, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this, []
         | _, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->

@@ -473,6 +473,9 @@ with
         | None ->
             0.0f
 
+    member this.GetNumReservedPlanes(coalition : CoalitionId, af : AirfieldId, plane : PlaneModel) =
+        getTotalPlanesReservedAtAirfield coalition af plane this.Hangars
+
     member this.GetTotalNumReservedPlanes(user : UserIds, coalition : CoalitionId) : float32 =
         let hangar = this.GetHangar(user, coalition)
         hangar.Airfields
@@ -485,19 +488,6 @@ with
         this.State.State.Airfields
         |> Seq.minBy (fun afs -> let pos, _ = afs.Runway in (pos - v).Length())
         |> fun afs -> afs.AirfieldId
-
-    member this.IsSpawnRestricted(af : AirfieldId, plane : PlaneModel, coalition : CoalitionId) =
-        let isFree =
-            let numOwned =
-                lazy
-                    this.State.State.Regions
-                    |> Seq.filter (fun region -> region.Owner = Some coalition)
-                    |> Seq.length
-            (not this.Limits.SpawnsAreRestricted ||
-             numOwned.Value * 4 <= this.State.State.Regions.Length ||
-             this.RearAirfields.Contains(af) ||
-             this.State.GetRegion(this.World.GetAirfield(af).Region).HasInvaders)
-        not isFree
 
     member this.SupplyFlightFactor(start : AirfieldId, destination : AirfieldId) =
         let computeSupplyRewardFactor regStart regEnd =

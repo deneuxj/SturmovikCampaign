@@ -182,10 +182,14 @@ with
 
 
 /// Get the total amount of planes of a given model at a given airfield
-let getTotalPlanesReservedAtAirfield af plane hangars =
+let getTotalPlanesReservedAtAirfield coalition af plane hangars =
     hangars
     |> Map.toSeq
-    |> Seq.choose (fun (_, hangar : PlayerHangar) -> hangar.Airfields.TryFind af)
+    |> Seq.choose (fun (_, hangar : PlayerHangar) ->
+        if hangar.Coalition = coalition then
+            hangar.Airfields.TryFind af
+        else
+            None)
     |> Seq.choose (fun afHangar -> afHangar.Planes.TryFind plane)
     |> Seq.sum
 
