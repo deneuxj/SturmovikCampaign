@@ -117,6 +117,14 @@ let showHangar(hangar : PlayerHangar, delay) =
                         let planes = String.concat ", " planes
                         yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
             ])
+        let guid =
+            try
+                Some(Guid(userIds.UserId))
+            with _ -> None
+        match guid with
+        | None -> ()
+        | Some guid ->
+            yield PlayerEntered(guid)
     ]
 
 /// Create an empty hangar for a player
@@ -135,6 +143,7 @@ type Command =
     | PunishThief of user:UserIds * PlaneModel * AirfieldId
     | Message of PlaneAvailabilityMessage
     | PlaneGifted of PlaneGift
+    | ShowHangar of user:UserIds * CoalitionId
 
 // It is not possible to identify static objects before they are damaged, because their position vector
 // is null in the spawn log entry. The information for static objects is stored in StaticObject
@@ -459,6 +468,11 @@ with
 
         | Message m ->
             this, [m]
+
+        | ShowHangar(user, coalition) ->
+            let hangar = this.GetHangar(user, coalition)
+            this,
+            showHangar(hangar, 5)
 
     member this.GetNumPlanesAt(af : AirfieldId, plane : PlaneModel) =
         this.Airfields.[af].TryFind plane |> Option.defaultValue 0.0f

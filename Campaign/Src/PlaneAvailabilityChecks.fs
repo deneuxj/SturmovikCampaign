@@ -56,7 +56,6 @@ let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world
             // Handle special entries
             match entry.Data with
             | :? JoinEntry as joined ->
-                yield PlayerEntered(joined.UserId)
                 for coalition in [Axis; Allies] do
                     match context.Hangars.TryFind((string joined.UserId, coalition)) with
                     | Some hangar ->

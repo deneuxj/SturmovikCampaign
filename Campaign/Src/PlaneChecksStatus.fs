@@ -397,15 +397,6 @@ with
                 yield PlaneCheckIn(this.Player, this.Plane, healthUp, af)
                 if isCorrectCoalition && this.CheckoutCost.GrantsReservationOnLanding then
                     yield AddReservedPlane(this.Player, this.Plane, healthUp, af, this.Coalition)
-                // Try to show PIN
-                match
-                    (try
-                        Message(PlayerEntered(Guid(this.Player.UserId)))
-                        |> Some
-                     with _ -> None)
-                    with
-                    | Some m -> yield m
-                    | None -> ()
                 // Reward real flights, i.e. exclude phony flights, landing at the same airfield take-off took place from.
                 match this.State with
                 | Landed(Some af2, _) when af2 <> af ->
@@ -413,6 +404,7 @@ with
                     yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward)
                 | _ ->
                     ()
+                yield ShowHangar(this.Player, this.Coalition)
             ]
         | _ ->
             { this with State = MissionEnded }, []
@@ -431,6 +423,7 @@ with
                     yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
             | _ ->
                 ()
+            yield ShowHangar(this.Player, this.Coalition)
         ]
 
     // Player ended mission before taking off, cancel mission
@@ -441,6 +434,7 @@ with
             yield PlaneCheckIn(this.Player, this.Plane, this.Health, this.StartAirfield)
             if this.CheckoutCost.GrantsReservationOnLanding then
                 yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
+            yield ShowHangar(this.Player, this.Coalition)
         ]
 
     // Player disconnected, mark as mission ended
