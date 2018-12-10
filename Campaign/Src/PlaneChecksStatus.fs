@@ -157,7 +157,9 @@ with
                                          "You will be KICKED if you take off"]))
                     | Free | FreshSpawn _ ->
                         yield Message(Overview(user, 0, [sprintf "%s, you are cleared to take off in a %s from %s" rank plane.PlaneName af.AirfieldName]))
-                        yield PlaneCheckOut(user, plane, 1.0f, false, af)
+                        yield PlaneCheckOut(user, plane, af)
+                        if cost = Free then
+                            yield RemoveReservedPlane(user, plane, af, coalition)
                 ]
             let supplyCommands =
                 if cargo > 0.0f<K> || weight >= 500.0f<K> then
@@ -384,7 +386,9 @@ with
             { this with State = MissionEnded },
             [
                 let healthUp = ceil(health * 10.0f) / 10.0f
-                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, healthUp, false, af)
+                yield PlaneCheckIn(this.Player, this.Plane, healthUp, af)
+                if isCorrectCoalition then
+                    yield AddReservedPlane(this.Player, this.Plane, healthUp, af, this.Coalition)
                 // Try to show PIN
                 match
                     (try
@@ -414,7 +418,8 @@ with
             | { CheckoutCost = Denied _ } ->
                 ()
             | { Health = health } when health >= 1.0f ->
-                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, 1.0f, false, this.StartAirfield)
+                yield PlaneCheckIn(this.Player, this.Plane, 1.0f, this.StartAirfield)
+                yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
             | _ ->
                 ()
         ]
@@ -424,8 +429,9 @@ with
         assert(this.State <> MissionEnded)
         { this with State = MissionEnded },
         [
+            yield PlaneCheckIn(this.Player, this.Plane, this.Health, this.StartAirfield)
             if doCheckIn then
-                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, this.Health, false, this.StartAirfield)
+                yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
         ]
 
     // Player disconnected, mark as mission ended

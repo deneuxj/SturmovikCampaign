@@ -125,9 +125,11 @@ let private emptyHangar (playerId : string, playerName, coalition, cash, freshSp
 
 /// Commands sent during state transitions in PlayerStateData to the main asyncSeq computation
 type Command =
-    | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
-    | PlaneCheckIn of user:UserIds * userCoalition:CoalitionId * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
+    | PlaneCheckOut of user:UserIds * PlaneModel * AirfieldId
+    | RemoveReservedPlane of user:UserIds * PlaneModel * AirfieldId * CoalitionId
     | PlayerFreshSpawn of user:UserIds * CoalitionId * PlaneType * float32
+    | PlaneCheckIn of user:UserIds * PlaneModel * health:float32 * AirfieldId
+    | AddReservedPlane of user:UserIds * PlaneModel * health:float32 * AirfieldId * CoalitionId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * CoalitionId * float32<E>
     | PunishThief of user:UserIds * PlaneModel * AirfieldId
@@ -304,12 +306,11 @@ with
     /// Commands are typically created by PlayerFlightData instances, when they hand game log entries.
     member this.Execute(command : Command) =
         match command with
-        | PlaneCheckOut(user, plane, health, isBorrowed, af) ->
+        | PlaneCheckOut(user, plane, af) ->
             let coalition =
                 this.State.GetRegion(this.World.GetAirfield(af).Region).Owner
             match coalition with
             | Some coalition ->
-                let hangar : PlayerHangar = this.GetHangar(user, coalition)
                 let planes =
                     this.Airfields.TryFind(af)
                     |> Option.defaultValue(Map.empty)
@@ -317,18 +318,13 @@ with
                     planes.TryFind(plane)
                     |> Option.defaultValue(0.0f)
                 let newQty = oldQty - 1.0f
-                let hangar =
-                    if not isBorrowed then
-                        hangar.RemovePlane(af, plane, health, 0.0f<E>)
-                    else
-                        hangar
-                let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
                 let airfields = this.Airfields.Add(af, planes.Add(plane, max 0.0f newQty))
-                { this with Hangars = hangars; Airfields = airfields },
+                { this with Airfields = airfields },
                 [
-                    yield Status(hangars, airfields)
+                    yield Status(this.Hangars, airfields)
                     if oldQty >= 1.0f && newQty < 1.0f then
                         yield PlanesAtAirfield(af, airfields.[af])
+                    let hangar : PlayerHangar = this.GetHangar(user, coalition)
                     if int newQty <= 0 then
                         yield Announce(coalition, [ sprintf "%s took the last %s from %s" hangar.RankedName plane.PlaneName af.AirfieldName ])
                     else
@@ -338,6 +334,16 @@ with
                 logger.Error("Attempt to check out plane from neutral region")
                 this, []
 
+        | RemoveReservedPlane(user, plane, af, coalition) ->
+            let hangar : PlayerHangar = this.GetHangar(user, coalition)
+            let hangar =
+                hangar.RemovePlane(af, plane, 1.0f, 0.0f<E>)
+            let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
+            { this with Hangars = hangars },
+            [
+                yield Status(hangars, this.Airfields)
+            ]
+
         | PlayerFreshSpawn(user, coalition, planeType, factor) ->
             let hangar : PlayerHangar = this.GetHangar(user, coalition)
             let oldSpawns = hangar.FreshSpawns.TryFind(planeType) |> Option.defaultValue 0.0f
@@ -345,44 +351,42 @@ with
             let hangar = { hangar with FreshSpawns = hangar.FreshSpawns.Add(planeType, newSpawns) }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
-            []
+            [
+                yield Status(hangars, this.Airfields)
+            ]
 
-        | PlaneCheckIn(user, userCoalition, plane, health, isBorrowed, af) ->
+        | PlaneCheckIn(user, plane, health, af) ->
             logger.Info (sprintf "Plane check in by %s of a %s at %s, health %3.0f" user.Name plane.PlaneName af.AirfieldName (health * 100.0f))
-            match this.GetAirfieldCoalition(af) with
-            | Some coalition ->
-                let planes =
-                    this.Airfields.TryFind(af)
-                    |> Option.defaultValue(Map.empty)
-                let oldQty =
-                    planes.TryFind(plane)
-                    |> Option.defaultValue(0.0f)
-                let newQty = oldQty + health
-                let planes =
-                    planes.Add(plane, oldQty + health)
-                let airfields = this.Airfields.Add(af, planes)
-                let hangar = this.GetHangar(user, coalition)
-                let hangar =
-                    if userCoalition = coalition && not isBorrowed then
-                        hangar.AddPlane(af, plane, health)
-                    else
-                        hangar
-                logger.Debug (sprintf "Hangar after check in: %A" hangar)
-                let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
-                { this with Hangars = hangars; Airfields = airfields },
-                [
-                    yield Status(hangars, airfields)
-                    if oldQty < 1.0f && newQty >= 1.0f then
-                        yield PlanesAtAirfield(af, airfields.[af])
-                        match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
-                        | Some coalition ->
-                            yield Announce(coalition, [sprintf "%s available at %s again" plane.PlaneName af.AirfieldName])
-                        | None ->
-                            ()
-                ]
-            | None ->
-                logger.Warn (sprintf "%s checked in at neutral airfield" user.Name)
-                this, []
+            let planes =
+                this.Airfields.TryFind(af)
+                |> Option.defaultValue(Map.empty)
+            let oldQty =
+                planes.TryFind(plane)
+                |> Option.defaultValue(0.0f)
+            let newQty = oldQty + health
+            let planes =
+                planes.Add(plane, oldQty + health)
+            let airfields = this.Airfields.Add(af, planes)
+            { this with Airfields = airfields },
+            [
+                yield Status(this.Hangars, airfields)
+                if oldQty < 1.0f && newQty >= 1.0f then
+                    yield PlanesAtAirfield(af, airfields.[af])
+                    match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
+                    | Some coalition ->
+                        yield Announce(coalition, [sprintf "%s available at %s again" plane.PlaneName af.AirfieldName])
+                    | None ->
+                        ()
+            ]
+
+        | AddReservedPlane(user, plane, health, af, coalition) ->
+            let hangar = this.GetHangar(user, coalition)
+            let hangar = hangar.AddPlane(af, plane, health)
+            let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
+            { this with Hangars = hangars },
+            [
+                yield Status(hangars, this.Airfields)
+            ]
 
         | PlaneGifted(gift) ->
             let coalition =
