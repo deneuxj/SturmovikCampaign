@@ -130,7 +130,6 @@ type Command =
     | PlayerFreshSpawn of user:UserIds * CoalitionId * PlaneType * float32
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * CoalitionId * float32<E>
-    | InformPlayerHangar of UserIds * CoalitionId
     | PunishThief of user:UserIds * PlaneModel * AirfieldId
     | Message of PlaneAvailabilityMessage
     | PlaneGifted of PlaneGift
@@ -447,11 +446,6 @@ with
             [
                 yield Status(hangars, this.Airfields)
             ]
-
-        | InformPlayerHangar(user, coalition) ->
-            let hangar = this.GetHangar(user, coalition)
-            this,
-            showHangar(hangar, 5)
 
         | PunishThief(user, plane, af) ->
             this,
