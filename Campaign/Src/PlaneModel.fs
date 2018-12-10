@@ -190,46 +190,9 @@ with
         | P47 | SpitfireMkIXe -> 2.0f * basePlaneCost
 
     member this.BombCapacity =
-        match this with
-        | Bf109e7 
-        | Bf109f2
-        | Bf109f4
-        | Bf109g2
-        | Bf109g4
-        | Bf109g6
-        | Bf109g14
-        | Bf109k4
-        | Fw190a3
-        | Fw190a5
-        | Fw190a8
-        | Mc202 -> 500.0f<K>
-        | Bf110g
-        | Bf110e -> 1250.0f<K>
-        | He111h16
-        | He111h6 -> 3600.0f<K>
-        | Hs129b2 -> 350.0f<K>
-        | Ju87 -> 1800.0f<K>
-        | Ju88a4 -> 2800.0f<K>
-        | SpitfireMkVb
-        | Ju52 -> 0.0f<K>
-        | Yak1s69
-        | Yak1s127
-        | Yak7bs36
-        | Lagg3s29
-        | La5
-        | La5fns2
-        | I16 -> 200.0f<K>
-        | IL2M42
-        | IL2M43
-        | IL2M41 -> 600.0f<K>
-        | Mig3 -> 200.0f<K>
-        | P39
-        | P40
-        | P47 -> 500.0f<K>
-        | A20 -> 1800.0f<K>
-        | Pe2s87
-        | Pe2s35 -> 1000.0f<K>
-        | SpitfireMkIXe -> 500.0f<K>
+        match this.BombLoads with
+        | [] ->0.0f<K>
+        | x -> x |> Seq.map snd |> Seq.max
 
     /// The mod mask and payload ID suitable for ground attack
     member this.AttackPayload =
@@ -237,7 +200,10 @@ with
             match this with
             | PlaneModel.Bf109e7 -> 5, 2
             | PlaneModel.Bf109f2 | PlaneModel.Bf109f4 | PlaneModel.Bf109g2 | PlaneModel.Bf109g4 | PlaneModel.Bf109g6-> 17, 2 // SC250-1
+            | PlaneModel.Bf109g14 -> 17, 2 // SD250-1
+            | PlaneModel.Bf109k4 -> 9, 2 // SC500-1
             | PlaneModel.Fw190a3 -> 9, 3 // SC500-1
+            | PlaneModel.Fw190a8 -> 101, 43 // SC250-3
             | PlaneModel.Fw190a5 -> 73, 9 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500 + SC500-1 + SC50-4"
             | PlaneModel.I16 -> 9, 2 // "0,1-SHKAS-AP-1000 + 2,3-SHKAS-AP-1800 + FAB100M-2"
             | PlaneModel.La5 -> 37, 5 // "0,1-SHVAK-AP-340 + FAB100M-2"
@@ -246,6 +212,7 @@ with
             | PlaneModel.Mig3 -> 5, 6 // "0,1-SHKAS-AP-1500 + 2-BS-APHE-300 + FAB100M-2"
             | PlaneModel.P39 -> 5, 12 // FAB250
             | PlaneModel.P40 -> 33, 8 // "0,1,2,3,4,5-M250-AP-1410 + FAB500M-1"
+            | PlaneModel.P47 -> 17, 24 // M65-2
             | PlaneModel.Yak1s127 -> 5, 2 // "0-UB-APHE-220 + 1-SHVAK-APHE-140 + FAB100M-2"
             | PlaneModel.Yak1s69 -> 17, 10 // "0,1-SHKAS-AP-1500 + 2-SHVAK-APHE-120 + FAB100M-2"
             | PlaneModel.Ju87 -> 1, 5 // "0,1-MG17-AP-2000 + SC250-3"
@@ -258,6 +225,7 @@ with
             | PlaneModel.Pe2s87 -> 5, 5
             | PlaneModel.A20 -> 5, 4
             | PlaneModel.Hs129b2 -> 1, 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
+            | PlaneModel.SpitfireMkIXe -> 7, 3 // GPB500-1 + GPB250-2
             | _ -> 1, 0
         modmask, payload
 
@@ -473,7 +441,9 @@ with
         match this with
         | Bf109e7 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
         | Bf109f2 -> xTimes [1; 4] [(0, 200.0f<K>); (1, 250.0f<K>)]
-        | Bf109g14 | Bf109k4 | Fw190a8 | P47 | SpitfireMkIXe -> [] // UNKNOWN
+        | Bf109g14 -> [(1, 280.0f<K>); (2, 250.0f<K>); (10, 250.0f<K>)]
+        | Bf109k4 -> [(1, 250.0f<K>); (2, 500.0f<K>)]
+        | Fw190a8 -> xTimes [1; 17] [(0, 280.0f<K>); (1, 250.0f<K>); (2, 250.0f<K>)] @ [(34, 280.0f<K>); (35, 500.0f<K>); (38, 280.0f<K>); (39, 560.0f<K>); (40, 500.0f<K>); (41, 250.0f<K>); (42, 330.0f<K>); (43, 750.0f<K>); (44, 500.0f<K>); (45, 780.0f<K>); (46, 1000.0f<K>)]
         | Mc202 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | Fw190a3 -> [(1, 200.0f<K>); (2, 250.0f<K>); (3, 500.0f<K>)]
         | Fw190a5 -> [(1, 200.0f<K>); (2, 250.0f<K>); (3, 500.0f<K>); (6, 200.0f<K>); (7, 400.0f<K>); (8, 450.0f<K>); (9, 700.0f<K>)]
@@ -516,6 +486,8 @@ with
         | Mig3 -> [(5, 100.0f<K>); (6, 200.0f<K>); (13, 100.0f<K>); (14, 200.0f<K>); (21, 100.0f<K>); (22, 200.0f<K>)]
         | P39 -> times 6 [(6, 100.0f<K>)] @ times 6 [(12, 250.0f<K>)]
         | P40 -> times 4 [(4, 250.0f<K>); (8, 500.0f<K>); (28, 250.0f<K>); (32, 500.0f<K>)]
+        | P47 -> times 6 [(6, 225.0f<K>)] @ times 6 [(12, 450.0f<K>)] @ times 6 [(18, 675.0f<K>)] @ times 6 [(24, 950.0f<K>)] @ times 6 [(30, 1175.0f<K>)] |> xTimes  [0; 36]
+        | SpitfireMkIXe -> [(1, 225.0f<K>); (2, 225.0f<K>); (3, 900.0f<K>); (6, 225.0f<K>); (7, 255.0f<K>)]
         | Yak1s69 -> [(9, 100.0f<K>); (10, 200.0f<K>)]
         | Yak1s127 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | Yak7bs36 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
@@ -525,8 +497,11 @@ with
 
     member this.SpecialLoadsCosts =
         // rockets
-        let r82 = 50.0f<E> / 8.0f
-        let r132 = 100.0f<E> / 8.0f
+        let r82 = 1.5f<E>
+        let r132 = 4.2f<E>
+        let wgr42 = 11.2f<E>
+        let rp3 = 4.3f<E>
+        let m8 = 11.6f<E> / 6.0f
 
         match this with
         | Lagg3s29 -> times 28 [21, 6.0f * r82]
@@ -534,10 +509,14 @@ with
         | I16 -> xTimes [3; 14] (times 4 [(0, 4.0f * r82); (4, 6.0f * r82)])
         | Mig3 -> xTimes [1; 9; 17] (times 4 [0, 6.0f * r82])
         | P40 -> times 24 [12, 4.0f * r82]
+        | P47 -> times 36 [36, 6.0f * m8]
         | IL2M41 -> xTimes [20; 40] (times 16 [0, 8.0f * r82]) @ times 16 [56, 8.0f * r132]
         | IL2M42 -> xTimes [29; 52] (times 19 [0, 8.0f * r82]) @ times 16 [71, 8.0f * r132]
         | IL2M43 -> xTimes [29; 49] (times 16 [0, 4.0f * r82]) @ times 16 [65, 4.0f * r132] @ times 8 [85, 4.0f * r82] @ times 4 [93, 4.0f * r132]
         | Pe2s35 | Pe2s87 -> times 4 [7, 10.0f * r132]
+        | Fw190a8 -> [(4, 2.0f * wgr42)]
+        | SpitfireMkIXe -> times 4 [(4, 2.0f * rp3)]
+        | Bf109g14 -> [(4, 2.0f * wgr42); (12, 2.0f * wgr42)]
         | _ -> []
 
     member this.GetPayLoadCost(payload, bombCost) =
@@ -564,7 +543,9 @@ with
         | Mig3 -> 24
         | P39 -> 18
         | P40 -> 36
+        | P47 -> 79
         | SpitfireMkVb -> 1
+        | SpitfireMkIXe -> 8
         | IL2M41 -> 72
         | IL2M42 ->87
         | IL2M43 -> 104
@@ -577,8 +558,11 @@ with
         | Bf109g2 -> 4
         | Bf109g4 -> 4
         | Bf109g6 -> 8
+        | Bf109g14 -> 16
+        | Bf109k4 -> 4
         | Fw190a3 -> 6
         | Fw190a5 -> 10
+        | Fw190a8 -> 48
         | Mc202 -> 5
         | Bf110e -> 9
         | Bf110g -> 15
@@ -588,7 +572,6 @@ with
         | He111h16 -> 19
         | Ju88a4 -> 12
         | Ju52 -> 3
-        | Bf109g14 | Bf109k4 | Fw190a8 | P47 | SpitfireMkIXe -> 0 // UNKNOWN
 
     member this.Roles =
         match this with
