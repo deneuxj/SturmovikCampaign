@@ -43,7 +43,7 @@ with
 
 /// States in the PlayerFlightData state machine
 type PlayerFlightState =
-    | Spawned of TransactionCost
+    | Spawned
     | Aborted
     | InFlight
     | Landed of AirfieldId option * TimeSpan option
@@ -167,7 +167,7 @@ with
             Some {
                 Player = user
                 Vehicle = entry.VehicleId
-                State = Spawned cost
+                State = Spawned
                 Health = 1.0f
                 CheckoutCost = cost
                 Coalition = coalition
@@ -185,13 +185,13 @@ with
     // Handle first take off after spawn
     member this.HandleTakeOff(context : Context, takeOff : TakeOffEntry) =
         match this.State with
-        | Spawned(Denied _) ->
+        | Spawned when this.CheckoutCost.IsDeniedCase ->
             { this with State = StolePlane },
             [ PunishThief(this.Player, this.Plane, this.StartAirfield) ]
-        | Spawned(cost) ->
+        | Spawned ->
             { this with State = InFlight },
             [
-                match cost with
+                match this.CheckoutCost with
                 | FreshSpawn(planeType, factor) ->
                     yield PlayerFreshSpawn(this.Player, this.Coalition, planeType, factor)
                 | _ -> ()
@@ -385,7 +385,6 @@ with
             [
                 let healthUp = ceil(health * 10.0f) / 10.0f
                 yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, healthUp, false, af)
-                yield InformPlayerHangar(this.Player, this.Coalition)
                 // Try to show PIN
                 match
                     (try
@@ -411,10 +410,10 @@ with
         assert(this.State <> MissionEnded)
         { this with State = MissionEnded },
         [
-            match this.State with
-            | Spawned(Denied _) ->
+            match this with
+            | { CheckoutCost = Denied _ } ->
                 ()
-            | _ when this.Health >= 1.0f ->
+            | { Health = health } when health >= 1.0f ->
                 yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, 1.0f, false, this.StartAirfield)
             | _ ->
                 ()
@@ -463,10 +462,10 @@ with
             this.HandlePrematureMissionEnd(context)
         | InFlight, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this.HandlePrematureMissionEnd(context)
-        | Spawned cost, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
-            this.HandleAbortionBeforeTakeOff(context, not cost.IsDeniedCase)
-        | Spawned cost, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
-            this.HandleAbortionBeforeTakeOff(context, not cost.IsDeniedCase)
+        | Spawned, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
+            this.HandleAbortionBeforeTakeOff(context, not this.CheckoutCost.IsDeniedCase)
+        | Spawned, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
+            this.HandleAbortionBeforeTakeOff(context, not this.CheckoutCost.IsDeniedCase)
         | MissionEnded, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
             this, []
         | _, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
