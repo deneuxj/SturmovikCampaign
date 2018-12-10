@@ -412,25 +412,21 @@ with
 
     // Check in what's left of the plane, award reward
     member this.HandleMissionEnd(context : Context, af : AirfieldId option, bombs : int option) =
-        match this.State, af, this.Health with
-        | Spawned(Denied _ ), _, _ ->
-            { this with State = MissionEnded }, []
-        | Landed _, Some af, health when health > 0.0f ->
+        assert(this.State <> MissionEnded)
+        match af, this.Health with
+        | Some af, health when health > 0.0f ->
+            let isCorrectCoalition = context.GetAirfieldCoalition(af) = Some this.Coalition
             let suppliesTransfered =
                 match bombs with
                 | Some bombs when bombs = this.NumBombs -> this.InitialBombs
                 | _ -> 0.0f<K>
             let supplyReward = context.SupplyFlightFactor(this.StartAirfield, af) * suppliesTransfered
-            let isCorrectCoalition = context.GetAirfieldCoalition(af) = Some this.Coalition
             { this with State = MissionEnded },
             [
-                assert(this.State <> MissionEnded)
                 let healthUp = ceil(health * 10.0f) / 10.0f
+                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, healthUp, this.IsBorrowed, af)
                 if this.IsBorrowed && isCorrectCoalition then
                     yield PlayerReturnedBorrowedPlane(this.Player, this.Plane, this.CheckoutCost.Amount, af)
-                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, healthUp, this.IsBorrowed, af)
-                yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
-                yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward)
                 yield InformPlayerHangar(this.Player, this.Coalition)
                 // Try to show PIN
                 match
@@ -441,6 +437,13 @@ with
                     with
                     | Some m -> yield m
                     | None -> ()
+                // Reward real flights, i.e. exclude phony flights, landing at the same airfield take-off took place from.
+                match this.State with
+                | Landed(Some af2, _) when af2 <> af ->
+                    yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
+                    yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward)
+                | _ ->
+                    ()
             ]
         | _ ->
             { this with State = MissionEnded }, []
