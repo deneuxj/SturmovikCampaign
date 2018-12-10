@@ -51,7 +51,7 @@
     # Ratio of max in-game tank kills (by AI) in battles
     MaxBattleKillsRatioByAI: 0.25
     # Max static planes per airfield
-    MaxStaticPlanes: 6
+    MaxStaticPlanes: 16
     # Whether spawn restrictions are in place
     SpawnRestrictions: true
     # Max number of fighter spawns at rear airfield (per player)

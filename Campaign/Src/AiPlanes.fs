@@ -79,7 +79,7 @@ let getNumPlanesWithRole planeRole (numPlanes : Map<PlaneModel, float32>) =
     numPlanes
     |> Seq.sumBy (fun kvp -> if kvp.Key.Roles.Contains(planeRole) then kvp.Value else 0.0f)
 
-let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) =
+let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, PlayerHangar.PlayerHangar>) (coalition : CoalitionId) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
     let threats =
@@ -99,6 +99,7 @@ let mkAllPatrols (world : World) (state : WorldState) (coalition : CoalitionId) 
                     if owner = Some coalition && getNumPlanesOfType Fighter afState.NumPlanes > 2.0f then
                         for enemyAirfield, enemyAirfieldState in threats do
                             for plane, count in afState.NumPlanes |> Map.toSeq |> Seq.filter (fun (plane, _) -> plane.Coalition = coalition) do
+                                let count = count - PlayerHangar.getTotalPlanesReservedAtAirfield coalition af.AirfieldId plane reservedPlanes
                                 let dir =
                                     let x = enemyAirfield.Pos - region.Position
                                     x / x.Length()

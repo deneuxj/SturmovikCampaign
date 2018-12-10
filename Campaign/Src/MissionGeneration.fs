@@ -155,6 +155,7 @@ type MissionData = {
     State : WorldState
     AxisOrders : OrderPackage
     AlliesOrders : OrderPackage
+    Hangars : Map<System.Guid * CoalitionId, PlayerHangar.PlayerHangar>
 }
 
 
@@ -322,7 +323,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         createParaTrooperDrops missionData.World store lcStore (Battlefield.identifyBattleAreas missionData.World missionData.State)
         |> List.map (fun p -> p.All)
     let parkedPlanes =
-        createParkedPlanes store missionData.World missionData.State missionParams.MaxStaticPlanes inAttackArea
+        createParkedPlanes store missionData.World missionData.State missionData.Hangars missionParams.MaxStaticPlanes inAttackArea
         |> McuUtil.groupFromList
     let parkedTanks =
         [Axis; Allies]

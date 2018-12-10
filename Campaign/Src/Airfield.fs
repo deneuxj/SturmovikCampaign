@@ -338,7 +338,7 @@ let createLandingDirections store (world : World) (state : WorldState) =
                 ()
     ]
 
-let createParkedPlanes store (world : World) (state : WorldState) (maxStaticPlanes : int) inAttackArea =
+let createParkedPlanes store (world : World) (state : WorldState) (reservedPlanes : Map<_, PlayerHangar.PlayerHangar>) (maxStaticPlanes : int) inAttackArea =
     let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
         let modelScript = world.PlaneSet.StaticPlaneModel model
         let mcus =
@@ -405,7 +405,11 @@ let createParkedPlanes store (world : World) (state : WorldState) (maxStaticPlan
                         | PlaneType.Attacker -> 1
                         | PlaneType.Fighter ->2)
                 for plane, qty in planes do
-                    for i in 0..(int qty - 1) do
+                    let qty =
+                        qty - PlayerHangar.getTotalPlanesReservedAtAirfield coalition af.AirfieldId plane reservedPlanes
+                        |> max 0.0f
+                        |> int
+                    for i in 0 .. qty - 1 do
                         match assign plane with
                         | Some spot ->
                             yield fun() -> mkParkedPlane(plane, spot, int country)

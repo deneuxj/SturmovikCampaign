@@ -239,6 +239,10 @@ module OrderDecision =
             with
             | e -> failwithf "Failed to read world and state data. Reason was: '%s'" e.Message
 
+        let hangars =
+            PlayerHangar.tryLoadHangars (Path.Combine(config.OutputDir, Filenames.hangars))
+            |> Option.defaultValue Map.empty
+
         // Decide column movements
         let columnOrders =
             if state.Regions |> List.exists (fun region -> region.HasInvaders) then
@@ -304,7 +308,7 @@ module OrderDecision =
 
             // Air patrols
             let mkPatrols coalition =
-                mkAllPatrols world state coalition
+                mkAllPatrols world state hangars coalition
                 |> prioritizeAiPatrols config.MissionLengthH world state
                 |> Seq.fold (fun (starts, filtered) (af, patrol) ->
                     if Set.contains af.AirfieldId starts then
@@ -444,6 +448,10 @@ module MissionFileGeneration =
             else
                 ""
 
+        let hangars =
+            PlayerHangar.tryLoadHangars (Path.Combine(config.OutputDir, Filenames.hangars))
+            |> Option.defaultValue Map.empty
+
         let dt = (1.0f<H>/60.0f) * float32 config.MissionLength
 
         let author = "coconut"
@@ -522,6 +530,7 @@ module MissionFileGeneration =
               Random = random
               AxisOrders = allAxisOrders
               AlliesOrders = allAlliesOrders
+              Hangars = hangars
             }
         async {
             // Retry an operation for at most 1 minute at 1s interval
