@@ -1110,7 +1110,7 @@ type Plugin() =
                                 hangars.TryFind (giver, coalition)
                                 |> Option.map (fun hangar -> string hangar.Player)
                             )
-                        let planeGift : PlaneAvailabilityChecks.PlaneGift =
+                        let planeGift : PlaneChecksContext.PlaneGift =
                             { GiverGuid = giverGuid
                               Recipient = recipient
                               Plane = plane

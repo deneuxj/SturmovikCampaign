@@ -34,6 +34,7 @@ open Campaign.PlayerHangar
 open Campaign.WatchLogs
 open MBrace.FsPickler
 open Campaign.PlaneAvailabilityChecks
+open Campaign.PlaneChecksContext
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 

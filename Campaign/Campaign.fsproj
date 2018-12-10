@@ -81,6 +81,8 @@
     <Compile Include="Src\TankParks.fs" />
     <Compile Include="Src\MissionGeneration.fs" />
     <Compile Include="Src\PlayerDiscipline.fs" />
+    <Compile Include="Src\PlaneChecksContext.fs" />
+    <Compile Include="Src\PlaneChecksStatus.fs" />
     <Compile Include="Src\PlaneAvailabilityChecks.fs" />
     <Compile Include="Src\Commenting.fs" />
     <Compile Include="Src\WebHook.fs" />
