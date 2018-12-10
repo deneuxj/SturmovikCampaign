@@ -480,8 +480,15 @@ module MissionFileGeneration =
                 ""
         let spawnRestrictions =
             if config.SpawnsAreRestricted then
-                ["You can spawn at any airfield named in ALL CAPS."
-                 "You can also spawn at other airfields, if you have landed <b>that</b> plane (undamaged) there earlier"]
+                [
+                    yield "You can spawn at any airfield named in ALL CAPS."
+                    yield "You can also spawn at other airfields, if you have landed <b>that</b> plane (undamaged) there earlier."
+                    for plane, data in world.PlaneSet.Planes |> Map.toSeq do
+                        if data.RearValueFactor > 1.0f then
+                            yield sprintf "Sparkly new %s are available at a %1.2f%% PREMIUM (more expensive) at ALL CAPS airfields." plane.PlaneName (100.0f * data.RearValueFactor)
+                        elif data.RearValueFactor < 1.0f then
+                            yield sprintf "%s are available at a %1.2f%% discount at ALL CAPS airfields." plane.PlaneName (100.0f * (1.0f - data.RearValueFactor))
+                ]
                 |> String.concat " "
             else
                 ""
