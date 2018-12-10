@@ -127,9 +127,7 @@ let private emptyHangar (playerId : string, playerName, coalition, cash, freshSp
 type Command =
     | PlaneCheckOut of user:UserIds * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
     | PlaneCheckIn of user:UserIds * userCoalition:CoalitionId * PlaneModel * health:float32 * isBorrowed:bool * AirfieldId
-    | PlayerPayed of user:UserIds * CoalitionId * float32<E>
     | PlayerFreshSpawn of user:UserIds * CoalitionId * PlaneType * float32
-    | PlayerReturnedBorrowedPlane of user:UserIds * PlaneModel * originalCost:float32<E> * AirfieldId
     | DeliverSupplies of float32<E> * RegionId
     | RewardPlayer of user:UserIds * CoalitionId * float32<E>
     | InformPlayerHangar of UserIds * CoalitionId
@@ -165,13 +163,7 @@ type Limits =
     {
       InitialCash : float32<E>
       MaxCash : float32<E>
-      PlaneRentalAllowed : bool
-      MoneyBackFactor : float32
-      MaxReservedPlanes : int
-      MaxTotalReservedPlanes : int
       SpawnsAreRestricted : bool
-      RearAirfieldCostFactor : float32
-      MaxRentalGain : float32<E>
       FreshSpawns : Map<PlaneType, float32>
     }
 with
@@ -182,17 +174,9 @@ with
             |> Map.ofList
         { InitialCash = 1.0f<E> * float32 config.InitialCash
           MaxCash = 1.0f<E> * float32 config.MaxCash
-          MoneyBackFactor = config.MoneyBackFactor
-          MaxReservedPlanes = config.MaxReservedPlanes
-          MaxTotalReservedPlanes = config.MaxTotalReservedPlanes
           SpawnsAreRestricted = config.SpawnsAreRestricted
-          RearAirfieldCostFactor = config.RearAirfieldCostFactor
-          PlaneRentalAllowed = config.PlaneRentalAllowed
-          MaxRentalGain = PlaneModel.basePlaneCost / 5.0f
           FreshSpawns = freshSpawns
         }
-
-    member this.ShowCashReserves = this.PlaneRentalAllowed
 
 /// Keeps track of information needed for the state transitions in PlayerFlightData
 type Context =
@@ -355,13 +339,6 @@ with
                 logger.Error("Attempt to check out plane from neutral region")
                 this, []
 
-        | PlayerPayed(user, coalition, cost) ->
-            let hangar : PlayerHangar = this.GetHangar(user, coalition)
-            let hangar = { hangar with Reserve = hangar.Reserve - cost }
-            let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
-            { this with Hangars = hangars },
-            [ Overview(user, 0, [ sprintf "You have have spent %0.0f" cost ]) ]
-
         | PlayerFreshSpawn(user, coalition, planeType, factor) ->
             let hangar : PlayerHangar = this.GetHangar(user, coalition)
             let oldSpawns = hangar.FreshSpawns.TryFind(planeType) |> Option.defaultValue 0.0f
@@ -370,25 +347,6 @@ with
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
             []
-
-        | PlayerReturnedBorrowedPlane(user, plane, cost, af) ->
-            match this.GetAirfieldCoalition(af) with
-            | Some coalition ->
-                let qty =
-                    this.Airfields.TryFind(af)
-                    |> Option.defaultValue Map.empty
-                    |> Map.tryFind plane
-                    |> Option.defaultValue 0.0f
-                let factor = getPriceFactor af plane qty this.Hangars
-                let moneyBack = plane.Cost * factor |> min (this.Limits.MaxRentalGain + cost)
-                let hangar = this.GetHangar(user, coalition)
-                let hangar = { hangar with Reserve = hangar.Reserve + moneyBack }
-                let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
-                { this with Hangars = hangars },
-                [ Overview(user, 0, [ sprintf "You got %0.0f back for bringing back the %s you requisitioned" moneyBack plane.PlaneName ]) ]
-            | None ->
-                logger.Error("Attempt to return borrowed plane to neutral region")
-                this, []
 
         | PlaneCheckIn(user, userCoalition, plane, health, isBorrowed, af) ->
             logger.Info (sprintf "Plane check in by %s of a %s at %s, health %3.0f" user.Name plane.PlaneName af.AirfieldName (health * 100.0f))
@@ -406,10 +364,7 @@ with
                 let airfields = this.Airfields.Add(af, planes)
                 let hangar = this.GetHangar(user, coalition)
                 let hangar =
-                    if userCoalition = coalition &&
-                        not isBorrowed &&
-                        this.GetNumReservedPlanes(user, af, plane) <= float32 this.Limits.MaxReservedPlanes &&
-                        this.GetTotalNumReservedPlanes(user, userCoalition) <= float32 this.Limits.MaxTotalReservedPlanes then
+                    if userCoalition = coalition && not isBorrowed then
                         hangar.AddPlane(af, plane, health)
                     else
                         hangar
@@ -418,8 +373,6 @@ with
                 { this with Hangars = hangars; Airfields = airfields },
                 [
                     yield Status(hangars, airfields)
-                    if not isBorrowed && this.GetNumReservedPlanes(user, af, plane) > float32 this.Limits.MaxReservedPlanes then
-                        yield Overview(user, 0, [sprintf "You have reached the limit on number of %s reserved at %s" plane.PlaneName af.AirfieldName])
                     if oldQty < 1.0f && newQty >= 1.0f then
                         yield PlanesAtAirfield(af, airfields.[af])
                         match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
@@ -492,8 +445,6 @@ with
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
             [
-                if this.Limits.ShowCashReserves then
-                    yield Overview(user, 15, [sprintf "You have been awarded %1.0f" reward])
                 yield Status(hangars, this.Airfields)
             ]
 
@@ -513,11 +464,6 @@ with
 
     member this.GetNumPlanesAt(af : AirfieldId, plane : PlaneModel) =
         this.Airfields.[af].TryFind plane |> Option.defaultValue 0.0f
-
-    member this.GetPlanePrice(af : AirfieldId, plane : PlaneModel) =
-        let qty = this.GetNumPlanesAt(af, plane)
-        let factor = getPriceFactor af plane qty this.Hangars
-        factor * plane.Cost
 
     member this.GetNumReservedPlanes(user : UserIds, af : AirfieldId, plane : PlaneModel) =
         match this.GetAirfieldCoalition(af) with

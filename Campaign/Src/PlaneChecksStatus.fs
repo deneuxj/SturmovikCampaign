@@ -31,28 +31,15 @@ open Campaign.PlaneChecksContext
 
 let private logger = LogManager.GetCurrentClassLogger()
 
-
 type TransactionCost =
-    | Rent of float32<E>
-    | Buy of float32<E>
     | Denied of reason:string
     | FreshSpawn of PlaneType * float32
     | Free
 with
-    member this.IsRental =
-        match this with
-        | Rent _ -> true
-        | _ -> false
-
     member this.IsDeniedCase =
         match this with
         | Denied _ -> true
         | _ -> false
-
-    member this.Amount =
-        match this with
-        | Rent x | Buy x -> x
-        | Denied _ | Free | FreshSpawn _ -> 0.0f<E>
 
 /// States in the PlayerFlightData state machine
 type PlayerFlightState =
@@ -123,48 +110,34 @@ with
                 if hangar.HasReservedPlane(af, plane) then
                     Free
                 elif context.IsSpawnRestricted(af, plane, coalition) then
-                    let price = context.GetPlanePrice(af, plane)
-                    if price = 0.0f<E> || price <= hangar.Reserve then
-                        Rent price
-                    else
-                        Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
+                    Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
                 elif context.RearAirfields.Contains(af) then
                     let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0.0f
                     let rearValueFactor = context.GetRearValueFactor(plane)
-                    match numFreshSpawnsLeft, plane.Cost * context.Limits.RearAirfieldCostFactor with
-                    | x, _ when x >= rearValueFactor ->
+                    match numFreshSpawnsLeft with
+                    | x when x >= rearValueFactor ->
                         FreshSpawn(plane.PlaneType, rearValueFactor)
-                    | x, price ->
-                        let available = context.GetHangar(user, coalition)
-                        if available.Reserve >= price then
-                            Buy price
-                        else
-                            let alts =
-                                hangar.FreshSpawns
-                                |> Map.toSeq
-                                |> Seq.filter (fun (_, qty) -> qty >= 1.0f)
-                                |> Seq.map fst
-                                |> Set.ofSeq
-                                |> fun planeTypes -> context.GetFreshSpawnAlternatives(planeTypes, af)
-                                |> Seq.filter (fun plane -> x >= context.GetRearValueFactor(plane))
-                                |> List.ofSeq
-                            match alts with
-                            | [] ->
-                                Denied "You have exhausted all your fresh spawns; They refill partially every new mission"
-                            | planes ->
-                                let planes =
-                                    planes
-                                    |> List.map (fun plane -> plane.PlaneName)
-                                    |> String.concat ", "
-                                Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instead: %s" planes)
+                    | x ->
+                        let alts =
+                            hangar.FreshSpawns
+                            |> Map.toSeq
+                            |> Seq.filter (fun (_, qty) -> qty >= 1.0f)
+                            |> Seq.map fst
+                            |> Set.ofSeq
+                            |> fun planeTypes -> context.GetFreshSpawnAlternatives(planeTypes, af)
+                            |> Seq.filter (fun plane -> x >= context.GetRearValueFactor(plane))
+                            |> List.ofSeq
+                        match alts with
+                        | [] ->
+                            Denied "You have exhausted all your fresh spawns; They refill partially every new mission"
+                        | planes ->
+                            let planes =
+                                planes
+                                |> List.map (fun plane -> plane.PlaneName)
+                                |> String.concat ", "
+                            Denied (sprintf "You have exhausted your fresh spawns in that plane, try one of the following instead: %s" planes)
                 else
                     Free
-            // Deny rental if it's not allowed in the limits
-            let cost =
-                if not context.Limits.PlaneRentalAllowed && cost.IsRental then
-                    Denied "Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"
-                else
-                    cost
             // Deny if loadout is not OK
             let cost =
                 let afs = context.State.GetAirfield(af)
@@ -184,13 +157,6 @@ with
                                          "You will be KICKED if you take off"]))
                     | Free | FreshSpawn _ ->
                         yield Message(Overview(user, 0, [sprintf "%s, you are cleared to take off in a %s from %s" rank plane.PlaneName af.AirfieldName]))
-                        yield PlaneCheckOut(user, plane, 1.0f, false, af)
-                    | Rent cost ->
-                        yield Message(Overview(user, 0, [sprintf "%s, it will cost you %0.0f to requisition a %s from %s" rank cost plane.PlaneName af.AirfieldName]))
-                        yield PlaneCheckOut(user, plane, 1.0f, true, af)
-                    | Buy cost ->
-                        if cost > 0.0f<E> then
-                            yield Message(Overview(user, 0, [sprintf "%s, it will cost you %0.0f to take a %s from %s" rank cost plane.PlaneName af.AirfieldName]))
                         yield PlaneCheckOut(user, plane, 1.0f, false, af)
                 ]
             let supplyCommands =
@@ -216,9 +182,6 @@ with
         | None ->
             None, []
 
-    member this.IsBorrowed =
-        this.CheckoutCost.IsRental
-
     // Handle first take off after spawn
     member this.HandleTakeOff(context : Context, takeOff : TakeOffEntry) =
         match this.State with
@@ -228,9 +191,6 @@ with
         | Spawned(cost) ->
             { this with State = InFlight },
             [
-                if this.IsBorrowed then
-                    yield PlayerPayed(this.Player, this.Coalition, cost.Amount)
-
                 match cost with
                 | FreshSpawn(planeType, factor) ->
                     yield PlayerFreshSpawn(this.Player, this.Coalition, planeType, factor)
@@ -424,9 +384,7 @@ with
             { this with State = MissionEnded },
             [
                 let healthUp = ceil(health * 10.0f) / 10.0f
-                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, healthUp, this.IsBorrowed, af)
-                if this.IsBorrowed && isCorrectCoalition then
-                    yield PlayerReturnedBorrowedPlane(this.Player, this.Plane, this.CheckoutCost.Amount, af)
+                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, healthUp, false, af)
                 yield InformPlayerHangar(this.Player, this.Coalition)
                 // Try to show PIN
                 match
@@ -457,7 +415,7 @@ with
             | Spawned(Denied _) ->
                 ()
             | _ when this.Health >= 1.0f ->
-                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, 1.0f, this.IsBorrowed, this.StartAirfield)
+                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, 1.0f, false, this.StartAirfield)
             | _ ->
                 ()
         ]
@@ -468,7 +426,7 @@ with
         { this with State = MissionEnded },
         [
             if doCheckIn then
-                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, this.Health, this.IsBorrowed, this.StartAirfield)
+                yield PlaneCheckIn(this.Player, this.Coalition, this.Plane, this.Health, false, this.StartAirfield)
         ]
 
     // Player disconnected, mark as mission ended

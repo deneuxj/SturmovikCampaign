@@ -189,19 +189,6 @@ let getTotalPlanesReservedAtAirfield af plane hangars =
     |> Seq.choose (fun afHangar -> afHangar.Planes.TryFind plane)
     |> Seq.sum
 
-/// Get the price factor of a plane depending on its (over)booking level
-let getPriceFactor af plane available hangars =
-    let numReserved = getTotalPlanesReservedAtAirfield af plane hangars
-    if available > numReserved then
-        1.0f
-    elif numReserved < 100.0f * Single.Epsilon then
-        1.0f
-    elif available < 100.0f * Single.Epsilon then
-        Single.PositiveInfinity
-    else
-        2.0f * numReserved / available
-    |> min 100.0f
-    |> max 1.0f
 
 open MBrace.FsPickler
 open System.IO

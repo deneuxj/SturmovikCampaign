@@ -71,9 +71,6 @@ type Configuration = {
     MaxStaticPlanes : int
     MaxCash : int
     InitialCash : int
-    MaxReservedPlanes : int // Per type and airfield
-    MaxTotalReservedPlanes : int // All types, all airfields
-    RearAirfieldCostFactor : float32
     SpawnsAreRestricted : bool
     FreshFighterSpawns : int
     FreshAttackerSpawns : int
@@ -83,8 +80,6 @@ type Configuration = {
     FreshAttackerRefill : float32
     FreshBomberRefill : float32
     FreshTransportRefill : float32
-    PlaneRentalAllowed : bool
-    MoneyBackFactor : float32
     EnablePlayerTanks : bool
     OutputDir : string
     ServerDataDir : string
@@ -95,7 +90,7 @@ type Configuration = {
     Briefing : string
     ThinkTime : int
     DesiredProduction : float32
-    PlaneProduction : float32
+    PlaneProduction : float32 // REMOVE
     RearAirfieldPlanes : int
     MaxFriendlyFireEvents : int
     FriendlyFireBanDuration : int
@@ -130,8 +125,6 @@ with
             MaxStaticPlanes = 6
             InitialCash = 5000
             MaxCash = 10000
-            MaxReservedPlanes = 2
-            MaxTotalReservedPlanes = 6
             SpawnsAreRestricted = true
             FreshFighterSpawns = 6
             FreshAttackerSpawns = 3
@@ -141,9 +134,6 @@ with
             FreshAttackerRefill = 1.0f
             FreshBomberRefill = 0.7f
             FreshTransportRefill = 1.0f
-            PlaneRentalAllowed = true
-            RearAirfieldCostFactor = 0.125f
-            MoneyBackFactor = 0.75f
             EnablePlayerTanks = true
             MissionName = "AutoGenMission2"
             MissionLength = 180
@@ -241,13 +231,8 @@ let loadConfigFile (path : string) =
         FreshAttackerRefill = float32 values.FreshAttackerRefill
         FreshBomberRefill = float32 values.FreshBomberRefill
         FreshTransportRefill = float32 values.FreshTransportRefill
-        PlaneRentalAllowed = values.PlaneRentalAllowed
         MaxCash = values.MaxCash
         InitialCash = values.InitialCash
-        MaxReservedPlanes = values.MaxReservedPlanes
-        MaxTotalReservedPlanes = values.MaxTotalReservedPlanes
-        MoneyBackFactor = float32 values.MoneyBackFactor
-        RearAirfieldCostFactor = float32 values.RearAirfieldCostFactor
         EnablePlayerTanks = values.EnablePlayerTanks
         MissionName = values.MissionName
         MissionLength = values.MissionLength
