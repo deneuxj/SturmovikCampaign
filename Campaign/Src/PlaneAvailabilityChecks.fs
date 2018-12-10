@@ -103,7 +103,7 @@ let checkPlaneAvailability (missionLength : float32<H>) (limits : Limits) (world
                 |> Seq.collect (snd >> snd) // Turn into a command seq
                 |> Seq.fold (fun (context : Context, msgs) cmd ->
                     let context, msgs2 = context.Execute(cmd)
-                    context, msgs2 @ msgs) (context, [])
+                    context, msgs @ msgs2) (context, [])
 
             // Update context with kill entries
             let context2 =
