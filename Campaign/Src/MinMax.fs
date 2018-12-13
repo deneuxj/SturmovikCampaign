@@ -385,7 +385,7 @@ let allMoves (neighboursOf : ColumnTransportType * int -> int[]) (state : BoardS
                         if not aggressive && state.Owners.[j] = someCoalition then
                             yield { Start = i; Destination = j; Force = moveableForce; Transport = transport }
         ]
-    let doAggressiveMoves = state.Score.AttackingSide = coalition
+    let doAggressiveMoves = true // state.Score.AttackingSide = coalition
     [
         if doAggressiveMoves then
             for i in 0 .. state.Owners.Length - 1 do
@@ -493,8 +493,10 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                         // Skip the following moves
                         // - A -> B; B -> A (armies swapping positions)
                         // - A -> B; C -> B (reinforcements into battle, not properly handled by campaign update)
+                        // - Two simultaneous invasions
                         alliesMove.Destination = axisMove.Start && alliesMove.Start = axisMove.Destination ||
-                        alliesMove.Destination = axisMove.Destination
+                        alliesMove.Destination = axisMove.Destination ||
+                        board.AxisForces.[alliesMove.Destination] > 0.0f<E> && board.AlliesForces.[axisMove.Destination] > 0.0f<E>
                     | _ ->
                         false
                 if skip then
