@@ -493,10 +493,8 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
                         // Skip the following moves
                         // - A -> B; B -> A (armies swapping positions)
                         // - A -> B; C -> B (reinforcements into battle, not properly handled by campaign update)
-                        // - Two simultaneous invasions
                         alliesMove.Destination = axisMove.Start && alliesMove.Start = axisMove.Destination ||
-                        alliesMove.Destination = axisMove.Destination ||
-                        board.AxisForces.[alliesMove.Destination] > 0.0f<E> && board.AlliesForces.[axisMove.Destination] > 0.0f<E>
+                        alliesMove.Destination = axisMove.Destination
                     | _ ->
                         false
                 if skip then
