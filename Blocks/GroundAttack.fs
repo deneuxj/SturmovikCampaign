@@ -14,8 +14,8 @@ type OptionalLandOrder =
 
 /// A single attacker that flies to an objective, attacks ground targets there and then flies to an exit point.
 type Attacker = {
-    DelayedStart : Mcu.McuTrigger
-    ImmediateStart : Mcu.McuTrigger
+    Start : Mcu.McuTrigger
+    Stop : Mcu.McuTrigger
     Plane : Mcu.HasEntity
     Ingress : Mcu.McuWaypoint
     AttackArea : Mcu.McuTrigger
@@ -33,8 +33,8 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let delayedStart = getTriggerByName group T.Blocks.DelayedStart
-        let immStart = getTriggerByName group T.Blocks.ImmediateStart
+        let start = getTriggerByName group T.Blocks.START
+        let stop = getTriggerByName group T.Blocks.STOP
         let plane = getVehicleByName group T.Blocks.Plane
         let ingress = getWaypointByName group T.Blocks.Ingress
         let egress = getWaypointByName group T.Blocks.Egress
@@ -79,8 +79,8 @@ with
         | NoLanding ->
             ()
         // result
-        { DelayedStart = delayedStart
-          ImmediateStart = immStart
+        { Start = start
+          Stop = stop
           Plane = plane
           Ingress = ingress
           Egress = egress
@@ -91,3 +91,12 @@ with
           All = McuUtil.groupFromList group
         }
 
+    member this.StartDelay
+        with get() =
+            match this.Start with
+            | :? Mcu.McuTimer as timer -> timer.Time
+            | _ -> failwith "MCU START in GroundAttack must be a timer"
+        and set(t) =
+            match this.Start with
+            | :? Mcu.McuTimer as timer -> timer.Time <- t
+            | _ -> failwith "MCU START in GroundAttack must be a timer"
