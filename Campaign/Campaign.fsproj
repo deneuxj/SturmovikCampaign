@@ -106,6 +106,7 @@
     <None Include="Config\PlaneSet-Stalingrad.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Config\PlaneSet-StalingradLate.yaml" />
     <None Include="Config\PlaneSet-Kuban.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
