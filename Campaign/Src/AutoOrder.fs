@@ -405,6 +405,8 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     match mark with
     | Defeat(coalition, depth, reason) when (state.Date - world.StartDate).TotalDays >= 7.0 && depth <= 4 ->
         Surrender(coalition, reason)
+    | Defeat(coalition, depth, reason) when (state.Date - world.StartDate).TotalDays >= 2.0 && depth <= 2 ->
+        Surrender(coalition, reason)
     | _ ->
         let { Axis = m1; Allies = m2 } = moves
         (Option.toList m1 @ Option.toList m2)
