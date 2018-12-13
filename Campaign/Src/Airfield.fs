@@ -148,7 +148,7 @@ let mkLoadoutString supplies loadouts =
     |> String.concat "/"
 
 /// Create plane specifications, which includes locking loadouts that aren't available due to limited supplies
-let mkPlaneSpecs supplies (planes : PlaneModel[]) (planesInAllSets : PlaneModel list) =
+let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes : PlaneModel[]) (planesInAllSets : PlaneModel list) =
     let maxIndex = 1 <<< (planes.Length)
 
     let mkPlaneSpec (plane : PlaneModel) =
@@ -166,7 +166,15 @@ let mkPlaneSpecs supplies (planes : PlaneModel[]) (planesInAllSets : PlaneModel 
                 |> Option.map fst
                 |> Option.defaultValue plane.EmptyPayload
         let constr = mkLoadoutString supplies loadouts
-        let planeSpec = newAirfieldPlane("0..99", constr, 0, defaultPayload, "", plane.PlaneName, -1)
+        let modFilter =
+            let data = planeSet.Planes.TryFind plane
+            match data with
+            | None -> "0..99"
+            | Some data ->
+                data.AllowedMods
+                |> List.map (fun m -> m.ModFilter)
+                |> String.concat "/"
+        let planeSpec = newAirfieldPlane(modFilter, constr, 0, defaultPayload, "", plane.PlaneName, -1)
                             .SetScript(T.String model.Script)
                             .SetModel(T.String model.Model)
                             .SetStartInAir(T.Integer 2)
@@ -261,7 +269,7 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                             None
                     splitPlaneSpawns coalitionFilter availablePlanes
                 let planeSpecs : T.Airfield.Planes.Plane list =
-                    mkPlaneSpecs state.Supplies spawnPlanes staticSpawnPlanes
+                    mkPlaneSpecs world.PlaneSet state.Supplies spawnPlanes staticSpawnPlanes
                 let planes =
                     T.Airfield.Planes()
                         .SetPlane(planeSpecs)

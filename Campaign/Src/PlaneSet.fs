@@ -44,6 +44,10 @@ with
         | [x] -> One x
         | [x; y] -> Interval(x, y)
         | _ -> failwith "Range must be a singleton or a pair"
+    member this.ModFilter =
+        match this with
+        | One x -> sprintf "%d" x
+        | Interval (x, y) -> sprintf "%d..%d" x y
 
 /// <summary>
 /// Data associated to a plane. The plane model itself is not included.
@@ -69,8 +73,22 @@ with
             |> List.tryFind(fun plane -> model.Contains(plane.PlaneName.ToLowerInvariant()))
         let idx = data.Static
         let factor = float32 data.Factor
+        let mods =
+            data.Mods
+            |> Option.ofObj
+            |> Option.map (fun x -> x :> _ seq)
+            |> Option.defaultValue (Seq.empty)
+            |> Seq.map List.ofSeq
+            |> List.ofSeq
+        let ranges =
+            // If the Mods field is not specified in the file, it will get the default value, which I guess is the empty list.
+            // Interpret that as no mod restrictions.
+            // This means it's in theory not possible to forbid all mods. In practice, one can allow unassigned mod value, e.g. 99
+            match List.map (ModRange.FromList) mods with
+            | [] -> PlaneData.Default.AllowedMods
+            | x -> x
         plane
-        |> Option.map(fun plane -> plane, { PlaneData.Default with StaticPlaneIndex = idx; Cost = plane.Cost; RearValueFactor = factor })
+        |> Option.map(fun plane -> plane, { PlaneData.Default with StaticPlaneIndex = idx; Cost = plane.Cost; RearValueFactor = factor; AllowedMods = ranges })
 
 /// <summary>
 /// Region where a plane set can be used.
