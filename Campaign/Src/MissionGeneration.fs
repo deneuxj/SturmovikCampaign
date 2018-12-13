@@ -392,18 +392,20 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             // Spawn "wing" immediately after "leader"
             for (_, blocks) in attacks do
                 for b1, b2 in Seq.pairwise blocks do
-                    Mcu.addTargetLink b1.Spawned b2.ImmediateStart.Index
+                    Mcu.addTargetLink b1.Spawned b2.Start.Index
             // Spawn pairs one minute after previous pair
             for (_, block1), (_, block2) in Seq.pairwise attacks do
                 match block1, block2 with
                 | b1 :: _, b2 :: _ ->
-                    Mcu.addTargetLink b1.Spawned b2.DelayedStart.Index
+                    b2.StartDelay <- 60.0
+                    Mcu.addTargetLink b1.Spawned b2.Start.Index
                 | _, _ ->
                     failwith "Expected at least one block in each attack list"
             // Start first pair one minute after mission start
             match attacks with
             | (_, hd :: _) :: _ ->
-                Mcu.addTargetLink missionBegin hd.DelayedStart.Index
+                hd.StartDelay <- 60.0
+                Mcu.addTargetLink missionBegin hd.Start.Index
             | _ -> ()
         mkAttackStarts axisAttacks
         mkAttackStarts alliesAttacks
