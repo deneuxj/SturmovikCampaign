@@ -610,6 +610,10 @@ type World = {
     TankTargetNumber : int
     /// Max amount of repairs per building group per hour
     RepairSpeed : float32<E/H>
+    /// Max amount of repair, per region, per hour.
+    RegionRepairSpeed : float32<E/H>
+    // Max number of tanks exposed in a park
+    MaxTanksInParks : int
 }
 with
     static member Create(scenario, planeSet, strategyFile, planeProduction, subBlocksFile : string) =
@@ -725,6 +729,8 @@ with
           TransferNumPlaneTarget = 8
           TankTargetNumber = 30
           RepairSpeed = 10.0f<E/H>
+          RegionRepairSpeed = 25.0f<E/H>
+          MaxTanksInParks = 16
         }
 
     member this.GetClosestAirfield(pos : Vector2) =
@@ -759,11 +765,6 @@ with
         this.Airfields
         |> Seq.exists (fun af -> af.Region = region)
 
-    // BREAKING. Max number of tanks exposed in a park
-    member this.MaxTanksInParks = 16
-
-    // BREAKING. Max amount of repair, per region, per hour.
-    member this.RegionRepairSpeed = this.RepairSpeed * 2.5f
 
 open Util
 
