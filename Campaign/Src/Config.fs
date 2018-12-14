@@ -72,6 +72,8 @@ type Configuration = {
     MaxCash : int
     InitialCash : int
     SpawnsAreRestricted : bool
+    MaxLuxuryBonusSpawns : int
+    FreshLuxurySpawns : int
     FreshFighterSpawns : int
     FreshAttackerSpawns : int
     FreshBomberSpawns : int
@@ -126,6 +128,8 @@ with
             InitialCash = 5000
             MaxCash = 10000
             SpawnsAreRestricted = true
+            MaxLuxuryBonusSpawns = 0
+            FreshLuxurySpawns = 0
             FreshFighterSpawns = 6
             FreshAttackerSpawns = 3
             FreshBomberSpawns = 2
@@ -223,6 +227,8 @@ let loadConfigFile (path : string) =
         MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI
         MaxStaticPlanes = values.MaxStaticPlanes
         SpawnsAreRestricted = values.SpawnRestrictions
+        MaxLuxuryBonusSpawns = values.MaxLuxuryBonusSpawns
+        FreshLuxurySpawns = values.FreshLuxurySpawns
         FreshFighterSpawns = values.FreshFighterSpawns
         FreshAttackerSpawns = values.FreshAttackerSpawns
         FreshBomberSpawns = values.FreshBomberSpawns

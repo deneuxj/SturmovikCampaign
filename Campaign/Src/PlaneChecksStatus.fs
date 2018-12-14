@@ -33,7 +33,7 @@ let private logger = LogManager.GetCurrentClassLogger()
 
 type PlaneOwnershipType =
     | Denied of reason:string
-    | FreshSpawn of factor:float32
+    | FreshSpawn of regularCost:float32 * luxuryCost:float32
     | FromReserved
     | FromPublic
 with
@@ -70,6 +70,7 @@ type PlayerFlightData =
       InitialBombs : float32<K>
       NumBombs : int
       Reward : float32<E>
+      PlaneDamages : float32 // % damage inflicted to enemies
       StartAirfield : AirfieldId
     }
 with
@@ -119,11 +120,11 @@ with
                     FromReserved
                 elif context.RearAirfields.Contains(af) then
                     let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0.0f
-                    let rearValueFactor = context.GetRearValueFactor(plane)
-                    match numFreshSpawnsLeft with
-                    | x when x >= rearValueFactor ->
-                        FreshSpawn(rearValueFactor)
-                    | x ->
+                    let regularCost, luxuryCost = context.GetRearValueFactor(plane) |> PlayerHangar.extractRegularAndLuxuryCosts
+                    match numFreshSpawnsLeft, hangar.LuxurySpawns + hangar.BonusLuxurySpawns with
+                    | x, y when x >= regularCost && y >= luxuryCost ->
+                        FreshSpawn(regularCost, luxuryCost)
+                    | x, y ->
                         let alts =
                             hangar.FreshSpawns
                             |> Map.toSeq
@@ -131,7 +132,9 @@ with
                             |> Seq.map fst
                             |> Set.ofSeq
                             |> fun planeTypes -> context.GetFreshSpawnAlternatives(planeTypes, af)
-                            |> Seq.filter (fun plane -> x >= context.GetRearValueFactor(plane))
+                            |> Seq.filter (fun plane ->
+                                let regular, luxury = context.GetRearValueFactor(plane) |> PlayerHangar.extractRegularAndLuxuryCosts
+                                x >= regular && y >= luxury)
                             |> List.ofSeq
                         match alts with
                         | [] ->
@@ -200,6 +203,7 @@ with
                 InitialBombs = weight
                 Reward = 0.0f<E>
                 StartAirfield = af
+                PlaneDamages = 0.0f
             }, List.concat [supplyCommands; planeInfo]
         | Some _
         | None ->
@@ -215,8 +219,8 @@ with
             { this with State = InFlight },
             [
                 match this.CheckoutCost with
-                | FreshSpawn(factor) ->
-                    yield PlayerFreshSpawn(this.Player, this.Coalition, this.Plane.PlaneType, factor)
+                | FreshSpawn(regularCost, luxuryCost) ->
+                    yield PlayerFreshSpawn(this.Player, this.Coalition, this.Plane.PlaneType, regularCost, luxuryCost)
                 | _ -> ()
 
                 let rank = context.GetHangar(this.Player, this.Coalition).RankedName
@@ -239,13 +243,26 @@ with
 
     // Increase reward depending on target and amount of damage
     member this.HandleInflictedDamage(context : Context, damage : DamageEntry) =
-        this.AccumulateDamageReward(context, damage.TargetId, damage.Damage)
+        this.AccumulateDamageReward(context, damage.TargetId, damage.Damage).AccumulatePlaneDamage(context, damage.TargetId, damage.Damage), []
 
     member this.HandleKill(context : Context, kill : KillEntry) =
         let targetHealth = context.GetObjectHealth(kill.TargetId)
-        this.AccumulateDamageReward(context, kill.TargetId, targetHealth)
+        this.AccumulateDamageReward(context, kill.TargetId, targetHealth).AccumulatePlaneDamage(context, kill.TargetId, targetHealth), []
 
-    member this.AccumulateDamageReward(context : Context, target : int, damage : float32) =
+    member this.AccumulatePlaneDamage(context : Context, target : int, damage : float32) : PlayerFlightData =
+        let value =
+            match context.Binding.TryFind(target) with
+            | Some (coalition, DynamicPlane plane) ->
+                let sign =
+                    if coalition = this.Coalition then
+                        1.0f
+                    else
+                        -1.0f
+                sign * plane.Cost / basePlaneCost
+            | _ -> 0.0f
+        { this with PlaneDamages = this.PlaneDamages + value }
+
+    member this.AccumulateDamageReward(context : Context, target : int, damage : float32) : PlayerFlightData =
         let value =
             match context.Binding.TryFind(target) with
             | Some(_, StaticPlane _) ->
@@ -317,7 +334,7 @@ with
             | _ ->
                 0.0f<E>
         let reward = factor * (damage * value + productionLoss)
-        { this with Reward = this.Reward + reward }, []
+        { this with Reward = this.Reward + reward }
 
     // Set health to 0
     member this.HandleKilled(context : Context, killed : KillEntry) =
@@ -394,7 +411,7 @@ with
         { this with State = Landed(af, None) }, cmds
 
     // Check in what's left of the plane, award reward
-    member this.HandleMissionEnd(context : Context, af : AirfieldId option, bombs : int option) =
+    member this.HandleMissionEnd(context : Context, af : AirfieldId option, bombs : int option, region : RegionId option) =
         assert(this.State <> MissionEnded)
         match af, this.Health with
         | Some af, health when health > 0.0f ->
@@ -414,13 +431,30 @@ with
                 match this.State with
                 | Landed(Some af2, _) when af2 <> af ->
                     yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
-                    yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward)
+                    let planeDamages =
+                        if isCorrectCoalition then
+                            this.PlaneDamages / 3.0f
+                        else
+                            0.0f
+                    yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward, planeDamages)
                 | _ ->
                     ()
                 yield ShowHangar(this.Player, this.Coalition)
             ]
-        | _ ->
-            { this with State = MissionEnded }, []
+        | None, health when health > 0.0f ->
+            { this with State = MissionEnded },
+            [
+                let territory =
+                    region
+                    |> Option.map context.State.GetRegion
+                    |> Option.bind (fun region -> region.Owner)
+                if territory <> Some this.Coalition then
+                    yield ResetLuxuryBonus(this.Player, this.Coalition)
+            ]
+        | _, health ->
+            assert(health <= 0.0f)
+            { this with State = MissionEnded },
+            [ yield ResetLuxuryBonus(this.Player, this.Coalition) ]
 
     // Player disconnected, return plane to start airfield if undamaged
     member this.HandlePrematureMissionEnd(context : Context) =
@@ -435,7 +469,7 @@ with
                 if this.CheckoutCost.GrantsReservationOnLanding then
                     yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
             | _ ->
-                ()
+                yield ResetLuxuryBonus(this.Player, this.Coalition)
             yield ShowHangar(this.Player, this.Coalition)
         ]
 
@@ -477,9 +511,11 @@ with
             logger.Warn(sprintf "Spurious landing event for %s in %s id %d" this.Player.Name this.Plane.PlaneName this.Vehicle)
             this, []
         | Landed(af, _), (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
-            this.HandleMissionEnd(context, af, Some finish.Bombs)
+            let pos = Vector2(float32 finish.Position.X, float32 finish.Position.Z)
+            let region = context.World.World.TryGetRegionWhere(pos)
+            this.HandleMissionEnd(context, af, Some finish.Bombs, region |> Option.map (fun r -> r.RegionId))
         | Landed(af, _), (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->
-            this.HandleMissionEnd(context, af, None)
+            this.HandleMissionEnd(context, af, None, None)
         | InFlight, (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
             this.HandlePrematureMissionEnd(context)
         | InFlight, (:? LeaveEntry as left) when string left.UserId = this.Player.UserId ->

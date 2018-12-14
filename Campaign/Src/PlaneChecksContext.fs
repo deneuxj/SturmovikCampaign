@@ -103,10 +103,11 @@ let showHangar(hangar : PlayerHangar, delay) =
         let numAttackers = getNumFreshSpawns PlaneType.Attacker
         let numBombers = getNumFreshSpawns PlaneType.Bomber
         let numTransports = getNumFreshSpawns PlaneType.Transport
+        let luxury = hangar.BonusLuxurySpawns + hangar.LuxurySpawns
         yield Overview(userIds, delay,
             [
                 sprintf "Welcome back %s" hangar.RankedName
-                sprintf "Fresh spawns at rear AF: F:%0.1f A:%0.1f B:%0.1f T:%0.1f" numFighters numAttackers numBombers numTransports
+                sprintf "Fresh spawns at rear AF: F:%0.1f+%0.1f A:%0.1f B:%0.1f T:%0.1f" numFighters luxury numAttackers numBombers numTransports
             ])
         yield Overview(userIds, delay,
             [
@@ -128,18 +129,19 @@ let showHangar(hangar : PlayerHangar, delay) =
     ]
 
 /// Create an empty hangar for a player
-let private emptyHangar (playerId : string, playerName, coalition, cash, freshSpawns) =
-    { Player = Guid(playerId); PlayerName = playerName; Coalition = coalition; Reserve = cash; Airfields = Map.empty; FreshSpawns = freshSpawns }
+let private emptyHangar (playerId : string, playerName, coalition, cash, freshSpawns, luxurySpawns) =
+    { Player = Guid(playerId); PlayerName = playerName; Coalition = coalition; Reserve = cash; Airfields = Map.empty; FreshSpawns = freshSpawns; LuxurySpawns = luxurySpawns; BonusLuxurySpawns = 0.0f }
 
 /// Commands sent during state transitions in PlayerStateData to the main asyncSeq computation
 type Command =
     | PlaneCheckOut of user:UserIds * PlaneModel * AirfieldId
     | RemoveReservedPlane of user:UserIds * PlaneModel * AirfieldId * CoalitionId
-    | PlayerFreshSpawn of user:UserIds * CoalitionId * PlaneType * float32
+    | PlayerFreshSpawn of user:UserIds * CoalitionId * PlaneType * float32 * float32
     | PlaneCheckIn of user:UserIds * PlaneModel * health:float32 * AirfieldId
     | AddReservedPlane of user:UserIds * PlaneModel * health:float32 * AirfieldId * CoalitionId
     | DeliverSupplies of float32<E> * RegionId
-    | RewardPlayer of user:UserIds * CoalitionId * float32<E>
+    | RewardPlayer of user:UserIds * CoalitionId * float32<E> * luxuryBonus:float32
+    | ResetLuxuryBonus of user:UserIds * CoalitionId
     | PunishThief of user:UserIds * PlaneModel * AirfieldId
     | Message of PlaneAvailabilityMessage
     | PlaneGifted of PlaneGift
@@ -174,6 +176,8 @@ type Limits =
       InitialCash : float32<E>
       MaxCash : float32<E>
       SpawnsAreRestricted : bool
+      MaxBonusLuxurySpawns : float32
+      LuxurySpawns : float32
       FreshSpawns : Map<PlaneType, float32>
     }
 with
@@ -185,6 +189,8 @@ with
         { InitialCash = 1.0f<E> * float32 config.InitialCash
           MaxCash = 1.0f<E> * float32 config.MaxCash
           SpawnsAreRestricted = config.SpawnsAreRestricted
+          MaxBonusLuxurySpawns = float32 config.MaxLuxuryBonusSpawns
+          LuxurySpawns = float32 config.FreshLuxurySpawns
           FreshSpawns = freshSpawns
         }
 
@@ -353,11 +359,18 @@ with
                 yield Status(hangars, this.Airfields)
             ]
 
-        | PlayerFreshSpawn(user, coalition, planeType, factor) ->
+        | PlayerFreshSpawn(user, coalition, planeType, regularCost, luxuryCost) ->
             let hangar : PlayerHangar = this.GetHangar(user, coalition)
             let oldSpawns = hangar.FreshSpawns.TryFind(planeType) |> Option.defaultValue 0.0f
-            let newSpawns = oldSpawns - factor |> max 0.0f
-            let hangar = { hangar with FreshSpawns = hangar.FreshSpawns.Add(planeType, newSpawns) }
+            let newSpawns = oldSpawns - regularCost |> max 0.0f
+            let payedByBonus = min hangar.BonusLuxurySpawns luxuryCost
+            let newBonus = hangar.BonusLuxurySpawns - payedByBonus
+            let newLuxury = hangar.LuxurySpawns - (luxuryCost - payedByBonus)
+            let hangar =
+                { hangar with
+                    FreshSpawns = hangar.FreshSpawns.Add(planeType, newSpawns)
+                    BonusLuxurySpawns = newBonus
+                    LuxurySpawns = newLuxury }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
             [
@@ -450,10 +463,20 @@ with
             let newNeeds = oldNeeds - supplies
             { this with RegionNeeds = this.RegionNeeds.Add(region, newNeeds) }, []
 
-        | RewardPlayer(user, coalition, reward) ->
+        | RewardPlayer(user, coalition, reward, luxuryBonus) ->
             let hangar = this.GetHangar(user, coalition)
             let reserve = min this.Limits.MaxCash (hangar.Reserve + reward)
-            let hangar = { hangar with Reserve = reserve }
+            let bonus = min this.Limits.MaxBonusLuxurySpawns (hangar.BonusLuxurySpawns + luxuryBonus)
+            let hangar = { hangar with Reserve = reserve; BonusLuxurySpawns = bonus }
+            let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
+            { this with Hangars = hangars },
+            [
+                yield Status(hangars, this.Airfields)
+            ]
+
+        | ResetLuxuryBonus(user, coalition) ->
+            let hangar = this.GetHangar(user, coalition)
+            let hangar = { hangar with BonusLuxurySpawns = 0.0f }
             let hangars = this.Hangars.Add((user.UserId, coalition), hangar)
             { this with Hangars = hangars },
             [
@@ -535,7 +558,7 @@ with
     member this.GetHangar(user : UserIds, coalition) =
         let freshSpawns = this.Limits.FreshSpawns
         this.Hangars.TryFind((user.UserId, coalition))
-        |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash, freshSpawns))
+        |> Option.defaultValue (emptyHangar(user.UserId, user.Name, coalition, this.Limits.InitialCash, freshSpawns, this.Limits.LuxurySpawns))
 
     member this.TryGetHangar(playerGuid : string, coalition : CoalitionId) =
         this.Hangars.TryFind((playerGuid, coalition))

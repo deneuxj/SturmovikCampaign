@@ -387,6 +387,7 @@ module MissionFileGeneration =
     open System.IO
     open MBrace.FsPickler
     open System.Diagnostics
+    open Campaign.PlayerHangar
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -492,10 +493,11 @@ module MissionFileGeneration =
                     yield "You can spawn at any airfield named in ALL CAPS."
                     yield "You can also spawn at other airfields, if you have landed <b>that</b> plane (undamaged) there earlier."
                     for plane, data in world.PlaneSet.Planes |> Map.toSeq do
+                        let regularCost, luxuryCost = data.RearValueFactor |> extractRegularAndLuxuryCosts
                         if data.RearValueFactor > 1.0f then
-                            yield sprintf "Sparkly new %s are available at a %1.2f%% PREMIUM (more expensive) at ALL CAPS airfields." plane.PlaneName (100.0f * data.RearValueFactor)
+                            yield sprintf "Sparkly new %s require %0.1f%% from extra fighter quota at ALL CAPS airfields." plane.PlaneName luxuryCost
                         elif data.RearValueFactor < 1.0f then
-                            yield sprintf "%s are available at a %1.2f%% discount at ALL CAPS airfields." plane.PlaneName (100.0f * (1.0f - data.RearValueFactor))
+                            yield sprintf "%s are available at a %1.2f%% discount at ALL CAPS airfields." plane.PlaneName (100.0f * (1.0f - regularCost))
                 ]
                 |> String.concat " "
             else

@@ -54,6 +54,10 @@
     MaxStaticPlanes: 16
     # Whether spawn restrictions are in place
     SpawnRestrictions: true
+    # Every time a player shoots down 3 planes, they get an additional fresh luxury spawn. This bonus is reset when the pilot is killed or captured. (per player)
+    MaxLuxuryBonusSpawns: 2
+    # Max number of "best plane" spawns at rear airfield (per player)
+    FreshLuxurySpawns: 2
     # Max number of fighter spawns at rear airfield (per player)
     FreshFighterSpawns: 5
     # Max number of attacker spawns at rear airfield (per player)
@@ -63,11 +67,11 @@
     # Max number of transport spawns at rear airfield (per player)
     FreshTransportSpawns: 3
     # Number of new fresh fighter spawns each new mission (per player)
-    FreshFighterRefill: 3.0
+    FreshFighterRefill: 1.5
     # Number of new fresh attacker spawns each new mission (per player)
-    FreshAttackerRefill: 2.0
+    FreshAttackerRefill: 1.0
     # Number of new fresh bomber spawns each new mission (per player)
-    FreshBomberRefill: 1.0
+    FreshBomberRefill: 0.5
     # Number of new fresh transport spawns each new mission (per player)
     FreshTransportRefill: 1.0
     # Max amount of cash a player can hold

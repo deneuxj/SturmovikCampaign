@@ -113,6 +113,10 @@ type PlayerHangar =
       PlayerName : string
       Coalition : CoalitionId
       Reserve : float32<E>
+      // Number of fresh spawns in the most modern planes, typically needed to avoid everyone favouring the best fighter
+      LuxurySpawns : float32
+      // Additional fresh spawns in modern planes, granted as a reward from missions. Meant to be reset after a death or capture.
+      BonusLuxurySpawns : float32
       // Number of fresh spawns left, i.e. free spawns in non-reserved planes
       FreshSpawns : Map<PlaneType, float32>
       Airfields : Map<AirfieldId, AirfieldHangar> }
@@ -226,3 +230,8 @@ let stringsToGuids hangars =
     |> Map.toSeq
     |> Seq.map (fun ((k : string, coalition), v) -> (Guid(k), coalition), v)
     |> Map.ofSeq
+
+let extractRegularAndLuxuryCosts x =
+    let regular = min x 1.0f
+    let luxury = x - 1.0f |> max 0.0f
+    regular, luxury
