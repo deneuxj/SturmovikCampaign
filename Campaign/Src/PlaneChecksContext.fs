@@ -327,29 +327,24 @@ with
             match coalition with
             | Some coalition ->
                 let hangar : PlayerHangar = this.GetHangar(user, coalition)
-                if this.State.State.RearAirfields.Contains(af) then
-                    // Do not remove the plane from the airfield's pool
-                    this,
-                    [ Announce(coalition, [ sprintf "%s entered a %s from %s" hangar.RankedName plane.PlaneName af.AirfieldName ]) ]
-                else
-                    let planes =
-                        this.Airfields.TryFind(af)
-                        |> Option.defaultValue(Map.empty)
-                    let oldQty =
-                        planes.TryFind(plane)
-                        |> Option.defaultValue(0.0f)
-                    let newQty = oldQty - 1.0f
-                    let airfields = this.Airfields.Add(af, planes.Add(plane, max 0.0f newQty))
-                    { this with Airfields = airfields },
-                    [
-                        yield Status(this.Hangars, airfields)
-                        if oldQty >= 1.0f && newQty < 1.0f then
-                            yield PlanesAtAirfield(af, airfields.[af])
-                        if int newQty <= 0 then
-                            yield Announce(coalition, [ sprintf "%s took the last %s from %s" hangar.RankedName plane.PlaneName af.AirfieldName ])
-                        else
-                            yield Announce(coalition, [ sprintf "%s entered a %s from %s (%d left)" hangar.RankedName plane.PlaneName af.AirfieldName (int newQty)])
-                    ]
+                let planes =
+                    this.Airfields.TryFind(af)
+                    |> Option.defaultValue(Map.empty)
+                let oldQty =
+                    planes.TryFind(plane)
+                    |> Option.defaultValue(0.0f)
+                let newQty = oldQty - 1.0f
+                let airfields = this.Airfields.Add(af, planes.Add(plane, max 0.0f newQty))
+                { this with Airfields = airfields },
+                [
+                    yield Status(this.Hangars, airfields)
+                    if oldQty >= 1.0f && newQty < 1.0f then
+                        yield PlanesAtAirfield(af, airfields.[af])
+                    if int newQty <= 0 then
+                        yield Announce(coalition, [ sprintf "%s took the last %s from %s" hangar.RankedName plane.PlaneName af.AirfieldName ])
+                    else
+                        yield Announce(coalition, [ sprintf "%s entered a %s from %s (%d left)" hangar.RankedName plane.PlaneName af.AirfieldName (int newQty)])
+                ]
             | None ->
                 logger.Error("Attempt to check out plane from neutral region")
                 this, []

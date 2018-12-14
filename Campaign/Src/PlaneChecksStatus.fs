@@ -170,7 +170,9 @@ with
                                          "You will be KICKED if you take off"]))
                     | FromReserved | FreshSpawn _ ->
                         yield Message(Overview(user, 0, [sprintf "%s, you are cleared to take off in your %s from %s" rank plane.PlaneName af.AirfieldName]))
-                        yield PlaneCheckOut(user, plane, af)
+                        if not(context.State.State.RearAirfields.Contains(af) && context.Limits.SpawnsAreRestricted) then
+                            // Only remove the plane from the airfield's pool if it's not taken from the infinite pool of the rear airfield
+                            yield PlaneCheckOut(user, plane, af)
                         if cost = FromReserved then
                             yield RemoveReservedPlane(user, plane, af, coalition)
                     | FromPublic ->
@@ -474,13 +476,19 @@ with
         ]
 
     // Player ended mission before taking off, cancel mission
-    member this.HandleAbortionBeforeTakeOff(context) =
+    member this.HandleAbortionBeforeTakeOff(context : Context) =
         assert(this.State <> MissionEnded)
         { this with State = MissionEnded },
         [
-            yield PlaneCheckIn(this.Player, this.Plane, this.Health, this.StartAirfield)
-            if this.CheckoutCost.GrantsReservationOnLanding then
+            if not(context.State.State.RearAirfields.Contains(this.StartAirfield) && context.Limits.SpawnsAreRestricted) then
+                // Do not check in the plane if it wasn't checked out because the airfield was the rear one.
+                yield PlaneCheckIn(this.Player, this.Plane, this.Health, this.StartAirfield)
+            match this.CheckoutCost with
+            | FromReserved ->
+                // Undo removal from reserved pool (took place during spawning)
                 yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
+            | Denied _ | FreshSpawn _ | FromPublic ->
+                ()
             yield ShowHangar(this.Player, this.Coalition)
         ]
 
