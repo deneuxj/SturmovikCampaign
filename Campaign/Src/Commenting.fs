@@ -107,11 +107,11 @@ let private updateAirfieldPlaneset(allowCapturedPlanes, wg : WorldFastAccess, sg
     // State of airfield at start of mission
     let afs = sg.GetAirfield(afId)
     let region = sg.GetRegion(wg.GetAirfield(afId).Region)
-    match region.HasInvaders, region.Owner with
-    | true, _ ->
-        // Don't attempt to update airfield where spawn is disabled due to an ongoing battle.
+    match sg.State.RearAirfields.Contains(afId), region.HasInvaders, region.Owner with
+    | true, _ , _ | _, true, _ ->
+        // Don't attempt to update rear airfields or airfields where spawn is disabled due to an ongoing battle.
         async.Zero()
-    | false, Some coalition ->
+    | false, false, Some coalition ->
         // Compute plane index: For each plane initially found in the spawn, check if it's now available.
         // If so, include it in the plane index, which is a bit mask.
         let planeSetIndex =
@@ -135,7 +135,7 @@ let private updateAirfieldPlaneset(allowCapturedPlanes, wg : WorldFastAccess, sg
             |> fst
         logger.Info(sprintf "Change to planeset %d at %s" planeSetIndex afId.AirfieldName)
         handlers.OnPlaneSetChanged(afId, planeSetIndex)
-    | false, None ->
+    | false, false, None ->
         async.Zero()
 
 let private initAirfieldPlanesets(config : Configuration, wg : WorldFastAccess, sg : WorldStateFastAccess, handlers, hangars, entries) =

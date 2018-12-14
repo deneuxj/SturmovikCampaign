@@ -147,10 +147,12 @@ let mkLoadoutString supplies loadouts =
     ranges Start loadouts
     |> String.concat "/"
 
-/// Create plane specifications, which includes locking loadouts that aren't available due to limited supplies
-let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes : PlaneModel[]) (planesInAllSets : PlaneModel list) =
-    let maxIndex = 1 <<< (planes.Length)
+type PlaneSpecsPlanes =
+    | Indexed of PlaneModel[] * PlaneModel list // Indexed by subset of available planes
+    | NotIndexed of CoalitionId // Not indexed, and infinite number of planes. Used for the rear airfield
 
+/// Create plane specifications, which includes locking loadouts that aren't available due to limited supplies
+let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes2 : PlaneSpecsPlanes) =
     let mkPlaneSpec (plane : PlaneModel) =
         let model = plane.ScriptModel
         let loadouts =
@@ -180,29 +182,40 @@ let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes : PlaneModel[])
                             .SetStartInAir(T.Integer 2)
         planeSpec
 
-    [
-        // Planes whose availability is updated dynamically during the mission by changing the planeset
-        for i, plane in Seq.indexed planes do
-            let mask = 1 <<< i
-            let planeSpec = mkPlaneSpec plane
-            for j in 0 .. maxIndex do
-                if (j &&& mask) <> 0 then
+    match planes2 with
+    | NotIndexed coalition ->
+        [
+            let allPlanes =
+                planeSet.Planes
+                |> Map.toSeq
+                |> Seq.filter (fun (plane, _) -> plane.Coalition = coalition)
+                |> Seq.map fst
+            for plane in allPlanes do
+                let planeSpec = mkPlaneSpec plane
+                yield planeSpec.SetSetIndex(T.Integer 0).SetNumber(T.Integer -1)
+        ]
+    | Indexed(planes, planesInAllSets) ->
+        [
+            let maxIndex = 1 <<< (planes.Length)
+            // Planes whose availability is updated dynamically during the mission by changing the planeset
+            for i, plane in Seq.indexed planes do
+                let mask = 1 <<< i
+                let planeSpec = mkPlaneSpec plane
+                for j in 0 .. maxIndex do
+                    if (j &&& mask) <> 0 then
+                        yield planeSpec.SetSetIndex(T.Integer j)
+                    else
+                        yield planeSpec.SetNumber(T.Integer 0).SetSetIndex(T.Integer j)
+            // Other planes, present in all planesets
+            for plane in planesInAllSets do
+                let planeSpec = mkPlaneSpec plane
+                for j in 0 .. maxIndex do
                     yield planeSpec.SetSetIndex(T.Integer j)
-                else
-                    yield planeSpec.SetNumber(T.Integer 0).SetSetIndex(T.Integer j)
-        // Other planes, present in all planesets
-        for plane in planesInAllSets do
-            let planeSpec = mkPlaneSpec plane
-            for j in 0 .. maxIndex do
-                yield planeSpec.SetSetIndex(T.Integer j)
-    ]
+        ]
 
 let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionStarted : Mcu.McuTrigger) =
     let sg = state.FastAccess
-    let rearAirfields =
-        [Axis; Allies]
-        |> Seq.choose (fun coalition -> world.RearAirfields.TryFind(coalition))
-        |> Set.ofSeq
+    let rearAirfields = state.RearAirfields
     [
         for airfield, state in Seq.zip world.Airfields state.Airfields do
             let region = sg.GetRegion(airfield.Region)
@@ -269,7 +282,10 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                             None
                     splitPlaneSpawns coalitionFilter availablePlanes
                 let planeSpecs : T.Airfield.Planes.Plane list =
-                    mkPlaneSpecs world.PlaneSet state.Supplies spawnPlanes staticSpawnPlanes
+                    if rearAirfields.Contains(airfield.AirfieldId) && restrictionsAreActive then
+                        mkPlaneSpecs world.PlaneSet state.Supplies (NotIndexed coalition)
+                    else
+                        mkPlaneSpecs world.PlaneSet state.Supplies (Indexed(spawnPlanes, staticSpawnPlanes))
                 let planes =
                     T.Airfield.Planes()
                         .SetPlane(planeSpecs)
@@ -306,26 +322,29 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                     |> Option.map (fun point -> Vector2(point.GetX().Value |> float32, point.GetY().Value |> float32).Rotate(af.GetYOri().Value |> float32) + Vector2.FromPos(af))
                     |> Option.map (fun pos -> pos, coalition)
                 let serverInputs =
-                    let maxIndex = 1 <<< spawnPlanes.Length
-                    [
-                        for i in 0..(maxIndex - 1) do
-                            let subst = Mcu.substId <| store.GetIdMapper()
-                            let input = newServerInput 0 (sprintf "%s-%d" airfield.AirfieldId.AirfieldName i)
-                            let alpha = 2.0f * float32(System.Math.PI * (if maxIndex = 0 then 0.0 else (float i) / (float maxIndex)))
-                            let pos = Vector2.FromPos(af) + 200.0f * Vector2(cos alpha, sin alpha)
-                            pos.AssignTo(input.Pos)
-                            let behave = newBehaviour 1 32 0 0 false (float i)  false false false false false
-                            let pos = Vector2.FromPos(af) + 100.0f * Vector2(cos alpha, sin alpha)
-                            pos.AssignTo(behave.Pos)
-                            subst input
-                            subst behave
-                            Mcu.addObjectLink behave entity.Index
-                            Mcu.addTargetLink input behave.Index
-                            if i = maxIndex - 1 then
-                                Mcu.addTargetLink missionStarted behave.Index
-                            yield input :> Mcu.McuBase
-                            yield behave :> Mcu.McuBase
-                    ]
+                    if rearAirfields.Contains(airfield.AirfieldId) && restrictionsAreActive then
+                        []
+                    else
+                        [
+                            let maxIndex = 1 <<< spawnPlanes.Length
+                            for i in 0..(maxIndex - 1) do
+                                let subst = Mcu.substId <| store.GetIdMapper()
+                                let input = newServerInput 0 (sprintf "%s-%d" airfield.AirfieldId.AirfieldName i)
+                                let alpha = 2.0f * float32(System.Math.PI * (if maxIndex = 0 then 0.0 else (float i) / (float maxIndex)))
+                                let pos = Vector2.FromPos(af) + 200.0f * Vector2(cos alpha, sin alpha)
+                                pos.AssignTo(input.Pos)
+                                let behave = newBehaviour 1 32 0 0 false (float i)  false false false false false
+                                let pos = Vector2.FromPos(af) + 100.0f * Vector2(cos alpha, sin alpha)
+                                pos.AssignTo(behave.Pos)
+                                subst input
+                                subst behave
+                                Mcu.addObjectLink behave entity.Index
+                                Mcu.addTargetLink input behave.Index
+                                if i = maxIndex - 1 then
+                                    Mcu.addTargetLink missionStarted behave.Index
+                                yield input :> Mcu.McuBase
+                                yield behave :> Mcu.McuBase
+                        ]
                 match runwayStartPos with
                 | Some x -> yield (x, [ mcu; upcast entity ] @ serverInputs)
                 | None -> ()

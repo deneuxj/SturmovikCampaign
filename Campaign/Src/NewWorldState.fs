@@ -66,57 +66,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                 else
                     yield regState
         ]
-    // Add the most needed kind of plane to the rear airfield
-    let airfields =
-        [
-            let random = System.Random()
-            let rear = world.RearAirfields.TryFind(coalition)
-            for af, afs in List.zip world.Airfields state.Airfields do
-                if Some af.AirfieldId = rear then
-                    let planeType = AutoOrder.pickPlaneToProduce coalition world state
-                    // Pick the plane model of that type that has smallest number at the rear airfield
-                    let candidates = world.PlaneSet.AllPlanesOfType(planeType, coalition) |> Array.shuffle random
-                    let plane =
-                        try
-                            candidates
-                            |> Array.map (fun plane -> plane, afs.NumPlanes.TryFind plane |> Option.defaultValue 0.0f)
-                            |> Array.minBy snd
-                            |> fst
-                            |> Some
-                        with
-                        | _ -> None
-                    // Weird case: No plane could be picked. Can only happen with broken planesets that lack models of a certain type
-                    let plane =
-                        match plane with
-                        | Some _ -> plane
-                        | None ->
-                            try
-                                world.PlaneSet.AllModels
-                                |> Seq.minBy (fun _ -> random.NextDouble())
-                                |> Some
-                            with
-                            | _ -> None
-                    match plane with
-                    | Some model ->
-                        let fallOff =
-                            2.0 - (state.Date - world.StartDate).TotalDays / 7.0
-                            |> max 0.0
-                            |> min 1.0
-                            |> float32
-                        let produced = fallOff * world.PlaneProduction * dt / model.Cost
-                        let oldValue = afs.NumPlanes |> Map.tryFind model |> Option.defaultVal 0.0f
-                        let newValue = oldValue + produced
-                        yield { afs with
-                                    NumPlanes = Map.add model newValue afs.NumPlanes
-                        }
-                    | None ->
-                        // Another weird case: No plane at all in the given plane set and coalition. Don't produce any plane.
-                        yield afs
-                else
-                    // Not the rear airfield. Don't produce any plane.
-                    yield afs
-        ]
-    { state with Regions = regions; Airfields = airfields }
+    { state with Regions = regions }
 
 /// A region received supplies from production.
 type Resupplied = {
@@ -1328,6 +1278,25 @@ let updateRunways (world : World) (state : WorldState) (windDirection : float32)
     { state with Airfields = afStates
     }
 
+let updateRearAirfields (world : World) (state : WorldState) =
+    let sg = state.FastAccess
+    let pickRearAirfield coalition =
+        let getAirfieldStorage af =
+            sg.GetAirfield(af).Supplies
+        let candidate =
+            pickRearAirfield 70000.0f 200000.0f world.FastAccess state.Regions getAirfieldStorage coalition
+        let suppliesOld = getAirfieldStorage(state.RearAirfield coalition)
+        let suppliesNew = getAirfieldStorage(candidate)
+        if suppliesOld < 1000.0f<E> && suppliesNew > suppliesOld then
+            candidate
+        else
+            state.RearAirfield coalition
+
+    let axisRearAirfield = pickRearAirfield Axis
+    let alliesRearAirfield = pickRearAirfield Allies
+
+    { state with AxisRearAirfield = axisRearAirfield; AlliesRearAirfield = alliesRearAirfield }
+
 type MissionResults = {
     Entries : string list
     Shipments : SuppliesShipped list
@@ -1371,4 +1340,5 @@ let newState (config : Configuration.Configuration) (world : World) (state : Wor
         match battles with
         | [] -> state8.AttackingSide.Other
         | _ :: _ -> state8.AttackingSide
-    { state8 with Date = nextDate config.LongWorkDay dt state8.Date; AttackingSide = attackingSide }, newlyProduced, battleReports
+    let state9 = updateRearAirfields world state8
+    { state9 with Date = nextDate config.LongWorkDay dt state8.Date; AttackingSide = attackingSide }, newlyProduced, battleReports

@@ -60,12 +60,11 @@ let mkAADefenses (includeSearchLights, world : World, state : WorldState) =
                         | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
                     // Defense areas close to airfield spawns are made stronger
                     let isHighPrio =
-                        world.RearAirfields.TryFind(owner.Value)
-                        |> Option.map wg.GetAirfield
-                        |> Option.filter (fun af -> af.Region = area.Home)
-                        |> Option.exists (fun af ->
+                        state.RearAirfield(owner.Value)
+                        |> wg.GetAirfield
+                        |> fun af ->
                             af.Spawn
-                            |> Seq.exists (fun spawn -> (Vector2.FromPos(spawn) - area.Position.Pos).Length() < 2500.0f))
+                            |> Seq.exists (fun spawn -> (Vector2.FromPos(spawn) - area.Position.Pos).Length() < 2500.0f)
                     let nest =
                         { Priority = if isHighPrio then 10.0f else 1.0f
                           Number = numUnits

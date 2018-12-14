@@ -252,6 +252,8 @@ type WorldState = {
     AttackingSide : CoalitionId
     Regions : RegionState list
     Airfields : AirfieldState list
+    AxisRearAirfield : AirfieldId
+    AlliesRearAirfield : AirfieldId
 }
 
 /// Provide fast access to state data using indexes.
@@ -408,35 +410,6 @@ with
     /// Check if a side is victorious.
     /// </summary>
     member this.VictoriousSide(world : World) =
-        let isRearAirfieldAttacked coalition =
-            world.RearAirfields.TryFind coalition
-            |> Option.map (fun af ->
-                world.Airfields
-                |> List.exists (fun af2 ->
-                    af2.AirfieldId = af
-                    &&
-                    this.Regions
-                    |> List.exists (fun regState ->
-                        if regState.RegionId = af2.Region then
-                            if regState.Owner = Some coalition.Other then
-                                true
-                            elif regState.HasInvaders then
-                                let attackingForce =
-                                    regState.NumInvadingVehicles
-                                    |> Map.fold (fun total vehicle num ->
-                                        total + vehicle.Cost * float32 num
-                                    ) 0.0f<E>
-                                let defendingForce =
-                                    regState.NumVehicles
-                                    |> Map.fold (fun total vehicle num ->
-                                        total + vehicle.Cost * float32 num
-                                    ) 0.0f<E>
-                                attackingForce > defendingForce
-                            else
-                                false
-                        else
-                            false)))
-            |> Option.defaultValue false
         if float32 (this.Date - world.StartDate).TotalDays > this.MaxConflictDuration then
             let numAxis, numAllies =
                 this.Regions
@@ -452,26 +425,21 @@ with
             else
                 None
         else
-            match isRearAirfieldAttacked Axis, isRearAirfieldAttacked Allies with
-            | true, false -> Some Allies
-            | false, true -> Some Axis
-            | true, true -> Some Allies // Unfair, but also unlikely
-            | false, false ->
-                let getNumRegionsWithAF coalition =
-                    world.Airfields
-                    |> Seq.filter (fun af ->
-                        this.Regions
-                        |> Seq.filter (fun reg -> reg.RegionId = af.Region && reg.Owner = Some coalition)
-                        |> Seq.isEmpty
-                        |> not)
-                    |> Seq.length
-                let numAxis = getNumRegionsWithAF Axis
-                let numAllies = getNumRegionsWithAF Allies
-                if numAxis = 0 then
-                    Some Allies
-                elif numAllies = 0 then
-                    Some Axis
-                else None
+            let getNumRegionsWithAF coalition =
+                world.Airfields
+                |> Seq.filter (fun af ->
+                    this.Regions
+                    |> Seq.filter (fun reg -> reg.RegionId = af.Region && reg.Owner = Some coalition)
+                    |> Seq.isEmpty
+                    |> not)
+                |> Seq.length
+            let numAxis = getNumRegionsWithAF Axis
+            let numAllies = getNumRegionsWithAF Allies
+            if numAxis <= 1 && numAllies > 1 then
+                Some Allies
+            elif numAllies <= 1 && numAxis > 1 then
+                Some Axis
+            else None
 
     /// <summary>
     /// Check if this mission's time interval overlaps with night time.
@@ -627,6 +595,41 @@ let computeProductionDifference subBlockSpecs (regions : Region list) =
     let allies = computeAbsProd(Allies)
     allies - axis
 
+/// Try to find an airfield suitable for being the rear airfield.
+/// It must be safe, away from other airfields, but not too far from it, and have supplies available
+let pickRearAirfield minDistance maxDistance (wg : WorldFastAccess) (regions : RegionState list) (getAirfieldSupplies : AirfieldId -> float32<E>) (coalition : CoalitionId) =
+    let regionsById =
+        regions
+        |> Seq.map (fun region -> region.RegionId, region)
+        |> dict
+    let ourAirfields =
+        wg.World.Airfields
+        |> Seq.filter (fun af -> regionsById.[af.Region].Owner = Some coalition)
+        |> Seq.choose (fun af ->
+            let distance =
+                try
+                    wg.World.Airfields
+                    |> Seq.filter(fun af2 -> regionsById.[af2.Region].Owner = Some (coalition.Other))
+                    |> Seq.map (fun af2 -> (af2.Pos - af.Pos).Length())
+                    |> Seq.min
+                    |> Some
+                with
+                | _ -> None
+            distance
+            |> Option.map (fun d -> af.AirfieldId, d, getAirfieldSupplies(af.AirfieldId) / 100.0f<E> |> floor |> min 5000.0f))
+        |> List.ofSeq
+
+    let candidates =
+        match List.filter (fun (_, d, _) -> d <= maxDistance && minDistance <= minDistance) ourAirfields with
+        | [] -> ourAirfields
+        | candidates -> candidates
+
+    match candidates with
+    | [] -> ourAirfields
+    | _ :: _ -> candidates
+    |> List.maxBy (fun (_, _, supplies) -> supplies)
+    |> fun (af, _, _) -> af
+
 /// Build the initial state
 let mkInitialState(config : Configuration, world : World, windDirection : float32) =
     let wg = WorldFastAccess.Create(world)
@@ -668,7 +671,10 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
         let extraVehicles =
             [(Axis, axisExtraVehicles); (Allies, alliesExtraVehicles)]
             |> Map.ofList
-            |> Map.map (fun _ amount -> amount / (3.0f * GroundAttackVehicle.LightArmorCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.HeavyTankCost))
+            |> Map.map (fun _ amount ->
+                amount
+                / (3.0f * GroundAttackVehicle.LightArmorCost + 9.0f * GroundAttackVehicle.MediumTankCost + 3.0f * GroundAttackVehicle.HeavyTankCost)
+                / (float32 <| List.length world.Regions))
             |> Map.map (fun _ k -> Map.ofList [(HeavyTank, 3.0f * k); (MediumTank, 9.0f * k); (LightArmor, 3.0f)])
         let supplyNeeds =
             computeFullDefenseNeeds world
@@ -708,13 +714,10 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
                         [(HeavyTank, scale 3.0f |> ceilint); (MediumTank, scale 9.0f |> ceilint); (LightArmor, scale 3.0f |> ceilint)]
                         |> Map.ofList
                     let vehicles =
-                        if Some region.RegionId = wg.RearRegions.TryFind(owner) then
-                            vehicles
-                            |> Map.map (fun _ -> float32)
-                            |> Map.sumUnion extraVehicles.[owner]
-                            |> Map.map (fun _ -> int)
-                        else
-                            vehicles
+                        vehicles
+                        |> Map.map (fun _ -> float32)
+                        |> Map.sumUnion extraVehicles.[owner]
+                        |> Map.map (fun _ -> int)
                     1.0f<E> * supplies, vehicles
             { RegionId = region.RegionId
               Owner = owner
@@ -727,6 +730,17 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
               NumInvadingVehicles = Map.empty
             }
         )
+    let pickRearAirfield coalition =
+        let getAirfieldStorage af =
+            wg.GetAirfield(af).Storage
+            |> List.sumBy(fun group -> group.Storage world.SubBlockSpecs)
+        pickRearAirfield 70000.0f 200000.0f wg regions getAirfieldStorage coalition
+    let axisRearAirfield = pickRearAirfield Axis
+    let alliesRearAirfield = pickRearAirfield Allies
+    let rearAirfield =
+        function
+        | Axis -> axisRearAirfield
+        | Allies -> alliesRearAirfield
     let mkAirfield (airfield : Airfield) =
         let owner =
             getOwner airfield.Region
@@ -740,12 +754,9 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
                 let scale (x : float32) =
                     x * (1.0f - (float32 hops) / (float32 cutoffHops)) |> max 0.0f
                 let maxPlanes =
-                    if world.RearAirfields.TryFind(owner) = Some airfield.AirfieldId then
-                        float32 config.RearAirfieldPlanes
-                    else
-                        airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
-                        |> (*) 3
-                        |> float32
+                    airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
+                    |> (*) 3
+                    |> float32
                 let planeTypeShares = PlaneModel.PlaneTypeShares(owner)
                 let numFighters = maxPlanes * planeTypeShares.[PlaneType.Fighter] |> scale |> round
                 let numAttackers = maxPlanes * planeTypeShares.[PlaneType.Attacker] |> scale |> round
@@ -769,6 +780,11 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
                     |> Util.compactSeq
                     |> Map.map (fun k v -> float32 v)
                 let supplies =
+                    let scale =
+                        if rearAirfield owner = airfield.AirfieldId then
+                            id
+                        else
+                            scale
                     airfield.Storage |> Seq.sumBy (fun gr -> gr.Storage world.SubBlockSpecs)
                     |> float32
                     |> scale
@@ -787,6 +803,8 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
       Regions = regions
       Date = world.StartDate
       AttackingSide = Axis
+      AxisRearAirfield = axisRearAirfield
+      AlliesRearAirfield = alliesRearAirfield
     }
 
 type WorldState with
@@ -817,6 +835,13 @@ type WorldState with
         |> List.sortByDescending fst
         |> List.truncate maxNumFires
         |> List.map (fun (damage, (grp, _)) -> grp.Pos.Pos, grp.Pos.Altitude, damage)
+
+    member this.RearAirfields = Set [ this.AxisRearAirfield; this.AlliesRearAirfield ]
+
+    member this.RearAirfield coalition =
+        match coalition with
+        | Axis -> this.AxisRearAirfield
+        | Allies -> this.AlliesRearAirfield
 
 type WorkingDay =
     { MorningStart : int
