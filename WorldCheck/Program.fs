@@ -25,7 +25,7 @@ let main argv =
     let scenario = Path.GetFileNameWithoutExtension(missionFile)
     let world =
         try
-            World.Create(scenario, planeSet, missionFile, 1.0f<E/H>, Path.Combine(exePath, "Config", subBlocksFile))
+            World.Create(scenario, planeSet, missionFile, Path.Combine(exePath, "Config", subBlocksFile))
         with
         | e -> failwithf "Error in mission file: %s" e.Message
 

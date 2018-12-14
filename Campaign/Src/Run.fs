@@ -52,7 +52,7 @@ module Init =
 
     let createWorld(config : Configuration, scenario : string) =
         let subBlocksFile = Path.Combine(config.ScriptPath, "Config", "SubBlocks.yaml")
-        let world0 = World.Create(scenario, config.PlaneSet scenario, Path.Combine(config.ScriptPath, scenario + ".Mission"), 1.0f<E/H> * config.PlaneProduction, subBlocksFile)
+        let world0 = World.Create(scenario, config.PlaneSet scenario, Path.Combine(config.ScriptPath, scenario + ".Mission"), subBlocksFile)
         let totalProduction =
             world0.Regions
             |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(world0.SubBlockSpecs, 1.0f)))

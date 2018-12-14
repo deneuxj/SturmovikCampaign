@@ -92,7 +92,6 @@ type Configuration = {
     Briefing : string
     ThinkTime : int
     DesiredProduction : float32
-    PlaneProduction : float32 // REMOVE
     RearAirfieldPlanes : int
     MaxFriendlyFireEvents : int
     FriendlyFireBanDuration : int
@@ -151,7 +150,6 @@ with
             ScriptPath = @"nul"
             ThinkTime = 30
             DesiredProduction = 300.0f
-            PlaneProduction = 1000.0f
             RearAirfieldPlanes = 5000
             WebHook = ""
             DiscordUserId = ""
@@ -251,7 +249,6 @@ let loadConfigFile (path : string) =
         ScriptPath = values.InstallPath
         ThinkTime = values.ThinkTime
         DesiredProduction = float32 values.DesiredProduction
-        PlaneProduction = float32 values.PlaneProduction
         RearAirfieldPlanes = values.RearAirfieldPlanes
         Briefing = values.Briefing
         WebHook = values.WebHook

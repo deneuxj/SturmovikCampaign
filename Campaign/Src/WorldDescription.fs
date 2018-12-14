@@ -568,7 +568,6 @@ type World = {
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
     SafeZones : Map<CoalitionId, SafeZone>
-    PlaneProduction : float32<E/H>
     ProductionFactor : float32
     /// Date of the first mission.
     StartDate : System.DateTime
@@ -589,7 +588,7 @@ type World = {
     MaxTanksInParks : int
 }
 with
-    static member Create(scenario, planeSet, strategyFile, planeProduction, subBlocksFile : string) =
+    static member Create(scenario, planeSet, strategyFile, subBlocksFile : string) =
         let subBlocks = SubBlockFile()
         subBlocks.Load(subBlocksFile)
         let subBlockSpecs =
@@ -681,7 +680,6 @@ with
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
           SafeZones = safeZones
-          PlaneProduction = planeProduction
           ProductionFactor = 1.0f
           StartDate = date
           Roads = roads
