@@ -933,7 +933,13 @@ type Plugin() =
     member x.SetCampaignData(config : Configuration) =
         match support with
         | Some support ->
-            campaignData <- Some(CampaignData(config, support))
+            campaignData <-
+                try
+                    Some(CampaignData(config, support))
+                with
+                | e ->
+                    logger.Error(sprintf "Failed to set campaign data: '%s'" e.Message)
+                    None
         | None ->
             invalidOp "Must set support API before setting campaign data"
 
@@ -1012,11 +1018,11 @@ type Plugin() =
             try
                 let cnf = loadConfigFile configFile
                 config <- Some cnf
-                x.SetCampaignData(cnf)
                 let task = Support.reset(support, scenario, cnf, postMessage, x.GetNotifications(cnf))
                 let task =
                     task.ContinueWith(fun nextTask ->
                         async {
+                            x.SetCampaignData(cnf)
                             x.StartWebHookClient(cnf)
                             return nextTask
                         })
