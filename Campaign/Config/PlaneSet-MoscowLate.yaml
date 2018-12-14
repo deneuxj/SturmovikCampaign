@@ -1,4 +1,5 @@
-﻿# Region numbers
+﻿
+# Region numbers
 #    | Stalingrad = 0
 #    | VelikieLuki = 1
 #    | Moscow = 2
@@ -36,15 +37,20 @@
 PlaneSet:
     Name: Moscow
     Regions: [2]
-    StartDate: "1-Jul-1941"
+    StartDate: "1-Dec-1941"
     Planes:
         - Model: Bf109e7
           Static: 3
           Factor: 1.0
           Mods: [[1, 99]]
+        - Model: Bf109f4
+          Static: 0
+          Factor: 2.0
+          Mods: [[1], [4, 5]] # 1/4..5
+          # Mods: [[999]] to lock all mods, as 999 is unlikely to be a valid mod ID.
         - Model: Bf109f2
           Static: 2
-          Factor: 2.0
+          Factor: 1.5
         - Model: Mc202
           Static: 5
         - Model: Bf110e
@@ -66,7 +72,11 @@ PlaneSet:
           Static: 11
         - Model: Mig3
           Static: 6
-          Factor: 2.0
+          Factor: 1.5
           Mods: [[3, 5]]
+        - Model: P40
+          Static: 7
+          Factor: 2.0
+          Mods: [[1, 4]]
         - Model: Pe2s35
           Static: 12
