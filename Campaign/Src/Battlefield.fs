@@ -168,8 +168,6 @@ with
                 |> fun x -> buildCanon(DefenseMiddle, x, None, vehicles.AntiTankPosition)
             )
         // Icons
-        let title =
-            sprintf "Battle %s (%d:%d)" region numAttackers numDefenders
         let icon1 = BattleIcons.Create(store, lcStore, center, yori, numAttackers, numDefenders, Defenders defendingCoalition.ToCoalition)
         let icon2 = BattleIcons.Create(store, lcStore, center, yori, numAttackers, numDefenders, Attackers defendingCoalition.Other.ToCoalition)
         // Result
