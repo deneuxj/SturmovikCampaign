@@ -190,8 +190,8 @@ type BattleIcons =
                         icon.Red <- 10
                         icon.Green <- 0
                         icon.Blue <- 0
-                    elif icon.IconId = Mcu.IconIdValue.AttackArmorColumn then
-                        icon.IconId <- Mcu.IconIdValue.CoverArmorColumn
+                    elif icon.IconId = Mcu.IconIdValue.AttackTankPlatoon then
+                        icon.IconId <- Mcu.IconIdValue.CoverTankPlatoon
                 | _ -> ()
         | Defenders _ ->
             ()
