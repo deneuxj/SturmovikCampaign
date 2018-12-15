@@ -68,13 +68,13 @@ with
             let r0 =
                 let r = random.NextDouble() |> float32
                 match areaLocation with
-                | DefenseBack -> 0.25f * r + 0.75f
-                | AttackBack -> 0.25f * r
-                | DefenseMiddle -> 0.25f * r + 0.5f
-                | AttackMiddle -> 0.25f * r + 0.25f
+                | DefenseBack -> 0.25f * r
+                | AttackBack -> 1.0f - 0.25f * r
+                | DefenseMiddle -> 0.25f * r + 0.25f
+                | AttackMiddle -> 0.75f - 0.25f * r
             let r1 = random.NextDouble() |> float32
-            let dx = (back * r0 + front * (1.0f - r0)) * dir
-            let dz = (left * r1 + right * (1.0f - r1)) * side
+            let dx = (back * (1.0f - r0) + front * r0) * dir
+            let dz = (left * (1.0f - r1) + right * r1) * side
             center + dx + dz
         // Get a random position within the boundary
         let getRandomPos(areaLocation) =

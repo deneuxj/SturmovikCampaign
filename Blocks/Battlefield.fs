@@ -27,12 +27,12 @@ with
         let destination = McuUtil.getWaypointByName group T.Blocks.Destination
         // Position all nodes
         let refPos = Vector2.FromMcu tank.Pos
-        let dv = startPos - refPos
         let dr = (destinationPos - startPos).YOri
         for mcu in group do
             let rel = Vector2.FromMcu(mcu.Pos) - refPos
             (rel.Rotate(dr) + startPos).AssignTo mcu.Pos
             mcu.Ori.Y <- mcu.Ori.Y + float dr
+        destinationPos.AssignTo destination.Pos
         // Set the country of anything that can have a country
         for mcu in group do
             match mcu with
@@ -67,12 +67,12 @@ with
         let target = McuUtil.getTriggerByName group T.Blocks.AttackArea :?> Mcu.McuAttackArea
         // Position all nodes
         let refPos = Vector2.FromMcu canon.Pos
-        let dv = startPos - refPos
         let dr = (targetPos - startPos).YOri
         for mcu in group do
             let rel = Vector2.FromMcu(mcu.Pos) - refPos
             (rel.Rotate(dr) + startPos).AssignTo mcu.Pos
             mcu.Ori.Y <- mcu.Ori.Y + float dr
+        targetPos.AssignTo target.Pos
         // Set the country of anything that can have a country
         for mcu in group do
             match mcu with
