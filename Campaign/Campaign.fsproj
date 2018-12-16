@@ -122,6 +122,7 @@
     <None Include="MyScripts\GenerateMission.fsx" />
     <None Include="MyScripts\ParseMissionLogs.fsx" />
     <None Include="MyScripts\Stats.fsx" />
+    <None Include="MyScripts\CheckPlaneAvailability.fsx" />
     <None Include="MyScripts\StateStats.fsx" />
     <None Include="MyScripts\ShowSupplies.fsx" />
     <None Include="MyScripts\Scratch.fsx" />
