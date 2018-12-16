@@ -257,10 +257,10 @@ with
             | Some (coalition, DynamicPlane plane) ->
                 let sign =
                     if coalition = this.Coalition then
-                        1.0f
-                    else
                         -1.0f
-                sign * plane.Cost / basePlaneCost
+                    else
+                        1.0f
+                damage * sign * plane.Cost / basePlaneCost
             | _ -> 0.0f
         { this with PlaneDamages = this.PlaneDamages + value }
 
@@ -431,7 +431,7 @@ with
                     yield AddReservedPlane(this.Player, this.Plane, healthUp, af, this.Coalition)
                 // Reward real flights, i.e. exclude phony flights, landing at the same airfield take-off took place from.
                 match this.State with
-                | Landed(Some af2, _) when af2 <> af ->
+                | Landed(Some af2, _) when af2 <> this.StartAirfield ->
                     yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
                     let planeDamages =
                         if isCorrectCoalition then
