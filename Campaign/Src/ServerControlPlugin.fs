@@ -1082,13 +1082,16 @@ type Plugin() =
                     |> List.map (fun coalition ->
                         string coalition,
                         hangars.TryFind(player, coalition)
-                        |> Option.map (fun h -> h.FreshSpawns)
-                        |> Option.map (fun m ->
-                            m
+                        |> Option.map (fun h ->
+                            h.FreshSpawns
                             |> Map.toSeq
                             |> Seq.map (fun (planeType, qty) ->
                                 string planeType, qty
                             )
+                            |> Seq.append [
+                                "Luxury spawns", h.LuxurySpawns
+                                "Luxury bonus", h.BonusLuxurySpawns
+                                ]
                             |> Map.ofSeq
                         )
                         |> Option.defaultValue Map.empty)
