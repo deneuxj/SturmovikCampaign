@@ -308,6 +308,7 @@ with
         this.ObjectHealth
         |> Map.tryFind idx
         |> Option.defaultValue 1.0f
+        |> max 0.0f
 
     member this.HandleDamage(damage : DamageEntry) =
         let oldHealth = this.GetObjectHealth(damage.TargetId)
