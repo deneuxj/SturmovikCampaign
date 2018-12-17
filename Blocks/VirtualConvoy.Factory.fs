@@ -263,6 +263,12 @@ with
             let (TruckInConvoyInstance(pos)) = instance
             let model = columnContent.[pos - 1]
             model.AssignTo(vehicle)
+        // Replace model of lead car by a vehicle with enough allowance to not crash into bridges
+        let car = getByIndex convoy.TheConvoy.LeadCarEntity.MisObjID (McuUtil.deepContentOf convoy.TheConvoy.All) :?> Mcu.HasEntity
+        match coalition with
+        | Mcu.CoalitionValue.Axis -> vehicles.GermanLightArmor.AssignTo(car)
+        | Mcu.CoalitionValue.Allies -> vehicles.RussianLightArmor.AssignTo(car)
+        | _ -> failwith "Unexpected coalition"
         convoy
 
 
