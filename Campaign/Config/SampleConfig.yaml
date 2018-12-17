@@ -77,7 +77,7 @@
     # Max amount of cash a player can hold
     MaxCash: 10000
     # Initial amount of cash for each player
-    InitialCash: 5000
+    InitialCash: 0
     # Control whether player-driven tank spawns should be included in battles
     EnablePlayerTanks: true
     # Where the textual generated mission file is written; this also the place where the campaign state is kept
