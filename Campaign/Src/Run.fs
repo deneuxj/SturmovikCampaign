@@ -329,7 +329,7 @@ module OrderDecision =
             let mkAttacks() =
                 let random = System.Random()
                 let attacks = 
-                    mkAllAttackers world state
+                    mkAllAttackers world state hangars
                     |> Array.ofSeq
                     |> Array.shuffle random
                 match attacks with
