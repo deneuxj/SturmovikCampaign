@@ -429,16 +429,17 @@ with
                 yield PlaneCheckIn(this.Player, this.Plane, healthUp, af)
                 if isCorrectCoalition && this.CheckoutCost.GrantsReservationOnLanding then
                     yield AddReservedPlane(this.Player, this.Plane, healthUp, af, this.Coalition)
+                let planeDamages =
+                    if isCorrectCoalition then
+                        this.PlaneDamages / 3.0f
+                    else
+                        0.0f
+                yield RewardPlayer(this.Player, this.Coalition, 0.0f<E>, planeDamages)
                 // Reward real flights, i.e. exclude phony flights, landing at the same airfield take-off took place from.
                 match this.State with
                 | Landed(Some af2, _) when af2 <> this.StartAirfield ->
                     yield DeliverSupplies(bombCost * (this.Cargo + suppliesTransfered), context.World.GetAirfield(af).Region)
-                    let planeDamages =
-                        if isCorrectCoalition then
-                            this.PlaneDamages / 3.0f
-                        else
-                            0.0f
-                    yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward, planeDamages)
+                    yield RewardPlayer(this.Player, this.Coalition, supplyReward * bombCost + this.Reward, 0.0f)
                 | _ ->
                     ()
                 yield ShowHangar(this.Player, this.Coalition)
