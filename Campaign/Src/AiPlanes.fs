@@ -84,6 +84,16 @@ with
               member x.SubGroups = [ blocks.[0].All; blocks.[1].All; bothKilled.All; icon1.All; icon2.All ]
         }, blocks
 
+    static member TryExtractHomeAirfield(name : string) =
+        seq {
+            if name.StartsWith("PTL-") then
+                let s = name.Substring(4)
+                for plane in PlaneModel.AllModels do
+                    if s.StartsWith(plane.PlaneName) then
+                        let af = AirfieldId (s.Substring(plane.PlaneName.Length + 1))
+                        yield plane, af
+        }
+        |> Seq.tryHead
 
 let getNumPlanesOfType planeType (numPlanes : Map<PlaneModel, float32>) =
     numPlanes
@@ -313,6 +323,17 @@ with
               member x.LcStrings = []
               member x.SubGroups = (blocks |> List.map (fun blk -> blk.All)) @ (conjKilled |> Seq.map (fun conj -> conj.All) |> Seq.toList) @ [ icon1.All; icon2.All ]
         }, blocks
+
+    static member TryExtractHomeAirfield(name : string) =
+        seq {
+            if name.StartsWith("ATT-") then
+                let s = name.Substring(4)
+                for plane in PlaneModel.AllModels do
+                    if s.StartsWith(plane.PlaneName) then
+                        let af = AirfieldId (s.Substring(plane.PlaneName.Length + 1))
+                        yield plane, af
+        }
+        |> Seq.tryHead
 
 let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_, PlayerHangar.PlayerHangar>) =
     let sg = WorldStateFastAccess.Create state

@@ -780,6 +780,35 @@ let applyPlaneTransfers (state : WorldState) (takeOffs : TookOff list) (landings
         |> List.map (fun af -> airfieldsAfterLandings.[af.AirfieldId])
     { state with Airfields = airfields }
 
+/// Update airfields according to losses in AI patrols and attack missions
+let applyAiPlaneLosses (state : WorldState) (damages : Damage seq) =
+    let aiLosses =
+        damages
+        |> Seq.choose (function
+            | { Object = ActivePlane(_, plane, Some afId); Data = { Amount = amount } } -> Some (plane, afId, amount)
+            | _ -> None)
+    let airfields =
+        state.Airfields
+        |> Seq.map (fun afs -> afs.AirfieldId, afs.NumPlanes)
+        |> Map.ofSeq
+    let airfields =
+        aiLosses
+        |> Seq.fold (fun (airfields : Map<AirfieldId, Map<PlaneModel, float32>>) (plane, afId, amount) ->
+            let numPlanes =
+                airfields.[afId]
+            let oldQty =
+                numPlanes.TryFind plane
+                |> Option.defaultValue 0.0f
+            let newQty =
+                oldQty - amount
+                |> max 0.0f
+            airfields.Add(afId, numPlanes.Add(plane, newQty))
+        ) airfields
+    let airfields =
+        state.Airfields
+        |> List.map (fun afs -> { afs with NumPlanes = airfields.[afs.AirfieldId] })
+    { state with Airfields = airfields }
+
 /// Similar to applyPlaneTransfers, but for AI ferry flights
 let applyPlaneFerries (state : WorldState) ferryEvents =
     let airfields =
@@ -1329,7 +1358,8 @@ let newState (config : Configuration.Configuration) (world : World) (state : Wor
     let state4 = applyDamagesAndResupplies mustConvertCapturedPlanes dt world state3b results.Shipments results.Blocked results.Damages (axisOrders.Resupply @ alliesOrders.Resupply) newSupplies results.Landings
     let state5 = applyPlaneTransfers state4 results.TakeOffs results.Landings
     let state5b = applyPlaneFerries state5 results.FerryPlanes
-    let state6 = applyVehicleDepartures state5b columnOrders results.ColumnDepartures
+    let state5c = applyAiPlaneLosses state5b results.Damages
+    let state6 = applyVehicleDepartures state5c columnOrders results.ColumnDepartures
     let battles = buildBattles state6 results.ParaDrops
     let state7, battleReports = applyConquests config world state6 battles results.BattleKills
     let state7b =

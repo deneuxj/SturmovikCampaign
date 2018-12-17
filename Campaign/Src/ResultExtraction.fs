@@ -513,7 +513,7 @@ type DamagedObject =
     | Column of VehicleInColumn
     | Vehicle of RegionId * GroundAttackVehicle
     | ParkedPlane of AirfieldId * PlaneModel
-    | ActivePlane of CoalitionId * PlaneModel
+    | ActivePlane of CoalitionId * PlaneModel * AiHomeAirfield:AirfieldId option
 with
     member this.Coalition(wg : WorldFastAccess, sg : WorldStateFastAccess) =
         match this with
@@ -532,7 +532,7 @@ with
         | Convoy v
         | Column v ->
             Some v.OrderId.Coalition
-        | ActivePlane(coalition, _) ->
+        | ActivePlane(coalition, _, _) ->
             Some coalition
 
     /// Full reward for destroying this
@@ -584,7 +584,7 @@ with
         | Vehicle(_, vehicle) ->
             vehicle.Cost
         | ParkedPlane(_, plane)
-        | ActivePlane(_, plane) ->
+        | ActivePlane(_, plane, _) ->
             plane.Cost
 
 
@@ -781,7 +781,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                             ()
                     | None ->
                         ()
-                | Some(PlaneObjectType plane, _, _, country)->
+                | Some(PlaneObjectType plane, name, _, country)->
                     let coalition =
                         match country with
                         | Country.Germany | Country.OtherAxis -> Some Axis
@@ -791,7 +791,15 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                     | Some coalition ->
                         let player = pilots.Value.TryFind damage.AttackerId
                         let data = { Amount = damage.Damage; ByPlayer = player }
-                        yield { Object = ActivePlane(coalition, plane); Data = data }
+                        let aiHomeAirfield =
+                            match AiPlanes.AiPatrol.TryExtractHomeAirfield name with
+                            | Some(_, af) -> Some af
+                            | None ->
+                                match AiPlanes.AiAttack.TryExtractHomeAirfield name with
+                                | Some(_, af) -> Some af
+                                | None -> None
+                            |> Option.filter (fun afId -> world.Airfields |> List.exists (fun af2 -> af2.AirfieldId = afId)) // If name of airfield got wrong (e.g. truncated), ignore it
+                        yield { Object = ActivePlane(coalition, plane, aiHomeAirfield); Data = data }
                     | None ->
                         ()
                 | _ -> () // Ignored object type
@@ -799,7 +807,6 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
     }
 
 let extractVehicleDamages (world : World) (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : AsyncSeq<LogEntry>) =
-    let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
     asyncSeq {
         let idMapper = ref Map.empty
         for entry in entries do
