@@ -451,13 +451,16 @@ with
                     region
                     |> Option.map context.State.GetRegion
                     |> Option.bind (fun region -> region.Owner)
-                if territory <> Some this.Coalition then
+                if territory <> Some this.Coalition && this.Plane.PlaneType = PlaneType.Fighter then
                     yield ResetLuxuryBonus(this.Player, this.Coalition)
             ]
         | _, health ->
             assert(health <= 0.0f)
             { this with State = MissionEnded },
-            [ yield ResetLuxuryBonus(this.Player, this.Coalition) ]
+            [
+                if this.Plane.PlaneType = PlaneType.Fighter then
+                    yield ResetLuxuryBonus(this.Player, this.Coalition)
+            ]
 
     // Player disconnected, return plane to start airfield if undamaged
     member this.HandlePrematureMissionEnd(context : Context) =
@@ -472,7 +475,8 @@ with
                 if this.CheckoutCost.GrantsReservationOnLanding then
                     yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
             | _ ->
-                yield ResetLuxuryBonus(this.Player, this.Coalition)
+                if this.Plane.PlaneType = PlaneType.Fighter then
+                    yield ResetLuxuryBonus(this.Player, this.Coalition)
             yield ShowHangar(this.Player, this.Coalition)
         ]
 
