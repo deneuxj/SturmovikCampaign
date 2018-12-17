@@ -722,23 +722,23 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
         |> List.tryFind(fun r ->
             pos.IsInConvexPolygon(r.Boundary))
     asyncSeq {
-        let idMapper = ref Map.empty
-        let pilots = ref Map.empty
+        let mutable idMapper = Map.empty
+        let mutable pilots = Map.empty
         for entry in entries do
             match entry with
             | :? PlayerPlaneEntry as entry ->
-                pilots := Map.add entry.VehicleId entry.Name pilots.Value
+                pilots <- pilots.Add(entry.VehicleId, entry.Name)
             | :? ObjectSpawnedEntry as spawned ->
-                idMapper := Map.add spawned.ObjectId (spawned.ObjectType, spawned.ObjectName, spawned.SubGroup, spawned.Country) !idMapper
+                idMapper <- idMapper.Add(spawned.ObjectId, (spawned.ObjectType, spawned.ObjectName, spawned.SubGroup, spawned.Country))
             | :? DamageEntry as damage ->
                 let damagePos = Vector2(damage.Position.X, damage.Position.Z)
-                match Map.tryFind damage.TargetId !idMapper with
+                match idMapper.TryFind damage.TargetId with
                 | Some(BuildingObjectType buildingType, _, subGroup, _) ->
                     // Damage to buildings: storage or production
                     match tryIdentifyBuilding world damagePos subGroup with
                     | Some damaged ->
                         let player =
-                            pilots.Value.TryFind damage.AttackerId
+                            pilots.TryFind damage.AttackerId
                         let data = { Amount = damage.Damage; ByPlayer = player }
                         yield { Object = damaged; Data = data }
                     | None -> () // No known building nearby
@@ -748,13 +748,13 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         |> List.minBy (fun af -> (af.Pos - damagePos).LengthSquared())
                     let distance = (closestAirfield.Pos - damagePos).Length()
                     if distance < 3000.0f then
-                        let player = pilots.Value.TryFind damage.AttackerId
+                        let player = pilots.TryFind damage.AttackerId
                         let data = { Amount = damage.Damage; ByPlayer = player }
                         yield { Object = ParkedPlane(closestAirfield.AirfieldId, planeModel); Data = data }
                 | Some(StaticVehicleType vehicleModel, _, _, _) ->
                     match tryFindContainingRegion damagePos with
                     | Some region ->
-                        let player = pilots.Value.TryFind damage.AttackerId
+                        let player = pilots.TryFind damage.AttackerId
                         let data = { Amount = damage.Damage; ByPlayer = player }
                         yield { Object = Vehicle(region.RegionId, vehicleModel); Data = data }
                     | None ->
@@ -774,7 +774,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                                 None
                         match objType with
                         | Some objType ->
-                            let player = pilots.Value.TryFind damage.AttackerId
+                            let player = pilots.TryFind damage.AttackerId
                             let data = { Amount = damage.Damage; ByPlayer = player }
                             yield { Object = objType; Data = data }
                         | None ->
@@ -789,7 +789,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         | _ -> None
                     match coalition with
                     | Some coalition ->
-                        let player = pilots.Value.TryFind damage.AttackerId
+                        let player = pilots.TryFind damage.AttackerId
                         let data = { Amount = damage.Damage; ByPlayer = player }
                         let aiHomeAirfield =
                             match AiPlanes.AiPatrol.TryExtractHomeAirfield name with
@@ -808,13 +808,13 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
 
 let extractVehicleDamages (world : World) (tanks : ColumnMovement list) (convoys : ResupplyOrder list) (entries : AsyncSeq<LogEntry>) =
     asyncSeq {
-        let idMapper = ref Map.empty
+        let mutable idMapper = Map.empty
         for entry in entries do
             match entry with
             | :? ObjectSpawnedEntry as spawned ->
-                idMapper := Map.add spawned.ObjectId (spawned.ObjectName, spawned.ObjectType, spawned.Country) !idMapper
+                idMapper <- idMapper.Add(spawned.ObjectId, (spawned.ObjectName, spawned.ObjectType, spawned.Country))
             | :? KillEntry as kill ->
-                match Map.tryFind kill.TargetId !idMapper with
+                match idMapper.TryFind kill.TargetId with
                 | Some(name, objectType, country) ->
                     let columnDamage =
                         tanks
