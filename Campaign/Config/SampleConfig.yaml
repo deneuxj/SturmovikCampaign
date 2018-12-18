@@ -69,9 +69,9 @@
     # Number of new fresh fighter spawns each new mission (per player)
     FreshFighterRefill: 1.5
     # Number of new fresh attacker spawns each new mission (per player)
-    FreshAttackerRefill: 1.0
+    FreshAttackerRefill: 1.5
     # Number of new fresh bomber spawns each new mission (per player)
-    FreshBomberRefill: 0.5
+    FreshBomberRefill: 1.0
     # Number of new fresh transport spawns each new mission (per player)
     FreshTransportRefill: 1.0
     # Max amount of cash a player can hold
