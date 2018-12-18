@@ -18,7 +18,7 @@ Set region owners. Each coalition must own at least one region with factories.
 In the initial world state, regions which have "***" in their Description are fully supplied. Those are the "strong bases".
 Other regions are supplied depending on their distance to the nearest strong base.
 
-2b. Define safe zones
+2b. Define safe zones (Optional, not currently used)
 Use influence areas. There must be one for the Allies and one for the Axis. In these zones, enemies are not allowed to enter and attack planes.
 Each zone must be named "SafeZone", and all zones must be in a group named "SafeZones".
 
