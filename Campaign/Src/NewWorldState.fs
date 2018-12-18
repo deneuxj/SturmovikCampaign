@@ -1308,6 +1308,7 @@ let updateRunways (world : World) (state : WorldState) (windDirection : float32)
     }
 
 let updateRearAirfields (world : World) (state : WorldState) =
+    let wg = world.FastAccess
     let sg = state.FastAccess
     let pickRearAirfield coalition =
         let getAirfieldStorage af =
@@ -1316,10 +1317,12 @@ let updateRearAirfields (world : World) (state : WorldState) =
             pickRearAirfield 70000.0f 200000.0f world.FastAccess state.Regions getAirfieldStorage coalition
         let suppliesOld = getAirfieldStorage(state.RearAirfield coalition)
         let suppliesNew = getAirfieldStorage(candidate)
-        if suppliesOld < 1000.0f<E> && suppliesNew > suppliesOld then
+        let oldRearAirfield = state.RearAirfield coalition
+        let oldRearRegion = sg.GetRegion(wg.GetAirfield(oldRearAirfield).Region)
+        if suppliesNew > suppliesOld || suppliesNew > 500.0f<E> || oldRearRegion.HasInvaders then
             candidate
         else
-            state.RearAirfield coalition
+            oldRearAirfield
 
     let axisRearAirfield = pickRearAirfield Axis
     let alliesRearAirfield = pickRearAirfield Allies

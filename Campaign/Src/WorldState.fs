@@ -604,7 +604,9 @@ let pickRearAirfield minDistance maxDistance (wg : WorldFastAccess) (regions : R
         |> dict
     let ourAirfields =
         wg.World.Airfields
-        |> Seq.filter (fun af -> regionsById.[af.Region].Owner = Some coalition)
+        |> Seq.filter (fun af ->
+            let region = regionsById.[af.Region]
+            region.Owner = Some coalition && not region.HasInvaders)
         |> Seq.choose (fun af ->
             let distance =
                 try
