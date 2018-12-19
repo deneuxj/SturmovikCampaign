@@ -537,119 +537,207 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
         let fromEnergy = min energy amount
         (energy - fromEnergy, forRepairs - (amount - fromEnergy))
 
-    // Repair and resupply regions
-    let regionsAfterSupplies =
-        [
-            for regState in state.Regions do
-                let excessFromOwnSupplies =
-                    let needs = regionAmmoNeeds.TryFind regState.RegionId |> Option.defaultValue 0.0f<E>
-                    regState.Supplies - needs
-                    |> max 0.0f<E>
-                let region = wg.GetRegion regState.RegionId
-                let energy =
-                    excessFromOwnSupplies +
-                    (Map.tryFind region.RegionId newSupplies
-                     |> Option.defaultValue 0.0f<E>)
-                let forRepairs = min energy repairPool
-                let energy = energy - forRepairs
-                // Highest prio: repair production
-                let prodHealth, forRepairs =
-                    computeHealing(
-                        world.SubBlockSpecs,
-                        regState.ProductionHealth,
-                        region.Production,
-                        forRepairs,
-                        healLimit)
-                // Second prio: fill up region supplies
-                let storeCapacity = regState.StorageCapacity(region, world.SubBlockSpecs)
-                // Consume energy to fill up supplies up to what's needed
-                let needs =
-                    regionNeeds.TryFind regState.RegionId
-                    |> Option.defaultVal 0.0f<E>
-                    |> max 0.0f<E>
-                let fillTarget = min needs storeCapacity
-                let toSupplies =
-                    fillTarget - regState.Supplies
-                    |> min (energy + forRepairs)
-                    |> max 0.0f<E>
-                let supplies = regState.Supplies - excessFromOwnSupplies + toSupplies
-                let energy, forRepairs = subtract toSupplies (energy, forRepairs)
-                // Last: repair storage
-                let storeHealth, forRepairs =
-                    computeHealing(
-                        world.SubBlockSpecs,
-                        regState.StorageHealth,
-                        region.Storage,
-                        forRepairs,
-                        healLimit)
-                yield
-                    { regState with ProductionHealth = prodHealth; StorageHealth = storeHealth; Supplies = supplies },
-                    (energy, forRepairs)
-        ]
-    let newSupplies =
-        regionsAfterSupplies
-        |> List.map (fun (regState, energy) -> regState.RegionId, energy)
-        |> Map.ofList
-    let regionsAfterSupplies =
-        regionsAfterSupplies
-        |> List.map fst
-    // Distribute supplies between regions and airfields
-    let airfieldsDistribution, regSupplies =
-        let x, regSupplies =
-            state.Airfields
-            |> List.fold (fun (airfields, regionEnergies) afState ->
-                let af = wg.GetAirfield(afState.AirfieldId)
-                // take from what's left of incoming supplies
-                let energy, forRepairs =
-                    Map.tryFind af.Region regionEnergies
-                    |> Option.defaultValue (0.0f<E>, 0.0f<E>)
-                // repair airfield storage
-                let storeHealth, forRepairs =
-                    computeHealing(world.SubBlockSpecs, afState.StorageHealth, af.Storage, forRepairs, healLimit)
-                let afState = { afState with StorageHealth = storeHealth }
-                // fill storage
-                let bombNeeds =
-                    afState.BombNeeds * bombCost
-                    |> max (1000.0f<K> * bombCost)
-                let fillTarget = min bombNeeds (afState.StorageCapacity(af, world.SubBlockSpecs))
-                let toAfSupplies =
-                    fillTarget - afState.Supplies
-                    |> max 0.0f<E>
-                    |> min (energy + forRepairs)
-                let energy, forRepairs = subtract toAfSupplies (energy, forRepairs)
-                // what goes over the bomb storage fill target goes back to the region
-                let backToRegion =
-                    afState.Supplies + toAfSupplies - fillTarget
-                    |> max 0.0f<E>
-                // result
-                let afState = { afState with Supplies = afState.Supplies + toAfSupplies - backToRegion }
-                let energy = energy + backToRegion
-                afState :: airfields, Map.add af.Region (energy, forRepairs) regionEnergies
-            ) ([], newSupplies)
-        List.rev x, regSupplies
-    let regionsAfterDistribution =
-        [
-            for regState, region in List.zip regionsAfterSupplies world.Regions do
-                // Energy back from airfields; excess is returned
-                let backFromAf, forRepairs =
-                    regSupplies.TryFind regState.RegionId
-                    |> Option.defaultValue (0.0f<E>, 0.0f<E>)
-                let newEnergy =
-                    backFromAf + regState.Supplies + forRepairs
-                    |> min (regState.StorageCapacity(region, world.SubBlockSpecs))
-                let transferred = newEnergy - regState.Supplies
-                yield
-                    { regState with Supplies = newEnergy },
-                    newEnergy - transferred
-        ]
-    let regSupplies =
-        regionsAfterDistribution
-        |> List.map (fun (region, energy) -> region.RegionId, energy)
-        |> Map.ofList
+    let folder (regions, airfields, energies) item =
+        match item with
+        | Choice1Of3(regionId, regState) -> (Map.add regionId regState regions, airfields, energies)
+        | Choice2Of3(afId, afState) -> (regions, Map.add afId afState airfields, energies)
+        | Choice3Of3(regionId, pair) -> (regions, airfields, Map.add regionId pair energies)
+
+    /// Using delivered and produced supplies, and supplies that are in excess of the region's needs, prepare for repair and resupply of the region and its airfields
+    let prepareRepairs region (regions, airfields, energies : Map<RegionId, float32<E> * float32<E>>) =
+        seq {
+            let regState = Map.find region regions
+            let excessFromOwnSupplies =
+                let needs = regionAmmoNeeds.TryFind regState.RegionId |> Option.defaultValue 0.0f<E>
+                regState.Supplies - needs
+                |> max 0.0f<E>
+            let energy =
+                excessFromOwnSupplies +
+                (Map.tryFind regState.RegionId newSupplies
+                 |> Option.defaultValue 0.0f<E>)
+            let forRepairs = min energy repairPool
+            let energy = energy - forRepairs
+            yield Choice1Of3(regState.RegionId, { regState with Supplies = regState.Supplies - excessFromOwnSupplies })
+            let oldRepairs, oldEnergy = energies.TryFind(regState.RegionId) |> Option.defaultValue (0.0f<E>, 0.0f<E>)
+            yield Choice3Of3(regState.RegionId, (oldRepairs + forRepairs, oldEnergy + energy))
+        }
+        |> Seq.fold folder (regions, airfields, energies)
+
+    /// Repair factories in the region
+    let repairProduction region (regions, airfields, energies : Map<_, _>) =
+        seq {
+            let regState = Map.find region regions
+            let forRepairs, energy = energies.TryFind(regState.RegionId) |> Option.defaultValue (0.0f<E>, 0.0f<E>)
+            let region = wg.GetRegion regState.RegionId
+            let prodHealth, forRepairs =
+                computeHealing(
+                    world.SubBlockSpecs,
+                    regState.ProductionHealth,
+                    region.Production,
+                    forRepairs,
+                    healLimit)
+            yield Choice1Of3(region.RegionId, { regState with ProductionHealth = prodHealth } )
+            yield Choice3Of3(region.RegionId, (forRepairs, energy))
+        }
+        |> Seq.fold folder (regions, airfields, energies)
+
+    /// Fill supplies in the region
+    let fillSupplies region (regions, airfields, energies : Map<_, _>) =
+        seq {
+            let regState = Map.find region regions
+            let forRepairs, energy = energies.TryFind(regState.RegionId) |> Option.defaultValue (0.0f<E>, 0.0f<E>)
+            let region = wg.GetRegion regState.RegionId
+            let storeCapacity = regState.StorageCapacity(region, world.SubBlockSpecs)
+            // Consume energy to fill up supplies up to what's needed
+            let needs =
+                regionNeeds.TryFind regState.RegionId
+                |> Option.defaultVal 0.0f<E>
+                |> max 0.0f<E>
+            let fillTarget = min needs storeCapacity
+            let toSupplies =
+                fillTarget - regState.Supplies
+                |> min (energy + forRepairs)
+                |> max 0.0f<E>
+            let supplies = regState.Supplies + toSupplies
+            let energy, forRepairs = subtract toSupplies (energy, forRepairs)
+            yield Choice1Of3(region.RegionId, { regState with Supplies = supplies } )
+            yield Choice3Of3(region.RegionId, (forRepairs, energy))
+        }
+        |> Seq.fold folder (regions, airfields, energies)
+
+    /// Add back left-over supplies to the region
+    let allToSupplies region (regions, airfields, energies : Map<_, _>) =
+        seq {
+            let regState = Map.find region regions
+            let forRepairs, backFromAf = energies.TryFind regState.RegionId |> Option.defaultValue (0.0f<E>, 0.0f<E>)
+            let region = wg.GetRegion regState.RegionId
+            let newEnergy =
+                backFromAf + regState.Supplies + forRepairs
+                |> min (regState.StorageCapacity(region, world.SubBlockSpecs))
+            let transferred = newEnergy - regState.Supplies
+            yield Choice1Of3(regState.RegionId, { regState with Supplies = newEnergy })
+            yield Choice3Of3(regState.RegionId, (forRepairs, newEnergy - transferred))
+        }
+        |> Seq.fold folder (regions, airfields, energies)
+
+    /// Repair a region's supply storage
+    let repairStorage region (regions, airfields, energies : Map<_, _>) =
+        seq {
+            let regState = Map.find region regions
+            let forRepairs, energy = energies.TryFind(regState.RegionId) |> Option.defaultValue (0.0f<E>, 0.0f<E>)
+            let region = wg.GetRegion regState.RegionId
+            let storeHealth, forRepairs =
+                computeHealing(
+                    world.SubBlockSpecs,
+                    regState.StorageHealth,
+                    region.Storage,
+                    forRepairs,
+                    healLimit)
+            yield Choice1Of3(region.RegionId, { regState with StorageHealth = storeHealth } )
+            yield Choice3Of3(region.RegionId, (forRepairs, energy))
+        }
+        |> Seq.fold folder (regions, airfields, energies)
+
+    /// Repair an airfield's storage
+    let repairAirfield afId (regions, airfields, energies : Map<_, _>) =
+        seq {
+            let afState = Map.find afId airfields
+            let af = wg.GetAirfield(afState.AirfieldId)
+            // take from what's left of incoming supplies
+            let forRepairs, energy = energies.TryFind(af.Region) |> Option.defaultValue (0.0f<E>, 0.0f<E>)
+            // repair airfield storage
+            let storeHealth, forRepairs =
+                computeHealing(world.SubBlockSpecs, afState.StorageHealth, af.Storage, forRepairs, healLimit)
+            let afState = { afState with StorageHealth = storeHealth }
+            yield Choice2Of3(afId, afState)
+            yield Choice3Of3(af.Region, (forRepairs, energy))
+        }
+        |> Seq.fold folder (regions, airfields, energies)
+
+    /// Add bombs to an airfield's storage
+    let refillBombs afId (regions, airfields, energies : Map<_, _>) =
+        seq {
+            let afState = Map.find afId airfields
+            let af = wg.GetAirfield(afState.AirfieldId)
+            let forRepairs, energy = energies.TryFind(af.Region) |> Option.defaultValue (0.0f<E>, 0.0f<E>)
+            // fill storage
+            let bombNeeds =
+                afState.BombNeeds * bombCost
+                |> max (1000.0f<K> * bombCost)
+            let fillTarget = min bombNeeds (afState.StorageCapacity(af, world.SubBlockSpecs))
+            let toAfSupplies =
+                fillTarget - afState.Supplies
+                |> max 0.0f<E>
+                |> min (energy + forRepairs)
+            let energy, forRepairs = subtract toAfSupplies (energy, forRepairs)
+            // what goes over the bomb storage fill target goes back to the region
+            let backToRegion =
+                afState.Supplies + toAfSupplies - fillTarget
+                |> max 0.0f<E>
+            // result
+            let afState = { afState with Supplies = afState.Supplies + toAfSupplies - backToRegion }
+            let energy = energy + backToRegion
+            yield Choice2Of3(afId, afState)
+            yield Choice3Of3(af.Region, (forRepairs, energy))
+        }
+        |> Seq.fold folder (regions, airfields, energies)
+
+    let regionMap =
+        state.Regions
+        |> Seq.map (fun regState -> regState.RegionId, regState)
+        |> Map.ofSeq
+
+    let airfieldMap =
+        state.Airfields
+        |> Seq.map (fun afState -> afState.AirfieldId, afState)
+        |> Map.ofSeq
+
+    let regions, airfields, waste =
+        world.Regions
+        |> Seq.fold (fun s region ->
+            let region = region.RegionId
+            // Prepare
+            let s = prepareRepairs region s
+            // Repair airfields that have an urgent need of bombs
+            let airfieldsInRegion =
+                world.Airfields
+                |> List.choose (fun af -> if af.Region = region then Some af.AirfieldId else None)
+                |> Set.ofList
+            let _, airfields, _ = s
+            let airfields =
+                airfields
+                |> Map.filter (fun afId _ -> airfieldsInRegion.Contains(afId))
+                |> Map.toSeq
+                |> Seq.map snd
+                |> List.ofSeq
+            let urgentAirfields, nonUrgentAirfields =
+                airfields
+                |> List.partition (fun (af : AirfieldState) -> af.StorageCapacity(wg.GetAirfield(af.AirfieldId), world.SubBlockSpecs) < 0.25f * af.BombNeeds * bombCost)
+            let s =
+                urgentAirfields
+                |> List.fold (fun x af -> repairAirfield af.AirfieldId x) s
+            // Take care of regions: repair production, then fill supplies, then repair storage
+            let s = repairProduction region s
+            let s = fillSupplies region s
+            let s = repairStorage region s
+            // Repair the rest of the airfields
+            let s =
+                nonUrgentAirfields
+                |> List.fold (fun x af -> repairAirfield af.AirfieldId x) s
+            // Fill bomb storage
+            let s =
+                airfields
+                |> List.fold (fun x af -> refillBombs af.AirfieldId x) s
+            // Left-overs back to region supplies
+            let s = allToSupplies region s
+            s
+        ) (regionMap, airfieldMap, Map.empty)
+
     { state with
-        Regions = regionsAfterDistribution |> List.map fst
-        Airfields = airfieldsDistribution },
-    regSupplies
+        Regions = state.Regions |> List.map (fun regState -> regions.[regState.RegionId])
+        Airfields = state.Airfields |> List.map (fun afState -> airfields.[afState.AirfieldId]) },
+    waste
+    |> Map.map (fun _ (_, e) -> e)
 
 /// Distribute cargo to airfields
 let distributeCargo (world : World) (state : WorldState) (cargo : Map<RegionId, float32<E>>) =
