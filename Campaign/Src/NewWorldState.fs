@@ -530,6 +530,8 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
     let healLimit = world.RepairSpeed * dt
     let repairPool = world.RegionRepairSpeed * dt
 
+    let regionAmmoNeeds = state.GetSupplyNeeds(world, dt)
+
     // Subtract an amount from energy reserve first, and then from funds for repairs
     let subtract amount (energy, forRepairs) =
         let fromEnergy = min energy amount
@@ -539,10 +541,15 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
     let regionsAfterSupplies =
         [
             for regState in state.Regions do
+                let excessFromOwnSupplies =
+                    let needs = regionAmmoNeeds.TryFind regState.RegionId |> Option.defaultValue 0.0f<E>
+                    regState.Supplies - needs
+                    |> max 0.0f<E>
                 let region = wg.GetRegion regState.RegionId
                 let energy =
-                    Map.tryFind region.RegionId newSupplies
-                    |> Option.defaultValue 0.0f<E>
+                    excessFromOwnSupplies +
+                    (Map.tryFind region.RegionId newSupplies
+                     |> Option.defaultValue 0.0f<E>)
                 let forRepairs = min energy repairPool
                 let energy = energy - forRepairs
                 // Highest prio: repair production
@@ -565,7 +572,7 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
                     fillTarget - regState.Supplies
                     |> min (energy + forRepairs)
                     |> max 0.0f<E>
-                let supplies = regState.Supplies + toSupplies
+                let supplies = regState.Supplies - excessFromOwnSupplies + toSupplies
                 let energy, forRepairs = subtract toSupplies (energy, forRepairs)
                 // Last: repair storage
                 let storeHealth, forRepairs =

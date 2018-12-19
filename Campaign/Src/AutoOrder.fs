@@ -94,17 +94,14 @@ let computeStorage (world : World) (state : WorldState) =
 let computeSupplyNeeds (missionDuration : float32<H>) (world : World) (state : WorldState) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
-    // Bombs and repairs at airfields. Needs can be negative.
+    // Bombs at airfields. Needs can be negative.
     let afNeeds =
         seq {
             for af, afs in Seq.zip world.Airfields state.Airfields do
                 let bombNeed =
                     afs.BombNeeds * bombCost
                     |> min (afs.StorageCapacity(af, world.SubBlockSpecs))
-                let repairs =
-                    Seq.zip af.Storage afs.StorageHealth
-                    |> Seq.sumBy (fun (building, health) -> (1.0f - Array.avg health) * building.RepairCost(world.SubBlockSpecs))
-                yield af.Region, bombNeed + repairs - afs.Supplies
+                yield af.Region, bombNeed - afs.Supplies
         }
     // Ammo needs. Can be negative.
     let regionAmmoCost = state.GetSupplyNeeds(world, missionDuration)
@@ -123,17 +120,44 @@ let computeSupplyNeeds (missionDuration : float32<H>) (world : World) (state : W
                 let reg = wg.GetRegion(region)
                 let cost =
                     min (capacity - regState.Supplies) costs
-                let repairs =
-                    List.zip reg.Production regState.ProductionHealth
-                    |> List.sumBy (fun (building, health) -> (1.0f - Array.avg health) *  building.RepairCost(world.SubBlockSpecs))
-                yield region, cost + repairs
+                yield region, cost
         }
     Seq.concat [ afNeeds ; regionSaturatedCanonNeeds ]
     |> Seq.groupBy fst
     |> Seq.map (fun (region, costs) -> region, costs |> Seq.sumBy snd)
     |> Map.ofSeq
 
-/// Forward the supply needs of regions at the frontline to regions at the back
+/// Compute repair needs.
+let computeRepairNeeds (missionDuration : float32<H>) (world : World) (state : WorldState) =
+    let airfieldRepairs =
+        seq {
+            for af, afs in Seq.zip world.Airfields state.Airfields do
+                let repairs =
+                    Seq.zip af.Storage afs.StorageHealth
+                    |> Seq.sumBy (fun (building, health) -> (1.0f - Array.avg health) * building.RepairCost(world.SubBlockSpecs))
+                yield af.Region, repairs
+        }
+        |> Seq.groupBy fst
+        |> Seq.map (fun (region, xs) -> region, xs |> Seq.sumBy snd)
+    let regionRepairs =
+        seq {
+            for region, regState in List.zip world.Regions state.Regions do
+                let repairs =
+                    List.zip region.Production regState.ProductionHealth
+                    |> List.sumBy (fun (building, health) ->
+                        (1.0f - Array.avg health) *  building.RepairCost(world.SubBlockSpecs)
+                        |> min (world.RepairSpeed * missionDuration))
+                yield region.RegionId, repairs
+        }
+    let totalRepairs =
+        Seq.append airfieldRepairs regionRepairs
+        |> Seq.groupBy fst
+        |> Seq.map (fun (region, xs) -> region, xs |> Seq.sumBy snd)
+        |> Seq.map (fun (region, amount) -> region, min (world.RegionRepairSpeed * missionDuration) amount)
+        |> Map.ofSeq
+    totalRepairs
+
+/// Forward the supply/repair needs of regions at the frontline to regions at the back
 let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<RegionId, float32<E>>) =
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
@@ -174,30 +198,32 @@ let createConvoyOrders (missionLength : float32<H>) (minTransfer : float32<E>) (
     let sg = WorldStateFastAccess.Create state
     let getOwner = sg.GetRegion >> (fun x -> x.Owner)
     let distances = computeDistanceFromFactories (getPaths >> List.map fst) getOwner world coalition
-    let areConnectedByRoad(start, destination) =
+    let areConnected(start, destination) =
         getPaths world
         |> List.choose (fun (path, data) -> if path.MatchesEndpoints(start, destination).IsSome then Some data else None)
     let capacities = computeStorageCapacity world
     let storages = computeStorage world state
     let needs = computeSupplyNeeds missionLength world state
     let forwardedNeeds = computeForwardedNeeds world state needs
+    let repairs = computeRepairNeeds missionLength world state
+    let forwardedRepairs = computeForwardedNeeds world state repairs
     let tryFind x y = Map.tryFind x y |> Option.defaultVal 0.0f<E>
     [
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && regState.Supplies > 0.0f<E> then
-                let senderOwnNeeds = tryFind region.RegionId needs
-                let senderForwardedNeeds = tryFind region.RegionId forwardedNeeds
+                let senderOwnNeeds = tryFind region.RegionId needs + tryFind region.RegionId repairs 
+                let senderForwardedNeeds = tryFind region.RegionId forwardedNeeds + tryFind region.RegionId forwardedRepairs
                 let senderDistance =
                     Map.tryFind region.RegionId distances
                     |> Option.defaultVal System.Int32.MaxValue
                 for ngh in region.Neighbours do
                     if getOwner ngh = Some coalition then
-                        for data in areConnectedByRoad(region.RegionId, ngh) do
+                        for data in areConnected(region.RegionId, ngh) do
                             let receiverDistance =
                                 Map.tryFind ngh distances
                                 |> Option.defaultVal System.Int32.MaxValue
-                            let receiverOwnNeeds = tryFind ngh needs
-                            let receiverForwardedNeeds = tryFind ngh forwardedNeeds
+                            let receiverOwnNeeds = tryFind ngh needs + tryFind ngh repairs
+                            let receiverForwardedNeeds = tryFind ngh forwardedNeeds + tryFind ngh forwardedRepairs
                             let senderNeeds, receiverNeeds =
                                 if senderDistance < receiverDistance then
                                     senderOwnNeeds, receiverOwnNeeds + receiverForwardedNeeds
@@ -263,6 +289,7 @@ let createAllConvoyOrders missionLength coalition x =
 /// Prioritize convoys according to needs of destination
 let prioritizeConvoys (missionLength : float32<H>) (world : World) (state : WorldState) (orders : ResupplyOrder list) =
     let needs = state.GetSupplyNeeds(world, missionLength)
+    let repairs = computeRepairNeeds missionLength world state
     let remaining =
         state.Regions
         |> List.map (fun regState -> regState.RegionId, regState.Supplies)
@@ -280,10 +307,10 @@ let prioritizeConvoys (missionLength : float32<H>) (world : World) (state : Worl
                 |> Map.exists (fun plane qty -> plane.Roles.Contains PlaneModel.CargoTransporter && qty >= 1.0f)
             | _ ->
                 true)
-        // Sort by supply needs
+        // Sort by supply and repair needs
         |> List.sortByDescending (fun order ->
-            Map.tryFind order.Convoy.Destination needs
-            |> fun x -> defaultArg x 0.0f<E>)
+            (needs.TryFind(order.Convoy.Destination) |> Option.defaultValue 0.0f<E>) +
+            (repairs.TryFind(order.Convoy.Destination) |> Option.defaultValue 0.0f<E>))
         // Stop sending convoys if no more supplies are available at the source
         |> List.fold (fun (remaining, ok) order ->
             let source = (order.Means, order.Convoy.Start)
