@@ -1319,7 +1319,7 @@ let updateRearAirfields (world : World) (state : WorldState) =
         let suppliesNew = getAirfieldStorage(candidate)
         let oldRearAirfield = state.RearAirfield coalition
         let oldRearRegion = sg.GetRegion(wg.GetAirfield(oldRearAirfield).Region)
-        if suppliesNew > suppliesOld || suppliesNew > 500.0f<E> || oldRearRegion.HasInvaders then
+        if suppliesNew > suppliesOld || suppliesNew > 500.0f<E> || oldRearRegion.HasInvaders || oldRearRegion.Owner <> Some coalition then
             candidate
         else
             oldRearAirfield
