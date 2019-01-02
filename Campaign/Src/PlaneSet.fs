@@ -204,6 +204,12 @@ with
                 | Some x -> x
                 | None -> failwithf "Could not find a PlaneModel corresponding to %s" plane.Model)
             |> Map.ofSeq
+        for (idx, coalition), models in planes |> Map.toSeq |> Seq.groupBy (fun (model, plane) -> plane.StaticPlaneIndex, model.Coalition) do
+            if Seq.length models > 1 then
+                failwithf "Multiple planes in the same coalition '%s' share the same Static index '%d': %s"
+                    (string coalition)
+                    idx
+                    (models |> Seq.map (fun (model, _) -> model.PlaneName) |> String.concat ", ")
         { Name = data.Name
           StartDate = date
           Regions = regions
