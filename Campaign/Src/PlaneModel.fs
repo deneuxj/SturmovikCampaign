@@ -107,6 +107,7 @@ type PlaneModel =
     | He111h16
     | Hs129b2
     | A20
+    | U2
 with
     member this.ScriptModel =
         match this with
@@ -149,6 +150,7 @@ with
         | La5fns2 -> Vehicles.vehicles.RussianFighter9
         | Yak7bs36 -> Vehicles.vehicles.RussianFighter11
         | A20 -> Vehicles.vehicles.RussianBomber3
+        | U2 -> Vehicles.vehicles.u2vs
 
     member this.Cost =
         match this with
@@ -188,6 +190,7 @@ with
         | Pe2s87
         | Pe2s35 -> (7.5f / 3.0f) * basePlaneCost
         | P47 | SpitfireMkIXe -> 2.0f * basePlaneCost
+        | U2 -> 0.5f * basePlaneCost
 
     member this.BombCapacity =
         match this.BombLoads with
@@ -226,12 +229,14 @@ with
             | PlaneModel.A20 -> 5, 4
             | PlaneModel.Hs129b2 -> 1, 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
             | PlaneModel.SpitfireMkIXe -> 7, 3 // GPB500-1 + GPB250-2
+            | PlaneModel.U2 -> 13, 11 // FAB250SV-2 + FAB100M-2
             | _ -> 1, 0
         modmask, payload
 
     /// The mod mask and payload ID suitable for fighter patrols
     member this.FighterPayload =
         match this with
+        | U2 -> 5, 6 // "0-SHKAS-AP-500"
         | _ -> 1, 0
 
     /// The mod mask and payload ID suitable for level-bombing
@@ -305,7 +310,8 @@ with
         | P47
         | A20
         | Pe2s87
-        | Pe2s35 -> Allies
+        | Pe2s35
+        | U2 -> Allies
 
     member this.PlaneType =
         match this with
@@ -340,7 +346,8 @@ with
         | Ju87
         | IL2M42
         | IL2M43
-        | IL2M41 -> Attacker
+        | IL2M41
+        | U2 -> Attacker
         | Ju88a4
         | He111h6
         | He111h16
@@ -390,6 +397,7 @@ with
         | Yak7bs36 -> "yak7bs36"
         | SpitfireMkVb -> "spitfireMkVb"
         | SpitfireMkIXe -> "spitfireMkIXe"
+        | U2 -> "u2vs"
 
     /// <summary>
     /// Substring of the TYPE: field in the mission log, in lower case
@@ -435,7 +443,7 @@ with
         | Yak7bs36 -> "yak-7b ser.36"
         | SpitfireMkVb -> "spitfire mk.vb"
         | SpitfireMkIXe -> "spitfire mk.ixe"
-
+        | U2 -> "U-2VS"
 
     member this.BombLoads =
         match this with
@@ -493,6 +501,7 @@ with
         | Yak7bs36 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | SpitfireMkVb -> [(0, 0.0f<K>); (1, 0.0f<K>)]
         | A20 -> [(1, 800.0f<K>); (2, 1600.0f<K>); (3, 2000.0f<K>); (4, 1000.0f<K>); (5, 1800.0f<K>)]
+        | U2 -> [(1, 100.0f<K>); (2, 200.0f<K>); (3, 300.0f<K>); (4, 200.0f<K>); (5, 300.0f<K>); (7, 100.0f<K>); (8, 200.0f<K>); (9, 300.0f<K>); (10, 200.0f<K>); (11, 300.0f<K>)]
         |> List.sortBy fst
 
     member this.SpecialLoadsCosts =
@@ -572,6 +581,7 @@ with
         | He111h16 -> 19
         | Ju88a4 -> 12
         | Ju52 -> 3
+        | U2 -> 0
 
     member this.Roles =
         match this with
@@ -614,6 +624,7 @@ with
         | Hs129b2 -> [ GroundAttacker ]
         | He111h6
         | He111h16 -> [ LevelBomber ]
+        | U2 -> [ GroundAttacker ]
         |> Set.ofList
 
     static member AllModels =
@@ -656,6 +667,7 @@ with
           He111h6
           He111h16
           Hs129b2
+          U2
         ]
 
     static member PlaneTypeShares(coalition) =

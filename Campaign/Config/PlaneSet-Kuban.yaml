@@ -59,7 +59,7 @@ PlaneSet:
           Static: 10
         - Model: Lagg3s29
           Static: 2
-        - Model: La5
+        - Model: La5s8
           Static: 8
         - Model: Yak7bs36
           Static: 10
@@ -73,3 +73,6 @@ PlaneSet:
           Static: 9
         - Model: A20
           Static: 7
+        - Model: U2VS
+          Static: 1
+          Factor: 0.5

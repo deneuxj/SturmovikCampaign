@@ -749,4 +749,10 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.u2vs =
+        let fighter = planes.[T.Vehicles.u2vs]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
 let vehicles = VehicleDataTypeStore()

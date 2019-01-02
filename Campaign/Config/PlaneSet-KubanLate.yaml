@@ -83,3 +83,6 @@ PlaneSet:
           Static: 9
         - Model: A20
           Static: 7
+        - Model: U2VS
+          Static: 1
+          Factor: 0.5

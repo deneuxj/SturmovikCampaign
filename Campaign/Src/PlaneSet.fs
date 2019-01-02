@@ -199,7 +199,10 @@ with
             ]
         let planes =
             data.Planes
-            |> Seq.choose PlaneData.TryFromYaml
+            |> Seq.map (fun plane ->
+                match PlaneData.TryFromYaml plane with
+                | Some x -> x
+                | None -> failwithf "Could not find a PlaneModel corresponding to %s" plane.Model)
             |> Map.ofSeq
         { Name = data.Name
           StartDate = date

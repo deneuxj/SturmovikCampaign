@@ -76,3 +76,7 @@ PlaneSet:
           Static: 2
         - Model: Pe2s87
           Static: 12
+        - Model: U2VS
+          Static: 1
+          Factor: 0.5
+
