@@ -55,9 +55,9 @@
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Util.fs" />
     <Compile Include="Vector.fs" />
-    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Links.fs" />
     <Compile Include="Predicates.fs" />
     <Compile Include="BlocksMissionData.fs" />
