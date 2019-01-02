@@ -197,23 +197,28 @@ with
                             logger.Warn(sprintf "Bad region value in planeset '%s'" data.Name)
                             Region.Stalingrad
             ]
-        let planes =
-            data.Planes
-            |> Seq.map (fun plane ->
-                match PlaneData.TryFromYaml plane with
-                | Some x -> x
-                | None -> failwithf "Could not find a PlaneModel corresponding to %s" plane.Model)
-            |> Map.ofSeq
-        for (idx, coalition), models in planes |> Map.toSeq |> Seq.groupBy (fun (model, plane) -> plane.StaticPlaneIndex, model.Coalition) do
-            if Seq.length models > 1 then
-                failwithf "Multiple planes in the same coalition '%s' share the same Static index '%d': %s"
-                    (string coalition)
-                    idx
-                    (models |> Seq.map (fun (model, _) -> model.PlaneName) |> String.concat ", ")
-        { Name = data.Name
-          StartDate = date
-          Regions = regions
-          Planes = planes }
+        try
+            let planes =
+                data.Planes
+                |> Seq.map (fun plane ->
+                    match PlaneData.TryFromYaml plane with
+                    | Some x -> x
+                    | None -> failwithf "Could not find a PlaneModel corresponding to %s" plane.Model)
+                |> Map.ofSeq
+            for (idx, coalition), models in planes |> Map.toSeq |> Seq.groupBy (fun (model, plane) -> plane.StaticPlaneIndex, model.Coalition) do
+                if Seq.length models > 1 then
+                    failwithf "Multiple planes in the same coalition '%s' share the same Static index '%d': %s"
+                        (string coalition)
+                        idx
+                        (models |> Seq.map (fun (model, _) -> model.PlaneName) |> String.concat ", ")
+            { Name = data.Name
+              StartDate = date
+              Regions = regions
+              Planes = planes }
+            |> Ok
+        with
+        | exc ->
+            Error <| sprintf "In plane set %s: %s" data.Name exc.Message
 
     member this.AllModels =
         this.Planes
@@ -277,8 +282,14 @@ let loadPlaneSets (planeSetDir : string) =
             let data = PlaneSetFile()
             data.Load(file)
             let planeSet = PlaneSet.FromYaml(data.PlaneSet)
-            let hasAxis = planeSet.AllModels |> Seq.exists (fun plane -> plane.Coalition = Axis)
-            let hasAllies = planeSet.AllModels |> Seq.exists (fun plane -> plane.Coalition = Allies)
-            if hasAxis && hasAllies then
-                yield planeSet
+            match planeSet with
+            | Ok planeSet ->
+                let hasAxis = planeSet.AllModels |> Seq.exists (fun plane -> plane.Coalition = Axis)
+                let hasAllies = planeSet.AllModels |> Seq.exists (fun plane -> plane.Coalition = Allies)
+                if hasAxis && hasAllies then
+                    yield planeSet
+                else
+                    logger.Warn(sprintf "Skipped plane set %s because one of the coalitions has no planes" file)
+            | Error msg ->
+                logger.Warn(sprintf "Could not load plane set %s because: '%s'" file msg)
     }

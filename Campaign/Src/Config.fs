@@ -184,7 +184,11 @@ with
             try
                 let file = PlaneSetFile()
                 file.Load(Path.Combine(this.ScriptPath, "Config", "planeSet-" + planeSetName + ".yaml"))
-                PlaneSet.FromYaml(file.PlaneSet)
+                match PlaneSet.FromYaml(file.PlaneSet) with
+                | Ok planeSet -> planeSet
+                | Error msg ->
+                    logger.Error(sprintf "Failed to load planeset '%s': %s" planeSetName msg)
+                    PlaneSet.Default
             with
             | e ->
                 logger.Error(sprintf "Failed to load planeset '%s': %s" planeSetName e.Message)
