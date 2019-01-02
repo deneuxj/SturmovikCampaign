@@ -314,7 +314,7 @@ with
         counter.WrapAround <- false
         let subst = Mcu.substId <| store.GetIdMapper()
         subst counter
-        for i in 0..1 do
+        for i in 0 .. numPlanes - 1 do
             Mcu.addTargetLink blocks.[i].Killed counter.Index
             Mcu.addTargetLink counter blocks.[i].Stop.Index
         // Result
