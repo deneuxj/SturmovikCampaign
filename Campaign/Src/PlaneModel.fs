@@ -443,7 +443,7 @@ with
         | Yak7bs36 -> "yak-7b ser.36"
         | SpitfireMkVb -> "spitfire mk.vb"
         | SpitfireMkIXe -> "spitfire mk.ixe"
-        | U2 -> "U-2VS"
+        | U2 -> "u-2vs"
 
     member this.BombLoads =
         match this with
