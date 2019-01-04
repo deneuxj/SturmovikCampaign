@@ -597,32 +597,38 @@ let computeProductionDifference subBlockSpecs (regions : Region list) =
 
 /// Try to find an airfield suitable for being the rear airfield.
 /// It must be safe, away from other airfields, but not too far from it, and have supplies available
-let pickRearAirfield minDistance maxDistance (wg : WorldFastAccess) (regions : RegionState list) (getAirfieldSupplies : AirfieldId -> float32<E>) (coalition : CoalitionId) =
+let pickRearAirfield minDistance (wg : WorldFastAccess) (regions : RegionState list) (getAirfieldSupplies : AirfieldId -> float32<E>) (hasPlanes : AirfieldId -> bool) (coalition : CoalitionId) =
     let regionsById =
         regions
         |> Seq.map (fun region -> region.RegionId, region)
         |> dict
+    let menacingAirfields =
+        wg.World.Airfields
+        |> List.filter(fun af2 ->
+            regionsById.[af2.Region].Owner = Some (coalition.Other) &&
+            hasPlanes af2.AirfieldId &&
+            getAirfieldSupplies af2.AirfieldId > 250.0f<K> * bombCost)
+
     let ourAirfields =
         wg.World.Airfields
         |> Seq.filter (fun af ->
             let region = regionsById.[af.Region]
             region.Owner = Some coalition && not region.HasInvaders)
-        |> Seq.choose (fun af ->
+        |> Seq.map (fun af ->
             let distance =
                 try
-                    wg.World.Airfields
-                    |> Seq.filter(fun af2 -> regionsById.[af2.Region].Owner = Some (coalition.Other))
+                    menacingAirfields
                     |> Seq.map (fun af2 -> (af2.Pos - af.Pos).Length())
                     |> Seq.min
                     |> Some
                 with
                 | _ -> None
-            distance
-            |> Option.map (fun d -> af.AirfieldId, d, getAirfieldSupplies(af.AirfieldId) / 100.0f<E> |> floor |> min 5000.0f))
+                |> Option.defaultValue System.Single.PositiveInfinity
+            af.AirfieldId, distance, getAirfieldSupplies(af.AirfieldId) / 100.0f<E> |> floor |> min 50.0f)
         |> List.ofSeq
 
     let candidates =
-        match List.filter (fun (_, d, _) -> d <= maxDistance && minDistance <= minDistance) ourAirfields with
+        match List.filter (fun (_, d, _) -> d >= minDistance) ourAirfields with
         | [] -> ourAirfields
         | candidates -> candidates
 
@@ -736,7 +742,8 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
         let getAirfieldStorage af =
             wg.GetAirfield(af).Storage
             |> List.sumBy(fun group -> group.Storage world.SubBlockSpecs)
-        pickRearAirfield 70000.0f 200000.0f wg regions getAirfieldStorage coalition
+        let hasPlanes _ = true
+        pickRearAirfield 70000.0f wg regions getAirfieldStorage hasPlanes coalition
     let axisRearAirfield = pickRearAirfield Axis
     let alliesRearAirfield = pickRearAirfield Allies
     let rearAirfield =

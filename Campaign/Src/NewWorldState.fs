@@ -1408,8 +1408,12 @@ let updateRearAirfields (world : World) (state : WorldState) =
     let pickRearAirfield coalition =
         let getAirfieldStorage af =
             sg.GetAirfield(af).Supplies
+        let hasPlanes af =
+            sg.GetAirfield(af).NumPlanes
+            |> Map.toSeq
+            |> Seq.exists (fun (plane, qty) -> plane.BombCapacity >= 250.0f<K> && qty >= 1.0f)
         let candidate =
-            pickRearAirfield 70000.0f 200000.0f world.FastAccess state.Regions getAirfieldStorage coalition
+            pickRearAirfield 70000.0f world.FastAccess state.Regions getAirfieldStorage hasPlanes coalition
         let suppliesOld = getAirfieldStorage(state.RearAirfield coalition)
         let suppliesNew = getAirfieldStorage(candidate)
         let oldRearAirfield = state.RearAirfield coalition
