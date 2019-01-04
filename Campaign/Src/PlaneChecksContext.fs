@@ -106,8 +106,8 @@ let showHangar(hangar : PlayerHangar, delay) =
         let luxury = hangar.BonusLuxurySpawns + hangar.LuxurySpawns
         yield Overview(userIds, delay,
             [
-                sprintf "Welcome back %s" hangar.RankedName
-                sprintf "Fresh spawns at rear AF: F:%0.1f+%0.1f A:%0.1f B:%0.1f T:%0.1f" numFighters luxury numAttackers numBombers numTransports
+                StringResources.welcome hangar.RankedName
+                StringResources.freshSpawns numFighters luxury numAttackers numBombers numTransports
             ])
         yield Overview(userIds, delay,
             [
@@ -116,7 +116,7 @@ let showHangar(hangar : PlayerHangar, delay) =
                     | [] -> ()
                     | planes ->
                         let planes = String.concat ", " planes
-                        yield sprintf "Your reserved planes at %s: %s" kvp.Key.AirfieldName planes
+                        yield StringResources.reservedPlanes kvp.Key.AirfieldName planes
             ])
         let guid =
             try
@@ -342,9 +342,9 @@ with
                     if oldQty >= 1.0f && newQty < 1.0f then
                         yield PlanesAtAirfield(af, airfields.[af])
                     if int newQty <= 0 then
-                        yield Announce(coalition, [ sprintf "%s took the last %s from %s" hangar.RankedName plane.PlaneName af.AirfieldName ])
+                        yield Announce(coalition, [ StringResources.tookLastPlane hangar.RankedName plane.PlaneName af.AirfieldName ])
                     else
-                        yield Announce(coalition, [ sprintf "%s entered a %s from %s (%d left)" hangar.RankedName plane.PlaneName af.AirfieldName (int newQty)])
+                        yield Announce(coalition, [ StringResources.enteredPlane hangar.RankedName plane.PlaneName af.AirfieldName (int newQty)])
                 ]
             | None ->
                 logger.Error("Attempt to check out plane from neutral region")
@@ -397,7 +397,7 @@ with
                     yield PlanesAtAirfield(af, airfields.[af])
                     match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
                     | Some coalition ->
-                        yield Announce(coalition, [sprintf "%s available at %s again" plane.PlaneName af.AirfieldName])
+                        yield Announce(coalition, [StringResources.planeAvailableAgain plane.PlaneName af.AirfieldName])
                     | None ->
                         ()
             ]
@@ -433,19 +433,19 @@ with
                         let giverUserId = { UserId = string hangarOut.Player; Name = hangarOut.PlayerName }
                         let recipientUserId = { UserId = string hangarIn.Player; Name = hangarIn.PlayerName }
                         if hangarOut.Player = hangarIn.Player then
-                            [], [ Overview(giverUserId, 0, ["You cannot gift a plane to yourself"]) ]
+                            [], [ Overview(giverUserId, 0, [StringResources.noSelfGift]) ]
                         else
                             // Gift to an individual
                             logger.Info(sprintf "Gift from %s to %s" hangarOut.PlayerName hangarIn.PlayerName)
                             [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)
                              hangarIn.AddPlane(gift.Airfield, gift.Plane, 1.0f)],
-                            [Overview (giverUserId, 0, [sprintf "You have gifted a %s to %s at %s" gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])
-                             Overview (recipientUserId, 0, [sprintf "You have been gifted a %s at %s by %s" gift.Plane.PlaneName gift.Airfield.AirfieldName hangarOut.PlayerName])]
+                            [Overview (giverUserId, 0, [StringResources.giftToPlayer gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])
+                             Overview (recipientUserId, 0, [StringResources.giftFromPlayer gift.Plane.PlaneName gift.Airfield.AirfieldName hangarOut.PlayerName])]
                     | Some (hangarOut : PlayerHangar), None ->
                         // Gift to public
                         logger.Info(sprintf "Gift from %s to the public" hangarOut.PlayerName)
                         [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)],
-                        [Announce(coalition, [sprintf "%s has gifted a %s to the public at %s" hangarOut.PlayerName gift.Plane.PlaneName gift.Airfield.AirfieldName])]
+                        [Announce(coalition, [StringResources.giftToPublic hangarOut.PlayerName gift.Plane.PlaneName gift.Airfield.AirfieldName])]
                 let hangars =
                     newHangars
                     |> List.fold (fun hangars h -> hangars |> Map.add ((string h.Player), coalition) h) this.Hangars
@@ -487,7 +487,7 @@ with
         | PunishThief(user, plane, af) ->
             this,
             [
-                Violation(user, "unauthorized take off")
+                Violation(user, StringResources.unauthorizedTakeOff)
             ]
 
         | Message m ->

@@ -251,7 +251,7 @@ let private mkHangarTask (config : Configuration, wg : WorldFastAccess, sg : Wor
             | false, Violation(user, reason) ->
                 true,
                 async {
-                    do! handlers.OnMessagesToPlayer(user, [sprintf "You are being kicked for %s. This is not a ban, you are welcome back." reason])
+                    do! handlers.OnMessagesToPlayer(user, [StringResources.kickNoBan reason])
                     Async.Start(
                         async {
                             do! Async.Sleep(10000)
@@ -276,14 +276,14 @@ let mkTimeTask(config : Configuration, handlers, entries : AsyncSeq<LogData<LogE
                 let times =
                     [
                         if t.Hours > 0 then
-                            yield sprintf "%d hours" t.Hours
+                            yield StringResources.hours t.Hours
                         if t.Minutes > 0 then
-                            yield sprintf "%d minutes" t.Minutes
+                            yield StringResources.minutes t.Minutes
                         if t.Hours = 0 && t.Minutes = 0 then
-                            yield sprintf "%d seconds" t.Seconds
+                            yield StringResources.seconds t.Seconds
                     ]
                     |> String.concat " "
-                [ sprintf "Time left in mission: %s" times ]
+                [ StringResources.timeLeft times ]
             logger.Info(msg)
             do! handlers.OnMessagesToCoalition(Axis, msg)
             do! handlers.OnMessagesToCoalition(Allies, msg)

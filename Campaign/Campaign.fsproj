@@ -52,6 +52,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="Src\AssemblyInfo.fs" />
+    <Compile Include="Src\StringResources.fs" />
     <Compile Include="Src\Util.fs" />
     <Compile Include="Src\WatchLogs.fs" />
     <Compile Include="Src\BasicTypes.fs" />
@@ -174,6 +175,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="Sample.Mission" />
+    <None Include="Strings.resx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">
@@ -237,8 +241,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\sturmovikservercontrol\CampaignServerControl\CampaignServerControl.fsproj">
       <Name>CampaignServerControl</Name>
       <Project>{641f10fc-c185-4c95-881d-cc2bec4b95fc}</Project>
