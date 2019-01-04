@@ -175,9 +175,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="Sample.Mission" />
-    <None Include="Strings.resx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="Strings.resx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">
