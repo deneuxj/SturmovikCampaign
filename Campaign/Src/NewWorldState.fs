@@ -1413,15 +1413,8 @@ let updateRearAirfields (world : World) (state : WorldState) =
             |> Map.toSeq
             |> Seq.exists (fun (plane, qty) -> plane.BombCapacity >= 250.0f<K> && qty >= 1.0f)
         let candidate =
-            pickRearAirfield 70000.0f world.FastAccess state.Regions getAirfieldStorage hasPlanes coalition
-        let suppliesOld = getAirfieldStorage(state.RearAirfield coalition)
-        let suppliesNew = getAirfieldStorage(candidate)
-        let oldRearAirfield = state.RearAirfield coalition
-        let oldRearRegion = sg.GetRegion(wg.GetAirfield(oldRearAirfield).Region)
-        if suppliesNew > suppliesOld || suppliesNew > 500.0f<E> || oldRearRegion.HasInvaders || oldRearRegion.Owner <> Some coalition then
-            candidate
-        else
-            oldRearAirfield
+            pickRearAirfield world.FastAccess state.Regions getAirfieldStorage hasPlanes coalition
+        candidate
 
     let axisRearAirfield = pickRearAirfield Axis
     let alliesRearAirfield = pickRearAirfield Allies

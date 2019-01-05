@@ -595,13 +595,13 @@ let computeProductionDifference subBlockSpecs (regions : Region list) =
     let allies = computeAbsProd(Allies)
     allies - axis
 
-/// Try to find an airfield suitable for being the rear airfield.
-/// It must be safe, away from other airfields, but not too far from it, and have supplies available
-let pickRearAirfield minDistance (wg : WorldFastAccess) (regions : RegionState list) (getAirfieldSupplies : AirfieldId -> float32<E>) (hasPlanes : AirfieldId -> bool) (coalition : CoalitionId) =
+/// Rank airfields on how desirable they are as rear airfields, taking into account distance and bomb supplies
+let rankRearAirfields (wg : WorldFastAccess) (regions : RegionState list) (getAirfieldSupplies : AirfieldId -> float32<E>) (hasPlanes : AirfieldId -> bool) (coalition : CoalitionId) =
     let regionsById =
         regions
         |> Seq.map (fun region -> region.RegionId, region)
         |> dict
+
     let menacingAirfields =
         wg.World.Airfields
         |> List.filter(fun af2 ->
@@ -624,19 +624,57 @@ let pickRearAirfield minDistance (wg : WorldFastAccess) (regions : RegionState l
                 with
                 | _ -> None
                 |> Option.defaultValue System.Single.PositiveInfinity
-            af.AirfieldId, distance, getAirfieldSupplies(af.AirfieldId) / 100.0f<E> |> floor |> min 50.0f)
+            af.AirfieldId, distance, getAirfieldSupplies(af.AirfieldId) |> max 0.0f<E>)
         |> List.ofSeq
 
-    let candidates =
-        match List.filter (fun (_, d, _) -> d >= minDistance) ourAirfields with
-        | [] -> ourAirfields
-        | candidates -> candidates
+    let closestWithBombs minDistance minBombs =
+        ourAirfields
+        |> List.filter (fun (_, d, s) -> d >= minDistance && s >= minBombs * bombCost)
+        |> List.sortBy (fun (_, d, _) -> d)
 
-    match candidates with
-    | [] -> ourAirfields
-    | _ :: _ -> candidates
-    |> List.maxBy (fun (_, _, supplies) -> supplies)
-    |> fun (af, _, _) -> af
+    let furthest() =
+        ourAirfields
+        |> List.sortByDescending (fun (_, d, _) -> d)
+
+    seq {
+        // Closest airfield with bombs that's at a safe distance from enemies
+        yield! closestWithBombs 70000.0f 10000.0f<K>
+        yield! closestWithBombs 70000.0f 2500.0f<K>
+        yield! closestWithBombs 70000.0f 1500.0f<K>
+
+        // Start trading distance for bombs, i.e. consider moving back to an airfield with more bombs
+        yield! closestWithBombs 100000.0f 10000.0f<K>
+        yield! closestWithBombs 100000.0f 2500.0f<K>
+        yield! closestWithBombs 200000.0f 10000.0f<K>
+
+        yield! closestWithBombs 70000.0f 500.0f<K>
+        yield! closestWithBombs 100000.0f 1500.0f<K>
+        yield! closestWithBombs 200000.0f 2500.0f<K>
+
+        yield! closestWithBombs 100000.0f 500.0f<K>
+        yield! closestWithBombs 200000.0f 1500.0f<K>
+        yield! closestWithBombs 200000.0f 500.0f<K>
+
+        yield! closestWithBombs 70000.0f 500.0f<K>
+        yield! closestWithBombs 100000.0f 1500.0f<K>
+        yield! closestWithBombs 200000.0f 2500.0f<K>
+
+        // Barely any bombs, pick the safe airfield closest to the front
+        yield! closestWithBombs 70000.0f 0.0f<K>
+        yield! closestWithBombs 100000.0f 0.0f<K>
+        yield! closestWithBombs 200000.0f 0.0f<K>
+
+        // No safe airfield, pick the one most far away from the front
+        yield! furthest()
+    }
+
+/// Try to find an airfield suitable for being the rear airfield.
+/// It must be safe, away from other airfields, but not too far from it, and have supplies available
+let pickRearAirfield (wg : WorldFastAccess) (regions : RegionState list) (getAirfieldSupplies : AirfieldId -> float32<E>) (hasPlanes : AirfieldId -> bool) (coalition : CoalitionId) =
+    rankRearAirfields wg regions getAirfieldSupplies hasPlanes coalition
+    |> Seq.tryHead
+    |> Option.map (fun (af, _, _) -> af)
+    |> function None -> failwith "No airfield suitable for being the rear airfield" | Some af -> af
 
 /// Build the initial state
 let mkInitialState(config : Configuration, world : World, windDirection : float32) =
@@ -743,7 +781,7 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
             wg.GetAirfield(af).Storage
             |> List.sumBy(fun group -> group.Storage world.SubBlockSpecs)
         let hasPlanes _ = true
-        pickRearAirfield 70000.0f wg regions getAirfieldStorage hasPlanes coalition
+        pickRearAirfield wg regions getAirfieldStorage hasPlanes coalition
     let axisRearAirfield = pickRearAirfield Axis
     let alliesRearAirfield = pickRearAirfield Allies
     let rearAirfield =
