@@ -100,7 +100,7 @@
     # Total production of all factories in an average region. Used to compute production factor to adjust production per factory building on the map.
     DesiredProduction: 150.0
     # Initial number of planes at rear airfield
-    RearAirfieldPlanes: 5000
+    RearAirfieldPlanes: 750
     # Fixed part of the mission briefing
     Briefing: |
         This mission is part of a dynamic campaign where the events from one mission affect the following missions.

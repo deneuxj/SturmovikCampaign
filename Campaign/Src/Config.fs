@@ -150,7 +150,7 @@ with
             ScriptPath = @"nul"
             ThinkTime = 30
             DesiredProduction = 300.0f
-            RearAirfieldPlanes = 5000
+            RearAirfieldPlanes = 750
             WebHook = ""
             DiscordUserId = ""
             MaxFriendlyFireEvents = 2
