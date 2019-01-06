@@ -172,7 +172,7 @@ module PlayChess =
             let minMax board =
                 use cancellation = new CancellationTokenSource()
                 cancellation.CancelAfter(config.ThinkTime * 1000)
-                timeBound cancellation.Token ({ Axis = None; Allies = None }, Ongoing 0.0f) 1 board
+                timeBound cancellation.Token ([{ Axis = None; Allies = None }], Ongoing 0.0f) 1 board
             yield! play minMax board
         }
 
@@ -246,12 +246,11 @@ module OrderDecision =
         // Decide column movements
         let columnOrders =
             if state.Regions |> List.exists (fun region -> region.HasInvaders) then
-                Continue []
+                Continue([], Map.empty)
             else
-                let dt = 1.0f<H> * float32 config.MissionLength / 60.0f
                 decideColumnMovements world state config.ThinkTime
         match columnOrders with
-        | Continue columnOrders ->
+        | Continue(columnOrders, _) ->
             let axisColumns =
                 columnOrders
                 |> List.filter (fun order -> order.OrderId.Coalition = Axis)

@@ -525,20 +525,24 @@ let minMax (cancel : CancellationToken) maxDepth (neighboursOf) (board : BoardSt
     let moves, score = bestMoveAtDepth (Defeat(Allies, 0, "Initial beta")) 0
     if cancel.IsCancellationRequested then
         logger.Info("Cancelled")
-        List.head moves, score
+        moves, score
     else
         logger.Trace(sprintf "Hits: %d, Score: %A" hits score)
         match moves with
         | topMove :: followingMoves ->
             logger.Debug(sprintf "DBG: %A\nfollowed by\n%A" topMove followingMoves)
-            topMove, score
+            moves, score
         | [] ->
             failwith "Empty combined move list"
 
 
 let rec play minMax (board : BoardState) =
     seq {
-        let move, value = minMax board
+        let moves, value = minMax board
+        let move =
+            match moves with
+            | [] -> { Axis = None; Allies = None }
+            | x :: _ -> x
         board.DoMove(move) |> ignore
         yield sprintf "Balance: %A" value
         yield sprintf "GER moves: %A" (move.Axis)

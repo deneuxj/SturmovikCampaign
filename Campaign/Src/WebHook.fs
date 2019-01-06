@@ -153,6 +153,26 @@ let postWorldState channel (world : World, state : WorldState) =
     sprintf "Allies planes:\n%s\n" (countPlanes Allies |> showPlanes) |> send
     sprintf "Allies tanks:\n%s\n" (countTanks Allies |> showTanks) |> send
 
+let postOrders channel (world : World, state : WorldState, orders: Map<CoalitionId, RegionId list>) =
+    let columnMovements coalition =
+        let destinations =
+            orders.TryFind coalition
+            |> Option.defaultValue []
+        match destinations with
+        | [] ->
+            sprintf "Nothing is know about the planned column movements of the %s side.\n" (string coalition)
+        | _ :: _ ->
+            let destinations =
+                destinations
+                |> List.map string
+                |> String.concat ", "
+            sprintf "Spies report that the %s side is planning to move tanks to %s.\n"
+                (string coalition)
+                destinations
+    let send = postMessage channel
+    columnMovements Axis |> send
+    columnMovements Allies |> send
+
 let onCampaignOver channel (victors : CoalitionId) =
     let be =
         match victors with

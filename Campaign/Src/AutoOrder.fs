@@ -409,7 +409,7 @@ let realizeMove (world : World) (state : WorldState) (move : Move) =
 
 type CoalitionsDecision =
     | Surrender of CoalitionId * string
-    | Continue of ColumnMovement list
+    | Continue of ColumnMovement list * Map<CoalitionId, RegionId list>
 
 /// Run a minmax search for the best column moves for each coalition.
 let decideColumnMovements (world : World) (state : WorldState) thinkTime =
@@ -426,7 +426,7 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     let minMax board =
         use cancellation = new CancellationTokenSource()
         cancellation.CancelAfter(thinkTime * 1000)
-        timeBound cancellation.Token ({ Axis = None; Allies = None }, Ongoing 0.0f) 1 board
+        timeBound cancellation.Token ([{ Axis = None; Allies = None }], Ongoing 0.0f) 1 board
     let moves, mark =
         minMax board
     match mark with
@@ -435,10 +435,22 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
     | Defeat(coalition, depth, reason) when (state.Date - world.StartDate).TotalDays >= 2.0 && depth <= 2 ->
         Surrender(coalition, reason)
     | _ ->
-        let { Axis = m1; Allies = m2 } = moves
-        (Option.toList m1 @ Option.toList m2)
-        |> List.map (realizeMove world state)
-        |> Continue
+        match moves with
+        | { Axis = m1; Allies = m2 } :: _ ->
+            let plans =
+                [ Axis, moves |> List.choose (fun x -> x.Axis) 
+                  Allies, moves |> List.choose (fun x -> x.Allies) 
+                ]
+                |> Map.ofSeq
+                |> Map.map (fun _ moves ->
+                    moves
+                    |> List.map (fun idx -> world.Regions.[idx.Destination].RegionId))
+            logger.Info (sprintf "Planned column movement destinations: %A" plans)
+            (Option.toList m1 @ Option.toList m2)
+            |> List.map (realizeMove world state)
+            |> fun x -> Continue(x, plans)
+        | [] ->
+            Continue([], Map.empty)
 
 /// Move tanks from a rear region (where they typically are in excess) closer to the front line (where they typically are in need)
 let allTankReinforcements (world : World) (state : WorldState) (coalition : CoalitionId) =

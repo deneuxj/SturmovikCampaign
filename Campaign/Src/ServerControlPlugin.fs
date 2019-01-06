@@ -46,6 +46,7 @@ module Support =
     open System.Numerics
     open Util.Async
     open System.Threading
+    open Campaign
 
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -110,6 +111,7 @@ module Support =
         AnnounceResults : AfterActionReport.ReportData * AfterActionReport.ReportData * NewWorldState.BattleSummary list -> unit
         AnnounceWeather : Weather.WeatherState -> unit
         AnnounceWorldState : World * WorldState -> unit
+        AnnounceOrders : World * WorldState * Map<CoalitionId, RegionId list> -> unit
         AnnounceCampaignOver : CoalitionId -> unit
         UpdateMap : World * WorldState * Map<Guid * CoalitionId, PlayerHangar.PlayerHangar> -> unit
         StartCommenter : unit -> unit
@@ -206,7 +208,8 @@ module Support =
                     support.Logging.LogInfo "Deciding orders..."
                     let decision = Campaign.Run.OrderDecision.run config
                     match decision with
-                    | AutoOrder.Continue _ ->
+                    | AutoOrder.Continue(_, plans) ->
+                        loadWorldThenDo (support, config) (fun (world, state, _) -> notifications.AnnounceOrders(world, state, plans))
                         return serverProc, GenerateMission
                     | AutoOrder.Surrender(coalition, reason) ->
                         do!
@@ -905,6 +908,11 @@ type Plugin() =
         | Some hook -> postWorldState (queue, hook) arg
         | None -> ()
 
+    let announceOrders arg =
+        match webHookClient with
+        | Some hook -> postOrders (queue, hook) arg
+        | None -> ()
+
     let updateMap (cnf : Configuration) arg =
         match support with
         | Some support ->
@@ -988,6 +996,7 @@ type Plugin() =
         { AnnounceResults = announceResults
           AnnounceWeather = announceWeather
           AnnounceWorldState = announceWorldState
+          AnnounceOrders = announceOrders
           AnnounceCampaignOver = onCampaignOver
           UpdateMap = updateMap cnf
           StartCommenter = fun() -> x.StartCommenter(cnf)
