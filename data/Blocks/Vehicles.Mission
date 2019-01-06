@@ -3099,8 +3099,8 @@ Vehicle
   XOri = 0.00;
   YOri = 0.00;
   ZOri = 0.00;
-  Script = "LuaScripts\WorldObjects\vehicles\maksim4-aa.txt";
-  Model = "graphics\artillery\maksim4-aa\maksim4-aa.mgm";
+  Script = "LuaScripts\WorldObjects\vehicles\dshk-aa.txt";
+  Model = "graphics\artillery\dshk-aa\dshk-aa.mgm";
   Desc = "";
   Country = 0;
   NumberInFormation = 0;
@@ -4089,6 +4089,158 @@ Plane
   ZOri = 14.00;
   Script = "LuaScripts\WorldObjects\Planes\u2vs.txt";
   Model = "graphics\planes\u2vs\u2vs.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fokkerdr1";
+  Index = 123;
+  LinkTrId = 0;
+  XPos = 28829.476;
+  YPos = 109.974;
+  ZPos = 19973.443;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 17.90;
+  Script = "LuaScripts\WorldObjects\Planes\fokkerdr1.txt";
+  Model = "graphics\planes\fokkerdr1\fokkerdr1.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "pfalzd3a";
+  Index = 124;
+  LinkTrId = 0;
+  XPos = 28830.028;
+  YPos = 110.112;
+  ZPos = 19992.591;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.50;
+  Script = "LuaScripts\WorldObjects\Planes\pfalzd3a.txt";
+  Model = "graphics\planes\pfalzd3a\pfalzd3a.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "sopcamel";
+  Index = 125;
+  LinkTrId = 0;
+  XPos = 28813.089;
+  YPos = 109.849;
+  ZPos = 19972.522;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.50;
+  Script = "LuaScripts\WorldObjects\Planes\sopcamel.txt";
+  Model = "graphics\planes\sopcamel\sopcamel.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 3;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "spad13";
+  Index = 126;
+  LinkTrId = 0;
+  XPos = 28812.536;
+  YPos = 109.824;
+  ZPos = 19993.328;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.40;
+  Script = "LuaScripts\WorldObjects\Planes\spad13.txt";
+  Model = "graphics\planes\spad13\spad13.mgm";
   Country = 0;
   Desc = "";
   Skin = "";
