@@ -10,7 +10,7 @@ open SturmovikMission.DataProvider
 
 let startDate, description =
     try
-        Campaign.Run.Init.createWorld Configuration.config
+        Campaign.Run.Init.createWorld(Configuration.config, "MoscowWinter")
     with
     | :? Parsing.ParseError as e ->
         Parsing.printParseError e
