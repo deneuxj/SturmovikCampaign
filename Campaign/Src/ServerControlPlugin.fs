@@ -99,7 +99,10 @@ module Support =
             use stateFile = File.OpenText(Path.Combine(config.OutputDir, Filenames.state))
             let world = serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
             let state = serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile)
-            action(world, state)
+            let hangars =
+                PlayerHangar.tryLoadHangars Filenames.hangars
+                |> Option.defaultValue Map.empty
+            action(world, state, hangars)
         with
         | _ -> support.Logging.LogError("Failed to generate situational map")
 
@@ -108,7 +111,7 @@ module Support =
         AnnounceWeather : Weather.WeatherState -> unit
         AnnounceWorldState : World * WorldState -> unit
         AnnounceCampaignOver : CoalitionId -> unit
-        UpdateMap : World * WorldState -> unit
+        UpdateMap : World * WorldState * Map<Guid * CoalitionId, PlayerHangar.PlayerHangar> -> unit
         StartCommenter : unit -> unit
         StopCommenter : unit -> unit
         StartBackground : unit -> unit
@@ -325,7 +328,7 @@ module Support =
                     let date = Campaign.Run.WeatherComputation.getNextDateFromState config
                     let weather = Campaign.Run.WeatherComputation.run(config, date)
                     notifications.AnnounceWeather weather
-                    Campaign.Run.MissionLogParsing.updateHangars(config, missionResults, missionLogEntries)
+                    let hangars = Campaign.Run.MissionLogParsing.updateHangars(config, missionResults, missionLogEntries)
                     let! updatedState =
                         tryOrNotifyPlayers
                             [ "Bad news, campaign update failed"
@@ -369,7 +372,7 @@ module Support =
                         Campaign.Run.MissionLogParsing.stage2 config (oldState, newState, axisAAR, alliesAAR, battleResults)
                         notifications.AnnounceResults(axisAAR, alliesAAR, battleResults)
                         notifications.AnnounceWorldState(world, newState)
-                        notifications.UpdateMap(world, newState)
+                        notifications.UpdateMap(world, newState, hangars)
                         return serverProc, DecideOrders
                 }
             | CampaignOver victorious ->
@@ -524,8 +527,8 @@ module Support =
                 logger.Error(sprintf "%s surrendered immediately after reset because '%s'" (string side) reason)
                 return ScheduledTask.NoTask
             | _ ->
-                loadWorldThenDo (support, config) (fun (world, state) ->
-                    notifications.UpdateMap(world, state)
+                loadWorldThenDo (support, config) (fun (world, state, hangars) ->
+                    notifications.UpdateMap(world, state, hangars)
                     notifications.AnnounceWorldState(world, state))
                 // Start campaign
                 return start(support, config, Some GenerateMission, postMessage, notifications)
@@ -533,7 +536,7 @@ module Support =
         |> ScheduledTask.SomeTaskNow "after reset"
 
     /// Build a graphical representation of the strategic situation
-    let mkMapGraphics(missionLength : float32<H>) (world : World, state : WorldState) : MapGraphics.MapPackage =
+    let mkMapGraphics(missionLength : float32<H>) (world : World, state : WorldState, hangars : Map<_, PlayerHangar.PlayerHangar>) : MapGraphics.MapPackage =
         let sg = state.FastAccess
         let wg = world.FastAccess
         let fills = state.GetAmmoFillLevelPerRegion(world, missionLength)
@@ -580,13 +583,17 @@ module Support =
                     match sg.GetRegion(af.Region).Owner with
                     | Some coalition ->
                         let numPlanes = afState.NumPlanes |> Map.toSeq |> Seq.sumBy snd
+                        let numReservedPlanes =
+                            PlaneModel.AllModels
+                            |> Seq.sumBy (fun plane -> PlayerHangar.getTotalPlanesReservedAtAirfield coalition af.AirfieldId plane hangars)
+                            |> int
                         let capacity = afState.StorageCapacity(af, world.SubBlockSpecs) / bombCost
                         yield {
                             Position = af.Pos
                             Icon = MapGraphics.Airfield
                             Color = if coalition = Axis then MapGraphics.Gray else MapGraphics.Red
                             Label = None
-                            Description = Some (sprintf "%1.0f/%1.0f Kg %d planes" (afState.Supplies / bombCost) capacity (int numPlanes))
+                            Description = Some (sprintf "%1.0f/%1.0f Kg %d planes (%d reserved)" (afState.Supplies / bombCost) capacity (int numPlanes) numReservedPlanes)
                             Depth = 0.0f
                         }
                     | None ->

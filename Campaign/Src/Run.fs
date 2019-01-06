@@ -993,6 +993,7 @@ module MissionLogParsing =
                 { h with FreshSpawns = freshSpawns }
             )
         saveHangars (Path.Combine(config.OutputDir, Filenames.hangars)) hangars
+        hangars
 
     /// Compute new campaign state
     let updateState(config, missionResults) =
