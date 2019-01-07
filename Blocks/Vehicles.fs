@@ -816,13 +816,13 @@ type VehicleDataTypeStore() =
         }
 
     member this.StaticRussianTruck =
-        let vehicle = ships.[T.Vehicles.StaticTruckRUS]
+        let vehicle = statics.[T.Vehicles.StaticTruckRUS]
         { Script = vehicle.GetScript().Value
           Model = vehicle.GetModel().Value
         }
 
     member this.StaticGermanTruck =
-        let vehicle = ships.[T.Vehicles.StaticTruckGER]
+        let vehicle = statics.[T.Vehicles.StaticTruckGER]
         { Script = vehicle.GetScript().Value
           Model = vehicle.GetModel().Value
         }
