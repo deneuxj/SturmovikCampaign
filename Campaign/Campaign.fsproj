@@ -160,6 +160,10 @@
       <Link>StalingradAutumn.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\StalingradFC.Mission">
+      <Link>StalingradFC.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Content Include="Installation.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
