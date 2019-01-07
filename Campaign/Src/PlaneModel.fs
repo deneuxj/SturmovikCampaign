@@ -719,6 +719,10 @@ with
           He111h16
           Hs129b2
           U2
+          FokkerDr1
+          Pfalzd3a
+          SopCamel
+          Spad13
         ]
 
     static member PlaneTypeShares(coalition) =
