@@ -101,7 +101,7 @@ module Support =
             let world = serializer.Deserialize<Campaign.WorldDescription.World>(worldFile)
             let state = serializer.Deserialize<Campaign.WorldState.WorldState>(stateFile)
             let hangars =
-                PlayerHangar.tryLoadHangars Filenames.hangars
+                PlayerHangar.tryLoadHangars(Path.Combine(config.OutputDir, Filenames.hangars))
                 |> Option.defaultValue Map.empty
             action(world, state, hangars)
         with
