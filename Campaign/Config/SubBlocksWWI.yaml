@@ -54,17 +54,14 @@
     - pattern: "industrial_block_fuel35m_300x100"
       sub_blocks: "[0..7]"
       production: 25.0
-      durability: 9000
       durability: 10000
     - pattern: "industrial_block_fuel25m_300x100"
       sub_blocks: "[0..6]"
       production: 25.0
-      durability: 9000
       durability: 10000
     - pattern: "industrial_block_bigwarehouse_300x100"
       sub_blocks: "[1..4] @ [6..7]"
       production: 25.0
-      durability: 50000
       durability: 10000
     - pattern: "industrial_block_midwarehouse_200x140"
       sub_blocks: "[0..8]"
@@ -90,7 +87,6 @@
       sub_blocks: "[2..3] @ [16..19]"
       production: 25.0
       durability: 9000
-      durability: 10000
     - pattern: "industrial_cornerl_01"
       sub_blocks: "[0..8]"
       production: 25.0
@@ -179,4 +175,3 @@
       sub_blocks: "[0; 2; 3] @ [6..8]"
       production: 10.0
       durability: 10000
-
