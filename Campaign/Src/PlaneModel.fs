@@ -68,6 +68,10 @@ let private xTimes offsets xs =
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
+    | FokkerDr1
+    | Pfalzd3a
+    | SopCamel
+    | Spad13
     | Bf109e7
     | Bf109f2
     | Bf109f4
@@ -111,6 +115,10 @@ type PlaneModel =
 with
     member this.ScriptModel =
         match this with
+        | FokkerDr1 -> Vehicles.vehicles.fokkerdr1
+        | Pfalzd3a -> Vehicles.vehicles.pfalzd3a
+        | SopCamel -> Vehicles.vehicles.sopcamel
+        | Spad13 -> Vehicles.vehicles.spad13
         | Bf109e7 -> Vehicles.vehicles.GermanFighter1
         | Bf109f2 -> Vehicles.vehicles.GermanFighter2
         | Mc202 -> Vehicles.vehicles.GermanFighter3
@@ -154,6 +162,10 @@ with
 
     member this.Cost =
         match this with
+        | FokkerDr1
+        | Pfalzd3a
+        | SopCamel
+        | Spad13 -> 0.25f * basePlaneCost
         | Bf109e7 -> basePlaneCost
         | Bf109f4
         | Bf109g2
@@ -201,36 +213,47 @@ with
     member this.AttackPayload =
         let modmask, payload =
             match this with
-            | PlaneModel.Bf109e7 -> 5, 2
-            | PlaneModel.Bf109f2 | PlaneModel.Bf109f4 | PlaneModel.Bf109g2 | PlaneModel.Bf109g4 | PlaneModel.Bf109g6-> 17, 2 // SC250-1
-            | PlaneModel.Bf109g14 -> 17, 2 // SD250-1
-            | PlaneModel.Bf109k4 -> 9, 2 // SC500-1
-            | PlaneModel.Fw190a3 -> 9, 3 // SC500-1
-            | PlaneModel.Fw190a8 -> 101, 43 // SC250-3
-            | PlaneModel.Fw190a5 -> 73, 9 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500 + SC500-1 + SC50-4"
-            | PlaneModel.I16 -> 9, 2 // "0,1-SHKAS-AP-1000 + 2,3-SHKAS-AP-1800 + FAB100M-2"
-            | PlaneModel.La5 -> 37, 5 // "0,1-SHVAK-AP-340 + FAB100M-2"
-            | PlaneModel.Lagg3s29 -> 17, 14 // "0-UB-APHE-200 + 1-SHVAK-APHE-160 + FAB100M-2"
-            | PlaneModel.Mc202 -> 9 , 2 // "0,1-BREDA12-APHE-800 + T100-2"
-            | PlaneModel.Mig3 -> 5, 6 // "0,1-SHKAS-AP-1500 + 2-BS-APHE-300 + FAB100M-2"
-            | PlaneModel.P39 -> 5, 12 // FAB250
-            | PlaneModel.P40 -> 33, 8 // "0,1,2,3,4,5-M250-AP-1410 + FAB500M-1"
-            | PlaneModel.P47 -> 17, 24 // M65-2
-            | PlaneModel.Yak1s127 -> 5, 2 // "0-UB-APHE-220 + 1-SHVAK-APHE-140 + FAB100M-2"
-            | PlaneModel.Yak1s69 -> 17, 10 // "0,1-SHKAS-AP-1500 + 2-SHVAK-APHE-120 + FAB100M-2"
-            | PlaneModel.Ju87 -> 1, 5 // "0,1-MG17-AP-2000 + SC250-3"
-            | PlaneModel.Bf110e -> 1, 2 // "0,1,2,3-MG17-AP-4000 + 4,5-MGFF-APHE-360 + SC250-2 + SC50-4"
-            | PlaneModel.Bf110g -> 1, 2 //  "0,1,2,3-MG17-AP-4000 + 4-MG15120-APHE-400 + 5-MG15120-APHE-350 + SC250-2 + SC50-4"
-            | PlaneModel.IL2M41 -> 1, 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
-            | PlaneModel.IL2M42 -> 33, 44 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-8"
-            | PlaneModel.IL2M43 -> 33, 41 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-4"
-            | PlaneModel.Pe2s35 -> 5, 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
-            | PlaneModel.Pe2s87 -> 5, 5
-            | PlaneModel.A20 -> 5, 4
-            | PlaneModel.Hs129b2 -> 1, 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
-            | PlaneModel.SpitfireMkIXe -> 7, 3 // GPB500-1 + GPB250-2
-            | PlaneModel.U2 -> 13, 11 // FAB250SV-2 + FAB100M-2
-            | _ -> 1, 0
+            | FokkerDr1 -> 1, 1
+            | Pfalzd3a -> 1, 1
+            | SopCamel -> 1, 2 // 20lb-4
+            | Spad13 -> 33, 3 // 20lb-2
+            | Bf109e7 -> 5, 2
+            | Bf109f2 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6-> 17, 2 // SC250-1
+            | Bf109g14 -> 17, 2 // SD250-1
+            | Bf109k4 -> 9, 2 // SC500-1
+            | Fw190a3 -> 9, 3 // SC500-1
+            | Fw190a8 -> 101, 43 // SC250-3
+            | Fw190a5 -> 73, 9 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500 + SC500-1 + SC50-4"
+            | I16 -> 9, 2 // "0,1-SHKAS-AP-1000 + 2,3-SHKAS-AP-1800 + FAB100M-2"
+            | La5 -> 37, 5 // "0,1-SHVAK-AP-340 + FAB100M-2"
+            | Lagg3s29 -> 17, 14 // "0-UB-APHE-200 + 1-SHVAK-APHE-160 + FAB100M-2"
+            | Mc202 -> 9 , 2 // "0,1-BREDA12-APHE-800 + T100-2"
+            | Mig3 -> 5, 6 // "0,1-SHKAS-AP-1500 + 2-BS-APHE-300 + FAB100M-2"
+            | P39 -> 5, 12 // FAB250
+            | P40 -> 33, 8 // "0,1,2,3,4,5-M250-AP-1410 + FAB500M-1"
+            | P47 -> 17, 24 // M65-2
+            | Yak1s127 -> 5, 2 // "0-UB-APHE-220 + 1-SHVAK-APHE-140 + FAB100M-2"
+            | Yak1s69 -> 17, 10 // "0,1-SHKAS-AP-1500 + 2-SHVAK-APHE-120 + FAB100M-2"
+            | Yak7bs36 -> 5, 2 // "0-UB-APHE-260 + 1-UB-APHE-140 + 2-SHVAK-APHE-120 + FAB100M-2"
+            | Ju87 -> 1, 5 // "0,1-MG17-AP-2000 + SC250-3"
+            | Bf110e -> 1, 2 // "0,1,2,3-MG17-AP-4000 + 4,5-MGFF-APHE-360 + SC250-2 + SC50-4"
+            | Bf110g -> 1, 2 //  "0,1,2,3-MG17-AP-4000 + 4-MG15120-APHE-400 + 5-MG15120-APHE-350 + SC250-2 + SC50-4"
+            | IL2M41 -> 1, 32 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-420 + FAB100M-4 + ROS82-8"
+            | IL2M42 -> 33, 44 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-8"
+            | IL2M43 -> 33, 41 // "0,1-SHKAS-AP-1500 + 2,3-SHVAK-APHE-500 + FAB100M-4 + ROS82-4"
+            | Pe2s35 -> 5, 5 // "0-SHKAS-AP-450 + 1-UB-APHE-150 + FAB250SV-4"
+            | Pe2s87 -> 5, 5
+            | A20 -> 5, 4
+            | Hs129b2 -> 1, 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
+            | SpitfireMkIXe -> 7, 3 // GPB500-1 + GPB250-2
+            | U2 -> 13, 11 // FAB250SV-2 + FAB100M-2
+            | SpitfireMkVb
+            | SpitfireMkIXe
+            | La5fns2
+            | Ju88a4
+            | Ju52
+            | He111h6
+            | He111h16 -> 1, 0
         modmask, payload
 
     /// The mod mask and payload ID suitable for fighter patrols
@@ -272,6 +295,10 @@ with
 
     member this.Coalition =
         match this with
+        | FokkerDr1
+        | Pfalzd3a -> Axis
+        | SopCamel
+        | Spad13 -> Allies
         | Bf109e7
         | Bf109f2
         | Bf109f4
@@ -315,6 +342,10 @@ with
 
     member this.PlaneType =
         match this with
+        | FokkerDr1
+        | Pfalzd3a
+        | SopCamel
+        | Spad13 -> Fighter
         | Bf109e7 
         | Bf109f2
         | Bf109f4
@@ -358,6 +389,10 @@ with
 
     member this.PlaneName =
         match this with
+        | FokkerDr1 -> "Fokker Dr.I"
+        | Pfalzd3a -> "Pfalz D.IIIa"
+        | SopCamel -> "Sopwith Camel"
+        | Spad13 -> "Spad 13.C1"
         | Bf109e7 -> "bf109e7"
         | Bf109f2 -> "bf109f2"
         | Bf109f4 -> "bf109f4"
@@ -404,6 +439,10 @@ with
     /// </summary>
     member this.MissionLogName =
         match this with
+        | FokkerDr1 -> "fokker dr.i"
+        | Pfalzd3a -> "pfalz d.iiia"
+        | Spad13 -> "spad 13.c1"
+        | SopCamel -> "sopwith camel"
         | Bf109e7 -> "bf 109 e-7"
         | Bf109f2 -> "bf 109 f-2"
         | Bf109f4 -> "bf 109 f-4"
@@ -447,6 +486,10 @@ with
 
     member this.BombLoads =
         match this with
+        | FokkerDr1 -> []
+        | Pfalzd3a -> []
+        | SopCamel -> [(2, 36.0f<K>); (3, 18.0f<K>)]
+        | Spad13 -> [(3, 18.0f<K>); (4, 9.0f<K>)]
         | Bf109e7 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
         | Bf109f2 -> xTimes [1; 4] [(0, 200.0f<K>); (1, 250.0f<K>)]
         | Bf109g14 -> [(1, 280.0f<K>); (2, 250.0f<K>); (10, 250.0f<K>)]
@@ -542,6 +585,10 @@ with
 
     member this.EmptyPayload =
         match this with
+        | FokkerDr1 -> 2
+        | Pfalzd3a -> 2
+        | SopCamel -> 4
+        | Spad13 -> 7
         | Lagg3s29 -> 49
         | Yak1s69 -> 11
         | Yak1s127 -> 3
@@ -585,6 +632,10 @@ with
 
     member this.Roles =
         match this with
+        | FokkerDr1
+        | Pfalzd3a -> [ Patroller ]
+        | SopCamel
+        | Spad13 -> [ GroundAttacker; Patroller ]
         | Bf109e7 -> [ GroundAttacker; Patroller ]
         | Bf109f2
         | Bf109f4

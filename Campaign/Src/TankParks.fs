@@ -123,14 +123,23 @@ let createParkedTanks store (missionLength : float32<H>) (maxTanksInParks : int)
                         let rot = pos.Z
                         let pos = Vector2(pos.X, pos.Y)
                         let model =
-                            match vehicle, coalition with
-                            | HeavyTank, Axis -> Vehicles.vehicles.GermanStaticHeavyTank
-                            | MediumTank, Axis -> Vehicles.vehicles.GermanStaticMediumTank
-                            | LightArmor, Axis -> Vehicles.vehicles.GermanStaticLightArmor
-                            | HeavyTank, Allies -> Vehicles.vehicles.RussianStaticHeavyTank
-                            | MediumTank, Allies -> Vehicles.vehicles.RussianStaticMediumTank
-                            | LightArmor, Allies -> Vehicles.vehicles.RussianStaticLightArmor
+                            if world.IsWWI then
+                                match coalition with
+                                | Axis -> Vehicles.vehicles.German
+                            else
+                                match vehicle, coalition with
+                                | HeavyTank, Axis -> Vehicles.vehicles.GermanStaticHeavyTank
+                                | MediumTank, Axis -> Vehicles.vehicles.GermanStaticMediumTank
+                                | LightArmor, Axis -> Vehicles.vehicles.GermanStaticLightArmor
+                                | HeavyTank, Allies -> Vehicles.vehicles.RussianStaticHeavyTank
+                                | MediumTank, Allies -> Vehicles.vehicles.RussianStaticMediumTank
+                                | LightArmor, Allies -> Vehicles.vehicles.RussianStaticLightArmor
                         let mcus =
+                            let durability =
+                                if world.IsWWI then
+                                    LightArmor.Durability
+                                else
+                                    vehicle.Durability
                             if inAttackArea pos then
                                 let block, entity = newBlockWithEntityMcu store country model.Model model.Script vehicle.Durability
                                 [ block; upcast entity ]
