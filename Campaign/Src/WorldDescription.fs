@@ -154,7 +154,7 @@ with
     member this.AddStorage(blocks : T.Block list, subBlockSpecs) =
         let storage =
             this.GetStaticBlocks(blocks)
-            |> List.filter (fun block -> block.Storage subBlockSpecs > 0.0f<E> && not (block.IsAirfieldStorage subBlockSpecs) && block.SubBlocks(subBlockSpecs).Length > 0)
+            |> List.filter (fun block -> block.Storage subBlockSpecs > 0.0f<E>  && block.SubBlocks(subBlockSpecs).Length > 0)
         { this with Storage = this.Storage @ storage
         }
 
@@ -514,12 +514,7 @@ with
                 ) airfields
         let airfields =
             storage
-            |> List.choose (fun storage ->
-                let blck = StaticGroup.FromBlock storage
-                if blck.IsAirfieldStorage subBlocksSpecs then
-                    Some blck
-                else
-                    None)
+            |> List.map StaticGroup.FromBlock
             |> List.fold (fun (airfields : Airfield list) blck ->
                 let pos = blck.Pos.Pos
                 let home =

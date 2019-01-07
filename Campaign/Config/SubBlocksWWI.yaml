@@ -1,33 +1,31 @@
 ﻿Blocks:
+    - pattern: "static_gazaa"
+      sub_blocks: "[0]"
+      storage: 10.0
+      durability: 5000
     - pattern: "arf_ammo_1"
       sub_blocks: "[0] @ [2..10]"
       storage: 100.0
-      is_airfield: true
       durability: 5000
     - pattern: "arf_ammo_2"
       sub_blocks: "[0..9]"
       storage: 125.0
-      is_airfield: true
       durability: 5000
     - pattern: "arf_ammo_3"
       sub_blocks: "[3..10]"
       storage: 50.0
-      is_airfield: true
       durability: 5000
     - pattern: "arf_ammo_4"
       sub_blocks: "[2..8]"
       storage: 75.0
-      is_airfield: true
       durability: 5000
     - pattern: "arf_sklad"
       sub_blocks: "[1]"
       storage: 300.0
-      is_airfield: true
       durability: 5000
     - pattern: "arf_saray"
       sub_blocks: "[1]"
       storage: 200.0
-      is_airfield: true
       durability: 5000
     - pattern: "industrial_200x140_01"
       sub_blocks: "[0..12]"
@@ -120,37 +118,30 @@
     - pattern: "arf_hangars_1"
       sub_blocks: "[0..1]"
       storage: 1200.0
-      is_airfield: true
       durability: 25000
     - pattern: "arf_hangars_2"
       sub_blocks: "[0..1]"
       storage: 1200.0
-      is_airfield: true
       durability: 25000
     - pattern: "arf_hangars_3"
       sub_blocks: "[0]"
       storage: 600.0
-      is_airfield: true
       durability: 25000
     - pattern: "arf_hangararc"
       sub_blocks: "[1]"
       storage: 1000.0
-      is_airfield: true
       durability: 50000
     - pattern: "arf_hangarbox"
       sub_blocks: "[1]"
       storage: 1000.0
-      is_airfield: true
       durability: 50000
     - pattern: "arf_gsm_1"
       sub_blocks: "[2..4]"
       storage: 100.0
-      is_airfield: true
       durability: 5000
     - pattern: "arf_gsm_2"
       sub_blocks: "[1; 2]"
       storage: 75.0
-      is_airfield: true
       durability: 5000
     - pattern: "port_up_group_cargo_190x15"
       sub_blocks: "[0..15]"
