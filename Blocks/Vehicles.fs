@@ -176,6 +176,30 @@ type VehicleDataTypeStore() =
           Model = tank.GetModel().Value
         }
 
+    member this.GermanMachineGun =
+        let gun = vehicles.[T.Vehicles.MgGER]
+        { Script = gun.GetScript().Value
+          Model = gun.GetModel().Value
+        }
+
+    member this.RussianMachineGun =
+        let gun = vehicles.[T.Vehicles.MgRUS]
+        { Script = gun.GetScript().Value
+          Model = gun.GetModel().Value
+        }
+
+    member this.GermanArtillery =
+        let gun = vehicles.[T.Vehicles.ArtilleryGER]
+        { Script = gun.GetScript().Value
+          Model = gun.GetModel().Value
+        }
+
+    member this.RussianArtillery =
+        let gun = vehicles.[T.Vehicles.ArtilleryRUS]
+        { Script = gun.GetScript().Value
+          Model = gun.GetModel().Value
+        }
+
     member this.RussianStaticHeavyTank =
         let tank = statics.[T.Vehicles.StaticHeavyTankRUS]
         { Script = tank.GetScript().Value
@@ -226,6 +250,18 @@ type VehicleDataTypeStore() =
 
     member this.TankPosition =
         let position = statics.[T.Vehicles.TankPosition]
+        { Script = position.GetScript().Value
+          Model = position.GetModel().Value
+        }
+
+    member this.MachineGunPosition =
+        let position = statics.[T.Vehicles.MachineGunPosition]
+        { Script = position.GetScript().Value
+          Model = position.GetModel().Value
+        }
+
+    member this.ArtilleryPosition =
+        let position = statics.[T.Vehicles.ArtilleryPosition]
         { Script = position.GetScript().Value
           Model = position.GetModel().Value
         }
