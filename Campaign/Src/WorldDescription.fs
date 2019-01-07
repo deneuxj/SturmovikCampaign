@@ -514,7 +514,11 @@ with
                 ) airfields
         let airfields =
             storage
-            |> List.map StaticGroup.FromBlock
+            |> List.choose (fun block ->
+                let group = StaticGroup.FromBlock block
+                match group.SubBlocks subBlocksSpecs with
+                | [||] -> None
+                | x -> Some group)
             |> List.fold (fun (airfields : Airfield list) blck ->
                 let pos = blck.Pos.Pos
                 let home =
