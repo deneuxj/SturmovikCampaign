@@ -641,7 +641,7 @@ with
 
 let (|BuildingObjectType|_|) (s : string) =
     let low = s.ToLower()
-    [ "arf_"; "industrial_"; "vl_"; "meh_"; "sklad_"; "scot_"; "port_"; "town_"; "rwstation_"; "watertower" ]
+    [ "arf_"; "industrial_"; "vl_"; "meh_"; "sklad_"; "scot_"; "port_"; "town_"; "rwstation_"; "watertower"; "static_gazaa" ]
     |> List.exists (fun prefix -> low.StartsWith(prefix))
     |> function true -> Some s | false -> None
 
