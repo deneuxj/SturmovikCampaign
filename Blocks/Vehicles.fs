@@ -755,4 +755,40 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.fokkerdr1 =
+        let fighter = planes.[T.Vehicles.fokkerdr1]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.pfalzd3a =
+        let fighter = planes.[T.Vehicles.pfalzd3a]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.sopcamel =
+        let fighter = planes.[T.Vehicles.sopcamel]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.spad13 =
+        let fighter = planes.[T.Vehicles.spad13]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.StaticRussianTruck =
+        let vehicle = ships.[T.Vehicles.StaticTruckRUS]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.StaticGermanTruck =
+        let vehicle = ships.[T.Vehicles.StaticTruckGER]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
 let vehicles = VehicleDataTypeStore()

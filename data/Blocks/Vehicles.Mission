@@ -4120,11 +4120,11 @@ Plane
   Index = 123;
   LinkTrId = 0;
   XPos = 28829.476;
-  YPos = 109.974;
+  YPos = 108.584;
   ZPos = 19973.443;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 17.90;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\fokkerdr1.txt";
   Model = "graphics\planes\fokkerdr1\fokkerdr1.mgm";
   Country = 0;
@@ -4142,7 +4142,7 @@ Plane
   Time = 60;
   DamageReport = 50;
   DamageThreshold = 1;
-  PayloadId = 0;
+  PayloadId = 2;
   WMMask = 1;
   AiRTBDecision = 0;
   DeleteAfterDeath = 1;
@@ -4158,11 +4158,11 @@ Plane
   Index = 124;
   LinkTrId = 0;
   XPos = 28830.028;
-  YPos = 110.112;
+  YPos = 108.584;
   ZPos = 19992.591;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 14.50;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\pfalzd3a.txt";
   Model = "graphics\planes\pfalzd3a\pfalzd3a.mgm";
   Country = 0;
@@ -4180,7 +4180,7 @@ Plane
   Time = 60;
   DamageReport = 50;
   DamageThreshold = 1;
-  PayloadId = 0;
+  PayloadId = 2;
   WMMask = 1;
   AiRTBDecision = 0;
   DeleteAfterDeath = 1;
@@ -4196,11 +4196,11 @@ Plane
   Index = 125;
   LinkTrId = 0;
   XPos = 28813.089;
-  YPos = 109.849;
+  YPos = 108.584;
   ZPos = 19972.522;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 14.50;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\sopcamel.txt";
   Model = "graphics\planes\sopcamel\sopcamel.mgm";
   Country = 0;
@@ -4218,7 +4218,7 @@ Plane
   Time = 60;
   DamageReport = 50;
   DamageThreshold = 1;
-  PayloadId = 3;
+  PayloadId = 4;
   WMMask = 1;
   AiRTBDecision = 0;
   DeleteAfterDeath = 1;
@@ -4234,11 +4234,11 @@ Plane
   Index = 126;
   LinkTrId = 0;
   XPos = 28812.536;
-  YPos = 109.824;
+  YPos = 108.584;
   ZPos = 19993.328;
   XOri = 0.00;
   YOri = 0.00;
-  ZOri = 14.40;
+  ZOri = 0.00;
   Script = "LuaScripts\WorldObjects\Planes\spad13.txt";
   Model = "graphics\planes\spad13\spad13.mgm";
   Country = 0;
@@ -4256,12 +4256,58 @@ Plane
   Time = 60;
   DamageReport = 50;
   DamageThreshold = 1;
-  PayloadId = 0;
+  PayloadId = 7;
   WMMask = 1;
   AiRTBDecision = 0;
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticTruckRUS";
+  Index = 127;
+  LinkTrId = 0;
+  XPos = 29133.798;
+  YPos = 108.584;
+  ZPos = 20352.144;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_zis.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_zis.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticTruckGER";
+  Index = 128;
+  LinkTrId = 0;
+  XPos = 29122.162;
+  YPos = 108.584;
+  ZPos = 20352.358;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_ford-g917.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_ford-g917.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
 }
 
 
