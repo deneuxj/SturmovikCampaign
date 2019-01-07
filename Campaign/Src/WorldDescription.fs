@@ -596,7 +596,7 @@ with
         subBlocks.Load(subBlocksFile)
         let subBlockSpecs =
             subBlocks.Blocks
-            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production, spec.storage, spec.is_airfield, spec.durability))
+            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production, spec.storage, spec.durability))
             |> List.ofSeq
         let map = data.ListOfOptions.Head.GetGuiMap().Value
         let regions =

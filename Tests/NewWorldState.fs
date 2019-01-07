@@ -8,7 +8,7 @@ open Campaign.NewWorldState
 
 [<Test>]
 let ``healing does not exceed limit``() =
-    let specs = [{ Pattern = "test_building"; SubBlocks = [| 0; 1; 2 |]; Production = 25.0f<E/H>; Storage = 0.0f<E>; IsAirfield = false; Durability = 25000 }]
+    let specs = [{ Pattern = "test_building"; SubBlocks = [| 0; 1; 2 |]; Production = 25.0f<E/H>; Storage = 0.0f<E>; Durability = 25000 }]
     let groups = [{ Model = "test_building"; Script = ""; Pos = { Pos = Vector2.Zero; Rotation = 0.0f; Altitude = 0.0f } }]
     let healLimit = 30.0f<E>
     let healths0 = [| 0.0f; 1.0f; 0.5f |]

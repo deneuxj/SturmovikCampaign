@@ -119,12 +119,11 @@ type SubBlockSpec = {
     SubBlocks : int[]
     Production : float32<E/H>
     Storage : float32<E>
-    IsAirfield : bool
     Durability : int
 }
 with
     /// Create from a pattern and a string representation of the list of sub-blocks
-    static member Create(pattern, subBlocks : string, production : float, storage : float, isAirfield, durability : int) =
+    static member Create(pattern, subBlocks : string, production : float, storage : float, durability : int) =
         let reInt = regex(@"\G\s*([+-]?\d+)")
         let (|ReInt|_|) (SubString(data, offset)) =
             let m = reInt.Match(data, offset)
@@ -164,7 +163,6 @@ with
           SubBlocks = Stream.FromString subBlocks |> parseAll|> List.concat |> Array.ofList
           Production = 1.0f<E/H> * float32 production
           Storage = 1.0f<E> * float32 storage
-          IsAirfield = isAirfield
           Durability = if durability > 0 then durability else defaultDurability }
 
 
@@ -227,15 +225,6 @@ with
             else
                 None)
         |> Option.defaultValue 0.0f<E>
-
-    member this.IsAirfieldStorage(subBlocksSpecs) =
-        subBlocksSpecs
-        |> List.tryPick (fun spec ->
-            if this.Model.Contains(spec.Pattern) then
-                Some spec.IsAirfield
-            else
-                None)
-        |> Option.defaultValue false
 
     member this.Durability(subBlocksSpecs) =
         subBlocksSpecs
