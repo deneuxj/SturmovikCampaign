@@ -627,9 +627,15 @@ let rankRearAirfields (wg : WorldFastAccess) (regions : RegionState list) (getAi
             af.AirfieldId, distance, getAirfieldSupplies(af.AirfieldId) |> max 0.0f<E>)
         |> List.ofSeq
 
+    let distK, bombK =
+        if wg.World.IsWWI then
+            0.5f, 0.1f
+        else
+            1.0f, 1.0f
+
     let closestWithBombs minDistance minBombs =
         ourAirfields
-        |> List.filter (fun (_, d, s) -> d >= minDistance && s >= minBombs * bombCost)
+        |> List.filter (fun (_, d, s) -> d >= distK * minDistance && s >= bombK * (minBombs * bombCost))
         |> List.sortBy (fun (_, d, _) -> d)
 
     let furthest() =
