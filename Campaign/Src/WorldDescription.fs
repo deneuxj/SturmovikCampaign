@@ -779,6 +779,7 @@ with
 type World
 with
     member this.FastAccess = WorldFastAccess.Create(this)
+    member this.IsWWI = this.StartDate < System.DateTime(1918, 12, 31)
 
 let cannonCost = 50.0f<E>
 let heavyMachineGunCost = cannonCost / 4.0f
