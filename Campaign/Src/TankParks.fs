@@ -125,7 +125,8 @@ let createParkedTanks store (missionLength : float32<H>) (maxTanksInParks : int)
                         let model =
                             if world.IsWWI then
                                 match coalition with
-                                | Axis -> Vehicles.vehicles.German
+                                | Axis -> Vehicles.vehicles.StaticGermanTruck
+                                | Allies -> Vehicles.vehicles.StaticRussianTruck
                             else
                                 match vehicle, coalition with
                                 | HeavyTank, Axis -> Vehicles.vehicles.GermanStaticHeavyTank
@@ -141,10 +142,10 @@ let createParkedTanks store (missionLength : float32<H>) (maxTanksInParks : int)
                                 else
                                     vehicle.Durability
                             if inAttackArea pos then
-                                let block, entity = newBlockWithEntityMcu store country model.Model model.Script vehicle.Durability
+                                let block, entity = newBlockWithEntityMcu store country model.Model model.Script durability
                                 [ block; upcast entity ]
                             else
-                                [ newBlockMcu store country model.Model model.Script vehicle.Durability ]
+                                [ newBlockMcu store country model.Model model.Script durability ]
                         for mcu in mcus do
                             pos.AssignTo mcu.Pos
                             mcu.Ori.Y <- float rot

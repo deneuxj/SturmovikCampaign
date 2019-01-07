@@ -35,6 +35,24 @@ type private AreaLocation =
     | AttackBack
     | AttackMiddle
 
+type WWIData =
+    { NumDefendingHowitzers : int
+      Defenders : int
+      NumAttackingHowitzers : int
+      Attackers : int
+    }
+
+type WWIIData =
+    { NumCannons : int
+      Defenders : Map<GroundAttackVehicle, int>
+      Attackers : GroundAttackVehicle[]
+      IncludePlayerSpawns : bool
+    }
+
+type UnitData =
+    | WWI of WWIData
+    | WWII of WWIIData
+
 type Battlefield =
     { Supporters : RespawningCanon list // Artillery behind the attacking front, fires at defenses
       Attackers : RespawningTank list // Moving tanks
@@ -44,7 +62,7 @@ type Battlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, lcStore, includePlayerSpawns : bool, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, numCanons : int, defenders : Map<GroundAttackVehicle, int>, attackers : GroundAttackVehicle[], region, numDefenders, numAttackers) =
+    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, unitData : UnitData, region, numDefenders, numAttackers) =
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float yori)
@@ -82,7 +100,8 @@ with
             |> Seq.find (fun v -> v.IsInConvexPolygon(boundary))
         // Player spawns
         let players =
-            if includePlayerSpawns then
+            match unitData with
+            | WWII { Defenders = defenders; Attackers = attackers; IncludePlayerSpawns = true } ->
                 [
                     let defendersExist =
                         defenders
@@ -106,7 +125,7 @@ with
                                 yori - 180.0f
                         yield PlayerTankSpawn.Ceate(store, getRandomPos(AttackBack), mirrored, defendingCoalition.Other.ToCountry, numAttackingHeavy)
                 ]
-            else
+            | _ ->
                 []
         // Build an attacking tank
         let buildTank name (model : VehicleTypeData) =
@@ -115,25 +134,39 @@ with
             model.AssignTo(tank.Tank)
             tank |> Choice1Of2
         // Build a supporting object (dug-in tank or rocket artillery)
-        let buildCanon(model : VehicleTypeData, wallModel : VehicleTypeData) =
+        let buildCanon name (model : VehicleTypeData, wallModel : VehicleTypeData) =
             let arty = RespawningCanon.Create(store, getRandomPos(AttackBack), getRandomPos(DefenseBack), defendingCoalition.Other.ToCountry)
+            arty.Canon.Name <- sprintf "B-%s-A-%s" region name
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
             arty |> Choice2Of2
         // Instantiate attacker blocks
         let attackers, support =
-            attackers
-            |> Seq.map (fun vehicle ->
-                match defendingCoalition.Other, vehicle with
-                | Allies, HeavyTank -> vehicles.RussianHeavyTank |> buildTank vehicle.Description
-                | Allies, MediumTank -> vehicles.RussianMediumTank |> buildTank vehicle.Description
-                | Allies, LightArmor -> (vehicles.RussianRocketArtillery, vehicles.TankPosition) |> buildCanon
-                | Axis, HeavyTank -> vehicles.GermanHeavyTank |> buildTank vehicle.Description
-                | Axis, MediumTank -> vehicles.GermanMediumTank |> buildTank vehicle.Description
-                | Axis, LightArmor -> (vehicles.GermanRocketArtillery, vehicles.TankPosition) |> buildCanon
-            )
-            |> List.ofSeq
-            |> List.partition (function Choice1Of2 _ -> true | _ -> false)
+            match unitData with
+            | WWII { Attackers = attackers } ->
+                attackers
+                |> Seq.map (fun vehicle ->
+                    match defendingCoalition.Other, vehicle with
+                    | Allies, HeavyTank -> vehicles.RussianHeavyTank |> buildTank vehicle.Description
+                    | Allies, MediumTank -> vehicles.RussianMediumTank |> buildTank vehicle.Description
+                    | Allies, LightArmor -> (vehicles.RussianRocketArtillery, vehicles.TankPosition) |> buildCanon vehicle.Description
+                    | Axis, HeavyTank -> vehicles.GermanHeavyTank |> buildTank vehicle.Description
+                    | Axis, MediumTank -> vehicles.GermanMediumTank |> buildTank vehicle.Description
+                    | Axis, LightArmor -> (vehicles.GermanRocketArtillery, vehicles.TankPosition) |> buildCanon vehicle.Description
+                )
+                |> List.ofSeq
+                |> List.partition (function Choice1Of2 _ -> true | _ -> false)
+            | WWI { Attackers = attackers; NumAttackingHowitzers = howitzers } ->
+                [],
+                List.init attackers (fun _ ->
+                    match defendingCoalition.Other with
+                    | Axis -> (vehicles.GermanMachineGun, vehicles.MachineGunPosition) |> buildCanon LightArmor.Description
+                    | Allies -> (vehicles.RussianMachineGun, vehicles.MachineGunPosition) |> buildCanon LightArmor.Description
+                ) @
+                List.init howitzers (fun _ ->
+                    match defendingCoalition.Other with
+                    | Axis -> (vehicles.GermanArtillery, vehicles.ArtilleryPosition) |> buildCanon LightArmor.Description
+                    | Allies -> (vehicles.RussianArtillery, vehicles.MachineGunPosition) |> buildCanon LightArmor.Description)
         let attackers = attackers |> List.map (function Choice1Of2 x -> x | _ -> failwith "Not a Choice1Of2")
         let support = support |> List.map (function Choice2Of2 x -> x | _ -> failwith "Not a Choice2Of2")
         // Instantiate defender blocks
@@ -147,26 +180,41 @@ with
             model.AssignTo(arty.Canon)
             arty
         let defenders =
-            defenders
-            |> expandMap
-            |> Seq.map (fun vehicle ->
-                match defendingCoalition, vehicle with
-                | Allies, HeavyTank -> vehicles.RussianHeavyTank
-                | Allies, MediumTank -> vehicles.RussianMediumTank
-                | Allies, LightArmor -> vehicles.RussianRocketArtillery
-                | Axis, HeavyTank -> vehicles.GermanHeavyTank
-                | Axis, MediumTank -> vehicles.GermanMediumTank
-                | Axis, LightArmor -> vehicles.GermanRocketArtillery
-                |> fun x -> buildCanon(DefenseBack, x, Some vehicle.Description, vehicles.TankPosition)
-            )
-            |> List.ofSeq
+            match unitData with
+            | WWII { Defenders = defenders } ->
+                defenders
+                |> expandMap
+                |> Seq.map (fun vehicle ->
+                    match defendingCoalition, vehicle with
+                    | Allies, HeavyTank -> vehicles.RussianHeavyTank
+                    | Allies, MediumTank -> vehicles.RussianMediumTank
+                    | Allies, LightArmor -> vehicles.RussianRocketArtillery
+                    | Axis, HeavyTank -> vehicles.GermanHeavyTank
+                    | Axis, MediumTank -> vehicles.GermanMediumTank
+                    | Axis, LightArmor -> vehicles.GermanRocketArtillery
+                    |> fun x -> buildCanon(DefenseBack, x, Some vehicle.Description, vehicles.TankPosition))
+                |> List.ofSeq
+            | WWI { Defenders = defenders } ->
+                List.init defenders (fun _ ->
+                    match defendingCoalition with
+                    | Axis -> vehicles.GermanMachineGun
+                    | Allies -> vehicles.RussianMachineGun
+                    |> fun x -> buildCanon(DefenseBack, x, Some LightArmor.Description, vehicles.ArtilleryPosition))
         let canons =
-            List.init numCanons (fun _ ->
-                match defendingCoalition with
-                | Axis -> vehicles.GermanAntiTankCanon
-                | Allies -> vehicles.RussianAntiTankCanon
-                |> fun x -> buildCanon(DefenseMiddle, x, None, vehicles.AntiTankPosition)
-            )
+            match unitData with
+            | WWII { NumCannons = numCannons } ->
+                List.init numCannons (fun _ ->
+                    match defendingCoalition with
+                    | Axis -> vehicles.GermanAntiTankCanon
+                    | Allies -> vehicles.RussianAntiTankCanon
+                    |> fun x -> buildCanon(DefenseMiddle, x, None, vehicles.AntiTankPosition))
+            | WWI { NumDefendingHowitzers = howitzers } ->
+                List.init howitzers (fun _ ->
+                    match defendingCoalition with
+                    | Axis -> vehicles.GermanArtillery
+                    | Allies -> vehicles.RussianArtillery
+                    |> fun x -> buildCanon(DefenseMiddle, x, None, vehicles.ArtilleryPosition))
+
         // Icons
         let icon1 = BattleIcons.Create(store, lcStore, center, yori, numAttackers, numDefenders, Defenders defendingCoalition.ToCoalition)
         let icon2 = BattleIcons.Create(store, lcStore, center, yori, numAttackers, numDefenders, Attackers defendingCoalition.Other.ToCoalition)
@@ -261,5 +309,24 @@ let generateBattlefields missionLength enablePlayerTanks maxVehicles killRatio r
                 attackingVehicles
                 |> Array.shuffle random
                 |> Array.truncate maxVehicles
-            yield Battlefield.Create(random, store, lcStore, enablePlayerTanks, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, numGuns, defendingVehicles, attackingVehicles, string bf.Home, numDefending * killRatio, numAttacking * killRatio)
+            let unitData =
+                if world.IsWWI then
+                    WWI {
+                        NumDefendingHowitzers = numGuns
+                        Defenders = numDefending
+                        NumAttackingHowitzers =
+                            attackingVehicles
+                            |> Seq.sumBy (function LightArmor -> 1 | _ -> 0)
+                        Attackers =
+                            attackingVehicles
+                            |> Array.sumBy (function LightArmor -> 0 | _ -> 1)
+                    }
+                else
+                    WWII {
+                        NumCannons = numGuns
+                        Defenders = defendingVehicles
+                        Attackers = attackingVehicles
+                        IncludePlayerSpawns = enablePlayerTanks
+                    }
+            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, unitData, string bf.Home, numDefending * killRatio, numAttacking * killRatio)
     ]

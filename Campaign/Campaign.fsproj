@@ -89,6 +89,7 @@
     <Compile Include="Src\WebHook.fs" />
     <Compile Include="Src\Run.fs" />
     <Compile Include="Src\ServerControlPlugin.fs" />
+    <None Include="Config\SubBlocksWWI.yaml" />
     <None Include="Config\SubBlocks.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

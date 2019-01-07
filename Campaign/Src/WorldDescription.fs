@@ -589,14 +589,20 @@ type World = {
 }
 with
     static member Create(scenario, planeSet, strategyFile, subBlocksFile : string) =
+        let s = Stream.FromFile strategyFile
+        let data = T.GroupData(s)
+
+        let date =
+            let options = List.head data.ListOfOptions
+            let h, m, s = options.GetTime().Value
+            System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
+
         let subBlocks = SubBlockFile()
         subBlocks.Load(subBlocksFile)
         let subBlockSpecs =
             subBlocks.Blocks
             |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production, spec.storage, spec.is_airfield, spec.durability))
             |> List.ofSeq
-        let s = Stream.FromFile strategyFile
-        let data = T.GroupData(s)
         let map = data.ListOfOptions.Head.GetGuiMap().Value
         let regions =
             let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
@@ -668,10 +674,6 @@ with
             |> List.map SafeZone.Create
             |> List.map (fun zone -> zone.Owner, zone)
             |> Map.ofList
-        let date =
-            let options = List.head data.ListOfOptions
-            let h, m, s = options.GetTime().Value
-            System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
         { Map = map
           Scenario = scenario
           PlaneSet = planeSet
@@ -695,6 +697,15 @@ with
           RegionRepairSpeed = 25.0f<E/H>
           MaxTanksInParks = 16
         }
+
+    static member IsWWIScenario scenarioFile =
+        let s = Stream.FromFile scenarioFile
+        let data = T.GroupData(s)
+        let date =
+            let options = List.head data.ListOfOptions
+            let h, m, s = options.GetTime().Value
+            System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
+        date < System.DateTime(1918, 12, 31)
 
     member this.GetClosestAirfield(pos : Vector2) =
         this.Airfields

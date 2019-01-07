@@ -51,8 +51,15 @@ module Init =
     let private logger = NLog.LogManager.GetCurrentClassLogger()
 
     let createWorld(config : Configuration, scenario : string) =
-        let subBlocksFile = Path.Combine(config.ScriptPath, "Config", "SubBlocks.yaml")
-        let world0 = World.Create(scenario, config.PlaneSet scenario, Path.Combine(config.ScriptPath, scenario + ".Mission"), subBlocksFile)
+        let scenarioFile = Path.Combine(config.ScriptPath, scenario + ".Mission")
+        let subBlocksFile =
+            let subBlocksFilename =
+                if World.IsWWIScenario scenarioFile then
+                    "SubBlocksWWI.yaml"
+                else
+                    "SubBlocks.yaml"
+            Path.Combine(config.ScriptPath, "Config", subBlocksFilename)
+        let world0 = World.Create(scenario, config.PlaneSet scenario, scenarioFile, subBlocksFile)
         let totalProduction =
             world0.Regions
             |> Seq.sumBy (fun region -> region.Production |> Seq.sumBy (fun grp -> grp.Production(world0.SubBlockSpecs, 1.0f)))

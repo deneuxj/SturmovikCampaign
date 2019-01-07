@@ -339,7 +339,11 @@ let createColumns
                                 composition
                                 |> List.ofArray
                                 |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
-                            let column = VirtualConvoy.CreateColumn(store, lcStore, pathVertices, bridgeEntitiesAtVertex, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                            let column =
+                                if world.IsWWI then
+                                    VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, List.length columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                                else
+                                    VirtualConvoy.CreateColumn(store, lcStore, pathVertices, bridgeEntitiesAtVertex, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                             let links = column.CreateLinks()
                             links.Apply(McuUtil.deepContentOf column)
                             Mcu.addTargetLink prevStart.Value column.Api.Start.Index
