@@ -94,6 +94,12 @@
       sub_blocks: "[2..3] @ [16..19]"
       production: 25.0
       durability: 9000
+    - pattern: "industrial_block_zavodcement"
+      sub_blocks: "[0..41]"
+      production: 25.0
+    - pattern: "industrial_block_zavodoktyabr"
+      sub_blocks: "[1..40]"
+      production: 25.0
     - pattern: "industrial_cornerl_01"
       sub_blocks: "[0..8]"
       production: 25.0
