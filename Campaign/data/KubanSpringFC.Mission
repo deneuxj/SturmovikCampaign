@@ -1,0 +1,568 @@
+# Mission File Version = 1.0;
+
+Options
+{
+  LCName = 0;
+  LCDesc = 1;
+  LCAuthor = 2;
+  PlayerConfig = "";
+  Time = 9:30:0;
+  Date = 15.4.1916;
+  HMap = "graphics\LANDSCAPE_Kuban_sp\height.hini";
+  Textures = "graphics\LANDSCAPE_Kuban_sp\textures.tini";
+  Forests = "graphics\LANDSCAPE_Kuban_sp\trees\woods.wds";
+  Layers = "";
+  GuiMap = "kuban-spring";
+  SeasonPrefix = "su";
+  MissionType = 0;
+  AqmId = 0;
+  CloudLevel = 500;
+  CloudHeight = 200;
+  PrecLevel = 0;
+  PrecType = 0;
+  CloudConfig = "summer\00_clear_00\sky.ini";
+  SeaState = 0;
+  Turbulence = 0;
+  TempPressLevel = 0;
+  Temperature = 15;
+  Pressure = 760;
+  WindLayers
+  {
+    0 :     0 :     0;
+    500 :     0 :     0;
+    1000 :     0 :     0;
+    2000 :     0 :     0;
+    5000 :     0 :     0;
+  }
+  Countries
+  {
+    0 : 0;
+    101 : 1;
+    201 : 2;
+  }
+}
+
+Group
+{
+  Name = "Regions";
+  Index = 10;
+  Desc = "";
+  MCU_TR_InfluenceArea
+  {
+    Index = 2;
+    Name = "Haucourt-Moulaine";
+    Desc = "***";
+    Targets = [];
+    Objects = [];
+    XPos = 248605.338;
+    YPos = 1.449;
+    ZPos = 228904.327;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 101;
+    Boundary
+    {
+      242642, 218721;
+      256080, 218462;
+      258984, 227029;
+      256315, 239721;
+      244479, 236626;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3;
+    Name = "Villers-la-Montagne";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 234302.620;
+    YPos = 1.449;
+    ZPos = 228982.484;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 101;
+    Boundary
+    {
+      242368, 218526;
+      244251, 236760;
+      236660, 240848;
+      226385, 223652;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 4;
+    Name = "Brehain-la-Ville";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 223144.280;
+    YPos = 1.449;
+    ZPos = 237171.173;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 101;
+    Boundary
+    {
+      226208, 223823;
+      236532, 240962;
+      228928, 249356;
+      213742, 238328;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 5;
+    Name = "Erouville";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 215762.221;
+    YPos = 1.449;
+    ZPos = 250620.950;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 201;
+    Boundary
+    {
+      213628, 238523;
+      228915, 249683;
+      224085, 259697;
+      205969, 253302;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 6;
+    Name = "Boulange";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 213456.592;
+    YPos = 1.449;
+    ZPos = 261953.704;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 201;
+    Boundary
+    {
+      205813, 253451;
+      224108, 259844;
+      222847, 278163;
+      205500, 281126;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 7;
+    Name = "Angevillers";
+    Desc = "***";
+    Targets = [];
+    Objects = [];
+    XPos = 213747.795;
+    YPos = 1.449;
+    ZPos = 291829.385;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 201;
+    Boundary
+    {
+      205596, 281412;
+      222719, 278465;
+      234820, 286750;
+      222472, 301327;
+      208449, 303381;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 8;
+    Name = "Tressange";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 232605.837;
+    YPos = 1.449;
+    ZPos = 263656.476;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 201;
+    Boundary
+    {
+      224298, 259882;
+      229001, 249854;
+      245094, 265181;
+      235058, 286666;
+      223086, 278295;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 9;
+    Name = "Aumetz";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 246378.420;
+    YPos = 1.449;
+    ZPos = 246861.456;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 101;
+    Boundary
+    {
+      244518, 236835;
+      256265, 239919;
+      262384, 247018;
+      256500, 258521;
+      245089, 265086;
+      229028, 249650;
+      236703, 241023;
+    }
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "Border battles";
+  Index = 24;
+  Desc = "";
+  MCU_TR_InfluenceArea
+  {
+    Index = 12;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 240091.658;
+    YPos = 8.898;
+    ZPos = 260130.741;
+    XOri = 0.00;
+    YOri = 311.70;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      235465, 260517;
+      239850, 255544;
+      244849, 260002;
+      240441, 264948;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 13;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 227964.213;
+    YPos = 8.898;
+    ZPos = 254852.585;
+    XOri = 0.00;
+    YOri = 28.14;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      226506, 250445;
+      232367, 253544;
+      229204, 259448;
+      223362, 256320;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 14;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 230649.052;
+    YPos = 8.898;
+    ZPos = 281698.727;
+    XOri = 0.00;
+    YOri = 304.99;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      226099, 282623;
+      229873, 277171;
+      235359, 281014;
+      231559, 286442;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 15;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 219502.613;
+    YPos = 8.898;
+    ZPos = 278499.982;
+    XOri = 0.00;
+    YOri = 352.16;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      215732, 275791;
+      222296, 274853;
+      223206, 281489;
+      216642, 282391;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 16;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 223463.017;
+    YPos = 8.898;
+    ZPos = 271776.311;
+    XOri = 0.00;
+    YOri = 274.20;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      220026, 274898;
+      220480, 268283;
+      227160, 268778;
+      226671, 275386;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 17;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 217604.441;
+    YPos = 8.898;
+    ZPos = 257842.770;
+    XOri = 0.00;
+    YOri = 289.29;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      213474, 259964;
+      215632, 253694;
+      221953, 255909;
+      219764, 262163;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 18;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 234148.133;
+    YPos = 8.898;
+    ZPos = 243721.970;
+    XOri = 0.00;
+    YOri = 313.99;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      229510, 243924;
+      234089, 239129;
+      238907, 243782;
+      234306, 248549;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 19;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 218671.931;
+    YPos = 8.898;
+    ZPos = 241836.177;
+    XOri = 0.00;
+    YOri = 304.99;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      214122, 242760;
+      217896, 237308;
+      223382, 241151;
+      219582, 246579;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 20;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 240634.147;
+    YPos = 8.898;
+    ZPos = 238815.298;
+    XOri = 0.00;
+    YOri = 329.40;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      236109, 237776;
+      241799, 234372;
+      245206, 240139;
+      239502, 243510;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 21;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 251623.833;
+    YPos = 8.898;
+    ZPos = 238601.121;
+    XOri = 0.00;
+    YOri = 281.51;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      247818, 241261;
+      249109, 234757;
+      255671, 236097;
+      254347, 242590;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 22;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 243774.495;
+    YPos = 8.898;
+    ZPos = 224016.339;
+    XOri = 0.00;
+    YOri = 265.48;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      240852, 227624;
+      240295, 221017;
+      246973, 220492;
+      247494, 227097;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 23;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 230222.680;
+    YPos = 8.898;
+    ZPos = 226924.187;
+    XOri = 0.00;
+    YOri = 320.72;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      225592, 226582;
+      230701, 222355;
+      234942, 227540;
+      229815, 231737;
+    }
+  }
+  
+
+}
+
+
+# end of file
