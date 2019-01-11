@@ -903,10 +903,10 @@ type WorkingDay =
     { MorningStart : int
       EveningStop : int }
 
-let shortWinterWorkingDay = { MorningStart = 9; EveningStop = 17 }
-let longWinterWorkingDay = { MorningStart = 6; EveningStop = 17 }
-let shortSummerWorkingDay = { MorningStart = 8; EveningStop = 18 }
-let longSummerWorkingDay = { MorningStart = 6; EveningStop = 18 }
+let shortWinterWorkingDay = { MorningStart = 9; EveningStop = 18 }
+let longWinterWorkingDay = { MorningStart = 6; EveningStop = 18 }
+let shortSummerWorkingDay = { MorningStart = 8; EveningStop = 20 }
+let longSummerWorkingDay = { MorningStart = 6; EveningStop = 21 }
 
 let nextDate (longDay : bool) (dt : float32<H>) (date : System.DateTime) =
     let workingDay =
