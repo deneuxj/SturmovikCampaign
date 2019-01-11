@@ -359,7 +359,8 @@ module OrderDecision =
             // Ferry flights
             let axisFerryFlights, alliesFerryFlights =
                 if weather.Wind.Speed < 7.0 then
-                    decidePlaneTransfers world state Axis, decidePlaneTransfers world state Allies
+                    let capturedPlanes = config.MaxCapturedPlanes > 0
+                    decidePlaneTransfers capturedPlanes world state Axis, decidePlaneTransfers capturedPlanes world state Allies
                 else
                     [], []
 

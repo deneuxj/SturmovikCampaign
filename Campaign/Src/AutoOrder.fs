@@ -584,7 +584,7 @@ let computeProductionPriorities (missionLength : float32<H>) (coalition : Coalit
     }
 
 /// Decide how many planes to ferry, where from and where to.
-let decidePlaneTransfers (world : World) (state : WorldState) (coalition : CoalitionId) =
+let decidePlaneTransfers (capturedPlanesCanFly : bool)(world : World) (state : WorldState) (coalition : CoalitionId) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     let targetNumPlanes = float32 world.TransferNumPlaneTarget
@@ -598,7 +598,7 @@ let decidePlaneTransfers (world : World) (state : WorldState) (coalition : Coali
                             |> max 0.0f
                             |> floor
                             |> int
-                        if numAvailableToFerry > 0 then
+                        if numAvailableToFerry > 0 && (capturedPlanesCanFly || plane.Coalition = coalition) then
                             yield af.AirfieldId, plane, numAvailableToFerry
         }
         |> Seq.sortByDescending(fun (_, _, n) -> n)
