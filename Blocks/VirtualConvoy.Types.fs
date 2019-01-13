@@ -51,6 +51,7 @@ with
         let center = Vector2.FromMcu(leadCar.Pos)
         let stopTravel = getByName "StopTravel"
         let resumeTravel = getByName "ResumeTravel"
+        let enemyPlaneNear = getByName T.Blocks.EnemyPlaneNear :?> Mcu.McuProximity
         // Rotate and translate
         let rot = ori - float32 leadCar.Ori.Y
         let diff = pos - center
@@ -59,6 +60,8 @@ with
             let pos2 = pos2 + diff
             pos2.AssignTo(mcu.Pos)
         leadCar.Ori.Y <- float ori 
+        // Set coalition to watch to the enemy's
+        enemyPlaneNear.PlaneCoalitions <- [ McuUtil.coalitionOf country |> McuUtil.swapCoalition ]
         // Result
         { LeadCarEntity = Seq.head <| McuUtil.filterByName T.Blocks.``LeadCar entity`` group :?> Mcu.McuEntity
           LeadCarDamaged = getByName T.Blocks.LeadCarDamaged
