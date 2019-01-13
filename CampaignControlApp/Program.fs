@@ -63,6 +63,9 @@ configuration file. Pass -r to reset the campaign.
         let options = Options.Create(argv)
         let victory = Campaign.ServerControlPlugin.Support.CampaignOver Campaign.BasicTypes.CoalitionId.Axis
         let config = Campaign.Configuration.loadConfigFile options.ConfigFile
+        if options.ResetScenario.IsSome && System.IO.File.Exists(System.IO.Path.Combine(config.OutputDir, "world.xml")) then
+            eprintfn "Will not reset campaign if campaign files exist. Please remove them first"
+            System.Environment.Exit(1)
         victory.Save(config, "victoryLoopState.xml")
         use scheduler = new Scheduler(options.ConfigFile)
         scheduler.ContinueOrReset(options.ResetScenario)
