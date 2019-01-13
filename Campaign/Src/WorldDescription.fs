@@ -564,7 +564,6 @@ type World = {
     AntiAirDefenses : DefenseArea list
     AntiTankDefenses : DefenseArea list
     Airfields : Airfield list
-    SafeZones : Map<CoalitionId, SafeZone>
     ProductionFactor : float32
     /// Date of the first mission.
     StartDate : System.DateTime
@@ -666,11 +665,6 @@ with
                 Airfield.ExtractAirfields(afs, staticPlanes, caponiers, afStorages, regions, subBlockSpecs)
             | _ :: _->
                 Airfield.ExtractAirfields(afs, planes, caponiers, afStorages, regions, subBlockSpecs)
-        let safeZones =
-            data.GetGroup("SafeZones").ListOfMCU_TR_InfluenceArea
-            |> List.map SafeZone.Create
-            |> List.map (fun zone -> zone.Owner, zone)
-            |> Map.ofList
         { Map = map
           Scenario = scenario
           PlaneSet = planeSet
@@ -678,7 +672,6 @@ with
           AntiAirDefenses = antiAirDefenses
           AntiTankDefenses = antiTankDefenses
           Airfields = airfields
-          SafeZones = safeZones
           ProductionFactor = 1.0f
           StartDate = date
           Roads = roads
