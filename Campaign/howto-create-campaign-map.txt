@@ -18,10 +18,6 @@ Set region owners. Each coalition must own at least one region with factories.
 In the initial world state, regions which have "***" in their Description are fully supplied. Those are the "strong bases".
 Other regions are supplied depending on their distance to the nearest strong base.
 
-2b. Define safe zones (Optional, not currently used)
-Use influence areas. There must be one for the Allies and one for the Axis. In these zones, enemies are not allowed to enter and attack planes.
-Each zone must be named "SafeZone", and all zones must be in a group named "SafeZones".
-
 3. Define roads and railways
 Each road path must start with a waypoint named "StartR" or "StartL" and finish with another one named "EndR" or "EndL".
 Each rail path must start with a waypoint named "Start" and finish with another one named "End".
@@ -98,10 +94,9 @@ These hangars must be within 3km of the airfield's spawn points.
 Planes are parked in caponiers. If needed, add a couple to an airfield that lacks them.
 There are multiple sizes, make sure there is enough of each type (small fighters, medium attackers, large bombers and transports)
 
-12. Place tank parking areas
-Use influence areas in a group named "Tank parks"
-Make sure there's plenty of room for up to 100 tanks
-Each region must have exactly one
+12. Place tank hiding spots
+Use static blocks whose names start with arf_nets_in a group named "Tank parks"
+Each region should have at least 16 parking spots (e.g. 4 arf_nets_1_4 blocks)
 
 13. Windsocks
 Create windsocks with entities in a group named "Windsocks"
@@ -121,8 +116,3 @@ Create a pair for each spawn so that planes will take off and land with the ligh
 17. Bridges and other buildings
 Bridges and other blocks, buildings... need not be in groups, although they can.
 You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.
-
-18. Anchorage (not used yet)
-They play a similar role to tank parks, but for armed ships (destroyers, speed boats and submarines).
-Create influence areas name "Anchorage" in a group name "Anchorage".
-Orientation of influence areas is used to orient the ships.
