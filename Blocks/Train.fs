@@ -47,6 +47,7 @@ with
         let destWp = getWaypointByName group T.Blocks.Destination
         let discard = getTriggerByName group T.Blocks.DELAYED_DISCARD
         let train = getVehicleByName group T.Blocks.Train
+        let enemyPlaneClose = getTriggerByName group T.Blocks.EnemyPlaneNear :?> Mcu.McuProximity
         // Logic to stop and block train when it reaches a destroyed bridge
         let conds =
             seq {
@@ -125,6 +126,9 @@ with
         train2.Index <- train.Index
         train2.LinkTrId <- train.LinkTrId
         train2.Ori.Y <- float startV.Ori
+        train2.AILevel <- Some 2
+        // Watch for enemy planes
+        enemyPlaneClose.PlaneCoalitions <- [ country |> McuUtil.coalitionOf |> McuUtil.swapCoalition ]
         // Position of all nodes
         let refPoint = Vector2(float32 train.Pos.X, float32 train.Pos.Z)
         let dv = startV.Pos - refPoint
