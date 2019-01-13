@@ -17,52 +17,21 @@
 module Campaign.TankParks
 
 open System.Numerics
-open SturmovikMission.Blocks.BlocksMissionData
-open SturmovikMission.Blocks
-open SturmovikMission.Blocks.Vehicles
-
 open VectorExtension
 
+open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks
+open Util
 open Campaign.WorldDescription
 open Campaign.WorldState
 open Campaign.Orders
-open Util
-open Campaign.ParkingArea
 open Campaign.BasicTypes
-open Campaign.StaticDefenseOptimization
-open SturmovikMission.DataProvider
-open SturmovikMission.DataProvider
-open SturmovikMission.DataProvider
-open SturmovikMission.Blocks.StaticDefenses.Types
 
-let createParkedTanks store (missionLength : float32<H>) (maxTanksInParks : int)(world : World) (state : WorldState) inAttackArea withSearchLights (orders : OrderPackage) (coalition : CoalitionId) =
-    let netsModel, netRelPositions =
-        let nets = Vehicles.vehicles.Nets
-        let nets =
-            { Script = nets.Script
-              Model = nets.Model
-              Pos = { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
-            }
-        let positions = nets.PlaneParkingPositions
-        match positions with
-        | Some positions ->
-            let rels =
-                let center = Vector3(positions.RefPos.X, positions.RefPos.Y, 0.0f)
-                positions.Positions
-                |> Seq.map fst
-                |> Seq.map (fun pos -> pos - center)
-                |> Array.ofSeq
-            nets, rels
-        | None ->
-            failwith "Could not find Nets in static objects"
-    let netFlatPos =
-        netRelPositions
-        |> Array.map (fun v3 -> Vector2(v3.X, v3.Y))
-    let fills = state.GetAmmoFillLevelPerRegion(world, missionLength)
+let createParkedTanks store (maxTanksInParks : int) (world : World) (state : WorldState) inAttackArea (orders : OrderPackage) (coalition : CoalitionId) =
     let country = coalition.ToCountry |> int
     [
         for region, regState in List.zip world.Regions state.Regions do
-            if regState.Owner = Some coalition && not(List.isEmpty region.Parking) && not regState.HasInvaders && not regState.NumExposedVehicles.IsEmpty then
+            if regState.Owner = Some coalition && not(List.isEmpty region.TankHiding) && not regState.HasInvaders && not regState.NumExposedVehicles.IsEmpty then
                 let subtracted =
                     orders.Columns
                     |> List.filter (fun order -> order.Start = region.RegionId)
@@ -74,53 +43,26 @@ let createParkedTanks store (missionLength : float32<H>) (maxTanksInParks : int)
                     |> expandMap
                     |> Array.shuffle (System.Random())
                     |> Array.truncate maxTanksInParks
-                let netPositions = computeRandomParkingPositions netFlatPos region.Parking parked.Length
+                let netPositions =
+                    region.TankHiding
+                    |> Seq.choose (fun block ->
+                        match block.PlaneParkingPositions with
+                        | Some x -> Some(block.Pos, x)
+                        | None -> None)
                 let parkingPositions =
                     seq {
-                        for center in netPositions do
-                            for dv in netRelPositions do
-                                yield Vector3(center.X, center.Y, 0.0f) + dv
+                        for blockPos, relPosGroups in netPositions do
+                            for absPos, _ in relPosGroups.Positions do
+                                let dv = Vector2(absPos.X, absPos.Y) - relPosGroups.RefPos
+                                yield blockPos.Pos + dv, blockPos.Rotation + absPos.Z
                     }
                 if parked.Length > 0 then
-                    let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f |> max 0.0f |> min 1.0f
-                    // Add machine guns among tanks for anti-air defense
-                    let aaDefenses =
-                        let boundary = region.Parking
-                        // Respawn after 20min +- 15s
-                        let num = numMgPerTank * float32 parked.Length |> max 4.0f |> min 10.0f |> ((*) fill) |> int
-                        { Priority = 1.0f
-                          Number = num
-                          Boundary = boundary
-                          Rotation = 0.0f
-                          Settings = CanonGenerationSettings.Default
-                          Specialty = AntiAirMg
-                          IncludeSearchLights = false
-                          Country = coalition.ToCountry
-                        }
-                    yield Choice2Of2 aaDefenses
 
-                    // Add flak too
-                    let aaDefenses =
-                        let num = numCannonsPerTank * float32 parked.Length |> max 2.0f |> min 6.0f |> ((*) fill) |> int
-                        let boundary = region.Parking
-                        { Priority = if num <= 5 then 1.0f else 1.0f + (float32 num - 5.0f) / 10.0f
-                          Number = num
-                          Boundary = boundary
-                          Rotation = 0.0f
-                          Settings = CanonGenerationSettings.Default
-                          Specialty = AntiAirCanon
-                          IncludeSearchLights = withSearchLights
-                          Country = coalition.ToCountry
-                        }
-                    yield Choice2Of2 aaDefenses
-
-                    for pos in netPositions do
-                        let block = newBlockMcu store country netsModel.Model netsModel.Script 1000
-                        pos.AssignTo block.Pos
+                    for block in region.TankHiding do
+                        let block = newBlockMcu store country block.Model block.Script 1000
                         yield Choice1Of2 block
 
-                    for vehicle, pos in Seq.zip parked parkingPositions do
-                        let rot = pos.Z
+                    for vehicle, (pos, rot) in Seq.zip parked parkingPositions do
                         let pos = Vector2(pos.X, pos.Y)
                         let model =
                             if world.IsWWI then

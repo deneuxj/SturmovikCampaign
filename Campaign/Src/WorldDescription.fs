@@ -53,8 +53,8 @@ type Region = {
     Storage : StaticGroup list
     /// Regions with factories get new planes, vehicles and ammo (stored in region storage and in airfield storage).
     Production : StaticGroup list
-    /// Area where tanks are parked
-    Parking : Vector2 list
+    /// Tents under which tanks that are not participating in columns or battles are hidden
+    TankHiding : StaticGroup list
     /// Side who owns the region initially
     InitialOwner : CoalitionId option
     /// A strong region initially has full numbers of tanks, planes and supplies
@@ -70,7 +70,7 @@ with
               Neighbours = []
               Storage = []
               Production = []
-              Parking = []
+              TankHiding = []
               InitialOwner = coalition
               IsStrong = region.GetDesc().Value.Contains("***")
             }
@@ -165,13 +165,11 @@ with
         { this with Production = this.Production @ factories
         }
 
-    member this.SetParking(areas : T.MCU_TR_InfluenceArea list) =
-        let parking =
-            areas
-            |> List.tryFind (fun area -> Vector2.FromPos(area).IsInConvexPolygon this.Boundary)
-            |> Option.map (fun area -> area.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord)))
-            |> Option.defaultVal []
-        { this with Parking = parking }
+    member this.AddTankTents(blocks : T.Block list, subBlockSpecs) =
+        let tents =
+            this.GetStaticBlocks(blocks)
+            |> List.filter (fun block -> block.PlaneParkingPositions.IsSome)
+        { this with TankHiding = tents @ this.TankHiding }
 
     member this.GetProductionCapacity(subBlockSpecs, factor) =
         this.Production
@@ -610,11 +608,11 @@ with
                 [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Factories").ListOfBlock; data.GetGroup("Static").ListOfBlock ]
                 |> List.concat
             let parkings =
-                data.GetGroup("Tank parks").ListOfMCU_TR_InfluenceArea
+                data.GetGroup("Tank parks").ListOfBlock
             regions
             |> List.map (fun area -> area.AddStorage(ammoStorages, subBlockSpecs))
             |> List.map (fun area -> area.AddProduction(factories, subBlockSpecs))
-            |> List.map (fun area -> area.SetParking parkings)
+            |> List.map (fun area -> area.AddTankTents(parkings, subBlockSpecs))
         // List of regions must not be empty
         if List.isEmpty regions then
             failwith "Extracted list of regions is empty"

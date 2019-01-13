@@ -72,7 +72,6 @@
     <Compile Include="Src\AfterActionReport.fs" />
     <Compile Include="Src\StaticDefenseOptimization.fs" />
     <Compile Include="Src\MapGraphics.fs" />
-    <Compile Include="Src\ParkingArea.fs" />
     <Compile Include="Src\PlaneFerry.fs" />
     <Compile Include="Src\Battlefield.fs" />
     <Compile Include="Src\AntiAirDefenses.fs" />

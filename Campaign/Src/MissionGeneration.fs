@@ -157,6 +157,11 @@ type MissionData = {
     AlliesOrders : OrderPackage
     Hangars : Map<System.Guid * CoalitionId, PlayerHangar.PlayerHangar>
 }
+with
+    member this.CoalitionOrders coalition =
+        match coalition with
+        | Axis -> this.AxisOrders
+        | Allies -> this.AlliesOrders
 
 
 let writeMissionFile (missionParams : MissionGenerationParameters) (missionData : MissionData) (filename : string) =
@@ -179,7 +184,6 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, missionLength, missionData.World, missionData.State)
     let spotting =
         createStorageIcons missionParams.MaxBuildingIcons store lcStore missionBegin missionData.World missionData.State
-        @ createTankParkIcons store lcStore missionBegin missionData.World missionData.State
     let blocks =
         let allBlocks = strategyMissionData.ListOfBlock
         let parkedPlanes =
@@ -327,7 +331,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> McuUtil.groupFromList
     let parkedTanks =
         [Axis; Allies]
-        |> List.collect (createParkedTanks store missionLength missionParams.MaxTanksInParks missionData.World missionData.State inAttackArea includeSearchLights missionData.AxisOrders)
+        |> List.collect (fun coalition -> createParkedTanks store missionParams.MaxTanksInParks missionData.World missionData.State inAttackArea (missionData.CoalitionOrders coalition) coalition)
     let parkedTanksAA =
         parkedTanks
         |> List.choose (function Choice2Of2 x -> Some x | _ -> None)
