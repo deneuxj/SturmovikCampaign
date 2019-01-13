@@ -249,7 +249,6 @@ with
 /// Packages all state data.
 type WorldState = {
     Date : System.DateTime
-    AttackingSide : CoalitionId
     Regions : RegionState list
     Airfields : AirfieldState list
     AxisRearAirfield : AirfieldId
@@ -858,7 +857,6 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
     { Airfields = airfields
       Regions = regions
       Date = world.StartDate
-      AttackingSide = Axis
       AxisRearAirfield = axisRearAirfield
       AlliesRearAirfield = alliesRearAirfield
     }

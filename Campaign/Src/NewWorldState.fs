@@ -1461,9 +1461,5 @@ let newState (config : Configuration.Configuration) (world : World) (state : Wor
         computeCompletedColumnMovements columnOrders results.ColumnDepartures results.Blocked results.Damages
         |> applyVehicleArrivals state7
     let state8 = updateRunways world state7b windOri
-    let attackingSide =
-        match battles with
-        | [] -> state8.AttackingSide.Other
-        | _ :: _ -> state8.AttackingSide
     let state9 = updateRearAirfields world state8
-    { state9 with Date = nextDate config.LongWorkDay dt state8.Date; AttackingSide = attackingSide }, newlyProduced, battleReports
+    { state9 with Date = nextDate config.LongWorkDay dt state8.Date }, newlyProduced, battleReports

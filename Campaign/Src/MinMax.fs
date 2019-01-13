@@ -51,7 +51,6 @@ type ScoreComponents =
       mutable NumAlliesFactories : int
       mutable TotalAxisForces : float32<E>
       mutable TotalAlliesForces : float32<E>
-      mutable AttackingSide : CoalitionId
     }
 with
     member this.Value =
@@ -76,7 +75,6 @@ with
         this.NumAlliesFactories <- score.NumAlliesFactories
         this.TotalAxisForces <- score.TotalAxisForces
         this.TotalAlliesForces <- score.TotalAlliesForces
-        this.AttackingSide <- score.AttackingSide
 
     member this.Clone() =
         let ret =
@@ -95,7 +93,6 @@ type BoardState =
     }
 with
     static member Create(world : World, state : WorldState) =
-        let attackers = state.AttackingSide
         let owners =
             state.Regions
             |> List.map (fun region -> region.Owner)
@@ -220,7 +217,6 @@ with
                 NumAlliesFactories = numAlliesFactories
                 TotalAxisForces = Array.sum axisForces
                 TotalAlliesForces = Array.sum alliesForces
-                AttackingSide = attackers
             }
           ValueOfRegion = valueOfRegion
           HasRegionFactory = hasFactory
@@ -307,7 +303,6 @@ with
                 | Some Axis, Some Axis
                 | Some Allies, Some Allies -> this.Score.Territory
                 | Some _, None -> failwith "Region cannot be captured by neutral coalition"
-        this.Score.AttackingSide <- this.Score.AttackingSide.Other
         !restore, oldScore
 
     member this.UndoMove(combined : CombinedMove, restore : _ list, oldScore : ScoreComponents) =
@@ -332,7 +327,6 @@ with
 
     member this.DisplayString =
         seq {
-            yield sprintf "Attackers: %s" (string this.Score.AttackingSide)
             for i, (name, (owner, allies, axis)) in Seq.indexed (Seq.zip this.Names (Seq.zip3 this.Owners this.AlliesForces this.AxisForces)) do
                 let owner =
                     match owner with
