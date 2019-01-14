@@ -140,6 +140,10 @@
       <Link>KubanSpring.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\KubanSpringFC.Mission">
+      <Link>KubanSpringFC.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\MoscowAutumn1.Mission">
       <Link>MoscowAutumn1.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
