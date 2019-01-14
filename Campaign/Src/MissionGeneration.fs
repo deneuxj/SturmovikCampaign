@@ -108,7 +108,7 @@ let createBuildingFires maxFires store (world : World) (state : WorldState) (win
     |> List.ofSeq
 
 
-let createParaTrooperDrops (world : World) store lcStore (battlefields : (DefenseAreaId * CoalitionId) seq) =
+let createParaTrooperDrops (world : World) store lcStore (battlefields : (AreaId * CoalitionId) seq) =
     let wg = world.FastAccess
     battlefields
     |> Seq.map (fun (bf, defending) ->

@@ -276,14 +276,13 @@ with
             None
 
 
-type DefenseAreaId = DefenseAreaId of int
+type AreaId = AreaId of int
 
-/// Defense areas contain static anti-air and anti-tank defenses. Defense areas are extracted from influence areas in group Defenses in the strategy mission.
-/// Influence areas for anti-air are named "AAA" and "AT" for anti-tank.
+/// Anti-air defense areas and battle grounds.
 type DefenseArea = {
-    DefenseAreaId : DefenseAreaId
+    DefenseAreaId : AreaId
     Home : RegionId
-    /// The orientation is relevant for AT tank canons, so that they can aim at incoming tanks.
+    /// The orientation is relevant for ground battles, so that cannons, tanks... can be properly oriented.
     Position : OrientedPosition
     Boundary : Vector2 list
     MaxNumGuns : int
@@ -310,7 +309,7 @@ with
                 match regions |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary)) with
                 | Some region ->
                     yield {
-                        DefenseAreaId = DefenseAreaId(area.GetIndex().Value)
+                        DefenseAreaId = AreaId(area.GetIndex().Value)
                         Home = region.RegionId
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f }
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
@@ -328,7 +327,7 @@ with
                 match regions |> List.tryFind(fun region -> pos.IsInConvexPolygon(region.Boundary)) with
                 | Some region ->
                     yield {
-                        DefenseAreaId = DefenseAreaId(area.GetIndex().Value)
+                        DefenseAreaId = AreaId(area.GetIndex().Value)
                         Home = region.RegionId
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f } 
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
@@ -350,6 +349,65 @@ with
         this.Position.Pos + c * dir
 
     member this.AttackPos =
+        let dir = Vector2.FromYOri(float this.Position.Rotation)
+        let c = this.LongPositions |> Seq.max
+        this.Position.Pos + c * dir
+
+/// A field where artillery exchange fire.
+/// The field overlaps with two contiguous regions.
+type ArtilleryField = {
+    ArtilleryFieldId : AreaId
+    RegionA : RegionId
+    RegionB : RegionId
+    Position : OrientedPosition // RegionA is at the back side, RegionB is at the front side
+    Boundary : Vector2 list
+}
+with
+    static member ExtractArtilleryAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
+        [
+            for area in areas do
+                let pos = Vector2.FromPos(area)
+                let rot = float32(area.GetYOri().Value)
+                let dir = Vector2.FromYOri(area.GetYOri().Value)
+                let boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
+                let center = boundary |> List.sum
+                let center = (1.0f / float32(List.length boundary)) * center
+                let withRegions =
+                    regions
+                    |> List.filter(fun region ->
+                        boundary
+                        |> List.exists (fun p -> p.IsInConvexPolygon(region.Boundary)))
+                    |> List.distinctBy(fun region -> region.RegionId)
+                    |> List.sortBy (fun region ->
+                        Vector2.Dot(dir, center - region.Position))
+                match withRegions with
+                | [ regionA; regionB ] ->
+                    yield {
+                        ArtilleryFieldId = AreaId(area.GetIndex().Value)
+                        RegionA = regionA.RegionId
+                        RegionB = regionB.RegionId
+                        Position = { Pos = pos; Rotation = rot; Altitude = 0.0f } 
+                        Boundary = boundary
+                    }
+                | [] ->
+                    failwithf "Front battle artillery area '%s' is not located in any region" (area.GetName().Value)
+                | [_] ->
+                    failwithf "Front battle artillery area '%s' must overlap with two regions" (area.GetName().Value)
+                | _ :: _ :: _ ->
+                    failwithf "Front battle artillery area '%s' overlaps with too many regions" (area.GetName().Value)
+        ]
+
+    member private this.LongPositions =
+        let dir = Vector2.FromYOri(float this.Position.Rotation)
+        this.Boundary
+        |> Seq.map (fun v -> Vector2.Dot(v - this.Position.Pos, dir))
+
+    member this.SideAPos =
+        let dir = Vector2.FromYOri(float this.Position.Rotation)
+        let c = this.LongPositions |> Seq.min
+        this.Position.Pos + c * dir
+
+    member this.SideBPos =
         let dir = Vector2.FromYOri(float this.Position.Rotation)
         let c = this.LongPositions |> Seq.max
         this.Position.Pos + c * dir
@@ -563,6 +621,7 @@ type World = {
     RiverWays : Path list
     AntiAirDefenses : DefenseArea list
     Battlefields : DefenseArea list
+    ArtilleryFields : ArtilleryField list
     Airfields : Airfield list
     ProductionFactor : float32
     /// Date of the first mission.
@@ -651,6 +710,10 @@ with
         let battlefields = battlefieldZones.ListOfMCU_TR_InfluenceArea
         let battlefields = DefenseArea.ExtractBattlefieldAreas(battlefields, regions)
 
+        let artilleryFieldsGroup = data.GetGroup("Border battles")
+        let artilleryFields = artilleryFieldsGroup.ListOfMCU_TR_InfluenceArea
+        let artilleryFields = ArtilleryField.ExtractArtilleryAreas(artilleryFields, regions)
+
         // Airfield spawns cannot be empty
         let afs = afsGroup.ListOfAirfield
         if List.isEmpty afs then
@@ -675,6 +738,7 @@ with
           Regions = regions
           AntiAirDefenses = antiAirDefenses
           Battlefields = battlefields
+          ArtilleryFields = artilleryFields
           Airfields = airfields
           ProductionFactor = 1.0f
           StartDate = date
@@ -739,8 +803,8 @@ open Util
 /// Provides fast access to world description data by index.
 type WorldFastAccess = {
     GetRegion : RegionId -> Region
-    GetAntiAirDefenses : DefenseAreaId -> DefenseArea
-    GetAntiTankDefenses : DefenseAreaId -> DefenseArea
+    GetAntiAirDefenses : AreaId-> DefenseArea
+    GetAntiTankDefenses : AreaId -> DefenseArea
     GetAirfield : AirfieldId -> Airfield
     GetRegionStorageSubBlocks : RegionId -> int -> int[]
     GetRegionProductionSubBlocks : RegionId -> int -> int[]

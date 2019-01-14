@@ -214,7 +214,7 @@ type ParaDropResult = {
     Precision : ParaDropPrecision
 }
 
-let extractParaDrops (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : AsyncSeq<LogEntry>) =
+let extractParaDrops (world : World) (state : WorldState) (battles : (AreaId * CoalitionId) seq) (entries : AsyncSeq<LogEntry>) =
     let defenders =
         battles
         |> dict
@@ -506,8 +506,8 @@ type DamagedObject =
     | Production of RegionId * group:int * building:int
     | Storage of RegionId * group:int * building:int
     | Airfield of AirfieldId * group:int * building:int
-    | Cannon of DefenseAreaId
-    | MachineGun of DefenseAreaId
+    | Cannon of AreaId
+    | MachineGun of AreaId
     | Convoy of VehicleInColumn
     | Column of VehicleInColumn
     | Vehicle of RegionId * GroundAttackVehicle
@@ -864,7 +864,7 @@ type BattleParticipantKilled = {
 }
 
 /// Extract damages caused to vehicles in a battle. Used to compute battle bonuses.
-let extractBattleDamages (world : World) (state : WorldState) (battles : (DefenseAreaId * CoalitionId) seq) (entries : AsyncSeq<LogData<LogEntry>>) =
+let extractBattleDamages (world : World) (state : WorldState) (battles : (AreaId * CoalitionId) seq) (entries : AsyncSeq<LogData<LogEntry>>) =
     let defenders =
         battles
         |> dict

@@ -170,7 +170,7 @@ with
 
 /// State of a defense area within a region.
 type DefenseAreaState = {
-    DefenseAreaId : DefenseAreaId
+    DefenseAreaId : AreaId
     NumUnits : int
 }
 
