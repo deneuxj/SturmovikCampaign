@@ -56426,6 +56426,31 @@ Group
   }
   
 
+  MCU_TR_InfluenceArea
+  {
+    Index = 13707;
+    Name = "Battle";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 236570.236;
+    YPos = 6.068;
+    ZPos = 245121.911;
+    XOri = 0.00;
+    YOri = 222.17;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      235551, 248659;
+      233089, 246444;
+      237620, 241504;
+      240003, 243759;
+    }
+  }
+  
+
 }
 
 
