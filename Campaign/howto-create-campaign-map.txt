@@ -96,8 +96,9 @@ Planes are parked in caponiers. If needed, add a couple to an airfield that lack
 There are multiple sizes, make sure there is enough of each type (small fighters, medium attackers, large bombers and transports)
 
 12. Place tank hiding spots
-Use static blocks whose names start with arf_nets_in a group named "Tank parks"
-Each region should have at least 16 parking spots (e.g. 4 arf_nets_1_4 blocks)
+Use static blocks whose names start with arf_nets_in a group named "Tank parks".
+Each region should have at least 16 parking spots (e.g. 4 arf_nets_1_4 blocks).
+You should place these hiding spots at the edges of forests.
 
 13. Windsocks
 Create windsocks with entities in a group named "Windsocks"
