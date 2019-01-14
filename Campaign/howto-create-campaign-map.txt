@@ -66,6 +66,7 @@ If the zone is named "AA-nn", it will be composed of flak and anti-air machine g
 Each area must be located within a region.
 Each area must be convex.
 Avoid trees and buildings in the area.
+You can also put defense zones in the groups "Storage" and "Airfierld spawns".
 
 Make sure there is enough storage in the region for all the AAA canons in the defense areas.
 Additional storage facilitates transferring supplies, it's a good idea to leave some extra storage capacity unused for defenses.

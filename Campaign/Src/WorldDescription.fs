@@ -600,9 +600,10 @@ with
             |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production, spec.storage, spec.durability))
             |> List.ofSeq
         let map = data.ListOfOptions.Head.GetGuiMap().Value
+        let storageGroup = data.GetGroup("Storage")
         let regions =
             let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
-            let ammoStorages = List.concat [ data.GetGroup("Ammo").ListOfBlock; data.GetGroup("Storage").ListOfBlock ]
+            let ammoStorages = List.concat [ data.GetGroup("Ammo").ListOfBlock; storageGroup.ListOfBlock ]
             let factories =
                 [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Factories").ListOfBlock; data.GetGroup("Static").ListOfBlock ]
                 |> List.concat
@@ -637,8 +638,11 @@ with
             logger.Info("Extracted list of river ways is empty")
 
         let defenses = data.GetGroup("Defenses")
+        let afsGroup = data.GetGroup("Airfield spawns")
         // Anti-air defenses should typically not be empty
-        let aaas = defenses.ListOfMCU_TR_InfluenceArea |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
+        let aaas =
+            defenses.ListOfMCU_TR_InfluenceArea @ afsGroup.ListOfMCU_TR_InfluenceArea @ storageGroup.ListOfMCU_TR_InfluenceArea
+            |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
         let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
         if List.isEmpty antiAirDefenses then
             logger.Warn("Extracted list of AA defenses is empty")
@@ -648,7 +652,7 @@ with
         let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(battlefields, regions, roads)
 
         // Airfield spawns cannot be empty
-        let afs = data.GetGroup("Airfield spawns").ListOfAirfield
+        let afs = afsGroup.ListOfAirfield
         if List.isEmpty afs then
             failwith "Extracted list of airfield spawns is empty"
 
