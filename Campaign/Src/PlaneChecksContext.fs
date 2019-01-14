@@ -164,8 +164,7 @@ type ObjectInstance =
     | SmallEscortShip
     | LandingShip
     | Artillery
-    | LightMachineGun
-    | HeavyMachineGun
+    | MachineGun
     | DynamicTank of GroundAttackVehicle
     | ConvoyTruck
     | TrainWagon
@@ -247,8 +246,7 @@ with
             | StaticPlaneType plane, _ -> StaticPlane plane
             | StaticVehicleType vehicle, _ -> StaticTank vehicle
             | _, CannonObjectName -> Artillery
-            | _, HeavyMachineGunAAName -> HeavyMachineGun
-            | _, LightMachineGunAAName -> LightMachineGun
+            | _, MachineGunAAName -> MachineGun
             | Named "PzKpfw III Ausf.H", _
             | Named "_PzKpfw III Ausf.L", _
             | Named "T-34-76 STZ", _

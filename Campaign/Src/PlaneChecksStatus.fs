@@ -296,10 +296,8 @@ with
                 float32 Orders.shipVehicleCapacity * GroundAttackVehicle.MediumTankCost
             | Some(_, Artillery) ->
                 cannonCost
-            | Some(_, LightMachineGun) ->
-                lightMachineGunCost
-            | Some(_, HeavyMachineGun) ->
-                heavyMachineGunCost
+            | Some(_, MachineGun) ->
+                machineGunCost
             | Some(_, StaticTank tank)
             | Some(_, DynamicTank tank) ->
                 tank.Cost / 10.0f

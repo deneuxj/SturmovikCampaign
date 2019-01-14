@@ -83,9 +83,7 @@ with
 [<Literal>]
 let CannonObjectName = "CANNON"
 [<Literal>]
-let LightMachineGunAAName = "MGAA-L"
-[<Literal>]
-let HeavyMachineGunAAName = "MGAA-H"
+let MachineGunAAName = "MGAA"
 
 type CanonGenerationSettings =
     { SkillLevel : int
@@ -139,8 +137,7 @@ with
             match specialty with
             | AntiTank | AntiAirCanon -> CannonObjectName
             | AntiAirMg when isFlak -> CannonObjectName
-            | AntiAirMg when country = Mcu.CountryValue.Russia -> HeavyMachineGunAAName
-            | AntiAirMg -> LightMachineGunAAName
+            | AntiAirMg -> MachineGunAAName
         cannon.Name <- name
         // Set attack radius according to gun type
         let range =

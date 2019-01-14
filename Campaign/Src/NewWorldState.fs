@@ -504,15 +504,11 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                             Map.tryFind (Cannon(area.DefenseAreaId)) damages
                             |> Option.defaultVal Seq.empty
                             |> Seq.sumBy (fun data -> data.Amount)
-                        let damagedLightMachineGuns =
-                            Map.tryFind (LightMachineGun(area.DefenseAreaId)) damages
+                        let damagedMachineGuns =
+                            Map.tryFind (MachineGun(area.DefenseAreaId)) damages
                             |> Option.defaultVal Seq.empty
                             |> Seq.sumBy (fun data -> data.Amount)
-                        let damagedHeavyMachineGuns =
-                            Map.tryFind (HeavyMachineGun(area.DefenseAreaId)) damages
-                            |> Option.defaultVal Seq.empty
-                            |> Seq.sumBy (fun data -> data.Amount)
-                        damagedCannons * cannonCost + damagedLightMachineGuns * lightMachineGunCost + damagedHeavyMachineGuns * heavyMachineGunCost)
+                        damagedCannons * cannonCost + damagedMachineGuns * machineGunCost)
                 yield
                     if damagesToDefenses > 0.0f<E> then
                         { regState with Supplies = max 0.0f<E> (regState.Supplies - damagesToDefenses) }

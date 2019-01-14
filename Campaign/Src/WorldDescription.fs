@@ -787,12 +787,10 @@ with
     member this.IsWWI = this.StartDate < System.DateTime(1918, 12, 31)
 
 let cannonCost = 50.0f<E>
-let heavyMachineGunCost = cannonCost / 4.0f
-let lightMachineGunCost = heavyMachineGunCost / (float32 SturmovikMission.Blocks.StaticDefenses.Factory.numLightMachineGunsPerHeavyMachineGun)
+let machineGunCost = cannonCost / 8.0f
 
 let cannonConsumption = cannonCost / 100.0f<H>
-let heavyMachineGunConsumption = heavyMachineGunCost / 100.0f<H>
-let lightMachineGunConsumption = lightMachineGunCost / 100.0f<H>
+let machineGunConsumption = machineGunCost / 100.0f<H>
 
 // Number of cannons to defend tanks in tank parks
 let numCannonsPerTank = 0.125f
@@ -808,7 +806,7 @@ type DefenseArea with
         | AntiAirMg ->
             let numFlak = 0.25f * float32 this.MaxNumGuns
             let numMg = 0.75f * float32 this.MaxNumGuns
-            numFlak * cannonCost + numMg * heavyMachineGunCost
+            numFlak * cannonCost + numMg * machineGunCost
 
     /// Cost of operating a fully defended region on the front
     member this.OperationCost =
@@ -817,7 +815,7 @@ type DefenseArea with
         | AntiAirMg ->
             let numFlak = 0.25f * float32 this.MaxNumGuns
             let numMg = 0.75f * float32 this.MaxNumGuns
-            numFlak * cannonConsumption + numMg * heavyMachineGunConsumption
+            numFlak * cannonConsumption + numMg * machineGunConsumption
 
 let bombCost = 100.0f<E> / 1000.0f<K>
 

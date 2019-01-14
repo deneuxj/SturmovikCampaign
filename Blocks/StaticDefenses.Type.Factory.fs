@@ -12,8 +12,6 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.WhileEnemyClose
 
-let numLightMachineGunsPerHeavyMachineGun = 2
-
 type CanonInstance = CanonInstance of int
 
 type StaticDefenseGroup = {
@@ -65,13 +63,6 @@ with
                             else
                                 canon
                     yield canon
-                    // Extra German MG instances, to balance for the Russian MG which has 4x the firepower.
-                    match specialty, isFlak, coalition with
-                    | AntiAirMg, false, Mcu.CoalitionValue.Axis ->
-                        for extra in 0..(numLightMachineGunsPerHeavyMachineGun  - 1) do
-                            yield Canon.Create(settings, AntiAirMg, random, store, boundary, yori, false, Mcu.CountryValue.Germany)
-                    | _ ->
-                        ()
             }
             |> Seq.mapi (fun i x -> CanonInstance i, x)
             |> Map.ofSeq

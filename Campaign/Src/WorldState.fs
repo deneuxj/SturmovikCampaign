@@ -317,19 +317,7 @@ with
                     yield region.RegionId, cost
             }
             |> Map.ofSeq
-        let tankParkCosts =
-            seq {
-                for region, regState in List.zip world.Regions this.Regions do
-                    let numTanks =
-                        regState.NumExposedVehicles
-                        |> Map.toSeq
-                        |> Seq.sumBy snd
-                        |> min world.MaxTanksInParks
-                        |> float32
-                    yield region.RegionId, numTanks * numCannonsPerTank * cannonCost + numTanks * numMgPerTank * heavyMachineGunCost
-            }
-            |> Map.ofSeq
-        [ aaCosts; atCosts; tankParkCosts ]
+        [ aaCosts; atCosts ]
         |> List.fold Map.sumUnion Map.empty
 
     member this.GetOperatingCostPerRegion(world : World) =
@@ -363,19 +351,7 @@ with
                     yield region.RegionId, cost
             }
             |> Map.ofSeq
-        let tankParkCosts =
-            seq {
-                for region, regState in List.zip world.Regions this.Regions do
-                    let numTanks =
-                        regState.NumExposedVehicles
-                        |> Map.toSeq
-                        |> Seq.sumBy snd
-                        |> min world.MaxTanksInParks
-                        |> float32
-                    yield region.RegionId, numTanks * numCannonsPerTank * cannonConsumption + numTanks * numMgPerTank * heavyMachineGunConsumption
-            }
-            |> Map.ofSeq
-        [ aaCosts; atCosts; tankParkCosts ]
+        [ aaCosts; atCosts ]
         |> List.fold Map.sumUnion Map.empty
 
     member this.GetSupplyNeeds(world : World, missionLength : float32<H>) =

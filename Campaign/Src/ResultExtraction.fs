@@ -507,8 +507,7 @@ type DamagedObject =
     | Storage of RegionId * group:int * building:int
     | Airfield of AirfieldId * group:int * building:int
     | Cannon of DefenseAreaId
-    | HeavyMachineGun of DefenseAreaId
-    | LightMachineGun of DefenseAreaId
+    | MachineGun of DefenseAreaId
     | Convoy of VehicleInColumn
     | Column of VehicleInColumn
     | Vehicle of RegionId * GroundAttackVehicle
@@ -523,8 +522,7 @@ with
         | ParkedPlane(af, _)
         | Airfield(af, _, _) -> sg.GetRegion(wg.GetAirfield(af).Region).Owner
         | Cannon def
-        | HeavyMachineGun def
-        | LightMachineGun def ->
+        | MachineGun def ->
             try
                 sg.GetRegion(wg.GetAntiAirDefenses(def).Home).Owner
             with
@@ -573,10 +571,8 @@ with
                 0.0f<E>
         | Cannon _ ->
             cannonCost
-        | HeavyMachineGun _ ->
-            heavyMachineGunCost
-        | LightMachineGun _ ->
-            lightMachineGunCost
+        | MachineGun _ ->
+            machineGunCost
         | Convoy _ ->
             float32 shipVehicleCapacity * GroundAttackVehicle.MediumTankCost
         | Column _ ->
@@ -762,7 +758,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         yield { Object = Vehicle(region.RegionId, vehicleModel); Data = data }
                     | None ->
                         ()
-                | Some(_, (CannonObjectName as gunType), _, _) | Some (_, (HeavyMachineGunAAName as gunType), _, _) | Some (_, (LightMachineGunAAName as gunType), _, _) ->
+                | Some(_, (CannonObjectName as gunType), _, _) | Some (_, (MachineGunAAName as gunType), _, _) ->
                     let defenseArea =
                         world.AntiAirDefenses @ world.AntiTankDefenses
                         |> List.tryFind (fun area -> damagePos.IsInConvexPolygon(area.Boundary))
@@ -771,8 +767,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         let objType =
                             match gunType with
                             | CannonObjectName -> Some(Cannon(area.DefenseAreaId))
-                            | LightMachineGunAAName -> Some(LightMachineGun(area.DefenseAreaId))
-                            | HeavyMachineGunAAName -> Some(HeavyMachineGun(area.DefenseAreaId))
+                            | MachineGunAAName -> Some(MachineGun(area.DefenseAreaId))
                             | _ ->
                                 None
                         match objType with
