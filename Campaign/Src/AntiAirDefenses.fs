@@ -73,6 +73,7 @@ let mkAADefenses (includeSearchLights, world : World, state : WorldState) =
                           Settings = if isHighPrio then CanonGenerationSettings.Strong else CanonGenerationSettings.Default
                           Specialty = area.Role
                           IncludeSearchLights = includeSearchLights
+                          IncludeFlak = not world.IsWWI
                           Country = country
                         }
                     yield nest

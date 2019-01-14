@@ -34,7 +34,7 @@ with
                 yield this.EnemyClose.All
             ]
 
-    static member Create(settings : CanonGenerationSettings, specialty : DefenseSpecialty, includeSearchLights : bool, random : System.Random, store, lcStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+    static member Create(settings : CanonGenerationSettings, specialty : DefenseSpecialty, includeFlak : bool, includeSearchLights : bool, random : System.Random, store, lcStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let center =
             let n = max 1 (List.length boundary)
             let k = 1.0f / float32 n
@@ -51,6 +51,7 @@ with
             seq {
                 for i in 1 .. groupSize do
                     let isFlak =
+                        includeFlak &&
                         match specialty with
                         | RearDefenseArea | FrontDefenseArea -> false
                         | AntiAirMg -> i <= max (numSearchLights + 1) (groupSize / 4)
