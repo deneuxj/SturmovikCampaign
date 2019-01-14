@@ -223,7 +223,7 @@ let extractParaDrops (world : World) (state : WorldState) (battles : (DefenseAre
         |> Seq.map fst
         |> Set.ofSeq
     let battles =
-        world.AntiTankDefenses
+        world.Battlefields
         |> List.filter(fun area -> battles.Contains area.DefenseAreaId)
     let checkForParaDrop precision eventName =
         let f =
@@ -760,7 +760,7 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                         ()
                 | Some(_, (CannonObjectName as gunType), _, _) | Some (_, (MachineGunAAName as gunType), _, _) ->
                     let defenseArea =
-                        world.AntiAirDefenses @ world.AntiTankDefenses
+                        world.AntiAirDefenses @ world.Battlefields
                         |> List.tryFind (fun area -> damagePos.IsInConvexPolygon(area.Boundary))
                     match defenseArea with
                     | Some area ->
@@ -873,7 +873,7 @@ let extractBattleDamages (world : World) (state : WorldState) (battles : (Defens
         |> Seq.map fst
         |> Set.ofSeq
     let battles =
-        world.AntiTankDefenses
+        world.Battlefields
         |> List.filter(fun area -> battles.Contains area.DefenseAreaId)
     asyncSeq {
         let mutable idMapper = Map.empty

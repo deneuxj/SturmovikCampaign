@@ -32,23 +32,33 @@ let getRandomPositionInArea(random : System.Random, area : Vector2 list, forward
     |> Seq.find(fun v -> v.IsInConvexPolygon(area))
 
 type DefenseSpecialty =
-    | AntiTank
+    | RearDefenseArea
+    | FrontDefenseArea
     | AntiAirMg
     | AntiAirCanon
 with
     member this.GroupName =
         match this with
-        | AntiTank -> "AntiTank"
+        | RearDefenseArea -> "AntiTank"
+        | FrontDefenseArea -> "Artillery"
         | AntiAirMg | AntiAirCanon -> "AntiAir"
 
     member this.SetModel(thing : Mcu.HasEntity, isFlak : bool) =
         match this with
-        | AntiTank ->
+        | RearDefenseArea ->
             match thing.Country with
             | Some Mcu.CountryValue.Germany ->
                 vehicles.GermanAntiTankCanon.AssignTo(thing)
             | Some Mcu.CountryValue.Russia ->
                 vehicles.RussianAntiTankCanon.AssignTo(thing)
+            | _ ->
+                ()
+        | FrontDefenseArea ->
+            match thing.Country with
+            | Some Mcu.CountryValue.Germany ->
+                vehicles.GermanArtillery.AssignTo(thing)
+            | Some Mcu.CountryValue.Russia ->
+                vehicles.RussianArtillery.AssignTo(thing)
             | _ ->
                 ()
         | AntiAirCanon ->
@@ -135,7 +145,7 @@ with
         // Set object name, used for identifying damages from the log
         let name =
             match specialty with
-            | AntiTank | AntiAirCanon -> CannonObjectName
+            | RearDefenseArea | FrontDefenseArea | AntiAirCanon -> CannonObjectName
             | AntiAirMg when isFlak -> CannonObjectName
             | AntiAirMg -> MachineGunAAName
         cannon.Name <- name
@@ -143,7 +153,7 @@ with
         let range =
             match specialty with
             | _ when isFlak -> 9000
-            | AntiTank | AntiAirCanon -> 2000
+            | RearDefenseArea | FrontDefenseArea | AntiAirCanon -> 2000
             | AntiAirMg -> 1500
         match attackOrder with
         | Some (:? Mcu.McuAttackArea as attackOrder) ->

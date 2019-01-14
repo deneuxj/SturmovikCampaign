@@ -554,7 +554,7 @@ let computeFrontLine (includeNeutral : bool) (world : World) (regions : RegionSt
 /// Compute amounts of supplies to have anti-tank and anti-air canons fully operational.
 let computeFullDefenseNeeds (world : World) =
     [
-        for area in world.AntiTankDefenses @ world.AntiAirDefenses do
+        for area in world.Battlefields @ world.AntiAirDefenses do
             yield area.Home, area.AmmoCost
     ]
     |> List.groupBy fst

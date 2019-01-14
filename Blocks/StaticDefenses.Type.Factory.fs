@@ -52,7 +52,7 @@ with
                 for i in 1 .. groupSize do
                     let isFlak =
                         match specialty with
-                        | AntiTank -> false
+                        | RearDefenseArea | FrontDefenseArea -> false
                         | AntiAirMg -> i <= max (numSearchLights + 1) (groupSize / 4)
                         | AntiAirCanon -> i <= max (numSearchLights + 1) (groupSize / 2)
                     let canon =
@@ -71,7 +71,8 @@ with
                 let model =
                     match specialty with
                     | AntiAirMg | AntiAirCanon -> Vehicles.vehicles.AntiAirPosition
-                    | AntiTank -> Vehicles.vehicles.AntiTankPosition
+                    | RearDefenseArea -> Vehicles.vehicles.AntiTankPosition
+                    | FrontDefenseArea -> Vehicles.vehicles.ArtilleryPosition
                 let newBlock (pos : Mcu.Vec3) (ori : Mcu.Vec3) =
                     let block = newBlock 1 (int country) model.Model model.Script
                     let mcu =
@@ -89,7 +90,7 @@ with
             // For ATs, show when an enemy ground vehicle is near, reduce scanning range.
             let wec = WhileEnemyClose.Create(true, true, store, center, coalition)
             match specialty with
-            | AntiTank ->
+            | RearDefenseArea ->
                 let otherCoalition = McuUtil.swapCoalition coalition
                 for mcu in McuUtil.deepContentOf wec.All do
                     match mcu with

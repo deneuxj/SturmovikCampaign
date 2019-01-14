@@ -497,7 +497,7 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
         [
             for region, regState in List.zip world.Regions regionsAfterDamages do
                 let damagesToDefenses =
-                    Seq.append world.AntiAirDefenses world.AntiTankDefenses
+                    Seq.append world.AntiAirDefenses world.Battlefields
                     |> Seq.filter (fun area -> area.Home = region.RegionId)
                     |> Seq.sumBy (fun area ->
                         let damagedCannons =

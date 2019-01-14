@@ -92,7 +92,7 @@ module Init =
             |> Map.ofSeq
 
         let antiTankUsage =
-            world.AntiTankDefenses
+            world.Battlefields
             |> Seq.map (fun def -> def.Home, def.MaxNumGuns)
             |> Seq.groupBy fst
             |> Seq.map (fun (region, canons) -> region, canons |> Seq.maxBy snd |> snd)

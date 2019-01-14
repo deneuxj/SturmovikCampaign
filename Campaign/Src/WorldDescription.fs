@@ -290,7 +290,7 @@ type DefenseArea = {
     Role : DefenseSpecialty
 }
 with
-    static member ExtractCentralDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
+    static member ExtractAntiAirDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
         [
             for area in areas do
                 let pos = Vector2.FromPos(area)
@@ -321,7 +321,7 @@ with
                     failwithf "Defense area '%s' is not located in any region" areaName
         ]
 
-    static member ExtractFrontLineDefenseAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list, paths : Path list) =
+    static member ExtractBattlefieldAreas(areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
         [
             for area in areas do
                 let pos = Vector2.FromPos(area)
@@ -333,10 +333,10 @@ with
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f } 
                         Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
                         MaxNumGuns = 12
-                        Role = AntiTank
+                        Role = RearDefenseArea
                     }
                 | None ->
-                    failwithf "Defense area '%s' is not located in any region" (area.GetName().Value)
+                    failwithf "Battlefield area '%s' is not located in any region" (area.GetName().Value)
         ]
 
     member private this.LongPositions =
@@ -562,7 +562,7 @@ type World = {
     SeaWays : Path list
     RiverWays : Path list
     AntiAirDefenses : DefenseArea list
-    AntiTankDefenses : DefenseArea list
+    Battlefields : DefenseArea list
     Airfields : Airfield list
     ProductionFactor : float32
     /// Date of the first mission.
@@ -643,13 +643,13 @@ with
         let aaas =
             defenses.ListOfMCU_TR_InfluenceArea @ afsGroup.ListOfMCU_TR_InfluenceArea @ storageGroup.ListOfMCU_TR_InfluenceArea
             |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
-        let antiAirDefenses = DefenseArea.ExtractCentralDefenseAreas(aaas, regions)
+        let antiAirDefenses = DefenseArea.ExtractAntiAirDefenseAreas(aaas, regions)
         if List.isEmpty antiAirDefenses then
             logger.Warn("Extracted list of AA defenses is empty")
 
         let battlefieldZones = data.GetGroup("Battles")
         let battlefields = battlefieldZones.ListOfMCU_TR_InfluenceArea
-        let antiTankDefenses = DefenseArea.ExtractFrontLineDefenseAreas(battlefields, regions, roads)
+        let battlefields = DefenseArea.ExtractBattlefieldAreas(battlefields, regions)
 
         // Airfield spawns cannot be empty
         let afs = afsGroup.ListOfAirfield
@@ -674,7 +674,7 @@ with
           PlaneSet = planeSet
           Regions = regions
           AntiAirDefenses = antiAirDefenses
-          AntiTankDefenses = antiTankDefenses
+          Battlefields = battlefields
           Airfields = airfields
           ProductionFactor = 1.0f
           StartDate = date
@@ -725,7 +725,7 @@ with
             |> fun x -> x.Position
         // Find battlefield whose orientation best matches the respective location of regions
         let dir = attackerPos - defenderPos
-        this.AntiTankDefenses
+        this.Battlefields
         |> Seq.filter (fun area -> area.Home = defender)
         |> Seq.maxBy (fun area -> Vector2.Dot(Vector2.FromYOri(float area.Position.Rotation), dir))
 
@@ -761,7 +761,7 @@ with
         let getAirfield = mkGetStuffFast world.Airfields (fun af -> af.AirfieldId)
         { GetRegion = getRegion
           GetAntiAirDefenses = mkGetStuffFast world.AntiAirDefenses (fun r -> r.DefenseAreaId)
-          GetAntiTankDefenses = mkGetStuffFast world.AntiTankDefenses (fun r -> r.DefenseAreaId)
+          GetAntiTankDefenses = mkGetStuffFast world.Battlefields (fun r -> r.DefenseAreaId)
           GetAirfield = getAirfield
           GetRegionStorageSubBlocks =
             fun region idx ->
@@ -802,7 +802,7 @@ type DefenseArea with
     /// Value of guns in a fully defended region
     member this.AmmoCost =
         match this.Role with
-        | AntiTank | AntiAirCanon -> float32 this.MaxNumGuns * cannonCost
+        | RearDefenseArea | FrontDefenseArea | AntiAirCanon -> float32 this.MaxNumGuns * cannonCost
         | AntiAirMg ->
             let numFlak = 0.25f * float32 this.MaxNumGuns
             let numMg = 0.75f * float32 this.MaxNumGuns
@@ -811,7 +811,7 @@ type DefenseArea with
     /// Cost of operating a fully defended region on the front
     member this.OperationCost =
         match this.Role with
-        | AntiTank | AntiAirCanon -> float32 this.MaxNumGuns * cannonConsumption
+        | RearDefenseArea | FrontDefenseArea | AntiAirCanon -> float32 this.MaxNumGuns * cannonConsumption
         | AntiAirMg ->
             let numFlak = 0.25f * float32 this.MaxNumGuns
             let numMg = 0.75f * float32 this.MaxNumGuns
@@ -822,5 +822,5 @@ let bombCost = 100.0f<E> / 1000.0f<K>
 type World
 with
     member this.RegionAmmoCost(regionId : RegionId) =
-        this.AntiAirDefenses @ this.AntiTankDefenses
+        this.AntiAirDefenses @ this.Battlefields
         |> Seq.sumBy(fun area -> if area.Home = regionId then area.AmmoCost else 0.0f<E>)
