@@ -370,8 +370,6 @@ with
                 let rot = float32(area.GetYOri().Value)
                 let dir = Vector2.FromYOri(area.GetYOri().Value)
                 let boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
-                let center = boundary |> List.sum
-                let center = (1.0f / float32(List.length boundary)) * center
                 let withRegions =
                     regions
                     |> List.filter(fun region ->
@@ -379,7 +377,7 @@ with
                         |> List.exists (fun p -> p.IsInConvexPolygon(region.Boundary)))
                     |> List.distinctBy(fun region -> region.RegionId)
                     |> List.sortBy (fun region ->
-                        Vector2.Dot(dir, center - region.Position))
+                        Vector2.Dot(dir, region.Position - pos))
                 match withRegions with
                 | [ regionA; regionB ] ->
                     yield {

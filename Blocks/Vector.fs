@@ -150,6 +150,13 @@ with
             else
                 degrees
 
+    static member Center(vs : Vector2 list) =
+        match List.length vs with
+        | 0 -> invalidArg "vs" "Must have at least one vertex"
+        | n ->
+            vs
+            |> List.sum
+            |> fun s -> s * (1.0f / (float32 n))
 
 let testConvexHull (random : System.Random) N =
     let nextFloat() =

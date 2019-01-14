@@ -243,6 +243,49 @@ with
             }
         }
 
+    static member CreateArtillery(random : System.Random, store, lcStore, wg : WorldFastAccess, area : ArtilleryField, coalitionA : CoalitionId) =
+        // Get a random position within the bounding rectangle of artillery field
+        let getRandomPos(isSideA : bool) =
+            let dir = Vector2.FromYOri(float area.Position.Rotation)
+            let back =
+                area.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, dir))
+                |> Seq.min
+            let front =
+                area.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, dir))
+                |> Seq.max
+            let side = Vector2.FromYOri (float area.Position.Rotation + 90.0)
+            let left =
+                area.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, side))
+                |> Seq.min
+            let right =
+                area.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, side))
+                |> Seq.max
+            let r0 =
+                let r = random.NextDouble() |> float32
+                if isSideA then
+                    0.1f * r
+                else
+                    1.0f - 0.1f * r
+            let r1 = random.NextDouble() |> float32
+            let dx = (back * (1.0f - r0) + front * r0) * dir
+            let dz = (left * (1.0f - r1) + right * r1) * side
+            area.Position.Pos + dx + dz
+        // Get a random position within the boundary and the region
+        let getRandomPos(isSideA) =
+            Seq.initInfinite (fun _ -> getRandomPos isSideA)
+            |> Seq.find (fun v ->
+                v.IsInConvexPolygon(area.Boundary)
+                &&
+                if isSideA then
+                    v.IsInConvexPolygon(wg.GetRegion(area.RegionA).Boundary)
+                else
+                    v.IsInConvexPolygon(wg.GetRegion(area.RegionB).Boundary))
+        failwith "TODO"
+
     /// All the Start MCU triggers
     member this.Starts =
         [
