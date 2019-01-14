@@ -497,18 +497,15 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
         [
             for region, regState in List.zip world.Regions regionsAfterDamages do
                 let damagesToDefenses =
-                    Seq.append world.AntiAirDefenses world.Battlefields
-                    |> Seq.filter (fun area -> area.Home = region.RegionId)
-                    |> Seq.sumBy (fun area ->
-                        let damagedCannons =
-                            Map.tryFind (Cannon(area.DefenseAreaId)) damages
-                            |> Option.defaultVal Seq.empty
-                            |> Seq.sumBy (fun data -> data.Amount)
-                        let damagedMachineGuns =
-                            Map.tryFind (MachineGun(area.DefenseAreaId)) damages
-                            |> Option.defaultVal Seq.empty
-                            |> Seq.sumBy (fun data -> data.Amount)
-                        damagedCannons * cannonCost + damagedMachineGuns * machineGunCost)
+                    let damagedCannons =
+                        Map.tryFind (Cannon(region.RegionId)) damages
+                        |> Option.defaultVal Seq.empty
+                        |> Seq.sumBy (fun data -> data.Amount)
+                    let damagedMachineGuns =
+                        Map.tryFind (MachineGun(region.RegionId)) damages
+                        |> Option.defaultVal Seq.empty
+                        |> Seq.sumBy (fun data -> data.Amount)
+                    damagedCannons * cannonCost + damagedMachineGuns * machineGunCost
                 yield
                     if damagesToDefenses > 0.0f<E> then
                         { regState with Supplies = max 0.0f<E> (regState.Supplies - damagesToDefenses) }

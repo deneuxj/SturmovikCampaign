@@ -506,8 +506,8 @@ type DamagedObject =
     | Production of RegionId * group:int * building:int
     | Storage of RegionId * group:int * building:int
     | Airfield of AirfieldId * group:int * building:int
-    | Cannon of AreaId
-    | MachineGun of AreaId
+    | Cannon of RegionId
+    | MachineGun of RegionId
     | Convoy of VehicleInColumn
     | Column of VehicleInColumn
     | Vehicle of RegionId * GroundAttackVehicle
@@ -521,12 +521,8 @@ with
         | Production(region, _, _) -> sg.GetRegion(region).Owner
         | ParkedPlane(af, _)
         | Airfield(af, _, _) -> sg.GetRegion(wg.GetAirfield(af).Region).Owner
-        | Cannon def
-        | MachineGun def ->
-            try
-                sg.GetRegion(wg.GetAntiAirDefenses(def).Home).Owner
-            with
-            | _ -> sg.GetRegion(wg.GetAntiTankDefenses(def).Home).Owner
+        | Cannon region
+        | MachineGun region -> sg.GetRegion(region).Owner
         | Convoy v
         | Column v ->
             Some v.OrderId.Coalition
@@ -759,15 +755,15 @@ let extractStaticDamages (world : World) (entries : AsyncSeq<LogEntry>) =
                     | None ->
                         ()
                 | Some(_, (CannonObjectName as gunType), _, _) | Some (_, (MachineGunAAName as gunType), _, _) ->
-                    let defenseArea =
-                        world.AntiAirDefenses @ world.Battlefields
+                    let region =
+                        world.Regions
                         |> List.tryFind (fun area -> damagePos.IsInConvexPolygon(area.Boundary))
-                    match defenseArea with
-                    | Some area ->
+                    match region with
+                    | Some region ->
                         let objType =
                             match gunType with
-                            | CannonObjectName -> Some(Cannon(area.DefenseAreaId))
-                            | MachineGunAAName -> Some(MachineGun(area.DefenseAreaId))
+                            | CannonObjectName -> Some(Cannon(region.RegionId))
+                            | MachineGunAAName -> Some(MachineGun(region.RegionId))
                             | _ ->
                                 None
                         match objType with
