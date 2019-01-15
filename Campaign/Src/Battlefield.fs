@@ -28,6 +28,8 @@ open VectorExtension
 open Util
 open Orders
 open SturmovikMission.Blocks.IconDisplay
+open SturmovikMission.Blocks.StaticDefenses
+open SturmovikMission.Blocks.MapGraphics
 
 type private AreaLocation =
     | DefenseBack
@@ -243,49 +245,6 @@ with
             }
         }
 
-    static member CreateArtillery(random : System.Random, store, lcStore, wg : WorldFastAccess, area : ArtilleryField, coalitionA : CoalitionId) =
-        // Get a random position within the bounding rectangle of artillery field
-        let getRandomPos(isSideA : bool) =
-            let dir = Vector2.FromYOri(float area.Position.Rotation)
-            let back =
-                area.Boundary
-                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, dir))
-                |> Seq.min
-            let front =
-                area.Boundary
-                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, dir))
-                |> Seq.max
-            let side = Vector2.FromYOri (float area.Position.Rotation + 90.0)
-            let left =
-                area.Boundary
-                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, side))
-                |> Seq.min
-            let right =
-                area.Boundary
-                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, side))
-                |> Seq.max
-            let r0 =
-                let r = random.NextDouble() |> float32
-                if isSideA then
-                    0.1f * r
-                else
-                    1.0f - 0.1f * r
-            let r1 = random.NextDouble() |> float32
-            let dx = (back * (1.0f - r0) + front * r0) * dir
-            let dz = (left * (1.0f - r1) + right * r1) * side
-            area.Position.Pos + dx + dz
-        // Get a random position within the boundary and the region
-        let getRandomPos(isSideA) =
-            Seq.initInfinite (fun _ -> getRandomPos isSideA)
-            |> Seq.find (fun v ->
-                v.IsInConvexPolygon(area.Boundary)
-                &&
-                if isSideA then
-                    v.IsInConvexPolygon(wg.GetRegion(area.RegionA).Boundary)
-                else
-                    v.IsInConvexPolygon(wg.GetRegion(area.RegionB).Boundary))
-        failwith "TODO"
-
     /// All the Start MCU triggers
     member this.Starts =
         [
@@ -373,3 +332,127 @@ let generateBattlefields missionLength enablePlayerTanks maxVehicles killRatio r
                     }
             yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, unitData, string bf.Home, numDefending * killRatio, numAttacking * killRatio)
     ]
+
+type ArtilleryBattlefield =
+    { SideA : RespawningCanon list
+      SideB : RespawningCanon list
+      Icons : IconDisplay list
+      All : McuUtil.IMcuGroup
+    }
+with
+    static member Create(random : System.Random, store, lcStore, wg : WorldFastAccess, area : ArtilleryField, coalitionA : CoalitionId) =
+        // Get a random position within the bounding rectangle of artillery field
+        let getRandomPos(isSideA : bool) =
+            let dir = Vector2.FromYOri(float area.Position.Rotation)
+            let back =
+                area.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, dir))
+                |> Seq.min
+            let front =
+                area.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, dir))
+                |> Seq.max
+            let side = Vector2.FromYOri (float area.Position.Rotation + 90.0)
+            let left =
+                area.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, side))
+                |> Seq.min
+            let right =
+                area.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - area.Position.Pos, side))
+                |> Seq.max
+            let r0 =
+                let r = random.NextDouble() |> float32
+                if isSideA then
+                    0.1f * r
+                else
+                    1.0f - 0.1f * r
+            let r1 = random.NextDouble() |> float32
+            let dx = (back * (1.0f - r0) + front * r0) * dir
+            let dz = (left * (1.0f - r1) + right * r1) * side
+            area.Position.Pos + dx + dz
+        // Get a random position within the boundary and the region
+        let getRandomPos(isSideA) =
+            Seq.initInfinite (fun _ -> getRandomPos isSideA)
+            |> Seq.find (fun v ->
+                v.IsInConvexPolygon(area.Boundary)
+                &&
+                if isSideA then
+                    v.IsInConvexPolygon(wg.GetRegion(area.RegionA).Boundary)
+                else
+                    v.IsInConvexPolygon(wg.GetRegion(area.RegionB).Boundary))
+        // Build a respawning artillery
+        let buildArtillery(isSideA : bool, model : VehicleTypeData, wallModel : VehicleTypeData) =
+            let coalition =
+                if isSideA then
+                    coalitionA
+                else
+                    coalitionA.Other
+            let arty = RespawningCanon.Create(store, getRandomPos(isSideA), getRandomPos(not isSideA), coalition.ToCountry)
+            arty.Canon.Name <- Types.CannonObjectName
+            wallModel.AssignTo(arty.Wall)
+            model.AssignTo(arty.Canon)
+            arty
+        let modelA, modelB =
+            match coalitionA with
+            | Axis -> vehicles.GermanArtillery, vehicles.RussianArtillery
+            | Allies -> vehicles.RussianArtillery, vehicles.GermanArtillery
+        let numPieces = 15
+        let cannonsA =
+            List.init numPieces (fun _ -> buildArtillery(true, modelA, vehicles.ArtilleryPosition))
+        let cannonsB =
+            List.init numPieces (fun _ -> buildArtillery(false, modelA, vehicles.ArtilleryPosition))
+        let iconsA1, iconsA2 = IconDisplay.CreatePair(store, lcStore, area.SideAPos, "", coalitionA.ToCoalition, Mcu.IconIdValue.CoverArtilleryPosition)
+        let iconsB1, iconsB2 = IconDisplay.CreatePair(store, lcStore, area.SideBPos, "", coalitionA.Other.ToCoalition, Mcu.IconIdValue.CoverArtilleryPosition)
+        let allIcons = [ iconsA1; iconsA2; iconsB1; iconsB2 ]
+        // Result
+        { SideA = cannonsA
+          SideB = cannonsB
+          Icons = allIcons
+          All =
+            { new McuUtil.IMcuGroup with
+                  member x.Content = []
+                  member x.LcStrings = []
+                  member x.SubGroups = [
+                    for c in cannonsA @ cannonsB do
+                        yield c.All
+                    for icon in allIcons do
+                        yield icon.All
+                  ]
+            }
+        }
+
+    /// All the Start MCU triggers
+    member this.Starts =
+        [
+            for a in this.SideA @ this.SideB do
+                yield a.Start
+            for icon in this.Icons do
+                yield icon.Show :> Mcu.McuTrigger
+        ]
+
+/// Identify artillery fields between enemy regions without ongoing battles.
+/// Return the field and coalition of side A.
+let identifyArtilleryFields (world : World) (state : WorldState) =
+    let sg = state.FastAccess
+    world.ArtilleryFields
+    |> List.choose(fun area ->
+        let regionA = sg.GetRegion(area.RegionA)
+        let regionB = sg.GetRegion(area.RegionB)
+        if regionA.HasInvaders || regionB.HasInvaders then
+            None
+        else
+            match regionA.Owner, regionB.Owner with
+            | Some coalitionA, Some coalitionB when coalitionA <> coalitionB ->
+                Some (area, coalitionA)
+            | _ ->
+                None)
+
+/// Identify suitable artillery fields, and pick up to maxNum at random, then generate the battles.
+let generateArtilleryFields random maxNum store lcStore world state =
+    identifyArtilleryFields world state
+    |> List.toArray
+    |> Array.shuffle random
+    |> Array.truncate maxNum
+    |> Array.map (fun (area, sideA) ->
+        ArtilleryBattlefield.Create(random, store, lcStore, world.FastAccess, area, sideA))

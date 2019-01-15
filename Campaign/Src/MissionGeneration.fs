@@ -52,6 +52,7 @@ open Campaign.Convoys
 open Campaign.TankParks
 open SturmovikMission.Blocks.Spotter
 open SturmovikMission.DataProvider.McuUtil
+open Campaign
 
 
 /// Set the country of entity owners in a list of Mcus depending on the region where they are located.
@@ -145,6 +146,7 @@ type MissionGenerationParameters = {
     SpawnsAreRestricted : bool
     MaxTanksInParks : int
     MaxAACannons : int
+    MaxArtilleryBattles : int
 }
 
 
@@ -326,6 +328,15 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let paraDrops =
         createParaTrooperDrops missionData.World store lcStore (Battlefield.identifyBattleAreas missionData.World missionData.State)
         |> List.map (fun p -> p.All)
+    let artilleryFields =
+        Battlefield.generateArtilleryFields random missionParams.MaxArtilleryBattles store lcStore missionData.World missionData.State
+        |> List.ofArray
+    for field in artilleryFields do
+        for trigger in field.Starts do
+            Mcu.addTargetLink missionBegin trigger.Index
+    let artilleryFields =
+        artilleryFields
+        |> List.map (fun x -> x.All)
     let parkedPlanes =
         createParkedPlanes store missionData.World missionData.State missionData.Hangars missionParams.MaxStaticPlanes inAttackArea
         |> McuUtil.groupFromList
@@ -472,5 +483,8 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           alliesPrio
           axisPlaneFerries
           alliesPlaneFerries
-          serverInputMissionEnd.All ] @ retainedAA @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @ buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections @ spotters
+          serverInputMissionEnd.All ] @
+        retainedAA @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @
+        buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections @ spotters @
+        artilleryFields
     McuOutput.writeMissionFiles "eng" filename options allGroups

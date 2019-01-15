@@ -531,6 +531,7 @@ module MissionFileGeneration =
               SpawnsAreRestricted = config.SpawnsAreRestricted
               MaxTanksInParks = config.MaxTanksInParks
               MaxAACannons = config.MaxAACannons
+              MaxArtilleryBattles = 2
             }
         let missionData =
             { World = world
