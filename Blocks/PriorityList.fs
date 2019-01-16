@@ -6,6 +6,7 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
 open System.Numerics
 open VectorExtension
+open SturmovikMission.DataProvider
 
 /// A node in the list
 type Node = {
@@ -74,3 +75,4 @@ with
                   member x.SubGroups = nodes |> List.map (fun node -> node.All)
             }
         }
+

@@ -77,6 +77,7 @@
     <Compile Include="Train.fs" />
     <Compile Include="ShipConvoy.fs" />
     <Compile Include="PriorityList.fs" />
+    <Compile Include="ResourcePool.fs" />
     <Compile Include="Proximity.fs" />
     <Compile Include="Effect.fs" />
     <Compile Include="Patrol.fs" />

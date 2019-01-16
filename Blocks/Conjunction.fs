@@ -66,3 +66,9 @@ with
                       member x.SubGroups: IMcuGroup list = this.All.SubGroups
                 }
         }
+
+    /// Clear A and B on a given trigger
+    member this.ClearABOn(trigger : Mcu.McuTrigger) =
+        Mcu.addTargetLink trigger this.ClearA.Index
+        Mcu.addTargetLink trigger this.ClearB.Index
+        this
