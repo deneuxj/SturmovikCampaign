@@ -225,7 +225,8 @@ let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World)
                             let size =
                                 int (convoy.TransportedSupplies / ResupplyOrder.TruckCapacity)
                                 |> min ColumnMovement.MaxColumnSize
-                            VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, size, coalition.ToCountry, coalition.ToCoalition, convoyName, 0)
+                            let withAA = not world.IsWWI
+                            VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, size, withAA, coalition.ToCountry, coalition.ToCoalition, convoyName, 0)
                             |> Choice1Of4
                         | ByRail ->
                             TrainWithNotification.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, convoyName)
@@ -341,7 +342,7 @@ let createColumns
                                 |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
                             let column =
                                 if world.IsWWI then
-                                    VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, List.length columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                                    VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, List.length columnContent, false, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                                 else
                                     VirtualConvoy.CreateColumn(store, lcStore, pathVertices, bridgeEntitiesAtVertex, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
                             let links = column.CreateLinks()

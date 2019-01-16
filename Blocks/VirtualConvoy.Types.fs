@@ -82,7 +82,7 @@ type TruckInConvoy =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, inFormation : int, spawnSide : SpawnSide, country : Mcu.CountryValue, formationName : string) =
+    static member Create(store : NumericalIdentifiers.IdStore, pos : Vector2, ori : float32, inFormation : int, spawnSide : SpawnSide, withAA : bool, country : Mcu.CountryValue, formationName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
@@ -98,12 +98,12 @@ with
         let m =
             match country with
             | Mcu.CountryValue.Germany ->
-                if inFormation % 5 = 0 then
+                if withAA && inFormation % 5 = 0 then
                     vehicles.GermanMobileAA
                 else
                     vehicles.GermanTruck
             | Mcu.CountryValue.Russia ->
-                if inFormation % 5 = 0 then
+                if withAA && inFormation % 5 = 0 then
                     vehicles.RussianMobileAA
                 else
                     vehicles.RussianTruck

@@ -115,7 +115,7 @@ with
     /// <param name="path">Path followed by the convoy.</param>
     /// <param name="bridges">Map bridges to 
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, convoySize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, convoySize : int, withAA : bool, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
         if convoySize > VirtualConvoy.MaxConvoySize then
             invalidArg "convoySize" "Maximum convoy size exceeded"
         if path.IsEmpty then
@@ -125,7 +125,7 @@ with
         let truckInConvoySet =
             seq {
                 for pos in 1..convoySize do
-                    yield (TruckInConvoyInstance(pos), TruckInConvoy.Create(store, startPos.Pos, startPos.Ori, pos, startPos.SpawnSide, country, convoyName))
+                    yield (TruckInConvoyInstance(pos), TruckInConvoy.Create(store, startPos.Pos, startPos.Ori, pos, startPos.SpawnSide, withAA, country, convoyName))
             }
             |> Map
         let waypointSet =
@@ -255,7 +255,7 @@ with
     /// <param name="rankOffset">Long columns are split into groups (by the caller); this is the rank of the first vehicle in the original column</param>
     static member CreateColumn(store : NumericalIdentifiers.IdStore, lcStore, path, bridges, columnContent : VehicleTypeData list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, eventName, rankOffset) =
         let columnContent = Array.ofList columnContent
-        let convoy = VirtualConvoy.Create(store, lcStore, path, bridges, columnContent.Length, country, coalition, eventName, rankOffset)
+        let convoy = VirtualConvoy.Create(store, lcStore, path, bridges, columnContent.Length, false, country, coalition, eventName, rankOffset)
         convoy.IconCover.Icon.IconId <- Mcu.IconIdValue.CoverArmorColumn
         convoy.IconAttack.Icon.IconId <- Mcu.IconIdValue.AttackArmorColumn
         for instance, truck in convoy.TruckInConvoySet |> Map.toSeq do
