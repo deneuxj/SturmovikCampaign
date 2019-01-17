@@ -78,6 +78,16 @@ There should be an influence area for each direction from which a region can be 
 In other words, there should be an area for each neighbouring region connected with a road, facing that region.
 Strictly speaking, only one battle area is really needed, but having multiple properly oriented lets the mission generator create more believable battles.
 
+8b. Define front battle areas
+Those are areas where artillery exchange fire accros region borders.
+Use influence areas in a group named "Front battles". Each influence area should be shaped as a square 6km wide.
+Two of the corners must be in a region, and the other two corners must be in one neighbouring region.
+The area must be oriented so that it points from one of the two regions to the other, i.e. roughly perpendicular to the border between the two regions.
+These areas can overlap with regular battle areas, as a region will never have a front battle and a regular battle active at the same time.
+If a front battle encloses a spawn point or airfield, there is a risk players get fired at by artillery while they are spawning or taxiing.
+This can be seen as fun and immersive, or annoying. This can also lead to randomly place friendly artillery on the runway, so it's probably best to avoid it.
+The artillery pieces will be placed at random places in the areas constituting the last 10% of the square, on either side.
+
 9. Define airfield spawn points
 Use fakefields for planes. Both types (sideways and runway) can be used. They must be in a group named "Aifield spawns"
 Do not create the entity.
