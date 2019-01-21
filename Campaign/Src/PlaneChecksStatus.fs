@@ -110,7 +110,7 @@ with
                     | [] ->
                         yield Message(Overview(user, 15, [StringResources.badSupplyMissionStart]))
                     | _ :: _ as x ->
-                        yield Message(Overview(user, 15, [StringResources.supplyMissionAdvice + (x |> List.map (fun af -> af.AirfieldId.AirfieldName) |> String.concat ", ")]))
+                        yield Message(Overview(user, 15, [StringResources.supplyMissionAdvice + " " + (x |> List.map (fun af -> af.AirfieldId.AirfieldName) |> String.concat ", ")]))
                 }
             let cost =
                 let hangar = context.GetHangar(user, coalition)

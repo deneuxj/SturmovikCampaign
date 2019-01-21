@@ -118,114 +118,114 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="BackAt" xml:space="preserve">
-    <value>"%s is back at %s"</value>
+    <value>%s is back at %s</value>
   </data>
   <data name="BadSupplyMissionStart" xml:space="preserve">
-    <value>"This airfield is not a good place to start a supply mission from"</value>
+    <value>This airfield is not a good place to start a supply mission from</value>
   </data>
   <data name="CargoDelivered" xml:space="preserve">
-    <value>"%s has delivered %0.0f Kg of cargo to %s"</value>
+    <value>%s has delivered %0.0f Kg of cargo to %s</value>
   </data>
   <data name="Crashed" xml:space="preserve">
-    <value>"%s has crashed"</value>
+    <value>%s has crashed</value>
   </data>
   <data name="CrashedNear" xml:space="preserve">
-    <value>"%s has crashed near %s"</value>
+    <value>%s has crashed near %s</value>
   </data>
   <data name="EnemyLanded" xml:space="preserve">
-    <value>"%s (an enemy!) has landed at %s"</value>
+    <value>%s (an enemy!) has landed at %s</value>
   </data>
   <data name="EnteredPlane" xml:space="preserve">
-    <value>"%s entered a %s from %s (%d left)"</value>
+    <value>%s entered a %s from %s (%d left)</value>
   </data>
   <data name="FreshSpawns" xml:space="preserve">
-    <value>"Fresh spawns at rear AF: F:%0.1f+%0.1f A:%0.1f B:%0.1f T:%0.1f"</value>
+    <value>Fresh spawns at rear AF: F:%0.1f+%0.1f A:%0.1f B:%0.1f T:%0.1f</value>
   </data>
   <data name="FreshSpawnsExhausted" xml:space="preserve">
-    <value>"You have exhausted all your fresh spawns; They refill partially every new mission"</value>
+    <value>You have exhausted all your fresh spawns; They refill partially every new mission</value>
   </data>
   <data name="FreshSpawnsExhaustedAlt" xml:space="preserve">
-    <value>"You have exhausted your fresh spawns in that plane, try one of the following instead: %s"</value>
+    <value>You have exhausted your fresh spawns in that plane, try one of the following instead: %s</value>
   </data>
   <data name="GiftFromPlayer" xml:space="preserve">
-    <value>"You have been gifted a %s at %s by %s"</value>
+    <value>You have been gifted a %s at %s by %s</value>
   </data>
   <data name="GiftToPlayer" xml:space="preserve">
-    <value>"You have gifted a %s to %s at %s"</value>
+    <value>You have gifted a %s to %s at %s</value>
   </data>
   <data name="GiftToPublic" xml:space="preserve">
-    <value>"%s has gifted a %s to the public at %s"</value>
+    <value>%s has gifted a %s to the public at %s</value>
   </data>
   <data name="Hours" xml:space="preserve">
-    <value>"%d hours"</value>
+    <value>%d hours</value>
   </data>
   <data name="InsufficientSupplies" xml:space="preserve">
-    <value>"Airfield supplies are no longer sufficient to provide this loadout"</value>
+    <value>Airfield supplies are no longer sufficient to provide this loadout</value>
   </data>
   <data name="KickNoBan" xml:space="preserve">
-    <value>"You are being kicked for %s. This is not a ban, you are welcome back."</value>
+    <value>You are being kicked for %s. This is not a ban, you are welcome back.</value>
   </data>
   <data name="LandedInTheRough" xml:space="preserve">
-    <value>"%s landed in the rough"</value>
+    <value>%s landed in the rough</value>
   </data>
   <data name="LandingViolation" xml:space="preserve">
-    <value>"landing on an enemy airfield"</value>
+    <value>landing on an enemy airfield</value>
   </data>
   <data name="Minutes" xml:space="preserve">
-    <value>"%d minutes"</value>
+    <value>%d minutes</value>
   </data>
   <data name="NoSelfGift" xml:space="preserve">
-    <value>"You cannot gift a plane to yourself"</value>
+    <value>You cannot gift a plane to yourself</value>
   </data>
   <data name="NotAReservedPlane" xml:space="preserve">
-    <value>"This is not one of your reserved planes."</value>
+    <value>This is not one of your reserved planes.</value>
   </data>
   <data name="PlaneAvailableAgain" xml:space="preserve">
-    <value>"%s available at %s again"</value>
+    <value>%s available at %s again</value>
   </data>
   <data name="PlaneReservedByOther" xml:space="preserve">
-    <value>"Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation"</value>
+    <value>Another pilot has reserved that plane; Bring one from the rear airfield to earn a reservation</value>
   </data>
   <data name="RearSpawnAdvice" xml:space="preserve">
-    <value>"You should consider taking off from the REAR airfield to reserve a new plane."</value>
+    <value>You should consider taking off from the REAR airfield to reserve a new plane.</value>
   </data>
   <data name="ReservedPlanes" xml:space="preserve">
-    <value>"Your reserved planes at %s: %s"</value>
+    <value>Your reserved planes at %s: %s</value>
   </data>
   <data name="ScarceTakeOff" xml:space="preserve">
-    <value>"%s has taken a scarcely available %s at %s"</value>
+    <value>%s has taken a scarcely available %s at %s</value>
   </data>
   <data name="Seconds" xml:space="preserve">
-    <value>"%d seconds"</value>
+    <value>%d seconds</value>
   </data>
   <data name="SupplyMissionAdvice" xml:space="preserve">
-    <value>"The following regions would benefit from resupplies: "</value>
+    <value>The following regions would benefit from resupplies:</value>
   </data>
   <data name="TakeOff" xml:space="preserve">
-    <value>"%s has taken off from %s in a %s"</value>
+    <value>%s has taken off from %s in a %s</value>
   </data>
   <data name="TakeOffCleared" xml:space="preserve">
-    <value>"%s, you are cleared to take off in your %s from %s"</value>
+    <value>%s, you are cleared to take off in your %s from %s</value>
   </data>
   <data name="TakeOffClearedAlt" xml:space="preserve">
-    <value>"%s, you are cleared to take off in a %s from %s"</value>
+    <value>%s, you are cleared to take off in a %s from %s</value>
   </data>
   <data name="TakeOffDenied" xml:space="preserve">
-    <value>"%s, you are not allowed to take off in a %s at %s"</value>
+    <value>%s, you are not allowed to take off in a %s at %s</value>
   </data>
   <data name="TakeOffKickWarning" xml:space="preserve">
-    <value>"You will be KICKED if you take off"</value>
+    <value>You will be KICKED if you take off</value>
   </data>
   <data name="TimeLeft" xml:space="preserve">
-    <value>"Time left in mission: %s"</value>
+    <value>Time left in mission: %s</value>
   </data>
   <data name="TookLastPlane" xml:space="preserve">
-    <value>"%s took the last %s from %s"</value>
+    <value>%s took the last %s from %s</value>
   </data>
   <data name="UnauthorizedTakeOff" xml:space="preserve">
-    <value>"unauthorized take off"</value>
+    <value>unauthorized take off</value>
   </data>
   <data name="Welcome" xml:space="preserve">
-    <value>"Welcome back %s"</value>
+    <value>Welcome back %s</value>
   </data>
 </root>
