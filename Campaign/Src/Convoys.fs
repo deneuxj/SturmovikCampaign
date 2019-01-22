@@ -229,7 +229,7 @@ let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World)
                             VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, size, withAA, coalition.ToCountry, coalition.ToCoalition, convoyName, 0)
                             |> Choice1Of4
                         | ByRail ->
-                            TrainWithNotification.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, convoyName)
+                            TrainWithNotification.Create(store, lcStore, not world.IsWWI, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, convoyName)
                             |> Choice2Of4
                         | BySeaShip
                         | ByRiverShip ->
@@ -361,7 +361,7 @@ let createColumns
                             yield McuUtil.groupFromList [ beforeNext ]
                     ]
             | ColByTrain ->
-                let train = TrainWithNotification.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, columnName)
+                let train = TrainWithNotification.Create(store, lcStore, not world.IsWWI, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, columnName)
                 Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
                 let links = train.CreateLinks()
                 links.Apply(McuUtil.deepContentOf train)
