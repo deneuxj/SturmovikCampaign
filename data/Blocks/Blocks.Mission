@@ -10232,18 +10232,18 @@ Group
 Group
 {
   Name = "ResourceLock";
-  Index = 828;
+  Index = 823;
   Desc = "";
   MCU_Timer
   {
-    Index = 823;
-    Name = "GRAB";
+    Index = 824;
+    Name = "ALL GRABBED";
     Desc = "";
     Targets = [825];
     Objects = [];
-    XPos = 14700.907;
-    YPos = 124.951;
-    ZPos = 26144.536;
+    XPos = 14595.762;
+    YPos = 149.887;
+    ZPos = 26183.024;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -10252,52 +10252,55 @@ Group
   }
   
 
-  MCU_Timer
-  {
-    Index = 824;
-    Name = "RELEASE";
-    Desc = "";
-    Targets = [826];
-    Objects = [];
-    XPos = 14667.140;
-    YPos = 122.539;
-    ZPos = 26143.707;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Time = 0;
-    Random = 100;
-  }
-  
-
-  MCU_Timer
-  {
-    Index = 825;
-    Name = "ENABLE_RELEASE";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 14700.637;
-    YPos = 125.860;
-    ZPos = 26176.549;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Time = 0;
-    Random = 100;
-  }
-  
-
-  MCU_Timer
+  MCU_Counter
   {
     Index = 826;
-    Name = "ENABLE_GRAB";
+    Name = "NumLocked";
     Desc = "";
-    Targets = [];
+    Targets = [824,827];
     Objects = [];
-    XPos = 14667.295;
-    YPos = 125.860;
-    ZPos = 26176.549;
+    XPos = 14595.707;
+    YPos = 149.887;
+    ZPos = 26155.299;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 2;
+    Dropcount = 0;
+  }
+  
+
+  MCU_ModifierAddVal
+  {
+    Index = 828;
+    Name = "-1";
+    Desc = "";
+    Targets = [826];
+    Objects = [];
+    XPos = 14588.379;
+    YPos = 149.887;
+    ZPos = 26139.438;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    ParamIndex = 0;
+    Data0 = -1;
+    Data1 = 0;
+    Data2 = 0;
+    Data3 = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 829;
+    Name = "GRAB";
+    Desc = "";
+    Targets = [826];
+    Objects = [];
+    XPos = 14595.888;
+    YPos = 149.887;
+    ZPos = 26122.999;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -10308,19 +10311,154 @@ Group
 
   MCU_Timer
   {
-    Index = 827;
-    Name = "INIT";
+    Index = 830;
+    Name = "AVAILABLE AGAIN";
     Desc = "";
-    Targets = [826];
+    Targets = [831];
     Objects = [];
-    XPos = 14646.319;
-    YPos = 124.699;
-    ZPos = 26176.862;
+    XPos = 14580.960;
+    YPos = 149.887;
+    ZPos = 26183.656;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
     Time = 0;
     Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 832;
+    Name = "Gate";
+    Desc = "";
+    Targets = [830,833];
+    Objects = [];
+    XPos = 14580.822;
+    YPos = 149.887;
+    ZPos = 26173.096;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 827;
+    Name = "";
+    Desc = "";
+    Targets = [832];
+    Objects = [];
+    XPos = 14588.789;
+    YPos = 149.887;
+    ZPos = 26172.923;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 835;
+    Name = "RELEASE";
+    Desc = "";
+    Targets = [828,832];
+    Objects = [];
+    XPos = 14580.919;
+    YPos = 149.887;
+    ZPos = 26123.655;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 836;
+    Name = "init";
+    Desc = "";
+    Targets = [833];
+    Objects = [];
+    XPos = 14565.927;
+    YPos = 149.887;
+    ZPos = 26173.526;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 833;
+    Name = "";
+    Desc = "";
+    Targets = [832];
+    Objects = [];
+    XPos = 14573.774;
+    YPos = 149.887;
+    ZPos = 26173.271;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 831;
+    Name = "OPEN";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 14565.106;
+    YPos = 149.887;
+    ZPos = 26204.230;
+    XOri = 0.00;
+    YOri = 307.03;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 825;
+    Name = "CLOSE";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 14612.339;
+    YPos = 149.887;
+    ZPos = 26202.012;
+    XOri = 0.00;
+    YOri = 306.40;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_TR_MissionBegin
+  {
+    Index = 840;
+    Name = "Translator Mission Begin";
+    Desc = "";
+    Targets = [836];
+    Objects = [];
+    XPos = 14552.780;
+    YPos = 149.887;
+    ZPos = 26173.415;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
   }
   
 
