@@ -4529,4 +4529,98 @@ Block
 }
 
 
+
+Train
+{
+  Name = "TrainMgAARUS";
+  Index = 135;
+  LinkTrId = 0;
+  XPos = 29109.763;
+  YPos = 108.584;
+  ZPos = 20036.422;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Trains\e.txt";
+  Model = "graphics\trains\e\e.mgm";
+  Desc = "";
+  Country = 101;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+  Carriages
+  {
+    "LuaScripts\WorldObjects\Trains\et.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-mg34.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-mg34.txt";
+  }
+  
+}
+
+
+
+Train
+{
+  Name = "TrainMgAAGER";
+  Index = 136;
+  LinkTrId = 0;
+  XPos = 29131.511;
+  YPos = 108.584;
+  ZPos = 20036.858;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\Trains\g8.txt";
+  Model = "graphics\trains\g8\g8.mgm";
+  Desc = "";
+  Country = 201;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+  Carriages
+  {
+    "LuaScripts\WorldObjects\Trains\g8t.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-mg34.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\pass.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\platformnb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\tankb.txt";
+    "LuaScripts\WorldObjects\Trains\platformaa-mg34.txt";
+  }
+  
+}
+
+
 # end of file

@@ -302,6 +302,12 @@ type VehicleDataTypeStore() =
     member this.MkGermanTrainMcu() =
         trains.[T.Vehicles.TrainGER].CreateMcu() :?> Mcu.HasEntity
 
+    member this.MkRussianTrainMgAAMcu() =
+        trains.[T.Vehicles.TrainMgAARUS].CreateMcu() :?> Mcu.HasEntity
+
+    member this.MkGermanTrainMgAAMcu() =
+        trains.[T.Vehicles.TrainMgAAGER].CreateMcu() :?> Mcu.HasEntity
+
     member this.RussianFighter1 =
         let fighter = planes.[T.Vehicles.fighter1RUS]
         { Script = fighter.GetScript().Value

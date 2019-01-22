@@ -26,7 +26,7 @@ type Train = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, country : Mcu.CountryValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, isHeavyAA : bool, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, country : Mcu.CountryValue) =
         if path.IsEmpty then
             failwith "Cannot create train with empty path"
         let startV = List.head path
@@ -120,9 +120,17 @@ with
         // Override train
         let train2 =
             match country with
-            | Mcu.CountryValue.Russia -> vehicles.MkRussianTrainMcu()
+            | Mcu.CountryValue.Russia ->
+                if isHeavyAA then 
+                    vehicles.MkRussianTrainMcu()
+                else
+                    vehicles.MkRussianTrainMgAAMcu()
             | Mcu.CountryValue.Germany 
-            | _ -> vehicles.MkGermanTrainMcu()
+            | _ ->
+                if isHeavyAA then
+                    vehicles.MkGermanTrainMcu()
+                else
+                    vehicles.MkGermanTrainMgAAMcu()
         train2.Index <- train.Index
         train2.LinkTrId <- train.LinkTrId
         train2.Ori.Y <- float startV.Ori
@@ -194,12 +202,12 @@ with
                 yield this.Blocked.All
             ]
 
-    static member Create(store, lcStore, path : PathVertex list, bridges, country, eventName) =
+    static member Create(store, lcStore, withHeavyAA, path : PathVertex list, bridges, country, eventName) =
         if path.IsEmpty then
             failwith "Cannot create train with empty path"
         let pos = path.Head.Pos
         let destinationPos = (List.last path).Pos
-        let train = Train.Create(store, lcStore, path, bridges, country)
+        let train = Train.Create(store, lcStore, withHeavyAA, path, bridges, country)
         let startEventName = sprintf "%s-D-0" eventName
         let started = EventReporting.Create(store, country, pos + Vector2(0.0f, 100.0f), startEventName)
         let arrivedEventName = sprintf "%s-A-0" eventName
