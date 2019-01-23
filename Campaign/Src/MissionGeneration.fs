@@ -196,7 +196,21 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> List.filter(fun block -> not(parkedPlanes.Contains(block.GetIndex().Value)))
         |> createBlocks missionData.Random store missionData.World missionData.State inAttackArea
     let bridges =
+        let bridgeReplacements =
+            dict [
+                "bridge_road_150", "bridge_rd_cptl_100"
+                "bridge_road_200", "bridge_rd_cptl_100"
+                "bridge_road_250", "bridge_rd_cptl_300"
+            ]
         strategyMissionData.ListOfBridge
+        |> List.map (fun bridge ->
+            let key = System.IO.Path.GetFileNameWithoutExtension(bridge.GetModel().Value)
+            match bridgeReplacements.TryGetValue key with
+            | false, _ -> bridge
+            | true, repl ->
+                bridge
+                    .SetModel(T.String(bridge.GetModel().Value.Replace(key, repl)))
+                    .SetScript(T.String(bridge.GetScript().Value.Replace(key, repl))))
         |> createBridges missionData.Random store missionData.World missionData.State inAttackArea
     let ground =
         strategyMissionData.ListOfGround
@@ -220,7 +234,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 | :? Mcu.HasEntity as entity -> Some entity
                 | _ -> None)
         let shortenedPaths = getMovementPathVertices missionData.World missionData.State moves
-        let bridgesAlongPaths = selectBridgesAlongPaths missionData.World missionData.State bridges shortenedPaths
+        let bridgesAlongPaths = selectBridgesAlongPaths bridges shortenedPaths
         let bridgeEntities = makeBridgeEntities store bridgesAlongPaths
         let bridgesOfVertex =
             bridgesAlongPaths

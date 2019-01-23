@@ -150,16 +150,17 @@ let getMovementPathVertices (world : World) (state : WorldState) (orders : Movem
 
 /// Select bridges along paths, assigning bridges to vertices
 /// Note that one bridge may belong to multiple vertices, and one vertex may have multiple bridges.
-let selectBridgesAlongPaths (world : World) (state : WorldState) (bridges : Mcu.HasEntity list) (paths : ('TChoice * PathVertex list) seq) =
-    match bridges with
+let selectBridgesAlongPaths (bridges : Mcu.HasEntity list) (paths : ('TChoice * PathVertex list) seq) =
+    match bridges |> List.filter (fun bridge -> bridge.Model.Contains("bridge_road_") |> not) with
     | [] -> []
-    | _ :: _ ->
+    | goodBridges ->
+        // goodBridges is the list of bridges that are not affected by the "bad collision" bug some bridges when given an instance
         let bridges =
             seq {
                 for origin, path in paths do
                     for v in path |> Seq.filter (fun v -> v.Role = Intermediate) do
                         let distance, nearest =
-                            bridges
+                            goodBridges
                             |> Seq.map (fun bridge -> (Vector2.FromMcu(bridge.Pos) - v.Pos).Length(), bridge)
                             |> Seq.minBy fst
                         if distance < 50.0f then
@@ -169,7 +170,7 @@ let selectBridgesAlongPaths (world : World) (state : WorldState) (bridges : Mcu.
                         let center = 0.5f * (v1.Pos + v2.Pos)
                         let radius = (v1.Pos - center).Length()
                         yield!
-                            bridges
+                            goodBridges
                             |> Seq.filter (fun bridge -> (Vector2.FromMcu(bridge.Pos) - center).Length() < radius)
                             |> Seq.map (fun bridge -> v1, bridge) // No need to extend radius, the waypoint is already before the bridge.
             }
