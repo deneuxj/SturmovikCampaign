@@ -91,6 +91,7 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
         let (|PlaneObjectType|_|) = planeObjectType world.PlaneSet
         let (|StaticPlaneType|_|) = staticPlaneType world.PlaneSet
         let mutable nameOf = Map.empty // Vehicle ID -> player ID
+        let mutable condemned = Set.empty // player ID
         let mutable coalitionOf = Map.empty // Vehicle ID -> coalition
         let mutable damagesOf = Map.empty // Vehicle ID -> friendly fire
         let mutable objects = Map.empty // Vehicle ID -> object type
@@ -114,7 +115,7 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                         Player = player
                         Decision = Informed (sprintf "%3.1f wrecking penalty" newScore)
                     }
-                if not isMuted && newScore > config.MaxNoobScore then
+                if not isMuted && newScore > config.MaxNoobScore && old <= config.MaxNoobScore then
                     yield {
                         Player = player
                         Decision = Informed "wrecking limit exceeded"
@@ -201,9 +202,17 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                         let record =
                             damagesOf.[damage.AttackerId]
                         record.Add(entry)
-                        if not isMuted then 
+                        if not isMuted && not (condemned.Contains player) then 
                             match FriendlyDamage.Judge(config, record) with
                             | Some penalty ->
+                                // Update set of players that have been kicked or banned.
+                                // We don't want to keep punishing them for every new violation in the interval between the action and the time we see it.
+                                match penalty with
+                                | Kicked | Banned _ ->
+                                    condemned <- condemned.Add(player)
+                                | _ ->
+                                    ()
+                                // Inform player, then apply punishment.
                                 yield {
                                     Player = player
                                     Decision = Informed "Friendly fire limit exceeded"
