@@ -65,6 +65,7 @@ type Configuration = {
     MaxSimultaneousFerryFlights : int
     MaxTanksInParks : int
     MaxVehiclesInBattle : int
+    MaxAtGuns : int
     MaxArtilleryBattles : int
     NumArtilleryPieces : int
     BattleKillRatio: int
@@ -118,6 +119,7 @@ with
             MaxSimultaneousConvoys = 2
             MaxSimultaneousFerryFlights = 3
             MaxVehiclesInBattle = 15
+            MaxAtGuns = 5
             MaxArtilleryBattles = 1
             NumArtilleryPieces = 15
             MaxPatrols = 6
@@ -224,6 +226,7 @@ let loadConfigFile (path : string) =
         MaxSimultaneousConvoys = values.MaxSimultaneousConvoys
         MaxSimultaneousFerryFlights = values.MaxSimultaneousFerryFlights
         MaxVehiclesInBattle = values.MaxVehiclesInBattle
+        MaxAtGuns = values.MaxAtGuns
         MaxArtilleryBattles = values.MaxArtilleryBattles
         NumArtilleryPieces = values.NumArtilleryPieces
         MaxPatrols = values.MaxPatrols

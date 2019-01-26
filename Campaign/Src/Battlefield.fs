@@ -281,7 +281,7 @@ let identifyBattleAreas (world : World) (state : WorldState) =
     }
 
 /// Generate battlefields from invasions in column movement orders.
-let generateBattlefields missionLength enablePlayerTanks maxVehicles killRatio random store lcStore (world : World) (state : WorldState) =
+let generateBattlefields missionLength enablePlayerTanks maxVehicles maxAtGuns killRatio random store lcStore (world : World) (state : WorldState) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     let ammoFill = state.GetAmmoFillLevelPerRegion(world, missionLength)
@@ -325,7 +325,7 @@ let generateBattlefields missionLength enablePlayerTanks maxVehicles killRatio r
                     }
                 else
                     WWII {
-                        NumCannons = numGuns
+                        NumCannons = numGuns |> min maxAtGuns
                         Defenders = defendingVehicles
                         Attackers = attackingVehicles
                         IncludePlayerSpawns = enablePlayerTanks

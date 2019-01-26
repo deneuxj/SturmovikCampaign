@@ -44,6 +44,8 @@
     MaxTanksInParks: 15
     # Max number of vehicles in a battle (per side)
     MaxVehiclesInBattle: 15
+    # Max number of anti-tank guns in a battle (defense side)
+    MaxAtGuns: 6
     # Max number of artillery battles
     MaxArtilleryBattles: 1
     # Number of artillery pieces per side, in each artillery battle

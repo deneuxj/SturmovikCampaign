@@ -526,6 +526,7 @@ module MissionFileGeneration =
               EnablePlayerTanks = config.EnablePlayerTanks
               StrategyMissionFile = Path.Combine(config.ScriptPath, world.Scenario + ".Mission")
               MaxVehiclesInBattle = config.MaxVehiclesInBattle
+              MaxAtGuns = config.MaxAtGuns
               MaxBuildingIcons = config.MaxBuildingIcons
               BattleKillRatio = config.BattleKillRatio
               SpawnsAreRestricted = config.SpawnsAreRestricted
