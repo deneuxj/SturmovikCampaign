@@ -147,6 +147,7 @@ type MissionGenerationParameters = {
     MaxTanksInParks : int
     MaxAACannons : int
     MaxArtilleryBattles : int
+    NumArtilleryPieces : int
 }
 
 
@@ -335,6 +336,9 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> List.collect (fun (_, start, group) -> (McuUtil.groupFromList [start]) :: group)
     let battles =
         Battlefield.generateBattlefields missionLength missionParams.EnablePlayerTanks missionParams.MaxVehiclesInBattle missionParams.BattleKillRatio missionData.Random store lcStore missionData.World missionData.State
+    let numArtilleryFields =
+        missionParams.MaxArtilleryBattles - List.length battles
+        |> max 0
     for bf in battles do
         for start in bf.Starts do
             Mcu.addTargetLink missionBegin start.Index
@@ -343,7 +347,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         createParaTrooperDrops missionData.World store lcStore (Battlefield.identifyBattleAreas missionData.World missionData.State)
         |> List.map (fun p -> p.All)
     let artilleryFields =
-        Battlefield.generateArtilleryFields random missionParams.MaxArtilleryBattles store lcStore missionData.World missionData.State
+        Battlefield.generateArtilleryFields random missionParams.NumArtilleryPieces numArtilleryFields store lcStore missionData.World missionData.State
         |> List.ofArray
     for field in artilleryFields do
         for trigger in field.Starts do

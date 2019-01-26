@@ -340,7 +340,7 @@ type ArtilleryBattlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, lcStore, wg : WorldFastAccess, area : ArtilleryField, coalitionA : CoalitionId) =
+    static member Create(random : System.Random, numPieces : int, store, lcStore, wg : WorldFastAccess, area : ArtilleryField, coalitionA : CoalitionId) =
         // Get a random position within the bounding rectangle of artillery field
         let getRandomPos(isSideA : bool) =
             let dir = Vector2.FromYOri(float area.Position.Rotation)
@@ -397,7 +397,6 @@ with
             match coalitionA with
             | Axis -> vehicles.GermanArtillery, vehicles.RussianArtillery
             | Allies -> vehicles.RussianArtillery, vehicles.GermanArtillery
-        let numPieces = 15
         let cannonsA =
             List.init numPieces (fun _ -> buildArtillery(true, modelA, vehicles.ArtilleryPosition))
         let cannonsB =
@@ -449,10 +448,10 @@ let identifyArtilleryFields (world : World) (state : WorldState) =
                 None)
 
 /// Identify suitable artillery fields, and pick up to maxNum at random, then generate the battles.
-let generateArtilleryFields random maxNum store lcStore world state =
+let generateArtilleryFields random numPieces maxNum store lcStore world state =
     identifyArtilleryFields world state
     |> List.toArray
     |> Array.shuffle random
     |> Array.truncate maxNum
     |> Array.map (fun (area, sideA) ->
-        ArtilleryBattlefield.Create(random, store, lcStore, world.FastAccess, area, sideA))
+        ArtilleryBattlefield.Create(random, numPieces, store, lcStore, world.FastAccess, area, sideA))
