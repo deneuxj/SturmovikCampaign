@@ -80,7 +80,7 @@ Strictly speaking, only one battle area is really needed, but having multiple pr
 
 8b. Define front battle areas
 Those are areas where artillery exchange fire accros region borders.
-Use influence areas in a group named "Front battles". Each influence area should be shaped as a square 6km wide.
+Use influence areas in a group named "Border battles". Each influence area should be shaped as a square 6km wide.
 Two of the corners must be in a region, and the other two corners must be in one neighbouring region.
 The area must be oriented so that it points from one of the two regions to the other, i.e. roughly perpendicular to the border between the two regions.
 These areas can overlap with regular battle areas, as a region will never have a front battle and a regular battle active at the same time.

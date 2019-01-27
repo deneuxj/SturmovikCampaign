@@ -169996,8 +169996,8 @@ Group
 
 Group
 {
-  Name = "Front battles";
-  Index = 8939;
+  Name = "Border battles";
+  Index = 8936;
   Desc = "";
   MCU_TR_InfluenceArea
   {
@@ -170016,17 +170016,17 @@ Group
     Country = 0;
     Boundary
     {
-      249561, 66967.1;
-      246923, 73130.5;
-      240793, 70476.9;
-      243441, 64359.4;
+      249561, 66967;
+      246923, 73130;
+      240793, 70476;
+      243441, 64359;
     }
   }
   
 
   MCU_TR_InfluenceArea
   {
-    Index = 8936;
+    Index = 8938;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170041,17 +170041,17 @@ Group
     Country = 0;
     Boundary
     {
-      264517, 65704.7;
+      264517, 65704;
       265666, 72310;
-      259081, 73427.8;
-      257964, 66855.4;
+      259081, 73427;
+      257964, 66855;
     }
   }
   
 
   MCU_TR_InfluenceArea
   {
-    Index = 8940;
+    Index = 8939;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170076,7 +170076,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8941;
+    Index = 8940;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170091,17 +170091,17 @@ Group
     Country = 0;
     Boundary
     {
-      280809, 99737.9;
+      280809, 99737;
       280200, 106414;
       273551, 105780;
-      274183, 99144.3;
+      274183, 99144;
     }
   }
   
 
   MCU_TR_InfluenceArea
   {
-    Index = 8942;
+    Index = 8941;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170116,17 +170116,17 @@ Group
     Country = 0;
     Boundary
     {
-      262984, 98137.8;
+      262984, 98137;
       259882, 104081;
       253973, 100966;
-      257082, 95069.1;
+      257082, 95069;
     }
   }
   
 
   MCU_TR_InfluenceArea
   {
-    Index = 8943;
+    Index = 8942;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170151,7 +170151,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8944;
+    Index = 8943;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170176,7 +170176,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8945;
+    Index = 8944;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170201,7 +170201,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8946;
+    Index = 8945;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170226,7 +170226,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8947;
+    Index = 8946;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170251,7 +170251,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8948;
+    Index = 8947;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170276,7 +170276,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8949;
+    Index = 8948;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170301,7 +170301,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8950;
+    Index = 8949;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170326,7 +170326,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8951;
+    Index = 8950;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170351,7 +170351,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8952;
+    Index = 8951;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -170376,7 +170376,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 8953;
+    Index = 8952;
     Name = "Artillery field";
     Desc = "";
     Targets = [];

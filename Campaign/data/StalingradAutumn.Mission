@@ -75837,8 +75837,8 @@ Group
 
 Group
 {
-  Name = "Front battles";
-  Index = 3826;
+  Name = "Border battles";
+  Index = 3824;
   Desc = "";
   MCU_TR_InfluenceArea
   {
@@ -75867,7 +75867,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3824;
+    Index = 3826;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
