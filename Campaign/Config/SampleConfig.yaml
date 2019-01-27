@@ -22,6 +22,10 @@
     MaxAttackers: 3
     # Max number of patrols (per side, two planes per patrol)
     MaxPatrols: 2
+    # Max number of planes of a type in a plane transfer
+    MaxTransferSize: 5
+    # Max number of plane transfers
+    MaxTransfers: 2
     # Max number of captured planes available for spawning (per airfield)
     MaxCapturedPlanes: 0
     # Base name of generated mission file

@@ -584,7 +584,7 @@ let computeProductionPriorities (missionLength : float32<H>) (coalition : Coalit
     }
 
 /// Decide how many planes to ferry, where from and where to.
-let decidePlaneTransfers (capturedPlanesCanFly : bool)(world : World) (state : WorldState) (coalition : CoalitionId) =
+let decidePlaneTransfers (capturedPlanesCanFly : bool) (maxTransferSize : int) (maxTransfers : int) (world : World) (state : WorldState) (coalition : CoalitionId) =
     let wg = world.FastAccess
     let sg = state.FastAccess
     let targetNumPlanes = float32 world.TransferNumPlaneTarget
@@ -661,8 +661,9 @@ let decidePlaneTransfers (capturedPlanesCanFly : bool)(world : World) (state : W
             |> min numReceive
         { OrderId = { Coalition = coalition; Index = 0 } // Index to be set when all orders have been decided
           Plane = plane
-          Qty = count
+          Qty = min count maxTransferSize
           Start = af
           Destination = af2
         })
+    |> Seq.truncate maxTransfers
     |> List.ofSeq

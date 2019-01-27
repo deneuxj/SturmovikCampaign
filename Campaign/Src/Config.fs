@@ -56,6 +56,8 @@ type Configuration = {
     MaxConvoys : int
     MaxAttackers : int
     MaxPatrols : int
+    MaxTransferSize : int
+    MaxTransfers : int
     MaxCapturedPlanes : int
     MissionName : string
     MissionLength : int
@@ -124,6 +126,8 @@ with
             NumArtilleryPieces = 15
             MaxPatrols = 6
             MaxAttackers = 3
+            MaxTransferSize = 5
+            MaxTransfers = 2
             MaxCapturedPlanes = 3
             MaxTanksInParks = 16
             BattleKillRatio = 5
@@ -231,6 +235,8 @@ let loadConfigFile (path : string) =
         NumArtilleryPieces = values.NumArtilleryPieces
         MaxPatrols = values.MaxPatrols
         MaxAttackers = values.MaxAttackers
+        MaxTransferSize = values.MaxTransferSize
+        MaxTransfers = values.MaxTransfers
         MaxCapturedPlanes = values.MaxCapturedPlanes
         MaxTanksInParks = values.MaxTanksInParks
         BattleKillRatio = values.BattleKillRatio
