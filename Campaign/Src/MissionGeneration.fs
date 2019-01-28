@@ -149,6 +149,7 @@ type MissionGenerationParameters = {
     MaxAACannons : int
     MaxArtilleryBattles : int
     NumArtilleryPieces : int
+    MaxAiPatrolPlanes : int
 }
 
 
@@ -407,16 +408,13 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         else
             []
     let allPatrols =
-        let axisPatrols =
-            missionData.AxisOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
-        let alliesPatrols =
-            missionData.AlliesOrders.Patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
-        [
-            for allMcus, blocks in axisPatrols @ alliesPatrols do
-                for block in blocks do
-                    Mcu.addTargetLink missionBegin block.Start.Index
-                yield allMcus
-        ]
+        let axisGroup, axisPatrols =
+            missionData.AxisOrders.Patrols |> AiPlanes.AiPatrol.ToConstrainedPatrolBlocks (missionParams.MaxAiPatrolPlanes, store, lcStore, Vector2(1000.0f, 0.0f))
+        let alliesGroup, alliesPatrols =
+            missionData.AlliesOrders.Patrols |> AiPlanes.AiPatrol.ToConstrainedPatrolBlocks (missionParams.MaxAiPatrolPlanes, store, lcStore, Vector2(2000.0f, 0.0f))
+        for block in axisPatrols @ alliesPatrols do
+            Mcu.addTargetLink missionBegin block.Start.Index
+        [ axisGroup; alliesGroup ]
     let allAttacks =
         let axisAttacks =
             missionData.AxisOrders.Attacks |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))

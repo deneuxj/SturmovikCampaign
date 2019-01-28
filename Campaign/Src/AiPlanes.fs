@@ -84,6 +84,28 @@ with
               member x.SubGroups = [ blocks.[0].All; blocks.[1].All; bothKilled.All; icon1.All; icon2.All ]
         }, blocks
 
+    /// Create logic for AI patrols, with constrains that ensure that no more than a maximum limit of planes are active at any time.
+    static member ToConstrainedPatrolBlocks(limit : int, store, lcStore, logicPos) (patrols : AiPatrol list) =
+        let blocks = patrols |> List.map (fun patrol -> patrol.ToPatrolBlock(store, lcStore))
+        let limiter = ResourcePool.ResourcePool.Create(store, limit, logicPos)
+        for _, patrols in blocks do
+            for patrol in patrols do
+                Mcu.addTargetLink limiter.AllGrabbed patrol.WhileEnemyClose.Deactivate.Index
+                Mcu.addTargetLink limiter.AvailableAgain patrol.WhileEnemyClose.Activate.Index
+                Mcu.addTargetLink patrol.Spawned limiter.Grab.Index
+                Mcu.addTargetLink patrol.Completed limiter.Release.Index
+        { new McuUtil.IMcuGroup with
+            member x.Content = []
+            member x.LcStrings = []
+            member x.SubGroups =
+                [
+                    for block, _ in blocks do
+                        yield block
+                    yield limiter.All
+                ]
+        },
+        blocks |> List.map snd |> List.concat
+
     static member TryExtractHomeAirfield(name : string) =
         seq {
             if name.StartsWith("PTL-") then

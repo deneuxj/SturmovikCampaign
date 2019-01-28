@@ -324,7 +324,6 @@ module OrderDecision =
                 ) (Set.empty, [])
                 |> snd
                 |> List.rev
-                |> List.truncate config.MaxPatrols
             let axisPatrols, alliesPatrols =
                 if not weather.IsOvercast || weather.CloudHeight > 3500.0 then
                     mkPatrols Axis, mkPatrols Allies
@@ -534,6 +533,7 @@ module MissionFileGeneration =
               MaxAACannons = config.MaxAACannons
               MaxArtilleryBattles = config.MaxArtilleryBattles
               NumArtilleryPieces = config.NumArtilleryPieces
+              MaxAiPatrolPlanes = config.MaxPatrols * 2
             }
         let missionData =
             { World = world

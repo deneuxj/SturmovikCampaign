@@ -841,8 +841,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 64;
-        TarId = 63;
+        CmdId = 63;
+        TarId = 64;
       }
     }
   }
@@ -850,7 +850,7 @@ Group
 
   MCU_CMD_AttackArea
   {
-    Index = 63;
+    Index = 64;
     Name = "command AttackArea";
     Desc = "";
     Targets = [];
@@ -926,7 +926,7 @@ Group
 
   MCU_Spawner
   {
-    Index = 64;
+    Index = 63;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
@@ -1077,7 +1077,7 @@ Group
     Index = 69;
     Name = "Trigger Timer";
     Desc = "";
-    Targets = [64];
+    Targets = [63];
     Objects = [];
     XPos = 16383.523;
     YPos = 112.395;
@@ -1169,8 +1169,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 92;
-        TarId = 91;
+        CmdId = 91;
+        TarId = 92;
       }
     }
   }
@@ -1254,7 +1254,7 @@ Group
 
   MCU_Spawner
   {
-    Index = 92;
+    Index = 91;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
@@ -1405,7 +1405,7 @@ Group
     Index = 97;
     Name = "SpawnGate";
     Desc = "";
-    Targets = [92];
+    Targets = [91];
     Objects = [];
     XPos = 16368.292;
     YPos = 100.781;
@@ -1493,7 +1493,7 @@ Group
     Index = 104;
     Name = "Trigger Deactivate";
     Desc = "";
-    Targets = [92];
+    Targets = [91];
     Objects = [];
     XPos = 16373.422;
     YPos = 100.690;
@@ -1509,7 +1509,7 @@ Group
     Index = 98;
     Name = "Trigger Activate";
     Desc = "";
-    Targets = [92];
+    Targets = [91];
     Objects = [];
     XPos = 16372.182;
     YPos = 100.669;
@@ -1522,7 +1522,7 @@ Group
 
   MCU_Timer
   {
-    Index = 91;
+    Index = 92;
     Name = "start attack delay";
     Desc = "";
     Targets = [93];
@@ -1784,8 +1784,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 145;
-        TarId = 144;
+        CmdId = 144;
+        TarId = 145;
       }
     }
   }
@@ -1793,7 +1793,7 @@ Group
 
   MCU_Spawner
   {
-    Index = 145;
+    Index = 144;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
@@ -1881,7 +1881,7 @@ Group
 
   MCU_Timer
   {
-    Index = 144;
+    Index = 145;
     Name = "Spawned";
     Desc = "";
     Targets = [156,147,157];
@@ -2060,7 +2060,7 @@ Group
     Index = 154;
     Name = "1s";
     Desc = "";
-    Targets = [145];
+    Targets = [144];
     Objects = [];
     XPos = 17585.954;
     YPos = 100.827;
@@ -2611,8 +2611,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 210;
-        TarId = 209;
+        CmdId = 209;
+        TarId = 210;
       }
     }
   }
@@ -2769,7 +2769,7 @@ Group
 
   MCU_Spawner
   {
-    Index = 210;
+    Index = 209;
     Name = "";
     Desc = "";
     Targets = [];
@@ -2786,7 +2786,7 @@ Group
 
   MCU_Timer
   {
-    Index = 209;
+    Index = 210;
     Name = "Spawned";
     Desc = "";
     Targets = [211,226,227,228,229];
@@ -2946,7 +2946,7 @@ Group
     Index = 233;
     Name = "1s";
     Desc = "";
-    Targets = [210];
+    Targets = [209];
     Objects = [];
     XPos = 29821.767;
     YPos = 181.758;
@@ -3311,8 +3311,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 270;
-        TarId = 269;
+        CmdId = 269;
+        TarId = 270;
       }
     }
   }
@@ -3320,7 +3320,7 @@ Group
 
   MCU_Spawner
   {
-    Index = 270;
+    Index = 269;
     Name = "SpawnPlane";
     Desc = "";
     Targets = [];
@@ -3337,7 +3337,7 @@ Group
 
   MCU_Timer
   {
-    Index = 269;
+    Index = 270;
     Name = "Spawned";
     Desc = "";
     Targets = [273];
@@ -3358,7 +3358,7 @@ Group
     Index = 268;
     Name = "Killed";
     Desc = "";
-    Targets = [275,276];
+    Targets = [275,276,841];
     Objects = [];
     XPos = 36153.213;
     YPos = 177.286;
@@ -3466,7 +3466,7 @@ Group
     Index = 284;
     Name = "WakeUp";
     Desc = "";
-    Targets = [282,285];
+    Targets = [282,285,843];
     Objects = [];
     XPos = 36426.899;
     YPos = 25.837;
@@ -3484,7 +3484,7 @@ Group
     Index = 286;
     Name = "Sleep";
     Desc = "";
-    Targets = [277,287];
+    Targets = [277,287,841];
     Objects = [];
     XPos = 36701.153;
     YPos = 24.016;
@@ -3568,7 +3568,7 @@ Group
     Index = 282;
     Name = "IsAlive";
     Desc = "";
-    Targets = [270];
+    Targets = [269];
     Objects = [];
     XPos = 36470.272;
     YPos = 29.727;
@@ -3648,6 +3648,56 @@ Group
     AILevel = 2;
     Country = 101;
     FloatParam = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 841;
+    Name = "Completed";
+    Desc = "";
+    Targets = [842];
+    Objects = [];
+    XPos = 36219.991;
+    YPos = 26.711;
+    ZPos = 37110.739;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 842;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [841];
+    Objects = [];
+    XPos = 36153.222;
+    YPos = 23.280;
+    ZPos = 37111.666;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 843;
+    Name = "Trigger Activate";
+    Desc = "";
+    Targets = [841];
+    Objects = [];
+    XPos = 36308.088;
+    YPos = 25.558;
+    ZPos = 37040.261;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
   }
   
 
@@ -5465,8 +5515,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 424;
-        TarId = 423;
+        CmdId = 423;
+        TarId = 424;
       }
     }
   }
@@ -5493,7 +5543,7 @@ Group
 
   MCU_Spawner
   {
-    Index = 424;
+    Index = 423;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
@@ -5510,7 +5560,7 @@ Group
 
   MCU_Timer
   {
-    Index = 423;
+    Index = 424;
     Name = "Spawned";
     Desc = "";
     Targets = [425];
@@ -5549,7 +5599,7 @@ Group
     Index = 430;
     Name = "1min";
     Desc = "";
-    Targets = [424];
+    Targets = [423];
     Objects = [];
     XPos = 14168.230;
     YPos = 85.454;
@@ -5567,7 +5617,7 @@ Group
     Index = 432;
     Name = "Start";
     Desc = "";
-    Targets = [424];
+    Targets = [423];
     Objects = [];
     XPos = 14581.119;
     YPos = 90.378;
@@ -5693,8 +5743,8 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 442;
-        TarId = 441;
+        CmdId = 441;
+        TarId = 442;
       }
     }
   }
@@ -5702,7 +5752,7 @@ Group
 
   MCU_Spawner
   {
-    Index = 442;
+    Index = 441;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
@@ -5719,7 +5769,7 @@ Group
 
   MCU_Timer
   {
-    Index = 441;
+    Index = 442;
     Name = "Spawned";
     Desc = "";
     Targets = [445];
@@ -5758,7 +5808,7 @@ Group
     Index = 447;
     Name = "20min";
     Desc = "";
-    Targets = [442];
+    Targets = [441];
     Objects = [];
     XPos = 14150.662;
     YPos = 85.454;
@@ -5776,7 +5826,7 @@ Group
     Index = 449;
     Name = "Start";
     Desc = "";
-    Targets = [442];
+    Targets = [441];
     Objects = [];
     XPos = 14563.551;
     YPos = 90.378;
@@ -5907,14 +5957,14 @@ Group
       OnReport
       {
         Type = 0;
-        CmdId = 458;
-        TarId = 457;
+        CmdId = 457;
+        TarId = 458;
       }
       OnReport
       {
         Type = 4;
-        CmdId = 460;
-        TarId = 459;
+        CmdId = 459;
+        TarId = 460;
       }
     }
   }
@@ -5922,7 +5972,7 @@ Group
 
   MCU_Spawner
   {
-    Index = 458;
+    Index = 457;
     Name = "Trigger Spawner";
     Desc = "";
     Targets = [];
@@ -5957,7 +6007,7 @@ Group
 
   MCU_Timer
   {
-    Index = 457;
+    Index = 458;
     Name = "Spawned";
     Desc = "";
     Targets = [465,466,467,468];
@@ -5978,7 +6028,7 @@ Group
     Index = 468;
     Name = "Destination";
     Desc = "";
-    Targets = [460];
+    Targets = [459];
     Objects = [454];
     XPos = 17749.661;
     YPos = 2500.000;
@@ -5994,7 +6044,7 @@ Group
 
   MCU_CMD_Land
   {
-    Index = 460;
+    Index = 459;
     Name = "Land";
     Desc = "";
     Targets = [];
@@ -6029,7 +6079,7 @@ Group
 
   MCU_Timer
   {
-    Index = 459;
+    Index = 460;
     Name = "JustLanded";
     Desc = "";
     Targets = [472,475];
@@ -6084,7 +6134,7 @@ Group
     Index = 472;
     Name = "Trigger Deactivate";
     Desc = "";
-    Targets = [456,459];
+    Targets = [456,460];
     Objects = [];
     XPos = 14988.382;
     YPos = 118.420;
@@ -6118,7 +6168,7 @@ Group
     Index = 466;
     Name = "Trigger Activate";
     Desc = "";
-    Targets = [456,459];
+    Targets = [456,460];
     Objects = [];
     XPos = 14991.505;
     YPos = 118.420;
@@ -6408,7 +6458,7 @@ Group
     Index = 463;
     Name = "Trigger Timer";
     Desc = "";
-    Targets = [458];
+    Targets = [457];
     Objects = [];
     XPos = 14997.219;
     YPos = 118.420;

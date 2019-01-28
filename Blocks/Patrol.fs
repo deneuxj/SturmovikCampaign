@@ -15,6 +15,7 @@ type Patrol = {
     Plane : Mcu.HasEntity
     Spawned : Mcu.McuTrigger
     Killed : Mcu.McuTrigger
+    Completed : Mcu.McuTrigger
     WhileEnemyClose : WhileEnemyClose
     All : McuUtil.IMcuGroup
 }
@@ -33,6 +34,7 @@ with
         let spawned = getTriggerByName group T.Blocks.Spawned
         let setGerman = getTriggerByName group T.Blocks.SetGerman
         let setRussian = getTriggerByName group T.Blocks.SetRussian
+        let completed = getTriggerByName group T.Blocks.Completed
         // Connection with wec
         let wakeup = getTriggerByName group T.Blocks.WakeUp
         let sleep = getTriggerByName group T.Blocks.Sleep
@@ -58,6 +60,7 @@ with
           Killed = killed
           Spawned = spawned
           WhileEnemyClose = wec
+          Completed = completed
           All =
             { new McuUtil.IMcuGroup with
                   member x.Content = group
