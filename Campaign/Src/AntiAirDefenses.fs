@@ -59,18 +59,29 @@ let mkAADefenses (includeSearchLights, world : World, state : WorldState) =
                         | Some Axis -> Mcu.CountryValue.Germany, Mcu.CoalitionValue.Axis
                         | Some Allies -> Mcu.CountryValue.Russia, Mcu.CoalitionValue.Allies
                     // Defense areas close to airfield spawns are made stronger
-                    let isHighPrio =
+                    let isCloseToRearAirfield =
                         state.RearAirfield(owner.Value)
                         |> wg.GetAirfield
                         |> fun af ->
                             af.Spawn
                             |> Seq.exists (fun spawn -> (Vector2.FromPos(spawn) - area.Position.Pos).Length() < 2500.0f)
+                    let isCloseToAirfield =
+                        world.Airfields
+                        |> Seq.collect (fun af -> af.Spawn)
+                        |> Seq.exists (fun spawn -> (Vector2.FromPos(spawn) - area.Position.Pos).Length() < 2500.0f)
+                    let isOnFront =
+                        wg.GetRegion(area.Home).Neighbours
+                        |> Seq.exists (fun ngh -> sg.GetRegion(ngh).Owner = Some owner.Value.Other)
+                    let priority =
+                        (if isCloseToRearAirfield then 2.0f else 0.0f) +
+                        (if isCloseToAirfield then 1.0f else 0.0f) +
+                        (if isOnFront then 1.0f else 0.0f)
                     let nest =
-                        { Priority = if isHighPrio then 10.0f else 1.0f
+                        { Priority = priority
                           Number = numUnits
                           Boundary = area.Boundary
                           Rotation = area.Position.Rotation
-                          Settings = if isHighPrio then CanonGenerationSettings.Strong else CanonGenerationSettings.Default
+                          Settings = if isCloseToRearAirfield then CanonGenerationSettings.Strong else CanonGenerationSettings.Default
                           Specialty = area.Role
                           IncludeSearchLights = includeSearchLights
                           IncludeFlak = not world.IsWWI
