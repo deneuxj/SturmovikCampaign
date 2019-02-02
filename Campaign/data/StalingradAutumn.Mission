@@ -75942,31 +75942,6 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3829;
-    Name = "Artillery field";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 146352.739;
-    YPos = 51.029;
-    ZPos = 254274.287;
-    XOri = 0.00;
-    YOri = 40.97;
-    ZOri = 0.00;
-    Enabled = 1;
-    Country = 0;
-    Boundary
-    {
-      145995, 249485;
-      151056, 253881;
-      146655, 258906;
-      141640, 254513;
-    }
-  }
-  
-
-  MCU_TR_InfluenceArea
-  {
     Index = 3830;
     Name = "Artillery field";
     Desc = "";
@@ -76047,9 +76022,9 @@ Group
     Desc = "";
     Targets = [];
     Objects = [];
-    XPos = 121248.089;
+    XPos = 121333.719;
     YPos = 51.029;
-    ZPos = 238271.822;
+    ZPos = 238443.081;
     XOri = 0.00;
     YOri = 329.20;
     ZOri = 0.00;
@@ -76057,10 +76032,10 @@ Group
     Country = 0;
     Boundary
     {
-      116587, 237114;
-      122345, 233681;
-      125742, 239433;
-      120002, 242823;
+      116673, 237285;
+      122431, 233852;
+      125828, 239604;
+      120088, 242994;
     }
   }
   
@@ -76086,6 +76061,31 @@ Group
       121562, 257825;
       115651, 260935;
       112547, 255036;
+    }
+  }
+  
+
+  MCU_TR_InfluenceArea
+  {
+    Index = 3835;
+    Name = "Artillery field";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 153611.434;
+    YPos = 51.029;
+    ZPos = 250170.657;
+    XOri = 0.00;
+    YOri = 264.89;
+    ZOri = 0.00;
+    Enabled = 1;
+    Country = 0;
+    Boundary
+    {
+      150547, 253869;
+      149950, 247192;
+      156606, 246625;
+      157171, 253267;
     }
   }
   
