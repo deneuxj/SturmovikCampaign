@@ -113,31 +113,31 @@
       durability: 10000
     - pattern: "arf_hangars_1"
       sub_blocks: "[0..1]"
-      storage: 1200.0
+      storage: 50.0
       durability: 25000
     - pattern: "arf_hangars_2"
       sub_blocks: "[0..1]"
-      storage: 1200.0
+      storage: 50.0
       durability: 25000
     - pattern: "arf_hangars_3"
       sub_blocks: "[0]"
-      storage: 600.0
+      storage: 25.0
       durability: 25000
     - pattern: "arf_hangararc"
       sub_blocks: "[1]"
-      storage: 1000.0
+      storage: 50.0
       durability: 50000
     - pattern: "arf_hangarbox"
       sub_blocks: "[1]"
-      storage: 1000.0
+      storage: 50.0
       durability: 50000
     - pattern: "arf_gsm_1"
       sub_blocks: "[2..4]"
-      storage: 100.0
+      storage: 10.0
       durability: 5000
     - pattern: "arf_gsm_2"
       sub_blocks: "[1; 2]"
-      storage: 75.0
+      storage: 5.0
       durability: 5000
     - pattern: "port_up_group_cargo_190x15"
       sub_blocks: "[0..15]"
