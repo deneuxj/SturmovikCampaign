@@ -784,10 +784,11 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
                 let maxPlanes =
                     if airfield.AirfieldId = rearAirfield owner then
                         config.RearAirfieldPlanes
+                        |> float32
                     else
                         airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
-                        |> (*) 3
-                    |> float32
+                        |> float32
+                        |> (*) config.NumPlanesFactor
                 let planeTypeShares = PlaneModel.PlaneTypeShares(owner)
                 let numFighters = maxPlanes * planeTypeShares.[PlaneType.Fighter] |> scale |> round
                 let numAttackers = maxPlanes * planeTypeShares.[PlaneType.Attacker] |> scale |> round

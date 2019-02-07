@@ -111,6 +111,8 @@
     DesiredProduction: 150.0
     # Initial number of planes at rear airfield
     RearAirfieldPlanes: 750
+    # Factor for initial number of planes at non-rear airfields
+    NumPlanesFactor: 1.0
     # Fixed part of the mission briefing
     Briefing: |
         This mission is part of a dynamic campaign where the events from one mission affect the following missions.
