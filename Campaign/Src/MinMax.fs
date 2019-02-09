@@ -339,6 +339,7 @@ with
 
 let allMoves (neighboursOf : ColumnTransportType * int -> int[]) (state : BoardState) (coalition : CoalitionId) =
     let someCoalition = Some coalition
+    let maxForce = 30.0f * MediumTank.Cost
     let tankForceThreshold = 10.0f * MediumTank.Cost
     let defensiveForceThreshold = 5.0f * MediumTank.Cost
     let aggressiveTransport = ColumnTransportType.All |> List.filter ((<>) ColByTrain)
@@ -368,7 +369,14 @@ let allMoves (neighboursOf : ColumnTransportType * int -> int[]) (state : BoardS
                             if moveableForce > 1.25f * opposing && opposing > defensiveForceThreshold then
                                 yield { Start = i; Destination = j; Force = 1.25f * opposing; Transport = transport }
                         if not aggressive && state.Owners.[j] = someCoalition then
-                            yield { Start = i; Destination = j; Force = moveableForce; Transport = transport }
+                            let destForce =
+                                match coalition with
+                                | Axis -> state.AxisForces.[j]
+                                | Allies -> state.AlliesForces.[j]
+                            let moveableForce =
+                                min moveableForce (maxForce - destForce)
+                            if moveableForce > 0.0f<E> then
+                                yield { Start = i; Destination = j; Force = moveableForce; Transport = transport }
         ]
     let doAggressiveMoves = true // state.Score.AttackingSide = coalition
     [

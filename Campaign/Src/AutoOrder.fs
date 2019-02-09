@@ -454,6 +454,7 @@ let decideColumnMovements (world : World) (state : WorldState) thinkTime =
 
 /// Move tanks from a rear region (where they typically are in excess) closer to the front line (where they typically are in need)
 let allTankReinforcements (world : World) (state : WorldState) (coalition : CoalitionId) =
+    let maxVehiclesInRegion = 30
     let vehicleMinValue = GroundAttackVehicle.HeavyTank.Cost * 5.0f
     let sg = state.FastAccess
     let distanceToEnemy = computeDistance false (fun world -> world.Roads @ world.Rails @ world.SeaWays) (fun region -> sg.GetRegion(region).Owner) (fun region -> sg.GetRegion(region).Owner = Some coalition.Other) world
@@ -470,15 +471,22 @@ let allTankReinforcements (world : World) (state : WorldState) (coalition : Coal
                                 let hasPath = hasPath (region.RegionId, ngh)
                                 for medium in ColumnTransportType.All do
                                     if hasPath (world.PathsFor medium) then
-                                        let maxVehicleNumber = medium.MaxNumVehicles
-                                        let composition = selectLimitedNumberOfVehicles regState maxVehicleNumber
-                                        yield {
-                                            OrderId = { Index = -1; Coalition = coalition }
-                                            Start = region.RegionId
-                                            Destination = ngh
-                                            Composition = composition
-                                            TransportType = medium
-                                        }
+                                        let numDestVehicles =
+                                            nghState.NumVehicles
+                                            |> Map.toSeq
+                                            |> Seq.sumBy snd
+                                        let maxVehicleNumber =
+                                            medium.MaxNumVehicles
+                                            |> min (maxVehiclesInRegion - numDestVehicles)
+                                        if maxVehicleNumber > 0 then
+                                            let composition = selectLimitedNumberOfVehicles regState maxVehicleNumber
+                                            yield {
+                                                OrderId = { Index = -1; Coalition = coalition }
+                                                Start = region.RegionId
+                                                Destination = ngh
+                                                Composition = composition
+                                                TransportType = medium
+                                            }
                         | None ->
                             ()
                 | None ->
