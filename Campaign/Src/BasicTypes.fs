@@ -227,6 +227,13 @@ with
         |> Option.defaultValue 0.0f<E>
 
     member this.Durability(subBlocksSpecs) =
+        // Reduce durability after changes in version 3.010 of the game
+        let adjustDurability x =
+            let low = min 10000.0f x
+            let med = min 15000.0f (x - 10000.0f) |> max 0.0f
+            let high = min 10000.0f (x - 25000.0f) |> max 0.0f
+            low + 0.5f * med + 0.1f * high
+
         subBlocksSpecs
         |> List.tryPick (fun spec ->
             if this.Model.Contains(spec.Pattern) then
@@ -234,6 +241,9 @@ with
             else
                 None)
         |> Option.defaultValue defaultDurability
+        |> float32
+        |> adjustDurability
+        |> int
 
     member this.PlaneParkingPositions =
         match this.Model with
