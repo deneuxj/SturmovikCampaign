@@ -670,33 +670,36 @@ type CampaignData(config : Configuration, support : SupportApis) =
         )
 
     // Get orders and mission results by date
-    let tryGetMissionResults(date : DateTime) =
-        try
-            let dateString =
-                date.ToString(Run.Filenames.dateFormat)
-            let resultFilename = Path.Combine(dataDir, sprintf "results_%s.xml" dateString)
-            let axisOrdersFilename = Path.Combine(dataDir, sprintf "axisOrders_%s.xml" dateString)
-            let alliesOrdersFilename = Path.Combine(dataDir, sprintf "alliesOrders_%s.xml" dateString)
-            let results = serializer.Deserialize<MissionResults>(File.OpenText(resultFilename))
-            let axisOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(axisOrdersFilename))
-            let alliesOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(alliesOrdersFilename))
-            let data =
-                [("AxisOrders", axisOrders :> obj)
-                 ("AlliesOrders", upcast alliesOrders)
-                 ("Shipments", upcast results.Shipments)
-                 ("ColumnDepartures", upcast results.ColumnDepartures)
-                 ("Blocked", upcast results.Blocked)
-                 ("Damages", upcast results.Damages)
-                 ("TakeOffs", upcast results.TakeOffs)
-                 ("Landings", upcast results.Landings)
-                 ("BattleKills", upcast results.BattleKills)
-                 ("FerryPlanes", upcast results.FerryPlanes)
-                 ("ParaDrops", upcast results.ParaDrops)]
-                |> Map.ofList
-                |> JsonConvert.SerializeObject
-            Ok data
-        with
-        | _ -> Error "Failed to retrieve mission results"
+    let tryGetMissionResults =
+        let cache = new System.Collections.Generic.Dictionary<_, _>()
+        let tryGetMissionResults(date : DateTime) =
+            try
+                let dateString =
+                    date.ToString(Run.Filenames.dateFormat)
+                let resultFilename = Path.Combine(dataDir, sprintf "results_%s.xml" dateString)
+                let axisOrdersFilename = Path.Combine(dataDir, sprintf "axisOrders_%s.xml" dateString)
+                let alliesOrdersFilename = Path.Combine(dataDir, sprintf "alliesOrders_%s.xml" dateString)
+                let results = serializer.Deserialize<MissionResults>(File.OpenText(resultFilename))
+                let axisOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(axisOrdersFilename))
+                let alliesOrders = serializer.Deserialize<Orders.OrderPackage>(File.OpenText(alliesOrdersFilename))
+                let data =
+                    [("AxisOrders", axisOrders :> obj)
+                     ("AlliesOrders", upcast alliesOrders)
+                     ("Shipments", upcast results.Shipments)
+                     ("ColumnDepartures", upcast results.ColumnDepartures)
+                     ("Blocked", upcast results.Blocked)
+                     ("Damages", upcast results.Damages)
+                     ("TakeOffs", upcast results.TakeOffs)
+                     ("Landings", upcast results.Landings)
+                     ("BattleKills", upcast results.BattleKills)
+                     ("FerryPlanes", upcast results.FerryPlanes)
+                     ("ParaDrops", upcast results.ParaDrops)]
+                    |> Map.ofList
+                    |> JsonConvert.SerializeObject
+                Ok data
+            with
+            | _ -> Error "Failed to retrieve mission results"
+        SturmovikMission.DataProvider.Cached.cached cache tryGetMissionResults
 
     let extractRegion (region : RegionState) =
         [ "Owner", region.Owner |> Option.map string |> Option.defaultValue "None" :> obj
@@ -708,20 +711,23 @@ type CampaignData(config : Configuration, support : SupportApis) =
         ]
         |> Map.ofList
 
-    let tryGetState(date : DateTime) =
-        try
-            let dateString =
-                date.ToString(Run.Filenames.dateFormat)
-            let stateFilename = Path.Combine(dataDir, sprintf "state_%s.xml" dateString)
-            let state = serializer.Deserialize<WorldState>(File.OpenText(stateFilename))
-            let data =
-                [("Regions", state.Regions |> List.map extractRegion :> obj)
-                ]
-                |> Map.ofList
-                |> JsonConvert.SerializeObject
-            Ok data
-        with
-        | _ -> Error "Failed to retrieve campaign state"
+    let tryGetState =
+        let cache = new System.Collections.Generic.Dictionary<_, _>()
+        let tryGetState(date : DateTime) =
+            try
+                let dateString =
+                    date.ToString(Run.Filenames.dateFormat)
+                let stateFilename = Path.Combine(dataDir, sprintf "state_%s.xml" dateString)
+                let state = serializer.Deserialize<WorldState>(File.OpenText(stateFilename))
+                let data =
+                    [("Regions", state.Regions |> List.map extractRegion :> obj)
+                    ]
+                    |> Map.ofList
+                    |> JsonConvert.SerializeObject
+                Ok data
+            with
+            | _ -> Error "Failed to retrieve campaign state"
+        SturmovikMission.DataProvider.Cached.cached cache tryGetState
 
     member this.GetMissionDates() = missionDates.Value
 
@@ -999,7 +1005,7 @@ type Plugin() =
           AnnounceOrders = announceOrders
           AnnounceCampaignOver = onCampaignOver
           UpdateMap = updateMap cnf
-          StartCommenter = fun() -> x.StartCommenter(cnf)
+          StartCommenter = fun() -> x.StartCommenter(cnf); x.SetCampaignData(cnf)
           StopCommenter = fun() -> x.StopCommenter() 
           StartBackground = fun() -> x.StartWebHookClient(cnf)
           StopBackground = fun() ->  x.StopWebHookClient()
