@@ -658,11 +658,12 @@ with
             |> List.ofSeq
         let map = data.ListOfOptions.Head.GetGuiMap().Value
         let storageGroup = data.GetGroup("Storage")
+        let staticGroup = data.GetGroup("Static")
         let regions =
             let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
             let ammoStorages = List.concat [ data.GetGroup("Ammo").ListOfBlock; storageGroup.ListOfBlock ]
             let factories =
-                [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Factories").ListOfBlock; data.GetGroup("Static").ListOfBlock ]
+                [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Factories").ListOfBlock; staticGroup.ListOfBlock ]
                 |> List.concat
             let parkings =
                 data.GetGroup("Tank parks").ListOfBlock
