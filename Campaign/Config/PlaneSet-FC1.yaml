@@ -42,7 +42,11 @@ PlaneSet:
           Static: 1
         - Model: Pfalz D.IIIa
           Static: 4
+        - Model: Fokker D.7
+          Static: 8
         - Model: Sopwith Camel
           Static: 1
         - Model: Spad 13.C1
           Static: 3
+        - Model: Sopwith Dolphin
+          Static: 7

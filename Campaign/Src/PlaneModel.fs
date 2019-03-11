@@ -68,9 +68,11 @@ let private xTimes offsets xs =
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
+    | FokkerD7
     | FokkerDr1
     | Pfalzd3a
     | SopCamel
+    | SopDolphin
     | Spad13
     | Bf109e7
     | Bf109f2
@@ -115,9 +117,11 @@ type PlaneModel =
 with
     member this.ScriptModel =
         match this with
+        | FokkerD7 -> Vehicles.vehicles.fokkerd7
         | FokkerDr1 -> Vehicles.vehicles.fokkerdr1
         | Pfalzd3a -> Vehicles.vehicles.pfalzd3a
         | SopCamel -> Vehicles.vehicles.sopcamel
+        | SopDolphin -> Vehicles.vehicles.sopdolphin
         | Spad13 -> Vehicles.vehicles.spad13
         | Bf109e7 -> Vehicles.vehicles.GermanFighter1
         | Bf109f2 -> Vehicles.vehicles.GermanFighter2
@@ -162,9 +166,11 @@ with
 
     member this.Cost =
         match this with
+        | FokkerD7
         | FokkerDr1
         | Pfalzd3a
         | SopCamel
+        | SopDolphin
         | Spad13 -> 0.25f * basePlaneCost
         | Bf109e7 -> basePlaneCost
         | Bf109f4
@@ -213,9 +219,11 @@ with
     member this.AttackPayload =
         let modmask, payload =
             match this with
+            | FokkerD7 -> 1, 1
             | FokkerDr1 -> 1, 1
             | Pfalzd3a -> 1, 1
             | SopCamel -> 1, 2 // 20lb-4
+            | SopDolphin -> 65, 2 // 20lb-4
             | Spad13 -> 33, 3 // 20lb-2
             | Bf109e7 -> 5, 2
             | Bf109f2 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6-> 17, 2 // SC250-1
@@ -295,9 +303,11 @@ with
 
     member this.Coalition =
         match this with
+        | FokkerD7
         | FokkerDr1
         | Pfalzd3a -> Axis
         | SopCamel
+        | SopDolphin
         | Spad13 -> Allies
         | Bf109e7
         | Bf109f2
@@ -342,9 +352,11 @@ with
 
     member this.PlaneType =
         match this with
+        | FokkerD7
         | FokkerDr1
         | Pfalzd3a
         | SopCamel
+        | SopDolphin
         | Spad13 -> Fighter
         | Bf109e7 
         | Bf109f2
@@ -389,9 +401,11 @@ with
 
     member this.PlaneName =
         match this with
+        | FokkerD7 -> "Fokker D.7"
         | FokkerDr1 -> "Fokker Dr.I"
         | Pfalzd3a -> "Pfalz D.IIIa"
         | SopCamel -> "Sopwith Camel"
+        | SopDolphin -> "Sopwith Dolphin"
         | Spad13 -> "Spad 13.C1"
         | Bf109e7 -> "bf109e7"
         | Bf109f2 -> "bf109f2"
@@ -439,10 +453,12 @@ with
     /// </summary>
     member this.MissionLogName =
         match this with
+        | FokkerD7 -> "fokker d.vii"
         | FokkerDr1 -> "fokker dr.i"
         | Pfalzd3a -> "pfalz d.iiia"
         | Spad13 -> "spad 13.c1"
         | SopCamel -> "sopwith camel"
+        | SopDolphin -> "sopwith dolphin"
         | Bf109e7 -> "bf 109 e-7"
         | Bf109f2 -> "bf 109 f-2"
         | Bf109f4 -> "bf 109 f-4"
@@ -486,9 +502,11 @@ with
 
     member this.BombLoads =
         match this with
+        | FokkerD7 -> []
         | FokkerDr1 -> []
         | Pfalzd3a -> []
         | SopCamel -> [(2, 36.0f<K>); (3, 18.0f<K>)]
+        | SopDolphin -> [(2, 36.0f<K>); (3, 18.0f<K>)]
         | Spad13 -> [(3, 18.0f<K>); (4, 9.0f<K>)]
         | Bf109e7 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
         | Bf109f2 -> xTimes [1; 4] [(0, 200.0f<K>); (1, 250.0f<K>)]
@@ -585,9 +603,11 @@ with
 
     member this.EmptyPayload =
         match this with
+        | FokkerD7 -> 2
         | FokkerDr1 -> 2
         | Pfalzd3a -> 2
         | SopCamel -> 4
+        | SopDolphin -> 13
         | Spad13 -> 7
         | Lagg3s29 -> 49
         | Yak1s69 -> 11
@@ -632,9 +652,11 @@ with
 
     member this.Roles =
         match this with
+        | FokkerD7
         | FokkerDr1
         | Pfalzd3a -> [ Patroller ]
         | SopCamel
+        | SopDolphin
         | Spad13 -> [ GroundAttacker; Patroller ]
         | Bf109e7 -> [ GroundAttacker; Patroller ]
         | Bf109f2
@@ -719,9 +741,11 @@ with
           He111h16
           Hs129b2
           U2
+          FokkerD7
           FokkerDr1
           Pfalzd3a
           SopCamel
+          SopDolphin
           Spad13
         ]
 
