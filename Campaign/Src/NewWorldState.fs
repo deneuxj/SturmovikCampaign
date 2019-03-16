@@ -1327,10 +1327,11 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
         )
     { state with Regions = regions }
 
-/// Reset the exposed vehicles in each region.
-/// Up to the max size of a road column vehicles can remain unexposed.
+/// Reset the exposed vehicles in each region, depending on the number of vehicles in that region.
+/// Up to a fixed maximum number can remain unexposed, the rest will be exposed, and can be destroyed.
 let resetExposedVehicles (state : WorldState) =
-    let convoySize = ColByRoad.MaxNumVehicles
+//    let maxHidden = ColByRoad.MaxNumVehicles
+    let maxHidden = 0
     { state with
         Regions =
             state.Regions
@@ -1340,10 +1341,10 @@ let resetExposedVehicles (state : WorldState) =
                     |> expandMap
                     |> Array.shuffle (System.Random())
                     |> fun arr ->
-                        if Array.length arr <= convoySize then
+                        if Array.length arr <= maxHidden then
                             arr
                         else
-                            Array.skip convoySize arr
+                            Array.skip maxHidden arr
                     |> compactSeq
                 { regState with NumExposedVehicles = exposed })
     }
