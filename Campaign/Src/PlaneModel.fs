@@ -69,6 +69,7 @@ let private xTimes offsets xs =
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
     | FokkerD7
+    | FokkerD7f
     | FokkerDr1
     | Pfalzd3a
     | SopCamel
@@ -85,6 +86,7 @@ type PlaneModel =
     | Fw190a3
     | Fw190a5
     | Fw190a8
+    | Fw190d9
     | Mc202
     | Bf110e
     | Bf110g
@@ -118,6 +120,7 @@ with
     member this.ScriptModel =
         match this with
         | FokkerD7 -> Vehicles.vehicles.fokkerd7
+        | FokkerD7f -> Vehicles.vehicles.fokkerd7f
         | FokkerDr1 -> Vehicles.vehicles.fokkerdr1
         | Pfalzd3a -> Vehicles.vehicles.pfalzd3a
         | SopCamel -> Vehicles.vehicles.sopcamel
@@ -131,6 +134,7 @@ with
         | Fw190a3 -> Vehicles.vehicles.GermanFighter6
         | Fw190a5 -> Vehicles.vehicles.GermanFighter7
         | Fw190a8 -> Vehicles.vehicles.fw190a8
+        | Fw190d9 -> Vehicles.vehicles.fw190d9
         | Bf109g4 -> Vehicles.vehicles.GermanFighter8
         | Bf109g6 -> Vehicles.vehicles.GermanFighter9
         | Bf109g14 -> Vehicles.vehicles.bf109g14
@@ -167,6 +171,7 @@ with
     member this.Cost =
         match this with
         | FokkerD7
+        | FokkerD7f
         | FokkerDr1
         | Pfalzd3a
         | SopCamel
@@ -180,7 +185,7 @@ with
         | Fw190a3
         | Fw190a5
         | Bf109f2 -> (5.0f / 3.0f) * basePlaneCost
-        | Bf109g14 | Bf109k4 | Fw190a8 -> 2.0f * basePlaneCost
+        | Bf109g14 | Bf109k4 | Fw190a8 | Fw190d9 -> 2.0f * basePlaneCost
         | Mc202 -> 1.33f * basePlaneCost
         | Ju87 -> 2.0f * basePlaneCost
         | Hs129b2
@@ -220,6 +225,7 @@ with
         let modmask, payload =
             match this with
             | FokkerD7 -> 1, 1
+            | FokkerD7f -> 1, 1
             | FokkerDr1 -> 1, 1
             | Pfalzd3a -> 1, 1
             | SopCamel -> 1, 2 // 20lb-4
@@ -232,6 +238,7 @@ with
             | Fw190a3 -> 9, 3 // SC500-1
             | Fw190a8 -> 101, 43 // SC250-3
             | Fw190a5 -> 73, 9 // "0,1-MG17-AP-1800 + 2,3-MG15120-APHE-500 + SC500-1 + SC50-4"
+            | Fw190d9 -> 9, 3 // SC500-1
             | I16 -> 9, 2 // "0,1-SHKAS-AP-1000 + 2,3-SHKAS-AP-1800 + FAB100M-2"
             | La5 -> 37, 5 // "0,1-SHVAK-AP-340 + FAB100M-2"
             | Lagg3s29 -> 17, 14 // "0-UB-APHE-200 + 1-SHVAK-APHE-160 + FAB100M-2"
@@ -304,6 +311,7 @@ with
     member this.Coalition =
         match this with
         | FokkerD7
+        | FokkerD7f
         | FokkerDr1
         | Pfalzd3a -> Axis
         | SopCamel
@@ -320,6 +328,7 @@ with
         | Fw190a3
         | Fw190a5
         | Fw190a8
+        | Fw190d9
         | Mc202
         | Bf110e
         | Bf110g
@@ -353,6 +362,7 @@ with
     member this.PlaneType =
         match this with
         | FokkerD7
+        | FokkerD7f
         | FokkerDr1
         | Pfalzd3a
         | SopCamel
@@ -369,6 +379,7 @@ with
         | Fw190a3
         | Fw190a5
         | Fw190a8
+        | Fw190d9
         | Mc202
         | I16
         | P40
@@ -402,6 +413,7 @@ with
     member this.PlaneName =
         match this with
         | FokkerD7 -> "Fokker D.7"
+        | FokkerD7f -> "Fokker D.7F"
         | FokkerDr1 -> "Fokker Dr.I"
         | Pfalzd3a -> "Pfalz D.IIIa"
         | SopCamel -> "Sopwith Camel"
@@ -418,6 +430,7 @@ with
         | Fw190a3 -> "fw190a3"
         | Fw190a5 -> "fw190a5"
         | Fw190a8 -> "fw190a8"
+        | Fw190d9 -> "fw190d9"
         | Mc202 -> "mc202"
         | Bf110e -> "bf110e"
         | Bf110g -> "bf110g"
@@ -454,6 +467,7 @@ with
     member this.MissionLogName =
         match this with
         | FokkerD7 -> "fokker d.vii"
+        | FokkerD7f -> "fokker d.viif"
         | FokkerDr1 -> "fokker dr.i"
         | Pfalzd3a -> "pfalz d.iiia"
         | Spad13 -> "spad 13.c1"
@@ -470,6 +484,7 @@ with
         | Fw190a3 -> "fw 190 a-3"
         | Fw190a5 -> "fw 190 a-5"
         | Fw190a8 -> "fw 190 a-8"
+        | Fw190d9 -> "fw 190 d-9"
         | Mc202 -> "mc.202"
         | Bf110e -> "bf 110 e"
         | Bf110g -> "bf 110 g"
@@ -503,6 +518,7 @@ with
     member this.BombLoads =
         match this with
         | FokkerD7 -> []
+        | FokkerD7f -> []
         | FokkerDr1 -> []
         | Pfalzd3a -> []
         | SopCamel -> [(2, 36.0f<K>); (3, 18.0f<K>)]
@@ -516,6 +532,7 @@ with
         | Mc202 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | Fw190a3 -> [(1, 200.0f<K>); (2, 250.0f<K>); (3, 500.0f<K>)]
         | Fw190a5 -> [(1, 200.0f<K>); (2, 250.0f<K>); (3, 500.0f<K>); (6, 200.0f<K>); (7, 400.0f<K>); (8, 450.0f<K>); (9, 700.0f<K>)]
+        | Fw190d9 -> [(1, 180.0f<K>); (2, 250.0f<K>); (3, 500.0f<K>)]
         | Bf110e -> [(1, 500.0f<K>); (2, 700.0f<K>); (3, 600.0f<K>); (4, 1000.0f<K>); (5, 1200.0f<K>); (6, 1000.0f<K>); (7, 1250.0f<K>); (8, 1200.0f<K>)]
         | Bf110g -> [(1, 500.0f<K>); (2, 700.0f<K>); (3, 600.0f<K>); (4, 1000.0f<K>); (5, 1200.0f<K>); (6, 1000.0f<K>); (7, 1250.0f<K>); (8, 1200.0f<K>); (12, 200.0f<K>); (14, 200.0f<K>)]
         | Ju87 -> [(1, 530.0f<K>); (2, 500.0f<K>); (3, 780.0f<K>); (4, 1000.0f<K>); (5, 750.0f<K>); (6, 1000.0f<K>); (7, 1800.0f<K>)]
@@ -572,6 +589,7 @@ with
         let wgr42 = 11.2f<E>
         let rp3 = 4.3f<E>
         let m8 = 11.6f<E> / 6.0f
+        let r4m = 8.7f<E> / 26.0f
 
         match this with
         | Lagg3s29 -> times 28 [21, 6.0f * r82]
@@ -585,6 +603,7 @@ with
         | IL2M43 -> xTimes [29; 49] (times 16 [0, 4.0f * r82]) @ times 16 [65, 4.0f * r132] @ times 8 [85, 4.0f * r82] @ times 4 [93, 4.0f * r132]
         | Pe2s35 | Pe2s87 -> times 4 [7, 10.0f * r132]
         | Fw190a8 -> [(4, 2.0f * wgr42)]
+        | Fw190d9 -> [(4, 2.0f * wgr42); (8, 26.0f * r4m)]
         | SpitfireMkIXe -> times 4 [(4, 2.0f * rp3)]
         | Bf109g14 -> [(4, 2.0f * wgr42); (12, 2.0f * wgr42)]
         | _ -> []
@@ -605,6 +624,7 @@ with
         match this with
         | FokkerD7 -> 2
         | FokkerDr1 -> 2
+        | FokkerD7f -> 2
         | Pfalzd3a -> 2
         | SopCamel -> 4
         | SopDolphin -> 13
@@ -639,6 +659,7 @@ with
         | Fw190a3 -> 6
         | Fw190a5 -> 10
         | Fw190a8 -> 48
+        | Fw190d9 -> 9
         | Mc202 -> 5
         | Bf110e -> 9
         | Bf110g -> 15
@@ -653,6 +674,7 @@ with
     member this.Roles =
         match this with
         | FokkerD7
+        | FokkerD7f
         | FokkerDr1
         | Pfalzd3a -> [ Patroller ]
         | SopCamel
@@ -668,7 +690,8 @@ with
         | Bf109k4 -> [ GroundAttacker; Interceptor ; Patroller ]
         | Fw190a3
         | Fw190a5
-        | Fw190a8 -> [ GroundAttacker; Interceptor ]
+        | Fw190a8
+        | Fw190d9 -> [ GroundAttacker; Interceptor ]
         | Mc202 -> [ Patroller ]
         | Bf110e
         | Bf110g -> [ GroundAttacker; Interceptor ]
@@ -712,6 +735,7 @@ with
           Fw190a3
           Fw190a5
           Fw190a8
+          Fw190d9
           Mc202
           Bf110e
           Bf110g
@@ -742,6 +766,7 @@ with
           Hs129b2
           U2
           FokkerD7
+          FokkerD7f
           FokkerDr1
           Pfalzd3a
           SopCamel

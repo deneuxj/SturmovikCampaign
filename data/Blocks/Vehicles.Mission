@@ -4699,4 +4699,80 @@ Plane
 }
 
 
+
+Plane
+{
+  Name = "fw190d9";
+  Index = 139;
+  LinkTrId = 0;
+  XPos = 28873.424;
+  YPos = 110.464;
+  ZPos = 20027.724;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.50;
+  Script = "LuaScripts\WorldObjects\Planes\fw190d9.txt";
+  Model = "graphics\planes\fw190d9\fw190d9.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "fokkerd7f";
+  Index = 140;
+  LinkTrId = 0;
+  XPos = 28829.520;
+  YPos = 110.112;
+  ZPos = 20028.546;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.50;
+  Script = "LuaScripts\WorldObjects\Planes\fokkerd7f.txt";
+  Model = "graphics\planes\fokkerd7f\fokkerd7f.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
 # end of file

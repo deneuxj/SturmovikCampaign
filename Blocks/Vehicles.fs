@@ -779,6 +779,12 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.fw190d9 =
+        let fighter = planes.[T.Vehicles.fw190d9]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
     member this.p47d28 =
         let fighter = planes.[T.Vehicles.p47d28]
         { Script = fighter.GetScript().Value
@@ -803,6 +809,11 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.fokkerd7f =
+        let fighter = planes.[T.Vehicles.fokkerd7f]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
     member this.fokkerdr1 =
         let fighter = planes.[T.Vehicles.fokkerdr1]
         { Script = fighter.GetScript().Value
