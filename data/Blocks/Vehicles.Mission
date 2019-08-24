@@ -75,9 +75,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -118,9 +120,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -161,9 +165,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -204,9 +210,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -247,9 +255,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -290,9 +300,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -333,9 +345,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -376,9 +390,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -419,9 +435,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -462,9 +480,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -505,9 +525,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -548,9 +570,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -591,9 +615,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -634,9 +660,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -677,9 +705,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -720,9 +750,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -763,9 +795,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -806,9 +840,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -1766,9 +1802,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -1809,9 +1847,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -1898,9 +1938,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -1941,9 +1983,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -2992,9 +3036,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -3035,9 +3081,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -3078,9 +3126,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -3121,9 +3171,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -3263,9 +3315,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -3306,9 +3360,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -4368,9 +4424,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -4411,9 +4469,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -4454,9 +4514,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -4497,9 +4559,11 @@ Vehicle
   Callnum = 0;
   Skin = "";
   RepairFriendlies = 0;
+  RehealFriendlies = 0;
   RearmFriendlies = 0;
   RefuelFriendlies = 0;
   RepairTime = 0;
+  RehealTime = 1;
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
@@ -4751,6 +4815,272 @@ Plane
   ZOri = 14.50;
   Script = "LuaScripts\WorldObjects\Planes\fokkerd7f.txt";
   Model = "graphics\planes\fokkerd7f\fokkerd7f.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "me262a";
+  Index = 141;
+  LinkTrId = 0;
+  XPos = 28872.088;
+  YPos = 110.264;
+  ZPos = 20044.577;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.50;
+  Script = "LuaScripts\WorldObjects\Planes\me262a.txt";
+  Model = "graphics\planes\me262a\me262a.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "albatrosd5";
+  Index = 142;
+  LinkTrId = 0;
+  XPos = 28829.128;
+  YPos = 110.114;
+  ZPos = 20047.262;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.30;
+  Script = "LuaScripts\WorldObjects\Planes\albatrosd5.txt";
+  Model = "graphics\planes\albatrosd5\albatrosd5.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bristolf2bf2";
+  Index = 143;
+  LinkTrId = 0;
+  XPos = 28813.432;
+  YPos = 110.134;
+  ZPos = 20029.706;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 9.85;
+  Script = "LuaScripts\WorldObjects\Planes\bristolf2bf2.txt";
+  Model = "graphics\planes\bristolf2bf2\bristolf2bf2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "bristolf2bf3";
+  Index = 144;
+  LinkTrId = 0;
+  XPos = 28813.363;
+  YPos = 110.134;
+  ZPos = 20048.639;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 9.85;
+  Script = "LuaScripts\WorldObjects\Planes\bristolf2bf3.txt";
+  Model = "graphics\planes\bristolf2bf3\bristolf2bf3.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "haberstadtcl2";
+  Index = 145;
+  LinkTrId = 0;
+  XPos = 28829.335;
+  YPos = 110.084;
+  ZPos = 20065.781;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.90;
+  Script = "LuaScripts\WorldObjects\Planes\halberstadtcl2.txt";
+  Model = "graphics\planes\halberstadtcl2\halberstadtcl2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "haberstadtcl2au";
+  Index = 146;
+  LinkTrId = 0;
+  XPos = 28829.128;
+  YPos = 110.084;
+  ZPos = 20083.956;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.90;
+  Script = "LuaScripts\WorldObjects\Planes\halberstadtcl2au.txt";
+  Model = "graphics\planes\halberstadtcl2au\halberstadtcl2au.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "se5a";
+  Index = 147;
+  LinkTrId = 0;
+  XPos = 28813.294;
+  YPos = 110.034;
+  ZPos = 20065.506;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 12.80;
+  Script = "LuaScripts\WorldObjects\Planes\se5a.txt";
+  Model = "graphics\planes\se5a\se5a.mgm";
   Country = 0;
   Desc = "";
   Skin = "";

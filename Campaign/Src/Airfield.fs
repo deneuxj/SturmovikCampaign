@@ -333,7 +333,7 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                                 let alpha = 2.0f * float32(System.Math.PI * (if maxIndex = 0 then 0.0 else (float i) / (float maxIndex)))
                                 let pos = Vector2.FromPos(af) + 200.0f * Vector2(cos alpha, sin alpha)
                                 pos.AssignTo(input.Pos)
-                                let behave = newBehaviour 1 32 0 0 false (float i)  false false false false false
+                                let behave = newBehaviour 1 32 0 0 false (float i)  false false false false false false
                                 let pos = Vector2.FromPos(af) + 100.0f * Vector2(cos alpha, sin alpha)
                                 pos.AssignTo(behave.Pos)
                                 subst input

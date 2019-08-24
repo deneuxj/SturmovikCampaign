@@ -115,7 +115,7 @@ let newServerInput idx name =
         T.Float 0.0,
         T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
 
-let newBehaviour idx filter aiLevel country engageable param limitAmmo rearmFriendlies refuelFriendlies repairFriendlies vulnerable =
+let newBehaviour idx filter aiLevel country engageable param limitAmmo rearmFriendlies refuelFriendlies rehealFriendlies repairFriendlies vulnerable =
     T.MCU_CMD_Behaviour(
         T.Integer aiLevel,
         T.Integer country,
@@ -129,6 +129,7 @@ let newBehaviour idx filter aiLevel country engageable param limitAmmo rearmFrie
         T.VectorOfIntegers[],
         T.Boolean rearmFriendlies,
         T.Boolean refuelFriendlies,
+        T.Boolean rehealFriendlies,
         T.Boolean repairFriendlies,
         T.VectorOfIntegers[],
         T.Boolean vulnerable,
