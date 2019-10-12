@@ -41,8 +41,18 @@ Options
   {
     0 : 0;
     101 : 1;
+    102 : 1;
+    103 : 1;
     201 : 2;
     202 : 2;
+    203 : 2;
+    301 : 3;
+    302 : 3;
+    303 : 3;
+    304 : 3;
+    305 : 3;
+    401 : 4;
+    402 : 4;
   }
 }
 
@@ -174,14 +184,14 @@ MCU_TR_Entity
     OnReport
     {
       Type = 3;
-      CmdId = 10;
-      TarId = 11;
+      CmdId = 11;
+      TarId = 10;
     }
     OnReport
     {
       Type = 4;
       CmdId = 8;
-      TarId = 10;
+      TarId = 11;
     }
   }
 }
@@ -190,7 +200,7 @@ MCU_TR_Entity
 
 MCU_CMD_AttackTarget
 {
-  Index = 11;
+  Index = 10;
   Name = "command Attack";
   Desc = "";
   Targets = [];
@@ -390,7 +400,7 @@ MCU_CMD_Land
 
 MCU_CMD_TakeOff
 {
-  Index = 10;
+  Index = 11;
   Name = "command Take off";
   Desc = "";
   Targets = [];
@@ -1738,7 +1748,7 @@ MCU_TR_Entity
     OnEvent
     {
       Type = 13;
-      TarId = 10;
+      TarId = 11;
     }
   }
 }
@@ -2750,6 +2760,70 @@ MCU_ModifierSetVal
   Data1 = 0;
   Data2 = 0;
   Data3 = 0;
+}
+
+
+
+Vehicle
+{
+  Name = "Vehicle";
+  Index = 126;
+  LinkTrId = 127;
+  XPos = 23732.851;
+  YPos = 149.887;
+  ZPos = 27565.203;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Script = "LuaScripts\WorldObjects\vehicles\fake_vehicle.txt";
+  Model = "graphics\vehicles\fake_vehicle\fake_vehicle.mgm";
+  Desc = "";
+  Country = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  AILevel = 2;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  CoopStart = 0;
+  Spotter = -1;
+  BeaconChannel = 0;
+  Callsign = 0;
+  PayloadId = 0;
+  WMMask = 1;
+  Fuel = 1;
+  Callnum = 0;
+  Skin = "";
+  RepairFriendlies = 1;
+  RehealFriendlies = 1;
+  RearmFriendlies = 0;
+  RefuelFriendlies = 1;
+  RepairTime = 4;
+  RehealTime = 4;
+  RearmTime = 1;
+  RefuelTime = 4;
+  MaintenanceRadius = 10;
+}
+
+
+
+MCU_TR_Entity
+{
+  Index = 127;
+  Name = "Vehicle entity";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 23732.851;
+  YPos = 150.087;
+  ZPos = 27565.203;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  MisObjID = 126;
 }
 
 

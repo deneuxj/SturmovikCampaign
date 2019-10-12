@@ -251,7 +251,7 @@ let setOptions (random : System.Random) (weather : WeatherState) (t : System.Dat
             let dir = int((float windDir + 60.0 * (random.NextDouble() - 0.5)) % 360.0)
             let altSpeedK = 1.0 + (float alt.Value) / 3000.0
             let speed = int(float windSpeed * altSpeedK * (1.0 + random.NextDouble() * 0.1))
-            T.Options.WindLayers.WindLayers_ValueType(alt, T.Integer dir, T.Integer speed)
+            T.Options.WindLayers.WindLayers_ValueType((alt, T.Integer dir, T.Integer speed))
         )
     options
         .SetDate(T.Date(t.Day, t.Month, t.Year))
