@@ -38,7 +38,18 @@ Options
   {
     0 : 0;
     101 : 1;
+    102 : 1;
+    103 : 1;
     201 : 2;
+    202 : 2;
+    203 : 2;
+    301 : 3;
+    302 : 3;
+    303 : 3;
+    304 : 3;
+    305 : 3;
+    401 : 4;
+    402 : 4;
   }
 }
 
@@ -5081,6 +5092,158 @@ Plane
   ZOri = 12.80;
   Script = "LuaScripts\WorldObjects\Planes\se5a.txt";
   Model = "graphics\planes\se5a\se5a.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "p38j25";
+  Index = 148;
+  LinkTrId = 0;
+  XPos = 28850.187;
+  YPos = 110.544;
+  ZPos = 20028.194;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 5.50;
+  Script = "LuaScripts\WorldObjects\Planes\p38j25.txt";
+  Model = "graphics\planes\p38j25\p38j25.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "p51d15";
+  Index = 149;
+  LinkTrId = 0;
+  XPos = 28849.784;
+  YPos = 110.424;
+  ZPos = 20046.535;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 14.10;
+  Script = "LuaScripts\WorldObjects\Planes\p51d15.txt";
+  Model = "graphics\planes\p51d15\p51d15.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "tempestmkvs2";
+  Index = 150;
+  LinkTrId = 0;
+  XPos = 28850.490;
+  YPos = 110.584;
+  ZPos = 20064.876;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 11.60;
+  Script = "LuaScripts\WorldObjects\Planes\tempestmkvs2.txt";
+  Model = "graphics\planes\tempestmkvs2\tempestmkvs2.mgm";
+  Country = 0;
+  Desc = "";
+  Skin = "";
+  AILevel = 2;
+  CoopStart = 0;
+  NumberInFormation = 0;
+  Vulnerable = 1;
+  Engageable = 1;
+  LimitAmmo = 1;
+  StartInAir = 2;
+  Callsign = 0;
+  Callnum = 0;
+  Time = 60;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  PayloadId = 0;
+  WMMask = 1;
+  AiRTBDecision = 0;
+  DeleteAfterDeath = 1;
+  Spotter = -1;
+  Fuel = 1;
+}
+
+
+
+Plane
+{
+  Name = "b25draf";
+  Index = 151;
+  LinkTrId = 0;
+  XPos = 28850.307;
+  YPos = 111.014;
+  ZPos = 20088.214;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.10;
+  Script = "LuaScripts\WorldObjects\Planes\b25draf.txt";
+  Model = "graphics\planes\b25draf\b25draf.mgm";
   Country = 0;
   Desc = "";
   Skin = "";

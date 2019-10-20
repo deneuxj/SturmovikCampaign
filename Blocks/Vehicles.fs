@@ -785,14 +785,44 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.me262 =
+        let fighter = planes.[T.Vehicles.me262a]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
     member this.p47d28 =
         let fighter = planes.[T.Vehicles.p47d28]
         { Script = fighter.GetScript().Value
           Model = fighter.GetModel().Value
         }
 
+    member this.p38j25 =
+        let fighter = planes.[T.Vehicles.p38j25]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.p51d15 =
+        let fighter = planes.[T.Vehicles.p51d15]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
     member this.spitfiremkixe =
         let fighter = planes.[T.Vehicles.spitfiremkixe]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.tempestmkvs2 =
+        let fighter = planes.[T.Vehicles.tempestmkvs2]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.b25 =
+        let fighter = planes.[T.Vehicles.b25draf]
         { Script = fighter.GetScript().Value
           Model = fighter.GetModel().Value
         }
@@ -840,6 +870,42 @@ type VehicleDataTypeStore() =
 
     member this.spad13 =
         let fighter = planes.[T.Vehicles.spad13]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.albatrosd5 =
+        let fighter = planes.[T.Vehicles.albatrosd5]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.haberstadtcl2 =
+        let fighter = planes.[T.Vehicles.haberstadtcl2]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.haberstadtcl2au =
+        let fighter = planes.[T.Vehicles.haberstadtcl2au]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.bristolf2bf2 =
+        let fighter = planes.[T.Vehicles.bristolf2bf2]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.bristolf2bf3 =
+        let fighter = planes.[T.Vehicles.bristolf2bf3]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
+    member this.se5a =
+        let fighter = planes.[T.Vehicles.se5a]
         { Script = fighter.GetScript().Value
           Model = fighter.GetModel().Value
         }

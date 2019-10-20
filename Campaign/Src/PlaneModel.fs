@@ -44,14 +44,14 @@ type PlaneRole =
 
 let basePlaneCost = 500.0f<E>
 
-//// times 2 [(4, x); (10, y)] -> [(4, x); (5, x); (10, y); (11, y)]
+/// times 2 [(4, x); (10, y)] -> [(4, x); (5, x); (10, y); (11, y)]
 let private times N xs =
     [
         for (n, x) in xs do
             for c in 0..(N - 1) do
                 yield (n + c, x)
     ]
-//// vTimes [(3, 10, x)] -> [(10, x); (11, x); (12, x)]
+/// vTimes [(3, 10, x)] -> [(10, x); (11, x); (12, x)]
 let private vTimes xs =
     [
         for (n, N, x) in xs do
@@ -75,6 +75,11 @@ type PlaneModel =
     | SopCamel
     | SopDolphin
     | Spad13
+    | AlbatrosD5 //
+    | HalberstadtCl2 //
+    | HalberstadtCl2Au //
+    | BristolF2Bf2 //
+    | BristolF2Bf3 //
     | Bf109e7
     | Bf109f2
     | Bf109f4
@@ -97,9 +102,11 @@ type PlaneModel =
     | IL2M42
     | IL2M43
     | Mig3
+    | P38 //
     | P39
     | P40
     | P47
+    | P51 //
     | Yak1s69
     | Yak1s127
     | Yak7bs36
@@ -108,6 +115,7 @@ type PlaneModel =
     | Lagg3s29
     | SpitfireMkVb
     | SpitfireMkIXe
+    | Tempest //
     | Pe2s35
     | Pe2s87
     | Ju87
@@ -126,6 +134,11 @@ with
         | SopCamel -> Vehicles.vehicles.sopcamel
         | SopDolphin -> Vehicles.vehicles.sopdolphin
         | Spad13 -> Vehicles.vehicles.spad13
+        | AlbatrosD5 -> Vehicles.vehicles.albatrosd5
+        | HalberstadtCl2 -> Vehicles.vehicles.haberstadtcl2
+        | HalberstadtCl2Au -> Vehicles.vehicles.haberstadtcl2au
+        | BristolF2Bf2 -> Vehicles.vehicles.bristolf2bf2
+        | BristolF2Bf3 -> Vehicles.vehicles.bristolf2bf3
         | Bf109e7 -> Vehicles.vehicles.GermanFighter1
         | Bf109f2 -> Vehicles.vehicles.GermanFighter2
         | Mc202 -> Vehicles.vehicles.GermanFighter3
@@ -148,15 +161,18 @@ with
         | IL2M42 -> Vehicles.vehicles.RussianAttacker2
         | IL2M43 -> Vehicles.vehicles.RussianAttacker3
         | Mig3 -> Vehicles.vehicles.RussianFighter2
+        | P38 -> Vehicles.vehicles.p38j25
         | P39 -> Vehicles.vehicles.RussianFighter10
         | P40 -> Vehicles.vehicles.RussianFighter3
         | P47 -> Vehicles.vehicles.p47d28
+        | P51 -> Vehicles.vehicles.p51d15
         | Yak1s69 -> Vehicles.vehicles.RussianFighter4
         | Yak1s127 -> Vehicles.vehicles.RussianFighter7
         | La5 -> Vehicles.vehicles.RussianFighter6
         | Lagg3s29 -> Vehicles.vehicles.RussianFighter5
         | SpitfireMkVb -> Vehicles.vehicles.RussianFighter8
         | SpitfireMkIXe -> Vehicles.vehicles.spitfiremkixe
+        | Tempest -> Vehicles.vehicles.tempestmkvs2
         | Pe2s35 -> Vehicles.vehicles.RussianBomber1
         | Pe2s87 -> Vehicles.vehicles.RussianBomber2
         | Ju87 -> Vehicles.vehicles.GermanAttacker2
@@ -176,7 +192,12 @@ with
         | Pfalzd3a
         | SopCamel
         | SopDolphin
-        | Spad13 -> 0.25f * basePlaneCost
+        | Spad13 
+        | AlbatrosD5
+        | HalberstadtCl2
+        | HalberstadtCl2Au
+        | BristolF2Bf2
+        | BristolF2Bf3 -> 0.25f * basePlaneCost
         | Bf109e7 -> basePlaneCost
         | Bf109f4
         | Bf109g2
@@ -212,7 +233,7 @@ with
         | A20
         | Pe2s87
         | Pe2s35 -> (7.5f / 3.0f) * basePlaneCost
-        | P47 | SpitfireMkIXe -> 2.0f * basePlaneCost
+        | P38 | P51 | P47 | SpitfireMkIXe | Tempest -> 2.0f * basePlaneCost
         | U2 -> 0.5f * basePlaneCost
 
     member this.BombCapacity =
@@ -231,6 +252,10 @@ with
             | SopCamel -> 1, 2 // 20lb-4
             | SopDolphin -> 65, 2 // 20lb-4
             | Spad13 -> 33, 3 // 20lb-2
+            | HalberstadtCl2
+            | HalberstadtCl2Au -> 129, 2 // Bombs
+            | BristolF2Bf2
+            | BristolF2Bf3 -> 65, 2 // Bombs
             | Bf109e7 -> 5, 2
             | Bf109f2 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6-> 17, 2 // SC250-1
             | Bf109g14 -> 17, 2 // SD250-1
@@ -244,9 +269,11 @@ with
             | Lagg3s29 -> 17, 14 // "0-UB-APHE-200 + 1-SHVAK-APHE-160 + FAB100M-2"
             | Mc202 -> 9 , 2 // "0,1-BREDA12-APHE-800 + T100-2"
             | Mig3 -> 5, 6 // "0,1-SHKAS-AP-1500 + 2-BS-APHE-300 + FAB100M-2"
+            | P38 -> 17, 8 // M8-6
             | P39 -> 5, 12 // FAB250
             | P40 -> 33, 8 // "0,1,2,3,4,5-M250-AP-1410 + FAB500M-1"
             | P47 -> 17, 24 // M65-2
+            | P51 -> 33, 12 // M8-6
             | Yak1s127 -> 5, 2 // "0-UB-APHE-220 + 1-SHVAK-APHE-140 + FAB100M-2"
             | Yak1s69 -> 17, 10 // "0,1-SHKAS-AP-1500 + 2-SHVAK-APHE-120 + FAB100M-2"
             | Yak7bs36 -> 5, 2 // "0-UB-APHE-260 + 1-UB-APHE-140 + 2-SHVAK-APHE-120 + FAB100M-2"
@@ -262,8 +289,10 @@ with
             | Hs129b2 -> 1, 4 // "0,1-MG17-AP-2000 + 2,3-MG15115-APHE-500 + SC250-1 + SC50-2"
             | SpitfireMkIXe -> 7, 3 // GPB500-1 + GPB250-2
             | U2 -> 13, 11 // FAB250SV-2 + FAB100M-2
+            | AlbatrosD5
             | SpitfireMkVb
             | SpitfireMkIXe
+            | Tempest
             | La5fns2
             | Ju88a4
             | Ju52
@@ -313,10 +342,15 @@ with
         | FokkerD7
         | FokkerD7f
         | FokkerDr1
-        | Pfalzd3a -> Axis
+        | Pfalzd3a
+        | AlbatrosD5
+        | HalberstadtCl2
+        | HalberstadtCl2Au -> Axis
         | SopCamel
         | SopDolphin
-        | Spad13 -> Allies
+        | Spad13
+        | BristolF2Bf2
+        | BristolF2Bf3 -> Allies
         | Bf109e7
         | Bf109f2
         | Bf109f4
@@ -351,9 +385,12 @@ with
         | Lagg3s29
         | SpitfireMkVb
         | SpitfireMkIXe
+        | Tempest
+        | P38
         | P39
         | P40
         | P47
+        | P51
         | A20
         | Pe2s87
         | Pe2s35
@@ -367,8 +404,13 @@ with
         | Pfalzd3a
         | SopCamel
         | SopDolphin
-        | Spad13 -> Fighter
-        | Bf109e7 
+        | Spad13
+        | AlbatrosD5
+        | HalberstadtCl2
+        | HalberstadtCl2Au
+        | BristolF2Bf2
+        | BristolF2Bf3 -> Fighter
+        | Bf109e7
         | Bf109f2
         | Bf109f4
         | Bf109g2
@@ -382,8 +424,10 @@ with
         | Fw190d9
         | Mc202
         | I16
+        | P38
         | P40
         | P47
+        | P51
         | La5
         | La5fns2
         | Yak1s69
@@ -392,6 +436,7 @@ with
         | Lagg3s29
         | SpitfireMkVb
         | SpitfireMkIXe
+        | Tempest
         | P39
         | Mig3 -> Fighter
         | Hs129b2
@@ -419,6 +464,11 @@ with
         | SopCamel -> "Sopwith Camel"
         | SopDolphin -> "Sopwith Dolphin"
         | Spad13 -> "Spad 13.C1"
+        | AlbatrosD5 -> "Albatros D5"
+        | HalberstadtCl2 -> "Haberstadt CL2"
+        | HalberstadtCl2Au -> "Haberstadt CL2 AU"
+        | BristolF2Bf2 -> "Bristol F2BF2"
+        | BristolF2Bf3 -> "Bristol F2BF3"
         | Bf109e7 -> "bf109e7"
         | Bf109f2 -> "bf109f2"
         | Bf109f4 -> "bf109f4"
@@ -448,9 +498,11 @@ with
         | La5fns2 -> "la5fns2"
         | Lagg3s29 -> "lagg3s29"
         | Mig3 -> "mig3"
+        | P38 -> "p38"
         | P39 -> "p39"
         | P40 -> "p40"
         | P47 -> "p47"
+        | P51 -> "p51"
         | A20 -> "a20"
         | Pe2s35 -> "pe2s35"
         | Pe2s87 -> "pe2s87"
@@ -459,6 +511,7 @@ with
         | Yak7bs36 -> "yak7bs36"
         | SpitfireMkVb -> "spitfireMkVb"
         | SpitfireMkIXe -> "spitfireMkIXe"
+        | Tempest -> "Tempest MkV s2"
         | U2 -> "u2vs"
 
     /// <summary>
@@ -466,6 +519,7 @@ with
     /// </summary>
     member this.MissionLogName =
         match this with
+        | AlbatrosD5 -> "albatros d.v"
         | FokkerD7 -> "fokker d.vii"
         | FokkerD7f -> "fokker d.viif"
         | FokkerDr1 -> "fokker dr.i"
@@ -473,6 +527,10 @@ with
         | Spad13 -> "spad 13.c1"
         | SopCamel -> "sopwith camel"
         | SopDolphin -> "sopwith dolphin"
+        | HalberstadtCl2 -> "halberstadt cl.ii"
+        | HalberstadtCl2Au -> "halberstadt cl.ii 200hp"
+        | BristolF2Bf2 -> "bristol f2b (f.ii)"
+        | BristolF2Bf3 -> "bristol f2b (f.iii)"
         | Bf109e7 -> "bf 109 e-7"
         | Bf109f2 -> "bf 109 f-2"
         | Bf109f4 -> "bf 109 f-4"
@@ -502,9 +560,11 @@ with
         | La5fns2 -> "la-5fn ser.2"
         | Lagg3s29 -> "lagg-3 ser.29"
         | Mig3 -> "mig-3"
+        | P38 -> "p38-j-25"
         | P39 -> "p-39"
         | P40 -> "p-40"
         | P47 -> "p-47d-28"
+        | P51 -> "p-51d-15"
         | A20 -> "a-20"
         | Pe2s35 -> "pe-2 ser.35"
         | Pe2s87 -> "pe-2 ser.87"
@@ -513,6 +573,7 @@ with
         | Yak7bs36 -> "yak-7b ser.36"
         | SpitfireMkVb -> "spitfire mk.vb"
         | SpitfireMkIXe -> "spitfire mk.ixe"
+        | Tempest -> "Tempest Mk.V ser.2"
         | U2 -> "u-2vs"
 
     member this.BombLoads =
@@ -524,6 +585,11 @@ with
         | SopCamel -> [(2, 36.0f<K>); (3, 18.0f<K>)]
         | SopDolphin -> [(2, 36.0f<K>); (3, 18.0f<K>)]
         | Spad13 -> [(3, 18.0f<K>); (4, 9.0f<K>)]
+        | AlbatrosD5 -> []
+        | HalberstadtCl2
+        | HalberstadtCl2Au -> xTimes [0; 5] [(2, 150.0f<K>); (3, 150.0f<K>); (4, 150.0f<K>); (5, 50.0f<K>); (6, 50.0f<K>)]
+        | BristolF2Bf2
+        | BristolF2Bf3 -> xTimes [0; 4] [(2, 120.0f<K>); (3, 200.0f<K>); (4, 200.0f<K>); (5, 100.0f<K>)]
         | Bf109e7 | Bf109f4 | Bf109g2 | Bf109g4 | Bf109g6 -> [(1, 200.0f<K>); (2, 250.0f<K>)]
         | Bf109f2 -> xTimes [1; 4] [(0, 200.0f<K>); (1, 250.0f<K>)]
         | Bf109g14 -> [(1, 280.0f<K>); (2, 250.0f<K>); (10, 250.0f<K>)]
@@ -570,14 +636,17 @@ with
         | La5fns2 -> xTimes [1; 4; 7] [(0, 100.0f<K>); (1, 200.0f<K>)]
         | Lagg3s29 -> vTimes [(7, 7, 100.0f<K>); (14, 7, 200.0f<K>)]
         | Mig3 -> [(5, 100.0f<K>); (6, 200.0f<K>); (13, 100.0f<K>); (14, 200.0f<K>); (21, 100.0f<K>); (22, 200.0f<K>)]
+        | P38 -> xTimes [0; 1; 8; 9] [(2, 450.0f<K>); (4, 900.0f<K>)] @ xTimes [0; 1] [(6, 1800.0f<K>)] @ xTimes [0; 1] [(14, 1200.0f<K>); (16, 1800.0f<K>)]
         | P39 -> times 6 [(6, 100.0f<K>)] @ times 6 [(12, 250.0f<K>)]
         | P40 -> times 4 [(4, 250.0f<K>); (8, 500.0f<K>); (28, 250.0f<K>); (32, 500.0f<K>)]
         | P47 -> times 6 [(6, 225.0f<K>)] @ times 6 [(12, 450.0f<K>)] @ times 6 [(18, 675.0f<K>)] @ times 6 [(24, 950.0f<K>)] @ times 6 [(30, 1175.0f<K>)] |> xTimes  [0; 36]
+        | P51 -> xTimes [0; 1; 2; 3] [(4, 450.0f<K>); (8, 900.0f<K>)] @ [(16, 450.0f<K>)]
         | SpitfireMkIXe -> [(1, 225.0f<K>); (2, 225.0f<K>); (3, 900.0f<K>); (6, 225.0f<K>); (7, 255.0f<K>)]
         | Yak1s69 -> [(9, 100.0f<K>); (10, 200.0f<K>)]
         | Yak1s127 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | Yak7bs36 -> [(1, 100.0f<K>); (2, 200.0f<K>)]
         | SpitfireMkVb -> [(0, 0.0f<K>); (1, 0.0f<K>)]
+        | Tempest -> [(1, 450.0f<K>); (2, 900.0f<K>)]
         | A20 -> [(1, 800.0f<K>); (2, 1600.0f<K>); (3, 2000.0f<K>); (4, 1000.0f<K>); (5, 1800.0f<K>)]
         | U2 -> [(1, 100.0f<K>); (2, 200.0f<K>); (3, 300.0f<K>); (4, 200.0f<K>); (5, 300.0f<K>); (7, 100.0f<K>); (8, 200.0f<K>); (9, 300.0f<K>); (10, 200.0f<K>); (11, 300.0f<K>)]
         |> List.sortBy fst
@@ -596,8 +665,10 @@ with
         | Yak1s69 -> times 4 [1, 2.0f * r82] @ times 4 [5, 6.0f * r82]
         | I16 -> xTimes [3; 14] (times 4 [(0, 4.0f * r82); (4, 6.0f * r82)])
         | Mig3 -> xTimes [1; 9; 17] (times 4 [0, 6.0f * r82])
+        | P38 -> times 6 [(8, 6.0f * m8)]
         | P40 -> times 24 [12, 4.0f * r82]
         | P47 -> times 36 [36, 6.0f * m8]
+        | P51 -> times 8 [(12, 6.0f * m8)]
         | IL2M41 -> xTimes [20; 40] (times 16 [0, 8.0f * r82]) @ times 16 [56, 8.0f * r132]
         | IL2M42 -> xTimes [29; 52] (times 19 [0, 8.0f * r82]) @ times 16 [71, 8.0f * r132]
         | IL2M43 -> xTimes [29; 49] (times 16 [0, 4.0f * r82]) @ times 16 [65, 4.0f * r132] @ times 8 [85, 4.0f * r82] @ times 4 [93, 4.0f * r132]
@@ -629,6 +700,11 @@ with
         | SopCamel -> 4
         | SopDolphin -> 13
         | Spad13 -> 7
+        | AlbatrosD5 -> 3
+        | HalberstadtCl2
+        | HalberstadtCl2Au -> 12
+        | BristolF2Bf2
+        | BristolF2Bf3 -> 10
         | Lagg3s29 -> 49
         | Yak1s69 -> 11
         | Yak1s127 -> 3
@@ -637,11 +713,14 @@ with
         | La5fns2 -> 9
         | I16 -> 22
         | Mig3 -> 24
+        | P38 -> 18
         | P39 -> 18
         | P40 -> 36
         | P47 -> 79
+        | P51 -> 28
         | SpitfireMkVb -> 1
         | SpitfireMkIXe -> 8
+        | Tempest -> 3
         | IL2M41 -> 72
         | IL2M42 ->87
         | IL2M43 -> 104
@@ -673,13 +752,18 @@ with
 
     member this.Roles =
         match this with
+        | AlbatrosD5
         | FokkerD7
         | FokkerD7f
         | FokkerDr1
         | Pfalzd3a -> [ Patroller ]
         | SopCamel
         | SopDolphin
-        | Spad13 -> [ GroundAttacker; Patroller ]
+        | Spad13
+        | HalberstadtCl2
+        | HalberstadtCl2Au
+        | BristolF2Bf2 
+        | BristolF2Bf3 -> [ GroundAttacker; Patroller ]
         | Bf109e7 -> [ GroundAttacker; Patroller ]
         | Bf109f2
         | Bf109f4
@@ -702,16 +786,19 @@ with
         | IL2M42
         | IL2M43 -> [ GroundAttacker ]
         | Mig3 -> [ Interceptor ]
+        | P38
         | P39
         | P40
-        | P47 -> [ GroundAttacker; Interceptor ]
+        | P47
+        | P51 -> [ GroundAttacker; Interceptor ]
         | Yak1s69 
         | Yak1s127
         | Yak7bs36
         | La5
         | La5fns2
         | SpitfireMkVb
-        | Lagg3s29 -> [ Interceptor ; Patroller ]
+        | Lagg3s29
+        | Tempest -> [ Interceptor ; Patroller ]
         | SpitfireMkIXe -> [ GroundAttacker; Interceptor ; Patroller ]
         | Ju87 -> [ GroundAttacker ]
         | A20
@@ -746,9 +833,11 @@ with
           IL2M42
           IL2M43
           Mig3
+          P38
           P39
           P40
           P47
+          P51
           Yak1s69
           Yak1s127
           Yak7bs36
@@ -757,6 +846,7 @@ with
           Lagg3s29
           SpitfireMkVb
           SpitfireMkIXe
+          Tempest
           A20
           Pe2s35
           Pe2s87
@@ -772,6 +862,11 @@ with
           SopCamel
           SopDolphin
           Spad13
+          AlbatrosD5
+          HalberstadtCl2
+          HalberstadtCl2Au
+          BristolF2Bf2
+          BristolF2Bf3
         ]
 
     static member PlaneTypeShares(coalition) =
