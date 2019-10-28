@@ -42,6 +42,42 @@ type PlaneRole =
     | LevelBomber
     | CargoTransporter
 
+type PlaneData =
+    { Kind : PlaneType
+      Name : string
+      MissionLogName : string
+      Roles : PlaneRole list
+      Coalition : CoalitionId
+      ScriptModel : Vehicles.VehicleTypeData
+      Cost : float32<E>
+      BombCapacity : float32<K>
+      CargoCapacity : float32<K>
+      Payloads : Map<PlaneRole, int>
+      ModMasks : Map<PlaneRole, int>
+      BombLoads : (int * float32<K>) list
+      SpecialLoadsCosts : (int * float<E>) list
+      EmptyPayload : int
+    }
+with
+    member this.SerializableValue =
+        [
+            yield "Kind", this.Kind.ToString() :> obj
+            yield "Name", this.Name :> obj
+            yield "MissionLogName", this.MissionLogName :> obj
+            yield "Roles", this.Roles |> List.map (fun role -> role.ToString()) :> obj
+            yield "Coalition", this.Coalition.ToString() :> obj
+            yield "ScriptModel", this.ScriptModel :> obj
+            yield "Cost", box this.Cost
+            yield "BombCapacity", box this.BombCapacity
+            yield "CargoCapacity", box this.CargoCapacity
+            yield "Payloads", this.Payloads |> Map.toList |> List.map (fun (role, x) -> role.ToString(), x) |> dict :> obj
+            yield "ModMasks", this.ModMasks |> Map.toList |> List.map (fun (role, x) -> role.ToString(), x) |> dict :> obj
+            yield "BombLoads", this.BombLoads :> obj
+            yield "SpecialLoadsCosts", this.SpecialLoadsCosts :> obj
+            yield "EmptyPayload", box this.EmptyPayload
+        ]
+        |> dict
+
 let basePlaneCost = 500.0f<E>
 
 /// times 2 [(4, x); (10, y)] -> [(4, x); (5, x); (10, y); (11, y)]
