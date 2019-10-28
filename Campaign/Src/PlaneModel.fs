@@ -33,7 +33,7 @@ with
         | Fighter -> "fighter"
         | Attacker -> "attacker"
         | Bomber -> "bomber"
-        | Transport -> "transport plane"
+        | Transport -> "transport"
 
 type PlaneRole =
     | Interceptor
@@ -111,11 +111,11 @@ type PlaneModel =
     | SopCamel
     | SopDolphin
     | Spad13
-    | AlbatrosD5 //
-    | HalberstadtCl2 //
-    | HalberstadtCl2Au //
-    | BristolF2Bf2 //
-    | BristolF2Bf3 //
+    | AlbatrosD5
+    | HalberstadtCl2
+    | HalberstadtCl2Au
+    | BristolF2Bf2
+    | BristolF2Bf3
     | Bf109e7
     | Bf109f2
     | Bf109f4
