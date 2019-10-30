@@ -86,6 +86,12 @@ with
         | Axis -> "Axis"
         | Allies -> "Allies"
 
+    static member FromString(s) =
+        match s with
+        | "Axis" -> Axis
+        | "Allies" -> Allies
+        | _ -> failwithf "Invalid coalition '%s'" s
+
 /// A position on the map and a rotation around the vertical axis.
 type OrientedPosition = {
     Pos : Vector2

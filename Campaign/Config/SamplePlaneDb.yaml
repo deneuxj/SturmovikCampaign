@@ -1,0 +1,38 @@
+﻿Planes:
+    - Plane:
+        Kind: Attacker
+        Name: Ju87
+        LogName: ju87
+        Roles: ['Attacker']
+        Coalition: Axis
+        Script: a
+        Model: a
+        Cost: 500.0
+        BombCapacity: 2000.0
+        CargoCapacity: 0.0
+        Bombs:
+            - Repeat:
+                Offsets:
+                    - 0
+                    - 5
+                    - 10
+                Loads:
+                    - Load:
+                        Id: 0
+                        Weight: 100.0
+        Payloads:
+            - Payload:
+                Role: Attacker
+                ModMask: 31
+                Id: 12
+        Specials:
+            - Repeat:
+                Offsets:
+                    - 0
+                    - 5
+                    - 10
+                Loads:
+                    - Load:
+                        Id: 0
+                        Cost: 100.0
+        EmptyPayload: 0

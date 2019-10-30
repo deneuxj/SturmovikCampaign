@@ -21,6 +21,7 @@ open SturmovikMission.Blocks
 open Campaign.BasicTypes
 open Util
 open System.Numerics
+open FSharp.Configuration
 
 type PlaneType  =
     | Fighter
@@ -30,10 +31,18 @@ type PlaneType  =
 with
     override this.ToString() =
         match this with
-        | Fighter -> "fighter"
-        | Attacker -> "attacker"
-        | Bomber -> "bomber"
-        | Transport -> "transport"
+        | Fighter -> "Fighter"
+        | Attacker -> "Attacker"
+        | Bomber -> "Bomber"
+        | Transport -> "Transport"
+
+    static member FromString(s) =
+        match s with
+        | "Fighter" -> Fighter
+        | "Attacker" -> Attacker
+        | "Bomber" -> Bomber
+        | "Transport" -> Transport
+        | _ -> failwithf "Invalid plane type '%s'" s
 
 type PlaneRole =
     | Interceptor
@@ -41,42 +50,37 @@ type PlaneRole =
     | GroundAttacker
     | LevelBomber
     | CargoTransporter
+with
+    static member FromString(s) =
+        match s with
+        | "Interceptor" -> Interceptor
+        | "Patroller" -> Patroller
+        | "Attacker" -> GroundAttacker
+        | "Bomber" -> LevelBomber
+        | "Cargo" -> CargoTransporter
+        | _ -> failwithf "Invalid plane role '%s'" s
 
 type PlaneData =
     { Kind : PlaneType
       Name : string
-      MissionLogName : string
+      LogName : string
       Roles : PlaneRole list
       Coalition : CoalitionId
       ScriptModel : Vehicles.VehicleTypeData
       Cost : float32<E>
       BombCapacity : float32<K>
       CargoCapacity : float32<K>
-      Payloads : Map<PlaneRole, int>
-      ModMasks : Map<PlaneRole, int>
+      Payloads : Map<PlaneRole, int*int>
       BombLoads : (int * float32<K>) list
-      SpecialLoadsCosts : (int * float<E>) list
+      SpecialLoadsCosts : (int * float32<E>) list
       EmptyPayload : int
     }
-with
-    member this.SerializableValue =
-        [
-            yield "Kind", this.Kind.ToString() :> obj
-            yield "Name", this.Name :> obj
-            yield "MissionLogName", this.MissionLogName :> obj
-            yield "Roles", this.Roles |> List.map (fun role -> role.ToString()) :> obj
-            yield "Coalition", this.Coalition.ToString() :> obj
-            yield "ScriptModel", this.ScriptModel :> obj
-            yield "Cost", box this.Cost
-            yield "BombCapacity", box this.BombCapacity
-            yield "CargoCapacity", box this.CargoCapacity
-            yield "Payloads", this.Payloads |> Map.toList |> List.map (fun (role, x) -> role.ToString(), x) |> dict :> obj
-            yield "ModMasks", this.ModMasks |> Map.toList |> List.map (fun (role, x) -> role.ToString(), x) |> dict :> obj
-            yield "BombLoads", this.BombLoads :> obj
-            yield "SpecialLoadsCosts", this.SpecialLoadsCosts :> obj
-            yield "EmptyPayload", box this.EmptyPayload
-        ]
-        |> dict
+
+[<Literal>]
+let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.yaml"
+type PlaneDbFile = YamlConfig<sampleFile>
+
+
 
 let basePlaneCost = 500.0f<E>
 
@@ -101,6 +105,52 @@ let private xTimes offsets xs =
             for (n, x) in xs do
                 yield (n + offset, x)
     ]
+
+type PlaneData
+with
+    static member FromYaml(yaml : PlaneDbFile.Planes_Item_Type.Plane_Type) =
+        let payloads =
+            yaml.Payloads
+            |> Seq.map (fun payload ->
+                PlaneRole.FromString payload.Payload.Role,
+                (payload.Payload.ModMask, payload.Payload.Id))
+            |> Map.ofSeq
+        let bombloads =
+            yaml.Bombs
+            |> Seq.map (fun group ->
+                let offsets = group.Repeat.Offsets |> List.ofSeq
+                let loads =
+                    group.Repeat.Loads
+                    |> Seq.map (fun x -> x.Load.Id, 1.0f<K> * float32 x.Load.Weight)
+                    |> List.ofSeq
+                xTimes offsets loads)
+            |> List.concat
+        let specials =
+            yaml.Specials
+            |> Seq.map (fun group ->
+                let offsets = group.Repeat.Offsets |> List.ofSeq
+                let loads =
+                    group.Repeat.Loads
+                    |> Seq.map (fun x -> x.Load.Id, 1.0f<E> * float32 x.Load.Cost)
+                    |> List.ofSeq
+                xTimes offsets loads)
+            |> List.concat
+
+        {
+            Kind = PlaneType.FromString yaml.Kind
+            Name = yaml.Name
+            LogName = yaml.LogName
+            Roles = yaml.Roles |> Seq.map PlaneRole.FromString |> List.ofSeq
+            Coalition = CoalitionId.FromString yaml.Coalition
+            ScriptModel = { Script = yaml.Script; Model = yaml.Model }
+            Cost = 1.0f<E> * float32 yaml.Cost
+            BombCapacity = 1.0f<K> * float32 yaml.BombCapacity
+            CargoCapacity = 1.0f<K> * float32 yaml.CargoCapacity
+            Payloads = payloads
+            BombLoads = bombloads
+            SpecialLoadsCosts = specials
+            EmptyPayload = 0
+        }
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =

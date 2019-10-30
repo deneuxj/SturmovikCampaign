@@ -121,6 +121,7 @@
     <None Include="Config\PlaneSet-Kuban.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Config\SamplePlaneDb.yaml" />
     <None Include="MyScripts\Configuration.fsx" />
     <None Include="MyScripts\Select.fsx" />
     <None Include="MyScripts\Init.fsx" />
