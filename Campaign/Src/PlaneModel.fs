@@ -80,8 +80,6 @@ type PlaneData =
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.yaml"
 type PlaneDbFile = YamlConfig<sampleFile>
 
-
-
 let basePlaneCost = 500.0f<E>
 
 /// times 2 [(4, x); (10, y)] -> [(4, x); (5, x); (10, y); (11, y)]
@@ -151,6 +149,54 @@ with
             SpecialLoadsCosts = specials
             EmptyPayload = 0
         }
+
+    member this.ToYaml() =
+        let toGenList (x : 'T seq) = System.Collections.Generic.List<_>(x)
+        let ret = PlaneDbFile.Planes_Item_Type.Plane_Type()
+        ret.Kind <- this.Kind.ToString()
+        ret.Name <- this.Name
+        ret.LogName <- this.LogName
+        ret.Roles <- this.Roles |> Seq.map (fun x -> x.ToString()) |> toGenList
+        ret.Coalition <- this.Coalition.ToString()
+        ret.Script <- this.ScriptModel.Script
+        ret.Model <- this.ScriptModel.Model
+        ret.Cost <- float this.Cost
+        ret.BombCapacity <- float this.BombCapacity
+        ret.CargoCapacity <- float this.CargoCapacity
+        ret.Bombs <-
+            this.BombLoads
+            |> Seq.map (fun (id, w) ->
+                let bomb = PlaneDbFile.Planes_Item_Type.Plane_Type.Bombs_Item_Type()
+                let load = PlaneDbFile.Planes_Item_Type.Plane_Type.Bombs_Item_Type.Repeat_Type.Loads_Item_Type()
+                load.Load.Id <- id
+                load.Load.Weight <- float w
+                bomb.Repeat.Loads <- toGenList [load]
+                bomb.Repeat.Offsets <- toGenList [0]
+                bomb)
+            |> toGenList
+        ret.Payloads <-
+            this.Payloads
+            |> Map.toSeq
+            |> Seq.map (fun (role, (mask, id)) ->
+                let payload = PlaneDbFile.Planes_Item_Type.Plane_Type.Payloads_Item_Type()
+                payload.Payload.Role <- role.ToString()
+                payload.Payload.ModMask <- mask
+                payload.Payload.Id <- id
+                payload)
+            |> toGenList
+        ret.Specials <-
+            this.SpecialLoadsCosts
+            |> Seq.map (fun (id, cost) ->
+                let bomb = PlaneDbFile.Planes_Item_Type.Plane_Type.Specials_Item_Type()
+                let load = PlaneDbFile.Planes_Item_Type.Plane_Type.Specials_Item_Type.Repeat_Type.Loads_Item_Type()
+                load.Load.Id <- id
+                load.Load.Cost <- float cost
+                bomb.Repeat.Loads <- toGenList [load]
+                bomb.Repeat.Offsets <- toGenList [0]
+                bomb)
+            |> toGenList
+        ret.EmptyPayload <- this.EmptyPayload
+        ret
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
