@@ -150,20 +150,19 @@ with
             EmptyPayload = 0
         }
 
-    member this.ToYaml() =
+    member this.ToYaml(yaml : PlaneDbFile.Planes_Item_Type.Plane_Type) =
         let toGenList (x : 'T seq) = System.Collections.Generic.List<_>(x)
-        let ret = PlaneDbFile.Planes_Item_Type.Plane_Type()
-        ret.Kind <- this.Kind.ToString()
-        ret.Name <- this.Name
-        ret.LogName <- this.LogName
-        ret.Roles <- this.Roles |> Seq.map (fun x -> x.ToString()) |> toGenList
-        ret.Coalition <- this.Coalition.ToString()
-        ret.Script <- this.ScriptModel.Script
-        ret.Model <- this.ScriptModel.Model
-        ret.Cost <- float this.Cost
-        ret.BombCapacity <- float this.BombCapacity
-        ret.CargoCapacity <- float this.CargoCapacity
-        ret.Bombs <-
+        yaml.Kind <- this.Kind.ToString()
+        yaml.Name <- this.Name
+        yaml.LogName <- this.LogName
+        yaml.Roles <- this.Roles |> Seq.map (fun x -> x.ToString()) |> toGenList
+        yaml.Coalition <- this.Coalition.ToString()
+        yaml.Script <- this.ScriptModel.Script
+        yaml.Model <- this.ScriptModel.Model
+        yaml.Cost <- float this.Cost
+        yaml.BombCapacity <- float this.BombCapacity
+        yaml.CargoCapacity <- float this.CargoCapacity
+        yaml.Bombs <-
             this.BombLoads
             |> Seq.map (fun (id, w) ->
                 let bomb = PlaneDbFile.Planes_Item_Type.Plane_Type.Bombs_Item_Type()
@@ -174,7 +173,7 @@ with
                 bomb.Repeat.Offsets <- toGenList [0]
                 bomb)
             |> toGenList
-        ret.Payloads <-
+        yaml.Payloads <-
             this.Payloads
             |> Map.toSeq
             |> Seq.map (fun (role, (mask, id)) ->
@@ -184,7 +183,7 @@ with
                 payload.Payload.Id <- id
                 payload)
             |> toGenList
-        ret.Specials <-
+        yaml.Specials <-
             this.SpecialLoadsCosts
             |> Seq.map (fun (id, cost) ->
                 let bomb = PlaneDbFile.Planes_Item_Type.Plane_Type.Specials_Item_Type()
@@ -195,8 +194,7 @@ with
                 bomb.Repeat.Offsets <- toGenList [0]
                 bomb)
             |> toGenList
-        ret.EmptyPayload <- this.EmptyPayload
-        ret
+        yaml.EmptyPayload <- this.EmptyPayload
 
 /// Various kind of planes used in the 1941/42 Moscow theater
 type PlaneModel =
@@ -1011,3 +1009,33 @@ with
 let tryGetPlaneByName name =
     PlaneModel.AllModels
     |> List.tryFind (fun plane -> plane.PlaneName = name)
+
+type PlaneData
+with
+    static member Convert(model : PlaneModel) =
+        { Kind = model.PlaneType
+          Name = model.PlaneName
+          LogName = model.MissionLogName
+          Roles = model.Roles |> List.ofSeq
+          Coalition = model.Coalition
+          ScriptModel = model.ScriptModel
+          Cost = model.Cost
+          BombCapacity = model.BombCapacity
+          CargoCapacity = model.CargoCapacity
+          Payloads =
+            model.Roles
+            |> Seq.map (fun role -> role, model.PayloadForRole(role))
+            |> Map.ofSeq
+          BombLoads = model.BombLoads
+          SpecialLoadsCosts = model.SpecialLoadsCosts
+          EmptyPayload = model.EmptyPayload
+        }
+
+    static member DumpAll(path : string) =
+        let file = PlaneDbFile()
+        for model in PlaneModel.AllModels do
+            let data = PlaneData.Convert(model)
+            let item = PlaneDbFile.Planes_Item_Type()
+            data.ToYaml(item.Plane)
+            file.Planes.Add(item)
+        file.Save(path)
