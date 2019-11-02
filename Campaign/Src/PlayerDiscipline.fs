@@ -52,7 +52,7 @@ type FriendlyDamage =
     }
 with
     static member Judge(config : Configuration, damages : FriendlyDamage seq) =
-        let threshold = 0.005f * PlaneModel.I16.Cost
+        let threshold = 0.005f * PlaneModel.basePlaneCost
         // Accumulate damages, resetting whenever no damage is done for 10s or more
         let accumulatedDamages =
             seq {
@@ -194,7 +194,7 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                                 model.Cost
                             | _ ->
                                 // Some other kind of object. Arbitrarily pick half the cost of an i16
-                                0.5f * PlaneModel.I16.Cost
+                                0.5f * PlaneModel.basePlaneCost
                         let cost = cost * damage.Damage
                         let entry =
                             { Time = missionStart + damage.Timestamp

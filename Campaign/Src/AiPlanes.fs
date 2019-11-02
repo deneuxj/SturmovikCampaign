@@ -49,12 +49,12 @@ with
             [
                 for i in 0..1 do
                     let block = Patrol.Create(store, lcStore, this.Pos + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Coalition.ToCoalition)
-                    let modmask, payload = this.Plane.PayloadForRole(this.Role)
+                    let modmask, payload = this.Plane.Payloads.[this.Role]
                     block.Plane.Country <- Some this.Coalition.ToCountry
                     this.Plane.ScriptModel.AssignTo(block.Plane)
                     block.Plane.PayloadId <- Some payload
                     block.Plane.WMMask <- Some modmask
-                    block.Plane.Name <- sprintf "PTL-%s-%s" this.Plane.PlaneName this.HomeAirfield.AirfieldName
+                    block.Plane.Name <- sprintf "PTL-%s-%s" this.Plane.Name this.HomeAirfield.AirfieldName
                     yield block
             ]
         // Logic to hide icon when the patrol is wiped out
@@ -110,20 +110,20 @@ with
         seq {
             if name.StartsWith("PTL-") then
                 let s = name.Substring(4)
-                for plane in PlaneModel.AllModels do
-                    if s.StartsWith(plane.PlaneName) then
-                        let af = AirfieldId (s.Substring(plane.PlaneName.Length + 1))
+                for plane in PlaneModel.planeDb do
+                    if s.StartsWith(plane.Name) then
+                        let af = AirfieldId (s.Substring(plane.Name.Length + 1))
                         yield plane, af
         }
         |> Seq.tryHead
 
 let getNumPlanesOfType planeType (numPlanes : Map<PlaneModel, float32>) =
     numPlanes
-    |> Seq.sumBy (fun kvp -> if kvp.Key.PlaneType = planeType then kvp.Value else 0.0f)
+    |> Seq.sumBy (fun kvp -> if kvp.Key.Kind = planeType then kvp.Value else 0.0f)
 
 let getNumPlanesWithRole planeRole (numPlanes : Map<PlaneModel, float32>) =
     numPlanes
-    |> Seq.sumBy (fun kvp -> if kvp.Key.Roles.Contains(planeRole) then kvp.Value else 0.0f)
+    |> Seq.sumBy (fun kvp -> if kvp.Key.Roles |> List.exists ((=) planeRole) then kvp.Value else 0.0f)
 
 let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, PlayerHangar.PlayerHangar>) (coalition : CoalitionId) =
     let sg = WorldStateFastAccess.Create state
@@ -132,7 +132,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
         [
             for af, afState in List.zip world.Airfields state.Airfields do
                 let owner = sg.GetRegion(af.Region).Owner
-                if owner = Some coalition.Other && afState.TotalPlaneValue >= PlaneModel.I16.Cost * 2.0f then
+                if owner = Some coalition.Other && afState.TotalPlaneValue >= PlaneModel.basePlaneCost * 2.0f then
                     yield af, afState
         ]
     let fighterRange = 60000.0f
@@ -151,7 +151,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                                     x / x.Length()
                                 let p1 = region.Position + dir * 15000.0f
                                 if (p1 - af.Pos).Length() < fighterRange then
-                                    if getNumPlanesOfType Bomber enemyAirfieldState.NumPlanes >= 1.0f && plane.Roles.Contains Interceptor && count >= 2.0f then
+                                    if getNumPlanesOfType Bomber enemyAirfieldState.NumPlanes >= 1.0f && plane.HasRole Interceptor && count >= 2.0f then
                                         yield af, {
                                             Plane = plane
                                             HomeAirfield = af.AirfieldId
@@ -162,7 +162,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                                             Role = Interceptor
                                             PlaneReserve = int count
                                         }
-                                    if getNumPlanesOfType Attacker enemyAirfieldState.NumPlanes >= 1.0f && plane.Roles.Contains Patroller && count >= 2.0f then
+                                    if getNumPlanesOfType Attacker enemyAirfieldState.NumPlanes >= 1.0f && plane.HasRole Patroller && count >= 2.0f then
                                         yield af, {
                                             Plane = plane
                                             HomeAirfield = af.AirfieldId
@@ -173,7 +173,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                                             Role = Patroller
                                             PlaneReserve = int count
                                         }
-                                    if getNumPlanesOfType Fighter enemyAirfieldState.NumPlanes >= 1.0f && plane.Roles.Contains Patroller && count >= 2.0f then
+                                    if getNumPlanesOfType Fighter enemyAirfieldState.NumPlanes >= 1.0f && plane.HasRole Patroller && count >= 2.0f then
                                         yield af, {
                                             Plane = plane
                                             HomeAirfield = af.AirfieldId
@@ -191,7 +191,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                 let owner = sg.GetRegion(af.Region).Owner
                 for plane, count in afState.NumPlanes |> Map.toSeq do
                     let count = count - PlayerHangar.getTotalPlanesReservedAtAirfield coalition af.AirfieldId plane reservedPlanes
-                    if owner = Some coalition && plane.Coalition = coalition && plane.Roles.Contains Patroller && count > 2.0f then
+                    if owner = Some coalition && plane.Coalition = coalition && plane.HasRole Patroller && count > 2.0f then
                         // Order the two regions so that the friendly one is first, if any
                         let regions =
                             if sg.GetRegion(region1).Owner = Some coalition then
@@ -293,12 +293,12 @@ with
             [
                 for i in 1..numPlanes do
                     let block = Attacker.Create(store, lcStore, this.Start + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Target, landOrder)
-                    let modmask, payload = this.Attacker.PayloadForRole(this.Role)
+                    let modmask, payload = this.Attacker.Payloads.[this.Role]
                     block.Plane.Country <- Some this.Coalition.ToCountry
                     this.Attacker.ScriptModel.AssignTo(block.Plane)
                     block.Plane.WMMask <- Some modmask
                     block.Plane.PayloadId <- Some payload
-                    block.Plane.Name <- sprintf "ATT-%s-%s" this.Attacker.PlaneName this.HomeAirfield.AirfieldName 
+                    block.Plane.Name <- sprintf "ATT-%s-%s" this.Attacker.Name this.HomeAirfield.AirfieldName 
                     yield block
             ]
         let conjKilled =
@@ -350,9 +350,9 @@ with
         seq {
             if name.StartsWith("ATT-") then
                 let s = name.Substring(4)
-                for plane in PlaneModel.AllModels do
-                    if s.StartsWith(plane.PlaneName) then
-                        let af = AirfieldId (s.Substring(plane.PlaneName.Length + 1))
+                for plane in PlaneModel.planeDb do
+                    if s.StartsWith(plane.Name) then
+                        let af = AirfieldId (s.Substring(plane.Name.Length + 1))
                         yield plane, af
         }
         |> Seq.tryHead
@@ -360,7 +360,7 @@ with
 let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_, PlayerHangar.PlayerHangar>) =
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
-    let attackers = world.PlaneSet.AllModels |> Seq.filter (fun plane -> plane.Roles.Contains GroundAttacker)
+    let attackers = world.PlaneSet.AllModels |> Seq.filter (fun plane -> plane.HasRole GroundAttacker)
     seq {
         for af, afState in List.zip world.Airfields state.Airfields do
             for af2, afState2 in List.zip world.Airfields state.Airfields do
@@ -370,7 +370,7 @@ let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_,
                     for coalition in [Axis; Allies] do
                         for attacker in attackers do
                             // If there are enough attackers of the same type, with enough bombs in the airfield's supplies, generate an attack order.
-                            let _, payload = attacker.AttackPayload
+                            let _, payload = attacker.Payloads.[GroundAttacker]
                             let bombLoad =
                                 attacker.BombLoads
                                 |> List.tryFind (fun (idx, load) -> idx = payload)
@@ -420,7 +420,7 @@ let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_,
                     if regState.Owner = Some coalition.Other && (region.Position - af.Pos).Length() < 75000.0f then
                         for attacker in attackers |> Seq.filter (fun plane -> plane.Coalition = coalition) do
                             // If there are enough attackers of the same type, with enough bombs in the airfield's supplies, generate an attack order.
-                            let _, payload = attacker.AttackPayload
+                            let _, payload = attacker.Payloads.[GroundAttacker]
                             let bombLoad =
                                 attacker.BombLoads
                                 |> List.tryFind (fun (idx, load) -> idx = payload)

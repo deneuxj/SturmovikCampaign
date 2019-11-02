@@ -57,7 +57,7 @@ with
         let mkPlaneReport (m : Map<PlaneModel, int>) =
             m
             |> Map.toSeq
-            |> Seq.map (fun (plane, qty) -> sprintf "%s: %d" plane.PlaneName qty)
+            |> Seq.map (fun (plane, qty) -> sprintf "%s: %d" plane.Name qty)
             |> String.concat ", "
         seq {
             yield sprintf "<u>%s</u> %s<br>"

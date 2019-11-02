@@ -501,9 +501,9 @@ module MissionFileGeneration =
                     for plane, data in world.PlaneSet.Planes |> Map.toSeq do
                         let regularCost, luxuryCost = data.RearValueFactor |> extractRegularAndLuxuryCosts
                         if data.RearValueFactor > 1.0f then
-                            yield sprintf "Sparkly new %s require +%1.1f from extra fighter quota at ALL CAPS airfields." plane.PlaneName luxuryCost
+                            yield sprintf "Sparkly new %s require +%1.1f from extra fighter quota at ALL CAPS airfields." plane.Name luxuryCost
                         elif data.RearValueFactor < 1.0f then
-                            yield sprintf "%s are available at a %1.2f%% discount at ALL CAPS airfields." plane.PlaneName (100.0f * (1.0f - regularCost))
+                            yield sprintf "%s are available at a %1.2f%% discount at ALL CAPS airfields." plane.Name (100.0f * (1.0f - regularCost))
                 ]
                 |> String.concat " "
             else

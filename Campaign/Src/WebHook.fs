@@ -118,7 +118,7 @@ let postWorldState channel (world : World, state : WorldState) =
         |> Map.filter (fun _ num -> num > 0)
     let showPlanes planes =
         planes
-        |> Map.map (fun (plane : PlaneModel) num -> sprintf "%s: %d" plane.PlaneName num)
+        |> Map.map (fun (plane : PlaneModel) num -> sprintf "%s: %d" plane.Name num)
         |> Map.toSeq
         |> Seq.map snd
         |> String.concat "\n"

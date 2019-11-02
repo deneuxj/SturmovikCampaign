@@ -587,7 +587,7 @@ module Support =
                     | Some coalition ->
                         let numPlanes = afState.NumPlanes |> Map.toSeq |> Seq.sumBy snd
                         let numReservedPlanes =
-                            PlaneModel.AllModels
+                            PlaneModel.planeDb
                             |> Seq.sumBy (fun plane -> PlayerHangar.getTotalPlanesReservedAtAirfield coalition af.AirfieldId plane hangars)
                             |> int
                         let capacity = afState.StorageCapacity(af, world.SubBlockSpecs) / bombCost
@@ -1085,7 +1085,7 @@ type Plugin() =
                             |> Map.ofSeq)) // Nested maps to one map from airfield and plane to quantity
                     |> List.fold Map.sumUnion Map.empty // Union across coalitions
                     |> Map.toSeq
-                    |> Seq.map (fun ((af, plane), qty) -> af.AirfieldName, plane.PlaneName, qty) // Turn airfield and plane IDs to strings
+                    |> Seq.map (fun ((af, plane), qty) -> af.AirfieldName, plane.Name, qty) // Turn airfield and plane IDs to strings
                     |> Seq.groupBy (fun (af, _, _) -> af) // Recreate nested maps: top-level, group by airfield
                     |> Seq.map (fun (af, grp) ->
                         af,

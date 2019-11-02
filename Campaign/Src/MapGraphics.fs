@@ -434,7 +434,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
             let start = af1.Pos
             let tip = af2.Pos
             let width =
-                let x = (qty / (PlaneModel.Ju52.CargoCapacity * bombCost)) |> min 1.0f
+                let x = (qty / (2300.0f<K> * bombCost)) |> min 1.0f
                 computeArrowWidth x
             renderArrow(start, tip, width, 45.0f, color)
             |> MapIcons.FromIcons

@@ -160,7 +160,7 @@ let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes2 : PlaneSpecsPl
             |> bombLoadsCosts
             |> combine plane.SpecialLoadsCosts
         let defaultPayload =
-            if plane.PlaneType = PlaneType.Fighter then
+            if plane.Kind = PlaneType.Fighter then
                 0
             else
                 loadouts
@@ -176,7 +176,7 @@ let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes2 : PlaneSpecsPl
                 data.AllowedMods
                 |> List.map (fun m -> m.ModFilter)
                 |> String.concat "/"
-        let planeSpec = newAirfieldPlane(modFilter, constr, 0, defaultPayload, "", plane.PlaneName, -1)
+        let planeSpec = newAirfieldPlane(modFilter, constr, 0, defaultPayload, "", plane.Name, -1)
                             .SetScript(T.String model.Script)
                             .SetModel(T.String model.Model)
                             .SetStartInAir(T.Integer 2)
@@ -370,7 +370,7 @@ let createParkedPlanes store (world : World) (state : WorldState) (reservedPlane
         let modelScript = world.PlaneSet.StaticPlaneModel model
         let mcus =
             let durability =
-                match model.PlaneType with
+                match model.Kind with
                 | PlaneType.Fighter -> 8000
                 | PlaneType.Attacker -> 11000
                 | PlaneType.Bomber | PlaneType.Transport -> 12000
@@ -404,7 +404,7 @@ let createParkedPlanes store (world : World) (state : WorldState) (reservedPlane
                 let bomberPlaces = ref(af.ParkedBombers |> Array.ofList |> Array.shuffle rnd |> List.ofArray)
                 // Assign a plane to a spot where it fits. Prioritize the smallest spots.
                 let assign (plane : PlaneModel) =
-                    match plane.PlaneType with
+                    match plane.Kind with
                     | PlaneType.Transport
                     | PlaneType.Bomber ->
                         match bomberPlaces.Value with
@@ -426,7 +426,7 @@ let createParkedPlanes store (world : World) (state : WorldState) (reservedPlane
                     afs.NumPlanes
                     |> Map.toSeq
                     |> Seq.sortBy(fun (plane, _) ->
-                        match plane.PlaneType with
+                        match plane.Kind with
                         | PlaneType.Bomber
                         | PlaneType.Transport -> 0
                         | PlaneType.Attacker -> 1

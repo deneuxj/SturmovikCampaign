@@ -69,8 +69,8 @@ with
     static member TryFromYaml(data : PlaneSetFile.PlaneSet_Type.Planes_Item_Type) =
         let model = data.Model.ToLowerInvariant()
         let plane =
-            PlaneModel.AllModels
-            |> List.tryFind(fun plane -> model.Contains(plane.PlaneName.ToLowerInvariant()))
+            PlaneModel.planeDb
+            |> List.tryFind(fun plane -> model.Contains(plane.Name.ToLowerInvariant()))
         let idx = data.Static
         let factor = float32 data.Factor
         let mods =
@@ -153,24 +153,7 @@ with
         { Name = "default"
           StartDate = DateTime.Parse("1-Jan-1942")
           Regions = [Region.Stalingrad]
-          Planes =
-            [ (Bf109e7, 3)
-              (Bf109f4, 0)
-              (Mc202, 5)
-              (Bf110e, 6)
-              (Ju88a4, 9)
-              (Ju87, 7)
-              (Ju52, 11)
-              (He111h6, 10)
-              (I16, 0)
-              (Yak1s69, 8)
-              (Lagg3s29, 2)
-              (P40, 7)
-              (IL2M42, 11)
-              (Pe2s87, 12)
-            ]
-            |> List.map mkPlane
-            |> Map.ofList
+          Planes = Map.empty
         }
 
     static member StaticPlaneModels(coalition) =
@@ -210,7 +193,7 @@ with
                     failwithf "Multiple planes in the same coalition '%s' share the same Static index '%d': %s"
                         (string coalition)
                         idx
-                        (models |> Seq.map (fun (model, _) -> model.PlaneName) |> String.concat ", ")
+                        (models |> Seq.map (fun (model, _) -> model.Name) |> String.concat ", ")
             { Name = data.Name
               StartDate = date
               Regions = regions
@@ -242,7 +225,7 @@ with
 
     member this.AllPlanesOfType(typ : PlaneType, coalition : CoalitionId) =
         this.AllModels
-        |> Seq.filter (fun model -> model.PlaneType = typ && model.Coalition = coalition)
+        |> Seq.filter (fun model -> model.Kind = typ && model.Coalition = coalition)
         |> Array.ofSeq
 
     member this.RandomPlaneOfType(typ : PlaneType, coalition : CoalitionId) =
@@ -252,7 +235,7 @@ with
 
     member this.RandomPlaneWithRole(role : PlaneRole, coalition : CoalitionId) =
         this.AllModels
-        |> Seq.filter (fun model -> model.Roles.Contains(role) && model.Coalition = coalition)
+        |> Seq.filter (fun model -> model.Roles |> List.exists ((=) role) && model.Coalition = coalition)
         |> Array.ofSeq
         |> Array.shuffle (System.Random())
         |> Seq.tryHead

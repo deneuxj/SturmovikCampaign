@@ -46,7 +46,7 @@ with
             match this.Recipient with
             | None -> "ALL"
             | Some (guid, name) -> sprintf "'%s'/'%s'" guid (name.Replace("'", ""))
-        sprintf "PLANEGIFT:'%s' RECIPIENT:%s PLANE:'%s' AIRFIELD:'%s'" this.GiverGuid recipient this.Plane.PlaneName this.Airfield.AirfieldName
+        sprintf "PLANEGIFT:'%s' RECIPIENT:%s PLANE:'%s' AIRFIELD:'%s'" this.GiverGuid recipient this.Plane.Name this.Airfield.AirfieldName
 
     static member TryFromString(s) =
         match s with
@@ -67,7 +67,7 @@ with
                         else
                             logger.Error(sprintf "Failed to parse PlaneGift recipient'%s'" s)
                             Error()
-                match recipient, PlaneModel.AllModels |> List.tryFind (fun plane -> plane.PlaneName = planeName) with
+                match recipient, PlaneModel.tryGetPlaneByName planeName with
                 | Ok(recipient), Some plane ->
                     logger.Debug(sprintf "Successfully parsed PlaneGift '%s'" s)
                     Some {
@@ -340,9 +340,9 @@ with
                     if oldQty >= 1.0f && newQty < 1.0f then
                         yield PlanesAtAirfield(af, airfields.[af])
                     if int newQty <= 0 then
-                        yield Announce(coalition, [ StringResources.tookLastPlane hangar.RankedName plane.PlaneName af.AirfieldName ])
+                        yield Announce(coalition, [ StringResources.tookLastPlane hangar.RankedName plane.Name af.AirfieldName ])
                     else
-                        yield Announce(coalition, [ StringResources.enteredPlane hangar.RankedName plane.PlaneName af.AirfieldName (int newQty)])
+                        yield Announce(coalition, [ StringResources.enteredPlane hangar.RankedName plane.Name af.AirfieldName (int newQty)])
                 ]
             | None ->
                 logger.Error("Attempt to check out plane from neutral region")
@@ -377,7 +377,7 @@ with
             ]
 
         | PlaneCheckIn(user, plane, health, af) ->
-            logger.Info (sprintf "Plane check in by %s of a %s at %s, health %3.0f" user.Name plane.PlaneName af.AirfieldName (health * 100.0f))
+            logger.Info (sprintf "Plane check in by %s of a %s at %s, health %3.0f" user.Name plane.Name af.AirfieldName (health * 100.0f))
             let planes =
                 this.Airfields.TryFind(af)
                 |> Option.defaultValue(Map.empty)
@@ -395,7 +395,7 @@ with
                     yield PlanesAtAirfield(af, airfields.[af])
                     match this.State.GetRegion(this.World.GetAirfield(af).Region).Owner with
                     | Some coalition ->
-                        yield Announce(coalition, [StringResources.planeAvailableAgain plane.PlaneName af.AirfieldName])
+                        yield Announce(coalition, [StringResources.planeAvailableAgain plane.Name af.AirfieldName])
                     | None ->
                         ()
             ]
@@ -437,13 +437,13 @@ with
                             logger.Info(sprintf "Gift from %s to %s" hangarOut.PlayerName hangarIn.PlayerName)
                             [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)
                              hangarIn.AddPlane(gift.Airfield, gift.Plane, 1.0f)],
-                            [Overview (giverUserId, 0, [StringResources.giftToPlayer gift.Plane.PlaneName hangarIn.PlayerName gift.Airfield.AirfieldName])
-                             Overview (recipientUserId, 0, [StringResources.giftFromPlayer gift.Plane.PlaneName gift.Airfield.AirfieldName hangarOut.PlayerName])]
+                            [Overview (giverUserId, 0, [StringResources.giftToPlayer gift.Plane.Name hangarIn.PlayerName gift.Airfield.AirfieldName])
+                             Overview (recipientUserId, 0, [StringResources.giftFromPlayer gift.Plane.Name gift.Airfield.AirfieldName hangarOut.PlayerName])]
                     | Some (hangarOut : PlayerHangar), None ->
                         // Gift to public
                         logger.Info(sprintf "Gift from %s to the public" hangarOut.PlayerName)
                         [hangarOut.RemovePlane(gift.Airfield, gift.Plane, 1.0f, 0.0f<E>)],
-                        [Announce(coalition, [StringResources.giftToPublic hangarOut.PlayerName gift.Plane.PlaneName gift.Airfield.AirfieldName])]
+                        [Announce(coalition, [StringResources.giftToPublic hangarOut.PlayerName gift.Plane.Name gift.Airfield.AirfieldName])]
                 let hangars =
                     newHangars
                     |> List.fold (fun hangars h -> hangars |> Map.add ((string h.Player), coalition) h) this.Hangars
@@ -565,7 +565,7 @@ with
     member this.GetFreshSpawnAlternatives(planeTypes : Set<PlaneType>, af : AirfieldId) =
         let planes = this.State.GetAirfield(af).NumPlanes
         planes
-        |> Map.filter (fun plane qty -> qty >= 1.0f && planeTypes.Contains(plane.PlaneType))
+        |> Map.filter (fun plane qty -> qty >= 1.0f && planeTypes.Contains(plane.Kind))
         |> Map.toSeq
         |> Seq.map fst
 

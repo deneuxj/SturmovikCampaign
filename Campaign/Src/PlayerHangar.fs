@@ -158,7 +158,7 @@ with
         [
             for kvp in hangar.Planes do
                 if kvp.Value >= 1.0f then
-                    yield kvp.Key.PlaneName
+                    yield kvp.Key.Name
         ]
 
     /// Return the rank corresponding to the reserve

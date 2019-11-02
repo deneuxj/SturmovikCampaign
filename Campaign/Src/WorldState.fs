@@ -789,7 +789,7 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
                         airfield.ParkedAttackers.Length + airfield.ParkedBombers.Length + airfield.ParkedFighters.Length
                         |> float32
                         |> (*) config.NumPlanesFactor
-                let planeTypeShares = PlaneModel.PlaneTypeShares(owner)
+                let planeTypeShares = PlaneModel.planeTypeShares(owner)
                 let numFighters = maxPlanes * planeTypeShares.[PlaneType.Fighter] |> scale |> round
                 let numAttackers = maxPlanes * planeTypeShares.[PlaneType.Attacker] |> scale |> round
                 let numBombers = maxPlanes * planeTypeShares.[PlaneType.Bomber] |> scale |> round
@@ -804,7 +804,7 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
                 let numPlanes =
                     world.PlaneSet.AllModels
                     |> Seq.filter (fun plane -> plane.Coalition = owner)
-                    |> Seq.map (fun plane -> plane.PlaneType, Array.init (int <| getNumPlanes plane.PlaneType) (fun _ -> plane))
+                    |> Seq.map (fun plane -> plane.Kind, Array.init (int <| getNumPlanes plane.Kind) (fun _ -> plane))
                     |> Seq.groupBy fst
                     |> Seq.map (fun (planeType, planes) -> planeType, planes |> Seq.map snd |> Array.concat |> Array.shuffle random |> Array.take (int <| getNumPlanes planeType))
                     |> Seq.map snd

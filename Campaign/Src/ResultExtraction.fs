@@ -48,7 +48,7 @@ let planeObjectType (planeSet : PlaneSet) (s : string) =
     | s -> Some s
     |> Option.bind (fun s ->
         planeSet.AllModels
-        |> Seq.tryFind (fun model -> s.ToLower().Contains(model.MissionLogName)))
+        |> Seq.tryFind (fun model -> s.ToLower().Contains(model.LogName)))
 
 /// A region shipped supplies
 type SuppliesShipped = {
@@ -362,8 +362,8 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 planePilot := planePilot.Value.Add(playerPlane.VehicleId, (playerPlane.Name, coalition))
                 initBombs <- initBombs.Add(playerPlane.VehicleId, playerPlane.Bombs)
                 match playerPlane.VehicleType with
-                | PlaneObjectType plane when plane.Roles.Contains CargoTransporter ->
-                    let modmask, payload = plane.CargoPayload
+                | PlaneObjectType plane when plane.HasRole CargoTransporter ->
+                    let modmask, payload = plane.Payloads.[CargoTransporter]
                     if playerPlane.Payload = payload then
                         cargo := Map.add playerPlane.VehicleId plane.CargoCapacity cargo.Value
                 | _ ->

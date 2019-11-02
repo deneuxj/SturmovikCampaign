@@ -268,7 +268,11 @@ let createShipConvoyOrders missionLength coalition =
     >> List.mapi (fun i (convoy, means) -> { OrderId = { Index = i + 1; Coalition = coalition }; Means = means; Convoy = convoy })
 
 let createAirConvoyOrders missionLength coalition =
-    let exactCapacity = (PlaneModel.Ju52.CargoCapacity * bombCost)
+    let ju52Capacity =
+        PlaneModel.tryGetPlaneByName "ju52"
+        |> Option.map (fun plane -> plane.CargoCapacity)
+        |> Option.defaultVal 2300.0f<K>
+    let exactCapacity = (ju52Capacity * bombCost)
     createConvoyOrders
         missionLength
         exactCapacity
@@ -304,7 +308,7 @@ let prioritizeConvoys (missionLength : float32<H>) (world : World) (state : Worl
                     state.Airfields
                     |> List.find (fun af -> af.AirfieldId = af0)
                 afs.NumPlanes
-                |> Map.exists (fun plane qty -> plane.Roles.Contains PlaneModel.CargoTransporter && qty >= 1.0f)
+                |> Map.exists (fun plane qty -> plane.HasRole PlaneModel.CargoTransporter && qty >= 1.0f)
             | _ ->
                 true)
         // Sort by supply and repair needs
@@ -499,7 +503,7 @@ let pickPlaneToProduce (coalition : CoalitionId) (world : World) (state : WorldS
     let wg = WorldFastAccess.Create world
     let sg = WorldStateFastAccess.Create state
 
-    let planeTypeShares = PlaneModel.PlaneTypeShares(coalition)
+    let planeTypeShares = PlaneModel.planeTypeShares(coalition)
     assert(planeTypeShares |> Seq.sumBy (fun kvp -> kvp.Value) = 1.0f)
     let numPlanesPerType =
         state.Airfields
@@ -507,7 +511,7 @@ let pickPlaneToProduce (coalition : CoalitionId) (world : World) (state : WorldS
         |> Seq.fold (fun perType afs ->
             afs.NumPlanes
             |> Map.toSeq
-            |> Seq.map (fun (plane, qty) -> plane.PlaneType, qty) // Replace exact plane model by plane type
+            |> Seq.map (fun (plane, qty) -> plane.Kind, qty) // Replace exact plane model by plane type
             |> Seq.groupBy fst
             |> Seq.map (fun (typ, xs) -> typ, xs |> Seq.sumBy snd) // Total number of planes per type at that airfield
             |> Seq.fold (fun perType (typ, qty) -> // Add to total number of planes per type for all regions

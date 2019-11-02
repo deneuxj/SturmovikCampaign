@@ -79,8 +79,8 @@ with
         match context.Binding.TryFind(entry.VehicleId) with
         | Some(coalition, DynamicPlane plane) ->
             let cargo =
-                if plane.Roles.Contains CargoTransporter then
-                    let modmask, payload = plane.CargoPayload
+                if plane.HasRole CargoTransporter then
+                    let modmask, payload = plane.Payloads.[CargoTransporter]
                     if entry.Payload = payload then
                         plane.CargoCapacity
                     else
@@ -119,7 +119,7 @@ with
                 elif hangar.HasReservedPlane(af, plane) then
                     FromReserved
                 elif context.RearAirfields.Contains(af) then
-                    let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.PlaneType) |> Option.defaultValue 0.0f
+                    let numFreshSpawnsLeft = hangar.FreshSpawns.TryFind(plane.Kind) |> Option.defaultValue 0.0f
                     let regularCost, luxuryCost = context.GetRearValueFactor(plane) |> PlayerHangar.extractRegularAndLuxuryCosts
                     match numFreshSpawnsLeft, hangar.LuxurySpawns + hangar.BonusLuxurySpawns with
                     | x, y when x >= regularCost && y >= luxuryCost ->
@@ -142,7 +142,7 @@ with
                         | planes ->
                             let planes =
                                 planes
-                                |> List.map (fun plane -> plane.PlaneName)
+                                |> List.map (fun plane -> plane.Name)
                                 |> String.concat ", "
                             Denied (StringResources.freshSpawnsExhaustedAlt planes)
                 else
@@ -165,11 +165,11 @@ with
                     match cost with
                     | Denied reason ->
                         yield Message(Warning(user, 0,
-                                        [StringResources.takeOffDenied rank plane.PlaneName af.AirfieldName
+                                        [StringResources.takeOffDenied rank plane.Name af.AirfieldName
                                          reason
                                          StringResources.takeOffKickWarning]))
                     | FromReserved | FreshSpawn _ ->
-                        yield Message(Overview(user, 0, [StringResources.takeOffCleared rank plane.PlaneName af.AirfieldName]))
+                        yield Message(Overview(user, 0, [StringResources.takeOffCleared rank plane.Name af.AirfieldName]))
                         if not(context.State.State.RearAirfields.Contains(af) && context.Limits.SpawnsAreRestricted) then
                             // Only remove the plane from the airfield's pool if it's not taken from the infinite pool of the rear airfield
                             yield PlaneCheckOut(user, plane, af)
@@ -177,7 +177,7 @@ with
                             yield RemoveReservedPlane(user, plane, af, coalition)
                     | FromPublic ->
                         yield Message(Overview(user, 0,
-                                        [ StringResources.takeOffClearedAlt rank plane.PlaneName af.AirfieldName 
+                                        [ StringResources.takeOffClearedAlt rank plane.Name af.AirfieldName 
                                           StringResources.notAReservedPlane
                                           StringResources.rearSpawnAdvice
                                         ]))
@@ -185,7 +185,7 @@ with
                         let numExtra = context.GetNumPlanesAt(af, plane) - context.GetNumReservedPlanes(coalition, af, plane)
                         if numExtra < 3.0f then
                             yield Message(Announce(coalition,
-                                            [ StringResources.scarceTakeOff user.Name plane.PlaneName af.AirfieldName ]))
+                                            [ StringResources.scarceTakeOff user.Name plane.Name af.AirfieldName ]))
                 ]
             let supplyCommands =
                 if cargo > 0.0f<K> || weight >= 500.0f<K> then
@@ -222,14 +222,14 @@ with
             [
                 match this.CheckoutCost with
                 | FreshSpawn(regularCost, luxuryCost) ->
-                    yield PlayerFreshSpawn(this.Player, this.Coalition, this.Plane.PlaneType, regularCost, luxuryCost)
+                    yield PlayerFreshSpawn(this.Player, this.Coalition, this.Plane.Kind, regularCost, luxuryCost)
                 | _ -> ()
 
                 let rank = context.GetHangar(this.Player, this.Coalition).RankedName
                 yield Message(
                         Announce(
                             this.Coalition,
-                            [StringResources.takeOff rank this.StartAirfield.AirfieldName (string this.Plane.PlaneType)]))
+                            [StringResources.takeOff rank this.StartAirfield.AirfieldName (string this.Plane.Kind)]))
             ]
         | unexpected ->
             logger.Warn(sprintf "Unexpected state during take off %A" unexpected)
@@ -449,14 +449,14 @@ with
                     region
                     |> Option.map context.State.GetRegion
                     |> Option.bind (fun region -> region.Owner)
-                if territory <> Some this.Coalition && this.Plane.PlaneType = PlaneType.Fighter then
+                if territory <> Some this.Coalition && this.Plane.Kind = PlaneType.Fighter then
                     yield ResetLuxuryBonus(this.Player, this.Coalition)
             ]
         | _, health ->
             assert(health <= 0.0f)
             { this with State = MissionEnded },
             [
-                if this.Plane.PlaneType = PlaneType.Fighter then
+                if this.Plane.Kind = PlaneType.Fighter then
                     yield ResetLuxuryBonus(this.Player, this.Coalition)
             ]
 
@@ -473,7 +473,7 @@ with
                 if this.CheckoutCost.GrantsReservationOnLanding then
                     yield AddReservedPlane(this.Player, this.Plane, this.Health, this.StartAirfield, this.Coalition)
             | _ ->
-                if this.Plane.PlaneType = PlaneType.Fighter then
+                if this.Plane.Kind = PlaneType.Fighter then
                     yield ResetLuxuryBonus(this.Player, this.Coalition)
             yield ShowHangar(this.Player, this.Coalition)
         ]
@@ -506,7 +506,7 @@ with
         | Landed _, (:? TakeOffEntry as takeOff) when takeOff.VehicleId = this.Vehicle ->
             this.HandleTakeOffAgain()
         | _, (:? TakeOffEntry as takeOff) when takeOff.VehicleId = this.Vehicle ->
-            logger.Warn(sprintf "Spurious take off event for %s in %s id %d" this.Player.Name this.Plane.PlaneName this.Vehicle)
+            logger.Warn(sprintf "Spurious take off event for %s in %s id %d" this.Player.Name this.Plane.Name this.Vehicle)
             this, []
         | _, (:? DamageEntry as damage) when damage.AttackerId = this.Vehicle ->
             this.HandleInflictedDamage(context, damage)
@@ -519,7 +519,7 @@ with
         | InFlight, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
             this.HandleLanding(context, landing)
         | _, (:? LandingEntry as landing) when landing.VehicleId = this.Vehicle ->
-            logger.Warn(sprintf "Spurious landing event for %s in %s id %d" this.Player.Name this.Plane.PlaneName this.Vehicle)
+            logger.Warn(sprintf "Spurious landing event for %s in %s id %d" this.Player.Name this.Plane.Name this.Vehicle)
             this, []
         | Landed(af, _), (:? PlayerMissionEndEntry as finish) when finish.VehicleId = this.Vehicle ->
             let pos = Vector2(float32 finish.Position.X, float32 finish.Position.Z)
