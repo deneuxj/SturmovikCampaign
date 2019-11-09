@@ -60,6 +60,7 @@
     <Compile Include="Src\PlaneSet.fs" />
     <Compile Include="Src\Config.fs" />
     <Compile Include="Src\WorldDescription.fs" />
+    <Compile Include="Src\NewWorldDescription.fs" />
     <Compile Include="Src\WorldState.fs" />
     <Compile Include="Src\PlayerHangar.fs" />
     <Compile Include="Src\Weather.fs" />
