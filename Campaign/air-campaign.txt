@@ -1,0 +1,29 @@
+Map is divided in regions, each controlled by at most one side
+
+Each side has a rear base
+
+Each region may have an airfield, and each airfield has a number of operational facilities (ammo, fuel, repairs)
+
+Each airfield has operational points, which can be affected negatively by raids, and positively by connection to the rear base
+
+Each region has logistics infrastructure with neighbours: bridges, train stations, camps
+
+Regions have connection capacity to the rear base depending on the state of logistics infrastructure on the paths to the rear base
+
+An airfield is active if it has enough operational points
+
+Each region has ground force points.
+Each active airfield within range provides extra points.
+Regions on the front lines deplete their points every turn.
+Regions get new ground force points every turn depending on the state of logistics infrastructure.
+When two enemy contiguous regions have a point difference that exceeds a certain threshold, the stronger one takes over the weaker one.
+
+Targets of opportunity consist of truck convoys, ships, trains. They are randomly generated and destroying them affects replenishment of operational points
+
+Tank columns are other targets of opportunity, and destroying them affects the ground force points
+
+Ground battles occur across the front line, and the outcome affects the ground force points in the two involved opposing regions
+
+The planes available at airfields depend on their operational points, and the history of flights.
+Each campaign scenario includes the relative number of flights of each model, ideally following historical values.
+When a plane is flown too often, it is removed from the plane set of the most popular airfields.
