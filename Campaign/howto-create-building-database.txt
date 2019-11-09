@@ -1,0 +1,32 @@
+The campaign system analyses damages caused to buildings and uses that information to affect the status of regions in the campaign.
+
+To be able to perform this task, the software needs a database of all buildings that have strategic value, which are the parts that compose them, and their geometric extent.
+
+This database has to be built manually, and the mission editor is used for that.
+
+Instructions:
+
+1) Pick a building group from the Buildings or the Blocks group in the mission editor
+
+2) Place it on the map, anywhere
+
+3) Pick the Influence Area MCU from the MCUs group
+
+4) Place it over the building
+
+5) Right-click on it, "Edit influence area boundary"
+
+6) Reshape the area so that it better matches the shape of the buildings. There's no need to be super-precise, a rough rectangle usually does the job.
+You can add a vertex in the shape by pressing control and clicking on an edge after the currently selected vertex (clockwise).
+You can select a vertex by double-clicking on it. The shape must be convex, i.e. the segment between any two points inside the shape must also be inside the shape.
+Press ESC to get out of the influence area boundary edit mode.
+
+7) Select the building. Now you will mark all the strategically relevant parts of the group, i.e. fuel tanks, houses... To do so:
+In the properties dialog, click on "Add" in the Damage panel. A dialog opens, click OK. Check if a part of the building group looks destroyed or disappeared.
+If it's not an important part (e.g. a fence, a net), double click in the row in the Damage table, change the Structure ID to 1, press OK, and repeat until you find an important part.
+Keep adding rows for each important part until you have identified all of them.
+
+If you are lucky, all the important parts have low structure IDs. Unfortunately some can have high IDs, I think the max value might be 128.
+To find those, it's better to create a mission with an AI that bombs the building, and look for structure IDs in the logs, but that's a bit technical.
+
+The campaign system uses a file named Buildings.Mission as the database. Edit this mission directly, or work in a separate mission and import your buildings as groups or template in Buildings.Mission when you are done.

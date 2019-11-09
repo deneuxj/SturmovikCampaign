@@ -1,0 +1,888 @@
+# Mission File Version = 1.0;
+
+Options
+{
+  LCName = 0;
+  LCDesc = 1;
+  LCAuthor = 2;
+  PlayerConfig = "";
+  Time = 12:30:0;
+  Date = 19.11.1942;
+  HMap = "graphics\landscape\height.hini";
+  Textures = "graphics\landscape\textures.tini";
+  Forests = "graphics\landscape\trees\woods.wds";
+  Layers = "";
+  GuiMap = "lapino-winter";
+  SeasonPrefix = "wi";
+  MissionType = 0;
+  AqmId = 0;
+  CloudLevel = 500;
+  CloudHeight = 200;
+  PrecLevel = 0;
+  PrecType = 0;
+  CloudConfig = "winter\00_clear_00\sky.ini";
+  SeaState = 0;
+  Turbulence = 0;
+  TempPressLevel = 0;
+  Temperature = -15;
+  Pressure = 760;
+  WindLayers
+  {
+    0 :     0 :     0;
+    500 :     0 :     0;
+    1000 :     0 :     0;
+    2000 :     0 :     0;
+    5000 :     0 :     0;
+  }
+  Countries
+  {
+    0 : 0;
+    101 : 1;
+    102 : 1;
+    103 : 1;
+    201 : 2;
+    202 : 2;
+    203 : 2;
+    301 : 3;
+    302 : 3;
+    303 : 3;
+    304 : 3;
+    305 : 3;
+    401 : 4;
+    402 : 4;
+  }
+}
+
+Block
+{
+  Name = "Block";
+  Index = 2;
+  LinkTrId = 0;
+  XPos = 46618.721;
+  YPos = 75.191;
+  ZPos = 12154.016;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_ammo_1.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_ammo_1.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 3;
+  LinkTrId = 0;
+  XPos = 46569.204;
+  YPos = 76.285;
+  ZPos = 12157.297;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_ammo_2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_ammo_2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 4;
+  LinkTrId = 0;
+  XPos = 46529.305;
+  YPos = 77.380;
+  ZPos = 12160.409;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_ammo_3.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_ammo_3.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 5;
+  LinkTrId = 0;
+  XPos = 46475.874;
+  YPos = 79.502;
+  ZPos = 12158.106;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_ammo_4.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_ammo_4.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 6;
+  LinkTrId = 0;
+  XPos = 46411.446;
+  YPos = 83.062;
+  ZPos = 12161.240;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_dugouts_1.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_1.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 7;
+  LinkTrId = 0;
+  XPos = 46353.100;
+  YPos = 83.559;
+  ZPos = 12167.448;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_dugouts_2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 8;
+  LinkTrId = 0;
+  XPos = 46243.845;
+  YPos = 84.208;
+  ZPos = 12162.482;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_dugouts_3.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_dugouts_3.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 9;
+  LinkTrId = 0;
+  XPos = 46136.023;
+  YPos = 84.427;
+  ZPos = 12165.622;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_gsm_1.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_1.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    3 = 1;
+    4 = 1;
+    2 = 1;
+    6 = 1;
+    7 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 10;
+  LinkTrId = 0;
+  XPos = 46064.913;
+  YPos = 83.279;
+  ZPos = 12165.622;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_gsm_2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_gsm_2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    0 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 11;
+  LinkTrId = 0;
+  XPos = 45964.714;
+  YPos = 81.507;
+  ZPos = 12169.028;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_hangararc.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_hangararc.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 12;
+  LinkTrId = 0;
+  XPos = 45856.138;
+  YPos = 82.333;
+  ZPos = 12170.557;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_hangarbox.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_hangarbox.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 13;
+  LinkTrId = 0;
+  XPos = 45766.677;
+  YPos = 81.209;
+  ZPos = 12171.322;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_hangars_1.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_hangars_1.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 14;
+  LinkTrId = 0;
+  XPos = 45684.656;
+  YPos = 82.102;
+  ZPos = 12173.095;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_hangars_2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_hangars_2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 15;
+  LinkTrId = 0;
+  XPos = 45609.723;
+  YPos = 82.729;
+  ZPos = 12173.859;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_hangars_3.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_hangars_3.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 16;
+  LinkTrId = 0;
+  XPos = 45524.469;
+  YPos = 82.524;
+  ZPos = 12175.398;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_sklad.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_sklad.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 17;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46629.422;
+  YPos = 74.994;
+  ZPos = 12154.868;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46607.2, 12125.4;
+    46654.4, 12127.3;
+    46654.5, 12192.5;
+    46606, 12193.8;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 18;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46578.159;
+  YPos = 74.994;
+  ZPos = 12152.847;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46555.7, 12123;
+    46602.7, 12125;
+    46602.7, 12190;
+    46554.7, 12191;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 19;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46522.877;
+  YPos = 74.994;
+  ZPos = 12153.389;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46500.5, 12123.5;
+    46547.5, 12125.5;
+    46547.5, 12190.5;
+    46499.5, 12191.5;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 20;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46471.727;
+  YPos = 74.994;
+  ZPos = 12153.094;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46449.3, 12123.2;
+    46496.3, 12125.2;
+    46496.3, 12190.2;
+    46448.3, 12191.2;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 21;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46411.055;
+  YPos = 74.994;
+  ZPos = 12158.593;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46390.6, 12097;
+    46435.6, 12097.3;
+    46434.8, 12241.6;
+    46388.2, 12240.6;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 22;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46351.959;
+  YPos = 74.994;
+  ZPos = 12151.690;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46333.7, 12066.9;
+    46378.7, 12071;
+    46376.6, 12263.1;
+    46329.5, 12267.1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 23;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46258.820;
+  YPos = 74.994;
+  ZPos = 12142.072;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46222.1, 12036.7;
+    46303.5, 12088.6;
+    46290.4, 12248.5;
+    46209.7, 12279.3;
+    46189.9, 12151.6;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 24;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46133.630;
+  YPos = 74.994;
+  ZPos = 12161.249;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46110.6, 12125.9;
+    46157.9, 12128.6;
+    46158.2, 12207.8;
+    46108.8, 12212;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 25;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46060.579;
+  YPos = 74.994;
+  ZPos = 12165.307;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46037.9, 12135.2;
+    46084.9, 12137.2;
+    46084.9, 12202.2;
+    46036.9, 12203.2;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 26;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45967.658;
+  YPos = 74.994;
+  ZPos = 12162.710;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45920.1, 12124.8;
+    46007.4, 12124.6;
+    46006.2, 12218;
+    45921.6, 12217.4;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 27;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45858.117;
+  YPos = 74.994;
+  ZPos = 12166.009;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45831, 12129.2;
+    45883.2, 12129.3;
+    45881.8, 12211.3;
+    45831.2, 12209.1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 28;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45765.842;
+  YPos = 74.994;
+  ZPos = 12168.939;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45740.4, 12099.2;
+    45792.8, 12101.4;
+    45792.5, 12240.7;
+    45740.1, 12240.5;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 29;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45683.808;
+  YPos = 74.994;
+  ZPos = 12174.256;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45658, 12104.3;
+    45710, 12106.3;
+    45710, 12245.3;
+    45657.7, 12251.4;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 30;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45608.645;
+  YPos = 74.994;
+  ZPos = 12173.570;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45587, 12143.8;
+    45632.9, 12147.7;
+    45633.4, 12206.1;
+    45586.1, 12211.2;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 31;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45522.930;
+  YPos = 74.994;
+  ZPos = 12175.744;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45502.2, 12139.5;
+    45545.3, 12141.4;
+    45544.2, 12212.2;
+    45503.1, 12213.4;
+  }
+}
+
+
+# end of file
