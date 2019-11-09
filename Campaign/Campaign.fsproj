@@ -194,6 +194,10 @@
     </Content>
     <EmbeddedResource Include="Strings.resx" />
     <None Include="Sample.Mission" />
+    <None Include="..\data\Blocks\Buildings.Mission">
+      <Link>Buildings.Mission</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">

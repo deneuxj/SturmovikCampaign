@@ -885,4 +885,1587 @@ MCU_TR_InfluenceArea
 }
 
 
+
+Block
+{
+  Name = "Block";
+  Index = 32;
+  LinkTrId = 0;
+  XPos = 45455.966;
+  YPos = 80.574;
+  ZPos = 12177.631;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\dugout.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\dugout.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 33;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45454.255;
+  YPos = 74.994;
+  ZPos = 12177.324;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45448, 12169.4;
+    45462.3, 12168.7;
+    45462.3, 12184.7;
+    45447.7, 12185.9;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 34;
+  LinkTrId = 0;
+  XPos = 45292.025;
+  YPos = 82.168;
+  ZPos = 12163.919;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\gumrak.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\gumrak.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    6 = 1;
+    8 = 1;
+    9 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 35;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45286.571;
+  YPos = 74.994;
+  ZPos = 12163.748;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45283.8, 11914.5;
+    45392.5, 12061.9;
+    45390.5, 12258.8;
+    45234.7, 12424.8;
+    45191.1, 12361.7;
+    45236.4, 11960.5;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 36;
+  LinkTrId = 0;
+  XPos = 44923.428;
+  YPos = 83.584;
+  ZPos = 12167.523;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_200x140_01.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_200x140_01.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 37;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44916.443;
+  YPos = 74.994;
+  ZPos = 12167.349;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44850.1, 12059.9;
+    44998.4, 12058.2;
+    44997.1, 12281.1;
+    44850.1, 12285.2;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 38;
+  LinkTrId = 0;
+  XPos = 44716.735;
+  YPos = 81.312;
+  ZPos = 12171.867;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_200x140_02.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_200x140_02.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    11 = 1;
+    12 = 1;
+    13 = 1;
+    14 = 1;
+    15 = 1;
+    16 = 1;
+    17 = 1;
+    18 = 1;
+    19 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 39;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44706.037;
+  YPos = 74.994;
+  ZPos = 12171.794;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44639.6, 12063.4;
+    44787.6, 12062.4;
+    44786.6, 12285.4;
+    44639.6, 12289.4;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 40;
+  LinkTrId = 0;
+  XPos = 44543.539;
+  YPos = 80.813;
+  ZPos = 12176.327;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_300x100_01.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_300x100_01.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+    13 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 41;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44537.337;
+  YPos = 74.994;
+  ZPos = 12176.376;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44482.8, 12023;
+    44609.4, 12019.6;
+    44606.8, 12333.5;
+    44473.3, 12330.4;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 42;
+  LinkTrId = 0;
+  XPos = 44376.271;
+  YPos = 80.235;
+  ZPos = 12178.762;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_300x100_02.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_300x100_02.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    3 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    9 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+    13 = 1;
+    14 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 43;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44372.063;
+  YPos = 74.994;
+  ZPos = 12178.633;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44316.7, 12025.3;
+    44443.7, 12021.3;
+    44440.7, 12335.3;
+    44307.7, 12332.3;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 44;
+  LinkTrId = 0;
+  XPos = 44210.641;
+  YPos = 79.865;
+  ZPos = 12185.375;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_300x100_03.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_300x100_03.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 45;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44206.023;
+  YPos = 74.994;
+  ZPos = 12185.282;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44150, 12031.6;
+    44277, 12027.6;
+    44274, 12341.6;
+    44141, 12338.6;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 46;
+  LinkTrId = 0;
+  XPos = 44057.208;
+  YPos = 80.576;
+  ZPos = 12181.389;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_300x100_04.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_300x100_04.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 47;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44054.937;
+  YPos = 74.994;
+  ZPos = 12181.327;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43998.9, 12027.7;
+    44125.9, 12023.7;
+    44122.9, 12337.7;
+    43989.9, 12334.7;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 48;
+  LinkTrId = 0;
+  XPos = 43912.595;
+  YPos = 80.061;
+  ZPos = 12175.936;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_bigwarehouse_300x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_bigwarehouse_300x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 49;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 43908.958;
+  YPos = 74.994;
+  ZPos = 12175.935;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43852.9, 12022.3;
+    43979.9, 12018.3;
+    43976.9, 12332.3;
+    43843.9, 12329.3;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 50;
+  LinkTrId = 0;
+  XPos = 43705.772;
+  YPos = 78.476;
+  ZPos = 12169.363;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_eu_fabric200x200.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_eu_fabric200x200.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 51;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 43694.755;
+  YPos = 74.994;
+  ZPos = 12168.211;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43597.1, 12061;
+    43811.6, 12060.7;
+    43810.5, 12280.6;
+    43595.5, 12280.8;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 52;
+  LinkTrId = 0;
+  XPos = 43455.541;
+  YPos = 80.254;
+  ZPos = 12168.484;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_eu_fabric200x200_2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_eu_fabric200x200_2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 53;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 43446.053;
+  YPos = 74.994;
+  ZPos = 12167.473;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43348.3, 12060.3;
+    43562.3, 12059.3;
+    43561.3, 12279.3;
+    43346.3, 12279.3;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 54;
+  LinkTrId = 0;
+  XPos = 43458.474;
+  YPos = 82.344;
+  ZPos = 11711.369;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_eu_fabric250x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_eu_fabric250x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 55;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 43452.562;
+  YPos = 74.994;
+  ZPos = 11711.689;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43395.6, 11557.8;
+    43522.6, 11553.8;
+    43519.6, 11867.8;
+    43386.6, 11864.8;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 56;
+  LinkTrId = 0;
+  XPos = 43700.406;
+  YPos = 83.945;
+  ZPos = 11714.633;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_eu_fabric300x200.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_eu_fabric300x200.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 57;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 43689.433;
+  YPos = 74.994;
+  ZPos = 11712.194;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43588.7, 11564.7;
+    43806.3, 11559.6;
+    43805.7, 11873.3;
+    43589.8, 11876;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 58;
+  LinkTrId = 0;
+  XPos = 43975.579;
+  YPos = 81.866;
+  ZPos = 11713.708;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_eu_fabric300x200_2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_eu_fabric300x200_2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 59;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 43970.040;
+  YPos = 74.994;
+  ZPos = 11701.789;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43868.6, 11553.6;
+    44086.6, 11548.6;
+    44085.6, 11862.6;
+    43869.6, 11865.6;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 60;
+  LinkTrId = 0;
+  XPos = 44200.204;
+  YPos = 82.389;
+  ZPos = 11694.201;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_fuel25m_300x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_fuel25m_300x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 61;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44196.780;
+  YPos = 74.994;
+  ZPos = 11694.913;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44139.2, 11577.7;
+    44257.4, 11584.9;
+    44260.4, 11806.7;
+    44143.4, 11804.5;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 62;
+  LinkTrId = 0;
+  XPos = 44371.120;
+  YPos = 84.960;
+  ZPos = 11697.126;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_fuel2_300x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_fuel2_300x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    3 = 1;
+    4 = 1;
+    13 = 1;
+    14 = 1;
+    15 = 1;
+    16 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 63;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44366.708;
+  YPos = 74.994;
+  ZPos = 11696.023;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44310.6, 11542.4;
+    44437.6, 11538.4;
+    44434.6, 11852.4;
+    44301.6, 11849.4;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 64;
+  LinkTrId = 0;
+  XPos = 44561.789;
+  YPos = 84.968;
+  ZPos = 11698.703;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_fuel35m_300x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_fuel35m_300x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 65;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44555.652;
+  YPos = 74.994;
+  ZPos = 11698.993;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44499.6, 11545.4;
+    44626.6, 11541.4;
+    44623.6, 11855.4;
+    44490.6, 11852.4;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 66;
+  LinkTrId = 0;
+  XPos = 44743.434;
+  YPos = 82.228;
+  ZPos = 11698.800;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_fuel_300x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_fuel_300x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    13 = 1;
+    16 = 1;
+    17 = 1;
+    18 = 1;
+    19 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 67;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44739.533;
+  YPos = 74.994;
+  ZPos = 11698.713;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44683.5, 11545.1;
+    44810.5, 11541.1;
+    44807.5, 11855.1;
+    44674.5, 11852.1;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 68;
+  LinkTrId = 0;
+  XPos = 44947.921;
+  YPos = 81.781;
+  ZPos = 11689.242;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_midwarehouse_200x140.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_midwarehouse_200x140.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 69;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44941.006;
+  YPos = 74.994;
+  ZPos = 11684.610;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44874.6, 11576.3;
+    45022.6, 11575.3;
+    45021.6, 11798.3;
+    44874.6, 11802.3;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 70;
+  LinkTrId = 0;
+  XPos = 45143.972;
+  YPos = 81.027;
+  ZPos = 11680.884;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_smallwarehouse2_150x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_smallwarehouse2_150x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+    13 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 71;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45137.023;
+  YPos = 74.994;
+  ZPos = 11680.665;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45070.6, 11572.3;
+    45218.6, 11571.3;
+    45217.6, 11794.3;
+    45070.6, 11798.3;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 72;
+  LinkTrId = 0;
+  XPos = 45344.508;
+  YPos = 85.269;
+  ZPos = 11687.775;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_smallwarehouse2_300x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_smallwarehouse2_300x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+    15 = 1;
+    22 = 1;
+    23 = 1;
+    24 = 1;
+    25 = 1;
+    26 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 73;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45341.213;
+  YPos = 74.994;
+  ZPos = 11685.624;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45284.7, 11531.9;
+    45411.7, 11527.9;
+    45408.7, 11841.9;
+    45275.7, 11838.9;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 74;
+  LinkTrId = 0;
+  XPos = 45534.515;
+  YPos = 82.623;
+  ZPos = 11678.596;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_smallwarehouse_150x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_smallwarehouse_150x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+    19 = 1;
+    20 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 75;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45531.103;
+  YPos = 74.994;
+  ZPos = 11678.652;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45464.1, 11570;
+    45612.1, 11569;
+    45611.1, 11792;
+    45464.1, 11796;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 76;
+  LinkTrId = 0;
+  XPos = 45723.024;
+  YPos = 83.927;
+  ZPos = 11691.665;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_smallwarehouse_300x100.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_smallwarehouse_300x100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    0 = 1;
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+    15 = 1;
+    23 = 1;
+    24 = 1;
+    25 = 1;
+    26 = 1;
+    27 = 1;
+    28 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 77;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45718.041;
+  YPos = 74.994;
+  ZPos = 11691.608;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45660.8, 11537;
+    45787.8, 11533;
+    45784.8, 11847;
+    45651.8, 11844;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 78;
+  LinkTrId = 0;
+  XPos = 46078.759;
+  YPos = 83.499;
+  ZPos = 11695.902;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_zavodcement.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_zavodcement.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+    0 = 1;
+    11 = 1;
+    12 = 1;
+    13 = 1;
+    14 = 1;
+    15 = 1;
+    16 = 1;
+    17 = 1;
+    18 = 1;
+    19 = 1;
+    20 = 1;
+    21 = 1;
+    22 = 1;
+    23 = 1;
+    24 = 1;
+    25 = 1;
+    27 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 79;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46055.631;
+  YPos = 74.994;
+  ZPos = 11690.437;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45857.6, 11499.4;
+    46365.7, 11497;
+    46367.7, 11858.2;
+    45862.7, 11885.9;
+  }
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 80;
+  LinkTrId = 0;
+  XPos = 46612.989;
+  YPos = 81.237;
+  ZPos = 11670.370;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\industrial_block_zavodoktyabr.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\industrial_block_zavodoktyabr.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+    10 = 1;
+    11 = 1;
+    12 = 1;
+    13 = 1;
+    14 = 1;
+    15 = 1;
+    16 = 1;
+    17 = 1;
+    18 = 1;
+    19 = 1;
+    20 = 1;
+    21 = 1;
+    22 = 1;
+    23 = 1;
+    24 = 1;
+    25 = 1;
+    26 = 1;
+    27 = 1;
+    28 = 1;
+    29 = 1;
+    30 = 1;
+    31 = 1;
+    32 = 1;
+    33 = 1;
+    34 = 1;
+    35 = 1;
+    36 = 1;
+    37 = 1;
+    38 = 1;
+    39 = 1;
+    40 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 81;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46591.933;
+  YPos = 74.994;
+  ZPos = 11665.486;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46422.8, 11356.5;
+    46786.2, 11389.1;
+    46744.6, 11735;
+    46614.5, 12036.9;
+  }
+}
+
+
 # end of file
