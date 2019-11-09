@@ -39,6 +39,50 @@ type BuildingProperties = {
     Boundary : Vector2 list
     SubParts : int list
 }
+with
+    /// Extract BuildingProperties from a block inside a delimiting influence area
+    static member FromMission(building : T.Block, boundary : T.MCU_TR_InfluenceArea) =
+        let pos = Vector2.FromPos(building)
+        let rot = float32(building.GetYOri().Value)
+        let vertices =
+            boundary.GetBoundary().Value
+            |> List.map (fun floats ->
+                let x, y = floats.Value
+                (Vector2(float32 x, float32 y) - pos).Rotate(-rot))
+        let subparts =
+            building.GetDamaged().Value
+            |> Map.toSeq
+            |> Seq.map fst
+            |> List.ofSeq
+        {
+            Model = building.GetModel().Value
+            Script = building.GetScript().Value
+            Boundary = vertices
+            SubParts = subparts
+        }
+
+    /// Extract a list of BuildingProperties from a .Mission file
+    static member FromFile(path : string) =
+        let data = T.GroupData(Stream.FromFile path)
+        let blocks = data.ListOfBlock
+        let zones = data.ListOfMCU_TR_InfluenceArea
+        let zones =
+            zones
+            |> List.map (fun area ->
+                let vertices =
+                    area.GetBoundary().Value
+                    |> List.map (fun floats ->
+                        let x, y = floats.Value
+                        Vector2(float32 x, float32 y))
+                (fun (v : Vector2) -> v.IsInConvexPolygon(vertices)), area)
+        [
+            for block in blocks do
+                let pos = Vector2.FromPos block
+                match zones |> List.tryFind (fun (f, _) -> f pos) with
+                | Some (_, data) ->
+                    yield BuildingProperties.FromMission(block, data)
+                | None ->   ()
+        ]
 
 type BuildingInstance = {
     Pos : OrientedPosition
