@@ -34,28 +34,20 @@ The taxi points leading to the runway will be used to put direction signs in the
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 These alternative waypoints should all have the same name (typically the name of the airfield).
 
-5. Define rail network
-Create a network of connected waypoints. Nodes of degree 1 in the network (endpoints) identify the start/end regions. Internal nodes must be located on logistics-critical installations, such as stations and bridges.
-Put these waypoints in a group called "Rail".
-Networks are used to detect when a region is connected to neighbouring regions. Isolated regions get quickly weaker.
-
-6. Define road network
-Same as for the rail, but in a group called "Road"
-
-7. Windsocks
+5. Windsocks
 Create windsocks with entities in a group named "Windsocks"
 
-8. Non-directional beacons
+6. Non-directional beacons
 Create non-directional beacons (ndb under "vehicles") with entities in a group named "NDBs".
 Set beacon channel to 1 in the advanced properties.
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
-9. Land fires
-Create land fire effects with entities named "LandFire" in a group named "Land fires". Don't forget to set them on the ground.
+7. Landing fires
+Create landing fire effects with entities named "LandFire" in a group named "Land fires". Don't forget to set them on the ground.
 
-10. Land lights
+9. Landing lights
 Create land lights with entities named "LandLight" in a group named "Land lights".
-Create a pair for each spawn so that planes will take off and land with the lights in their back.
+Create a pair for each runway so that planes will take off and land with the lights in their back.
 
 11. Bridges and other buildings
 Bridges and other blocks, buildings... need not be in groups, although they can.
