@@ -106,13 +106,79 @@ type Region = {
 type NetworkNode = {
     Id : int
     Pos : Vector2
-    Radius : Vector2
     // Bridges, train stations... Affect the flow capacity when damaged
     Facilities : BuildingInstance list
     FlowCapacity : float32<E/H>
     Region : RegionId
     Neighbours : int list 
 }
+with
+    static member NodesFromIni(system : string, roads : string, flowCapacity) =
+        let parseFloat s = System.Single.Parse(s, System.Globalization.CultureInfo.InvariantCulture)
+        let matchf(line, pat) = System.Text.RegularExpressions.Regex.Match(line, pat)
+        let getValue key lines =
+            let line =
+                try
+                    lines
+                    |> Array.find (fun (line : string) -> line.StartsWith(key))
+                with _ -> failwithf "Could not find entry '%s'" key
+            let posEqual = line.IndexOf("=")
+            if posEqual = -1 then
+                failwithf "Entry '%s' found but ill-formed" key
+            parseFloat(line.Substring(posEqual + 1))
+        let scaleFactor, parseStep, mapHeight =
+            let lines =
+                try
+                    System.IO.File.ReadAllLines(system)
+                with _ ->
+                    failwithf "Failed to read road system ini file '%s'" system
+            getValue "Map_ScaleFactor" lines,
+            getValue "RoadSegmentParseStep" lines,
+            getValue "Map_Height" lines
+        let truncateAndScale x =
+            floor(x / parseStep) * parseStep * float32 scaleFactor
+        let coords =
+            [
+                for line in System.IO.File.ReadAllLines(roads) do
+                    let mutable s = line
+                    while not(System.String.IsNullOrWhiteSpace(s)) do
+                        let m = matchf(s, @"(\d+(\.\d*)?),(\d+(\.\d*)?)(.*)")
+                        if m.Success then
+                            yield parseFloat(m.Groups.[1].Value), parseFloat(m.Groups.[2].Value)
+                            s <- m.Groups.[3].Value
+                        else
+                            s <- ""
+            ]
+            |> List.map (fun (x, y) -> truncateAndScale y, truncateAndScale (mapHeight - x))
+        // Create all nodes
+        let nodes =
+            coords
+            |> List.fold (fun nodes (x, y) ->
+                let node =
+                    Map.tryFind (x, y) nodes
+                    |> Option.defaultValue
+                        { Id = nodes.Count
+                          Pos = Vector2(x, y)
+                          Facilities = []
+                          FlowCapacity = flowCapacity
+                          Region = RegionId ""
+                          Neighbours = []
+                        }
+                Map.add (x, y) node nodes
+            ) Map.empty
+        // Set neighbours
+        let nodes =
+            coords
+            |> Seq.pairwise
+            |> Seq.fold (fun (nodes : Map<_, NetworkNode>) (v1, v2) ->
+                let node1 = nodes.[v1]
+                let node2 = nodes.[v2]
+                nodes
+                |> Map.add v1 { node1 with Neighbours = node2.Id :: node1.Neighbours }
+                |> Map.add v2 { node2 with Neighbours = node1.Id :: node2.Neighbours }
+            ) nodes
+        // Result
+        nodes
 
 type Runway = {
     SpawnPos : OrientedPosition
