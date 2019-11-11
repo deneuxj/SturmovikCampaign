@@ -112,10 +112,22 @@ type NetworkNode = {
     Region : RegionId
     Neighbours : int list 
 }
+
+type Network = {
+    Nodes : NetworkNode list
+}
 with
+    /// Build a partially initialized graph from map ini files (roadssystem.ini and roads.ini or railroads.ini)
+    /// Only the layout information is filled in, facilities and regions are not set
     static member NodesFromIni(system : string, roads : string, flowCapacity) =
-        let parseFloat s = System.Single.Parse(s, System.Globalization.CultureInfo.InvariantCulture)
+        // parse a float using the invariant culture
+        let parseFloat s =
+            try
+                System.Single.Parse(s, System.Globalization.CultureInfo.InvariantCulture)
+            with _ -> failwithf "Failed to parse '%s' as a float" s
+        // Shorthand for Regex.Match
         let matchf(line, pat) = System.Text.RegularExpressions.Regex.Match(line, pat)
+        // Helper function to extract a float value from an ini file
         let getValue key lines =
             let line =
                 try
@@ -126,17 +138,20 @@ with
             if posEqual = -1 then
                 failwithf "Entry '%s' found but ill-formed" key
             parseFloat(line.Substring(posEqual + 1))
-        let scaleFactor, parseStep, mapHeight =
+        // Relevant values extracted from roadssystem.ini
+        let parseStep, mapHeight, scaleFactor =
             let lines =
                 try
                     System.IO.File.ReadAllLines(system)
                 with _ ->
                     failwithf "Failed to read road system ini file '%s'" system
-            getValue "Map_ScaleFactor" lines,
             getValue "RoadSegmentParseStep" lines,
-            getValue "Map_Height" lines
+            getValue "Map_Height" lines,
+            getValue "Map_ScaleFactor" lines
+        // Transformation to apply to each coordinate component
         let truncateAndScale x =
             floor(x / parseStep) * parseStep * float32 scaleFactor
+        // Extract coordinates from roads.ini
         let coords =
             [
                 for line in System.IO.File.ReadAllLines(roads) do
@@ -144,12 +159,12 @@ with
                     while not(System.String.IsNullOrWhiteSpace(s)) do
                         let m = matchf(s, @"(\d+(\.\d*)?),(\d+(\.\d*)?)(.*)")
                         if m.Success then
-                            yield parseFloat(m.Groups.[1].Value), parseFloat(m.Groups.[2].Value)
-                            s <- m.Groups.[3].Value
+                            yield parseFloat(m.Groups.[1].Value), parseFloat(m.Groups.[3].Value)
+                            s <- m.Groups.[5].Value
                         else
                             s <- ""
             ]
-            |> List.map (fun (x, y) -> truncateAndScale y, truncateAndScale (mapHeight - x))
+            |> List.map (fun (x, y) -> truncateAndScale (mapHeight - y), truncateAndScale x)
         // Create all nodes
         let nodes =
             coords
@@ -177,8 +192,45 @@ with
                 |> Map.add v1 { node1 with Neighbours = node2.Id :: node1.Neighbours }
                 |> Map.add v2 { node2 with Neighbours = node1.Id :: node2.Neighbours }
             ) nodes
+        // Retain nodes from the mapping, remove self-references in neighbours
+        let nodes =
+            nodes
+            |> Map.toSeq
+            |> Seq.map snd
+            |> Seq.map (fun node -> { node with Neighbours = node.Neighbours |> List.filter ((<>) node.Id) })
+            |> List.ofSeq
         // Result
-        nodes
+        { Nodes = nodes }
+
+    /// Set the region of each node, and remove nodes that are not in a region
+    member this.SetRegions(regions : Region list) =
+        // Set region, drop nodes outside all regions
+        let nodes =
+            this.Nodes
+            |> List.choose (fun node ->
+                let region =
+                    regions
+                    |> List.tryFind (fun region -> node.Pos.IsInConvexPolygon(region.Boundary))
+                match region with
+                | Some region ->
+                    Some { node with Region = region.RegionId }
+                | None -> None
+            )
+        // Remove references to neighbours that were dropped
+        let retained =
+            nodes
+            |> Seq.map (fun node -> node.Id)
+            |> Set.ofSeq
+        let nodes =
+            this.Nodes
+            |> List.map (fun node ->
+                let ngh =
+                    node.Neighbours
+                    |> List.filter (retained.Contains)
+                { node with Neighbours = ngh })
+        // Result
+        { this with Nodes = nodes }
+
 
 type Runway = {
     SpawnPos : OrientedPosition
