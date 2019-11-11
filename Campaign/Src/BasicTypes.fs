@@ -98,6 +98,13 @@ type OrientedPosition = {
     Rotation : float32
     Altitude : float32
 }
+with
+    static member inline FromMission(block) =
+        {
+            Pos = Vector2.FromPos(block)
+            Rotation = getYOri block |> valueOf |> float32
+            Altitude = getAlt block |> valueOf |> float32
+        }
 
 /// Constants used to pick the kind of fires to display
 let bigDamage = 500.0f<E>
