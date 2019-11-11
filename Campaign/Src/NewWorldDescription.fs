@@ -88,10 +88,30 @@ type BuildingInstance = {
     Pos : OrientedPosition
     Properties : BuildingProperties
 }
+with
+    /// Create a list of building instances from a database of known building types, and a list of blocks from a .Mission file
+    static member CreateInstances(db : BuildingProperties list, blocks : T.Block list) =
+        let db =
+            db
+            |> Seq.map (fun building -> building.Script, building)
+            |> dict
+        [
+            for block in blocks do
+                match db.TryGetValue(block.GetScript().Value) with
+                | true, props ->
+                    yield { Pos =
+                                { Pos = Vector2.FromPos block
+                                  Rotation = block.GetYOri().Value |> float32
+                                  Altitude = block.GetYPos().Value |> float32 }
+                            Properties = props }
+                | false, _ ->
+                    ()
+        ]
 
 type Region = {
     RegionId : RegionId
     Boundary : Vector2 list
+    Position : Vector2
     Neighbours : RegionId list
     InitialOwner : CoalitionId option
     // Production in the region; Typically only the rearmost region should have production.
@@ -101,6 +121,95 @@ type Region = {
     FlowCapacity : float32<E/H>
     IndustryBuildings : BuildingInstance list
 }
+with
+    /// Create a list of regions from a list of influence areas and a list of building instances
+    static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list, strongProduction : float32<E/H>, buildingFlowCapacity : float32<E/H>) =
+        let extractOne (region : T.MCU_TR_InfluenceArea) : Region =
+            let coalition = CoalitionId.FromCountry (enum(region.GetCountry().Value))
+            let boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
+            let buildings =
+                buildings
+                |> List.filter (fun building -> building.Pos.Pos.IsInConvexPolygon boundary)
+            { RegionId = RegionId(region.GetName().Value)
+              Position = Vector2.FromPos(region)
+              Boundary = boundary
+              Neighbours = []
+              Production = if region.GetDesc().Value.Contains("***") then strongProduction else 0.0f<E/H>
+              InitialOwner = coalition
+              FlowCapacity = buildingFlowCapacity * float32 buildings.Length
+              IndustryBuildings = buildings
+            }
+        let withBoundaries =
+            regions
+            |> List.map extractOne
+        let cellRadius = 1000.0f
+        let cellRadius2 = cellRadius * cellRadius
+        let floor1 x : float32 =
+            let un1t = 2.0f * cellRadius
+            floor(x / un1t) * un1t
+        let ceil1 x : float32 =
+            let un1t = 2.0f * cellRadius
+            ceil(x / un1t) * un1t
+        let nearestCenters (v : Vector2) =
+            let x0 = floor1 v.X
+            let x1 = ceil1 v.X
+            let y0 = floor1 v.Y
+            let y1 = ceil1 v.Y
+            [
+                (x0, y0)
+                (x0, y1)
+                (x1, y0)
+                (x1, y1)
+            ]
+        let located =
+            withBoundaries
+            |> List.map (fun region ->
+                region.Boundary
+                |> List.mapi(fun i v ->
+                    nearestCenters v
+                    |> List.map (fun center -> center, (region.RegionId, i, v))
+                )
+            )
+            |> List.concat
+            |> List.concat
+            |> Seq.groupBy fst
+            |> Seq.map (fun (k, items) -> k, items |> Seq.map snd |> List.ofSeq)
+            |> dict
+        let neighbours =
+            located
+            |> Seq.map (fun kvp ->
+                [
+                    for region1, i1, v1 in kvp.Value do
+                        for region2, i2, v2 in kvp.Value do
+                            if region1 <> region2 && (v1 - v2).LengthSquared() < cellRadius2 then
+                                yield (region1, i1), region2
+                ]
+            )
+            |> List.concat
+            |> Seq.groupBy fst
+            |> Seq.map (fun (key, items) -> key, items |> Seq.map snd |> Set.ofSeq)
+            |> dict
+        let getNeighbours(regionId, i) =
+            match neighbours.TryGetValue((regionId, i)) with
+            | true, items -> items
+            | false, _ -> Set.empty
+        let setNeighbours (region : Region) =
+            let indices = (region.Boundary |> List.mapi(fun i _ -> i)) @ [0]
+            let ngh =
+                indices
+                |> Seq.pairwise
+                |> Seq.map (fun (i, j) ->
+                    let s1 = getNeighbours(region.RegionId, i)
+                    let s2 = getNeighbours(region.RegionId, j)
+                    Set.intersect s1 s2
+                    |> List.ofSeq
+                )
+                |> List.concat
+                |> Seq.distinct
+                |> List.ofSeq
+            { region with Neighbours = ngh }
+        withBoundaries
+        |> List.map setNeighbours
 
 /// A node in the logistics network
 type NetworkNode = {
