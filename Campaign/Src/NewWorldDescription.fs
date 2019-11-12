@@ -349,12 +349,85 @@ type Runway = {
     PathToRunway : Vector2 list
     Start : Vector2
     End : Vector2
-    Facilities : BuildingInstance list
 }
+with
+    static member FromMission(spawn : T.Airfield) =
+        match spawn.TryGetChart() with
+        | Some chart ->
+            let pos = OrientedPosition.FromMission spawn
+            let taxi = chart.GetPoints()
+            let vecs =
+                taxi
+                |> List.map (fun point -> Vector2(float32(point.GetX().Value), float32(point.GetY().Value)), point.GetType().Value)
+                |> List.map (fun (v, t) -> v.Rotate(pos.Rotation) + pos.Pos, t)
+            let path =
+                vecs
+                |> List.takeWhile (fun (_, t) -> t < 2)
+                |> List.map fst
+            let p1, _ =
+                vecs
+                |> List.find (fun (_, t) -> t = 2)
+            let p2, _ =
+                vecs
+                |> List.findBack (fun (_, t) -> t = 2)
+            {
+                SpawnPos = pos
+                PathToRunway = path
+                Start = p1
+                End = p2
+            }
+        | None ->
+            failwithf "Airfield spawn '%s' lacks a chart" (spawn.GetName().Value)
 
 type Airfield = {
     AirfieldId : AirfieldId
     Region : RegionId
+    Boundary : Vector2 list
     Runways : Runway list
-    Facilities : StaticGroup list
+    FlowCapacity : float32<E/H>
+    Facilities : BuildingInstance list
 }
+with
+    static member FromMission(spawns : T.Airfield list, areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
+        [
+            for area in areas do
+                let boundary =
+                    area.GetBoundary().Value
+                    |> List.map Vector2.FromPair
+                let runways =
+                    [
+                        for spawn in spawns do
+                            let pos = Vector2.FromPos spawn
+                            if pos.IsInConvexPolygon boundary then
+                                yield Runway.FromMission spawn
+                    ]
+                let pos = Vector2.FromPos area
+                match regions |> List.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary) with
+                | Some region ->
+                    let buildings =
+                        region.IndustryBuildings
+                        |> List.filter (fun building -> building.Pos.Pos.IsInConvexPolygon boundary)
+                    let flowCapacityPerBuilding =
+                        match region.IndustryBuildings |> List.length with
+                        | 0 -> 0.0f<E/H>
+                        | n -> region.FlowCapacity / float32 n
+                    yield {
+                        AirfieldId = AirfieldId (area.GetName().Value)
+                        Region = region.RegionId
+                        Boundary = boundary
+                        Runways = runways
+                        FlowCapacity = flowCapacityPerBuilding * float32(List.length buildings)
+                        Facilities = buildings
+                    }
+                | None ->
+                    ()
+        ]
+
+
+type World = {
+    Regions : Region list
+    Roads : Network
+    Rails : Network
+    Airfields : Airfield list
+}
+
