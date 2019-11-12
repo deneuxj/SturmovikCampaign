@@ -38,6 +38,7 @@ type BuildingProperties = {
     Script : string
     Boundary : Vector2 list
     SubParts : int list
+    Durability : int
 }
 with
     /// Extract BuildingProperties from a block inside a delimiting influence area
@@ -54,11 +55,13 @@ with
             |> Map.toSeq
             |> Seq.map fst
             |> List.ofSeq
+        let durability = building.GetDurability().Value
         {
             Model = building.GetModel().Value
             Script = building.GetScript().Value
             Boundary = vertices
             SubParts = subparts
+            Durability = durability
         }
 
     /// Extract a list of BuildingProperties from a .Mission file
