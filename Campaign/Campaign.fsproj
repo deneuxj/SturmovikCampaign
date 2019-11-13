@@ -126,6 +126,9 @@
     <None Include="Config\PlaneDb.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="Config\Roads-Sample.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="MyScripts\Configuration.fsx" />
     <None Include="MyScripts\Select.fsx" />
     <None Include="MyScripts\Init.fsx" />
@@ -215,6 +218,9 @@
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.3.4\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
+    <Reference Include="FSharp.Data">
+      <HintPath>..\packages\FSharp.Data.3.3.2\lib\net45\FSharp.Data.dll</HintPath>
+    </Reference>
     <Reference Include="FsPickler">
       <HintPath>..\packages\FsPickler.4.6\lib\net45\FsPickler.dll</HintPath>
     </Reference>
@@ -271,6 +277,7 @@
       <Project>{6f0be45c-721f-49fb-bfda-73eb7a6d07ba}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
