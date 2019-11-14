@@ -23,7 +23,7 @@ open SturmovikMission.Blocks
 open Util
 
 open Campaign.BasicTypes
-open Campaign.PlaneSet
+open Campaign.PlaneModel
 open Campaign.WorldDescription
 
 type BuildingProperties = {
@@ -114,11 +114,19 @@ type Airfield = {
 }
 
 type World = {
+    /// Base name of scenario file
+    Scenario : string
+    /// Name of the map where the scenario takes place
+    Map : string
+    /// Date of the first mission.
+    StartDate : System.DateTime
+    /// Weather offset: affects how late or early the weather pattern is.
+    WeatherDaysOffset : float
+    Planes : PlaneModel list
     Regions : Region list
     Roads : Network
     Rails : Network
     Airfields : Airfield list
-    Planes : PlaneSet
 }
 
 module Loading =
