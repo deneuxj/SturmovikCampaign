@@ -19,14 +19,7 @@ module Campaign.NewWorldDescription
 open System.Numerics
 open VectorExtension
 
-open SturmovikMission.DataProvider
-open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks
-open SturmovikMission.Blocks.StaticDefenses.Types
-open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
-open SturmovikMission.DataProvider.Parsing
-open SturmovikMission.Blocks.VirtualConvoy.Types
-open SturmovikMission.Blocks.VirtualConvoy.Factory
 open Util
 
 open Campaign.BasicTypes
@@ -40,9 +33,106 @@ type BuildingProperties = {
     SubParts : int list
     Durability : int
 }
+
+type BuildingInstance = {
+    Pos : OrientedPosition
+    Properties : BuildingProperties
+}
+
+type Region = {
+    RegionId : RegionId
+    Boundary : Vector2 list
+    Position : Vector2
+    Neighbours : RegionId list
+    InitialOwner : CoalitionId option
+    // Production in the region; Typically only the rearmost region should have production.
+    // It represents the entry point into the game for supplies, and cannot be affected.
+    Production : float32<E/H>
+    // Supplies can pass through the region, affected by industry
+    FlowCapacity : float32<E/H>
+    IndustryBuildings : BuildingInstance list
+}
+
+/// A node in the logistics network
+type NetworkNode = {
+    Id : int
+    Pos : Vector2
+    // Bridges, train stations... Affect the flow capacity when damaged
+    Facilities : BuildingInstance list
+    FlowCapacity : float32<E/H>
+    Region : RegionId
+    Neighbours : int list 
+}
+
+type Network = {
+    Nodes : NetworkNode list
+}
 with
+    /// Set the region of each node, and remove nodes that are not in a region
+    member this.SetRegions(regions : Region list) =
+        // Set region, drop nodes outside all regions
+        let nodes =
+            this.Nodes
+            |> List.choose (fun node ->
+                let region =
+                    regions
+                    |> List.tryFind (fun region -> node.Pos.IsInConvexPolygon(region.Boundary))
+                match region with
+                | Some region ->
+                    Some { node with Region = region.RegionId }
+                | None -> None
+            )
+        // Remove references to neighbours that were dropped
+        let retained =
+            nodes
+            |> Seq.map (fun node -> node.Id)
+            |> Set.ofSeq
+        let nodes =
+            this.Nodes
+            |> List.map (fun node ->
+                let ngh =
+                    node.Neighbours
+                    |> List.filter (retained.Contains)
+                { node with Neighbours = ngh })
+        // Result
+        { this with Nodes = nodes }
+
+type Runway = {
+    SpawnPos : OrientedPosition
+    PathToRunway : Vector2 list
+    Start : Vector2
+    End : Vector2
+}
+
+type Airfield = {
+    AirfieldId : AirfieldId
+    Region : RegionId
+    Boundary : Vector2 list
+    Runways : Runway list
+    FlowCapacity : float32<E/H>
+    Facilities : BuildingInstance list
+}
+
+type World = {
+    Regions : Region list
+    Roads : Network
+    Rails : Network
+    Airfields : Airfield list
+    Planes : PlaneSet
+}
+
+module Loading =
+    open SturmovikMission.DataProvider.Parsing
+    open FSharp.Data
+
+    open SturmovikMission.Blocks.BlocksMissionData
+
+    [<Literal>]
+    let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\Roads-Sample.json"
+    type private JsonNetwork = JsonProvider<sampleFile>
+
     /// Extract BuildingProperties from a block inside a delimiting influence area
-    static member FromMission(building : T.Block, boundary : T.MCU_TR_InfluenceArea) =
+    let extractBuildingProperties(building : T.Block, boundary : T.MCU_TR_InfluenceArea) =
         let pos = Vector2.FromPos(building)
         let rot = float32(building.GetYOri().Value)
         let vertices =
@@ -64,8 +154,8 @@ with
             Durability = durability
         }
 
-    /// Extract a list of BuildingProperties from a .Mission file
-    static member FromFile(path : string) =
+    /// Load a list of BuildingProperties from a .Mission file
+    let loadBuildingPropertiesList(path : string) =
         let data = T.GroupData(Stream.FromFile path)
         let blocks = data.ListOfBlock
         let zones = data.ListOfMCU_TR_InfluenceArea
@@ -83,17 +173,12 @@ with
                 let pos = Vector2.FromPos block
                 match zones |> List.tryFind (fun (f, _) -> f pos) with
                 | Some (_, data) ->
-                    yield BuildingProperties.FromMission(block, data)
+                    yield extractBuildingProperties(block, data)
                 | None ->   ()
         ]
 
-type BuildingInstance = {
-    Pos : OrientedPosition
-    Properties : BuildingProperties
-}
-with
-    /// Create a list of building instances from a database of known building types, and a list of blocks from a .Mission file
-    static member CreateInstances(db : BuildingProperties list, blocks : T.Block list) =
+    /// Extract a list of building instances from a list of blocks from a .Mission file using a database of known building types 
+    let extractBuildingInstances(db : BuildingProperties list, blocks : T.Block list) =
         let db =
             db
             |> Seq.map (fun building -> building.Script, building)
@@ -111,22 +196,8 @@ with
                     ()
         ]
 
-type Region = {
-    RegionId : RegionId
-    Boundary : Vector2 list
-    Position : Vector2
-    Neighbours : RegionId list
-    InitialOwner : CoalitionId option
-    // Production in the region; Typically only the rearmost region should have production.
-    // It represents the entry point into the game for supplies, and cannot be affected.
-    Production : float32<E/H>
-    // Supplies can pass through the region, affected by industry
-    FlowCapacity : float32<E/H>
-    IndustryBuildings : BuildingInstance list
-}
-with
-    /// Create a list of regions from a list of influence areas and a list of building instances
-    static member ExtractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list, strongProduction : float32<E/H>, buildingFlowCapacity : float32<E/H>) =
+    /// Extract a list of regions from a list of influence areas and a list of building instances
+    let extractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list, strongProduction : float32<E/H>, buildingFlowCapacity : float32<E/H>) =
         let extractOne (region : T.MCU_TR_InfluenceArea) : Region =
             let coalition = CoalitionId.FromCountry (enum(region.GetCountry().Value))
             let boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
@@ -214,58 +285,8 @@ with
         withBoundaries
         |> List.map setNeighbours
 
-/// A node in the logistics network
-type NetworkNode = {
-    Id : int
-    Pos : Vector2
-    // Bridges, train stations... Affect the flow capacity when damaged
-    Facilities : BuildingInstance list
-    FlowCapacity : float32<E/H>
-    Region : RegionId
-    Neighbours : int list 
-}
-
-type Network = {
-    Nodes : NetworkNode list
-}
-with
-    /// Set the region of each node, and remove nodes that are not in a region
-    member this.SetRegions(regions : Region list) =
-        // Set region, drop nodes outside all regions
-        let nodes =
-            this.Nodes
-            |> List.choose (fun node ->
-                let region =
-                    regions
-                    |> List.tryFind (fun region -> node.Pos.IsInConvexPolygon(region.Boundary))
-                match region with
-                | Some region ->
-                    Some { node with Region = region.RegionId }
-                | None -> None
-            )
-        // Remove references to neighbours that were dropped
-        let retained =
-            nodes
-            |> Seq.map (fun node -> node.Id)
-            |> Set.ofSeq
-        let nodes =
-            this.Nodes
-            |> List.map (fun node ->
-                let ngh =
-                    node.Neighbours
-                    |> List.filter (retained.Contains)
-                { node with Neighbours = ngh })
-        // Result
-        { this with Nodes = nodes }
-
-module Network =
-    open FSharp.Data
-
-    [<Literal>]
-    let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\Roads-Sample.json"
-    type JsonNetwork = JsonProvider<sampleFile>
-
-    let loadFromFile (path : string) =
+    /// Load a road network from a JSON file. Only the coordinates and the graph information is set.
+    let loadRoadGraph (path : string) =
         let data = JsonNetwork.Load(path)
         {
             Nodes =
@@ -282,15 +303,8 @@ module Network =
                 ]
         }
 
-
-type Runway = {
-    SpawnPos : OrientedPosition
-    PathToRunway : Vector2 list
-    Start : Vector2
-    End : Vector2
-}
-with
-    static member FromMission(spawn : T.Airfield) =
+    /// Extract runway information from a plane spawn
+    let extractRunway(spawn : T.Airfield) =
         match spawn.TryGetChart() with
         | Some chart ->
             let pos = OrientedPosition.FromMission spawn
@@ -318,16 +332,8 @@ with
         | None ->
             failwithf "Airfield spawn '%s' lacks a chart" (spawn.GetName().Value)
 
-type Airfield = {
-    AirfieldId : AirfieldId
-    Region : RegionId
-    Boundary : Vector2 list
-    Runways : Runway list
-    FlowCapacity : float32<E/H>
-    Facilities : BuildingInstance list
-}
-with
-    static member FromMission(spawns : T.Airfield list, areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
+    /// Extract airfields and their runways from spawns, airfield areas and regions
+    let extractAirfield(spawns : T.Airfield list, areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
         [
             for area in areas do
                 let boundary =
@@ -338,7 +344,7 @@ with
                         for spawn in spawns do
                             let pos = Vector2.FromPos spawn
                             if pos.IsInConvexPolygon boundary then
-                                yield Runway.FromMission spawn
+                                yield extractRunway spawn
                     ]
                 let pos = Vector2.FromPos area
                 match regions |> List.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary) with
@@ -361,12 +367,3 @@ with
                 | None ->
                     ()
         ]
-
-
-type World = {
-    Regions : Region list
-    Roads : Network
-    Rails : Network
-    Airfields : Airfield list
-}
-
