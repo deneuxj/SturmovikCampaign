@@ -341,7 +341,7 @@ module Loading =
             failwithf "Airfield spawn '%s' lacks a chart" (spawn.GetName().Value)
 
     /// Extract airfields and their runways from spawns, airfield areas and regions
-    let extractAirfield(spawns : T.Airfield list, areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
+    let extractAirfields(spawns : T.Airfield list, areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
         [
             for area in areas do
                 let boundary =
@@ -375,3 +375,49 @@ module Loading =
                 | None ->
                     ()
         ]
+
+    /// Load a scenario mission file and create a world description.
+    let loadWorld(scenario : string, strongProduction : float32<E/H>, buildingFlowCapacity : float32<E/H>) =
+        let buildingDb = loadBuildingPropertiesList "Buildings.Mission"
+        let missionData = T.GroupData(Stream.FromFile scenario)
+        // Region boundaries
+        let regionAreas = missionData.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
+        let regionBoundaries =
+            regionAreas
+            |> List.map (fun area ->
+                area.GetBoundary().Value
+                |> List.map Vector2.FromPair)
+        // Blocks inside regions
+        let blocks =
+            missionData.GetGroup("Static").ListOfBlock
+            |> List.filter (fun block ->
+                let pos = Vector2.FromPos block
+                regionBoundaries
+                |> List.exists (fun boundary -> pos.IsInConvexPolygon boundary))
+        // Building instances
+        let buildings = extractBuildingInstances(buildingDb, blocks)
+        // Regions
+        let regions = extractRegions(regionAreas, buildings, strongProduction, buildingFlowCapacity)
+        // Airfields
+        let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea
+        let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield
+        let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions)
+        // Roads: TODO
+        // Railroads: TODO
+        // Misc data
+        let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
+        let options = missionData.ListOfOptions.[0]
+        let mapName = options.GetGuiMap().Value
+        let startDate = options.GetDate()
+        let hour, minute, second = options.GetTime().Value
+        {
+            Scenario = scenario
+            Map = mapName
+            StartDate = System.DateTime(startDate.Year, startDate.Month, startDate.Day, hour.Value, minute.Value, second.Value)
+            WeatherDaysOffset = 0.0
+            Planes = []
+            Regions = regions
+            Roads = failwith "TODO"
+            Rails = failwith "TODO"
+            Airfields = airfields
+        }
