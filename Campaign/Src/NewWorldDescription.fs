@@ -57,15 +57,21 @@ type Region = {
 type NetworkNode = {
     Id : int
     Pos : Vector2
-    // Bridges, train stations... Affect the flow capacity when damaged
-    Facilities : BuildingInstance list
-    FlowCapacity : float32<E/H>
     Region : RegionId
-    Neighbours : int list 
+    HasTerminal : bool
+}
+
+/// An undirected edge between two nodes
+type NetworkLink = {
+    NodeA : int
+    NodeB : int
+    Bridges : BuildingInstance list
+    FlowCapacity : float32<E/H>
 }
 
 type Network = {
     Nodes : NetworkNode list
+    Links : NetworkLink list
 }
 with
     /// Set the region of each node, and remove nodes that are not in a region
@@ -82,20 +88,16 @@ with
                     Some { node with Region = region.RegionId }
                 | None -> None
             )
-        // Remove references to neighbours that were dropped
+        // Remove links to nodes that were dropped
         let retained =
             nodes
             |> Seq.map (fun node -> node.Id)
             |> Set.ofSeq
-        let nodes =
-            this.Nodes
-            |> List.map (fun node ->
-                let ngh =
-                    node.Neighbours
-                    |> List.filter (retained.Contains)
-                { node with Neighbours = ngh })
+        let links =
+            this.Links
+            |> List.filter (fun link -> retained.Contains(link.NodeA) && retained.Contains(link.NodeB))
         // Result
-        { this with Nodes = nodes }
+        { this with Nodes = nodes; Links = links }
 
 type Runway = {
     SpawnPos : OrientedPosition
@@ -295,21 +297,35 @@ module Loading =
         |> List.map setNeighbours
 
     /// Load a road network from a JSON file. Only the coordinates and the graph information is set.
-    let loadRoadGraph (path : string) =
+    let loadRoadGraph (path : string, flowCapacity) =
         let data = JsonNetwork.Load(path)
-        {
-            Nodes =
-                [
-                    for node in data.Nodes do
-                        yield {
+        let nodesAndLinks =
+            [
+                for node in data.Nodes do
+                    yield Choice1Of2
+                        {
                             Id = node.Id
                             Pos = Vector2(float32 node.Pos.[0], float32 node.Pos.[1])
-                            Facilities = []
-                            FlowCapacity = 0.0f<E/H>
                             Region = RegionId ""
-                            Neighbours = node.Neighbours |> List.ofArray
+                            HasTerminal = false
                         }
-                ]
+                    for ngh in node.Neighbours do
+                        if node.Id < ngh then
+                            yield Choice2Of2
+                                {
+                                    NodeA = node.Id
+                                    NodeB = ngh
+                                    Bridges = []
+                                    FlowCapacity = flowCapacity
+                                }
+            ]
+        {
+            Nodes =
+                nodesAndLinks
+                |> List.choose (function Choice1Of2 x -> Some x | _ -> None)
+            Links =
+                nodesAndLinks
+                |> List.choose (function Choice2Of2 x -> Some x | _ -> None)
         }
 
     /// Extract runway information from a plane spawn
@@ -407,22 +423,14 @@ module Loading =
         let options = missionData.ListOfOptions.[0]
         let mapName = options.GetGuiMap().Value
         let graph =
-            loadRoadGraph(sprintf "Roads-%s.json" mapName)
+            loadRoadGraph(sprintf "Roads-%s.json" mapName, roadsCapacity)
         let roads = graph.SetRegions regions
-        let roads =
-            { roads with
-                Nodes =
-                    roads.Nodes
-                    |> List.map (fun node -> { node with FlowCapacity = roadsCapacity })}
+        let roads = (failwith "TODO: set bridges and terminals") roads
         // Railroads
         let graph =
-            loadRoadGraph(sprintf "Rails-%s.json" mapName)
+            loadRoadGraph(sprintf "Rails-%s.json" mapName, railsCapacity)
         let rails = graph.SetRegions regions
-        let rails =
-            { rails with
-                Nodes =
-                    rails.Nodes
-                    |> List.map (fun node -> { node with FlowCapacity = railsCapacity })}
+        let rails = (failwith "TODO: set bridges and terminals") rails
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
