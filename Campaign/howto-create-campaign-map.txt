@@ -18,13 +18,18 @@ Set region owners. Each coalition must own at least one region with factories.
 In the initial world state, regions which have "***" in their Description are fully supplied. Those are the "strong bases".
 Other regions are supplied depending on their distance to the nearest strong base.
 
-3. Define airfield areas
+3. Define logistics terminals
+Create influence areas in a group named "Terminals". Each region should have at least one.
+Those areas should cover cities that are communication hubs, for roads and railroads.
+Any segment of road or rails inside these areas are locations where supplies can be loaded to and from other regions.
+
+4. Define airfield areas
 Use influence areas. The point of reference of each area must be inside a region.
 Each area must be convex, have a unique name. The corners of the area will host AA groups, and should be clear from buildings, forests and water.
 Buildings within the area will be counted as operational buildings of that airfield.
 All these areas must be in group named "Airfields".
 
-4. Define spawns and runways
+5. Define spawns and runways
 Use fakefields for planes with runways. Include *** in the Description field to specify that this runway is suitable for the me262 and bombers with 1500Kg of bombs or more.
 Optionally, set the name of the fakefield to the name of the runway. This is often the direction of take-off and landing in degrees divided by 10.
 If there are parallel runways, use a suffix to differentiate them (e.g. R for right). This is only for the players' convenience, it does not affect the campaign system.
@@ -34,21 +39,24 @@ The taxi points leading to the runway will be used to put direction signs in the
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 These alternative waypoints should all have the same name (typically the name of the airfield).
 
-5. Windsocks
+6. Windsocks
 Create windsocks with entities in a group named "Windsocks"
 
-6. Non-directional beacons
+7. Non-directional beacons
 Create non-directional beacons (ndb under "vehicles") with entities in a group named "NDBs".
 Set beacon channel to 1 in the advanced properties.
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
-7. Landing fires
+8. Landing fires
 Create landing fire effects with entities named "LandFire" in a group named "Land fires". Don't forget to set them on the ground.
 
 9. Landing lights
 Create land lights with entities named "LandLight" in a group named "Land lights".
 Create a pair for each runway so that planes will take off and land with the lights in their back.
 
-11. Bridges and other buildings
-Bridges and other blocks, buildings... need not be in groups, although they can.
-You can import the standard templates and leave them as is. The mission generation script will remove everything that's not in a region, and keep the rest.
+10. Bridges
+Road and rail bridges should be located in groups named "BridgesHW" and "BridgesRW", respectively.
+They must not be located under the "Static" group (see below).
+
+11. Other buildings
+Buildings of strategic value as well as "valueless" buildings should be under a group named "Static".
