@@ -130,6 +130,7 @@ type World = {
 }
 
 module Loading =
+    open System.IO
     open SturmovikMission.DataProvider.Parsing
     open FSharp.Data
 
@@ -377,7 +378,7 @@ module Loading =
         ]
 
     /// Load a scenario mission file and create a world description.
-    let loadWorld(scenario : string, strongProduction : float32<E/H>, buildingFlowCapacity : float32<E/H>) =
+    let loadWorld(scenario : string, strongProduction : float32<E/H>, buildingFlowCapacity : float32<E/H>, roadsCapacity : float32<E/H>, railsCapacity : float32<E/H>) =
         let buildingDb = loadBuildingPropertiesList "Buildings.Mission"
         let missionData = T.GroupData(Stream.FromFile scenario)
         // Region boundaries
@@ -402,12 +403,28 @@ module Loading =
         let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea
         let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield
         let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions)
-        // Roads: TODO
-        // Railroads: TODO
-        // Misc data
-        let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
+        // Roads
         let options = missionData.ListOfOptions.[0]
         let mapName = options.GetGuiMap().Value
+        let graph =
+            loadRoadGraph(sprintf "Roads-%s.json" mapName)
+        let roads = graph.SetRegions regions
+        let roads =
+            { roads with
+                Nodes =
+                    roads.Nodes
+                    |> List.map (fun node -> { node with FlowCapacity = roadsCapacity })}
+        // Railroads
+        let graph =
+            loadRoadGraph(sprintf "Rails-%s.json" mapName)
+        let rails = graph.SetRegions regions
+        let rails =
+            { rails with
+                Nodes =
+                    rails.Nodes
+                    |> List.map (fun node -> { node with FlowCapacity = railsCapacity })}
+        // Misc data
+        let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
         let hour, minute, second = options.GetTime().Value
         {
@@ -417,7 +434,7 @@ module Loading =
             WeatherDaysOffset = 0.0
             Planes = []
             Regions = regions
-            Roads = failwith "TODO"
-            Rails = failwith "TODO"
+            Roads = roads
+            Rails = rails
             Airfields = airfields
         }

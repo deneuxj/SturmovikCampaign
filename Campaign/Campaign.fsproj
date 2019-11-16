@@ -129,6 +129,14 @@
     <None Include="Config\Roads-Sample.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Config\Roads-rheinland-summer.json">
+      <Link>Config\Roads-rheinland-summer.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\Rails-rheinland-summer.json">
+      <Link>Config\Rails-rheinland-summer.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="MyScripts\Configuration.fsx" />
     <None Include="MyScripts\Select.fsx" />
     <None Include="MyScripts\Init.fsx" />
