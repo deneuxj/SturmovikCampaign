@@ -131,5 +131,5 @@ Usage: RoadExtractor <road or railroad description path>
 Extract road network from provided file, and write result as in file with same name and extension .json
 """
 
-    printfn "Hello World from F#!"
+    printfn "Done."
     0 // return an integer exit code
