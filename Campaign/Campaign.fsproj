@@ -54,6 +54,7 @@
     <Compile Include="Src\AssemblyInfo.fs" />
     <Compile Include="Src\StringResources.fs" />
     <Compile Include="Src\Util.fs" />
+    <Compile Include="Src\SpacePartition.fs" />
     <Compile Include="Src\WatchLogs.fs" />
     <Compile Include="Src\BasicTypes.fs" />
     <Compile Include="Src\PlaneModel.fs" />
