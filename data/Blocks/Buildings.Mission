@@ -3328,4 +3328,2764 @@ MCU_TR_InfluenceArea
 }
 
 
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 112;
+  LinkTrId = 0;
+  XPos = 46663.632;
+  YPos = 81.495;
+  ZPos = 9582.977;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_arch.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_arch.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 113;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46660.942;
+  YPos = 83.613;
+  ZPos = 9582.937;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46611.1, 9574.35;
+    46715, 9574.39;
+    46715, 9595.61;
+    46611.1, 9595.28;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 114;
+  LinkTrId = 0;
+  XPos = 46503.827;
+  YPos = 81.287;
+  ZPos = 9585.714;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_arch170.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_arch170.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 115;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46503.173;
+  YPos = 83.613;
+  ZPos = 9587.677;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46414.3, 9576.24;
+    46592.3, 9575.68;
+    46592, 9599.18;
+    46415.1, 9596.4;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 116;
+  LinkTrId = 0;
+  XPos = 46341.900;
+  YPos = 81.918;
+  ZPos = 9587.348;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_dngrid.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_dngrid.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 117;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46340.642;
+  YPos = 83.613;
+  ZPos = 9587.348;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46290.7, 9578.41;
+    46394.7, 9578.41;
+    46394.7, 9599.41;
+    46290.7, 9599.41;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 118;
+  LinkTrId = 0;
+  XPos = 46235.866;
+  YPos = 82.700;
+  ZPos = 9593.207;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_ramphi_dn.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_ramphi_dn.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 119;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46184.212;
+  YPos = 83.613;
+  ZPos = 9591.463;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46134.3, 9582.53;
+    46238.3, 9582.53;
+    46238.3, 9603.53;
+    46134.3, 9603.53;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 120;
+  LinkTrId = 0;
+  XPos = 46089.410;
+  YPos = 82.762;
+  ZPos = 9594.260;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_ramphi_up.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_ramphi_up.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 121;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46043.803;
+  YPos = 83.613;
+  ZPos = 9592.464;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45993.9, 9583.53;
+    46097.9, 9583.53;
+    46097.9, 9604.53;
+    45993.9, 9604.53;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 122;
+  LinkTrId = 0;
+  XPos = 45942.897;
+  YPos = 82.760;
+  ZPos = 9594.349;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_start_dn_lft.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_start_dn_lft.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 123;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45940.525;
+  YPos = 83.613;
+  ZPos = 9594.086;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45922.5, 9584.89;
+    45963.8, 9584.36;
+    45964, 9607.73;
+    45921.9, 9606.15;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 124;
+  LinkTrId = 0;
+  XPos = 45878.566;
+  YPos = 82.671;
+  ZPos = 9595.241;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_start_dn_rgt.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_start_dn_rgt.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 125;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45877.285;
+  YPos = 83.613;
+  ZPos = 9595.607;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45858.8, 9585.52;
+    45899.8, 9585.52;
+    45900.8, 9608.52;
+    45857.8, 9607.52;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 126;
+  LinkTrId = 0;
+  XPos = 45777.000;
+  YPos = 82.609;
+  ZPos = 9596.367;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_trpz.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_trpz.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 127;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45774.968;
+  YPos = 83.613;
+  ZPos = 9596.492;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45724.2, 9589.15;
+    45830.4, 9589.33;
+    45829.9, 9606.84;
+    45724.3, 9607.49;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 128;
+  LinkTrId = 0;
+  XPos = 45667.793;
+  YPos = 82.600;
+  ZPos = 9597.716;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_updn_lft.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_updn_lft.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 129;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45666.084;
+  YPos = 83.613;
+  ZPos = 9597.764;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45647.6, 9587.68;
+    45688.6, 9587.68;
+    45689.6, 9610.68;
+    45646.6, 9609.68;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 130;
+  LinkTrId = 0;
+  XPos = 45611.301;
+  YPos = 82.599;
+  ZPos = 9597.245;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_updn_rgt.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_updn_rgt.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 131;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45609.765;
+  YPos = 83.613;
+  ZPos = 9596.938;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45591.2, 9586.85;
+    45632.2, 9586.85;
+    45633.2, 9609.85;
+    45590.2, 9608.85;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 132;
+  LinkTrId = 0;
+  XPos = 45511.759;
+  YPos = 82.599;
+  ZPos = 9598.474;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_upgrid.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_upgrid.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 133;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45502.365;
+  YPos = 83.613;
+  ZPos = 9597.951;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45456.2, 9590.02;
+    45566, 9590.32;
+    45566.7, 9610.86;
+    45456.7, 9610.17;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 134;
+  LinkTrId = 0;
+  XPos = 45383.442;
+  YPos = 82.599;
+  ZPos = 9598.019;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_arch.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_arch.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 135;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45376.376;
+  YPos = 83.613;
+  ZPos = 9598.327;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45329.3, 9588.55;
+    45436.9, 9589.78;
+    45436.4, 9611.55;
+    45328.9, 9610.24;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 136;
+  LinkTrId = 0;
+  XPos = 45208.228;
+  YPos = 82.599;
+  ZPos = 9598.364;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_arch170.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_arch170.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 137;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45198.145;
+  YPos = 83.613;
+  ZPos = 9597.944;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45119.1, 9590.32;
+    45296.8, 9589.39;
+    45296.6, 9609.94;
+    45119, 9609.86;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 138;
+  LinkTrId = 0;
+  XPos = 45033.699;
+  YPos = 82.599;
+  ZPos = 9598.989;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_dngrid.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_dngrid.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 139;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45027.456;
+  YPos = 83.613;
+  ZPos = 9598.921;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44979.3, 9591.76;
+    45086.7, 9591.37;
+    45086.9, 9609.5;
+    44979.3, 9610.06;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 140;
+  LinkTrId = 0;
+  XPos = 44961.849;
+  YPos = 82.599;
+  ZPos = 9600.009;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_ramphi_dn.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_ramphi_dn.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 141;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44906.648;
+  YPos = 83.613;
+  ZPos = 9599.911;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44856, 9589.24;
+    44965.9, 9590.8;
+    44965.6, 9609.9;
+    44856, 9610.27;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 142;
+  LinkTrId = 0;
+  XPos = 44838.334;
+  YPos = 82.599;
+  ZPos = 9600.665;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_ramphi_up.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_ramphi_up.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 143;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44787.629;
+  YPos = 83.613;
+  ZPos = 9601.262;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44737, 9590.35;
+    44846, 9591.35;
+    44846, 9610.35;
+    44737, 9611.35;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 144;
+  LinkTrId = 0;
+  XPos = 44695.355;
+  YPos = 82.599;
+  ZPos = 9602.241;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_start_dn_lft.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_start_dn_lft.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 145;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44692.374;
+  YPos = 83.613;
+  ZPos = 9602.190;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44673.6, 9591.25;
+    44714.6, 9591.25;
+    44715.6, 9614.25;
+    44672.6, 9613.25;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 146;
+  LinkTrId = 0;
+  XPos = 44636.202;
+  YPos = 82.599;
+  ZPos = 9603.066;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_start_dn_rgt.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_start_dn_rgt.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 147;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44634.858;
+  YPos = 83.613;
+  ZPos = 9602.667;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44616.1, 9591.73;
+    44657.1, 9591.73;
+    44658.1, 9614.73;
+    44615.1, 9613.73;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 148;
+  LinkTrId = 0;
+  XPos = 44580.654;
+  YPos = 82.599;
+  ZPos = 9603.504;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_start_up_lft.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_start_up_lft.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 149;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44577.521;
+  YPos = 83.613;
+  ZPos = 9603.424;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44565.4, 9595.97;
+    44596.8, 9596.19;
+    44596.9, 9614.25;
+    44565.4, 9614.49;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 150;
+  LinkTrId = 0;
+  XPos = 44540.504;
+  YPos = 82.599;
+  ZPos = 9604.406;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_start_up_rgt.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_start_up_rgt.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 151;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44537.695;
+  YPos = 83.613;
+  ZPos = 9603.993;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44525.2, 9595.57;
+    44556.2, 9596.57;
+    44556.2, 9614.57;
+    44525.2, 9614.57;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 152;
+  LinkTrId = 0;
+  XPos = 44464.471;
+  YPos = 82.599;
+  ZPos = 9605.393;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_trpz.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_trpz.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 153;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44460.386;
+  YPos = 83.613;
+  ZPos = 9606.665;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44409.8, 9595.4;
+    44518.8, 9596.4;
+    44518.8, 9615.4;
+    44409.8, 9616.4;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 154;
+  LinkTrId = 0;
+  XPos = 44371.283;
+  YPos = 82.599;
+  ZPos = 9605.318;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_updn_lft.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_updn_lft.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 155;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44370.421;
+  YPos = 83.613;
+  ZPos = 9604.659;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44349.5, 9596.57;
+    44392.9, 9597.24;
+    44392.9, 9615.24;
+    44349.5, 9615.57;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 156;
+  LinkTrId = 0;
+  XPos = 44301.510;
+  YPos = 82.599;
+  ZPos = 9604.116;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_updn_rgt.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_updn_rgt.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 157;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44301.309;
+  YPos = 83.613;
+  ZPos = 9604.516;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44279.9, 9595.86;
+    44322.9, 9596.86;
+    44322.9, 9614.86;
+    44279.9, 9614.86;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 158;
+  LinkTrId = 0;
+  XPos = 44218.600;
+  YPos = 82.599;
+  ZPos = 9604.670;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rw_upgrid.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rw_upgrid.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 159;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44215.291;
+  YPos = 83.613;
+  ZPos = 9606.674;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44163.9, 9595.01;
+    44272.9, 9596.01;
+    44272.9, 9615.01;
+    44163.9, 9616.01;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 160;
+  LinkTrId = 0;
+  XPos = 46583.058;
+  YPos = 83.713;
+  ZPos = 9174.965;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_big_1.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_big_1.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 161;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46570.841;
+  YPos = 83.613;
+  ZPos = 9175.111;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46386.5, 9163.84;
+    46779, 9162.88;
+    46779, 9185.4;
+    46386.1, 9185.62;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 162;
+  LinkTrId = 0;
+  XPos = 46084.771;
+  YPos = 82.680;
+  ZPos = 9177.328;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_big_2.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_big_2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    9 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 163;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46071.878;
+  YPos = 83.613;
+  ZPos = 9177.054;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45837.6, 9165.3;
+    46333.5, 9165.28;
+    46333.5, 9190.24;
+    45839.5, 9191.22;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 164;
+  LinkTrId = 0;
+  XPos = 45601.248;
+  YPos = 82.599;
+  ZPos = 9179.864;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_hw110.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_hw110.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    2 = 1;
+    1 = 1;
+    8 = 1;
+    9 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 165;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45588.697;
+  YPos = 83.613;
+  ZPos = 9180.995;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45432, 9155.19;
+    45771, 9158.73;
+    45771.5, 9201.67;
+    45430.1, 9203.93;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 166;
+  LinkTrId = 0;
+  XPos = 45190.479;
+  YPos = 82.599;
+  ZPos = 9177.911;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_hw130.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_hw130.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    1 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 167;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45178.642;
+  YPos = 83.613;
+  ZPos = 9180.023;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45014.1, 9153.78;
+    45365.6, 9157;
+    45363.2, 9200.39;
+    45014, 9202;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 168;
+  LinkTrId = 0;
+  XPos = 44743.653;
+  YPos = 82.599;
+  ZPos = 9180.905;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_hw150.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_hw150.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    1 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 169;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44726.832;
+  YPos = 83.613;
+  ZPos = 9180.643;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44505.5, 9153.45;
+    44980.7, 9155.77;
+    44979, 9206.03;
+    44508, 9206.35;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 170;
+  LinkTrId = 0;
+  XPos = 44202.485;
+  YPos = 82.599;
+  ZPos = 9183.305;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_hw170.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_hw170.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    1 = 1;
+    8 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 171;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44190.647;
+  YPos = 83.613;
+  ZPos = 9183.130;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44012, 9157.28;
+    44402.7, 9157.75;
+    44403.8, 9207.41;
+    44011.1, 9208.63;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 172;
+  LinkTrId = 0;
+  XPos = 46569.097;
+  YPos = 80.071;
+  ZPos = 8793.100;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_hw190.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_hw190.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    8 = 1;
+    1 = 1;
+    9 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 173;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46558.724;
+  YPos = 83.613;
+  ZPos = 8793.521;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46377.1, 8771.05;
+    46802.1, 8771.93;
+    46800.5, 8815.97;
+    46376.6, 8813.8;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 174;
+  LinkTrId = 0;
+  XPos = 46259.452;
+  YPos = 82.487;
+  ZPos = 8791.685;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_hw50.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_hw50.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 175;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46251.046;
+  YPos = 83.613;
+  ZPos = 8791.796;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46227.1, 8781.17;
+    46291.5, 8782.25;
+    46291.1, 8803.08;
+    46226.6, 8801.53;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 176;
+  LinkTrId = 0;
+  XPos = 46032.769;
+  YPos = 82.600;
+  ZPos = 8794.073;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_hw70.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_hw70.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    1 = 1;
+    7 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 177;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46015.452;
+  YPos = 83.613;
+  ZPos = 8794.088;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45886.3, 8770.98;
+    46179, 8771.57;
+    46178.8, 8813.2;
+    45885.3, 8814.16;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 178;
+  LinkTrId = 0;
+  XPos = 45686.006;
+  YPos = 82.599;
+  ZPos = 8801.938;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_hw90.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_hw90.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+    7 = 1;
+    1 = 1;
+    8 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 179;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45670.970;
+  YPos = 83.613;
+  ZPos = 8802.321;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45529.2, 8780.64;
+    45842.1, 8779.23;
+    45841.1, 8821.65;
+    45528.8, 8823.03;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 180;
+  LinkTrId = 0;
+  XPos = 45431.322;
+  YPos = 82.599;
+  ZPos = 8801.751;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_pontoon_100.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_pontoon_100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    1 = 1;
+    4 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 181;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45423.895;
+  YPos = 83.613;
+  ZPos = 8800.982;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45366.7, 8792.79;
+    45498, 8792.28;
+    45498.3, 8812.28;
+    45366.7, 8811.79;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 182;
+  LinkTrId = 0;
+  XPos = 45155.268;
+  YPos = 82.599;
+  ZPos = 8803.848;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_railroad_100.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_railroad_100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 183;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45148.185;
+  YPos = 83.613;
+  ZPos = 8804.050;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45016.7, 8797.23;
+    45292.4, 8795.85;
+    45293.9, 8813.98;
+    45017, 8813.61;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 184;
+  LinkTrId = 0;
+  XPos = 44842.751;
+  YPos = 82.599;
+  ZPos = 8805.376;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_railroad_200.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_railroad_200.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    1 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 185;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44835.842;
+  YPos = 83.613;
+  ZPos = 8805.078;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44744.8, 8796.74;
+    44942, 8795.94;
+    44941.4, 8815.54;
+    44744.6, 8815.74;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 186;
+  LinkTrId = 0;
+  XPos = 44604.921;
+  YPos = 82.599;
+  ZPos = 8804.347;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_rd_cptl_100.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_rd_cptl_100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 187;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44599.202;
+  YPos = 83.613;
+  ZPos = 8804.456;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44495.8, 8796.3;
+    44713.6, 8795.18;
+    44713.8, 8815.18;
+    44495.8, 8814.89;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 188;
+  LinkTrId = 0;
+  XPos = 44295.620;
+  YPos = 82.599;
+  ZPos = 8804.895;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_rd_cptl_300.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_rd_cptl_300.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+    6 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 189;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44289.621;
+  YPos = 83.613;
+  ZPos = 8804.347;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44134.8, 8794.54;
+    44459.8, 8794;
+    44459.4, 8815.87;
+    44133.9, 8814.94;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 190;
+  LinkTrId = 0;
+  XPos = 44044.450;
+  YPos = 82.599;
+  ZPos = 8804.700;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_road_100.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_road_100.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    1 = 1;
+    3 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 191;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44038.087;
+  YPos = 83.613;
+  ZPos = 8804.432;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43980.3, 8795.47;
+    44106.9, 8796.26;
+    44107.3, 8812.97;
+    43980.5, 8812.52;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 192;
+  LinkTrId = 0;
+  XPos = 46592.632;
+  YPos = 80.684;
+  ZPos = 8543.474;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_road_150.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_road_150.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    2 = 1;
+    3 = 1;
+    1 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 193;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46587.142;
+  YPos = 83.613;
+  ZPos = 8543.498;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46521.8, 8533.48;
+    46680.7, 8533.61;
+    46681.2, 8551.83;
+    46522, 8553;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 194;
+  LinkTrId = 0;
+  XPos = 46392.598;
+  YPos = 82.528;
+  ZPos = 8542.136;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_road_200.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_road_200.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 195;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46387.819;
+  YPos = 83.613;
+  ZPos = 8542.096;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46292.3, 8532.4;
+    46498.8, 8532.27;
+    46497.7, 8550.43;
+    46292.1, 8552.55;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 196;
+  LinkTrId = 0;
+  XPos = 46100.905;
+  YPos = 82.607;
+  ZPos = 8544.682;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_road_250.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_road_250.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 197;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46094.718;
+  YPos = 83.613;
+  ZPos = 8544.312;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45961, 8513.8;
+    46240, 8529.8;
+    46241.2, 8558.03;
+    45959.8, 8557.88;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 198;
+  LinkTrId = 0;
+  XPos = 45507.191;
+  YPos = 82.599;
+  ZPos = 8542.458;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_road_300_ssp.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_road_300_ssp.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 199;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45502.582;
+  YPos = 83.613;
+  ZPos = 8542.108;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45124, 8526;
+    45889.9, 8527;
+    45888.6, 8559.97;
+    45124, 8560.34;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 200;
+  LinkTrId = 0;
+  XPos = 44892.401;
+  YPos = 82.599;
+  ZPos = 8545.821;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_rr110.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_rr110.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 201;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44885.867;
+  YPos = 83.613;
+  ZPos = 8545.955;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44735.9, 8523.89;
+    45050.7, 8526.24;
+    45048.4, 8564.24;
+    44735.4, 8567.96;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 202;
+  LinkTrId = 0;
+  XPos = 44527.983;
+  YPos = 82.599;
+  ZPos = 8543.200;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_rr130.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_rr130.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 203;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44516.648;
+  YPos = 83.613;
+  ZPos = 8543.267;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44369.6, 8524.61;
+    44685.2, 8523.07;
+    44684.6, 8562.09;
+    44368.3, 8565.64;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 204;
+  LinkTrId = 0;
+  XPos = 44156.459;
+  YPos = 82.599;
+  ZPos = 8544.391;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_rr150.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_rr150.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 205;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 44146.052;
+  YPos = 83.613;
+  ZPos = 8544.437;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    43993.2, 8523.72;
+    44321.1, 8523.59;
+    44320.9, 8564.04;
+    43992.5, 8566.17;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 206;
+  LinkTrId = 0;
+  XPos = 46599.552;
+  YPos = 83.607;
+  ZPos = 8328.680;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_rr170.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_rr170.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 207;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46589.498;
+  YPos = 83.613;
+  ZPos = 8329.073;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46431.6, 8309.81;
+    46805.9, 8308.13;
+    46806.2, 8349.48;
+    46431, 8351.98;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 208;
+  LinkTrId = 0;
+  XPos = 46228.497;
+  YPos = 82.570;
+  ZPos = 8331.424;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_rr70.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_rr70.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 209;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46221.571;
+  YPos = 83.613;
+  ZPos = 8331.264;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    46096.6, 8311.65;
+    46356.2, 8312.03;
+    46356.3, 8351.37;
+    46094.9, 8353.34;
+  }
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 210;
+  LinkTrId = 0;
+  XPos = 45889.590;
+  YPos = 82.599;
+  ZPos = 8330.837;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\bridge_rr90.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\bridge_rr90.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Damaged
+  {
+    1 = 1;
+    2 = 1;
+    3 = 1;
+    4 = 1;
+    5 = 1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 211;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45874.692;
+  YPos = 83.613;
+  ZPos = 8330.357;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45753.5, 8309.65;
+    46025.7, 8307.69;
+    46028.1, 8351.01;
+    45752, 8352.09;
+  }
+}
+
+
 # end of file
