@@ -99,6 +99,65 @@ with
         // Result
         { this with Nodes = nodes; Links = links }
 
+    /// Set the bridges located on each link
+    member this.SetBridges(bridges : BuildingInstance list) =
+        // Find bridges by their exact position
+        let byPos =
+            bridges
+            |> Seq.map (fun instance -> instance.Pos, instance)
+            |> dict
+        // Get the boundary of each bridge, and cache values
+        let getBoundary pos =
+            byPos.[pos].Properties.Boundary
+            |> List.map (fun v -> v.Rotate(pos.Rotation) + pos.Pos)
+        let cache = System.Collections.Generic.Dictionary()
+        let cachedGetBoundary = SturmovikMission.DataProvider.Cached.cached cache getBoundary
+        // Quick intersection tests for bridges
+        let tree = Campaign.SpacePartition.QuadTree.fromBoundaryOjects cachedGetBoundary 10 10 (bridges |> Seq.map (fun instance -> instance.Pos))
+        // Area between nodes to "capture" bridges
+        let roadSegment (v1 : Vector2, v2 : Vector2) : Vector2 list =
+            let dir = v2 - v1
+            let len = dir.Length()
+            let dir = dir / len
+            let side = 3.0f * dir.Rotate(90.0f)
+            [
+                v1 - side
+                v2 - side
+                v2 + side
+                v1 + side
+            ]
+        let finder = Campaign.SpacePartition.QuadTreeItemFinder.create cachedGetBoundary roadSegment tree
+        // Find bridges between nodes of each link
+        let links =
+            this.Links
+            |> List.map (fun link ->
+                let v1 = this.Nodes.[link.NodeA].Pos
+                let v2 = this.Nodes.[link.NodeB].Pos
+                let bridges =
+                    finder.FindIntersectingItems (v1, v2)
+                    |> Seq.distinct
+                    |> Seq.map (fun pos -> byPos.[pos])
+                    |> List.ofSeq
+                { link with Bridges = bridges }
+            )
+        { this with
+            Links = links }
+
+    /// Set the nodes that are in terminal areas
+    member this.SetTerminals(areas : Vector2 list list) =
+        let nodes =
+            this.Nodes
+            |> List.map (fun node ->
+                let hasTerminal =
+                    areas
+                    |> List.exists(fun area -> node.Pos.IsInConvexPolygon area)
+                { node with HasTerminal = hasTerminal }
+            )
+        { this with
+            Nodes = nodes
+        }
+
+
 type Runway = {
     SpawnPos : OrientedPosition
     PathToRunway : Vector2 list
@@ -419,18 +478,32 @@ module Loading =
         let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea
         let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield
         let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions)
-        // Roads
+        // Map name
         let options = missionData.ListOfOptions.[0]
         let mapName = options.GetGuiMap().Value
-        let graph =
-            loadRoadGraph(sprintf "Roads-%s.json" mapName, roadsCapacity)
-        let roads = graph.SetRegions regions
-        let roads = (failwith "TODO: set bridges and terminals") roads
+        // Terminal areas
+        let terminals =
+            missionData.GetGroup("Terminals").ListOfMCU_TR_InfluenceArea
+            |> List.map (fun area ->
+                area.GetBoundary().Value
+                |> List.map Vector2.FromPair)
+        // Function to load roads and bridges
+        let loadRoads group graph capacity =
+            // Bridges
+            let blocks =
+                missionData.GetGroup(group).ListOfBlock
+            let bridges = extractBuildingInstances(buildingDb, blocks)
+            // Roads
+            let graph =
+                loadRoadGraph(graph, capacity)
+            let roads0 = graph.SetRegions regions
+            let roads1 = roads0.SetBridges bridges
+            let roads2 = roads1.SetTerminals terminals
+            roads2
+        // Roads
+        let roads = loadRoads "BridgesHW" (sprintf "Roads-%s.json" mapName) roadsCapacity
         // Railroads
-        let graph =
-            loadRoadGraph(sprintf "Rails-%s.json" mapName, railsCapacity)
-        let rails = graph.SetRegions regions
-        let rails = (failwith "TODO: set bridges and terminals") rails
+        let rails = loadRoads "BridgesRW" (sprintf "Rails-%s.json" mapName) railsCapacity
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
