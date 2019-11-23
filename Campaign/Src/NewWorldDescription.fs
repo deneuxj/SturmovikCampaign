@@ -202,28 +202,31 @@ module Loading =
     open FSharp.Data
 
     open SturmovikMission.Blocks.BlocksMissionData
+    open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 
     [<Literal>]
     let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\Roads-Sample.json"
     type private JsonNetwork = JsonProvider<sampleFile>
 
     /// Extract BuildingProperties from a block inside a delimiting influence area
-    let extractBuildingProperties(building : T.Block, boundary : T.MCU_TR_InfluenceArea) =
+    let inline extractBuildingProperties(building : ^Block, boundary : T.MCU_TR_InfluenceArea) =
         let pos = Vector2.FromPos(building)
-        let rot = float32(building.GetYOri().Value)
+        let rot = float32(building |> getYOri |> valueOf)
         let vertices =
             boundary.GetBoundary().Value
             |> List.map (fun floats ->
                 (Vector2.FromPair floats - pos).Rotate(-rot))
         let subparts =
-            building.GetDamaged().Value
+            building
+            |> getDamaged
+            |> valueOf
             |> Map.toSeq
             |> Seq.map fst
             |> List.ofSeq
-        let durability = building.GetDurability().Value
+        let durability = building |> getDurability |> valueOf
         {
-            Model = building.GetModel().Value
-            Script = building.GetScript().Value
+            Model = building |> getModel |> valueOf
+            Script = building |> getScript |> valueOf
             Boundary = vertices
             SubParts = subparts
             Durability = durability
@@ -233,6 +236,7 @@ module Loading =
     let loadBuildingPropertiesList(path : string) =
         let data = T.GroupData(Stream.FromFile path)
         let blocks = data.ListOfBlock
+        let bridges = data.ListOfBridge
         let zones = data.ListOfMCU_TR_InfluenceArea
         let zones =
             zones
@@ -243,29 +247,32 @@ module Loading =
                         let x, y = floats.Value
                         Vector2(float32 x, float32 y))
                 (fun (v : Vector2) -> v.IsInConvexPolygon(vertices)), area)
-        [
-            for block in blocks do
-                let pos = Vector2.FromPos block
-                match zones |> List.tryFind (fun (f, _) -> f pos) with
-                | Some (_, data) ->
-                    yield extractBuildingProperties(block, data)
-                | None ->   ()
-        ]
+        let inline build blocks =
+            [
+                for block in blocks do
+                    let pos = Vector2.FromPos block
+                    match zones |> List.tryFind (fun (f, _) -> f pos) with
+                    | Some (_, data) ->
+                        yield extractBuildingProperties(block, data)
+                    | None ->   ()
+            ]
+        [ build blocks ; build bridges ]
+        |> List.concat
 
     /// Extract a list of building instances from a list of blocks from a .Mission file using a database of known building types 
-    let extractBuildingInstances(db : BuildingProperties list, blocks : T.Block list) =
+    let inline extractBuildingInstances(db : BuildingProperties list, blocks : ^Block list) =
         let db =
             db
             |> Seq.map (fun building -> building.Script, building)
             |> dict
         [
             for block in blocks do
-                match db.TryGetValue(block.GetScript().Value) with
+                match db.TryGetValue(block |> getScript |> valueOf) with
                 | true, props ->
                     yield { Pos =
                                 { Pos = Vector2.FromPos block
-                                  Rotation = block.GetYOri().Value |> float32
-                                  Altitude = block.GetYPos().Value |> float32 }
+                                  Rotation = block |> getYOri |> valueOf |> float32
+                                  Altitude = block |> getAlt |> valueOf |> float32 }
                             Properties = props }
                 | false, _ ->
                     ()
@@ -497,7 +504,7 @@ module Loading =
         let loadRoads group graph capacity =
             // Bridges
             let blocks =
-                missionData.GetGroup(group).ListOfBlock
+                missionData.GetGroup(group).ListOfBridge
             let bridges = extractBuildingInstances(buildingDb, blocks)
             // Roads
             let graph =
