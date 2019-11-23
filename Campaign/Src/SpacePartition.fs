@@ -46,7 +46,7 @@ module QuadNode =
             items
             |> Seq.fold (fun (lower, upper) item ->
                 let l, u = getBounds item
-                (min l lower, max u upper)) (Vector2(ninf, ninf), Vector2(pinf, pinf))
+                (min l lower, max u upper)) (Vector2(pinf, pinf), Vector2(ninf, ninf))
         {
             Min = lower
             Max = upper
