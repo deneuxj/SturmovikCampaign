@@ -127,12 +127,17 @@ with
                 v1 + side
             ]
         let finder = Campaign.SpacePartition.QuadTreeItemFinder.create cachedGetBoundary roadSegment tree
+        // Quick node lookup
+        let nodeById =
+            this.Nodes
+            |> Seq.map (fun node -> node.Id, node)
+            |> dict
         // Find bridges between nodes of each link
         let links =
             this.Links
             |> List.map (fun link ->
-                let v1 = this.Nodes.[link.NodeA].Pos
-                let v2 = this.Nodes.[link.NodeB].Pos
+                let v1 = nodeById.[link.NodeA].Pos
+                let v2 = nodeById.[link.NodeB].Pos
                 let bridges =
                     finder.FindIntersectingItems (v1, v2)
                     |> Seq.distinct
@@ -192,6 +197,7 @@ type World = {
 
 module Loading =
     open System.IO
+    open System.Reflection
     open SturmovikMission.DataProvider.Parsing
     open FSharp.Data
 
@@ -208,8 +214,7 @@ module Loading =
         let vertices =
             boundary.GetBoundary().Value
             |> List.map (fun floats ->
-                let x, y = floats.Value
-                (Vector2(float32 x, float32 y) - pos).Rotate(-rot))
+                (Vector2.FromPair floats - pos).Rotate(-rot))
         let subparts =
             building.GetDamaged().Value
             |> Map.toSeq
@@ -454,7 +459,8 @@ module Loading =
 
     /// Load a scenario mission file and create a world description.
     let loadWorld(scenario : string, strongProduction : float32<E/H>, buildingFlowCapacity : float32<E/H>, roadsCapacity : float32<E/H>, railsCapacity : float32<E/H>) =
-        let buildingDb = loadBuildingPropertiesList "Buildings.Mission"
+        let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+        let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
         let missionData = T.GroupData(Stream.FromFile scenario)
         // Region boundaries
         let regionAreas = missionData.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
@@ -501,9 +507,9 @@ module Loading =
             let roads2 = roads1.SetTerminals terminals
             roads2
         // Roads
-        let roads = loadRoads "BridgesHW" (sprintf "Roads-%s.json" mapName) roadsCapacity
+        let roads = loadRoads "BridgesHW" (Path.Combine(exeDir, "Config", sprintf "Roads-%s.json" mapName)) roadsCapacity
         // Railroads
-        let rails = loadRoads "BridgesRW" (sprintf "Rails-%s.json" mapName) railsCapacity
+        let rails = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapName)) railsCapacity
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
