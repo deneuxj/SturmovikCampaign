@@ -33,6 +33,15 @@ type BuildingProperties = {
     SubParts : int list
     Durability : int
 }
+with
+    static member CapacityDensity = 10.0f<E/M^2>
+
+    member this.Area =
+        1.0f<M^2> * Vector2.ConvexPolygonArea this.Boundary
+
+    member this.Capacity =
+        BuildingProperties.CapacityDensity * this.Area
+
 
 type BuildingInstance = {
     Pos : OrientedPosition
@@ -48,10 +57,12 @@ type Region = {
     // Production in the region; Typically only the rearmost region should have production.
     // It represents the entry point into the game for supplies, and cannot be affected.
     Production : float32<E/H>
-    // Supplies can pass through the region, affected by industry
-    OperationalCapacity : float32<E>
     IndustryBuildings : BuildingInstance list
 }
+with
+    member this.Capacity =
+        this.IndustryBuildings
+        |> List.sumBy (fun building -> building.Properties.Capacity)
 
 /// A node in the logistics network
 type NetworkNode = {
@@ -175,9 +186,12 @@ type Airfield = {
     Region : RegionId
     Boundary : Vector2 list
     Runways : Runway list
-    OperationalCapacity : float32<E>
     Facilities : BuildingInstance list
 }
+with
+    member this.Capacity =
+        this.Facilities
+        |> List.sumBy (fun building -> building.Properties.Capacity)
 
 type World = {
     /// Base name of scenario file
@@ -279,7 +293,7 @@ module Loading =
         ]
 
     /// Extract a list of regions from a list of influence areas and a list of building instances
-    let extractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list, strongProduction : float32<E/H>, buildingCapacity : float32<E>) =
+    let extractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list, strongProduction : float32<E/H>) =
         let extractOne (region : T.MCU_TR_InfluenceArea) : Region =
             let coalition = CoalitionId.FromCountry (enum(region.GetCountry().Value))
             let boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
@@ -292,7 +306,6 @@ module Loading =
               Neighbours = []
               Production = if region.GetDesc().Value.Contains("***") then strongProduction else 0.0f<E/H>
               InitialOwner = coalition
-              OperationalCapacity = buildingCapacity * float32 buildings.Length
               IndustryBuildings = buildings
             }
         let withBoundaries =
@@ -448,16 +461,11 @@ module Loading =
                     let buildings =
                         region.IndustryBuildings
                         |> List.filter (fun building -> building.Pos.Pos.IsInConvexPolygon boundary)
-                    let capacityPerBuilding =
-                        match region.IndustryBuildings |> List.length with
-                        | 0 -> 0.0f<E>
-                        | n -> region.OperationalCapacity / float32 n
                     yield {
                         AirfieldId = AirfieldId (area.GetName().Value)
                         Region = region.RegionId
                         Boundary = boundary
                         Runways = runways
-                        OperationalCapacity = capacityPerBuilding * float32(List.length buildings)
                         Facilities = buildings
                     }
                 | None ->
@@ -465,7 +473,7 @@ module Loading =
         ]
 
     /// Load a scenario mission file and create a world description.
-    let loadWorld(scenario : string, strongProduction : float32<E/H>, buildingCapacity : float32<E>, roadsCapacity : float32<E/H>, railsCapacity : float32<E/H>) =
+    let loadWorld(scenario : string, strongProduction : float32<E/H>, roadsCapacity : float32<E/H>, railsCapacity : float32<E/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
         let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
         let missionData = T.GroupData(Stream.FromFile scenario)
@@ -486,7 +494,7 @@ module Loading =
         // Building instances
         let buildings = extractBuildingInstances(buildingDb, blocks)
         // Regions
-        let regions = extractRegions(regionAreas, buildings, strongProduction, buildingCapacity)
+        let regions = extractRegions(regionAreas, buildings, strongProduction)
         // Airfields
         let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea
         let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield

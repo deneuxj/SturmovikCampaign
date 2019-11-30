@@ -36,6 +36,10 @@ type H
 /// Mass
 type K
 
+[<Measure>]
+/// Distance
+type M
+
 type CoalitionId = Axis | Allies
 with
     /// <summary>

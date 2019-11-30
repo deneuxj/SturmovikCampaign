@@ -19,7 +19,7 @@ let main argv =
 
     let world =
         try
-            Loading.loadWorld(missionFile, 10000.0f<E/H>, 100.0f<E>, 100.0f<E/H>, 1000.0f<E/H>)
+            Loading.loadWorld(missionFile, 10000.0f<E/H>, 100.0f<E/H>, 1000.0f<E/H>)
         with
         | e ->
             eprintfn "Error in mission file: %s" e.Message
