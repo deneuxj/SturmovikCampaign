@@ -10,20 +10,33 @@ Each region has logistics infrastructure with neighbours: bridges, train station
 
 Regions have connection capacity to the rear base depending on the state of logistics infrastructure on the paths to the rear base
 
-An airfield is active if it has enough operational points
-
 Each region has ground force points.
-Each active airfield within range provides extra points.
+
 Regions on the front lines deplete their points every turn.
+
 Regions get new ground force points every turn depending on the state of logistics infrastructure.
-When two enemy contiguous regions have a point difference that exceeds a certain threshold, the stronger one takes over the weaker one.
 
-Targets of opportunity consist of truck convoys, ships, trains. They are randomly generated and destroying them affects replenishment of operational points
+Each region has defense points consisting of its own ground force points, and part of the ground force points of its friendly neighbours (affected by connectivity)
 
-Tank columns are other targets of opportunity, and destroying them affects the ground force points
+Each region has threat points consisting of part of the ground force points of its enemy neighbours (affected by connectivity)
 
-Ground battles occur across the front line, and the outcome affects the ground force points in the two involved opposing regions
+When a region's threat points exceeds its defense points significantly, it is conquered by the enemy
 
-The planes available at airfields depend on their operational points, and the history of flights.
-Each campaign scenario includes the relative number of flights of each model, ideally following historical values.
-When a plane is flown too often, it is removed from the plane set of the most popular airfields.
+A region's ground force points is affected by actual damage inflicted by players, and by virtual damage inflicted by virtual ground skirmishes and virtual attacks from the air.
+
+The effectiveness of attacks from virtual events is determined by the effectiveness of actual missions conducted by player.
+
+A mission consists of an airfield of departure, a target area and a plane type.
+
+Missions where the players do not return safely home, even after destroying targets, do not affect positively the outcome of virtual missions.
+
+The number of virtual missions depends on the operational readiness of starting airfields.
+
+Virtual missions can also target airfields and their operational facilities. The success rate of such missions is affected by actual airfield raids conducted by players.
+
+The planned virtual missions are shown on the map during the preceding mission. Players can choose to fly missions to try and improve the income of the upcoming virtual missions, or do their own thing and have a lesser impact.
+
+The former can be seen as "following orders", and has a relatively higher risk (enemies see the planned mission too) with a high reward (both personal and for the team).
+
+The public web stats system should be based on individual contribution to the virtual missions outcomes.
+
