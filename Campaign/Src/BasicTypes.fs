@@ -97,6 +97,8 @@ with
         | _ -> failwithf "Invalid coalition '%s'" s
 
 /// A position on the map and a rotation around the vertical axis.
+[<CustomComparison>]
+[<CustomEquality>]
 type OrientedPosition = {
     Pos : Vector2
     Rotation : float32
@@ -109,6 +111,31 @@ with
             Rotation = getYOri block |> valueOf |> float32
             Altitude = getAlt block |> valueOf |> float32
         }
+
+    member private this.AsTuple =
+        (this.Pos.X, this.Pos.Y, this.Rotation, this.Altitude)
+
+    override this.Equals(other) =
+        match other with
+        | :? OrientedPosition as other ->
+            this.AsTuple = other.AsTuple
+        | _ ->
+            invalidArg "other" "Must be an OrientedPosition"
+
+    override this.GetHashCode() =
+        hash this.AsTuple
+
+    interface System.IComparable<OrientedPosition> with
+        member this.CompareTo(other): int =
+            compare this.AsTuple other.AsTuple
+
+    interface System.IComparable with
+        member this.CompareTo(other): int =
+            match other with
+            | :? OrientedPosition as other ->
+                compare this.AsTuple other.AsTuple
+            | _ ->
+                invalidArg "other" "Must be an OrientedPosition"
 
 /// Constants used to pick the kind of fires to display
 let bigDamage = 500.0f<E>

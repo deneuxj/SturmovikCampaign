@@ -472,6 +472,27 @@ module Loading =
                     ()
         ]
 
+    /// Remove buildings that are assigned to airfields from regions
+    let cleanRegionBuildings(regions : Region list, airfields : Airfield list) =
+        let buildingsInAirfields =
+            airfields
+            |> Seq.fold (fun buildings airfield ->
+                airfield.Facilities
+                |> Seq.map (fun building -> building.Pos)
+                |> Set.ofSeq
+                |> Set.union buildings
+            ) Set.empty
+        let filter (building : BuildingInstance) =
+            not <| Set.contains building.Pos buildingsInAirfields
+        regions
+        |> List.map (fun region ->
+            let buildings =
+                region.IndustryBuildings
+                |> List.filter filter
+            { region with
+                IndustryBuildings = buildings
+            })
+
     /// Load a scenario mission file and create a world description.
     let loadWorld(scenario : string, strongProduction : float32<E/H>, roadsCapacity : float32<E/H>, railsCapacity : float32<E/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
@@ -499,6 +520,7 @@ module Loading =
         let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea
         let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield
         let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions)
+        let regions = cleanRegionBuildings(regions, airfields)
         // Map name
         let options = missionData.ListOfOptions.[0]
         let mapName = options.GetGuiMap().Value
