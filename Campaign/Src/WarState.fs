@@ -37,24 +37,51 @@ type MissionRecord =
 type GroundDamage =
     {
         Instance : BuildingInstance
-        Health : float32
+        Health : Map<int, float32>
     }
+with
+    static member CountResources (buildings : BuildingInstance list) (damages : Map<OrientedPosition, GroundDamage>) =
+        buildings
+        |> List.sumBy (fun building ->
+            let damages =
+                damages.TryFind building.Pos
+                |> Option.map (fun dmg -> dmg.Health)
+                |> Option.defaultValue Map.empty
+            let health =
+                building.Properties.SubParts
+                |> List.sumBy (fun part ->
+                    damages.TryFind part
+                    |> Option.defaultValue 1.0f
+                    |> function
+                       | x when x <= 0.5f -> 0.0f
+                       | x -> x)
+            let health =
+                match building.Properties.SubParts.Length with
+                | 0 -> health
+                | n -> health / float32 n
+            building.Properties.Capacity * health)
 
 type RegionStatus =
     {
-        RegionId : RegionId
+        Properties : Region
         Owner : CoalitionId option
-        Damages : GroundDamage list
+        Damages : Map<OrientedPosition, GroundDamage>
         Resources : float32<E>
     }
+with
+    member this.Capacity =
+        GroundDamage.CountResources this.Properties.IndustryBuildings this.Damages
 
 type AirfieldStatus =
     {
-        AirfieldId : AirfieldId
+        Properties : Airfield
         Resources : float32<E>
-        Damages : GroundDamage list
+        Damages : Map<OrientedPosition, GroundDamage>
         Planes : Map<PlaneModel, float32>
     }
+with
+    member this.Capacity =
+        GroundDamage.CountResources this.Properties.Facilities this.Damages
 
 type WarState =
     {
@@ -75,9 +102,9 @@ module Init =
         let resources =
             description.Capacity
         {
-            RegionId = region
+            Properties = description
             Owner = description.InitialOwner
-            Damages = []
+            Damages = Map.empty
             Resources = resources
         }
 
@@ -89,9 +116,9 @@ module Init =
         let resources =
             description.Capacity
         {
-            AirfieldId = airfield
+            Airfield = description
             Resources = resources
-            Damages = []
+            Damages = Map.empty
             Planes = Map.empty
         }
 
