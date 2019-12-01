@@ -43,6 +43,10 @@ with
     member this.Capacity =
         BuildingProperties.CapacityDensity * this.Area
 
+    member this.PartCapacity =
+        match this.SubParts.Length with
+        | 0 -> 0.0f<E>
+        | n -> this.Capacity / float32 n
 
 type BuildingInstance = {
     Pos : OrientedPosition
