@@ -130,6 +130,18 @@ let suntimes(date : System.DateTime) =
     let sunset = System.DateTime(date.Year, date.Month, date.Day, int set, 0, 0)
     sunrise, sunset
 
+/// Function to cache computationally expensive properties of objects.
+let cachedProperty f =
+    let cache = System.Runtime.CompilerServices.ConditionalWeakTable()
+    fun this ->
+        match cache.TryGetValue this with
+        | false, _ ->
+            let value = f this
+            cache.Add(this, box value)
+            value
+        | true, x ->
+            unbox x
+
 /// Extensions to Option module
 module Option =
     let defaultVal x y = defaultArg y x
