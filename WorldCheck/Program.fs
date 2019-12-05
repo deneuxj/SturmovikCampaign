@@ -1,7 +1,7 @@
 ﻿open System.IO
 open Campaign.NewWorldDescription
+open Campaign.WarState
 open Campaign.BasicTypes
-open System.Reflection
 
 // Learn more about F# at http://fsharp.org
 // See the 'F# Tutorial' project for more help.
@@ -23,6 +23,15 @@ let main argv =
         with
         | e ->
             eprintfn "Error in mission file: %s" e.Message
+            System.Console.ReadKey(true) |> ignore
+            failwith "Failed"
+
+    let war = 
+        try
+            Init.mkWar world
+        with
+        | e ->
+            eprintfn "Failed to initialize war: %s" e.Message
             System.Console.ReadKey(true) |> ignore
             failwith "Failed"
 
