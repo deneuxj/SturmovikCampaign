@@ -22,14 +22,30 @@ open VectorExtension
 open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.BasicTypes
+open Campaign.WorldDescription
+open Campaign.PlaneModel
 
 // We use explicit command and result types for all changes to the state of the war.
 // This makes it easier to present relevant data to players and help them understand what affect their actions have.
 
 /// Commands to change a WarState
 type Commands =
-    // Damage a building or a bridge
+    // Damage a part of a building or a bridge
     | DamageBuilding of Instance: BuildingInstanceId * Part: int * Damage: float32
+    // Repair a building or a bridge
+    | RepairBuilding of Instance: BuildingInstanceId * Resources: float32<E>
+    // Take out resources from a region
+    | TakeOutResources of RegionId * float32<E>
+    // Assign resources to a region
+    | MoveResourcesIn of RegionId * float32<E>
+    // Take out resources from an airfield
+    | TakeOutSupplies of AirfieldId * float32<E>
+    // Assign supplies to an airfield
+    | MoveSuppliesIn of AirfieldId * float32<E>
+    // Remove a plane from an airfield
+    | RemovePlane of AirfieldId * PlaneModelId * Health: float32
+    // Add a plane to an airfield
+    | AddPlane of AirfieldId * PlaneModelId * Health: float32
 
 /// Interesting data to report from execution of commands
 type Results =

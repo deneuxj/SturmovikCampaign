@@ -213,6 +213,7 @@ type World = {
     Airfields : Airfield list
     Buildings : IDictionary<BuildingInstanceId, BuildingInstance>
     Bridges : IDictionary<BuildingInstanceId, BuildingInstance>
+    PlaneSet : IDictionary<PlaneModelId, PlaneModel>
 }
 
 module Loading =
@@ -576,4 +577,5 @@ module Loading =
             Airfields = airfields
             Buildings = buildingsDict
             Bridges = bridges
+            PlaneSet = dict[]
         }

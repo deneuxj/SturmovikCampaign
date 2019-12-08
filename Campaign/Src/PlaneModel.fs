@@ -60,6 +60,9 @@ with
         | "Cargo" -> CargoTransporter
         | _ -> failwithf "Invalid plane role '%s'" s
 
+[<Struct>]
+type PlaneModelId = PlaneModelId of string
+
 type PlaneModel =
     { Kind : PlaneType
       Name : string
@@ -75,6 +78,8 @@ type PlaneModel =
       SpecialLoadsCosts : (int * float32<E>) list
       EmptyPayload : int
     }
+with
+    member this.Id = this.Name
 
 [<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.yaml"
