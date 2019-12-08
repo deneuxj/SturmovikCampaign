@@ -28,6 +28,7 @@ open Campaign.BasicTypes
 
 /// Commands to change a WarState
 type Commands =
+    // Damage a building or a bridge
     | DamageBuilding of Instance: BuildingInstanceId * Part: int * Damage: float32
 
 /// Interesting data to report from execution of commands
@@ -41,14 +42,23 @@ module DamageExtension =
             let dmg = dmg |> max 0.0f |> min 1.0f
             let health = this.GetBuildingPartHealthLevel(bid, part)
             let health = health - dmg |> max 0.0f
-            let fill = this.GetBuildingPartFillLevel(bid, part)
-            let store = this.GetBuildingStorage(bid)
+            let isBridge = this.World.Bridges.ContainsKey(bid)
+            let store =
+                if isBridge then
+                    0.0f<E>
+                else
+                    this.GetBuildingStorage(bid)
             let fill2 =
+                let fill = this.GetBuildingPartFillLevel(bid, part)
                 fill * (1.0f - dmg)
                 |> min (this.GetBuildingPartFunctionalityLevel(bid, part))
-            this.SetBuildingPartHealthLevel(bid, part, health)
             this.SetBuildingPartFillLevel(bid, part, fill2)
-            let store2 = this.GetBuildingStorage(bid)
+            this.SetBuildingPartHealthLevel(bid, part, health)
+            let store2 =
+                if isBridge then
+                    0.0f<E>
+                else
+                    this.GetBuildingStorage(bid)
             store2 - store
 
     type Commands with

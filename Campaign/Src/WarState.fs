@@ -65,39 +65,43 @@ type WarState =
         MissionRecords : MissionRecord list
     }
 with
-    /// Relative level of space used in a subpart, relatively to full health availability
+    /// Relative level of space used in a subpart of a building, relatively to full health availability
     member this.GetBuildingPartFillLevel(bid, part) =
+        assert(this.World.Buildings.ContainsKey(bid))
         match this.BuildingPartFillLevel.TryGetValue((bid, part)) with
         | true, x -> x
         | false, _ -> 0.0f
 
+    /// Set relative occupancy of a building part.
     member this.SetBuildingPartFillLevel(bid, part, x) =
+        assert(this.World.Buildings.ContainsKey(bid))
         if x = 0.0f then
             this.BuildingPartFillLevel.Remove((bid, part)) |> ignore
         else
             this.BuildingPartFillLevel.[(bid, part)] <- x
 
-    /// Amount of resources stored
+    /// Amount of resources stored in a building.
     member this.GetBuildingStorage(bid) =
         let building = this.World.Buildings.[bid]
         building.Properties.SubParts
         |> List.sumBy (fun part -> this.GetBuildingPartFillLevel(bid, part))
         |> (*) building.Properties.PartCapacity
 
-    /// Level of health of a subpart of a building
+    /// Level of health of a subpart of a building or bridge
     member this.GetBuildingPartHealthLevel(bid, part) =
         match this.BuildingPartHealthLevel.TryGetValue((bid, part)) with
         | true, x -> x
         | false, _ -> 1.0f
 
-    /// Max amount of resources that can be stored, depending on health but not taking into account current amounts.
+    /// Max amount of resources that can be stored in a building, depending on health but not taking into account current amounts.
     member this.GetBuildingCapacity(bid) =
+        assert(this.World.Buildings.ContainsKey(bid))
         let building = this.World.Buildings.[bid]
         building.Properties.SubParts
         |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
         |> (*) building.Properties.PartCapacity
 
-    /// Level of functionality of a subpart of a building.
+    /// Level of functionality of a subpart of a building or bridge
     member this.GetBuildingPartFunctionalityLevel(bid, part) =
         let health = this.GetBuildingPartHealthLevel(bid, part)
         if health < 0.5f then
@@ -105,6 +109,7 @@ with
         else
             health
 
+    /// Set the level of health of a subpart of a building or a bridge
     member this.SetBuildingPartHealthLevel(bid, part, x) =
         if x = 1.0f then
             this.BuildingPartHealthLevel.Remove((bid, part)) |> ignore
@@ -113,6 +118,7 @@ with
 
     /// Assign resources to a building. Returns unassigned resources.
     member this.AssignResources (bid : BuildingInstanceId, rsc : float32<E>) =
+        assert(this.World.Buildings.ContainsKey(bid))
         let building = this.World.Buildings.[bid]
         let partCapacity = building.Properties.PartCapacity
         let rsc =

@@ -212,6 +212,7 @@ type World = {
     Rails : Network
     Airfields : Airfield list
     Buildings : IDictionary<BuildingInstanceId, BuildingInstance>
+    Bridges : IDictionary<BuildingInstanceId, BuildingInstance>
 }
 
 module Loading =
@@ -550,11 +551,15 @@ module Loading =
             let roads0 = graph.SetRegions regions
             let roads1 = roads0.SetBridges bridges
             let roads2 = roads1.SetTerminals terminals
-            roads2
+            roads2, bridges
         // Roads
-        let roads = loadRoads "BridgesHW" (Path.Combine(exeDir, "Config", sprintf "Roads-%s.json" mapName)) roadsCapacity
+        let roads, roadBridges = loadRoads "BridgesHW" (Path.Combine(exeDir, "Config", sprintf "Roads-%s.json" mapName)) roadsCapacity
         // Railroads
-        let rails = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapName)) railsCapacity
+        let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapName)) railsCapacity
+        let bridges =
+            Seq.concat [roadBridges; railBridges]
+            |> Seq.map (fun bridge -> bridge.Id, bridge)
+            |> dict
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
@@ -570,4 +575,5 @@ module Loading =
             Rails = rails
             Airfields = airfields
             Buildings = buildingsDict
+            Bridges = bridges
         }
