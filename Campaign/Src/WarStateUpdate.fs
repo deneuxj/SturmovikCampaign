@@ -21,50 +21,40 @@ open VectorExtension
 
 open Campaign.NewWorldDescription
 open Campaign.WarState
+open Campaign.BasicTypes
 
+// We use explicit command and result types for all changes to the state of the war.
+// This makes it easier to present relevant data to players and help them understand what affect their actions have.
+
+/// Commands to change a WarState
 type Commands =
-    | DamageBuilding of Instance: BuildingInstance * Part: int * Damage: float32
+    | DamageBuilding of Instance: BuildingInstanceId * Part: int * Damage: float32
+
+/// Interesting data to report from execution of commands
+type Results =
+    | StorageChange of Instance: BuildingInstanceId * Amount: float32<E>
 
 module DamageExtension =
-    type BuildingStatus with
-        member this.ApplyDamage(part, damage) =
-            let health =
-                this.Health
-                |> Map.tryFind part
-                |> Option.defaultValue 1.0f
-            let health = health - damage
-            { this with
-                Health = this.Health.Add(part, health)
-            }
+    type WarState with
+        /// Apply damage specified in a DamageBuilding command. Return the change in storage in the affected building.
+        member this.ApplyDamage(bid, part, dmg) =
+            let dmg = dmg |> max 0.0f |> min 1.0f
+            let health = this.GetBuildingPartHealthLevel(bid, part)
+            let health = health - dmg |> max 0.0f
+            let fill = this.GetBuildingPartFillLevel(bid, part)
+            let store = this.GetBuildingStorage(bid)
+            let fill2 =
+                fill * (1.0f - dmg)
+                |> min (this.GetBuildingPartFunctionalityLevel(bid, part))
+            this.SetBuildingPartHealthLevel(bid, part, health)
+            this.SetBuildingPartFillLevel(bid, part, fill2)
+            let store2 = this.GetBuildingStorage(bid)
+            store2 - store
 
     type Commands with
-        static member ApplyBuildingDamage(instance : BuildingInstance, part, damage, state : WarState) =
-            let applyDamageToBuildings buildings =
-                buildings
-                |> List.map (fun building ->
-                    if obj.ReferenceEquals(building.Instance, instance) then
-                        building.ApplyDamage(part, damage)
-                    else
-                        building)
-            let regions =
-                state.Regions
-                |> Map.map (fun _ region ->
-                    if instance.Pos.Pos.IsInConvexPolygon region.Properties.Boundary then
-                        let buildings = applyDamageToBuildings region.Buildings
-                        { region with Buildings = buildings }
-                    else
-                        region)
-            let airfields =
-                state.Airfields
-                |> Map.map (fun _ airfield ->
-                    if instance.Pos.Pos.IsInConvexPolygon airfield.Properties.Boundary then
-                        let buildings = applyDamageToBuildings airfield.Buildings
-                        { airfield with Buildings = buildings }
-                    else
-                        airfield
-                )
-            { state with
-                Regions = regions
-                Airfields = airfields }
-
-
+        /// Execute commands on a WarState. Return the result of the command.
+        member this.Execute(state : WarState) =
+            match this with
+            | DamageBuilding(bid, part, dmg) ->
+                let change = state.ApplyDamage(bid, part, dmg)
+                StorageChange(bid, change)

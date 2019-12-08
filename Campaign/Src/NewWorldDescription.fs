@@ -18,6 +18,7 @@ module Campaign.NewWorldDescription
 
 open System.Numerics
 open VectorExtension
+open System.Collections.Generic
 
 open SturmovikMission.Blocks
 open Util
@@ -48,10 +49,16 @@ with
         | 0 -> 0.0f<E>
         | n -> this.Capacity / float32 n
 
+/// Identify buildings by their position.
+[<Struct>]
+type BuildingInstanceId = BuildingInstanceId of OrientedPosition
+
 type BuildingInstance = {
     Pos : OrientedPosition
     Properties : BuildingProperties
 }
+with
+    member this.Id = BuildingInstanceId this.Pos
 
 type Region = {
     RegionId : RegionId
@@ -62,12 +69,8 @@ type Region = {
     // Production in the region; Typically only the rearmost region should have production.
     // It represents the entry point into the game for supplies, and cannot be affected.
     Production : float32<E/H>
-    IndustryBuildings : BuildingInstance list
+    IndustryBuildings : BuildingInstanceId list
 }
-with
-    member this.Capacity =
-        this.IndustryBuildings
-        |> List.sumBy (fun building -> building.Properties.Capacity)
 
 /// A node in the logistics network
 type NetworkNode = {
@@ -81,7 +84,7 @@ type NetworkNode = {
 type NetworkLink = {
     NodeA : int
     NodeB : int
-    Bridges : BuildingInstance list
+    Bridges : BuildingInstanceId list
     FlowCapacity : float32<E/H>
 }
 
@@ -157,7 +160,7 @@ with
                 let bridges =
                     finder.FindIntersectingItems (v1, v2)
                     |> Seq.distinct
-                    |> Seq.map (fun pos -> byPos.[pos])
+                    |> Seq.map BuildingInstanceId
                     |> List.ofSeq
                 { link with Bridges = bridges }
             )
@@ -191,12 +194,8 @@ type Airfield = {
     Region : RegionId
     Boundary : Vector2 list
     Runways : Runway list
-    Facilities : BuildingInstance list
+    Facilities : BuildingInstanceId list
 }
-with
-    member this.Capacity =
-        this.Facilities
-        |> List.sumBy (fun building -> building.Properties.Capacity)
 
 type World = {
     /// Base name of scenario file
@@ -212,6 +211,7 @@ type World = {
     Roads : Network
     Rails : Network
     Airfields : Airfield list
+    Buildings : IDictionary<BuildingInstanceId, BuildingInstance>
 }
 
 module Loading =
@@ -311,7 +311,7 @@ module Loading =
               Neighbours = []
               Production = if region.GetDesc().Value.Contains("***") then strongProduction else 0.0f<E/H>
               InitialOwner = coalition
-              IndustryBuildings = buildings
+              IndustryBuildings = buildings |> List.map (fun b -> b.Id)
             }
         let withBoundaries =
             regions
@@ -447,7 +447,7 @@ module Loading =
             failwithf "Airfield spawn '%s' lacks a chart" (spawn.GetName().Value)
 
     /// Extract airfields and their runways from spawns, airfield areas and regions
-    let extractAirfields(spawns : T.Airfield list, areas : T.MCU_TR_InfluenceArea list, regions : Region list) =
+    let extractAirfields(spawns : T.Airfield list, areas : T.MCU_TR_InfluenceArea list, regions : Region list, getBuilding : BuildingInstanceId -> BuildingInstance) =
         [
             for area in areas do
                 let boundary =
@@ -465,7 +465,7 @@ module Loading =
                 | Some region ->
                     let buildings =
                         region.IndustryBuildings
-                        |> List.filter (fun building -> building.Pos.Pos.IsInConvexPolygon boundary)
+                        |> List.filter (fun building -> (getBuilding building).Pos.Pos.IsInConvexPolygon boundary)
                     yield {
                         AirfieldId = AirfieldId (area.GetName().Value)
                         Region = region.RegionId
@@ -483,12 +483,11 @@ module Loading =
             airfields
             |> Seq.fold (fun buildings airfield ->
                 airfield.Facilities
-                |> Seq.map (fun building -> building.Pos)
                 |> Set.ofSeq
                 |> Set.union buildings
             ) Set.empty
-        let filter (building : BuildingInstance) =
-            not <| Set.contains building.Pos buildingsInAirfields
+        let filter (building : BuildingInstanceId) =
+            not <| Set.contains building buildingsInAirfields
         regions
         |> List.map (fun region ->
             let buildings =
@@ -519,12 +518,16 @@ module Loading =
                 |> List.exists (fun boundary -> pos.IsInConvexPolygon boundary))
         // Building instances
         let buildings = extractBuildingInstances(buildingDb, blocks)
+        let buildingsDict =
+            buildings
+            |> Seq.map (fun b -> b.Id, b)
+            |> dict
         // Regions
         let regions = extractRegions(regionAreas, buildings, strongProduction)
         // Airfields
         let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea
         let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield
-        let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions)
+        let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions, fun bid -> buildingsDict.[bid])
         let regions = cleanRegionBuildings(regions, airfields)
         // Map name
         let options = missionData.ListOfOptions.[0]
@@ -566,4 +569,5 @@ module Loading =
             Roads = roads
             Rails = rails
             Airfields = airfields
+            Buildings = buildingsDict
         }

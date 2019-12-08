@@ -18,6 +18,7 @@ namespace Campaign.WarState
 
 open System
 open System.Numerics
+open System.Collections.Generic
 
 open Campaign.BasicTypes
 open Campaign.PlaneModel
@@ -52,87 +53,97 @@ type MissionRecord =
         Return : ReturnType
     }
 
-/// The health and usage of a building.
-type BuildingStatus =
+/// The overall status of the war.
+type WarState =
     {
-        Instance : BuildingInstance
-        Health : Map<int, float32>
-        Stores : Map<int, float32>
+        World : World
+        RegionOwners : IDictionary<RegionId, CoalitionId>
+        BuildingPartFillLevel : IDictionary<BuildingInstanceId * int, float32>
+        BuildingPartHealthLevel : IDictionary<BuildingInstanceId * int, float32>
+        AirfieldPlanes : IDictionary<AirfieldId, Dictionary<PlaneModel, float32>>
+        Date : DateTime
+        MissionRecords : MissionRecord list
     }
 with
-    static member Create(instance : BuildingInstance, fillLevel) =
-        let filledStores =
-            instance.Properties.SubParts
-            |> List.map (fun part -> part, fillLevel)
-            |> Map.ofList
-        {
-            Instance = instance
-            Health = Map.empty
-            Stores = filledStores
-        }
+    /// Relative level of space used in a subpart, relatively to full health availability
+    member this.GetBuildingPartFillLevel(bid, part) =
+        match this.BuildingPartFillLevel.TryGetValue((bid, part)) with
+        | true, x -> x
+        | false, _ -> 0.0f
 
-    /// Level of health of a subpart.
-    member this.SubPartHealthLevel (subpart) =
-        this.Health.TryFind subpart
-        |> Option.defaultValue 1.0f
+    member this.SetBuildingPartFillLevel(bid, part, x) =
+        if x = 0.0f then
+            this.BuildingPartFillLevel.Remove((bid, part)) |> ignore
+        else
+            this.BuildingPartFillLevel.[(bid, part)] <- x
+
+    /// Amount of resources stored
+    member this.GetBuildingStorage(bid) =
+        let building = this.World.Buildings.[bid]
+        building.Properties.SubParts
+        |> List.sumBy (fun part -> this.GetBuildingPartFillLevel(bid, part))
+        |> (*) building.Properties.PartCapacity
+
+    /// Level of health of a subpart of a building
+    member this.GetBuildingPartHealthLevel(bid, part) =
+        match this.BuildingPartHealthLevel.TryGetValue((bid, part)) with
+        | true, x -> x
+        | false, _ -> 1.0f
+
+    /// Max amount of resources that can be stored, depending on health but not taking into account current amounts.
+    member this.GetBuildingCapacity(bid) =
+        let building = this.World.Buildings.[bid]
+        building.Properties.SubParts
+        |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
+        |> (*) building.Properties.PartCapacity
 
     /// Level of functionality of a subpart of a building.
-    member this.SubPartFunctionalityLevel (subpart) =
-        let health = this.SubPartHealthLevel subpart
+    member this.GetBuildingPartFunctionalityLevel(bid, part) =
+        let health = this.GetBuildingPartHealthLevel(bid, part)
         if health < 0.5f then
             0.0f
         else
             health
 
-    /// Max amount of resources that can be stored, not taking into account current amounts.
-    member this.Capacity =
-        this.Instance.Properties.SubParts
-        |> List.sumBy this.SubPartFunctionalityLevel
-        |> (*) this.Instance.Properties.PartCapacity
+    member this.SetBuildingPartHealthLevel(bid, part, x) =
+        if x = 1.0f then
+            this.BuildingPartHealthLevel.Remove((bid, part)) |> ignore
+        else
+            this.BuildingPartHealthLevel.[(bid, part)] <- x
 
-    /// Relative level of space used in a subpart, relatively to full health availability
-    member this.SubPartFillLevel (subpart) =
-        let level =
-            this.Stores.TryFind subpart
-            |> Option.defaultValue 0.0f
-        level
-
-    /// Amount of resources stored
-    member this.Stored =
-        this.Instance.Properties.SubParts
-        |> List.sumBy this.SubPartFillLevel
-        |> (*) this.Instance.Properties.PartCapacity
-
-    /// Assign resources to a building. Returns unassigned resources in addition to new building status.
-    member this.AssignResources (rsc : float32<E>) =
-        let partCapacity = this.Instance.Properties.PartCapacity
-        let stores, rsc =
-            this.Instance.Properties.SubParts
-            |> List.fold (fun (stores, rsc) subpart ->
-                let stored = partCapacity * this.SubPartFillLevel subpart
-                let capacity = partCapacity * this.SubPartFunctionalityLevel subpart
+    /// Assign resources to a building. Returns unassigned resources.
+    member this.AssignResources (bid : BuildingInstanceId, rsc : float32<E>) =
+        let building = this.World.Buildings.[bid]
+        let partCapacity = building.Properties.PartCapacity
+        let rsc =
+            building.Properties.SubParts
+            |> List.fold (fun rsc subpart ->
+                let stored = partCapacity * this.GetBuildingPartFillLevel(bid, subpart)
+                let capacity = partCapacity * this.GetBuildingPartFunctionalityLevel(bid, subpart)
                 let transferred =
                     min rsc (capacity - stored)
                     |> max 0.0f<E>
-                Map.add subpart ((stored + transferred) / partCapacity) stores, rsc - transferred
-            ) (this.Stores, rsc)
-        { this with
-            Stores = stores }, rsc
+                this.SetBuildingPartFillLevel(bid, subpart, (stored + transferred) / partCapacity)
+                rsc - transferred
+            ) rsc
+        rsc
 
-    /// Assign resources to multiple buildings. Returns unassigned resources in addition to new building statuses
-    static member DistributeResources (rsc : float32<E>) (buildings : BuildingStatus list) =
+    /// Assign resources to multiple buildings. Returns unassigned resources.
+    member this.DistributeResources (rsc : float32<E>) (buildings : BuildingInstanceId list) =
         // Group buildings by proximity
         let groups =
-            let areClose (b1 : BuildingStatus) (b2 : BuildingStatus) =
-                (b1.Instance.Pos.Pos - b2.Instance.Pos.Pos).Length() < 100.0f
+            let areClose (b1 : BuildingInstanceId) (b2 : BuildingInstanceId) =
+                let b1 = this.World.Buildings.[b1]
+                let b2 = this.World.Buildings.[b2]
+                (b1.Pos.Pos - b2.Pos.Pos).Length() < 100.0f
             Util.Algo.computePartition areClose buildings
         // Order by fill level. We distribute in priority to group that already have 50% to 75% fill level,
         // then to groups that are less than 50%, and finally to groups that are more than 75%
         let groups =
             groups
             |> List.sortByDescending (fun group ->
-                let stored = group |> List.sumBy (fun this -> this.Stored)
-                let capacity = group |> List.sumBy (fun this -> this.Capacity)
+                let stored = group |> List.sumBy this.GetBuildingStorage
+                let capacity = group |> List.sumBy this.GetBuildingCapacity
                 if capacity <= 0.0f<E> then
                     1, None
                 else
@@ -141,93 +152,40 @@ with
                     | x when x < 0.5f -> 3, Some x
                     | x -> 4, Some x)
         // Assign resources to sorted buildings
-        let buildings, rsc =
+        let rsc =
             groups
             |> List.concat
-            |> List.fold (fun (buildings, rsc) building ->
-                let building, rsc = building.AssignResources rsc
-                building :: buildings, rsc) ([], rsc)
+            |> List.fold (fun rsc bid ->
+                let rsc = this.AssignResources(bid, rsc)
+                rsc) rsc
         // Result
-        buildings, rsc
-
-/// The owner of a region, and the status of its buildings.
-type RegionStatus =
-    {
-        Properties : Region
-        Owner : CoalitionId option
-        Buildings : BuildingStatus list
-    }
-with
-    member this.Capacity =
-        this.Buildings
-        |> List.sumBy (fun building -> building.Capacity)
-
-/// The status of the buildings at an airfield, and the planes available there.
-type AirfieldStatus =
-    {
-        Properties : Airfield
-        Buildings : BuildingStatus list
-        Planes : Map<PlaneModel, float32>
-    }
-with
-    member this.Capacity =
-        this.Buildings
-        |> List.sumBy (fun building -> building.Capacity)
-
-/// The overall status of the war.
-type WarState =
-    {
-        World : World
-        Regions : Map<RegionId, RegionStatus>
-        Airfields : Map<AirfieldId, AirfieldStatus>
-        Date : DateTime
-        MissionRecords : MissionRecord list
-    }
+        rsc
 
 [<RequireQualifiedAccess>]
 module Init =
-    /// Create the initial status of a region
-    let mkRegion (world : World) (region : RegionId) =
-        let description =
-            world.Regions
-            |> List.find (fun reg -> reg.RegionId = region)
-        let buildings =
-            description.IndustryBuildings
-            |> List.map (fun instance -> BuildingStatus.Create(instance, 1.0f))
-        {
-            Properties = description
-            Owner = description.InitialOwner
-            Buildings = buildings
-        }
 
-    /// Create the initial status of an airfield
-    let mkAirfield (world : World) (airfield : AirfieldId) =
-        let description =
-            world.Airfields
-            |> List.find (fun afs -> afs.AirfieldId = airfield)
-        let buildings =
-            description.Facilities
-            |> List.map (fun instance -> BuildingStatus.Create(instance, 1.0f))
-        {
-            Properties = description
-            Buildings = buildings
-            Planes = Map.empty
-        }
+    let private mutableDict (xs : ('K * 'V) seq) =
+        let dict = Dictionary(HashIdentity.Structural)
+        for k, v in xs do
+            dict.Add(k, v)
+        dict
 
     /// Create the initial status of the war
     let mkWar (world : World) =
-        let regions =
+        let regionOwners =
             world.Regions
-            |> List.map (fun desc-> desc.RegionId, mkRegion world desc.RegionId)
-            |> Map.ofList
+            |> List.choose (fun desc-> desc.InitialOwner |> Option.map (fun owner -> desc.RegionId, owner))
+            |> mutableDict
         let airfields =
             world.Airfields
-            |> List.map (fun desc -> desc.AirfieldId, mkAirfield world desc.AirfieldId)
-            |> Map.ofList
+            |> Seq.map (fun af -> af.AirfieldId, mutableDict [])
+            |> mutableDict
         {
             World = world
-            Regions = regions
-            Airfields = airfields
+            RegionOwners = regionOwners
+            BuildingPartFillLevel = mutableDict []
+            BuildingPartHealthLevel = mutableDict []
+            AirfieldPlanes = airfields
             Date = world.StartDate
             MissionRecords = []
         }
