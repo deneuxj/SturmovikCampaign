@@ -180,10 +180,14 @@ module Init =
             world.Airfields
             |> Seq.map (fun af -> af.AirfieldId, mutableDict [])
             |> mutableDict
+        let allFilled = mutableDict []
+        for building in world.Buildings.Values do
+            for part in building.Properties.SubParts do
+                allFilled.Add((building.Id, part), 1.0f)
         {
             World = world
             RegionOwners = regionOwners
-            BuildingPartFillLevel = mutableDict []
+            BuildingPartFillLevel = allFilled
             BuildingPartHealthLevel = mutableDict []
             AirfieldPlanes = airfields
             Date = world.StartDate
