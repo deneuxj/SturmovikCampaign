@@ -168,10 +168,50 @@ with
         // Result
         rsc
 
+
+    /// Cached computation of a mapping from a coalition to distances to regions owned by this coalition
+    static member private DistancesToCoalition =
+        Util.cachedProperty (fun (this : WarState) ->
+            [Allies; Axis]
+            |> List.map (fun coalition ->
+                let sources =
+                    this.RegionOwners
+                    |> Seq.choose (fun kvp ->
+                        if kvp.Value = coalition then
+                            Some kvp.Key
+                        else None)
+                    |> Set
+                let distances =
+                    this.World.Regions
+                    |> Seq.map (fun region -> region.RegionId, System.Int32.MaxValue)
+                    |> Seq.mutableDict
+                let nghOf =
+                    this.World.Regions
+                    |> Seq.map (fun region -> region.RegionId, Set region.Neighbours)
+                    |> dict
+                for region in sources do
+                    distances.[region] <- 0
+                let rec work (xs : Set<RegionId>) dist =
+                    let nghs =
+                        xs
+                        |> Seq.map (fun region -> nghOf.[region])
+                        |> Set.unionMany
+                    let next =
+                        nghs
+                        |> Set.filter (fun region -> distances.[region] > dist)
+                    for ngh in next do
+                        distances.[ngh] <- dist
+                    work next (dist + 1)
+                work sources 1
+                coalition, distances)
+            |> Map.ofList
+        )
+
+    /// Get the mapping from a coalition to distances to regions owned by this coalition
+    member this.DistanceToCoalition = WarState.DistancesToCoalition this
+
 [<RequireQualifiedAccess>]
 module Init =
-
-
     /// Create the initial status of the war
     let mkWar (world : World) =
         let regionOwners =
