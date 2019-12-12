@@ -206,13 +206,25 @@ type World = {
     StartDate : System.DateTime
     /// Weather offset: affects how late or early the weather pattern is.
     WeatherDaysOffset : float
-    Planes : PlaneModel list
+    /// Resources that can be spent per region or airfield on repairing buildings
+    RepairSpeed: float32<E/H>
+    /// Amount of resources to repair 1 unit of storage capacity
+    RepairCostRatio : float32
+    /// Amount of resources needed to repair one bridge section
+    BridgeRepairCost : float32<E>
+    /// Descriptions of regions
     Regions : Region list
+    /// The road network
     Roads : Network
+    /// The rail network
     Rails : Network
+    /// Descriptions of all airfields
     Airfields : Airfield list
+    /// Mapping from building instance identifiers to building instances
     Buildings : IDictionary<BuildingInstanceId, BuildingInstance>
+    /// Mapping from bridge instance identifiers to bridge instances
     Bridges : IDictionary<BuildingInstanceId, BuildingInstance>
+    /// Mapping from plane model identifiers to plane model descriptions
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
 }
 
@@ -570,7 +582,9 @@ module Loading =
             Map = mapName
             StartDate = System.DateTime(startDate.Year, startDate.Month, startDate.Day, hour.Value, minute.Value, second.Value)
             WeatherDaysOffset = 0.0
-            Planes = []
+            RepairSpeed = 1.0f<E/H>
+            RepairCostRatio = 2.0f
+            BridgeRepairCost = 10.0f<E>
             Regions = regions
             Roads = roads
             Rails = rails

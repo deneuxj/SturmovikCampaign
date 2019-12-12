@@ -54,6 +54,15 @@ type MissionRecord =
         Return : ReturnType
     }
 
+/// How resources in a region should be used
+type ResourceUsagePriority =
+    | RepairRegion of TargetStorageCapacity: float32<E>
+    | RepairForwardBridges of TargetTransportCapacity: float32<E/H> // Bridges into regions that are closer to the front, or on the other side of the front
+    | RepairBackwardBridges of TargetTransportCapacity: float32<E/H> // Bridges into regions away from the front, or into regions equally close to the front
+    | RepairAirfield of TargetStorageCapacity: float32<E>
+    | RetainForRegion of TargetStorage: float32<E>
+    | RefillAirfield of TargetStorage: float32<E>
+
 /// The overall status of the war.
 type WarState =
     {
@@ -62,6 +71,7 @@ type WarState =
         BuildingPartFillLevel : IDictionary<BuildingInstanceId * int, float32>
         BuildingPartHealthLevel : IDictionary<BuildingInstanceId * int, float32>
         AirfieldPlanes : IDictionary<AirfieldId, Dictionary<PlaneModel, float32>>
+        ResourceUsagePriorities : IDictionary<RegionId, ResourceUsagePriority list>
         Date : DateTime
         MissionRecords : MissionRecord list
     }
@@ -168,6 +178,15 @@ with
         // Result
         rsc
 
+    /// Get the list of priorities on how to spend resources in a region
+    member this.GetResourceUsagePriorities(region) =
+        match this.ResourceUsagePriorities.TryGetValue(region) with
+        | true, xs -> xs
+        | false, _ -> []
+
+    /// Set the list of priorities on how to spend resources in a region
+    member this.SetResourceUsagePriorities(region, prios) =
+        this.ResourceUsagePriorities.[region] <- prios
 
     /// Cached computation of a mapping from a coalition to distances to regions owned by this coalition
     static member private DistancesToCoalition =
@@ -229,6 +248,7 @@ module Init =
         {
             World = world
             RegionOwners = regionOwners
+            ResourceUsagePriorities = Seq.mutableDict []
             BuildingPartFillLevel = allFilled
             BuildingPartHealthLevel = Seq.mutableDict []
             AirfieldPlanes = airfields
