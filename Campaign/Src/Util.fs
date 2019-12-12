@@ -302,6 +302,13 @@ module Map =
             yield! advBoth()
         }
 
+    let mutableDict (xs : ('K * 'V) seq) =
+        let dict = Dictionary(HashIdentity.Structural)
+        for k, v in xs do
+            dict.Add(k, v)
+        dict
+
+
 /// Misc useful algorithms.
 module Algo =
     /// <summary>

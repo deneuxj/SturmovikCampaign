@@ -24,6 +24,7 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.WorldDescription
 open Campaign.NewWorldDescription
+open Util
 
 type TargetType =
     | Truck | Train | Ship | Battleship | Artillery | Tank | ArmoredCar | Bridge
@@ -170,23 +171,18 @@ with
 [<RequireQualifiedAccess>]
 module Init =
 
-    let private mutableDict (xs : ('K * 'V) seq) =
-        let dict = Dictionary(HashIdentity.Structural)
-        for k, v in xs do
-            dict.Add(k, v)
-        dict
 
     /// Create the initial status of the war
     let mkWar (world : World) =
         let regionOwners =
             world.Regions
             |> List.choose (fun desc-> desc.InitialOwner |> Option.map (fun owner -> desc.RegionId, owner))
-            |> mutableDict
+            |> Seq.mutableDict
         let airfields =
             world.Airfields
-            |> Seq.map (fun af -> af.AirfieldId, mutableDict [])
-            |> mutableDict
-        let allFilled = mutableDict []
+            |> Seq.map (fun af -> af.AirfieldId, Seq.mutableDict [])
+            |> Seq.mutableDict
+        let allFilled = Seq.mutableDict []
         for building in world.Buildings.Values do
             for part in building.Properties.SubParts do
                 allFilled.Add((building.Id, part), 1.0f)
@@ -194,7 +190,7 @@ module Init =
             World = world
             RegionOwners = regionOwners
             BuildingPartFillLevel = allFilled
-            BuildingPartHealthLevel = mutableDict []
+            BuildingPartHealthLevel = Seq.mutableDict []
             AirfieldPlanes = airfields
             Date = world.StartDate
             MissionRecords = []
