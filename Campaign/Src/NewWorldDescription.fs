@@ -34,12 +34,14 @@ type BuildingProperties = {
     SubParts : int list
     Durability : int
 }
-with
+
+module private BuildingProperties_ =
+    let Areas = Util.cachedProperty (fun this -> 1.0f<M^2> * Vector2.ConvexPolygonArea this.Boundary)
+
+type BuildingProperties with
     static member CapacityDensity = 10.0f<E/M^2>
 
-    static member private Areas = Util.cachedProperty (fun this -> 1.0f<M^2> * Vector2.ConvexPolygonArea this.Boundary)
-
-    member this.Area = BuildingProperties.Areas this
+    member this.Area = BuildingProperties_.Areas this
 
     member this.Capacity =
         BuildingProperties.CapacityDensity * this.Area

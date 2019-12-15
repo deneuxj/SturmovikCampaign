@@ -131,6 +131,8 @@ let suntimes(date : System.DateTime) =
     sunrise, sunset
 
 /// Function to cache computationally expensive properties of objects.
+/// Use this from a static variable, e.g. a module-level let binding.
+/// Do not use from a static property, as those are evaluated every call.
 let cachedProperty f =
     let cache = System.Runtime.CompilerServices.ConditionalWeakTable()
     fun this ->

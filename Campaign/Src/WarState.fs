@@ -143,69 +143,12 @@ with
             |> Seq.fold min 1.0f
         functionality * link.FlowCapacity
 
-    /// Assign resources to a building. Returns unassigned resources.
-    member this.AssignResources (bid : BuildingInstanceId, rsc : float32<E>) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        let building = this.World.Buildings.[bid]
-        let partCapacity = building.Properties.PartCapacity
-        let rsc =
-            building.Properties.SubParts
-            |> List.fold (fun rsc subpart ->
-                let stored = partCapacity * this.GetBuildingPartFillLevel(bid, subpart)
-                let capacity = partCapacity * this.GetBuildingPartFunctionalityLevel(bid, subpart)
-                let transferred =
-                    min rsc (capacity - stored)
-                    |> max 0.0f<E>
-                this.SetBuildingPartFillLevel(bid, subpart, (stored + transferred) / partCapacity)
-                rsc - transferred
-            ) rsc
-        rsc
-
-    /// Assign resources to multiple buildings. Returns unassigned resources.
-    member this.DistributeResources (rsc : float32<E>) (buildings : BuildingInstanceId list) =
-        // Group buildings by proximity
-        let groups =
-            let areClose (b1 : BuildingInstanceId) (b2 : BuildingInstanceId) =
-                let b1 = this.World.Buildings.[b1]
-                let b2 = this.World.Buildings.[b2]
-                (b1.Pos.Pos - b2.Pos.Pos).Length() < 100.0f
-            Util.Algo.computePartition areClose buildings
-        // Order by fill level. We distribute in priority to group that already have 50% to 75% fill level,
-        // then to groups that are less than 50%, and finally to groups that are more than 75%
-        let groups =
-            groups
-            |> List.sortByDescending (fun group ->
-                let stored = group |> List.sumBy this.GetBuildingStorage
-                let capacity = group |> List.sumBy this.GetBuildingCapacity
-                if capacity <= 0.0f<E> then
-                    1, None
-                else
-                    match stored / capacity with
-                    | x when x > 0.75f -> 2, Some (1.0f - x)
-                    | x when x < 0.5f -> 3, Some x
-                    | x -> 4, Some x)
-        // Assign resources to sorted buildings
-        let rsc =
-            groups
-            |> List.concat
-            |> List.fold (fun rsc bid ->
-                let rsc = this.AssignResources(bid, rsc)
-                rsc) rsc
-        // Result
-        rsc
-
-    /// Get the list of priorities on how to spend resources in a region
-    member this.GetResourceUsagePriorities(region) =
-        match this.ResourceUsagePriorities.TryGetValue(region) with
-        | true, xs -> xs
-        | false, _ -> []
-
-    /// Set the list of priorities on how to spend resources in a region
-    member this.SetResourceUsagePriorities(region, prios) =
-        this.ResourceUsagePriorities.[region] <- prios
+module private WarState_ =
+    let CachedRoads = Util.cachedProperty (fun x -> x.World.Roads.QuickAccess)
+    let CachedRails = Util.cachedProperty (fun x -> x.World.Rails.QuickAccess)
 
     /// Cached computation of a mapping from a coalition to distances to regions owned by this coalition
-    static member private DistancesToCoalition =
+    let DistancesToCoalition =
         Util.cachedProperty (fun (this : WarState) ->
             [Allies; Axis]
             |> List.map (fun coalition ->
@@ -242,20 +185,9 @@ with
             |> Map.ofList
         )
 
-    /// Get the mapping from a coalition to distances to regions owned by this coalition
-    member this.DistanceToCoalition = WarState.DistancesToCoalition this
-
-    static member private CachedRoads = Util.cachedProperty (fun x -> x.World.Roads.QuickAccess)
-
-    /// Get the mappings for quick access to road nodes and links
-    member this.Roads = WarState.CachedRoads this
-
-    static member private CachedRails = Util.cachedProperty (fun x -> x.World.Rails.QuickAccess)
-
-    /// Get the mappings for quick access to rail nodes and links
-    member this.Rails = WarState.CachedRails this
-
-    member this.ComputeTransportCapacity(network : NetworkQuickAccess, regions : Set<RegionId>, sources : Set<int>, sinks : Set<int>) =
+    /// Compute the flow capacity of a transport network between a set of starting nodes (sources) and destinations (sinks),
+    /// constrained to the nodes inside a set of regions
+    let ComputeTransportCapacity(this : WarState, network : NetworkQuickAccess, regions : Set<RegionId>, sources : Set<int>, sinks : Set<int>) =
         let flow = Seq.mutableDict []
         let pred = Seq.mutableDict []
         // Utility function to iterate over predecessor links in pred
@@ -329,15 +261,10 @@ with
         forEachAugmentationPath()
         ret
 
-    member private this.ComputeTransportCapacityCached =
+    let ComputeTransportCapacityCached x network =
         SturmovikMission.DataProvider.Cached.cached
             (Seq.mutableDict [])
-            (fun (regionA, regionB, roadType) ->
-                let network =
-                    match roadType with
-                    | "ROADS" -> this.Roads
-                    | "RAILS" -> this.Rails
-                    | _ -> failwithf "Invalid road type '%s'" roadType
+            (fun (regionA, regionB) ->
                 let regions = Set [regionA; regionB]
                 let regionA, regionB =
                     min regionA regionB, max regionA regionB
@@ -349,16 +276,94 @@ with
                     |> Set.ofSeq
                 let sources = terminalsInRegion regionA
                 let sinks = terminalsInRegion regionB
-                this.ComputeTransportCapacity(network, regions, sources, sinks)
+                ComputeTransportCapacity(x, network, regions, sources, sinks)
             )
 
-        static member private ComputeRoadsCapacity =
-                    Util.cachedProperty
-                        (fun (this : WarState) ->
-                            fun (regionA, regionB) ->
-                                this.ComputeTransportCapacityCached(regionA, regionB, "ROADS"))
+    let RoadTransportCapacity =
+        Util.cachedProperty (fun this -> ComputeTransportCapacityCached this (CachedRoads this))
 
-        member this.GetRoadsCapacity = WarState.ComputeRoadsCapacity this
+    let RailTransportCapacity =
+        Util.cachedProperty (fun this -> ComputeTransportCapacityCached this (CachedRails this))
+
+
+type WarState with
+    /// Assign resources to a building. Returns unassigned resources.
+    member this.AssignResources (bid : BuildingInstanceId, rsc : float32<E>) =
+        assert(this.World.Buildings.ContainsKey(bid))
+        let building = this.World.Buildings.[bid]
+        let partCapacity = building.Properties.PartCapacity
+        let rsc =
+            building.Properties.SubParts
+            |> List.fold (fun rsc subpart ->
+                let stored = partCapacity * this.GetBuildingPartFillLevel(bid, subpart)
+                let capacity = partCapacity * this.GetBuildingPartFunctionalityLevel(bid, subpart)
+                let transferred =
+                    min rsc (capacity - stored)
+                    |> max 0.0f<E>
+                this.SetBuildingPartFillLevel(bid, subpart, (stored + transferred) / partCapacity)
+                rsc - transferred
+            ) rsc
+        rsc
+
+    /// Assign resources to multiple buildings. Returns unassigned resources.
+    member this.DistributeResources (rsc : float32<E>) (buildings : BuildingInstanceId list) =
+        // Group buildings by proximity
+        let groups =
+            let areClose (b1 : BuildingInstanceId) (b2 : BuildingInstanceId) =
+                let b1 = this.World.Buildings.[b1]
+                let b2 = this.World.Buildings.[b2]
+                (b1.Pos.Pos - b2.Pos.Pos).Length() < 100.0f
+            Util.Algo.computePartition areClose buildings
+        // Order by fill level. We distribute in priority to group that already have 50% to 75% fill level,
+        // then to groups that are less than 50%, and finally to groups that are more than 75%
+        let groups =
+            groups
+            |> List.sortByDescending (fun group ->
+                let stored = group |> List.sumBy this.GetBuildingStorage
+                let capacity = group |> List.sumBy this.GetBuildingCapacity
+                if capacity <= 0.0f<E> then
+                    1, None
+                else
+                    match stored / capacity with
+                    | x when x > 0.75f -> 2, Some (1.0f - x)
+                    | x when x < 0.5f -> 3, Some x
+                    | x -> 4, Some x)
+        // Assign resources to sorted buildings
+        let rsc =
+            groups
+            |> List.concat
+            |> List.fold (fun rsc bid ->
+                let rsc = this.AssignResources(bid, rsc)
+                rsc) rsc
+        // Result
+        rsc
+
+    /// Get the list of priorities on how to spend resources in a region
+    member this.GetResourceUsagePriorities(region) =
+        match this.ResourceUsagePriorities.TryGetValue(region) with
+        | true, xs -> xs
+        | false, _ -> []
+
+    /// Set the list of priorities on how to spend resources in a region
+    member this.SetResourceUsagePriorities(region, prios) =
+        this.ResourceUsagePriorities.[region] <- prios
+
+    /// Get the mapping from a coalition to distances to regions owned by this coalition
+    member this.DistanceToCoalition = WarState_.DistancesToCoalition this
+
+    /// Get the mappings for quick access to road nodes and links
+    member this.Roads = WarState_.CachedRoads this
+
+    /// Get the mappings for quick access to rail nodes and links
+    member this.Rails = WarState_.CachedRails this
+
+    /// Get the roads transport capacity between two adjacent regions
+    member this.ComputeRoadsCapacity =
+        WarState_.RoadTransportCapacity this
+
+    /// Get the rails transport capacity between two adjacent regions
+    member this.ComputeRailsCapacity =
+        WarState_.RailTransportCapacity this
 
 
 [<RequireQualifiedAccess>]
