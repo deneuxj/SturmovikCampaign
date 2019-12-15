@@ -57,8 +57,7 @@ type MissionRecord =
 /// How resources in a region should be used
 type ResourceUsagePriority =
     | RepairRegion of TargetStorageCapacity: float32<E>
-    | RepairForwardBridges of TargetTransportCapacity: float32<E/H> // Bridges into regions that are closer to the front, or on the other side of the front
-    | RepairBackwardBridges of TargetTransportCapacity: float32<E/H> // Bridges into regions away from the front, or into regions equally close to the front
+    | RepairBridges of TargetTransportCapacity: float32<E/H>
     | RepairAirfield of TargetStorageCapacity: float32<E>
     | RetainForRegion of TargetStorage: float32<E>
     | RefillAirfield of TargetStorage: float32<E>

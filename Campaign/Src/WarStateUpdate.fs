@@ -117,9 +117,7 @@ module DamageExtension =
                             min targetStorage available
                         | RefillAirfield targetStorage ->
                             min targetStorage available
-                        | RepairBackwardBridges targetTransport ->
-                            failwith "TODO"
-                        | RepairForwardBridges targetTransport ->
+                        | RepairBridges targetTransport ->
                             failwith "TODO"
                     let assignment = (task, amount) :: assignment
                     assignment, available - amount
