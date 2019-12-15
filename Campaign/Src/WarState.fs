@@ -229,6 +229,88 @@ with
     /// Get the mapping from a coalition to distances to regions owned by this coalition
     member this.DistanceToCoalition = WarState.DistancesToCoalition this
 
+    static member private CachedRoads = Util.cachedProperty (fun x -> x.World.Roads.QuickAccess)
+
+    member this.Roads = WarState.CachedRoads this
+
+    static member private CachedRails = Util.cachedProperty (fun x -> x.World.Rails.QuickAccess)
+
+    member this.Rails = WarState.CachedRails this
+
+    member this.ComputeTransportCapacity(network : NetworkQuickAccess, regions : Set<RegionId>, sources : Set<int>, sinks : Set<int>) =
+        let flow = Seq.mutableDict []
+        let pred = Seq.mutableDict []
+        // Utility function to iterate over predecessor links in pred
+        let rec walkPred action link =
+            match link with
+            | None -> ()
+            | Some link ->
+                action link
+                let link = pred.TryGetValue(link.NodeA) |> Option.ofPair
+                walkPred action link
+        // Edmonds-Karp algorithm
+        let mutable ret = 0.0f<E/H>
+        let rec forEachAugmentationPath() =
+            let queue = System.Collections.Generic.Queue()
+            // Run a breadth-first-search to find the shortest path from the sources to the sinks
+            for s in sources do
+                queue.Enqueue(s)
+            while queue.Count > 0 do
+                let node = queue.Dequeue()
+                let successors, getLink = network.GetLink(node)
+                // Constrain the path search inside the provided regions
+                let successors =
+                    successors
+                    |> Seq.filter (fun node ->
+                        let region = network.GetNode(node).Region
+                        regions.Contains(region))
+                for succ in successors do
+                    let link = getLink succ
+                    let flow =
+                        flow.TryGetValue((node, succ))
+                        |> Option.ofPair
+                        |> Option.defaultValue 0.0f<E/H>
+                    if not(sinks.Contains(succ)) && link.FlowCapacity > flow then
+                        if not (pred.ContainsKey succ) then
+                            pred.[succ] <- link
+                            queue.Enqueue(succ)
+            let mutable stop = true
+            for sink in sinks do
+                match pred.TryGetValue(sink) with
+                | true, prec ->
+                    stop <- false
+                    // See how much more flow we can send
+                    let mutable df = 1.0f<E/H> * System.Single.PositiveInfinity
+                    Some prec
+                    |> walkPred (fun link ->
+                            let flow =
+                                flow.TryGetValue((link.NodeA, link.NodeB))
+                                |> Option.ofPair
+                                |> Option.defaultValue 0.0f<E/H>
+                            df <- min df (link.FlowCapacity - flow))
+                    // Update flow by that amount
+                    Some prec
+                    |> walkPred (fun link ->
+                        let link = link.NodeA, link.NodeB
+                        let x =
+                            flow.TryGetValue(link)
+                            |> Option.ofPair
+                            |> Option.defaultValue 0.0f<E/H>
+                        flow.[link] <- x + df
+                        let link = snd link, fst link
+                        let x =
+                            flow.TryGetValue(link)
+                            |> Option.ofPair
+                            |> Option.defaultValue 0.0f<E/H>
+                        flow.[link] <- x - df)
+                    ret <- ret + df
+                | false, _ ->
+                    ()
+            if not stop then
+                forEachAugmentationPath()
+        forEachAugmentationPath()
+        ret
+
 [<RequireQualifiedAccess>]
 module Init =
     /// Create the initial status of the war

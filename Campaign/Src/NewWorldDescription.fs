@@ -181,6 +181,36 @@ with
             Nodes = nodes
         }
 
+/// A network with functions to quickly access nodes and links
+type NetworkQuickAccess =
+    {
+        Data : Network
+        GetNode : int -> NetworkNode
+        GetLink : int -> int seq * (int -> NetworkLink)
+    }
+
+type Network with
+    member this.QuickAccess =
+        let nodes =
+            this.Nodes
+            |> Seq.map (fun node -> node.Id, node)
+            |> dict
+        let links =
+            this.Links
+            |> Seq.groupBy (fun link -> link.NodeA)
+            |> Seq.map (fun (nodeA, links) ->
+                nodeA,
+                links
+                |> Seq.map (fun link -> link.NodeB, link)
+                |> dict)
+            |> dict
+        {
+            Data = this
+            GetNode = fun x -> nodes.[x]
+            GetLink = fun x ->
+                let dict = links.[x]
+                upcast dict.Keys, fun y -> dict.[y]
+        }
 
 type Runway = {
     SpawnPos : OrientedPosition
