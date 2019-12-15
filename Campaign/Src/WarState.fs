@@ -247,10 +247,12 @@ with
 
     static member private CachedRoads = Util.cachedProperty (fun x -> x.World.Roads.QuickAccess)
 
+    /// Get the mappings for quick access to road nodes and links
     member this.Roads = WarState.CachedRoads this
 
     static member private CachedRails = Util.cachedProperty (fun x -> x.World.Rails.QuickAccess)
 
+    /// Get the mappings for quick access to rail nodes and links
     member this.Rails = WarState.CachedRails this
 
     member this.ComputeTransportCapacity(network : NetworkQuickAccess, regions : Set<RegionId>, sources : Set<int>, sinks : Set<int>) =
