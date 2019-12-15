@@ -146,6 +146,12 @@ let cachedProperty f =
 module Option =
     let defaultVal x y = defaultArg y x
 
+    /// Turn result of TryGetValue-like functions into an option
+    let ofPair =
+        function
+        | true, x -> Some x
+        | false, _ -> None
+
 /// Extensions to Array module
 module Array =
     let shuffle (random : System.Random) xs =
