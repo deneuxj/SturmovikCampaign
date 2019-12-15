@@ -329,6 +329,38 @@ with
         forEachAugmentationPath()
         ret
 
+    member private this.ComputeTransportCapacityCached =
+        SturmovikMission.DataProvider.Cached.cached
+            (Seq.mutableDict [])
+            (fun (regionA, regionB, roadType) ->
+                let network =
+                    match roadType with
+                    | "ROADS" -> this.Roads
+                    | "RAILS" -> this.Rails
+                    | _ -> failwithf "Invalid road type '%s'" roadType
+                let regions = Set [regionA; regionB]
+                let regionA, regionB =
+                    min regionA regionB, max regionA regionB
+                let terminalsInRegion region =
+                    network.Data.Nodes
+                    |> Seq.filter (fun node ->
+                        node.Region = region && node.HasTerminal)
+                    |> Seq.map (fun node -> node.Id)
+                    |> Set.ofSeq
+                let sources = terminalsInRegion regionA
+                let sinks = terminalsInRegion regionB
+                this.ComputeTransportCapacity(network, regions, sources, sinks)
+            )
+
+        static member private ComputeRoadsCapacity =
+                    Util.cachedProperty
+                        (fun (this : WarState) ->
+                            fun (regionA, regionB) ->
+                                this.ComputeTransportCapacityCached(regionA, regionB, "ROADS"))
+
+        member this.GetRoadsCapacity = WarState.ComputeRoadsCapacity this
+
+
 [<RequireQualifiedAccess>]
 module Init =
     /// Create the initial status of the war
