@@ -127,6 +127,23 @@ with
         else
             this.BuildingPartHealthLevel.[(bid, part)] <- x
 
+    /// Level of functionality of a bridge
+    member this.GetBridgeFunctionalityLevel(bid) =
+        let building = this.World.Bridges.[bid]
+        building.Properties.SubParts
+        |> List.fold (fun level part ->
+            this.GetBuildingPartFunctionalityLevel(bid, part)
+            |> min level
+        ) 1.0f
+
+    /// Get transport link capacity
+    member this.GetFlowCapacity(link : NetworkLink) =
+        let functionality =
+            link.Bridges
+            |> Seq.map (fun bid -> this.GetBridgeFunctionalityLevel(bid))
+            |> Seq.fold min 1.0f
+        functionality * link.FlowCapacity
+
     /// Assign resources to a building. Returns unassigned resources.
     member this.AssignResources (bid : BuildingInstanceId, rsc : float32<E>) =
         assert(this.World.Buildings.ContainsKey(bid))
@@ -270,7 +287,7 @@ with
                         flow.TryGetValue((node, succ))
                         |> Option.ofPair
                         |> Option.defaultValue 0.0f<E/H>
-                    if not(sinks.Contains(succ)) && link.FlowCapacity > flow then
+                    if not(sinks.Contains(succ)) && this.GetFlowCapacity(link) > flow then
                         if not (pred.ContainsKey succ) then
                             pred.[succ] <- link
                             queue.Enqueue(succ)
@@ -287,7 +304,7 @@ with
                                 flow.TryGetValue((link.NodeA, link.NodeB))
                                 |> Option.ofPair
                                 |> Option.defaultValue 0.0f<E/H>
-                            df <- min df (link.FlowCapacity - flow))
+                            df <- min df (this.GetFlowCapacity(link) - flow))
                     // Update flow by that amount
                     Some prec
                     |> walkPred (fun link ->
