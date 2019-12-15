@@ -62,132 +62,15 @@ type ResourceUsagePriority =
     | RetainForRegion of TargetStorage: float32<E>
     | RefillAirfield of TargetStorage: float32<E>
 
-/// The overall status of the war.
-type WarState =
-    {
-        World : World
-        RegionOwners : IDictionary<RegionId, CoalitionId>
-        BuildingPartFillLevel : IDictionary<BuildingInstanceId * int, float32>
-        BuildingPartHealthLevel : IDictionary<BuildingInstanceId * int, float32>
-        AirfieldPlanes : IDictionary<AirfieldId, Dictionary<PlaneModel, float32>>
-        ResourceUsagePriorities : IDictionary<RegionId, ResourceUsagePriority list>
-        Date : DateTime
-        MissionRecords : MissionRecord list
-    }
-with
-    /// Relative level of space used in a subpart of a building, relatively to full health availability
-    member this.GetBuildingPartFillLevel(bid, part) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        match this.BuildingPartFillLevel.TryGetValue((bid, part)) with
-        | true, x -> x
-        | false, _ -> 0.0f
+/// Shorthand for SturmovikMission.DataProvider.Cached
+module private Cached =
+    let cached = SturmovikMission.DataProvider.Cached.cached
 
-    /// Set relative occupancy of a building part.
-    member this.SetBuildingPartFillLevel(bid, part, x) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        if x = 0.0f then
-            this.BuildingPartFillLevel.Remove((bid, part)) |> ignore
-        else
-            this.BuildingPartFillLevel.[(bid, part)] <- x
-
-    /// Amount of resources stored in a building.
-    member this.GetBuildingStorage(bid) =
-        let building = this.World.Buildings.[bid]
-        building.Properties.SubParts
-        |> List.sumBy (fun part -> this.GetBuildingPartFillLevel(bid, part))
-        |> (*) building.Properties.PartCapacity
-
-    /// Level of health of a subpart of a building or bridge
-    member this.GetBuildingPartHealthLevel(bid, part) =
-        match this.BuildingPartHealthLevel.TryGetValue((bid, part)) with
-        | true, x -> x
-        | false, _ -> 1.0f
-
-    /// Max amount of resources that can be stored in a building, depending on health but not taking into account current amounts.
-    member this.GetBuildingCapacity(bid) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        let building = this.World.Buildings.[bid]
-        building.Properties.SubParts
-        |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
-        |> (*) building.Properties.PartCapacity
-
-    /// Level of functionality of a subpart of a building or bridge
-    member this.GetBuildingPartFunctionalityLevel(bid, part) =
-        let health = this.GetBuildingPartHealthLevel(bid, part)
-        if health < 0.5f then
-            0.0f
-        else
-            health
-
-    /// Set the level of health of a subpart of a building or a bridge
-    member this.SetBuildingPartHealthLevel(bid, part, x) =
-        if x = 1.0f then
-            this.BuildingPartHealthLevel.Remove((bid, part)) |> ignore
-        else
-            this.BuildingPartHealthLevel.[(bid, part)] <- x
-
-    /// Level of functionality of a bridge
-    member this.GetBridgeFunctionalityLevel(bid) =
-        let building = this.World.Bridges.[bid]
-        building.Properties.SubParts
-        |> List.fold (fun level part ->
-            this.GetBuildingPartFunctionalityLevel(bid, part)
-            |> min level
-        ) 1.0f
-
-    /// Get transport link capacity
-    member this.GetFlowCapacity(link : NetworkLink) =
-        let functionality =
-            link.Bridges
-            |> Seq.map (fun bid -> this.GetBridgeFunctionalityLevel(bid))
-            |> Seq.fold min 1.0f
-        functionality * link.FlowCapacity
-
-module private WarState_ =
-    let CachedRoads = Util.cachedProperty (fun x -> x.World.Roads.QuickAccess)
-    let CachedRails = Util.cachedProperty (fun x -> x.World.Rails.QuickAccess)
-
-    /// Cached computation of a mapping from a coalition to distances to regions owned by this coalition
-    let DistancesToCoalition =
-        Util.cachedProperty (fun (this : WarState) ->
-            [Allies; Axis]
-            |> List.map (fun coalition ->
-                let sources =
-                    this.RegionOwners
-                    |> Seq.choose (fun kvp ->
-                        if kvp.Value = coalition then
-                            Some kvp.Key
-                        else None)
-                    |> Set
-                let distances =
-                    this.World.Regions
-                    |> Seq.map (fun region -> region.RegionId, System.Int32.MaxValue)
-                    |> Seq.mutableDict
-                let nghOf =
-                    this.World.Regions
-                    |> Seq.map (fun region -> region.RegionId, Set region.Neighbours)
-                    |> dict
-                for region in sources do
-                    distances.[region] <- 0
-                let rec work (xs : Set<RegionId>) dist =
-                    let nghs =
-                        xs
-                        |> Seq.map (fun region -> nghOf.[region])
-                        |> Set.unionMany
-                    let next =
-                        nghs
-                        |> Set.filter (fun region -> distances.[region] > dist)
-                    for ngh in next do
-                        distances.[ngh] <- dist
-                    work next (dist + 1)
-                work sources 1
-                coalition, distances)
-            |> Map.ofList
-        )
-
+/// Complex algorithms using data from WarState
+module private Algo =
     /// Compute the flow capacity of a transport network between a set of starting nodes (sources) and destinations (sinks),
     /// constrained to the nodes inside a set of regions
-    let ComputeTransportCapacity(this : WarState, network : NetworkQuickAccess, regions : Set<RegionId>, sources : Set<int>, sinks : Set<int>) =
+    let computeTransportCapacity(getFlowCapacity, network : NetworkQuickAccess, regions : Set<RegionId>, sources : Set<int>, sinks : Set<int>) =
         let flow = Seq.mutableDict []
         let pred = Seq.mutableDict []
         // Utility function to iterate over predecessor links in pred
@@ -220,7 +103,7 @@ module private WarState_ =
                         flow.TryGetValue((node, succ))
                         |> Option.ofPair
                         |> Option.defaultValue 0.0f<E/H>
-                    if not(sinks.Contains(succ)) && this.GetFlowCapacity(link) > flow then
+                    if not(sinks.Contains(succ)) && getFlowCapacity(link) > flow then
                         if not (pred.ContainsKey succ) then
                             pred.[succ] <- link
                             queue.Enqueue(succ)
@@ -237,7 +120,7 @@ module private WarState_ =
                                 flow.TryGetValue((link.NodeA, link.NodeB))
                                 |> Option.ofPair
                                 |> Option.defaultValue 0.0f<E/H>
-                            df <- min df (this.GetFlowCapacity(link) - flow))
+                            df <- min df (getFlowCapacity(link) - flow))
                     // Update flow by that amount
                     Some prec
                     |> walkPred (fun link ->
@@ -261,32 +144,175 @@ module private WarState_ =
         forEachAugmentationPath()
         ret
 
-    let ComputeTransportCapacityCached x network =
-        SturmovikMission.DataProvider.Cached.cached
-            (Seq.mutableDict [])
-            (fun (regionA, regionB) ->
-                let regions = Set [regionA; regionB]
-                let regionA, regionB =
-                    min regionA regionB, max regionA regionB
-                let terminalsInRegion region =
-                    network.Data.Nodes
-                    |> Seq.filter (fun node ->
-                        node.Region = region && node.HasTerminal)
-                    |> Seq.map (fun node -> node.Id)
-                    |> Set.ofSeq
-                let sources = terminalsInRegion regionA
-                let sinks = terminalsInRegion regionB
-                ComputeTransportCapacity(x, network, regions, sources, sinks)
+    /// Compute transport capacity between two adjacent regions
+    let computeTransportCapacityBetweenRegions getFlowCapacity network =
+        (fun (regionA, regionB) ->
+            let regions = Set [regionA; regionB]
+            let regionA, regionB =
+                min regionA regionB, max regionA regionB
+            let terminalsInRegion region =
+                network.Data.Nodes
+                |> Seq.filter (fun node ->
+                    node.Region = region && node.HasTerminal)
+                |> Seq.map (fun node -> node.Id)
+                |> Set.ofSeq
+            let sources = terminalsInRegion regionA
+            let sinks = terminalsInRegion regionB
+            computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks)
+        )
+
+
+/// The overall status of the war.
+type WarState(world, owners, buildingPartFillLevel, buildingPartHealthLevel, airfieldPlanes, resourceUsagePriorities : (RegionId * ResourceUsagePriority list) list, date, missionRecords) =
+
+    let buildingPartFillLevel = Seq.mutableDict buildingPartFillLevel
+    let buildingPartHealthLevel = Seq.mutableDict buildingPartHealthLevel
+    let owners = Seq.mutableDict owners
+    let airfieldPlanes =
+        airfieldPlanes
+        |> Seq.map (fun (af, planes : (PlaneModel * float32) list) -> af, Seq.mutableDict planes)
+        |> Seq.mutableDict
+    let resourceUsagePriorities = Seq.mutableDict resourceUsagePriorities
+    let roads = world.Roads.QuickAccess
+    let rails = world.Rails.QuickAccess
+    // Must be cleared whenever owners change
+    let regionDistancesToEnemy = Seq.mutableDict []
+    // Must be cleared whenever bridges are damaged or repaired
+    let roadsCapacities = Seq.mutableDict []
+    let railsCapacities = Seq.mutableDict []
+
+    /// Method to be called after the owner of a region changes
+    member this.ClearCachesAfterOwnerChanged() =
+        owners.Clear()
+
+    /// Method to be called after the health of a bridges changes
+    member this.ClearCachesAfterBridgeHealthChanged() =
+        roadsCapacities.Clear()
+        railsCapacities.Clear()
+
+    member this.World : World = world
+
+    member this.Date : DateTime = date
+
+    member this.MissionRecords : MissionRecord list = missionRecords
+
+    /// Relative level of space used in a subpart of a building, relatively to full health availability
+    member this.GetBuildingPartFillLevel(bid, part) =
+        assert(this.World.Buildings.ContainsKey(bid))
+        match buildingPartFillLevel.TryGetValue((bid, part)) with
+        | true, x -> x
+        | false, _ -> 0.0f
+
+    /// Set relative occupancy of a building part.
+    member this.SetBuildingPartFillLevel(bid, part, x) =
+        assert(this.World.Buildings.ContainsKey(bid))
+        if x = 0.0f then
+            buildingPartFillLevel.Remove((bid, part)) |> ignore
+        else
+            buildingPartFillLevel.[(bid, part)] <- x
+
+    /// Amount of resources stored in a building.
+    member this.GetBuildingStorage(bid) =
+        let building = this.World.Buildings.[bid]
+        building.Properties.SubParts
+        |> List.sumBy (fun part -> this.GetBuildingPartFillLevel(bid, part))
+        |> (*) building.Properties.PartCapacity
+
+    /// Level of health of a subpart of a building or bridge
+    member this.GetBuildingPartHealthLevel(bid, part) =
+        match buildingPartHealthLevel.TryGetValue((bid, part)) with
+        | true, x -> x
+        | false, _ -> 1.0f
+
+    /// Max amount of resources that can be stored in a building, depending on health but not taking into account current amounts.
+    member this.GetBuildingCapacity(bid) =
+        assert(this.World.Buildings.ContainsKey(bid))
+        let building = this.World.Buildings.[bid]
+        building.Properties.SubParts
+        |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
+        |> (*) building.Properties.PartCapacity
+
+    /// Level of functionality of a subpart of a building or bridge
+    member this.GetBuildingPartFunctionalityLevel(bid, part) =
+        let health = this.GetBuildingPartHealthLevel(bid, part)
+        if health < 0.5f then
+            0.0f
+        else
+            health
+
+    /// Set the level of health of a subpart of a building or a bridge
+    member this.SetBuildingPartHealthLevel(bid, part, x) =
+        if x = 1.0f then
+            buildingPartHealthLevel.Remove((bid, part)) |> ignore
+        else
+            buildingPartHealthLevel.[(bid, part)] <- x
+        if this.World.Bridges.ContainsKey(bid) then
+            this.ClearCachesAfterBridgeHealthChanged()
+
+    /// Level of functionality of a bridge
+    member this.GetBridgeFunctionalityLevel(bid) =
+        let building = this.World.Bridges.[bid]
+        building.Properties.SubParts
+        |> List.fold (fun level part ->
+            this.GetBuildingPartFunctionalityLevel(bid, part)
+            |> min level
+        ) 1.0f
+
+    /// Get transport link capacity
+    member this.GetFlowCapacity(link : NetworkLink) =
+        let functionality =
+            link.Bridges
+            |> Seq.map (fun bid -> this.GetBridgeFunctionalityLevel(bid))
+            |> Seq.fold min 1.0f
+        functionality * link.FlowCapacity
+
+    /// Compute a mapping from a coalition to distances to regions owned by this coalition
+    member this.ComputeDistancesToCoalition =
+        Cached.cached
+            regionDistancesToEnemy
+            (fun coalition ->
+                let sources =
+                    owners
+                    |> Seq.choose (fun kvp ->
+                        if kvp.Value = coalition then
+                            Some kvp.Key
+                        else None)
+                    |> Set
+                let distances =
+                    world.Regions
+                    |> Seq.map (fun region -> region.RegionId, System.Int32.MaxValue)
+                    |> Seq.mutableDict
+                let nghOf =
+                    world.Regions
+                    |> Seq.map (fun region -> region.RegionId, Set region.Neighbours)
+                    |> dict
+                for region in sources do
+                    distances.[region] <- 0
+                let rec work (xs : Set<RegionId>) dist =
+                    let nghs =
+                        xs
+                        |> Seq.map (fun region -> nghOf.[region])
+                        |> Set.unionMany
+                    let next =
+                        nghs
+                        |> Set.filter (fun region -> distances.[region] > dist)
+                    for ngh in next do
+                        distances.[ngh] <- dist
+                    work next (dist + 1)
+                work sources 1
+                coalition, distances
             )
 
-    let RoadTransportCapacity =
-        Util.cachedProperty (fun this -> ComputeTransportCapacityCached this (CachedRoads this))
+    member this.ComputeRoadCapacity =
+        Cached.cached
+            roadsCapacities
+            (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity roads)
 
-    let RailTransportCapacity =
-        Util.cachedProperty (fun this -> ComputeTransportCapacityCached this (CachedRails this))
+    member this.ComputeRailCapacity =
+        Cached.cached
+            railsCapacities
+            (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity rails)
 
-
-type WarState with
     /// Assign resources to a building. Returns unassigned resources.
     member this.AssignResources (bid : BuildingInstanceId, rsc : float32<E>) =
         assert(this.World.Buildings.ContainsKey(bid))
@@ -340,31 +366,13 @@ type WarState with
 
     /// Get the list of priorities on how to spend resources in a region
     member this.GetResourceUsagePriorities(region) =
-        match this.ResourceUsagePriorities.TryGetValue(region) with
+        match resourceUsagePriorities.TryGetValue(region) with
         | true, xs -> xs
         | false, _ -> []
 
     /// Set the list of priorities on how to spend resources in a region
     member this.SetResourceUsagePriorities(region, prios) =
-        this.ResourceUsagePriorities.[region] <- prios
-
-    /// Get the mapping from a coalition to distances to regions owned by this coalition
-    member this.DistanceToCoalition = WarState_.DistancesToCoalition this
-
-    /// Get the mappings for quick access to road nodes and links
-    member this.Roads = WarState_.CachedRoads this
-
-    /// Get the mappings for quick access to rail nodes and links
-    member this.Rails = WarState_.CachedRails this
-
-    /// Get the roads transport capacity between two adjacent regions
-    member this.ComputeRoadsCapacity =
-        WarState_.RoadTransportCapacity this
-
-    /// Get the rails transport capacity between two adjacent regions
-    member this.ComputeRailsCapacity =
-        WarState_.RailTransportCapacity this
-
+        resourceUsagePriorities.[region] <- prios
 
 [<RequireQualifiedAccess>]
 module Init =
@@ -373,22 +381,13 @@ module Init =
         let regionOwners =
             world.Regions
             |> List.choose (fun desc-> desc.InitialOwner |> Option.map (fun owner -> desc.RegionId, owner))
-            |> Seq.mutableDict
         let airfields =
             world.Airfields
-            |> Seq.map (fun af -> af.AirfieldId, Seq.mutableDict [])
-            |> Seq.mutableDict
-        let allFilled = Seq.mutableDict []
-        for building in world.Buildings.Values do
-            for part in building.Properties.SubParts do
-                allFilled.Add((building.Id, part), 1.0f)
-        {
-            World = world
-            RegionOwners = regionOwners
-            ResourceUsagePriorities = Seq.mutableDict []
-            BuildingPartFillLevel = allFilled
-            BuildingPartHealthLevel = Seq.mutableDict []
-            AirfieldPlanes = airfields
-            Date = world.StartDate
-            MissionRecords = []
-        }
+            |> Seq.map (fun af -> af.AirfieldId, [])
+        let allFilled =
+            seq {
+                for building in world.Buildings.Values do
+                    for part in building.Properties.SubParts do
+                        yield (building.Id, part), 1.0f
+            }
+        WarState(world, regionOwners, allFilled, [], airfields, [], world.StartDate, [])
