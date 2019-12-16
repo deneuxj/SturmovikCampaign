@@ -2,15 +2,21 @@ Map is divided in regions, each controlled by at most one side
 
 Each side has a rear base
 
-Each region may have an airfield, and each airfield has a number of operational facilities (ammo, fuel, repairs)
+Each region may have an airfield, and each airfield has a number of operational facilities (buildings)
 
-Each airfield has operational points, which can be affected negatively by raids, and positively by connection to the rear base
+Each airfield has operational points, affected by operational facilities
 
-Each region has logistics infrastructure with neighbours: bridges, train stations, camps
+Each region has logistics infrastructure with neighbours: bridges
 
 Regions have connection capacity to the rear base depending on the state of logistics infrastructure on the paths to the rear base
 
+Regions have maintenance infrastructure depending on buildings in the region
+
+Repairs are available in a region depending on connectivity with the rear base and the health of the maintenance infrastructure
+
 Each region has ground force points.
+
+Repairs are used to increase the health of maintenance infrastructure (buildings in regions), connection capacity (bridges), airfield operationality (buildings at airfields), and ground forces.
 
 Regions on the front lines deplete their points every turn.
 
