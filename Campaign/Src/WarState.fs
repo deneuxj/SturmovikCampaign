@@ -58,6 +58,7 @@ type MissionRecord =
 type ResourceUsagePriority =
     | RepairRegion of TargetStorageCapacity: float32<E>
     | RepairBridges of TargetTransportCapacity: float32<E/H>
+    | RepairAttackBridges of TargetTransportCapacity: float32<E/H>
     | RepairAirfield of TargetStorageCapacity: float32<E>
     | RetainForRegion of TargetStorage: float32<E>
     | RefillAirfield of TargetStorage: float32<E>
@@ -144,23 +145,39 @@ module private Algo =
         forEachAugmentationPath()
         ret
 
+    let terminalsInRegion network region =
+        network.Data.Nodes
+        |> Seq.filter (fun node ->
+            node.Region = region && node.HasTerminal)
+        |> Seq.map (fun node -> node.Id)
+        |> Set.ofSeq
+
     /// Compute transport capacity between two adjacent regions
     let computeTransportCapacityBetweenRegions getFlowCapacity network =
-        (fun (regionA, regionB) ->
+        fun (regionA, regionB) ->
             let regions = Set [regionA; regionB]
             let regionA, regionB =
                 min regionA regionB, max regionA regionB
-            let terminalsInRegion region =
-                network.Data.Nodes
-                |> Seq.filter (fun node ->
-                    node.Region = region && node.HasTerminal)
-                |> Seq.map (fun node -> node.Id)
-                |> Set.ofSeq
-            let sources = terminalsInRegion regionA
-            let sinks = terminalsInRegion regionB
+            let sources = terminalsInRegion network regionA
+            let sinks = terminalsInRegion network regionB
             computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks)
-        )
 
+    /// Compute transport capacity over multiple networks to all neighbours of a region
+    let computeTransportCapacityToNeighbours getFlowCapacity networks neighboursOf filter =
+        fun region ->
+            let others =
+                neighboursOf region
+                |> Seq.filter (fun ngh -> filter region ngh)
+                |> Set.ofSeq
+            let regions = others.Add region
+            networks
+            |> List.sumBy (fun network ->
+                let sources = terminalsInRegion network region
+                let sinks =
+                    others
+                    |> Set.map (terminalsInRegion network)
+                    |> Set.unionMany
+                computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks))
 
 /// The overall status of the war.
 type WarState(world, owners, buildingPartFillLevel, buildingPartHealthLevel, airfieldPlanes, resourceUsagePriorities : (RegionId * ResourceUsagePriority list) list, date, missionRecords) =
@@ -180,15 +197,24 @@ type WarState(world, owners, buildingPartFillLevel, buildingPartHealthLevel, air
     // Must be cleared whenever bridges are damaged or repaired
     let roadsCapacities = Seq.mutableDict []
     let railsCapacities = Seq.mutableDict []
+    // Must be cleared whenever bridges are damaged or repaired, or owners change
+    // Capacity to enemy or neutral regions
+    let invasionCapacity = Seq.mutableDict []
+    // Capacity to friendly regions
+    let transportCapacity = Seq.mutableDict []
 
     /// Method to be called after the owner of a region changes
     member this.ClearCachesAfterOwnerChanged() =
         owners.Clear()
+        invasionCapacity.Clear()
+        transportCapacity.Clear()
 
     /// Method to be called after the health of a bridges changes
     member this.ClearCachesAfterBridgeHealthChanged() =
         roadsCapacities.Clear()
         railsCapacities.Clear()
+        invasionCapacity.Clear()
+        transportCapacity.Clear()
 
     member this.World : World = world
 
@@ -312,6 +338,24 @@ type WarState(world, owners, buildingPartFillLevel, buildingPartHealthLevel, air
         Cached.cached
             railsCapacities
             (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity rails)
+
+    member this.ComputeInvasionCapacity =
+        let neighboursOf regionId =
+            this.World.GetRegion(regionId).Neighbours
+        let filter owner other =
+            owner <> other
+        Cached.cached
+            invasionCapacity
+            (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads] neighboursOf filter)
+
+    member this.ComputeTransportCapacity =
+        let neighboursOf regionId =
+            this.World.GetRegion(regionId).Neighbours
+        let filter owner other =
+            owner = other
+        Cached.cached
+            invasionCapacity
+            (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads; rails] neighboursOf filter)
 
     /// Assign resources to a building. Returns unassigned resources.
     member this.AssignResources (bid : BuildingInstanceId, rsc : float32<E>) =

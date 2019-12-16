@@ -50,7 +50,7 @@ type Commands =
 /// Interesting data to report from execution of commands
 type Results =
     | StorageChange of Instance: BuildingInstanceId * Amount: float32<E>
-    | ResourcesSpent of Region: RegionId * (ResourceUsagePriority * float32<E>) list * Remaining: float32<E>
+    | ResourcesSpent of Region: RegionId * (ResourceUsagePriority * float32<E>) list * Remaining: float32<E> * RemainingRepairs: float32<E>
 
 module DamageExtension =
     type WarState with
@@ -87,21 +87,24 @@ module DamageExtension =
             let available =
                 region.IndustryBuildings
                 |> List.sumBy this.GetBuildingStorage
-            let countSpendingToRepair (targetCapacity : float32<E>) currentCapacity available =
-                (targetCapacity - currentCapacity) * this.World.RepairCostRatio
+            let countSpendingToRepair cost available maxRepairs =
+                cost
                 |> max 0.0f<E>
-                |> min (this.World.RepairSpeed * timespan)
+                |> min maxRepairs
                 |> min available
-            let plan, available =
+            let repairWorkForce = this.World.RepairSpeed * timespan
+            let plan, available, maxRepairs =
                 priorities
-                |> List.fold (fun (assignment, available) task ->
-                    let amount =
+                |> List.fold (fun (assignment, available, maxRepairs) task ->
+                    let amount, maxRepairs =
                         match task with
                         | RepairRegion targetCapacity ->
                             let capacity =
                                 region.IndustryBuildings
                                 |> List.sumBy this.GetBuildingCapacity
-                            countSpendingToRepair targetCapacity capacity available
+                            let cost = (targetCapacity - capacity) * this.World.RepairCostRatio
+                            let spent = countSpendingToRepair cost available maxRepairs
+                            spent, maxRepairs - spent
                         | RepairAirfield targetCapacity ->
                             let airfields =
                                 this.World.Airfields
@@ -112,22 +115,34 @@ module DamageExtension =
                                     af.Facilities
                                     |> List.sumBy this.GetBuildingStorage
                                 )
-                            countSpendingToRepair targetCapacity capacity available
+                            let cost = (targetCapacity - capacity) * this.World.RepairCostRatio
+                            let spent = countSpendingToRepair cost available maxRepairs
+                            spent, maxRepairs - spent
                         | RetainForRegion targetStorage ->
-                            min targetStorage available
+                            min targetStorage available, maxRepairs
                         | RefillAirfield targetStorage ->
-                            min targetStorage available
+                            min targetStorage available, maxRepairs
                         | RepairBridges targetTransport ->
-                            failwith "TODO"
+                            let currentTransport = this.ComputeTransportCapacity region.RegionId
+                            let diff = targetTransport - currentTransport
+                            let cost = this.World.TransportRepairCostRatio * diff
+                            let spent = countSpendingToRepair cost available maxRepairs
+                            spent, maxRepairs - spent
+                        | RepairAttackBridges targetTransport ->
+                            let currentTransport = this.ComputeInvasionCapacity region.RegionId
+                            let diff = targetTransport - currentTransport
+                            let cost = this.World.TransportRepairCostRatio * diff
+                            let spent = countSpendingToRepair cost available maxRepairs
+                            spent, maxRepairs - spent
                     let assignment = (task, amount) :: assignment
-                    assignment, available - amount
-                ) ([], available)
+                    assignment, available - amount, maxRepairs
+                ) ([], available, repairWorkForce)
             let plan = List.rev plan
             for task, amount in plan do
                 match task with
                 | _ ->
                     failwith "TODO"
-            region.RegionId, plan, available
+            region.RegionId, plan, available, maxRepairs
 
     type Commands with
         /// Execute commands on a WarState. Return the result of the command.
@@ -137,5 +152,5 @@ module DamageExtension =
                 let change = state.ApplyDamage(bid, part, dmg)
                 StorageChange(bid, change)
             | SpendResources(region) ->
-                let region, plan, remaining = state.SpendResources(region, timespan)
-                ResourcesSpent(region, plan, remaining)
+                let region, plan, remaining, repairs = state.SpendResources(region, timespan)
+                ResourcesSpent(region, plan, remaining, repairs)

@@ -241,9 +241,9 @@ type World = {
     /// Resources that can be spent per region or airfield on repairing buildings
     RepairSpeed: float32<E/H>
     /// Amount of resources to repair 1 unit of storage capacity
-    RepairCostRatio : float32
-    /// Amount of resources needed to repair one bridge section
-    BridgeRepairCost : float32<E>
+    RepairCostRatio : float32<E/E>
+    /// Amount of resources needed to repair 1 unit of transport capacity
+    TransportRepairCostRatio : float32<E/(E/H)>
     /// Descriptions of regions
     Regions : Region list
     /// The road network
@@ -259,6 +259,10 @@ type World = {
     /// Mapping from plane model identifiers to plane model descriptions
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
 }
+with
+    member this.GetRegion regionId =
+        this.Regions
+        |> List.find (fun region -> region.RegionId = regionId)
 
 module Loading =
     open System.IO
@@ -616,7 +620,7 @@ module Loading =
             WeatherDaysOffset = 0.0
             RepairSpeed = 1.0f<E/H>
             RepairCostRatio = 2.0f
-            BridgeRepairCost = 10.0f<E>
+            TransportRepairCostRatio = 1.0f<H>
             Regions = regions
             Roads = roads
             Rails = rails
