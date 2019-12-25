@@ -90,7 +90,7 @@ type NetworkLink = {
     NodeA : int
     NodeB : int
     Bridges : BuildingInstanceId list
-    FlowCapacity : float32<E/H>
+    FlowCapacity : float32<M^3/H>
 }
 
 type Network = {
@@ -244,9 +244,9 @@ type World = {
     /// Resources that can be spent per region or airfield on repairing buildings
     RepairSpeed: float32<E/H>
     /// Amount of resources to repair 1 unit of storage capacity
-    RepairCostRatio : float32<E/E>
+    RepairCostRatio : float32<E/M^3>
     /// Amount of resources needed to repair 1 unit of transport capacity
-    TransportRepairCostRatio : float32<E/(E/H)>
+    TransportRepairCostRatio : float32<E/(M^3/H)>
     /// Descriptions of regions
     Regions : Region list
     /// The road network
@@ -551,7 +551,7 @@ module Loading =
             })
 
     /// Load a scenario mission file and create a world description.
-    let loadWorld(scenario : string, strongProduction : float32<E/H>, roadsCapacity : float32<E/H>, railsCapacity : float32<E/H>) =
+    let loadWorld(scenario : string, strongProduction : float32<E/H>, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
         let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
         let missionData = T.GroupData(Stream.FromFile scenario)
@@ -622,8 +622,8 @@ module Loading =
             StartDate = System.DateTime(startDate.Year, startDate.Month, startDate.Day, hour.Value, minute.Value, second.Value)
             WeatherDaysOffset = 0.0
             RepairSpeed = 1.0f<E/H>
-            RepairCostRatio = 2.0f
-            TransportRepairCostRatio = 1.0f<H>
+            RepairCostRatio = 2.0f<E/M^3>
+            TransportRepairCostRatio = 1.0f<E/(M^3/H)>
             Regions = regions
             Roads = roads
             Rails = rails

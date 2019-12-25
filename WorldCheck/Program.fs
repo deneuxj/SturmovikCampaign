@@ -19,7 +19,12 @@ let main argv =
 
     let world =
         try
-            Loading.loadWorld(missionFile, 10000.0f<E/H>, 100.0f<E/H>, 1000.0f<E/H>)
+            let truck = 5.0f<M^3>
+            let separation = 10.0f<M>
+            let speed = 50000.0f<M/H>
+            let numTrucks = speed / separation
+            let roadCapacity = numTrucks * truck
+            Loading.loadWorld(missionFile, 10000.0f<E/H>, roadCapacity, roadCapacity * 3.0f)
         with
         | e ->
             eprintfn "Error in mission file: %s" e.Message

@@ -74,7 +74,7 @@ module private Algo =
                 let link = pred.TryGetValue(link.NodeA) |> Option.ofPair
                 walkPred action link
         // Edmonds-Karp algorithm
-        let mutable ret = 0.0f<E/H>
+        let mutable ret = 0.0f<M^3/H>
         let rec forEachAugmentationPath() =
             let queue = System.Collections.Generic.Queue()
             // Run a breadth-first-search to find the shortest path from the sources to the sinks
@@ -94,7 +94,7 @@ module private Algo =
                     let flow =
                         flow.TryGetValue((node, succ))
                         |> Option.ofPair
-                        |> Option.defaultValue 0.0f<E/H>
+                        |> Option.defaultValue 0.0f<M^3/H>
                     if not(sinks.Contains(succ)) && getFlowCapacity(link) > flow then
                         if not (pred.ContainsKey succ) then
                             pred.[succ] <- link
@@ -105,13 +105,13 @@ module private Algo =
                 | true, prec ->
                     stop <- false
                     // See how much more flow we can send
-                    let mutable df = 1.0f<E/H> * System.Single.PositiveInfinity
+                    let mutable df = 1.0f<M^3/H> * System.Single.PositiveInfinity
                     Some prec
                     |> walkPred (fun link ->
                             let flow =
                                 flow.TryGetValue((link.NodeA, link.NodeB))
                                 |> Option.ofPair
-                                |> Option.defaultValue 0.0f<E/H>
+                                |> Option.defaultValue 0.0f<M^3/H>
                             df <- min df (getFlowCapacity(link) - flow))
                     // Update flow by that amount
                     Some prec
@@ -120,13 +120,13 @@ module private Algo =
                         let x =
                             flow.TryGetValue(link)
                             |> Option.ofPair
-                            |> Option.defaultValue 0.0f<E/H>
+                            |> Option.defaultValue 0.0f<M^3/H>
                         flow.[link] <- x + df
                         let link = snd link, fst link
                         let x =
                             flow.TryGetValue(link)
                             |> Option.ofPair
-                            |> Option.defaultValue 0.0f<E/H>
+                            |> Option.defaultValue 0.0f<M^3/H>
                         flow.[link] <- x - df)
                     ret <- ret + df
                 | false, _ ->
