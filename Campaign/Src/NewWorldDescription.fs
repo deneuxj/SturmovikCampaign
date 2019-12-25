@@ -39,16 +39,19 @@ module private BuildingProperties_ =
     let Areas = Util.cachedProperty (fun this -> 1.0f<M^2> * Vector2.ConvexPolygonArea this.Boundary)
 
 type BuildingProperties with
-    static member CapacityDensity = 10.0f<E/M^2>
+    /// Volume of storage per surface unit
+    static member CapacityDensity = 1.0f<M^3/M^2>
 
     member this.Area = BuildingProperties_.Areas this
 
+    /// Total capacity of all parts in the building
     member this.Capacity =
         BuildingProperties.CapacityDensity * this.Area
 
+    /// Volume of storage in a single part
     member this.PartCapacity =
         match this.SubParts.Length with
-        | 0 -> 0.0f<E>
+        | 0 -> 0.0f<M^3>
         | n -> this.Capacity / float32 n
 
 /// Identify buildings by their position.

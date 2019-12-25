@@ -32,12 +32,6 @@ open Campaign.PlaneModel
 type Commands =
     // Damage a part of a building or a bridge
     | DamageBuilding of Instance: BuildingInstanceId * Part: int * Damage: float32
-    // Spend resources on maintenance of a region, its airfields and bridges
-    | SpendResources of RegionId
-    // Take out resources from a region
-    | TakeOutResources of RegionId * float32<E>
-    // Assign resources to a region
-    | MoveResourcesIn of RegionId * float32<E>
     // Take out resources from an airfield
     | TakeOutSupplies of AirfieldId * float32<E>
     // Assign supplies to an airfield
@@ -49,12 +43,11 @@ type Commands =
 
 /// Interesting data to report from execution of commands
 type Results =
-    | StorageChange of Instance: BuildingInstanceId * Amount: float32<E>
-    | ResourcesSpent of Region: RegionId * (ResourceUsagePriority * float32<E>) list * Remaining: float32<E> * RemainingRepairs: float32<E>
+    | StorageChange of Instance: BuildingInstanceId * Amount: float32<M^3>
 
 module DamageExtension =
     type WarState with
-        /// Apply damage specified in a DamageBuilding command. Return the change in storage in the affected building.
+        /// Apply damage specified in a DamageBuilding command. Return change in storage volume (a negative number).
         member this.ApplyDamage(bid, part, dmg) =
             let dmg = dmg |> max 0.0f |> min 1.0f
             let health = this.GetBuildingPartHealthLevel(bid, part)
@@ -62,87 +55,16 @@ module DamageExtension =
             let isBridge = this.World.Bridges.ContainsKey(bid)
             let store =
                 if isBridge then
-                    0.0f<E>
+                    0.0f<M^3>
                 else
-                    this.GetBuildingStorage(bid)
-            let fill2 =
-                let fill = this.GetBuildingPartFillLevel(bid, part)
-                fill * (1.0f - dmg)
-                |> min (this.GetBuildingPartFunctionalityLevel(bid, part))
-            this.SetBuildingPartFillLevel(bid, part, fill2)
+                    this.GetBuildingCapacity(bid)
             this.SetBuildingPartHealthLevel(bid, part, health)
             let store2 =
                 if isBridge then
-                    0.0f<E>
+                    0.0f<M^3>
                 else
-                    this.GetBuildingStorage(bid)
+                    this.GetBuildingCapacity(bid)
             store2 - store
-
-        /// Spend resources in storage in a region according to the region's priorities
-        member this.SpendResources(region : RegionId, timespan : float32<H>) =
-            let region =
-                this.World.Regions
-                |> List.find (fun reg -> reg.RegionId = region)
-            let priorities = this.GetResourceUsagePriorities(region.RegionId)
-            let available =
-                region.IndustryBuildings
-                |> List.sumBy this.GetBuildingStorage
-            let countSpendingToRepair cost available maxRepairs =
-                cost
-                |> max 0.0f<E>
-                |> min maxRepairs
-                |> min available
-            let repairWorkForce = this.World.RepairSpeed * timespan
-            let plan, available, maxRepairs =
-                priorities
-                |> List.fold (fun (assignment, available, maxRepairs) task ->
-                    let amount, maxRepairs =
-                        match task with
-                        | RepairRegion targetCapacity ->
-                            let capacity =
-                                region.IndustryBuildings
-                                |> List.sumBy this.GetBuildingCapacity
-                            let cost = (targetCapacity - capacity) * this.World.RepairCostRatio
-                            let spent = countSpendingToRepair cost available maxRepairs
-                            spent, maxRepairs - spent
-                        | RepairAirfield targetCapacity ->
-                            let airfields =
-                                this.World.Airfields
-                                |> List.filter (fun af -> af.Region = region.RegionId)
-                            let capacity =
-                                airfields
-                                |> List.sumBy (fun af ->
-                                    af.Facilities
-                                    |> List.sumBy this.GetBuildingStorage
-                                )
-                            let cost = (targetCapacity - capacity) * this.World.RepairCostRatio
-                            let spent = countSpendingToRepair cost available maxRepairs
-                            spent, maxRepairs - spent
-                        | RetainForRegion targetStorage ->
-                            min targetStorage available, maxRepairs
-                        | RefillAirfield targetStorage ->
-                            min targetStorage available, maxRepairs
-                        | RepairBridges targetTransport ->
-                            let currentTransport = this.ComputeTransportCapacity region.RegionId
-                            let diff = targetTransport - currentTransport
-                            let cost = this.World.TransportRepairCostRatio * diff
-                            let spent = countSpendingToRepair cost available maxRepairs
-                            spent, maxRepairs - spent
-                        | RepairAttackBridges targetTransport ->
-                            let currentTransport = this.ComputeInvasionCapacity region.RegionId
-                            let diff = targetTransport - currentTransport
-                            let cost = this.World.TransportRepairCostRatio * diff
-                            let spent = countSpendingToRepair cost available maxRepairs
-                            spent, maxRepairs - spent
-                    let assignment = (task, amount) :: assignment
-                    assignment, available - amount, maxRepairs
-                ) ([], available, repairWorkForce)
-            let plan = List.rev plan
-            for task, amount in plan do
-                match task with
-                | _ ->
-                    failwith "TODO"
-            region.RegionId, plan, available, maxRepairs
 
     type Commands with
         /// Execute commands on a WarState. Return the result of the command.
@@ -151,6 +73,3 @@ module DamageExtension =
             | DamageBuilding(bid, part, dmg) ->
                 let change = state.ApplyDamage(bid, part, dmg)
                 StorageChange(bid, change)
-            | SpendResources(region) ->
-                let region, plan, remaining, repairs = state.SpendResources(region, timespan)
-                ResourcesSpent(region, plan, remaining, repairs)

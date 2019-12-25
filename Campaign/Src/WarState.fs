@@ -54,15 +54,6 @@ type MissionRecord =
         Return : ReturnType
     }
 
-/// How resources in a region should be used
-type ResourceUsagePriority =
-    | RepairRegion of TargetStorageCapacity: float32<E>
-    | RepairBridges of TargetTransportCapacity: float32<E/H>
-    | RepairAttackBridges of TargetTransportCapacity: float32<E/H>
-    | RepairAirfield of TargetStorageCapacity: float32<E>
-    | RetainForRegion of TargetStorage: float32<E>
-    | RefillAirfield of TargetStorage: float32<E>
-
 /// Shorthand for SturmovikMission.DataProvider.Cached
 module private Cached =
     let cached = SturmovikMission.DataProvider.Cached.cached
@@ -180,16 +171,14 @@ module private Algo =
                 computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks))
 
 /// The overall status of the war.
-type WarState(world, owners, buildingPartFillLevel, buildingPartHealthLevel, airfieldPlanes, resourceUsagePriorities : (RegionId * ResourceUsagePriority list) list, date, missionRecords) =
+type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, date, missionRecords) =
 
-    let buildingPartFillLevel = Seq.mutableDict buildingPartFillLevel
     let buildingPartHealthLevel = Seq.mutableDict buildingPartHealthLevel
     let owners = Seq.mutableDict owners
     let airfieldPlanes =
         airfieldPlanes
         |> Seq.map (fun (af, planes : (PlaneModel * float32) list) -> af, Seq.mutableDict planes)
         |> Seq.mutableDict
-    let resourceUsagePriorities = Seq.mutableDict resourceUsagePriorities
     let roads = world.Roads.QuickAccess
     let rails = world.Rails.QuickAccess
     // Must be cleared whenever owners change
@@ -221,28 +210,6 @@ type WarState(world, owners, buildingPartFillLevel, buildingPartHealthLevel, air
     member this.Date : DateTime = date
 
     member this.MissionRecords : MissionRecord list = missionRecords
-
-    /// Relative level of space used in a subpart of a building, relatively to full health availability
-    member this.GetBuildingPartFillLevel(bid, part) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        match buildingPartFillLevel.TryGetValue((bid, part)) with
-        | true, x -> x
-        | false, _ -> 0.0f
-
-    /// Set relative occupancy of a building part.
-    member this.SetBuildingPartFillLevel(bid, part, x) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        if x = 0.0f then
-            buildingPartFillLevel.Remove((bid, part)) |> ignore
-        else
-            buildingPartFillLevel.[(bid, part)] <- x
-
-    /// Amount of resources stored in a building.
-    member this.GetBuildingStorage(bid) =
-        let building = this.World.Buildings.[bid]
-        building.Properties.SubParts
-        |> List.sumBy (fun part -> this.GetBuildingPartFillLevel(bid, part))
-        |> (*) building.Properties.PartCapacity
 
     /// Level of health of a subpart of a building or bridge
     member this.GetBuildingPartHealthLevel(bid, part) =
@@ -357,67 +324,6 @@ type WarState(world, owners, buildingPartFillLevel, buildingPartHealthLevel, air
             invasionCapacity
             (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads; rails] neighboursOf filter)
 
-    /// Assign resources to a building. Returns unassigned resources.
-    member this.AssignResources (bid : BuildingInstanceId, rsc : float32<E>) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        let building = this.World.Buildings.[bid]
-        let partCapacity = building.Properties.PartCapacity
-        let rsc =
-            building.Properties.SubParts
-            |> List.fold (fun rsc subpart ->
-                let stored = partCapacity * this.GetBuildingPartFillLevel(bid, subpart)
-                let capacity = partCapacity * this.GetBuildingPartFunctionalityLevel(bid, subpart)
-                let transferred =
-                    min rsc (capacity - stored)
-                    |> max 0.0f<E>
-                this.SetBuildingPartFillLevel(bid, subpart, (stored + transferred) / partCapacity)
-                rsc - transferred
-            ) rsc
-        rsc
-
-    /// Assign resources to multiple buildings. Returns unassigned resources.
-    member this.DistributeResources (rsc : float32<E>) (buildings : BuildingInstanceId list) =
-        // Group buildings by proximity
-        let groups =
-            let areClose (b1 : BuildingInstanceId) (b2 : BuildingInstanceId) =
-                let b1 = this.World.Buildings.[b1]
-                let b2 = this.World.Buildings.[b2]
-                (b1.Pos.Pos - b2.Pos.Pos).Length() < 100.0f
-            Util.Algo.computePartition areClose buildings
-        // Order by fill level. We distribute in priority to group that already have 50% to 75% fill level,
-        // then to groups that are less than 50%, and finally to groups that are more than 75%
-        let groups =
-            groups
-            |> List.sortByDescending (fun group ->
-                let stored = group |> List.sumBy this.GetBuildingStorage
-                let capacity = group |> List.sumBy this.GetBuildingCapacity
-                if capacity <= 0.0f<E> then
-                    1, None
-                else
-                    match stored / capacity with
-                    | x when x > 0.75f -> 2, Some (1.0f - x)
-                    | x when x < 0.5f -> 3, Some x
-                    | x -> 4, Some x)
-        // Assign resources to sorted buildings
-        let rsc =
-            groups
-            |> List.concat
-            |> List.fold (fun rsc bid ->
-                let rsc = this.AssignResources(bid, rsc)
-                rsc) rsc
-        // Result
-        rsc
-
-    /// Get the list of priorities on how to spend resources in a region
-    member this.GetResourceUsagePriorities(region) =
-        match resourceUsagePriorities.TryGetValue(region) with
-        | true, xs -> xs
-        | false, _ -> []
-
-    /// Set the list of priorities on how to spend resources in a region
-    member this.SetResourceUsagePriorities(region, prios) =
-        resourceUsagePriorities.[region] <- prios
-
 [<RequireQualifiedAccess>]
 module Init =
     /// Create the initial status of the war
@@ -428,10 +334,4 @@ module Init =
         let airfields =
             world.Airfields
             |> Seq.map (fun af -> af.AirfieldId, [])
-        let allFilled =
-            seq {
-                for building in world.Buildings.Values do
-                    for part in building.Properties.SubParts do
-                        yield (building.Id, part), 1.0f
-            }
-        WarState(world, regionOwners, allFilled, [], airfields, [], world.StartDate, [])
+        WarState(world, regionOwners, [], airfields, world.StartDate, [])
