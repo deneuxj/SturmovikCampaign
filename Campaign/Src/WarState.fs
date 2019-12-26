@@ -171,7 +171,7 @@ module private Algo =
                 computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks))
 
 /// The overall status of the war.
-type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, date, missionRecords) =
+type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces : ((CoalitionId * RegionId) * float32<MGF>) seq, date, missionRecords) =
 
     let buildingPartHealthLevel = Seq.mutableDict buildingPartHealthLevel
     let owners = Seq.mutableDict owners
@@ -191,6 +191,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, date, miss
     let invasionCapacity = Seq.mutableDict []
     // Capacity to friendly regions
     let transportCapacity = Seq.mutableDict []
+    // Ground forces
+    let groundForces = Seq.mutableDict groundForces
 
     /// Method to be called after the owner of a region changes
     member this.ClearCachesAfterOwnerChanged() =
@@ -250,6 +252,16 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, date, miss
             this.GetBuildingPartFunctionalityLevel(bid, part)
             |> min level
         ) 1.0f
+
+    /// Get the ground forces of a coalition in a region
+    member this.GetGroundForces(coalition, region) =
+        groundForces.TryGetValue((coalition, region))
+        |> Option.ofPair
+        |> Option.defaultValue 0.0f<MGF>
+
+    /// Set the ground forces of a coalition in a region
+    member this.SetGroundForces(coalition, region, forces) =
+        groundForces.[(coalition, region)] <- forces
 
     /// Get transport link capacity
     member this.GetFlowCapacity(link : NetworkLink) =
@@ -335,4 +347,30 @@ module Init =
         let airfields =
             world.Airfields
             |> Seq.map (fun af -> af.AirfieldId, [])
-        WarState(world, regionOwners, [], airfields, world.StartDate, [])
+        let frontGroundForces =
+            let regionOwners = dict regionOwners
+            let getOwner rid =
+                regionOwners.TryGetValue(rid)
+                |> Option.ofPair
+            world.Regions.Values
+            |> Seq.choose (fun region ->
+                getOwner region.RegionId
+                |> Option.bind (fun owner ->
+                    let isOnBorder = 
+                        region.Neighbours
+                        |> Seq.exists (fun ngh -> getOwner ngh <> Some owner)
+                    if isOnBorder then
+                        Some ((owner, region.RegionId), 0.0f<MGF>)
+                    else
+                        None))
+        let war =
+            WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate, [])
+        // Set forces on the frontline according to the region's storage capacity
+        for (coalition, rid), _ in frontGroundForces do
+            let capacity =
+                world.Regions.[rid].IndustryBuildings
+                |> Seq.sumBy war.GetBuildingCapacity
+            let battleDuration = 10.0f<H>
+            let optimalForces = capacity / (battleDuration * world.GroundForcesCost)
+            war.SetGroundForces(coalition, rid, optimalForces)
+        war

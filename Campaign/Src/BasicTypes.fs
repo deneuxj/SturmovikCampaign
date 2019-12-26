@@ -40,6 +40,10 @@ type K
 /// Distance
 type M
 
+[<Measure>]
+/// Military ground force
+type MGF
+
 type CoalitionId = Axis | Allies
 with
     /// <summary>
