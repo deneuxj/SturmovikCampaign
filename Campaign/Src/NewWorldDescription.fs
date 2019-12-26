@@ -248,7 +248,7 @@ type World = {
     /// Amount of resources needed to repair 1 unit of transport capacity
     TransportRepairCostRatio : float32<E/(M^3/H)>
     /// Descriptions of regions
-    Regions : Region list
+    Regions : IDictionary<RegionId, Region>
     /// The road network
     Roads : Network
     /// The rail network
@@ -262,10 +262,6 @@ type World = {
     /// Mapping from plane model identifiers to plane model descriptions
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
 }
-with
-    member this.GetRegion regionId =
-        this.Regions
-        |> List.find (fun region -> region.RegionId = regionId)
 
 module Loading =
     open System.IO
@@ -616,6 +612,10 @@ module Loading =
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
         let hour, minute, second = options.GetTime().Value
+        let regions =
+            regions
+            |> Seq.map (fun r -> r.RegionId, r)
+            |> dict
         {
             Scenario = scenario
             Map = mapName

@@ -40,7 +40,7 @@ let main argv =
             System.Console.ReadKey(true) |> ignore
             failwith "Failed"
 
-    printfn "Number of regions: %d" world.Regions.Length
+    printfn "Number of regions: %d" world.Regions.Count
     printfn "Number of airfields: %d" world.Airfields.Length
     printfn "Number of road bridges: %d" (world.Roads.Links |> List.sumBy (fun link -> link.Bridges.Length))
     printfn "Number of railroad bridges: %d" (world.Rails.Links |> List.sumBy (fun link -> link.Bridges.Length))

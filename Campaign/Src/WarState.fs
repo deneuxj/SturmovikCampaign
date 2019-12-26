@@ -198,7 +198,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, date, miss
         invasionCapacity.Clear()
         transportCapacity.Clear()
 
-    /// Method to be called after the health of a bridges changes
+    /// Method to be called after the health of a bridge changes
     member this.ClearCachesAfterBridgeHealthChanged() =
         roadsCapacities.Clear()
         railsCapacities.Clear()
@@ -272,11 +272,11 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, date, miss
                         else None)
                     |> Set
                 let distances =
-                    world.Regions
+                    world.Regions.Values
                     |> Seq.map (fun region -> region.RegionId, System.Int32.MaxValue)
                     |> Seq.mutableDict
                 let nghOf =
-                    world.Regions
+                    world.Regions.Values
                     |> Seq.map (fun region -> region.RegionId, Set region.Neighbours)
                     |> dict
                 for region in sources do
@@ -308,7 +308,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, date, miss
 
     member this.ComputeInvasionCapacity =
         let neighboursOf regionId =
-            this.World.GetRegion(regionId).Neighbours
+            this.World.Regions.[regionId].Neighbours
         let filter owner other =
             owner <> other
         Cached.cached
@@ -317,7 +317,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, date, miss
 
     member this.ComputeTransportCapacity =
         let neighboursOf regionId =
-            this.World.GetRegion(regionId).Neighbours
+            this.World.Regions.[regionId].Neighbours
         let filter owner other =
             owner = other
         Cached.cached
@@ -329,8 +329,9 @@ module Init =
     /// Create the initial status of the war
     let mkWar (world : World) =
         let regionOwners =
-            world.Regions
-            |> List.choose (fun desc-> desc.InitialOwner |> Option.map (fun owner -> desc.RegionId, owner))
+            world.Regions.Values
+            |> Seq.choose (fun desc-> desc.InitialOwner |> Option.map (fun owner -> desc.RegionId, owner))
+            |> List.ofSeq
         let airfields =
             world.Airfields
             |> Seq.map (fun af -> af.AirfieldId, [])
