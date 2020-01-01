@@ -32,10 +32,6 @@ open Campaign.PlaneModel
 type Commands =
     // Damage a part of a building or a bridge
     | DamageBuilding of Instance: BuildingInstanceId * Part: int * Damage: float32
-    // Take out resources from an airfield
-    | TakeOutSupplies of AirfieldId * float32<E>
-    // Assign supplies to an airfield
-    | MoveSuppliesIn of AirfieldId * float32<E>
     // Remove a plane from an airfield
     | RemovePlane of AirfieldId * PlaneModelId * Health: float32
     // Add a plane to an airfield
@@ -43,33 +39,38 @@ type Commands =
 
 /// Interesting data to report from execution of commands
 type Results =
-    | StorageChange of Instance: BuildingInstanceId * Amount: float32<M^3>
+    | UpdatedStorageValue of Instance: BuildingInstanceId * Amount: float32<M^3>
+    | UpdatedPlanesAtAirfield of AirfieldId * Map<PlaneModelId, float32>
 
 module DamageExtension =
     type WarState with
-        /// Apply damage specified in a DamageBuilding command. Return change in storage volume (a negative number).
+        /// Apply damage to a part of a building. Return new storage volume of the whole building.
         member this.ApplyDamage(bid, part, dmg) =
             let dmg = dmg |> max 0.0f |> min 1.0f
             let health = this.GetBuildingPartHealthLevel(bid, part)
             let health = health - dmg |> max 0.0f
             let isBridge = this.World.Bridges.ContainsKey(bid)
-            let store =
-                if isBridge then
-                    0.0f<M^3>
-                else
-                    this.GetBuildingCapacity(bid)
             this.SetBuildingPartHealthLevel(bid, part, health)
             let store2 =
                 if isBridge then
                     0.0f<M^3>
                 else
                     this.GetBuildingCapacity(bid)
-            store2 - store
+            store2
+
+        /// Add or remove planes from an airfield, return all the planes at that airfield after the change
+        member this.ChangePlanes(afid, plane, delta) =
+            let qty = this.GetNumPlanes(afid, plane) + delta
+            this.SetNumPlanes(afid, plane, qty)
+            this.GetNumPlanes(afid)
 
     type Commands with
         /// Execute commands on a WarState. Return the result of the command.
-        member this.Execute(state : WarState, timespan) =
+        member this.Execute(state : WarState) =
             match this with
             | DamageBuilding(bid, part, dmg) ->
-                let change = state.ApplyDamage(bid, part, dmg)
-                StorageChange(bid, change)
+                let storage = state.ApplyDamage(bid, part, dmg)
+                UpdatedStorageValue(bid, storage)
+            | AddPlane(afid, plane, health) ->
+                let newStatus = state.ChangePlanes(afid, plane, health)
+                UpdatedPlanesAtAirfield(afid, newStatus)

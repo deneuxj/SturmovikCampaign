@@ -177,7 +177,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     let owners = Seq.mutableDict owners
     let airfieldPlanes =
         airfieldPlanes
-        |> Seq.map (fun (af, planes : (PlaneModel * float32) list) -> af, Seq.mutableDict planes)
+        |> Seq.map (fun (af, planes : (PlaneModelId * float32) list) -> af, Seq.mutableDict planes)
         |> Seq.mutableDict
     let roads = world.Roads.QuickAccess
     let rails = world.Rails.QuickAccess
@@ -335,6 +335,26 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         Cached.cached
             invasionCapacity
             (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads; rails] neighboursOf filter)
+
+    member this.GetNumPlanes(afid) =
+        airfieldPlanes.TryGetValue(afid)
+        |> Option.ofPair
+        |> Option.map (fun dict -> dict |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq)
+        |> Option.defaultValue Map.empty
+
+    member this.GetNumPlanes(afid, model) =
+        airfieldPlanes.TryGetValue(afid)
+        |> Option.ofPair
+        |> Option.map (fun d -> d.TryGetValue(model) |> Option.ofPair |> Option.defaultValue 0.0f)
+        |> Option.defaultValue 0.0f
+
+    member this.SetNumPlanes(afid, model, qty) =
+        let inner =
+            airfieldPlanes.TryGetValue(afid)
+            |> Option.ofPair
+            |> Option.defaultValue (Seq.mutableDict [])
+        inner.[model] <- qty
+
 
 [<RequireQualifiedAccess>]
 module Init =
