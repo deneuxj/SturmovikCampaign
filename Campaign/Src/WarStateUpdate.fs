@@ -73,3 +73,6 @@ module DamageExtension =
             | AddPlane(afid, plane, health) ->
                 let newStatus = state.ChangePlanes(afid, plane, health)
                 UpdatedPlanesAtAirfield(afid, newStatus)
+            | RemovePlane(afid, plane, health) ->
+                let newStatus = state.ChangePlanes(afid, plane, -health)
+                UpdatedPlanesAtAirfield(afid, newStatus)
