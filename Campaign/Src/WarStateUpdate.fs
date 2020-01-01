@@ -44,19 +44,18 @@ type Results =
 
 module DamageExtension =
     type WarState with
-        /// Apply damage to a part of a building. Return new storage volume of the whole building.
-        member this.ApplyDamage(bid, part, dmg) =
-            let dmg = dmg |> max 0.0f |> min 1.0f
+        /// Apply damage to or repair a part of a building. Return new storage volume of the whole building.
+        member this.ChangeHealth(bid, part, delta) =
             let health = this.GetBuildingPartHealthLevel(bid, part)
-            let health = health - dmg |> max 0.0f
+            let health = health + delta |> max 0.0f |> min 1.0f
             let isBridge = this.World.Bridges.ContainsKey(bid)
             this.SetBuildingPartHealthLevel(bid, part, health)
-            let store2 =
+            let store =
                 if isBridge then
                     0.0f<M^3>
                 else
                     this.GetBuildingCapacity(bid)
-            store2
+            store
 
         /// Add or remove planes from an airfield, return all the planes at that airfield after the change
         member this.ChangePlanes(afid, plane, delta) =
@@ -69,7 +68,7 @@ module DamageExtension =
         member this.Execute(state : WarState) =
             match this with
             | DamageBuilding(bid, part, dmg) ->
-                let storage = state.ApplyDamage(bid, part, dmg)
+                let storage = state.ChangeHealth(bid, part, -dmg)
                 UpdatedStorageValue(bid, storage)
             | AddPlane(afid, plane, health) ->
                 let newStatus = state.ChangePlanes(afid, plane, health)
