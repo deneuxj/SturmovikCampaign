@@ -26,34 +26,6 @@ open Campaign.WorldDescription
 open Campaign.NewWorldDescription
 open Util
 
-type TargetType =
-    | Truck | Train | Ship | Battleship | Artillery | Tank | ArmoredCar | Bridge
-    | Building of BuildingProperties * int
-    | ParkedPlane of PlaneType
-    | Air of PlaneType
-
-type Target =
-    {
-        Kind : TargetType
-        Pos : Vector2
-    }
-
-type AmmoType =
-    Rocket | Bullets | Bomb
-
-type ReturnType =
-    CrashedInEnemyTerritory | CrashedInFriendlyTerritory | AtAirfield of AirfieldId
-
-/// The results of a flight by a player, used to build success rates of virtual missions.
-type MissionRecord =
-    {
-        Date : DateTime
-        Plane : PlaneModel
-        Start : AirfieldId
-        TargetsDestroyed : (Target * AmmoType) list
-        Return : ReturnType
-    }
-
 /// Shorthand for SturmovikMission.DataProvider.Cached
 module private Cached =
     let cached = SturmovikMission.DataProvider.Cached.cached
@@ -171,7 +143,7 @@ module private Algo =
                 computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks))
 
 /// The overall status of the war.
-type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces : ((CoalitionId * RegionId) * float32<MGF>) seq, date, missionRecords) =
+type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces : ((CoalitionId * RegionId) * float32<MGF>) seq, date) =
 
     let buildingPartHealthLevel = Seq.mutableDict buildingPartHealthLevel
     let owners = Seq.mutableDict owners
@@ -210,8 +182,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.World : World = world
 
     member this.Date : DateTime = date
-
-    member this.MissionRecords : MissionRecord list = missionRecords
 
     /// Level of health of a subpart of a building or bridge
     member this.GetBuildingPartHealthLevel(bid, part) =
@@ -384,7 +354,7 @@ module Init =
                     else
                         None))
         let war =
-            WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate, [])
+            WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate)
         // Set forces on the frontline according to the region's storage capacity
         for (coalition, rid), _ in frontGroundForces do
             let capacity =

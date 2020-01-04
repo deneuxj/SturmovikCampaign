@@ -64,6 +64,7 @@
     <Compile Include="Src\NewWorldDescription.fs" />
     <Compile Include="Src\WarState.fs" />
     <Compile Include="Src\WarStateUpdate.fs" />
+    <Compile Include="Src\Missions.fs" />
     <Compile Include="Src\WorldState.fs" />
     <Compile Include="Src\PlayerHangar.fs" />
     <Compile Include="Src\Weather.fs" />
