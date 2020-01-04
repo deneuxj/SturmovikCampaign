@@ -26,7 +26,7 @@ open Campaign.WorldDescription
 open Campaign.PlaneModel
 
 // We use explicit command and result types for all changes to the state of the war.
-// This makes it easier to present relevant data to players and help them understand what affect their actions have.
+// This makes it easier to present relevant data to players and help them understand what effect their actions have.
 
 /// Commands to change a WarState
 type Commands =
