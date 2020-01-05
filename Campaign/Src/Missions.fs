@@ -38,6 +38,7 @@ type Target =
     {
         Kind : TargetType
         Pos : Vector2
+        Altitude : float32<M>
     }
 
 type AmmoType =
@@ -47,7 +48,7 @@ type ReturnType =
     CrashedInEnemyTerritory | CrashedInFriendlyTerritory | AtAirfield of AirfieldId
 
 /// The results of a flight by a player, used to build success rates of missions.
-type MissionRecord =
+type FlightRecord =
     {
         Date : DateTime
         Plane : PlaneModel
@@ -55,3 +56,71 @@ type MissionRecord =
         TargetsDestroyed : (Target * AmmoType) list
         Return : ReturnType
     }
+
+type AltitudeLevel = LowAltitude | MediumAltitude | HighAltitude
+with
+    member this.Roof =
+        match this with
+        | LowAltitude -> 1500.0f
+        | MediumAltitude -> 3000.0f
+        | HighAltitude -> System.Single.PositiveInfinity
+
+    member this.Ground =
+        match this with
+        | LowAltitude -> System.Single.NegativeInfinity
+        | MediumAltitude -> LowAltitude.Roof
+        | HighAltitude -> MediumAltitude.Roof
+
+/// Domains of combat affected by experience bonuses
+type ExperienceDomain =
+    | AirSupremacy // Fighter attacks on fighters
+    | Interception of AltitudeLevel // Fighter and ground attackers on bombers and ground attackers
+    | GroundAttack of PlaneType // Any plane on ground targets using gun and rockets
+    | Bombing of PlaneType // Any plane on ground targets using bombs
+
+/// Experience bonuses granted by successful flight records
+type ExperienceBonus =
+    {
+        Start : AirfieldId
+        Region : RegionId
+        Domain : ExperienceDomain
+        Bonus : float32
+    }
+
+/// Kind of targets on the ground
+type GroundTargetType =
+    | BridgeTarget
+    | BuildingTarget // Factories and other buildings inside regions but outside airfields
+    | AirfieldTarget // Hangars, fuel tanks, parked planes... on an airfield
+
+type AirMissionType =
+    | AreaProtection
+    | GroundTargetAttack of GroundTargetType * AltitudeLevel
+    | PlaneTransfer of Destination: AirfieldId
+    | AirfieldResupply
+    | BattleResupply
+
+type AirMission =
+    {
+        StartAirfield : AirfieldId
+        Objective : RegionId
+        MissionType : AirMissionType
+        NumPlanes : int
+        Model : PlaneModelId
+    }
+
+type GroundMissionType =
+    | GroundForcesTransfer
+    | GroundBattle
+
+type GroundMission =
+    {
+        StartRegion : RegionId
+        Objective : RegionId
+        MissionType : GroundMissionType
+        Forces : float32<MGF>
+    }
+
+type Mission =
+    | AirMission of AirMission
+    | GroundMission of GroundMission
