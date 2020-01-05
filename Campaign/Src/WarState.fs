@@ -167,13 +167,13 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     let groundForces = Seq.mutableDict groundForces
 
     /// Method to be called after the owner of a region changes
-    member this.ClearCachesAfterOwnerChanged() =
+    member private this.ClearCachesAfterOwnerChanged() =
         owners.Clear()
         invasionCapacity.Clear()
         transportCapacity.Clear()
 
     /// Method to be called after the health of a bridge changes
-    member this.ClearCachesAfterBridgeHealthChanged() =
+    member private this.ClearCachesAfterBridgeHealthChanged() =
         roadsCapacities.Clear()
         railsCapacities.Clear()
         invasionCapacity.Clear()
@@ -291,8 +291,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.ComputeInvasionCapacity =
         let neighboursOf regionId =
             this.World.Regions.[regionId].Neighbours
-        let filter owner other =
-            owner <> other
+        let filter region other =
+            this.GetOwner region <> this.GetOwner other
         Cached.cached
             invasionCapacity
             (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads] neighboursOf filter)
@@ -300,8 +300,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.ComputeTransportCapacity =
         let neighboursOf regionId =
             this.World.Regions.[regionId].Neighbours
-        let filter owner other =
-            owner = other
+        let filter region other =
+            this.GetOwner region = this.GetOwner other
         Cached.cached
             invasionCapacity
             (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads; rails] neighboursOf filter)
@@ -325,6 +325,20 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             |> Option.defaultValue (Seq.mutableDict [])
         inner.[model] <- qty
 
+    member this.GetOwner(rid) =
+        owners.TryGetValue(rid)
+        |> Option.ofPair
+
+    member this.SetOwner(rid, coalition) =
+        match coalition with
+        | None ->
+            if owners.Remove(rid) then
+                this.ClearCachesAfterOwnerChanged()
+        | Some x ->
+            let needClear = this.GetOwner(rid) <> coalition
+            owners.[rid] <- x
+            if needClear then
+                this.ClearCachesAfterOwnerChanged()
 
 [<RequireQualifiedAccess>]
 module Init =
