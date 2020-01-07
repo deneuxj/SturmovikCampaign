@@ -86,6 +86,25 @@ type ExperienceBonus =
         Domain : ExperienceDomain
         Bonus : float32
     }
+with
+    member this.Key =
+        this.Start, this.Region, this.Domain
+
+/// Mapping from start airfields, objective regions and experience domains to bonus values
+type ExperienceBonuses =
+    {
+        Bonuses : Map<AirfieldId * RegionId * ExperienceDomain, float32>
+    }
+with
+    member this.GetBonus(key) =
+        this.Bonuses.TryFind(key)
+        |> Option.defaultValue 0.0f
+
+    member this.Update(bonus : ExperienceBonus) =
+        let oldValue =
+            this.GetBonus(bonus.Key)
+        { this with
+            Bonuses = this.Bonuses.Add(bonus.Key, oldValue + bonus.Bonus) }
 
 /// Kind of targets on the ground
 type GroundTargetType =
