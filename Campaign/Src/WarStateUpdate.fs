@@ -31,9 +31,9 @@ open Campaign.PlaneModel
 /// Commands to change a WarState
 type Commands =
     // Damage a part of a building or a bridge
-    | DamageBuilding of Instance: BuildingInstanceId * Part: int * Damage: float32
+    | DamageBuildingPart of Instance: BuildingInstanceId * Part: int * Damage: float32
     // Repair a part of a building or a bridge
-    | RepairBuilding of Instance: BuildingInstanceId * Part: int * Healing: float32
+    | RepairBuildingPart of Instance: BuildingInstanceId * Part: int * Healing: float32
     // Remove a plane from an airfield
     | RemovePlane of AirfieldId * PlaneModelId * Health: float32
     // Add a plane to an airfield
@@ -84,10 +84,10 @@ module DamageExtension =
         /// Execute commands on a WarState. Return the result of the command.
         member this.Execute(state : WarState) =
             match this with
-            | DamageBuilding(bid, part, dmg) ->
+            | DamageBuildingPart(bid, part, dmg) ->
                 let storage = state.ChangeHealth(bid, part, -dmg)
                 [ UpdatedStorageValue(bid, storage) ]
-            | RepairBuilding(bid, part, heal) ->
+            | RepairBuildingPart(bid, part, heal) ->
                 let storage = state.ChangeHealth(bid, part, heal)
                 [ UpdatedStorageValue(bid, storage) ]
             | AddPlane(afid, plane, health) ->

@@ -41,7 +41,7 @@ let main argv =
             failwith "Failed"
 
     printfn "Number of regions: %d" world.Regions.Count
-    printfn "Number of airfields: %d" world.Airfields.Length
+    printfn "Number of airfields: %d" world.Airfields.Count
     printfn "Number of road bridges: %d" (world.Roads.Links |> List.sumBy (fun link -> link.Bridges.Length))
     printfn "Number of railroad bridges: %d" (world.Rails.Links |> List.sumBy (fun link -> link.Bridges.Length))
     printfn "Number of regions with terminals: %d" ([world.Roads.Nodes ; world.Rails.Nodes] |> Seq.concat |> Seq.filter (fun node -> node.HasTerminal) |> Seq.distinctBy (fun node -> node.Region) |> Seq.length)

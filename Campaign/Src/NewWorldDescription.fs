@@ -256,7 +256,7 @@ type World = {
     /// The rail network
     Rails : Network
     /// Descriptions of all airfields
-    Airfields : Airfield list
+    Airfields : IDictionary<AirfieldId, Airfield>
     /// Mapping from building instance identifiers to building instances
     Buildings : IDictionary<BuildingInstanceId, BuildingInstance>
     /// Mapping from bridge instance identifiers to bridge instances
@@ -617,6 +617,10 @@ module Loading =
         let regions =
             regions
             |> Seq.map (fun r -> r.RegionId, r)
+            |> dict
+        let airfields =
+            airfields
+            |> Seq.map (fun af -> af.AirfieldId, af)
             |> dict
         {
             Scenario = scenario

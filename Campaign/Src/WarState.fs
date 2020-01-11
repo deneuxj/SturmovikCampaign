@@ -205,6 +205,14 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         else
             health
 
+    /// Level of functionality of a building
+    member this.GetBuildingFunctionalityLevel(bid) =
+        assert(this.World.Buildings.ContainsKey(bid))
+        let building = this.World.Buildings.[bid]
+        building.Properties.SubParts
+        |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
+        |> (*) (1.0f / (building.Properties.SubParts.Length |> max 1 |> float32))
+
     /// Set the level of health of a subpart of a building or a bridge
     member this.SetBuildingPartHealthLevel(bid, part, x) =
         if x = 1.0f then
@@ -349,8 +357,8 @@ module Init =
             |> Seq.choose (fun desc-> desc.InitialOwner |> Option.map (fun owner -> desc.RegionId, owner))
             |> List.ofSeq
         let airfields =
-            world.Airfields
-            |> Seq.map (fun af -> af.AirfieldId, [])
+            world.Airfields.Keys
+            |> Seq.map (fun afid -> afid, [])
         let frontGroundForces =
             let regionOwners = dict regionOwners
             let getOwner rid =
