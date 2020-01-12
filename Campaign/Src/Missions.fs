@@ -127,7 +127,7 @@ type AirMission =
         Objective : RegionId
         MissionType : AirMissionType
         NumPlanes : int
-        Model : PlaneModelId
+        Plane : PlaneModelId
     }
 
 type GroundMissionType =
@@ -170,19 +170,20 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
     member this.DoTakeOffs() =
         seq {
             for mission in airMissions do
-                let plane = war.World.PlaneSet.[mission.Model].Name
+                let plane = war.World.PlaneSet.[mission.Plane].Name
                 let numPlanes = numPlanes.[mission]
                 yield
-                    Some(RemovePlane(mission.StartAirfield, mission.Model, float32 numPlanes)),
+                    Some(RemovePlane(mission.StartAirfield, mission.Plane, float32 numPlanes)),
                     sprintf "%d %s take off from %s" (int numPlanes) plane mission.StartAirfield.AirfieldName
         }
 
     member this.DoInterceptions() =
+        let numInterceptorPasses = 3
         seq {
-            for targets in airMissions do
+            for mission in airMissions do
                 let targetCoalition =
-                    war.GetOwner(war.World.Airfields.[targets.StartAirfield].Region)
-                let threats =
+                    war.GetOwner(war.World.Airfields.[mission.StartAirfield].Region)
+                let interceptors =
                     airMissions
                     // Different coalition
                     |> Seq.filter (fun mission ->
@@ -190,39 +191,39 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             war.GetOwner(war.World.Airfields.[mission.StartAirfield].Region)
                         targetCoalition <> intercepterCoalition)
                     // Same objective
-                    |> Seq.filter (fun mission -> mission.Objective = targets.Objective)
+                    |> Seq.filter (fun mission -> mission.Objective = mission.Objective)
                     // Is area protection
                     |> Seq.filter (function { MissionType = AreaProtection _ } -> true | _ -> false)
-                for intercepters in threats do
-                    for pass in 1..3 do
-                        let interceptorRate = getFighterAttackRate()
-                        let defenseRate =
-                            match targets.MissionType with
+                for interception in interceptors do
+                    for pass in 1..numInterceptorPasses do
+                        let interceptorKillRate = getFighterAttackRate()
+                        let defenderKillRate =
+                            match mission.MissionType with
                             | AreaProtection _ -> getFighterAttackRate()
                             | _ -> getBomberDefenseRate()
-                        let numInterceptors = numPlanes.[intercepters]
-                        let numIntercepted = numPlanes.[targets]
+                        let numInterceptors = numPlanes.[interception]
+                        let numIntercepted = numPlanes.[mission]
                         let numInterceptors2 =
-                            numInterceptors - numIntercepted * defenseRate
+                            numInterceptors - numIntercepted * defenderKillRate
                             |> max 0.0f
                         let numIntercepted2 =
-                            numIntercepted - numInterceptors * interceptorRate
-                        numPlanes.[intercepters] <- numInterceptors2
-                        numPlanes.[targets] <- numIntercepted2
+                            numIntercepted - numInterceptors * interceptorKillRate
+                        numPlanes.[interception] <- numInterceptors2
+                        numPlanes.[mission] <- numIntercepted2
                     yield
                         None,
-                        sprintf "%d %s from %s survive an encounter with the enemy over %s"
-                            (int <| numPlanes.[intercepters])
-                            (war.World.PlaneSet.[intercepters.Model].Name)
-                            (intercepters.StartAirfield.AirfieldName)
-                            (string intercepters.Objective)
+                        sprintf "%d %s interceptors from %s survive an encounter with the enemy over %s"
+                            (int <| numPlanes.[interception])
+                            (war.World.PlaneSet.[interception.Plane].Name)
+                            (interception.StartAirfield.AirfieldName)
+                            (string interception.Objective)
                     yield
                         None,
-                        sprintf "%d %s from %s survive an encounter with the enemy over %s"
-                            (int <| numPlanes.[targets])
-                            (war.World.PlaneSet.[targets.Model].Name)
-                            (targets.StartAirfield.AirfieldName)
-                            (string targets.Objective)
+                        sprintf "%d %s from %s survive an interception with the enemy over %s"
+                            (int <| numPlanes.[mission])
+                            (war.World.PlaneSet.[mission.Plane].Name)
+                            (mission.StartAirfield.AirfieldName)
+                            (string mission.Objective)
         }
 
     member this.DoObjectives() =
@@ -235,22 +236,34 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                     ()
                 | GroundTargetAttack(targetType, _) ->
                     let region = war.World.Regions.[mission.Objective]
+                    let plane = war.World.PlaneSet.[mission.Plane].Name
                     let mkMessage, targets =
                         match targetType with
                         | BridgeTarget ->
-                            sprintf "Bridge destroyed in %s at %0.0f, %0.0f" (string mission.Objective),
+                            sprintf "Bridge destroyed by %s from %s in %s at %0.0f, %0.0f"
+                                plane
+                                mission.StartAirfield.AirfieldName
+                                (string mission.Objective)
+                                ,
                             war.World.Roads.Links @ war.World.Rails.Links
                             |> List.collect (fun link -> link.Bridges)
                             |> List.filter (fun bid -> war.World.Bridges.[bid].Pos.Pos.IsInConvexPolygon region.Boundary)
                             |> List.sortByDescending (war.GetBridgeFunctionalityLevel)
                             |> List.map (fun bid -> bid, war.World.Bridges.[bid])
                         | BuildingTarget ->
-                            sprintf "Building destroyed in %s at %0.0f, %0.0f" (string mission.Objective),
+                            sprintf "Building destroyed by %s from %s in %s at %0.0f, %0.0f"
+                                plane
+                                mission.StartAirfield.AirfieldName
+                                (string mission.Objective)
+                                ,
                             region.IndustryBuildings
                             |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
                             |> List.map (fun bid -> bid, war.World.Buildings.[bid])
                         | AirfieldTarget ->
-                            sprintf "Airfield building destroyed in %s at %0.0f, %0.0f" (string mission.Objective),
+                            sprintf "Airfield building destroyed by %s from %s in %s at %0.0f, %0.0f"
+                                plane
+                                mission.StartAirfield.AirfieldName
+                                (string mission.Objective),
                             war.World.Airfields.Values
                             |> Seq.filter (fun af -> af.Region = mission.Objective)
                             |> Seq.collect (fun af -> af.Facilities)
@@ -263,22 +276,22 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 Some(DamageBuildingPart(bid, part, 1.0f)),
                                 mkMessage building.Pos.Pos.X building.Pos.Pos.Y
                 | PlaneTransfer afid ->
-                    let plane = war.World.PlaneSet.[mission.Model].Name
+                    let plane = war.World.PlaneSet.[mission.Plane].Name
                     yield
-                        Some(AddPlane(afid, mission.Model, float32 numPlanes)),
+                        Some(AddPlane(afid, mission.Plane, float32 numPlanes)),
                         sprintf "%d %s transfered to %s" numPlanes plane afid.AirfieldName
         }
 
     member this.DoReturnToBase() =
         seq {
             for mission in airMissions do
-                let numPlanes = int <| numPlanes.[mission]
+                let numPlanes = numPlanes.[mission] |> int |> max 0
                 match mission.MissionType with
                 | AreaProtection | GroundTargetAttack _ ->
-                    let plane = war.World.PlaneSet.[mission.Model].Name
+                    let plane = war.World.PlaneSet.[mission.Plane].Name
                     let afid = mission.StartAirfield
                     yield
-                        Some(AddPlane(afid, mission.Model, float32 numPlanes)),
+                        Some(AddPlane(afid, mission.Plane, float32 numPlanes)),
                         sprintf "%d %s landed back at %s" numPlanes plane afid.AirfieldName
                 | PlaneTransfer _ ->
                     // Transfered planes do not return to start base
