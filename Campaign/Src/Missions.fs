@@ -130,33 +130,60 @@ type AirMission =
         Model : PlaneModelId
     }
 
-type AirMission with
-    /// Build a list of war state update commands with descriptions
-    static member Simulate (random : System.Random, war : WarState, missions : AirMission list) =
-        let numPlanes =
-            missions
-            |> Seq.map (fun m -> m, float32 m.NumPlanes)
-            |> Seq.mutableDict
-        let getFighterAttackRate() =
-            random.NextDouble() * 0.2 + 0.4
-            |> float32
-        let getBomberDefenseRate() =
-            random.NextDouble() * 0.2 + 0.0
-            |> float32
-        [
-            // All take offs
-            for mission in missions do
+type GroundMissionType =
+    | GroundForcesTransfer
+    | GroundBattle
+
+type GroundMission =
+    {
+        StartRegion : RegionId
+        Objective : RegionId
+        MissionType : GroundMissionType
+        Forces : float32<MGF>
+    }
+
+type Mission =
+    | AirMission of AirMission
+    | GroundMission of GroundMission
+
+type MissionSimulator(random : System.Random, war : WarState, missions : Mission list) =
+    let airMissions =
+        missions
+        |> List.choose (
+            function
+            | AirMission mission -> Some mission
+            | GroundMission _ -> None)
+
+    let numPlanes =
+        airMissions
+        |> List.map (fun mission -> mission, float32 mission.NumPlanes)
+        |> Seq.mutableDict
+
+    let getFighterAttackRate() =
+        random.NextDouble() * 0.2 + 0.4
+        |> float32
+
+    let getBomberDefenseRate() =
+        random.NextDouble() * 0.2 + 0.0
+        |> float32
+
+    member this.DoTakeOffs() =
+        seq {
+            for mission in airMissions do
                 let plane = war.World.PlaneSet.[mission.Model].Name
                 let numPlanes = numPlanes.[mission]
                 yield
                     Some(RemovePlane(mission.StartAirfield, mission.Model, float32 numPlanes)),
                     sprintf "%d %s take off from %s" (int numPlanes) plane mission.StartAirfield.AirfieldName
-            // All interceptions
-            for targets in missions do
+        }
+
+    member this.DoInterceptions() =
+        seq {
+            for targets in airMissions do
                 let targetCoalition =
                     war.GetOwner(war.World.Airfields.[targets.StartAirfield].Region)
                 let threats =
-                    missions
+                    airMissions
                     // Different coalition
                     |> Seq.filter (fun mission ->
                         let intercepterCoalition =
@@ -196,8 +223,11 @@ type AirMission with
                             (war.World.PlaneSet.[targets.Model].Name)
                             (targets.StartAirfield.AirfieldName)
                             (string targets.Objective)
-            // All other mission types
-            for mission in missions do
+        }
+
+    member this.DoObjectives() =
+        seq {
+            for mission in airMissions do
                 let numPlanes = int <| numPlanes.[mission]
                 match mission.MissionType with
                 | AreaProtection ->
@@ -237,8 +267,11 @@ type AirMission with
                     yield
                         Some(AddPlane(afid, mission.Model, float32 numPlanes)),
                         sprintf "%d %s transfered to %s" numPlanes plane afid.AirfieldName
-            // Return to base
-            for mission in missions do
+        }
+
+    member this.DoReturnToBase() =
+        seq {
+            for mission in airMissions do
                 let numPlanes = int <| numPlanes.[mission]
                 match mission.MissionType with
                 | AreaProtection | GroundTargetAttack _ ->
@@ -250,20 +283,12 @@ type AirMission with
                 | PlaneTransfer _ ->
                     // Transfered planes do not return to start base
                     ()
-        ]
+        }
 
-type GroundMissionType =
-    | GroundForcesTransfer
-    | GroundBattle
-
-type GroundMission =
-    {
-        StartRegion : RegionId
-        Objective : RegionId
-        MissionType : GroundMissionType
-        Forces : float32<MGF>
-    }
-
-type Mission =
-    | AirMission of AirMission
-    | GroundMission of GroundMission
+    member this.DoAll() =
+        seq {
+            yield! this.DoTakeOffs()
+            yield! this.DoInterceptions()
+            yield! this.DoObjectives()
+            yield! this.DoReturnToBase()
+        }
