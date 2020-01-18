@@ -144,7 +144,7 @@ type Mission =
     | AirMission of AirMission
     | GroundMission of GroundMission
 
-type MissionSimulator(random : System.Random, war : WarState, missions : Mission list) =
+type MissionSimulator(random : System.Random, war : WarState, missions : Mission list, duration : float32<H>) =
     let airMissions =
         missions
         |> List.choose (
@@ -215,8 +215,50 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         }
 
     member this.DoBattles() =
-        let numBattleRounds = 10
-        let hitRate = 0.05f
+        let roundDuration = 1.0f<H> / 3.0f
+        let numBattleRounds = int <| round(duration / roundDuration)
+
+        // Get the max amount of supplies forces have available in a region for a round of battle
+        // For the defenders, it's the local industry, and the industry of the friendly neighbours, limited by transport capacity
+        // Same for the attackers, but without the local industry.
+        let getRoundSupplies(region, coalition) =
+            let isDefending = war.GetOwner(region) = Some coalition
+            let inRegion =
+                if isDefending then
+                    war.World.Regions.[region].IndustryBuildings
+                    |> Seq.sumBy war.GetBuildingCapacity
+                else
+                    0.0f<M ^ 3>
+            let fromNeighbour ngh =
+                let isFriendly = war.GetOwner(ngh) = Some coalition
+                if isFriendly then
+                    let available =
+                        war.World.Regions.[ngh].IndustryBuildings
+                        |> Seq.sumBy war.GetBuildingCapacity
+                    let byRoad =
+                        war.ComputeRoadCapacity(ngh, region)
+                    let byRail =
+                        war.ComputeRailCapacity(ngh, region)
+                    let inFlow = (byRoad + byRail) * roundDuration
+                    min inFlow available
+                else
+                    0.0f<M^3>
+            let fromNeighbours =
+                war.World.Regions.[region].Neighbours
+                |> Seq.sumBy fromNeighbour
+            inRegion + fromNeighbours
+
+        // Get the efficiency factor that influences damage inflicted to the other sound in one round.
+        // Depends on the available supplies
+        let getEfficiency(forces, supplies) =
+            if forces > 0.0f<MGF> then
+                let needed = forces * war.World.GroundForcesCost * roundDuration
+                supplies / needed
+                |> max 0.5f
+                |> min 1.0f
+            else
+                0.0f
+
         seq {
             let battles =
                 groundMissions
@@ -229,14 +271,27 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                 match defenders with
                 | Some defenders ->
                     let attackers = defenders.Other
+                    let defendersSupplies = getRoundSupplies(battle.Objective, defenders)
+                    let attackersSupplies = getRoundSupplies(battle.Objective, attackers)
+                    yield None,
+                        sprintf "%s (forces: %0.0f, supplies: %0.0f) attack %s (forces: %0.0f, supplies: %0.0f) in %s"
+                            (string attackers)
+                            (war.GetGroundForces(attackers, battle.Objective))
+                            attackersSupplies
+                            (string defenders)
+                            (war.GetGroundForces(defenders, battle.Objective))
+                            defendersSupplies
+                            (string battle.Objective)
                     for round in 1..numBattleRounds do
                         let defenseForces = war.GetGroundForces(defenders, battle.Objective)
+                        let defenseEfficiency = getEfficiency(defenseForces, defendersSupplies)
                         let attackForces = war.GetGroundForces(attackers, battle.Objective)
+                        let attackEfficiency = getEfficiency(attackForces, attackersSupplies)
                         let defenseLosses =
-                            attackForces * getGroundForcesHitRate()
+                            attackForces * getGroundForcesHitRate() * attackEfficiency
                             |> min defenseForces
                         let attackLosses =
-                            defenseForces * getGroundForcesHitRate()
+                            defenseForces * getGroundForcesHitRate() * defenseEfficiency
                             |> min attackForces
                         yield
                             Some(DestroyGroundForces(battle.Objective, defenders, defenseLosses)),
