@@ -131,15 +131,13 @@ type AirMission =
     }
 
 type GroundMissionType =
-    | GroundForcesTransfer
+    | GroundForcesTransfer of StartRegion : RegionId * Forces : float32<MGF>
     | GroundBattle
 
 type GroundMission =
     {
-        StartRegion : RegionId
         Objective : RegionId
         MissionType : GroundMissionType
-        Forces : float32<MGF>
     }
 
 type Mission =
@@ -154,6 +152,13 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
             | AirMission mission -> Some mission
             | GroundMission _ -> None)
 
+    let groundMissions =
+        missions
+        |> List.choose (
+            function
+            | AirMission _ -> None
+            | GroundMission mission -> Some mission)
+
     let numPlanes =
         airMissions
         |> List.map (fun mission -> mission, float32 mission.NumPlanes)
@@ -167,6 +172,10 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         random.NextDouble() * 0.2 + 0.0
         |> float32
 
+    let getGroundForcesHitRate() =
+        random.NextDouble() * 0.01 + 0.05
+        |> float32
+
     member this.DoTakeOffs() =
         seq {
             for mission in airMissions do
@@ -175,6 +184,74 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                 yield
                     Some(RemovePlane(mission.StartAirfield, mission.Plane, float32 numPlanes)),
                     sprintf "%d %s take off from %s" (int numPlanes) plane mission.StartAirfield.AirfieldName
+        }
+
+    member this.DoGroundForcesMovements() =
+        seq {
+            for mission in groundMissions do
+                match mission.MissionType with
+                | GroundForcesTransfer(startRegion, forces) ->
+                    let coalitionStart = war.GetOwner(startRegion)
+                    let coalitionDestination = war.GetOwner(mission.Objective)
+                    match coalitionStart with
+                    | None ->
+                        // Should not happen
+                        ()
+                    | Some coalitionStart ->
+                        let verb =
+                            if Some coalitionStart <> coalitionDestination then
+                                "invade"
+                            else
+                                "move into"
+                        yield
+                            Some(MoveGroundForces(startRegion, mission.Objective, coalitionStart, forces)),
+                            sprintf "%0.0f worth of ground forces %s %s from %s"
+                                forces
+                                verb
+                                (string mission.Objective)
+                                (string startRegion)
+                | GroundBattle ->
+                    ()
+        }
+
+    member this.DoBattles() =
+        let numBattleRounds = 10
+        let hitRate = 0.05f
+        seq {
+            let battles =
+                groundMissions
+                |> Seq.filter (
+                    function
+                    | { MissionType = GroundBattle } -> true
+                    | _ -> false)
+            for battle in battles do
+                let defenders = war.GetOwner(battle.Objective)
+                match defenders with
+                | Some defenders ->
+                    let attackers = defenders.Other
+                    for round in 1..numBattleRounds do
+                        let defenseForces = war.GetGroundForces(defenders, battle.Objective)
+                        let attackForces = war.GetGroundForces(attackers, battle.Objective)
+                        let defenseLosses =
+                            attackForces * getGroundForcesHitRate()
+                            |> min defenseForces
+                        let attackLosses =
+                            defenseForces * getGroundForcesHitRate()
+                            |> min attackForces
+                        yield
+                            Some(DestroyGroundForces(battle.Objective, defenders, defenseLosses)),
+                            sprintf "Defense of %s sustained %0.0f worth of damage in round %d"
+                                (string battle.Objective)
+                                defenseLosses
+                                round
+                        yield
+                            Some(DestroyGroundForces(battle.Objective, attackers, attackLosses)),
+                            sprintf "Attackers of %s sustained %0.0f worth of damage in round %d"
+                                (string battle.Objective)
+                                attackLosses
+                                round
+                | None ->
+                    ()
         }
 
     member this.DoInterceptions() =
@@ -300,8 +377,10 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
 
     member this.DoAll() =
         seq {
+            yield! this.DoGroundForcesMovements()
             yield! this.DoTakeOffs()
             yield! this.DoInterceptions()
             yield! this.DoObjectives()
+            yield! this.DoBattles()
             yield! this.DoReturnToBase()
         }
