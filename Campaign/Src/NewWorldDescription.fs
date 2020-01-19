@@ -249,6 +249,8 @@ type World = {
     TransportRepairCostRatio : float32<E/(M^3/H)>
     /// Volume of ammo and fuel needed for a unit of ground force to work optimally, per hour
     GroundForcesCost : float32<M^3/MGF/H>
+    /// Transport capacity required per unit of ground force
+    GroundForcesTransportCost : float32<M^3/H/MGF>
     /// Descriptions of regions
     Regions : IDictionary<RegionId, Region>
     /// The road network
@@ -631,6 +633,7 @@ module Loading =
             RepairCostRatio = 2.0f<E/M^3>
             TransportRepairCostRatio = 1.0f<E/(M^3/H)>
             GroundForcesCost = 10.0f<M^3/MGF/H>
+            GroundForcesTransportCost = 5.0f<M^3/H/MGF>
             Regions = regions
             Roads = roads
             Rails = rails

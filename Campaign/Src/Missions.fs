@@ -203,6 +203,16 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 "invade"
                             else
                                 "move into"
+                        let maxFlow =
+                            if Some coalitionStart <> coalitionDestination then
+                                war.ComputeRoadCapacity(startRegion, mission.Objective)
+                            else
+                                war.ComputeRoadCapacity(startRegion, mission.Objective) +
+                                war.ComputeRailCapacity(startRegion, mission.Objective)
+                        let volume =
+                            forces * war.World.GroundForcesTransportCost
+                            |> max maxFlow
+                        let forces = volume / war.World.GroundForcesTransportCost
                         yield
                             Some(MoveGroundForces(startRegion, mission.Objective, coalitionStart, forces)),
                             sprintf "%0.0f worth of ground forces %s %s from %s"
