@@ -79,7 +79,9 @@ type PlaneModel =
       EmptyPayload : int
     }
 with
-    member this.Id = this.Name
+    member this.Id = PlaneModelId this.Name
+
+    member this.MaxRange = 100000.0f<M>
 
 [<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.yaml"

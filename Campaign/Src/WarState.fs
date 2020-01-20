@@ -283,7 +283,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                         distances.[ngh] <- dist
                     work next (dist + 1)
                 work sources 1
-                coalition, distances
+                distances
             )
 
     member this.ComputeRoadCapacity =
@@ -347,6 +347,10 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             owners.[rid] <- x
             if needClear then
                 this.ClearCachesAfterOwnerChanged()
+
+    member this.GetAirfieldCapacity(afid) =
+        this.World.Airfields.[afid].Facilities
+        |> List.sumBy this.GetBuildingCapacity
 
 [<RequireQualifiedAccess>]
 module Init =

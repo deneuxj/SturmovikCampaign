@@ -114,7 +114,7 @@ with
 type GroundTargetType =
     | BridgeTarget
     | BuildingTarget // Factories and other buildings inside regions but outside airfields
-    | AirfieldTarget // Hangars, fuel tanks, parked planes... on an airfield
+    | AirfieldTarget of AirfieldId // Hangars, fuel tanks, parked planes... on an airfield
 
 type AirMissionType =
     | AreaProtection
@@ -401,14 +401,12 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             region.IndustryBuildings
                             |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
                             |> List.map (fun bid -> bid, war.World.Buildings.[bid])
-                        | AirfieldTarget ->
+                        | AirfieldTarget af ->
                             sprintf "Airfield building destroyed by %s from %s in %s at %0.0f, %0.0f"
                                 plane
                                 mission.StartAirfield.AirfieldName
                                 (string mission.Objective),
-                            war.World.Airfields.Values
-                            |> Seq.filter (fun af -> af.Region = mission.Objective)
-                            |> Seq.collect (fun af -> af.Facilities)
+                            war.World.Airfields.[af].Facilities
                             |> List.ofSeq
                             |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
                             |> List.map (fun bid -> bid, war.World.Buildings.[bid])
