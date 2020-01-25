@@ -32,7 +32,7 @@ type AirfieldId = Campaign.WorldDescription.AirfieldId
 type ScenarioStep =
     | Stalemate
     | Victory of CoalitionId
-    | Ongoing of (WarState -> StepData)
+    | Ongoing of StepData
 
 and StepData =
     {
@@ -88,6 +88,15 @@ with
         | None ->
             None
 
+type MissionPlanningResult =
+    | TooFewTargets
+    | Plan of Mission list * Airfields
+with
+    member this.LacksResources =
+        match this with
+        | TooFewTargets | Plan(_ :: _, _) -> false
+        | Plan([], _) -> true
+
 module Bodenplatte =
     let totalPlanes : Map<_, float32> -> float32 =
         Map.toSeq >> Seq.sumBy snd
@@ -112,21 +121,25 @@ module Bodenplatte =
     let idTempest = PlaneModelId "Tempest MkV s2"
     let idP38 = PlaneModelId "p38"
 
+    /// Get the list of attackers of a coalition, preferred ones first
     let attackersOf =
         function
         | Axis -> [ idMe262 ]
         | Allies -> [ idP38; idP47]
 
+    /// Get the list of interceptors of a coalition, preferred ones first
     let interceptorsOf =
         function
         | Axis -> [ idFw190d9; idBf109k4 ]
-        | Allies -> [ idP51; idP47; idP38 ]
+        | Allies -> [ idP38; idP51; idP47 ]
 
+    /// Get the list of fighters of a coalition, preferred ones first
     let fightersOf =
         function
-        | Axis -> [ idFw190a8; idBf109g14 ]
+        | Axis -> [ idBf109g14; idFw190a8 ]
         | Allies -> [ idP51; idSpitfire; idTempest ]
 
+    /// Get the total number of planes of give types at an airfield
     let sumPlanes (atAirfield : Map<PlaneModelId, float32>) (planes : PlaneModelId seq) =
         planes
         |> Seq.fold (fun s plane ->
@@ -134,7 +147,8 @@ module Bodenplatte =
             |> Option.defaultValue 0.0f
             |> (+) s) 0.0f
 
-    let rec airRaid (friendly : CoalitionId) (war : WarState) =
+    /// Try to make missions to attack enemy airfields, with sufficient cover over target, and over home airfield
+    let tryMakeAirRaid (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
 
@@ -167,91 +181,96 @@ module Bodenplatte =
                 numPlanes >= minPlanesAtAirfield && resources >= minPlanesAtAirfield * planeRunCost)
 
         match raidTargets with
-        | [] ->
-            // No more suitable targets. Try launch an invasion instead
-            groundInvasion friendly war
         | _ :: _ ->
             let raids =
-                seq {
-                    let mutable available = Airfields.Create(war)
-                    let rec work plane planesPerMission (starts : Airfield list) (targets : Airfield list) =
-                        seq {
-                            match starts, targets with
-                            | [], _ | _, [] -> ()
-                            | af :: starts, af2 :: targets ->
-                                let distance =
-                                    let pos = List.head af.Boundary
-                                    let pos2 = List.head af2.Boundary
-                                    (pos - pos2).Length() * 1.0f<M>
-                                if distance <= war.World.PlaneSet.[plane].MaxRange then
-                                    let numPlanes =
-                                        totalPlanes(war.GetNumPlanes(af2.AirfieldId))
-                                    let resources = war.GetAirfieldCapacity(af2.AirfieldId)
-                                    if numPlanes >= minPlanesAtAirfield && resources >= minPlanesAtAirfield * planeRunCost then
-                                        let mission : AirMission =
-                                            {
-                                                StartAirfield = af.AirfieldId
-                                                Objective = af2.Region
-                                                MissionType = GroundTargetAttack(AirfieldTarget af2.AirfieldId, LowAltitude)
-                                                NumPlanes = int planesPerMission
-                                                Plane = plane
-                                            }
-                                        let av2 = available.TryCheckout(af.AirfieldId, mission.CheckoutData)
-                                        match av2 with
-                                        | Some av2 ->
-                                            available <- av2
-                                            yield mission
-                                        | None ->
-                                            ()
-                                yield! work plane planesPerMission starts targets
-                        }
-                    for planesPerMission in [25; 10; 5] do
-                        for plane in attackersOf friendly do
-                            yield! work plane (float32 planesPerMission) readyAirfields raidTargets
-                }
-            if Seq.isEmpty raids then
-                // No raids can be made, try to ferry planes closer to the front
-                ferryPlanes friendly war
-            else
-                let raidsAndCovers =
-                    seq {
-                        let mutable available = Airfields.Create(war)
-                        let raidIt = raids.GetEnumerator()
-                        let rec work plane planesPerMission starts =
-                            seq {
-                                if raidIt.MoveNext() then
-                                    match starts with
-                                    | [] -> ()
-                                    | af :: starts ->
-                                        let raid = raidIt.Current
-                                        let distance =
-                                            let pos = List.head af.Boundary
-                                            let pos2 = war.World.Regions.[raid.Objective].Position
-                                            (pos - pos2).Length() * 1.0f<M>
-                                        if distance <= war.World.PlaneSet.[plane].MaxRange then
-                                            let mission : AirMission =
-                                                {
-                                                    StartAirfield = af.AirfieldId
-                                                    Objective = raid.Objective
-                                                    MissionType = AreaProtection
-                                                    NumPlanes = int planesPerMission
-                                                    Plane = plane
-                                                }
-                                            let av2 =
-                                                available.TryCheckout(raid.StartAirfield, raid.CheckoutData)
-                                                |> Option.bind (fun av -> av.TryCheckout(af.AirfieldId, mission.CheckoutData))
-                                            match av2 with
-                                            | Some av2 ->
-                                                available <- av2
-                                                yield raid
-                                                yield mission
-                                            | None ->
-                                                ()
-                                        yield! work plane planesPerMission starts
+                /// Check that distances between start airfields and objectives are within range,
+                /// and then return the missions of which a raid is composed:
+                /// An airfield attack, CAP over target, CAP over attackers' home base
+                let planOneRaid (target : Airfield) attackers targetCover homeCover =
+                    let getAirfieldsDistance (af1 : Airfield) (af2 : Airfield) =
+                        (af1.Boundary.Head - af2.Boundary.Head).Length() * 1.0f<M>
+                    let canFlyToTarget (af, (plane : PlaneModel, _, home)) =
+                        getAirfieldsDistance af home <= plane.MaxRange
+                    let planeOf (plane, _, _) = plane
+                    let numPlanesOf (_, num, _) = num
+                    let airfieldOf (_, _, af) = af
+                    if [(target, attackers); (target, targetCover); (airfieldOf attackers, homeCover)] |> List.forall canFlyToTarget then
+                        [
+                            {
+                                StartAirfield = (airfieldOf attackers).AirfieldId
+                                Objective = target.Region
+                                MissionType =
+                                    GroundTargetAttack(
+                                        AirfieldTarget target.AirfieldId,
+                                        LowAltitude
+                                    )
+                                NumPlanes = numPlanesOf attackers
+                                Plane = (planeOf attackers).Id
                             }
-                        for planesPerMission in [8; 4] do
-                            for plane in fightersOf friendly do
-                                yield! work plane (float32 planesPerMission) readyAirfields
-                    }
-                raidsAndCovers
-    
+                            {
+                                StartAirfield = (airfieldOf targetCover).AirfieldId
+                                Objective = target.Region
+                                MissionType = AreaProtection
+                                NumPlanes = numPlanesOf targetCover
+                                Plane = (planeOf targetCover).Id
+                            }
+                            {
+                                StartAirfield = (airfieldOf homeCover).AirfieldId
+                                Objective = target.Region
+                                MissionType = AreaProtection
+                                NumPlanes = numPlanesOf homeCover
+                                Plane = (planeOf homeCover).Id
+                            }
+                        ]
+                    else
+                        []
+                let mutable budget = budget
+                // For each attack plane type, and for each potential target airfield,
+                // Try to plan an attack flight, a target cover flight with fighters,
+                // and a home cover flight with intercepters.
+                // Prioritized solutions to maximize number of attack planes, then number of fighters/interceptors,
+                // then fighter plane model, and finally interceptor plane model.
+                [
+                    for attacker in attackersOf friendly do
+                        for target in raidTargets do
+                            let missions =
+                                interceptorsOf friendly
+                                |> Seq.allPairs (fightersOf friendly)
+                                |> Seq.allPairs [8; 4; 2]
+                                |> Seq.allPairs [10; 5]
+                                |> Seq.allPairs readyAirfields
+                                |> Seq.where (fun (start, (numAttackers, _)) ->
+                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [attacker] >= float32 numAttackers)
+                                |> Seq.allPairs readyAirfields
+                                |> Seq.where (fun (start, (_, (_, (numFighters, (fighter, _))))) ->
+                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [fighter] >= float32 numFighters)
+                                |> Seq.allPairs readyAirfields
+                                |> Seq.where (fun (start, (_, (_, (_, (numFighters, (_, interceptor)))))) ->
+                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [interceptor] >= float32 numFighters)
+                                |> Seq.tryPick (fun (start1, (start2, (start3, (numAttackers, (numFighters, (fighter, interceptor)))))) ->
+                                    let attackers = (war.World.PlaneSet.[attacker], numAttackers, start3)
+                                    let targetCover = (war.World.PlaneSet.[fighter], numFighters, start2)
+                                    let homeCover = (war.World.PlaneSet.[interceptor], numFighters, start1)
+                                    match planOneRaid target attackers targetCover homeCover with
+                                    | [] -> None
+                                    | missions ->
+                                        let remaining =
+                                            missions
+                                            |> List.fold (fun budget mission ->
+                                                budget
+                                                |> Option.bind (fun (budget : Airfields) ->
+                                                    budget.TryCheckout(mission.StartAirfield, mission.CheckoutData))
+                                            ) (Some budget)
+                                        match remaining with
+                                        | Some x ->
+                                            budget <- x
+                                            Some missions
+                                        | None ->
+                                            None)
+                                |> Option.defaultValue []
+                            yield! missions
+                ]
+                |> List.map AirMission
+            Plan (raids, budget)
+        | [] ->
+            TooFewTargets
