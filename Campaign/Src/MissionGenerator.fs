@@ -29,11 +29,13 @@ open Util
 
 type AirfieldId = Campaign.WorldDescription.AirfieldId
 
+/// A step in the sequence of rounds making up a campaign.
 type ScenarioStep =
     | Stalemate
     | Victory of CoalitionId
     | Ongoing of StepData
 
+/// Content of a round, and a generator function to produce the next step, given the updated state of the war.
 and StepData =
     {
         Briefing : string
@@ -41,6 +43,8 @@ and StepData =
         Next : WarState -> ScenarioStep
     }
 
+/// Resources available at an airfield.
+/// Decreased whenever a flight is planned taking off from that airfield
 type AirfieldStatus =
     {
         Resources : float32<M^3>
@@ -60,6 +64,7 @@ with
         else
             None
 
+/// Resources available at airfields
 type Airfields =
     {
         Airfields : Map<AirfieldId, AirfieldStatus>
@@ -181,6 +186,8 @@ module Bodenplatte =
                 numPlanes >= minPlanesAtAirfield && resources >= minPlanesAtAirfield * planeRunCost)
 
         match raidTargets with
+        | [] ->
+            TooFewTargets
         | _ :: _ ->
             let raids =
                 /// Check that distances between start airfields and objectives are within range,
@@ -272,5 +279,3 @@ module Bodenplatte =
                 ]
                 |> List.map AirMission
             Plan (raids, budget)
-        | [] ->
-            TooFewTargets
