@@ -55,9 +55,9 @@ with
         match s with
         | "Interceptor" -> Interceptor
         | "Patroller" -> Patroller
-        | "Attacker" -> GroundAttacker
-        | "Bomber" -> LevelBomber
-        | "Cargo" -> CargoTransporter
+        | "GroundAttacker" -> GroundAttacker
+        | "LevelBomber" -> LevelBomber
+        | "CargoTransporter" -> CargoTransporter
         | _ -> failwithf "Invalid plane role '%s'" s
 
 [<Struct>]
@@ -208,7 +208,8 @@ with
 let planeDb =
     let file = PlaneDbFile()
     file.Planes.Clear()
-    file.Load("PlaneDb.yaml")
+    let location = System.Reflection.Assembly.GetExecutingAssembly().Location |> System.IO.Path.GetDirectoryName
+    file.Load(System.IO.Path.Combine(location, "Config", "PlaneDb.yaml"))
     file.Planes
     |> Seq.map (fun plane -> PlaneModel.FromYaml plane.Plane)
     |> List.ofSeq

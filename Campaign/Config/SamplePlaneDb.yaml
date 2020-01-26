@@ -3,7 +3,7 @@
         Kind: Attacker
         Name: Ju87
         LogName: ju87
-        Roles: ['Attacker']
+        Roles: ['GroundAttacker']
         Coalition: Axis
         Script: a
         Model: a
