@@ -144,6 +144,10 @@ module Bodenplatte =
         | Axis -> [ idBf109g14; idFw190a8 ]
         | Allies -> [ idP51; idSpitfire; idTempest ]
 
+    let allPlanesOf coalition =
+        [attackersOf; interceptorsOf; fightersOf]
+        |> List.collect (fun f -> f coalition)
+
     /// Get the total number of planes of give types at an airfield
     let sumPlanes (atAirfield : Map<PlaneModelId, float32>) (planes : PlaneModelId seq) =
         planes
