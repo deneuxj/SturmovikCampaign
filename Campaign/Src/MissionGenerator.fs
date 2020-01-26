@@ -153,7 +153,7 @@ module Bodenplatte =
             |> (+) s) 0.0f
 
     /// Try to make missions to attack enemy airfields, with sufficient cover over target, and over home airfield
-    let tryMakeAirRaid (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+    let tryMakeAirRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
 
@@ -279,3 +279,122 @@ module Bodenplatte =
                 ]
                 |> List.map AirMission
             Plan (raids, budget)
+
+    /// Try to make CAP missions over regions targetted by enemy air missions.
+    let tryMakeCovers (friendly : CoalitionId) (budget : Airfields) (war : WarState) (enemyMissions : AirMission list) =
+        let enemy = friendly.Other
+        let distanceToEnemy = war.ComputeDistancesToCoalition enemy
+
+        let airfields =
+            war.World.Airfields.Values
+            |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some friendly)
+            |> Seq.sortBy (fun af -> distanceToEnemy.[af.Region])
+            |> List.ofSeq
+
+        let readyAirfields =
+            airfields
+            |> List.filter (fun af ->
+                war.GetGroundForces(enemy, af.Region) = 0.0f<MGF> &&
+                war.GetAirfieldCapacity(af.AirfieldId) >= minPlanesAtAirfield * planeRunCost)
+
+        let targettedRegions =
+            enemyMissions
+            |> List.map (fun mission -> mission.Objective)
+            |> Set.ofList
+            |> List.ofSeq
+
+        match targettedRegions with
+        | [] -> TooFewTargets
+        | _ :: _ ->
+            let mutable budget = budget
+            let missions =
+                [
+                    for target in targettedRegions do
+                        let mission =
+                            let planes = interceptorsOf friendly @ fightersOf friendly
+                            let numbers = [8; 4; 2]
+                            readyAirfields
+                            |> Seq.allPairs planes
+                            |> Seq.allPairs numbers
+                            |> Seq.tryPick (fun (planes, (plane, start)) ->
+                                let plane = war.World.PlaneSet.[plane]
+                                let distance =
+                                    (war.World.Regions.[target].Position - start.Boundary.Head).Length() * 1.0f<M>
+                                if distance <= plane.MaxRange then
+                                    let mission =
+                                        {
+                                            StartAirfield = start.AirfieldId
+                                            Objective = target
+                                            MissionType = AreaProtection
+                                            NumPlanes = planes
+                                            Plane = plane.Id
+                                        }
+                                    let budget2 =
+                                        budget.TryCheckout(start.AirfieldId, mission.CheckoutData)
+                                    match budget2 with
+                                    | Some budget2 ->
+                                        budget <- budget2
+                                        Some mission
+                                    | None ->
+                                        None
+                                else
+                                    None
+                            )
+                        yield! Option.toList mission
+                ]
+                |> List.map AirMission
+            Plan(missions, budget)
+
+    /// Try to send planes closer to the frontline.
+    let tryTransferPlanesForward (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+        let airfields =
+            war.World.Airfields.Values
+            |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some friendly)
+            |> List.ofSeq
+
+        let enemy = friendly.Other
+        let distanceToEnemy = war.ComputeDistancesToCoalition enemy
+        let mutable budget = budget
+        let missions =
+            [
+                let forward =
+                    Seq.allPairs airfields airfields
+                    |> Seq.where (fun (af1, af2) -> distanceToEnemy.[af1.Region] > distanceToEnemy.[af2.Region])
+                for af1, af2 in forward do
+                    let mutable excessPlanes =
+                        let afid = af1.AirfieldId
+                        let af = budget.Airfields.[afid]
+                        (totalPlanes af.Planes * planeRunCost - af.Resources) / planeRunCost
+                    let mutable sustainable =
+                        let afid = af2.AirfieldId
+                        let af = budget.Airfields.[afid]
+                        (af.Resources - totalPlanes af.Planes * planeRunCost) / planeRunCost
+                    for plane in attackersOf friendly @ fightersOf friendly @ interceptorsOf friendly do
+                        if excessPlanes > 0.0f && sustainable > 0.0f then
+                            let numPlanes =
+                                sumPlanes budget.Airfields.[af1.AirfieldId].Planes [plane]
+                                |> min excessPlanes
+                                |> int
+                                |> max 4
+                            if numPlanes > 0 then
+                                let mission =
+                                    {
+                                        StartAirfield = af1.AirfieldId
+                                        Objective = af2.Region
+                                        MissionType = PlaneTransfer af2.AirfieldId
+                                        NumPlanes = numPlanes
+                                        Plane = plane
+                                    }
+                                let budget2 = budget.TryCheckout(af1.AirfieldId, mission.CheckoutData)
+                                match budget2 with
+                                | Some b ->
+                                    budget <- b
+                                    let numPlanes = (float32 numPlanes)
+                                    excessPlanes <- excessPlanes - numPlanes
+                                    sustainable <- sustainable - numPlanes
+                                    yield mission
+                                | None ->
+                                    ()
+            ]
+            |> List.map AirMission
+        Plan (missions, budget)
