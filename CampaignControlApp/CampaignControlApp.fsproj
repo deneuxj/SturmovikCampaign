@@ -78,7 +78,7 @@
       <HintPath>..\packages\SturmovikMission.DataProvider.5.4.1\lib\net45\DataProvider.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Configuration">
-      <HintPath>..\packages\FSharp.Configuration.1.5.0\lib\net45\FSharp.Configuration.dll</HintPath>
+      <HintPath>..\packages\FSharp.Configuration.1.6.0\lib\net45\FSharp.Configuration.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.3.4\lib\net45\FSharp.Core.dll</HintPath>
@@ -98,7 +98,7 @@
       <HintPath>..\packages\Sturmovik.RConClient.1.5.0.0\lib\net45\RConClient.dll</HintPath>
     </Reference>
     <Reference Include="SharpYaml">
-      <HintPath>..\packages\FSharp.Configuration.1.5.0\lib\net45\SharpYaml.dll</HintPath>
+      <HintPath>..\packages\FSharp.Configuration.1.6.0\lib\net45\SharpYaml.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
