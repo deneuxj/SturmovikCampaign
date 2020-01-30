@@ -120,7 +120,7 @@ module Bodenplatte =
     let idBf109k4 = PlaneModelId "bf109k4"
     let idFw190d9 = PlaneModelId "fw190d9"
 
-    let idP51 = PlaneModelId "p51d"
+    let idP51 = PlaneModelId "p51"
     let idP47 = PlaneModelId "p47"
     let idSpitfire = PlaneModelId "spitfireMkIXe"
     let idTempest = PlaneModelId "Tempest MkV s2"
