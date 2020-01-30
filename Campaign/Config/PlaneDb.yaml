@@ -7628,3 +7628,41 @@ Planes:
             Id: 2
       Specials: []
       EmptyPayload: 10
+  - Plane:
+      Kind: Fighter
+      Name: me262
+      LogName: me262
+      Roles:
+        - Interceptor
+        - GroundAttacker
+      Coalition: Axis
+      Script: LuaScripts\WorldObjects\Planes\me262a.txt
+      Model: graphics\planes\me262a\me262a.mgm
+      Cost: 2000.0
+      BombCapacity: 500.0
+      CargoCapacity: 500.0
+      Bombs:
+        - Repeat:
+            Offsets:
+              - 0
+            Loads:
+              - Load:
+                  Id: 3
+                  Weight: 250.0
+              - Load:
+                  Id: 4
+                  Weight: 500.0
+              - Load:
+                  Id: 5
+                  Weight: 500.0
+      Payloads:
+        - Payload:
+            Role: Interceptor
+            ModMask: 1
+            Id: 0
+        - Payload:
+            Role: GroundAttacker
+            ModMask: 129
+            Id: 4
+      Specials: []
+      EmptyPayload: 9
