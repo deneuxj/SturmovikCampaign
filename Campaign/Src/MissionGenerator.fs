@@ -156,6 +156,74 @@ module Bodenplatte =
             |> Option.defaultValue 0.0f
             |> (+) s) 0.0f
 
+    /// Set the number of planes at each airfield controlled by a coalition.
+    let initAirfields (friendly : CoalitionId) (war : WarState) =
+        let enemy = friendly.Other
+        let distanceToEnemy = war.ComputeDistancesToCoalition enemy
+
+        let planes =
+            allPlanesOf friendly
+            |> Seq.map (fun planeId -> war.World.PlaneSet.[planeId])
+            |> Seq.filter (fun plane -> plane.Kind <> PlaneType.Transport)
+            |> Seq.sortByDescending (fun plane -> plane.Cost)
+            |> List.ofSeq
+
+        let airfields =
+            war.World.Airfields.Values
+            |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some friendly)
+            |> Seq.sortBy (fun af -> distanceToEnemy.[af.Region])
+            |> List.ofSeq
+
+        // Non-transport planes: Set according to airfield resources and respective cost
+        match planes with
+        | [] -> ()
+        | [plane] ->
+            for af in airfields do
+                let numPlanes =
+                    war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
+                war.SetNumPlanes(af.AirfieldId, plane.Id, numPlanes)
+        | expansive :: regular ->
+            // Rear airfields get regular planes and the expansive plane
+            // Front airfields get regular planes and the cheap plane
+            let regular = List.rev regular
+            let cheap, regular = List.head regular, List.tail regular
+            let numAirfields = List.length airfields
+            let numFrontAirfields = numAirfields / 2 |> max 1
+            let numRearAirfields = numAirfields - numFrontAirfields |> max 1
+            airfields
+            |> List.iteri (fun i af ->
+                let planes =
+                    regular
+                let planes =
+                    if i < numFrontAirfields then
+                        cheap :: regular
+                    else
+                        regular
+                let planes =
+                    if i >= numAirfields - numRearAirfields then
+                        expansive :: regular
+                    else
+                        regular
+                let totalCost =
+                    planes
+                    |> List.sumBy (fun plane -> plane.Cost)
+                let numPlanes = war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
+                for plane in planes do
+                    let qty = numPlanes * plane.Cost / totalCost |> max 1.0f
+                    war.SetNumPlanes(af.AirfieldId, plane.Id, qty)
+                )
+
+        // Transport planes at the rearmost airfield
+        match List.tryLast airfields with
+        | Some rear ->
+            let transport =
+                allPlanesOf friendly
+                |> List.filter (fun planeId -> war.World.PlaneSet.[planeId].Kind = PlaneType.Transport)
+            for plane in transport do
+                war.SetNumPlanes(rear.AirfieldId, plane, 20.0f)
+        | None ->
+            ()
+
     /// Try to make missions to attack enemy airfields, with sufficient cover over target, and over home airfield
     let tryMakeAirRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
         let enemy = friendly.Other
