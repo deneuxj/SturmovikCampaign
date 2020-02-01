@@ -193,6 +193,10 @@
       <Link>StalingradFC.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\RheinLandSummer.Mission">
+      <Link>RheinLandSummer.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Content Include="Installation.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
