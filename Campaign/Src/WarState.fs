@@ -281,7 +281,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                         |> Set.filter (fun region -> distances.[region] > dist)
                     for ngh in next do
                         distances.[ngh] <- dist
-                    work next (dist + 1)
+                    if not(next.IsEmpty) then
+                        work next (dist + 1)
                 work sources 1
                 distances
             )
