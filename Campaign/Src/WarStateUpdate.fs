@@ -51,6 +51,32 @@ type Results =
     | UpdatedPlanesAtAirfield of AirfieldId * Map<PlaneModelId, float32>
     | UpdatedGroundForces of RegionId * CoalitionId * float32<MGF>
 
+module Results =
+    let asString (war : WarState) result =
+        match result with
+        | UpdatedStorageValue(BuildingInstanceId orPos as bid, amount) ->
+            let buildingDescr =
+                match war.World.Buildings.TryGetValue bid with
+                | true, building ->
+                    sprintf "Building %s" building.Properties.Model
+                | false, _ ->
+                    match war.World.Bridges.TryGetValue bid with
+                    | true, bridge ->
+                        sprintf "Bridge %s" bridge.Properties.Model
+                    | false, _ ->
+                        "Unknown bridge or building"
+            sprintf "%s at %4.0f, %4.0f now has capacity %1.0f" buildingDescr orPos.Pos.X orPos.Pos.Y amount
+        | UpdatedPlanesAtAirfield(AirfieldId name, planes) ->
+            let planeStr =
+                planes
+                |> Map.toSeq
+                |> Seq.filter (fun (_, qty) -> qty > 0.0f)
+                |> Seq.map (fun (PlaneModelId plane, qty) -> sprintf "%s: %1.0f" plane qty)
+                |> String.concat ", "
+            sprintf "Airfield %s now has the following planes: %s" name planeStr
+        | UpdatedGroundForces(region, coalition, forces) ->
+            sprintf "Ground forces of %s in %s is now at %0.1f" (string region) (string coalition) forces
+
 module DamageExtension =
     type WarState with
         /// Apply damage to or repair a part of a building. Return new storage volume of the whole building.
