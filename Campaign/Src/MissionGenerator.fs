@@ -102,6 +102,12 @@ with
         | TooFewTargets | Plan(_ :: _, _) -> false
         | Plan([], _) -> true
 
+module MissionPlanningResult =
+    let getMissions originalBudget =
+        function
+        | TooFewTargets -> [], originalBudget
+        | Plan(missions, budget) -> missions, budget
+
 module Bodenplatte =
     let totalPlanes : Map<_, float32> -> float32 =
         Map.toSeq >> Seq.sumBy snd
@@ -470,3 +476,34 @@ module Bodenplatte =
             ]
             |> List.map AirMission
         Plan (missions, budget)
+
+    let rec oneSideStrikes (side : CoalitionId) depth (war : WarState) =
+        let budget = Airfields.Create war
+        match tryMakeAirRaids side budget war with
+        | TooFewTargets ->
+            Victory side
+        | Plan([], _) ->
+            if depth > 0 then
+                oneSideStrikes side.Other (depth - 1) war
+            else
+                Stalemate
+        | Plan(missions, budget) ->
+            let raids =
+                missions
+                |> List.choose (function AirMission x -> Some x | _ -> None)
+            let covers, budget =
+                tryMakeCovers side.Other budget war raids
+                |> MissionPlanningResult.getMissions budget
+            let sideTransfers, budget =
+                tryTransferPlanesForward side budget war
+                |> MissionPlanningResult.getMissions budget
+            let otherTransfers, budget =
+                tryTransferPlanesForward side.Other budget war
+                |> MissionPlanningResult.getMissions budget
+            Ongoing {
+                Briefing = sprintf "%s is launching strikes agains %s assets on the ground" (string side) (string side.Other)
+                Missions = missions @ covers @ sideTransfers @ otherTransfers
+                Next = oneSideStrikes side.Other 1
+            }
+
+    let start war = oneSideStrikes Axis 1 war
