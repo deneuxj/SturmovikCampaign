@@ -27,6 +27,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
+    <StartArguments>C:\Users\johann\Documents\SturmovikCampaign\Campaign\data\RheinLandSummer.Mission</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -68,13 +69,13 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="DataProvider">
-      <HintPath>..\packages\SturmovikMission.DataProvider.5.4.1\lib\net45\DataProvider.dll</HintPath>
+      <HintPath>..\packages\SturmovikMission.DataProvider.5.5.0\lib\net45\DataProvider.dll</HintPath>
     </Reference>
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.3.4\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
     <Reference Include="McuLibrary">
-      <HintPath>..\packages\SturmovikMission.DataProvider.5.4.1\lib\net45\McuLibrary.dll</HintPath>
+      <HintPath>..\packages\SturmovikMission.DataProvider.5.5.0\lib\net45\McuLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="mscorlib" />
