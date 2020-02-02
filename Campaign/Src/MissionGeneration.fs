@@ -114,8 +114,10 @@ let createParaTrooperDrops (world : World) store lcStore (battlefields : (AreaId
     battlefields
     |> Seq.map (fun (bf, defending) ->
         let bf = wg.GetAntiTankDefenses(bf)
-        [ ParaDrop.Create(store, lcStore, bf.DefensePos, bf.Position.Rotation, defending.ToCountry, "D-" + string bf.Home)
-          ParaDrop.Create(store, lcStore, bf.AttackPos, bf.Position.Rotation + 180.0f, defending.Other.ToCountry, "A-" + string bf.Home) ])
+        let defendingCountry = world.CountryOfCoalition defending
+        let otherCountry = world.CountryOfCoalition defending.Other
+        [ ParaDrop.Create(store, lcStore, bf.DefensePos, bf.Position.Rotation, defendingCountry.ToMcuValue, "D-" + string bf.Home)
+          ParaDrop.Create(store, lcStore, bf.AttackPos, bf.Position.Rotation + 180.0f, otherCountry.ToMcuValue, "A-" + string bf.Home) ])
     |> List.concat
 
 
@@ -474,7 +476,8 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             for regState, region in List.zip missionData.State.Regions missionData.World.Regions do
                 match regState.Owner with
                 | Some coalition ->
-                    let spotter = Spotter.Create(store, lcStore, region.Position, coalition.ToCountry, string region.RegionId)
+                    let country = missionData.World.CountryOfCoalition coalition
+                    let spotter = Spotter.Create(store, lcStore, region.Position, country.ToMcuValue, string region.RegionId)
                     Mcu.addTargetLink missionBegin spotter.Start.Index
                     yield spotter.All
                 | None ->

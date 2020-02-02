@@ -36,7 +36,7 @@ open SturmovikMission.Blocks
 type AiPatrol =
     { Plane : PlaneModel
       HomeAirfield : AirfieldId
-      Coalition : CoalitionId
+      Country : CountryId
       Pos : Vector2
       Altitude : float32
       ProtectedRegion : RegionId option
@@ -44,13 +44,15 @@ type AiPatrol =
       PlaneReserve : int // Max number of planes that can be use for that patrol
     }
 with
+    member this.Coalition = this.Country.Coalition
+
     member this.ToPatrolBlock(store, lcStore) =
         let blocks =
             [
                 for i in 0..1 do
                     let block = Patrol.Create(store, lcStore, this.Pos + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Coalition.ToCoalition)
                     let modmask, payload = this.Plane.Payloads.[this.Role]
-                    block.Plane.Country <- Some this.Coalition.ToCountry
+                    block.Plane.Country <- Some this.Country.ToMcuValue
                     this.Plane.ScriptModel.AssignTo(block.Plane)
                     block.Plane.PayloadId <- Some payload
                     block.Plane.WMMask <- Some modmask
@@ -125,7 +127,8 @@ let getNumPlanesWithRole planeRole (numPlanes : Map<PlaneModel, float32>) =
     numPlanes
     |> Seq.sumBy (fun kvp -> if kvp.Key.Roles |> List.exists ((=) planeRole) then kvp.Value else 0.0f)
 
-let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, PlayerHangar.PlayerHangar>) (coalition : CoalitionId) =
+let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, PlayerHangar.PlayerHangar>) (country : CountryId) =
+    let coalition = country.Coalition
     let sg = WorldStateFastAccess.Create state
     let wg = WorldFastAccess.Create world
     let threats =
@@ -155,7 +158,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                                         yield af, {
                                             Plane = plane
                                             HomeAirfield = af.AirfieldId
-                                            Coalition = coalition
+                                            Country = country
                                             Pos = p1
                                             Altitude = 4000.0f
                                             ProtectedRegion = Some af.Region
@@ -166,7 +169,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                                         yield af, {
                                             Plane = plane
                                             HomeAirfield = af.AirfieldId
-                                            Coalition = coalition
+                                            Country = country
                                             Pos = p1
                                             Altitude = 3000.0f
                                             ProtectedRegion = Some af.Region
@@ -177,7 +180,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                                         yield af, {
                                             Plane = plane
                                             HomeAirfield = af.AirfieldId
-                                            Coalition = coalition
+                                            Country = country
                                             Pos = p1
                                             Altitude = 2500.0f
                                             ProtectedRegion = Some af.Region
@@ -213,7 +216,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                                 yield af, {
                                     Plane = plane
                                     HomeAirfield = af.AirfieldId
-                                    Coalition = coalition
+                                    Country = country
                                     Pos = p1
                                     Altitude = 3000.0f
                                     ProtectedRegion = Some ourRegion.RegionId
@@ -226,7 +229,7 @@ let mkAllPatrols (world : World) (state : WorldState) (reservedPlanes : Map<_, P
                                 yield af, {
                                     Plane = plane
                                     HomeAirfield = af.AirfieldId
-                                    Coalition = coalition
+                                    Country = country
                                     Pos = p1
                                     Altitude = 3000.0f
                                     ProtectedRegion = None
@@ -275,7 +278,7 @@ type AiAttack =
       HomeAirfield : AirfieldId
       AttackerReserve : int
       NumPlanes : int
-      Coalition : CoalitionId
+      Country : CountryId
       Start : Vector2
       Target : Vector2
       Altitude : float32
@@ -283,6 +286,8 @@ type AiAttack =
       Role : PlaneRole
     }
 with
+    member this.Coalition = this.Country.Coalition
+
     member this.ToPatrolBlock(store, lcStore) =
         let numPlanes = this.NumPlanes
         let landOrder =
@@ -294,7 +299,7 @@ with
                 for i in 1..numPlanes do
                     let block = Attacker.Create(store, lcStore, this.Start + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Target, landOrder)
                     let modmask, payload = this.Attacker.Payloads.[this.Role]
-                    block.Plane.Country <- Some this.Coalition.ToCountry
+                    block.Plane.Country <- Some this.Country.ToMcuValue
                     this.Attacker.ScriptModel.AssignTo(block.Plane)
                     block.Plane.WMMask <- Some modmask
                     block.Plane.PayloadId <- Some payload
@@ -367,7 +372,8 @@ let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_,
                 // Airfield raids
                 // af: Axis, af2: Allies, separated by less than 75km (30min round trip at 300km/h)
                 if sg.GetRegion(af.Region).Owner = Some Axis && sg.GetRegion(af2.Region).Owner = Some Allies && (af.Pos - af2.Pos).Length() < 75000.0f then
-                    for coalition in [Axis; Allies] do
+                    for country in world.Countries do
+                        let coalition = country.Coalition
                         for attacker in attackers do
                             // If there are enough attackers of the same type, with enough bombs in the airfield's supplies, generate an attack order.
                             let _, payload = attacker.Payloads.[GroundAttacker]
@@ -391,7 +397,7 @@ let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_,
                                         Altitude = 2000.0f
                                         Attacker = attacker
                                         NumPlanes = 3
-                                        Coalition = coalition
+                                        Country = country
                                         Role = GroundAttacker
                                     }
                             | Allies ->
@@ -407,7 +413,7 @@ let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_,
                                         Altitude = 2000.0f
                                         Attacker = attacker
                                         NumPlanes = 3
-                                        Coalition = coalition
+                                        Country = country
                                         Role = GroundAttacker
                                     }
             // Storage raids
@@ -416,6 +422,7 @@ let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_,
                 cached cache (fun (region : Region) -> region.Storage |> Util.Algo.computePartition (fun grp1 grp2 -> (grp1.Pos.Pos - grp2.Pos.Pos).Length() < 1000.0f))
             match sg.GetRegion(af.Region).Owner with
             | Some coalition ->
+                let country = world.CountryOfCoalition coalition
                 for region, regState in List.zip world.Regions state.Regions do
                     if regState.Owner = Some coalition.Other && (region.Position - af.Pos).Length() < 75000.0f then
                         for attacker in attackers |> Seq.filter (fun plane -> plane.Coalition = coalition) do
@@ -442,7 +449,7 @@ let mkAllAttackers (world : World) (state : WorldState) (reservedPlanes : Map<_,
                                             Altitude = 2000.0f
                                             Attacker = attacker
                                             NumPlanes = 1
-                                            Coalition = coalition
+                                            Country = country
                                             Role = GroundAttacker
                                         }
             | None -> ()

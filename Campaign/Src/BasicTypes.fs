@@ -46,31 +46,16 @@ type MGF
 
 type CoalitionId = Axis | Allies
 with
-    /// <summary>
-    /// Convert from a country value from a log entry.
-    /// </summary>
-    static member FromLogEntry(country : ploggy.Country) =
-        match country with
-        | ploggy.Country.Germany | ploggy.Country.OtherAxis -> Some Axis
-        | ploggy.Country.USSR | ploggy.Country.OtherAllies -> Some Allies
-        | ploggy.Country.None | ploggy.Country.Neutral -> None // Should not happen
-        | _ -> failwithf "Unknown country value %d" (int country)
-
-    /// <summary>
-    /// Convert to a numerical country value suitable for use in mission files.
-    /// </summary>
-    member this.ToCountry =
-        match this with
-        | Axis -> Mcu.CountryValue.Germany
-        | Allies -> Mcu.CountryValue.Russia
 
     /// <summary>
     /// Convert a country value from a MCU in a mission to a CoalitionId option.
     /// </summary>
     static member FromCountry(country : Mcu.CountryValue) =
-        match country with
-        | Mcu.CountryValue.Russia -> Some Allies
-        | Mcu.CountryValue.Germany -> Some Axis
+        match McuUtil.coalitionOf country with
+        | Mcu.CoalitionValue.Allies -> Some Allies
+        | Mcu.CoalitionValue.Axis -> Some Axis
+        | Mcu.CoalitionValue.CentralPowers -> Some Axis
+        | Mcu.CoalitionValue.Entente -> Some Allies
         | _ -> None
 
     /// <summary>
@@ -99,6 +84,45 @@ with
         | "Axis" -> Axis
         | "Allies" -> Allies
         | _ -> failwithf "Invalid coalition '%s'" s
+
+type CountryId =
+    | Russia
+    | UnitedStates
+    | GreatBritain
+    | Germany
+    | Italy
+with
+    member this.Coalition =
+        match this with
+        | Russia | UnitedStates | GreatBritain -> Allies
+        | Germany | Italy -> Axis
+
+    member this.ToMcuValue =
+        match this with
+        | Russia -> Mcu.CountryValue.Russia
+        | UnitedStates -> Mcu.CountryValue.UnitedStates
+        | GreatBritain -> Mcu.CountryValue.GreatBritain
+        | Germany -> Mcu.CountryValue.Germany
+        | Italy -> Mcu.CountryValue.Italy
+
+    static member FromMcuValue (x : Mcu.CountryValue) =
+        match x with
+        | Mcu.CountryValue.Russia -> Some Russia
+        | Mcu.CountryValue.UnitedStates -> Some UnitedStates
+        | Mcu.CountryValue.GreatBritain -> Some GreatBritain
+        | Mcu.CountryValue.Germany -> Some Germany
+        | Mcu.CountryValue.Italy -> Some Italy
+        | _ -> None
+
+    /// <summary>
+    /// Convert from a country value from a log entry.
+    /// </summary>
+    static member FromLogEntry(country : ploggy.Country) =
+        match country with
+        | ploggy.Country.Germany | ploggy.Country.OtherAxis -> Some Germany
+        | ploggy.Country.USSR | ploggy.Country.OtherAllies -> Some Russia
+        | ploggy.Country.None | ploggy.Country.Neutral -> None // Should not happen
+        | _ -> failwithf "Unknown country value %d" (int country)
 
 /// A position on the map and a rotation around the vertical axis.
 [<CustomComparison>]

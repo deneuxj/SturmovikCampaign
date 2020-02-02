@@ -357,7 +357,8 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 let newDamage = oldDamage + damage.Damage
                 damages := Map.add damage.TargetId newDamage !damages
             | :? PlayerPlaneEntry as playerPlane ->
-                let coalition = CoalitionId.FromLogEntry playerPlane.Country
+                let country = CountryId.FromLogEntry playerPlane.Country
+                let coalition = country |> Option.map (fun country -> country.Coalition)
                 playerPilot := playerPilot.Value.Add(playerPlane.NickId, playerPlane.VehicleId)
                 planePilot := planePilot.Value.Add(playerPlane.VehicleId, (playerPlane.Name, coalition))
                 initBombs <- initBombs.Add(playerPlane.VehicleId, playerPlane.Bombs)

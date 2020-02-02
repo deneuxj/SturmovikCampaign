@@ -275,9 +275,9 @@ with
             | _ ->
                 StaticObject(spawn.ObjectType, if spawn.SubGroup >= 0 then Some spawn.SubGroup else None)
         let binding =
-            match CoalitionId.FromLogEntry spawn.Country with
+            match CountryId.FromLogEntry spawn.Country with
             | None -> this.Binding
-            | Some coalition -> this.Binding.Add(spawn.ObjectId, (coalition, entity))
+            | Some country -> this.Binding.Add(spawn.ObjectId, (country.Coalition, entity))
         { this with Binding = binding}
 
     /// Attempt to resolve static objects using a damage entry

@@ -610,6 +610,7 @@ type SubBlockFile = YamlConfig<sampleSubBlocksFile>
 /// Packages all description data.
 type World = {
     Scenario : string
+    Countries : CountryId list
     Map : string
     PlaneSet : PlaneSet
     Regions : Region list
@@ -671,6 +672,18 @@ with
             |> List.map (fun area -> area.AddStorage(ammoStorages, subBlockSpecs))
             |> List.map (fun area -> area.AddProduction(factories, subBlockSpecs))
             |> List.map (fun area -> area.AddTankTents(parkings, subBlockSpecs))
+        let countries =
+            data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
+            |> Seq.choose (fun area -> CountryId.FromMcuValue(area.GetCountry().Value |> enum))
+            |> Seq.distinct
+            |> List.ofSeq
+
+        // List of countries must have at least one Axis and one Allies member
+        if not(countries |> List.exists (fun country -> country.Coalition = Axis)) then
+            failwith "No region owned by an Axis country"
+        if not(countries |> List.exists (fun country -> country.Coalition = Allies)) then
+            failwith "No region owned by an Allied country"
+
         // List of regions must not be empty
         if List.isEmpty regions then
             failwith "Extracted list of regions is empty"
@@ -733,6 +746,7 @@ with
                 Airfield.ExtractAirfields(afs, planes, caponiers, afStorages, regions, subBlockSpecs)
         { Map = map
           Scenario = scenario
+          Countries = countries
           PlaneSet = planeSet
           Regions = regions
           AntiAirDefenses = antiAirDefenses
@@ -763,6 +777,10 @@ with
             let h, m, s = options.GetTime().Value
             System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
         date < System.DateTime(1918, 12, 31)
+
+    member this.CountryOfCoalition (coalition : CoalitionId) =
+        this.Countries
+        |> List.find (fun country -> country.Coalition = coalition)
 
     member this.GetClosestAirfield(pos : Vector2) =
         this.Airfields

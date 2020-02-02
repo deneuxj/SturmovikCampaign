@@ -33,14 +33,16 @@ let generatePlaneTransfer store lcStore (world : World) (state : WorldState) (mi
     let blocksAndGroups =
         [
             for order in orders do
+                let coalition = order.OrderId.Coalition
+                let country = world.CountryOfCoalition coalition
                 // Create mission logic
                 let spawnPos, spawnOri = sg.GetAirfield(order.Start).AiSpawnPos
                 let landPos, landOri = sg.GetAirfield(order.Destination).Runway
-                let flight = FerryFlight.Create(store, spawnPos, landPos, spawnOri, landOri, order.Qty, order.OrderId.Coalition.ToCountry)
+                let flight = FerryFlight.Create(store, spawnPos, landPos, spawnOri, landOri, order.Qty, country.ToMcuValue)
                 let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, (5.0f * landPos + spawnPos) / 6.0f, "Transfer", order.OrderId.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
-                let reportSpawned = EventReporting.Create(store, order.OrderId.Coalition.ToCountry, spawnPos + Vector2(0.0f, 100.0f), order.SpawnedEventName)
-                let reportLanded = EventReporting.Create(store, order.OrderId.Coalition.ToCountry, landPos + Vector2(0.0f, 100.0f), order.LandedEventName)
-                let reportKilled = EventReporting.Create(store, order.OrderId.Coalition.ToCountry, spawnPos + Vector2(0.0f, 200.0f), order.KilledEventName)
+                let reportSpawned = EventReporting.Create(store, country.ToMcuValue, spawnPos + Vector2(0.0f, 100.0f), order.SpawnedEventName)
+                let reportLanded = EventReporting.Create(store, country.ToMcuValue, landPos + Vector2(0.0f, 100.0f), order.LandedEventName)
+                let reportKilled = EventReporting.Create(store, country.ToMcuValue, spawnPos + Vector2(0.0f, 200.0f), order.KilledEventName)
                 // Plane type
                 order.Plane.ScriptModel.AssignTo(flight.Plane)
                 // Links

@@ -28,7 +28,7 @@ open Campaign.Orders
 open Campaign.BasicTypes
 
 let createParkedTanks store (maxTanksInParks : int) (world : World) (state : WorldState) inAttackArea (orders : OrderPackage) (coalition : CoalitionId) =
-    let country = coalition.ToCountry |> int
+    let country = (world.CountryOfCoalition coalition).ToMcuValue |> int
     [
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && not(List.isEmpty region.TankHiding) && not regState.HasInvaders && not regState.NumExposedVehicles.IsEmpty then

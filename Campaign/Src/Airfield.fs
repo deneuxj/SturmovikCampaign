@@ -359,7 +359,8 @@ let createLandingDirections store (world : World) (state : WorldState) =
             let back = Vector2.UnitX.Rotate(ori)
             match sg.GetRegion(wg.GetAirfield(af.AirfieldId).Region).Owner with
             | Some owner ->
-                let tee = LandingTee.Create(store, pos - 150.0f * back, ori, owner.ToCountry)
+                let country = world.CountryOfCoalition owner
+                let tee = LandingTee.Create(store, pos - 150.0f * back, ori, country.ToMcuValue)
                 yield tee.All
             | None ->
                 ()
@@ -398,7 +399,7 @@ let createParkedPlanes store (world : World) (state : WorldState) (reservedPlane
             let reg = sg.GetRegion af.Region
             match reg.Owner with
             | Some coalition ->
-                let country = coalition.ToCountry
+                let country = (world.CountryOfCoalition coalition).ToMcuValue
                 let fighterPlaces = ref(af.ParkedFighters |> Array.ofList |> Array.shuffle rnd |> List.ofArray)
                 let attackerPlaces = ref(af.ParkedAttackers |> Array.ofList |> Array.shuffle rnd |> List.ofArray)
                 let bomberPlaces = ref(af.ParkedBombers |> Array.ofList |> Array.shuffle rnd |> List.ofArray)
@@ -538,7 +539,8 @@ let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (stat
                     |> List.tryFind (fun (pos, owner) -> (pos - lightPos).Length() < 200.0f)
                 match runwayStart with
                 | Some(_, owner) ->
-                    light.Country <- Some owner.ToCountry
+                    let country = world.CountryOfCoalition owner
+                    light.Country <- Some country.ToMcuValue
                     match owner with
                     | Allies ->
                         vehicles.RussianLandLight.AssignTo(light)

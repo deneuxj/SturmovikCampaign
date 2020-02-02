@@ -64,7 +64,8 @@ type Battlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCoalition : CoalitionId, unitData : UnitData, region, numDefenders, numAttackers) =
+    static member Create(random : System.Random, store, lcStore, center : Vector2, yori : float32, boundary : Vector2 list, defendingCountry : CountryId, attackingCountry : CountryId, unitData : UnitData, region, numDefenders, numAttackers) =
+        let defendingCoalition = defendingCountry.Coalition
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float yori)
@@ -114,7 +115,7 @@ with
                             defenders
                             |> Map.tryFind HeavyTank
                             |> Option.defaultVal 1
-                        yield PlayerTankSpawn.Ceate(store, getRandomPos(DefenseBack), yori, defendingCoalition.ToCountry, numDefendingHeavy)
+                        yield PlayerTankSpawn.Ceate(store, getRandomPos(DefenseBack), yori, defendingCountry.ToMcuValue, numDefendingHeavy)
                         let numAttackingHeavy =
                             attackers
                             |> Seq.filter (function HeavyTank -> true | _ -> false)
@@ -125,19 +126,19 @@ with
                                 yori + 180.0f
                             else
                                 yori - 180.0f
-                        yield PlayerTankSpawn.Ceate(store, getRandomPos(AttackBack), mirrored, defendingCoalition.Other.ToCountry, numAttackingHeavy)
+                        yield PlayerTankSpawn.Ceate(store, getRandomPos(AttackBack), mirrored, attackingCountry.ToMcuValue, numAttackingHeavy)
                 ]
             | _ ->
                 []
         // Build an attacking tank
         let buildTank name (model : VehicleTypeData) =
-            let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack), defendingCoalition.Other.ToCountry)
+            let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack), attackingCountry.ToMcuValue)
             tank.Tank.Name <- sprintf "B-%s-A-%s" region name
             model.AssignTo(tank.Tank)
             tank |> Choice1Of2
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCanon name (model : VehicleTypeData, wallModel : VehicleTypeData) =
-            let arty = RespawningCanon.Create(store, getRandomPos(AttackBack), getRandomPos(DefenseBack), defendingCoalition.Other.ToCountry)
+            let arty = RespawningCanon.Create(store, getRandomPos(AttackBack), getRandomPos(DefenseBack), attackingCountry.ToMcuValue)
             arty.Canon.Name <- sprintf "B-%s-A-%s" region name
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
@@ -174,7 +175,7 @@ with
         // Instantiate defender blocks
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCanon (location, model : VehicleTypeData, name , wallModel : VehicleTypeData) =
-            let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack), defendingCoalition.ToCountry)
+            let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack), defendingCountry.ToMcuValue)
             match name with
             | Some name -> arty.Canon.Name <- sprintf "B-%s-D-%s" region name
             | None -> ()
@@ -287,6 +288,8 @@ let generateBattlefields missionLength enablePlayerTanks maxVehicles maxAtGuns k
     let ammoFill = state.GetAmmoFillLevelPerRegion(world, missionLength)
     [
         for bf, defending in identifyBattleAreas world state do
+            let defendingCountry = world.CountryOfCoalition defending
+            let attackingCountry = world.CountryOfCoalition defending.Other
             let bf = wg.GetAntiTankDefenses(bf)
             let regState = sg.GetRegion(bf.Home)
             let fill = ammoFill.TryFind(bf.Home) |> Option.defaultValue 0.0f |> max 0.0f |> min 1.0f
@@ -330,7 +333,7 @@ let generateBattlefields missionLength enablePlayerTanks maxVehicles maxAtGuns k
                         Attackers = attackingVehicles
                         IncludePlayerSpawns = enablePlayerTanks
                     }
-            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defending, unitData, string bf.Home, numDefending * killRatio, numAttacking * killRatio)
+            yield Battlefield.Create(random, store, lcStore, bf.Position.Pos, bf.Position.Rotation, bf.Boundary, defendingCountry, attackingCountry, unitData, string bf.Home, numDefending * killRatio, numAttacking * killRatio)
     ]
 
 type ArtilleryBattlefield =
@@ -340,7 +343,7 @@ type ArtilleryBattlefield =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(random : System.Random, numPieces : int, store, lcStore, wg : WorldFastAccess, area : ArtilleryField, coalitionA : CoalitionId) =
+    static member Create(random : System.Random, numPieces : int, store, lcStore, wg : WorldFastAccess, area : ArtilleryField, countryA : CountryId, countryB : CountryId) =
         // Get a random position within the bounding rectangle of artillery field
         let getRandomPos(isSideA : bool) =
             let dir = Vector2.FromYOri(float area.Position.Rotation)
@@ -383,26 +386,26 @@ with
                     v.IsInConvexPolygon(wg.GetRegion(area.RegionB).Boundary))
         // Build a respawning artillery
         let buildArtillery(isSideA : bool, model : VehicleTypeData, wallModel : VehicleTypeData) =
-            let coalition =
+            let country =
                 if isSideA then
-                    coalitionA
+                    countryA
                 else
-                    coalitionA.Other
-            let arty = RespawningCanon.Create(store, getRandomPos(isSideA), getRandomPos(not isSideA), coalition.ToCountry)
+                    countryB
+            let arty = RespawningCanon.Create(store, getRandomPos(isSideA), getRandomPos(not isSideA), country.ToMcuValue)
             arty.Canon.Name <- Types.CannonObjectName
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
             arty
         let modelA, modelB =
-            match coalitionA with
+            match countryA.Coalition with
             | Axis -> vehicles.GermanArtillery, vehicles.RussianArtillery
             | Allies -> vehicles.RussianArtillery, vehicles.GermanArtillery
         let cannonsA =
             List.init numPieces (fun _ -> buildArtillery(true, modelA, vehicles.ArtilleryPosition))
         let cannonsB =
             List.init numPieces (fun _ -> buildArtillery(false, modelA, vehicles.ArtilleryPosition))
-        let iconsA1, iconsA2 = IconDisplay.CreatePair(store, lcStore, area.SideAPos, "", coalitionA.ToCoalition, Mcu.IconIdValue.CoverArtilleryPosition)
-        let iconsB1, iconsB2 = IconDisplay.CreatePair(store, lcStore, area.SideBPos, "", coalitionA.Other.ToCoalition, Mcu.IconIdValue.CoverArtilleryPosition)
+        let iconsA1, iconsA2 = IconDisplay.CreatePair(store, lcStore, area.SideAPos, "", countryA.Coalition.ToCoalition, Mcu.IconIdValue.CoverArtilleryPosition)
+        let iconsB1, iconsB2 = IconDisplay.CreatePair(store, lcStore, area.SideBPos, "", countryB.Coalition.ToCoalition, Mcu.IconIdValue.CoverArtilleryPosition)
         let allIcons = [ iconsA1; iconsA2; iconsB1; iconsB2 ]
         // Result
         { SideA = cannonsA
@@ -454,4 +457,6 @@ let generateArtilleryFields random numPieces maxNum store lcStore world state =
     |> Array.shuffle random
     |> Array.truncate maxNum
     |> Array.map (fun (area, sideA) ->
-        ArtilleryBattlefield.Create(random, numPieces, store, lcStore, world.FastAccess, area, sideA))
+        let countryA = world.CountryOfCoalition sideA
+        let countryB = world.CountryOfCoalition sideA.Other
+        ArtilleryBattlefield.Create(random, numPieces, store, lcStore, world.FastAccess, area, countryA, countryB))

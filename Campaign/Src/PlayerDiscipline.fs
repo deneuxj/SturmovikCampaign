@@ -180,9 +180,10 @@ let disciplinePlayers (config : Configuration) (world : World) (state : WorldSta
                                     | Some region ->
                                         match state.GetRegion(region.RegionId).Owner with
                                         | Some coalition ->
-                                            if int coalition.ToCountry = int countryA then
+                                            match CountryId.FromLogEntry countryA with
+                                            | Some country when country.Coalition = coalition ->
                                                 cost
-                                            else
+                                            | _ ->
                                                 0.0f<E>
                                         | None ->
                                             0.0f<E>

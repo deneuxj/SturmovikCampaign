@@ -326,6 +326,10 @@ module OrderDecision =
                 |> List.rev
             let axisPatrols, alliesPatrols =
                 if not weather.IsOvercast || weather.CloudHeight > 3500.0 then
+                    let mkPatrols coalition =
+                        world.Countries
+                        |> List.filter (fun country -> country.Coalition = coalition)
+                        |> List.collect mkPatrols
                     mkPatrols Axis, mkPatrols Allies
                 else
                     [], []

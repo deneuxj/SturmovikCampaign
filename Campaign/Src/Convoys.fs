@@ -207,6 +207,7 @@ let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World)
             for order, pathVertices in orders do
                 let convoy = order.Convoy
                 let coalition = order.OrderId.Coalition
+                let country = world.CountryOfCoalition coalition
                 match order.Means with
                 | ByRoad | ByRail | BySeaShip | ByRiverShip ->
                     let virtualConvoy =
@@ -227,10 +228,10 @@ let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World)
                                 int (convoy.TransportedSupplies / ResupplyOrder.TruckCapacity)
                                 |> min ColumnMovement.MaxColumnSize
                             let withAA = not world.IsWWI
-                            VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, size, withAA, coalition.ToCountry, coalition.ToCoalition, convoyName, 0)
+                            VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, size, withAA, country.ToMcuValue, coalition.ToCoalition, convoyName, 0)
                             |> Choice1Of4
                         | ByRail ->
-                            TrainWithNotification.Create(store, lcStore, not world.IsWWI, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, convoyName)
+                            TrainWithNotification.Create(store, lcStore, not world.IsWWI, pathVertices, bridgeEntitiesAtVertex, country.ToMcuValue, convoyName)
                             |> Choice2Of4
                         | BySeaShip
                         | ByRiverShip ->
@@ -240,7 +241,7 @@ let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World)
                                 | ByRiverShip -> River
                                 | _ -> failwith "Unexpected ship transport means"
                             let numShips = int <| ceil (order.Convoy.TransportedSupplies / ResupplyOrder.ShipCapacity)
-                            ShipConvoy.Create(store, lcStore, numShips, waterType, pathVertices, coalition.ToCountry, convoyName)
+                            ShipConvoy.Create(store, lcStore, numShips, waterType, pathVertices, country.ToMcuValue, convoyName)
                             |> Choice3Of4
                         | ByAir _ -> failwith "Cannot handle air cargo"
                     let links =
@@ -261,7 +262,7 @@ let createConvoys (store : NumericalIdentifiers.IdStore) lcStore (world : World)
                     let airName = order.MissionLogEventName
                     let startPos, startDir = sg.GetAirfield(afStart).Runway
                     let landPos, landDir = sg.GetAirfield(afDestination).Runway
-                    let flight = TransportFlight.Create(store, lcStore, startPos, startDir, landPos, landDir, coalition.ToCountry, airName)
+                    let flight = TransportFlight.Create(store, lcStore, startPos, startDir, landPos, landDir, country.ToMcuValue, airName)
                     yield order.OrderId, startPos, Choice4Of4 flight
         ]
     let nodes =
@@ -297,6 +298,7 @@ let createColumns
         for order, pathVertices in orders do
             let regState = sg.GetRegion(order.Start)
             let coalition = order.OrderId.Coalition
+            let country = world.CountryOfCoalition coalition
             let expectedTravelTime =
                 pathVertices
                 |> Seq.pairwise
@@ -343,9 +345,9 @@ let createColumns
                                 |> List.map (fun vehicleType -> vehicleType.GetModel(coalition, true))
                             let column =
                                 if world.IsWWI then
-                                    VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, List.length columnContent, false, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                                    VirtualConvoy.Create(store, lcStore, pathVertices, bridgeEntitiesAtVertex, List.length columnContent, false, country.ToMcuValue, coalition.ToCoalition, columnName, !rankOffset)
                                 else
-                                    VirtualConvoy.CreateColumn(store, lcStore, pathVertices, bridgeEntitiesAtVertex, columnContent, coalition.ToCountry, coalition.ToCoalition, columnName, !rankOffset)
+                                    VirtualConvoy.CreateColumn(store, lcStore, pathVertices, bridgeEntitiesAtVertex, columnContent, country.ToMcuValue, coalition.ToCoalition, columnName, !rankOffset)
                             let links = column.CreateLinks()
                             links.Apply(McuUtil.deepContentOf column)
                             Mcu.addTargetLink prevStart.Value column.Api.Start.Index
@@ -362,7 +364,7 @@ let createColumns
                             yield McuUtil.groupFromList [ beforeNext ]
                     ]
             | ColByTrain ->
-                let train = TrainWithNotification.Create(store, lcStore, not world.IsWWI, pathVertices, bridgeEntitiesAtVertex, coalition.ToCountry, columnName)
+                let train = TrainWithNotification.Create(store, lcStore, not world.IsWWI, pathVertices, bridgeEntitiesAtVertex, country.ToMcuValue, columnName)
                 Mcu.addTargetLink prevStart.Value train.TheTrain.Start.Index
                 let links = train.CreateLinks()
                 links.Apply(McuUtil.deepContentOf train)
@@ -401,7 +403,7 @@ let createColumns
                     | ColByRiverShip -> River
                     | _ -> failwith "Unexpected column transport type"
                 let numShips = int <| ceil ((float32 order.Composition.Length) / (float32 shipVehicleCapacity))
-                let ships = ShipConvoy.Create(store, lcStore, numShips, waterType, pathVertices, coalition.ToCountry, columnName)
+                let ships = ShipConvoy.Create(store, lcStore, numShips, waterType, pathVertices, country.ToMcuValue, columnName)
                 ships.MakeAsLandShips(waterType)
                 Mcu.addTargetLink prevStart.Value ships.Start.Index
                 yield order.OrderId, initialDelay, [ ships.All ]
