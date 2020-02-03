@@ -145,23 +145,26 @@ type Mission =
     | GroundMission of GroundMission
 
 type MissionSimulator(random : System.Random, war : WarState, missions : Mission list, duration : float32<H>) =
+    let missions =
+        List.indexed missions
+
     let airMissions =
         missions
         |> List.choose (
             function
-            | AirMission mission -> Some mission
-            | GroundMission _ -> None)
+            | i, AirMission mission -> Some (i, mission)
+            | _, GroundMission _ -> None)
 
     let groundMissions =
         missions
         |> List.choose (
             function
-            | AirMission _ -> None
-            | GroundMission mission -> Some mission)
+            | _, AirMission _ -> None
+            | i, GroundMission mission -> Some (i, mission))
 
     let numPlanes =
         airMissions
-        |> List.map (fun mission -> mission, float32 mission.NumPlanes)
+        |> List.map (fun (i, mission) -> i, float32 mission.NumPlanes)
         |> Seq.mutableDict
 
     let getFighterAttackRate() =
@@ -178,9 +181,9 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
 
     member this.DoTakeOffs() =
         seq {
-            for mission in airMissions do
+            for mId, mission in airMissions do
                 let plane = war.World.PlaneSet.[mission.Plane].Name
-                let numPlanes = numPlanes.[mission]
+                let numPlanes = numPlanes.[mId]
                 yield
                     Some(RemovePlane(mission.StartAirfield, mission.Plane, float32 numPlanes)),
                     sprintf "%d %s take off from %s" (int numPlanes) plane mission.StartAirfield.AirfieldName
@@ -188,7 +191,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
 
     member this.DoGroundForcesMovements() =
         seq {
-            for mission in groundMissions do
+            for mId, mission in groundMissions do
                 match mission.MissionType with
                 | GroundForcesTransfer(startRegion, forces) ->
                     let coalitionStart = war.GetOwner(startRegion)
@@ -274,9 +277,9 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                 groundMissions
                 |> Seq.filter (
                     function
-                    | { MissionType = GroundBattle } -> true
+                    | _, { MissionType = GroundBattle } -> true
                     | _ -> false)
-            for battle in battles do
+            for mId, battle in battles do
                 let defenders = war.GetOwner(battle.Objective)
                 match defenders with
                 | Some defenders ->
@@ -322,57 +325,69 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
     member this.DoInterceptions() =
         let numInterceptorPasses = 3
         seq {
-            for mission in airMissions do
+            for mId, mission in airMissions do
                 let targetCoalition =
                     war.GetOwner(war.World.Airfields.[mission.StartAirfield].Region)
                 let interceptors =
                     airMissions
                     // Different coalition
-                    |> Seq.filter (fun mission ->
+                    |> Seq.filter (fun (_, mission) ->
                         let intercepterCoalition =
                             war.GetOwner(war.World.Airfields.[mission.StartAirfield].Region)
                         targetCoalition <> intercepterCoalition)
                     // Same objective
-                    |> Seq.filter (fun mission -> mission.Objective = mission.Objective)
+                    |> Seq.filter (fun (_, mission) -> mission.Objective = mission.Objective)
                     // Is area protection
-                    |> Seq.filter (function { MissionType = AreaProtection _ } -> true | _ -> false)
-                for interception in interceptors do
+                    |> Seq.filter (function _, { MissionType = AreaProtection _ } -> true | _ -> false)
+                for interId, interception in interceptors do
+                    let interceptorsName = war.World.PlaneSet.[interception.Plane].Name
+                    let interceptedName = war.World.PlaneSet.[mission.Plane].Name
                     for pass in 1..numInterceptorPasses do
                         let interceptorKillRate = getFighterAttackRate()
                         let defenderKillRate =
-                            match mission.MissionType with
-                            | AreaProtection _ -> getFighterAttackRate()
-                            | _ -> getBomberDefenseRate()
-                        let numInterceptors = numPlanes.[interception]
-                        let numIntercepted = numPlanes.[mission]
-                        let numInterceptors2 =
-                            numInterceptors - numIntercepted * defenderKillRate
-                            |> max 0.0f
-                        let numIntercepted2 =
-                            numIntercepted - numInterceptors * interceptorKillRate
-                            |> max 0.0f
-                        numPlanes.[interception] <- numInterceptors2
-                        numPlanes.[mission] <- numIntercepted2
-                    yield
-                        None,
-                        sprintf "%d %s interceptors from %s survive an encounter with the enemy over %s"
-                            (int <| numPlanes.[interception])
-                            (war.World.PlaneSet.[interception.Plane].Name)
-                            (interception.StartAirfield.AirfieldName)
-                            (string interception.Objective)
-                    yield
-                        None,
-                        sprintf "%d %s from %s survive an interception with the enemy over %s"
-                            (int <| numPlanes.[mission])
-                            (war.World.PlaneSet.[mission.Plane].Name)
-                            (mission.StartAirfield.AirfieldName)
-                            (string mission.Objective)
+                            match war.World.PlaneSet.[mission.Plane].Kind with
+                            | PlaneType.Fighter ->
+                                let loadoutKillRateModifier =
+                                    match mission.MissionType with
+                                    | AreaProtection _ -> 1.0f
+                                    | _ -> 0.5f
+                                loadoutKillRateModifier * getFighterAttackRate()
+                            | _ ->
+                                getBomberDefenseRate()
+                        let numInterceptors = numPlanes.[interId]
+                        let numIntercepted = numPlanes.[mId]
+                        let numInterceptorsShotDown =
+                            numIntercepted * defenderKillRate
+                            |> min numInterceptors
+                        let numInterceptedShotDown =
+                            numInterceptors * interceptorKillRate
+                            |> min numIntercepted
+                        let numInterceptors2 = numInterceptors - numInterceptorsShotDown
+                        let numIntercepted2 = numIntercepted - numInterceptedShotDown
+                        numPlanes.[interId] <- numInterceptors2
+                        numPlanes.[mId] <- numIntercepted2
+                        if numInterceptorsShotDown > 0.0f then
+                            yield
+                                None,
+                                sprintf "%0.1f %s were shot down or damaged by %s over %s"
+                                    numInterceptorsShotDown
+                                    interceptorsName
+                                    interceptedName
+                                    (string interception.Objective)
+                        if numInterceptedShotDown > 0.0f then
+                            yield
+                                None,
+                                sprintf "%0.1f %s were shot down or damaged by %s over %s"
+                                    numInterceptedShotDown
+                                    interceptedName
+                                    interceptorsName
+                                    (string interception.Objective)
         }
 
     member this.DoObjectives() =
         seq {
-            for mission in airMissions do
-                let numPlanes = int <| numPlanes.[mission]
+            for mId, mission in airMissions do
+                let numPlanes = int <| numPlanes.[mId]
                 match mission.MissionType with
                 | AreaProtection ->
                     // Effect of area protection already handled during interception phase
@@ -425,8 +440,8 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
 
     member this.DoReturnToBase() =
         seq {
-            for mission in airMissions do
-                let numPlanes = numPlanes.[mission] |> int |> max 0
+            for mId, mission in airMissions do
+                let numPlanes = numPlanes.[mId] |> int |> max 0
                 match mission.MissionType with
                 | AreaProtection | GroundTargetAttack _ ->
                     let plane = war.World.PlaneSet.[mission.Plane].Name
