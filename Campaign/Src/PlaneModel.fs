@@ -62,6 +62,10 @@ with
 
 [<Struct>]
 type PlaneModelId = PlaneModelId of string
+with
+    override this.ToString() =
+        let (PlaneModelId name) = this
+        name
 
 type PlaneModel =
     { Kind : PlaneType
