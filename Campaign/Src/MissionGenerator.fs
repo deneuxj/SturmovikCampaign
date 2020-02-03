@@ -118,7 +118,9 @@ module Bodenplatte =
         member this.CheckoutData =
             (this.Plane, planeRunCost, float32 this.NumPlanes)
 
-    let minPlanesAtAirfield = 10.0f
+    let maxPlanesAtAirfield = 100.0f
+
+    let minActiveAirfieldResources = planeRunCost * 10.0f
 
     let idMe262 = PlaneModelId "me262"
     let idBf109g14 = PlaneModelId "bf109g14"
@@ -202,18 +204,20 @@ module Bodenplatte =
                     regular
                 let planes =
                     if i < numFrontAirfields then
-                        cheap :: regular
+                        cheap :: planes
                     else
-                        regular
+                        planes
                 let planes =
                     if i >= numAirfields - numRearAirfields then
-                        expansive :: regular
+                        expansive :: planes
                     else
-                        regular
+                        planes
                 let totalCost =
                     planes
                     |> List.sumBy (fun plane -> plane.Cost)
-                let numPlanes = war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
+                let numPlanes =
+                    war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
+                    |> min maxPlanesAtAirfield
                 for plane in planes do
                     let qty = numPlanes * plane.Cost / totalCost |> max 1.0f
                     war.SetNumPlanes(af.AirfieldId, plane.Id, qty)
@@ -245,7 +249,7 @@ module Bodenplatte =
             airfields
             |> List.filter (fun af ->
                 war.GetGroundForces(enemy, af.Region) = 0.0f<MGF> &&
-                war.GetAirfieldCapacity(af.AirfieldId) >= minPlanesAtAirfield * planeRunCost)
+                war.GetAirfieldCapacity(af.AirfieldId) >= minActiveAirfieldResources)
 
         let distanceToFriendly = war.ComputeDistancesToCoalition friendly
 
@@ -261,7 +265,7 @@ module Bodenplatte =
                 let numPlanes =
                     totalPlanes(war.GetNumPlanes(af.AirfieldId))
                 let resources = war.GetAirfieldCapacity(af.AirfieldId)
-                numPlanes >= minPlanesAtAirfield && resources >= minPlanesAtAirfield * planeRunCost)
+                numPlanes >= 10.0f || resources >= minActiveAirfieldResources)
 
         match raidTargets with
         | [] ->
@@ -373,7 +377,7 @@ module Bodenplatte =
             airfields
             |> List.filter (fun af ->
                 war.GetGroundForces(enemy, af.Region) = 0.0f<MGF> &&
-                war.GetAirfieldCapacity(af.AirfieldId) >= minPlanesAtAirfield * planeRunCost)
+                war.GetAirfieldCapacity(af.AirfieldId) >= minActiveAirfieldResources)
 
         let targettedRegions =
             enemyMissions
