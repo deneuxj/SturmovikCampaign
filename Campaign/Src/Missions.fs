@@ -350,6 +350,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             |> max 0.0f
                         let numIntercepted2 =
                             numIntercepted - numInterceptors * interceptorKillRate
+                            |> max 0.0f
                         numPlanes.[interception] <- numInterceptors2
                         numPlanes.[mission] <- numIntercepted2
                     yield
