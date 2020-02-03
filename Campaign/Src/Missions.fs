@@ -115,11 +115,25 @@ type GroundTargetType =
     | BridgeTarget
     | BuildingTarget // Factories and other buildings inside regions but outside airfields
     | AirfieldTarget of AirfieldId // Hangars, fuel tanks, parked planes... on an airfield
+with
+    member this.Description =
+        match this with
+        | BridgeTarget -> "bridges"
+        | BuildingTarget -> "buildings"
+        | AirfieldTarget afId -> sprintf "%s airbase" afId.AirfieldName
 
 type AirMissionType =
     | AreaProtection
     | GroundTargetAttack of GroundTargetType * AltitudeLevel
     | PlaneTransfer of Destination: AirfieldId
+with
+    member this.Description =
+        match this with
+        | AreaProtection -> "CAP"
+        | GroundTargetAttack(target, HighAltitude) -> sprintf "high-altitude bombing of %s" target.Description
+        | GroundTargetAttack(target, MediumAltitude) -> sprintf "dive bombing of %s" target.Description
+        | GroundTargetAttack(target, LowAltitude) -> sprintf "strafing of %s" target.Description
+        | PlaneTransfer(afId) -> sprintf "plane transfer to %s" afId.AirfieldName
 
 type AirMission =
     {
@@ -186,7 +200,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                 let numPlanes = numPlanes.[mId]
                 yield
                     Some(RemovePlane(mission.StartAirfield, mission.Plane, float32 numPlanes)),
-                    sprintf "%d %s take off from %s" (int numPlanes) plane mission.StartAirfield.AirfieldName
+                    sprintf "%d %s take off from %s for %s" (int numPlanes) plane mission.StartAirfield.AirfieldName mission.MissionType.Description
         }
 
     member this.DoGroundForcesMovements() =
@@ -435,7 +449,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                     let plane = war.World.PlaneSet.[mission.Plane].Name
                     yield
                         Some(AddPlane(afid, mission.Plane, float32 numPlanes)),
-                        sprintf "%d %s transfered to %s" numPlanes plane afid.AirfieldName
+                        sprintf "%d %s transfered to %s from %s" numPlanes plane afid.AirfieldName mission.StartAirfield.AirfieldName
         }
 
     member this.DoReturnToBase() =
@@ -448,7 +462,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                     let afid = mission.StartAirfield
                     yield
                         Some(AddPlane(afid, mission.Plane, float32 numPlanes)),
-                        sprintf "%d %s landed back at %s" numPlanes plane afid.AirfieldName
+                        sprintf "%d %s landed back at %s after %s" numPlanes plane afid.AirfieldName mission.MissionType.Description
                 | PlaneTransfer _ ->
                     // Transfered planes do not return to start base
                     ()
