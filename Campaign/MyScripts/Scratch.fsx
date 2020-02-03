@@ -53,6 +53,7 @@ let advance() =
     | Stalemate -> printfn "Stalemate"
     | Victory side -> printfn "%s is victorious" (string side)
     | Ongoing data ->
+        printfn "New mission: %s" data.Briefing
         let sim = MissionSimulator(random, war, data.Missions, 10.0f<H>)
         let events = sim.DoAll()
         for cmd, descr in events do
