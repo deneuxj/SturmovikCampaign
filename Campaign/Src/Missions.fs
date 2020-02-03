@@ -32,10 +32,11 @@ open Util
 
 
 type TargetType =
-    | Truck | Train | Ship | Battleship | Artillery | Tank | ArmoredCar | Bridge
-    | Building of BuildingProperties * int
-    | ParkedPlane of PlaneType
-    | Air of PlaneType
+    | Truck | Train | Ship | Battleship | Artillery | Tank | ArmoredCar
+    | Bridge of BuildingInstanceId * int
+    | Building of BuildingInstanceId * int
+    | ParkedPlane of AirfieldId * PlaneModelId
+    | Air of PlaneModelId
 
 type Target =
     {
@@ -409,42 +410,108 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                 | GroundTargetAttack(targetType, _) ->
                     let region = war.World.Regions.[mission.Objective]
                     let plane = war.World.PlaneSet.[mission.Plane].Name
-                    let mkMessage, targets =
+                    let mkMessage (target : Target) =
+                        let subject =
+                            match target.Kind with
+                            | TargetType.Bridge(bid, _) ->
+                                let building = war.World.Bridges.[bid]
+                                sprintf "Bridge %s" building.Properties.Model
+                            | TargetType.Building(bid, _) ->
+                                let building = war.World.Buildings.[bid]
+                                sprintf "Building %s" building.Properties.Model
+                            | TargetType.ParkedPlane(afId, parked) ->
+                                sprintf "Parked plane %s at %s" (string parked) afId.AirfieldName
+                            | Truck -> "Truck"
+                            | Train -> "Train"
+                            | Ship -> "Ship"
+                            | Battleship -> "Battleship"
+                            | Artillery -> "Piece of artillery"
+                            | Tank -> "Tank"
+                            | ArmoredCar -> "Armored car"
+                            | Air plane ->
+                                sprintf "In-flight plane %s" (string plane)
+                        sprintf "%s hit by %s from %s in %s at %0.0f, %0.0f"
+                            subject
+                            plane
+                            mission.StartAirfield.AirfieldName
+                            (string mission.Objective)
+                            target.Pos.X
+                            target.Pos.Y
+
+                    let targets =
                         match targetType with
                         | BridgeTarget ->
-                            sprintf "Bridge destroyed by %s from %s in %s at %0.0f, %0.0f"
-                                plane
-                                mission.StartAirfield.AirfieldName
-                                (string mission.Objective)
-                                ,
-                            war.World.Roads.Links @ war.World.Rails.Links
-                            |> List.collect (fun link -> link.Bridges)
-                            |> List.filter (fun bid -> war.World.Bridges.[bid].Pos.Pos.IsInConvexPolygon region.Boundary)
-                            |> List.sortByDescending (war.GetBridgeFunctionalityLevel)
-                            |> List.map (fun bid -> bid, war.World.Bridges.[bid])
+                            let targets =
+                                war.World.Roads.Links @ war.World.Rails.Links
+                                |> List.collect (fun link -> link.Bridges)
+                                |> List.filter (fun bid -> war.World.Bridges.[bid].Pos.Pos.IsInConvexPolygon region.Boundary)
+                                |> List.sortByDescending (war.GetBridgeFunctionalityLevel)
+                                |> Seq.map (fun bid ->
+                                    let bridge = war.World.Bridges.[bid]
+                                    let part = random.Next(List.length bridge.Properties.SubParts)
+                                    {
+                                        Kind = TargetType.Bridge(bid, part)
+                                        Pos = bridge.Pos.Pos
+                                        Altitude = 0.0f<M>
+                                    })
+                            targets
+
                         | BuildingTarget ->
-                            sprintf "Building destroyed by %s from %s in %s at %0.0f, %0.0f"
-                                plane
-                                mission.StartAirfield.AirfieldName
-                                (string mission.Objective)
-                                ,
-                            region.IndustryBuildings
-                            |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
-                            |> List.map (fun bid -> bid, war.World.Buildings.[bid])
+                            let targets =
+                                region.IndustryBuildings
+                                |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
+                                |> Seq.map (fun bid ->
+                                    let building = war.World.Buildings.[bid]
+                                    let part = random.Next(List.length building.Properties.SubParts)
+                                    {
+                                        Kind = TargetType.Building(bid, part)
+                                        Pos = building.Pos.Pos
+                                        Altitude = 0.0f<M>
+                                    })
+                            targets
+
                         | AirfieldTarget af ->
-                            sprintf "Airfield building destroyed by %s from %s in %s at %0.0f, %0.0f"
-                                plane
-                                mission.StartAirfield.AirfieldName
-                                (string mission.Objective),
-                            war.World.Airfields.[af].Facilities
-                            |> List.ofSeq
-                            |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
-                            |> List.map (fun bid -> bid, war.World.Buildings.[bid])
-                    for (bid, building) in targets |> Seq.truncate numPlanes do
-                        for part in building.Properties.SubParts do
-                            yield
-                                Some(DamageBuildingPart(bid, part, 1.0f)),
-                                mkMessage building.Pos.Pos.X building.Pos.Pos.Y
+                            let buildingTargets =
+                                war.World.Airfields.[af].Facilities
+                                |> List.ofSeq
+                                |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
+                                |> List.map (fun bid ->
+                                    let building = war.World.Buildings.[bid]
+                                    let part = random.Next(List.length building.Properties.SubParts)
+                                    {
+                                        Kind = TargetType.Building(bid, part)
+                                        Pos = building.Pos.Pos
+                                        Altitude = 0.0f<M>
+                                    })
+
+                            let parkedPlanes =
+                                war.GetNumPlanes(af)
+                                |> Map.toSeq
+                                |> Seq.collect (fun (planeId, qty) ->
+                                    Seq.init (int qty) (fun _ -> planeId))
+                                |> Seq.map (fun planeId ->
+                                    {
+                                        Kind = TargetType.ParkedPlane(af, planeId)
+                                        Pos = Vector2.Zero
+                                        Altitude = 0.0f<M>
+                                    })
+
+                            Seq.selectFrom2 (fun _ _ -> random.Next(2) = 1) buildingTargets parkedPlanes
+                            |> Seq.map (function Choice1Of2 x | Choice2Of2 x -> x)
+
+                    for target in targets |> Seq.truncate numPlanes do
+                        let command =
+                            match target.Kind with
+                            | TargetType.Building(bid, part) ->
+                                Some(DamageBuildingPart(bid, part, 1.0f))
+                            | TargetType.ParkedPlane(afId, planeId) ->
+                                Some(RemovePlane(afId, planeId, 1.0f))
+                            | _ ->
+                                None
+                        yield
+                            command,
+                            mkMessage target
+
                 | PlaneTransfer afid ->
                     let plane = war.World.PlaneSet.[mission.Plane].Name
                     yield
