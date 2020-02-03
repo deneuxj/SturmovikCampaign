@@ -316,6 +316,49 @@ module Map =
             dict.Add(k, v)
         dict
 
+    let selectFrom2 selector (xs1 : 'T1 seq) (xs2 : 'T2 seq) =
+        seq {
+            let it1 = xs1.GetEnumerator()
+            let it2 = xs2.GetEnumerator()
+
+            let rec select(x, y) =
+                seq {
+                    if selector x y then
+                        yield Choice2Of2 y
+                        yield! advRight x
+                    else
+                        yield Choice1Of2 x
+                        yield! advLeft y
+                }
+            and advLeft(y) =
+                seq {
+                    match it1.MoveNext2() with
+                    | None ->
+                        yield Choice2Of2 y
+                        yield! unroll it2 |> Seq.map Choice2Of2
+                    | Some x ->
+                        yield! select(x, y)
+                }
+            and advRight(x) =
+                seq {
+                    match it2.MoveNext2() with
+                    | None ->
+                        yield Choice1Of2 x
+                        yield! unroll it1 |> Seq.map Choice1Of2
+                    | Some y ->
+                        yield! select(x, y)
+                }
+            match it1.MoveNext2(), it2.MoveNext2() with
+            | None, None -> ()
+            | None, Some y ->
+                yield Choice2Of2 y
+                yield! unroll it2 |> Seq.map Choice2Of2
+            | Some x, None ->
+                yield Choice1Of2 x
+                yield! unroll it1 |> Seq.map Choice1Of2
+            | Some x, Some y ->
+                yield! select(x, y)
+        }
 
 /// Misc useful algorithms.
 module Algo =
