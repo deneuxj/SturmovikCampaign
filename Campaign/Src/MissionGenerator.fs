@@ -212,14 +212,14 @@ module Bodenplatte =
                         expansive :: planes
                     else
                         planes
-                let totalCost =
+                let totalInvCost =
                     planes
-                    |> List.sumBy (fun plane -> plane.Cost)
+                    |> List.sumBy (fun plane -> 1.0f / plane.Cost)
                 let numPlanes =
                     war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
                     |> min maxPlanesAtAirfield
                 for plane in planes do
-                    let qty = numPlanes * plane.Cost / totalCost |> max 1.0f
+                    let qty = numPlanes * (1.0f / plane.Cost) / totalInvCost |> max 1.0f
                     war.SetNumPlanes(af.AirfieldId, plane.Id, qty)
                 )
 
