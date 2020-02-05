@@ -32,11 +32,20 @@ open Util
 
 
 type TargetType =
-    | Truck | Train | Ship | Battleship | Artillery | Tank | ArmoredCar
+    | Truck | Train | Ship | Battleship | GunBoat | Artillery | Tank | ArmoredCar
     | Bridge of BuildingInstanceId * int
     | Building of BuildingInstanceId * int
     | ParkedPlane of AirfieldId * PlaneModelId
     | Air of PlaneModelId
+with
+    member this.GroundForceValue =
+        match this with
+        | Battleship -> 100.0f<MGF>
+        | GunBoat -> 15.0f<MGF>
+        | Artillery -> 10.0f<MGF>
+        | Tank -> 25.0f<MGF>
+        | ArmoredCar -> 5.0f<MGF>
+        | _ -> 0.0f<MGF>
 
 type Target =
     {
@@ -113,12 +122,14 @@ with
 
 /// Kind of targets on the ground
 type GroundTargetType =
+    | GroundForces
     | BridgeTarget
     | BuildingTarget // Factories and other buildings inside regions but outside airfields
     | AirfieldTarget of AirfieldId // Hangars, fuel tanks, parked planes... on an airfield
 with
     member this.Description =
         match this with
+        | GroundForces -> "ground forces"
         | BridgeTarget -> "bridges"
         | BuildingTarget -> "buildings"
         | AirfieldTarget afId -> sprintf "%s airbase" afId.AirfieldName
@@ -425,6 +436,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             | Train -> "Train"
                             | Ship -> "Ship"
                             | Battleship -> "Battleship"
+                            | GunBoat -> "Gun boat"
                             | Artillery -> "Piece of artillery"
                             | Tank -> "Tank"
                             | ArmoredCar -> "Armored car"
@@ -440,6 +452,30 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
 
                     let targets =
                         match targetType with
+                        | GroundForces ->
+                            let kinds =
+                                [| TargetType.ArmoredCar; TargetType.Artillery; TargetType.Tank |]
+                            let forces =
+                                let owner = war.GetOwner(mission.Objective)
+                                owner
+                                |> Option.map(fun owner -> war.GetGroundForces(owner, mission.Objective))
+                                |> Option.defaultValue 0.0f<MGF>
+                            let targets =
+                                Seq.unfold (fun forces ->
+                                    if forces < 0.0f<MGF> then
+                                        None
+                                    else
+                                        let kind = kinds.[random.Next(kinds.Length)]
+                                        Some(kind, forces - kind.GroundForceValue)) forces
+                                |> Seq.map (fun kind ->
+                                    {
+                                        Kind = kind
+                                        Pos = Vector2.Zero
+                                        Altitude = 0.0f<M>
+                                    }
+                                )
+                            targets
+
                         | BridgeTarget ->
                             let targets =
                                 war.World.Roads.Links @ war.World.Rails.Links
