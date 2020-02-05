@@ -93,6 +93,19 @@ with
         | None ->
             None
 
+type TargetAdapter<'Target> =
+    abstract GetPos : 'Target -> Vector2
+    abstract MkGroundTarget : 'Target -> GroundTargetType
+    abstract GetRegion : 'Target -> Campaign.WorldDescription.RegionId
+
+type AirfieldTargetAdapter() =
+    do ()
+    interface TargetAdapter<Airfield> with
+        member __.GetPos(af) = af.Boundary.Head
+        member __.MkGroundTarget(af) = AirfieldTarget af.AirfieldId
+        member __.GetRegion(af) = af.Region
+
+
 type MissionPlanningResult =
     | TooFewTargets
     | Plan of Mission list * Airfields
@@ -164,6 +177,9 @@ module Bodenplatte =
             |> Option.defaultValue 0.0f
             |> (+) s) 0.0f
 
+    let airfieldPos (af : Airfield) =
+        af.Boundary.Head
+
     /// Set the number of planes at each airfield controlled by a coalition.
     let initAirfields (friendly : CoalitionId) (war : WarState) =
         let enemy = friendly.Other
@@ -234,8 +250,8 @@ module Bodenplatte =
         | None ->
             ()
 
-    /// Try to make missions to attack enemy airfields, with sufficient cover over target, and over home airfield
-    let tryMakeAirRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+    /// Try to make missions to attack generic enemy ground targets, with sufficient cover over target, and over home airfield
+    let tryMakeAirRaids (adapter : TargetAdapter<'Target>) (raidTargets : 'Target list) (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
 
@@ -251,22 +267,6 @@ module Bodenplatte =
                 war.GetGroundForces(enemy, af.Region) = 0.0f<MGF> &&
                 war.GetAirfieldCapacity(af.AirfieldId) >= minActiveAirfieldResources)
 
-        let distanceToFriendly = war.ComputeDistancesToCoalition friendly
-
-        let enemyAirfields =
-            war.World.Airfields.Values
-            |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some enemy)
-            |> Seq.sortBy (fun af -> distanceToFriendly.[af.Region])
-            |> List.ofSeq
-
-        let raidTargets =
-            enemyAirfields
-            |> List.filter (fun af ->
-                let numPlanes =
-                    totalPlanes(war.GetNumPlanes(af.AirfieldId))
-                let resources = war.GetAirfieldCapacity(af.AirfieldId)
-                numPlanes >= 10.0f || resources >= minActiveAirfieldResources)
-
         match raidTargets with
         | [] ->
             TooFewTargets
@@ -275,22 +275,24 @@ module Bodenplatte =
                 /// Check that distances between start airfields and objectives are within range,
                 /// and then return the missions of which a raid is composed:
                 /// An airfield attack, CAP over target, CAP over attackers' home base
-                let planOneRaid (target : Airfield) attackers targetCover homeCover =
-                    let getAirfieldsDistance (af1 : Airfield) (af2 : Airfield) =
-                        (af1.Boundary.Head - af2.Boundary.Head).Length() * 1.0f<M>
-                    let canFlyToTarget (af, (plane : PlaneModel, _, home)) =
-                        getAirfieldsDistance af home <= plane.MaxRange
+                let planOneRaid (target : 'Target) attackers targetCover homeCover =
+                    let getAirfieldsDistance (af : Airfield) (pos : Vector2) =
+                        (af.Boundary.Head - pos).Length() * 1.0f<M>
+                    let canFlyToTarget (target, (plane : PlaneModel, _, home)) =
+                        getAirfieldsDistance home (adapter.GetPos target) <= plane.MaxRange
+                    let canFlyToAirfield (af, (plane : PlaneModel, _, home)) =
+                        getAirfieldsDistance home  (airfieldPos af) <= plane.MaxRange
                     let planeOf (plane, _, _) = plane
                     let numPlanesOf (_, num, _) = num
                     let airfieldOf (_, _, af) = af
-                    if [(target, attackers); (target, targetCover); (airfieldOf attackers, homeCover)] |> List.forall canFlyToTarget then
+                    if [(target, attackers); (target, targetCover) ] |> List.forall canFlyToTarget && canFlyToAirfield (airfieldOf attackers, homeCover) then
                         [
                             {
                                 StartAirfield = (airfieldOf attackers).AirfieldId
-                                Objective = target.Region
+                                Objective = adapter.GetRegion target
                                 MissionType =
                                     GroundTargetAttack(
-                                        AirfieldTarget target.AirfieldId,
+                                        adapter.MkGroundTarget target,
                                         LowAltitude
                                     )
                                 NumPlanes = numPlanesOf attackers
@@ -298,14 +300,14 @@ module Bodenplatte =
                             }
                             {
                                 StartAirfield = (airfieldOf targetCover).AirfieldId
-                                Objective = target.Region
+                                Objective = adapter.GetRegion target
                                 MissionType = AreaProtection
                                 NumPlanes = numPlanesOf targetCover
                                 Plane = (planeOf targetCover).Id
                             }
                             {
                                 StartAirfield = (airfieldOf homeCover).AirfieldId
-                                Objective = target.Region
+                                Objective = adapter.GetRegion target
                                 MissionType = AreaProtection
                                 NumPlanes = numPlanesOf homeCover
                                 Plane = (planeOf homeCover).Id
@@ -361,6 +363,27 @@ module Bodenplatte =
                 ]
                 |> List.map AirMission
             Plan (raids, budget)
+
+    /// Try to make missions to attack enemy airfields, with sufficient cover over target, and over home airfield
+    let tryMakeAirfieldRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+        let distanceToFriendly = war.ComputeDistancesToCoalition friendly
+        let enemy = friendly.Other
+
+        let enemyAirfields =
+            war.World.Airfields.Values
+            |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some enemy)
+            |> Seq.sortBy (fun af -> distanceToFriendly.[af.Region])
+            |> List.ofSeq
+
+        let raidTargets =
+            enemyAirfields
+            |> List.filter (fun af ->
+                let numPlanes =
+                    totalPlanes(war.GetNumPlanes(af.AirfieldId))
+                let resources = war.GetAirfieldCapacity(af.AirfieldId)
+                numPlanes >= 10.0f || resources >= minActiveAirfieldResources)
+
+        tryMakeAirRaids (AirfieldTargetAdapter()) raidTargets friendly budget war
 
     /// Try to make CAP missions over regions targetted by enemy air missions.
     let tryMakeCovers (friendly : CoalitionId) (budget : Airfields) (war : WarState) (enemyMissions : AirMission list) =
@@ -483,7 +506,7 @@ module Bodenplatte =
 
     let rec oneSideStrikes (side : CoalitionId) depth (war : WarState) =
         let budget = Airfields.Create war
-        match tryMakeAirRaids side budget war with
+        match tryMakeAirfieldRaids side budget war with
         | TooFewTargets ->
             Victory side
         | Plan([], _) ->
