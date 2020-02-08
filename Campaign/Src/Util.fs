@@ -360,6 +360,40 @@ module Map =
                 yield! select(x, y)
         }
 
+    /// Return the shortest prefix of a sequence where the last item
+    /// in the prefix satisfies a predicate, or the entire sequence if no
+    /// item satisfies the predicate.
+    let takeUntil pred (xs : 'T seq) =
+        seq {
+            let it = xs.GetEnumerator()
+            let rec work() =
+                seq {
+                    if it.MoveNext() then
+                        yield it.Current
+                        if not(pred it.Current) then
+                            yield! work()
+                }
+            yield! work()
+        }
+
+    /// Return the item in a sequence which has highest projected value,
+    /// interrupting the search when the projected value satisfies the
+    /// given predicate.
+    let maxByUntil proj pred xs =
+        let init = xs |> Seq.head
+
+        xs
+        |> Seq.skip 1
+        |> Seq.scan (fun ((_, h0) as s) x ->
+            let h = proj x
+            if h0 < h then
+                (x, h)
+            else
+                s) (init, proj init)
+        |> Seq.map fst
+        |> takeUntil pred
+        |> Seq.last
+
 /// Misc useful algorithms.
 module Algo =
     /// <summary>
