@@ -149,6 +149,33 @@ module MissionPlanningResult =
         xs
         |> Seq.maxByUntil proj pred
 
+module Planning =
+    let chain planners =
+        fun budget ->
+            planners
+            |> Seq.fold (fun (missions, budget) planner ->
+                let plan = planner budget
+                let missions2, budget = MissionPlanningResult.getMissions budget plan
+                (missions @ missions2, budget)
+            ) ([], budget)
+            |> Plan
+
+    let andThen also first =
+        fun budget ->
+            match first budget with
+            | Plan((_ :: _) as missions, budget) ->
+                let missions2, budget =
+                    (chain also) budget
+                    |> MissionPlanningResult.getMissions budget
+                Plan(missions @ missions2, budget)
+            | nogo -> nogo
+
+    let orElse alternatives =
+        fun budget ->
+            alternatives
+            |> Seq.map (fun f -> f budget)
+            |> MissionPlanningResult.firstWithNonEmptyPlan
+
 module Bodenplatte =
     let totalPlanes : Map<_, float32> -> float32 =
         Map.toSeq >> Seq.sumBy snd
@@ -281,7 +308,7 @@ module Bodenplatte =
             ()
 
     /// Try to make missions to attack generic enemy ground targets, with sufficient cover over target, and over home airfield
-    let tryMakeAirRaids (adapter : TargetAdapter<'Target>) (raidTargets : 'Target list) (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+    let tryMakeAirRaids (war : WarState) (adapter : TargetAdapter<'Target>) (raidTargets : 'Target list) (friendly : CoalitionId) (budget : Airfields)  =
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
 
@@ -395,7 +422,7 @@ module Bodenplatte =
             Plan (raids, budget)
 
     /// Try to make missions to attack enemy airfields, with sufficient cover over target, and over home airfield
-    let tryMakeAirfieldRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+    let tryMakeAirfieldRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields)  =
         let distanceToFriendly = war.ComputeDistancesToCoalition friendly
         let enemy = friendly.Other
 
@@ -413,10 +440,10 @@ module Bodenplatte =
                 let resources = war.GetAirfieldCapacity(af.AirfieldId)
                 numPlanes >= 10.0f || resources >= minActiveAirfieldResources)
 
-        tryMakeAirRaids (AirfieldTargetAdapter()) raidTargets friendly budget war
+        tryMakeAirRaids war (AirfieldTargetAdapter()) raidTargets friendly budget
 
     /// Try to make missions to attack enemy industry, with cover over target, and over home airfield
-    let tryMakeIndustryRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+    let tryMakeIndustryRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields) =
         let distanceToFriendly = war.ComputeDistancesToCoalition friendly
         let enemy = friendly.Other
 
@@ -429,10 +456,10 @@ module Bodenplatte =
             |> Seq.sortByDescending (fun region -> distanceToFriendly.[region.RegionId])
             |> List.ofSeq
 
-        tryMakeAirRaids (RegionTargetAdapter()) enemyRegions friendly budget war
+        tryMakeAirRaids war (RegionTargetAdapter()) enemyRegions friendly budget
 
     /// Try to plan missions to defend ground forces in friendly territory.
-    let tryMakeDefensiveGroundForcesRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+    let tryMakeDefensiveGroundForcesRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields) =
         let threatenedRegions =
             war.World.Regions.Values
             |> Seq.filter (fun region ->
@@ -442,10 +469,10 @@ module Bodenplatte =
                 war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId))
             |> List.ofSeq
 
-        tryMakeAirRaids (GroundForcesTargetAdapter()) threatenedRegions friendly budget war
+        tryMakeAirRaids war (GroundForcesTargetAdapter()) threatenedRegions friendly budget
 
     /// Try to plan missions to support ground forces in enemy territory
-    let tryMakeOffensiveGroundForcesRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+    let tryMakeOffensiveGroundForcesRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields) =
         let weakRegions =
             war.World.Regions.Values
             |> Seq.filter (fun region ->
@@ -455,10 +482,10 @@ module Bodenplatte =
                 war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId))
             |> List.ofSeq
 
-        tryMakeAirRaids (GroundForcesTargetAdapter()) weakRegions friendly budget war
+        tryMakeAirRaids war (GroundForcesTargetAdapter()) weakRegions friendly budget
 
     /// Try to make CAP missions over regions targetted by enemy air missions.
-    let tryMakeCovers (friendly : CoalitionId) (budget : Airfields) (war : WarState) (enemyMissions : AirMission list) =
+    let tryMakeCovers (war : WarState) (friendly : CoalitionId) (enemyMissions : AirMission list) (budget : Airfields) =
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
 
@@ -523,7 +550,7 @@ module Bodenplatte =
             Plan(missions, budget)
 
     /// Try to send planes closer to the frontline.
-    let tryTransferPlanesForward (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+    let tryTransferPlanesForward (war : WarState) (friendly : CoalitionId) (budget : Airfields) =
         let airfields =
             war.World.Airfields.Values
             |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some friendly)
@@ -577,15 +604,23 @@ module Bodenplatte =
         Plan (missions, budget)
 
     let rec oneSideStrikes (side : CoalitionId) depth (war : WarState) =
-        let budget = Airfields.Create war
-        let plan =
-            [
-                tryMakeAirfieldRaids
-                tryMakeIndustryRaids
+        let tryMakeAirfieldRaids = tryMakeAirfieldRaids war side
+        let tryMakeIndustryRaids = tryMakeIndustryRaids war side
+        let tryMakeAirRaids = Planning.orElse [ tryMakeAirfieldRaids; tryMakeIndustryRaids ]
+        let tryMakeOtherDefensiveGroundForcesRaids = tryMakeDefensiveGroundForcesRaids war side.Other
+        let tryMakeOffensiveGroundForcesRaids = tryMakeOffensiveGroundForcesRaids war side
+        let tryMakeDefensiveGroundForcesRaids = tryMakeDefensiveGroundForcesRaids war side
+        let tryTransferPlanesForward = tryTransferPlanesForward war side
+
+        let sideAttacks =
+            Planning.orElse [
+                tryMakeDefensiveGroundForcesRaids  |> Planning.andThen [ tryMakeAirRaids; tryTransferPlanesForward ]
+                tryMakeAirRaids |> Planning.andThen [ tryMakeOffensiveGroundForcesRaids; tryTransferPlanesForward ]
+                tryMakeOffensiveGroundForcesRaids |> Planning.andThen [ tryTransferPlanesForward ]
             ]
-            |> Seq.map (fun f -> f side budget war)
-            |> MissionPlanningResult.firstWithNonEmptyPlan
-        match plan with
+
+        let budget = Airfields.Create war
+        match sideAttacks budget with
         | TooFewTargets ->
             Victory side
         | Plan([], _) ->
@@ -598,17 +633,16 @@ module Bodenplatte =
                 missions
                 |> List.choose (function AirMission x -> Some x | _ -> None)
             let covers, budget =
-                tryMakeCovers side.Other budget war raids
+                Planning.chain [ tryMakeCovers war side.Other raids; tryMakeOtherDefensiveGroundForcesRaids ] budget
                 |> MissionPlanningResult.getMissions budget
-            let sideTransfers, budget =
-                tryTransferPlanesForward side budget war
-                |> MissionPlanningResult.getMissions budget
-            let otherTransfers, budget =
-                tryTransferPlanesForward side.Other budget war
-                |> MissionPlanningResult.getMissions budget
+            let momentum =
+                if depth = 0 then
+                    "keeping the pressure on"
+                else
+                    "striking against"
             Ongoing {
-                Briefing = sprintf "%s is launching strikes agains %s assets on the ground" (string side) (string side.Other)
-                Missions = missions @ covers @ sideTransfers @ otherTransfers
+                Briefing = sprintf "%s is %s %s assets on the ground" (string side) momentum (string side.Other)
+                Missions = missions @ covers
                 Next = oneSideStrikes side.Other 1
             }
 
