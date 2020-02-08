@@ -99,12 +99,16 @@ type TargetAdapter<'Target> =
     abstract GetRegion : 'Target -> Campaign.WorldDescription.RegionId
 
 type AirfieldTargetAdapter() =
-    do ()
     interface TargetAdapter<Airfield> with
         member __.GetPos(af) = af.Boundary.Head
         member __.MkGroundTarget(af) = AirfieldTarget af.AirfieldId
         member __.GetRegion(af) = af.Region
 
+type RegionTargetAdapter() =
+    interface TargetAdapter<Region> with
+        member __.GetPos(region) = region.Position
+        member __.MkGroundTarget(region) = BuildingTarget
+        member __.GetRegion(region) = region.RegionId
 
 type MissionPlanningResult =
     | TooFewTargets
@@ -121,6 +125,24 @@ module MissionPlanningResult =
         | TooFewTargets -> [], originalBudget
         | Plan(missions, budget) -> missions, budget
 
+    let hasMissions =
+        function
+        | TooFewTargets | Plan([],_) -> false
+        | Plan(_ :: _, _) -> true
+
+    let firstWithNonEmptyPlan (xs : MissionPlanningResult seq) =
+        let proj =
+            function
+            | Plan([], _) -> 1
+            | TooFewTargets -> 0
+            | Plan(_ :: _, _) -> 2
+        let pred =
+            function
+            | Plan(_ :: _, _) -> true
+            | _ -> false
+        xs
+        |> Seq.maxByUntil proj pred
+
 module Bodenplatte =
     let totalPlanes : Map<_, float32> -> float32 =
         Map.toSeq >> Seq.sumBy snd
@@ -134,6 +156,8 @@ module Bodenplatte =
     let maxPlanesAtAirfield = 100.0f
 
     let minActiveAirfieldResources = planeRunCost * 10.0f
+
+    let minRegionBuildingCapacity = 1000.0f<M^3>
 
     let idMe262 = PlaneModelId "me262"
     let idBf109g14 = PlaneModelId "bf109g14"
@@ -385,6 +409,23 @@ module Bodenplatte =
 
         tryMakeAirRaids (AirfieldTargetAdapter()) raidTargets friendly budget war
 
+    /// Try to make missions to attack enemy industry, with cover over target, and over home airfield
+    let tryMakeIndustryRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+        let distanceToFriendly = war.ComputeDistancesToCoalition friendly
+        let enemy = friendly.Other
+
+        let enemyRegions =
+            war.World.Regions.Values
+            |> Seq.filter (fun region ->
+                war.GetOwner(region.RegionId) = Some enemy &&
+                distanceToFriendly.[region.RegionId] > 1 &&
+                war.GetRegionBuildingCapacity(region.RegionId) > minRegionBuildingCapacity)
+            |> Seq.sortByDescending (fun region -> distanceToFriendly.[region.RegionId])
+            |> List.ofSeq
+
+        tryMakeAirRaids (RegionTargetAdapter()) enemyRegions friendly budget war
+
+
     /// Try to make CAP missions over regions targetted by enemy air missions.
     let tryMakeCovers (friendly : CoalitionId) (budget : Airfields) (war : WarState) (enemyMissions : AirMission list) =
         let enemy = friendly.Other
@@ -506,7 +547,14 @@ module Bodenplatte =
 
     let rec oneSideStrikes (side : CoalitionId) depth (war : WarState) =
         let budget = Airfields.Create war
-        match tryMakeAirfieldRaids side budget war with
+        let plan =
+            [
+                tryMakeAirfieldRaids
+                tryMakeIndustryRaids
+            ]
+            |> Seq.map (fun f -> f side budget war)
+            |> MissionPlanningResult.firstWithNonEmptyPlan
+        match plan with
         | TooFewTargets ->
             Victory side
         | Plan([], _) ->
