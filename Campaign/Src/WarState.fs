@@ -189,7 +189,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         | true, x -> x
         | false, _ -> 1.0f
 
-    /// Max amount of resources that can be stored in a building, depending on health but not taking into account current amounts.
+    /// Storage room in a building, taking health into account.
     member this.GetBuildingCapacity(bid) =
         assert(this.World.Buildings.ContainsKey(bid))
         let building = this.World.Buildings.[bid]
@@ -221,6 +221,11 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             buildingPartHealthLevel.[(bid, part)] <- x
         if this.World.Bridges.ContainsKey(bid) then
             this.ClearCachesAfterBridgeHealthChanged()
+
+    /// Storage room in a region, taking health into account.
+    member this.GetRegionBuildingCapacity(rid : RegionId) =
+        this.World.Regions.[rid].IndustryBuildings
+        |> Seq.sumBy this.GetBuildingCapacity
 
     /// Level of functionality of a bridge
     member this.GetBridgeFunctionalityLevel(bid) =
