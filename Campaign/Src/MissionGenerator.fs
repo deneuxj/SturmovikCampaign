@@ -110,6 +110,12 @@ type RegionTargetAdapter() =
         member __.MkGroundTarget(region) = BuildingTarget
         member __.GetRegion(region) = region.RegionId
 
+type GroundForcesTargetAdapter() =
+    interface TargetAdapter<Region> with
+        member __.GetPos(region) = region.Position
+        member __.MkGroundTarget(region) = GroundForces
+        member __.GetRegion(region) = region.RegionId
+
 type MissionPlanningResult =
     | TooFewTargets
     | Plan of Mission list * Airfields
@@ -425,6 +431,31 @@ module Bodenplatte =
 
         tryMakeAirRaids (RegionTargetAdapter()) enemyRegions friendly budget war
 
+    /// Try to plan missions to defend ground forces in friendly territory.
+    let tryMakeDefensiveGroundForcesRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+        let threatenedRegions =
+            war.World.Regions.Values
+            |> Seq.filter (fun region ->
+                war.GetOwner(region.RegionId) = Some friendly &&
+                war.GetGroundForces(friendly, region.RegionId) < 5.0f * war.GetGroundForces(friendly.Other, region.RegionId))
+            |> Seq.sortByDescending (fun region ->
+                war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId))
+            |> List.ofSeq
+
+        tryMakeAirRaids (GroundForcesTargetAdapter()) threatenedRegions friendly budget war
+
+    /// Try to plan missions to support ground forces in enemy territory
+    let tryMakeOffensiveGroundForcesRaids (friendly : CoalitionId) (budget : Airfields) (war : WarState) =
+        let weakRegions =
+            war.World.Regions.Values
+            |> Seq.filter (fun region ->
+                war.GetOwner(region.RegionId) = Some friendly.Other &&
+                war.GetGroundForces(friendly, region.RegionId) > 0.0f<MGF>)
+            |> Seq.sortByDescending (fun region ->
+                war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId))
+            |> List.ofSeq
+
+        tryMakeAirRaids (GroundForcesTargetAdapter()) weakRegions friendly budget war
 
     /// Try to make CAP missions over regions targetted by enemy air missions.
     let tryMakeCovers (friendly : CoalitionId) (budget : Airfields) (war : WarState) (enemyMissions : AirMission list) =
