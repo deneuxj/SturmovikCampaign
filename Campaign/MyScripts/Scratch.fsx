@@ -42,8 +42,8 @@ let world =
     { x with PlaneSet = planeSet }
 
 let war = Init.mkWar world
-Bodenplatte.initAirfields Axis war
-Bodenplatte.initAirfields Allies war
+Bodenplatte.initAirfields 0.5f Axis war
+Bodenplatte.initAirfields 1.0f Allies war
 
 let mutable step = Bodenplatte.start war
 let random = System.Random(0)

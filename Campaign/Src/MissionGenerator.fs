@@ -238,7 +238,7 @@ module Bodenplatte =
         af.Boundary.Head
 
     /// Set the number of planes at each airfield controlled by a coalition.
-    let initAirfields (friendly : CoalitionId) (war : WarState) =
+    let initAirfields (factor : float32) (friendly : CoalitionId) (war : WarState) =
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
 
@@ -262,7 +262,7 @@ module Bodenplatte =
             for af in airfields do
                 let numPlanes =
                     war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
-                war.SetNumPlanes(af.AirfieldId, plane.Id, numPlanes)
+                war.SetNumPlanes(af.AirfieldId, plane.Id, factor * numPlanes)
         | expansive :: regular ->
             // Rear airfields get regular planes and the expansive plane
             // Front airfields get regular planes and the cheap plane
@@ -293,7 +293,7 @@ module Bodenplatte =
                     |> min maxPlanesAtAirfield
                 for plane in planes do
                     let qty = numPlanes * (1.0f / plane.Cost) / totalInvCost |> max 1.0f
-                    war.SetNumPlanes(af.AirfieldId, plane.Id, qty)
+                    war.SetNumPlanes(af.AirfieldId, plane.Id, factor * qty)
                 )
 
         // Transport planes at the rearmost airfield
