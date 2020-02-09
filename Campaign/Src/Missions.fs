@@ -421,6 +421,14 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                 | GroundTargetAttack(targetType, _) ->
                     let region = war.World.Regions.[mission.Objective]
                     let plane = war.World.PlaneSet.[mission.Plane].Name
+                    let numBridgePartsDamaged, volumeBuildingDamaged =
+                        let planeBombs =
+                            war.World.PlaneSet.[mission.Plane].BombCapacity
+                        if planeBombs > 0.0f<K> then
+                            planeBombs / 100.0f<K> |> int |> max 1,
+                            planeBombs * 0.1f<M^3/K>
+                        else
+                            3, 5.0f<M^3>
                     let mkMessage (target : Target) =
                         let subject =
                             match target.Kind with
@@ -451,6 +459,46 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             target.Pos.Y
 
                     let targets =
+                        // Pick parts of a building at random, biased towards undamaged parts
+                        let getParts (building : BuildingInstance) =
+                            let parts =
+                                building.Properties.SubParts
+                                |> List.sortByDescending (fun part -> war.GetBuildingPartFunctionalityLevel(building.Id, part))
+                            seq {
+                                let rec work numParts parts =
+                                    seq {
+                                        match parts with
+                                        | [] -> ()
+                                        | _ :: _ ->
+                                            let x = random.NextDouble();
+                                            let part = x * x * (float numParts) |> int |> min (numParts - 1)
+                                            yield {
+                                                Kind = TargetType.Building(building.Id, part)
+                                                Pos = building.Pos.Pos
+                                                Altitude = 0.0f<M>
+                                            }
+                                            let parts =
+                                                parts
+                                                |> List.fold (fun (i, xs) x ->
+                                                    if i = part then
+                                                        (i + 1, xs)
+                                                    else
+                                                        (i + 1, x :: xs)
+                                                ) (0, [])
+                                                |> snd
+                                                |> List.rev
+                                            yield! work (numParts - 1) parts
+                                    }
+                                yield! work (List.length parts) parts
+                            }
+                        let getBuildingParts building =
+                            let parts = getParts building
+                            let partVolume = building.Properties.PartCapacity
+                            let numParts = volumeBuildingDamaged / partVolume |> int |> max 1
+                            Seq.truncate numParts parts
+                        let getBridgeParts bridge =
+                            getParts bridge
+                            |> Seq.truncate numBridgePartsDamaged
                         match targetType with
                         | GroundForces ->
                             let kinds =
@@ -482,28 +530,18 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 |> List.collect (fun link -> link.Bridges)
                                 |> List.filter (fun bid -> war.World.Bridges.[bid].Pos.Pos.IsInConvexPolygon region.Boundary)
                                 |> List.sortByDescending (war.GetBridgeFunctionalityLevel)
-                                |> Seq.map (fun bid ->
+                                |> Seq.collect (fun bid ->
                                     let bridge = war.World.Bridges.[bid]
-                                    let part = random.Next(List.length bridge.Properties.SubParts)
-                                    {
-                                        Kind = TargetType.Bridge(bid, part)
-                                        Pos = bridge.Pos.Pos
-                                        Altitude = 0.0f<M>
-                                    })
+                                    getBridgeParts bridge)
                             targets
 
                         | BuildingTarget ->
                             let targets =
                                 region.IndustryBuildings
                                 |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
-                                |> Seq.map (fun bid ->
+                                |> Seq.collect (fun bid ->
                                     let building = war.World.Buildings.[bid]
-                                    let part = random.Next(List.length building.Properties.SubParts)
-                                    {
-                                        Kind = TargetType.Building(bid, part)
-                                        Pos = building.Pos.Pos
-                                        Altitude = 0.0f<M>
-                                    })
+                                    getBuildingParts building)
                             targets
 
                         | AirfieldTarget af ->
@@ -511,14 +549,9 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 war.World.Airfields.[af].Facilities
                                 |> List.ofSeq
                                 |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
-                                |> List.map (fun bid ->
+                                |> Seq.collect (fun bid ->
                                     let building = war.World.Buildings.[bid]
-                                    let part = random.Next(List.length building.Properties.SubParts)
-                                    {
-                                        Kind = TargetType.Building(bid, part)
-                                        Pos = building.Pos.Pos
-                                        Altitude = 0.0f<M>
-                                    })
+                                    getBuildingParts building)
 
                             let parkedPlanes =
                                 war.GetNumPlanes(af)
