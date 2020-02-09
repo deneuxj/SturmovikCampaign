@@ -610,8 +610,8 @@ module Bodenplatte =
         let sideAttacks =
             Planning.orElse [
                 tryMakeGroundForcesDefense  |> Planning.andThen [ tryMakeAirRaids; tryTransferPlanesForward ]
-                tryMakeAirRaids |> Planning.andThen [ tryMakeGroundForcesSupport; tryTransferPlanesForward ]
-                tryMakeGroundForcesHarassment |> Planning.andThen [ tryTransferPlanesForward ]
+                tryMakeAirRaids |> Planning.andThen [ tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryTransferPlanesForward ]
+                tryMakeGroundForcesHarassment |> Planning.andThen [ tryMakeGroundForcesSupport; tryTransferPlanesForward ]
             ]
 
         let budget = Airfields.Create war
