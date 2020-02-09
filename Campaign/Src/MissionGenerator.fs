@@ -464,13 +464,13 @@ module Bodenplatte =
 
         tryMakeAirRaids war (GroundForcesTargetAdapter()) threatenedRegions friendly budget
 
-    /// Try to plan missions to support ground forces in enemy territory
-    let tryMakeOffensiveGroundForcesRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields) =
+    /// Try to plan missions to attack ground forces in enemy territory
+    let tryMakeOffensiveGroundForcesRaids (war : WarState) (onlySupport : bool) (friendly : CoalitionId) (budget : Airfields) =
         let weakRegions =
             war.World.Regions.Values
             |> Seq.filter (fun region ->
                 war.GetOwner(region.RegionId) = Some friendly.Other &&
-                war.GetGroundForces(friendly, region.RegionId) > 0.0f<MGF>)
+                (not onlySupport || war.GetGroundForces(friendly, region.RegionId) > 0.0f<MGF>))
             |> Seq.sortByDescending (fun region ->
                 war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId))
             |> List.ofSeq
@@ -601,15 +601,16 @@ module Bodenplatte =
         let tryMakeIndustryRaids = tryMakeIndustryRaids war side
         let tryMakeAirRaids = Planning.orElse [ tryMakeAirfieldRaids; tryMakeIndustryRaids ]
         let tryMakeOtherDefensiveGroundForcesRaids = tryMakeDefensiveGroundForcesRaids war side.Other
-        let tryMakeOffensiveGroundForcesRaids = tryMakeOffensiveGroundForcesRaids war side
-        let tryMakeDefensiveGroundForcesRaids = tryMakeDefensiveGroundForcesRaids war side
+        let tryMakeGroundForcesHarassment = tryMakeOffensiveGroundForcesRaids war false side
+        let tryMakeGroundForcesSupport = tryMakeOffensiveGroundForcesRaids war true side
+        let tryMakeGroundForcesDefense = tryMakeDefensiveGroundForcesRaids war side
         let tryTransferPlanesForward = tryTransferPlanesForward war side
 
         let sideAttacks =
             Planning.orElse [
-                tryMakeDefensiveGroundForcesRaids  |> Planning.andThen [ tryMakeAirRaids; tryTransferPlanesForward ]
-                tryMakeAirRaids |> Planning.andThen [ tryMakeOffensiveGroundForcesRaids; tryTransferPlanesForward ]
-                tryMakeOffensiveGroundForcesRaids |> Planning.andThen [ tryTransferPlanesForward ]
+                tryMakeGroundForcesDefense  |> Planning.andThen [ tryMakeAirRaids; tryTransferPlanesForward ]
+                tryMakeAirRaids |> Planning.andThen [ tryMakeGroundForcesSupport; tryTransferPlanesForward ]
+                tryMakeGroundForcesHarassment |> Planning.andThen [ tryTransferPlanesForward ]
             ]
 
         let budget = Airfields.Create war
