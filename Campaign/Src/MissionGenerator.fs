@@ -207,7 +207,7 @@ module Bodenplatte =
     /// Get the list of attackers of a coalition, preferred ones first
     let attackersOf =
         function
-        | Axis -> [ idMe262 ]
+        | Axis -> [ idMe262; idFw190d9 ]
         | Allies -> [ idP38; idP47]
 
     /// Get the list of interceptors of a coalition, preferred ones first
