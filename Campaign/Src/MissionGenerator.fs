@@ -429,10 +429,9 @@ module Bodenplatte =
         let raidTargets =
             enemyAirfields
             |> List.filter (fun af ->
-                let numPlanes =
-                    totalPlanes(war.GetNumPlanes(af.AirfieldId))
+                let numPlanes = totalPlanes(war.GetNumPlanes(af.AirfieldId))
                 let resources = war.GetAirfieldCapacity(af.AirfieldId)
-                numPlanes >= 10.0f || resources >= minActiveAirfieldResources)
+                numPlanes >= 1.0f && resources >= minActiveAirfieldResources)
 
         tryMakeAirRaids war (AirfieldTargetAdapter()) raidTargets friendly budget
 
