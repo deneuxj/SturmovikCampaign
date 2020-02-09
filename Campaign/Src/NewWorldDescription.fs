@@ -226,6 +226,7 @@ type Runway = {
 
 type Airfield = {
     AirfieldId : AirfieldId
+    Position : Vector2
     Region : RegionId
     Boundary : Vector2 list
     Runways : Runway list
@@ -521,6 +522,7 @@ module Loading =
                         |> List.filter (fun building -> (getBuilding building).Pos.Pos.IsInConvexPolygon boundary)
                     yield {
                         AirfieldId = AirfieldId (area.GetName().Value)
+                        Position = pos
                         Region = region.RegionId
                         Boundary = boundary
                         Runways = runways

@@ -100,7 +100,7 @@ type TargetAdapter<'Target> =
 
 type AirfieldTargetAdapter() =
     interface TargetAdapter<Airfield> with
-        member __.GetPos(af) = af.Boundary.Head
+        member __.GetPos(af) = af.Position
         member __.MkGroundTarget(af) = AirfieldTarget af.AirfieldId
         member __.GetRegion(af) = af.Region
 
