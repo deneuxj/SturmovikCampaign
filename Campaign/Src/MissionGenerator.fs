@@ -207,24 +207,25 @@ module Bodenplatte =
     /// Get the list of attackers of a coalition, preferred ones first
     let attackersOf =
         function
-        | Axis -> [ idMe262; idFw190d9 ]
-        | Allies -> [ idP38; idP47]
+        | Axis -> [ idMe262; idFw190d9; idFw190a8; idBf109k4; idBf109g14]
+        | Allies -> [ idP38; idP47; idP51 ]
 
     /// Get the list of interceptors of a coalition, preferred ones first
     let interceptorsOf =
         function
-        | Axis -> [ idFw190d9; idBf109k4 ]
-        | Allies -> [ idP38; idP51; idP47 ]
+        | Axis -> [ idFw190d9; idBf109k4; idFw190a8; idBf109g14 ]
+        | Allies -> [ idP38; idP51; idTempest; idP47; idSpitfire ]
 
     /// Get the list of fighters of a coalition, preferred ones first
     let fightersOf =
         function
-        | Axis -> [ idBf109g14; idFw190a8 ]
-        | Allies -> [ idP51; idSpitfire; idTempest ]
+        | Axis -> [ idBf109g14; idFw190a8; idBf109k4; idFw190d9 ]
+        | Allies -> [ idP51; idSpitfire; idTempest; idP47; idP38 ]
 
     let allPlanesOf coalition =
         [attackersOf; interceptorsOf; fightersOf]
         |> List.collect (fun f -> f coalition)
+        |> List.distinct
 
     /// Get the total number of planes of give types at an airfield
     let sumPlanes (atAirfield : Map<PlaneModelId, float32>) (planes : PlaneModelId seq) =
