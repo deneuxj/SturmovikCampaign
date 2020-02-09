@@ -329,49 +329,42 @@ module Bodenplatte =
             TooFewTargets
         | _ :: _ ->
             let raids =
-                /// Check that distances between start airfields and objectives are within range,
-                /// and then return the missions of which a raid is composed:
+                /// Return the missions of which a raid is composed:
                 /// An airfield attack, CAP over target, CAP over attackers' home base
                 let planOneRaid (target : 'Target) attackers targetCover homeCover =
-                    let getAirfieldsDistance (af : Airfield) (pos : Vector2) =
-                        (af.Boundary.Head - pos).Length() * 1.0f<M>
-                    let canFlyToTarget (target, (plane : PlaneModel, _, home)) =
-                        getAirfieldsDistance home (adapter.GetPos target) <= plane.MaxRange
-                    let canFlyToAirfield (af, (plane : PlaneModel, _, home)) =
-                        getAirfieldsDistance home  (airfieldPos af) <= plane.MaxRange
-                    let planeOf (plane, _, _) = plane
-                    let numPlanesOf (_, num, _) = num
-                    let airfieldOf (_, _, af) = af
-                    if [(target, attackers); (target, targetCover) ] |> List.forall canFlyToTarget && canFlyToAirfield (airfieldOf attackers, homeCover) then
-                        [
-                            {
-                                StartAirfield = (airfieldOf attackers).AirfieldId
-                                Objective = adapter.GetRegion target
-                                MissionType =
-                                    GroundTargetAttack(
-                                        adapter.MkGroundTarget target,
-                                        LowAltitude
-                                    )
-                                NumPlanes = numPlanesOf attackers
-                                Plane = (planeOf attackers).Id
-                            }
-                            {
-                                StartAirfield = (airfieldOf targetCover).AirfieldId
-                                Objective = adapter.GetRegion target
-                                MissionType = AreaProtection
-                                NumPlanes = numPlanesOf targetCover
-                                Plane = (planeOf targetCover).Id
-                            }
-                            {
-                                StartAirfield = (airfieldOf homeCover).AirfieldId
-                                Objective = adapter.GetRegion target
-                                MissionType = AreaProtection
-                                NumPlanes = numPlanesOf homeCover
-                                Plane = (planeOf homeCover).Id
-                            }
-                        ]
-                    else
-                        []
+                    let planeOf (plane, _, _) : PlaneModel = plane
+                    let numPlanesOf (_, num, _) : int = num
+                    let airfieldOf (_, _, af) : Airfield = af
+                    [
+                        {
+                            StartAirfield = (airfieldOf attackers).AirfieldId
+                            Objective = adapter.GetRegion target
+                            MissionType =
+                                GroundTargetAttack(
+                                    adapter.MkGroundTarget target,
+                                    LowAltitude
+                                )
+                            NumPlanes = numPlanesOf attackers
+                            Plane = (planeOf attackers).Id
+                        }
+                        {
+                            StartAirfield = (airfieldOf targetCover).AirfieldId
+                            Objective = adapter.GetRegion target
+                            MissionType = AreaProtection
+                            NumPlanes = numPlanesOf targetCover
+                            Plane = (planeOf targetCover).Id
+                        }
+                        {
+                            StartAirfield = (airfieldOf homeCover).AirfieldId
+                            Objective = adapter.GetRegion target
+                            MissionType = AreaProtection
+                            NumPlanes = numPlanesOf homeCover
+                            Plane = (planeOf homeCover).Id
+                        }
+                    ]
+                let isInPlaneRange (plane : PlaneModelId) (start : Airfield) (target : Vector2) =
+                    let maxRange = war.World.PlaneSet.[plane].MaxRange
+                    (start.Position - target).Length() * 1.0f<M> < maxRange
                 let mutable budget = budget
                 // For each attack plane type, and for each potential target airfield,
                 // Try to plan an attack flight, a target cover flight with fighters,
@@ -388,33 +381,34 @@ module Bodenplatte =
                                 |> Seq.allPairs [10; 5]
                                 |> Seq.allPairs readyAirfields
                                 |> Seq.where (fun (start, (numAttackers, _)) ->
-                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [attacker] >= float32 numAttackers)
+                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [attacker] >= float32 numAttackers &&
+                                    isInPlaneRange attacker start (adapter.GetPos target))
                                 |> Seq.allPairs readyAirfields
                                 |> Seq.where (fun (start, (_, (_, (numFighters, (fighter, _))))) ->
-                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [fighter] >= float32 numFighters)
+                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [fighter] >= float32 numFighters &&
+                                    isInPlaneRange fighter start (adapter.GetPos target))
                                 |> Seq.allPairs readyAirfields
-                                |> Seq.where (fun (start, (_, (_, (_, (numFighters, (_, interceptor)))))) ->
-                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [interceptor] >= float32 numFighters)
+                                |> Seq.where (fun (start, (_, (attackerHome, (_, (numFighters, (_, interceptor)))))) ->
+                                    sumPlanes budget.Airfields.[start.AirfieldId].Planes [interceptor] >= float32 numFighters &&
+                                    isInPlaneRange interceptor start attackerHome.Position)
                                 |> Seq.tryPick (fun (start1, (start2, (start3, (numAttackers, (numFighters, (fighter, interceptor)))))) ->
                                     let attackers = (war.World.PlaneSet.[attacker], numAttackers, start3)
                                     let targetCover = (war.World.PlaneSet.[fighter], numFighters, start2)
                                     let homeCover = (war.World.PlaneSet.[interceptor], numFighters, start1)
-                                    match planOneRaid target attackers targetCover homeCover with
-                                    | [] -> None
-                                    | missions ->
-                                        let remaining =
-                                            missions
-                                            |> List.fold (fun budget mission ->
-                                                budget
-                                                |> Option.bind (fun (budget : Airfields) ->
-                                                    budget.TryCheckout(mission.StartAirfield, mission.CheckoutData))
-                                            ) (Some budget)
-                                        match remaining with
-                                        | Some x ->
-                                            budget <- x
-                                            Some missions
-                                        | None ->
-                                            None)
+                                    let missions = planOneRaid target attackers targetCover homeCover
+                                    let remaining =
+                                        missions
+                                        |> List.fold (fun budget mission ->
+                                            budget
+                                            |> Option.bind (fun (budget : Airfields) ->
+                                                budget.TryCheckout(mission.StartAirfield, mission.CheckoutData))
+                                        ) (Some budget)
+                                    match remaining with
+                                    | Some x ->
+                                        budget <- x
+                                        Some missions
+                                    | None ->
+                                        None)
                                 |> Option.defaultValue []
                             yield! missions
                 ]
