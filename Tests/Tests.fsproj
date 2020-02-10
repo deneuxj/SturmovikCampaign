@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="NewWorldState.fs" />
+    <Compile Include="MissionGenerator.fs" />
     <Compile Include="Other.fs" />
     <None Include="Script.fsx" />
     <Content Include="App.config" />
