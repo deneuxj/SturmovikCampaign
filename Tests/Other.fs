@@ -36,6 +36,12 @@ let ``Seq.mergeOrdered works as expected``() =
     Assert.AreEqual(expected, res)
 
 [<Test>]
+let ``Seq.maxByUntil includes the predicate true point``() =
+    let xs = [ 1; 2; 3; 4; 5 ]
+    let res = xs |> Seq.maxByUntil id ((=) 4)
+    Assert.AreEqual(4, res)
+
+[<Test>]
 let ``Campaign.Commenting.InjectOldAndFresh works as expected``() =
     let oldEntries =
         asyncSeq {
