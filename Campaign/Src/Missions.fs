@@ -47,9 +47,17 @@ with
         | ArmoredCar -> 5.0f<MGF>
         | _ -> 0.0f<MGF>
 
+module TargetType =
+    let (|GroundForceTarget|_|) (kind : TargetType) =
+        let value = kind.GroundForceValue
+        if value > 0.0f<MGF> then
+            Some value
+        else None
+
 type Target =
     {
         Kind : TargetType
+        Owner : CoalitionId option
         Pos : Vector2
         Altitude : float32<M>
     }
@@ -122,14 +130,14 @@ with
 
 /// Kind of targets on the ground
 type GroundTargetType =
-    | GroundForces
+    | GroundForces of CoalitionId
     | BridgeTarget
     | BuildingTarget // Factories and other buildings inside regions but outside airfields
     | AirfieldTarget of AirfieldId // Hangars, fuel tanks, parked planes... on an airfield
 with
     member this.Description =
         match this with
-        | GroundForces -> "ground forces"
+        | GroundForces coalition -> sprintf "ground forces of %s" (string coalition)
         | BridgeTarget -> "bridges"
         | BuildingTarget -> "buildings"
         | AirfieldTarget afId -> sprintf "%s airbase" afId.AirfieldName
@@ -460,7 +468,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
 
                     let targets =
                         // Pick parts of a building at random, biased towards undamaged parts
-                        let getParts (building : BuildingInstance) =
+                        let getParts owner (building : BuildingInstance) =
                             let parts =
                                 building.Properties.SubParts
                                 |> List.sortByDescending (fun part -> war.GetBuildingPartFunctionalityLevel(building.Id, part))
@@ -474,6 +482,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                             let part = x * x * (float numParts) |> int |> min (numParts - 1)
                                             yield {
                                                 Kind = TargetType.Building(building.Id, part)
+                                                Owner = owner
                                                 Pos = building.Pos.Pos
                                                 Altitude = 0.0f<M>
                                             }
@@ -491,23 +500,20 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                     }
                                 yield! work (List.length parts) parts
                             }
-                        let getBuildingParts building =
-                            let parts = getParts building
+                            |> Seq.cache
+                        let getBuildingParts owner building =
+                            let parts = getParts owner building
                             let partVolume = building.Properties.PartCapacity
                             let numParts = volumeBuildingDamaged / partVolume |> int |> max 1
                             Seq.truncate numParts parts
-                        let getBridgeParts bridge =
-                            getParts bridge
+                        let getBridgeParts owner bridge =
+                            getParts owner bridge
                             |> Seq.truncate numBridgePartsDamaged
                         match targetType with
-                        | GroundForces ->
+                        | GroundForces owner ->
                             let kinds =
                                 [| TargetType.ArmoredCar; TargetType.Artillery; TargetType.Tank |]
-                            let forces =
-                                let owner = war.GetOwner(mission.Objective)
-                                owner
-                                |> Option.map(fun owner -> war.GetGroundForces(owner, mission.Objective))
-                                |> Option.defaultValue 0.0f<MGF>
+                            let forces = war.GetGroundForces(owner, mission.Objective)
                             let targets =
                                 Seq.unfold (fun forces ->
                                     if forces < 0.0f<MGF> then
@@ -515,9 +521,11 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                     else
                                         let kind = kinds.[random.Next(kinds.Length)]
                                         Some(kind, forces - kind.GroundForceValue)) forces
+                                |> Seq.cache
                                 |> Seq.map (fun kind ->
                                     {
                                         Kind = kind
+                                        Owner = Some owner
                                         Pos = Vector2.Zero
                                         Altitude = 0.0f<M>
                                     }
@@ -525,6 +533,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             targets
 
                         | BridgeTarget ->
+                            let owner = war.GetOwner(region.RegionId)
                             let targets =
                                 war.World.Roads.Links @ war.World.Rails.Links
                                 |> List.collect (fun link -> link.Bridges)
@@ -532,26 +541,28 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 |> List.sortByDescending (war.GetBridgeFunctionalityLevel)
                                 |> Seq.collect (fun bid ->
                                     let bridge = war.World.Bridges.[bid]
-                                    getBridgeParts bridge)
+                                    getBridgeParts owner bridge)
                             targets
 
                         | BuildingTarget ->
+                            let owner = war.GetOwner(region.RegionId)
                             let targets =
                                 region.IndustryBuildings
                                 |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
                                 |> Seq.collect (fun bid ->
                                     let building = war.World.Buildings.[bid]
-                                    getBuildingParts building)
+                                    getBuildingParts owner building)
                             targets
 
                         | AirfieldTarget af ->
+                            let owner = war.GetOwner(region.RegionId)
                             let buildingTargets =
                                 war.World.Airfields.[af].Facilities
                                 |> List.ofSeq
                                 |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
                                 |> Seq.collect (fun bid ->
                                     let building = war.World.Buildings.[bid]
-                                    getBuildingParts building)
+                                    getBuildingParts owner building)
 
                             let parkedPlanes =
                                 war.GetNumPlanes(af)
@@ -561,20 +572,24 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 |> Seq.map (fun planeId ->
                                     {
                                         Kind = TargetType.ParkedPlane(af, planeId)
+                                        Owner = owner
                                         Pos = Vector2.Zero
                                         Altitude = 0.0f<M>
                                     })
 
                             Seq.selectFrom2 (fun _ _ -> random.Next(2) = 1) buildingTargets parkedPlanes
+                            |> Seq.cache
                             |> Seq.map (function Choice1Of2 x | Choice2Of2 x -> x)
 
                     for target in targets |> Seq.truncate numPlanes do
                         let command =
-                            match target.Kind with
-                            | TargetType.Building(bid, part) ->
+                            match target with
+                            | { Kind = TargetType.Building(bid, part) } ->
                                 Some(DamageBuildingPart(bid, part, 1.0f))
-                            | TargetType.ParkedPlane(afId, planeId) ->
+                            | { Kind = TargetType.ParkedPlane(afId, planeId) } ->
                                 Some(RemovePlane(afId, planeId, 1.0f))
+                            | { Kind = TargetType.GroundForceTarget value; Owner = Some owner } ->
+                                Some(DestroyGroundForces(mission.Objective, owner, value))
                             | _ ->
                                 None
                         yield

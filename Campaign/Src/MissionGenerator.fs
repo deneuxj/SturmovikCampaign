@@ -110,10 +110,10 @@ type RegionTargetAdapter() =
         member __.MkGroundTarget(region) = BuildingTarget
         member __.GetRegion(region) = region.RegionId
 
-type GroundForcesTargetAdapter() =
+type GroundForcesTargetAdapter(side) =
     interface TargetAdapter<Region> with
         member __.GetPos(region) = region.Position
-        member __.MkGroundTarget(region) = GroundForces
+        member __.MkGroundTarget(region) = GroundForces side
         member __.GetRegion(region) = region.RegionId
 
 type MissionPlanningResult =
@@ -463,7 +463,7 @@ module Bodenplatte =
                 war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId))
             |> List.ofSeq
 
-        tryMakeAirRaids war (GroundForcesTargetAdapter()) threatenedRegions friendly budget
+        tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) threatenedRegions friendly budget
 
     /// Try to plan missions to attack ground forces in enemy territory
     let tryMakeOffensiveGroundForcesRaids (war : WarState) (onlySupport : bool) (friendly : CoalitionId) (budget : Airfields) =
@@ -473,10 +473,10 @@ module Bodenplatte =
                 war.GetOwner(region.RegionId) = Some friendly.Other &&
                 (not onlySupport || war.GetGroundForces(friendly, region.RegionId) > 0.0f<MGF>))
             |> Seq.sortByDescending (fun region ->
-                war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId))
+                war.GetGroundForces(friendly.Other, region.RegionId) / if onlySupport then war.GetGroundForces(friendly, region.RegionId) else 1.0f<MGF>)
             |> List.ofSeq
 
-        tryMakeAirRaids war (GroundForcesTargetAdapter()) weakRegions friendly budget
+        tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) weakRegions friendly budget
 
     /// Try to make CAP missions over regions targetted by enemy air missions.
     let tryMakeCovers (war : WarState) (friendly : CoalitionId) (enemyMissions : AirMission list) (budget : Airfields) =
