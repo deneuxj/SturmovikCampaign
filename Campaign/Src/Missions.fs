@@ -469,46 +469,27 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                     let targets =
                         // Pick parts of a building at random, biased towards undamaged parts
                         let getParts owner (building : BuildingInstance) =
-                            let parts =
-                                building.Properties.SubParts
-                                |> List.sortByDescending (fun part -> war.GetBuildingPartFunctionalityLevel(building.Id, part))
-                            seq {
-                                let rec work numParts parts =
-                                    seq {
-                                        match parts with
-                                        | [] -> ()
-                                        | _ :: _ ->
-                                            let x = random.NextDouble();
-                                            let part = x * x * (float numParts) |> int |> min (numParts - 1)
-                                            yield {
-                                                Kind = TargetType.Building(building.Id, part)
-                                                Owner = owner
-                                                Pos = building.Pos.Pos
-                                                Altitude = 0.0f<M>
-                                            }
-                                            let parts =
-                                                parts
-                                                |> List.fold (fun (i, xs) x ->
-                                                    if i = part then
-                                                        (i + 1, xs)
-                                                    else
-                                                        (i + 1, x :: xs)
-                                                ) (0, [])
-                                                |> snd
-                                                |> List.rev
-                                            yield! work (numParts - 1) parts
-                                    }
-                                yield! work (List.length parts) parts
-                            }
-                            |> Seq.cache
+                            building.Properties.SubParts
+                            |> List.sortByDescending (fun part -> war.GetBuildingPartHealthLevel(building.Id, part))
+                            |> Seq.filter (fun part -> war.GetBuildingPartHealthLevel(building.Id, part) > 0.0f)
+                            |> Seq.map (fun part ->
+                                {
+                                    Kind = TargetType.Building(building.Id, part)
+                                    Owner = owner
+                                    Pos = building.Pos.Pos
+                                    Altitude = 0.0f<M>
+                                })
+
                         let getBuildingParts owner building =
                             let parts = getParts owner building
                             let partVolume = building.Properties.PartCapacity
                             let numParts = volumeBuildingDamaged / partVolume |> int |> max 1
                             Seq.truncate numParts parts
+
                         let getBridgeParts owner bridge =
                             getParts owner bridge
                             |> Seq.truncate numBridgePartsDamaged
+
                         match targetType with
                         | GroundForces owner ->
                             let kinds =
