@@ -460,7 +460,8 @@ module Bodenplatte =
                 war.GetOwner(region.RegionId) = Some friendly &&
                 war.GetGroundForces(friendly, region.RegionId) < 5.0f * war.GetGroundForces(friendly.Other, region.RegionId))
             |> Seq.sortByDescending (fun region ->
-                war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId))
+                war.GetGroundForces(friendly.Other, region.RegionId) / war.GetGroundForces(friendly, region.RegionId),
+                war.GetGroundForces(friendly.Other, region.RegionId))
             |> List.ofSeq
 
         tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) threatenedRegions friendly budget
@@ -471,6 +472,7 @@ module Bodenplatte =
             war.World.Regions.Values
             |> Seq.filter (fun region ->
                 war.GetOwner(region.RegionId) = Some friendly.Other &&
+                war.GetGroundForces(friendly.Other, region.RegionId) > 0.0f<MGF> &&
                 (not onlySupport || war.GetGroundForces(friendly, region.RegionId) > 0.0f<MGF>))
             |> Seq.sortByDescending (fun region ->
                 war.GetGroundForces(friendly.Other, region.RegionId) / if onlySupport then war.GetGroundForces(friendly, region.RegionId) else 1.0f<MGF>)
