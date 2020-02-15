@@ -224,6 +224,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
             for mId, mission in airMissions do
                 let plane = war.World.PlaneSet.[mission.Plane].Name
                 let numPlanes = numPlanes.[mId]
+                assert(numPlanes >= 0.0f)
                 yield
                     Some(RemovePlane(mission.StartAirfield, mission.Plane, float32 numPlanes)),
                     sprintf "%d %s take off from %s for %s" (int numPlanes) plane mission.StartAirfield.AirfieldName mission.MissionType.Description
@@ -406,6 +407,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                         let numIntercepted2 = numIntercepted - numInterceptedShotDown
                         numPlanes.[interId] <- numInterceptors2
                         numPlanes.[mId] <- numIntercepted2
+                        assert(numPlanes |> Seq.forall (fun kvp -> kvp.Value >= 0.0f))
                         if numInterceptorsShotDown > 0.0f then
                             yield
                                 None,
@@ -428,6 +430,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         seq {
             for mId, mission in airMissions do
                 let numPlanes = int <| numPlanes.[mId]
+                assert(numPlanes >= 0)
                 match mission.MissionType with
                 | AreaProtection ->
                     // Effect of area protection already handled during interception phase
@@ -490,9 +493,11 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             let parts = getParts owner building
                             let partVolume = building.Properties.PartCapacity
                             let numParts = volumeBuildingDamaged / partVolume |> int |> max 1
+                            assert(numParts >= 0)
                             Seq.truncate numParts parts
 
                         let getBridgeParts owner bridge =
+                            assert(numBridgePartsDamaged >= 0)
                             getParts owner bridge
                             |> Seq.truncate numBridgePartsDamaged
 
@@ -555,6 +560,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 war.GetNumPlanes(af)
                                 |> Map.toSeq
                                 |> Seq.collect (fun (planeId, qty) ->
+                                    assert(qty >= 0.0f)
                                     Seq.init (int qty) (fun _ -> planeId))
                                 |> Seq.map (fun planeId ->
                                     {
