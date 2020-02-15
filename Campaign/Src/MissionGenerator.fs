@@ -180,15 +180,24 @@ module Bodenplatte =
     let totalPlanes : Map<_, float32> -> float32 =
         Map.toSeq >> Seq.sumBy (snd >> floor)
 
-    let planeRunCost = 10.0f<M^3>
+    let typicalRange = 1.0e5f<M>
+    let planeRunCost = 0.2f<M^3> / typicalRange
+    let bombDensity = 250.0f<K/M^3>
 
     type Campaign.Missions.AirMission with
-        member this.CheckoutData =
-            (this.Plane, planeRunCost, float32 this.NumPlanes)
+        member this.CheckoutData(world : World) =
+            let distance =
+                1.0f<M> * (world.Regions.[this.Objective].Position - world.Airfields.[this.StartAirfield].Position).Length()
+            let bombs =
+                match this.MissionType with
+                | GroundTargetAttack _ -> world.PlaneSet.[this.Plane].BombCapacity / bombDensity
+                | AreaProtection -> 0.0f<M^3>
+                | PlaneTransfer _ -> 0.0f<M^3>
+            (this.Plane, distance * planeRunCost + bombs, float32 this.NumPlanes)
 
     let maxPlanesAtAirfield = 100.0f
 
-    let minActiveAirfieldResources = planeRunCost * 10.0f
+    let minActiveAirfieldResources = planeRunCost * 10.0f * typicalRange
 
     let minRegionBuildingCapacity = 1000.0f<M^3>
 
@@ -257,6 +266,7 @@ module Bodenplatte =
             |> List.ofSeq
 
         // Non-transport planes: Set according to airfield resources and respective cost
+        let planeRunCost = typicalRange * planeRunCost
         match planes with
         | [] -> ()
         | [plane] ->
@@ -404,7 +414,7 @@ module Bodenplatte =
                                         |> List.fold (fun budget (mission, _) ->
                                             budget
                                             |> Option.bind (fun (budget : Airfields) ->
-                                                budget.TryCheckout(mission.StartAirfield, mission.CheckoutData))
+                                                budget.TryCheckout(mission.StartAirfield, mission.CheckoutData war.World))
                                         ) (Some budget)
                                     match remaining with
                                     | Some x ->
@@ -558,7 +568,7 @@ module Bodenplatte =
                                             Plane = plane.Id
                                         }
                                     let budget2 =
-                                        budget.TryCheckout(start.AirfieldId, mission.CheckoutData)
+                                        budget.TryCheckout(start.AirfieldId, mission.CheckoutData war.World)
                                     match budget2 with
                                     | Some budget2 ->
                                         budget <- budget2
@@ -584,6 +594,7 @@ module Bodenplatte =
 
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
+        let planeRunCost = typicalRange * planeRunCost + 500.0f<K>/bombDensity
         let mutable budget = budget
         let missions =
             [
@@ -592,14 +603,22 @@ module Bodenplatte =
                     |> Seq.where (fun (af1, af2) -> distanceToEnemy.[af1.Region] > distanceToEnemy.[af2.Region])
                 for af1, af2 in forward do
                     let mutable excessPlanes =
+                        let minAmount =
+                            if distanceToEnemy.[af1.Region] > 4 then
+                                5.0f
+                            else
+                                15.0f
                         let afid = af1.AirfieldId
                         let af = budget.Airfields.[afid]
-                        (totalPlanes af.Planes * planeRunCost - af.Resources) / planeRunCost
+                        totalPlanes af.Planes - minAmount
                     let mutable sustainable =
                         let afid = af2.AirfieldId
                         let af = budget.Airfields.[afid]
                         (af.Resources - totalPlanes af.Planes * planeRunCost) / planeRunCost
-                    for plane in attackersOf friendly @ fightersOf friendly @ interceptorsOf friendly do
+                    let allButTransport =
+                        allPlanesOf friendly
+                        |> List.filter (fun planeId -> war.World.PlaneSet.[planeId].Kind <> PlaneType.Transport)
+                    for plane in allButTransport do
                         if excessPlanes > 0.0f && sustainable > 0.0f then
                             let numPlanes =
                                 sumPlanes budget.Airfields.[af1.AirfieldId].Planes [plane]
@@ -615,7 +634,7 @@ module Bodenplatte =
                                         NumPlanes = numPlanes
                                         Plane = plane
                                     }
-                                let budget2 = budget.TryCheckout(af1.AirfieldId, mission.CheckoutData)
+                                let budget2 = budget.TryCheckout(af1.AirfieldId, mission.CheckoutData war.World)
                                 match budget2 with
                                 | Some b ->
                                     budget <- b
