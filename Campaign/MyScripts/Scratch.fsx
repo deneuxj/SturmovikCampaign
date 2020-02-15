@@ -71,7 +71,7 @@ type WarState with
         |> Seq.sumBy (fun af ->
             this.GetNumPlanes(af.AirfieldId)
             |> Map.toSeq
-            |> Seq.sumBy (fun (plane, qty) -> if this.World.PlaneSet.[plane].Kind = planeType then qty else 0.0f)
+            |> Seq.sumBy (fun (plane, qty) -> if this.World.PlaneSet.[plane].Kind = planeType then floor qty else 0.0f)
         )
 
     member this.GetSummaryColums() =
@@ -91,10 +91,12 @@ type WarState with
 
 let advance verbose =
     match step with
-    | Stalemate -> printfn "Stalemate"
-    | Victory side -> printfn "%s is victorious" (string side)
+    | Stalemate comment -> printfn "Stalemate after %s" comment
+    | Victory(side, comment) -> printfn "%s is victorious thanks to %s" (string side) comment
     | Ongoing data ->
         printfn "New mission: %s" data.Briefing
+        for mission in data.Missions do
+            printfn "%s" mission.Description
         printfn "%s" (war.GetSummaryColums())
         printfn "%s" (war.GetSummary Axis)
         printfn "%s" (war.GetSummary Allies)
@@ -105,17 +107,32 @@ let advance verbose =
                 printfn "Action: %s" descr
             cmd
             |> Option.iter (fun cmd ->
+                let showStatus(prefix) =
+                    match cmd with
+                    | DamageBuildingPart(bid, part, damage) ->
+                        let health = war.GetBuildingPartHealthLevel(bid, part)
+                        printfn "%s Current health of part: %1.2f" prefix health
+                    | _ -> ()
+                //showStatus "BEFORE"
                 for result in cmd.Execute(war) do
                     if verbose then
-                        printfn "Result: %s" (Results.asString war result))
+                        printfn "Result: %s" (Results.asString war result)
+                //showStatus "AFTER"
+                )
+        for region in war.World.Regions.Values do
+            for coalition in [Axis; Allies] do
+                let owner = war.GetOwner(region.RegionId)
+                if war.GetGroundForces(coalition, region.RegionId) > 0.0f<MGF> && owner <> Some coalition then
+                    eprintfn "Forces from %s wandered into %s controlled by %s" (string coalition) (string region.RegionId) (string owner)
         step <- data.Next war
 
 let advanceStar verbose =
     let rec work() =
+        advance verbose
         match step with
         | Ongoing _ ->
-            advance verbose
             work()
         | _ ->
-            ()
+            // Can't advance, but try anyway to get the final status message
+            advance verbose
     work()
