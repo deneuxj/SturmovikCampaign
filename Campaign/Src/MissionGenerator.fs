@@ -621,7 +621,7 @@ module Bodenplatte =
                                 sumPlanes budget.Airfields.[af1.AirfieldId].Planes [plane]
                                 |> min excessPlanes
                                 |> int
-                                |> max 4
+                                |> min 25
                             if numPlanes > 0 then
                                 let mission =
                                     {
@@ -635,16 +635,16 @@ module Bodenplatte =
                                 match budget2 with
                                 | Some b ->
                                     budget <- b
-                                    let numPlanes = (float32 numPlanes)
-                                    excessPlanes <- excessPlanes - numPlanes
-                                    sustainable <- sustainable - numPlanes
-                                    yield mission
+                                    let numPlanesF = (float32 numPlanes)
+                                    excessPlanes <- excessPlanes - numPlanesF
+                                    sustainable <- sustainable - numPlanesF
+                                    yield mission, sprintf "Transfer %d %s from %s to %s" numPlanes (string plane) af1.AirfieldId.AirfieldName af2.AirfieldId.AirfieldName
                                 | None ->
                                     ()
             ]
-            |> List.map (fun m ->
+            |> List.map (fun (m, description) ->
                 { Kind = AirMission m
-                  Description = "Transfer" })
+                  Description = description })
         Plan ("Transfers", missions, budget)
 
     let rec oneSideStrikes (side : CoalitionId) comment depth (war : WarState) =
