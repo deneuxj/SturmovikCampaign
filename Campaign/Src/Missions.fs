@@ -174,9 +174,15 @@ type GroundMission =
         MissionType : GroundMissionType
     }
 
-type Mission =
+type MissionType =
     | AirMission of AirMission
     | GroundMission of GroundMission
+
+type Mission =
+    {
+        Kind : MissionType
+        Description : string
+    }
 
 type MissionSimulator(random : System.Random, war : WarState, missions : Mission list, duration : float32<H>) =
     let missions =
@@ -186,15 +192,15 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         missions
         |> List.choose (
             function
-            | i, AirMission mission -> Some (i, mission)
-            | _, GroundMission _ -> None)
+            | i, { Kind = AirMission mission } -> Some (i, mission)
+            | _, { Kind = GroundMission _ } -> None)
 
     let groundMissions =
         missions
         |> List.choose (
             function
-            | _, AirMission _ -> None
-            | i, GroundMission mission -> Some (i, mission))
+            | _, { Kind = AirMission _ } -> None
+            | i, { Kind = GroundMission mission } -> Some (i, mission))
 
     let numPlanes =
         airMissions

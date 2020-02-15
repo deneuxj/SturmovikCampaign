@@ -15,9 +15,12 @@ let airMission = {
 }
 
 let mission : Mission =
-    AirMission airMission
+    { Kind = AirMission airMission
+      Description = "Mission A" }
 
-let missionB = AirMission { airMission with Objective = RegionId "AC" }
+let missionB =
+    { Kind = AirMission { airMission with Objective = RegionId "AC" }
+      Description = "Mission B" }
 
 let budget0 =
     { Airfields = Map.empty }
@@ -25,81 +28,81 @@ let budget0 =
 [<Test>]
 let ``chain properly executes plans in a sequence``() =
     let planA _ =
-        MissionPlanningResult.TooFewTargets
+        MissionPlanningResult.TooFewTargets ""
     let planB budget =
-        MissionPlanningResult.Plan([], budget)
+        MissionPlanningResult.Plan("", [], budget)
     let planC budget =
-        MissionPlanningResult.Plan([mission], budget)
+        MissionPlanningResult.Plan("", [mission], budget)
 
     let plan = Planning.chain [planA; planB]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan([], budget0)
+        MissionPlanningResult.Plan("", [], budget0)
     Assert.AreEqual(expected, res)
 
     let plan = Planning.chain [planA; planB; planC]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan([mission], budget0)
+        MissionPlanningResult.Plan("", [mission], budget0)
     Assert.AreEqual(expected, res)
 
     let plan = Planning.chain [planC; planB; planA]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan([mission], budget0)
+        MissionPlanningResult.Plan("", [mission], budget0)
     Assert.AreEqual(expected, res)
 
 [<Test>]
 let ``chain properly accumulates missions``() =
     let planA _ =
-        MissionPlanningResult.TooFewTargets
+        MissionPlanningResult.TooFewTargets ""
     let planB budget =
-        MissionPlanningResult.Plan([ missionB ], budget)
+        MissionPlanningResult.Plan("", [missionB], budget)
     let planC budget =
-        MissionPlanningResult.Plan([mission], budget)
+        MissionPlanningResult.Plan("", [mission], budget)
 
     let plan = Planning.chain [planA; planB; planC; planC]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan([missionB; mission; mission], budget0)
+        MissionPlanningResult.Plan("", [missionB; mission; mission], budget0)
     Assert.AreEqual(expected, res)
 
 [<Test>]
 let ``andThen executes rest of sequence when first plan has work to do``() =
     let planA budget =
-        MissionPlanningResult.Plan([mission], budget)
+        MissionPlanningResult.Plan("", [mission], budget)
     let planB budget =
-        MissionPlanningResult.Plan([missionB], budget)
+        MissionPlanningResult.Plan("", [missionB], budget)
     let plan = Planning.andThen [planB] planA
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan([mission; missionB], budget0)
+        MissionPlanningResult.Plan("", [mission; missionB], budget0)
     Assert.AreEqual(expected, res)
 
 [<Test>]
 let ``andThen does not let TooFewTargets in also arguments erase the first plan``() =
     let planA budget =
-        MissionPlanningResult.Plan([mission], budget)
+        MissionPlanningResult.Plan("", [mission], budget)
     let planB budget =
-        MissionPlanningResult.TooFewTargets
+        MissionPlanningResult.TooFewTargets ""
     let plan = Planning.andThen [planB] planA
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan([mission], budget0)
+        MissionPlanningResult.Plan("", [mission], budget0)
     Assert.AreEqual(expected, res)
 
 [<Test>]
 let ``orElse picks the first plan with work to do``() =
     let planA _ =
-        MissionPlanningResult.TooFewTargets
+        MissionPlanningResult.TooFewTargets ""
     let planB budget =
-        MissionPlanningResult.Plan([], budget)
+        MissionPlanningResult.Plan("", [], budget)
     let planC budget =
-        MissionPlanningResult.Plan([mission], budget)
+        MissionPlanningResult.Plan("", [mission], budget)
     let planD budget =
-        MissionPlanningResult.Plan([missionB], budget)
+        MissionPlanningResult.Plan("", [missionB], budget)
     let plan = Planning.orElse [planA; planB; planC; planD; planA]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan([mission], budget0)
+        MissionPlanningResult.Plan("", [mission], budget0)
     Assert.AreEqual(expected, res)
