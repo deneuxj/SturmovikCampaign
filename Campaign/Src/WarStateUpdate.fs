@@ -94,8 +94,9 @@ module DamageExtension =
 
         /// Add or remove planes from an airfield, return all the planes at that airfield after the change
         member this.ChangePlanes(afid, plane, delta) =
-            let qty = this.GetNumPlanes(afid, plane) + delta
-            assert(qty >= 0.0f)
+            let qty =
+                this.GetNumPlanes(afid, plane) + delta
+                |> max 0.0f
             this.SetNumPlanes(afid, plane, qty)
             this.GetNumPlanes(afid)
 
