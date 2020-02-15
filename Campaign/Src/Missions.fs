@@ -223,11 +223,15 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         seq {
             for mId, mission in airMissions do
                 let plane = war.World.PlaneSet.[mission.Plane].Name
-                let numPlanes = numPlanes.[mId]
-                assert(numPlanes >= 0.0f)
+                let numPlanesTookOff = 
+                    min
+                        numPlanes.[mId]
+                        (war.GetNumPlanes(mission.StartAirfield, mission.Plane))
+                assert(numPlanesTookOff >= 0.0f)
+                numPlanes.[mId] <- numPlanesTookOff
                 yield
-                    Some(RemovePlane(mission.StartAirfield, mission.Plane, float32 numPlanes)),
-                    sprintf "%d %s take off from %s for %s" (int numPlanes) plane mission.StartAirfield.AirfieldName mission.MissionType.Description
+                    Some(RemovePlane(mission.StartAirfield, mission.Plane, numPlanesTookOff)),
+                    sprintf "%d %s take off from %s for %s" (int numPlanesTookOff) plane mission.StartAirfield.AirfieldName mission.MissionType.Description
         }
 
     member this.DoGroundForcesMovements() =
