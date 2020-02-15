@@ -31,8 +31,8 @@ type AirfieldId = Campaign.WorldDescription.AirfieldId
 
 /// A step in the sequence of rounds making up a campaign.
 type ScenarioStep =
-    | Stalemate
-    | Victory of CoalitionId
+    | Stalemate of string
+    | Victory of CoalitionId * string
     | Ongoing of StepData
 
 /// Content of a round, and a generator function to produce the next step, given the updated state of the war.
@@ -139,8 +139,8 @@ module MissionPlanningResult =
     let firstWithNonEmptyPlan (xs : MissionPlanningResult seq) =
         let proj =
             function
-            | Plan(_, [], _) -> 1
-            | TooFewTargets _ -> 0
+            | Plan(_, [], _) -> 0
+            | TooFewTargets _ -> 1
             | Plan(_, _ :: _, _) -> 2
         let pred =
             function
@@ -178,7 +178,7 @@ module Planning =
 
 module Bodenplatte =
     let totalPlanes : Map<_, float32> -> float32 =
-        Map.toSeq >> Seq.sumBy snd
+        Map.toSeq >> Seq.sumBy (snd >> floor)
 
     let planeRunCost = 10.0f<M^3>
 
@@ -323,12 +323,14 @@ module Bodenplatte =
             airfields
             |> List.filter (fun af ->
                 war.GetGroundForces(enemy, af.Region) = 0.0f<MGF> &&
-                war.GetAirfieldCapacity(af.AirfieldId) >= minActiveAirfieldResources)
+                war.GetAirfieldCapacity(af.AirfieldId) >= minActiveAirfieldResources &&
+                totalPlanes(war.GetNumPlanes(af.AirfieldId)) >= 5.0f)
 
-        match raidTargets with
-        | [] ->
+        match readyAirfields, raidTargets with
+        | [], _ -> Plan("No planes for " + description, [], budget)
+        | _, [] ->
             TooFewTargets description
-        | _ :: _ ->
+        | _ :: _, _ :: _ ->
             let raids =
                 /// Return the missions of which a raid is composed:
                 /// An airfield attack, CAP over target, CAP over attackers' home base
@@ -424,7 +426,11 @@ module Bodenplatte =
                                 m.StartAirfield.AirfieldName
                                 (string m.Objective)
                     })
-            Plan (description, raids, budget)
+            match raids with
+            | [] ->
+                Plan ("No planes in range for " + description, [], budget)
+            | _::_ ->
+                Plan (description, raids, budget)
 
     /// Try to make missions to attack enemy airfields, with sufficient cover over target, and over home airfield
     let tryMakeAirfieldRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields)  =
@@ -474,7 +480,11 @@ module Bodenplatte =
                 war.GetGroundForces(friendly.Other, region.RegionId))
             |> List.ofSeq
 
-        tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) "Close air support" threatenedRegions friendly budget
+        match threatenedRegions with
+        | [] ->
+            Plan("No regions need defensive air support", [], budget)
+        | _ :: _ ->
+            tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) "Close air support" threatenedRegions friendly budget
 
     /// Try to plan missions to attack ground forces in enemy territory
     let tryMakeOffensiveGroundForcesRaids (war : WarState) (onlySupport : bool) (friendly : CoalitionId) (budget : Airfields) =
@@ -488,7 +498,13 @@ module Bodenplatte =
                 war.GetGroundForces(friendly.Other, region.RegionId) / if onlySupport then war.GetGroundForces(friendly, region.RegionId) else 1.0f<MGF>)
             |> List.ofSeq
 
-        tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) "Close air support" weakRegions friendly budget
+        match onlySupport, weakRegions with
+        | true, [] ->
+            Plan("No invasion to cover", [], budget)
+        | false, [] ->
+            TooFewTargets "Enemy ground troops destroyed"
+        | _, _::_ ->
+            tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) "Close air support" weakRegions friendly budget
 
     /// Try to make CAP missions over regions targetted by enemy air missions.
     let tryMakeCovers (war : WarState) (friendly : CoalitionId) (enemyMissions : AirMission list) (budget : Airfields) =
@@ -505,7 +521,8 @@ module Bodenplatte =
             airfields
             |> List.filter (fun af ->
                 war.GetGroundForces(enemy, af.Region) = 0.0f<MGF> &&
-                war.GetAirfieldCapacity(af.AirfieldId) >= minActiveAirfieldResources)
+                war.GetAirfieldCapacity(af.AirfieldId) >= minActiveAirfieldResources &&
+                totalPlanes(war.GetNumPlanes(af.AirfieldId)) >= 2.0f)
 
         let targettedRegions =
             enemyMissions
@@ -513,9 +530,10 @@ module Bodenplatte =
             |> Set.ofList
             |> List.ofSeq
 
-        match targettedRegions with
-        | [] -> TooFewTargets "Air defense"
-        | _ :: _ ->
+        match readyAirfields, targettedRegions with
+        | [], _ -> Plan("No planes for air defense", [], budget)
+        | _, [] -> Plan("No enemy plane incursions", [], budget)
+        | _ :: _, _ :: _ ->
             let mutable budget = budget
             let missions =
                 [
@@ -613,10 +631,9 @@ module Bodenplatte =
                   Description = "Transfer" })
         Plan ("Transfers", missions, budget)
 
-    let rec oneSideStrikes (side : CoalitionId) depth (war : WarState) =
+    let rec oneSideStrikes (side : CoalitionId) comment depth (war : WarState) =
         let tryMakeAirfieldRaids = tryMakeAirfieldRaids war side
         let tryMakeIndustryRaids = tryMakeIndustryRaids war side
-        let tryMakeAirRaids = Planning.orElse [ tryMakeAirfieldRaids; tryMakeIndustryRaids ]
         let tryMakeOtherDefensiveGroundForcesRaids = tryMakeDefensiveGroundForcesRaids war side.Other
         let tryMakeGroundForcesHarassment = tryMakeOffensiveGroundForcesRaids war false side
         let tryMakeGroundForcesSupport = tryMakeOffensiveGroundForcesRaids war true side
@@ -625,27 +642,27 @@ module Bodenplatte =
 
         let sideAttacks =
             Planning.orElse [
-                tryMakeGroundForcesDefense  |> Planning.andThen [ tryMakeAirRaids; tryTransferPlanesForward ]
-                tryMakeAirRaids |> Planning.andThen [ tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryTransferPlanesForward ]
-                tryMakeGroundForcesHarassment |> Planning.andThen [ tryMakeGroundForcesSupport; tryTransferPlanesForward ]
-                tryTransferPlanesForward |> Planning.andThen [ tryMakeGroundForcesSupport ]
-            ]
+                tryMakeAirfieldRaids |> Planning.andThen [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeIndustryRaids; tryMakeGroundForcesHarassment ]
+                tryMakeIndustryRaids |> Planning.andThen [tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment ]
+                tryMakeGroundForcesHarassment |> Planning.andThen [ tryMakeGroundForcesSupport ]
+            ] |> Planning.andThen [tryTransferPlanesForward]
 
         let budget = Airfields.Create war
         match sideAttacks budget with
-        | TooFewTargets _ ->
-            Victory side
-        | Plan(_, [], _) ->
+        | TooFewTargets comment ->
+            Victory(side, comment)
+        | Plan(comment, [], _) ->
+            let comment2 = sprintf "%s loses initiative because of %s" (string side) comment
             if depth > 0 then
-                oneSideStrikes side.Other (depth - 1) war
+                oneSideStrikes side.Other comment2 (depth - 1) war
             else
-                Stalemate
+                Stalemate (sprintf "%s and %s" comment comment2)
         | Plan(description, missions, budget) ->
             let raids =
                 missions
                 |> List.choose (function { Kind = AirMission x } -> Some x | _ -> None)
             let covers, budget =
-                Planning.chain [ tryMakeCovers war side.Other raids; tryMakeOtherDefensiveGroundForcesRaids ] budget
+                Planning.chain [ tryMakeCovers war side.Other raids; tryMakeOtherDefensiveGroundForcesRaids; tryTransferPlanesForward ] budget
                 |> MissionPlanningResult.getMissions budget
             let momentum =
                 if depth = 0 then
@@ -653,9 +670,9 @@ module Bodenplatte =
                 else
                     "striking against"
             Ongoing {
-                Briefing = sprintf "%s is %s %s assets on the ground with %s" (string side) momentum (string side.Other) description
+                Briefing = sprintf "%s. %s is %s %s assets on the ground with %s" comment (string side) momentum (string side.Other) description
                 Missions = missions @ covers
-                Next = oneSideStrikes side.Other 1
+                Next = oneSideStrikes side.Other (sprintf "%s takes the initiative" (string side.Other)) 1
             }
 
-    let start war = oneSideStrikes Axis 1 war
+    let start war = oneSideStrikes Axis "Axis opens the hostilities" 1 war
