@@ -23,7 +23,8 @@ let missionB =
       Description = "Mission B" }
 
 let budget0 =
-    { Airfields = Map.empty }
+    { Airfields = Map.empty
+      Regions = Map.empty }
 
 [<Test>]
 let ``chain properly executes plans in a sequence``() =

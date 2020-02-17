@@ -64,10 +64,11 @@ with
         else
             None
 
-/// Resources available at airfields
-type Airfields =
+/// Resources, and planes available at airfields, ground forces available in regions.
+type ForcesAvailability =
     {
         Airfields : Map<AirfieldId, AirfieldStatus>
+        Regions : Map<Campaign.WorldDescription.RegionId * CoalitionId, float32<MGF>>
     }
 with
     static member Create(war : WarState) =
@@ -78,9 +79,15 @@ with
                     afid,
                     { Resources = war.GetAirfieldCapacity(afid); Planes = war.GetNumPlanes(afid) } )
                 |> Map.ofSeq
+            Regions =
+                war.World.Regions.Keys
+                |> Seq.collect (fun rid ->
+                    [Axis; Allies]
+                    |> Seq.map (fun coalition -> (rid, coalition), war.GetGroundForces(coalition, rid)))
+                |> Map.ofSeq
         }
 
-    member this.TryCheckout(afid, data) =
+    member this.TryCheckoutPlane(afid, data) =
         let afs =
             this.Airfields.[afid]
         let afs = afs.TryCheckout(data)
@@ -92,6 +99,15 @@ with
             }
         | None ->
             None
+
+    member this.TryCheckoutGroundForce(coalition, rid, force) =
+        let available =
+            this.Regions.TryFind((rid, coalition))
+            |> Option.defaultValue 0.0f<MGF>
+        if available >= force then
+            { this with Regions = this.Regions.Add((rid, coalition), available - force) }
+        else
+            this
 
 type TargetAdapter<'Target> =
     abstract GetPos : 'Target -> Vector2
@@ -118,7 +134,7 @@ type GroundForcesTargetAdapter(side) =
 
 type MissionPlanningResult =
     | TooFewTargets of string
-    | Plan of string * Mission list * Airfields
+    | Plan of string * Mission list * ForcesAvailability
 with
     member this.LacksResources =
         match this with
@@ -319,7 +335,7 @@ module Bodenplatte =
             ()
 
     /// Try to make missions to attack generic enemy ground targets, with sufficient cover over target, and over home airfield
-    let tryMakeAirRaids (war : WarState) (adapter : TargetAdapter<'Target>) (description : string) (raidTargets : 'Target list) (friendly : CoalitionId) (budget : Airfields)  =
+    let tryMakeAirRaids (war : WarState) (adapter : TargetAdapter<'Target>) (description : string) (raidTargets : 'Target list) (friendly : CoalitionId) (budget : ForcesAvailability)  =
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
 
@@ -355,11 +371,11 @@ module Bodenplatte =
                     for target in raidTargets do
                         let targetRegion = adapter.GetRegion target
                         let targetPos = adapter.GetPos target
-                        let missionAlternatives (budget : Airfields) mkMissionFrom destination =
+                        let missionAlternatives (budget : ForcesAvailability) mkMissionFrom destination =
                             readyAirfields 
                             |> Seq.choose (fun af ->
                                 let mission : AirMission = mkMissionFrom af
-                                match budget.TryCheckout(af.AirfieldId, mission.CheckoutData war.World) with
+                                match budget.TryCheckoutPlane(af.AirfieldId, mission.CheckoutData war.World) with
                                 | None -> None
                                 | Some budget ->
                                     if isInPlaneRange mission.Plane af destination then
@@ -433,14 +449,14 @@ module Bodenplatte =
                         match mission with
                         | { Kind = AirMission mission } ->
                             budget
-                            |> Option.bind (fun (budget : Airfields) ->
-                                budget.TryCheckout(mission.StartAirfield, mission.CheckoutData war.World))
+                            |> Option.bind (fun (budget : ForcesAvailability) ->
+                                budget.TryCheckoutPlane(mission.StartAirfield, mission.CheckoutData war.World))
                         | _ -> budget
                     ) (Some budget)
                 Plan (description, raids, Option.get budget)
 
     /// Try to make missions to attack enemy airfields, with sufficient cover over target, and over home airfield
-    let tryMakeAirfieldRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields)  =
+    let tryMakeAirfieldRaids (war : WarState) (friendly : CoalitionId) (budget : ForcesAvailability)  =
         let distanceToFriendly = war.ComputeDistancesToCoalition friendly
         let enemy = friendly.Other
 
@@ -460,7 +476,7 @@ module Bodenplatte =
         tryMakeAirRaids war (AirfieldTargetAdapter()) "Airfield strike" raidTargets friendly budget
 
     /// Try to make missions to attack enemy industry, with cover over target, and over home airfield
-    let tryMakeIndustryRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields) =
+    let tryMakeIndustryRaids (war : WarState) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let distanceToFriendly = war.ComputeDistancesToCoalition friendly
         let enemy = friendly.Other
 
@@ -476,7 +492,7 @@ module Bodenplatte =
         tryMakeAirRaids war (RegionTargetAdapter()) "Industry raid" enemyRegions friendly budget
 
     /// Try to plan missions to defend ground forces in friendly territory.
-    let tryMakeDefensiveGroundForcesRaids (war : WarState) (friendly : CoalitionId) (budget : Airfields) =
+    let tryMakeDefensiveGroundForcesRaids (war : WarState) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let threatenedRegions =
             war.World.Regions.Values
             |> Seq.filter (fun region ->
@@ -494,7 +510,7 @@ module Bodenplatte =
             tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) "Close air support" threatenedRegions friendly budget
 
     /// Try to plan missions to attack ground forces in enemy territory
-    let tryMakeOffensiveGroundForcesRaids (war : WarState) (onlySupport : bool) (friendly : CoalitionId) (budget : Airfields) =
+    let tryMakeOffensiveGroundForcesRaids (war : WarState) (onlySupport : bool) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let weakRegions =
             war.World.Regions.Values
             |> Seq.filter (fun region ->
@@ -514,7 +530,7 @@ module Bodenplatte =
             tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) "Close air support" weakRegions friendly budget
 
     /// Try to make CAP missions over regions targetted by enemy air missions.
-    let tryMakeCovers (war : WarState) (friendly : CoalitionId) (enemyMissions : AirMission list) (budget : Airfields) =
+    let tryMakeCovers (war : WarState) (friendly : CoalitionId) (enemyMissions : AirMission list) (budget : ForcesAvailability) =
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
 
@@ -565,7 +581,7 @@ module Bodenplatte =
                                             Plane = plane.Id
                                         }
                                     let budget2 =
-                                        budget.TryCheckout(start.AirfieldId, mission.CheckoutData war.World)
+                                        budget.TryCheckoutPlane(start.AirfieldId, mission.CheckoutData war.World)
                                     match budget2 with
                                     | Some budget2 ->
                                         budget <- budget2
@@ -583,7 +599,7 @@ module Bodenplatte =
             Plan("Air defense", missions, budget)
 
     /// Try to send planes closer to the frontline.
-    let tryTransferPlanesForward (war : WarState) (friendly : CoalitionId) (budget : Airfields) =
+    let tryTransferPlanesForward (war : WarState) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let airfields =
             war.World.Airfields.Values
             |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some friendly)
@@ -631,7 +647,7 @@ module Bodenplatte =
                                         NumPlanes = numPlanes
                                         Plane = plane
                                     }
-                                let budget2 = budget.TryCheckout(af1.AirfieldId, mission.CheckoutData war.World)
+                                let budget2 = budget.TryCheckoutPlane(af1.AirfieldId, mission.CheckoutData war.World)
                                 match budget2 with
                                 | Some b ->
                                     budget <- b
@@ -663,7 +679,7 @@ module Bodenplatte =
                 tryMakeGroundForcesHarassment |> Planning.andThen [ tryMakeGroundForcesSupport ]
             ] |> Planning.andThen [tryTransferPlanesForward]
 
-        let budget = Airfields.Create war
+        let budget = ForcesAvailability.Create war
         match sideAttacks budget with
         | TooFewTargets comment ->
             Victory(side, comment)
