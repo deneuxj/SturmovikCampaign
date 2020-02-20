@@ -163,8 +163,37 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     let invasionCapacity = Seq.mutableDict []
     // Capacity to friendly regions
     let transportCapacity = Seq.mutableDict []
+    // Distances (in number of regions) of regions to regions with airfields, need never be cleared
+    let mutable regionDistancesToAirfields = None
+
     // Ground forces
     let groundForces = Seq.mutableDict groundForces
+
+    let distancesToSources sources =
+        let distances =
+            world.Regions.Values
+            |> Seq.map (fun region -> region.RegionId, System.Int32.MaxValue)
+            |> Seq.mutableDict
+        let nghOf =
+            world.Regions.Values
+            |> Seq.map (fun region -> region.RegionId, Set region.Neighbours)
+            |> dict
+        for region in sources do
+            distances.[region] <- 0
+        let rec work (xs : Set<RegionId>) dist =
+            let nghs =
+                xs
+                |> Seq.map (fun region -> nghOf.[region])
+                |> Set.unionMany
+            let next =
+                nghs
+                |> Set.filter (fun region -> distances.[region] > dist)
+            for ngh in next do
+                distances.[ngh] <- dist
+            if not(next.IsEmpty) then
+                work next (dist + 1)
+        work sources 1
+        distances
 
     /// Method to be called after the owner of a region changes
     member private this.ClearCachesAfterOwnerChanged() =
@@ -266,31 +295,21 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                             Some kvp.Key
                         else None)
                     |> Set
-                let distances =
-                    world.Regions.Values
-                    |> Seq.map (fun region -> region.RegionId, System.Int32.MaxValue)
-                    |> Seq.mutableDict
-                let nghOf =
-                    world.Regions.Values
-                    |> Seq.map (fun region -> region.RegionId, Set region.Neighbours)
-                    |> dict
-                for region in sources do
-                    distances.[region] <- 0
-                let rec work (xs : Set<RegionId>) dist =
-                    let nghs =
-                        xs
-                        |> Seq.map (fun region -> nghOf.[region])
-                        |> Set.unionMany
-                    let next =
-                        nghs
-                        |> Set.filter (fun region -> distances.[region] > dist)
-                    for ngh in next do
-                        distances.[ngh] <- dist
-                    if not(next.IsEmpty) then
-                        work next (dist + 1)
-                work sources 1
-                distances
-            )
+                distancesToSources sources)
+
+    member this.ComputeDistancesToAirfields() =
+        match regionDistancesToAirfields with
+        | None ->
+            let x =
+                let sources =
+                    world.Airfields.Values
+                    |> Seq.map (fun af -> af.Region)
+                    |> Set
+                distancesToSources sources
+            regionDistancesToAirfields <- Some x
+            x
+        | Some x ->
+            x
 
     member this.ComputeRoadCapacity =
         Cached.cached
