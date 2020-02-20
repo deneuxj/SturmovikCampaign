@@ -42,7 +42,7 @@ let world =
     { x with PlaneSet = planeSet }
 
 let war = Init.mkWar world
-Bodenplatte.initAirfields 0.5f Axis war
+Bodenplatte.initAirfields 0.75f Axis war
 Bodenplatte.initAirfields 1.0f Allies war
 
 let mutable step = Bodenplatte.start war
@@ -119,11 +119,11 @@ let advance verbose =
                         printfn "Result: %s" (Results.asString war result)
                 //showStatus "AFTER"
                 )
-        for region in war.World.Regions.Values do
-            for coalition in [Axis; Allies] do
-                let owner = war.GetOwner(region.RegionId)
-                if war.GetGroundForces(coalition, region.RegionId) > 0.0f<MGF> && owner <> Some coalition then
-                    eprintfn "Forces from %s wandered into %s controlled by %s" (string coalition) (string region.RegionId) (string owner)
+        //for region in war.World.Regions.Values do
+        //    for coalition in [Axis; Allies] do
+        //        let owner = war.GetOwner(region.RegionId)
+        //        if war.GetGroundForces(coalition, region.RegionId) > 0.0f<MGF> && owner <> Some coalition then
+        //            eprintfn "Forces from %s wandered into %s controlled by %s" (string coalition) (string region.RegionId) (string owner)
         step <- data.Next war
 
 let advanceStar verbose =
