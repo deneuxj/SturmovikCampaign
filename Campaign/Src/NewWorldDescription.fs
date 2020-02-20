@@ -202,6 +202,8 @@ type Network with
             |> dict
         let links =
             this.Links
+            |> Seq.map (fun link -> { link with NodeA = link.NodeB; NodeB = link.NodeA })
+            |> Seq.append this.Links
             |> Seq.groupBy (fun link -> link.NodeA)
             |> Seq.map (fun (nodeA, links) ->
                 nodeA,
