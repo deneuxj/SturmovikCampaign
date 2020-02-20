@@ -729,8 +729,12 @@ module Bodenplatte =
             |> Option.map (fun budget ->
                 missions
                 |> List.map (fun m ->
+                    let startRegion =
+                        match m.MissionType with
+                        | GroundForcesTransfer(_, startRegion, _) -> string startRegion
+                        | _ -> ""
                     { Kind = GroundMission m
-                      Description = "invasion" } ),
+                      Description = sprintf "Invasion %s -> %s" startRegion (string m.Objective) } ),
                 budget))
         |> Seq.tryHead
         |> Option.map (fun (missions, budget) ->
@@ -754,7 +758,7 @@ module Bodenplatte =
                         MissionType = GroundBattle
                     }
         ]
-        |> List.map (fun m -> { Kind = GroundMission m; Description = "engage enemy" })
+        |> List.map (fun m -> { Kind = GroundMission m; Description = sprintf "Battle in %s" (string m.Objective) })
         |> function
             | [] -> Plan("No battle to start", [], budget)
             | ms -> Plan(sprintf "Battles started by %s" (string friendly), ms, budget)
