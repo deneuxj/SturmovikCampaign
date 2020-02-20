@@ -214,8 +214,8 @@ module Bodenplatte =
     type Campaign.Missions.GroundMission with
         member this.CheckoutData() =
             match this with
-            | { MissionType = GroundBattle } -> this.Objective, 0.0f<MGF>
-            | { MissionType = GroundForcesTransfer(start, forces) } -> start, forces
+            | { MissionType = GroundBattle } -> None
+            | { MissionType = GroundForcesTransfer(coalition, start, forces) } -> Some(coalition, start, forces)
 
     let maxPlanesAtAirfield = 100.0f
 
@@ -709,7 +709,7 @@ module Bodenplatte =
                                     minimumForceAddition <- minimumForceAddition - force
                                     yield {
                                         Objective = target.RegionId
-                                        MissionType = GroundForcesTransfer(ngh, force)
+                                        MissionType = GroundForcesTransfer(friendly, ngh, force)
                                     }
                         ]
                     if minimumForceAddition <= 0.0f<MGF> && not missions.IsEmpty then
@@ -720,8 +720,11 @@ module Bodenplatte =
             |> List.fold (fun (budget : ForcesAvailability option) mission ->
                 budget
                 |> Option.bind (fun budget ->
-                    let start, force = mission.CheckoutData()
-                    budget.TryCheckoutGroundForce(friendly, start, force))
+                    match mission.CheckoutData() with
+                    | Some(coalition, start, force) ->
+                        budget.TryCheckoutGroundForce(coalition, start, force)
+                    | None ->
+                        Some budget)
             ) (Some budget)
             |> Option.map (fun budget ->
                 missions

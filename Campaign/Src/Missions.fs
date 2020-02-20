@@ -165,7 +165,7 @@ type AirMission =
     }
 
 type GroundMissionType =
-    | GroundForcesTransfer of StartRegion : RegionId * Forces : float32<MGF>
+    | GroundForcesTransfer of Coalition: CoalitionId * StartRegion: RegionId * Forces: float32<MGF>
     | GroundBattle
 
 type GroundMission =
@@ -238,7 +238,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         seq {
             for mId, mission in groundMissions do
                 match mission.MissionType with
-                | GroundForcesTransfer(startRegion, forces) ->
+                | GroundForcesTransfer(coalition, startRegion, forces) ->
                     let coalitionStart = war.GetOwner(startRegion)
                     let coalitionDestination = war.GetOwner(mission.Objective)
                     match coalitionStart with
@@ -247,10 +247,16 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                         ()
                     | Some coalitionStart ->
                         let verb =
-                            if Some coalitionStart <> coalitionDestination then
-                                "invade"
+                            if coalition = coalitionStart then
+                                if Some coalitionStart <> coalitionDestination then
+                                    "invade"
+                                else
+                                    "travel to"
                             else
-                                "move into"
+                                if Some coalition = coalitionDestination then
+                                    "retreat back to"
+                                else
+                                    "roam into"
                         let maxFlow =
                             if Some coalitionStart <> coalitionDestination then
                                 war.ComputeRoadCapacity(startRegion, mission.Objective)
@@ -262,7 +268,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             |> max maxFlow
                         let forces = volume / war.World.GroundForcesTransportCost
                         yield
-                            Some(MoveGroundForces(startRegion, mission.Objective, coalitionStart, forces)),
+                            Some(MoveGroundForces(startRegion, mission.Objective, coalition, forces)),
                             sprintf "%0.0f worth of ground forces %s %s from %s"
                                 forces
                                 verb

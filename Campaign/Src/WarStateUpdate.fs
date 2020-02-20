@@ -131,7 +131,7 @@ module DamageExtension =
                 let newForces = state.ChangeGroundForces(rid, coalition, -destroyed)
                 [ UpdatedGroundForces(rid, coalition, newForces) ]
             | MoveGroundForces(start, destination, coalition, forces) ->
-                let startForces = state.ChangeGroundForces(start, coalition, forces)
-                let destinationForces = state.ChangeGroundForces(destination, coalition, -forces)
+                let startForces = state.ChangeGroundForces(start, coalition, -forces)
+                let destinationForces = state.ChangeGroundForces(destination, coalition, forces)
                 [ UpdatedGroundForces(start, coalition, startForces)
                   UpdatedGroundForces(destination, coalition, destinationForces) ]
