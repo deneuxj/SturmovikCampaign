@@ -67,7 +67,7 @@ module private Algo =
                         flow.TryGetValue((node, succ))
                         |> Option.ofPair
                         |> Option.defaultValue 0.0f<M^3/H>
-                    if not(sinks.Contains(succ)) && getFlowCapacity(link) > flow then
+                    if not(sources.Contains(succ)) && getFlowCapacity(link) > flow then
                         if not (pred.ContainsKey succ) then
                             pred.[succ] <- link
                             queue.Enqueue(succ)
