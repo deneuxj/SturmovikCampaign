@@ -89,17 +89,20 @@ type WarState with
             (this.AllPlanes(coalition, PlaneType.Fighter))
             (this.AllPlanes(coalition, PlaneType.Transport))
 
+let mutable numSteps = 0
+
 let advance verbose =
+    printfn "%s" (war.GetSummaryColums())
+    printfn "%s" (war.GetSummary Axis)
+    printfn "%s" (war.GetSummary Allies)
     match step with
-    | Stalemate comment -> printfn "Stalemate after %s" comment
-    | Victory(side, comment) -> printfn "%s is victorious thanks to %s" (string side) comment
+    | Stalemate comment -> printfn "Stalemate after %d steps %s" numSteps comment
+    | Victory(side, comment) -> printfn "%s is victorious after %d steps thanks to %s" (string side) numSteps comment
     | Ongoing data ->
-        printfn "New mission: %s" data.Briefing
+        numSteps <- numSteps + 1
+        printfn "New mission %02d: %s" numSteps data.Briefing
         for mission in data.Missions do
             printfn "%s" mission.Description
-        printfn "%s" (war.GetSummaryColums())
-        printfn "%s" (war.GetSummary Axis)
-        printfn "%s" (war.GetSummary Allies)
         let sim = MissionSimulator(random, war, data.Missions, 10.0f<H>)
         let events = sim.DoAll()
         for cmd, descr in events do
