@@ -265,7 +265,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 war.ComputeRailCapacity(startRegion, mission.Objective)
                         let volume =
                             forces * war.World.GroundForcesTransportCost
-                            |> max maxFlow
+                            |> min maxFlow
                         let forces = volume / war.World.GroundForcesTransportCost
                         yield
                             Some(MoveGroundForces(startRegion, mission.Objective, coalition, forces)),
