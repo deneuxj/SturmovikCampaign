@@ -336,7 +336,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         let filter region other =
             this.GetOwner region = this.GetOwner other
         Cached.cached
-            invasionCapacity
+            transportCapacity
             (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads; rails] neighboursOf filter)
 
     member this.GetNumPlanes(afid) =
