@@ -257,15 +257,29 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                     "retreat back to"
                                 else
                                     "roam into"
+                        // Max transport capacity by roads and rails.
                         let maxFlow =
                             if Some coalitionStart <> coalitionDestination then
                                 war.ComputeRoadCapacity(startRegion, mission.Objective)
                             else
                                 war.ComputeRoadCapacity(startRegion, mission.Objective) +
                                 war.ComputeRailCapacity(startRegion, mission.Objective)
-                        let volume =
-                            forces * war.World.GroundForcesTransportCost
-                            |> min maxFlow
+                        let desired = forces * war.World.GroundForcesTransportCost
+                        let volume = min desired maxFlow
+                        // Transport capacity usage info
+                        if desired > maxFlow then
+                            yield None,
+                                sprintf "Transport from %s to %s is limited by transport capacity to %2.0f%%"
+                                    (string startRegion)
+                                    (string mission.Objective)
+                                    (100.0f * maxFlow / desired)
+                        else
+                            yield None,
+                                sprintf "Transport from %s to %s uses %2.0f%% of the transport capacity"
+                                    (string startRegion)
+                                    (string mission.Objective)
+                                    (100.0f * desired / maxFlow)
+                        // Displacement of forces
                         let forces = volume / war.World.GroundForcesTransportCost
                         yield
                             Some(MoveGroundForces(startRegion, mission.Objective, coalition, forces)),
