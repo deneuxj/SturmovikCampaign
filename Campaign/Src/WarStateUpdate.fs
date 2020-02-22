@@ -44,12 +44,15 @@ type Commands =
     | DestroyGroundForces of RegionId * CoalitionId * Amount: float32<MGF>
     // Move ground forces from a region to another
     | MoveGroundForces of RegionId * RegionId * CoalitionId * Amount: float32<MGF>
+    // Set the owner of a region, typically after a conquest
+    | SetRegionOwner of RegionId * CoalitionId option
 
 /// Interesting data to report from execution of commands
 type Results =
     | UpdatedStorageValue of Instance: BuildingInstanceId * Amount: float32<M^3>
     | UpdatedPlanesAtAirfield of AirfieldId * Map<PlaneModelId, float32>
     | UpdatedGroundForces of RegionId * CoalitionId * float32<MGF>
+    | RegionOwnerSet of RegionId * CoalitionId option
 
 module Results =
     let asString (war : WarState) result =
@@ -76,6 +79,10 @@ module Results =
             sprintf "Airfield %s now has the following planes: %s" name planeStr
         | UpdatedGroundForces(region, coalition, forces) ->
             sprintf "Ground forces of %s in %s is now at %0.1f" (string region) (string coalition) forces
+        | RegionOwnerSet(rid, None) ->
+            sprintf "%s has become neutral" (string rid)
+        | RegionOwnerSet(rid, Some coalition) ->
+            sprintf "%s is now controlled by %s" (string rid) (string coalition)
 
 module DamageExtension =
     type WarState with
@@ -135,3 +142,6 @@ module DamageExtension =
                 let destinationForces = state.ChangeGroundForces(destination, coalition, forces)
                 [ UpdatedGroundForces(start, coalition, startForces)
                   UpdatedGroundForces(destination, coalition, destinationForces) ]
+            | SetRegionOwner(rid, owner) ->
+                state.SetOwner(rid, owner)
+                [ RegionOwnerSet(rid, owner) ]

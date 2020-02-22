@@ -214,7 +214,7 @@ module Bodenplatte =
     type Campaign.Missions.GroundMission with
         member this.CheckoutData() =
             match this with
-            | { MissionType = GroundBattle } -> None
+            | { MissionType = GroundBattle _ } -> None
             | { MissionType = GroundForcesTransfer(coalition, start, forces) } -> Some(coalition, start, forces)
 
     let maxPlanesAtAirfield = 100.0f
@@ -755,7 +755,7 @@ module Bodenplatte =
                 if enemyForce > 0.0f<MGF> && friendlyForce >= 1.5f * enemyForce then
                     yield {
                         Objective = region.RegionId
-                        MissionType = GroundBattle
+                        MissionType = GroundBattle friendly
                     }
         ]
         |> List.map (fun m -> { Kind = GroundMission m; Description = sprintf "Battle in %s" (string m.Objective) })

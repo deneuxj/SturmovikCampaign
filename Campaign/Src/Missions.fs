@@ -166,7 +166,7 @@ type AirMission =
 
 type GroundMissionType =
     | GroundForcesTransfer of Coalition: CoalitionId * StartRegion: RegionId * Forces: float32<MGF>
-    | GroundBattle
+    | GroundBattle of Initiator: CoalitionId
 
 type GroundMission =
     {
@@ -274,7 +274,7 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                 verb
                                 (string mission.Objective)
                                 (string startRegion)
-                | GroundBattle ->
+                | GroundBattle _ ->
                     ()
         }
 
@@ -326,30 +326,30 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         seq {
             let battles =
                 groundMissions
-                |> Seq.filter (
+                |> Seq.choose (
                     function
-                    | _, { MissionType = GroundBattle } -> true
-                    | _ -> false)
-            for mId, battle in battles do
-                let defenders = war.GetOwner(battle.Objective)
+                    | _, { Objective = rid; MissionType = GroundBattle initiator } -> Some (rid, initiator)
+                    | _ -> None)
+            for rid, initiator in battles do
+                let defenders = war.GetOwner(rid)
                 match defenders with
                 | Some defenders ->
                     let attackers = defenders.Other
-                    let defendersSupplies = getRoundSupplies(battle.Objective, defenders)
-                    let attackersSupplies = getRoundSupplies(battle.Objective, attackers)
+                    let defendersSupplies = getRoundSupplies(rid, defenders)
+                    let attackersSupplies = getRoundSupplies(rid, attackers)
                     yield None,
                         sprintf "%s (forces: %0.0f, supplies: %0.0f) attack %s (forces: %0.0f, supplies: %0.0f) in %s"
                             (string attackers)
-                            (war.GetGroundForces(attackers, battle.Objective))
+                            (war.GetGroundForces(attackers, rid))
                             attackersSupplies
                             (string defenders)
-                            (war.GetGroundForces(defenders, battle.Objective))
+                            (war.GetGroundForces(defenders, rid))
                             defendersSupplies
-                            (string battle.Objective)
+                            (string rid)
                     let rec work iterLeft =
                         seq {
-                            let defenseForces = war.GetGroundForces(defenders, battle.Objective)
-                            let attackForces = war.GetGroundForces(attackers, battle.Objective)
+                            let defenseForces = war.GetGroundForces(defenders, rid)
+                            let attackForces = war.GetGroundForces(attackers, rid)
                             if iterLeft > 0 && defenseForces > 0.0f<MGF> && attackForces > 0.0f<MGF> then
                                 let defenseEfficiency = getEfficiency(defenseForces, defendersSupplies)
                                 let attackEfficiency = getEfficiency(attackForces, attackersSupplies)
@@ -360,22 +360,29 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                                     defenseForces * getGroundForcesHitRate() * defenseEfficiency
                                     |> min attackForces
                                 yield
-                                    Some(DestroyGroundForces(battle.Objective, defenders, defenseLosses)),
+                                    Some(DestroyGroundForces(rid, defenders, defenseLosses)),
                                     sprintf "Defense of %s sustained %0.0f worth of damage"
-                                        (string battle.Objective)
+                                        (string rid)
                                         defenseLosses
                                 yield
-                                    Some(DestroyGroundForces(battle.Objective, attackers, attackLosses)),
+                                    Some(DestroyGroundForces(rid, attackers, attackLosses)),
                                     sprintf "Attackers of %s sustained %0.0f worth of damage"
-                                        (string battle.Objective)
+                                        (string rid)
                                         attackLosses
                                 yield! work (iterLeft - 1)
-                            elif iterLeft > 0 && attackForces <= 0.0f<MGF> then
-                                yield None, "Attackers were destroyed"
-                            elif iterLeft >0 && defenseForces <= 0.0f<MGF> then
-                                yield None, sprintf "Attackers captured %s" (string battle.Objective)
                         }
                     yield! work numBattleRounds
+                    // If the side that initiated the battle has a significant numerical advantage, the other side surrenders
+                    let initiators, pursued =
+                        war.GetGroundForces(initiator, rid), war.GetGroundForces(initiator.Other, rid)
+                    if initiators > 2.0f * pursued then
+                        yield None,
+                            sprintf "%s victorious in %s" (string initiator) (string rid)
+                        yield Some(DestroyGroundForces(rid, initiator.Other, pursued)),
+                            sprintf "%0.0f forces from %s surrendered in %s" pursued (string initiator.Other) (string rid)
+                        if defenders <> initiator then
+                            yield Some(SetRegionOwner(rid, Some initiator)),
+                                sprintf "%s took over %s" (string initiator) (string rid)
                 | None ->
                     ()
         }
