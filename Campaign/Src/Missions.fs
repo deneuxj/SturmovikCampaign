@@ -346,29 +346,36 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             (war.GetGroundForces(defenders, battle.Objective))
                             defendersSupplies
                             (string battle.Objective)
-                    for round in 1..numBattleRounds do
-                        let defenseForces = war.GetGroundForces(defenders, battle.Objective)
-                        let defenseEfficiency = getEfficiency(defenseForces, defendersSupplies)
-                        let attackForces = war.GetGroundForces(attackers, battle.Objective)
-                        let attackEfficiency = getEfficiency(attackForces, attackersSupplies)
-                        let defenseLosses =
-                            attackForces * getGroundForcesHitRate() * attackEfficiency
-                            |> min defenseForces
-                        let attackLosses =
-                            defenseForces * getGroundForcesHitRate() * defenseEfficiency
-                            |> min attackForces
-                        yield
-                            Some(DestroyGroundForces(battle.Objective, defenders, defenseLosses)),
-                            sprintf "Defense of %s sustained %0.0f worth of damage in round %d"
-                                (string battle.Objective)
-                                defenseLosses
-                                round
-                        yield
-                            Some(DestroyGroundForces(battle.Objective, attackers, attackLosses)),
-                            sprintf "Attackers of %s sustained %0.0f worth of damage in round %d"
-                                (string battle.Objective)
-                                attackLosses
-                                round
+                    let rec work iterLeft =
+                        seq {
+                            let defenseForces = war.GetGroundForces(defenders, battle.Objective)
+                            let attackForces = war.GetGroundForces(attackers, battle.Objective)
+                            if iterLeft > 0 && defenseForces > 0.0f<MGF> && attackForces > 0.0f<MGF> then
+                                let defenseEfficiency = getEfficiency(defenseForces, defendersSupplies)
+                                let attackEfficiency = getEfficiency(attackForces, attackersSupplies)
+                                let defenseLosses =
+                                    attackForces * getGroundForcesHitRate() * attackEfficiency
+                                    |> min defenseForces
+                                let attackLosses =
+                                    defenseForces * getGroundForcesHitRate() * defenseEfficiency
+                                    |> min attackForces
+                                yield
+                                    Some(DestroyGroundForces(battle.Objective, defenders, defenseLosses)),
+                                    sprintf "Defense of %s sustained %0.0f worth of damage"
+                                        (string battle.Objective)
+                                        defenseLosses
+                                yield
+                                    Some(DestroyGroundForces(battle.Objective, attackers, attackLosses)),
+                                    sprintf "Attackers of %s sustained %0.0f worth of damage"
+                                        (string battle.Objective)
+                                        attackLosses
+                                yield! work (iterLeft - 1)
+                            elif iterLeft > 0 && attackForces <= 0.0f<MGF> then
+                                yield None, "Attackers were destroyed"
+                            elif iterLeft >0 && defenseForces <= 0.0f<MGF> then
+                                yield None, sprintf "Attackers captured %s" (string battle.Objective)
+                        }
+                    yield! work numBattleRounds
                 | None ->
                     ()
         }
