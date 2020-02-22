@@ -197,9 +197,9 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
 
     /// Method to be called after the owner of a region changes
     member private this.ClearCachesAfterOwnerChanged() =
-        owners.Clear()
         invasionCapacity.Clear()
         transportCapacity.Clear()
+        regionDistancesToEnemy.Clear()
 
     /// Method to be called after the health of a bridge changes
     member private this.ClearCachesAfterBridgeHealthChanged() =
