@@ -197,8 +197,8 @@ module Bodenplatte =
         Map.toSeq >> Seq.sumBy (snd >> floor)
 
     let typicalRange = 1.0e5f<M>
-    let planeRunCost = 0.2f<M^3> / typicalRange
-    let bombDensity = 250.0f<K/M^3>
+    let planeRunCost = 0.7f<M^3> / typicalRange
+    let bombDensity = 100.0f<K/M^3>
 
     type Campaign.Missions.AirMission with
         member this.CheckoutData(world : World) =

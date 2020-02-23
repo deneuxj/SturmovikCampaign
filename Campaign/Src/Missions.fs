@@ -297,34 +297,9 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         let numBattleRounds = int <| round(duration / roundDuration)
 
         // Get the max amount of supplies forces have available in a region for a round of battle
-        // For the defenders, it's the local industry, and the industry of the friendly neighbours, limited by transport capacity
-        // Same for the attackers, but without the local industry.
-        let getRoundSupplies(region, coalition) =
-            let isDefending = war.GetOwner(region) = Some coalition
-            let inRegion =
-                if isDefending then
-                    war.World.Regions.[region].IndustryBuildings
-                    |> Seq.sumBy war.GetBuildingCapacity
-                else
-                    0.0f<M ^ 3>
-            let fromNeighbour ngh =
-                let isFriendly = war.GetOwner(ngh) = Some coalition
-                if isFriendly then
-                    let available =
-                        war.World.Regions.[ngh].IndustryBuildings
-                        |> Seq.sumBy war.GetBuildingCapacity
-                    let byRoad =
-                        war.ComputeRoadCapacity(ngh, region)
-                    let byRail =
-                        war.ComputeRailCapacity(ngh, region)
-                    let inFlow = (byRoad + byRail) * roundDuration
-                    min inFlow available
-                else
-                    0.0f<M^3>
-            let fromNeighbours =
-                war.World.Regions.[region].Neighbours
-                |> Seq.sumBy fromNeighbour
-            inRegion + fromNeighbours
+        // For the defenders, it's the industry in the rear regions, limited by the road and rail transport capacity
+        // Same for the attackers, but with the additional limitation that only roads can be used into the attacked region.
+        let getRoundSupplies(region, coalition) = 0.0f<M^3> // TODO
 
         // Get the efficiency factor that influences damage inflicted to the other sound in one round.
         // Depends on the available supplies
@@ -365,8 +340,8 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             let defenseForces = war.GetGroundForces(defenders, rid)
                             let attackForces = war.GetGroundForces(attackers, rid)
                             if iterLeft > 0 && defenseForces > 0.0f<MGF> && attackForces > 0.0f<MGF> then
-                                let defenseEfficiency = getEfficiency(defenseForces, defendersSupplies)
-                                let attackEfficiency = getEfficiency(attackForces, attackersSupplies)
+                                let defenseEfficiency = 1.0f //getEfficiency(defenseForces, defendersSupplies)
+                                let attackEfficiency = 1.0f //getEfficiency(attackForces, attackersSupplies)
                                 let defenseLosses =
                                     attackForces * getGroundForcesHitRate() * attackEfficiency
                                     |> min defenseForces

@@ -419,6 +419,6 @@ module Init =
                 world.Regions.[rid].IndustryBuildings
                 |> Seq.sumBy war.GetBuildingCapacity
             let battleDuration = 10.0f<H>
-            let optimalForces = capacity / (battleDuration * world.GroundForcesCost)
+            let optimalForces = capacity / (battleDuration * world.GroundForcesCost * world.ResourceVolume)
             war.SetGroundForces(coalition, rid, optimalForces)
         war

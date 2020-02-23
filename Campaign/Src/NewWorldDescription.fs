@@ -250,8 +250,10 @@ type World = {
     RepairCostRatio : float32<E/M^3>
     /// Amount of resources needed to repair 1 unit of transport capacity
     TransportRepairCostRatio : float32<E/(M^3/H)>
-    /// Volume of ammo and fuel needed for a unit of ground force to work optimally, per hour
-    GroundForcesCost : float32<M^3/MGF/H>
+    /// Volume of resources
+    ResourceVolume : float32<M^3/E>
+    /// Amount of resources for a unit of ground force to work optimally, per hour
+    GroundForcesCost : float32<E/MGF/H>
     /// Transport capacity required per unit of ground force
     GroundForcesTransportCost : float32<M^3/H/MGF>
     /// Descriptions of regions
@@ -636,8 +638,9 @@ module Loading =
             RepairSpeed = 1.0f<E/H>
             RepairCostRatio = 2.0f<E/M^3>
             TransportRepairCostRatio = 1.0f<E/(M^3/H)>
-            GroundForcesCost = 10.0f<M^3/MGF/H>
+            GroundForcesCost = 10.0f<E/MGF/H>
             GroundForcesTransportCost = 5.0f<M^3/H/MGF>
+            ResourceVolume = 1.0f<M^3/E>
             Regions = regions
             Roads = roads
             Rails = rails
