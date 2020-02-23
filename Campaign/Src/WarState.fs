@@ -166,10 +166,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     let roadsCapacities = Seq.mutableDict []
     let railsCapacities = Seq.mutableDict []
     // Must be cleared whenever bridges are damaged or repaired, or owners change
-    // Capacity to enemy or neutral regions
-    let invasionCapacity = Seq.mutableDict []
-    // Capacity to friendly regions
-    let transportCapacity = Seq.mutableDict []
+    let supplyAvailability = Seq.mutableDict []
     // Distances (in number of regions) of regions to regions with airfields, need never be cleared
     let mutable regionDistancesToAirfields = None
 
@@ -204,16 +201,14 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
 
     /// Method to be called after the owner of a region changes
     member private this.ClearCachesAfterOwnerChanged() =
-        invasionCapacity.Clear()
-        transportCapacity.Clear()
         regionDistancesToEnemy.Clear()
+        supplyAvailability.Clear()
 
     /// Method to be called after the health of a bridge changes
     member private this.ClearCachesAfterBridgeHealthChanged() =
         roadsCapacities.Clear()
         railsCapacities.Clear()
-        invasionCapacity.Clear()
-        transportCapacity.Clear()
+        supplyAvailability.Clear()
 
     member this.World : World = world
 
@@ -328,23 +323,40 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             railsCapacities
             (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity rails)
 
-    member this.ComputeInvasionCapacity =
-        let neighboursOf regionId =
-            this.World.Regions.[regionId].Neighbours
-        let filter region other =
-            this.GetOwner region <> this.GetOwner other
+    member this.ComputeSupplyAvailability =
         Cached.cached
-            invasionCapacity
-            (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads] neighboursOf filter)
-
-    member this.ComputeTransportCapacity =
-        let neighboursOf regionId =
-            this.World.Regions.[regionId].Neighbours
-        let filter region other =
-            this.GetOwner region = this.GetOwner other
-        Cached.cached
-            transportCapacity
-            (Algo.computeTransportCapacityToNeighbours this.GetFlowCapacity [roads; rails] neighboursOf filter)
+            supplyAvailability
+            (fun region ->
+                match owners.TryGetValue region with
+                | false, _ -> 0.0f<E/H>
+                | true, owner ->
+                    let regions =
+                        owners
+                        |> Seq.filter (fun kvp -> kvp.Value = owner)
+                        |> Seq.map (fun kvp -> kvp.Key)
+                        |> Set
+                    let sourceRegions =
+                        world.Regions
+                        |> Seq.filter (fun kvp -> kvp.Value.IsEntry)
+                        |> Seq.map (fun kvp -> kvp.Key)
+                        |> Set
+                    let computeFlow (network : NetworkQuickAccess) =
+                        let sources = 
+                            network.Data.Nodes
+                            |> List.filter (fun node -> node.HasTerminal && sourceRegions.Contains node.Region)
+                            |> Seq.map (fun node -> node.Id)
+                            |> Set
+                        let sinks = Algo.terminalsInRegion network region
+                        let flow = Algo.computeTransportCapacity(this.GetFlowCapacity, network, regions, sources, sinks)
+                        flow / world.ResourceVolume
+                    let production =
+                        owners
+                        |> Seq.filter (fun kvp -> kvp.Value = owner && world.Regions.[kvp.Key].IsEntry)
+                        |> Seq.sumBy (fun kvp -> this.GetRegionBuildingCapacity(kvp.Key) * world.ResourceProductionRate)
+                    // This is not strictly correct: A production region that is cut from the network should not be able to contribute.
+                    // To do things properly, the production should be added as sources in the graph
+                    let limit = computeFlow rails + computeFlow roads
+                    min limit production)
 
     member this.GetNumPlanes(afid) =
         airfieldPlanes.TryGetValue(afid)

@@ -299,9 +299,22 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         // Get the max amount of supplies forces have available in a region for a round of battle
         // For the defenders, it's the industry in the rear regions, limited by the road and rail transport capacity
         // Same for the attackers, but with the additional limitation that only roads can be used into the attacked region.
-        let getRoundSupplies(region, coalition) = 0.0f<M^3> // TODO
+        let getRoundSupplies(region, coalition) =
+            match war.GetOwner(region) with
+            | None -> 0.0f<E>
+            | Some owner when owner = coalition ->
+                war.ComputeSupplyAvailability region * roundDuration
+            | Some _ ->
+                war.World.Regions.[region].Neighbours
+                |> List.filter (fun ngh -> war.GetOwner(ngh) = Some coalition)
+                |> List.map (fun ngh ->
+                    war.ComputeSupplyAvailability ngh
+                    |> min (war.ComputeRoadCapacity(ngh, region) / war.World.ResourceVolume))
+                |> function
+                    | [] -> 0.0f<E>
+                    | xs -> roundDuration * List.max xs
 
-        // Get the efficiency factor that influences damage inflicted to the other sound in one round.
+        // Get the efficiency factor that influences damage inflicted to the other side in one round.
         // Depends on the available supplies
         let getEfficiency(forces, supplies) =
             if forces > 0.0f<MGF> then
@@ -340,8 +353,8 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                             let defenseForces = war.GetGroundForces(defenders, rid)
                             let attackForces = war.GetGroundForces(attackers, rid)
                             if iterLeft > 0 && defenseForces > 0.0f<MGF> && attackForces > 0.0f<MGF> then
-                                let defenseEfficiency = 1.0f //getEfficiency(defenseForces, defendersSupplies)
-                                let attackEfficiency = 1.0f //getEfficiency(attackForces, attackersSupplies)
+                                let defenseEfficiency = getEfficiency(defenseForces, defendersSupplies)
+                                let attackEfficiency = getEfficiency(attackForces, attackersSupplies)
                                 let defenseLosses =
                                     attackForces * getGroundForcesHitRate() * attackEfficiency
                                     |> min defenseForces

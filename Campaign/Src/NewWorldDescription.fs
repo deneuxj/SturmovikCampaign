@@ -71,9 +71,8 @@ type Region = {
     Position : Vector2
     Neighbours : RegionId list
     InitialOwner : CoalitionId option
-    // Production in the region; Typically only the rearmost region should have production.
-    // It represents the entry point into the game for supplies, and cannot be affected.
-    Production : float32<E/H>
+    /// Whether supplies arrive/are produced in this region. Also called "rear region" if true.
+    IsEntry : bool
     IndustryBuildings : BuildingInstanceId list
 }
 
@@ -252,6 +251,8 @@ type World = {
     TransportRepairCostRatio : float32<E/(M^3/H)>
     /// Volume of resources
     ResourceVolume : float32<M^3/E>
+    /// Resources that can be produced per hour, per storage volume
+    ResourceProductionRate : float32<E/H/M^3>
     /// Amount of resources for a unit of ground force to work optimally, per hour
     GroundForcesCost : float32<E/MGF/H>
     /// Transport capacity required per unit of ground force
@@ -356,7 +357,7 @@ module Loading =
         ]
 
     /// Extract a list of regions from a list of influence areas and a list of building instances
-    let extractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list, strongProduction : float32<E/H>) =
+    let extractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list) =
         let extractOne (region : T.MCU_TR_InfluenceArea) : Region =
             let coalition = CoalitionId.FromCountry (enum(region.GetCountry().Value))
             let boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
@@ -367,7 +368,7 @@ module Loading =
               Position = Vector2.FromPos(region)
               Boundary = boundary
               Neighbours = []
-              Production = if region.GetDesc().Value.Contains("***") then strongProduction else 0.0f<E/H>
+              IsEntry = region.GetDesc().Value.Contains("***")
               InitialOwner = coalition
               IndustryBuildings = buildings |> List.map (fun b -> b.Id)
             }
@@ -557,7 +558,7 @@ module Loading =
             })
 
     /// Load a scenario mission file and create a world description.
-    let loadWorld(scenario : string, strongProduction : float32<E/H>, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
+    let loadWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
         let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
         let missionData = T.GroupData(Stream.FromFile scenario)
@@ -582,7 +583,7 @@ module Loading =
             |> Seq.map (fun b -> b.Id, b)
             |> dict
         // Regions
-        let regions = extractRegions(regionAreas, buildings, strongProduction)
+        let regions = extractRegions(regionAreas, buildings)
         // Airfields
         let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea
         let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield
@@ -641,6 +642,7 @@ module Loading =
             GroundForcesCost = 10.0f<E/MGF/H>
             GroundForcesTransportCost = 5.0f<M^3/H/MGF>
             ResourceVolume = 1.0f<M^3/E>
+            ResourceProductionRate = 1.0f<E/H/M^3>
             Regions = regions
             Roads = roads
             Rails = rails

@@ -24,7 +24,7 @@ let main argv =
             let speed = 50000.0f<M/H>
             let numTrucks = speed / separation
             let roadCapacity = numTrucks * truck
-            Loading.loadWorld(missionFile, 10000.0f<E/H>, roadCapacity, roadCapacity * 3.0f)
+            Loading.loadWorld(missionFile, roadCapacity, roadCapacity * 3.0f)
         with
         | e ->
             eprintfn "Error in mission file: %s" e.Message
