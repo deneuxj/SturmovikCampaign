@@ -38,19 +38,19 @@ let ``chain properly executes plans in a sequence``() =
     let plan = Planning.chain [planA; planB]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan("", [], budget0)
+        MissionPlanningResult.Plan("Chain of missions", [], budget0)
     Assert.AreEqual(expected, res)
 
     let plan = Planning.chain [planA; planB; planC]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan("", [mission], budget0)
+        MissionPlanningResult.Plan("Chain of missions", [mission], budget0)
     Assert.AreEqual(expected, res)
 
     let plan = Planning.chain [planC; planB; planA]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan("", [mission], budget0)
+        MissionPlanningResult.Plan("Chain of missions", [mission], budget0)
     Assert.AreEqual(expected, res)
 
 [<Test>]
@@ -65,7 +65,7 @@ let ``chain properly accumulates missions``() =
     let plan = Planning.chain [planA; planB; planC; planC]
     let res = plan budget0
     let expected =
-        MissionPlanningResult.Plan("", [missionB; mission; mission], budget0)
+        MissionPlanningResult.Plan("Chain of missions", [missionB; mission; mission], budget0)
     Assert.AreEqual(expected, res)
 
 [<Test>]
