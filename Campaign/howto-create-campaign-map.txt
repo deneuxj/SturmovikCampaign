@@ -38,6 +38,7 @@ Do create the chart. It's needed for picking spawn points according to wind, and
 The taxi points leading to the runway will be used to put direction signs in the game to help spawning players to get to the runway.
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 These alternative waypoints should all have the same name (typically the name of the airfield).
+Airfields without runways are allowed. These can be used by players as alternative landing sites, but are otherwise ignored by the campaign system.
 
 6. Windsocks
 Create windsocks with entities in a group named "Windsocks"

@@ -283,7 +283,7 @@ module Bodenplatte =
 
         let airfields =
             war.World.Airfields.Values
-            |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some friendly)
+            |> Seq.filter (fun af -> af.IsActive && war.GetOwner(af.Region) = Some friendly)
             |> Seq.sortBy (fun af -> distanceToEnemy.[af.Region])
             |> List.ofSeq
 
@@ -347,7 +347,7 @@ module Bodenplatte =
 
         let airfields =
             war.World.Airfields.Values
-            |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some friendly)
+            |> Seq.filter (fun af -> af.IsActive && war.GetOwner(af.Region) = Some friendly)
             |> Seq.sortBy (fun af -> distanceToEnemy.[af.Region])
             |> List.ofSeq
 
@@ -468,7 +468,7 @@ module Bodenplatte =
 
         let enemyAirfields =
             war.World.Airfields.Values
-            |> Seq.filter (fun af -> war.GetOwner(af.Region) = Some enemy)
+            |> Seq.filter (fun af -> af.IsActive && war.GetOwner(af.Region) = Some enemy)
             |> Seq.sortBy (fun af -> distanceToFriendly.[af.Region])
             |> List.ofSeq
 

@@ -233,6 +233,9 @@ type Airfield = {
     Runways : Runway list
     Facilities : BuildingInstanceId list
 }
+with
+    // Airfields without runways can be used by players for emergency landings, but are otherwise unused.
+    member this.IsActive = not this.Runways.IsEmpty
 
 type World = {
     /// Base name of scenario file
