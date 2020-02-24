@@ -1,7 +1,7 @@
 ﻿module Campaign.Tests.MissionGenerator
 
 open NUnit.Framework
-open Campaign.MissionGenerator
+open Campaign.CampaignScenario
 open Campaign.Missions
 open Campaign.WorldDescription
 open Campaign.PlaneModel

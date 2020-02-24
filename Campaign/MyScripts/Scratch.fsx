@@ -15,22 +15,13 @@ open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.Missions
-open Campaign.MissionGenerator
+open Campaign.CampaignScenario
 open Campaign.PlaneModel
 open DamageExtension
 
 let missionDir = @"C:\Users\johann\Documents\SturmovikCampaign\Campaign\data"
 
-let planeDb =
-    planeDb
-    |> List.map (fun plane -> plane.Id, plane)
-    |> Map.ofList
-
-let planeSet =
-    Bodenplatte.allPlanesOf Axis @ Bodenplatte.allPlanesOf Allies
-    |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> printfn "%s missing" (string plane); None))
-    |> Seq.map (fun plane -> plane.Id, plane)
-    |> dict
+let planeSet = BodenplatteInternal.PlaneSet.Default
 
 let world =
     let truck = 5.0f<M^3>
@@ -39,13 +30,14 @@ let world =
     let numTrucks = speed / separation
     let roadCapacity = numTrucks * truck
     let x = Loading.loadWorld(Path.Combine(missionDir, "RheinlandSummer.Mission"), roadCapacity, roadCapacity * 3.0f)
-    { x with PlaneSet = planeSet }
+    (planeSet :> IScenarioWorldSetup).Setup x
 
 let war = Init.mkWar world
-Bodenplatte.initAirfields 0.75f Axis war
-Bodenplatte.initAirfields 1.0f Allies war
+let mgen : IScenarioController<_> = upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet))
+mgen.InitAirfields(0.75f, Axis, war)
+mgen.InitAirfields(1.0f, Allies, war)
 
-let mutable step = Bodenplatte.start war
+let mutable step = mgen.Start(war)
 let random = System.Random(0)
 
 type WarState with
@@ -127,7 +119,7 @@ let advance verbose =
         //        let owner = war.GetOwner(region.RegionId)
         //        if war.GetGroundForces(coalition, region.RegionId) > 0.0f<MGF> && owner <> Some coalition then
         //            eprintfn "Forces from %s wandered into %s controlled by %s" (string coalition) (string region.RegionId) (string owner)
-        step <- data.Next (upcast war)
+        step <- mgen.NextStep data (upcast war)
 
 let advanceStar verbose =
     let rec work() =

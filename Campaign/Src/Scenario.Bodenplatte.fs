@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace Campaign.MissionGenerator
+/// Types to maintain the state of a campaign and plan missions
+namespace Campaign.CampaignScenario
 
 open System.Numerics
 open VectorExtension
@@ -27,231 +28,163 @@ open Campaign.PlaneModel
 
 open Util
 
-type AirfieldId = Campaign.WorldDescription.AirfieldId
-
-/// A step in the sequence of rounds making up a campaign.
-type ScenarioStep =
-    | Stalemate of string
-    | Victory of CoalitionId * string
-    | Ongoing of StepData
-
-/// Content of a round, and a generator function to produce the next step, given the updated state of the war.
-and StepData =
-    {
-        Briefing : string
-        Missions : Mission list
-        Next : IWarStateQuery -> ScenarioStep
-    }
-
-/// Resources available at an airfield.
-/// Decreased whenever a flight is planned taking off from that airfield
-type AirfieldStatus =
-    {
-        Resources : float32<M^3>
-        Planes : Map<PlaneModelId, float32>
-    }
-with
-    member this.TryCheckout((plane, resourcesPerPlane : float32<M^3>, numPlanes)) =
-        let qty = this.Planes.TryFind(plane) |> Option.defaultValue 0.0f
-        let qty = qty - numPlanes
-        let rsc = this.Resources - resourcesPerPlane * numPlanes
-        if qty >= 0.0f && rsc >= 0.0f<M^3> then
-            Some {
-                this with
-                    Resources = rsc
-                    Planes = this.Planes.Add(plane, qty)
-            }
-        else
-            None
-
-/// Resources, and planes available at airfields, ground forces available in regions.
-type ForcesAvailability =
-    {
-        Airfields : Map<AirfieldId, AirfieldStatus>
-        Regions : Map<Campaign.WorldDescription.RegionId * CoalitionId, float32<MGF>>
-    }
-with
-    static member Create(war : IWarStateQuery) =
+module BodenplatteInternal =
+    type ImplData =
         {
-            Airfields =
-                war.World.Airfields.Keys
-                |> Seq.map (fun afid ->
-                    afid,
-                    { Resources = war.GetAirfieldCapacity(afid); Planes = war.GetNumPlanes(afid) } )
-                |> Map.ofSeq
-            Regions =
-                war.World.Regions.Keys
-                |> Seq.collect (fun rid ->
-                    [Axis; Allies]
-                    |> Seq.map (fun coalition -> (rid, coalition), war.GetGroundForces(coalition, rid)))
-                |> Map.ofSeq
+            OffensiveCoalition : CoalitionId
+            Comment : string
         }
 
-    member this.TryCheckoutPlane(afid, data) =
-        let afs =
-            this.Airfields.[afid]
-        let afs = afs.TryCheckout(data)
-        match afs with
-        | Some afs ->
-            Some {
-                this with
-                    Airfields = this.Airfields.Add(afid, afs)
+    type Constants =
+        {
+            /// For mission planning: typical distance from airbase to target for a fighter-based strafing mission
+            TypicalRange : float32<M>
+            /// For mission planning: max range of a fighter mission
+            MaxFighterRange : float32<M>
+            /// Fuel volume consumption of a fighter, in volume per flown meter
+            PlaneRunCost : float32<M^3/M>
+            /// Weight of 1 cubic meter of bomb and its packaging
+            BombDensity : float32<K/M^3>
+            /// Max number of planes at each airfield during initial plane distribution
+            MaxPlanesAtAirfield : float32
+            /// Minimum amount of resources at an airfield to be considered as a target during mission planning
+            MinActiveAirfieldResources : float32<M^3>
+            /// Minimum amount of storage capacity in a region to be considered as a target during mission planning
+            MinRegionBuildingCapacity : float32<M^3>
+        }
+    with
+        static member Default =
+            let typicalRange = 1.05f<M>
+            let planeRunCost = 0.7f<M^3> / typicalRange
+            let bombDensity = 100.0f<K/M^3>
+            let maxPlanesAtAirfield = 100.0f
+            let minActiveAirfieldResources = planeRunCost * 10.0f * typicalRange
+            let minRegionBuildingCapacity = 1000.0f<M^3>
+            {
+                TypicalRange = typicalRange
+                MaxFighterRange = 1.5f * typicalRange
+                PlaneRunCost = planeRunCost
+                BombDensity = bombDensity
+                MaxPlanesAtAirfield = maxPlanesAtAirfield
+                MinActiveAirfieldResources = minActiveAirfieldResources
+                MinRegionBuildingCapacity = minRegionBuildingCapacity
             }
-        | None ->
-            None
 
-    member this.TryCheckoutGroundForce(coalition, rid, force) =
-        let available =
-            this.Regions.TryFind((rid, coalition))
-            |> Option.defaultValue 0.0f<MGF>
-        if available >= force then
-            Some { this with Regions = this.Regions.Add((rid, coalition), available - force) }
-        else
-            None
+    type PlaneSet =
+        {
+            IdMe262 : string
+            IdBf109g14 : string
+            IdFw190a8 : string
+            IdBf109k4 : string
+            IdFw190d9 : string
+            IdP51 : string
+            IdP38 : string
+            IdP47 : string
+            IdSpitfire : string
+            IdTempest : string
+        }
+    with
+        static member Default =
+            {
+                IdMe262 = "me262"
+                IdBf109g14 = "bf109g14"
+                IdFw190a8 = "fw190a8"
+                IdBf109k4 = "bf109k4"
+                IdFw190d9 = "fw190d9"
+                IdP51 = "p51"
+                IdP38 = "p38"
+                IdP47 = "p47"
+                IdSpitfire = "spitfireMkIXe"
+                IdTempest = "Tempest MkV s2"
+            }
 
-type TargetAdapter<'Target> =
-    abstract GetPos : 'Target -> Vector2
-    abstract MkGroundTarget : 'Target -> GroundTargetType
-    abstract GetRegion : 'Target -> Campaign.WorldDescription.RegionId
+        member this.AllPlanesOf coalition =
+            match coalition with
+            | Axis ->
+                [
+                    this.IdMe262
+                    this.IdBf109g14
+                    this.IdFw190a8
+                    this.IdBf109k4
+                    this.IdFw190d9
+                ]
+            | Allies ->
+                [
+                    this.IdP51
+                    this.IdP38
+                    this.IdP47
+                    this.IdSpitfire
+                    this.IdTempest
+                ]
 
-type AirfieldTargetAdapter() =
-    interface TargetAdapter<Airfield> with
-        member __.GetPos(af) = af.Position
-        member __.MkGroundTarget(af) = AirfieldTarget af.AirfieldId
-        member __.GetRegion(af) = af.Region
-
-type RegionTargetAdapter() =
-    interface TargetAdapter<Region> with
-        member __.GetPos(region) = region.Position
-        member __.MkGroundTarget(region) = BuildingTarget
-        member __.GetRegion(region) = region.RegionId
-
-type GroundForcesTargetAdapter(side) =
-    interface TargetAdapter<Region> with
-        member __.GetPos(region) = region.Position
-        member __.MkGroundTarget(region) = GroundForces side
-        member __.GetRegion(region) = region.RegionId
-
-type MissionPlanningResult =
-    | TooFewTargets of string
-    | Plan of string * Mission list * ForcesAvailability
-with
-    member this.LacksResources =
-        match this with
-        | TooFewTargets _ | Plan(_, _ :: _, _) -> false
-        | Plan(_, [], _) -> true
-
-module MissionPlanningResult =
-    let getMissions originalBudget =
-        function
-        | TooFewTargets _ -> [], originalBudget
-        | Plan(_, missions, budget) -> missions, budget
-
-    let hasMissions =
-        function
-        | TooFewTargets _ | Plan(_, [],_) -> false
-        | Plan(_, _ :: _, _) -> true
-
-    let firstWithNonEmptyPlan (xs : MissionPlanningResult seq) =
-        let proj =
+        /// Get the list of attackers of a coalition, preferred ones first
+        member this.Attackers =
             function
-            | Plan(_, [], _) -> 0
-            | TooFewTargets _ -> 1
-            | Plan(_, _ :: _, _) -> 2
-        let pred =
+            | Axis -> [ this.IdMe262; this.IdFw190d9; this.IdFw190a8; this.IdBf109k4; this.IdBf109g14]
+            | Allies -> [ this.IdP38; this.IdP47; this.IdP51 ]
+
+        /// Get the list of interceptors of a coalition, preferred ones first
+        member this.InterceptorsOf =
             function
-            | Plan(_, _ :: _, _) -> true
-            | _ -> false
-        xs
-        |> Seq.maxByUntil proj pred
+            | Axis -> [ this.IdFw190d9; this.IdBf109k4; this.IdFw190a8; this.IdBf109g14 ]
+            | Allies -> [ this.IdP38; this.IdP51; this.IdTempest; this.IdP47; this.IdSpitfire ]
 
-module Planning =
-    let chain planners =
-        fun budget ->
-            planners
-            |> Seq.fold (fun (missions, budget) planner ->
-                let plan = planner budget
-                let missions2, budget = MissionPlanningResult.getMissions budget plan
-                (missions @ missions2, budget)
-            ) ([], budget)
-            |> fun (m, b) -> Plan("Chain of missions", m, b)
+        /// Get the list of fighters of a coalition, preferred ones first
+        member this.FightersOf =
+            function
+            | Axis -> [ this.IdBf109g14; this.IdFw190a8; this.IdBf109k4; this.IdFw190d9 ]
+            | Allies -> [ this.IdP51; this.IdSpitfire; this.IdTempest; this.IdP47; this.IdP38 ]
 
-    let andThen also first =
-        fun budget ->
-            match first budget with
-            | Plan(description, ((_ :: _) as missions), budget) ->
-                let missions2, budget =
-                    (chain also) budget
-                    |> MissionPlanningResult.getMissions budget
-                Plan(description, missions @ missions2, budget)
-            | nogo -> nogo
+        interface IScenarioWorldSetup with
+            member this.Setup(world: World): World = 
+                let planes =
+                    List.concat [ this.AllPlanesOf Axis; this.AllPlanesOf Allies ]
+                    |> List.map PlaneModelId
 
-    let orElse alternatives =
-        fun budget ->
-            alternatives
-            |> Seq.map (fun f -> f budget)
-            |> MissionPlanningResult.firstWithNonEmptyPlan
+                let planeDb =
+                    planeDb
+                    |> List.map (fun plane -> plane.Id, plane)
+                    |> Map.ofList
+                    
+                let planeSet =
+                    planes
+                    |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> eprintfn "%s missing" (string plane); None))
+                    |> Seq.map (fun plane -> plane.Id, plane)
+                    |> dict
 
-module Bodenplatte =
+                { world with PlaneSet = planeSet }
+
+open BodenplatteInternal
+
+type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
     let totalPlanes : Map<_, float32> -> float32 =
         Map.toSeq >> Seq.sumBy (snd >> floor)
 
-    let typicalRange = 1.0e5f<M>
-    let planeRunCost = 0.7f<M^3> / typicalRange
-    let bombDensity = 100.0f<K/M^3>
+    let typicalRange = C.TypicalRange
+    let planeRunCost = C.PlaneRunCost
+    let bombDensity = C.BombDensity
+    let maxPlanesAtAirfield = C.MaxPlanesAtAirfield
+    let minActiveAirfieldResources = C.MinActiveAirfieldResources
+    let minRegionBuildingCapacity = C.MinRegionBuildingCapacity
 
-    type Campaign.Missions.AirMission with
-        member this.CheckoutData(world : World) =
-            let distance =
-                1.0f<M> * (world.Regions.[this.Objective].Position - world.Airfields.[this.StartAirfield].Position).Length()
-            let bombs =
-                match this.MissionType with
-                | GroundTargetAttack _ -> world.PlaneSet.[this.Plane].BombCapacity / bombDensity
-                | AreaProtection -> 0.0f<M^3>
-                | PlaneTransfer _ -> 0.0f<M^3>
-            (this.Plane, distance * planeRunCost + bombs, float32 this.NumPlanes)
+    let checkoutDataAir (mission : AirMission) =
+        let distance =
+            1.0f<M> * (world.Regions.[mission.Objective].Position - world.Airfields.[mission.StartAirfield].Position).Length()
+        let bombs =
+            match mission.MissionType with
+            | GroundTargetAttack _ -> world.PlaneSet.[mission.Plane].BombCapacity / bombDensity
+            | AreaProtection -> 0.0f<M^3>
+            | PlaneTransfer _ -> 0.0f<M^3>
+        (mission.Plane, distance * planeRunCost + bombs, float32 mission.NumPlanes)
 
-    type Campaign.Missions.GroundMission with
-        member this.CheckoutData() =
-            match this with
+    let checkoutDataGround (mission : GroundMission) =
+            match mission with
             | { MissionType = GroundBattle _ } -> None
             | { MissionType = GroundForcesTransfer(coalition, start, forces) } -> Some(coalition, start, forces)
 
-    let maxPlanesAtAirfield = 100.0f
-
-    let minActiveAirfieldResources = planeRunCost * 10.0f * typicalRange
-
-    let minRegionBuildingCapacity = 1000.0f<M^3>
-
-    let idMe262 = PlaneModelId "me262"
-    let idBf109g14 = PlaneModelId "bf109g14"
-    let idFw190a8 = PlaneModelId "fw190a8"
-    let idBf109k4 = PlaneModelId "bf109k4"
-    let idFw190d9 = PlaneModelId "fw190d9"
-
-    let idP51 = PlaneModelId "p51"
-    let idP47 = PlaneModelId "p47"
-    let idSpitfire = PlaneModelId "spitfireMkIXe"
-    let idTempest = PlaneModelId "Tempest MkV s2"
-    let idP38 = PlaneModelId "p38"
-
-    /// Get the list of attackers of a coalition, preferred ones first
-    let attackersOf =
-        function
-        | Axis -> [ idMe262; idFw190d9; idFw190a8; idBf109k4; idBf109g14]
-        | Allies -> [ idP38; idP47; idP51 ]
-
-    /// Get the list of interceptors of a coalition, preferred ones first
-    let interceptorsOf =
-        function
-        | Axis -> [ idFw190d9; idBf109k4; idFw190a8; idBf109g14 ]
-        | Allies -> [ idP38; idP51; idTempest; idP47; idSpitfire ]
-
-    /// Get the list of fighters of a coalition, preferred ones first
-    let fightersOf =
-        function
-        | Axis -> [ idBf109g14; idFw190a8; idBf109k4; idFw190d9 ]
-        | Allies -> [ idP51; idSpitfire; idTempest; idP47; idP38 ]
+    let attackersOf = PS.Attackers >> List.map PlaneModelId
+    let interceptorsOf = PS.InterceptorsOf >> List.map PlaneModelId
+    let fightersOf = PS.FightersOf >> List.map PlaneModelId
 
     let allPlanesOf coalition =
         [attackersOf; interceptorsOf; fightersOf]
@@ -265,9 +198,6 @@ module Bodenplatte =
             atAirfield.TryFind(plane)
             |> Option.defaultValue 0.0f
             |> (+) s) 0.0f
-
-    let airfieldPos (af : Airfield) =
-        af.Boundary.Head
 
     /// Set the number of planes at each airfield controlled by a coalition.
     let initAirfields (factor : float32) (friendly : CoalitionId) (war : IWarState) =
@@ -381,7 +311,7 @@ module Bodenplatte =
                             readyAirfields 
                             |> Seq.choose (fun af ->
                                 let mission : AirMission = mkMissionFrom af
-                                match budget.TryCheckoutPlane(af.AirfieldId, mission.CheckoutData war.World) with
+                                match budget.TryCheckoutPlane(af.AirfieldId, checkoutDataAir mission) with
                                 | None -> None
                                 | Some budget ->
                                     if isInPlaneRange mission.Plane af destination then
@@ -456,7 +386,7 @@ module Bodenplatte =
                         | { Kind = AirMission mission } ->
                             budget
                             |> Option.bind (fun (budget : ForcesAvailability) ->
-                                budget.TryCheckoutPlane(mission.StartAirfield, mission.CheckoutData war.World))
+                                budget.TryCheckoutPlane(mission.StartAirfield, checkoutDataAir mission))
                         | _ -> budget
                     ) (Some budget)
                 Plan (description, raids, Option.get budget)
@@ -587,7 +517,7 @@ module Bodenplatte =
                                             Plane = plane.Id
                                         }
                                     let budget2 =
-                                        budget.TryCheckoutPlane(start.AirfieldId, mission.CheckoutData war.World)
+                                        budget.TryCheckoutPlane(start.AirfieldId, checkoutDataAir mission)
                                     match budget2 with
                                     | Some budget2 ->
                                         budget <- budget2
@@ -653,7 +583,7 @@ module Bodenplatte =
                                         NumPlanes = numPlanes
                                         Plane = plane
                                     }
-                                let budget2 = budget.TryCheckoutPlane(af1.AirfieldId, mission.CheckoutData war.World)
+                                let budget2 = budget.TryCheckoutPlane(af1.AirfieldId, checkoutDataAir mission)
                                 match budget2 with
                                 | Some b ->
                                     budget <- b
@@ -720,7 +650,7 @@ module Bodenplatte =
             |> List.fold (fun (budget : ForcesAvailability option) mission ->
                 budget
                 |> Option.bind (fun budget ->
-                    match mission.CheckoutData() with
+                    match checkoutDataGround mission with
                     | Some(coalition, start, force) ->
                         budget.TryCheckoutGroundForce(coalition, start, force)
                     | None ->
@@ -806,7 +736,18 @@ module Bodenplatte =
             Ongoing {
                 Briefing = sprintf "%s. %s is %s %s assets on the ground with %s" comment (string side) momentum (string side.Other) description
                 Missions = missions @ covers
-                Next = oneSideStrikes side.Other (sprintf "%s takes the initiative" (string side.Other)) 1
+                Data = {
+                    OffensiveCoalition = side.Other
+                    Comment = sprintf "%s takes the initiative" (string side.Other)
+                }
             }
 
-    let start war = oneSideStrikes Axis "Axis opens the hostilities" 1 war
+    interface IScenarioController<ImplData> with
+        member this.InitAirfields(planeNumberCoefficient, coalition, war) =
+            initAirfields planeNumberCoefficient coalition war
+
+        member this.NextStep(stepData) =
+            oneSideStrikes stepData.Data.OffensiveCoalition stepData.Data.Comment 1
+
+        member this.Start(war) =
+            oneSideStrikes Axis "Axis opens the hostilities" 1 war
