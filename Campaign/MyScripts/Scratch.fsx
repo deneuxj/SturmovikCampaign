@@ -34,7 +34,7 @@ let world =
 
 let war = Init.mkWar world
 let mgen : IScenarioController<_> = upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet))
-mgen.InitAirfields(0.75f, Axis, war)
+mgen.InitAirfields(1.5f, Axis, war)
 mgen.InitAirfields(1.0f, Allies, war)
 
 let mutable step = mgen.Start(war)

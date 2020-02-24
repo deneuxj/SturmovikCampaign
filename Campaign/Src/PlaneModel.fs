@@ -85,7 +85,7 @@ type PlaneModel =
 with
     member this.Id = PlaneModelId this.Name
 
-    member this.MaxRange = 100000.0f<M>
+    member this.MaxRange = 800000.0f<M>
 
 [<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.yaml"

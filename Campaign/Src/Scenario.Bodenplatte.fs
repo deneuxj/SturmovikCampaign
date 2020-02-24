@@ -39,8 +39,6 @@ module BodenplatteInternal =
         {
             /// For mission planning: typical distance from airbase to target for a fighter-based strafing mission
             TypicalRange : float32<M>
-            /// For mission planning: max range of a fighter mission
-            MaxFighterRange : float32<M>
             /// Fuel volume consumption of a fighter, in volume per flown meter
             PlaneRunCost : float32<M^3/M>
             /// Weight of 1 cubic meter of bomb and its packaging
@@ -54,7 +52,7 @@ module BodenplatteInternal =
         }
     with
         static member Default =
-            let typicalRange = 1.05f<M>
+            let typicalRange = 400e3f<M>
             let planeRunCost = 0.7f<M^3> / typicalRange
             let bombDensity = 100.0f<K/M^3>
             let maxPlanesAtAirfield = 100.0f
@@ -62,7 +60,6 @@ module BodenplatteInternal =
             let minRegionBuildingCapacity = 1000.0f<M^3>
             {
                 TypicalRange = typicalRange
-                MaxFighterRange = 1.5f * typicalRange
                 PlaneRunCost = planeRunCost
                 BombDensity = bombDensity
                 MaxPlanesAtAirfield = maxPlanesAtAirfield
