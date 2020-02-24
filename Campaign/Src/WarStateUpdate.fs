@@ -55,7 +55,7 @@ type Results =
     | RegionOwnerSet of RegionId * CoalitionId option
 
 module Results =
-    let asString (war : WarState) result =
+    let asString (war : IWarStateQuery) result =
         match result with
         | UpdatedStorageValue(BuildingInstanceId orPos as bid, amount) ->
             let buildingDescr =
@@ -85,7 +85,7 @@ module Results =
             sprintf "%s is now controlled by %s" (string rid) (string coalition)
 
 module DamageExtension =
-    type WarState with
+    type IWarState with
         /// Apply damage to or repair a part of a building. Return new storage volume of the whole building.
         member this.ChangeHealth(bid, part, delta) =
             let health = this.GetBuildingPartHealthLevel(bid, part)
@@ -117,7 +117,7 @@ module DamageExtension =
 
     type Commands with
         /// Execute commands on a WarState. Return the result of the command.
-        member this.Execute(state : WarState) =
+        member this.Execute(state : IWarState) =
             match this with
             | DamageBuildingPart(bid, part, dmg) ->
                 let storage = state.ChangeHealth(bid, part, -dmg)

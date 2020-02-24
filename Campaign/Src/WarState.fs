@@ -132,26 +132,74 @@ module private Algo =
             let sinks = terminalsInRegion network regionB
             computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks)
 
-    /// Compute transport capacity over multiple networks to all neighbours of a region
-    let computeTransportCapacityToNeighbours getFlowCapacity networks neighboursOf filter =
-        fun region ->
-            let others =
-                neighboursOf region
-                |> Seq.filter (fun ngh -> filter region ngh)
-                |> Set.ofSeq
-            let regions = others.Add region
-            networks
-            |> List.sumBy (fun network ->
-                let sources = terminalsInRegion network region
-                let sinks =
-                    others
-                    |> Set.map (terminalsInRegion network)
-                    |> Set.unionMany
-                computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks))
+type IWarStateQuery =
+    /// Get the immutable description of the world
+    abstract member World : World
+    /// Get the current date and time
+    abstract member Date : DateTime
+    /// Level of health of a subpart of a building or bridge
+    abstract member GetBuildingPartHealthLevel : BuildingInstanceId * int -> float32
+    /// Storage room in a building, taking health into account.
+    abstract member GetBuildingCapacity : BuildingInstanceId -> float32<M^3>
+    /// Level of functionality of a subpart of a building or bridge
+    abstract member GetBuildingPartFunctionalityLevel : BuildingInstanceId * int -> float32
+    /// Level of functionality of a building
+    abstract member GetBuildingFunctionalityLevel : BuildingInstanceId -> float32
+    /// Storage room in a region, taking health into account.
+    abstract member GetRegionBuildingCapacity : RegionId -> float32<M^3>
+    /// Level of functionality of a bridge
+    abstract member GetBridgeFunctionalityLevel : BuildingInstanceId -> float32
+    /// Get the ground forces of a coalition in a region
+    abstract member GetGroundForces : CoalitionId * RegionId -> float32<MGF>
+    /// Get transport link capacity
+    abstract member GetFlowCapacity : NetworkLink -> float32<M^3/H>
+    /// Compute a mapping from a coalition to distances (in regions) to regions owned by this coalition
+    abstract member ComputeDistancesToCoalition : CoalitionId -> IDictionary<RegionId, int>
+    /// Compute a mapping from a regions to distances (in regions) to the closest region with an airfield
+    abstract member ComputeDistancesToAirfields : unit -> IDictionary<RegionId, int>
+    /// Compute a mapping from pairs of regions to road transport capacity between these two regions
+    abstract member ComputeRoadCapacity : unit -> (RegionId * RegionId -> float32<M^3/H>)
+    /// Compute a mapping from pairs of regions to rail transport capacity between these two regions
+    abstract member ComputeRailCapacity : unit -> (RegionId * RegionId -> float32<M^3/H>)
+    /// Compute a mapping from regions to amount of supplies that can reach it from the rear regions every hour
+    abstract member ComputeSupplyAvailability : unit -> (RegionId -> float32<E/H>)
+    /// Get a mapping denoting the number of each plane model at an airfield
+    abstract member GetNumPlanes : AirfieldId -> Map<PlaneModelId, float32>
+    /// Get the owner of a region
+    abstract member GetOwner : RegionId -> CoalitionId option
+
+[<AutoOpen>]
+module IWarStateExtensions = 
+    type IWarStateQuery with
+        member this.GetNumPlanes(afId, model) =
+            this.GetNumPlanes(afId)
+            |> Map.tryFind model
+            |> Option.defaultValue 0.0f
+
+        member this.GetAirfieldCapacity(afid) =
+            this.World.Airfields.[afid].Facilities
+            |> List.sumBy this.GetBuildingCapacity
+
+type IWarStateUpdate =
+    /// Set the date and time
+    abstract member SetDate : DateTime -> unit
+    /// Set the level of health of a subpart of a building or a bridge
+    abstract member SetBuildingPartHealthLevel : BuildingInstanceId * int * float32 -> unit
+    /// Set the ground forces of a coalition in a region
+    abstract member SetGroundForces : CoalitionId * RegionId * float32<MGF> -> unit
+    /// Set the number of planes of a given model available at a given airfield
+    abstract member SetNumPlanes : AirfieldId * PlaneModelId * float32 -> unit
+    /// Set the owner of a region
+    abstract member SetOwner : RegionId * CoalitionId option -> unit
+
+type IWarState =
+    inherit IWarStateQuery
+    inherit IWarStateUpdate
 
 /// The overall status of the war.
 type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces : ((CoalitionId * RegionId) * float32<MGF>) seq, date) =
 
+    let mutable date = date
     let buildingPartHealthLevel = Seq.mutableDict buildingPartHealthLevel
     let owners = Seq.mutableDict owners
     let airfieldPlanes =
@@ -214,13 +262,13 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
 
     member this.Date : DateTime = date
 
-    /// Level of health of a subpart of a building or bridge
+    member this.SetDate(date2) = date <- date2
+
     member this.GetBuildingPartHealthLevel(bid, part) =
         match buildingPartHealthLevel.TryGetValue((bid, part)) with
         | true, x -> x
         | false, _ -> 1.0f
 
-    /// Storage room in a building, taking health into account.
     member this.GetBuildingCapacity(bid) =
         assert(this.World.Buildings.ContainsKey(bid))
         let building = this.World.Buildings.[bid]
@@ -228,7 +276,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
         |> (*) building.Properties.PartCapacity
 
-    /// Level of functionality of a subpart of a building or bridge
     member this.GetBuildingPartFunctionalityLevel(bid, part) =
         let health = this.GetBuildingPartHealthLevel(bid, part)
         if health < 0.5f then
@@ -236,7 +283,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         else
             health
 
-    /// Level of functionality of a building
     member this.GetBuildingFunctionalityLevel(bid) =
         assert(this.World.Buildings.ContainsKey(bid))
         let building = this.World.Buildings.[bid]
@@ -244,7 +290,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
         |> (*) (1.0f / (building.Properties.SubParts.Length |> max 1 |> float32))
 
-    /// Set the level of health of a subpart of a building or a bridge
     member this.SetBuildingPartHealthLevel(bid, part, x) =
         if x = 1.0f then
             buildingPartHealthLevel.Remove((bid, part)) |> ignore
@@ -253,12 +298,10 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         if this.World.Bridges.ContainsKey(bid) then
             this.ClearCachesAfterBridgeHealthChanged()
 
-    /// Storage room in a region, taking health into account.
     member this.GetRegionBuildingCapacity(rid : RegionId) =
         this.World.Regions.[rid].IndustryBuildings
         |> Seq.sumBy this.GetBuildingCapacity
 
-    /// Level of functionality of a bridge
     member this.GetBridgeFunctionalityLevel(bid) =
         let building = this.World.Bridges.[bid]
         building.Properties.SubParts
@@ -267,17 +310,14 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             |> min level
         ) 1.0f
 
-    /// Get the ground forces of a coalition in a region
     member this.GetGroundForces(coalition, region) =
         groundForces.TryGetValue((coalition, region))
         |> Option.ofPair
         |> Option.defaultValue 0.0f<MGF>
 
-    /// Set the ground forces of a coalition in a region
     member this.SetGroundForces(coalition, region, forces) =
         groundForces.[(coalition, region)] <- forces
 
-    /// Get transport link capacity
     member this.GetFlowCapacity(link : NetworkLink) =
         let functionality =
             link.Bridges
@@ -285,7 +325,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             |> Seq.fold min 1.0f
         functionality * link.FlowCapacity
 
-    /// Compute a mapping from a coalition to distances to regions owned by this coalition
     member this.ComputeDistancesToCoalition =
         Cached.cached
             regionDistancesToEnemy
@@ -313,17 +352,17 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         | Some x ->
             x
 
-    member this.ComputeRoadCapacity =
+    member this.ComputeRoadCapacity() =
         Cached.cached
             roadsCapacities
             (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity roads)
 
-    member this.ComputeRailCapacity =
+    member this.ComputeRailCapacity() =
         Cached.cached
             railsCapacities
             (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity rails)
 
-    member this.ComputeSupplyAvailability =
+    member this.ComputeSupplyAvailability() =
         Cached.cached
             supplyAvailability
             (fun region ->
@@ -364,12 +403,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         |> Option.map (fun dict -> dict |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq)
         |> Option.defaultValue Map.empty
 
-    member this.GetNumPlanes(afid, model) =
-        airfieldPlanes.TryGetValue(afid)
-        |> Option.ofPair
-        |> Option.map (fun d -> d.TryGetValue(model) |> Option.ofPair |> Option.defaultValue 0.0f)
-        |> Option.defaultValue 0.0f
-
     member this.SetNumPlanes(afid, model, qty) =
         let inner =
             airfieldPlanes.TryGetValue(afid)
@@ -392,9 +425,29 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             if needClear then
                 this.ClearCachesAfterOwnerChanged()
 
-    member this.GetAirfieldCapacity(afid) =
-        this.World.Airfields.[afid].Facilities
-        |> List.sumBy this.GetBuildingCapacity
+    interface IWarState with
+        member this.ComputeDistancesToAirfields() = upcast(this.ComputeDistancesToAirfields())
+        member this.ComputeDistancesToCoalition(arg1) = upcast(this.ComputeDistancesToCoalition(arg1))
+        member this.ComputeRailCapacity() = this.ComputeRailCapacity()
+        member this.ComputeRoadCapacity() = this.ComputeRoadCapacity()
+        member this.ComputeSupplyAvailability() = this.ComputeSupplyAvailability()
+        member this.Date = this.Date
+        member this.GetBridgeFunctionalityLevel(arg1) = this.GetBridgeFunctionalityLevel(arg1)
+        member this.GetBuildingCapacity(arg1) = this.GetBuildingCapacity(arg1)
+        member this.GetBuildingFunctionalityLevel(arg1) = this.GetBuildingFunctionalityLevel(arg1)
+        member this.GetBuildingPartFunctionalityLevel(arg1, arg2) = this.GetBuildingPartFunctionalityLevel(arg1, arg2)
+        member this.GetBuildingPartHealthLevel(arg1, arg2) = this.GetBuildingPartHealthLevel(arg1, arg2)
+        member this.GetFlowCapacity(arg1) = this.GetFlowCapacity(arg1)
+        member this.GetGroundForces(arg1, arg2) = this.GetGroundForces(arg1, arg2)
+        member this.GetNumPlanes(arg1) = this.GetNumPlanes(arg1)
+        member this.GetOwner(arg1) = this.GetOwner(arg1)
+        member this.GetRegionBuildingCapacity(arg1) = this.GetRegionBuildingCapacity(arg1)
+        member this.SetBuildingPartHealthLevel(arg1, arg2, arg3) = this.SetBuildingPartHealthLevel(arg1, arg2, arg3)
+        member this.SetDate(arg1) = this.SetDate(arg1)
+        member this.SetGroundForces(coalition, region, forces) = this.SetGroundForces(coalition, region, forces)
+        member this.SetNumPlanes(arg1, arg2, arg3) = this.SetNumPlanes(arg1, arg2, arg3)
+        member this.SetOwner(arg1, arg2) = this.SetOwner(arg1, arg2)
+        member this.World = this.World
 
 [<RequireQualifiedAccess>]
 module Init =

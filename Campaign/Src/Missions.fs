@@ -184,7 +184,7 @@ type Mission =
         Description : string
     }
 
-type MissionSimulator(random : System.Random, war : WarState, missions : Mission list, duration : float32<H>) =
+type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : Mission list, duration : float32<H>) =
     let missions =
         List.indexed missions
 
@@ -235,6 +235,8 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         }
 
     member this.DoGroundForcesMovements() =
+        let roads = war.ComputeRoadCapacity()
+        let rails = war.ComputeRailCapacity()
         seq {
             for mId, mission in groundMissions do
                 match mission.MissionType with
@@ -260,10 +262,10 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
                         // Max transport capacity by roads and rails.
                         let maxFlow =
                             if Some coalitionStart <> coalitionDestination then
-                                war.ComputeRoadCapacity(startRegion, mission.Objective)
+                                roads(startRegion, mission.Objective)
                             else
-                                war.ComputeRoadCapacity(startRegion, mission.Objective) +
-                                war.ComputeRailCapacity(startRegion, mission.Objective)
+                                roads(startRegion, mission.Objective) +
+                                rails(startRegion, mission.Objective)
                         let desired = forces * war.World.GroundForcesTransportCost
                         let volume = min desired maxFlow
                         // Transport capacity usage info
@@ -299,20 +301,23 @@ type MissionSimulator(random : System.Random, war : WarState, missions : Mission
         // Get the max amount of supplies forces have available in a region for a round of battle
         // For the defenders, it's the industry in the rear regions, limited by the road and rail transport capacity
         // Same for the attackers, but with the additional limitation that only roads can be used into the attacked region.
-        let getRoundSupplies(region, coalition) =
-            match war.GetOwner(region) with
-            | None -> 0.0f<E>
-            | Some owner when owner = coalition ->
-                war.ComputeSupplyAvailability region * roundDuration
-            | Some _ ->
-                war.World.Regions.[region].Neighbours
-                |> List.filter (fun ngh -> war.GetOwner(ngh) = Some coalition)
-                |> List.map (fun ngh ->
-                    war.ComputeSupplyAvailability ngh
-                    |> min (war.ComputeRoadCapacity(ngh, region) / war.World.ResourceVolume))
-                |> function
-                    | [] -> 0.0f<E>
-                    | xs -> roundDuration * List.max xs
+        let getRoundSupplies =
+            let supplies = war.ComputeSupplyAvailability()
+            let roads = war.ComputeRoadCapacity()
+            fun (region, coalition) ->
+                match war.GetOwner(region) with
+                | None -> 0.0f<E>
+                | Some owner when owner = coalition ->
+                    supplies region * roundDuration
+                | Some _ ->
+                    war.World.Regions.[region].Neighbours
+                    |> List.filter (fun ngh -> war.GetOwner(ngh) = Some coalition)
+                    |> List.map (fun ngh ->
+                        supplies ngh
+                        |> min (roads(ngh, region) / war.World.ResourceVolume))
+                    |> function
+                        | [] -> 0.0f<E>
+                        | xs -> roundDuration * List.max xs
 
         // Get the efficiency factor that influences damage inflicted to the other side in one round.
         // Depends on the available supplies

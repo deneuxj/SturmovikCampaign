@@ -127,7 +127,7 @@ let advance verbose =
         //        let owner = war.GetOwner(region.RegionId)
         //        if war.GetGroundForces(coalition, region.RegionId) > 0.0f<MGF> && owner <> Some coalition then
         //            eprintfn "Forces from %s wandered into %s controlled by %s" (string coalition) (string region.RegionId) (string owner)
-        step <- data.Next war
+        step <- data.Next (upcast war)
 
 let advanceStar verbose =
     let rec work() =
