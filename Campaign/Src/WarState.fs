@@ -24,6 +24,8 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.WorldDescription
 open Campaign.NewWorldDescription
+open Campaign.Weather
+
 open Util
 
 /// Shorthand for SturmovikMission.DataProvider.Cached
@@ -137,6 +139,8 @@ type IWarStateQuery =
     abstract member World : World
     /// Get the current date and time
     abstract member Date : DateTime
+    /// Get the weather
+    abstract member Weather : WeatherState
     /// Level of health of a subpart of a building or bridge
     abstract member GetBuildingPartHealthLevel : BuildingInstanceId * int -> float32
     /// Storage room in a building, taking health into account.
@@ -183,6 +187,8 @@ module IWarStateExtensions =
 type IWarStateUpdate =
     /// Set the date and time
     abstract member SetDate : DateTime -> unit
+    /// Set the weather
+    abstract member SetWeather : WeatherState -> unit
     /// Set the level of health of a subpart of a building or a bridge
     abstract member SetBuildingPartHealthLevel : BuildingInstanceId * int * float32 -> unit
     /// Set the ground forces of a coalition in a region
@@ -197,9 +203,10 @@ type IWarState =
     inherit IWarStateUpdate
 
 /// The overall status of the war.
-type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces : ((CoalitionId * RegionId) * float32<MGF>) seq, date) =
+type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces : ((CoalitionId * RegionId) * float32<MGF>) seq, date, weather) =
 
     let mutable date = date
+    let mutable weather = weather
     let buildingPartHealthLevel = Seq.mutableDict buildingPartHealthLevel
     let owners = Seq.mutableDict owners
     let airfieldPlanes =
@@ -263,6 +270,10 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.Date : DateTime = date
 
     member this.SetDate(date2) = date <- date2
+
+    member this.Weather = weather
+
+    member this.SetWeather(weather2) = weather <- weather2
 
     member this.GetBuildingPartHealthLevel(bid, part) =
         match buildingPartHealthLevel.TryGetValue((bid, part)) with
@@ -447,6 +458,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.SetGroundForces(coalition, region, forces) = this.SetGroundForces(coalition, region, forces)
         member this.SetNumPlanes(arg1, arg2, arg3) = this.SetNumPlanes(arg1, arg2, arg3)
         member this.SetOwner(arg1, arg2) = this.SetOwner(arg1, arg2)
+        member this.SetWeather(arg) = this.SetWeather(arg)
+        member this.Weather = this.Weather
         member this.World = this.World
 
 [<RequireQualifiedAccess>]
@@ -476,8 +489,9 @@ module Init =
                         Some ((owner, region.RegionId), 0.0f<MGF>)
                     else
                         None))
+        let weather = getWeather (System.Random()) world.StartDate
         let war =
-            WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate)
+            WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate, weather)
         // Set forces on the frontline according to the region's storage capacity
         for (coalition, rid), _ in frontGroundForces do
             let capacity =
