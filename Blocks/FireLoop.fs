@@ -30,11 +30,11 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let effect1 = getVehicleByName group T.Blocks.Effect1
-        let effect2 = getVehicleByName group T.Blocks.Effect2
-        let init = getTriggerByName group T.Blocks.INITIALLY
-        let startLoop = getTriggerByName group T.Blocks.START_LOOP
-        let stopLook = getTriggerByName group T.Blocks.STOP_LOOP
+        let effect1 = getVehicleByName group "Effect1"
+        let effect2 = getVehicleByName group "Effect2"
+        let init = getTriggerByName group "INITIALLY"
+        let startLoop = getTriggerByName group "START_LOOP"
+        let stopLook = getTriggerByName group "STOP_LOOP"
         // Position of all nodes
         let refPoint = Vector2.FromMcu(effect1.Pos)
         let dv = pos - refPoint

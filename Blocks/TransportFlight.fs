@@ -24,13 +24,13 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.RequestSpawn
-        let destination = getTriggerByName group T.Blocks.Destination
-        let cmdLand = getTriggerByName group T.Blocks.Land
-        let plane1 = getVehicleByName group T.Blocks.Transport1
-        let killed = getTriggerByName group T.Blocks.Killed
-        let arrived = getTriggerByName group T.Blocks.Landed
-        let completed = getTriggerByName group T.Blocks.COMPLETED
+        let start = getTriggerByName group "RequestSpawn"
+        let destination = getTriggerByName group "Destination"
+        let cmdLand = getTriggerByName group "Land"
+        let plane1 = getVehicleByName group "Transport1"
+        let killed = getTriggerByName group "Killed"
+        let arrived = getTriggerByName group "Landed"
+        let completed = getTriggerByName group "COMPLETED"
         // Position of all nodes
         let refPoint = Vector2.FromMcu plane1.Pos
         let dPos = takeOffPos - refPoint

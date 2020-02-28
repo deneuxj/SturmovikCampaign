@@ -13,10 +13,8 @@ let private sampleFile = __SOURCE_DIRECTORY__ + "/Sample.Mission"
 let private blocksFile = dataDir + "/Blocks/Blocks.Mission"
 [<Literal>]
 let private vehiclesFile = dataDir + "/Blocks/Vehicles.mission"
-[<Literal>]
-let private libFiles = blocksFile + ";" + vehiclesFile
 
-type T = SturmovikMissionTypes.Provider<sampleFile, libFiles>
+type T = SturmovikMissionTypes.Provider<sampleFile>
 
 let blocksData =
     let blockMission =

@@ -25,12 +25,12 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let notifier = getVehicleByName group T.Blocks.Notification
+        let notifier = getVehicleByName group "Notification"
         let entity = getEntityByIndex notifier.LinkTrId group 
         let getByName = getTriggerByName group
-        let leaderArrived = getByName T.Blocks.Trigger
-        let destroyed = getByName T.Blocks.Disable
-        let isAlive = getByName T.Blocks.IsEnabled
+        let leaderArrived = getByName "Trigger"
+        let destroyed = getByName "Disable"
+        let isAlive = getByName "IsEnabled"
         // Position of all nodes
         let refPoint = Vector2(float32 notifier.Pos.X, float32 notifier.Pos.Z)
         let dv = pos - refPoint

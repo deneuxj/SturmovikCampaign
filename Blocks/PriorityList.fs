@@ -25,11 +25,11 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let act = getTriggerByName group T.Blocks.Do
-        let pass = getTriggerByName group T.Blocks.Pass
-        let attempt = getTriggerByName group T.Blocks.Try
-        let enable = getTriggerByName group T.Blocks.Enable
-        let disable = getTriggerByName group T.Blocks.Disable
+        let act = getTriggerByName group "Do"
+        let pass = getTriggerByName group "Pass"
+        let attempt = getTriggerByName group "Try"
+        let enable = getTriggerByName group "Enable"
+        let disable = getTriggerByName group "Disable"
         // Position of all nodes
         let refPoint = Vector2.FromMcu act.Pos
         let dv = pos - refPoint

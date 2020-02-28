@@ -30,13 +30,13 @@ with
             subst mcu
             substlc mcu
         // Get key nodes
-        let precise = getTriggerByName group T.Blocks.PreciselyDropped
-        let wide = getTriggerByName group T.Blocks.WidelyDropped
-        let preciseCx = getComplexTriggerByName group T.Blocks.PreciseDrop
-        let wideCx = getComplexTriggerByName group T.Blocks.WideDrop
-        let msgPrecise = getTriggerByName group T.Blocks.SubtitlePrecise
-        let msgWide = getTriggerByName group T.Blocks.SubtitleWide
-        let friendlyNear = getTriggerByName group T.Blocks.FRIENDLY_NEAR :?> Mcu.McuProximity
+        let precise = getTriggerByName group "PreciselyDropped"
+        let wide = getTriggerByName group "WidelyDropped"
+        let preciseCx = getComplexTriggerByName group "PreciseDrop"
+        let wideCx = getComplexTriggerByName group "WideDrop"
+        let msgPrecise = getTriggerByName group "SubtitlePrecise"
+        let msgWide = getTriggerByName group "SubtitleWide"
+        let friendlyNear = getTriggerByName group "FRIENDLY_NEAR" :?> Mcu.McuProximity
         // Correct positions
         let ref = Vector2.FromMcu precise.Pos
         let dv = pos - ref

@@ -29,12 +29,12 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let setA = getTriggerByName group T.Blocks.SetA
-        let clearA = getTriggerByName group T.Blocks.ClearA
-        let setB = getTriggerByName group T.Blocks.SetB
-        let clearB = getTriggerByName group T.Blocks.ClearB
-        let allTrue = getTriggerByName group T.Blocks.AllTrue
-        let someFalse = getTriggerByName group T.Blocks.SomeFalse
+        let setA = getTriggerByName group "SetA"
+        let clearA = getTriggerByName group "ClearA"
+        let setB = getTriggerByName group "SetB"
+        let clearB = getTriggerByName group "ClearB"
+        let allTrue = getTriggerByName group "AllTrue"
+        let someFalse = getTriggerByName group "SomeFalse"
         // Position of all nodes
         let refPoint = Vector2.FromMcu setA.Pos
         let dv = pos - refPoint

@@ -33,19 +33,19 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.START
-        let stop = getTriggerByName group T.Blocks.STOP
-        let plane = getVehicleByName group T.Blocks.Plane
-        let ingress = getWaypointByName group T.Blocks.Ingress
-        let egress = getWaypointByName group T.Blocks.Egress
-        let exit = getWaypointByName group T.Blocks.Exit
-        let killed = getTriggerByName group T.Blocks.Killed
-        let spawned = getTriggerByName group T.Blocks.Spawned
-        let attack = getTriggerByName group T.Blocks.AttackGroundTargets
-        let respawnDelay = getTriggerByName group T.Blocks.RespawnDelay :?> Mcu.McuTimer
-        let attackDuration = getTriggerByName group T.Blocks.AttackDuration :?> Mcu.McuTimer
-        let landNode = getTriggerByName group T.Blocks.Land
-        let landDelay = getTriggerByName group T.Blocks.LandDelay :?> Mcu.McuTimer
+        let start = getTriggerByName group "START"
+        let stop = getTriggerByName group "STOP"
+        let plane = getVehicleByName group "Plane"
+        let ingress = getWaypointByName group "Ingress"
+        let egress = getWaypointByName group "Egress"
+        let exit = getWaypointByName group "Exit"
+        let killed = getTriggerByName group "Killed"
+        let spawned = getTriggerByName group "Spawned"
+        let attack = getTriggerByName group "AttackGroundTargets"
+        let respawnDelay = getTriggerByName group "RespawnDelay" :?> Mcu.McuTimer
+        let attackDuration = getTriggerByName group "AttackDuration" :?> Mcu.McuTimer
+        let landNode = getTriggerByName group "Land"
+        let landDelay = getTriggerByName group "LandDelay" :?> Mcu.McuTimer
         // Respawn timing, depends on travel time
         respawnDelay.Time <-
             attackDuration.Time + 3.6 * 2.0 * (float <| (target - pos).Length()) / float ingress.Speed

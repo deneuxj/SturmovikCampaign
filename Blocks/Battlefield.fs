@@ -22,9 +22,9 @@ with
         for mcu in group do
             subst mcu
         // Key nodes
-        let start = McuUtil.getTriggerByName group T.Blocks.Start
-        let tank = McuUtil.getVehicleByName group T.Blocks.HeavyTank
-        let destination = McuUtil.getWaypointByName group T.Blocks.Destination
+        let start = McuUtil.getTriggerByName group "Start"
+        let tank = McuUtil.getVehicleByName group "HeavyTank"
+        let destination = McuUtil.getWaypointByName group "Destination"
         // Position all nodes
         let refPos = Vector2.FromMcu tank.Pos
         let dr = (destinationPos - startPos).YOri
@@ -61,10 +61,10 @@ with
         for mcu in group do
             subst mcu
         // Key nodes
-        let start = McuUtil.getTriggerByName group T.Blocks.Start
-        let canon = McuUtil.getVehicleByName group T.Blocks.Gun
-        let wall = McuUtil.getVehicleByName group T.Blocks.Wall
-        let target = McuUtil.getTriggerByName group T.Blocks.AttackArea :?> Mcu.McuAttackArea
+        let start = McuUtil.getTriggerByName group "Start"
+        let canon = McuUtil.getVehicleByName group "Gun"
+        let wall = McuUtil.getVehicleByName group "Wall"
+        let target = McuUtil.getTriggerByName group "AttackArea" :?> Mcu.McuAttackArea
         // Position all nodes
         let refPos = Vector2.FromMcu canon.Pos
         let dr = (targetPos - startPos).YOri
@@ -146,8 +146,8 @@ type BattleIcons =
             subst mcu
             substLc mcu
         // Key nodes
-        let iconAttackers = McuUtil.getTriggerByName group T.Blocks.NumAttackers
-        let iconDefenders = McuUtil.getTriggerByName group T.Blocks.NumDefenders
+        let iconAttackers = McuUtil.getTriggerByName group "NumAttackers"
+        let iconDefenders = McuUtil.getTriggerByName group "NumDefenders"
         // Position
         let xmin =
             group

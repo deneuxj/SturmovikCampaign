@@ -35,15 +35,15 @@ with
             subst mcu
         // Get key nodes
         let getByName = getTriggerByName group
-        let start = getByName T.Blocks.StartMonitoring
-        let stop = getByName T.Blocks.StopMonitoring
-        let deactivate = getByName T.Blocks.Deactivate
-        let activate = getByName T.Blocks.Activate
-        let wakeup = getByName T.Blocks.WakeUp
-        let sleep = getByName T.Blocks.Sleep
-        let proximity = getByName T.Blocks.EnemyClose :?> Mcu.McuProximity
-        let enemyEnters = getByName T.Blocks.EnemyEnters :?> Mcu.McuProximity
-        let randomDelay = getByName T.Blocks.RandomDelay :?> Mcu.McuTimer
+        let start = getByName "StartMonitoring"
+        let stop = getByName "StopMonitoring"
+        let deactivate = getByName "Deactivate"
+        let activate = getByName "Activate"
+        let wakeup = getByName "WakeUp"
+        let sleep = getByName "Sleep"
+        let proximity = getByName "EnemyClose" :?> Mcu.McuProximity
+        let enemyEnters = getByName "EnemyEnters" :?> Mcu.McuProximity
+        let randomDelay = getByName "RandomDelay" :?> Mcu.McuTimer
         // Set random delay to some random value 0-60s
         randomDelay.Time <- randomDelaySource.NextDouble() * 60.0
         // Correct coalition fields

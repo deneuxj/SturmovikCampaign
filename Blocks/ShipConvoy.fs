@@ -63,15 +63,15 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.START
-        let arrived = getTriggerByName group T.Blocks.ARRIVED
-        let killed = getTriggerByName group T.Blocks.KILLED :?> Mcu.McuCounter
-        let wp1 = getWaypointByName group T.Blocks.WP1
-        let destWp = getWaypointByName group T.Blocks.Destination
-        let escort1 = getVehicleByName group T.Blocks.Escort1
-        let escort2 = getVehicleByName group T.Blocks.Escort2
-        let ship1 = getVehicleByName group T.Blocks.Cargo1
-        let completed = getTriggerByName group T.Blocks.COMPLETED
+        let start = getTriggerByName group "START"
+        let arrived = getTriggerByName group "ARRIVED"
+        let killed = getTriggerByName group "KILLED" :?> Mcu.McuCounter
+        let wp1 = getWaypointByName group "WP1"
+        let destWp = getWaypointByName group "Destination"
+        let escort1 = getVehicleByName group "Escort1"
+        let escort2 = getVehicleByName group "Escort2"
+        let ship1 = getVehicleByName group "Cargo1"
+        let completed = getTriggerByName group "COMPLETED"
         let ship1Entity = getEntityByIndex ship1.LinkTrId group
         // Adjust killed count
         killed.Count <- 2 + numShips
@@ -85,9 +85,9 @@ with
                 for mcu in group do
                     subst mcu
                 // Get key nodes
-                let ship = getVehicleByName group T.Blocks.Cargo2
+                let ship = getVehicleByName group "Cargo2"
                 let entity = getEntityByIndex ship.LinkTrId group
-                let shipKilled = getTriggerByName group T.Blocks.Cargo2Killed
+                let shipKilled = getTriggerByName group "Cargo2Killed"
                 // Link ship killed to group killed counter
                 Mcu.addTargetLink shipKilled killed.Index
                 // Link ship to leader
@@ -113,7 +113,7 @@ with
                 group)
         let ships =
             shipGroups
-            |> List.map (fun group -> getVehicleByName group T.Blocks.Cargo2)
+            |> List.map (fun group -> getVehicleByName group "Cargo2")
         let group = group @ List.concat shipGroups
         // Override model escort
         do

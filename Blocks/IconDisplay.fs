@@ -29,8 +29,8 @@ with
             subst mcu
             substLc mcu
         // Get key nodes
-        let show = getTriggerByName group T.Blocks.Show :?> Mcu.McuTimer
-        let hide = getTriggerByName group T.Blocks.Hide
+        let show = getTriggerByName group "Show" :?> Mcu.McuTimer
+        let hide = getTriggerByName group "Hide"
         let activate = getByIndex show.Targets.Head group :?> Mcu.McuTrigger
         let icon = getIconByIndex activate.Targets.Head group
         // Position of all nodes

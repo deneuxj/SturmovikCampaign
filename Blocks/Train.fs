@@ -37,17 +37,17 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.START
-        let stopTravel = getTriggerByName group T.Blocks.STOP
-        let resumeTravel = getTriggerByName group T.Blocks.RESUME
-        let arrived = getTriggerByName group T.Blocks.ARRIVED
-        let killed = getTriggerByName group T.Blocks.KILLED
-        let blocked = getTriggerByName group T.Blocks.BLOCKED
-        let completed = getTriggerByName group T.Blocks.COMPLETED
-        let destWp = getWaypointByName group T.Blocks.Destination
-        let discard = getTriggerByName group T.Blocks.DELAYED_DISCARD
-        let train = getVehicleByName group T.Blocks.Train
-        let enemyPlaneClose = getTriggerByName group T.Blocks.EnemyPlaneNear :?> Mcu.McuProximity
+        let start = getTriggerByName group "START"
+        let stopTravel = getTriggerByName group "STOP"
+        let resumeTravel = getTriggerByName group "RESUME"
+        let arrived = getTriggerByName group "ARRIVED"
+        let killed = getTriggerByName group "KILLED"
+        let blocked = getTriggerByName group "BLOCKED"
+        let completed = getTriggerByName group "COMPLETED"
+        let destWp = getWaypointByName group "Destination"
+        let discard = getTriggerByName group "DELAYED_DISCARD"
+        let train = getVehicleByName group "Train"
+        let enemyPlaneClose = getTriggerByName group "EnemyPlaneNear" :?> Mcu.McuProximity
         // Logic to stop and block train when it reaches a destroyed bridge
         let conds =
             seq {

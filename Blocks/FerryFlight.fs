@@ -29,18 +29,18 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.Try
-        let enable = getTriggerByName group T.Blocks.Enable
-        let doNode = getTriggerByName group T.Blocks.Do
-        let pass = getTriggerByName group T.Blocks.Pass
-        let next = getTriggerByName group T.Blocks.Next
-        let destination = getTriggerByName group T.Blocks.Destination
-        let cmdLand = getTriggerByName group T.Blocks.Land
-        let plane = getVehicleByName group T.Blocks.TransferPlane
-        let killed = getTriggerByName group T.Blocks.Killed
-        let arrived = getTriggerByName group T.Blocks.JustLanded
-        let counter = getTriggerByName group T.Blocks.StartCount :?> Mcu.McuCounter
-        let spawned = getTriggerByName group T.Blocks.Spawned
+        let start = getTriggerByName group "Try"
+        let enable = getTriggerByName group "Enable"
+        let doNode = getTriggerByName group "Do"
+        let pass = getTriggerByName group "Pass"
+        let next = getTriggerByName group "Next"
+        let destination = getTriggerByName group "Destination"
+        let cmdLand = getTriggerByName group "Land"
+        let plane = getVehicleByName group "TransferPlane"
+        let killed = getTriggerByName group "Killed"
+        let arrived = getTriggerByName group "JustLanded"
+        let counter = getTriggerByName group "StartCount" :?> Mcu.McuCounter
+        let spawned = getTriggerByName group "Spawned"
         // Position of all nodes
         let refPoint = Vector2.FromMcu plane.Pos
         let dPos = startPos - refPoint

@@ -28,10 +28,10 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let grab = getTriggerByName group T.Blocks.GRAB
-        let release = getTriggerByName group T.Blocks.RELEASE
-        let allGrabbed = getTriggerByName group T.Blocks.``ALL GRABBED``
-        let availableAgain = getTriggerByName group T.Blocks.``AVAILABLE AGAIN``
+        let grab = getTriggerByName group "GRAB"
+        let release = getTriggerByName group "RELEASE"
+        let allGrabbed = getTriggerByName group "ALL GRABBED"
+        let availableAgain = getTriggerByName group "AVAILABLE AGAIN"
         let xOpen = getTriggerByName group "OPEN"
         let xClose = getTriggerByName group "CLOSE"
         let numLocked = getTriggerByName group "NumLocked" :?> Mcu.McuCounter

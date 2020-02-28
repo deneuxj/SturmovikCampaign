@@ -28,17 +28,17 @@ with
             subst mcu
         let wec = WhileEnemyClose.Create(true, false, store, pos, coalition)
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.DelayedStart
-        let plane = getVehicleByName group T.Blocks.Plane
-        let killed = getTriggerByName group T.Blocks.Killed
-        let spawned = getTriggerByName group T.Blocks.Spawned
-        let setGerman = getTriggerByName group T.Blocks.SetGerman
-        let setRussian = getTriggerByName group T.Blocks.SetRussian
-        let completed = getTriggerByName group T.Blocks.Completed
+        let start = getTriggerByName group "DelayedStart"
+        let plane = getVehicleByName group "Plane"
+        let killed = getTriggerByName group "Killed"
+        let spawned = getTriggerByName group "Spawned"
+        let setGerman = getTriggerByName group "SetGerman"
+        let setRussian = getTriggerByName group "SetRussian"
+        let completed = getTriggerByName group "Completed"
         // Connection with wec
-        let wakeup = getTriggerByName group T.Blocks.WakeUp
-        let sleep = getTriggerByName group T.Blocks.Sleep
-        let startMonitoring = getTriggerByName group T.Blocks.StartMonitoring
+        let wakeup = getTriggerByName group "WakeUp"
+        let sleep = getTriggerByName group "Sleep"
+        let startMonitoring = getTriggerByName group "StartMonitoring"
         Mcu.addTargetLink wec.WakeUp wakeup.Index
         Mcu.addTargetLink wec.Sleep sleep.Index
         Mcu.addTargetLink startMonitoring wec.StartMonitoring.Index

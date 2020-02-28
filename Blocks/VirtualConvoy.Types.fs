@@ -39,7 +39,7 @@ with
             subst mcu
         // Get key nodes
         let getByName = getTriggerByName group
-        let leadCar = getVehicleByName group T.Blocks.LeadCar
+        let leadCar = getVehicleByName group "LeadCar"
         leadCar.Country <- Some country
         match country with
         | Mcu.CountryValue.Germany ->
@@ -51,7 +51,7 @@ with
         let center = Vector2.FromMcu(leadCar.Pos)
         let stopTravel = getByName "StopTravel"
         let resumeTravel = getByName "ResumeTravel"
-        let enemyPlaneNear = getByName T.Blocks.EnemyPlaneNear :?> Mcu.McuProximity
+        let enemyPlaneNear = getByName "EnemyPlaneNear" :?> Mcu.McuProximity
         // Rotate and translate
         let rot = ori - float32 leadCar.Ori.Y
         let diff = pos - center
@@ -63,12 +63,12 @@ with
         // Set coalition to watch to the enemy's
         enemyPlaneNear.PlaneCoalitions <- [ McuUtil.coalitionOf country |> McuUtil.swapCoalition ]
         // Result
-        { LeadCarEntity = Seq.head <| McuUtil.filterByName T.Blocks.``LeadCar entity`` group :?> Mcu.McuEntity
-          LeadCarDamaged = getByName T.Blocks.LeadCarDamaged
-          ActivateGroup = getByName T.Blocks.ActivateGroup
-          DeactivateGroup = getByName T.Blocks.DeactivateGroup
-          DeleteLeadCar = getByName T.Blocks.DeleteLeadCar
-          Discard = getByName T.Blocks.Discard
+        { LeadCarEntity = Seq.head <| McuUtil.filterByName "LeadCar entity" group :?> Mcu.McuEntity
+          LeadCarDamaged = getByName "LeadCarDamaged"
+          ActivateGroup = getByName "ActivateGroup"
+          DeactivateGroup = getByName "DeactivateGroup"
+          DeleteLeadCar = getByName "DeleteLeadCar"
+          Discard = getByName "Discard"
           StopTravel = stopTravel
           Resumetravel = resumeTravel
           All = McuUtil.groupFromList group
@@ -91,7 +91,7 @@ with
             subst mcu
         // Get key nodes
         let getByName = getTriggerByName group
-        let truck = getVehicleByName group T.Blocks.Truck
+        let truck = getVehicleByName group "Truck"
         truck.Name <- sprintf "%s-%d" formationName inFormation
         truck.Country <- Some country
         // Truck model. Every fifth truck is a mobile AA truck.
@@ -129,10 +129,10 @@ with
             pos2.AssignTo(mcu.Pos)
         truck.Ori.Y <- float ori 
         // Result
-        { Entity = Seq.head <| McuUtil.filterByName T.Blocks.``Truck entity`` group :?> Mcu.McuEntity
-          Damaged = getByName T.Blocks.TruckDamaged
-          Delete = getByName T.Blocks.DeleteTruck
-          Discard = getByName T.Blocks.Discard
+        { Entity = Seq.head <| McuUtil.filterByName "Truck entity" group :?> Mcu.McuEntity
+          Damaged = getByName "TruckDamaged"
+          Delete = getByName "DeleteTruck"
+          Discard = getByName "Discard"
           All = McuUtil.groupFromList group
         }
 

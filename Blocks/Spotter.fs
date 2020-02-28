@@ -39,16 +39,16 @@ with
             subst mcu
             lcSubst mcu
         // Key nodes
-        let probe = McuUtil.getTriggerByName group T.Blocks.PROBE :?> Mcu.McuProximity
+        let probe = McuUtil.getTriggerByName group "PROBE" :?> Mcu.McuProximity
         let message =
             match country with
             | Mcu.CountryValue.Germany -> 
-                McuUtil.getTriggerByName group T.Blocks.MESSAGE_AXIS
+                McuUtil.getTriggerByName group "MESSAGE_AXIS"
             | _
             | Mcu.CountryValue.Russia -> 
-                McuUtil.getTriggerByName group T.Blocks.MESSAGE_ALLIES
-        let detected = McuUtil.getTriggerByName group T.Blocks.DETECTED
-        let start = McuUtil.getTriggerByName group T.Blocks.START
+                McuUtil.getTriggerByName group "MESSAGE_ALLIES"
+        let detected = McuUtil.getTriggerByName group "DETECTED"
+        let start = McuUtil.getTriggerByName group "START"
 
         // Position all nodes
         let refPos = Vector2.FromMcu probe.Pos

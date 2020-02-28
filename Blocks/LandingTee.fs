@@ -19,8 +19,8 @@ with
         for mcu in group do
             subst mcu
         // Key nodes
-        let leg = McuUtil.getVehicleByName group T.Blocks.Leg
-        let bar = McuUtil.getVehicleByName group T.Blocks.Tee
+        let leg = McuUtil.getVehicleByName group "Leg"
+        let bar = McuUtil.getVehicleByName group "Tee"
         // Hide icons, or people might get confused and try to attack them
         leg.Name <- "NOICON"
         bar.Name <- "NOICON"

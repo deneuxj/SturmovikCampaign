@@ -22,11 +22,11 @@ with
             subst mcu
         // Get key nodes
         let getByName = getTriggerByName group
-        let start = getByName T.Blocks.Start
-        let stop = getByName T.Blocks.Stop
-        let elapsed = getByName T.Blocks.Elapsed
+        let start = getByName "Start"
+        let stop = getByName "Stop"
+        let elapsed = getByName "Elapsed"
         // Timer value
-        let timer = getByName T.Blocks.Timer :?> Mcu.McuTimer
+        let timer = getByName "Timer" :?> Mcu.McuTimer
         timer.Time <- time
         // Position of all nodes
         let diff = pos - Vector2.FromMcu(elapsed.Pos)

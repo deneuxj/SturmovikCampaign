@@ -28,9 +28,9 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.Start :?> Mcu.McuTimer
-        let out = getTriggerByName group T.Blocks.Out :?> Mcu.McuCounter
-        let proximity = getTriggerByName group T.Blocks.Proximity :?> Mcu.McuProximity
+        let start = getTriggerByName group "Start" :?> Mcu.McuTimer
+        let out = getTriggerByName group "Out" :?> Mcu.McuCounter
+        let proximity = getTriggerByName group "Proximity" :?> Mcu.McuProximity
         // Position of all nodes
         let refPoint = Vector2.FromMcu proximity.Pos
         let dv = pos - refPoint

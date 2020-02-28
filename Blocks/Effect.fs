@@ -27,8 +27,8 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let start = getTriggerByName group T.Blocks.StartEffect
-        let stop = getTriggerByName group T.Blocks.StopEffect
+        let start = getTriggerByName group "StartEffect"
+        let stop = getTriggerByName group "StopEffect"
         // Position of all nodes
         let refPoint = Vector2.FromMcu start.Pos
         let dv = pos - refPoint
