@@ -4,6 +4,7 @@
 ./*.suo
 devenv*.vspx
 *.userprefs
+**/Properties/launchSettings.json
 .nuget/
 packages/
 SturmovikCampaign-*.zip
