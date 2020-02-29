@@ -1,9 +1,9 @@
-﻿#I @"..\bin\Debug"
-#I @"C:\Users\johann\Documents\SturmovikCampaign\packages\FSharp.Data.3.3.2\lib\net45"
-
+﻿#I @"C:\Users\johann\Documents\SturmovikCampaign\packages\FSharp.Data.3.3.2\lib\net45"
+#I @"..\..\packages\SturmovikMission.DataProvider.6.0.1\lib\net45"
+#I @"..\bin\Debug"
 #r "Campaign.dll"
 #r "System.Numerics.Vectors.dll"
-#r "DataProvider.dll"
+#r "SturmovikMission.DataProvider.Runtime.dll"
 #r "ploggy"
 #r "FsPickler"
 
