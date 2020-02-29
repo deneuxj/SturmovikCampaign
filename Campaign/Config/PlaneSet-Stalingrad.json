@@ -1,0 +1,106 @@
+﻿{
+   "PlaneSet": {
+      "Name": "Stalingrad",
+      "Regions": [
+         0
+      ],
+      "StartDate": "1-May-1942",
+      "Planes": [
+         {
+            "Model": "Bf109e7",
+            "Static": 3,
+            "Factor": 0.75
+         },
+         {
+            "Model": "Bf109f4",
+            "Static": 0
+         },
+         {
+            "Model": "Bf109g2",
+            "Static": 1
+         },
+         {
+            "Model": "Fw190a3",
+            "Static": 5
+         },
+         {
+            "Model": "Bf110e",
+            "Static": 6
+         },
+         {
+            "Model": "Ju88",
+            "Static": 9,
+            "Mods": [
+               [
+                  1,
+                  3
+               ],
+               [
+                  5
+               ]
+            ]
+         },
+         {
+            "Model": "Ju87",
+            "Static": 7,
+            "Mods": [
+               [
+                  1
+               ],
+               [
+                  3,
+                  5
+               ]
+            ]
+         },
+         {
+            "Model": "Ju52",
+            "Static": 11
+         },
+         {
+            "Model": "He111h6",
+            "Static": 10,
+            "Mods": [
+               [
+                  1,
+                  4
+               ]
+            ]
+         },
+         {
+            "Model": "I16",
+            "Static": 0,
+            "Factor": 0.75
+         },
+         {
+            "Model": "IL2Mod42",
+            "Static": 11
+         },
+         {
+            "Model": "IL2Mod41",
+            "Static": 9
+         },
+         {
+            "Model": "P40",
+            "Static": 7
+         },
+         {
+            "Model": "Yak1s69",
+            "Static": 8
+         },
+         {
+            "Model": "Lagg3s29",
+            "Static": 2
+         },
+         {
+            "Model": "Pe2s87",
+            "Static": 12
+         },
+         {
+            "Model": "U2VS",
+            "Static": 1,
+            "Factor": 0.5
+         }
+      ]
+   }
+}

@@ -45,45 +45,41 @@
     <Compile Include="Src\PlaneChecksContext.fs" />
     <Compile Include="Src\PlaneChecksStatus.fs" />
     <Compile Include="Src\PlaneAvailabilityChecks.fs" />
-    <Compile Include="Src\Commenting.fs" />
-    <Compile Include="Src\WebHook.fs" />
-    <Compile Include="Src\Run.fs" />
-    <Compile Include="Src\ServerControlPlugin.fs" />
-    <None Include="Config\SubBlocksWWI.yaml">
+    <None Include="Config\SubBlocksWWI.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Config\SubBlocks.yaml">
+    <None Include="Config\SubBlocks.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Config\SampleConfig.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\PlaneSet-FC1.yaml">
+    <None Include="Config\PlaneSet-FC1.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Config\PlaneSet-Moscow.yaml">
+    <None Include="Config\PlaneSet-Moscow.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\PlaneSet-MoscowLate.yaml">
+    <None Include="Config\PlaneSet-MoscowLate.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\PlaneSet-KubanLate.yaml">
+    <None Include="Config\PlaneSet-KubanLate.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\PlaneSet-VLuki.yaml">
+    <None Include="Config\PlaneSet-VLuki.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\PlaneSet-Stalingrad.yaml">
+    <None Include="Config\PlaneSet-Stalingrad.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\PlaneSet-StalingradLate.yaml">
+    <None Include="Config\PlaneSet-StalingradLate.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\PlaneSet-Kuban.yaml">
+    <None Include="Config\PlaneSet-Kuban.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\SamplePlaneDb.yaml" />
-    <None Include="Config\PlaneDb.yaml">
+    <None Include="Config\SamplePlaneDb.json" />
+    <None Include="Config\PlaneDb.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Config\Roads-Sample.json">
@@ -191,6 +187,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Blocks\Blocks.fsproj" />
+    <ProjectReference Include="..\ploggy\ploggy.csproj" />
   </ItemGroup>
 
 </Project>

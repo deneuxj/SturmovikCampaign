@@ -1,0 +1,68 @@
+﻿{
+   "Planes": [
+      {
+         "Plane": {
+            "Kind": "Attacker",
+            "Name": "Ju87",
+            "LogName": "ju87",
+            "Roles": [
+               "GroundAttacker"
+            ],
+            "Coalition": "Axis",
+            "Script": "a",
+            "Model": "a",
+            "Cost": 500,
+            "BombCapacity": 2000,
+            "CargoCapacity": 0,
+            "Bombs": [
+               {
+                  "Repeat": {
+                     "Offsets": [
+                        0,
+                        5,
+                        10
+                     ],
+                     "Loads": [
+                        {
+                           "Load": {
+                              "Id": 0,
+                              "Weight": 100
+                           }
+                        }
+                     ]
+                  }
+               }
+            ],
+            "Payloads": [
+               {
+                  "Payload": {
+                     "Role": "Attacker",
+                     "ModMask": 31,
+                     "Id": 12
+                  }
+               }
+            ],
+            "Specials": [
+               {
+                  "Repeat": {
+                     "Offsets": [
+                        0,
+                        5,
+                        10
+                     ],
+                     "Loads": [
+                        {
+                           "Load": {
+                              "Id": 0,
+                              "Cost": 100
+                           }
+                        }
+                     ]
+                  }
+               }
+            ],
+            "EmptyPayload": 0
+         }
+      }
+   ]
+}

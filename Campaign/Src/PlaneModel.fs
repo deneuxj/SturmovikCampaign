@@ -21,7 +21,7 @@ open SturmovikMission.Blocks
 open Campaign.BasicTypes
 open Util
 open System.Numerics
-open FSharp.Configuration
+open FSharp.Data
 
 type PlaneType  =
     | Fighter
@@ -88,8 +88,8 @@ with
     member this.MaxRange = 800000.0f<M>
 
 [<Literal>]
-let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.yaml"
-type PlaneDbFile = YamlConfig<sampleFile>
+let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.json"
+type PlaneDbFile = JsonProvider<sampleFile>
 
 let basePlaneCost = 500.0f<E>
 
@@ -103,15 +103,15 @@ let private xTimes offsets xs =
 
 type PlaneModel
 with
-    static member FromYaml(yaml : PlaneDbFile.Planes_Item_Type.Plane_Type) =
+    static member FromJson(json : PlaneDbFile.Plane2) =
         let payloads =
-            yaml.Payloads
+            json.Payloads
             |> Seq.map (fun payload ->
                 PlaneRole.FromString payload.Payload.Role,
                 (payload.Payload.ModMask, payload.Payload.Id))
             |> Map.ofSeq
         let bombloads =
-            yaml.Bombs
+            json.Bombs
             |> Seq.map (fun group ->
                 let offsets = group.Repeat.Offsets |> List.ofSeq
                 let loads =
@@ -121,7 +121,7 @@ with
                 xTimes offsets loads)
             |> List.concat
         let specials =
-            yaml.Specials
+            json.Specials
             |> Seq.map (fun group ->
                 let offsets = group.Repeat.Offsets |> List.ofSeq
                 let loads =
@@ -132,66 +132,62 @@ with
             |> List.concat
 
         {
-            Kind = PlaneType.FromString yaml.Kind
-            Name = yaml.Name
-            LogName = yaml.LogName
-            Roles = yaml.Roles |> Seq.map PlaneRole.FromString |> List.ofSeq
-            Coalition = CoalitionId.FromString yaml.Coalition
-            ScriptModel = { Script = yaml.Script; Model = yaml.Model }
-            Cost = 1.0f<E> * float32 yaml.Cost
-            BombCapacity = 1.0f<K> * float32 yaml.BombCapacity
-            CargoCapacity = 1.0f<K> * float32 yaml.CargoCapacity
+            Kind = PlaneType.FromString json.Kind
+            Name = json.Name
+            LogName = json.LogName
+            Roles = json.Roles |> Seq.map PlaneRole.FromString |> List.ofSeq
+            Coalition = CoalitionId.FromString json.Coalition
+            ScriptModel = { Script = json.Script; Model = json.Model }
+            Cost = 1.0f<E> * float32 json.Cost
+            BombCapacity = 1.0f<K> * float32 json.BombCapacity
+            CargoCapacity = 1.0f<K> * float32 json.CargoCapacity
             Payloads = payloads
             BombLoads = bombloads
             SpecialLoadsCosts = specials
             EmptyPayload = 0
         }
 
-    member this.ToYaml(yaml : PlaneDbFile.Planes_Item_Type.Plane_Type) =
-        let toGenList (x : 'T seq) = System.Collections.Generic.List<_>(x)
-        yaml.Kind <- this.Kind.ToString()
-        yaml.Name <- this.Name
-        yaml.LogName <- this.LogName
-        yaml.Roles <- this.Roles |> Seq.map (fun x -> x.ToString()) |> toGenList
-        yaml.Coalition <- this.Coalition.ToString()
-        yaml.Script <- this.ScriptModel.Script
-        yaml.Model <- this.ScriptModel.Model
-        yaml.Cost <- float this.Cost
-        yaml.BombCapacity <- float this.BombCapacity
-        yaml.CargoCapacity <- float this.CargoCapacity
-        yaml.Bombs <-
+    member this.ToJson() : PlaneDbFile.Plane2 =
+        let bombs =
             this.BombLoads
-            |> Seq.map (fun (id, w) ->
-                let bomb = PlaneDbFile.Planes_Item_Type.Plane_Type.Bombs_Item_Type()
-                let load = PlaneDbFile.Planes_Item_Type.Plane_Type.Bombs_Item_Type.Repeat_Type.Loads_Item_Type()
-                load.Load.Id <- id
-                load.Load.Weight <- float w
-                bomb.Repeat.Loads <- toGenList [load]
-                bomb.Repeat.Offsets <- toGenList [0]
+            |> List.map (fun (id, w) ->
+                let load = new PlaneDbFile.Load(PlaneDbFile.Load2(id, int w))
+                let repeat = PlaneDbFile.Repeat([|0|], [|load|])
+                let bomb = PlaneDbFile.Bomb(repeat)
                 bomb)
-            |> toGenList
-        yaml.Payloads <-
+            |> Array.ofList
+        let payloads =
             this.Payloads
             |> Map.toSeq
             |> Seq.map (fun (role, (mask, id)) ->
-                let payload = PlaneDbFile.Planes_Item_Type.Plane_Type.Payloads_Item_Type()
-                payload.Payload.Role <- role.ToString()
-                payload.Payload.ModMask <- mask
-                payload.Payload.Id <- id
-                payload)
-            |> toGenList
-        yaml.Specials <-
+                PlaneDbFile.Payload(PlaneDbFile.Payload2(string role, mask, id)))
+            |> Array.ofSeq
+        let specials =
             this.SpecialLoadsCosts
             |> Seq.map (fun (id, cost) ->
-                let bomb = PlaneDbFile.Planes_Item_Type.Plane_Type.Specials_Item_Type()
-                let load = PlaneDbFile.Planes_Item_Type.Plane_Type.Specials_Item_Type.Repeat_Type.Loads_Item_Type()
-                load.Load.Id <- id
-                load.Load.Cost <- float cost
-                bomb.Repeat.Loads <- toGenList [load]
-                bomb.Repeat.Offsets <- toGenList [0]
+                let load = new PlaneDbFile.Load3(PlaneDbFile.Load4(id, int cost))
+                let repeat = PlaneDbFile.Repeat2([|0|], [|load|])
+                let bomb = PlaneDbFile.Special(repeat)
                 bomb)
-            |> toGenList
-        yaml.EmptyPayload <- this.EmptyPayload
+            |> Array.ofSeq
+        let json =
+            PlaneDbFile.Plane2(
+                string this.Kind,
+                this.Name,
+                this.LogName,
+                this.Roles |> List.map string |> Array.ofList,
+                string this.Coalition,
+                this.ScriptModel.Script,
+                this.ScriptModel.Model,
+                int this.Cost,
+                int this.BombCapacity,
+                int this.CargoCapacity,
+                bombs,
+                payloads,
+                specials,
+                this.EmptyPayload
+            )
+        json
 
     member this.HasRole(role) = this.Roles |> List.exists ((=) role)
 
@@ -210,12 +206,10 @@ with
         cost
 
 let planeDb =
-    let file = PlaneDbFile()
-    file.Planes.Clear()
     let location = System.Reflection.Assembly.GetExecutingAssembly().Location |> System.IO.Path.GetDirectoryName
-    file.Load(System.IO.Path.Combine(location, "Config", "PlaneDb.yaml"))
+    let file = PlaneDbFile.Load(System.IO.Path.Combine(location, "Config", "PlaneDb.yaml"))
     file.Planes
-    |> Seq.map (fun plane -> PlaneModel.FromYaml plane.Plane)
+    |> Seq.map (fun plane -> PlaneModel.FromJson plane.Plane)
     |> List.ofSeq
 
 let tryGetPlaneByName name =

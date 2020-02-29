@@ -21,7 +21,7 @@ open Campaign.PlaneModel
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks
 open System
-open FSharp.Configuration
+open FSharp.Data
 open NLog
 open Util
 open System.IO
@@ -29,8 +29,8 @@ open System.IO
 let private logger = LogManager.GetCurrentClassLogger()
 
 [<Literal>]
-let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\PlaneSet-Moscow.yaml"
-type PlaneSetFile = YamlConfig<sampleFile>
+let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\PlaneSet-Moscow.json"
+type PlaneSetFile = JsonProvider<sampleFile>
 
 /// <summary>
 /// Range of plane modifications: Can be a single value or an interval (both bounds included)
@@ -66,13 +66,13 @@ with
           AllowedMods = [Interval(0, 99)]
           StaticPlaneIndex = 0 }
 
-    static member TryFromYaml(data : PlaneSetFile.PlaneSet_Type.Planes_Item_Type) =
+    static member TryFromJson(data : PlaneSetFile.Plane) =
         let model = data.Model.ToLowerInvariant()
         let plane =
             PlaneModel.planeDb
             |> List.tryFind(fun plane -> model.Contains(plane.Name.ToLowerInvariant()))
         let idx = data.Static
-        let factor = float32 data.Factor
+        let factor = data.Factor |> Option.map float32 |> Option.defaultValue 1.0f
         let mods =
             data.Mods
             |> Option.ofObj
@@ -161,14 +161,8 @@ with
         | Axis -> axisStatic
         | Allies -> alliesStatic
 
-    static member FromYaml(data : PlaneSetFile.PlaneSet_Type) =
-        let date =
-            match DateTime.TryParse data.StartDate with
-            | (true, x) ->
-                x
-            | _ ->
-                logger.Warn(sprintf "Date '%s' in planeset '%s' is invalid" data.StartDate data.Name)
-                DateTime.Parse("1-Jan-1935")
+    static member FromJson(data : PlaneSetFile.PlaneSet) =
+        let date = data.StartDate
         let regions : Region list =
             [
                 for x in data.Regions do
@@ -184,7 +178,7 @@ with
             let planes =
                 data.Planes
                 |> Seq.map (fun plane ->
-                    match PlaneData.TryFromYaml plane with
+                    match PlaneData.TryFromJson plane with
                     | Some x -> x
                     | None -> failwithf "Could not find a PlaneModel corresponding to %s" plane.Model)
                 |> Map.ofSeq
@@ -261,10 +255,9 @@ let tryPickPlaneSet (region : Region) (date : DateTime) (planeSets : PlaneSet se
 /// </summary>
 let loadPlaneSets (planeSetDir : string) =
     seq {
-        for file in Directory.EnumerateFiles(planeSetDir, "PlaneSet-*.yaml") do
-            let data = PlaneSetFile()
-            data.Load(file)
-            let planeSet = PlaneSet.FromYaml(data.PlaneSet)
+        for file in Directory.EnumerateFiles(planeSetDir, "PlaneSet-*.json") do
+            let data = PlaneSetFile.Load(file)
+            let planeSet = PlaneSet.FromJson(data.PlaneSet)
             match planeSet with
             | Ok planeSet ->
                 let hasAxis = planeSet.AllModels |> Seq.exists (fun plane -> plane.Coalition = Axis)

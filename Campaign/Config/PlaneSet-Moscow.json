@@ -1,0 +1,135 @@
+﻿{
+    "Comment": [
+        " Region numbers",
+        "    | Stalingrad = 0",        "    | VelikieLuki = 1",         "    | Moscow = 2",        "    | Kuban = 3",
+        " Static plane models, see Vehicles.mission",
+        "     | Axis:",
+        "          0: GermanStaBf109",
+        "             GermanStaBf109Net",
+        "             GermanStaBf109Open",
+        "             GermanStaBf109e7",
+        "             GermanStaBf109e7Net",
+        "          5: GermanStaBf109e7Open",
+        "             GermanStaAttacker",
+        "             GermanStaJu87",
+        "             GermanStaJu87Net",
+        "             GermanStaBomber",
+        "         10: GermanStaHe111h6",
+        "             GermanStaTransport",
+        "     | Allies:",
+        "          0: RussianStaI16",
+        "             RussianStaI16Net",
+        "             RussianStaLagg3",
+        "             RussianStaLagg3Net",
+        "             RussianStaLagg3W1",
+        "          5: RussianStaLagg3W2",
+        "             RussianStaMig3",
+        "             RussianStaMig3Net",
+        "             RussianStaYak1",
+        "             RussianStaYak1Net",
+        "         10: RussianStaYak1Open",
+        "             RussianStaAttacker",
+        "             RussianStaBomber"
+    ],
+    "PlaneSet": {
+        "Name": "Moscow",
+        "Regions": [
+            2
+        ],
+        "StartDate": "1-Jul-1941",
+        "Planes": [
+            {
+                "Model": "Bf109e7",
+                "Static": 3,
+                "Factor": 1,
+                "Mods": [
+                    [
+                        1,
+                        99
+                    ]
+                ]
+            },
+            {
+                "Model": "Bf109f2",
+                "Static": 2,
+                "Factor": 2
+            },
+            {
+                "Model": "Mc202",
+                "Static": 5
+            },
+            {
+                "Model": "Bf110e",
+                "Static": 6
+            },
+            {
+                "Model": "Ju88",
+                "Static": 9,
+                "Mods": [
+                    [
+                        1,
+                        3
+                    ],
+                    [
+                        5
+                    ]
+                ]
+            },
+            {
+                "Model": "Ju87",
+                "Static": 7,
+                "Mods": [
+                    [
+                        1
+                    ],
+                    [
+                        3,
+                        5
+                    ]
+                ]
+            },
+            {
+                "Model": "Ju52",
+                "Static": 11
+            },
+            {
+                "Model": "He111h6",
+                "Static": 10,
+                "Mods": [
+                    [
+                        1,
+                        4
+                    ]
+                ]
+            },
+            {
+                "Model": "I16",
+                "Static": 0
+            },
+            {
+                "Model": "IL2Mod41",
+                "Static": 11
+            },
+            {
+                "Model": "Mig3",
+                "Static": 6,
+                "Factor": 2,
+                "Mods": [
+                    [
+                        3,
+                        5
+                    ]
+                ]
+            },
+            {
+                "Model": "Pe2s35",
+                "Static": 12
+            },
+            {
+                "Model": "U2VS",
+                "Static": 1,
+                "Factor": 0.5
+            }
+        ]
+    }
+}
