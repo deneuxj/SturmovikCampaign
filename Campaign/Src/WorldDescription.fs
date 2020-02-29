@@ -601,11 +601,11 @@ with
           Owner = owner
         }
 
-open FSharp.Configuration
+open FSharp.Data
 
 [<Literal>]
-let sampleSubBlocksFile = __SOURCE_DIRECTORY__ + @"\..\Config\SubBlocks.yaml"
-type SubBlockFile = YamlConfig<sampleSubBlocksFile>
+let sampleSubBlocksFile = __SOURCE_DIRECTORY__ + @"\..\Config\SubBlocks.json"
+type SubBlockFile = JsonProvider<sampleSubBlocksFile>
 
 /// Packages all description data.
 type World = {
@@ -651,11 +651,14 @@ with
             let h, m, s = options.GetTime().Value
             System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
 
-        let subBlocks = SubBlockFile()
-        subBlocks.Load(subBlocksFile)
+        let subBlocks = SubBlockFile.Load(subBlocksFile)
         let subBlockSpecs =
+            let inline conv (d : 'T option) =
+                d
+                |> Option.map float
+                |> Option.defaultValue 0.0
             subBlocks.Blocks
-            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.pattern, spec.sub_blocks, spec.production, spec.storage, spec.durability))
+            |> Seq.map(fun spec -> SubBlockSpec.Create(spec.Pattern, spec.SubBlocks, conv spec.Production, conv spec.Storage, conv spec.Durability |> int))
             |> List.ofSeq
         let map = data.ListOfOptions.Head.GetGuiMap().Value
         let storageGroup = data.GetGroup("Storage")
