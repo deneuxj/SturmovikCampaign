@@ -3,13 +3,9 @@ module Campaign.Tests.Other
 
 open NUnit.Framework
 open Campaign.BasicTypes
-open System.Numerics
 open FSharp.Control
-open Campaign.WatchLogs
 open Campaign.Airfield
 open Util
-open Campaign.Commenting
-open ploggy
 
 [<Test>]
 let ``loadout constraints: empty loadouts gives full constraint``() =
@@ -40,45 +36,3 @@ let ``Seq.maxByUntil includes the predicate true point``() =
     let xs = [ 1; 2; 3; 4; 5 ]
     let res = xs |> Seq.maxByUntil id ((=) 4)
     Assert.AreEqual(4, res)
-
-[<Test>]
-let ``Campaign.Commenting.InjectOldAndFresh works as expected``() =
-    let oldEntries =
-        asyncSeq {
-            yield LogEntry.Parse("T:0 AType:15 VER:17")
-            yield LogEntry.Parse("T:0 AType:20 USERID:b8bafd78-159f-4d68-8219-b8b9c1fcccf8 USERNICKID:bfa2dc72-2066-4ba5-aff2-ee9467edaeba")
-            yield LogEntry.Parse("T:0 AType:0 GDate:1941.12.26 GTime:10:0:0 MFile:Multiplayer/dogfight\AutoGenMission2_1.msnbin MID: GType:2 CNTRS:0:0,101:1,201:2 SETTS:010000000010000100000000110 MODS:0 PRESET:0 AQMID:0 ROUNDS: 1 POINTS: 500")
-            yield LogEntry.Parse("T:1 AType:11 GID:905216 IDS:260096,266240,272384,278528,284672,290816,300032 LID:260096")
-        }
-        |> AsyncSeq.map Old
-    let newEntries =
-        asyncSeq {
-            do! Async.Sleep(530)
-            yield LogEntry.Parse("T:53 AType:12 ID:114688 TYPE:fake_block[21282,1] COUNTRY:201 NAME:CNV-R-2-0-D-0 PID:-1 POS(0.0000,74.1304,0.0000)")
-            yield LogEntry.Parse("T:53 AType:3 AID:-1 TID:114688 POS(0.0000,74.1304,0.0000)")
-            do! Async.Sleep(530)
-            yield LogEntry.Parse("T:106 AType:12 ID:114688 TYPE:fake_block[21282,1] COUNTRY:201 NAME:CNV-R-2-1-D-0 PID:-1 POS(0.0000,74.1304,0.0000)")
-            yield LogEntry.Parse("T:106 AType:3 AID:-1 TID:114688 POS(0.0000,74.1304,0.0000)")
-        }
-        |> AsyncSeq.map Fresh
-    let entries = AsyncSeq.append oldEntries newEntries
-    let oldInjected =
-        seq {
-            yield ArtificialEntry(24L, "1") :> LogEntry
-        }
-    let newInjected =
-        asyncSeq {
-            do! Async.Sleep(600)
-            yield "2"
-        }
-    let takeNewInjected =
-        let it = newInjected.GetEnumerator()
-        it.MoveNext
-    let result =
-        injectOldAndFresh entries oldInjected takeNewInjected ignore
-        |> AsyncSeq.truncate 10
-        |> AsyncSeq.iter (fun data ->
-            printfn "%A" data)
-        |> Async.RunSynchronously
-    ()
-    //Assert.AreEqual(10, result.Length)
