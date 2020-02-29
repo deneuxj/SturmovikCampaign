@@ -16,8 +16,6 @@
 
 module Campaign.Configuration
 
-
-open FSharp.Configuration
 open System.IO
 open Util
 open SturmovikMission.DataProvider.Parsing
@@ -194,9 +192,8 @@ with
             |> Option.defaultValue (PlaneSet.Default)
         | planeSetName ->
             try
-                let file = PlaneSetFile()
-                file.Load(Path.Combine(this.ScriptPath, "Config", "planeSet-" + planeSetName + ".yaml"))
-                match PlaneSet.FromYaml(file.PlaneSet) with
+                let file = PlaneSetFile.Load(Path.Combine(this.ScriptPath, "Config", "planeSet-" + planeSetName + ".yaml"))
+                match PlaneSet.FromJson(file.PlaneSet) with
                 | Ok planeSet -> planeSet
                 | Error msg ->
                     logger.Error(sprintf "Failed to load planeset '%s': %s" planeSetName msg)
@@ -208,13 +205,14 @@ with
 
     member this.MissionLengthH = 1.0f<H> * float32 this.MissionLength / 60.0f
 
+open FSharp.Data
+
 [<Literal>]
-let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SampleConfig.yaml"
-type ConfigFile = YamlConfig<sampleFile>
+let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SampleConfig.json"
+type ConfigFile = JsonProvider<sampleFile>
 
 let loadConfigFile (path : string) =
-    let config = ConfigFile()
-    config.Load(path)
+    let config = ConfigFile.Load(path)
     let values = config.Campaign
     {
         PlayList = values.PlayList |> List.ofSeq
@@ -225,7 +223,7 @@ let loadConfigFile (path : string) =
             | -1 -> None
             | x -> Some x
         WeatherDayMaxOffset = values.WeatherDayMaxOffset
-        MaxAACannons = values.MaxAACannons
+        MaxAACannons = values.MaxAaCannons
         MaxFires = values.MaxFires
         MaxBuildingIcons = values.MaxBuildingIcons
         MaxConvoys = values.MaxConvoys
@@ -243,7 +241,7 @@ let loadConfigFile (path : string) =
         MaxTanksInParks = values.MaxTanksInParks
         BattleKillRatio = values.BattleKillRatio
         MaxBattleKillsRatioByPlayers = float32 values.MaxBattleKillsRatioByPlayers
-        MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAI
+        MaxBattleKillsRatioByAI = float32 values.MaxBattleKillsRatioByAi
         MaxStaticPlanes = values.MaxStaticPlanes
         SpawnsAreRestricted = values.SpawnRestrictions
         MaxLuxuryBonusSpawns = values.MaxLuxuryBonusSpawns
@@ -273,8 +271,8 @@ let loadConfigFile (path : string) =
         RearAirfieldPlanes = values.RearAirfieldPlanes
         NumPlanesFactor = float32 values.NumPlanesFactor
         Briefing = values.Briefing
-        WebHook = values.WebHook
-        DiscordUserId = values.DiscordUserId
+        WebHook = string values.WebHook
+        DiscordUserId = string values.DiscordUserId
         FriendlyFireBanDuration = values.FriendlyFireBanDuration
         MaxFriendlyFireEvents = values.MaxFriendlyFireEvents
         MaxNoobScore = float32 values.MaxNoobScore

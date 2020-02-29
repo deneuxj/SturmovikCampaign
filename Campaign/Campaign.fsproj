@@ -51,7 +51,7 @@
     <None Include="Config\SubBlocks.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\SampleConfig.yaml">
+    <None Include="Config\SampleConfig.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Config\PlaneSet-FC1.json">
