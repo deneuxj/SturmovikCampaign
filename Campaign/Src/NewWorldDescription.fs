@@ -134,7 +134,7 @@ with
             byPos.[pos].Properties.Boundary
             |> List.map (fun v -> v.Rotate(pos.Rotation) + pos.Pos)
         let cache = System.Collections.Generic.Dictionary()
-        let cachedGetBoundary = SturmovikMission.DataProvider.Cached.cached cache getBoundary
+        let cachedGetBoundary = SturmovikMission.Cached.cached cache getBoundary
         // Quick intersection tests for bridges
         let tree = Campaign.SpacePartition.QuadTree.fromBoundaryOjects cachedGetBoundary 10 10 (bridges |> Seq.map (fun instance -> instance.Pos))
         // Area between nodes to "capture" bridges

@@ -23,7 +23,7 @@ open SturmovikMission.Blocks.Patrol
 open SturmovikMission.Blocks.GroundAttack
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.DataProvider
-open SturmovikMission.DataProvider.Cached
+open SturmovikMission.Cached
 open SturmovikMission.Blocks.IconDisplay
 
 open Campaign.BasicTypes

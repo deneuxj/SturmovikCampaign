@@ -24,7 +24,7 @@ open VectorExtension
 open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.Proximity
-open SturmovikMission.DataProvider.Cached
+open SturmovikMission.Cached
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.IconDisplay
 open SturmovikMission.Blocks.MapGraphics

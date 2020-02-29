@@ -699,7 +699,7 @@ type CampaignData(config : Configuration, support : SupportApis) =
                 Ok data
             with
             | _ -> Error "Failed to retrieve mission results"
-        SturmovikMission.DataProvider.Cached.cached cache tryGetMissionResults
+        SturmovikMission.Cached.cached cache tryGetMissionResults
 
     let extractRegion (region : RegionState) =
         [ "Owner", region.Owner |> Option.map string |> Option.defaultValue "None" :> obj
@@ -727,7 +727,7 @@ type CampaignData(config : Configuration, support : SupportApis) =
                 Ok data
             with
             | _ -> Error "Failed to retrieve campaign state"
-        SturmovikMission.DataProvider.Cached.cached cache tryGetState
+        SturmovikMission.Cached.cached cache tryGetState
 
     member this.GetMissionDates() = missionDates.Value
 

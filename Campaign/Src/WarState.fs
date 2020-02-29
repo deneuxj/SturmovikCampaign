@@ -25,12 +25,8 @@ open Campaign.PlaneModel
 open Campaign.WorldDescription
 open Campaign.NewWorldDescription
 open Campaign.Weather
-
+open SturmovikMission
 open Util
-
-/// Shorthand for SturmovikMission.DataProvider.Cached
-module private Cached =
-    let cached = SturmovikMission.DataProvider.Cached.cached
 
 /// Complex algorithms using data from WarState
 module private Algo =
