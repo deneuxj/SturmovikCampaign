@@ -1,8 +1,50 @@
 ﻿module Campaign.StringResources
 
-open FSharp.Configuration
+open System.Resources
+open System.Reflection
 
-type Strings = ResXProvider<"Strings.resx">
+type StringsAccess() =
+    let rm = new ResourceManager("Strings", Assembly.GetExecutingAssembly());
+
+    member this.Welcome = rm.GetString("Welcome")
+    member this.FreshSpawns = rm.GetString("FreshSpawns")
+    member this.ReservedPlanes = rm.GetString("ReservedPlanes")
+    member this.TookLastPlane = rm.GetString("TookLastPlane")
+    member this.EnteredPlane = rm.GetString("EnteredPlane")
+    member this.PlaneAvailableAgain = rm.GetString("PlaneAvailableAgain")
+    member this.NoSelfGift = rm.GetString("NoSelfGift")
+    member this.GiftToPlayer = rm.GetString("GiftToPlayer")
+    member this.GiftFromPlayer = rm.GetString("GiftFromPlayer")
+    member this.GiftToPublic = rm.GetString("GiftToPublic")
+    member this.UnauthorizedTakeOff = rm.GetString("UnauthorizedTakeOff")
+    member this.BadSupplyMissionStart = rm.GetString("BadSupplyMissionStart")
+    member this.SupplyMissionAdvice = rm.GetString("SupplyMissionAdvice")
+    member this.FreshSpawnsExhausted = rm.GetString("FreshSpawnsExhausted")
+    member this.FreshSpawnsExhaustedAlt = rm.GetString("FreshSpawnsExhaustedAlt")
+    member this.TakeOffDenied = rm.GetString("TakeOffDenied")
+    member this.TakeOffKickWarning = rm.GetString("TakeOffKickWarning")
+    member this.TakeOffCleared = rm.GetString("TakeOffCleared")
+    member this.TakeOffClearedAlt = rm.GetString("TakeOffClearedAlt")
+    member this.NotAReservedPlane = rm.GetString("NotAReservedPlane")
+    member this.RearSpawnAdvice = rm.GetString("RearSpawnAdvice")
+    member this.ScarceTakeOff = rm.GetString("ScarceTakeOff")
+    member this.TakeOff = rm.GetString("TakeOff")
+    member this.CargoDelivered = rm.GetString("CargoDelivered")
+    member this.EnemyLanded = rm.GetString("EnemyLanded")
+    member this.LandingViolation = rm.GetString("LandingViolation")
+    member this.BackAt = rm.GetString("BackAt")
+    member this.CrashedNear = rm.GetString("CrashedNear")
+    member this.LandedInTheRough = rm.GetString("LandedInTheRough")
+    member this.Crashed = rm.GetString("Crashed")
+    member this.KickNoBan = rm.GetString("KickNoBan")
+    member this.Hours = rm.GetString("Hours")
+    member this.Minutes = rm.GetString("Minutes")
+    member this.Seconds = rm.GetString("Seconds")
+    member this.TimeLeft = rm.GetString("TimeLeft")
+    member this.PlaneReservedByOther = rm.GetString("PlaneReservedByOther")
+    member this.InsufficientSupplies = rm.GetString("InsufficientSupplies")
+
+let Strings = StringsAccess()
 
 let welcome =
     sprintf (Printf.StringFormat<string -> string> Strings.Welcome)
