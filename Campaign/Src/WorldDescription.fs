@@ -644,7 +644,7 @@ type World = {
 with
     static member Create(scenario, planeSet, strategyFile, subBlocksFile : string) =
         let s = Stream.FromFile strategyFile
-        let data = T.GroupData(s)
+        let data = T.GroupData.Parse(s)
 
         let date =
             let options = List.head data.ListOfOptions
@@ -774,7 +774,7 @@ with
 
     static member IsWWIScenario scenarioFile =
         let s = Stream.FromFile scenarioFile
-        let data = T.GroupData(s)
+        let data = T.GroupData.Parse(s)
         let date =
             let options = List.head data.ListOfOptions
             let h, m, s = options.GetTime().Value

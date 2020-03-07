@@ -100,11 +100,11 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                             mkDamaged (
                                 let subBlocks = building.SubBlocks(world.SubBlockSpecs)
                                 Array.zip subBlocks healths
-                                |> Seq.map (fun (idx, h) -> (idx, T.Float (1.0 - float h)))
+                                |> Seq.map (fun (idx, h) -> (idx, T.Float.N (1.0 - float h)))
                                 |> Map.ofSeq))
-                        |> setDurability (StaticGroup.FromBlock(block).Durability(world.SubBlockSpecs) |> T.Integer)
-                        |> setIndex (T.Integer 1)
-                        |> setLinkTrId (T.Integer 0) // No entity
+                        |> setDurability (StaticGroup.FromBlock(block).Durability(world.SubBlockSpecs) |> T.Integer.N)
+                        |> setIndex (T.Integer.N 1)
+                        |> setLinkTrId (T.Integer.N 0) // No entity
                         |> createMcu
                         :?> Mcu.HasEntity
                     match state.Owner with
@@ -131,9 +131,9 @@ let inline createBlocksGen mkDamaged (random : System.Random) (store : Numerical
                     yield upcast damagedBlock
     ]
 
-let createBlocks random store world state inAttackArea (blocks : T.Block list) = createBlocksGen T.Block.Damaged random store world state inAttackArea blocks
+let createBlocks random store world state inAttackArea (blocks : T.Block list) = createBlocksGen T.Block.Damaged.FromMap random store world state inAttackArea blocks
 
-let createBridges random store world state inAttackArea (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged random store world state inAttackArea blocks
+let createBridges random store world state inAttackArea (blocks : T.Bridge list) = createBlocksGen T.Bridge.Damaged.FromMap random store world state inAttackArea blocks
 
 let createGrounds (store : NumericalIdentifiers.IdStore) (blocks : T.Ground list) =
     [

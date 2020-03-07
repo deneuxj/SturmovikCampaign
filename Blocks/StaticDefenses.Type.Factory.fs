@@ -78,8 +78,8 @@ with
                     let block = newBlock 1 (int country) model.Model model.Script
                     let mcu =
                         block
-                            .SetXPos(T.Float pos.X).SetYPos(T.Float pos.Y).SetZPos(T.Float pos.Z)
-                            .SetXOri(T.Float ori.X).SetYOri(T.Float ori.Y).SetZOri(T.Float ori.Z)
+                            .SetXPos(T.Float.N pos.X).SetYPos(T.Float.N pos.Y).SetZPos(T.Float.N pos.Z)
+                            .SetXOri(T.Float.N ori.X).SetYOri(T.Float.N ori.Y).SetZOri(T.Float.N ori.Z)
                             .CreateMcu()
                     let subst = Mcu.substId <| store.GetIdMapper()
                     subst mcu

@@ -124,7 +124,7 @@ let createParaTrooperDrops (world : World) store lcStore (battlefields : (AreaId
 let addMultiplayerPlaneConfigs (planeSet : PlaneSet.PlaneSet) (options : T.Options) =
     let configs =
         planeSet.AllModels
-        |> Seq.map (fun model -> T.String(model.ScriptModel.Script))
+        |> Seq.map (fun model -> T.String.N (model.ScriptModel.Script))
     options.SetMultiplayerPlaneConfig(List.ofSeq configs)
 
 
@@ -174,7 +174,7 @@ with
 let writeMissionFile (missionParams : MissionGenerationParameters) (missionData : MissionData) (filename : string) =
     let wg = WorldFastAccess.Create(missionData.World)
     let random = System.Random()
-    let strategyMissionData = T.GroupData(Parsing.Stream.FromFile missionParams.StrategyMissionFile)
+    let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile missionParams.StrategyMissionFile)
     let options = strategyMissionData.ListOfOptions.Head
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
@@ -214,8 +214,8 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             | false, _ -> bridge
             | true, repl ->
                 bridge
-                    .SetModel(T.String(bridge.GetModel().Value.Replace(key, repl)))
-                    .SetScript(T.String(bridge.GetScript().Value.Replace(key, repl))))
+                    .SetModel(T.String.N(bridge.GetModel().Value.Replace(key, repl)))
+                    .SetScript(T.String.N(bridge.GetScript().Value.Replace(key, repl))))
         |> createBridges missionData.Random store missionData.World missionData.State inAttackArea
     let ground =
         strategyMissionData.ListOfGround
@@ -455,7 +455,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         |> List.map (fun fire -> fire.All)
     let options =
         (Weather.setOptions missionData.Random missionData.Weather missionData.State.Date options)
-            .SetMissionType(T.Integer 2) // deathmatch
+            .SetMissionType(T.Integer.N 2) // deathmatch
             |> addMultiplayerPlaneConfigs missionParams.PlaneSet
     let optionStrings =
         { new McuUtil.IMcuGroup with

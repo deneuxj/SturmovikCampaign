@@ -177,9 +177,9 @@ let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes2 : PlaneSpecsPl
                 |> List.map (fun m -> m.ModFilter)
                 |> String.concat "/"
         let planeSpec = newAirfieldPlane(modFilter, constr, 0, defaultPayload, "", plane.Name, -1)
-                            .SetScript(T.String model.Script)
-                            .SetModel(T.String model.Model)
-                            .SetStartInAir(T.Integer 2)
+                            .SetScript(T.String.N model.Script)
+                            .SetModel(T.String.N model.Model)
+                            .SetStartInAir(T.Integer.N 2)
         planeSpec
 
     match planes2 with
@@ -192,7 +192,7 @@ let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes2 : PlaneSpecsPl
                 |> Seq.map fst
             for plane in allPlanes do
                 let planeSpec = mkPlaneSpec plane
-                yield planeSpec.SetSetIndex(T.Integer 0).SetNumber(T.Integer -1)
+                yield planeSpec.SetSetIndex(T.Integer.N 0).SetNumber(T.Integer.N -1)
         ]
     | Indexed(planes, planesInAllSets) ->
         [
@@ -203,14 +203,14 @@ let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes2 : PlaneSpecsPl
                 let planeSpec = mkPlaneSpec plane
                 for j in 0 .. maxIndex do
                     if (j &&& mask) <> 0 then
-                        yield planeSpec.SetSetIndex(T.Integer j)
+                        yield planeSpec.SetSetIndex(T.Integer.N j)
                     else
-                        yield planeSpec.SetNumber(T.Integer 0).SetSetIndex(T.Integer j)
+                        yield planeSpec.SetNumber(T.Integer.N 0).SetSetIndex(T.Integer.N j)
             // Other planes, present in all planesets
             for plane in planesInAllSets do
                 let planeSpec = mkPlaneSpec plane
                 for j in 0 .. maxIndex do
-                    yield planeSpec.SetSetIndex(T.Integer j)
+                    yield planeSpec.SetSetIndex(T.Integer.N j)
         ]
 
 let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int) (store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionStarted : Mcu.McuTrigger) =
@@ -244,18 +244,18 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                                 distance)
                         |> fun spawn ->
                             spawn
-                                .SetReturnPlanes(T.Boolean true)
-                                .SetRefuelFriendlies(T.Boolean true)
-                                .SetRearmFriendlies(T.Boolean true)
-                                .SetMaintenanceRadius(T.Integer 3000)
-                                .SetRefuelTime(T.Integer 0)
-                                .SetRearmTime(T.Integer 0)
+                                .SetReturnPlanes(T.Boolean.N true)
+                                .SetRefuelFriendlies(T.Boolean.N true)
+                                .SetRearmFriendlies(T.Boolean.N true)
+                                .SetMaintenanceRadius(T.Integer.N 3000)
+                                .SetRefuelTime(T.Integer.N 0)
+                                .SetRearmTime(T.Integer.N 0)
 
                     match coalition with
                     | Axis ->
-                        spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Germany)))
+                        spawn.SetCountry(T.Integer.N (int(Mcu.CountryValue.Germany)))
                     | Allies ->
-                        spawn.SetCountry(T.Integer(int(Mcu.CountryValue.Russia)))
+                        spawn.SetCountry(T.Integer.N (int(Mcu.CountryValue.Russia)))
                 let availablePlanes =
                     state.NumPlanes
                     |> Map.map (fun _ number -> number |> floor |> int)
@@ -287,7 +287,7 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                     else
                         mkPlaneSpecs world.PlaneSet state.Supplies (Indexed(spawnPlanes, staticSpawnPlanes))
                 let planes =
-                    T.Airfield.Planes()
+                    T.Airfield.Planes.Default
                         .SetPlane(planeSpecs)
                 let afName =
                     if restrictionsAreActive then
@@ -309,7 +309,7 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                     else
                         sprintf "(%1.1f/%1.1f T)" amount capacity
                 let afName = sprintf "%s %s" afName amountSpec
-                let af = af.SetPlanes(planes).SetIndex(T.Integer 1).SetLinkTrId(T.Integer 2).SetName(T.String afName)
+                let af = af.SetPlanes(planes).SetIndex(T.Integer.N 1).SetLinkTrId(T.Integer.N 2).SetName(T.String.N afName)
                 let entity = newEntity 2
                 entity.MisObjID <- 1
                 let mcu = af.CreateMcu()
@@ -506,8 +506,14 @@ let createLandFires (store : NumericalIdentifiers.IdStore) (world : World) (stat
 let createLandLights(store : NumericalIdentifiers.IdStore) (world : World) (state : WorldState) (missionBegin : Mcu.McuTrigger) (runwayStarts : (Vector2 * CoalitionId) list) (landLights : Mcu.McuBase list) =
     let lightsOn(lights : Mcu.McuEntity list) =
         let subst = Mcu.substId <| store.GetIdMapper()
-        let prio = T.Integer 0
-        let lowPrio = T.MCU_CMD_ForceComplete(T.String "Switch lights on", T.Boolean false, T.Integer 1, T.String "LightsOn", T.VectorOfIntegers[], prio, T.VectorOfIntegers[], T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0, T.Float 0.0).CreateMcu() :?> Mcu.McuTrigger
+        let prio = T.Integer.N 0
+        let lowPrio = 
+            T.MCU_CMD_ForceComplete.Default
+                .SetDesc(T.String.N "Switch lights on")
+                .SetIndex(T.Integer.N 1)
+                .SetName(T.String.N "LightsOn")
+                .SetPriority(prio)
+                .CreateMcu() :?> Mcu.McuTrigger
         subst lowPrio
         for light in lights do
             Mcu.addObjectLink lowPrio light.Index

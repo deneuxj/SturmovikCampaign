@@ -95,7 +95,7 @@ type PlayerTankSpawn =
         let spawn =
             blocksData.ListOfAirfield |> List.find(fun af -> af.GetName().Value = "Tankfield")
         let entity = newEntity 2
-        let spawn = spawn.SetLinkTrId(T.Integer 2).SetIndex(T.Integer 1).SetCountry(T.Integer(int country))
+        let spawn = spawn.SetLinkTrId(T.Integer.N 2).SetIndex(T.Integer.N 1).SetCountry(T.Integer.N (int country))
         entity.MisObjID <- 1
         // Tank selection
         let m =
@@ -103,9 +103,9 @@ type PlayerTankSpawn =
             | Mcu.CountryValue.Germany -> vehicles.GermanPlayerTank
             | Mcu.CountryValue.Russia -> vehicles.RussianPlayerTank
             | _ -> failwith "Unknown coalition"
-        let tank = newAirfieldTank("Heavy tank", m.Model, m.Script, numTanks).SetRenewable(T.Boolean true).SetRenewTime(T.Integer 900)
+        let tank = newAirfieldTank("Heavy tank", m.Model, m.Script, numTanks).SetRenewable(T.Boolean.N true).SetRenewTime(T.Integer.N 900)
         let spawn =
-            spawn.SetPlanes(T.Airfield.Planes().SetVehicle([tank]))
+            spawn.SetPlanes(T.Airfield.Planes.Default.SetVehicle([tank]))
         let spawn = spawn.CreateMcu()
         position.AssignTo(spawn.Pos)
         position.AssignTo(entity.Pos)

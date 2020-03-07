@@ -30,7 +30,7 @@ let private logger = LogManager.GetCurrentClassLogger()
 /// Get the region and date of a scenario
 let extractRegionAndDate (strategyFile : string) =
     let s = Stream.FromFile strategyFile
-    let data = T.GroupData(s)
+    let data = T.GroupData.Parse(s)
     let options = data.ListOfOptions.Head
     let date = options.GetDate()
     let date = System.DateTime(date.Year, date.Month, date.Day)

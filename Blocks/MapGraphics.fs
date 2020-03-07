@@ -10,26 +10,12 @@ open VectorExtension
 let private defaultIcon =
     let lcDesc = 1
     let lcName = 2
-    T.MCU_Icon(
-        T.Integer(0),
-        T.VectorOfIntegers[1;2],
-        T.Boolean true,
-        T.Integer(0),
-        T.Integer(0),
-        T.Integer(1),
-        T.Integer(lcDesc),
-        T.Integer(lcName),
-        T.Integer(0),
-        T.VectorOfIntegers[],
-        T.Integer(0),
-        T.VectorOfIntegers[],
-        T.Float(0.0),
-        T.Float(0.0),
-        T.Float(0.0),
-        T.Float(0.0),
-        T.Float(0.0),
-        T.Float(0.0)
-    )
+    T.MCU_Icon.Default
+        .SetCoalitions(T.VectorOfIntegers.N [1;2])
+        .SetEnabled(T.Boolean.N true)
+        .SetIndex(T.Integer.N 1)
+        .SetLCDesc(T.Integer.N lcDesc)
+        .SetLCName(T.Integer.N lcName)
 
 /// Make an icon.
 let mkIcon (store : NumericalIdentifiers.IdStore) (lcStore : NumericalIdentifiers.IdStore) (lineType : int) (red, green, blue) (v : Vector2) =
@@ -37,12 +23,12 @@ let mkIcon (store : NumericalIdentifiers.IdStore) (lcStore : NumericalIdentifier
     let substLc = Mcu.substLCId <| lcStore.GetIdMapper()
     let mcu =
         defaultIcon
-            .SetXPos(T.Float(float v.X))
-            .SetZPos(T.Float(float v.Y))
-            .SetLineType(T.Integer lineType)
-            .SetRColor(T.Integer red)
-            .SetGColor(T.Integer green)
-            .SetBColor(T.Integer blue)
+            .SetXPos(T.Float.N (float v.X))
+            .SetZPos(T.Float.N (float v.Y))
+            .SetLineType(T.Integer.N lineType)
+            .SetRColor(T.Integer.N red)
+            .SetGColor(T.Integer.N green)
+            .SetBColor(T.Integer.N blue)
             .CreateMcu()
             :?> Mcu.McuIcon
     subst mcu

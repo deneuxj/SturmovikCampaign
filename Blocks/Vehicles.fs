@@ -29,7 +29,7 @@ with
 type VehicleDataTypeStore() =
     let data =
         let path = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location)
-        T.GroupData(Parsing.Stream.FromFile(Path.Combine(path, "Vehicles.mission")))
+        T.GroupData.Parse(Parsing.Stream.FromFile(Path.Combine(path, "Vehicles.mission")))
 
     let vehicles =
         data.ListOfVehicle

@@ -315,7 +315,7 @@ module Loading =
 
     /// Load a list of BuildingProperties from a .Mission file
     let loadBuildingPropertiesList(path : string) =
-        let data = T.GroupData(Stream.FromFile path)
+        let data = T.GroupData.Parse(Stream.FromFile path)
         let blocks = data.ListOfBlock
         let bridges = data.ListOfBridge
         let zones = data.ListOfMCU_TR_InfluenceArea
@@ -564,7 +564,7 @@ module Loading =
     let loadWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
         let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
-        let missionData = T.GroupData(Stream.FromFile scenario)
+        let missionData = T.GroupData.Parse(Stream.FromFile scenario)
         // Region boundaries
         let regionAreas = missionData.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
         let regionBoundaries =
