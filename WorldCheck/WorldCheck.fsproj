@@ -65,14 +65,10 @@
     <Content Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="Sample.Mission" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.3.4\lib\net45\FSharp.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="McuLibrary">
-      <HintPath>..\packages\SturmovikMission.DataProvider.6.0.1\lib\net45\McuLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="mscorlib" />
@@ -81,9 +77,6 @@
     </Reference>
     <Reference Include="ploggy">
       <HintPath>..\packages\ploggy.1.2.2\lib\net45\ploggy.dll</HintPath>
-    </Reference>
-    <Reference Include="SturmovikMission.DataProvider.Runtime">
-      <HintPath>..\packages\SturmovikMission.DataProvider.6.0.1\lib\net45\SturmovikMission.DataProvider.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
