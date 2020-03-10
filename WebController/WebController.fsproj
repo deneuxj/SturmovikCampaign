@@ -7,7 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Basic.Dto.fs" />
+    <Compile Include="World.Dto.fs" />
+    <Compile Include="War.Dto.fs" />
     <Compile Include="Program.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Blocks\Blocks.fsproj" />
+    <ProjectReference Include="..\Campaign\Campaign.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
