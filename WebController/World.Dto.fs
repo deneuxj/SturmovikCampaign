@@ -75,6 +75,8 @@ type World =
         StartDate : DateTime
         Regions : Region[]
         Airfields : Airfield[]
+        // Properties of buildings and bridges
+        BuildingProperties : BuildingProperties[]
         Bridges : BuildingInstance[]
         PlaneSet : PlaneModel[]
     }
