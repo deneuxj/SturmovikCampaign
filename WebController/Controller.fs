@@ -9,6 +9,7 @@ open Campaign
 [<AutoOpen>]
 module internal Extensions =
     open Campaign.WebController.Dto
+    open Campaign.WarState.IWarStateExtensions
 
     type System.Numerics.Vector2 with
         member this.ToDto() =
@@ -135,7 +136,7 @@ module internal Extensions =
             }
 
     type NewWorldDescription.World with
-        member this.Dto() =
+        member this.ToDto() =
             let fn, getPropertiesId = mkIdMaps(this.Buildings.Values, this.Bridges.Values)
             let buildingProps = 
                 let props =
@@ -162,11 +163,125 @@ module internal Extensions =
                 PlaneSet = this.PlaneSet.Values |> Seq.map (fun plane -> plane.ToDto()) |> Array.ofSeq
             }
 
+    type Weather.WeatherState with
+        member this.ToDto() =
+            {
+                CloudDensity = float32 this.CloudDensity
+                CloudHeight = float32 this.CloudHeight
+                CloudThickness = float32 this.CloudThickness
+                Precipitation = float32 this.Precipitation
+                WindSpeed = float32 this.Wind.Speed
+                WindDirectionTo = float32 this.Wind.Direction
+                Turbulence = float32 this.Turbulence
+                Temperature = float32 this.Temperature
+                Pressure = float32 this.Pressure
+            }
+
+    type WarState.IWarStateQuery with
+        member this.ToDto() =
+            let mkBuildingHealth bids =
+                seq {
+                    for bid in bids do
+                        let health = this.GetBuildingHealth(bid)
+                        if health < 1.0f then
+                            let (NewWorldDescription.BuildingInstanceId pos) = bid
+                            yield
+                                pos.ToDto(),
+                                {
+                                    HealthLevel = health
+                                    FunctionalityLevel = this.GetBuildingFunctionalityLevel(bid)
+                                }
+                }
+                |> dict
+
+            let groundForces =
+                [|
+                    for rid in this.World.Regions.Keys do
+                        for coalition in [BasicTypes.Axis; BasicTypes.Allies] do
+                            let forces = float32 <| this.GetGroundForces(coalition, rid)
+                            if forces > 0.0f then
+                                yield {
+                                    Region = string rid
+                                    Forces = forces
+                                    Coalition = string coalition
+                                }
+                |]
+
+            let mkTransport graph =
+                [|
+                    for kvp in this.World.Regions do
+                        let rid, neighbours = kvp.Key, kvp.Value.Neighbours
+                        for ngh in neighbours do
+                            if string ngh > string rid then
+                                yield {
+                                    RegionA = string rid
+                                    RegionB = string ngh
+                                    Capacity = float32 <| graph(rid, ngh)
+                                }
+                |]
+
+            let supplies =
+                let x = this.ComputeSupplyAvailability()
+                seq {
+                    for rid in this.World.Regions.Keys do
+                        yield string rid, float32(x rid)
+                }
+                |> dict
+
+            let planes =
+                seq {
+                    for afid in this.World.Airfields.Keys do
+                        let nofPlanes =
+                            this.GetNumPlanes(afid)
+                            |> Map.toSeq
+                            |> Seq.map (fun (planeId, qty) -> string planeId, qty)
+                            |> dict
+                        yield afid.AirfieldName, nofPlanes
+                }
+                |> dict
+
+            let owners =
+                seq {
+                    for rid in this.World.Regions.Keys do
+                        match this.GetOwner(rid) with
+                        | None -> ()
+                        | Some coalition -> yield (string rid, string coalition)
+                }
+                |> dict
+            {
+                Date = this.Date.ToDto()
+                Weather = this.Weather.ToDto()
+                BuildingHealth = mkBuildingHealth this.World.Buildings.Keys
+                BridgeHealth = mkBuildingHealth this.World.Bridges.Keys
+                GroundForces = groundForces
+                RoadTransport = this.ComputeRoadCapacity() |> mkTransport
+                RailTransport = this.ComputeRailCapacity() |> mkTransport
+                SupplyStatus = supplies
+                Planes = planes
+                RegionOwner = owners
+            }
+
 
 type Controller(workDir : string) =
-    let mutable world : NewWorldDescription.World option = None
-    let mutable state = None
     let theLock = obj()
+
+    let getWorld, setWorld, getState, setState =
+        let mutable world : NewWorldDescription.World option = None
+        let mutable state : WarState.WarState option = None
+
+        let getWorld() =
+            lock theLock (fun () -> world)
+
+        let setWorld w =
+            lock theLock (fun () -> world <- w)
+
+        let getState() =
+            lock theLock (fun () -> state)
+
+        let setState s =
+            lock theLock (fun () -> state <- s)
+
+        getWorld, setWorld, getState, setState
 
     do
         if not(Directory.Exists workDir) then
@@ -176,8 +291,18 @@ type Controller(workDir : string) =
             with
             | e -> failwithf "Directory '%s' not found, and could not be created because: %s" workDir e.Message
 
-    member this.GetWorld() =
-        match world with
-        | None -> Error "Campaign not initialized"
+    member this.GetWorldDto() =
+        match getWorld() with
+        | None ->
+            Error "Campaign not initialized"
         | Some world ->
-            failwith "TODO"
+            let dto = world.ToDto()
+            Ok dto
+
+    member this.GetStateDto() =
+        match getState() with
+        | None ->
+            Error "Campaign not started"
+        | Some war ->
+            let dto = war.ToDto()
+            Ok dto
