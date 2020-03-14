@@ -276,7 +276,7 @@ type World = {
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
 }
 
-module Loading =
+module Init =
     open System.IO
     open System.Reflection
     open SturmovikMission.DataProvider.Parsing
@@ -315,7 +315,14 @@ module Loading =
 
     /// Load a list of BuildingProperties from a .Mission file
     let loadBuildingPropertiesList(path : string) =
-        let data = T.GroupData.Parse(Stream.FromFile path)
+        let data =
+            try
+                T.GroupData.Parse(Stream.FromFile path)
+            with
+            | :? ParseError as e ->
+                printParseError e
+                |> String.concat "\n"
+                |> failwithf "%s"
         let blocks = data.ListOfBlock
         let bridges = data.ListOfBridge
         let zones = data.ListOfMCU_TR_InfluenceArea
@@ -561,7 +568,7 @@ module Loading =
             })
 
     /// Load a scenario mission file and create a world description.
-    let loadWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
+    let mkWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
         let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
         let missionData = T.GroupData.Parse(Stream.FromFile scenario)

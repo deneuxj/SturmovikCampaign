@@ -30,7 +30,7 @@ let world =
     let speed = 50000.0f<M/H>
     let numTrucks = speed / separation
     let roadCapacity = numTrucks * truck
-    let x = Loading.loadWorld(Path.Combine(missionDir, "RheinlandSummer.Mission"), roadCapacity, roadCapacity * 3.0f)
+    let x = Init.mkWorld(Path.Combine(missionDir, "RheinlandSummer.Mission"), roadCapacity, roadCapacity * 3.0f)
     (planeSet :> IScenarioWorldSetup).Setup x
 
 let war = Init.mkWar world
