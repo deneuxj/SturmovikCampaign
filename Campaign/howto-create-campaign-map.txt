@@ -61,3 +61,8 @@ They must not be located under the "Static" group (see below).
 
 11. Other buildings
 Buildings of strategic value as well as "valueless" buildings should be under a group named "Static".
+
+12. Other data
+Create a fakefield outside of the play area, set the planes that can be used in this campaign.
+Make sure to include all planes that players might want to use, including exotic choices in ahistorical uses of the campaign.
+Set the mission type to deathmatch.
