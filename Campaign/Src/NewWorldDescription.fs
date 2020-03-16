@@ -295,8 +295,9 @@ module Init =
         let rot = float32(building |> getYOri |> valueOf)
         let vertices =
             boundary.GetBoundary().Value
-            |> List.map (fun floats ->
+            |> Seq.map (fun floats ->
                 (Vector2.FromPair floats - pos).Rotate(-rot))
+            |> List.ofSeq
         let subparts =
             building
             |> getDamaged
@@ -331,9 +332,10 @@ module Init =
             |> List.map (fun area ->
                 let vertices =
                     area.GetBoundary().Value
-                    |> List.map (fun floats ->
+                    |> Seq.map (fun floats ->
                         let x, y = floats.Value
                         Vector2(float32 x, float32 y))
+                    |> List.ofSeq
                 (fun (v : Vector2) -> v.IsInConvexPolygon(vertices)), area)
         let inline build blocks =
             [
@@ -370,7 +372,7 @@ module Init =
     let extractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list) =
         let extractOne (region : T.MCU_TR_InfluenceArea) : Region =
             let coalition = CoalitionId.FromCountry (enum(region.GetCountry().Value))
-            let boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
+            let boundary = region.GetBoundary().Value |> Seq.map(fun coord -> Vector2.FromPair(coord)) |> List.ofSeq
             let buildings =
                 buildings
                 |> List.filter (fun building -> building.Pos.Pos.IsInConvexPolygon boundary)
@@ -494,8 +496,9 @@ module Init =
             let taxi = chart.GetPoints()
             let vecs =
                 taxi
-                |> List.map (fun point -> Vector2(float32(point.GetX().Value), float32(point.GetY().Value)), point.GetType().Value)
-                |> List.map (fun (v, t) -> v.Rotate(pos.Rotation) + pos.Pos, t)
+                |> Seq.map (fun point -> Vector2(float32(point.GetX().Value), float32(point.GetY().Value)), point.GetType().Value)
+                |> Seq.map (fun (v, t) -> v.Rotate(pos.Rotation) + pos.Pos, t)
+                |> List.ofSeq
             let path =
                 vecs
                 |> List.takeWhile (fun (_, t) -> t < 2)
@@ -521,7 +524,8 @@ module Init =
             for area in areas do
                 let boundary =
                     area.GetBoundary().Value
-                    |> List.map Vector2.FromPair
+                    |> Seq.map Vector2.FromPair
+                    |> List.ofSeq
                 let runways =
                     [
                         for spawn in spawns do
@@ -578,14 +582,15 @@ module Init =
             regionAreas
             |> List.map (fun area ->
                 area.GetBoundary().Value
-                |> List.map Vector2.FromPair)
+                |> Seq.map Vector2.FromPair
+                |> List.ofSeq)
         // Blocks inside regions
         let blocks =
             missionData.GetGroup("Static").ListOfBlock
             |> List.filter (fun block ->
                 let pos = Vector2.FromPos block
                 regionBoundaries
-                |> List.exists (fun boundary -> pos.IsInConvexPolygon boundary))
+                |> Seq.exists (fun boundary -> pos.IsInConvexPolygon boundary))
         // Building instances
         let buildings = extractBuildingInstances(buildingDb, blocks)
         let buildingsDict =
@@ -607,7 +612,8 @@ module Init =
             missionData.GetGroup("Terminals").ListOfMCU_TR_InfluenceArea
             |> List.map (fun area ->
                 area.GetBoundary().Value
-                |> List.map Vector2.FromPair)
+                |> Seq.map Vector2.FromPair
+                |> List.ofSeq)
         // Function to load roads and bridges
         let loadRoads group graph capacity =
             // Bridges

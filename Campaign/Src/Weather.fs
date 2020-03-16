@@ -246,7 +246,7 @@ let setOptions (random : System.Random) (weather : WeatherState) (t : System.Dat
         let windDir = int weather.Wind.Direction
         let windSpeed = int weather.Wind.Speed
         options.GetWindLayers().Value
-        |> List.map(fun trip ->
+        |> Seq.map(fun trip ->
             let alt, _, _ = trip.Value
             let dir = int((float windDir + 60.0 * (random.NextDouble() - 0.5)) % 360.0)
             let altSpeedK = 1.0 + (float alt.Value) / 3000.0

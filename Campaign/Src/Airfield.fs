@@ -234,7 +234,7 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                                 let points = chart.GetPoints()
                                 let distance =
                                     points
-                                    |> List.pick(fun p1 ->
+                                    |> Seq.pick(fun p1 ->
                                         if p1.GetType().Value = 2 then
                                             let p =
                                                 Vector2(float32 <| p1.GetX().Value, float32 <| p1.GetY().Value).Rotate(float32 (spawn.GetYOri().Value)) + Vector2.FromPos(spawn)

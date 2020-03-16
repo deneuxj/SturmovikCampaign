@@ -66,7 +66,7 @@ with
             let coalition = CoalitionId.FromCountry (enum(region.GetCountry().Value))
             { RegionId = RegionId(region.GetName().Value)
               Position = Vector2.FromPos(region)
-              Boundary = region.GetBoundary().Value |> List.map(fun coord -> Vector2.FromPair(coord))
+              Boundary = region.GetBoundary().Value |> Seq.map(fun coord -> Vector2.FromPair(coord)) |> List.ofSeq
               Neighbours = []
               Storage = []
               Production = []
@@ -312,7 +312,7 @@ with
                         DefenseAreaId = AreaId(area.GetIndex().Value)
                         Home = region.RegionId
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f }
-                        Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
+                        Boundary = area.GetBoundary().Value |> Seq.map(Vector2.FromPair) |> List.ofSeq
                         MaxNumGuns = numGuns
                         Role = role
                     }
@@ -330,7 +330,7 @@ with
                         DefenseAreaId = AreaId(area.GetIndex().Value)
                         Home = region.RegionId
                         Position = { Pos = pos; Rotation = float32(area.GetYOri().Value); Altitude = 0.0f } 
-                        Boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
+                        Boundary = area.GetBoundary().Value |> Seq.map(Vector2.FromPair) |> List.ofSeq
                         MaxNumGuns = 12
                         Role = RearDefenseArea
                     }
@@ -369,7 +369,7 @@ with
                 let pos = Vector2.FromPos(area)
                 let rot = float32(area.GetYOri().Value)
                 let dir = Vector2.FromYOri(area.GetYOri().Value)
-                let boundary = area.GetBoundary().Value |> List.map(Vector2.FromPair)
+                let boundary = area.GetBoundary().Value |> Seq.map(Vector2.FromPair) |> List.ofSeq
                 let withRegions =
                     regions
                     |> List.filter(fun region ->
@@ -597,7 +597,7 @@ with
                 coalition
             | None ->
                 failwith "Safe zone must not be neutral"
-        { Boundary = area.GetBoundary().Value |> List.map Vector2.FromPair
+        { Boundary = area.GetBoundary().Value |> Seq.map Vector2.FromPair |> List.ofSeq
           Owner = owner
         }
 

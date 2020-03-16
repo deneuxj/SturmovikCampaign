@@ -179,8 +179,8 @@ let runwayOfAirfieldSpawn (airfield : T.Airfield) =
         let points = chart.GetPoints()
         let pos, direction =
             points
-            |> List.pairwise
-            |> List.pick(fun (p1, p2) ->
+            |> Seq.pairwise
+            |> Seq.pick(fun (p1, p2) ->
                 if p1.GetType().Value = 2 && p2.GetType().Value = 2 then
                     let mkVec(p : T.Airfield.Chart.Point) =
                         Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
@@ -199,8 +199,8 @@ let parkingOfAirfieldSpawn (airfield : T.Airfield) =
         let points = chart.GetPoints()
         let pos, direction =
             points
-            |> List.pairwise
-            |> List.pick(fun (p1, p2) ->
+            |> Seq.pairwise
+            |> Seq.pick(fun (p1, p2) ->
                 if p1.GetType().Value = 0 && p2.GetType().Value = 1 then
                     let mkVec(p : T.Airfield.Chart.Point) =
                         Vector2(float32 <| p.GetX().Value, float32 <| p.GetY().Value)
