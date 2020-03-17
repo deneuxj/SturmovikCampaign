@@ -207,7 +207,7 @@ with
 
 let planeDb =
     let location = System.Reflection.Assembly.GetExecutingAssembly().Location |> System.IO.Path.GetDirectoryName
-    let file = PlaneDbFile.Load(System.IO.Path.Combine(location, "Config", "PlaneDb.yaml"))
+    let file = PlaneDbFile.Load(System.IO.Path.Combine(location, "Config", "PlaneDb.json"))
     file.Planes
     |> Seq.map (fun plane -> PlaneModel.FromJson plane.Plane)
     |> List.ofSeq
