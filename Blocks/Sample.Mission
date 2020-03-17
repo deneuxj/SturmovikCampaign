@@ -2827,4 +2827,145 @@ MCU_TR_Entity
 }
 
 
+
+Block
+{
+  Name = "Block";
+  Index = 129;
+  LinkTrId = 0;
+  XPos = 26487.354;
+  YPos = 152.438;
+  ZPos = 30941.691;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocksdetail\det-block-admina.mgm";
+  Script = "LuaScripts\WorldObjects\BlocksDetail\det-block-admina.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 130;
+  LinkTrId = 0;
+  XPos = 27097.749;
+  YPos = 157.287;
+  ZPos = 30918.511;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\af_barracksround2.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\af_barracksround2.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Bridge
+{
+  Name = "Bridge";
+  Index = 131;
+  LinkTrId = 0;
+  XPos = 27762.229;
+  YPos = 161.894;
+  ZPos = 30941.691;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\bridges\br_rd_arch.mgm";
+  Script = "LuaScripts\WorldObjects\Bridges\br_rd_arch.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Airfield
+{
+  Name = "Airfield";
+  Index = 132;
+  LinkTrId = 0;
+  XPos = 27762.229;
+  YPos = 160.194;
+  ZPos = 31436.188;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\airfields\fakefield.mgm";
+  Script = "LuaScripts\WorldObjects\Airfields\fakefield.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Callsign = 0;
+  Callnum = 0;
+  ReturnPlanes = 0;
+  Hydrodrome = 0;
+  RepairFriendlies = 0;
+  RehealFriendlies = 0;
+  RearmFriendlies = 0;
+  RefuelFriendlies = 0;
+  RepairTime = 0;
+  RehealTime = 0;
+  RearmTime = 0;
+  RefuelTime = 0;
+  MaintenanceRadius = 1000;
+}
+
+
+
+Airfield
+{
+  Name = "Airfield";
+  Index = 133;
+  LinkTrId = 0;
+  XPos = 27159.561;
+  YPos = 157.032;
+  ZPos = 31474.820;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\airfields\fakevehiclefield.mgm";
+  Script = "LuaScripts\WorldObjects\Airfields\fakevehiclefield.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+  Callsign = 0;
+  Callnum = 0;
+  ReturnPlanes = 0;
+  Hydrodrome = 0;
+  RepairFriendlies = 0;
+  RehealFriendlies = 0;
+  RearmFriendlies = 0;
+  RefuelFriendlies = 0;
+  RepairTime = 0;
+  RehealTime = 0;
+  RearmTime = 0;
+  RefuelTime = 0;
+  MaintenanceRadius = 1000;
+}
+
+
 # end of file
