@@ -151,7 +151,7 @@ with
         let bombs =
             this.BombLoads
             |> List.map (fun (id, w) ->
-                let load = new PlaneDbFile.Load(PlaneDbFile.Load2(id, int w))
+                let load = new PlaneDbFile.Load(PlaneDbFile.Load2(id, decimal w))
                 let repeat = PlaneDbFile.Repeat([|0|], [|load|])
                 let bomb = PlaneDbFile.Bomb(repeat)
                 bomb)
@@ -165,7 +165,7 @@ with
         let specials =
             this.SpecialLoadsCosts
             |> Seq.map (fun (id, cost) ->
-                let load = new PlaneDbFile.Load3(PlaneDbFile.Load4(id, int cost))
+                let load = new PlaneDbFile.Load3(PlaneDbFile.Load4(id, decimal cost))
                 let repeat = PlaneDbFile.Repeat2([|0|], [|load|])
                 let bomb = PlaneDbFile.Special(repeat)
                 bomb)
@@ -179,9 +179,9 @@ with
                 string this.Coalition,
                 this.ScriptModel.Script,
                 this.ScriptModel.Model,
-                int this.Cost,
-                int this.BombCapacity,
-                int this.CargoCapacity,
+                decimal this.Cost,
+                decimal this.BombCapacity,
+                decimal this.CargoCapacity,
                 bombs,
                 payloads,
                 specials,
