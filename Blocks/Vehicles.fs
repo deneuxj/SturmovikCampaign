@@ -33,27 +33,27 @@ type VehicleDataTypeStore() =
 
     let vehicles =
         data.ListOfVehicle
-        |> List.map (fun vehicle -> vehicle.GetName().Value, vehicle)
+        |> Seq.map (fun vehicle -> vehicle.GetName().Value, vehicle)
         |> dict
 
     let planes =
         data.ListOfPlane
-        |> List.map (fun vehicle -> vehicle.GetName().Value, vehicle)
+        |> Seq.map (fun vehicle -> vehicle.GetName().Value, vehicle)
         |> dict
 
     let trains =
         data.ListOfTrain
-        |> List.map (fun vehicle -> vehicle.GetName().Value, vehicle)
+        |> Seq.map (fun vehicle -> vehicle.GetName().Value, vehicle)
         |> dict
 
     let ships =
         data.ListOfShip
-        |> List.map (fun vehicle -> vehicle.GetName().Value, vehicle)
+        |> Seq.map (fun vehicle -> vehicle.GetName().Value, vehicle)
         |> dict
 
     let statics =
         data.ListOfBlock
-        |> List.map (fun block -> block.GetName().Value, block)
+        |> Seq.map (fun block -> block.GetName().Value, block)
         |> dict
 
     member this.RussianCar =

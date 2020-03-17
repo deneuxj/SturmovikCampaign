@@ -647,7 +647,7 @@ with
         let data = T.GroupData.Parse(s)
 
         let date =
-            let options = List.head data.ListOfOptions
+            let options = Seq.head data.ListOfOptions
             let h, m, s = options.GetTime().Value
             System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
 
@@ -660,17 +660,19 @@ with
             subBlocks.Blocks
             |> Seq.map(fun spec -> SubBlockSpec.Create(spec.Pattern, spec.SubBlocks, conv spec.Production, conv spec.Storage, conv spec.Durability |> int))
             |> List.ofSeq
-        let map = data.ListOfOptions.Head.GetGuiMap().Value
+        let map = Seq.head(data.ListOfOptions).GetGuiMap().Value
         let storageGroup = data.GetGroup("Storage")
         let staticGroup = data.GetGroup("Static")
         let regions =
-            let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea)
-            let ammoStorages = List.concat [ data.GetGroup("Ammo").ListOfBlock; storageGroup.ListOfBlock ]
+            let regions = Region.ExtractRegions(data.GetGroup("Regions").ListOfMCU_TR_InfluenceArea |> List.ofSeq)
+            let ammoStorages = Seq.concat [ data.GetGroup("Ammo").ListOfBlock; storageGroup.ListOfBlock ] |> List.ofSeq
             let factories =
                 [ data.GetGroup("Moscow_Big_Cities_Targets").ListOfBlock; data.GetGroup("Factories").ListOfBlock; staticGroup.ListOfBlock ]
-                |> List.concat
+                |> Seq.concat
+                |> List.ofSeq
             let parkings =
                 data.GetGroup("Tank parks").ListOfBlock
+                |> List.ofSeq
             regions
             |> List.map (fun area -> area.AddStorage(ammoStorages, subBlockSpecs))
             |> List.map (fun area -> area.AddProduction(factories, subBlockSpecs))
@@ -692,22 +694,22 @@ with
             failwith "Extracted list of regions is empty"
 
         // List of roads should typically never be empty.
-        let roads = Path.ExtractPaths(data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
+        let roads = Path.ExtractPaths(List.ofSeq <| data.GetGroup("Roads").ListOfMCU_Waypoint, regions)
         if List.isEmpty roads then
             logger.Error("Extracted list of roads is empty")
 
         // List of roads should normally not be empty, but it's not completely unrealistic if it is.
-        let rails = Path.ExtractPaths(data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
+        let rails = Path.ExtractPaths(List.ofSeq <| data.GetGroup("Trains").ListOfMCU_Waypoint, regions)
         if List.isEmpty rails then
             logger.Warn("Extracted list of rails is empty")
 
         // Not uncommon that sea ways are empty, e.g. on a map without coasts.
-        let seaWays = Path.ExtractPaths(data.GetGroup("Sea").ListOfMCU_Waypoint, regions)
+        let seaWays = Path.ExtractPaths(List.ofSeq <| data.GetGroup("Sea").ListOfMCU_Waypoint, regions)
         if List.isEmpty seaWays then
             logger.Info("Extracted list of sea ways is empty")
 
         // Not uncommon river ways are empty, e.g. on a map without large rivers.
-        let riverWays = Path.ExtractPaths(data.GetGroup("River").ListOfMCU_Waypoint, regions)
+        let riverWays = Path.ExtractPaths(List.ofSeq <| data.GetGroup("River").ListOfMCU_Waypoint, regions)
         if List.isEmpty riverWays then
             logger.Info("Extracted list of river ways is empty")
 
@@ -715,35 +717,37 @@ with
         let afsGroup = data.GetGroup("Airfield spawns")
         // Anti-air defenses should typically not be empty
         let aaas =
-            defenses.ListOfMCU_TR_InfluenceArea @ afsGroup.ListOfMCU_TR_InfluenceArea @ storageGroup.ListOfMCU_TR_InfluenceArea
-            |> List.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
+            Seq.concat [ defenses.ListOfMCU_TR_InfluenceArea; afsGroup.ListOfMCU_TR_InfluenceArea; storageGroup.ListOfMCU_TR_InfluenceArea ]
+            |> Seq.filter(fun spawn -> spawn.GetName().Value.StartsWith("AA"))
+            |> List.ofSeq
         let antiAirDefenses = DefenseArea.ExtractAntiAirDefenseAreas(aaas, regions)
         if List.isEmpty antiAirDefenses then
             logger.Warn("Extracted list of AA defenses is empty")
 
         let battlefieldZones = data.GetGroup("Battles")
-        let battlefields = battlefieldZones.ListOfMCU_TR_InfluenceArea
+        let battlefields = battlefieldZones.ListOfMCU_TR_InfluenceArea |> List.ofSeq
         let battlefields = DefenseArea.ExtractBattlefieldAreas(battlefields, regions)
 
         let artilleryFieldsGroup = data.GetGroup("Border battles")
-        let artilleryFields = artilleryFieldsGroup.ListOfMCU_TR_InfluenceArea
+        let artilleryFields = artilleryFieldsGroup.ListOfMCU_TR_InfluenceArea |> List.ofSeq
         let artilleryFields = ArtilleryField.ExtractArtilleryAreas(artilleryFields, regions)
 
         // Airfield spawns cannot be empty
-        let afs = afsGroup.ListOfAirfield
+        let afs = afsGroup.ListOfAirfield |> List.ofSeq
         if List.isEmpty afs then
             failwith "Extracted list of airfield spawns is empty"
 
-        let planes = data.GetGroup("Parked planes").ListOfPlane
-        let afStorages = data.GetGroup("Airfield storage").ListOfBlock @ data.GetGroup("Static").ListOfBlock
+        let planes = data.GetGroup("Parked planes").ListOfPlane |> List.ofSeq
+        let afStorages = Seq.concat [ data.GetGroup("Airfield storage").ListOfBlock; data.GetGroup("Static").ListOfBlock ] |> List.ofSeq
         let airfields =
             let caponiers =
                 data.GetGroup("Static").ListOfBlock
-                |> List.map StaticGroup.FromBlock
-                |> List.filter (fun group -> group.PlaneParkingPositions.IsSome)
+                |> Seq.map StaticGroup.FromBlock
+                |> Seq.filter (fun group -> group.PlaneParkingPositions.IsSome)
+                |> List.ofSeq
             match planes with
             | [] ->
-                let staticPlanes = data.GetGroup("Parked planes").ListOfBlock
+                let staticPlanes = data.GetGroup("Parked planes").ListOfBlock |> List.ofSeq
                 Airfield.ExtractAirfields(afs, staticPlanes, caponiers, afStorages, regions, subBlockSpecs)
             | _ :: _->
                 Airfield.ExtractAirfields(afs, planes, caponiers, afStorages, regions, subBlockSpecs)
@@ -776,7 +780,7 @@ with
         let s = Stream.FromFile scenarioFile
         let data = T.GroupData.Parse(s)
         let date =
-            let options = List.head data.ListOfOptions
+            let options = Seq.head data.ListOfOptions
             let h, m, s = options.GetTime().Value
             System.DateTime(options.GetDate().Year, options.GetDate().Month, options.GetDate().Day, h.Value, m.Value, s.Value)
         date < System.DateTime(1918, 12, 31)

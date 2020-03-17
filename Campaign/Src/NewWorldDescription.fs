@@ -329,7 +329,7 @@ module Init =
         let zones = data.ListOfMCU_TR_InfluenceArea
         let zones =
             zones
-            |> List.map (fun area ->
+            |> Seq.map (fun area ->
                 let vertices =
                     area.GetBoundary().Value
                     |> Seq.map (fun floats ->
@@ -337,6 +337,7 @@ module Init =
                         Vector2(float32 x, float32 y))
                     |> List.ofSeq
                 (fun (v : Vector2) -> v.IsInConvexPolygon(vertices)), area)
+            |> List.ofSeq
         let inline build blocks =
             [
                 for block in blocks do
@@ -577,7 +578,9 @@ module Init =
         let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
         let missionData = T.GroupData.Parse(Stream.FromFile scenario)
         // Region boundaries
-        let regionAreas = missionData.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
+        let regionAreas =
+            missionData.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
+            |> List.ofSeq
         let regionBoundaries =
             regionAreas
             |> List.map (fun area ->
@@ -587,10 +590,11 @@ module Init =
         // Blocks inside regions
         let blocks =
             missionData.GetGroup("Static").ListOfBlock
-            |> List.filter (fun block ->
+            |> Seq.filter (fun block ->
                 let pos = Vector2.FromPos block
                 regionBoundaries
                 |> Seq.exists (fun boundary -> pos.IsInConvexPolygon boundary))
+            |> List.ofSeq
         // Building instances
         let buildings = extractBuildingInstances(buildingDb, blocks)
         let buildingsDict =
@@ -600,25 +604,27 @@ module Init =
         // Regions
         let regions = extractRegions(regionAreas, buildings)
         // Airfields
-        let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea
-        let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield
+        let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea |> List.ofSeq
+        let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield |> List.ofSeq
         let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions, fun bid -> buildingsDict.[bid])
         let regions = cleanRegionBuildings(regions, airfields)
         // Map name
-        let options = missionData.ListOfOptions.[0]
+        let options = Seq.head missionData.ListOfOptions
         let mapName = options.GetGuiMap().Value
         // Terminal areas
         let terminals =
             missionData.GetGroup("Terminals").ListOfMCU_TR_InfluenceArea
-            |> List.map (fun area ->
+            |> Seq.map (fun area ->
                 area.GetBoundary().Value
                 |> Seq.map Vector2.FromPair
                 |> List.ofSeq)
+            |> List.ofSeq
         // Function to load roads and bridges
         let loadRoads group graph capacity =
             // Bridges
             let blocks =
                 missionData.GetGroup(group).ListOfBridge
+                |> List.ofSeq
             let bridges = extractBuildingInstances(buildingDb, blocks)
             // Roads
             let graph =

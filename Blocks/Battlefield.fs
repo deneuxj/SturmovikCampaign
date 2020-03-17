@@ -93,7 +93,7 @@ type PlayerTankSpawn =
     }
     static member Ceate(store : NumericalIdentifiers.IdStore, position : Vector2, yori : float32, country : Mcu.CountryValue, numTanks : int) =
         let spawn =
-            blocksData.ListOfAirfield |> List.find(fun af -> af.GetName().Value = "Tankfield")
+            blocksData.ListOfAirfield |> Seq.find(fun af -> af.GetName().Value = "Tankfield")
         let entity = newEntity 2
         let spawn = spawn.SetLinkTrId(T.Integer.N 2).SetIndex(T.Integer.N 1).SetCountry(T.Integer.N (int country))
         entity.MisObjID <- 1

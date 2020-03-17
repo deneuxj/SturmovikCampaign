@@ -175,7 +175,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let wg = WorldFastAccess.Create(missionData.World)
     let random = System.Random()
     let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile missionParams.StrategyMissionFile)
-    let options = strategyMissionData.ListOfOptions.Head
+    let options = Seq.head strategyMissionData.ListOfOptions
     let store = NumericalIdentifiers.IdStore()
     let lcStore = NumericalIdentifiers.IdStore()
     lcStore.SetNextId 3
@@ -198,7 +198,8 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
             |> List.map (fun mcu -> mcu.Index)
             |> Set.ofList
         allBlocks
-        |> List.filter(fun block -> not(parkedPlanes.Contains(block.GetIndex().Value)))
+        |> Seq.filter(fun block -> not(parkedPlanes.Contains(block.GetIndex().Value)))
+        |> List.ofSeq
         |> createBlocks missionData.Random store missionData.World missionData.State inAttackArea
     let bridges =
         let bridgeReplacements =
@@ -208,7 +209,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 "bridge_road_250", "bridge_rd_cptl_300"
             ]
         strategyMissionData.ListOfBridge
-        |> List.map (fun bridge ->
+        |> Seq.map (fun bridge ->
             let key = System.IO.Path.GetFileNameWithoutExtension(bridge.GetModel().Value)
             match bridgeReplacements.TryGetValue key with
             | false, _ -> bridge
@@ -216,9 +217,11 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
                 bridge
                     .SetModel(T.String.N(bridge.GetModel().Value.Replace(key, repl)))
                     .SetScript(T.String.N(bridge.GetScript().Value.Replace(key, repl))))
+        |> List.ofSeq
         |> createBridges missionData.Random store missionData.World missionData.State inAttackArea
     let ground =
         strategyMissionData.ListOfGround
+        |> List.ofSeq
         |> createGrounds store
     let spawns = createAirfieldSpawns missionParams.SpawnsAreRestricted missionParams.MaxCapturedPlanes store missionData.World missionData.State missionBegin
     let landingDirections = createLandingDirections store missionData.World missionData.State
