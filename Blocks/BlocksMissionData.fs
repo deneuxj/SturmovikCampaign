@@ -214,10 +214,11 @@ module CommonMethods =
         (^T : (member CreateMcu : unit -> Mcu.McuBase) x)
 
     let inline getDamaged(x : ^T) : ^R =
-        (^T : (member GetDamaged : unit -> ^R) x)
+        (^T : (member TryGetDamaged : unit -> ^R option) x)
+        |> Option.defaultValue (^R : (static member Default : ^R) ())
 
     let inline setDamaged (damaged : ^D) (x : ^T) =
-        (^T : (member SetDamaged : ^D -> ^T) x, damaged)
+        (^T : (member SetDamaged : ^D option -> ^T) x, Some damaged)
 
     let inline getDurability (x : ^T) : ^R =
         (^T : (member GetDurability : unit -> ^R) x)

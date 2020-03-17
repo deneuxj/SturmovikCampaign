@@ -309,7 +309,7 @@ let createAirfieldSpawns (restrictionsAreActive : bool) (maxCapturedPlanes : int
                     else
                         sprintf "(%1.1f/%1.1f T)" amount capacity
                 let afName = sprintf "%s %s" afName amountSpec
-                let af = af.SetPlanes(planes).SetIndex(T.Integer.N 1).SetLinkTrId(T.Integer.N 2).SetName(T.String.N afName)
+                let af = af.SetPlanes(Some planes).SetIndex(T.Integer.N 1).SetLinkTrId(T.Integer.N 2).SetName(T.String.N afName)
                 let entity = newEntity 2
                 entity.MisObjID <- 1
                 let mcu = af.CreateMcu()

@@ -105,7 +105,7 @@ type PlayerTankSpawn =
             | _ -> failwith "Unknown coalition"
         let tank = newAirfieldTank("Heavy tank", m.Model, m.Script, numTanks).SetRenewable(T.Boolean.N true).SetRenewTime(T.Integer.N 900)
         let spawn =
-            spawn.SetPlanes(T.Airfield.Planes.Default.SetVehicle([tank]))
+            spawn.SetPlanes(Some(T.Airfield.Planes.Default.SetVehicle([tank])))
         let spawn = spawn.CreateMcu()
         position.AssignTo(spawn.Pos)
         position.AssignTo(entity.Pos)
