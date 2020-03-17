@@ -576,7 +576,15 @@ module Init =
     let mkWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
         let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
-        let missionData = T.GroupData.Parse(Stream.FromFile scenario)
+        let missionData =
+            try
+                T.GroupData.Parse(Stream.FromFile scenario)
+            with
+            | :? ParseError as err ->
+                printParseError err
+                |> String.concat "\n"
+                |> eprintfn "%s"
+                failwithf "Failed to parse scenario '%s'" scenario
         // Region boundaries
         let regionAreas =
             missionData.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
