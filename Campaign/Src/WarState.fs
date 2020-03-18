@@ -20,6 +20,8 @@ open System
 open System.Numerics
 open System.Collections.Generic
 
+open Newtonsoft.Json
+
 open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.WorldDescription
@@ -208,8 +210,34 @@ type IWarState =
     inherit IWarStateQuery
     inherit IWarStateUpdate
 
+type private WarStateSerialization =
+    {
+        FormatVersionMajor : int
+        FormatVersionMinor : int
+        Date : DateTime
+        Weather : WeatherState
+        BuildingPartHealthLevel : IDictionary<BuildingInstanceId * int, float32>
+        Owners : IDictionary<RegionId, CoalitionId>
+        GroundForces : IDictionary<CoalitionId * RegionId, float32>
+        AirfieldPlanes : IDictionary<AirfieldId, IDictionary<PlaneModelId, float32>>
+    }
+with
+    static member Default =
+        {
+            FormatVersionMajor = 1
+            FormatVersionMinor = 0
+            Date = DateTime(0L)
+            Weather = WeatherState.Default
+            BuildingPartHealthLevel = dict []
+            Owners = dict []
+            GroundForces = dict []
+            AirfieldPlanes = dict []
+        }
+
+    member this.Version = sprintf "%d.%d" this.FormatVersionMajor this.FormatVersionMinor
+
 /// The overall status of the war.
-type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces : ((CoalitionId * RegionId) * float32<MGF>) seq, date, weather) =
+type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces, date, weather) =
 
     let mutable date = date
     let mutable weather = weather
@@ -270,6 +298,40 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         roadsCapacities.Clear()
         railsCapacities.Clear()
         supplyAvailability.Clear()
+
+    member this.ToJson() =
+        let unmeasure = Seq.map (fun (kvp : KeyValuePair<_, _>) -> kvp.Key, float32 kvp.Value) >> dict
+        let data =
+            {
+                FormatVersionMajor = 1
+                FormatVersionMinor = 0
+                Date = date
+                Weather = weather
+                BuildingPartHealthLevel = buildingPartHealthLevel
+                Owners = owners
+                GroundForces = groundForces |> unmeasure
+                AirfieldPlanes = airfieldPlanes |> Seq.map (fun kvp -> kvp.Key, kvp.Value :> IDictionary<_, _>) |> dict
+            }
+        JsonConvert.SerializeObject(data)
+
+    static member FromJson(json : string, world) =
+        let data = JsonConvert.DeserializeObject<WarStateSerialization>(json)
+        let expected = WarStateSerialization.Default
+        if data.FormatVersionMajor <> expected.FormatVersionMajor then
+            failwithf "Cannot load data with version %s, incompatible with %s" data.Version expected.Version
+        let inline toList (x : IDictionary<'K, 'V>) =
+            x
+            |> Seq.map (fun kvp -> kvp.Key, kvp.Value)
+            |> List.ofSeq
+        let airfieldPlanes =
+            data.AirfieldPlanes
+            |> toList
+            |> List.map (fun (k, v) -> k, toList v)
+        let groundForces =
+            data.GroundForces
+            |> toList
+            |> List.map (fun (k, v) -> k, v * 1.0f<MGF>)
+        WarState(world, toList data.Owners, toList data.BuildingPartHealthLevel, airfieldPlanes, groundForces, data.Date, data.Weather)
 
     member this.World : World = world
 
@@ -509,3 +571,15 @@ module Init =
             let optimalForces = capacity / (battleDuration * world.GroundForcesCost * world.ResourceVolume)
             war.SetGroundForces(coalition, rid, optimalForces)
         war
+
+module IO =
+    open System.IO
+
+    type WarState with
+        static member LoadFromFile(path, world) =
+            let json = File.ReadAllText(path)
+            WarState.FromJson(json, world)
+
+        member this.SaveToFile(path) =
+            let json = this.ToJson()
+            File.WriteAllText(path, json)

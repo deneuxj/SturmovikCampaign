@@ -61,6 +61,18 @@ type WeatherState = {
 with
     static member RainThreshold = 0.95
 
+    static member Default =
+        {
+            CloudDensity = 0.0
+            CloudHeight = 0.0
+            CloudThickness = 0.0
+            Precipitation = 0.0
+            Wind = { Speed = 0.0; Direction = 0.0 }
+            Turbulence = 0.0
+            Temperature = 0.0
+            Pressure = 0.0
+        }
+
     member this.IsOvercast =
         this.Precipitation >= WeatherState.RainThreshold
 

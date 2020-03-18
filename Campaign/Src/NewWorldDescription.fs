@@ -681,3 +681,18 @@ module Init =
             Bridges = bridges
             PlaneSet = dict[]
         }
+
+module IO =
+    open Newtonsoft.Json
+    open System.IO
+
+    type World with
+        member this.SaveToFile(path : string) =
+            let serializer = new JsonSerializer()
+            use outStream = File.CreateText(path)
+            serializer.Serialize(outStream, this)
+
+        static member LoadFromFile(path : string) =
+            let serializer = new JsonSerializer()
+            use inStream = File.OpenText(path)
+            serializer.Deserialize(inStream, typeof<World>) :?> World
