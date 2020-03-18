@@ -2,7 +2,6 @@
 
 open System.IO
 open Campaign.WebController.Routes
-open Campaign.WebController
 open Util
 open Campaign
 
@@ -262,12 +261,45 @@ module internal Extensions =
             }
 
 
-type Controller(workDir : string) =
+open Campaign.NewWorldDescription
+open Campaign.NewWorldDescription.IO
+open Campaign.WarState
+open Campaign.WarState.IO
+open Campaign.BasicTypes
+open System.Collections.Generic
+open Util
+open Campaign.CampaignScenario
+
+type Settings =
+    {
+        WorkDir : string
+        RoadsCapacity : float32
+        RailsCapacity : float32
+    }
+with
+    static member Default =
+        let truck = 5.0f<M^3>
+        let separation = 10.0f<M>
+        let speed = 50000.0f<M/H>
+        let numTrucks = speed / separation
+        let roadCapacity = float32(numTrucks * truck)
+
+        {
+            WorkDir = "CampaignData"
+            RoadsCapacity = roadCapacity
+            RailsCapacity = 3.0f * roadCapacity
+        }
+
+type Controller(settings : Settings) =
     let theLock = obj()
+    let worldFilename = "world.json"
+    let stateBaseFilename = "-state.json"
+
+    let stateFilename idx = sprintf "%03d%s" idx stateBaseFilename
 
     let getWorld, setWorld, getState, setState =
-        let mutable world : NewWorldDescription.World option = None
-        let mutable state : WarState.WarState option = None
+        let mutable world : World option = None
+        let mutable state : WarState option = None
 
         let getWorld() =
             lock theLock (fun () -> world)
@@ -283,13 +315,74 @@ type Controller(workDir : string) =
 
         getWorld, setWorld, getState, setState
 
+    let tryGetCachedState, addToCachedState, resetCachedState =
+        let stateCache = Dictionary<int, Dto.WarState>()
+
+        let tryGetCachedState idx =
+            lock theLock (fun () ->
+                stateCache.TryGetValue(idx)
+                |> Option.ofPair
+            )
+
+        let addToCachedState(idx, state) =
+            lock theLock (fun () ->
+                stateCache.Add(idx, state)
+            )
+
+        let resetCachedState() =
+            lock theLock (fun () ->
+                stateCache.Clear()
+            )
+
+        tryGetCachedState, addToCachedState, resetCachedState
+
+    let getScenarioController, setScenarioController =
+        let mutable sctrl : IScenarioController option = None
+
+        let getScenarioController() =
+            lock theLock (fun () -> sctrl)
+
+        let setScenarioController(x) =
+            lock theLock (fun () -> sctrl <- x)
+
+        getScenarioController, setScenarioController
+
     do
-        if not(Directory.Exists workDir) then
+        // Create work area if it doesn't exist
+        if not(Directory.Exists settings.WorkDir) then
             try
-                Directory.CreateDirectory workDir
+                Directory.CreateDirectory settings.WorkDir
                 |> ignore
             with
-            | e -> failwithf "Directory '%s' not found, and could not be created because: %s" workDir e.Message
+            | e -> failwithf "Directory '%s' not found, and could not be created because: %s" settings.WorkDir e.Message
+
+        // Load world
+        let path = Path.Combine(settings.WorkDir, worldFilename)
+        if File.Exists path then
+            try
+                setWorld(Some(World.LoadFromFile path))
+            with
+            | e -> eprintfn "Failed to load '%s': %s" path e.Message
+
+        // Load latest state
+        let latestState =
+            Directory.EnumerateFiles(settings.WorkDir, "*" + stateBaseFilename)
+            |> Seq.sort
+            |> Seq.tryLast
+        match getWorld(), latestState with
+        | Some world, Some latestState ->
+            let path = Path.Combine(settings.WorkDir, latestState)
+            try
+                setState(Some(WarState.LoadFromFile(path, world)))
+            with
+            | e -> eprintfn "Failed to load '%s': %s" path e.Message
+        | None, Some path ->
+            eprintfn "Cannot load '%s' because world data could not be loaded." path
+        | Some _, None ->
+            ()
+        | None, None ->
+            // Do nothing, user must initialize campaign manually
+            ()
 
     member this.GetWorldDto() =
         match getWorld() with
@@ -306,3 +399,78 @@ type Controller(workDir : string) =
         | Some war ->
             let dto = war.ToDto()
             Ok dto
+
+    /// Try to get a recorded state by its number
+    member this.GetStateDto(idx : int) =
+        match tryGetCachedState idx with
+        | Some cached -> Ok cached
+        | None ->
+            match getWorld() with
+            | None ->
+                Error "Campaign not initialized"
+            | Some world ->
+                let path = Path.Combine(settings.WorkDir, stateFilename idx)
+                try
+                    let state = WarState.LoadFromFile(path, world).ToDto()
+                    addToCachedState(idx, state)
+                    Ok state
+                with
+                | _ -> Error <| sprintf "Failed to load state n.%d" idx
+
+    member this.ResetCampaign() =
+        lock theLock (fun () ->
+            let bakDir =
+                let up = Path.GetDirectoryName(Path.GetFullPath(settings.WorkDir))
+                Seq.initInfinite (fun i -> sprintf "%s.bak%03d" settings.WorkDir i)
+                |> Seq.find (fun dirname -> not(Directory.Exists(Path.Combine(up, dirname))))
+
+            let moveDir _ =
+                try
+                    Directory.Move(settings.WorkDir, bakDir)
+                    Ok "Old working dir backed up"
+                with
+                | _ -> Error <| sprintf "Failed to back up working dir '%s'" settings.WorkDir
+
+            let recreateDir _ =
+                try
+                    Directory.CreateDirectory(settings.WorkDir) |> ignore
+                    Ok "Fresh working dir created"
+                with
+                | _ -> Error <| sprintf "Failed to create fresh working dir '%s'" settings.WorkDir
+
+            let prepareDir _ =
+                if not(Directory.Exists(settings.WorkDir)) || not (Seq.isEmpty(Directory.EnumerateFileSystemEntries(settings.WorkDir))) then
+                    moveDir()
+                    |> Result.bind recreateDir
+                else
+                    Ok "No old campaign data to backup before reset"
+
+            let initData _ =
+                let scenario = "RheinlandSummer.Mission"
+                let world = Init.mkWorld(scenario, settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
+                let (planeSet : IScenarioWorldSetup, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
+                    let planeSet = BodenplatteInternal.PlaneSet.Default
+                    upcast planeSet, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet)), 1.5f, 1.0f
+                let world = planeSet.Setup world
+                let state0 = Init.mkWar world
+                sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
+                sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
+                resetCachedState()
+                setWorld(Some world)
+                setState(Some state0)
+                setScenarioController(Some sctrl)
+                Ok "Campaign data initialized"
+
+            let writeData _ =
+                match getWorld(), getState(), getScenarioController() with
+                | Some world, Some state, _ ->
+                    world.SaveToFile(Path.Combine(settings.WorkDir, worldFilename))
+                    state.SaveToFile(Path.Combine(settings.WorkDir, stateFilename 0))
+                    Error "TODO: implement scenario controller saving"
+                | _ ->
+                    Error "Internal error: world, state or controller data not set"
+
+            prepareDir()
+            |> Result.bind initData
+            |> Result.bind writeData
+        )
