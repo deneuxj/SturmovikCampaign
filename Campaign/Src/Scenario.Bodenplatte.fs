@@ -739,12 +739,13 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 }
             }
 
-    interface IScenarioController<ImplData> with
+    interface IScenarioController with
         member this.InitAirfields(planeNumberCoefficient, coalition, war) =
             initAirfields planeNumberCoefficient coalition war
 
         member this.NextStep(stepData) =
-            oneSideStrikes stepData.Data.OffensiveCoalition stepData.Data.Comment 1
+            let data = stepData.Data :?> ImplData
+            oneSideStrikes data.OffensiveCoalition data.Comment 1
 
         member this.Start(war) =
             oneSideStrikes Axis "Axis opens the hostilities" 1 war

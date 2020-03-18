@@ -31,18 +31,18 @@ open Util
 type AirfieldId = Campaign.WorldDescription.AirfieldId
 
 /// A step in the sequence of rounds making up a campaign.
-type ScenarioStep<'ImplData> =
+type ScenarioStep =
     | Stalemate of string
     | Victory of CoalitionId * string
-    | Ongoing of StepData<'ImplData>
+    | Ongoing of StepData
 
 /// Content of a round, and a generator function to produce the next step, given the updated state of the war.
-and StepData<'ImplData> =
+and StepData =
     {
         Briefing : string
         Missions : Mission list
         /// Can be used by implementation to store scenario-specific data
-        Data : 'ImplData
+        Data : obj
     }
 
 /// Interface of scenario-specific world setup functions, e.g. set the planeset
@@ -50,11 +50,11 @@ type IScenarioWorldSetup =
     abstract member Setup : World -> World
 
 /// Interface of scenario controllers
-type IScenarioController<'ImplData> =
+type IScenarioController =
     /// Set plane numbers at the airfields of a coalition
     abstract member InitAirfields : planeNumberCoefficient: float32 * CoalitionId * IWarState -> unit
-    abstract member Start : IWarStateQuery -> ScenarioStep<'ImplData>
-    abstract member NextStep : StepData<'ImplData> -> (IWarStateQuery -> ScenarioStep<'ImplData>)
+    abstract member Start : IWarStateQuery -> ScenarioStep
+    abstract member NextStep : StepData -> (IWarStateQuery -> ScenarioStep)
 
 /// Resources available at an airfield.
 /// Decreased whenever a flight is planned taking off from that airfield.
