@@ -58,7 +58,7 @@
 
   <ItemGroup>
     <PackageReference Include="NLog" Version="4.5.11" />
-    <PackageReference Include="SturmovikMission.DataProvider" Version="7.0.2" />
+    <PackageReference Include="SturmovikMission.DataProvider" Version="7.0.3" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
   </ItemGroup>
 

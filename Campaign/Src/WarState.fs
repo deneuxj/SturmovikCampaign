@@ -479,6 +479,7 @@ module Init =
         let airfields =
             world.Airfields.Keys
             |> Seq.map (fun afid -> afid, [])
+            |> List.ofSeq
         let frontGroundForces =
             let regionOwners = dict regionOwners
             let getOwner rid =
@@ -495,6 +496,7 @@ module Init =
                         Some ((owner, region.RegionId), 0.0f<MGF>)
                     else
                         None))
+            |> List.ofSeq
         let weather = getWeather (System.Random()) world.StartDate
         let war =
             WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate, weather)
