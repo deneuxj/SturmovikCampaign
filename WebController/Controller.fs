@@ -270,12 +270,14 @@ open System.Collections.Generic
 open Util
 open Campaign.CampaignScenario
 open Campaign.CampaignScenario.IO
+open Campaign.WarStateUpdate.CommandExecution
 
 type Settings =
     {
         WorkDir : string
         RoadsCapacity : float32
         RailsCapacity : float32
+        SimulatedDuration : float32
     }
 with
     static member Default =
@@ -289,6 +291,7 @@ with
             WorkDir = "CampaignData"
             RoadsCapacity = roadCapacity
             RailsCapacity = 3.0f * roadCapacity
+            SimulatedDuration = 10.0f
         }
 
 type Controller(settings : Settings) =
@@ -361,6 +364,8 @@ type Controller(settings : Settings) =
 
         getScenarioState, setScenarioState
 
+    let wkPath f = Path.Combine(settings.WorkDir, f)
+
     do
         // Create work area if it doesn't exist
         if not(Directory.Exists settings.WorkDir) then
@@ -371,7 +376,7 @@ type Controller(settings : Settings) =
             | e -> failwithf "Directory '%s' not found, and could not be created because: %s" settings.WorkDir e.Message
 
         // Load world
-        let path = Path.Combine(settings.WorkDir, worldFilename)
+        let path = wkPath worldFilename
         if File.Exists path then
             try
                 setWorld(Some(World.LoadFromFile path))
@@ -387,7 +392,7 @@ type Controller(settings : Settings) =
             with _ -> None
         match getWorld(), latestState with
         | Some world, Some latestState ->
-            let path = Path.Combine(settings.WorkDir, latestState)
+            let path = wkPath latestState
             try
                 setState(Some(WarState.LoadFromFile(path, world)))
             with
@@ -419,7 +424,7 @@ type Controller(settings : Settings) =
             with _ -> None
         match latestStep, getScenarioController(), getState() with
         | Some filename, _, _ ->
-            let path = Path.Combine(settings.WorkDir, filename)
+            let path = wkPath filename
             let json = File.ReadAllText(path)
             let step = ScenarioStep.Deserialize(json)
             setScenarioState(Some step)
@@ -453,7 +458,7 @@ type Controller(settings : Settings) =
             | None ->
                 Error "Campaign not initialized"
             | Some world ->
-                let path = Path.Combine(settings.WorkDir, stateFilename idx)
+                let path = wkPath(stateFilename idx)
                 try
                     let state = WarState.LoadFromFile(path, world).ToDto()
                     addToCachedState(idx, state)
@@ -510,9 +515,9 @@ type Controller(settings : Settings) =
             let writeData _ =
                 match getWorld(), getState(), getScenarioController(), getScenarioState() with
                 | Some world, Some state, _, Some step ->
-                    world.SaveToFile(Path.Combine(settings.WorkDir, worldFilename))
-                    state.SaveToFile(Path.Combine(settings.WorkDir, stateFilename 0))
-                    File.WriteAllText(Path.Combine(settings.WorkDir, stepFilename 0), step.Serialize())
+                    world.SaveToFile(wkPath worldFilename)
+                    state.SaveToFile(wkPath(stateFilename 0))
+                    File.WriteAllText(wkPath(stepFilename 0), step.Serialize())
                     Ok "Initial campaign data written"
                 | _ ->
                     Error "Internal error: world, state or controller data not set"
@@ -521,3 +526,39 @@ type Controller(settings : Settings) =
             |> Result.bind initData
             |> Result.bind writeData
         )
+
+        member this.Advance(seed) =
+            match getState(), getScenarioController(), getScenarioState() with
+            | Some state, Some sctrl, Some(Ongoing stepData) ->
+                let random = System.Random(seed)
+                // Simulate missions
+                let sim = Campaign.Missions.MissionSimulator(random, state, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
+                let events = sim.DoAll()
+                let results =
+                    events
+                    |> Seq.choose(fun (cmd, description) ->
+                        cmd
+                        |> Option.map (fun cmd -> description, cmd.Execute(state)))
+                    |> List.ofSeq
+                // Move to next day
+                state.SetDate(state.Date + System.TimeSpan(24, 0, 0))
+                // Plan next round
+                let advance = sctrl.NextStep(stepData)
+                let nextStep = advance state
+                // Write war state and campaign step files
+                let stateFile, stepFile =
+                    Seq.initInfinite (fun i -> (stateFilename i, stepFilename i))
+                    |> Seq.find (fun (stateFile, stepFile) ->
+                        [stateFile; stepFile]
+                        |> Seq.map (fun filename -> Path.Combine(settings.WorkDir, filename))
+                        |> Seq.forall (File.Exists >> not))
+                state.SaveToFile(stateFile)
+                File.WriteAllText(stepFile, nextStep.Serialize())
+                // Results from the commands generated by the simulation
+                Ok results
+
+            | _, _, Some _ ->
+                Error "Cannot advance campaign, it has reached its final state"
+
+            | _ ->
+                Error "Campaign data missing"
