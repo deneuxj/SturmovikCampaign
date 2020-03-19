@@ -269,6 +269,7 @@ open Campaign.BasicTypes
 open System.Collections.Generic
 open Util
 open Campaign.CampaignScenario
+open Campaign.CampaignScenario.IO
 
 type Settings =
     {
@@ -294,8 +295,10 @@ type Controller(settings : Settings) =
     let theLock = obj()
     let worldFilename = "world.json"
     let stateBaseFilename = "-state.json"
+    let stepBaseFilename = "-step.json"
 
     let stateFilename idx = sprintf "%03d%s" idx stateBaseFilename
+    let stepFilename idx = sprintf "%03d%s" idx stepBaseFilename
 
     let getWorld, setWorld, getState, setState =
         let mutable world : World option = None
@@ -347,6 +350,17 @@ type Controller(settings : Settings) =
 
         getScenarioController, setScenarioController
 
+    let getScenarioState, setScenarioState =
+        let mutable step : ScenarioStep option = None
+
+        let getScenarioState() =
+            lock theLock (fun () -> step)
+
+        let setScenarioState(x) =
+            lock theLock (fun () -> step <- x)
+
+        getScenarioState, setScenarioState
+
     do
         // Create work area if it doesn't exist
         if not(Directory.Exists settings.WorkDir) then
@@ -366,9 +380,11 @@ type Controller(settings : Settings) =
 
         // Load latest state
         let latestState =
-            Directory.EnumerateFiles(settings.WorkDir, "*" + stateBaseFilename)
-            |> Seq.sort
-            |> Seq.tryLast
+            try
+                Directory.EnumerateFiles(settings.WorkDir, "*" + stateBaseFilename)
+                |> Seq.max
+                |> Some
+            with _ -> None
         match getWorld(), latestState with
         | Some world, Some latestState ->
             let path = Path.Combine(settings.WorkDir, latestState)
@@ -382,6 +398,34 @@ type Controller(settings : Settings) =
             ()
         | None, None ->
             // Do nothing, user must initialize campaign manually
+            ()
+
+        // Load scenario controller: TODO
+        match getWorld() with
+        | Some world ->
+            let sctrl : IScenarioController =
+                let planeSet = BodenplatteInternal.PlaneSet.Default
+                upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet))
+            setScenarioController(Some sctrl)
+        | None ->
+            ()
+
+        // Load scenario state
+        let latestStep =
+            try
+                Directory.EnumerateFiles(settings.WorkDir, "*" + stepBaseFilename)
+                |> Seq.max
+                |> Some
+            with _ -> None
+        match latestStep, getScenarioController(), getState() with
+        | Some filename, _, _ ->
+            let path = Path.Combine(settings.WorkDir, filename)
+            let json = File.ReadAllText(path)
+            let step = ScenarioStep.Deserialize(json)
+            setScenarioState(Some step)
+        | None, Some sctrl, Some state ->
+            setScenarioState(Some(sctrl.Start state))
+        | _ ->
             ()
 
     member this.GetWorldDto() =
@@ -455,18 +499,21 @@ type Controller(settings : Settings) =
                 let state0 = Init.mkWar world
                 sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
                 sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
+                let step = sctrl.Start state0
                 resetCachedState()
                 setWorld(Some world)
                 setState(Some state0)
                 setScenarioController(Some sctrl)
+                setScenarioState(Some step)
                 Ok "Campaign data initialized"
 
             let writeData _ =
-                match getWorld(), getState(), getScenarioController() with
-                | Some world, Some state, _ ->
+                match getWorld(), getState(), getScenarioController(), getScenarioState() with
+                | Some world, Some state, _, Some step ->
                     world.SaveToFile(Path.Combine(settings.WorkDir, worldFilename))
                     state.SaveToFile(Path.Combine(settings.WorkDir, stateFilename 0))
-                    Error "TODO: implement scenario controller saving"
+                    File.WriteAllText(Path.Combine(settings.WorkDir, stepFilename 0), step.Serialize())
+                    Ok "Initial campaign data written"
                 | _ ->
                     Error "Internal error: world, state or controller data not set"
 
