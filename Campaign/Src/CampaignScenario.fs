@@ -213,3 +213,76 @@ module Planning =
             alternatives
             |> Seq.map (fun f -> f budget)
             |> MissionPlanningResult.firstWithNonEmptyPlan
+
+module IO =
+    open Newtonsoft.Json
+    open Newtonsoft.Json.Linq
+
+    type ScenarioStep with
+        member this.Serialize() =
+            let ob =
+                match this with
+                | Stalemate reason -> [("step", box "stalemate"); ("reason", box reason)]
+                | Victory(coalition, reason) -> [("step", box "victory"); ("coalition", box(string coalition)); ("reason", box reason)]
+                | Ongoing(x) -> [("step", box "ongoing"); ("briefing", box x.Briefing); ("data", x.Data); ("missions", box x.Missions)]
+                |> dict
+            JsonConvert.SerializeObject(ob)
+
+        static member Deserialize(json : string) =
+            let (|JString|_|) (x : JToken) =
+                match x with
+                | :? JValue as v ->
+                    match v.Value with
+                    | :? string as s -> Some s
+                    | _ -> None
+                | _ -> None
+
+            let ob = JObject.Parse(json)
+
+            let reason =
+                lazy
+                    match ob.TryGetValue("reason") with
+                    | false, _ -> ""
+                    | true, JString reason ->
+                        reason
+                    | _ ->
+                        "<failed to deserialize reason>"
+
+            match ob.TryGetValue("step") with
+            | false, _ ->
+                failwith "Missing 'step' key"
+            | true, JString "stalemate" ->
+                Stalemate reason.Value
+            | true, JString "victory" ->
+                match ob.TryGetValue("coalition") with
+                | true, JString s ->
+                    let coalition = Campaign.BasicTypes.CoalitionId.FromString s
+                    Victory(coalition, reason.Value)
+                | _ ->
+                    failwith "Missing coalition information in victory"
+            | true, JString "ongoing" ->
+                let briefing =
+                    match ob.TryGetValue("briefing") with
+                    | false, _ -> ""
+                    | true, JString txt -> txt
+                    | true, _ -> "<failed to deserialize briefing>"
+                let missions =
+                    match ob.TryGetValue("missions") with
+                    | false, _ -> []
+                    | true, (:? JArray as array) ->
+                        array
+                        |> Seq.map string
+                        |> Seq.map JsonConvert.DeserializeObject<Mission>
+                        |> List.ofSeq
+                    | true, _ -> []
+                let data =
+                    match ob.TryGetValue("data") with
+                    | false, _ -> failwith "Missing data in ongoing step"
+                    | true, token -> JsonConvert.DeserializeObject(string token)
+                Ongoing {
+                    Missions = missions
+                    Briefing = briefing
+                    Data = data
+                }
+            | true, unexpected ->
+                failwithf "Unexpected JSON token '%s' for key 'step'" (string unexpected)
