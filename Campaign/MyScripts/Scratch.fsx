@@ -19,7 +19,7 @@ open Campaign.WarStateUpdate
 open Campaign.Missions
 open Campaign.CampaignScenario
 open Campaign.PlaneModel
-open DamageExtension
+open CommandExecution
 
 let missionDir = @"C:\Users\johann\Documents\SturmovikCampaign\Campaign\data"
 

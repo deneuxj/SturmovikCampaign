@@ -84,7 +84,7 @@ module Results =
         | RegionOwnerSet(rid, Some coalition) ->
             sprintf "%s is now controlled by %s" (string rid) (string coalition)
 
-module DamageExtension =
+module CommandExecution =
     type IWarState with
         /// Apply damage to or repair a part of a building. Return new storage volume of the whole building.
         member this.ChangeHealth(bid, part, delta) =
