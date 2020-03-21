@@ -39,7 +39,7 @@ let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 
 let mkRoutes (ser : ISerializer, rr : IRoutingResponse, ctrl : IControllerInteraction) =
     let inline serializeAsync x = ser.SerializeAsync x
-    [
+    choose [
         GET >=> choose [
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync |> OK)
             pathScan "/query/state/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync |> OK)
