@@ -64,3 +64,22 @@ type WarState =
         Planes : IDictionary<string, IDictionary<string, float32>>
         RegionOwner : IDictionary<string, string>
     }
+
+type Command =
+    {
+        Verb : string
+        Args : IDictionary<string, obj>
+    }
+
+type Result =
+    {
+        ChangeDescription : string
+        Values : IDictionary<string, obj>
+    }
+
+type SimulationStep =
+    {
+        Description : string
+        Command : Command option
+        Results : Result[]
+    }

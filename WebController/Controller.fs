@@ -260,6 +260,97 @@ module internal Extensions =
                 RegionOwner = owners
             }
 
+    type WarStateUpdate.Commands with
+        member this.ToDto(state : WarState.IWarStateQuery) =
+            let verb, args =
+                match this with
+                | WarStateUpdate.DamageBuildingPart(bid, part, damage) ->
+                    let building = state.World.GetBuildingInstance(bid)
+                    "DamageBuildingPart",
+                    [ "BuildingAt", building.Pos.ToDto() :> obj
+                      "Part", box part
+                      "Damage", box damage
+                    ] |> dict
+                | WarStateUpdate.RepairBuildingPart(bid, part, repair) ->
+                    let building = state.World.GetBuildingInstance(bid)
+                    "DamageBuildingPart",
+                    [ "BuildingAt", building.Pos.ToDto() :> obj
+                      "Part", box part
+                      "Repair", box repair
+                    ] |> dict
+                | WarStateUpdate.RemovePlane(afId, plane, health) ->
+                    "RemovePlane",
+                    [ "Airfield", afId.AirfieldName :> obj
+                      "Plane", string plane :> obj
+                      "Amount", box health
+                    ] |> dict
+                | WarStateUpdate.AddPlane(afId, plane, health) ->
+                    "AddPlane",
+                    [ "Airfield", afId.AirfieldName :> obj
+                      "Plane", string plane :> obj
+                      "Amount", box health
+                    ] |> dict
+                | WarStateUpdate.AddGroundForces(region, coalition, amount) ->
+                    "AddGroundForces",
+                    [ "Region", string region :> obj
+                      "Coalition", string coalition :> obj
+                      "Amount", box amount
+                    ] |> dict
+                | WarStateUpdate.DestroyGroundForces(region, coalition, amount) ->
+                    "DestroyGroundForces",
+                    [ "Region", string region :> obj
+                      "Coalition", string coalition :> obj
+                      "Amount", box amount
+                    ] |> dict
+                | WarStateUpdate.MoveGroundForces(regionA, regionB, coalition, amount) ->
+                    "MoveGroundForces",
+                    [ "Start", string regionA :> obj
+                      "Destination", string regionB :> obj
+                      "Coalition", string coalition :> obj
+                      "Amount", box amount
+                    ] |> dict
+                | WarStateUpdate.SetRegionOwner(region, coalition) ->
+                    "SetRegionOwner",
+                    [ "Region", string region :> obj
+                      "Coalition", coalition |> Option.map string |> Option.defaultValue "Neutral" :> obj
+                    ] |> dict
+            { Verb = verb
+              Args = args
+            }
+
+    type WarStateUpdate.Results with
+        member this.ToDto(state : WarState.IWarStateQuery) =
+            let desc, values =
+                match this with
+                | WarStateUpdate.UpdatedStorageValue(bid, amount) ->
+                    "UpdatedStorageValue",
+                    [ "BuildingAt", state.World.GetBuildingInstance(bid).Pos.ToDto() :> obj
+                      "Amount", box amount
+                    ] |> dict
+                | WarStateUpdate.UpdatedPlanesAtAirfield(afId, content) ->
+                    "UpdatedPlanesAtAirfield",
+                    [ "Airfield", afId.AirfieldName :> obj
+                      "Planes",
+                        content
+                        |> Map.toSeq
+                        |> Seq.map (fun (k, v) -> string k, box v)
+                        |> dict
+                        :> obj
+                    ] |> dict
+                | WarStateUpdate.UpdatedGroundForces(region, coalition, forces) ->
+                    "UpdatedGroundForces",
+                    [ "Region", string region :> obj
+                      "Coalition", string coalition :> obj
+                      "Forces", box forces
+                    ] |> dict
+                | WarStateUpdate.RegionOwnerSet(region, coalition) ->
+                    "RegionOwnerSet",
+                    [ "Region", string region :> obj
+                      "Coalition", coalition |> Option.map string |> Option.defaultValue "Neutral" :> obj
+                    ] |> dict
+            { ChangeDescription = desc
+              Values = values
+            }
 
 open Campaign.NewWorldDescription
 open Campaign.NewWorldDescription.IO
@@ -554,9 +645,12 @@ type Controller(settings : Settings) =
                         let events = sim.DoAll()
                         let results =
                             events
-                            |> Seq.choose(fun (cmd, description) ->
-                                cmd
-                                |> Option.map (fun cmd -> description, cmd.Execute(state)))
+                            |> Seq.map(fun (cmd, description) ->
+                                let results =
+                                    cmd
+                                    |> Option.map (fun cmd -> cmd.Execute(state))
+                                    |> Option.defaultValue []
+                                description, cmd, results)
                             |> List.ofSeq
                         // Move to next day
                         state.SetDate(state.Date + System.TimeSpan(24, 0, 0))
@@ -573,6 +667,14 @@ type Controller(settings : Settings) =
                         state.SaveToFile(stateFile)
                         File.WriteAllText(stepFile, nextStep.Serialize())
                         // Results from the commands generated by the simulation
+                        let results =
+                            results
+                            |> Seq.map (fun (description, cmd, results) ->
+                                { Dto.SimulationStep.Description = description
+                                  Dto.Command = cmd |> Option.map(fun cmd -> cmd.ToDto(state))
+                                  Dto.Results = results |> Seq.map(fun res -> res.ToDto(state)) |> Array.ofSeq
+                                })
+                            |> Array.ofSeq
                         channel.Reply(Ok results)
                         // state changed was done by mutating s.State
                         s
@@ -594,5 +696,5 @@ type Controller(settings : Settings) =
                 this.GetWorldDto()
 
         interface IControllerInteraction with
-            member this.Advance() = failwith "TODO" //this.Advance()
+            member this.Advance() = this.Advance(0)
             member this.ResetCampaign(scenario) = this.ResetCampaign()

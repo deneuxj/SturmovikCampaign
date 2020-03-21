@@ -25,27 +25,25 @@ open Suave.Writers
 open Campaign.WebController.Dto
 
 type IRoutingResponse =
-    abstract GetWorld : unit -> Result<World, string>
-    abstract GetWarState : int option -> Result<WarState, string>
+    abstract GetWorld : unit -> Async<Result<World, string>>
+    abstract GetWarState : int option -> Async<Result<WarState, string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
-    abstract Advance : unit -> Async<Result<string, string>>
+    abstract Advance : unit -> Async<Result<SimulationStep[], string>>
 
 type ISerializer =
-    abstract Serialize<'T> : Result<'T, string> -> string
     abstract SerializeAsync<'T> : Async<Result<'T, string>> -> string
 
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 
 let mkRoutes (ser : ISerializer, rr : IRoutingResponse, ctrl : IControllerInteraction) =
-    let inline serialize x = ser.Serialize x
     let inline serializeAsync x = ser.SerializeAsync x
     [
         GET >=> choose [
-            path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serialize |> OK)
-            pathScan "/query/state/%d" (fun n -> rr.GetWarState(Some n) |> serialize |> OK)
-            path "/query/state" >=> (rr.GetWarState None |> serialize |> OK)
+            path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync |> OK)
+            pathScan "/query/state/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync |> OK)
+            path "/query/state" >=> (rr.GetWarState None |> serializeAsync |> OK)
         ] >=> setJsonMimeType
         PUT >=> choose [
             pathScan "/control/reset/%s" (fun scenario -> ctrl.ResetCampaign(scenario) |> serializeAsync |> OK)
