@@ -294,8 +294,16 @@ with
             SimulatedDuration = 10.0f
         }
 
+type private ControllerState =
+    {
+        World : World option
+        State : WarState option
+        DtoStateCache : Map<int, Dto.WarState>
+        ScenarioController : IScenarioController option
+        Step : ScenarioStep option
+    }
+
 type Controller(settings : Settings) =
-    let theLock = obj()
     let worldFilename = "world.json"
     let stateBaseFilename = "-state.json"
     let stepBaseFilename = "-step.json"
@@ -303,68 +311,26 @@ type Controller(settings : Settings) =
     let stateFilename idx = sprintf "%03d%s" idx stateBaseFilename
     let stepFilename idx = sprintf "%03d%s" idx stepBaseFilename
 
-    let getWorld, setWorld, getState, setState =
-        let mutable world : World option = None
-        let mutable state : WarState option = None
-
-        let getWorld() =
-            lock theLock (fun () -> world)
-
-        let setWorld w =
-            lock theLock (fun () -> world <- w)
-
-        let getState() =
-            lock theLock (fun () -> state)
-
-        let setState s =
-            lock theLock (fun () -> state <- s)
-
-        getWorld, setWorld, getState, setState
-
-    let tryGetCachedState, addToCachedState, resetCachedState =
-        let stateCache = Dictionary<int, Dto.WarState>()
-
-        let tryGetCachedState idx =
-            lock theLock (fun () ->
-                stateCache.TryGetValue(idx)
-                |> Option.ofPair
-            )
-
-        let addToCachedState(idx, state) =
-            lock theLock (fun () ->
-                stateCache.Add(idx, state)
-            )
-
-        let resetCachedState() =
-            lock theLock (fun () ->
-                stateCache.Clear()
-            )
-
-        tryGetCachedState, addToCachedState, resetCachedState
-
-    let getScenarioController, setScenarioController =
-        let mutable sctrl : IScenarioController option = None
-
-        let getScenarioController() =
-            lock theLock (fun () -> sctrl)
-
-        let setScenarioController(x) =
-            lock theLock (fun () -> sctrl <- x)
-
-        getScenarioController, setScenarioController
-
-    let getScenarioState, setScenarioState =
-        let mutable step : ScenarioStep option = None
-
-        let getScenarioState() =
-            lock theLock (fun () -> step)
-
-        let setScenarioState(x) =
-            lock theLock (fun () -> step <- x)
-
-        getScenarioState, setScenarioState
-
     let wkPath f = Path.Combine(settings.WorkDir, f)
+
+    let mb = new MailboxProcessor<_>(fun mb ->
+        let rec work (state : ControllerState) =
+            async {
+                let! req = mb.Receive()
+                let! state  = req state
+                return! work state
+            }
+        work {
+            World = None
+            State = None
+            DtoStateCache = Map.empty
+            ScenarioController = None
+            Step = None
+        }
+    )
+    do mb.Start()
+
+    let doOnState fn = mb.Post fn
 
     do
         // Create work area if it doesn't exist
@@ -378,10 +344,15 @@ type Controller(settings : Settings) =
         // Load world
         let path = wkPath worldFilename
         if File.Exists path then
-            try
-                setWorld(Some(World.LoadFromFile path))
-            with
-            | e -> eprintfn "Failed to load '%s': %s" path e.Message
+            fun s -> async {
+                return
+                    try
+                        let w = World.LoadFromFile path
+                        { s with World = Some w}
+                    with e ->
+                        eprintfn "Failed to load '%s': %s" path e.Message
+                        s
+            } |> doOnState
 
         // Load latest state
         let latestState =
@@ -390,30 +361,40 @@ type Controller(settings : Settings) =
                 |> Seq.max
                 |> Some
             with _ -> None
-        match getWorld(), latestState with
-        | Some world, Some latestState ->
-            let path = wkPath latestState
-            try
-                setState(Some(WarState.LoadFromFile(path, world)))
-            with
-            | e -> eprintfn "Failed to load '%s': %s" path e.Message
-        | None, Some path ->
-            eprintfn "Cannot load '%s' because world data could not be loaded." path
-        | Some _, None ->
-            ()
-        | None, None ->
-            // Do nothing, user must initialize campaign manually
-            ()
 
-        // Load scenario controller: TODO
-        match getWorld() with
-        | Some world ->
-            let sctrl : IScenarioController =
-                let planeSet = BodenplatteInternal.PlaneSet.Default
-                upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet))
-            setScenarioController(Some sctrl)
+        match latestState with
+        | Some latestState ->
+            let path = wkPath latestState
+            fun s -> async {
+                match s.World with
+                | Some world ->
+                    return
+                        try
+                            let war = WarState.LoadFromFile(path, world)
+                            { s with State = Some war }
+                        with e ->
+                            eprintfn "Failed to load '%s': %s" path e.Message
+                            s
+                | None ->
+                    eprintfn "Cannot load '%s' because world data could not be loaded." path
+                    return s
+            } |> doOnState
         | None ->
             ()
+
+        // Restore scenario controller
+        // TODO. For now we just create a controller for Bodenplatte
+        fun s -> async {
+            return
+                match s.World with
+                | Some world ->
+                    let sctrl : IScenarioController =
+                        let planeSet = BodenplatteInternal.PlaneSet.Default
+                        upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet))
+                    { s with ScenarioController = Some sctrl}
+                | None ->
+                    s
+        } |> doOnState
 
         // Load scenario state
         let latestStep =
@@ -422,52 +403,73 @@ type Controller(settings : Settings) =
                 |> Seq.max
                 |> Some
             with _ -> None
-        match latestStep, getScenarioController(), getState() with
-        | Some filename, _, _ ->
-            let path = wkPath filename
-            let json = File.ReadAllText(path)
-            let step = ScenarioStep.Deserialize(json)
-            setScenarioState(Some step)
-        | None, Some sctrl, Some state ->
-            setScenarioState(Some(sctrl.Start state))
-        | _ ->
-            ()
+        fun s -> async {
+            return
+                match s.ScenarioController, s.State with
+                | Some sctrl, Some state ->
+                    match latestStep with
+                    | Some filename ->
+                        let path = wkPath filename
+                        let json = File.ReadAllText(path)
+                        let step = ScenarioStep.Deserialize(json)
+                        { s with Step = Some step }
+                    | None ->
+                        { s with Step = Some(sctrl.Start state) }
+                | _ ->
+                    s
+        } |> doOnState
 
     member this.GetWorldDto() =
-        match getWorld() with
-        | None ->
-            Error "Campaign not initialized"
-        | Some world ->
-            let dto = world.ToDto()
-            Ok dto
+        mb.PostAndAsyncReply <| fun channel s -> async {
+            return
+                match s.World with
+                | None ->
+                    channel.Reply(Error "Campaign not initialized")
+                    s
+                | Some world ->
+                    channel.Reply(Ok(world.ToDto()))
+                    s
+        }
 
     member this.GetStateDto() =
-        match getState() with
-        | None ->
-            Error "Campaign not started"
-        | Some war ->
-            let dto = war.ToDto()
-            Ok dto
+        mb.PostAndAsyncReply <| fun channel s -> async {
+            return
+                match s.State with
+                | None ->
+                    channel.Reply(Error "Campaign not started")
+                    s
+                | Some war ->
+                    channel.Reply(Ok(war.ToDto()))
+                    s
+        }
 
     /// Try to get a recorded state by its number
     member this.GetStateDto(idx : int) =
-        match tryGetCachedState idx with
-        | Some cached -> Ok cached
-        | None ->
-            match getWorld() with
-            | None ->
-                Error "Campaign not initialized"
-            | Some world ->
-                let path = wkPath(stateFilename idx)
-                try
-                    let state = WarState.LoadFromFile(path, world).ToDto()
-                    addToCachedState(idx, state)
-                    Ok state
-                with
-                | _ -> Error <| sprintf "Failed to load state n.%d" idx
+        mb.PostAndAsyncReply <| fun channel s -> async {
+            return
+                match s.DtoStateCache.TryGetValue idx with
+                | true, x ->
+                    channel.Reply(Ok x)
+                    s
+                | false, _ ->
+                    match s.World with
+                    | None ->
+                        channel.Reply(Error "Campaign not initialized")
+                        s
+                    | Some world ->
+                        let path = wkPath(stateFilename idx)
+                        try
+                            let state = WarState.LoadFromFile(path, world).ToDto()
+                            channel.Reply(Ok state)
+                            { s with DtoStateCache = s.DtoStateCache.Add(idx, state) }
+                        with
+                        | _ ->
+                            channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
+                            s
+        }
 
     member this.ResetCampaign() =
-        lock theLock (fun () ->
+        mb.PostAndAsyncReply <| fun channel s -> async {
             let bakDir =
                 let up = Path.GetDirectoryName(Path.GetFullPath(settings.WorkDir))
                 Seq.initInfinite (fun i -> sprintf "%s.bak%03d" settings.WorkDir i)
@@ -505,60 +507,92 @@ type Controller(settings : Settings) =
                 sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
                 sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
                 let step = sctrl.Start state0
-                resetCachedState()
-                setWorld(Some world)
-                setState(Some state0)
-                setScenarioController(Some sctrl)
-                setScenarioState(Some step)
-                Ok "Campaign data initialized"
+                Ok
+                    { s with
+                        DtoStateCache = Map.empty
+                        World = Some world
+                        State = Some state0
+                        ScenarioController = Some sctrl
+                        Step = Some step
+                    }
 
-            let writeData _ =
-                match getWorld(), getState(), getScenarioController(), getScenarioState() with
+            let writeData (s : ControllerState) =
+                match s.World, s.State, s.ScenarioController, s.Step with
                 | Some world, Some state, _, Some step ->
                     world.SaveToFile(wkPath worldFilename)
                     state.SaveToFile(wkPath(stateFilename 0))
                     File.WriteAllText(wkPath(stepFilename 0), step.Serialize())
-                    Ok "Initial campaign data written"
+                    Ok s
                 | _ ->
                     Error "Internal error: world, state or controller data not set"
 
-            prepareDir()
-            |> Result.bind initData
-            |> Result.bind writeData
-        )
+            let res =
+                prepareDir()
+                |> Result.bind initData
+                |> Result.bind writeData
+
+            let userRes =
+                res
+                |> Result.bind (fun _ -> Ok "Success")
+
+            channel.Reply(userRes)
+
+            return
+                match res with
+                | Ok s -> s
+                | Error _ -> s
+        }
 
         member this.Advance(seed) =
-            match getState(), getScenarioController(), getScenarioState() with
-            | Some state, Some sctrl, Some(Ongoing stepData) ->
-                let random = System.Random(seed)
-                // Simulate missions
-                let sim = Campaign.Missions.MissionSimulator(random, state, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
-                let events = sim.DoAll()
-                let results =
-                    events
-                    |> Seq.choose(fun (cmd, description) ->
-                        cmd
-                        |> Option.map (fun cmd -> description, cmd.Execute(state)))
-                    |> List.ofSeq
-                // Move to next day
-                state.SetDate(state.Date + System.TimeSpan(24, 0, 0))
-                // Plan next round
-                let advance = sctrl.NextStep(stepData)
-                let nextStep = advance state
-                // Write war state and campaign step files
-                let stateFile, stepFile =
-                    Seq.initInfinite (fun i -> (stateFilename i, stepFilename i))
-                    |> Seq.find (fun (stateFile, stepFile) ->
-                        [stateFile; stepFile]
-                        |> Seq.map (fun filename -> Path.Combine(settings.WorkDir, filename))
-                        |> Seq.forall (File.Exists >> not))
-                state.SaveToFile(stateFile)
-                File.WriteAllText(stepFile, nextStep.Serialize())
-                // Results from the commands generated by the simulation
-                Ok results
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                return
+                    match s.State, s.ScenarioController, s.Step with
+                    | Some state, Some sctrl, Some(Ongoing stepData) ->
+                        let random = System.Random(seed)
+                        // Simulate missions
+                        let sim = Campaign.Missions.MissionSimulator(random, state, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
+                        let events = sim.DoAll()
+                        let results =
+                            events
+                            |> Seq.choose(fun (cmd, description) ->
+                                cmd
+                                |> Option.map (fun cmd -> description, cmd.Execute(state)))
+                            |> List.ofSeq
+                        // Move to next day
+                        state.SetDate(state.Date + System.TimeSpan(24, 0, 0))
+                        // Plan next round
+                        let advance = sctrl.NextStep(stepData)
+                        let nextStep = advance state
+                        // Write war state and campaign step files
+                        let stateFile, stepFile =
+                            Seq.initInfinite (fun i -> (stateFilename i, stepFilename i))
+                            |> Seq.find (fun (stateFile, stepFile) ->
+                                [stateFile; stepFile]
+                                |> Seq.map (fun filename -> Path.Combine(settings.WorkDir, filename))
+                                |> Seq.forall (File.Exists >> not))
+                        state.SaveToFile(stateFile)
+                        File.WriteAllText(stepFile, nextStep.Serialize())
+                        // Results from the commands generated by the simulation
+                        channel.Reply(Ok results)
+                        // state changed was done by mutating s.State
+                        s
+                    | _, _, Some _ ->
+                        channel.Reply(Error "Cannot advance campaign, it has reached its final state")
+                        s
+                    | _ ->
+                        channel.Reply(Error "Campaign data missing")
+                        s
+            }
 
-            | _, _, Some _ ->
-                Error "Cannot advance campaign, it has reached its final state"
+        interface IRoutingResponse with
+            member this.GetWarState(idx) =
+                match idx with
+                | None -> this.GetStateDto()
+                | Some idx -> this.GetStateDto(idx)
 
-            | _ ->
-                Error "Campaign data missing"
+            member this.GetWorld() =
+                this.GetWorldDto()
+
+        interface IControllerInteraction with
+            member this.Advance() = failwith "TODO" //this.Advance()
+            member this.ResetCampaign(scenario) = this.ResetCampaign()
