@@ -183,14 +183,9 @@ module IWarStateExtensions =
             |> List.sumBy this.GetBuildingCapacity
 
         member this.GetBuildingHealth(bid) =
-            [ this.World.Bridges.TryGetValue ; this.World.Buildings.TryGetValue ]
-            |> List.tryPick (fun tryGet ->
-                tryGet bid
-                |> Option.ofPair)
-            |> Option.map (fun building ->
-                building.Properties.SubParts
-                |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part)))
-            |> Option.defaultValue 1.0f
+            let building = this.World.GetBuildingInstance(bid)
+            building.Properties.SubParts
+            |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part))
 
 type IWarStateUpdate =
     /// Set the date and time

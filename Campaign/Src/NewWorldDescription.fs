@@ -275,6 +275,11 @@ type World = {
     /// Mapping from plane model identifiers to plane model descriptions
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
 }
+with
+    /// Get building or bridge instance by its ID
+    member this.GetBuildingInstance(bid : BuildingInstanceId) =
+        [this.Buildings; this.Bridges]
+        |> Seq.pick (fun d -> d.TryGetValue(bid) |> Option.ofPair)
 
 module Init =
     open System.IO
