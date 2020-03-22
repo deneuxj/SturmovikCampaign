@@ -242,8 +242,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         airfieldPlanes
         |> Seq.map (fun (af, planes : (PlaneModelId * float32) list) -> af, Seq.mutableDict planes)
         |> Seq.mutableDict
-    let roads = world.Roads.QuickAccess
-    let rails = world.Rails.QuickAccess
+    let roads = world.Roads.GetQuickAccess()
+    let rails = world.Rails.GetQuickAccess()
     // Must be cleared whenever owners change
     let regionDistancesToEnemy = Seq.mutableDict []
     // Must be cleared whenever bridges are damaged or repaired

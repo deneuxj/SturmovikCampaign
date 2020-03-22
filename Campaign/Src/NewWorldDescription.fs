@@ -194,7 +194,7 @@ type NetworkQuickAccess =
     }
 
 type Network with
-    member this.QuickAccess =
+    member this.GetQuickAccess() =
         let nodes =
             this.Nodes
             |> Seq.map (fun node -> node.Id, node)
