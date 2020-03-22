@@ -35,7 +35,7 @@ let world =
     (planeSet :> IScenarioWorldSetup).Setup x
 
 let war = Init.mkWar world
-let mgen : IScenarioController<_> = upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet))
+let mgen : IScenarioController = upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet))
 mgen.InitAirfields(1.5f, Axis, war)
 mgen.InitAirfields(1.0f, Allies, war)
 
