@@ -590,10 +590,10 @@ type Controller(settings : Settings) =
             let initData _ =
                 let scenario = "RheinlandSummer.Mission"
                 let world = Init.mkWorld(scenario, settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
-                let (planeSet : IScenarioWorldSetup, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
+                let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
                     let planeSet = BodenplatteInternal.PlaneSet.Default
-                    upcast planeSet, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet)), 1.5f, 1.0f
-                let world = planeSet.Setup world
+                    let world = planeSet.Setup world
+                    world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet)), 1.5f, 1.0f
                 let state0 = Init.mkWar world
                 sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
                 sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)

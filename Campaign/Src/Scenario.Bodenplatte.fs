@@ -132,24 +132,26 @@ module BodenplatteInternal =
             | Axis -> [ this.IdBf109g14; this.IdFw190a8; this.IdBf109k4; this.IdFw190d9 ]
             | Allies -> [ this.IdP51; this.IdSpitfire; this.IdTempest; this.IdP47; this.IdP38 ]
 
-        interface IScenarioWorldSetup with
-            member this.Setup(world: World): World = 
-                let planes =
-                    List.concat [ this.AllPlanesOf Axis; this.AllPlanesOf Allies ]
-                    |> List.map PlaneModelId
+        member this.Setup(world: World): World = 
+            let planes =
+                List.concat [ this.AllPlanesOf Axis; this.AllPlanesOf Allies ]
+                |> List.map PlaneModelId
 
-                let planeDb =
-                    planeDb
-                    |> List.map (fun plane -> plane.Id, plane)
-                    |> Map.ofList
+            let planeDb =
+                planeDb
+                |> List.map (fun plane -> plane.Id, plane)
+                |> Map.ofList
                     
-                let planeSet =
-                    planes
-                    |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> eprintfn "%s missing" (string plane); None))
-                    |> Seq.map (fun plane -> plane.Id, plane)
-                    |> dict
+            let planeSet =
+                planes
+                |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> eprintfn "%s missing" (string plane); None))
+                |> Seq.map (fun plane -> plane.Id, plane)
+                |> dict
 
-                { world with PlaneSet = planeSet }
+            { world with PlaneSet = planeSet }
+
+        interface IScenarioWorldSetup with
+            member this.Setup(world) = this.Setup(world)
 
 open BodenplatteInternal
 
