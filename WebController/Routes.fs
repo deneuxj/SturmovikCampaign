@@ -28,6 +28,7 @@ open Campaign.WebController.Dto
 type IRoutingResponse =
     abstract GetWorld : unit -> Async<Result<World, string>>
     abstract GetWarState : int option -> Async<Result<WarState, string>>
+    abstract GetDates : unit -> Async<Result<DateTime[], string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
@@ -42,6 +43,7 @@ let private usage = """
 GET /query/world
 GET /query/current
 GET /query/past/<n>
+GET /query/dates
 
 PUT /control/reset
 PUT /control/advance
@@ -54,6 +56,7 @@ let mkRoutes (ser : ISerializer, rr : IRoutingResponse, ctrl : IControllerIntera
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync |> OK)
             path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync |> OK)
             pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync |> OK)
+            path "/query/dates" >=> context (fun _ -> rr.GetDates() |> serializeAsync |> OK)
         ] >=> setJsonMimeType
         PUT >=> choose [
             path "/control/reset" >=> context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync |> OK)

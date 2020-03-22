@@ -554,6 +554,33 @@ type Controller(settings : Settings) =
                             s
         }
 
+    member this.GetDates() =
+        mb.PostAndAsyncReply <| fun channel s -> async {
+            match s.World with
+            | Some world ->
+                let dates =
+                    Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+                    |> Seq.filter (fun filename -> filename.EndsWith(stateBaseFilename))
+                    |> Seq.sort
+                    |> Seq.map (fun path ->
+                        try
+                            WarState.LoadFromFile(path, world).Date.ToDto()
+                        with _ ->
+                            { Year = -1
+                              Month = -1
+                              Day = -1
+                              Hour = -1
+                              Minute = -1
+                            }
+                        )
+                    |> Array.ofSeq
+                channel.Reply(Ok dates)
+                return s
+            | None ->
+                channel.Reply(Error "Campaign not initialized")
+                return s
+        }
+
     member this.ResetCampaign() =
         async {
             let bakDir =
@@ -688,8 +715,9 @@ type Controller(settings : Settings) =
                 | None -> this.GetStateDto()
                 | Some idx -> this.GetStateDto(idx)
 
-            member this.GetWorld() =
-                this.GetWorldDto()
+            member this.GetWorld() = this.GetWorldDto()
+
+            member this.GetDates() = this.GetDates()
 
         interface IControllerInteraction with
             member this.Advance() = this.Advance(0)
