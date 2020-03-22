@@ -688,16 +688,16 @@ module Init =
         }
 
 module IO =
-    open Newtonsoft.Json
+    open MBrace.FsPickler
     open System.IO
 
     type World with
         member this.SaveToFile(path : string) =
-            let serializer = new JsonSerializer()
+            let serializer = FsPickler.CreateXmlSerializer(indent = true)
             use outStream = File.CreateText(path)
             serializer.Serialize(outStream, this)
 
         static member LoadFromFile(path : string) =
-            let serializer = new JsonSerializer()
+            let serializer = FsPickler.CreateXmlSerializer(indent = true)
             use inStream = File.OpenText(path)
-            serializer.Deserialize(inStream, typeof<World>) :?> World
+            serializer.Deserialize<World>(inStream)

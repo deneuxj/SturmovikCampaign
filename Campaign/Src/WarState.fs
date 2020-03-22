@@ -294,7 +294,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         railsCapacities.Clear()
         supplyAvailability.Clear()
 
-    member this.ToJson() =
+    member this.Serialize(writer : System.IO.StreamWriter) =
         let unmeasure = Seq.map (fun (kvp : KeyValuePair<_, _>) -> kvp.Key, float32 kvp.Value) >> dict
         let data =
             {
@@ -307,10 +307,12 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                 GroundForces = groundForces |> unmeasure
                 AirfieldPlanes = airfieldPlanes |> Seq.map (fun kvp -> kvp.Key, kvp.Value :> IDictionary<_, _>) |> dict
             }
-        JsonConvert.SerializeObject(data)
+        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+        serializer.Serialize(writer, data)
 
-    static member FromJson(json : string, world) =
-        let data = JsonConvert.DeserializeObject<WarStateSerialization>(json)
+    static member Deserialize(reader : System.IO.StreamReader, world) =
+        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+        let data = serializer.Deserialize<WarStateSerialization>(reader)
         let expected = WarStateSerialization.Default
         if data.FormatVersionMajor <> expected.FormatVersionMajor then
             failwithf "Cannot load data with version %s, incompatible with %s" data.Version expected.Version
@@ -571,10 +573,12 @@ module IO =
     open System.IO
 
     type WarState with
-        static member LoadFromFile(path, world) =
-            let json = File.ReadAllText(path)
-            WarState.FromJson(json, world)
+        static member LoadFromFile(path : string, world) =
+            use reader = new StreamReader(path)
+            WarState.Deserialize(reader, world)
 
-        member this.SaveToFile(path) =
-            let json = this.ToJson()
-            File.WriteAllText(path, json)
+        member this.SaveToFile(path : string) =
+            if File.Exists(path) then
+                File.Delete(path)
+            use writer = new StreamWriter(path)
+            this.Serialize(writer)

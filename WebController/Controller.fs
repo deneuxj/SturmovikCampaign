@@ -395,9 +395,9 @@ type private ControllerState =
     }
 
 type Controller(settings : Settings) =
-    let worldFilename = "world.json"
-    let stateBaseFilename = "-state.json"
-    let stepBaseFilename = "-step.json"
+    let worldFilename = "world.xml"
+    let stateBaseFilename = "-state.xml"
+    let stepBaseFilename = "-step.xml"
 
     let stateFilename idx = sprintf "%03d%s" idx stateBaseFilename
     let stepFilename idx = sprintf "%03d%s" idx stepBaseFilename
@@ -447,24 +447,22 @@ type Controller(settings : Settings) =
 
         // Load latest state
         let latestState =
-            try
-                Directory.EnumerateFiles(settings.WorkDir, "*" + stateBaseFilename)
-                |> Seq.max
-                |> Some
-            with _ -> None
+            Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+            |> Seq.filter (fun s -> s.EndsWith(stateBaseFilename))
+            |> Seq.sortDescending
+            |> Seq.tryHead
 
         match latestState with
         | Some latestState ->
-            let path = wkPath latestState
             fun s -> async {
                 match s.World with
                 | Some world ->
                     return
                         try
-                            let war = WarState.LoadFromFile(path, world)
+                            let war = WarState.LoadFromFile(latestState, world)
                             { s with State = Some war }
                         with e ->
-                            eprintfn "Failed to load '%s': %s" path e.Message
+                            eprintfn "Failed to load '%s': %s" latestState e.Message
                             s
                 | None ->
                     eprintfn "Cannot load '%s' because world data could not be loaded." path
@@ -489,20 +487,18 @@ type Controller(settings : Settings) =
 
         // Load scenario state
         let latestStep =
-            try
-                Directory.EnumerateFiles(settings.WorkDir, "*" + stepBaseFilename)
-                |> Seq.max
-                |> Some
-            with _ -> None
+            Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+            |> Seq.filter (fun s -> s.EndsWith(stepBaseFilename))
+            |> Seq.sortDescending
+            |> Seq.tryHead
         fun s -> async {
             return
                 match s.ScenarioController, s.State with
                 | Some sctrl, Some state ->
                     match latestStep with
-                    | Some filename ->
-                        let path = wkPath filename
-                        let json = File.ReadAllText(path)
-                        let step = ScenarioStep.Deserialize(json)
+                    | Some path ->
+                        use reader = new StreamReader(path)
+                        let step = ScenarioStep.Deserialize(reader)
                         { s with Step = Some step }
                     | None ->
                         { s with Step = Some(sctrl.Start state) }
@@ -560,7 +556,7 @@ type Controller(settings : Settings) =
         }
 
     member this.ResetCampaign() =
-        mb.PostAndAsyncReply <| fun channel s -> async {
+        async {
             let bakDir =
                 let up = Path.GetDirectoryName(Path.GetFullPath(settings.WorkDir))
                 Seq.initInfinite (fun i -> sprintf "%s.bak%03d" settings.WorkDir i)
@@ -599,7 +595,7 @@ type Controller(settings : Settings) =
                 sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
                 let step = sctrl.Start state0
                 Ok
-                    { s with
+                    {
                         DtoStateCache = Map.empty
                         World = Some world
                         State = Some state0
@@ -612,7 +608,7 @@ type Controller(settings : Settings) =
                 | Some world, Some state, _, Some step ->
                     world.SaveToFile(wkPath worldFilename)
                     state.SaveToFile(wkPath(stateFilename 0))
-                    File.WriteAllText(wkPath(stepFilename 0), step.Serialize())
+                    step.SaveToFile(wkPath(stepFilename 0))
                     Ok s
                 | _ ->
                     Error "Internal error: world, state or controller data not set"
@@ -626,12 +622,14 @@ type Controller(settings : Settings) =
                 res
                 |> Result.bind (fun _ -> Ok "Success")
 
-            channel.Reply(userRes)
+            return! mb.PostAndAsyncReply <| fun channel s -> async {
+                channel.Reply(userRes)
 
-            return
-                match res with
-                | Ok s -> s
-                | Error _ -> s
+                return
+                    match res with
+                    | Ok s2 -> s2
+                    | Error _ -> s
+            }
         }
 
         member this.Advance(seed) =
@@ -665,7 +663,7 @@ type Controller(settings : Settings) =
                                 |> Seq.map (fun filename -> Path.Combine(settings.WorkDir, filename))
                                 |> Seq.forall (File.Exists >> not))
                         state.SaveToFile(stateFile)
-                        File.WriteAllText(stepFile, nextStep.Serialize())
+                        nextStep.SaveToFile(stepFile)
                         // Results from the commands generated by the simulation
                         let results =
                             results
