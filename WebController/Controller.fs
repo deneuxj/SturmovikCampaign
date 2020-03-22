@@ -657,10 +657,9 @@ type Controller(settings : Settings) =
                         let nextStep = advance state
                         // Write war state and campaign step files
                         let stateFile, stepFile =
-                            Seq.initInfinite (fun i -> (stateFilename i, stepFilename i))
+                            Seq.initInfinite (fun i -> (wkPath(stateFilename i), wkPath(stepFilename i)))
                             |> Seq.find (fun (stateFile, stepFile) ->
                                 [stateFile; stepFile]
-                                |> Seq.map (fun filename -> Path.Combine(settings.WorkDir, filename))
                                 |> Seq.forall (File.Exists >> not))
                         state.SaveToFile(stateFile)
                         nextStep.SaveToFile(stepFile)
@@ -675,7 +674,7 @@ type Controller(settings : Settings) =
                             |> Array.ofSeq
                         channel.Reply(Ok results)
                         // state changed was done by mutating s.State
-                        s
+                        { s with Step = Some nextStep }
                     | _, _, Some _ ->
                         channel.Reply(Error "Cannot advance campaign, it has reached its final state")
                         s
