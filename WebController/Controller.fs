@@ -669,7 +669,7 @@ type Controller(settings : Settings) =
                             results
                             |> Seq.map (fun (description, cmd, results) ->
                                 { Dto.SimulationStep.Description = description
-                                  Dto.Command = cmd |> Option.map(fun cmd -> cmd.ToDto(state))
+                                  Dto.Command = cmd |> Option.map(fun cmd -> [| cmd.ToDto(state) |]) |> Option.defaultValue [||]
                                   Dto.Results = results |> Seq.map(fun res -> res.ToDto(state)) |> Array.ofSeq
                                 })
                             |> Array.ofSeq

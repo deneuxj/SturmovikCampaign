@@ -80,6 +80,6 @@ type Result =
 type SimulationStep =
     {
         Description : string
-        Command : Command option
+        Command : Command[]
         Results : Result[]
     }
