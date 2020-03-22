@@ -148,7 +148,7 @@ with
         | :? OrientedPosition as other ->
             this.AsTuple = other.AsTuple
         | _ ->
-            invalidArg "other" "Must be an OrientedPosition"
+            false
 
     override this.GetHashCode() =
         hash this.AsTuple
