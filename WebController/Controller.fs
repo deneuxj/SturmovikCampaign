@@ -179,19 +179,18 @@ module internal Extensions =
     type WarState.IWarStateQuery with
         member this.ToDto() =
             let mkBuildingHealth bids =
-                seq {
+                [|
                     for bid in bids do
                         let health = this.GetBuildingHealth(bid)
                         if health < 1.0f then
                             let (NewWorldDescription.BuildingInstanceId pos) = bid
                             yield
-                                pos.ToDto(),
                                 {
+                                    Position = pos.ToDto()
                                     HealthLevel = health
                                     FunctionalityLevel = this.GetBuildingFunctionalityLevel(bid)
                                 }
-                }
-                |> dict
+                |]
 
             let groundForces =
                 [|

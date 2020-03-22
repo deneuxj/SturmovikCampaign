@@ -33,6 +33,7 @@ type Weather =
 
 type BuildingStatus =
     {
+        Position : OrientedPosition
         HealthLevel : float32
         FunctionalityLevel : float32
     }
@@ -55,8 +56,8 @@ type WarState =
     {
         Date : DateTime
         Weather : Weather
-        BuildingHealth : IDictionary<OrientedPosition, BuildingStatus>
-        BridgeHealth : IDictionary<OrientedPosition, BuildingStatus>
+        BuildingHealth : BuildingStatus[]
+        BridgeHealth : BuildingStatus[]
         GroundForces : GroundForces[]
         RoadTransport : TransportCapacity[]
         RailTransport : TransportCapacity[]
