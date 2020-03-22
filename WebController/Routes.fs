@@ -20,6 +20,7 @@ open Suave
 open Suave.Filters
 open Suave.Operators
 open Suave.Successful
+open Suave.RequestErrors
 open Suave.Writers
 
 open Campaign.WebController.Dto
@@ -37,16 +38,29 @@ type ISerializer =
 
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 
+let private usage = """
+GET /query/world
+GET /query/current
+GET /query/past/<n>
+
+PUT /control/reset
+PUT /control/advance
+"""
+
 let mkRoutes (ser : ISerializer, rr : IRoutingResponse, ctrl : IControllerInteraction) =
     let inline serializeAsync x = ser.SerializeAsync x
     choose [
         GET >=> choose [
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync |> OK)
-            pathScan "/query/state/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync |> OK)
-            path "/query/state" >=> (rr.GetWarState None |> serializeAsync |> OK)
+            path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync |> OK)
+            pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync |> OK)
         ] >=> setJsonMimeType
         PUT >=> choose [
-            pathScan "/control/reset/%s" (fun scenario -> ctrl.ResetCampaign(scenario) |> serializeAsync |> OK)
+            path "/control/reset" >=> context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync |> OK)
             path "/control/advance" >=> context (fun _ -> ctrl.Advance() |> serializeAsync |> OK)
         ] >=> setJsonMimeType
+        GET >=> path "/help" >=> OK usage
+        context (fun ctx ->
+            "Invalid request. Try 'GET <url>/help' for a list of valid requests."
+            |> NOT_FOUND)
     ]
