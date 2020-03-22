@@ -138,8 +138,10 @@ module CommandExecution =
                 let newForces = state.ChangeGroundForces(rid, coalition, -destroyed)
                 [ UpdatedGroundForces(rid, coalition, newForces) ]
             | MoveGroundForces(start, destination, coalition, forces) ->
+                let beforeMove = state.GetGroundForces(coalition, start)
                 let startForces = state.ChangeGroundForces(start, coalition, -forces)
-                let destinationForces = state.ChangeGroundForces(destination, coalition, forces)
+                let actuallyMoved = beforeMove - startForces
+                let destinationForces = state.ChangeGroundForces(destination, coalition, actuallyMoved)
                 [ UpdatedGroundForces(start, coalition, startForces)
                   UpdatedGroundForces(destination, coalition, destinationForces) ]
             | SetRegionOwner(rid, owner) ->
