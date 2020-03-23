@@ -28,6 +28,7 @@ open Campaign.WebController.Dto
 type IRoutingResponse =
     abstract GetWorld : unit -> Async<Result<World, string>>
     abstract GetWarState : int option -> Async<Result<WarState, string>>
+    abstract GetSimulation : int -> Async<Result<SimulationStep[], string>>
     abstract GetDates : unit -> Async<Result<DateTime[], string>>
 
 type IControllerInteraction =
@@ -41,6 +42,7 @@ let private usage = """
 GET /query/world
 GET /query/current
 GET /query/past/<n>
+GET /query/simulation/<n>
 GET /query/dates
 
 PUT /control/reset
@@ -64,8 +66,9 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
         GET >=> choose [
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
             path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync)
-            pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
             path "/query/dates" >=> context (fun _ -> rr.GetDates() |> serializeAsync)
+            pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
+            pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
         ]
         PUT >=> choose [
             path "/control/reset" >=> context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync)

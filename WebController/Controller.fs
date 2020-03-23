@@ -384,25 +384,31 @@ with
             SimulatedDuration = 10.0f
         }
 
+/// Internal state of a controller
 type private ControllerState =
     {
         World : World option
         State : WarState option
         DtoStateCache : Map<int, Dto.WarState>
+        DtoSimulationCache : Map<int, Dto.SimulationStep[]>
         ScenarioController : IScenarioController option
         Step : ScenarioStep option
     }
 
+/// Interface between the web service and the campaign
 type Controller(settings : Settings) =
     let worldFilename = "world.xml"
     let stateBaseFilename = "-state.xml"
     let stepBaseFilename = "-step.xml"
+    let simulationBaseFilename = "-simulation.xml"
 
-    let stateFilename idx = sprintf "%03d%s" idx stateBaseFilename
-    let stepFilename idx = sprintf "%03d%s" idx stepBaseFilename
+    let getStateFilename idx = sprintf "%03d%s" idx stateBaseFilename
+    let getStepFilename idx = sprintf "%03d%s" idx stepBaseFilename
+    let getSimulationFilename idx = sprintf "%03d%s" idx simulationBaseFilename
 
     let wkPath f = Path.Combine(settings.WorkDir, f)
 
+    // A mailbox processor to serialize access to the ControllerState
     let mb = new MailboxProcessor<_>(fun mb ->
         let rec work (state : ControllerState) =
             async {
@@ -414,6 +420,7 @@ type Controller(settings : Settings) =
             World = None
             State = None
             DtoStateCache = Map.empty
+            DtoSimulationCache = Map.empty
             ScenarioController = None
             Step = None
         }
@@ -543,11 +550,40 @@ type Controller(settings : Settings) =
                         channel.Reply(Error "Campaign not initialized")
                         s
                     | Some world ->
-                        let path = wkPath(stateFilename idx)
+                        let path = wkPath(getStateFilename idx)
                         try
                             let state = WarState.LoadFromFile(path, world).ToDto()
                             channel.Reply(Ok state)
                             { s with DtoStateCache = s.DtoStateCache.Add(idx, state) }
+                        with
+                        | _ ->
+                            channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
+                            s
+        }
+
+    /// Try to get the simulation steps leading to the state identified by the given index
+    member this.GetSimulationDto(idx : int) =
+        mb.PostAndAsyncReply <| fun channel s -> async {
+            return
+                match s.DtoSimulationCache.TryGetValue idx with
+                | true, x ->
+                    channel.Reply(Ok x)
+                    s
+                | false, _ ->
+                    match s.World with
+                    | None ->
+                        channel.Reply(Error "Campaign not initialized")
+                        s
+                    | Some world ->
+                        let path = wkPath(getSimulationFilename idx)
+                        try
+                            let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+                            use reader = new StreamReader(path)
+                            let steps =
+                                serializer.DeserializeSequence(reader)
+                                |> Array.ofSeq
+                            channel.Reply(Ok steps)
+                            { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
                         with
                         | _ ->
                             channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
@@ -623,6 +659,7 @@ type Controller(settings : Settings) =
                 Ok
                     {
                         DtoStateCache = Map.empty
+                        DtoSimulationCache = Map.empty
                         World = Some world
                         State = Some state0
                         ScenarioController = Some sctrl
@@ -633,8 +670,8 @@ type Controller(settings : Settings) =
                 match s.World, s.State, s.ScenarioController, s.Step with
                 | Some world, Some state, _, Some step ->
                     world.SaveToFile(wkPath worldFilename)
-                    state.SaveToFile(wkPath(stateFilename 0))
-                    step.SaveToFile(wkPath(stepFilename 0))
+                    state.SaveToFile(wkPath(getStateFilename 0))
+                    step.SaveToFile(wkPath(getStepFilename 0))
                     Ok s
                 | _ ->
                     Error "Internal error: world, state or controller data not set"
@@ -660,53 +697,55 @@ type Controller(settings : Settings) =
 
         member this.Advance(seed) =
             mb.PostAndAsyncReply <| fun channel s -> async {
-                return
-                    match s.State, s.ScenarioController, s.Step with
-                    | Some state, Some sctrl, Some(Ongoing stepData) ->
-                        let random = System.Random(seed)
-                        // Simulate missions
-                        let sim = Campaign.Missions.MissionSimulator(random, state, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
-                        let events = sim.DoAll()
-                        let results =
-                            events
-                            |> Seq.map(fun (cmd, description) ->
-                                let results =
-                                    cmd
-                                    |> Option.map (fun cmd -> cmd.Execute(state))
-                                    |> Option.defaultValue []
-                                description, cmd, results)
-                            |> List.ofSeq
-                        // Move to next day
-                        state.SetDate(state.Date + System.TimeSpan(24, 0, 0))
-                        // Plan next round
-                        let advance = sctrl.NextStep(stepData)
-                        let nextStep = advance state
-                        // Write war state and campaign step files
-                        let stateFile, stepFile =
-                            Seq.initInfinite (fun i -> (wkPath(stateFilename i), wkPath(stepFilename i)))
-                            |> Seq.find (fun (stateFile, stepFile) ->
-                                [stateFile; stepFile]
-                                |> Seq.forall (File.Exists >> not))
-                        state.SaveToFile(stateFile)
-                        nextStep.SaveToFile(stepFile)
-                        // Results from the commands generated by the simulation
-                        let results =
-                            results
-                            |> Seq.map (fun (description, cmd, results) ->
-                                { Dto.SimulationStep.Description = description
-                                  Dto.Command = cmd |> Option.map(fun cmd -> [| cmd.ToDto(state) |]) |> Option.defaultValue [||]
-                                  Dto.Results = results |> Seq.map(fun res -> res.ToDto(state)) |> Array.ofSeq
-                                })
-                            |> Array.ofSeq
-                        channel.Reply(Ok results)
-                        // state changed was done by mutating s.State
-                        { s with Step = Some nextStep }
-                    | _, _, Some _ ->
-                        channel.Reply(Error "Cannot advance campaign, it has reached its final state")
-                        s
-                    | _ ->
-                        channel.Reply(Error "Campaign data missing")
-                        s
+                match s.State, s.ScenarioController, s.Step with
+                | Some state, Some sctrl, Some(Ongoing stepData) ->
+                    let random = System.Random(seed)
+                    // Simulate missions
+                    let sim = Campaign.Missions.MissionSimulator(random, state, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
+                    let events = sim.DoAll()
+                    let results =
+                        events
+                        |> Seq.map(fun (cmd, description) ->
+                            let results =
+                                cmd
+                                |> Option.map (fun cmd -> cmd.Execute(state))
+                                |> Option.defaultValue []
+                            description, cmd, results)
+                        |> List.ofSeq
+                    // Move to next day
+                    state.SetDate(state.Date + System.TimeSpan(24, 0, 0))
+                    // Plan next round
+                    let advance = sctrl.NextStep(stepData)
+                    let nextStep = advance state
+                    // Write war state and campaign step files
+                    let stateFile, stepFile, simFile =
+                        Seq.initInfinite (fun i -> (wkPath(getStateFilename i), wkPath(getStepFilename i), wkPath(getSimulationFilename i)))
+                        |> Seq.find (fun (stateFile, stepFile, simFile) ->
+                            [stateFile; stepFile; simFile]
+                            |> Seq.forall (File.Exists >> not))
+                    state.SaveToFile(stateFile)
+                    nextStep.SaveToFile(stepFile)
+                    // Results from the commands generated by the simulation
+                    let results =
+                        results
+                        |> Seq.map (fun (description, cmd, results) ->
+                            { Dto.SimulationStep.Description = description
+                              Dto.Command = cmd |> Option.map(fun cmd -> [| cmd.ToDto(state) |]) |> Option.defaultValue [||]
+                              Dto.Results = results |> Seq.map(fun res -> res.ToDto(state)) |> Array.ofSeq
+                            })
+                        |> Array.ofSeq
+                    use writer = new StreamWriter(simFile)
+                    let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+                    serializer.SerializeSequence(writer, results) |> ignore
+                    channel.Reply(Ok results)
+                    // state changed was done by mutating s.State
+                    return { s with Step = Some nextStep }
+                | _, _, Some _ ->
+                    channel.Reply(Error "Cannot advance campaign, it has reached its final state")
+                    return s
+                | _ ->
+                    channel.Reply(Error "Campaign data missing")
+                    return s
             }
 
         interface IRoutingResponse with
@@ -716,7 +755,7 @@ type Controller(settings : Settings) =
                 | Some idx -> this.GetStateDto(idx)
 
             member this.GetWorld() = this.GetWorldDto()
-
+            member this.GetSimulation(idx) = this.GetSimulationDto(idx)
             member this.GetDates() = this.GetDates()
 
         interface IControllerInteraction with
