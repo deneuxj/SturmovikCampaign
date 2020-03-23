@@ -570,24 +570,19 @@ type Controller(settings : Settings) =
                     channel.Reply(Ok x)
                     s
                 | false, _ ->
-                    match s.World with
-                    | None ->
-                        channel.Reply(Error "Campaign not initialized")
+                    let path = wkPath(getSimulationFilename idx)
+                    try
+                        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+                        use reader = new StreamReader(path)
+                        let steps =
+                            serializer.DeserializeSequence(reader)
+                            |> Array.ofSeq
+                        channel.Reply(Ok steps)
+                        { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
+                    with
+                    | _ ->
+                        channel.Reply(Error <| sprintf "Failed to load simulation n.%d" idx)
                         s
-                    | Some world ->
-                        let path = wkPath(getSimulationFilename idx)
-                        try
-                            let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-                            use reader = new StreamReader(path)
-                            let steps =
-                                serializer.DeserializeSequence(reader)
-                                |> Array.ofSeq
-                            channel.Reply(Ok steps)
-                            { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
-                        with
-                        | _ ->
-                            channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
-                            s
         }
 
     member this.GetDates() =
