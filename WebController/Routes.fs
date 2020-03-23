@@ -34,10 +34,8 @@ type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
     abstract Advance : unit -> Async<Result<SimulationStep[], string>>
 
-type ISerializer =
-    abstract SerializeAsync<'T> : Async<Result<'T, string>> -> string
-
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
+let setTextMimeType = setMimeType "application/text; charset=utf-8"
 
 let private usage = """
 GET /query/world
@@ -49,21 +47,32 @@ PUT /control/reset
 PUT /control/advance
 """
 
-let mkRoutes (ser : ISerializer, rr : IRoutingResponse, ctrl : IControllerInteraction) =
-    let inline serializeAsync x = ser.SerializeAsync x
+let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
+    let inline serializeAsync task ctx =
+        async {
+            let! x = task
+            let webpart =
+                match x with
+                | Ok x ->
+                    let json = Newtonsoft.Json.JsonConvert.SerializeObject(box x)
+                    OK json >=> setJsonMimeType
+                | Error s ->
+                    CONFLICT s >=> setTextMimeType
+            return! webpart ctx
+        }
     choose [
         GET >=> choose [
-            path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync |> OK)
-            path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync |> OK)
-            pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync |> OK)
-            path "/query/dates" >=> context (fun _ -> rr.GetDates() |> serializeAsync |> OK)
-        ] >=> setJsonMimeType
+            path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
+            path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync)
+            pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
+            path "/query/dates" >=> context (fun _ -> rr.GetDates() |> serializeAsync)
+        ]
         PUT >=> choose [
-            path "/control/reset" >=> context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync |> OK)
-            path "/control/advance" >=> context (fun _ -> ctrl.Advance() |> serializeAsync |> OK)
-        ] >=> setJsonMimeType
-        GET >=> path "/help" >=> OK usage
+            path "/control/reset" >=> context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync)
+            path "/control/advance" >=> context (fun _ -> ctrl.Advance() |> serializeAsync)
+        ]
+        GET >=> path "/help" >=> OK usage >=> setTextMimeType
         context (fun ctx ->
             "Invalid request. Try 'GET <url>/help' for a list of valid requests."
-            |> NOT_FOUND)
+            |> NOT_FOUND) >=> setTextMimeType
     ]
