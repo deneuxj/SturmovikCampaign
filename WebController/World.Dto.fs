@@ -72,6 +72,8 @@ type World =
     {
         Scenario : string
         Map : string
+        MapSouthWest : Vector2
+        MapNorthEast : Vector2
         StartDate : DateTime
         Regions : Region[]
         Airfields : Airfield[]

@@ -151,9 +151,15 @@ module internal Extensions =
                         PropertiesId = getPropertiesId bridge.Pos
                     }
                 )
+            let mapSE, mapNE =
+                match this.Map.ToLowerInvariant() with
+                | _
+                | "rheinland" -> { X = 30e3f; Y = 30e3f }, { X = 354e3f; Y = 431e3f }
             {
                 Scenario = this.Scenario
                 Map = this.Map
+                MapSouthWest = mapSE
+                MapNorthEast = mapNE
                 StartDate = this.StartDate.ToDto()
                 Regions = this.Regions.Values |> Seq.map (fun r -> r.ToDto(getPropertiesId)) |> Array.ofSeq
                 Airfields = this.Airfields.Values |> Seq.map (fun af -> af.ToDto(getPropertiesId)) |> Array.ofSeq
