@@ -17,6 +17,11 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.101
+    - name: Get paket
+      run: |
+        cd WebController
+        dotnet tool restore
+        dotnet paket update
     - name: Install dependencies
       run: dotnet restore
     - name: Build
