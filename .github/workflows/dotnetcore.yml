@@ -28,3 +28,8 @@ jobs:
       run: dotnet build --configuration Release --no-restore
     - name: Test
       run: dotnet test --no-restore --verbosity normal
+    - name: Create artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: Release binaries
+        path: WebController/bin/Release
