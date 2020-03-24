@@ -38,6 +38,8 @@ type IControllerInteraction =
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 let setTextMimeType = setMimeType "application/text; charset=utf-8"
 
+let allowAnyOrigin = setHeader "Access-Control-Allow-Origin" "*"
+
 let private usage = """
 GET /query/world
 GET /query/current
@@ -50,7 +52,7 @@ PUT /control/advance
 """
 
 let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
-    let inline serializeAsync task ctx =
+    let inline serializeAsync task (ctx : HttpContext) =
         async {
             let! x = task
             let webpart =
@@ -79,3 +81,4 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
             "Invalid request. Try 'GET <url>/help' for a list of valid requests."
             |> NOT_FOUND) >=> setTextMimeType
     ]
+    >=> allowAnyOrigin
