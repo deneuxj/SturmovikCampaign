@@ -23,6 +23,7 @@ open VectorExtension
 open Campaign.BasicTypes
 open Campaign.NewWorldDescription
 open Campaign.WarState
+open Campaign.WarStateUpdate
 open Campaign.Missions
 open Campaign.PlaneModel
 
@@ -49,6 +50,16 @@ module BodenplatteInternal =
             MinActiveAirfieldResources : float32<M^3>
             /// Minimum amount of storage capacity in a region to be considered as a target during mission planning
             MinRegionBuildingCapacity : float32<M^3>
+            /// New plane delivery period
+            NewPlanesPeriod : float32<H>
+            /// Numbers of planes delivered
+            NumNewPlanes : float32
+            /// Earliest mission time, in time from midnight
+            EarliestStart : float32<H>
+            /// Latest missiont time
+            LatestStart : float32<H>
+            /// MinimumTime between mission starts
+            MinStartDiff : float32<H>
         }
     with
         static member Default =
@@ -58,6 +69,7 @@ module BodenplatteInternal =
             let maxPlanesAtAirfield = 100.0f
             let minActiveAirfieldResources = planeRunCost * 10.0f * typicalRange
             let minRegionBuildingCapacity = 1000.0f<M^3>
+            let day = 24.0f<H>
             {
                 TypicalRange = typicalRange
                 PlaneRunCost = planeRunCost
@@ -65,6 +77,11 @@ module BodenplatteInternal =
                 MaxPlanesAtAirfield = maxPlanesAtAirfield
                 MinActiveAirfieldResources = minActiveAirfieldResources
                 MinRegionBuildingCapacity = minRegionBuildingCapacity
+                NewPlanesPeriod = 5.0f * day
+                NumNewPlanes = 100.0f
+                EarliestStart = 5.0f<H>
+                LatestStart = 19.0f<H>
+                MinStartDiff = 5.0f<H>
             }
 
     type PlaneSet =
@@ -94,6 +111,22 @@ module BodenplatteInternal =
                 IdSpitfire = "spitfireMkIXe"
                 IdTempest = "Tempest MkV s2"
             }
+
+        member this.NewPlanesDelivery(numPlanes : float32) =
+            Map.ofList [
+                Axis, [
+                    this.IdMe262, 0.1f * numPlanes
+                    this.IdBf109k4, 0.3f * numPlanes
+                    this.IdFw190d9, 0.2f * numPlanes
+                ]
+                Allies, [
+                    this.IdP51, 0.4f * numPlanes
+                    this.IdP38, 0.2f * numPlanes
+                    this.IdP47, 0.1f * numPlanes
+                    this.IdSpitfire, 0.2f * numPlanes
+                    this.IdTempest, 0.1f * numPlanes
+                ]
+            ]
 
         member this.AllPlanesOf coalition =
             match coalition with
@@ -748,6 +781,40 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         member this.NextStep(stepData) =
             let data = stepData.Data :?> ImplData
             oneSideStrikes data.OffensiveCoalition data.Comment 1
+
+        member this.NewDay(war) =
+            seq {
+                let random = System.Random(int32(war.Date.Ticks &&& 0x7FFFFFFFL))
+                let timeDiff = C.MinStartDiff + float32(random.NextDouble() * (24.0 - double C.MinStartDiff)) * 1.0f<H>
+                let span(h : float32<H>) =
+                    System.TimeSpan(int h, int(60.0f * h % 1.0f<H>), 0)
+                let newTime = war.Date + span timeDiff
+                let hour = 1.0f<H> * float32 newTime.Hour
+                let newTime =
+                    if hour > C.LatestStart then
+                        newTime.Date + span(24.0f<H>) + span(C.EarliestStart)
+                    elif hour < C.EarliestStart then
+                        newTime.Date + span(C.EarliestStart)
+                    else
+                        newTime
+                let period (t : System.DateTime) =
+                    int(24.0f<H> * float32 (t - war.World.StartDate).Days / C.NewPlanesPeriod)
+                // Add new planes
+                if period war.Date < period newTime then
+                    let newPlanes = PS.NewPlanesDelivery(C.NumNewPlanes)
+                    for coalition in [Axis; Allies] do
+                        let airfields =
+                            war.World.Airfields.Values
+                            |> Seq.filter (fun af -> war.World.Regions.[af.Region].IsEntry && war.GetOwner(af.Region) = Some coalition)
+                            |> Array.ofSeq
+                        let numAirfields = float32 airfields.Length
+                        for af in airfields do
+                            for plane, qty in newPlanes.[coalition] do
+                                let plane = PlaneModelId plane
+                                yield Some(AddPlane(af.AirfieldId, plane, qty / numAirfields)), "New plane delivery"
+                // Update time
+                yield Some(AdvanceTime(newTime - war.Date)), "Advance time"
+            }
 
         member this.Start(war) =
             oneSideStrikes Axis "Axis opens the hostilities" 1 war

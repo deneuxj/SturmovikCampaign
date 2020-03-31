@@ -319,6 +319,10 @@ module internal Extensions =
                     [ "Region", string region :> obj
                       "Coalition", coalition |> Option.map string |> Option.defaultValue "Neutral" :> obj
                     ] |> dict
+                | WarStateUpdate.AdvanceTime(span) ->
+                    "AdvanceTime",
+                    [ "Hours", span.TotalHours |> box
+                    ] |> dict
             { Verb = verb
               Args = args
             }
@@ -352,6 +356,10 @@ module internal Extensions =
                     "RegionOwnerSet",
                     [ "Region", string region :> obj
                       "Coalition", coalition |> Option.map string |> Option.defaultValue "Neutral" :> obj
+                    ] |> dict
+                | WarStateUpdate.TimeSet(time) ->
+                    "TimeSet",
+                    [ "DateTime", time.ToDto() :> obj
                     ] |> dict
             { ChangeDescription = desc
               Values = values
@@ -703,7 +711,12 @@ type Controller(settings : Settings) =
                     let random = System.Random(seed)
                     // Simulate missions
                     let sim = Campaign.Missions.MissionSimulator(random, state, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
-                    let events = sim.DoAll()
+                    let events = 
+                        seq {
+                            yield! sim.DoAll()
+                            for cmd in sctrl.NewDay(state) do
+                                yield cmd
+                        }
                     let results =
                         events
                         |> Seq.map(fun (cmd, description) ->
@@ -713,8 +726,6 @@ type Controller(settings : Settings) =
                                 |> Option.defaultValue []
                             description, cmd, results)
                         |> List.ofSeq
-                    // Move to next day
-                    state.SetDate(state.Date + System.TimeSpan(24, 0, 0))
                     // Plan next round
                     let advance = sctrl.NextStep(stepData)
                     let nextStep = advance state

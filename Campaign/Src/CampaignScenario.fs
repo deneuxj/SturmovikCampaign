@@ -23,6 +23,7 @@ open VectorExtension
 open Campaign.BasicTypes
 open Campaign.NewWorldDescription
 open Campaign.WarState
+open Campaign.WarStateUpdate
 open Campaign.Missions
 open Campaign.PlaneModel
 
@@ -54,6 +55,7 @@ type IScenarioController =
     /// Set plane numbers at the airfields of a coalition
     abstract member InitAirfields : planeNumberCoefficient: float32 * CoalitionId * IWarState -> unit
     abstract member Start : IWarStateQuery -> ScenarioStep
+    abstract member NewDay : IWarStateQuery -> (Commands option * string) seq
     abstract member NextStep : StepData -> (IWarStateQuery -> ScenarioStep)
 
 /// Resources available at an airfield.
