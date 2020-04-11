@@ -499,7 +499,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             planeBombs / 100.0f<K> |> int |> max 1,
                             planeBombs * 0.1f<M^3/K>
                         else
-                            3, 5.0f<M^3>
+                            2, 2.5f<M^3>
                     let mkMessage (target : Target) =
                         let subject =
                             match target.Kind with
