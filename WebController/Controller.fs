@@ -154,7 +154,7 @@ module internal Extensions =
             let mapSE, mapNE =
                 match this.Map.ToLowerInvariant() with
                 | _
-                | "rheinland" -> { X = 30e3f; Y = 30e3f }, { X = 354e3f; Y = 431e3f }
+                | "rheinland" -> { X = 30.0e3f; Y = 30.0e3f }, { X = 354.0e3f; Y = 431.0e3f }
             {
                 Scenario = this.Scenario
                 Map = this.Map
