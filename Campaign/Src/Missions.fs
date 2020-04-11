@@ -400,6 +400,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
 
     member this.DoInterceptions() =
         seq {
+            let mutable earlyRTB = Set.empty
             for mId, mission in airMissions do
                 let targetCoalition =
                     war.GetOwner(war.World.Airfields.[mission.StartAirfield].Region)
@@ -414,50 +415,69 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                     |> Seq.filter (fun (_, mission) -> mission.Objective = mission.Objective)
                     // Is area protection
                     |> Seq.filter (function _, { MissionType = AreaProtection _ } -> true | _ -> false)
-                for interId, interception in interceptors do
+                for interId, interception in interceptors |> Seq.filter (fst >> earlyRTB.Contains >> not) do
                     let interceptorsName = war.World.PlaneSet.[interception.Plane].Name
                     let interceptedName = war.World.PlaneSet.[mission.Plane].Name
+                    let mutable lossesBeforeAbort = numPlanes.[interId] * 0.5f
+                    yield
+                        None,
+                        sprintf "%s are intercepted by %s over %s"
+                            interceptedName
+                            interceptorsName
+                            (string interception.Objective)
                     for pass in 1..numInterceptorPasses do
-                        let interceptorKillRate = getFighterAttackRate()
-                        let defenderKillRate =
-                            match war.World.PlaneSet.[mission.Plane].Kind with
-                            | PlaneType.Fighter ->
-                                let loadoutKillRateModifier =
-                                    match mission.MissionType with
-                                    | AreaProtection _ -> 1.0f
-                                    | _ -> 0.5f
-                                loadoutKillRateModifier * getFighterAttackRate()
-                            | _ ->
-                                getBomberDefenseRate()
-                        let numInterceptors = numPlanes.[interId]
-                        let numIntercepted = numPlanes.[mId]
-                        let numInterceptorsShotDown =
-                            numIntercepted * defenderKillRate
-                            |> min numInterceptors
-                        let numInterceptedShotDown =
-                            numInterceptors * interceptorKillRate
-                            |> min numIntercepted
-                        let numInterceptors2 = numInterceptors - numInterceptorsShotDown
-                        let numIntercepted2 = numIntercepted - numInterceptedShotDown
-                        numPlanes.[interId] <- numInterceptors2
-                        numPlanes.[mId] <- numIntercepted2
-                        assert(numPlanes |> Seq.forall (fun kvp -> kvp.Value >= 0.0f))
-                        if numInterceptorsShotDown > 0.0f then
+                        if lossesBeforeAbort > 0.0f then
+                            let interceptorKillRate = getFighterAttackRate()
+                            let defenderKillRate =
+                                match war.World.PlaneSet.[mission.Plane].Kind with
+                                | PlaneType.Fighter ->
+                                    let loadoutKillRateModifier =
+                                        match mission.MissionType with
+                                        | AreaProtection _ -> 1.0f
+                                        | _ -> 0.75f
+                                    loadoutKillRateModifier * getFighterAttackRate()
+                                | _ ->
+                                    getBomberDefenseRate()
+                            let numInterceptors = numPlanes.[interId]
+                            let numIntercepted = numPlanes.[mId]
+                            let numInterceptorsShotDown =
+                                numIntercepted * defenderKillRate
+                                |> min numInterceptors
+                            let numInterceptedShotDown =
+                                numInterceptors * interceptorKillRate
+                                |> min numIntercepted
+                            let numInterceptors2 = numInterceptors - numInterceptorsShotDown
+                            lossesBeforeAbort <- lossesBeforeAbort - numInterceptorsShotDown
+                            let numIntercepted2 = numIntercepted - numInterceptedShotDown
+                            numPlanes.[interId] <- numInterceptors2
+                            numPlanes.[mId] <- numIntercepted2
+                            assert(numPlanes |> Seq.forall (fun kvp -> kvp.Value >= 0.0f))
+                            if numInterceptorsShotDown > 0.0f then
+                                yield
+                                    None,
+                                    sprintf "%0.1f %s were shot down or damaged by %s over %s"
+                                        numInterceptorsShotDown
+                                        interceptorsName
+                                        interceptedName
+                                        (string interception.Objective)
+                            if numInterceptedShotDown > 0.0f then
+                                yield
+                                    None,
+                                    sprintf "%0.1f %s were shot down or damaged by %s over %s"
+                                        numInterceptedShotDown
+                                        interceptedName
+                                        interceptorsName
+                                        (string interception.Objective)
+                            if lossesBeforeAbort <= 0.0f then
+                                earlyRTB <- earlyRTB.Add(interId)
+                        else if not(Single.IsNegativeInfinity lossesBeforeAbort) then
                             yield
                                 None,
-                                sprintf "%0.1f %s were shot down or damaged by %s over %s"
-                                    numInterceptorsShotDown
-                                    interceptorsName
-                                    interceptedName
-                                    (string interception.Objective)
-                        if numInterceptedShotDown > 0.0f then
-                            yield
-                                None,
-                                sprintf "%0.1f %s were shot down or damaged by %s over %s"
-                                    numInterceptedShotDown
-                                    interceptedName
+                                sprintf "Interceptors %s over %s have disengaged"
                                     interceptorsName
                                     (string interception.Objective)
+                                // To avoid repeated "have disengaged" messages
+                                lossesBeforeAbort <- Single.NegativeInfinity
         }
 
     member this.DoObjectives() =
