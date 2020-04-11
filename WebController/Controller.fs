@@ -278,7 +278,7 @@ module internal Extensions =
                     ] |> dict
                 | WarStateUpdate.RepairBuildingPart(bid, part, repair) ->
                     let building = state.World.GetBuildingInstance(bid)
-                    "DamageBuildingPart",
+                    "RepairBuildingPart",
                     [ "BuildingAt", building.Pos.ToDto() :> obj
                       "Part", box part
                       "Repair", box repair
