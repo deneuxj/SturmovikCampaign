@@ -209,16 +209,18 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
         |> List.map (fun (i, mission) -> i, float32 mission.NumPlanes)
         |> Seq.mutableDict
 
+    let numInterceptorPasses = 5
+
     let getFighterAttackRate() =
-        random.NextDouble() * 0.2 + 0.4
+        random.NextDouble() * 0.2 + 0.05
         |> float32
 
     let getBomberDefenseRate() =
-        random.NextDouble() * 0.2 + 0.0
+        random.NextDouble() * 0.1 + 0.1
         |> float32
 
     let getGroundForcesHitRate() =
-        random.NextDouble() * 0.01 + 0.05
+        random.NextDouble() * 0.2 + 0.25
         |> float32
 
     member this.DoTakeOffs() =
@@ -397,7 +399,6 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
         }
 
     member this.DoInterceptions() =
-        let numInterceptorPasses = 3
         seq {
             for mId, mission in airMissions do
                 let targetCoalition =
