@@ -40,7 +40,7 @@ module private BuildingProperties_ =
 
 type BuildingProperties with
     /// Volume of storage per surface unit
-    static member CapacityDensity = 1.0f<M^3/M^2>
+    static member CapacityDensity = 0.25f<M^3/M^2>
 
     member this.Area = BuildingProperties_.Areas this
 
