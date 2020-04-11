@@ -194,6 +194,8 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
             function
             | i, { Kind = AirMission mission } -> Some (i, mission)
             | _, { Kind = GroundMission _ } -> None)
+        // CAP missions first, so that CAP vs CAP are run before CAP vs ground attack
+        |> List.sortBy (function (_, { MissionType = AreaProtection _ }) -> 0 | _ -> 1)
 
     let groundMissions =
         missions
