@@ -760,6 +760,19 @@ type Controller(settings : Settings) =
                     return s
             }
 
+        member this.Run(seed, maxSteps) =
+            let rec work stepsLeft =
+                async {
+                    if stepsLeft <= 0 then
+                        return Error ""
+                    else
+                        let! r = this.Advance(seed)
+                        match r with
+                        | Error s -> return Ok s
+                        | Ok _ -> return! work (stepsLeft - 1)
+                }
+            work maxSteps
+
         interface IRoutingResponse with
             member this.GetWarState(idx) =
                 match idx with
@@ -772,4 +785,5 @@ type Controller(settings : Settings) =
 
         interface IControllerInteraction with
             member this.Advance() = this.Advance(0)
+            member this.Run() = this.Run(0, 15)
             member this.ResetCampaign(scenario) = this.ResetCampaign()
