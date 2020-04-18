@@ -234,3 +234,43 @@ module QuadTreeItemFinder =
             MayMatch = mayMatch
             IsMatch = isMatch
         }
+
+/// Extract free areas from a QuadTree
+module FreeAreas =
+    type FreeAreasNode =
+        {
+            Min : Vector2
+            Max : Vector2
+            Children : FreeAreasNode[]
+        }
+
+    /// Translate a quad tree node to a free areas node
+    let rec translate (quad : QuadNode<Vector2>) =
+        if Array.isEmpty quad.Content then
+            Some {
+                Min = quad.Min
+                Max = quad.Max
+                Children = [||]
+            }
+        elif Array.isEmpty quad.Children then
+            None
+        else
+            let subs = quad.Children |> Array.choose translate
+            match subs with
+            | [||] -> None
+            | _ ->
+                Some {
+                    Min = quad.Min
+                    Max = quad.Max
+                    Children = subs
+                }
+
+    /// Compute area statistics, returning total area and number of leaf nodes
+    let rec sumArea (free : FreeAreasNode) =
+        if Array.isEmpty free.Children then
+            let area = (free.Max.X - free.Min.X) * (free.Max.Y - free.Min.Y)
+            (area, 1)
+        else
+            free.Children
+            |> Seq.map sumArea
+            |> Seq.fold (fun (area, num) (acc0, acc1) -> (area + acc0, num + acc1)) (0.0f, 0)
