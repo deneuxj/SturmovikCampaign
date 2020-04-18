@@ -30,6 +30,8 @@ type QuadNode<'T> =
 
 [<RequireQualifiedAccess>]
 module QuadNode =
+    open FSharp.Collections.ParallelSeq
+
     /// Get the lower corner of the bounding box containing two points
     let min (v1 : Vector2) (v2 : Vector2) =
         Vector2(min v1.X v2.X, min v1.Y v2.Y)
@@ -69,7 +71,8 @@ module QuadNode =
                             let upper = Vector2(x2, y2)
                             let content =
                                 node.Content
-                                |> Array.filter (fun item -> intersects item (lower, upper))
+                                |> PSeq.filter (fun item -> intersects item (lower, upper))
+                                |> PSeq.toArray
                             let child = {
                                 Min = lower
                                 Max = upper
