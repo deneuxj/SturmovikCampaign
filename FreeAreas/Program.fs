@@ -17,7 +17,7 @@ let getPoints (path : string) =
     | _ -> failwith "Input file must have two lines"
 
 let mkQuadTree (points : Vector2 seq) =
-    QuadTree.fromBoundaryOjects (fun v -> [v]) 10 1 points
+    QuadTree.fromBoundaryOjects (fun v -> [v]) 10 1 false points
 
 [<EntryPoint>]
 let main argv =

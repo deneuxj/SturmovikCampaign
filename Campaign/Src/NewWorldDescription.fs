@@ -136,7 +136,7 @@ with
         let cache = System.Collections.Generic.Dictionary()
         let cachedGetBoundary = SturmovikMission.Cached.cached cache getBoundary
         // Quick intersection tests for bridges
-        let tree = Campaign.SpacePartition.QuadTree.fromBoundaryOjects cachedGetBoundary 10 10 (bridges |> Seq.map (fun instance -> instance.Pos))
+        let tree = Campaign.SpacePartition.QuadTree.fromBoundaryOjects cachedGetBoundary 10 10 true (bridges |> Seq.map (fun instance -> instance.Pos))
         // Area between nodes to "capture" bridges
         let roadSegment (v1 : Vector2, v2 : Vector2) : Vector2 list =
             let dir = v2 - v1

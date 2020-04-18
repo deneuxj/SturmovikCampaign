@@ -55,7 +55,7 @@ module QuadNode =
         }
 
     /// Split or merge the leaves of a quad tree to meet new constraints on maximum depth and maximum number of items in leaves
-    let rec split (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (maxItems : int) (node : QuadNode<'T>) =
+    let rec split (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (maxItems : int) (contentInInnerNodes : bool) (node : QuadNode<'T>) =
         if maxDepth <= 0 || node.Content.Length <= maxItems then
             { node with Children = [||] }
         elif node.Children.Length = 0 then
@@ -76,19 +76,25 @@ module QuadNode =
                                 Children = [||]
                                 Content = content
                             }
-                            let child = split intersects (maxDepth - 1) maxItems child
+                            let child = split intersects (maxDepth - 1) maxItems contentInInnerNodes child
                             yield child
                 |]
-            { node with Children = subs }
+            { node with
+                Children = subs
+                Content = if contentInInnerNodes then node.Content else [||]
+            }
         else
             let newChildren =
                 node.Children
-                |> Array.map (split intersects (maxDepth - 1) maxItems)
-            { node with Children = newChildren }
+                |> Array.map (split intersects (maxDepth - 1) maxItems contentInInnerNodes)
+            { node with
+                Children = newChildren
+                Content = if contentInInnerNodes then node.Content else [||]
+            }
 
     /// Create the root of a quad tree and split it
-    let create (getBounds : 'T -> (Vector2 * Vector2)) (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (maxItems : int) =
-        newRoot getBounds >> split intersects maxDepth maxItems
+    let create (getBounds : 'T -> (Vector2 * Vector2)) (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (maxItems : int) (contentInInnerNodes : bool) =
+        newRoot getBounds >> split intersects maxDepth maxItems contentInInnerNodes
 
     /// Find items in a quad tree that intersect an external item
     /// Note that the sequence of found items may contain duplicates
@@ -113,6 +119,7 @@ type QuadTree<'T> =
         Intersects : 'T -> Vector2 * Vector2 -> bool
         MaxDepth : int
         MaxItems : int
+        ContentInInnerNodes : bool
         Root : QuadNode<'T>
     }
 with
@@ -126,7 +133,7 @@ with
             { this with
                 MaxDepth = maxDepth
                 MaxItems = maxItems
-                Root = QuadNode.split this.Intersects maxDepth maxItems this.Root 
+                Root = QuadNode.split this.Intersects maxDepth maxItems this.ContentInInnerNodes this.Root 
             }
 
 /// Helper functions to check for intersections based on convex hulls
@@ -194,14 +201,15 @@ module private Functions =
 [<RequireQualifiedAccess>]
 module QuadTree =
     /// Create a quad tree from items that have convex polygons as boundaries
-    let fromBoundaryOjects (getBoundary : 'T -> Vector2 list) maxDepth maxItems (items : 'T seq) =
+    let fromBoundaryOjects (getBoundary : 'T -> Vector2 list) maxDepth maxItems contentInInnerNodes (items : 'T seq) =
         let getBoundingBox = Functions.getBoundingBox getBoundary
         let intersectWithBox = Functions.intersectWithBoundingBox getBoundary
-        let root = QuadNode.create getBoundingBox intersectWithBox maxDepth maxItems items
+        let root = QuadNode.create getBoundingBox intersectWithBox maxDepth maxItems contentInInnerNodes items
         {
             Intersects = intersectWithBox
             MaxDepth = maxDepth
             MaxItems = maxItems
+            ContentInInnerNodes = contentInInnerNodes
             Root = root
         }
 
