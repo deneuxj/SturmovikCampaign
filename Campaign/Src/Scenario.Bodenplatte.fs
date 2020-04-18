@@ -23,6 +23,7 @@ open VectorExtension
 open Campaign.BasicTypes
 open Campaign.NewWorldDescription
 open Campaign.WarState
+open Campaign.WarStateUpdate
 open Campaign.Missions
 open Campaign.PlaneModel
 
@@ -39,32 +40,48 @@ module BodenplatteInternal =
         {
             /// For mission planning: typical distance from airbase to target for a fighter-based strafing mission
             TypicalRange : float32<M>
-            /// Fuel volume consumption of a fighter, in volume per flown meter
+            /// Volume of consumables and maintenance per flown meter
             PlaneRunCost : float32<M^3/M>
-            /// Weight of 1 cubic meter of bomb and its packaging
-            BombDensity : float32<K/M^3>
+            /// Volume of consumables and maintenance per kg of bomb
+            BombCost : float32<M^3/K>
             /// Max number of planes at each airfield during initial plane distribution
             MaxPlanesAtAirfield : float32
             /// Minimum amount of resources at an airfield to be considered as a target during mission planning
             MinActiveAirfieldResources : float32<M^3>
             /// Minimum amount of storage capacity in a region to be considered as a target during mission planning
             MinRegionBuildingCapacity : float32<M^3>
+            /// New plane delivery period
+            NewPlanesPeriod : float32<H>
+            /// Numbers of planes delivered
+            NumNewPlanes : float32
+            /// Earliest mission time, in time from midnight
+            EarliestStart : float32<H>
+            /// Latest missiont time
+            LatestStart : float32<H>
+            /// MinimumTime between mission starts
+            MinStartDiff : float32<H>
         }
     with
         static member Default =
-            let typicalRange = 400e3f<M>
-            let planeRunCost = 0.7f<M^3> / typicalRange
-            let bombDensity = 100.0f<K/M^3>
+            let typicalRange = 400.0e3f<M>
+            let planeRunCost = 5.0f<M^3> / typicalRange
+            let bombCost = 0.01f<M^3/K>
             let maxPlanesAtAirfield = 100.0f
             let minActiveAirfieldResources = planeRunCost * 10.0f * typicalRange
             let minRegionBuildingCapacity = 1000.0f<M^3>
+            let day = 24.0f<H>
             {
                 TypicalRange = typicalRange
                 PlaneRunCost = planeRunCost
-                BombDensity = bombDensity
+                BombCost = bombCost
                 MaxPlanesAtAirfield = maxPlanesAtAirfield
                 MinActiveAirfieldResources = minActiveAirfieldResources
                 MinRegionBuildingCapacity = minRegionBuildingCapacity
+                NewPlanesPeriod = 3.0f * day
+                NumNewPlanes = 300.0f
+                EarliestStart = 5.0f<H>
+                LatestStart = 19.0f<H>
+                MinStartDiff = 5.0f<H>
             }
 
     type PlaneSet =
@@ -94,6 +111,22 @@ module BodenplatteInternal =
                 IdSpitfire = "spitfireMkIXe"
                 IdTempest = "Tempest MkV s2"
             }
+
+        member this.NewPlanesDelivery(numPlanes : float32) =
+            Map.ofList [
+                Axis, [
+                    this.IdMe262, 0.1f * numPlanes
+                    this.IdBf109k4, 0.3f * numPlanes
+                    this.IdFw190d9, 0.2f * numPlanes
+                ]
+                Allies, [
+                    this.IdP51, 0.4f * numPlanes
+                    this.IdP38, 0.2f * numPlanes
+                    this.IdP47, 0.1f * numPlanes
+                    this.IdSpitfire, 0.2f * numPlanes
+                    this.IdTempest, 0.1f * numPlanes
+                ]
+            ]
 
         member this.AllPlanesOf coalition =
             match coalition with
@@ -161,7 +194,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
 
     let typicalRange = C.TypicalRange
     let planeRunCost = C.PlaneRunCost
-    let bombDensity = C.BombDensity
+    let bombCost = C.BombCost
     let maxPlanesAtAirfield = C.MaxPlanesAtAirfield
     let minActiveAirfieldResources = C.MinActiveAirfieldResources
     let minRegionBuildingCapacity = C.MinRegionBuildingCapacity
@@ -171,7 +204,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             1.0f<M> * (world.Regions.[mission.Objective].Position - world.Airfields.[mission.StartAirfield].Position).Length()
         let bombs =
             match mission.MissionType with
-            | GroundTargetAttack _ -> world.PlaneSet.[mission.Plane].BombCapacity / bombDensity
+            | GroundTargetAttack _ -> world.PlaneSet.[mission.Plane].BombCapacity * bombCost
             | AreaProtection -> 0.0f<M^3>
             | PlaneTransfer _ -> 0.0f<M^3>
         (mission.Plane, distance * planeRunCost + bombs, float32 mission.NumPlanes)
@@ -303,10 +336,14 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 // then fighter plane model, and finally interceptor plane model.
                 [
                     let mutable budget = budget
+                    // At most one attack mission and pair of CAP missions from each airfield
+                    let readyAttackAirfields = ResizeArray(readyAirfields)
+                    let readyCAPAirfields = ResizeArray(readyAirfields)
+
                     for target in raidTargets do
                         let targetRegion = adapter.GetRegion target
                         let targetPos = adapter.GetPos target
-                        let missionAlternatives (budget : ForcesAvailability) mkMissionFrom destination =
+                        let missionAlternatives readyAirfields (budget : ForcesAvailability) mkMissionFrom destination =
                             readyAirfields 
                             |> Seq.choose (fun af ->
                                 let mission : AirMission = mkMissionFrom af
@@ -328,7 +365,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                                       Plane = attacker
                                       NumPlanes = numAttackers
                                     }
-                                for attackerMission, budget in missionAlternatives budget mkAttackerMission targetPos do
+                                for attackerMission, budget in missionAlternatives readyAttackAirfields budget mkAttackerMission targetPos do
                                 let attackerStart = war.World.Airfields.[attackerMission.StartAirfield]
                                 for numFighters in [8; 4; 2] do
                                 for fighter in fightersOf friendly do
@@ -338,7 +375,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                                       MissionType = AreaProtection
                                       Plane = fighter
                                       NumPlanes = numFighters }
-                                for fighterMission, budget in missionAlternatives budget mkFighterMission targetPos do
+                                for fighterMission, budget in missionAlternatives readyCAPAirfields budget mkFighterMission targetPos do
                                 for numInterceptors in [4; 3; 2] do
                                 for interceptor in interceptorsOf friendly do
                                 let mkInterceptorMission af =
@@ -347,7 +384,11 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                                       MissionType = AreaProtection
                                       Plane = interceptor
                                       NumPlanes = numInterceptors }
-                                for interceptorMission, budget in missionAlternatives budget mkInterceptorMission attackerStart.Position do
+                                // Do not use the same airfield as the CAP mission for the interception
+                                let readyCAPAirfields2 =
+                                    readyCAPAirfields
+                                    |> Seq.filter (fun af -> af.AirfieldId <> fighterMission.StartAirfield)
+                                for interceptorMission, budget in missionAlternatives readyCAPAirfields2 budget mkInterceptorMission attackerStart.Position do
                                     yield [
                                         attackerMission, description
                                         fighterMission, "Target cover"
@@ -358,6 +399,9 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                         match groupAndBudget with
                         | Some(group, x) ->
                             budget <- x
+                            readyAttackAirfields.RemoveAll(fun af -> af.AirfieldId = fst(group.[0]).StartAirfield) |> ignore
+                            for i in 1..2 do
+                                readyCAPAirfields.RemoveAll(fun af -> af.AirfieldId = fst(group.[i]).StartAirfield) |> ignore
                             yield! group
                         | None ->
                             ()
@@ -542,7 +586,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
 
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
-        let planeRunCost = typicalRange * planeRunCost + 500.0f<K>/bombDensity
+        let planeRunCost = typicalRange * planeRunCost + 500.0f<K> * bombCost
         let mutable budget = budget
         let missions =
             [
@@ -748,6 +792,40 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         member this.NextStep(stepData) =
             let data = stepData.Data :?> ImplData
             oneSideStrikes data.OffensiveCoalition data.Comment 1
+
+        member this.NewDay(war) =
+            seq {
+                let random = System.Random(int32(war.Date.Ticks &&& 0x7FFFFFFFL))
+                let timeDiff = C.MinStartDiff + float32(random.NextDouble() * (24.0 - double C.MinStartDiff)) * 1.0f<H>
+                let span(h : float32<H>) =
+                    System.TimeSpan(int h, int(60.0f * h % 1.0f<H>), 0)
+                let newTime = war.Date + span timeDiff
+                let hour = 1.0f<H> * float32 newTime.Hour
+                let newTime =
+                    if hour > C.LatestStart then
+                        newTime.Date + span(24.0f<H>) + span(C.EarliestStart)
+                    elif hour < C.EarliestStart then
+                        newTime.Date + span(C.EarliestStart)
+                    else
+                        newTime
+                let period (t : System.DateTime) =
+                    int(24.0f<H> * float32 (t - war.World.StartDate).Days / C.NewPlanesPeriod)
+                // Add new planes
+                if period war.Date < period newTime then
+                    let newPlanes = PS.NewPlanesDelivery(C.NumNewPlanes)
+                    for coalition in [Axis; Allies] do
+                        let airfields =
+                            war.World.Airfields.Values
+                            |> Seq.filter (fun af -> war.World.Regions.[af.Region].IsEntry && war.GetOwner(af.Region) = Some coalition)
+                            |> Array.ofSeq
+                        let numAirfields = float32 airfields.Length
+                        for af in airfields do
+                            for plane, qty in newPlanes.[coalition] do
+                                let plane = PlaneModelId plane
+                                yield Some(AddPlane(af.AirfieldId, plane, qty / numAirfields)), "New plane delivery"
+                // Update time
+                yield Some(AdvanceTime(newTime - war.Date)), "Advance time"
+            }
 
         member this.Start(war) =
             oneSideStrikes Axis "Axis opens the hostilities" 1 war

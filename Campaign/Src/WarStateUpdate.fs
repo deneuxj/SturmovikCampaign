@@ -46,6 +46,8 @@ type Commands =
     | MoveGroundForces of RegionId * RegionId * CoalitionId * Amount: float32<MGF>
     // Set the owner of a region, typically after a conquest
     | SetRegionOwner of RegionId * CoalitionId option
+    // Advance time
+    | AdvanceTime of System.TimeSpan
 
 /// Interesting data to report from execution of commands
 type Results =
@@ -53,6 +55,7 @@ type Results =
     | UpdatedPlanesAtAirfield of AirfieldId * Map<PlaneModelId, float32>
     | UpdatedGroundForces of RegionId * CoalitionId * float32<MGF>
     | RegionOwnerSet of RegionId * CoalitionId option
+    | TimeSet of System.DateTime
 
 module Results =
     let asString (war : IWarStateQuery) result =
@@ -83,6 +86,8 @@ module Results =
             sprintf "%s has become neutral" (string rid)
         | RegionOwnerSet(rid, Some coalition) ->
             sprintf "%s is now controlled by %s" (string rid) (string coalition)
+        | TimeSet t ->
+            sprintf "Time set to %s" (t.ToString("F"))
 
 module CommandExecution =
     type IWarState with
@@ -147,3 +152,7 @@ module CommandExecution =
             | SetRegionOwner(rid, owner) ->
                 state.SetOwner(rid, owner)
                 [ RegionOwnerSet(rid, owner) ]
+            | AdvanceTime span ->
+                let newTime = state.Date + span
+                state.SetDate(newTime)
+                [ TimeSet(newTime) ]

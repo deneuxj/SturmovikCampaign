@@ -34,6 +34,7 @@ type IRoutingResponse =
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
     abstract Advance : unit -> Async<Result<SimulationStep[], string>>
+    abstract Run : unit -> Async<Result<string, string>>
 
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 let setTextMimeType = setMimeType "application/text; charset=utf-8"
@@ -75,6 +76,7 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
         PUT >=> choose [
             path "/control/reset" >=> context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync)
             path "/control/advance" >=> context (fun _ -> ctrl.Advance() |> serializeAsync)
+            path "/control/run" >=> context (fun _ -> ctrl.Run() |> serializeAsync)
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
         context (fun ctx ->

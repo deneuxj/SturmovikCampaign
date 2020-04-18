@@ -154,7 +154,7 @@ module internal Extensions =
             let mapSE, mapNE =
                 match this.Map.ToLowerInvariant() with
                 | _
-                | "rheinland" -> { X = 30e3f; Y = 30e3f }, { X = 354e3f; Y = 431e3f }
+                | "rheinland" -> { X = 30.0e3f; Y = 30.0e3f }, { X = 354.0e3f; Y = 431.0e3f }
             {
                 Scenario = this.Scenario
                 Map = this.Map
@@ -278,7 +278,7 @@ module internal Extensions =
                     ] |> dict
                 | WarStateUpdate.RepairBuildingPart(bid, part, repair) ->
                     let building = state.World.GetBuildingInstance(bid)
-                    "DamageBuildingPart",
+                    "RepairBuildingPart",
                     [ "BuildingAt", building.Pos.ToDto() :> obj
                       "Part", box part
                       "Repair", box repair
@@ -319,6 +319,10 @@ module internal Extensions =
                     [ "Region", string region :> obj
                       "Coalition", coalition |> Option.map string |> Option.defaultValue "Neutral" :> obj
                     ] |> dict
+                | WarStateUpdate.AdvanceTime(span) ->
+                    "AdvanceTime",
+                    [ "Hours", span.TotalHours |> box
+                    ] |> dict
             { Verb = verb
               Args = args
             }
@@ -352,6 +356,10 @@ module internal Extensions =
                     "RegionOwnerSet",
                     [ "Region", string region :> obj
                       "Coalition", coalition |> Option.map string |> Option.defaultValue "Neutral" :> obj
+                    ] |> dict
+                | WarStateUpdate.TimeSet(time) ->
+                    "TimeSet",
+                    [ "DateTime", time.ToDto() :> obj
                     ] |> dict
             { ChangeDescription = desc
               Values = values
@@ -703,7 +711,12 @@ type Controller(settings : Settings) =
                     let random = System.Random(seed)
                     // Simulate missions
                     let sim = Campaign.Missions.MissionSimulator(random, state, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
-                    let events = sim.DoAll()
+                    let events = 
+                        seq {
+                            yield! sim.DoAll()
+                            for cmd in sctrl.NewDay(state) do
+                                yield cmd
+                        }
                     let results =
                         events
                         |> Seq.map(fun (cmd, description) ->
@@ -713,8 +726,6 @@ type Controller(settings : Settings) =
                                 |> Option.defaultValue []
                             description, cmd, results)
                         |> List.ofSeq
-                    // Move to next day
-                    state.SetDate(state.Date + System.TimeSpan(24, 0, 0))
                     // Plan next round
                     let advance = sctrl.NextStep(stepData)
                     let nextStep = advance state
@@ -749,6 +760,19 @@ type Controller(settings : Settings) =
                     return s
             }
 
+        member this.Run(seed, maxSteps) =
+            let rec work stepsLeft =
+                async {
+                    if stepsLeft <= 0 then
+                        return Error ""
+                    else
+                        let! r = this.Advance(seed)
+                        match r with
+                        | Error s -> return Ok s
+                        | Ok _ -> return! work (stepsLeft - 1)
+                }
+            work maxSteps
+
         interface IRoutingResponse with
             member this.GetWarState(idx) =
                 match idx with
@@ -761,4 +785,5 @@ type Controller(settings : Settings) =
 
         interface IControllerInteraction with
             member this.Advance() = this.Advance(0)
+            member this.Run() = this.Run(0, 15)
             member this.ResetCampaign(scenario) = this.ResetCampaign()
