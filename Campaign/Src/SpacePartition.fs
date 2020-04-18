@@ -254,14 +254,15 @@ module FreeAreas =
 
     /// Translate a quad tree node to a free areas node
     let rec translate (quad : QuadNode<Vector2>) =
-        if Array.isEmpty quad.Content then
-            Some {
-                Min = quad.Min
-                Max = quad.Max
-                Children = [||]
-            }
-        elif Array.isEmpty quad.Children then
-            None
+        if Array.isEmpty quad.Children then
+            if Array.isEmpty quad.Content then
+                Some {
+                    Min = quad.Min
+                    Max = quad.Max
+                    Children = [||]
+                }
+            else
+                None
         else
             let subs = quad.Children |> Array.choose translate
             match subs with
