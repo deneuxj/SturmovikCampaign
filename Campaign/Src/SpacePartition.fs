@@ -56,31 +56,37 @@ module QuadNode =
             Content = Array.ofSeq items
         }
 
+    let divideBounds (minV : Vector2, maxV : Vector2) =
+        let hx = (minV.X + maxV.X) / 2.0f
+        let hy = (minV.Y + maxV.Y) / 2.0f
+        seq {
+            for x1, x2 in [(minV.X, hx); (hx, maxV.X)] do
+                for y1, y2 in [(minV.Y, hy); (hy, maxV.Y)] do
+                    let lower = Vector2(x1, y1)
+                    let upper = Vector2(x2, y2)
+                    yield (lower, upper)
+        }
+
     /// Split or merge the leaves of a quad tree to meet new constraints on maximum depth and maximum number of items in leaves
     let rec split (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (maxItems : int) (contentInInnerNodes : bool) (node : QuadNode<'T>) =
         if maxDepth <= 0 || node.Content.Length <= maxItems then
             { node with Children = [||] }
         elif node.Children.Length = 0 then
             let subs =
-                let hx = (node.Min.X + node.Max.X) / 2.0f
-                let hy = (node.Min.Y + node.Max.Y) / 2.0f
                 [|
-                    for x1, x2 in [(node.Min.X, hx); (hx, node.Max.X)] do
-                        for y1, y2 in [(node.Min.Y, hy); (hy, node.Max.Y)] do
-                            let lower = Vector2(x1, y1)
-                            let upper = Vector2(x2, y2)
-                            let content =
-                                node.Content
-                                |> PSeq.filter (fun item -> intersects item (lower, upper))
-                                |> PSeq.toArray
-                            let child = {
-                                Min = lower
-                                Max = upper
-                                Children = [||]
-                                Content = content
-                            }
-                            let child = split intersects (maxDepth - 1) maxItems contentInInnerNodes child
-                            yield child
+                    for lower, upper in divideBounds(node.Min, node.Max) do
+                        let content =
+                            node.Content
+                            |> PSeq.filter (fun item -> intersects item (lower, upper))
+                            |> PSeq.toArray
+                        let child = {
+                            Min = lower
+                            Max = upper
+                            Children = [||]
+                            Content = content
+                        }
+                        let child = split intersects (maxDepth - 1) maxItems contentInInnerNodes child
+                        yield child
                 |]
             { node with
                 Children = subs
@@ -286,3 +292,54 @@ module FreeAreas =
             free.Children
             |> Seq.map sumArea
             |> Seq.fold (fun (area, num) (acc0, acc1) -> (area + acc0, num + acc1)) (0.0f, 0)
+
+    /// Find candidates for the center of a shape that must not fit within non-free areas
+    let findPositionCandidates (order : FreeAreasNode[] -> FreeAreasNode seq) (root : FreeAreasNode) (shape : Vector2 list) =
+        let center = Seq.sum shape / float32 (List.length shape)
+        let rec candidates (node : FreeAreasNode) =
+            seq {
+                if Array.isEmpty node.Children then
+                    let center = 0.5f * node.Min + node.Max
+                    yield center
+                else
+                    yield!
+                        node.Children
+                        |> order
+                        |> Seq.collect candidates
+            }
+        let validate (candidate : Vector2) =
+            let shape = shape |> List.map ((+) (candidate - center))
+            let rec hasIntersectionWithNonFree (node : FreeAreasNode) =
+                if Array.isEmpty node.Children then
+                    // Area covered by node is free
+                    false
+                else
+                    // Children that are fully filled with obstacles (e.g. squares in forests, lakes, cities...)
+                    let occupied =
+                        QuadNode.divideBounds(node.Min, node.Max)
+                        |> Seq.filter (fun bounds -> node.Children |> Array.exists (fun child -> (child.Min, child.Max) = bounds) |> not)
+                    // Check if bound box intersects with shape
+                    let canIntersect = Functions.intersectWithBoundingBox id shape (node.Min, node.Max)
+                    // Check if the fully occupied areas intersect with the shape
+                    let intersectsHere = 
+                        lazy
+                            occupied
+                            |> Seq.exists (fun bounds -> Functions.intersectWithBoundingBox id shape bounds)
+                    // Recursive check
+                    let intersectsDown =
+                        lazy
+                            node.Children
+                            |> Array.exists hasIntersectionWithNonFree
+                    // Result
+                    canIntersect && (intersectsHere.Value || intersectsDown.Value)
+            not(hasIntersectionWithNonFree root)
+
+        candidates root
+        |> Seq.filter validate
+
+    /// Order function that can be passed to findPositionCandidates, shuffles nodes and remove those
+    /// that do not intersect with a convex region.
+    let randomSelectionWithinRegion (random : System.Random) (region : Vector2 list) (nodes : FreeAreasNode[]) =
+        nodes
+        |> Util.Array.shuffle random
+        |> Seq.filter (fun node -> Functions.intersectWithBoundingBox id region (node.Min, node.Max))
