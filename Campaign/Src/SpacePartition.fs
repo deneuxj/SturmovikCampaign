@@ -321,19 +321,20 @@ module FreeAreas =
                     // Check if bound box intersects with shape
                     let canIntersect = Functions.intersectWithBoundingBox id shape (node.Min, node.Max)
                     // Check if the fully occupied areas intersect with the shape
-                    let intersectsHere = 
-                        lazy
-                            occupied
-                            |> Seq.exists (fun bounds -> Functions.intersectWithBoundingBox id shape bounds)
+                    let intersectsHere() = 
+                        occupied
+                        |> Seq.exists (fun bounds -> Functions.intersectWithBoundingBox id shape bounds)
                     // Recursive check
-                    let intersectsDown =
-                        lazy
-                            node.Children
-                            |> Array.exists hasIntersectionWithNonFree
+                    let intersectsDown() =
+                        node.Children
+                        |> Array.exists hasIntersectionWithNonFree
                     // Result
-                    canIntersect && (intersectsHere.Value || intersectsDown.Value)
-            not(hasIntersectionWithNonFree root)
+                    canIntersect && (intersectsHere() || intersectsDown())
+            if not(hasIntersectionWithNonFree root) then
+                Some (candidate - center)
+            else
+                None
 
         candidates root
         |> Seq.sortByDescending rankCandidate
-        |> Seq.filter validate
+        |> Seq.choose validate

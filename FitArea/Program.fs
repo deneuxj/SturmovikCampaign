@@ -61,8 +61,7 @@ let main argv =
                     failwith "Failed to find a fit"
                 candidates
                 |> Seq.truncate 10
-                |> Seq.map (fun v -> v.ToString())
-                |> Seq.iter (printfn "%s")
+                |> Seq.iter (fun offset -> printfn "%s" (string offset))
             | [], _, _ ->
                 failwith "Missing shape outline"
             | _, [], _ ->
