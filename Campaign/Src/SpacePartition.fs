@@ -293,19 +293,19 @@ module FreeAreas =
             |> Seq.map sumArea
             |> Seq.fold (fun (area, num) (acc0, acc1) -> (area + acc0, num + acc1)) (0.0f, 0)
 
-    /// Find candidates for the center of a shape that must not fit within non-free areas
-    let findPositionCandidates (order : FreeAreasNode[] -> FreeAreasNode seq) (root : FreeAreasNode) (shape : Vector2 list) =
+    /// Find candidates for the center of a shape that must fit within non-free areas, within the boundaries of a region
+    let findPositionCandidates rankCandidate (root : FreeAreasNode) (shape : Vector2 list) (region : Vector2 list) =
         let center = Seq.sum shape / float32 (List.length shape)
         let rec candidates (node : FreeAreasNode) =
             seq {
-                if Array.isEmpty node.Children then
-                    let center = 0.5f * node.Min + node.Max
-                    yield center
-                else
-                    yield!
-                        node.Children
-                        |> order
-                        |> Seq.collect candidates
+                if Functions.intersectWithBoundingBox id region (node.Min, node.Max) then
+                    if Array.isEmpty node.Children then
+                        let center = 0.5f * (node.Min + node.Max)
+                        yield center
+                    else
+                        yield!
+                            node.Children
+                            |> Seq.collect candidates
             }
         let validate (candidate : Vector2) =
             let shape = shape |> List.map ((+) (candidate - center))
@@ -335,11 +335,5 @@ module FreeAreas =
             not(hasIntersectionWithNonFree root)
 
         candidates root
+        |> Seq.sortByDescending rankCandidate
         |> Seq.filter validate
-
-    /// Order function that can be passed to findPositionCandidates, shuffles nodes and remove those
-    /// that do not intersect with a convex region.
-    let randomSelectionWithinRegion (random : System.Random) (region : Vector2 list) (nodes : FreeAreasNode[]) =
-        nodes
-        |> Util.Array.shuffle random
-        |> Seq.filter (fun node -> Functions.intersectWithBoundingBox id region (node.Min, node.Max))

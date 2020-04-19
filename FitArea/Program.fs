@@ -51,9 +51,11 @@ let main argv =
                 with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
             match shape, region, freeAreas with
             | _ :: _, _ :: _, Some root ->
-                let order = FreeAreas.randomSelectionWithinRegion (System.Random(seed)) region
+                let random = System.Random(seed)
+                let rank _ = 
+                    random.Next()
                 let candidates =
-                    FreeAreas.findPositionCandidates order root shape
+                    FreeAreas.findPositionCandidates rank root shape region
                     |> Seq.cache
                 if Seq.isEmpty candidates then
                     failwith "Failed to find a fit"
