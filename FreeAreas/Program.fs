@@ -7,14 +7,19 @@ open Campaign.SpacePartition
 open System.Diagnostics
 open MBrace.FsPickler
 
+let parseNum x = Single.Parse(x, System.Globalization.CultureInfo.InvariantCulture)
+
 let getPoints (path : string) =
-    match File.ReadAllLines(path) |> List.ofArray with
-    | xs :: ys :: _ ->
-        let parseNum x = Single.Parse(x, System.Globalization.CultureInfo.InvariantCulture)
-        let numbers (line : string) = line.Split "," |> Seq.map parseNum
-        Seq.zip (numbers xs) (numbers ys)
-        |> Seq.map (fun (x, y) -> Vector2(x, y))
-    | _ -> failwith "Input file must have two lines"
+    seq {
+        use file = File.OpenText(path)
+        while not file.EndOfStream do
+            let line = file.ReadLine()
+            let components = line.Split ','
+            match components with
+            | [| cx; cy |] -> yield Vector2(parseNum cx, parseNum cy)
+            | [||] -> ()
+            | _ -> failwithf "Ill-formed line '%s'" line
+    }
 
 let mkQuadTree (points : Vector2 seq) =
     QuadTree.fromBoundaryOjects (fun v -> [v]) 10 1 false points
@@ -29,6 +34,7 @@ let main argv =
             paths
             |> Seq.collect getPoints
             |> mkQuadTree
+        printfn "Top node bounds: %A %A" tree.Root.Min tree.Root.Max
         let time = watch.ElapsedMilliseconds
         printfn "Computation took %f s" ((float time) / 1000.0)
         let watch = Stopwatch.StartNew()
