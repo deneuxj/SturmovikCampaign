@@ -22,7 +22,7 @@ let getPoints (path : string) =
     }
 
 let mkQuadTree (points : Vector2 seq) =
-    QuadTree.fromBoundaryOjects (fun v -> [v]) 10 1 false points
+    QuadTree.fromBoundaryOjects (fun v -> [v]) 10 0 false points
 
 [<EntryPoint>]
 let main argv =
