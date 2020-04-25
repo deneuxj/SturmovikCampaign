@@ -58,8 +58,7 @@ type Target =
     {
         Kind : TargetType
         Owner : CoalitionId option
-        Pos : Vector2
-        Altitude : float32<M>
+        Pos : OrientedPosition
     }
 
 type AmmoType =
@@ -526,8 +525,8 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             plane
                             mission.StartAirfield.AirfieldName
                             (string mission.Objective)
-                            target.Pos.X
-                            target.Pos.Y
+                            target.Pos.Pos.X
+                            target.Pos.Pos.Y
 
                     let targets =
                         // Pick parts of a building at random, biased towards undamaged parts
@@ -539,8 +538,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                 {
                                     Kind = TargetType.Building(building.Id, part)
                                     Owner = owner
-                                    Pos = building.Pos.Pos
-                                    Altitude = 0.0f<M>
+                                    Pos = building.Pos
                                 })
 
                         let getBuildingParts owner building =
@@ -572,8 +570,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                     {
                                         Kind = kind
                                         Owner = Some owner
-                                        Pos = Vector2.Zero
-                                        Altitude = 0.0f<M>
+                                        Pos = { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
                                     }
                                 )
                             targets
@@ -620,8 +617,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                     {
                                         Kind = TargetType.ParkedPlane(af, planeId)
                                         Owner = owner
-                                        Pos = Vector2.Zero
-                                        Altitude = 0.0f<M>
+                                        Pos = { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
                                     })
 
                             Seq.selectFrom2 (fun _ _ -> random.Next(2) = 1) buildingTargets parkedPlanes
