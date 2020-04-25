@@ -283,6 +283,23 @@ module FreeAreas =
                     Children = subs
                 }
 
+    /// Retrieve the leaves that are accepted by a predicate. Can be used to e.g. find all leaves inside an area.
+    /// The predicate must be so that if it accepts a child, it must also accept its parent, or conversely,
+    /// if it rejects a node it must also reject all its children.
+    let rec filterLeaves predicate (node : FreeAreasNode) =
+        seq {
+            if predicate node then
+                if Array.isEmpty node.Children then
+                    yield node
+                else
+                    for child in node.Children do
+                        yield! filterLeaves predicate child
+        }
+
+    /// Check if the bounding box of a node intersects with a region
+    let intersectsWithRegion (region : Vector2 list) (node : FreeAreasNode) =
+        Functions.intersectWithBoundingBox id region (node.Min, node.Max)
+
     /// Compute area statistics, returning total area and number of leaf nodes
     let rec sumArea (free : FreeAreasNode) =
         if Array.isEmpty free.Children then
@@ -331,7 +348,7 @@ module FreeAreas =
                     // Result
                     canIntersect && (intersectsHere() || intersectsDown())
             if not(hasIntersectionWithNonFree root) then
-                Some (candidate - center)
+                Some candidate
             else
                 None
 
