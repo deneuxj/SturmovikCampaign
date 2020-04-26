@@ -24,6 +24,7 @@
     <Compile Include="Src\WarState.fs" />
     <Compile Include="Src\WarStateUpdate.fs" />
     <Compile Include="Src\Missions.fs" />
+    <Compile Include="Src\MissionSelection.fs" />
     <Compile Include="Src\StaticDefenseOptimization.fs" />
     <Compile Include="Src\AiPlanes.fs" />
     <Compile Include="Src\MissionFileGeneration.fs" />
