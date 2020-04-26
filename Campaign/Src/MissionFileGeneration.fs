@@ -21,7 +21,11 @@ open BasicTypes
 open PlaneModel
 open PlaneSet
 open AiPlanes
+open Campaign.WarState
+open Campaign.MissionSelection
+
 open System.Numerics
+open Campaign.Missions
 
 type GameType =
     | Coop
@@ -113,3 +117,54 @@ type MissionContent =
         AiPatrols : AiPatrol list
         AiAttacks : AiAttack list
     }
+
+type AiStartPoint =
+    | StartAtIngress of float32<M>
+    | StartOverAirfield
+
+type AiAttack with
+    static member TryFromAirMission(state : WarState, mission : AirMission, getTargetPosition, ?maxFlightSize, ?aiStartPoint) =
+        let aiStartPoint = defaultArg aiStartPoint (StartAtIngress 50000.0f<M>)
+        let coalition = state.GetOwner(state.World.Airfields.[mission.StartAirfield].Region)
+        match mission, coalition with
+        | { MissionType = GroundTargetAttack(target, altitude) }, Some coalition ->
+            let planeModel = state.World.PlaneSet.[mission.Plane]
+            let numPlanes = min (defaultArg maxFlightSize 5) mission.NumPlanes
+            let reserve = mission.NumPlanes - numPlanes
+            let country = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun x -> x.Key
+            let targetPos : Vector2 = getTargetPosition(target, mission.Objective)
+            let toTarget =
+                let v = targetPos - state.World.Airfields.[mission.StartAirfield].Position
+                v / v.Length()
+            let startPos =
+                match aiStartPoint with
+                | StartAtIngress dist ->
+                    targetPos - (dist / 1.0f<M>) * toTarget
+                | StartOverAirfield ->
+                    state.World.Airfields.[mission.StartAirfield].Position
+            let altitude, roles =
+                match altitude with
+                | LowAltitude -> 1000.0f, [PlaneRole.GroundAttacker]
+                | MediumAltitude -> 2500.0f, [PlaneRole.GroundAttacker; PlaneRole.LevelBomber]
+                | HighAltitude -> 4500.0f, [PlaneRole.LevelBomber; PlaneRole.GroundAttacker]
+            let role =
+                roles
+                |> List.tryFind (fun role -> planeModel.Payloads.ContainsKey role)
+            role
+            |> Option.map (fun role ->
+                {
+                    Attacker = planeModel
+                    NumPlanes = numPlanes
+                    AttackerReserve = reserve
+                    HomeAirfield = mission.StartAirfield
+                    Country = country
+                    Start = startPos
+                    Target = targetPos
+                    Altitude = altitude
+                    Landing = None
+                    Role = role
+                })
+        | _ -> None
+
+let mkMultiplayerMissionContent (state : WarState) (selection : MissionSelection) =
+    ()
