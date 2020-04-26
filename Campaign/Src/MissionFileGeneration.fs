@@ -201,5 +201,28 @@ type AiPatrol with
         | _ ->
             None
 
+type GroundBattle with
+    static member TryFromGroundMission(state : WarState, mission : GroundMission, getBattlePosition) =
+        match mission with
+        | { MissionType = GroundBattle initiator } ->
+            let pos, boundary = getBattlePosition(initiator, mission.Objective)
+            let computeNum (force : float32<MGF>) =
+                { NumRocketArtillery = int(0.25f * force / TargetType.ArmoredCar.GroundForceValue)
+                  NumArtillery = int(0.25f * force / TargetType.Artillery.GroundForceValue)
+                  NumAntiTankGuns = int(0.25f * force / TargetType.Artillery.GroundForceValue)
+                  NumTanks = int(0.25f * force / TargetType.Tank.GroundForceValue)
+                }
+            let getCountryInCoalition coalition = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun kvp -> kvp.Key
+            Some {
+                Boundary = boundary
+                Pos = pos
+                Defending = getCountryInCoalition initiator.Other
+                Attacking = getCountryInCoalition initiator
+                NumDefending = computeNum(state.GetGroundForces(initiator.Other, mission.Objective))
+                NumAttacking = computeNum(state.GetGroundForces(initiator, mission.Objective))
+            }
+        | _ ->
+            None
+
 let mkMultiplayerMissionContent (state : WarState) (selection : MissionSelection) =
     ()
