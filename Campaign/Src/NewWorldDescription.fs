@@ -274,6 +274,8 @@ type World = {
     Bridges : IDictionary<BuildingInstanceId, BuildingInstance>
     /// Mapping from plane model identifiers to plane model descriptions
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
+    /// Participating countries and their coalition
+    Countries : IDictionary<CountryId, CoalitionId>
 }
 with
     /// Get building or bridge instance by its ID
@@ -685,6 +687,13 @@ module Init =
             Buildings = buildingsDict
             Bridges = bridges
             PlaneSet = dict[]
+            Countries =
+                dict [
+                    Germany, Axis
+                    Russia, Allies
+                    GreatBritain, Allies
+                    UnitedStates, Allies
+                ]
         }
 
 module IO =
