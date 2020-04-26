@@ -14,9 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/// Missions are simulated events whose outcome changes the state of war.
-/// Success rate is affected by player actions.
-
 /// Creation of game mission files
 module Campaign.MissionFileGeneration
 
@@ -25,8 +22,6 @@ open PlaneModel
 open PlaneSet
 open AiPlanes
 open System.Numerics
-open SturmovikMission.Blocks.Util
-open SturmovikMission.DataProvider
 
 type GameType =
     | Coop
