@@ -166,5 +166,40 @@ type AiAttack with
                 })
         | _ -> None
 
+type AiPatrol with
+    static member TryFromAirMission(state : WarState, mission : AirMission, getTargetPosition, ?maxFlightSize) =
+        let maxFlightSize = defaultArg maxFlightSize 2
+        let coalition = state.GetOwner(state.World.Airfields.[mission.StartAirfield].Region)
+        match mission, coalition with
+        | { MissionType = AreaProtection }, Some coalition ->
+            let planeModel = state.World.PlaneSet.[mission.Plane]
+            let numPlanes = min maxFlightSize mission.NumPlanes
+            let reserve = mission.NumPlanes - numPlanes
+            let country = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun x -> x.Key
+            let targetPos : Vector2 = getTargetPosition(mission.Objective)
+            let roles, protectedRegion =
+                if state.GetOwner(mission.Objective) = Some coalition then
+                    [PlaneRole.Interceptor; PlaneRole.Patroller], Some mission.Objective
+                else
+                    [PlaneRole.Patroller; PlaneRole.Interceptor], None
+            let role =
+                roles
+                |> List.tryFind (fun role -> planeModel.Payloads.ContainsKey role)
+            role
+            |> Option.map (fun role ->
+                {
+                    Plane = planeModel
+                    NumPlanes = numPlanes
+                    PlaneReserve = reserve
+                    HomeAirfield = mission.StartAirfield
+                    Country = country
+                    Pos = targetPos
+                    Altitude = 3500.0f
+                    Role = role
+                    ProtectedRegion = protectedRegion
+                })
+        | _ ->
+            None
+
 let mkMultiplayerMissionContent (state : WarState) (selection : MissionSelection) =
     ()
