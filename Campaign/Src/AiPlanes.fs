@@ -32,6 +32,7 @@ open SturmovikMission.Blocks
 
 type AiPatrol =
     { Plane : PlaneModel
+      NumPlanes : int
       HomeAirfield : AirfieldId
       Country : CountryId
       Pos : Vector2
@@ -46,7 +47,7 @@ with
     member this.ToPatrolBlock(store, lcStore) =
         let blocks =
             [
-                for i in 0..1 do
+                for i in 1..this.NumPlanes do
                     let block = Patrol.Create(store, lcStore, this.Pos + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Coalition.ToCoalition)
                     let modmask, payload = this.Plane.Payloads.[this.Role]
                     block.Plane.Country <- Some this.Country.ToMcuValue
@@ -56,31 +57,48 @@ with
                     block.Plane.Name <- sprintf "PTL-%s-%s" this.Plane.Name this.HomeAirfield.AirfieldName
                     yield block
             ]
-        // Logic to hide icon when the patrol is wiped out
-        let bothKilled = SturmovikMission.Blocks.Conjunction.Conjunction.Create(store, this.Pos + Vector2(200.0f, 200.0f))
-        Mcu.addTargetLink blocks.[0].Killed bothKilled.SetA.Index
-        Mcu.addTargetLink blocks.[1].Killed bothKilled.SetB.Index
-        Mcu.addTargetLink blocks.[0].Spawned bothKilled.ClearA.Index
-        Mcu.addTargetLink blocks.[1].Spawned bothKilled.ClearB.Index
+        let conjKilled =
+            [|
+                for i in 1..this.NumPlanes - 1 do
+                    let thisKilled = SturmovikMission.Blocks.Conjunction.Conjunction.Create(store, this.Pos + (float32 i) * Vector2(200.0f, 200.0f))
+                    Mcu.addTargetLink blocks.[i].Killed thisKilled.SetA.Index
+                    Mcu.addTargetLink blocks.[i].Spawned thisKilled.ClearA.Index
+                    yield thisKilled
+            |]
+        for prev, curr in Seq.pairwise conjKilled do
+            Mcu.addTargetLink prev.AllTrue curr.SetB.Index
+            Mcu.addTargetLink prev.SomeFalse curr.ClearB.Index
+        match conjKilled with
+        | [||] -> ()
+        | _ ->
+            let first = conjKilled.[0]
+            Mcu.addTargetLink blocks.[0].Killed first.SetB.Index
+            Mcu.addTargetLink blocks.[0].Spawned first.ClearB.Index
+        let allKilled, someSpawned =
+            match conjKilled with
+            | [||] ->
+                blocks.[0].Killed, blocks.[0].Spawned
+            | _ ->
+                let last = conjKilled.[conjKilled.Length - 1]
+                last.AllTrue, last.SomeFalse
         let icon1, icon2 = IconDisplay.CreatePair(store, lcStore, this.Pos, sprintf "Patrol at %d m" (int this.Altitude), this.Coalition.ToCoalition, Mcu.IconIdValue.CoverBombersFlight)
-        Mcu.addTargetLink bothKilled.AllTrue icon1.Hide.Index
-        Mcu.addTargetLink bothKilled.AllTrue icon2.Hide.Index
-        for i in 0..1 do
-            Mcu.addTargetLink blocks.[i].Spawned icon1.Show.Index
-            Mcu.addTargetLink blocks.[i].Spawned icon2.Show.Index
+        Mcu.addTargetLink allKilled icon1.Hide.Index
+        Mcu.addTargetLink allKilled icon2.Hide.Index
+        Mcu.addTargetLink someSpawned icon1.Show.Index
+        Mcu.addTargetLink someSpawned icon2.Show.Index
         // logic to stop spawns when all planes from the start airfield have been destroyed
         let counter = BlocksMissionData.newCounter 1
         counter.Count <- this.PlaneReserve
         counter.WrapAround <- false
         let subst = Mcu.substId <| store.GetIdMapper()
         subst counter
-        for i in 0..1 do
+        for i in 0 .. this.NumPlanes - 1 do
             Mcu.addTargetLink blocks.[i].Killed counter.Index
             Mcu.addTargetLink counter blocks.[i].WhileEnemyClose.StopMonitoring.Index
         { new McuUtil.IMcuGroup with
               member x.Content = [counter]
               member x.LcStrings = []
-              member x.SubGroups = [ blocks.[0].All; blocks.[1].All; bothKilled.All; icon1.All; icon2.All ]
+              member x.SubGroups = (blocks |> List.map (fun blk -> blk.All)) @ (conjKilled |> Seq.map (fun conj -> conj.All) |> Seq.toList) @ [ icon1.All; icon2.All ]
         }, blocks
 
     /// Create logic for AI patrols, with constrains that ensure that no more than a maximum limit of planes are active at any time.
