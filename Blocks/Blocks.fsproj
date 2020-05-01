@@ -48,6 +48,12 @@
       <Link>Blocks.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="..\data\Blocks\Blocks2.eng" Link="Blocks2.eng">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\data\Blocks\Blocks2.Mission" Link="Blocks2.Mission">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="..\data\Blocks\Vehicles.Mission">
       <Link>Vehicles.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
