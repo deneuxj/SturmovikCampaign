@@ -63,9 +63,9 @@ Group
   MCU_Waypoint
   {
     Index = 3;
-    Name = "Waypoint2";
+    Name = "INTO_PRIMARY";
     Desc = "";
-    Targets = [4];
+    Targets = [];
     Objects = [5];
     XPos = 152087.311;
     YPos = 2000.000;
@@ -84,7 +84,7 @@ Group
     Index = 6;
     Name = "0s";
     Desc = "";
-    Targets = [7,8,9,10,11];
+    Targets = [9];
     Objects = [];
     XPos = 145472.186;
     YPos = 131.807;
@@ -120,7 +120,7 @@ Group
     Index = 13;
     Name = "ESCORT_READY";
     Desc = "";
-    Targets = [14];
+    Targets = [];
     Objects = [];
     XPos = 150345.916;
     YPos = 134.461;
@@ -135,840 +135,9 @@ Group
 
   Group
   {
-    Name = "SecondaryObjective";
-    Index = 15;
-    Desc = "";
-    MCU_Waypoint
-    {
-      Index = 16;
-      Name = "Ingress2";
-      Desc = "";
-      Targets = [17,18,19];
-      Objects = [5];
-      XPos = 155577.598;
-      YPos = 2000.000;
-      ZPos = 75058.521;
-      XOri = 0.00;
-      YOri = 269.86;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 20;
-      Name = "ToIngress2";
-      Desc = "";
-      Targets = [16];
-      Objects = [];
-      XPos = 155527.662;
-      YPos = 122.600;
-      ZPos = 80468.971;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 1;
-      Random = 50;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 17;
-      Name = "StartAttack2";
-      Desc = "";
-      Targets = [22,23];
-      Objects = [5];
-      XPos = 155487.399;
-      YPos = 2000.000;
-      ZPos = 64825.660;
-      XOri = 0.00;
-      YOri = 270.86;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_CMD_AttackArea
-    {
-      Index = 22;
-      Name = "AttackArea2";
-      Desc = "";
-      Targets = [];
-      Objects = [];
-      XPos = 155573.398;
-      YPos = 2000.000;
-      ZPos = 54690.326;
-      XOri = 0.00;
-      YOri = 270.04;
-      ZOri = 0.00;
-      AttackGround = 0;
-      AttackAir = 0;
-      AttackGTargets = 1;
-      AttackArea = 1000;
-      Time = 59940;
-      Priority = 1;
-    }
-    
-
-    MCU_Counter
-    {
-      Index = 25;
-      Name = "Attack2Done";
-      Desc = "";
-      Targets = [26,27];
-      Objects = [];
-      XPos = 145426.337;
-      YPos = 129.263;
-      ZPos = 64676.049;
-      XOri = 0.00;
-      YOri = 270.04;
-      ZOri = 0.00;
-      Counter = 1;
-      Dropcount = 0;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 23;
-      Name = "AttackDuration";
-      Desc = "";
-      Targets = [25];
-      Objects = [];
-      XPos = 150495.140;
-      YPos = 85.818;
-      ZPos = 64633.518;
-      XOri = 0.00;
-      YOri = 270.04;
-      ZOri = 0.00;
-      Time = 900;
-      Random = 100;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 26;
-      Name = "AfterAttack2";
-      Desc = "";
-      Targets = [30];
-      Objects = [];
-      XPos = 145429.865;
-      YPos = 144.314;
-      ZPos = 74807.283;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 0;
-      Random = 100;
-    }
-    
-
-    MCU_Deactivate
-    {
-      Index = 7;
-      Name = "";
-      Desc = "";
-      Targets = [26];
-      Objects = [];
-      XPos = 143056.160;
-      YPos = 142.549;
-      ZPos = 74735.834;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_CMD_Formation
-    {
-      Index = 32;
-      Name = "FormationNoneLoose";
-      Desc = "";
-      Targets = [];
-      Objects = [5];
-      XPos = 152363.831;
-      YPos = 126.503;
-      ZPos = 75044.243;
-      XOri = 0.00;
-      YOri = 89.66;
-      ZOri = 0.00;
-    FormationType = 0;
-    FormationDensity = 2;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 18;
-      Name = "5s";
-      Desc = "";
-      Targets = [32];
-      Objects = [];
-      XPos = 153887.445;
-      YPos = 113.592;
-      ZPos = 75035.759;
-      XOri = 0.00;
-      YOri = 89.66;
-      ZOri = 0.00;
-      Time = 5;
-      Random = 100;
-    }
-    
-
-    MCU_Activate
-    {
-      Index = 19;
-      Name = "";
-      Desc = "";
-      Targets = [26];
-      Objects = [];
-      XPos = 148864.432;
-      YPos = 92.421;
-      ZPos = 75029.879;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_Deactivate
-    {
-      Index = 35;
-      Name = "DeactivateToIngress2";
-      Desc = "";
-      Targets = [20];
-      Objects = [];
-      XPos = 153810.691;
-      YPos = 88.369;
-      ZPos = 81727.086;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-  }
-  
-
-  Group
-  {
-    Name = "PrimaryObjective";
-    Index = 36;
-    Desc = "";
-    MCU_Waypoint
-    {
-      Index = 4;
-      Name = "Ingress";
-      Desc = "";
-      Targets = [38,39];
-      Objects = [5];
-      XPos = 158699.863;
-      YPos = 2000.000;
-      ZPos = 95088.283;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 38;
-      Name = "StartAttack";
-      Desc = "";
-      Targets = [41,42,43];
-      Objects = [5];
-      XPos = 165370.797;
-      YPos = 2000.000;
-      ZPos = 95061.691;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_CMD_AttackArea
-    {
-      Index = 41;
-      Name = "AttackArea";
-      Desc = "";
-      Targets = [];
-      Objects = [];
-      XPos = 175506.209;
-      YPos = 2000.000;
-      ZPos = 95138.012;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      AttackGround = 0;
-      AttackAir = 0;
-      AttackGTargets = 1;
-      AttackArea = 1000;
-      Time = 59940;
-      Priority = 1;
-    }
-    
-
-    MCU_Counter
-    {
-      Index = 45;
-      Name = "AttackDone";
-      Desc = "";
-      Targets = [46,27];
-      Objects = [];
-      XPos = 165510.802;
-      YPos = 129.263;
-      ZPos = 85000.491;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Counter = 1;
-      Dropcount = 0;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 42;
-      Name = "AttackDuration";
-      Desc = "";
-      Targets = [45];
-      Objects = [];
-      XPos = 165558.173;
-      YPos = 85.818;
-      ZPos = 90069.251;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 900;
-      Random = 100;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 48;
-      Name = "Egress";
-      Desc = "";
-      Targets = [20,30];
-      Objects = [5];
-      XPos = 155610.138;
-      YPos = 2000.000;
-      ZPos = 85047.862;
-      XOri = 0.00;
-      YOri = 182.23;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 46;
-      Name = "AfterAttack1";
-      Desc = "";
-      Targets = [48,50];
-      Objects = [];
-      XPos = 160448.137;
-      YPos = 144.314;
-      ZPos = 85033.748;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 0;
-      Random = 100;
-    }
-    
-
-    MCU_Deactivate
-    {
-      Index = 8;
-      Name = "";
-      Desc = "";
-      Targets = [46];
-      Objects = [];
-      XPos = 158820.086;
-      YPos = 149.862;
-      ZPos = 88432.004;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_CMD_Formation
-    {
-      Index = 52;
-      Name = "FormationNoneLoose";
-      Desc = "";
-      Targets = [];
-      Objects = [5];
-      XPos = 158663.761;
-      YPos = 126.503;
-      ZPos = 98546.762;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    FormationType = 0;
-    FormationDensity = 2;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 39;
-      Name = "5s";
-      Desc = "";
-      Targets = [52];
-      Objects = [];
-      XPos = 158663.761;
-      YPos = 113.592;
-      ZPos = 97023.125;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 5;
-      Random = 100;
-    }
-    
-
-    MCU_Activate
-    {
-      Index = 43;
-      Name = "";
-      Desc = "";
-      Targets = [46];
-      Objects = [];
-      XPos = 162195.712;
-      YPos = 92.421;
-      ZPos = 88429.939;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_CMD_Formation
-    {
-      Index = 55;
-      Name = "FormationRightEdgeSafe";
-      Desc = "";
-      Targets = [];
-      Objects = [5];
-      XPos = 160457.442;
-      YPos = 126.503;
-      ZPos = 81786.896;
-      XOri = 0.00;
-      YOri = 179.75;
-      ZOri = 0.00;
-    FormationType = 3;
-    FormationDensity = 1;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 50;
-      Name = "5s";
-      Desc = "";
-      Targets = [55];
-      Objects = [];
-      XPos = 160464.117;
-      YPos = 113.592;
-      ZPos = 83310.518;
-      XOri = 0.00;
-      YOri = 179.75;
-      ZOri = 0.00;
-      Time = 5;
-      Random = 100;
-    }
-    
-
-  }
-  
-
-  Group
-  {
     Name = "MeetEscort";
     Index = 57;
     Desc = "";
-    MCU_Waypoint
-    {
-      Index = 58;
-      Name = "RDV1";
-      Desc = "";
-      Targets = [59,60,61];
-      Objects = [5];
-      XPos = 145373.538;
-      YPos = 2000.000;
-      ZPos = 94947.737;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 62;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [63];
-      Objects = [5];
-      XPos = 140476.863;
-      YPos = 2000.000;
-      ZPos = 92814.732;
-      XOri = 0.00;
-      YOri = 91.41;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 63;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [65];
-      Objects = [5];
-      XPos = 140443.395;
-      YPos = 2000.000;
-      ZPos = 96998.226;
-      XOri = 0.00;
-      YOri = 34.17;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 65;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [67];
-      Objects = [5];
-      XPos = 143689.786;
-      YPos = 2000.000;
-      ZPos = 99140.175;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 67;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [69];
-      Objects = [5];
-      XPos = 147019.848;
-      YPos = 2000.000;
-      ZPos = 99089.973;
-      XOri = 0.00;
-      YOri = 319.46;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_CMD_Formation
-    {
-      Index = 70;
-      Name = "FormationRightEdgeDense";
-      Desc = "";
-      Targets = [];
-      Objects = [5];
-      XPos = 145368.738;
-      YPos = 126.503;
-      ZPos = 98433.264;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    FormationType = 3;
-    FormationDensity = 0;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 59;
-      Name = "5s";
-      Desc = "";
-      Targets = [70,72];
-      Objects = [];
-      XPos = 145368.738;
-      YPos = 113.592;
-      ZPos = 96909.627;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 5;
-      Random = 100;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 69;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [74];
-      Objects = [5];
-      XPos = 150174.398;
-      YPos = 2000.000;
-      ZPos = 96914.398;
-      XOri = 0.00;
-      YOri = 267.96;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 61;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [74];
-      Objects = [5];
-      XPos = 149129.926;
-      YPos = 2000.000;
-      ZPos = 94945.432;
-      XOri = 0.00;
-      YOri = 303.31;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 74;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [77];
-      Objects = [5];
-      XPos = 150268.957;
-      YPos = 2000.000;
-      ZPos = 92899.034;
-      XOri = 0.00;
-      YOri = 214.00;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 77;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [79];
-      Objects = [5];
-      XPos = 147156.437;
-      YPos = 2000.000;
-      ZPos = 90840.755;
-      XOri = 0.00;
-      YOri = 182.32;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Waypoint
-    {
-      Index = 79;
-      Name = "LeftOrbit";
-      Desc = "";
-      Targets = [62];
-      Objects = [5];
-      XPos = 143709.238;
-      YPos = 2000.000;
-      ZPos = 90907.691;
-      XOri = 0.00;
-      YOri = 149.18;
-      ZOri = 0.00;
-      Area = 1000;
-      Speed = 300;
-      Priority = 1;
-    }
-    
-
-    MCU_Activate
-    {
-      Index = 60;
-      Name = "Trigger Activate";
-      Desc = "";
-      Targets = [82];
-      Objects = [];
-      XPos = 150469.296;
-      YPos = 125.345;
-      ZPos = 98451.099;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 82;
-      Name = "AttackerAtRDV1";
-      Desc = "";
-      Targets = [3];
-      Objects = [];
-      XPos = 151513.670;
-      YPos = 122.084;
-      ZPos = 98482.274;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 0;
-      Random = 100;
-    }
-    
-
-    MCU_Deactivate
-    {
-      Index = 11;
-      Name = "Trigger Deactivate";
-      Desc = "";
-      Targets = [82];
-      Objects = [];
-      XPos = 152776.270;
-      YPos = 142.268;
-      ZPos = 98466.687;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_Deactivate
-    {
-      Index = 10;
-      Name = "Trigger Deactivate";
-      Desc = "";
-      Targets = [86];
-      Objects = [];
-      XPos = 152713.920;
-      YPos = 153.295;
-      ZPos = 101786.859;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 86;
-      Name = "EscortAtRDV1";
-      Desc = "";
-      Targets = [82];
-      Objects = [];
-      XPos = 151451.319;
-      YPos = 149.589;
-      ZPos = 101849.209;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 0;
-      Random = 100;
-    }
-    
-
-    MCU_Activate
-    {
-      Index = 88;
-      Name = "Trigger Activate";
-      Desc = "";
-      Targets = [86];
-      Objects = [];
-      XPos = 150329.008;
-      YPos = 128.187;
-      ZPos = 101818.034;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 72;
-      Name = "Try";
-      Desc = "";
-      Targets = [86];
-      Objects = [];
-      XPos = 151462.821;
-      YPos = 105.403;
-      ZPos = 103255.982;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 1;
-      Random = 100;
-    }
-    
-
-    MCU_Timer
-    {
-      Index = 14;
-      Name = "0s";
-      Desc = "";
-      Targets = [88,72];
-      Objects = [];
-      XPos = 150364.940;
-      YPos = 173.083;
-      ZPos = 104787.709;
-      XOri = 0.00;
-      YOri = 0.00;
-      ZOri = 0.00;
-      Time = 0;
-      Random = 100;
-    }
-    
-
   }
   
 
@@ -982,7 +151,7 @@ Group
       Index = 92;
       Name = "Waypoint1";
       Desc = "";
-      Targets = [58];
+      Targets = [];
       Objects = [5];
       XPos = 135506.395;
       YPos = 2000.000;
@@ -1099,7 +268,7 @@ Group
       Index = 100;
       LinkTrId = 5;
       XPos = 125376.494;
-      YPos = 104.297;
+      YPos = 115.459;
       ZPos = 95080.510;
       XOri = 354.44;
       YOri = 0.00;
@@ -1138,7 +307,7 @@ Group
       Targets = [];
       Objects = [];
       XPos = 125376.494;
-      YPos = 104.497;
+      YPos = 115.659;
       ZPos = 95080.510;
       XOri = 0.00;
       YOri = 0.00;
@@ -1191,9 +360,9 @@ Group
     MCU_Counter
     {
       Index = 105;
-      Name = "GroupUnableToAttack";
+      Name = "GROUP_UNABLE_TO_ATT";
       Desc = "";
-      Targets = [25,45,35];
+      Targets = [];
       Objects = [];
       XPos = 125406.889;
       YPos = 102.005;
@@ -1201,7 +370,7 @@ Group
       XOri = 0.00;
       YOri = 0.00;
       ZOri = 0.00;
-      Counter = 2;
+      Counter = 1;
       Dropcount = 0;
     }
     
@@ -1211,7 +380,7 @@ Group
       Index = 103;
       Name = "Dead";
       Desc = "";
-      Targets = [104];
+      Targets = [104,373];
       Objects = [];
       XPos = 125388.059;
       YPos = 105.980;
@@ -1256,6 +425,24 @@ Group
       YOri = 0.00;
       ZOri = 0.00;
       Color = 1;
+    }
+    
+
+    MCU_Counter
+    {
+      Index = 373;
+      Name = "ALL_KILLED";
+      Desc = "";
+      Targets = [];
+      Objects = [];
+      XPos = 125376.524;
+      YPos = 102.513;
+      ZPos = 95196.294;
+      XOri = 0.00;
+      YOri = 0.00;
+      ZOri = 0.00;
+      Counter = 1;
+      Dropcount = 0;
     }
     
 
@@ -1402,6 +589,61 @@ Group
     }
     
 
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 320;
+    Name = "IntoReturn";
+    Desc = "";
+    Targets = [322,30];
+    Objects = [5];
+    XPos = 148883.178;
+    YPos = 2000.000;
+    ZPos = 84969.403;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 322;
+    Name = "INTO_SECONDARY";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 148884.747;
+    YPos = 93.600;
+    ZPos = 80057.827;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 2;
+    Random = 50;
+  }
+  
+
+  MCU_Counter
+  {
+    Index = 369;
+    Name = "RELEASE_ESCORT";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 154801.106;
+    YPos = 165.717;
+    ZPos = 108458.928;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 1;
+    Dropcount = 0;
   }
   
 
@@ -3240,6 +2482,763 @@ Group
     }
     
 
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "GroundAreaAttack";
+  Index = 319;
+  Desc = "";
+  MCU_Waypoint
+  {
+    Index = 294;
+    Name = "INGRESS";
+    Desc = "";
+    Targets = [295,296,370];
+    Objects = [];
+    XPos = 178620.178;
+    YPos = 2000.000;
+    ZPos = 89911.466;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 295;
+    Name = "START_ATTACK";
+    Desc = "";
+    Targets = [299,300,301];
+    Objects = [];
+    XPos = 185291.112;
+    YPos = 2000.000;
+    ZPos = 89884.874;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_CMD_AttackArea
+  {
+    Index = 299;
+    Name = "ATTACK_AREA";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 195426.524;
+    YPos = 2000.000;
+    ZPos = 89961.195;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    AttackGround = 0;
+    AttackAir = 0;
+    AttackGTargets = 1;
+    AttackArea = 1000;
+    Time = 59940;
+    Priority = 1;
+  }
+  
+
+  MCU_Counter
+  {
+    Index = 303;
+    Name = "ATTACK_DONE";
+    Desc = "";
+    Targets = [304,371];
+    Objects = [];
+    XPos = 185431.117;
+    YPos = 129.263;
+    ZPos = 79823.674;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 1;
+    Dropcount = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 300;
+    Name = "AttackDuration";
+    Desc = "";
+    Targets = [303];
+    Objects = [];
+    XPos = 185478.488;
+    YPos = 85.818;
+    ZPos = 84892.434;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 900;
+    Random = 100;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 307;
+    Name = "EGRESS";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 175530.453;
+    YPos = 2000.000;
+    ZPos = 79871.045;
+    XOri = 0.00;
+    YOri = 182.23;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 304;
+    Name = "AFTER_ATTACK";
+    Desc = "";
+    Targets = [307,311];
+    Objects = [];
+    XPos = 180368.452;
+    YPos = 144.314;
+    ZPos = 79856.931;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 312;
+    Name = "";
+    Desc = "";
+    Targets = [304,370];
+    Objects = [];
+    XPos = 178740.401;
+    YPos = 149.862;
+    ZPos = 83255.187;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_CMD_Formation
+  {
+    Index = 313;
+    Name = "FORMATION_NONE";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 178584.076;
+    YPos = 126.503;
+    ZPos = 93369.945;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  FormationType = 0;
+  FormationDensity = 2;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 296;
+    Name = "5s";
+    Desc = "";
+    Targets = [313];
+    Objects = [];
+    XPos = 178584.076;
+    YPos = 113.592;
+    ZPos = 91846.308;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 5;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 301;
+    Name = "";
+    Desc = "";
+    Targets = [304];
+    Objects = [];
+    XPos = 182116.027;
+    YPos = 92.421;
+    ZPos = 83253.122;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_CMD_Formation
+  {
+    Index = 316;
+    Name = "FORMATION_SAFE";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 180377.757;
+    YPos = 126.503;
+    ZPos = 76610.079;
+    XOri = 0.00;
+    YOri = 179.75;
+    ZOri = 0.00;
+  FormationType = 3;
+  FormationDensity = 1;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 311;
+    Name = "5s";
+    Desc = "";
+    Targets = [316];
+    Objects = [];
+    XPos = 180384.432;
+    YPos = 113.592;
+    ZPos = 78133.701;
+    XOri = 0.00;
+    YOri = 179.75;
+    ZOri = 0.00;
+    Time = 5;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 318;
+    Name = "START";
+    Desc = "";
+    Targets = [312];
+    Objects = [];
+    XPos = 173956.244;
+    YPos = 139.647;
+    ZPos = 83264.423;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 370;
+    Name = "IfAttackCanceled";
+    Desc = "";
+    Targets = [307];
+    Objects = [];
+    XPos = 177101.158;
+    YPos = 154.292;
+    ZPos = 85313.038;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 371;
+    Name = "Trigger Activate";
+    Desc = "";
+    Targets = [370];
+    Objects = [];
+    XPos = 178757.008;
+    YPos = 152.784;
+    ZPos = 85301.125;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "MeetingPoint";
+  Index = 358;
+  Desc = "";
+  MCU_Waypoint
+  {
+    Index = 323;
+    Name = "RDV";
+    Desc = "";
+    Targets = [324,325,326,362];
+    Objects = [];
+    XPos = 145590.850;
+    YPos = 2000.000;
+    ZPos = 64864.720;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 328;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [329];
+    Objects = [];
+    XPos = 140694.175;
+    YPos = 2000.000;
+    ZPos = 62731.715;
+    XOri = 0.00;
+    YOri = 91.41;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 329;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [331];
+    Objects = [];
+    XPos = 140660.707;
+    YPos = 2000.000;
+    ZPos = 66915.209;
+    XOri = 0.00;
+    YOri = 34.17;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 331;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [333];
+    Objects = [];
+    XPos = 143907.098;
+    YPos = 2000.000;
+    ZPos = 69057.158;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 333;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [335];
+    Objects = [];
+    XPos = 147237.160;
+    YPos = 2000.000;
+    ZPos = 69006.956;
+    XOri = 0.00;
+    YOri = 319.46;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_CMD_Formation
+  {
+    Index = 336;
+    Name = "FORMATION_DENSE";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 145586.050;
+    YPos = 126.503;
+    ZPos = 68350.247;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  FormationType = 3;
+  FormationDensity = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 324;
+    Name = "5s";
+    Desc = "";
+    Targets = [336,338];
+    Objects = [];
+    XPos = 145586.050;
+    YPos = 113.592;
+    ZPos = 66826.610;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 5;
+    Random = 100;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 335;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [340];
+    Objects = [];
+    XPos = 150391.710;
+    YPos = 2000.000;
+    ZPos = 66831.381;
+    XOri = 0.00;
+    YOri = 267.96;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 326;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [340];
+    Objects = [];
+    XPos = 149347.238;
+    YPos = 2000.000;
+    ZPos = 64862.415;
+    XOri = 0.00;
+    YOri = 303.31;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 340;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [343];
+    Objects = [];
+    XPos = 150486.269;
+    YPos = 2000.000;
+    ZPos = 62816.017;
+    XOri = 0.00;
+    YOri = 214.00;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 343;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [345];
+    Objects = [];
+    XPos = 147373.749;
+    YPos = 2000.000;
+    ZPos = 60757.738;
+    XOri = 0.00;
+    YOri = 182.32;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 345;
+    Name = "LeftOrbit";
+    Desc = "";
+    Targets = [328];
+    Objects = [];
+    XPos = 143926.550;
+    YPos = 2000.000;
+    ZPos = 60824.674;
+    XOri = 0.00;
+    YOri = 149.18;
+    ZOri = 0.00;
+    Area = 1000;
+    Speed = 300;
+    Priority = 1;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 325;
+    Name = "Trigger Activate";
+    Desc = "";
+    Targets = [348];
+    Objects = [];
+    XPos = 150686.608;
+    YPos = 125.345;
+    ZPos = 68368.082;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 348;
+    Name = "AttackerAtRDV1";
+    Desc = "";
+    Targets = [365];
+    Objects = [];
+    XPos = 151730.982;
+    YPos = 122.084;
+    ZPos = 68399.257;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 351;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [348];
+    Objects = [];
+    XPos = 152993.582;
+    YPos = 142.268;
+    ZPos = 68383.670;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 352;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [353];
+    Objects = [];
+    XPos = 152931.232;
+    YPos = 153.295;
+    ZPos = 71703.842;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 353;
+    Name = "EscortAtRDV1";
+    Desc = "";
+    Targets = [348];
+    Objects = [];
+    XPos = 151668.631;
+    YPos = 149.589;
+    ZPos = 71766.192;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Activate
+  {
+    Index = 355;
+    Name = "Trigger Activate";
+    Desc = "";
+    Targets = [353];
+    Objects = [];
+    XPos = 150546.320;
+    YPos = 128.187;
+    ZPos = 71735.017;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 338;
+    Name = "Try";
+    Desc = "";
+    Targets = [353];
+    Objects = [];
+    XPos = 151680.133;
+    YPos = 105.403;
+    ZPos = 73172.965;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 1;
+    Random = 100;
+  }
+  
+
+  MCU_Counter
+  {
+    Index = 360;
+    Name = "START";
+    Desc = "";
+    Targets = [351,352];
+    Objects = [];
+    XPos = 154516.213;
+    YPos = 143.239;
+    ZPos = 70027.627;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 1;
+    Dropcount = 0;
+  }
+  
+
+  MCU_Counter
+  {
+    Index = 361;
+    Name = "ESCORT_READY";
+    Desc = "";
+    Targets = [338,355];
+    Objects = [];
+    XPos = 150551.316;
+    YPos = 96.680;
+    ZPos = 74842.883;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 1;
+    Dropcount = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 362;
+    Name = "MaxWait";
+    Desc = "";
+    Targets = [363,366];
+    Objects = [];
+    XPos = 151740.540;
+    YPos = 156.162;
+    ZPos = 64821.415;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 600;
+    Random = 100;
+  }
+  
+
+  MCU_Counter
+  {
+    Index = 363;
+    Name = "PROCEED";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 154543.108;
+    YPos = 171.074;
+    ZPos = 66352.134;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Counter = 1;
+    Dropcount = 0;
+  }
+  
+
+  MCU_Timer
+  {
+    Index = 365;
+    Name = "0s";
+    Desc = "";
+    Targets = [363];
+    Objects = [];
+    XPos = 151740.540;
+    YPos = 116.982;
+    ZPos = 67342.600;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Time = 0;
+    Random = 100;
+  }
+  
+
+  MCU_Deactivate
+  {
+    Index = 366;
+    Name = "Trigger Deactivate";
+    Desc = "";
+    Targets = [365];
+    Objects = [];
+    XPos = 151785.561;
+    YPos = 158.286;
+    ZPos = 66082.007;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
   }
   
 

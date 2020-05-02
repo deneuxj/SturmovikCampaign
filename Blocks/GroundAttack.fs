@@ -7,6 +7,7 @@ open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.Blocks.McuInstantiation
 
 type OptionalLandOrder =
     | Land of Vector2 * float32
@@ -101,128 +102,309 @@ with
             | :? Mcu.McuTimer as timer -> timer.Time <- t
             | _ -> failwith "MCU START in GroundAttack must be a timer"
 
-type DirectedPoint =
-    { Pos : Vector2
-      Direction : float32
-    }
-
 type StartType =
     | AirStart of {| Altitude : int |}
     | GroundStart of {| EnginesRunning : bool; TakeOffPoint : DirectedPoint |}
 
-type AttackArea = {
+type AttackAreaParams = {
     Center : Vector2
     Ingress : DirectedPoint
     AttackStart : DirectedPoint
     AttackAltitude : int
     Egress : DirectedPoint
 }
-with member this.DirectedPoint =
-    { Pos = this.Center
-      Direction = (this.Center - this.Ingress.Pos).YOri
-    }
+with
+    member this.DirectedPoint =
+        { Pos = this.Center
+          Direction = (this.Center - this.Ingress.Pos).YOri
+        }
 
-type AttackerGroupParams = {
+type AttackArea = {
+    /// OBJ, IN
+    Ingress : Mcu.McuWaypoint
+    /// OBJ, OUT
+    StartAttack : Mcu.McuWaypoint
+    /// OBJ
+    AttackArea : Mcu.McuAttackArea
+    /// IN: trigger this when a wing is unable to drop more bombs
+    AttackDone : Mcu.McuCounter
+    /// OBJ, OUT
+    Egress : Mcu.McuWaypoint
+    /// OBJ
+    FormationNone : Mcu.McuTrigger
+    /// OBJ
+    FormationSafe : Mcu.McuTrigger
+    /// OUT
+    AfterAttack : Mcu.McuTrigger
+    /// IN
+    Start : Mcu.McuTrigger
+    All : McuUtil.IMcuGroup
+}
+with
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, config : AttackAreaParams) =
+        // Instantiate
+        let mcus, subst = getFreshGroup blocks2Data store "GroundAreaAttack"
+
+        // nodes of interest
+        let ingress = getWaypointByName mcus "INGRESS"
+        let startAttack = getWaypointByName mcus "START_ATTACK"
+        let attackArea = getTriggerByName mcus "ATTACK_AREA" :?> Mcu.McuAttackArea
+        let attackDone = getTriggerByName mcus "ATTACK_DONE" :?> Mcu.McuCounter
+        let egress = getWaypointByName mcus "EGRESS"
+        let formationNone = getTriggerByName mcus "FORMATION_NONE"
+        let formationSafe = getTriggerByName mcus "FORMATION_SAFE"
+        let start = getTriggerByName mcus "START"
+        let afterAttack = getTriggerByName mcus "AFTER_ATTACK"
+
+        // general node relocation
+        relocateGroup config.DirectedPoint (mcus, attackArea)
+        setAltitude config.AttackAltitude mcus
+
+        // specific node relocation
+        config.Ingress.AssignTo ingress
+        config.AttackStart.AssignTo startAttack
+        config.Egress.AssignTo egress
+
+        {
+            Ingress = ingress
+            StartAttack = startAttack
+            AttackArea = attackArea
+            AttackDone = attackDone
+            Egress = egress
+            FormationNone = formationNone
+            FormationSafe = formationSafe
+            Start = start
+            AfterAttack = afterAttack
+            All = McuUtil.groupFromList mcus
+        }
+
+    member this.ConnectTo(entity : Mcu.McuEntity) =
+        for node in this.All.Content do
+            match node with
+            | :? Mcu.McuWaypoint as wp -> Mcu.addObjectLink wp entity.Index
+            | _ -> ()
+        for trigger in [this.FormationNone; this.FormationSafe; upcast this.AttackArea] do
+            Mcu.addObjectLink trigger entity.Index
+
+
+type MeetingPointConfig = {
+    Location : DirectedPoint
+    Altitude : int
+    MaxWaitDuration : float32
+}
+
+type MeetingPoint = {
+    /// IN
+    Start : Mcu.McuTrigger
+    /// OBJ
+    MeetAt : Mcu.McuWaypoint
+    /// IN
+    OtherArrived : Mcu.McuTrigger
+    /// OBJ
+    FormationDense : Mcu.McuTrigger
+    /// OUT
+    Proceed : Mcu.McuTrigger
+    All : McuUtil.IMcuGroup
+}
+with
+    static member Create(store, config : MeetingPointConfig) =
+        // Instantiation
+        let mcus, subst = getFreshGroup blocks2Data store "MeetingPoint"
+        // Nodes of interest
+        let start = getTriggerByName mcus "START"
+        let meetAt = getWaypointByName mcus "RDV"
+        let otherArrived = getTriggerByName mcus "ESCORT_READY"
+        let timeout = getTriggerByName mcus "MaxWait" :?> Mcu.McuTimer
+        let proceed = getTriggerByName mcus "PROCEED"
+        let formation = getTriggerByName mcus "FORMATION_DENSE"
+        // Relocation
+        relocateGroup config.Location (mcus, meetAt)
+        setAltitude config.Altitude mcus
+        // Result
+        timeout.Time <- float config.MaxWaitDuration
+        {
+            Start = start
+            MeetAt = meetAt
+            OtherArrived = otherArrived
+            FormationDense = formation
+            Proceed = proceed
+            All = McuUtil.groupFromList mcus
+        }
+
+    member this.ConnectTo(entity : Mcu.McuEntity) =
+        for node in this.All.Content do
+            match node with
+            | :? Mcu.McuWaypoint as wp -> Mcu.addObjectLink wp entity.Index
+            | _ -> ()
+        Mcu.addObjectLink this.FormationDense entity.Index
+
+
+type AttackerGroupConfig = {
     StartType : StartType
     StartPos : DirectedPoint
     CruiseAltitude : int
     CruiseSpeed : int
-    RendezVous : DirectedPoint option
+    RendezVous : MeetingPointConfig option
     MidPos : DirectedPoint
-    PrimaryObjective : AttackArea
-    SecondaryObjective : AttackArea option
+    PrimaryObjective : AttackAreaParams
+    SecondaryObjective : AttackAreaParams option
+    IntoReturn : DirectedPoint
     Return : DirectedPoint
     Final : DirectedPoint
     LandAt : Vector2
     NumPlanes : int
 }
 
-/// Move and rotate a group to a new location
-let relocateGroup (newCenter : DirectedPoint) (group : #Mcu.McuBase seq * Mcu.McuBase) =
-    let mcus, refMcu = group
-    let refPos = Vector2.FromMcu refMcu.Pos
-    let rotation = newCenter.Direction - float32 refMcu.Ori.Y
-    for mcu in mcus do
-        let r = (Vector2.FromMcu mcu.Pos) - refPos
-        let r = newCenter.Pos + r.Rotate(rotation)
-        r.AssignTo(mcu.Pos)
-
-let setAltitude (altitude : int) (group : #Mcu.McuBase seq * Mcu.McuBase) =
-    let mcus, _ = group
-    for mcu in mcus do
-        mcu.Pos.Y <- float altitude
-
 type AttackerGroup = {
+    /// IN
     Start : Mcu.McuTrigger
-    EscortReady : Mcu.McuTrigger
+    /// OUT
     ReleaseEscort : Mcu.McuTrigger
+    /// OUT
     AllKilled : Mcu.McuTrigger
     LeadPlane : Mcu.HasEntity
+    WingPlanes : Mcu.HasEntity[]
+    PrimaryAttackArea : AttackArea
+    SecondaryAttackArea : AttackArea option
+    MeetWithEscort : MeetingPoint option
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, mkPlanes : int * DirectedPoint * Vector2 -> Mcu.McuBase list, parameters : AttackerGroupParams) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, config : AttackerGroupConfig) =
         // Instantiate
-        let subst = Mcu.substId <| store.GetIdMapper()
-        let group = blocksData.GetGroup("GroundAttack").CreateMcuList()
-        for mcu in group do
-            subst mcu
+        let group, subst = getFreshGroup blocks2Data store "GroundAttack"
+
+        // Subgroups
+        let attack1 = AttackArea.Create(store, lcStore, config.PrimaryObjective)
+        let attack2 = config.SecondaryObjective |> Option.map (fun o -> AttackArea.Create(store, lcStore, o))
+        let meeting = config.RendezVous |> Option.map (fun rdv -> MeetingPoint.Create(store, rdv))
 
         // Nodes of interest
-        let wpRDV = getWaypointByName group "RDV1"
-        let wp2 = getWaypointByName group "Waypoint2"
-        let wpIngress1 = getWaypointByName group "Ingress1"
-        let wpStartAttack1 = getWaypointByName group "StartAttack1"
-        let wpEgress1 = getWaypointByName group "Egress1"
+        let intoPrimary = getWaypointByName group "INTO_PRIMARY"
+        let wp1 = getWaypointByName group "Waypoint1"
+        let start = getTriggerByName group "START"
+        let escortReady = getTriggerByName group "ESCORT_READY"
+        let releaseEscort = getTriggerByName group "RELEASE_ESCORT"
+        let intoSecondary = getTriggerByName group "INTO_SECONDARY" :?> Mcu.McuTimer
+        let intoReturn = getWaypointByName group "IntoReturn"
+        let wpReturn = getWaypointByName group "RETURN"
+        let unableToAttack = getTriggerByName group "GROUP_UNABLE_TO_ATT" :?> Mcu.McuCounter
+        let greenFlare = getTriggerByName group "GREEN_FLARE"
+        let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
+        let planeVehicle = getVehicleByName group "ATTACKER"
+        let plane = getEntityByIndex planeVehicle.LinkTrId group
 
         // groups of related nodes, each group centered around some key position
-        let extractGroup groupName refName =
-            group |> filterByPath [groupName],
-            group |> filterByName refName |> Seq.head
-        let centralGroup = extractGroup "GroundAttack" "Waypoint2"
-        let primaryObjGroup = extractGroup "PrimaryObjective" "AttackArea"
-        let secondaryObjGroup = extractGroup "SecondaryObjective" "AttackArea2"
-        let meetEscortGroup = extractGroup "MeetEscort" "RDV1"
+        let extractGroup = extractGroup group
+        let centralGroup = extractGroup "GroundAttack" "Waypoint1"
         let flightStartGroup = extractGroup "FlightStart" "TakeOff"
         let planeGroup = extractGroup "Plane" "ATTACKER"
         let returnGroup = extractGroup "Return" "Return"
         let landGroup = extractGroup "Land" "Land"
 
         // General relocation
-        relocateGroup parameters.MidPos centralGroup
-        relocateGroup parameters.PrimaryObjective.DirectedPoint primaryObjGroup
-        parameters.SecondaryObjective |> Option.iter (fun p -> relocateGroup p.DirectedPoint secondaryObjGroup)
-        parameters.RendezVous |> Option.iter (fun p -> relocateGroup p meetEscortGroup)
-        match parameters.StartType with
+        relocateGroup config.MidPos centralGroup
+        match config.StartType with
         | AirStart x ->
-            relocateGroup parameters.StartPos planeGroup
-            relocateGroup parameters.StartPos flightStartGroup
-            setAltitude x.Altitude planeGroup
+            relocateGroup config.StartPos planeGroup
+            relocateGroup config.StartPos flightStartGroup
+            setAltitude x.Altitude (fst planeGroup)
         | GroundStart x ->
-            relocateGroup parameters.StartPos planeGroup
+            relocateGroup config.StartPos planeGroup
             relocateGroup x.TakeOffPoint flightStartGroup
-        relocateGroup parameters.StartPos planeGroup
-        relocateGroup parameters.Return returnGroup
-        relocateGroup { Pos = parameters.LandAt; Direction = parameters.Return.Direction } landGroup
+        relocateGroup config.StartPos planeGroup
+        relocateGroup config.Return returnGroup
+        relocateGroup { Pos = config.LandAt; Direction = config.Return.Direction } landGroup
 
         // Altitude
-        for group in [centralGroup; meetEscortGroup; flightStartGroup; returnGroup] do
-            setAltitude parameters.CruiseAltitude group
-        setAltitude parameters.PrimaryObjective.AttackAltitude primaryObjGroup
-        parameters.SecondaryObjective |> Option.iter (fun p -> setAltitude p.AttackAltitude secondaryObjGroup)
+        for group in [centralGroup; flightStartGroup; returnGroup] do
+            setAltitude config.CruiseAltitude (fst group)
+        setAltitude config.CruiseAltitude [intoPrimary; intoReturn; wpReturn]
 
         // Detailed relocation
-        // TODO
+        config.MidPos.AssignTo intoPrimary
+        config.IntoReturn.AssignTo intoReturn
+        config.Return.AssignTo wpReturn
 
         // Set speeds
+        for mcu in group do
+            match mcu with
+            | :? Mcu.McuWaypoint as wp -> wp.Speed <- config.CruiseSpeed
+            | _ -> ()
 
-        // Cut off secondary objective logic if inactive
-        // TODO
-
-        // Remove placeholder plane
-        // TODO
+        // Set up connections between subgroups
+        let cx = Mcu.addTargetLink
+        //  Escort meet-up
+        match meeting with
+        | Some meeting ->
+            cx wp1 meeting.MeetAt.Index
+            cx start meeting.Start.Index
+            cx attack1.StartAttack releaseEscort.Index
+            cx escortReady meeting.OtherArrived.Index
+        | None ->
+            cx wp1 attack1.Ingress.Index
+        //  Primary objective
+        cx start attack1.Start.Index
+        cx attack1.StartAttack releaseEscort.Index
+        cx attack1.AfterAttack greenFlare.Index
+        cx unableToAttack attack1.AttackDone.Index
+        cx attack1.Egress intoReturn.Index
+        //  Secondary objective
+        match attack2 with
+        | Some attack2 ->
+            cx start attack2.Start.Index
+            cx attack2.AfterAttack greenFlare.Index
+            cx unableToAttack attack2.AttackDone.Index
+            cx attack2.Egress wpReturn.Index
+            cx intoSecondary attack2.Ingress.Index
+        | None ->
+            // Break connection between waypoint and timer
+            intoReturn.Targets <- intoReturn.Targets |> List.filter ((<>) intoSecondary.Index)
 
         // Set plane wing
-        // TODO
+        allKilled.Count <- config.NumPlanes
+        unableToAttack.Count <- config.NumPlanes
+        attack1.ConnectTo plane
+        attack2 |> Option.iter (fun attack -> attack.ConnectTo plane)
+        meeting |> Option.iter (fun meeting -> meeting.ConnectTo plane)
 
-        failwith "TODO"
+        let isDead = getTriggerByName group "Dead"
+        let isBingoBombs = getTriggerByName group "BingoBombs"
+        let isDone = getTriggerByName group "UnableToAttack"
+        let newGroup() = cloneFresh store [planeVehicle :> Mcu.McuBase; plane; isDead; isBingoBombs; isDone]
+        let wing =
+            [|
+                for i in 2..config.NumPlanes do
+                    let group = newGroup()
+                    let dead = getTriggerByName group "Dead"
+                    let unable = getTriggerByName group "UnableToAttack"
+                    let vehicle = getVehicleByName group "ATTACKER"
+                    let entity = getEntityByIndex vehicle.LinkTrId group
+                    vehicle.Name <- sprintf "ATTACKER %d" i
+                    vehicle.NumberInFormation.Value.Number <- i
+                    cx entity plane.Index
+                    cx dead allKilled.Index
+                    cx unable unableToAttack.Index
+                    yield vehicle, group
+            |]
+
+        // Result
+        {
+            Start = start
+            ReleaseEscort = releaseEscort
+            AllKilled = allKilled
+            LeadPlane = planeVehicle
+            WingPlanes = wing |> Array.map fst
+            PrimaryAttackArea = attack1
+            SecondaryAttackArea = attack2
+            MeetWithEscort = meeting
+            All = 
+                { new McuUtil.IMcuGroup with
+                      member this.Content = group
+                      member this.LcStrings = []
+                      member this.SubGroups = [
+                        for _, group in wing do
+                            yield McuUtil.groupFromList group
+                      ]
+                }
+        }
