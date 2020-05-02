@@ -11,6 +11,7 @@
     <Compile Include="Links.fs" />
     <Compile Include="Predicates.fs" />
     <Compile Include="BlocksMissionData.fs" />
+    <Compile Include="McuInstantiation.fs" />
     <Compile Include="Vehicles.fs" />
     <Compile Include="MapGraphics.fs" />
     <Compile Include="Conjunction.fs" />
