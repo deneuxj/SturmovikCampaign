@@ -26,6 +26,7 @@ open Campaign.MissionSelection
 
 open System.Numerics
 open Campaign.Missions
+open WorldDescription
 
 type GameType =
     | Coop
@@ -116,6 +117,7 @@ type MissionContent =
         GroundBattles : GroundBattle list
         AiPatrols : AiPatrol list
         AiAttacks : AiAttack list
+        ParkedPlanes : Map<AirfieldId, PlaneModelId>
     }
 
 type AiStartPoint =
