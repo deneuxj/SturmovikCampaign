@@ -417,3 +417,12 @@ with
                       ]
                 }
         }
+
+    member this.SetPlanes(proto : T.Plane) =
+        for plane in Seq.append [this.LeadPlane] this.WingPlanes do
+            plane.Model <- proto.GetModel().Value
+            plane.Script <- proto.GetModel().Value
+            plane.WMMask <- Some (proto.GetWMMask().Value)
+            plane.PayloadId <- Some (proto.GetPayloadId().Value)
+            plane.AILevel <- Some (proto.GetAILevel().Value)
+            plane.Country <- Some (enum(proto.GetCountry().Value))
