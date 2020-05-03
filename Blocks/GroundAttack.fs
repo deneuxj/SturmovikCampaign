@@ -141,7 +141,7 @@ type AttackArea = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, config : AttackAreaParams) =
+    static member Create(store : NumericalIdentifiers.IdStore, config : AttackAreaParams) =
         // Instantiate
         let mcus, subst = getFreshGroup blocks2Data store "GroundAreaAttack"
 
@@ -270,13 +270,13 @@ type AttackerGroup = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, config : AttackerGroupConfig) =
+    static member Create(store : NumericalIdentifiers.IdStore, config : AttackerGroupConfig) =
         // Instantiate
         let group, subst = getFreshGroup blocks2Data store "GroundAttack"
 
         // Subgroups
-        let attack1 = AttackArea.Create(store, lcStore, config.PrimaryObjective)
-        let attack2 = config.SecondaryObjective |> Option.map (fun o -> AttackArea.Create(store, lcStore, o))
+        let attack1 = AttackArea.Create(store, config.PrimaryObjective)
+        let attack2 = config.SecondaryObjective |> Option.map (fun o -> AttackArea.Create(store, o))
         let meeting = config.RendezVous |> Option.map (fun rdv -> MeetingPoint.Create(store, rdv))
 
         // Nodes of interest
