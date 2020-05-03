@@ -14,7 +14,12 @@ with
     member this.AssignTo(mcu : Mcu.McuTrigger) =
         this.Pos.AssignTo mcu.Pos
         mcu.Ori.Y <- float this.Direction
-        
+
+    static member inline FromMCU(mcu) =
+        let pos = Vector2.FromPos(mcu)
+        let direction = mcu |> CommonMethods.getYOri |> CommonMethods.valueOf |> float32
+        { Pos = pos; Direction = direction }
+
 /// Extract a group of nodes and a node to use as reference when relocating.
 let extractGroup group groupName refName =
     group |> filterByPath [groupName],
