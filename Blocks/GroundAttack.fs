@@ -293,6 +293,7 @@ with
         let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
         let planeVehicle = getVehicleByName group "ATTACKER"
         let plane = getEntityByIndex planeVehicle.LinkTrId group
+        let wpFinal = getWaypointByName group "Final"
 
         // groups of related nodes, each group centered around some key position
         let extractGroup = extractGroup group
@@ -325,6 +326,8 @@ with
         config.MidPos.AssignTo intoPrimary
         config.IntoReturn.AssignTo intoReturn
         config.Return.AssignTo wpReturn
+        config.Final.AssignTo wpFinal
+        setAltitude 1000 [wpFinal]
 
         // Set speeds
         for mcu in group do
