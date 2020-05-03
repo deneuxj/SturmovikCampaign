@@ -376,12 +376,20 @@ with
         let newGroup() = cloneFresh store [planeVehicle :> Mcu.McuBase; plane; isDead; isBingoBombs; isDone]
         let wing =
             [|
+                let offset =
+                    match config.StartType with
+                    | AirStart _ -> Vector2(-50.0f, 50.0f).Rotate(config.StartPos.Direction)
+                    | GroundStart _ -> Vector2(0.0f, 35.0f).Rotate(config.StartPos.Direction)
                 for i in 2..config.NumPlanes do
                     let group = newGroup()
                     let dead = getTriggerByName group "Dead"
                     let unable = getTriggerByName group "UnableToAttack"
                     let vehicle = getVehicleByName group "ATTACKER"
                     let entity = getEntityByIndex vehicle.LinkTrId group
+                    for mcu in group do
+                        let pos = Vector2.FromMcu(mcu.Pos)
+                        let newPos = pos + (float32 (i - 1)) * offset
+                        newPos.AssignTo mcu.Pos
                     vehicle.Name <- sprintf "ATTACKER %d" i
                     vehicle.NumberInFormation.Value.Number <- i
                     cx entity plane.Index
