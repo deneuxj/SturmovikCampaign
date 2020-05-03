@@ -287,9 +287,9 @@ with
         let releaseEscort = getTriggerByName group "RELEASE_ESCORT"
         let intoSecondary = getTriggerByName group "INTO_SECONDARY" :?> Mcu.McuTimer
         let intoReturn = getWaypointByName group "IntoReturn"
-        let wpReturn = getWaypointByName group "RETURN"
+        let wpReturn = getWaypointByName group "Return"
         let unableToAttack = getTriggerByName group "GROUP_UNABLE_TO_ATT" :?> Mcu.McuCounter
-        let greenFlare = getTriggerByName group "GREEN_FLARE"
+        let greenFlare = getTriggerByName group "GreenFlare"
         let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
         let planeVehicle = getVehicleByName group "ATTACKER"
         let plane = getEntityByIndex planeVehicle.LinkTrId group
@@ -341,14 +341,16 @@ with
             cx start meeting.Start.Index
             cx attack1.StartAttack releaseEscort.Index
             cx escortReady meeting.OtherArrived.Index
+            cx meeting.Proceed intoPrimary.Index
         | None ->
-            cx wp1 attack1.Ingress.Index
+            cx wp1 intoPrimary.Index
         //  Primary objective
         cx start attack1.Start.Index
         cx attack1.StartAttack releaseEscort.Index
         cx attack1.AfterAttack greenFlare.Index
         cx unableToAttack attack1.AttackDone.Index
         cx attack1.Egress intoReturn.Index
+        cx intoPrimary attack1.Ingress.Index
         //  Secondary objective
         match attack2 with
         | Some attack2 ->
@@ -403,6 +405,13 @@ with
                       member this.Content = group
                       member this.LcStrings = []
                       member this.SubGroups = [
+                        yield attack1.All
+                        match attack2 with
+                        | Some attack2 -> yield attack2.All
+                        | None -> ()
+                        match meeting with
+                        | Some meeting -> yield meeting.All
+                        | None -> ()
                         for _, group in wing do
                             yield McuUtil.groupFromList group
                       ]
