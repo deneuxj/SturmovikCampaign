@@ -251,7 +251,7 @@ type AttackerGroupConfig = {
     IntoReturn : DirectedPoint
     Return : DirectedPoint
     Final : DirectedPoint
-    LandAt : Vector2
+    LandAt : DirectedPoint
     NumPlanes : int
 }
 
@@ -315,7 +315,7 @@ with
             relocateGroup x.TakeOffPoint flightStartGroup
         relocateGroup config.StartPos planeGroup
         relocateGroup config.Return returnGroup
-        relocateGroup { Pos = config.LandAt; Direction = config.Return.Direction } landGroup
+        relocateGroup config.LandAt landGroup
 
         // Altitude
         for group in [centralGroup; flightStartGroup; returnGroup] do

@@ -133,7 +133,7 @@ let mkConfigFromGroup (group : T.GroupData) =
                     IntoReturn = DirectedPoint.FromMCU(intoReturn)
                     Return = DirectedPoint.FromMCU(wpReturn)
                     Final = DirectedPoint.FromMCU(wpLand)
-                    LandAt = Vector2.FromPos(landing)
+                    LandAt = DirectedPoint.FromMCU(landing)
             |}
         | [] | [_] | [_;_] ->
             failwith "Missing 'intoReturn', 'return' or 'land' waypoint"
