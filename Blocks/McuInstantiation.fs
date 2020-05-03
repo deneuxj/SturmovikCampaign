@@ -34,6 +34,7 @@ let relocateGroup (newCenter : DirectedPoint) (group : #Mcu.McuBase seq * Mcu.Mc
         let r = (Vector2.FromMcu mcu.Pos) - refPos
         let r = newCenter.Pos + r.Rotate(rotation)
         r.AssignTo(mcu.Pos)
+        mcu.Ori.Y <- (mcu.Ori.Y + float rotation) % 360.0
 
 /// Set the altitude of a group of nodes.
 let setAltitude (altitude : int) (mcus : #Mcu.McuBase seq) =
