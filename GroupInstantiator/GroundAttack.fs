@@ -18,8 +18,7 @@ let mkConfigFromGroup (group : T.GroupData) =
         | [subject] -> subject
         | [] -> failwith "Group does not have a plane"
         | _ -> failwith "Group has too many planes"
-    let startPos =
-        { Pos = Vector2.FromPos(plane); Direction = plane.GetYOri().Value |> float32 }
+    let startPos = DirectedPoint.FromMCU(plane)
     let (|OnGround|InAir|Unknown|) =
         function
         | 0 -> InAir
@@ -179,4 +178,4 @@ let mkConfigFromGroup (group : T.GroupData) =
             failwith "Missing waypoint to primary objective"
         | _ -> failwith "Failed to analyse flight path"
 
-    config
+    config, plane

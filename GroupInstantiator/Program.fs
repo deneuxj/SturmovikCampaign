@@ -33,11 +33,12 @@ let main argv =
             let store = SturmovikMission.DataProvider.NumericalIdentifiers.IdStore()
             let group =
                 config
-                |> Result.bind(fun config ->
+                |> Result.bind(fun (config, plane) ->
                     try
                         printfn "Instantiating template"
-                        SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, config)
-                        |> Ok
+                        let group = SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, config)
+                        group.SetPlanes(plane)
+                        Ok group
                     with
                     | e -> Error ("Error during instantiation: " + e.Message))
             match group with
