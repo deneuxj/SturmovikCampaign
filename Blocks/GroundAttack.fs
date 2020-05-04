@@ -430,10 +430,21 @@ with
         }
 
     member this.SetPlanes(proto : T.Plane) =
+        let decodeFromFakeBase2 n =
+            let rec work n k res =
+                if n = 0 then
+                    res
+                elif n % 10 = 1 then
+                    work (n / 10) (k * 2) (res + k)
+                elif n % 10 = 0 then
+                    work (n / 10) (k * 2) res
+                else
+                    failwith "Invalid fake base 2 number"
+            work n 1 0
         for plane in Seq.append [this.LeadPlane] this.WingPlanes do
             plane.Model <- proto.GetModel().Value
-            plane.Script <- proto.GetModel().Value
-            plane.WMMask <- Some (proto.GetWMMask().Value)
+            plane.Script <- proto.GetScript().Value
+            plane.WMMask <- Some (proto.GetWMMask().Value |> decodeFromFakeBase2)
             plane.PayloadId <- Some (proto.GetPayloadId().Value)
             plane.AILevel <- Some (proto.GetAILevel().Value)
             plane.Country <- Some (enum(proto.GetCountry().Value))
