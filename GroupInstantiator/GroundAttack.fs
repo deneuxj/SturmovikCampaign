@@ -120,7 +120,7 @@ let mkConfigFromGroup (group : T.GroupData) =
 
     let (|Closing|) =
         function
-        | [intoReturn : T.MCU_Waypoint; wpReturn; wpLand] ->
+        | [wpReturn : T.MCU_Waypoint; wpLand] ->
             let landing =
                 let landing =
                     group.ListOfMCU_CMD_Land
@@ -130,7 +130,6 @@ let mkConfigFromGroup (group : T.GroupData) =
                 | [x] -> x
                 | _ -> failwith "Too many landing commands"
             Closing {|
-                    IntoReturn = DirectedPoint.FromMCU(intoReturn)
                     Return = DirectedPoint.FromMCU(wpReturn)
                     Final = DirectedPoint.FromMCU(wpLand)
                     LandAt = DirectedPoint.FromMCU(landing)
@@ -148,7 +147,7 @@ let mkConfigFromGroup (group : T.GroupData) =
 
     let config =
         match path with
-        | Start(startData, OptRendezVous(rdvOpt, MidPos(mid, Attack(primary, rest)))) ->
+        | Start(startData, OptRendezVous(rdvOpt, MidPos(mid, Attack(primary, MidPos(intoReturn, rest))))) ->
             let secondary, rest =
                 match rest with
                 | Attack(secondary, rest) -> Some secondary, rest
@@ -164,7 +163,7 @@ let mkConfigFromGroup (group : T.GroupData) =
                     MidPos = mid
                     PrimaryObjective = primary
                     SecondaryObjective = secondary
-                    IntoReturn = closing.IntoReturn
+                    IntoReturn = intoReturn
                     Return = closing.Return
                     Final = closing.Final
                     LandAt = closing.LandAt
