@@ -6,8 +6,16 @@ open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.Parsing
 
+let iconAttrib = "Icons made by Smashicons from www.flaticon.com"
+let urls = [ "https://www.flaticon.com/authors/smashicons"
+             "https://www.flaticon.com/" ]
+
 [<EntryPoint>]
 let main argv =
+    printfn "%s" iconAttrib
+    for url in urls do
+        printfn "%s" url
+
     let mutable status = 0
     for file in argv do
         let filename = IO.Path.GetFileNameWithoutExtension(file).ToLowerInvariant()
