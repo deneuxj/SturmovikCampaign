@@ -394,7 +394,7 @@ with
                         let newPos = pos + (float32 (i - 1)) * offset
                         newPos.AssignTo mcu.Pos
                     vehicle.Name <- sprintf "ATTACKER %d" i
-                    vehicle.NumberInFormation.Value.Number <- i
+                    vehicle.NumberInFormation.Value.Number <- i - 1
                     cx entity plane.Index
                     cx dead allKilled.Index
                     cx unable unableToAttack.Index
