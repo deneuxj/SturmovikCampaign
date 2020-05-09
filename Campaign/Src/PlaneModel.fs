@@ -77,7 +77,7 @@ type PlaneModel =
       Cost : float32<E>
       BombCapacity : float32<K>
       CargoCapacity : float32<K>
-      Payloads : Map<PlaneRole, int*int>
+      Payloads : Map<PlaneRole, int64*int>
       BombLoads : (int * float32<K>) list
       SpecialLoadsCosts : (int * float32<E>) list
       EmptyPayload : int
@@ -108,7 +108,7 @@ with
             json.Payloads
             |> Seq.map (fun payload ->
                 PlaneRole.FromString payload.Payload.Role,
-                (payload.Payload.ModMask, payload.Payload.Id))
+                (int64 payload.Payload.ModMask, payload.Payload.Id))
             |> Map.ofSeq
         let bombloads =
             json.Bombs
@@ -160,7 +160,7 @@ with
             this.Payloads
             |> Map.toSeq
             |> Seq.map (fun (role, (mask, id)) ->
-                PlaneDbFile.Payload(PlaneDbFile.Payload2(string role, mask, id)))
+                PlaneDbFile.Payload(PlaneDbFile.Payload2(string role, int32 mask, id)))
             |> Array.ofSeq
         let specials =
             this.SpecialLoadsCosts

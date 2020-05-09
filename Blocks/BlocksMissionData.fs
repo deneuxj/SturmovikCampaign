@@ -118,7 +118,7 @@ let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, 
         .SetNumber(T.Integer.N number)
         .SetSpotter(T.Integer.N -1)
         .SetVulnerable(T.Boolean.N true)
-        .SetWMMask(T.Integer.N mods)
+        .SetWMMask(T.Mask.N mods)
         .SetRenewable(T.Boolean.N false)
 
 let newAirfieldTank(name, model, script, number) =
