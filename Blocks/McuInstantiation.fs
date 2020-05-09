@@ -74,3 +74,15 @@ type IMcuGroup with
     member this.PushGroupName(store, name) =
         deepContentOf this
         |> gatherInNamedGroup store name
+
+type IHasVehicles =
+    abstract Vehicles : Mcu.HasEntity seq
+
+let setVehiclesAfterPlane (proto : T.Plane) (hasVehicles : IHasVehicles) =
+    for plane in hasVehicles.Vehicles do
+        plane.Model <- proto.GetModel().Value
+        plane.Script <- proto.GetScript().Value
+        plane.WMMask <- Some (proto.GetWMMask().Value)
+        plane.PayloadId <- Some (proto.GetPayloadId().Value)
+        plane.AILevel <- Some (proto.GetAILevel().Value)
+        plane.Country <- Some (enum(proto.GetCountry().Value))

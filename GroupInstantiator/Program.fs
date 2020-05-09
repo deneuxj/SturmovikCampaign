@@ -46,7 +46,7 @@ let main argv =
                     try
                         printfn "Instantiating template"
                         let group = SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, config)
-                        group.SetPlanes(plane)
+                        setVehiclesAfterPlane plane group
                         group.All.PushGroupName(store, "Instantiated Ground Attack")
                         Ok group
                     with

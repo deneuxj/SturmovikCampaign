@@ -298,6 +298,7 @@ with
         let planeVehicle = getVehicleByName group "ATTACKER"
         let plane = getEntityByIndex planeVehicle.LinkTrId group
         let wpFinal = getWaypointByName group "Final"
+        let takeOff = getTriggerByName group "TakeOff"
 
         // groups of related nodes, each group centered around some key position
         let extractGroup = extractGroup group
@@ -354,6 +355,11 @@ with
 
         // Set up connections between subgroups
         let cx = Mcu.addTargetLink
+        //  Take-off or fly to first waypoint
+        match config.StartType with
+        | AirStart _ -> cx start wp1.Index
+        | GroundStart _ -> cx start takeOff.Index
+
         //  Escort meet-up
         match meeting with
         | Some meeting ->
@@ -386,6 +392,7 @@ with
         // Set plane wing
         allKilled.Count <- config.NumPlanes
         unableToAttack.Count <- config.NumPlanes
+
         attack1.ConnectTo plane
         attack2 |> Option.iter (fun attack -> attack.ConnectTo plane)
         meeting |> Option.iter (fun meeting -> meeting.ConnectTo plane)
@@ -393,8 +400,11 @@ with
         let isDead = getTriggerByName group "Dead"
         let isBingoBombs = getTriggerByName group "BingoBombs"
         let isDone = getTriggerByName group "UnableToAttack"
-        let newGroup() = cloneFresh store [planeVehicle :> Mcu.McuBase; plane; isDead; isBingoBombs; isDone]
+        cx isDead allKilled.Index
+        cx isDone unableToAttack.Index
+        
         let wing =
+            let newGroup() = cloneFresh store [planeVehicle :> Mcu.McuBase; plane; isDead; isBingoBombs; isDone]
             [|
                 let offset =
                     match config.StartType with
@@ -447,11 +457,7 @@ with
                 }
         }
 
-    member this.SetPlanes(proto : T.Plane) =
-        for plane in Seq.append [this.LeadPlane] this.WingPlanes do
-            plane.Model <- proto.GetModel().Value
-            plane.Script <- proto.GetScript().Value
-            plane.WMMask <- Some (proto.GetWMMask().Value)
-            plane.PayloadId <- Some (proto.GetPayloadId().Value)
-            plane.AILevel <- Some (proto.GetAILevel().Value)
-            plane.Country <- Some (enum(proto.GetCountry().Value))
+    interface IHasVehicles with
+        member this.Vehicles =
+            Seq.append [this.LeadPlane] this.WingPlanes
+
