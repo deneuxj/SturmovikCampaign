@@ -22,8 +22,10 @@ with
 
 /// Extract a group of nodes and a node to use as reference when relocating.
 let extractGroup group groupName refName =
-    group |> filterByPath [groupName],
-    group |> filterByName refName |> Seq.head
+    let selected =
+        group |> filterByPath [groupName] |> List.ofSeq
+    selected,
+    selected |> filterByName refName |> Seq.exactlyOne
 
 /// Move and rotate a group to a new location.
 let relocateGroup (newCenter : DirectedPoint) (group : #Mcu.McuBase seq * Mcu.McuBase) =
