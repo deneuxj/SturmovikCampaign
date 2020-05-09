@@ -8,6 +8,8 @@ open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.WhileEnemyClose
+open SturmovikMission.Blocks.McuInstantiation
+open SturmovikMission.Blocks.GroundAttack
 
 /// A pair of fighters that fly a circular pattern for one hour, then respawns.
 type Patrol = {
@@ -68,3 +70,151 @@ with
                   member x.SubGroups = [ wec.All ]
             }
         }
+
+
+type PatrolGroupConfig = {
+    StartType : StartType
+    StartPos : DirectedPoint
+    CruiseAltitude : int
+    CruiseSpeed : int
+    MidPoint : DirectedPoint
+    PatrolCenter : DirectedPoint
+    PatrolDuration : float32
+    PatrolAltitude : int
+    PatrolSpeed : int
+    MaxRange : int
+    Return : DirectedPoint
+    Final : DirectedPoint
+    LandAt : DirectedPoint
+    NumPlanes : int
+}
+
+type PatrolGroup = {
+    /// IN
+    Start : Mcu.McuTrigger
+    /// OUT
+    FlightCannotPatrol : Mcu.McuTrigger
+    /// OUT
+    AllKilled : Mcu.McuTrigger
+    LeadPlane : Mcu.HasEntity
+    WingPlanes : Mcu.HasEntity[]
+    All : McuUtil.IMcuGroup
+}
+with
+    static member Create(store, config : PatrolGroupConfig) =
+        // Instantiate
+        let group, subst = getFreshGroup blocks2Data store "Patrol"
+
+        // Nodes of interest
+        let start = getTriggerByName group "START"
+        let areaMaxRange = getTriggerByName group "MaxPursuit" :?> Mcu.McuProximity
+        let flightCannotPatrol = getTriggerByName group "FLIGHT_CANNOT_PATROL" :?> Mcu.McuCounter
+        let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
+        let wp2 = getWaypointByName group "Waypoint2"
+        let returnWp = getWaypointByName group "WaypointRTB"
+        let finalWp = getWaypointByName group "Final"
+        let patrolDuration = getTriggerByName group "PatrolDuration" :?> Mcu.McuTimer
+        let planeVehicle = getVehicleByName group "PATROL"
+        let plane = getEntityByIndex planeVehicle.LinkTrId group
+
+        // groups of related nodes
+        let extractGroup = extractGroup group
+        let areaGroup = extractGroup "PatrolArea" "MaxPursuit"
+        let returnGroup = extractGroup "Return" "Land"
+        let startGroup = extractGroup "FlightStart" "TakeOff"
+        let planeGroup = extractGroup "Plane" "PATROL"
+
+        // General relocation
+        relocateGroup config.PatrolCenter (group, areaMaxRange)
+        match config.StartType with
+        | AirStart x ->
+            relocateGroup config.StartPos planeGroup
+            relocateGroup config.StartPos startGroup
+            setAltitude x.Altitude (fst planeGroup)
+        | GroundStart x ->
+            relocateGroup config.StartPos planeGroup
+            relocateGroup x.TakeOffPoint startGroup
+        relocateGroup config.PatrolCenter areaGroup
+        relocateGroup config.LandAt returnGroup
+
+        // Altitude
+        for (group, _) in [startGroup; returnGroup] do
+            setAltitude config.CruiseAltitude group
+        setAltitude config.PatrolAltitude (fst areaGroup)
+
+        // Detailed relocation
+        config.Return.AssignTo returnWp
+        config.Final.AssignTo finalWp
+        config.MidPoint.AssignTo wp2
+        setAltitude 1000 [finalWp]
+
+        // Set speeds
+        for mcu in group do
+            match mcu with
+            | :? Mcu.McuWaypoint as wp -> wp.Speed <- config.CruiseSpeed
+            | _ -> ()
+        for mcu in fst areaGroup do
+            match mcu with
+            | :? Mcu.McuWaypoint as wp -> wp.Speed <- config.PatrolSpeed
+            | _ -> ()
+
+        patrolDuration.Time <- float config.PatrolDuration
+        areaMaxRange.Distance <- config.MaxRange
+
+        // Set plane wing
+        allKilled.Count <- config.NumPlanes
+        flightCannotPatrol.Count <- config.NumPlanes
+
+        let cx = Mcu.addTargetLink
+        let dead = getTriggerByName group "Dead"
+        let unable = getTriggerByName group "Unable"
+        cx dead allKilled.Index
+        cx unable flightCannotPatrol.Index
+
+        let wing =
+            let newGroup() = cloneFresh store (fst planeGroup)
+            [|
+                let offset =
+                    match config.StartType with
+                    | AirStart _ -> Vector2(-50.0f, 50.0f).Rotate(config.StartPos.Direction)
+                    | GroundStart _ -> Vector2(0.0f, 35.0f).Rotate(config.StartPos.Direction)
+                for i in 2..config.NumPlanes do
+                    let group = newGroup()
+                    let vehicle = getVehicleByName group "PATROL"
+                    let dead = getTriggerByName group "Dead"
+                    let unable = getTriggerByName group "Unable"
+                    let entity = getEntityByIndex vehicle.LinkTrId group
+                    for mcu in group do
+                        let pos = Vector2.FromMcu(mcu.Pos)
+                        let newPos = pos + (float32 (i - 1)) * offset
+                        newPos.AssignTo mcu.Pos
+                    vehicle.Name <- sprintf "PATROL %d" i
+                    vehicle.NumberInFormation.Value.Number <- i - 1
+                    cx entity plane.Index
+                    cx dead allKilled.Index
+                    cx unable flightCannotPatrol.Index
+                    gatherInNamedGroup store (sprintf "Wingman %d" (i - 1)) group
+                    yield vehicle, group
+            |]
+
+        // Result
+        {
+            Start = start
+            FlightCannotPatrol = flightCannotPatrol
+            LeadPlane = planeVehicle
+            WingPlanes = wing |> Array.map fst
+            AllKilled = allKilled
+            All =
+                { new McuUtil.IMcuGroup with
+                      member this.Content = group
+                      member this.LcStrings = []
+                      member this.SubGroups = [
+                        for _, group in wing do
+                            yield McuUtil.groupFromList group
+                      ]
+                }
+        }
+
+    interface IHasVehicles with
+        member this.Vehicles =
+            Seq.append [this.LeadPlane] this.WingPlanes
