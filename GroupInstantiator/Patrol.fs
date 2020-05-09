@@ -65,8 +65,8 @@ let mkConfigFromGroup (group : T.GroupData) =
                     Final = DirectedPoint.FromMCU(wpLand)
                     LandAt = DirectedPoint.FromMCU(landing)
             |}
-        | [] | [_] | [_;_] ->
-            failwith "Missing 'intoReturn', 'return' or 'land' waypoint"
+        | [] | [_] ->
+            failwith "Missing 'RTB' or 'Final' waypoint"
         | _ ->
             failwith "Extra unprocessed waypoints"
 
@@ -78,7 +78,7 @@ let mkConfigFromGroup (group : T.GroupData) =
 
     let config =
         match prefixData.Path with
-        | Start(start, Waypoint(wp2, PatrolArea(patrol, Waypoint(rtb, Closing closing)))) ->
+        | Start(start, Waypoint(wp2, PatrolArea(patrol, Closing closing))) ->
             {
                 StartType = prefixData.StartType
                 StartPos = prefixData.StartPos
