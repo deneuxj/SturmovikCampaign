@@ -5,6 +5,7 @@ open GroundAttack
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.Parsing
+open SturmovikMission.Blocks.McuInstantiation
 
 let iconAttrib = "Icons made by Smashicons from www.flaticon.com"
 let urls = [ "https://www.flaticon.com/authors/smashicons"
@@ -46,6 +47,7 @@ let main argv =
                         printfn "Instantiating template"
                         let group = SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, config)
                         group.SetPlanes(plane)
+                        group.All.PushGroupName(store, "Instantiated Ground Attack")
                         Ok group
                     with
                     | e -> Error ("Error during instantiation: " + e.Message))

@@ -276,8 +276,11 @@ with
 
         // Subgroups
         let attack1 = AttackArea.Create(store, config.PrimaryObjective)
+        attack1.All.PushGroupName(store, "Primary objective")
         let attack2 = config.SecondaryObjective |> Option.map (fun o -> AttackArea.Create(store, o))
+        attack2 |> Option.iter (fun attack2 -> attack2.All.PushGroupName(store, "Secondary objective"))
         let meeting = config.RendezVous |> Option.map (fun rdv -> MeetingPoint.Create(store, rdv))
+        meeting |> Option.iter (fun meeting -> meeting.All.PushGroupName(store, "RendezVous"))
 
         // Nodes of interest
         let intoPrimary = getWaypointByName group "INTO_PRIMARY"
@@ -398,6 +401,7 @@ with
                     cx entity plane.Index
                     cx dead allKilled.Index
                     cx unable unableToAttack.Index
+                    gatherInNamedGroup store (sprintf "Wingman %d" (i - 1)) group
                     yield vehicle, group
             |]
 

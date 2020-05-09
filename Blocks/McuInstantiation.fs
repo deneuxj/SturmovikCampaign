@@ -60,3 +60,15 @@ let cloneFresh (store : NumericalIdentifiers.IdStore) (group : Mcu.McuBase seq) 
     for mcu in mcus do
         subst mcu
     mcus
+
+/// Put a nodes in a named group
+let gatherInNamedGroup (store : NumericalIdentifiers.IdStore) name (mcus : Mcu.McuBase seq) =
+    let idx = store.GetIdMapper() 1
+    for mcu in mcus do
+        mcu.Path <- mcu.Path @ [name, idx]
+
+type IMcuGroup with
+    /// Put all nodes in this group under one named group
+    member this.PushGroupName(store, name) =
+        deepContentOf this
+        |> gatherInNamedGroup store name
