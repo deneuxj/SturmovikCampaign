@@ -1,6 +1,5 @@
 ﻿module GroundAttack
 
-
 open SturmovikMission.Blocks.GroundAttack
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.McuInstantiation
@@ -11,7 +10,14 @@ open VectorExtension
 let infoWp (wp : T.MCU_Waypoint) =
     sprintf "waypoint '%s' (ID %d)" (wp.GetName().Value) (wp.GetIndex().Value)
 
-let mkConfigFromGroup (group : T.GroupData) =
+type PathPrefixData = {
+    Plane : T.Plane
+    StartPos : DirectedPoint
+    StartType : StartType
+    Path : T.MCU_Waypoint list
+}
+
+let extractPath (group : T.GroupData) =
     let plane =
         let x = group.ListOfPlane |> List.ofSeq
         match x with
@@ -69,6 +75,19 @@ let mkConfigFromGroup (group : T.GroupData) =
             ]
         work last
         |> List.rev
+    {
+        Plane = plane
+        StartPos = startPos
+        StartType = startType
+        Path = path
+    }
+
+let mkConfigFromGroup (group : T.GroupData) =
+    let prefixData = extractPath group
+    let plane = prefixData.Plane
+    let startPos = prefixData.StartPos
+    let startType = prefixData.StartType
+    let path = prefixData.Path
 
     let (|Start|_|) =
         function
