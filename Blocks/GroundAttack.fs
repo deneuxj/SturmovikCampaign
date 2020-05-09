@@ -210,6 +210,7 @@ with
     static member Create(store, config : MeetingPointConfig) =
         // Instantiation
         let mcus, subst = getFreshGroup blocks2Data store "MeetingPoint"
+
         // Nodes of interest
         let start = getTriggerByName mcus "START"
         let meetAt = getWaypointByName mcus "RDV"
@@ -300,14 +301,27 @@ with
 
         // groups of related nodes, each group centered around some key position
         let extractGroup = extractGroup group
-        let centralGroup = extractGroup "GroundAttack" "Waypoint1"
         let flightStartGroup = extractGroup "FlightStart" "TakeOff"
         let planeGroup = extractGroup "Plane" "ATTACKER"
         let returnGroup = extractGroup "Return" "Return"
         let landGroup = extractGroup "Land" "Land"
 
         // General relocation
-        relocateGroup config.MidPos centralGroup
+        try
+            let rest =
+                let bag =
+                    [flightStartGroup; planeGroup; returnGroup; landGroup]
+                    |> Seq.map fst
+                    |> Seq.collect (Seq.map (fun mcu -> mcu.Index))
+                    |> Set
+                let mcus =
+                    group
+                    |> List.filter (fun mcu -> not(bag.Contains(mcu.Index)))
+                let refPoint =
+                    getTriggerByName mcus "START"
+                mcus, refPoint
+            relocateGroup { config.StartPos with Pos = config.StartPos.Pos + Vector2(0.0f, 300.0f) } rest
+        with _ -> ()
         match config.StartType with
         | AirStart x ->
             relocateGroup config.StartPos planeGroup
@@ -321,7 +335,7 @@ with
         relocateGroup config.LandAt landGroup
 
         // Altitude
-        for group in [centralGroup; flightStartGroup; returnGroup] do
+        for group in [flightStartGroup; returnGroup] do
             setAltitude config.CruiseAltitude (fst group)
         setAltitude config.CruiseAltitude [intoPrimary; intoReturn; wpReturn]
 
