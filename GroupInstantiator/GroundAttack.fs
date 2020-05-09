@@ -153,8 +153,8 @@ let mkConfigFromGroup (group : T.GroupData) =
                     Final = DirectedPoint.FromMCU(wpLand)
                     LandAt = DirectedPoint.FromMCU(landing)
             |}
-        | [] | [_] | [_;_] ->
-            failwith "Missing 'intoReturn', 'return' or 'land' waypoint"
+        | [] | [_] ->
+            failwith "Missing 'RTB' or 'Final' waypoint"
         | _ ->
             failwith "Extra unprocessed waypoints"
 
