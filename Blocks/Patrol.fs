@@ -110,6 +110,7 @@ with
         let areaMaxRange = getTriggerByName group "MaxPursuit" :?> Mcu.McuProximity
         let flightCannotPatrol = getTriggerByName group "FLIGHT_CANNOT_PATROL" :?> Mcu.McuCounter
         let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
+        let wp1 = getWaypointByName group "Waypoint1"
         let wp2 = getWaypointByName group "Waypoint2"
         let returnWp = getWaypointByName group "WaypointRTB"
         let finalWp = getWaypointByName group "Final"
@@ -140,6 +141,7 @@ with
         // Altitude
         for (group, _) in [startGroup; returnGroup] do
             setAltitude config.CruiseAltitude group
+        setAltitude config.CruiseAltitude [wp2]
         setAltitude config.PatrolAltitude (fst areaGroup)
 
         // Detailed relocation
@@ -147,6 +149,7 @@ with
         config.Final.AssignTo finalWp
         config.MidPoint.AssignTo wp2
         setAltitude 1000 [finalWp]
+        setAltitude 1000 [wp1]
 
         // Set speeds
         for mcu in group do
