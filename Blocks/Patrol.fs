@@ -112,11 +112,16 @@ with
         let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
         let wp1 = getWaypointByName group "Waypoint1"
         let wp2 = getWaypointByName group "Waypoint2"
+        let startPatrol = getWaypointByName group "PatrolStart"
         let returnWp = getWaypointByName group "WaypointRTB"
         let finalWp = getWaypointByName group "Final"
         let patrolDuration = getTriggerByName group "PatrolDuration" :?> Mcu.McuTimer
         let planeVehicle = getVehicleByName group "PATROL"
         let plane = getEntityByIndex planeVehicle.LinkTrId group
+
+        let minMaxRange =
+            let v = (Vector2.FromMcu areaMaxRange.Pos) - (Vector2.FromMcu startPatrol.Pos)
+            v.Length() + 1500.0f
 
         // groups of related nodes
         let extractGroup = extractGroup group
@@ -161,8 +166,8 @@ with
             | :? Mcu.McuWaypoint as wp -> wp.Speed <- config.PatrolSpeed
             | _ -> ()
 
-        patrolDuration.Time <- float config.PatrolDuration
-        areaMaxRange.Distance <- config.MaxRange
+        patrolDuration.Time <- max 10.0 (float config.PatrolDuration)
+        areaMaxRange.Distance <- max (int minMaxRange) config.MaxRange
 
         // Set plane wing
         allKilled.Count <- config.NumPlanes
