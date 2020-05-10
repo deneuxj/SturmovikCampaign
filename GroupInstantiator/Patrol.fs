@@ -15,11 +15,7 @@ let mkConfigFromGroup (group : T.GroupData) =
     let (|Start|_|) =
         function
         | (startWp : T.MCU_Waypoint) :: rest ->
-            Some(
-                {|
-                    CruiseAltitude = startWp.GetYOri().Value |> int
-                    CruiseSpeed = startWp.GetSpeed().Value
-                |}, rest)
+            Some(rest)
         | [] -> None
 
     let (|Waypoint|_|) =
@@ -29,6 +25,7 @@ let mkConfigFromGroup (group : T.GroupData) =
                 {|
                     Pos = DirectedPoint.FromMCU wp
                     Alt = int(wp.GetYPos().Value)
+                    Speed = wp.GetSpeed().Value
                 |}, rest)
         | [] -> None
 
@@ -78,12 +75,12 @@ let mkConfigFromGroup (group : T.GroupData) =
 
     let config =
         match prefixData.Path with
-        | Start(start, Waypoint(wp2, PatrolArea(patrol, Closing closing))) ->
+        | Start(Waypoint(wp2, PatrolArea(patrol, Closing closing))) ->
             {
                 StartType = prefixData.StartType
                 StartPos = prefixData.StartPos
-                CruiseAltitude = start.CruiseAltitude
-                CruiseSpeed = start.CruiseSpeed
+                CruiseAltitude = wp2.Alt
+                CruiseSpeed = wp2.Speed
                 MidPoint = wp2.Pos
                 PatrolCenter = patrol.Center
                 PatrolDuration = patrol.Duration
