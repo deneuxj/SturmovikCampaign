@@ -33,6 +33,7 @@
     <Compile Include="Effect.fs" />
     <Compile Include="GroundAttack.fs" />
     <Compile Include="Patrol.fs" />
+    <Compile Include="Escort.fs" />
     <Compile Include="TransportFlight.fs" />
     <Compile Include="FerryFlight.fs" />
     <Compile Include="FireLoop.fs" />

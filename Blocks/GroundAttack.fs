@@ -4,8 +4,6 @@ open System.Numerics
 open VectorExtension
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
-open SturmovikMission.Blocks.Vehicles
-open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.McuInstantiation
 
@@ -186,6 +184,32 @@ with
         for trigger in [this.FormationNone; this.FormationSafe; upcast this.AttackArea] do
             Mcu.addObjectLink trigger entity.Index
 
+type FlightSectionConfig = {
+    Altitude : int
+    Speed : int
+    Prio : int
+    Path : Vector2 list
+}
+with
+    member this.CreateWaypoints(store) =
+        let wps =
+            [
+                for i, v in List.indexed this.Path do
+                    let wp =
+                        T.MCU_Waypoint.Default
+                            .SetArea(T.Integer.N 1000)
+                            .SetSpeed(T.Integer.N this.Speed)
+                            .SetYPos(T.Float.N (float this.Altitude))
+                            .SetXPos(T.Float.N (float v.X))
+                            .SetZPos(T.Float.N (float v.Y))
+                            .SetPriority(T.Integer.N this.Prio)
+                            .SetIndex(T.Integer.N (i + 1))
+                    yield wp.CreateMcu()
+            ]
+        for wp1, wp2 in Seq.pairwise wps do
+            Mcu.addTargetLink (wp1 :?> Mcu.McuTrigger) wp2.Index
+        cloneFresh store wps
+        |> List.map (fun x -> x :?> Mcu.McuWaypoint)
 
 type MeetingPointConfig = {
     Location : DirectedPoint
