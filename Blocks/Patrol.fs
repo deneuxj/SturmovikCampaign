@@ -4,8 +4,6 @@ open System.Numerics
 open VectorExtension
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
-open SturmovikMission.Blocks.Vehicles
-open SturmovikMission.Blocks.VirtualConvoy.Types
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.Blocks.WhileEnemyClose
 open SturmovikMission.Blocks.McuInstantiation
