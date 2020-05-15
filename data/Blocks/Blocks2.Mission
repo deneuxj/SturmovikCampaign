@@ -1620,7 +1620,7 @@ Group
       Index = 135;
       Name = "Waypoint1";
       Desc = "";
-      Targets = [56];
+      Targets = [];
       Objects = [60];
       XPos = 135485.744;
       YPos = 2000.000;

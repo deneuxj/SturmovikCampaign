@@ -126,10 +126,15 @@ with
         // Logic connection
         let cx = Mcu.addTargetLink
         //  Take-off or fly to first waypoint
+        let onTookOff = getTriggerByName (fst takeOffGroup) "TookOff"
         match config.StartType with
-        | AirStart _ -> cx start wp1.Index
-        | GroundStart _ -> cx start takeOff.Index
+        | AirStart _ -> cx start onTookOff.Index
+        | GroundStart _ ->
+            cx start takeOff.Index
+            let planeTookOff = getTriggerByName (fst planeGroup) "TookOff"
+            cx planeTookOff onTookOff.Index
         //  Escort meet-up
+        cx wp1 (List.head toRdv).Index
         cx (List.last toRdv) rdv.Index
 
         // Set wing
@@ -196,8 +201,7 @@ let connectEscortWithPlanes (escort : EscortGroup) (planes : AttackerGroup) =
     Mcu.addObjectLink escort.EscortCmd planes.LeadPlane.LinkTrId
     let cx = Mcu.addTargetLink
     cx planes.PrimaryAttackArea.Ingress escort.CoverArea.Index
-    cx planes.PrimaryAttackArea.AttackDone escort.ReleaseEscort.Index
-    cx planes.AllKilled escort.ReleaseEscort.Index
+    cx planes.ReleaseEscort escort.ReleaseEscort.Index
     match planes.MeetWithEscort with
     | Some meet ->
         cx meet.Proceed escort.ProceedRDV.Index
