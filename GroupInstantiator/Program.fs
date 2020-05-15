@@ -96,5 +96,17 @@ let main argv =
                 |> McuUtil.deepContentOf
             processSkeleton mkConfigFromGroup mkGroup getNodes "patrol" file
 
+        if filename.StartsWith("skel-escort-") then
+            let mkConfigFromGroup = Escort.mkConfigFromGroup
+            let mkGroup(store, configAndPlane) =
+                let config, plane = configAndPlane
+                let group = SturmovikMission.Blocks.Escort.EscortGroup.Create(store, config)
+                setVehiclesAfterPlane plane group
+                group.All.PushGroupName(store, "Instantiated Escort")
+                group
+            let getNodes(group : SturmovikMission.Blocks.Escort.EscortGroup) =
+                group.All
+                |> McuUtil.deepContentOf
+            processSkeleton mkConfigFromGroup mkGroup getNodes "patrol" file
 
     status // return an integer exit code

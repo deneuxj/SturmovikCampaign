@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="GroundAttack.fs" />
     <Compile Include="Patrol.fs" />
+    <Compile Include="Escort.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

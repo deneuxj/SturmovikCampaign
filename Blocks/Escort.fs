@@ -63,7 +63,7 @@ with
         let retWp2 = getWaypointByName mcus "Waypoint3"
         let coverAreaDuration = getTriggerByName mcus "CoverDuration" :?> Mcu.McuTimer
         let wp1 = getWaypointByName mcus "Waypoint1"
-        let takeOff = getWaypointByName mcus "TakeOff"
+        let takeOff = getTriggerByName mcus "TakeOff"
         let proceed = getTriggerByName mcus "PROCEED_RDV"
         let escortCmd = getTriggerByName mcus "ESCORT_CMD"
 
@@ -186,6 +186,11 @@ with
                       ]
                 }
         }
+
+    interface IHasVehicles with
+        member this.Vehicles =
+            Seq.append [this.LeadPlane] this.WingPlanes
+
 
 let connectEscortWithPlanes (escort : EscortGroup) (planes : AttackerGroup) =
     Mcu.addObjectLink escort.EscortCmd planes.LeadPlane.LinkTrId
