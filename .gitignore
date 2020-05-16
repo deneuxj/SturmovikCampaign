@@ -14,6 +14,7 @@ data/Blocks/*.ger
 data/Blocks/*.rus
 data/Blocks/*.pol
 data/Blocks/*.spa
+data/Blocks/*.chs
 data/Blocks/*.list
 data/Blocks/*.msnbin
 data/*.fra
