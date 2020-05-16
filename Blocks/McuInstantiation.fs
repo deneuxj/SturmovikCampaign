@@ -52,7 +52,7 @@ let getFreshGroup (source : T.GroupData) (store : NumericalIdentifiers.IdStore) 
     mcus, subst
 
 /// Clone a group, giving its members new numerical IDs.
-let cloneFresh (store : NumericalIdentifiers.IdStore) (group : Mcu.McuBase seq) =
+let cloneFresh (store : NumericalIdentifiers.IdStore) (group : #Mcu.McuBase seq) =
     let repr =
         group
         |> Seq.map (fun mcu -> mcu.AsString())
@@ -64,7 +64,7 @@ let cloneFresh (store : NumericalIdentifiers.IdStore) (group : Mcu.McuBase seq) 
     mcus
 
 /// Put a nodes in a named group
-let gatherInNamedGroup (store : NumericalIdentifiers.IdStore) name (mcus : Mcu.McuBase seq) =
+let gatherInNamedGroup (store : NumericalIdentifiers.IdStore) name (mcus : #Mcu.McuBase seq) =
     let idx = store.GetIdMapper() 1
     for mcu in mcus do
         mcu.Path <- mcu.Path @ [name, idx]

@@ -428,7 +428,9 @@ with
         cx isDone unableToAttack.Index
         
         let wing =
-            let newGroup() = cloneFresh store [planeVehicle :> Mcu.McuBase; plane; isDead; isBingoBombs; isDone]
+            let items : Mcu.McuBase list =
+                [planeVehicle; plane; isDead; isBingoBombs; isDone]
+            let newGroup() = cloneFresh store items
             [|
                 let offset =
                     match config.StartType with
