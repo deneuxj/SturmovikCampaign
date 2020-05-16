@@ -295,7 +295,7 @@ type AttackerGroup = {
     ReleaseEscort : Mcu.McuTrigger
     /// OUT
     AllKilled : Mcu.McuTrigger
-    LeadPlane : Mcu.HasEntity
+    LeadPlane : Mcu.HasEntity ref
     WingPlanes : Mcu.HasEntity[]
     PrimaryAttackArea : AttackArea
     SecondaryAttackArea : AttackArea option
@@ -473,7 +473,7 @@ with
             Start = start
             ReleaseEscort = releaseEscort
             AllKilled = allKilled
-            LeadPlane = planeVehicle
+            LeadPlane = ref planeVehicle
             WingPlanes = wing |> Array.map fst
             PrimaryAttackArea = attack1
             SecondaryAttackArea = attack2
@@ -498,5 +498,13 @@ with
 
     interface IHasVehicles with
         member this.Vehicles =
-            Seq.append [this.LeadPlane] this.WingPlanes
+            Seq.append [this.LeadPlane.Value] this.WingPlanes
+
+        member this.ReplaceVehicleWith(oldVehicleIdx, newVehicle) =
+            if this.LeadPlane.Value.Index = oldVehicleIdx then
+                this.LeadPlane := newVehicle
+            this.WingPlanes
+            |> Array.iteri(fun idx plane ->
+                if plane.Index = oldVehicleIdx then
+                    this.WingPlanes.[idx] <- newVehicle)
 

@@ -42,7 +42,7 @@ type EscortGroup = {
     /// OBJ: Set object to lead plane of group to escort
     EscortCmd : Mcu.McuTrigger
 
-    LeadPlane : Mcu.HasEntity
+    LeadPlane : Mcu.HasEntity ref
     WingPlanes : Mcu.HasEntity[]
     All : McuUtil.IMcuGroup
 }
@@ -181,7 +181,7 @@ with
             AtRDV = rdv
             Unable = allUnable
             EscortCmd = escortCmd
-            LeadPlane = leadPlane
+            LeadPlane = ref leadPlane
             WingPlanes = wing |> Array.map fst
             All =
                 { new McuUtil.IMcuGroup with
@@ -198,11 +198,19 @@ with
 
     interface IHasVehicles with
         member this.Vehicles =
-            Seq.append [this.LeadPlane] this.WingPlanes
+            Seq.append [this.LeadPlane.Value] this.WingPlanes
+
+        member this.ReplaceVehicleWith(oldVehicleIdx, newVehicle) =
+            if this.LeadPlane.Value.Index = oldVehicleIdx then
+                this.LeadPlane := newVehicle
+            this.WingPlanes
+            |> Array.iteri(fun idx plane ->
+                if plane.Index = oldVehicleIdx then
+                    this.WingPlanes.[idx] <- newVehicle)
 
 
 let connectEscortWithPlanes (escort : EscortGroup) (planes : AttackerGroup) =
-    Mcu.addObjectLink escort.EscortCmd planes.LeadPlane.LinkTrId
+    Mcu.addObjectLink escort.EscortCmd planes.LeadPlane.Value.LinkTrId
     let cx = Mcu.addTargetLink
     cx planes.PrimaryAttackArea.Ingress escort.CoverArea.Index
     cx planes.ReleaseEscort escort.ReleaseEscort.Index

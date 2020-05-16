@@ -77,13 +77,28 @@ type IMcuGroup with
         |> gatherInNamedGroup store name
 
 type IHasVehicles =
+    abstract ReplaceVehicleWith : int * Mcu.HasEntity -> unit
     abstract Vehicles : Mcu.HasEntity seq
 
 let setVehiclesAfterPlane (proto : T.Plane) (hasVehicles : IHasVehicles) =
     for plane in hasVehicles.Vehicles do
-        plane.Model <- proto.GetModel().Value
-        plane.Script <- proto.GetScript().Value
-        plane.WMMask <- Some (proto.GetWMMask().Value)
-        plane.PayloadId <- Some (proto.GetPayloadId().Value)
-        plane.AILevel <- Some (proto.GetAILevel().Value)
-        plane.Country <- Some (enum(proto.GetCountry().Value))
+        let newPlane =
+            proto
+                .SetName(T.String.N plane.Name)
+                .SetIndex(T.Integer.N plane.Index)
+                .SetLinkTrId(T.Integer.N plane.LinkTrId)
+            |> fun newPlane ->
+                match plane.NumberInFormation with
+                | Some x ->
+                    newPlane.SetNumberInFormation(T.Integer.N x.Number)
+                | None ->
+                    newPlane
+            |> fun newPlane ->
+                newPlane
+                    .SetXOri(T.Float.N plane.Ori.X)
+                    .SetYOri(T.Float.N plane.Ori.Y)
+                    .SetZOri(T.Float.N plane.Ori.Z)
+                    .SetXPos(T.Float.N plane.Pos.X)
+                    .SetYPos(T.Float.N plane.Pos.Y)
+                    .SetZPos(T.Float.N plane.Pos.Z)
+        hasVehicles.ReplaceVehicleWith(plane.Index, newPlane.CreateMcu() :?> Mcu.HasEntity)

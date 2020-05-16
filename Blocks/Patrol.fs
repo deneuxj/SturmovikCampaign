@@ -94,7 +94,7 @@ type PatrolGroup = {
     FlightCannotPatrol : Mcu.McuTrigger
     /// OUT
     AllKilled : Mcu.McuTrigger
-    LeadPlane : Mcu.HasEntity
+    LeadPlane : Mcu.HasEntity ref
     WingPlanes : Mcu.HasEntity[]
     All : McuUtil.IMcuGroup
 }
@@ -207,7 +207,7 @@ with
         {
             Start = start
             FlightCannotPatrol = flightCannotPatrol
-            LeadPlane = planeVehicle
+            LeadPlane = ref planeVehicle
             WingPlanes = wing |> Array.map fst
             AllKilled = allKilled
             All =
@@ -223,4 +223,12 @@ with
 
     interface IHasVehicles with
         member this.Vehicles =
-            Seq.append [this.LeadPlane] this.WingPlanes
+            Seq.append [this.LeadPlane.Value] this.WingPlanes
+
+        member this.ReplaceVehicleWith(oldVehicleIdx, newVehicle) =
+            if this.LeadPlane.Value.Index = oldVehicleIdx then
+                this.LeadPlane := newVehicle
+            this.WingPlanes
+            |> Array.iteri(fun idx plane ->
+                if plane.Index = oldVehicleIdx then
+                    this.WingPlanes.[idx] <- newVehicle)
