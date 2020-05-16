@@ -19,7 +19,7 @@ let mkConfigFromGroup (group : T.GroupData) =
             | [] -> failwith "Failed to find meeting point"
             | wp :: rest ->
                 if wp.GetName().Value.ToLowerInvariant() = "rdv" then
-                    procMeeting (rest, toMeeting |> List.rev, wp)
+                    procMeeting (rest, toMeeting, wp)
                 else
                     procToMeeting (rest, wp :: toMeeting)
 
@@ -31,7 +31,7 @@ let mkConfigFromGroup (group : T.GroupData) =
 
         and procRTB (path, toMeeting, rdv, rtb) =
             match path with
-            | [] -> toMeeting, rdv, List.rev rtb
+            | [] -> List.rev toMeeting, rdv, List.rev rtb
             | wp :: rest -> procRTB (rest, toMeeting, rdv, wp :: rtb)
         procToMeeting (prefixData.Path, [])
 
