@@ -82,7 +82,7 @@ let extractPath (group : T.GroupData) =
         Path = path
     }
 
-let mkConfigFromGroup (group : T.GroupData) =
+let mkConfigFromGroup (omitEscortInstructions : bool) (group : T.GroupData) =
     let prefixData = extractPath group
     let plane = prefixData.Plane
     let startPos = prefixData.StartPos
@@ -199,7 +199,7 @@ let mkConfigFromGroup (group : T.GroupData) =
     let instructions =
         [
             yield "IN: Connect external trigger to START"
-            if config.RendezVous.IsSome then
+            if config.RendezVous.IsSome && not omitEscortInstructions then
                 yield "IN: Connect external trigger to ESCORT_READY"
                 yield "OUT: Connect RDV to external trigger (to tell attackers at rendez-vous point)"
                 yield "OUT: Connect ESCORT_STDBY to external trigger (e.g. to tell escort to stop escorting during dives)"

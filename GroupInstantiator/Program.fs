@@ -20,7 +20,7 @@ let main argv =
 
     let mutable status = 0
 
-    let processSkeleton mkConfigFromGroup mkGroup getNodes label file =
+    let processSkeleton mkConfigFromGroup mkGroups label file =
         let skelGroup =
             try
                 printfn "Parsing skeleton %s file %s" label file
@@ -47,17 +47,17 @@ let main argv =
             ()
 
         let store = SturmovikMission.DataProvider.NumericalIdentifiers.IdStore()
-        let group =
+        let groups =
             configAndPlane
             |> Result.bind(fun x ->
                 try
                     printfn "Instantiating template"
-                    let group = mkGroup(store, x)
-                    Ok group
+                    let groups = mkGroups(store, x)
+                    Ok groups
                 with
                 | e -> Error ("Error during instantiation: " + e.Message))
-        match group with
-        | Ok group ->
+        match groups with
+        | Ok groups ->
             let outFile =
                 IO.Path.Combine(
                     IO.Path.GetDirectoryName(file),
@@ -65,7 +65,10 @@ let main argv =
                 )
             try
                 printfn "Writing result to %s" outFile
-                SturmovikMission.DataProvider.McuOutput.writeGroupFile outFile (getNodes group)
+                let nodes =
+                    groups
+                    |> List.collect (McuUtil.deepContentOf)
+                SturmovikMission.DataProvider.McuOutput.writeGroupFile outFile nodes
             with
             | e ->
                 printfn "Error while writing result to %s: %s" outFile e.Message
@@ -78,17 +81,14 @@ let main argv =
         let filename = IO.Path.GetFileNameWithoutExtension(file).ToLowerInvariant()
 
         if filename.StartsWith("skel-groundattack-") then
-            let mkConfigFromGroup = GroundAttack.mkConfigFromGroup
+            let mkConfigFromGroup = GroundAttack.mkConfigFromGroup false
             let mkGroup(store, configAndPlane) =
                 let config, plane, _ = configAndPlane
                 let group = SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, config)
                 setVehiclesAfterPlane plane group
                 group.All.PushGroupName(store, "Instantiated Ground Attack")
-                group
-            let getNodes(group : SturmovikMission.Blocks.GroundAttack.AttackerGroup) =
-                group.All
-                |> McuUtil.deepContentOf
-            processSkeleton mkConfigFromGroup mkGroup getNodes "ground attack" file
+                [group.All]
+            processSkeleton mkConfigFromGroup mkGroup "ground attack" file
 
         if filename.StartsWith("skel-patrol-") then
             let mkConfigFromGroup = Patrol.mkConfigFromGroup
@@ -97,23 +97,37 @@ let main argv =
                 let group = SturmovikMission.Blocks.Patrol.PatrolGroup.Create(store, config)
                 setVehiclesAfterPlane plane group
                 group.All.PushGroupName(store, "Instantiated Patrol")
-                group
-            let getNodes(group : SturmovikMission.Blocks.Patrol.PatrolGroup) =
-                group.All
-                |> McuUtil.deepContentOf
-            processSkeleton mkConfigFromGroup mkGroup getNodes "patrol" file
+                [group.All]
+            processSkeleton mkConfigFromGroup mkGroup "patrol" file
 
         if filename.StartsWith("skel-escort-") then
-            let mkConfigFromGroup = Escort.mkConfigFromGroup
-            let mkGroup(store, configAndPlane) =
-                let config, plane, _ = configAndPlane
-                let group = SturmovikMission.Blocks.Escort.EscortGroup.Create(store, config)
-                setVehiclesAfterPlane plane group
-                group.All.PushGroupName(store, "Instantiated Escort")
-                group
-            let getNodes(group : SturmovikMission.Blocks.Escort.EscortGroup) =
-                group.All
-                |> McuUtil.deepContentOf
-            processSkeleton mkConfigFromGroup mkGroup getNodes "patrol" file
+            let mkConfigFromGroup group =
+                let (escortGroup, escortPlane, escortInstructions), (attackersGroup, attackersPlane, attackersInstructions) = 
+                    Escort.mkFullConfigFromGroup group
+                let instructions =
+                    [
+                        for line in escortInstructions do
+                            yield "Escort: " + line
+                        for line in attackersInstructions do
+                            yield "Attackers: " + line
+                    ]
+                (escortGroup, attackersGroup), (escortPlane, attackersPlane), instructions
+            
+            let mkGroup(store, configsAndPlanes) =
+                let (escortConfig, attackersConfig), (escortPlane, attackersPlane), _ = configsAndPlanes
+                
+                let escortGroup = SturmovikMission.Blocks.Escort.EscortGroup.Create(store, escortConfig)
+                setVehiclesAfterPlane escortPlane escortGroup
+                escortGroup.All.PushGroupName(store, "Instantiated Escort")
+
+                let attackersGroup = SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, attackersConfig)
+                setVehiclesAfterPlane attackersPlane attackersGroup
+                attackersGroup.All.PushGroupName(store, "Instantiated Ground Attack")
+
+                SturmovikMission.Blocks.Escort.connectEscortWithPlanes escortGroup attackersGroup
+
+                [escortGroup.All; attackersGroup.All]
+            
+            processSkeleton mkConfigFromGroup mkGroup "patrol" file
 
     status // return an integer exit code

@@ -10,7 +10,7 @@ open VectorExtension
 
 open GroundAttack
 
-let mkConfigFromGroup (group : T.GroupData) =
+let mkConfigFromGroup (omitAttackersInstructions : bool) (group : T.GroupData) =
     let prefixData = extractPath group
 
     let toMeeting, rdv, toRTB =
@@ -97,12 +97,13 @@ let mkConfigFromGroup (group : T.GroupData) =
 
     let instructions =
         [
-            "IN: Connect external trigger to START"
-            "OUT: Connect ESCORT_CMD to leader of group to escort via target-link"
-            "IN: Connect external trigger to COVER_AREA (e.g. when escorted group starts ground attack)"
-            "IN: Connect external trigger to SET_FREE (when escorted group is done with its primary objective)"
-            "IN: Connect external trigger to PROCEED_RDV (when escorted group reaches the rendez-vous point)"
-            "OUT: Connect RDV to external trigger (to inform that escort has reached rendez-vous)"
+            yield "IN: Connect external trigger to START"
+            if not omitAttackersInstructions then
+                yield "OUT: Connect ESCORT_CMD to leader of group to escort via target-link"
+                yield "IN: Connect external trigger to COVER_AREA (e.g. when escorted group starts ground attack)"
+                yield "IN: Connect external trigger to SET_FREE (when escorted group is done with its primary objective)"
+                yield "IN: Connect external trigger to PROCEED_RDV (when escorted group reaches the rendez-vous point)"
+                yield "OUT: Connect RDV to external trigger (to inform that escort has reached rendez-vous)"
         ]
 
     {
@@ -115,3 +116,13 @@ let mkConfigFromGroup (group : T.GroupData) =
         LandAt = landAt
         NumPlanes = numPlanes
     }, prefixData.Plane, instructions
+
+
+let mkFullConfigFromGroup (group : T.GroupData) =
+    let escortGroup = group.GetGroup("Escort")
+    if Seq.isEmpty escortGroup.ListOfMCU_Waypoint then
+        failwith "Failed to find a group named 'Escort' with waypoints in it."
+    let attackersGroup = group.GetGroup("Attackers")
+    if Seq.isEmpty attackersGroup.ListOfMCU_Waypoint then
+        failwith "Failed to find a group named 'Attackers' with waypoints in it."
+    mkConfigFromGroup true escortGroup, GroundAttack.mkConfigFromGroup true attackersGroup
