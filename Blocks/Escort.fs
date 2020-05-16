@@ -116,7 +116,6 @@ with
         gatherInNamedGroup store "Back to base" toBase
         for wp in toBase do
             Mcu.addObjectLink wp leadPlaneEntity.Index
-        Mcu.addTargetLink retWp2 (List.head toBase).Index
 
         // Detailed node relocation
         rtbPoint.Pos.AssignTo retWp1.Pos
@@ -138,12 +137,12 @@ with
         //  Escort meet-up
         cx wp1 (List.head toRdv).Index
         cx (List.last toRdv) rdv.Index
+        cx retWp2 (List.head toBase).Index
 
         // Set wing
         let planeGroup = fst planeGroup
         allUnable.Count <- config.NumPlanes
 
-        let cx = Mcu.addTargetLink
         let unable = getTriggerByName planeGroup "Unable"
         cx unable allUnable.Index
 
