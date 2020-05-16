@@ -198,13 +198,15 @@ let mkConfigFromGroup (group : T.GroupData) =
 
     let instructions =
         [
-            "IN: Connect external trigger to START"
-            "IN: Connect external trigger to ESCORT_READY (optional, only if RDV enabled)"
-            "IN: Connect external trigger to ATTACK_DONE of primary objective (e.g. xx objects destroyed)"
-            "IN: Connect external trigger to ATTACK_DONE of secondary objective (optional, if secondary objective enabled)"
-            "OUT: Connect RDV to external trigger (to tell attackers at rendez-vous point)"
-            "OUT: Connect ESCORT_STDBY to external trigger (e.g. to tell escort to stop escorting during dives)"
-            "OUT: Connect RELEASE_ESCORT to external trigger (e.g. to release escort)"
+            yield "IN: Connect external trigger to START"
+            if config.RendezVous.IsSome then
+                yield "IN: Connect external trigger to ESCORT_READY"
+                yield "OUT: Connect RDV to external trigger (to tell attackers at rendez-vous point)"
+                yield "OUT: Connect ESCORT_STDBY to external trigger (e.g. to tell escort to stop escorting during dives)"
+                yield "OUT: Connect RELEASE_ESCORT to external trigger (e.g. to release escort)"
+            yield "IN: Connect external trigger to ATTACK_DONE of primary objective (e.g. xx objects destroyed)"
+            if config.SecondaryObjective.IsSome then
+                yield "IN: Connect external trigger to ATTACK_DONE of secondary objective"
         ]
 
     config, plane, instructions
