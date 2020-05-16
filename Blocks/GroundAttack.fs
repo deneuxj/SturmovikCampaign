@@ -191,12 +191,16 @@ type FlightSectionConfig = {
     Path : Vector2 list
 }
 with
+    /// Create list of McuWaypoint, ordered as in Path
     member this.CreateWaypoints(store) =
+        if this.Path.Length > 9999 then
+            failwith "Too many waypoints in the path"
         let wps =
             [
                 for i, v in List.indexed this.Path do
                     let wp =
                         T.MCU_Waypoint.Default
+                            .SetName(T.String.N (sprintf "WP %04d" i))
                             .SetArea(T.Integer.N 1000)
                             .SetSpeed(T.Integer.N this.Speed)
                             .SetYPos(T.Float.N (float this.Altitude))
@@ -210,6 +214,7 @@ with
             Mcu.addTargetLink (wp1 :?> Mcu.McuTrigger) wp2.Index
         cloneFresh store wps
         |> List.map (fun x -> x :?> Mcu.McuWaypoint)
+        |> List.sortBy (fun x -> x.Name)
 
 type MeetingPointConfig = {
     Location : DirectedPoint
