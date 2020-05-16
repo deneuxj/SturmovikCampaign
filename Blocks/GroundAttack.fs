@@ -194,8 +194,18 @@ type FlightSectionConfig = {
     Path : Vector2 list
 }
 with
+    static member Create(wps : T.MCU_Waypoint list) =
+        let alt = List.tryHead wps |> Option.map (fun wp -> wp.GetYPos().Value |> int) |> Option.defaultValue 2000
+        let speed = List.tryHead wps |> Option.map (fun wp -> wp.GetSpeed().Value |> int) |> Option.defaultValue 300
+        {
+            Altitude = alt
+            Speed = speed
+            Prio = 1
+            Path = wps |> List.map (Vector2.FromPos)
+        }
+
     /// Create list of McuWaypoint, ordered as in Path
-    member this.CreateWaypoints(store) =
+    member this.CreateWaypoints(store, objIdx) =
         if this.Path.Length > 9999 then
             failwith "Too many waypoints in the path"
         let wps =
@@ -211,6 +221,7 @@ with
                             .SetZPos(T.Float.N (float v.Y))
                             .SetPriority(T.Integer.N this.Prio)
                             .SetIndex(T.Integer.N (i + 1))
+                            .SetObjects(T.VectorOfIntegers.N [objIdx])
                     yield wp.CreateMcu()
             ]
         for wp1, wp2 in Seq.pairwise wps do
@@ -218,6 +229,12 @@ with
         cloneFresh store wps
         |> List.map (fun x -> x :?> Mcu.McuWaypoint)
         |> List.sortBy (fun x -> x.Name)
+
+let waypointsToGroup (wps : Mcu.McuWaypoint seq) =
+    wps
+    |> Seq.map (fun x -> x :> Mcu.McuBase)
+    |> List.ofSeq
+    |> McuUtil.groupFromList
 
 type MeetingPointConfig = {
     Location : DirectedPoint
@@ -275,15 +292,13 @@ with
 type AttackerGroupConfig = {
     StartType : StartType
     StartPos : DirectedPoint
-    CruiseAltitude : int
-    CruiseSpeed : int
+    ToRendezVous : FlightSectionConfig option
     RendezVous : MeetingPointConfig option
-    MidPos : DirectedPoint
+    ToPrimaryObjective : FlightSectionConfig
     PrimaryObjective : AttackAreaParams
+    ToSecondaryObjective : FlightSectionConfig option
     SecondaryObjective : AttackAreaParams option
-    IntoReturn : DirectedPoint
-    Return : DirectedPoint
-    Final : DirectedPoint
+    ToReturn : FlightSectionConfig
     LandAt : DirectedPoint
     NumPlanes : int
 }
@@ -318,28 +333,27 @@ with
             meeting.All.PushGroupName(store, "RendezVous"))
 
         // Nodes of interest
-        let intoPrimary = getWaypointByName group "INTO_PRIMARY"
         let wp1 = getWaypointByName group "Waypoint1"
         let start = getTriggerByName group "START"
         let escortReady = getTriggerByName group "ESCORT_READY"
         let releaseEscort = getTriggerByName group "RELEASE_ESCORT"
         let escortStdBy = getTriggerByName group "ESCORT_STDBY"
         let intoSecondary = getTriggerByName group "INTO_SECONDARY" :?> Mcu.McuTimer
-        let intoReturn = getWaypointByName group "IntoReturn"
-        let wpReturn = getWaypointByName group "Return"
         let unableToAttack = getTriggerByName group "GROUP_UNABLE_TO_ATT" :?> Mcu.McuCounter
         let greenFlare = getTriggerByName group "GreenFlare"
         let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
         let planeVehicle = getVehicleByName group "ATTACKER"
         let plane = getEntityByIndex planeVehicle.LinkTrId group
-        let wpFinal = getWaypointByName group "Final"
         let takeOff = getTriggerByName group "TakeOff"
+        let chooseSecOrReturn = getTriggerByName group "ChooseSecOrReturn"
+        let final = getTriggerByName group "Final"
 
         // groups of related nodes, each group centered around some key position
         let extractGroup = extractGroup group
         let flightStartGroup = extractGroup "FlightStart" "TakeOff"
         let planeGroup = extractGroup "Plane" "ATTACKER"
         let returnGroup = extractGroup "Return" "Return"
+        let flyBack = getTriggerByName (fst returnGroup) "Return"
         let landGroup = extractGroup "Land" "Land"
 
         // General relocation
@@ -367,27 +381,14 @@ with
             relocateGroup config.StartPos planeGroup
             relocateGroup x.TakeOffPoint flightStartGroup
         relocateGroup config.StartPos planeGroup
-        relocateGroup config.Return returnGroup
         relocateGroup config.LandAt landGroup
 
-        // Altitude
-        for group in [flightStartGroup; returnGroup] do
-            setAltitude config.CruiseAltitude (fst group)
-        setAltitude config.CruiseAltitude [intoPrimary; intoReturn; wpReturn]
-
-        // Detailed relocation
-        config.MidPos.AssignTo intoPrimary
-        config.IntoReturn.AssignTo intoReturn
-        config.Return.AssignTo wpReturn
-        config.Final.AssignTo wpFinal
-        setAltitude 1000 [wpFinal]
-
-        // Set speeds
-        for mcu in group do
-            match mcu with
-            | :? Mcu.McuWaypoint as wp -> wp.Speed <- config.CruiseSpeed
-            | _ -> ()
-
+        // Flight sections
+        let toRdv = config.ToRendezVous |> Option.map(fun x -> x.CreateWaypoints(store, plane.Index))
+        let toPrimary = config.ToPrimaryObjective.CreateWaypoints(store, plane.Index)
+        let toSecondary = config.ToSecondaryObjective |> Option.map (fun x -> x.CreateWaypoints(store, plane.Index))
+        let toBase = config.ToReturn.CreateWaypoints(store, plane.Index)
+        let intoPrimary = List.last toPrimary
         // Set up connections between subgroups
         let cx = Mcu.addTargetLink
         //  Take-off or fly to first waypoint
@@ -398,7 +399,12 @@ with
         //  Escort meet-up
         match meeting with
         | Some meeting ->
-            cx wp1 meeting.MeetAt.Index
+            match toRdv with
+            | Some (wp :: _ as toRdv) ->
+                cx wp1 wp.Index
+                cx (List.last toRdv) meeting.MeetAt.Index
+            | _ ->
+                cx wp1 meeting.MeetAt.Index
             cx start meeting.Start.Index
             cx attack1.StartAttack escortStdBy.Index
             cx attack1.AfterAttack releaseEscort.Index
@@ -411,19 +417,32 @@ with
         cx start attack1.Start.Index
         cx attack1.AfterAttack greenFlare.Index
         cx unableToAttack attack1.AttackDone.Index
-        cx attack1.Egress intoReturn.Index
         cx intoPrimary attack1.Ingress.Index
+        match toSecondary with
+        | Some (wp :: _ as toSecondary) ->
+            cx attack1.Egress wp.Index
+            cx (List.last toSecondary) chooseSecOrReturn.Index
+        | _ ->
+            cx attack1.Egress chooseSecOrReturn.Index
         //  Secondary objective
         match attack2 with
         | Some attack2 ->
             cx start attack2.Start.Index
             cx attack2.AfterAttack greenFlare.Index
             cx unableToAttack attack2.AttackDone.Index
-            cx attack2.Egress wpReturn.Index
+            cx attack2.Egress (List.head toBase).Index
             cx intoSecondary attack2.Ingress.Index
         | None ->
             // Break connection between waypoint and timer
-            intoReturn.Targets <- intoReturn.Targets |> List.filter ((<>) intoSecondary.Index)
+            chooseSecOrReturn.Targets <- chooseSecOrReturn.Targets |> List.filter ((<>) intoSecondary.Index)
+        //  Flight back to base
+        match toBase with
+        | [] ->
+            cx flyBack final.Index
+        | wp :: _ ->
+            cx flyBack wp.Index
+            cx (List.last toBase) final.Index
+
         //  Release escort if group dies
         cx allKilled releaseEscort.Index
 
@@ -492,6 +511,17 @@ with
                         | None -> ()
                         for _, group in wing do
                             yield McuUtil.groupFromList group
+                        match toRdv with
+                        | Some toRdv ->
+                            yield waypointsToGroup toRdv
+                        | None -> ()
+                        yield waypointsToGroup toPrimary
+                        match toSecondary with
+                        | Some toSecondary ->
+                            yield waypointsToGroup toSecondary
+                        | None ->
+                            ()
+                        yield waypointsToGroup toBase
                       ]
                 }
         }

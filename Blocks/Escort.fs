@@ -102,20 +102,16 @@ with
         setAltitude config.Area.Altitude (fst coverTargetGroup)
 
         // waypoints to rendez-vous
-        let toRdv = config.FlightToRendezVous.CreateWaypoints(store)
+        let toRdv = config.FlightToRendezVous.CreateWaypoints(store, leadPlaneEntity.Index)
         gatherInNamedGroup store "To RDV" toRdv
-        for wp in toRdv do
-            Mcu.addObjectLink wp leadPlaneEntity.Index
 
         // waypoints to home base
         let flightToReturn =
             { config.FlightToReturn with
                 Path = config.FlightToReturn.Path |> List.skip 2
             }
-        let toBase = flightToReturn.CreateWaypoints(store)
+        let toBase = flightToReturn.CreateWaypoints(store, leadPlaneEntity.Index)
         gatherInNamedGroup store "Back to base" toBase
-        for wp in toBase do
-            Mcu.addObjectLink wp leadPlaneEntity.Index
 
         // Detailed node relocation
         rtbPoint.Pos.AssignTo retWp1.Pos
