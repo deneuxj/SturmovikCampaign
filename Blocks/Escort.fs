@@ -103,6 +103,7 @@ with
 
         // waypoints to rendez-vous
         let toRdv = config.FlightToRendezVous.CreateWaypoints(store)
+        gatherInNamedGroup store "To RDV" toRdv
         for wp in toRdv do
             Mcu.addObjectLink wp leadPlaneEntity.Index
 
@@ -112,6 +113,7 @@ with
                 Path = config.FlightToReturn.Path |> List.skip 2
             }
         let toBase = flightToReturn.CreateWaypoints(store)
+        gatherInNamedGroup store "Back to base" toBase
         for wp in toBase do
             Mcu.addObjectLink wp leadPlaneEntity.Index
         Mcu.addTargetLink retWp2 (List.head toBase).Index
