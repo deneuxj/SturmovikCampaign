@@ -94,4 +94,8 @@ let mkConfigFromGroup (group : T.GroupData) =
             } : PatrolGroupConfig
         | _ -> failwith "Failed to analyse flight path"
 
-    config, prefixData.Plane
+    let instructions =
+        [
+            "IN: Connect externel trigger to START"
+        ]
+    config, prefixData.Plane, instructions

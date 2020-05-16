@@ -95,6 +95,16 @@ let mkConfigFromGroup (group : T.GroupData) =
         |> System.Int32.TryParse
         |> function true, x -> x | _ -> 3
 
+    let instructions =
+        [
+            "IN: Connect external trigger to START"
+            "OUT: Connect ESCORT_CMD to leader of group to escort via target-link"
+            "IN: Connect external trigger to COVER_AREA (e.g. when escorted group starts ground attack)"
+            "IN: Connect external trigger to SET_FREE (when escorted group is done with its primary objective)"
+            "IN: Connect external trigger to PROCEED_RDV (when escorted group reaches the rendez-vous point)"
+            "OUT: Connect RDV to external trigger (to inform that escort has reached rendez-vous)"
+        ]
+
     {
         StartType = prefixData.StartType
         StartPos = prefixData.StartPos
@@ -104,4 +114,4 @@ let mkConfigFromGroup (group : T.GroupData) =
         FlightToReturn = returnFlight
         LandAt = landAt
         NumPlanes = numPlanes
-    }, prefixData.Plane
+    }, prefixData.Plane, instructions

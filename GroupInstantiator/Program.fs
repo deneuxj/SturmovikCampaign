@@ -38,7 +38,14 @@ let main argv =
                     mkConfigFromGroup skelGroup
                     |> Ok
                 with e -> Error ("Error while extracting template parameters: " + e.Message))
-    
+        
+        match configAndPlane with
+        | Ok(_, _, instructions) ->
+            for instruction in instructions do
+                printfn "%s" instruction
+        | _ ->
+            ()
+
         let store = SturmovikMission.DataProvider.NumericalIdentifiers.IdStore()
         let group =
             configAndPlane
@@ -73,7 +80,7 @@ let main argv =
         if filename.StartsWith("skel-groundattack-") then
             let mkConfigFromGroup = GroundAttack.mkConfigFromGroup
             let mkGroup(store, configAndPlane) =
-                let config, plane = configAndPlane
+                let config, plane, _ = configAndPlane
                 let group = SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, config)
                 setVehiclesAfterPlane plane group
                 group.All.PushGroupName(store, "Instantiated Ground Attack")
@@ -86,7 +93,7 @@ let main argv =
         if filename.StartsWith("skel-patrol-") then
             let mkConfigFromGroup = Patrol.mkConfigFromGroup
             let mkGroup(store, configAndPlane) =
-                let config, plane = configAndPlane
+                let config, plane, _ = configAndPlane
                 let group = SturmovikMission.Blocks.Patrol.PatrolGroup.Create(store, config)
                 setVehiclesAfterPlane plane group
                 group.All.PushGroupName(store, "Instantiated Patrol")
@@ -99,7 +106,7 @@ let main argv =
         if filename.StartsWith("skel-escort-") then
             let mkConfigFromGroup = Escort.mkConfigFromGroup
             let mkGroup(store, configAndPlane) =
-                let config, plane = configAndPlane
+                let config, plane, _ = configAndPlane
                 let group = SturmovikMission.Blocks.Escort.EscortGroup.Create(store, config)
                 setVehiclesAfterPlane plane group
                 group.All.PushGroupName(store, "Instantiated Escort")
