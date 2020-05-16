@@ -33,7 +33,7 @@ type EscortGroup = {
     Start : Mcu.McuTrigger
     CoverArea : Mcu.McuTrigger // Triggered by attackers during ingress
     ReleaseEscort : Mcu.McuTrigger // Triggered by attackers after first attack
-    ProceedRDV : Mcu.McuTrigger // Triggered by attackers at RDV
+    FollowEscorted : Mcu.McuTrigger // Triggered by attackers after successful RDV
 
     /// OUT
     AtRDV : Mcu.McuTrigger
@@ -64,7 +64,7 @@ with
         let coverAreaDuration = getTriggerByName mcus "CoverDuration" :?> Mcu.McuTimer
         let wp1 = getWaypointByName mcus "Waypoint1"
         let takeOff = getTriggerByName mcus "TakeOff"
-        let proceed = getTriggerByName mcus "PROCEED_RDV"
+        let follow = getTriggerByName mcus "FOLLOW_ESCORTED"
         let escortCmd = getTriggerByName mcus "ESCORT_CMD"
 
         // groups of related nodes
@@ -177,7 +177,7 @@ with
             Start = start
             CoverArea = coverArea
             ReleaseEscort = setFree
-            ProceedRDV = proceed
+            FollowEscorted = follow
             AtRDV = rdv
             Unable = allUnable
             EscortCmd = escortCmd
@@ -208,7 +208,7 @@ let connectEscortWithPlanes (escort : EscortGroup) (planes : AttackerGroup) =
     cx planes.ReleaseEscort escort.ReleaseEscort.Index
     match planes.MeetWithEscort with
     | Some meet ->
-        cx meet.Proceed escort.ProceedRDV.Index
+        cx meet.Proceed escort.FollowEscorted.Index
         cx escort.AtRDV meet.OtherArrived.Index
     | None ->
         failwith "Attack group lacks a rendezvous point with the escort"
