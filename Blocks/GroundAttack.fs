@@ -313,7 +313,9 @@ with
         let attack2 = config.SecondaryObjective |> Option.map (fun o -> AttackArea.Create(store, o))
         attack2 |> Option.iter (fun attack2 -> attack2.All.PushGroupName(store, "Secondary objective"))
         let meeting = config.RendezVous |> Option.map (fun rdv -> MeetingPoint.Create(store, rdv))
-        meeting |> Option.iter (fun meeting -> meeting.All.PushGroupName(store, "RendezVous"))
+        meeting |> Option.iter (fun meeting ->
+            meeting.OtherArrived.Name <- "EscortReady"
+            meeting.All.PushGroupName(store, "RendezVous"))
 
         // Nodes of interest
         let intoPrimary = getWaypointByName group "INTO_PRIMARY"
