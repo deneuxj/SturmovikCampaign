@@ -134,6 +134,8 @@ type AttackArea = {
     FormationSafe : Mcu.McuTrigger
     /// OUT
     AfterAttack : Mcu.McuTrigger
+    /// OUT
+    Canceled : Mcu.McuTrigger
     /// IN
     Start : Mcu.McuTrigger
     All : McuUtil.IMcuGroup
@@ -153,7 +155,7 @@ with
         let formationSafe = getTriggerByName mcus "FORMATION_SAFE"
         let start = getTriggerByName mcus "START"
         let afterAttack = getTriggerByName mcus "AFTER_ATTACK"
-
+        let canceled = getTriggerByName mcus "ATTACK_CANCELED"
         // general node relocation
         relocateGroup config.DirectedPoint (mcus, attackArea)
         setAltitude config.AttackAltitude mcus
@@ -173,6 +175,7 @@ with
             FormationSafe = formationSafe
             Start = start
             AfterAttack = afterAttack
+            Canceled = canceled
             All = McuUtil.groupFromList mcus
         }
 
@@ -318,6 +321,7 @@ with
         let start = getTriggerByName group "START"
         let escortReady = getTriggerByName group "ESCORT_READY"
         let releaseEscort = getTriggerByName group "RELEASE_ESCORT"
+        let escortStdBy = getTriggerByName group "ESCORT_STDBY"
         let intoSecondary = getTriggerByName group "INTO_SECONDARY" :?> Mcu.McuTimer
         let intoReturn = getWaypointByName group "IntoReturn"
         let wpReturn = getWaypointByName group "Return"
@@ -394,14 +398,15 @@ with
         | Some meeting ->
             cx wp1 meeting.MeetAt.Index
             cx start meeting.Start.Index
-            cx attack1.StartAttack releaseEscort.Index
+            cx attack1.StartAttack escortStdBy.Index
+            cx attack1.AfterAttack releaseEscort.Index
+            cx attack1.Canceled releaseEscort.Index
             cx escortReady meeting.OtherArrived.Index
             cx meeting.Proceed intoPrimary.Index
         | None ->
             cx wp1 intoPrimary.Index
         //  Primary objective
         cx start attack1.Start.Index
-        cx attack1.StartAttack releaseEscort.Index
         cx attack1.AfterAttack greenFlare.Index
         cx unableToAttack attack1.AttackDone.Index
         cx attack1.Egress intoReturn.Index
@@ -417,6 +422,8 @@ with
         | None ->
             // Break connection between waypoint and timer
             intoReturn.Targets <- intoReturn.Targets |> List.filter ((<>) intoSecondary.Index)
+        //  Release escort if group dies
+        cx allKilled releaseEscort.Index
 
         // Set plane wing
         allKilled.Count <- config.NumPlanes
@@ -431,7 +438,6 @@ with
         let isDone = getTriggerByName group "UnableToAttack"
         cx isDead allKilled.Index
         cx isDone unableToAttack.Index
-        
         let wing =
             let items : Mcu.McuBase list =
                 [planeVehicle; plane; isDead; isBingoBombs; isDone]
