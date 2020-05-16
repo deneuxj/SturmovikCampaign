@@ -137,7 +137,10 @@ with
         //  Escort meet-up
         cx wp1 (List.head toRdv).Index
         cx (List.last toRdv) rdv.Index
+        //  Return to base
+        let finalWp = getWaypointByName (fst landGroup) "Final"
         cx retWp2 (List.head toBase).Index
+        cx (List.last toBase) finalWp.Index
 
         // Set wing
         let planeGroup = fst planeGroup
