@@ -217,8 +217,8 @@ type EscortGroup(store, config : EscortConfig) =
 
 
 let connectEscortWithPlanes (escort : EscortGroup) (planes : AttackerGroup) =
-    Mcu.addObjectLink escort.EscortCmd planes.LeadPlane.LinkTrId
     let cx = Mcu.addTargetLink
+    cx escort.EscortCmd planes.LeadPlane.LinkTrId
     cx planes.EscortStandBy escort.CoverArea.Index
     cx planes.ReleaseEscort escort.ReleaseEscort.Index
     match planes.MeetWithEscort with
