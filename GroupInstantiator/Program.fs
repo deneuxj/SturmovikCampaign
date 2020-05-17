@@ -84,7 +84,7 @@ let main argv =
             let mkConfigFromGroup = GroundAttack.mkConfigFromGroup false
             let mkGroup(store, configAndPlane) =
                 let config, plane, _ = configAndPlane
-                let group = SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, config)
+                let group = SturmovikMission.Blocks.GroundAttack.AttackerGroup(store, config)
                 setVehiclesAfterPlane plane group
                 group.All.PushGroupName(store, "Instantiated Ground Attack")
                 [group.All]
@@ -94,7 +94,7 @@ let main argv =
             let mkConfigFromGroup = Patrol.mkConfigFromGroup
             let mkGroup(store, configAndPlane) =
                 let config, plane, _ = configAndPlane
-                let group = SturmovikMission.Blocks.Patrol.PatrolGroup.Create(store, config)
+                let group = SturmovikMission.Blocks.Patrol.PatrolGroup(store, config)
                 setVehiclesAfterPlane plane group
                 group.All.PushGroupName(store, "Instantiated Patrol")
                 [group.All]
@@ -116,11 +116,11 @@ let main argv =
             let mkGroup(store, configsAndPlanes) =
                 let (escortConfig, attackersConfig), (escortPlane, attackersPlane), _ = configsAndPlanes
                 
-                let escortGroup = SturmovikMission.Blocks.Escort.EscortGroup.Create(store, escortConfig)
+                let escortGroup = SturmovikMission.Blocks.Escort.EscortGroup(store, escortConfig)
                 setVehiclesAfterPlane escortPlane escortGroup
                 escortGroup.All.PushGroupName(store, "Instantiated Escort")
 
-                let attackersGroup = SturmovikMission.Blocks.GroundAttack.AttackerGroup.Create(store, attackersConfig)
+                let attackersGroup = SturmovikMission.Blocks.GroundAttack.AttackerGroup(store, attackersConfig)
                 setVehiclesAfterPlane attackersPlane attackersGroup
                 attackersGroup.All.PushGroupName(store, "Instantiated Ground Attack")
 

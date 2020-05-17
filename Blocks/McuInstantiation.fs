@@ -102,3 +102,19 @@ let setVehiclesAfterPlane (proto : T.Plane) (hasVehicles : IHasVehicles) =
                     .SetYPos(T.Float.N plane.Pos.Y)
                     .SetZPos(T.Float.N plane.Pos.Z)
         hasVehicles.ReplaceVehicleWith(plane.Index, newPlane.CreateMcu() :?> Mcu.HasEntity)
+
+/// Make a group where nodes in the group's content can be replaced by other nodes.
+/// Useful e.g. when replacing vehicles in a template.
+let mcuGroupWithReplaceables(replaceables : Set<int>, getReplacements) (grp : McuUtil.IMcuGroup) =
+    { new McuUtil.IMcuGroup with
+          member this.Content =
+            grp.Content
+            |> List.filter (fun mcu -> not(replaceables.Contains mcu.Index))
+            |> List.append (getReplacements())
+
+          member this.LcStrings =
+            grp.LcStrings
+
+          member this.SubGroups =
+            grp.SubGroups
+    }

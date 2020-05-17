@@ -303,60 +303,48 @@ type AttackerGroupConfig = {
     NumPlanes : int
 }
 
-type AttackerGroup = {
-    /// IN
-    Start : Mcu.McuTrigger
-    /// OUT
-    ReleaseEscort : Mcu.McuTrigger
-    /// OUT
-    AllKilled : Mcu.McuTrigger
-    LeadPlane : Mcu.HasEntity ref
-    WingPlanes : Mcu.HasEntity[]
-    PrimaryAttackArea : AttackArea
-    SecondaryAttackArea : AttackArea option
-    MeetWithEscort : MeetingPoint option
-    All : McuUtil.IMcuGroup
-}
-with
-    static member Create(store : NumericalIdentifiers.IdStore, config : AttackerGroupConfig) =
-        // Instantiate
-        let group, subst = getFreshGroup blocks2Data store "GroundAttack"
+type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupConfig) =
+    // Instantiate
+    let group, subst = getFreshGroup blocks2Data store "GroundAttack"
 
-        // Subgroups
-        let attack1 = AttackArea.Create(store, config.PrimaryObjective)
-        attack1.All.PushGroupName(store, "Primary objective")
-        let attack2 = config.SecondaryObjective |> Option.map (fun o -> AttackArea.Create(store, o))
-        attack2 |> Option.iter (fun attack2 -> attack2.All.PushGroupName(store, "Secondary objective"))
-        let meeting = config.RendezVous |> Option.map (fun rdv -> MeetingPoint.Create(store, rdv))
-        meeting |> Option.iter (fun meeting ->
+    // Subgroups
+    let attack1 = AttackArea.Create(store, config.PrimaryObjective)
+    do attack1.All.PushGroupName(store, "Primary objective")
+    let attack2 = config.SecondaryObjective |> Option.map (fun o -> AttackArea.Create(store, o))
+    do attack2 |> Option.iter (fun attack2 -> attack2.All.PushGroupName(store, "Secondary objective"))
+    let meeting = config.RendezVous |> Option.map (fun rdv -> MeetingPoint.Create(store, rdv))
+    do
+        meeting
+        |> Option.iter (fun meeting ->
             meeting.OtherArrived.Name <- "EscortReady"
             meeting.All.PushGroupName(store, "RendezVous"))
 
-        // Nodes of interest
-        let wp1 = getWaypointByName group "Waypoint1"
-        let start = getTriggerByName group "START"
-        let escortReady = getTriggerByName group "ESCORT_READY"
-        let releaseEscort = getTriggerByName group "RELEASE_ESCORT"
-        let escortStdBy = getTriggerByName group "ESCORT_STDBY"
-        let intoSecondary = getTriggerByName group "INTO_SECONDARY" :?> Mcu.McuTimer
-        let unableToAttack = getTriggerByName group "GROUP_UNABLE_TO_ATT" :?> Mcu.McuCounter
-        let greenFlare = getTriggerByName group "GreenFlare"
-        let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
-        let planeVehicle = getVehicleByName group "ATTACKER"
-        let plane = getEntityByIndex planeVehicle.LinkTrId group
-        let takeOff = getTriggerByName group "TakeOff"
-        let chooseSecOrReturn = getTriggerByName group "ChooseSecOrReturn"
-        let final = getTriggerByName group "Final"
+    // Nodes of interest
+    let wp1 = getWaypointByName group "Waypoint1"
+    let start = getTriggerByName group "START"
+    let escortReady = getTriggerByName group "ESCORT_READY"
+    let releaseEscort = getTriggerByName group "RELEASE_ESCORT"
+    let escortStdBy = getTriggerByName group "ESCORT_STDBY"
+    let intoSecondary = getTriggerByName group "INTO_SECONDARY" :?> Mcu.McuTimer
+    let unableToAttack = getTriggerByName group "GROUP_UNABLE_TO_ATT" :?> Mcu.McuCounter
+    let greenFlare = getTriggerByName group "GreenFlare"
+    let allKilled = getTriggerByName group "ALL_KILLED" :?> Mcu.McuCounter
+    let planeVehicle = getVehicleByName group "ATTACKER"
+    let plane = getEntityByIndex planeVehicle.LinkTrId group
+    let takeOff = getTriggerByName group "TakeOff"
+    let chooseSecOrReturn = getTriggerByName group "ChooseSecOrReturn"
+    let final = getTriggerByName group "Final"
 
-        // groups of related nodes, each group centered around some key position
-        let extractGroup = extractGroup group
-        let flightStartGroup = extractGroup "FlightStart" "TakeOff"
-        let planeGroup = extractGroup "Plane" "ATTACKER"
-        let returnGroup = extractGroup "Return" "Return"
-        let flyBack = getTriggerByName (fst returnGroup) "Return"
-        let landGroup = extractGroup "Land" "Land"
+    // groups of related nodes, each group centered around some key position
+    let extractGroup = extractGroup group
+    let flightStartGroup = extractGroup "FlightStart" "TakeOff"
+    let planeGroup = extractGroup "Plane" "ATTACKER"
+    let returnGroup = extractGroup "Return" "Return"
+    let flyBack = getTriggerByName (fst returnGroup) "Return"
+    let landGroup = extractGroup "Land" "Land"
 
-        // General relocation
+    // General relocation
+    do
         try
             let rest =
                 let bag =
@@ -383,20 +371,22 @@ with
         relocateGroup config.StartPos planeGroup
         relocateGroup config.LandAt landGroup
 
-        // Flight sections
-        let toRdv = config.ToRendezVous |> Option.map(fun x -> x.CreateWaypoints(store, plane.Index))
-        let toPrimary = config.ToPrimaryObjective.CreateWaypoints(store, plane.Index)
-        let toSecondary = config.ToSecondaryObjective |> Option.map (fun x -> x.CreateWaypoints(store, plane.Index))
-        let toBase = config.ToReturn.CreateWaypoints(store, plane.Index)
-        let intoPrimary = List.last toPrimary
-        // Set up connections between subgroups
-        let cx = Mcu.addTargetLink
-        //  Take-off or fly to first waypoint
+    // Flight sections
+    let toRdv = config.ToRendezVous |> Option.map(fun x -> x.CreateWaypoints(store, plane.Index))
+    let toPrimary = config.ToPrimaryObjective.CreateWaypoints(store, plane.Index)
+    let toSecondary = config.ToSecondaryObjective |> Option.map (fun x -> x.CreateWaypoints(store, plane.Index))
+    let toBase = config.ToReturn.CreateWaypoints(store, plane.Index)
+    let intoPrimary = List.last toPrimary
+    // Set up connections between subgroups
+    let cx = Mcu.addTargetLink
+    //  Take-off or fly to first waypoint
+    do
         match config.StartType with
         | AirStart _ -> cx start wp1.Index
         | GroundStart _ -> cx start takeOff.Index
 
-        //  Escort meet-up
+    //  Escort meet-up
+    do
         match meeting with
         | Some meeting ->
             match toRdv with
@@ -446,7 +436,8 @@ with
         //  Release escort if group dies
         cx allKilled releaseEscort.Index
 
-        // Set plane wing
+    // Set plane wing
+    do
         allKilled.Count <- config.NumPlanes
         unableToAttack.Count <- config.NumPlanes
 
@@ -454,87 +445,130 @@ with
         attack2 |> Option.iter (fun attack -> attack.ConnectTo plane)
         meeting |> Option.iter (fun meeting -> meeting.ConnectTo plane)
 
-        let isDead = getTriggerByName group "Dead"
-        let isBingoBombs = getTriggerByName group "BingoBombs"
-        let isDone = getTriggerByName group "UnableToAttack"
+    let isDead = getTriggerByName group "Dead"
+    let isBingoBombs = getTriggerByName group "BingoBombs"
+    let isDone = getTriggerByName group "UnableToAttack"
+    do
         cx isDead allKilled.Index
         cx isDone unableToAttack.Index
-        let wing =
-            let items : Mcu.McuBase list =
-                [planeVehicle; plane; isDead; isBingoBombs; isDone]
-            let newGroup() = cloneFresh store items
-            [|
-                let offset =
-                    match config.StartType with
-                    | AirStart _ -> Vector2(-50.0f, 50.0f).Rotate(config.StartPos.Direction)
-                    | GroundStart _ -> Vector2(0.0f, 35.0f).Rotate(config.StartPos.Direction)
-                for i in 2..config.NumPlanes do
-                    let group = newGroup()
-                    let dead = getTriggerByName group "Dead"
-                    let unable = getTriggerByName group "UnableToAttack"
-                    let vehicle = getVehicleByName group "ATTACKER"
-                    let entity = getEntityByIndex vehicle.LinkTrId group
-                    for mcu in group do
-                        let pos = Vector2.FromMcu(mcu.Pos)
-                        let newPos = pos + (float32 (i - 1)) * offset
-                        newPos.AssignTo mcu.Pos
-                    vehicle.Name <- sprintf "ATTACKER %d" i
-                    vehicle.NumberInFormation.Value.Number <- i - 1
-                    cx entity plane.Index
-                    cx dead allKilled.Index
-                    cx unable unableToAttack.Index
-                    gatherInNamedGroup store (sprintf "Wingman %d" (i - 1)) group
-                    yield vehicle, group
-            |]
+    let wing =
+        let items : Mcu.McuBase list =
+            [planeVehicle; plane; isDead; isBingoBombs; isDone]
+        let newGroup() = cloneFresh store items
+        [|
+            let offset =
+                match config.StartType with
+                | AirStart _ -> Vector2(-50.0f, 50.0f).Rotate(config.StartPos.Direction)
+                | GroundStart _ -> Vector2(0.0f, 35.0f).Rotate(config.StartPos.Direction)
+            for i in 2..config.NumPlanes do
+                let group = newGroup()
+                let dead = getTriggerByName group "Dead"
+                let unable = getTriggerByName group "UnableToAttack"
+                let vehicle = getVehicleByName group "ATTACKER"
+                let entity = getEntityByIndex vehicle.LinkTrId group
+                for mcu in group do
+                    let pos = Vector2.FromMcu(mcu.Pos)
+                    let newPos = pos + (float32 (i - 1)) * offset
+                    newPos.AssignTo mcu.Pos
+                vehicle.Name <- sprintf "ATTACKER %d" i
+                vehicle.NumberInFormation.Value.Number <- i - 1
+                cx entity plane.Index
+                cx dead allKilled.Index
+                cx unable unableToAttack.Index
+                gatherInNamedGroup store (sprintf "Wingman %d" (i - 1)) group
+                yield vehicle, group
+        |]
 
-        // Result
-        {
-            Start = start
-            ReleaseEscort = releaseEscort
-            AllKilled = allKilled
-            LeadPlane = ref planeVehicle
-            WingPlanes = wing |> Array.map fst
-            PrimaryAttackArea = attack1
-            SecondaryAttackArea = attack2
-            MeetWithEscort = meeting
-            All = 
-                { new McuUtil.IMcuGroup with
-                      member this.Content = group
-                      member this.LcStrings = []
-                      member this.SubGroups = [
-                        yield attack1.All
-                        match attack2 with
-                        | Some attack2 -> yield attack2.All
-                        | None -> ()
-                        match meeting with
-                        | Some meeting -> yield meeting.All
-                        | None -> ()
-                        for _, group in wing do
-                            yield McuUtil.groupFromList group
-                        match toRdv with
-                        | Some toRdv ->
-                            yield waypointsToGroup toRdv
-                        | None -> ()
-                        yield waypointsToGroup toPrimary
-                        match toSecondary with
-                        | Some toSecondary ->
-                            yield waypointsToGroup toSecondary
-                        | None ->
-                            ()
-                        yield waypointsToGroup toBase
-                      ]
-                }
+    let leadPlane = ref planeVehicle
+    let wingPlanes = wing |> Array.map fst
+
+    let replaceables =
+        seq {
+            yield planeVehicle.Index
+            for plane in wingPlanes do
+                yield plane.Index
         }
+        |> Set
+
+    let getReplacements() : Mcu.McuBase list=
+        [
+            yield leadPlane.Value
+            for plane in wingPlanes do
+                yield plane
+        ]
+
+    let group =
+        [
+            yield! group
+            for _, group in wing do
+                yield! group
+
+            match toRdv with
+            | Some wps ->
+                for wp in wps do yield upcast wp
+            | None -> ()
+
+            for wp in toPrimary do yield upcast wp
+
+            match toSecondary with
+            | Some wps ->
+                for wp in wps do yield upcast wp
+            | None -> ()
+
+            for wp in toBase do yield upcast wp
+        ]
+
+    /// IN
+    member this.Start = start
+
+    /// OUT
+    member this.ReleaseEscort = releaseEscort
+
+    /// OUT
+    member this.AllKilled = allKilled
+
+    /// OUT
+    member this.EscortStandBy = attack1.Ingress
+
+    /// IN
+    member this.OtherAtRDV = meeting |> Option.map (fun m -> m.OtherArrived)
+
+    /// OUT
+    member this.ProceedAfterRDV = meeting |> Option.map (fun m -> m.Proceed)
+
+    member this.LeadPlane = leadPlane.Value
+ 
+    member this.PrimaryAttackArea = attack1
+
+    member this.SecondaryAttackArea = attack2
+
+    member this.MeetWithEscort = meeting
+
+    member this.All = 
+        { new McuUtil.IMcuGroup with
+            member this.Content = group
+            member this.LcStrings = []
+            member this.SubGroups = [
+                yield attack1.All
+                match attack2 with
+                | Some attack2 -> yield attack2.All
+                | None -> ()
+                match meeting with
+                | Some meeting -> yield meeting.All
+                | None -> ()
+            ]
+        }
+        |> mcuGroupWithReplaceables(replaceables, getReplacements)
 
     interface IHasVehicles with
         member this.Vehicles =
-            Seq.append [this.LeadPlane.Value] this.WingPlanes
+            Seq.append [leadPlane.Value] wingPlanes
 
         member this.ReplaceVehicleWith(oldVehicleIdx, newVehicle) =
-            if this.LeadPlane.Value.Index = oldVehicleIdx then
-                this.LeadPlane := newVehicle
-            this.WingPlanes
+            if leadPlane.Value.Index = oldVehicleIdx then
+                leadPlane := newVehicle
+            wingPlanes
             |> Array.iteri(fun idx plane ->
                 if plane.Index = oldVehicleIdx then
-                    this.WingPlanes.[idx] <- newVehicle)
+                    wingPlanes.[idx] <- newVehicle)
 
