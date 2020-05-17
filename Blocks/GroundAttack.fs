@@ -534,7 +534,7 @@ type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupC
     member this.AllKilled = allKilled
 
     /// OUT
-    member this.EscortStandBy = attack1.Ingress
+    member this.EscortStandBy = escortStdBy
 
     /// IN
     member this.OtherAtRDV = meeting |> Option.map (fun m -> m.OtherArrived)
