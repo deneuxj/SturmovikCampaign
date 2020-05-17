@@ -208,11 +208,13 @@ type PatrolGroup(store, config : PatrolGroupConfig) =
         }
         |> Set
 
-    let getReplacements() : Mcu.McuBase list=
-        [
-            for plane in wingPlanes do
-                yield plane
-        ]
+    let getReplacement(mcu : Mcu.McuBase) : Mcu.McuBase =
+        if replaceables.Contains(mcu.Index) then
+            wingPlanes
+            |> Array.find (fun plane -> plane.Index = mcu.Index)
+            :> Mcu.McuBase
+        else
+            mcu
 
     let group =
         [
@@ -234,6 +236,6 @@ type PatrolGroup(store, config : PatrolGroupConfig) =
 
     member this.All =
         groupFromList group
-        |> mcuGroupWithReplaceables(replaceables, getReplacements)
+        |> mcuGroupWithReplaceables getReplacement
 
     override this.Planes = wingPlanes

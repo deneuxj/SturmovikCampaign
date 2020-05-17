@@ -68,6 +68,9 @@ let main argv =
                 let nodes =
                     groups
                     |> List.collect (McuUtil.deepContentOf)
+                printfn "%d nodes" nodes.Length
+                //for node in nodes do
+                //    printfn "%s" (node.AsString())
                 SturmovikMission.DataProvider.McuOutput.writeGroupFile outFile nodes
             with
             | e ->

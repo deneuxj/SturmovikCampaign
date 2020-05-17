@@ -98,9 +98,6 @@ let setVehiclesAfterPlane (proto : T.Plane) (hasVehicles : IHasVehicles) =
     for plane in hasVehicles.Vehicles do
         let newPlane =
             proto
-                .SetName(T.String.N plane.Name)
-                .SetIndex(T.Integer.N plane.Index)
-                .SetLinkTrId(T.Integer.N plane.LinkTrId)
             |> fun newPlane ->
                 match plane.NumberInFormation with
                 | Some x ->
@@ -109,26 +106,33 @@ let setVehiclesAfterPlane (proto : T.Plane) (hasVehicles : IHasVehicles) =
                     newPlane
             |> fun newPlane ->
                 newPlane
-                    .SetXOri(T.Float.N plane.Ori.X)
-                    .SetYOri(T.Float.N plane.Ori.Y)
                     .SetZOri(T.Float.N plane.Ori.Z)
-                    .SetXPos(T.Float.N plane.Pos.X)
-                    .SetYPos(T.Float.N plane.Pos.Y)
+                    .SetYOri(T.Float.N plane.Ori.Y)
+                    .SetXOri(T.Float.N plane.Ori.X)
                     .SetZPos(T.Float.N plane.Pos.Z)
+                    .SetYPos(T.Float.N plane.Pos.Y)
+                    .SetXPos(T.Float.N plane.Pos.X)
+                    .SetLinkTrId(T.Integer.N plane.LinkTrId)
+                    .SetIndex(T.Integer.N plane.Index)
+                    .SetName(T.String.N plane.Name)
+
         hasVehicles.ReplaceVehicleWith(plane.Index, newPlane.CreateMcu() :?> Mcu.HasEntity)
 
-/// Make a group where nodes in the group's content can be replaced by other nodes.
+/// Make a group where nodes in the group can be replaced by other nodes.
 /// Useful e.g. when replacing vehicles in a template.
-let mcuGroupWithReplaceables(replaceables : Set<int>, getReplacements) (grp : McuUtil.IMcuGroup) =
+let rec mcuGroupWithReplaceables getReplacement (grp : McuUtil.IMcuGroup) =
     { new McuUtil.IMcuGroup with
           member this.Content =
             grp.Content
-            |> List.filter (fun mcu -> not(replaceables.Contains mcu.Index))
-            |> List.append (getReplacements())
+            |> List.map (fun mcu ->
+                let mcu2 : Mcu.McuBase = getReplacement mcu
+                assert (mcu2.Index = mcu.Index)
+                mcu2)
 
           member this.LcStrings =
             grp.LcStrings
 
           member this.SubGroups =
             grp.SubGroups
+            |> List.map (mcuGroupWithReplaceables getReplacement)
     }

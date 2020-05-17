@@ -169,11 +169,13 @@ type EscortGroup(store, config : EscortConfig) =
         }
         |> Set
 
-    let getReplacements() : Mcu.McuBase list=
-        [
-            for plane in wingPlanes do
-                yield plane
-        ]
+    let getReplacement(mcu : Mcu.McuBase) : Mcu.McuBase =
+        if replaceables.Contains(mcu.Index) then
+            wingPlanes
+            |> Array.find (fun plane -> plane.Index = mcu.Index)
+            :> Mcu.McuBase
+        else
+            mcu
 
     let group =
         [
@@ -209,7 +211,7 @@ type EscortGroup(store, config : EscortConfig) =
 
     member this.All =
         groupFromList group
-        |> mcuGroupWithReplaceables(replaceables, getReplacements)
+        |> mcuGroupWithReplaceables getReplacement
 
     override this.Planes = wingPlanes
 

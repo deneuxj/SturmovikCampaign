@@ -493,11 +493,13 @@ type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupC
         }
         |> Set
 
-    let getReplacements() : Mcu.McuBase list=
-        [
-            for plane in wingPlanes do
-                yield plane
-        ]
+    let getReplacement(mcu : Mcu.McuBase) : Mcu.McuBase =
+        if replaceables.Contains(mcu.Index) then
+            wingPlanes
+            |> Array.find (fun plane -> plane.Index = mcu.Index)
+            :> Mcu.McuBase
+        else
+            mcu
 
     let group =
         [
@@ -560,6 +562,6 @@ type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupC
                 | None -> ()
             ]
         }
-        |> mcuGroupWithReplaceables(replaceables, getReplacements)
+        |> mcuGroupWithReplaceables getReplacement
 
     override this.Planes = wingPlanes
