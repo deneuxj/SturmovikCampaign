@@ -221,13 +221,15 @@ with
                             .SetZPos(T.Float.N (float v.Y))
                             .SetPriority(T.Integer.N this.Prio)
                             .SetIndex(T.Integer.N (i + 1))
-                            .SetObjects(T.VectorOfIntegers.N [objIdx])
                     yield wp.CreateMcu()
             ]
         for wp1, wp2 in Seq.pairwise wps do
             Mcu.addTargetLink (wp1 :?> Mcu.McuTrigger) wp2.Index
         cloneFresh store wps
-        |> List.map (fun x -> x :?> Mcu.McuWaypoint)
+        |> List.map (fun x ->
+            let wp = x :?> Mcu.McuWaypoint
+            wp.Objects <- [objIdx]
+            wp)
         |> List.sortBy (fun x -> x.Name)
 
 let waypointsToGroup (wps : Mcu.McuWaypoint seq) =
