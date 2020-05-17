@@ -88,6 +88,8 @@ type PatrolGroupConfig = {
 }
 
 type PatrolGroup(store, config : PatrolGroupConfig) =
+    inherit PlaneWingReplacement()
+
     // Instantiate
     let group, subst = getFreshGroup blocks2Data store "Patrol"
 
@@ -194,12 +196,13 @@ type PatrolGroup(store, config : PatrolGroupConfig) =
                 yield vehicle, group
         |]
 
-    let leadPlane = ref planeVehicle
-    let wingPlanes = wing |> Array.map fst
+    let wingPlanes =
+        wing
+        |> Array.map fst
+        |> Array.append [| planeVehicle |]
 
     let replaceables =
         seq {
-            yield planeVehicle.Index
             for plane in wingPlanes do
                 yield plane.Index
         }
@@ -207,7 +210,6 @@ type PatrolGroup(store, config : PatrolGroupConfig) =
 
     let getReplacements() : Mcu.McuBase list=
         [
-            yield leadPlane.Value
             for plane in wingPlanes do
                 yield plane
         ]
@@ -228,20 +230,10 @@ type PatrolGroup(store, config : PatrolGroupConfig) =
     /// OUT
     member this.AllKilled = allKilled
 
-    member this.LeadPlane = leadPlane.Value
+    member this.LeadPlane = wingPlanes.[0]
 
     member this.All =
         groupFromList group
         |> mcuGroupWithReplaceables(replaceables, getReplacements)
 
-    interface IHasVehicles with
-        member this.Vehicles =
-            Seq.append [leadPlane.Value] wingPlanes
-
-        member this.ReplaceVehicleWith(oldVehicleIdx, newVehicle) =
-            if leadPlane.Value.Index = oldVehicleIdx then
-                leadPlane := newVehicle
-            wingPlanes
-            |> Array.iteri(fun idx plane ->
-                if plane.Index = oldVehicleIdx then
-                    wingPlanes.[idx] <- newVehicle)
+    override this.Planes = wingPlanes

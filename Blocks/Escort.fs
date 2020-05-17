@@ -29,6 +29,8 @@ type EscortConfig = {
 }
 
 type EscortGroup(store, config : EscortConfig) =
+    inherit PlaneWingReplacement()
+
     // Instantiate
     let mcus, subst = getFreshGroup blocks2Data store "Escort"
 
@@ -155,12 +157,13 @@ type EscortGroup(store, config : EscortConfig) =
                 yield vehicle, group
         |]
 
-    let leadPlane = ref leadPlane
-    let wingPlanes = wing |> Array.map fst
+    let wingPlanes =
+        wing
+        |> Array.map fst
+        |> Array.append [| leadPlane |]
 
     let replaceables =
         seq {
-            yield leadPlane.Value.Index
             for plane in wingPlanes do
                 yield plane.Index
         }
@@ -168,7 +171,6 @@ type EscortGroup(store, config : EscortConfig) =
 
     let getReplacements() : Mcu.McuBase list=
         [
-            yield leadPlane.Value
             for plane in wingPlanes do
                 yield plane
         ]
@@ -203,23 +205,13 @@ type EscortGroup(store, config : EscortConfig) =
     /// OBJ: Set object to lead plane of group to escort
     member this.EscortCmd = escortCmd
 
-    member this.LeadPlane = leadPlane.Value
+    member this.LeadPlane = wingPlanes.[0]
 
     member this.All =
         groupFromList group
         |> mcuGroupWithReplaceables(replaceables, getReplacements)
 
-    interface IHasVehicles with
-        member this.Vehicles =
-            Seq.append [leadPlane.Value] wingPlanes
-
-        member this.ReplaceVehicleWith(oldVehicleIdx, newVehicle) =
-            if leadPlane.Value.Index = oldVehicleIdx then
-                leadPlane := newVehicle
-            wingPlanes
-            |> Array.iteri(fun idx plane ->
-                if plane.Index = oldVehicleIdx then
-                    wingPlanes.[idx] <- newVehicle)
+    override this.Planes = wingPlanes
 
 
 let connectEscortWithPlanes (escort : EscortGroup) (planes : AttackerGroup) =

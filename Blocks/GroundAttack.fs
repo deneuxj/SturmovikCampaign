@@ -304,6 +304,8 @@ type AttackerGroupConfig = {
 }
 
 type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupConfig) =
+    inherit PlaneWingReplacement()
+
     // Instantiate
     let group, subst = getFreshGroup blocks2Data store "GroundAttack"
 
@@ -479,12 +481,13 @@ type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupC
                 yield vehicle, group
         |]
 
-    let leadPlane = ref planeVehicle
-    let wingPlanes = wing |> Array.map fst
+    let wingPlanes =
+        wing
+        |> Array.map fst
+        |> Array.append [| planeVehicle |]
 
     let replaceables =
         seq {
-            yield planeVehicle.Index
             for plane in wingPlanes do
                 yield plane.Index
         }
@@ -492,7 +495,6 @@ type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupC
 
     let getReplacements() : Mcu.McuBase list=
         [
-            yield leadPlane.Value
             for plane in wingPlanes do
                 yield plane
         ]
@@ -536,7 +538,7 @@ type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupC
     /// OUT
     member this.ProceedAfterRDV = meeting |> Option.map (fun m -> m.Proceed)
 
-    member this.LeadPlane = leadPlane.Value
+    member this.LeadPlane = wingPlanes.[0]
  
     member this.PrimaryAttackArea = attack1
 
@@ -560,15 +562,4 @@ type AttackerGroup(store : NumericalIdentifiers.IdStore, config : AttackerGroupC
         }
         |> mcuGroupWithReplaceables(replaceables, getReplacements)
 
-    interface IHasVehicles with
-        member this.Vehicles =
-            Seq.append [leadPlane.Value] wingPlanes
-
-        member this.ReplaceVehicleWith(oldVehicleIdx, newVehicle) =
-            if leadPlane.Value.Index = oldVehicleIdx then
-                leadPlane := newVehicle
-            wingPlanes
-            |> Array.iteri(fun idx plane ->
-                if plane.Index = oldVehicleIdx then
-                    wingPlanes.[idx] <- newVehicle)
-
+    override this.Planes = wingPlanes

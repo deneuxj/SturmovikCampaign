@@ -80,6 +80,20 @@ type IHasVehicles =
     abstract ReplaceVehicleWith : int * Mcu.HasEntity -> unit
     abstract Vehicles : Mcu.HasEntity seq
 
+[<AbstractClass>]
+type PlaneWingReplacement() =
+    abstract Planes : Mcu.HasEntity[]
+
+    interface IHasVehicles with
+        member this.Vehicles =
+            upcast this.Planes
+
+        member this.ReplaceVehicleWith(oldVehicleIdx, newVehicle) =
+            this.Planes
+            |> Array.iteri(fun idx plane ->
+                if plane.Index = oldVehicleIdx then
+                    this.Planes.[idx] <- newVehicle)
+
 let setVehiclesAfterPlane (proto : T.Plane) (hasVehicles : IHasVehicles) =
     for plane in hasVehicles.Vehicles do
         let newPlane =
