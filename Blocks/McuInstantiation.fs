@@ -115,8 +115,9 @@ let setVehiclesAfterPlane (proto : T.Plane) (hasVehicles : IHasVehicles) =
                     .SetLinkTrId(T.Integer.N plane.LinkTrId)
                     .SetIndex(T.Integer.N plane.Index)
                     .SetName(T.String.N plane.Name)
-
-        hasVehicles.ReplaceVehicleWith(plane.Index, newPlane.CreateMcu() :?> Mcu.HasEntity)
+        let mcu2 = newPlane.CreateMcu() :?> Mcu.HasEntity
+        mcu2.Path <- plane.Path
+        hasVehicles.ReplaceVehicleWith(plane.Index, mcu2)
 
 /// Make a group where nodes in the group can be replaced by other nodes.
 /// Useful e.g. when replacing vehicles in a template.
