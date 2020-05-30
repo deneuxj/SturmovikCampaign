@@ -238,8 +238,8 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
         | [] ->
             failwith "Cannot get node from empty polygon"
 
-    let poly1 = toPolyNode poly1
-    let poly2 = toPolyNode poly2
+    let loop1 = toPolyNode poly1
+    let loop2 = toPolyNode poly2
 
     // Find intersection between edge starting at node1 and the segments between node2 and start2
     let rec findIntersection (start2, node1 : PolygonIntersectionNode, node2 : PolygonIntersectionNode) =
@@ -270,59 +270,55 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
             }
         work(poly1, poly2)
 
+    // Walk over the outlines of two polygons, yielding the intersections and vertices inside the other polygon
     let intersectionOutline =
-        if Seq.isEmpty (allIntersections(poly1, poly2)) then
-            if poly1.Vertices |> Seq.forall poly2.Contains then
-                Some poly1.Vertices
-            elif poly2.Vertices |> Seq.forall poly1.Contains then
-                Some poly2.Vertices
+        if Seq.isEmpty (allIntersections(loop1, loop2)) then
+            if loop1.Vertices |> Seq.forall loop2.Contains then
+                Some poly1
+            elif loop2.Vertices |> Seq.forall loop1.Contains then
+                Some poly2
             else
                 None
         else
-            let node1, node2, posI =
-                allIntersections(poly1, poly2)
-                |> Seq.head
-            let rec decide(node1, node2, pos) =
+            let rec start(loop1, loop2) =
+                let node1, node2, pos =
+                    allIntersections(loop1, loop2)
+                    |> Seq.groupBy (fun (node1, _, _) -> node1)
+                    |> Seq.head
+                    |> fun (node1, xs) ->
+                        xs
+                        |> Seq.minBy (fun (_, _, pos) -> (pos - node1.Pos).LengthSquared())
+                decide(node1, node2, pos, loop1, loop2)
+            and decide(node1, node2, pos, loop1 : PolygonIntersectionNode, loop2 : PolygonIntersectionNode) =
                 seq {
                     yield pos
-                    if poly2.Contains(node1.Next.Pos) then
-                        yield! direct(node1.Next, poly2)
-                    elif poly1.Contains(node2.Next.Pos) then
-                        yield! direct(node2.Next, poly1)
-                    elif poly2.Contains(node1.Pos) then
-                        poly1.Reverse()
-                        yield! direct(node1, poly2)
-                    elif poly1.Contains(node2.Pos) then
-                        poly2.Reverse()
-                        yield! direct(node2, poly1)
+                    if loop2.Contains(node1.Next.Pos) then
+                        yield! direct(node1.Next, loop1, loop2)
+                    elif loop1.Contains(node2.Next.Pos) then
+                        yield! direct(node2.Next, loop2, loop1)
+                    elif loop1.Contains(node2.Pos) then
+                        loop2.Reverse()
+                        yield! direct(node2, loop2, loop1)
                     else
                         let nextIntersection =
                             allIntersections(node1, node2)
                             |> Seq.tryFind (fun (n1, n2, p) -> p <> pos && n1 = node1)
                         match nextIntersection with
-                        | Some (_, node2, pos) ->
-                            yield! decide(node1, node2, pos)
+                        | Some (_, node2, pos2) ->
+                            yield pos2
                         | None ->
                             ()
+                        yield! start(node1.Next, loop2)
                 }
-            and direct(node1, poly2) =
+            and direct(node1, loop1, loop2) =
                 seq {
                     yield node1.Pos
-                    if poly2.Contains(node1.Next.Pos) then
-                        yield! direct(node1.Next, poly2)
+                    if loop2.Contains(node1.Next.Pos) then
+                        yield! direct(node1.Next, loop1, loop2)
                     else
-                        let closestIntersection =
-                            allIntersections(node1, poly2)
-                            |> Seq.filter (fun (n, _, _) -> n = node1)
-                            |> Seq.sortBy (fun (_, _, p) -> (p - node1.Pos).LengthSquared())
-                            |> Seq.tryHead
-                        match closestIntersection with
-                        | None ->
-                            ()
-                        | Some (_, node2, pos) ->
-                            yield! decide(node1, node2, pos)
+                        yield! start(node1, loop2)
                 }
-            let looping = decide(node1, node2, posI)
+            let looping = start(loop1, loop2)
             let p1 = looping |> Seq.head
             seq {
                 yield p1
@@ -331,6 +327,8 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
                     |> Seq.skip 1
                     |> Seq.takeWhile (fun p -> (p1 - p).Length() > 0.01f)
             }
+            |> List.ofSeq
+            |> List.distinct
             |> Some
 
     intersectionOutline
