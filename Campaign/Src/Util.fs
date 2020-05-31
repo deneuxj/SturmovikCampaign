@@ -396,6 +396,9 @@ module Map =
         |> takeUntil pred
         |> Seq.last
 
+    /// Given sequences x1 ... xn, y1 ... yn', z1 ... zn'', return the sequence x1, y1, z1, x2, y2, z2...
+    let interleave xs = xs |> Seq.transpose |> Seq.concat
+
 /// Misc useful algorithms.
 module Algo =
     /// <summary>
