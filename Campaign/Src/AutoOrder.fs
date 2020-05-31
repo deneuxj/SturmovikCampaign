@@ -115,7 +115,7 @@ let computeSupplyNeeds (missionDuration : float32<H>) (world : World) (state : W
             for region, costs in regionCanonNeeds |> Map.toSeq do
                 let capacity =
                     Map.tryFind region capacities
-                    |> Option.defaultVal 0.0f<E>
+                    |> Option.defaultValue 0.0f<E>
                 let regState = sg.GetRegion(region)
                 let reg = wg.GetRegion(region)
                 let cost =
@@ -188,7 +188,7 @@ let computeForwardedNeeds (world : World) (state : WorldState) (needs : Map<Regi
                 None
     let roots =
         inFront
-        |> Seq.map (fun region -> Map.tryFind region needs |> Option.defaultVal 0.0f<E> |> fun value -> region, value)
+        |> Seq.map (fun region -> Map.tryFind region needs |> Option.defaultValue 0.0f<E> |> fun value -> region, value)
         |> List.ofSeq
     Algo.propagate getSuccessors update roots
 
@@ -207,7 +207,7 @@ let createConvoyOrders (missionLength : float32<H>) (minTransfer : float32<E>) (
     let forwardedNeeds = computeForwardedNeeds world state needs
     let repairs = computeRepairNeeds missionLength world state
     let forwardedRepairs = computeForwardedNeeds world state repairs
-    let tryFind x y = Map.tryFind x y |> Option.defaultVal 0.0f<E>
+    let tryFind x y = Map.tryFind x y |> Option.defaultValue 0.0f<E>
     [
         for region, regState in List.zip world.Regions state.Regions do
             if regState.Owner = Some coalition && regState.Supplies > 0.0f<E> then
@@ -215,13 +215,13 @@ let createConvoyOrders (missionLength : float32<H>) (minTransfer : float32<E>) (
                 let senderForwardedNeeds = tryFind region.RegionId forwardedNeeds + tryFind region.RegionId forwardedRepairs
                 let senderDistance =
                     Map.tryFind region.RegionId distances
-                    |> Option.defaultVal System.Int32.MaxValue
+                    |> Option.defaultValue System.Int32.MaxValue
                 for ngh in region.Neighbours do
                     if getOwner ngh = Some coalition then
                         for data in areConnected(region.RegionId, ngh) do
                             let receiverDistance =
                                 Map.tryFind ngh distances
-                                |> Option.defaultVal System.Int32.MaxValue
+                                |> Option.defaultValue System.Int32.MaxValue
                             let receiverOwnNeeds = tryFind ngh needs + tryFind ngh repairs
                             let receiverForwardedNeeds = tryFind ngh forwardedNeeds + tryFind ngh forwardedRepairs
                             let senderNeeds, receiverNeeds =
@@ -271,7 +271,7 @@ let createAirConvoyOrders missionLength coalition =
     let ju52Capacity =
         PlaneModel.tryGetPlaneByName "ju52"
         |> Option.map (fun plane -> plane.CargoCapacity)
-        |> Option.defaultVal 2300.0f<K>
+        |> Option.defaultValue 2300.0f<K>
     let exactCapacity = (ju52Capacity * bombCost)
     createConvoyOrders
         missionLength
@@ -318,7 +318,7 @@ let prioritizeConvoys (missionLength : float32<H>) (world : World) (state : Worl
         // Stop sending convoys if no more supplies are available at the source
         |> List.fold (fun (remaining, ok) order ->
             let source = (order.Means, order.Convoy.Start)
-            let supplies = Map.tryFind order.Convoy.Start remaining |> Option.defaultVal 0.0f<E>
+            let supplies = Map.tryFind order.Convoy.Start remaining |> Option.defaultValue 0.0f<E>
             let requested = order.Convoy.TransportedSupplies
             let transported = min supplies requested
             if transported > 0.0f<E> then
@@ -517,7 +517,7 @@ let pickPlaneToProduce (coalition : CoalitionId) (world : World) (state : WorldS
             |> Seq.fold (fun perType (typ, qty) -> // Add to total number of planes per type for all regions
                 let newQty =
                     qty +
-                    (Map.tryFind typ perType |> Option.defaultVal 0.0f)
+                    (Map.tryFind typ perType |> Option.defaultValue 0.0f)
                 Map.add typ newQty perType
             ) perType
         ) Map.empty
@@ -531,7 +531,7 @@ let pickPlaneToProduce (coalition : CoalitionId) (world : World) (state : WorldS
         planeTypeShares
         |> Map.filter (fun _ qty -> qty > 0.0f)
         |> Map.map (fun typ share ->
-            let actual = Map.tryFind typ relNumPlanesPerType |> Option.defaultVal 0.0f
+            let actual = Map.tryFind typ relNumPlanesPerType |> Option.defaultValue 0.0f
             actual / share)
         |> Map.toSeq
         |> Seq.minBy snd
@@ -549,7 +549,7 @@ let computeProductionPriorities (missionLength : float32<H>) (coalition : Coalit
         |> Seq.sumBy (fun state ->
             if state.Owner = Some coalition then
                 Map.tryFind state.RegionId allNeeds
-                |> Option.defaultVal 0.0f<E>
+                |> Option.defaultValue 0.0f<E>
             else
                 0.0f<E>)
         |> max 0.0f<E>

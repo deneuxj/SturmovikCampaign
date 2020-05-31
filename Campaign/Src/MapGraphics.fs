@@ -327,10 +327,10 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                 let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f |> max 0.0f |> min 1.0f
                 let capacity =
                     Map.tryFind region.RegionId actualCapacities
-                    |> Option.defaultVal 0.0f<E>
+                    |> Option.defaultValue 0.0f<E>
                 let fullCapacity =
                     Map.tryFind region.RegionId fullCapacities
-                    |> Option.defaultVal 0.0f<E>
+                    |> Option.defaultValue 0.0f<E>
                 let color =
                     let red = 200.0f * (1.0f - fill)
                     let green = 255.0f * fill

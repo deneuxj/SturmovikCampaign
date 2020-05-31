@@ -142,7 +142,7 @@ let getMovementPathVertices (world : World) (state : WorldState) (orders : Movem
                                 ep.Pos.IsInConvexPolygon(destinationZone)
                             | None ->
                                 false)
-                        |> Option.defaultVal pathVertices
+                        |> Option.defaultValue pathVertices
                     | _ -> pathVertices
                 yield order.OriginalOrder, pathVertices
         }

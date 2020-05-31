@@ -335,7 +335,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     | None -> 1.0f
                 let cargoAmount =
                     cargo.Value.TryFind vehicle
-                    |> Option.defaultVal 0.0f<K>
+                    |> Option.defaultValue 0.0f<K>
                 cargo := cargo.Value.Remove vehicle
                 ongoingFlight := ongoingFlight.Value.Remove vehicle
                 Some { PlaneId = vehicle; Airfield = af; Plane = plane; Health = health; Cargo = cargoAmount; PlayerName = None; Coalition = sg.GetRegion(wg.GetAirfield(af).Region).Owner }
@@ -374,7 +374,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                     let bombLoadWeight =
                         model.BombLoads
                         |> List.tryPick (fun (loadout, weight) -> if loadout = playerPlane.Payload then Some weight else None)
-                        |> Option.defaultVal 0.0f<K>
+                        |> Option.defaultValue 0.0f<K>
                     let cost = model.GetPayLoadCost(playerPlane.Payload, bombCost)
                     weaponCost := Map.add playerPlane.VehicleId cost weaponCost.Value
                     bombWeight := bombWeight.Value.Add(playerPlane.VehicleId, bombLoadWeight)
@@ -387,10 +387,10 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                 | Some plane ->
                     let cargo =
                         cargo.Value.TryFind takeOff.VehicleId
-                        |> Option.defaultVal 0.0f<K>
+                        |> Option.defaultValue 0.0f<K>
                     let weapons =
                         weaponCost.Value.TryFind takeOff.VehicleId
-                        |> Option.defaultVal 0.0f<E>
+                        |> Option.defaultValue 0.0f<E>
                     let pilot, coalition =
                         match planePilot.Value.TryFind takeOff.VehicleId with
                         | None -> None, None
@@ -427,7 +427,7 @@ let extractTakeOffsAndLandings (world : World) (state : WorldState) (entries : A
                                 health
                         let cargoAmount =
                             cargo.Value.TryFind landing.VehicleId
-                            |> Option.defaultVal 0.0f<K>
+                            |> Option.defaultValue 0.0f<K>
                         cargo := cargo.Value.Remove landing.VehicleId
                         let pilot, coalition =
                             match planePilot.Value.TryFind landing.VehicleId with

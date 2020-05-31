@@ -146,8 +146,6 @@ let cachedProperty f =
 
 /// Extensions to Option module
 module Option =
-    let defaultVal x y = defaultArg y x
-
     /// Turn result of TryGetValue-like functions into an option
     let ofPair =
         function
@@ -196,11 +194,11 @@ module Map =
                 let n1 =
                     m1
                     |> Map.tryFind k
-                    |> Option.defaultVal z
+                    |> Option.defaultValue z
                 let n2 =
                     m2
                     |> Map.tryFind k
-                    |> Option.defaultVal z
+                    |> Option.defaultValue z
                 yield k, n1 + n2
         }
         |> Map.ofSeq

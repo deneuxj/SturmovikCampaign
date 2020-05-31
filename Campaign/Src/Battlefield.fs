@@ -114,7 +114,7 @@ with
                         let numDefendingHeavy =
                             defenders
                             |> Map.tryFind HeavyTank
-                            |> Option.defaultVal 1
+                            |> Option.defaultValue 1
                         yield PlayerTankSpawn.Ceate(store, getRandomPos(DefenseBack), yori, defendingCountry.ToMcuValue, numDefendingHeavy)
                         let numAttackingHeavy =
                             attackers

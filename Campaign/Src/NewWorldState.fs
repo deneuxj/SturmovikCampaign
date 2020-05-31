@@ -58,7 +58,7 @@ let applyProduction (dt : float32<H>) (world : World) (coalition : CoalitionId) 
                     let vehicles =
                         let oldValue =
                             Map.tryFind priorities.Vehicle regState.Products.Vehicles
-                            |> Option.defaultVal 0.0f<E>
+                            |> Option.defaultValue 0.0f<E>
                         let newValue = oldValue + vehiclePrio * energy
                         Map.add priorities.Vehicle newValue regState.Products.Vehicles
                     let assignment = { regState.Products with Supplies = supplies; Vehicles = vehicles }
@@ -296,7 +296,7 @@ let computeDelivered (orders : ResupplyOrder list) (shipped : SuppliesShipped li
                 match orders.TryFind vehicle.OrderId with
                 | Some order ->
                     let oldValue =
-                        Map.tryFind order.Convoy.Destination arrived |> Option.defaultVal 0.0f<E>
+                        Map.tryFind order.Convoy.Destination arrived |> Option.defaultValue 0.0f<E>
                     let toBeRemoved =
                         match order.Means with
                         | ByRail -> order.Convoy.TransportedSupplies * (min damages 1.0f)
@@ -391,7 +391,7 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
             |> Seq.sumBy (fun data -> data.Amount)
             |> (-) health
             |> max 0.0f)
-        >> Option.defaultVal health
+        >> Option.defaultValue health
 
     let regionsAfterShipping =
         [
@@ -481,7 +481,7 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                     damages
                     |> Map.tryFind (Vehicle(region.RegionId, vehicleType))
                     |> Option.map (Seq.sumBy (fun data -> data.Amount))
-                    |> Option.defaultVal 0.0f
+                    |> Option.defaultValue 0.0f
                     |> (round >> int)
                 let subtract =
                     GroundAttackVehicle.AllVehicles
@@ -499,11 +499,11 @@ let applyDamages (world : World) (state : WorldState) (shipped : SuppliesShipped
                 let damagesToDefenses =
                     let damagedCannons =
                         Map.tryFind (Cannon(region.RegionId)) damages
-                        |> Option.defaultVal Seq.empty
+                        |> Option.defaultValue Seq.empty
                         |> Seq.sumBy (fun data -> data.Amount)
                     let damagedMachineGuns =
                         Map.tryFind (MachineGun(region.RegionId)) damages
-                        |> Option.defaultVal Seq.empty
+                        |> Option.defaultValue Seq.empty
                         |> Seq.sumBy (fun data -> data.Amount)
                     damagedCannons * cannonCost + damagedMachineGuns * machineGunCost
                 yield
@@ -584,7 +584,7 @@ let applyResupplies (dt : float32<H>) (world : World) (state : WorldState) newSu
             // Consume energy to fill up supplies up to what's needed
             let needs =
                 regionNeeds.TryFind regState.RegionId
-                |> Option.defaultVal 0.0f<E>
+                |> Option.defaultValue 0.0f<E>
                 |> max 0.0f<E>
             let fillTarget = min needs storeCapacity
             let toSupplies =
@@ -1302,7 +1302,7 @@ let applyVehicleDepartures (state : WorldState) (movements : ColumnMovement list
         |> List.fold (fun regionMap (movement, departure) ->
             let numVehicles : Map<GroundAttackVehicle, int> =
                 Map.tryFind movement.Start regionMap
-                |> Option.defaultVal Map.empty
+                |> Option.defaultValue Map.empty
             let numVehicles = Util.addMaps numVehicles (Util.compactSeq departure.Vehicles)
             Map.add movement.Start numVehicles regionMap
         ) Map.empty

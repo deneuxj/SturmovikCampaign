@@ -47,7 +47,7 @@ let mkAADefenses (includeSearchLights, world : World, state : WorldState) =
                 let numUnits =
                     regionFillLevel
                     |> Map.tryFind area.Home
-                    |> Option.defaultVal 0.0f
+                    |> Option.defaultValue 0.0f
                     |> ((*) (float32 area.MaxNumGuns))
                     |> ceil
                     |> int

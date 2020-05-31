@@ -195,7 +195,7 @@ with
         let bombLoadWeight =
             this.BombLoads
             |> List.tryPick (fun (loadout, weight) -> if loadout = payload then Some weight else None)
-            |> Option.defaultVal 0.0f<K>
+            |> Option.defaultValue 0.0f<K>
 
         let loadoutCost =
             this.SpecialLoadsCosts
