@@ -23,10 +23,12 @@ open PlaneSet
 open AiPlanes
 open Campaign.WarState
 open Campaign.MissionSelection
-
 open System.Numerics
 open Campaign.Missions
 open WorldDescription
+open Campaign.SpacePartition
+open VectorExtension
+open Util
 
 type GameType =
     | Coop
@@ -225,6 +227,128 @@ type GroundBattle with
             }
         | _ ->
             None
+
+type TargetLocator(random : System.Random, state : WarState, missions : Mission list) =
+    let freeAreas : FreeAreas.FreeAreasNode option =
+        let path =
+            match state.World.Map.ToLowerInvariant() with
+            | "rheinland-summer"
+            | _ ->
+                "rheinland.bin"
+        use freeAreasFile =
+            try
+                System.IO.File.OpenRead(path)
+            with _ -> failwithf "Could not open free areas data file '%s'" path
+        let serializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
+        try
+            serializer.Deserialize(freeAreasFile)
+        with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
+
+    let mapExtent =
+        match state.World.Map.ToLowerInvariant() with
+        | "rheinland-summer"
+        | _ ->
+            Vector2(30.0e3f, 30.0e3f), 324.0e3f, 400.0e3f
+
+    let getLocationCandidates(region, shape) =
+        match freeAreas with
+        | Some root ->
+            // Transform from mission editor coordinates to free areas coordinates, and the inverse
+            let transform, transform' =
+                // bin data uses coordinate system where x goes east and y goes north, from 0 to 400000 on both axes.
+                let origin, sx, sy = mapExtent
+                let t(v : Vector2) =
+                    Vector2(400.0e3f * (v.Y - origin.Y) / sy, 400.e3f * (v.X - origin.X) / sx)
+                let t'(v : Vector2) =
+                    Vector2(origin.X + sx * v.Y / 400.0e3f, origin.Y + sy * v.X / 400.0e3f)
+                t, t'
+            let region2 = List.map transform region
+            let shape2 = List.map transform shape
+            let rank _ = 
+                random.Next()
+            let candidates =
+                FreeAreas.findPositionCandidates rank root shape2 region2
+                |> Seq.map transform'
+                |> Seq.cache
+            candidates
+        | None ->
+            Seq.empty
+
+    let interleave xs = xs |> Seq.transpose |> Seq.concat
+
+    let battleLocations =
+        [
+            for mission in missions do
+                match mission.Kind with
+                | GroundMission { Objective = regId; MissionType = GroundBattle initiator } when state.GetOwner(regId).IsSome ->
+                    let region = state.World.Regions.[regId]
+                    let defender = state.GetOwner(regId).Value
+                    let battleShape =
+                        [
+                            Vector2(2000.0f, -1000.0f)
+                            Vector2(-2000.0f, -1000.0f)
+                            Vector2(-2000.0f, 1000.0f)
+                            Vector2(2000.0f, 1000.0f)
+                        ]
+                    let battleShapes =
+                        [
+                            for rotation in 0.0f .. 45.0f .. 135.0f do
+                                yield
+                                    battleShape
+                                    |> List.map (fun v -> v.Rotate rotation)
+                        ]
+                    let enemyRegions =
+                        region.Neighbours
+                        |> Seq.choose (fun regB -> state.GetOwner(regB) |> Option.attach regB)
+                        |> Seq.filter (fun (owner, _) -> owner = defender.Other)
+                        |> Seq.map (fun (owner, regId) -> owner, state.World.Regions.[regId])
+                    let frontline =
+                        enemyRegions
+                        |> Seq.choose (fun (owner, regB) -> NewWorldDescription.commonBorder(region, regB) |> Option.attach (owner, regB))
+                        |> Seq.sortByDescending (fun ((p1, p2), _) -> (p1 - p2).LengthSquared())
+                        |> Seq.tryHead
+                    let preferredArea =
+                        match frontline with
+                        | None -> region.Boundary
+                        | Some ((p1, p2), (enemy, enemyRegion)) ->
+                            let axis = region.Position - enemyRegion.Position
+                            let refK =
+                                let v = p1 - enemyRegion.Position
+                                Vector2.Dot(p1 - enemyRegion.Position, axis) / axis.LengthSquared()
+                            let attackerForceRatio =
+                                state.GetGroundForces(enemy, regId) / state.GetGroundForces(defender, regId)
+                            let scaleK =
+                                if System.Single.IsNaN attackerForceRatio then refK
+                                else
+                                    attackerForceRatio
+                                    |> min 2.0f
+                                    |> max 0.5f
+                                    |> fun x ->
+                                        let x = (x - 0.5f) / 1.5f
+                                        1.1f * refK * (1.0f - x) + 1.0f * x
+                            let scaleK = scaleK / refK
+                            let scaledBoundaryB =
+                                enemyRegion.Boundary
+                                |> List.map (fun v -> scaleK * (v - enemyRegion.Position) + enemyRegion.Position)
+                            intersectConvexPolygons(region.Boundary, scaledBoundaryB)
+                            |> Option.defaultValue region.Boundary
+                    let candidates =
+                        battleShapes
+                        |> Seq.map (fun shape ->
+                            getLocationCandidates(preferredArea, shape)
+                            |> Seq.map (fun v -> v, shape))
+                        |> interleave
+                        |> Seq.append (
+                            battleShapes
+                            |> Seq.map (fun shape ->
+                                getLocationCandidates(region.Boundary, shape)
+                                |> Seq.map (fun v -> v, shape))
+                            |> interleave)
+                    
+                    match Seq.tryHead candidates with
+                    | Some x -> yield x
+                    | None -> ()
+        ]
 
 let mkMultiplayerMissionContent (state : WarState) (selection : MissionSelection) =
     ()

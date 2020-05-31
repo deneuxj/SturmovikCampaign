@@ -154,6 +154,10 @@ module Option =
         | true, x -> Some x
         | false, _ -> None
 
+    /// Turn option content to a pair using y as the second component
+    let attach y =
+        Option.map (fun x -> x, y)
+
 /// Extensions to Array module
 module Array =
     let shuffle (random : System.Random) xs =

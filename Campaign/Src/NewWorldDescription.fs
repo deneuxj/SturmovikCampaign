@@ -76,6 +76,22 @@ type Region = {
     IndustryBuildings : BuildingInstanceId list
 }
 
+/// Return the edge in regA's boundary that is shared with regB's boundary, if any.
+let commonBorder (regA : Region, regB : Region) =
+    (regA.Boundary, regB.Boundary)
+    ||> Seq.allPairs
+    |> Seq.filter (fun (p1, p2) -> (p1 - p2).Length() < 2000.0f)
+    |> List.ofSeq
+    |> function
+        | [(p1, _); (p2, _)] -> Some (p1, p2)
+        | [] | [_] -> None
+        | xs ->
+            // Normally two regions should have at most one common edge, as their boundaries are convex.
+            // If for whatever reason we get more than two vertices, pick the two with the largest distance between them.
+            Seq.allPairs xs xs
+            |> Seq.maxBy (fun ((p1, _), (p2, _)) -> (p1 - p2).LengthSquared())
+            |> fun ((p1, _), (p2, _)) -> Some (p1, p2)
+
 /// A node in the logistics network
 type NetworkNode = {
     Id : int
