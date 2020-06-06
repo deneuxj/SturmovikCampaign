@@ -171,7 +171,7 @@ type AiAttack with
         | _ -> None
 
 type AiPatrol with
-    static member TryFromAirMission(state : WarState, mission : AirMission, getPatrolPosition, ?maxFlightSize) =
+    static member TryFromAirMission(state : WarState, mission : AirMission, targetPos : Vector2, ?maxFlightSize) =
         let maxFlightSize = defaultArg maxFlightSize 2
         let coalition = state.GetOwner(state.World.Airfields.[mission.StartAirfield].Region)
         match mission, coalition with
@@ -180,7 +180,6 @@ type AiPatrol with
             let numPlanes = min maxFlightSize mission.NumPlanes
             let reserve = mission.NumPlanes - numPlanes
             let country = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun x -> x.Key
-            let targetPos : Vector2 = getPatrolPosition(mission.Objective)
             let roles, protectedRegion =
                 if state.GetOwner(mission.Objective) = Some coalition then
                     [PlaneRole.Interceptor; PlaneRole.Patroller], Some mission.Objective
@@ -227,7 +226,7 @@ type GroundBattle with
         | _ ->
             None
 
-type TargetLocator(random : System.Random, state : WarState, missions : Mission list) =
+type TargetLocator(random : System.Random, state : WarState) =
     let freeAreas : FreeAreas.FreeAreasNode option =
         let path =
             match state.World.Map.ToLowerInvariant() with
@@ -249,7 +248,7 @@ type TargetLocator(random : System.Random, state : WarState, missions : Mission 
         | _ ->
             Vector2(30.0e3f, 30.0e3f), 324.0e3f, 400.0e3f
 
-    let getLocationCandidates(region, shape) =
+    let getGroundLocationCandidates(region, shape) =
         match freeAreas with
         | Some root ->
             // Transform from mission editor coordinates to free areas coordinates, and the inverse
@@ -332,14 +331,14 @@ type TargetLocator(random : System.Random, state : WarState, missions : Mission 
         let candidates =
             battleShapes
             |> Seq.map (fun shape ->
-                getLocationCandidates(preferredArea, snd shape)
+                getGroundLocationCandidates(preferredArea, snd shape)
                 |> Seq.map (fun v -> v, shape))
             |> Seq.interleave
             |> Seq.append (
                 // Try again with the full region instead of the preferred area
                 battleShapes
                 |> Seq.map (fun shape ->
-                    getLocationCandidates(region.Boundary, snd shape)
+                    getGroundLocationCandidates(region.Boundary, snd shape)
                     |> Seq.map (fun v -> v, shape))
                 |> Seq.interleave)
                     
@@ -352,9 +351,95 @@ type TargetLocator(random : System.Random, state : WarState, missions : Mission 
 
     let battleLocationCache = Seq.mutableDict []
 
-    member this.TryGetBattleLocation =
-        SturmovikMission.Cached.cached battleLocationCache tryGetBattleLocation
+    let tryGetBattleLocationCached = SturmovikMission.Cached.cached battleLocationCache tryGetBattleLocation
 
+    let tryGetGroundTargetLocation (regId : RegionId, targetType : GroundTargetType) =
+        match targetType with
+        | GroundForces targettedCoalition ->
+            match tryGetBattleLocationCached regId with
+            | None ->
+                // No battle going on, find a free location for a camp
+                let campShape =
+                    [
+                        Vector2(1000.0f, 1000.0f)
+                        Vector2(-1000.0f, 1000.0f)
+                        Vector2(-1000.0f, -1000.0f)
+                        Vector2(1000.0f, -1000.0f)
+                    ]
+                let region = state.World.Regions.[regId]
+                let candidates = getGroundLocationCandidates(region.Boundary, campShape)
+                let filters =
+                    match state.GetOwner(regId) with
+                    | Some owner when owner = targettedCoalition ->
+                        // Attacking a defense position, preferably close to the region's capital
+                        [
+                            fun p -> (p - region.Position).Length() < 5000.0f
+                            fun p -> (p - region.Position).Length() < 10000.0f
+                            fun _ -> true
+                        ]
+                    | Some _ ->
+                        // Attacking an invading army, preferably close to the border
+                        let borderVertices =
+                            region.Neighbours
+                            |> Seq.filter (fun nghId -> state.GetOwner(nghId) = Some targettedCoalition)
+                            |> Seq.choose (fun nghId -> NewWorldDescription.commonBorder(region, state.World.Regions.[nghId]))
+                            |> Seq.collect (fun (p1, p2) -> [p1; p2])
+                            |> Array.ofSeq
+                        let closeToBorder dist p =
+                            borderVertices
+                            |> Array.exists (fun bv -> (bv - p).Length() < dist)
+                        [
+                            closeToBorder 5000.0f
+                            closeToBorder 10000.0f
+                            fun _ -> true
+                        ]
+                    | None ->
+                        // Attacking a position in a neutral region. Should not happen, but accept any position anyway
+                        [fun _ -> true]
+                filters
+                |> Seq.tryPick (fun filter -> candidates |> Seq.tryFind filter)
+            | Some (p, _) ->
+                // There's a battle going on, use its location
+                Some p.Pos
+
+        | AirfieldTarget afid ->
+            Some (state.World.Airfields.[afid].Position)
+
+        | BridgeTarget | BuildingTarget ->
+            let region = state.World.Regions.[regId]
+            // Find the largets cluster of healthy buildings, and use that
+            let individualTargetPositions =
+                if targetType = BridgeTarget then
+                    state.World.Bridges
+                    |> Seq.filter (fun kvp -> kvp.Value.Pos.Pos.IsInConvexPolygon region.Boundary)
+                    |> Seq.filter (fun kvp -> state.GetBuildingFunctionalityLevel(kvp.Key) > 0.5f)
+                    |> Seq.map (fun kvp -> kvp.Value.Pos.Pos)
+                else
+                    state.World.Buildings
+                    |> Seq.filter (fun kvp -> kvp.Value.Pos.Pos.IsInConvexPolygon region.Boundary)
+                    |> Seq.filter (fun kvp -> state.GetBuildingFunctionalityLevel(kvp.Key) > 0.5f)
+                    |> Seq.map (fun kvp -> kvp.Value.Pos.Pos)
+            let clusters =
+                individualTargetPositions
+                |> Seq.allPairs individualTargetPositions
+                |> Seq.filter (fun (p1, p2) -> p1 <> p2 && (p1 - p2).Length() < 1000.0f)
+                |> Seq.groupBy fst
+                |> Seq.cache
+            if Seq.isEmpty clusters then
+                None
+            else
+                clusters
+                |> Seq.maxBy (snd >> Seq.length)
+                |> fst
+                |> Some
+
+    let groundTargetLocationCache = Seq.mutableDict []
+
+    let tryGetGroundTargetLocationCached = SturmovikMission.Cached.cached groundTargetLocationCache tryGetGroundTargetLocation
+
+    member this.TryGetBattleLocation regId = tryGetBattleLocationCached regId
+
+    member this.TryGetGroundTargetLocation(regId, targetType) = tryGetGroundTargetLocationCached(regId, targetType)
 
 let mkMultiplayerMissionContent (state : WarState) (selection : MissionSelection) =
     ()
