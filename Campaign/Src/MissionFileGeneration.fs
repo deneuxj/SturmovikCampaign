@@ -110,15 +110,15 @@ type Convoy =
         Destination : OrientedPosition
     }
 
-type MissionContent =
+type MultiplayerMissionContent =
     {
         Boundary : Vector2 list
-        GameType : GameType
         PlayerSpawns : PlayerSpawn list
         AntiAirNests : StaticDefenseOptimization.Nest list
         GroundBattles : GroundBattle list
         AiPatrols : AiPatrol list
         AiAttacks : AiAttack list
+        Convoys : Convoy list
         ParkedPlanes : Map<AirfieldId, PlaneModelId>
     }
 
