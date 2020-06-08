@@ -55,6 +55,44 @@ with
             RiskLevel = 0.0f
         }
 
+    /// All the regions involved in the selected missions
+    member this.Regions(world : NewWorldDescription.World) =
+        let optAir (m : AirMission option) =
+            seq {
+                match m with
+                | Some m ->
+                    yield m.Objective
+                    yield world.Airfields.[m.StartAirfield].Region
+                    match m.MissionType with
+                    | PlaneTransfer afId -> yield world.Airfields.[afId].Region
+                    | _ -> ()
+                | None -> ()
+            }
+        let optGround (m : GroundMission option) =
+            seq {
+                match m with
+                | Some m ->
+                    yield m.Objective
+                    match m.MissionType with
+                    | GroundForcesTransfer(_, startRegion, _) -> yield startRegion
+                    | _ -> ()
+                | None -> ()
+            }
+        seq {
+            yield this.MainMission.Objective
+            yield world.Airfields.[this.MainMission.StartAirfield].Region
+            yield! optAir this.HomeCover
+            yield! optAir this.TargetCover
+            yield! optAir this.Interception
+            yield! optAir this.HomeAttack
+            yield! optGround this.GroundBattleAtTarget
+            for m in this.OtherMissions do
+                match m.Kind with
+                | AirMission m -> yield m.Objective
+                | GroundMission m -> yield m.Objective
+        }
+        |> Seq.distinct
+
 let enumerateGroundAttackMissions (state : WarState) (coalition : CoalitionId) (missions : Mission list) =
     let airMissionCoalition (mission : AirMission) =
         state.World.Airfields.[mission.StartAirfield].Region |> state.GetOwner
