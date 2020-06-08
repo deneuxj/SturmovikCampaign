@@ -441,5 +441,60 @@ type TargetLocator(random : System.Random, state : WarState) =
 
     member this.TryGetGroundTargetLocation(regId, targetType) = tryGetGroundTargetLocationCached(regId, targetType)
 
-let mkMultiplayerMissionContent (state : WarState) (selection : MissionSelection) =
+let mkMultiplayerMissionContent warmedUp (state : WarState) (missions : MissionSelection) =
+    // All regions that are involved in some mission
+    let primaryRegions = missions.Regions(state.World)
+    // All regions, including the primary ones, that are within 50km of the primary regions
+    let nearRegions =
+        let primaryRegionsVertices =
+            primaryRegions
+            |> Seq.collect (fun regId -> state.World.Regions.[regId].Boundary)
+        state.World.Regions.Values
+        |> Seq.filter (fun region ->
+            region.Boundary
+            |> Seq.allPairs primaryRegionsVertices
+            |> Seq.exists (fun (v1, v2) -> (v1 - v2).Length() < 50000.0f)
+        )
+        |> Seq.cache
+    let boundary =
+        nearRegions
+        |> Seq.collect (fun region -> region.Boundary)
+        |> List.ofSeq
+        |> convexHull
+    // Player spawns
+    let spawns =
+        [
+            let within =
+                state.World.Airfields.Values
+                |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary)
+            let wind = Vector2.FromYOri(state.Weather.Wind.Direction)
+            for af in within do
+                let runway =
+                    af.Runways
+                    |> List.maxBy(fun runway ->
+                        let direction =
+                            runway.End - runway.Start
+                        let direction = direction / direction.Length()
+                        Vector2.Dot(direction, wind))
+                let planes =
+                    state.GetNumPlanes(af.AirfieldId)
+                    |> Map.toSeq
+                    |> Seq.choose (fun (planeId, num) ->
+                        if num >= 1.0f then
+                            let plane = state.World.PlaneSet.[planeId]
+                            Some {
+                                Model = plane
+                                Mods = [Interval(0, 99)]
+                            }
+                        else
+                            None)
+                    |> List.ofSeq
+                let spawn =
+                    {
+                        SpawnType = Parking warmedUp
+                        Pos = runway.SpawnPos
+                        Flight = Unconstrained planes
+                    }
+                yield spawn
+        ]
     ()
