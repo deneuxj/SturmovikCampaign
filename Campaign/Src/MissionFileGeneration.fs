@@ -450,17 +450,47 @@ let mkMultiplayerMissionContent warmedUp (state : WarState) (missions : MissionS
             primaryRegions
             |> Seq.collect (fun regId -> state.World.Regions.[regId].Boundary)
         state.World.Regions.Values
-        |> Seq.filter (fun region ->
+        |> Seq.map (fun region ->
+            region,
             region.Boundary
             |> Seq.allPairs primaryRegionsVertices
-            |> Seq.exists (fun (v1, v2) -> (v1 - v2).Length() < 50000.0f)
-        )
+            |> Seq.map (fun (v1, v2) -> (v1 - v2).Length())
+            |> Seq.min)
+        // Sort by increasing distance to the primary regions
+        |> Seq.sortBy snd
         |> Seq.cache
+    // Count number of airfields in each coalition in the regions in the prefixes of nearRegions
+    let numAfs =
+        nearRegions
+        |> Seq.scan (fun (numAxisAfs, numAlliesAfs) (region, _) ->
+            let airfieldsInRegion =
+                state.World.Airfields.Values
+                |> Seq.filter (fun af ->
+                    af.Region = region.RegionId &&
+                    not af.Runways.IsEmpty &&
+                    state.GetNumPlanes(af.AirfieldId) |> Seq.sumBy (fun kvp -> kvp.Value) > 10.0f)
+                |> Seq.length
+            match state.GetOwner(region.RegionId) with
+            | Some Axis -> numAxisAfs + airfieldsInRegion, numAlliesAfs
+            | Some Allies -> numAxisAfs, numAlliesAfs + airfieldsInRegion
+            | None -> numAxisAfs, numAlliesAfs) (0, 0)
+    // Take all regions within 50km, and until each coalition has at least 5 airfields
+    let nearRegions =
+        Seq.zip nearRegions numAfs
+        |> Seq.takeWhile (fun ((region, dist), (numAxisAfs, numAlliesAfs)) ->
+            dist < 50000.0f || numAxisAfs < 5 || numAlliesAfs < 5)
+        |> Seq.map (fun ((x, _), _) -> x)
+        // Include all the entry regions
+        |> Seq.append (state.World.Regions.Values |> Seq.filter (fun region -> region.IsEntry))
+        |> Seq.distinct
+        |> List.ofSeq
+    // Play area is the convex hull of all these regions
     let boundary =
         nearRegions
         |> Seq.collect (fun region -> region.Boundary)
         |> List.ofSeq
         |> convexHull
+
     // Player spawns
     let spawns =
         [
