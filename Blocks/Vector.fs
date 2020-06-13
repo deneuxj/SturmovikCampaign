@@ -333,6 +333,11 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
 
     intersectionOutline
 
+let mkCircle(center, radius : float32) =
+    [
+        for alpha in 0.0f..30.0f..359.0f do
+            yield Vector2.FromYOri(float alpha) * radius + center
+    ]
 
 let testConvexHull (random : System.Random) N =
     let nextFloat() =
