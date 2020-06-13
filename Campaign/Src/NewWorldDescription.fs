@@ -299,6 +299,10 @@ with
         [this.Buildings; this.Bridges]
         |> Seq.pick (fun d -> d.TryGetValue(bid) |> Option.ofPair)
 
+    member this.GetAnyCountryInCoalition(coalition) =
+        this.Countries
+        |> Seq.pick(fun kvp -> if kvp.Value = coalition then Some kvp.Key else None)
+
 module Init =
     open System.IO
     open System.Reflection

@@ -26,9 +26,11 @@ open Campaign.MissionSelection
 open System.Numerics
 open Campaign.Missions
 open WorldDescription
+open StaticDefenseOptimization
 open Campaign.SpacePartition
 open VectorExtension
 open Util
+open SturmovikMission.Blocks.StaticDefenses.Types
 
 type GameType =
     | Coop
@@ -72,6 +74,7 @@ type PlayerFlight =
 
 type PlayerSpawn =
     {
+        Airfield : AirfieldId
         SpawnType : PlayerSpawnType
         Pos : OrientedPosition
         Flight : PlayerFlight
@@ -114,7 +117,7 @@ type MultiplayerMissionContent =
     {
         Boundary : Vector2 list
         PlayerSpawns : PlayerSpawn list
-        AntiAirNests : StaticDefenseOptimization.Nest list
+        AntiAirNests : Nest list
         GroundBattles : GroundBattle list
         AiPatrols : AiPatrol list
         AiAttacks : AiAttack list
@@ -433,6 +436,15 @@ type TargetLocator(random : System.Random, state : WarState) =
                 |> fst
                 |> Some
 
+    let getAirfieldAALocations (afId : AirfieldId) =
+        let airfield = state.World.Airfields.[afId]
+        let shape = VectorExtension.mkCircle(Vector2.Zero, 50.0f)
+        let area radius = VectorExtension.mkCircle(airfield.Position, radius)
+        seq { 2000.0f .. 500.0f .. 10000.0f }
+        |> Seq.collect (fun radius -> getGroundLocationCandidates(area radius, shape))
+        |> Seq.filter (fun v -> not(v.IsInConvexPolygon(airfield.Boundary)))
+        |> Seq.map (fun v -> v, VectorExtension.mkCircle(v, 50.0f))
+
     let groundTargetLocationCache = Seq.mutableDict []
 
     let tryGetGroundTargetLocationCached = SturmovikMission.Cached.cached groundTargetLocationCache tryGetGroundTargetLocation
@@ -441,7 +453,12 @@ type TargetLocator(random : System.Random, state : WarState) =
 
     member this.TryGetGroundTargetLocation(regId, targetType) = tryGetGroundTargetLocationCached(regId, targetType)
 
-let mkMultiplayerMissionContent warmedUp (state : WarState) (missions : MissionSelection) =
+    member this.GetAirfieldAA(afId) = getAirfieldAALocations afId
+
+
+let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float32<H>) (state : WarState) (missions : MissionSelection) =
+    let locator = TargetLocator(random, state)
+
     // All regions that are involved in some mission
     let primaryRegions = missions.Regions(state.World)
     // All regions, including the primary ones, that are within 50km of the primary regions
@@ -475,7 +492,7 @@ let mkMultiplayerMissionContent warmedUp (state : WarState) (missions : MissionS
             | Some Allies -> numAxisAfs, numAlliesAfs + airfieldsInRegion
             | None -> numAxisAfs, numAlliesAfs) (0, 0)
     // Take all regions within 50km, and until each coalition has at least 5 airfields
-    let nearRegions =
+    let gameRegions =
         Seq.zip nearRegions numAfs
         |> Seq.takeWhile (fun ((region, dist), (numAxisAfs, numAlliesAfs)) ->
             dist < 50000.0f || numAxisAfs < 5 || numAlliesAfs < 5)
@@ -486,7 +503,7 @@ let mkMultiplayerMissionContent warmedUp (state : WarState) (missions : MissionS
         |> List.ofSeq
     // Play area is the convex hull of all these regions
     let boundary =
-        nearRegions
+        gameRegions
         |> Seq.collect (fun region -> region.Boundary)
         |> List.ofSeq
         |> convexHull
@@ -521,10 +538,46 @@ let mkMultiplayerMissionContent warmedUp (state : WarState) (missions : MissionS
                     |> List.ofSeq
                 let spawn =
                     {
+                        Airfield = af.AirfieldId
                         SpawnType = Parking warmedUp
                         Pos = runway.SpawnPos
                         Flight = Unconstrained planes
                     }
                 yield spawn
+        ]
+
+    // AA nests
+    let aaNests =
+        [
+            let gunsPerNest = 5
+            let aaCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * missionLength
+            // Airfields
+            for afId in spawns |> Seq.map (fun spawn -> spawn.Airfield) do
+                let country = 
+                    state.GetOwner(state.World.Airfields.[afId].Region)
+                    |> Option.map state.World.GetAnyCountryInCoalition
+                    |> Option.defaultWith (fun () -> failwith "Spawn in neutral region")
+                let numNests = int(state.GetAirfieldCapacity(afId) / aaCost) |> max 1
+                let positions =
+                    locator.GetAirfieldAA(afId)
+                    |> Seq.truncate numNests
+                for _, shape in positions do
+                    let nest =
+                        { Priority = 2.0f
+                          Number = gunsPerNest
+                          Boundary = shape
+                          Rotation = 0.0f
+                          Settings = CanonGenerationSettings.Strong
+                          Specialty = DefenseSpecialty.AntiAirCanon
+                          IncludeSearchLights = true
+                          IncludeFlak = true
+                          Country = country.ToMcuValue
+                        }
+                    yield nest
+            // Bridges
+
+            // Factories
+
+            // Ground troops
         ]
     ()
