@@ -208,6 +208,63 @@ type NetworkQuickAccess =
         GetNode : int -> NetworkNode
         GetLink : int -> int seq * (int -> NetworkLink)
     }
+with
+    /// Get shortest path from set of nodes to another set of nodes
+    member this.FindPath(sources : Set<int>, goals : Set<int>) =
+        let distToGoals idx =
+            let node = this.GetNode idx
+            goals
+            |> Seq.map (fun goal -> (this.GetNode(goal).Pos - node.Pos).Length(), goal)
+            |> Seq.minBy fst
+
+        let working =
+            sources
+            |> Seq.map (fun src -> fst(distToGoals src), src)
+            |> Set
+        
+        let prec = Seq.mutableDict []
+
+        let rec walkBack idx =
+            seq {
+                yield idx
+                match prec.TryGetValue(idx) with
+                | true, idx ->
+                    yield! walkBack idx
+                | false, _ ->
+                    ()
+            }
+            |> Seq.rev
+
+        let rec work(working : Set<float32 * int>, visited) =
+            if Set.isEmpty working then
+                None
+            else
+                let (_, curr) as x = Set.minElement working
+                if goals.Contains curr then
+                    walkBack curr
+                    |> Some
+                else
+                    let working = Set.remove x working
+                    let visited = Set.add curr visited
+                    let succs, _ = this.GetLink curr
+                    for succ in succs do
+                        prec.[succ] <- curr
+                    let working =
+                        (working, succs)
+                        ||> Seq.fold (fun working succ ->
+                            if visited.Contains succ then
+                                working
+                            else
+                                working.Add(distToGoals succ)
+                        )
+                    work(working, visited)
+
+        work(working, Set.empty)
+        |> Option.map (fun path ->
+            path
+            |> Seq.pairwise
+            |> Seq.map (fun (nodeA, nodeB) -> snd(this.GetLink(nodeA)) nodeB)
+        )
 
 type Network with
     member this.GetQuickAccess() =
