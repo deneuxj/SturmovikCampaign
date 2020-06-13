@@ -31,6 +31,7 @@ open Campaign.SpacePartition
 open VectorExtension
 open Util
 open SturmovikMission.Blocks.StaticDefenses.Types
+open NewWorldDescription
 
 type GameType =
     | Coop
@@ -455,6 +456,8 @@ type TargetLocator(random : System.Random, state : WarState) =
 
     member this.GetAirfieldAA(afId) = getAirfieldAALocations afId
 
+    member this.GetGroundLocationCandidates(area, shape) = getGroundLocationCandidates(area, shape)
+
 
 let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float32<H>) (state : WarState) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
@@ -574,8 +577,70 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
                           Country = country.ToMcuValue
                         }
                     yield nest
-            // Bridges
 
+            // Bridges on the paths from regions to the neighbours
+            let getCriticialBridges (network : Network) (regionA, regionB) =
+                let nodes = network.Nodes |> List.filter (fun node -> node.Region = regionA || node.Region = regionB)
+                let links =
+                    network.Links
+                    |> List.filter (fun link -> link.Bridges |> Seq.forall (fun bid -> state.GetBridgeFunctionalityLevel(bid) > 0.5f))
+                let network =
+                    { network with
+                        Nodes = nodes
+                        Links = links
+                    }
+                let sources =
+                    nodes
+                    |> Seq.filter (fun node -> node.Region = regionA && node.HasTerminal)
+                    |> Seq.map (fun node -> node.Id)
+                    |> Set
+                let goals =
+                    nodes
+                    |> Seq.filter (fun node -> node.Region = regionB && node.HasTerminal)
+                    |> Seq.map (fun node -> node.Id)
+                    |> Set
+                network.GetQuickAccess().FindPath(sources, goals)
+                |> Option.map (fun links ->
+                    links
+                    |> Seq.collect (fun link -> link.Bridges))
+                |> Option.defaultValue Seq.empty
+
+            let allCriticalBridges =
+                gameRegions
+                |> Seq.collect (fun region -> Seq.allPairs [region.RegionId] region.Neighbours)
+                |> Seq.distinctBy (fun (regionA, regionB) -> min regionA regionB, max regionA regionB)
+                |> Seq.collect (fun regs -> Seq.append (getCriticialBridges state.World.Roads regs) (getCriticialBridges state.World.Rails regs))
+                |> Seq.distinct
+
+            for BuildingInstanceId pos in allCriticalBridges do
+                let area = VectorExtension.mkCircle(pos.Pos, 2000.0f)
+                let shape = VectorExtension.mkCircle(Vector2.Zero, 50.0f)
+                let p =
+                    locator.GetGroundLocationCandidates(area, shape)
+                    |> Seq.tryHead
+                match p with
+                | Some p -> 
+                    let country = 
+                        state.World.Regions.Values
+                        |> Seq.tryFind (fun region -> pos.Pos.IsInConvexPolygon region.Boundary)
+                        |> Option.bind (fun region -> state.GetOwner(region.RegionId))
+                        |> Option.map state.World.GetAnyCountryInCoalition
+                    match country with
+                    | Some country ->
+                        let nest =
+                            { Priority = 0.0f
+                              Number = gunsPerNest
+                              Boundary = shape |> List.map ((+) p)
+                              Rotation = 0.0f
+                              Settings = CanonGenerationSettings.Default
+                              Specialty = DefenseSpecialty.AntiAirMg
+                              IncludeSearchLights = true
+                              IncludeFlak = true
+                              Country = country.ToMcuValue
+                            }
+                        yield nest
+                    | None ->
+                        ()
             // Factories
 
             // Ground troops
