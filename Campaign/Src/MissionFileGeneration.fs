@@ -230,6 +230,26 @@ type GroundBattle with
         | _ ->
             None
 
+/// Compute groups of buildings or bridges in a region that are still 50% functional or more.
+/// The result is not a partitition, i.e. each building may appear in more than one groups.
+let computeHealthyBuildingClusters(radius, state : WarState, buildings : BuildingInstance seq, regId : RegionId) =
+    let region = state.World.Regions.[regId]
+    // Find the largest cluster of healthy buildings, and use that
+    let healthyBuildings =
+        buildings
+        |> Seq.filter (fun building -> building.Pos.Pos.IsInConvexPolygon region.Boundary)
+        |> Seq.filter (fun building -> state.GetBuildingFunctionalityLevel(building.Id) > 0.5f)
+    let clusters =
+        healthyBuildings
+        |> Seq.allPairs healthyBuildings
+        |> Seq.filter (fun (b1, b2) -> b1.Id <> b2.Id && (b1.Pos.Pos - b2.Pos.Pos).Length() < radius)
+        |> Seq.groupBy fst
+        |> Seq.cache
+    clusters
+    |> Seq.sortByDescending (snd >> Seq.length)
+    |> Seq.map (fun (rep, group) -> rep, group |> Seq.map snd)
+
+
 type TargetLocator(random : System.Random, state : WarState) =
     let freeAreas : FreeAreas.FreeAreasNode option =
         let path =
@@ -411,31 +431,15 @@ type TargetLocator(random : System.Random, state : WarState) =
 
         | BridgeTarget | BuildingTarget ->
             let region = state.World.Regions.[regId]
-            // Find the largets cluster of healthy buildings, and use that
-            let individualTargetPositions =
-                if targetType = BridgeTarget then
-                    state.World.Bridges
-                    |> Seq.filter (fun kvp -> kvp.Value.Pos.Pos.IsInConvexPolygon region.Boundary)
-                    |> Seq.filter (fun kvp -> state.GetBuildingFunctionalityLevel(kvp.Key) > 0.5f)
-                    |> Seq.map (fun kvp -> kvp.Value.Pos.Pos)
-                else
-                    state.World.Buildings
-                    |> Seq.filter (fun kvp -> kvp.Value.Pos.Pos.IsInConvexPolygon region.Boundary)
-                    |> Seq.filter (fun kvp -> state.GetBuildingFunctionalityLevel(kvp.Key) > 0.5f)
-                    |> Seq.map (fun kvp -> kvp.Value.Pos.Pos)
+            // Find the largest cluster of healthy buildings, and use that
             let clusters =
-                individualTargetPositions
-                |> Seq.allPairs individualTargetPositions
-                |> Seq.filter (fun (p1, p2) -> p1 <> p2 && (p1 - p2).Length() < 1000.0f)
-                |> Seq.groupBy fst
-                |> Seq.cache
-            if Seq.isEmpty clusters then
-                None
-            else
-                clusters
-                |> Seq.maxBy (snd >> Seq.length)
-                |> fst
-                |> Some
+                if targetType = BridgeTarget then
+                    computeHealthyBuildingClusters(1000.0f, state, state.World.Bridges.Values, regId)
+                else
+                    computeHealthyBuildingClusters(1000.0f, state, state.World.Buildings.Values, regId)
+            clusters
+            |> Seq.tryHead
+            |> Option.map(fun (building, _) -> building.Pos.Pos)
 
     let getAirfieldAALocations (afId : AirfieldId) =
         let airfield = state.World.Airfields.[afId]
@@ -641,7 +645,53 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
                         yield nest
                     | None ->
                         ()
+                | None ->
+                    ()
+
             // Factories
+            for coalition, region in state.World.Regions |> Seq.choose (fun kvp -> state.GetOwner(kvp.Key) |> Option.attach kvp.Value) do
+                let clusters =
+                    computeHealthyBuildingClusters(3000.0f, state, state.World.Buildings.Values, region.RegionId)
+                    |> List.ofSeq
+                let country = state.World.GetAnyCountryInCoalition(coalition)
+                let rec work (covered : Set<BuildingInstanceId>) clusters =
+                    match clusters with
+                    | [] -> Seq.empty
+                    | (rep : BuildingInstance, group) :: clusters ->
+                        if covered.Contains (rep.Id) then
+                            work covered clusters
+                        else
+                            seq {
+                                let shape = VectorExtension.mkCircle(Vector2.Zero, 50.0f)
+                                let location =
+                                    seq { 2000.0f .. 500.0f .. 5000.0f }
+                                    |> Seq.map (fun radius -> VectorExtension.mkCircle(rep.Pos.Pos, radius))
+                                    |> Seq.collect (fun area -> locator.GetGroundLocationCandidates(area, shape))
+                                    |> Seq.tryHead
+                                match location with
+                                | None ->
+                                    yield! work covered clusters
+                                | Some p ->
+                                    let nest =
+                                        { Priority = 0.0f
+                                          Number = gunsPerNest
+                                          Boundary = shape |> List.map ((+) p)
+                                          Rotation = 0.0f
+                                          Settings = CanonGenerationSettings.Default
+                                          Specialty = DefenseSpecialty.AntiAirCanon
+                                          IncludeSearchLights = true
+                                          IncludeFlak = true
+                                          Country = country.ToMcuValue
+                                        }
+                                    yield nest
+                                    let covered =
+                                        group
+                                        |> Seq.map (fun (b : BuildingInstance) -> b.Id)
+                                        |> Set
+                                        |> Set.union covered
+                                    yield! work covered clusters
+                            }
+                yield! work Set.empty clusters
 
             // Ground troops
         ]
