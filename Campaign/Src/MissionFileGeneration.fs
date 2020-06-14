@@ -694,5 +694,42 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
                 yield! work Set.empty clusters
 
             // Ground troops
+            for m in missions.GroundMissions do
+                let region = state.World.Regions.[m.Objective]
+                match m.MissionType with
+                | GroundBattle _ ->
+                    // AA guns at ground battles
+                    match state.GetOwner(m.Objective) with
+                    | Some owner ->
+                        match locator.TryGetBattleLocation(m.Objective) with
+                        | Some(oriPos, _) ->
+                            let posNeg = oriPos.Pos - Vector2.FromYOri(float oriPos.Rotation) * 3000.0f
+                            let posPos = oriPos.Pos + Vector2.FromYOri(float oriPos.Rotation) * 3000.0f
+                            // Position of region's owners is the one closest to the region's capital
+                            let posOwner, posInvader =
+                                if (posNeg - region.Position).Length() < (posPos - region.Position).Length() then
+                                    posNeg, posPos
+                                else
+                                    posPos, posNeg
+                            let countryOwner = state.World.GetAnyCountryInCoalition(owner).ToMcuValue
+                            let countryInvader = state.World.GetAnyCountryInCoalition(owner.Other).ToMcuValue
+                            let shape = VectorExtension.mkCircle(Vector2.Zero, 500.0f)
+                            let mkNest(p, country) =
+                                {
+                                    Priority = 0.0f
+                                    Number = gunsPerNest
+                                    Boundary = shape |> List.map ((+) p)
+                                    Rotation = 0.0f
+                                    Settings = CanonGenerationSettings.Default
+                                    Specialty = DefenseSpecialty.AntiAirMg
+                                    IncludeSearchLights = true
+                                    IncludeFlak = true
+                                    Country = country
+                                }
+                            yield mkNest(posOwner, countryOwner)
+                            yield mkNest(posInvader, countryInvader)
+                        | None -> ()
+                    | None -> ()
+                | _ -> ()
         ]
     ()

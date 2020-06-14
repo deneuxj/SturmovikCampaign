@@ -93,6 +93,17 @@ with
         }
         |> Seq.distinct
 
+    member this.GroundMissions =
+        seq {
+            match this.GroundBattleAtTarget with
+            | Some m -> yield m
+            | None -> ()
+            for m in this.OtherMissions do
+                match m.Kind with
+                | GroundMission m -> yield m
+                | _ -> ()
+        }
+
 let enumerateGroundAttackMissions (state : WarState) (coalition : CoalitionId) (missions : Mission list) =
     let airMissionCoalition (mission : AirMission) =
         state.World.Airfields.[mission.StartAirfield].Region |> state.GetOwner
