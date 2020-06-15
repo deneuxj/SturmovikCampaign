@@ -33,98 +33,6 @@ open Util
 open SturmovikMission.Blocks.StaticDefenses.Types
 open NewWorldDescription
 
-type GameType =
-    | Coop
-    | SinglePlayer
-    | MultiPlayer
-
-type PlayerSpawnType =
-    | Airborne
-    | Runway
-    | Parking of WarmedUp: bool
-
-type PlayerSpawnPlane =
-    {
-        Model : PlaneModel
-        Mods : ModRange list
-    }
-
-type WaypointAction =
-    | TakeOff
-    | Land
-    | Fly
-    | AttackAir of Radius: float32<M> * Duration: float32<H>
-    | AttackGround of Radius: float32<M>
-
-type Waypoint =
-    { Pos : OrientedPosition
-      Action : WaypointAction
-    }
-
-type PlayerDirectedFlight =
-    {
-        Title : string
-        Flight : string
-        Rank : int
-        Waypoints : Waypoint list
-    }
-
-type PlayerFlight =
-    | Unconstrained of PlayerSpawnPlane list
-    | Directed of PlayerDirectedFlight
-
-type PlayerSpawn =
-    {
-        Airfield : AirfieldId
-        SpawnType : PlayerSpawnType
-        Pos : OrientedPosition
-        Flight : PlayerFlight
-    }
-
-type GroundBattleNumbers =
-    {
-        NumRocketArtillery : int
-        NumArtillery : int
-        NumAntiTankGuns : int
-        NumTanks : int
-    }
-
-type GroundBattle =
-    {
-        Boundary : Vector2 list
-        Pos : OrientedPosition
-        Defending : CountryId
-        Attacking : CountryId
-        NumDefending : GroundBattleNumbers
-        NumAttacking : GroundBattleNumbers
-    }
-
-type ConvoyMember =
-    | Train
-    | Truck
-    | Tank
-    | ArmoredCar
-    | AntiAirTruck
-    | StaffCar
-
-type Convoy =
-    {
-        Members : ConvoyMember list
-        Start : OrientedPosition
-        Destination : OrientedPosition
-    }
-
-type MultiplayerMissionContent =
-    {
-        Boundary : Vector2 list
-        PlayerSpawns : PlayerSpawn list
-        AntiAirNests : Nest list
-        GroundBattles : GroundBattle list
-        AiPatrols : AiPatrol list
-        AiAttacks : AiAttack list
-        Convoys : Convoy list
-        ParkedPlanes : Map<AirfieldId, PlaneModelId>
-    }
 
 type AiStartPoint =
     | StartAtIngress of float32<M>
@@ -204,28 +112,6 @@ type AiPatrol with
                     Role = role
                     ProtectedRegion = protectedRegion
                 })
-        | _ ->
-            None
-
-type GroundBattle with
-    static member TryFromGroundMission(state : WarState, mission : GroundMission, pos : OrientedPosition, area : Vector2 list) =
-        match mission with
-        | { MissionType = GroundBattle initiator } ->
-            let computeNum (force : float32<MGF>) =
-                { NumRocketArtillery = int(0.25f * force / TargetType.ArmoredCar.GroundForceValue)
-                  NumArtillery = int(0.25f * force / TargetType.Artillery.GroundForceValue)
-                  NumAntiTankGuns = int(0.25f * force / TargetType.Artillery.GroundForceValue)
-                  NumTanks = int(0.25f * force / TargetType.Tank.GroundForceValue)
-                }
-            let getCountryInCoalition coalition = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun kvp -> kvp.Key
-            Some {
-                Boundary = area
-                Pos = pos
-                Defending = getCountryInCoalition initiator.Other
-                Attacking = getCountryInCoalition initiator
-                NumDefending = computeNum(state.GetGroundForces(initiator.Other, mission.Objective))
-                NumAttacking = computeNum(state.GetGroundForces(initiator, mission.Objective))
-            }
         | _ ->
             None
 
@@ -461,6 +347,120 @@ type TargetLocator(random : System.Random, state : WarState) =
 
     member this.GetGroundLocationCandidates(area, shape) = getGroundLocationCandidates(area, shape)
 
+
+type GameType =
+    | Coop
+    | SinglePlayer
+    | MultiPlayer
+
+type PlayerSpawnType =
+    | Airborne
+    | Runway
+    | Parking of WarmedUp: bool
+
+type PlayerSpawnPlane =
+    {
+        Model : PlaneModel
+        Mods : ModRange list
+    }
+
+type WaypointAction =
+    | TakeOff
+    | Land
+    | Fly
+    | AttackAir of Radius: float32<M> * Duration: float32<H>
+    | AttackGround of Radius: float32<M>
+
+type Waypoint =
+    { Pos : OrientedPosition
+      Action : WaypointAction
+    }
+
+type PlayerDirectedFlight =
+    {
+        Title : string
+        Flight : string
+        Rank : int
+        Waypoints : Waypoint list
+    }
+
+type PlayerFlight =
+    | Unconstrained of PlayerSpawnPlane list
+    | Directed of PlayerDirectedFlight
+
+type PlayerSpawn =
+    {
+        Airfield : AirfieldId
+        SpawnType : PlayerSpawnType
+        Pos : OrientedPosition
+        Flight : PlayerFlight
+    }
+
+type GroundBattleNumbers =
+    {
+        NumRocketArtillery : int
+        NumArtillery : int
+        NumAntiTankGuns : int
+        NumTanks : int
+    }
+
+type GroundBattle =
+    {
+        Boundary : Vector2 list
+        Pos : OrientedPosition
+        Defending : CountryId
+        Attacking : CountryId
+        NumDefending : GroundBattleNumbers
+        NumAttacking : GroundBattleNumbers
+    }
+with
+    static member TryFromGroundMission(state : WarState, mission : GroundMission, pos : OrientedPosition, area : Vector2 list) =
+        match mission with
+        | { MissionType = GroundBattle initiator } ->
+            let computeNum (force : float32<MGF>) =
+                { NumRocketArtillery = int(0.25f * force / TargetType.ArmoredCar.GroundForceValue)
+                  NumArtillery = int(0.25f * force / TargetType.Artillery.GroundForceValue)
+                  NumAntiTankGuns = int(0.25f * force / TargetType.Artillery.GroundForceValue)
+                  NumTanks = int(0.25f * force / TargetType.Tank.GroundForceValue)
+                }
+            let getCountryInCoalition coalition = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun kvp -> kvp.Key
+            Some {
+                Boundary = area
+                Pos = pos
+                Defending = getCountryInCoalition initiator.Other
+                Attacking = getCountryInCoalition initiator
+                NumDefending = computeNum(state.GetGroundForces(initiator.Other, mission.Objective))
+                NumAttacking = computeNum(state.GetGroundForces(initiator, mission.Objective))
+            }
+        | _ ->
+            None
+
+type ConvoyMember =
+    | Train
+    | Truck
+    | Tank
+    | ArmoredCar
+    | AntiAirTruck
+    | StaffCar
+
+type Convoy =
+    {
+        Members : ConvoyMember list
+        Start : OrientedPosition
+        Destination : OrientedPosition
+    }
+
+type MultiplayerMissionContent =
+    {
+        Boundary : Vector2 list
+        PlayerSpawns : PlayerSpawn list
+        AntiAirNests : Nest list
+        GroundBattles : GroundBattle list
+        AiPatrols : AiPatrol list
+        AiAttacks : AiAttack list
+        Convoys : Convoy list
+        ParkedPlanes : Map<AirfieldId, PlaneModelId>
+    }
 
 let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float32<H>) (state : WarState) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
