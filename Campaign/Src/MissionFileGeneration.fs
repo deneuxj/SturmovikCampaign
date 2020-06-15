@@ -32,6 +32,9 @@ open VectorExtension
 open Util
 open SturmovikMission.Blocks.StaticDefenses.Types
 open NewWorldDescription
+open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.DataProvider
+open SturmovikMission.DataProvider.McuUtil
 
 
 type AiStartPoint =
@@ -450,6 +453,14 @@ type Convoy =
         Destination : OrientedPosition
     }
 
+type MissionGenSettings =
+    {
+        /// Mission length in minutes
+        MissionLength : int
+        MaxAntiAirCannons : int
+        MaxAiPatrolPlanes : int
+    }
+
 type MultiplayerMissionContent =
     {
         Boundary : Vector2 list
@@ -461,6 +472,41 @@ type MultiplayerMissionContent =
         Convoys : Convoy list
         ParkedPlanes : Map<AirfieldId, PlaneModelId>
     }
+with
+    member this.AiPatrolsOf(coalition, state : WarState) =
+        this.AiPatrols
+        |> List.filter (fun patrol -> state.GetOwner(state.World.Airfields.[patrol.HomeAirfield].Region) = Some coalition)
+
+    member this.BuildMission(random, settings : MissionGenSettings, state : WarState) =
+        let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile (state.World.Scenario + ".Mission"))
+        let options = Seq.head strategyMissionData.ListOfOptions
+        let store = NumericalIdentifiers.IdStore()
+        let lcStore = NumericalIdentifiers.IdStore()
+        lcStore.SetNextId 3
+        let getId = store.GetIdMapper()
+        let missionBegin = newMissionBegin (getId 1)
+        let missionLength = 1.0f<H> * float32 settings.MissionLength / 60.0f
+
+        // AA
+        let retainedAA =
+            this.AntiAirNests
+            |> StaticDefenseOptimization.select random settings.MaxAntiAirCannons
+            |> StaticDefenseOptimization.instantiateAll store lcStore random missionBegin
+            |> List.map (fun grp -> grp :> IMcuGroup)
+
+        // Patrols
+        let allPatrols =
+            let axisGroup, axisPatrols =
+                this.AiPatrolsOf(Axis, state)
+                |> AiPlanes.AiPatrol.ToConstrainedPatrolBlocks (settings.MaxAiPatrolPlanes, store, lcStore, Vector2(1000.0f, 0.0f))
+            let alliesGroup, alliesPatrols =
+                this.AiPatrolsOf(Allies, state)
+                |> AiPlanes.AiPatrol.ToConstrainedPatrolBlocks (settings.MaxAiPatrolPlanes, store, lcStore, Vector2(2000.0f, 0.0f))
+            for block in axisPatrols @ alliesPatrols do
+                Mcu.addTargetLink missionBegin block.Start.Index
+            [ axisGroup; alliesGroup ]
+
+        ()
 
 let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float32<H>) (state : WarState) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
@@ -817,6 +863,7 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
         ]
         |> List.choose id
 
+    // Result
     {
         Boundary = boundary
         PlayerSpawns = spawns
@@ -827,3 +874,4 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
         Convoys = []
         ParkedPlanes = Map.empty
     }
+
