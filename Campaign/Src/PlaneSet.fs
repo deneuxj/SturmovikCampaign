@@ -44,10 +44,18 @@ with
         | [x] -> One x
         | [x; y] -> Interval(x, y)
         | _ -> failwith "Range must be a singleton or a pair"
+
+    static member All : ModRange list = []
+
     member this.ModFilter =
         match this with
         | One x -> sprintf "%d" x
         | Interval (x, y) -> sprintf "%d..%d" x y
+
+    static member ModFilters(ranges : ModRange seq) =
+        ranges
+        |> Seq.map (fun range -> range.ModFilter)
+        |> String.concat ","
 
 /// <summary>
 /// Data associated to a plane. The plane model itself is not included.

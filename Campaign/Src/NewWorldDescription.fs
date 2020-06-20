@@ -294,6 +294,7 @@ type Network with
 type Runway = {
     SpawnPos : OrientedPosition
     PathToRunway : Vector2 list
+    PathOffRunway : Vector2 list
     Start : Vector2
     End : Vector2
 }
@@ -594,9 +595,16 @@ module Init =
             let p2, _ =
                 vecs
                 |> List.findBack (fun (_, t) -> t = 2)
+            let exit =
+                vecs
+                |> List.rev
+                |> List.takeWhile (fun (_, t) -> t < 2)
+                |> List.map fst
+                |> List.rev
             {
                 SpawnPos = pos
                 PathToRunway = path
+                PathOffRunway = exit
                 Start = p1
                 End = p2
             }

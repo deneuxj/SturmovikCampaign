@@ -364,8 +364,24 @@ type PlayerSpawnType =
 type PlayerSpawnPlane =
     {
         Model : PlaneModel
-        Mods : ModRange list
+        AllowedMods : ModRange list
+        AllowedPayloads : ModRange list
+        AllowedSkins : ModRange list
+        Mods : int64
+        Payload : int
+        Skin : int
     }
+with
+    static member Default(plane) =
+        {
+            Model = plane
+            AllowedMods = ModRange.All
+            AllowedPayloads = ModRange.All
+            AllowedSkins = ModRange.All
+            Mods = 0L
+            Payload = 0
+            Skin = 0
+        }
 
 type WaypointAction =
     | TakeOff
@@ -398,6 +414,91 @@ type PlayerSpawn =
         Pos : OrientedPosition
         Flight : PlayerFlight
     }
+with
+    member this.BuildMCUs(store : NumericalIdentifiers.IdStore, state : WarState) =
+        let subst = Mcu.substId(store.GetIdMapper())
+        let af = state.World.Airfields.[this.Airfield]
+        let coalition = state.GetOwner(af.Region)
+        match coalition with
+        | None ->
+            // No spawning in neutral regions
+            McuUtil.groupFromList []
+        | Some coalition ->
+            if state.GetGroundForces(coalition.Other, af.Region) > 0.1f * state.GetGroundForces(coalition, af.Region) then
+                // No spawning in regions with significant enemy presence
+                McuUtil.groupFromList []
+            else
+            match this.Flight with
+            | Unconstrained planes ->
+                let runway =
+                    lazy
+                        let windDir = Vector2.FromYOri(float state.Weather.Wind.Direction)
+                        try
+                            af.Runways
+                            |> Seq.maxBy (fun runway -> Vector2.Dot(windDir, runway.End - runway.Start))
+                            |> Some
+                        with _ -> None
+                let spawn =
+                    T.Airfield.Default
+                        .SetIndex(T.Integer.N 1)
+                        .SetLinkTrId(T.Integer.N 2)
+                        .SetReturnPlanes(T.Boolean.N true)
+                        .SetRefuelFriendlies(T.Boolean.N true)
+                        .SetRearmFriendlies(T.Boolean.N true)
+                        .SetRepairFriendlies(T.Boolean.N true)
+                        .SetMaintenanceRadius(T.Integer.N 3000)
+                        .SetRefuelTime(T.Integer.N 30)
+                        .SetRearmTime(T.Integer.N 30)
+                        .SetRepairTime(T.Integer.N 30)
+                let spawn =
+                    match this.SpawnType with
+                    | Airborne ->
+                        spawn
+                            .SetXPos(T.Float.N(float this.Pos.Pos.X))
+                            .SetZPos(T.Float.N(float this.Pos.Pos.Y))
+                            .SetYPos(T.Float.N(float this.Pos.Altitude))
+                            .SetYOri(T.Float.N(float this.Pos.Rotation))
+                    | Runway ->
+                        let pos, ori =
+                            match runway with
+                            | Lazy(Some runway) ->
+                                runway.Start, (runway.End - runway.Start).YOri
+                            | _ ->
+                                this.Pos.Pos, this.Pos.Rotation
+                        spawn
+                            .SetXPos(T.Float.N(float pos.X))
+                            .SetZPos(T.Float.N(float pos.Y))
+                            .SetYOri(T.Float.N(float ori))
+                    | Parking _ ->
+                        let pos, ori =
+                            match runway with
+                            | Lazy(Some runway) ->
+                                runway.SpawnPos.Pos, runway.SpawnPos.Rotation
+                            | _ ->
+                                this.Pos.Pos, this.Pos.Rotation
+                        spawn
+                            .SetXPos(T.Float.N(float pos.X))
+                            .SetZPos(T.Float.N(float pos.Y))
+                            .SetYOri(T.Float.N(float ori))
+                let planes =
+                    planes
+                    |> List.map (fun plane ->
+                        let modFilters = ModRange.ModFilters plane.AllowedMods
+                        let payloadFilters = ModRange.ModFilters plane.AllowedPayloads
+                        let skinFilters = ModRange.ModFilters plane.AllowedSkins
+                        let afPlane = newAirfieldPlane(modFilters, payloadFilters, plane.Mods, plane.Payload, skinFilters, plane.Model.Name, -1)
+                        afPlane
+                    )
+                let spawn =
+                    spawn.SetPlanes(Some(T.Airfield.Planes.Default.SetPlane planes))
+                let spawnEntity =
+                    T.MCU_TR_Entity.Default.SetIndex(T.Integer.N 2).SetMisObjID(T.Integer.N 1)
+                let mcus =
+                    [ spawn.CreateMcu(); spawnEntity.CreateMcu() ]
+                for mcu in mcus do subst mcu
+                McuUtil.groupFromList mcus
+            | Directed _ ->
+                failwith "TODO"
 
 type GroundBattleNumbers =
     {
@@ -461,6 +562,7 @@ type MissionGenSettings =
         MaxAiPatrolPlanes : int
     }
 
+/// Data needed to create a multiplayer "dogfight" mission
 type MultiplayerMissionContent =
     {
         Boundary : Vector2 list
@@ -473,10 +575,12 @@ type MultiplayerMissionContent =
         ParkedPlanes : Map<AirfieldId, PlaneModelId>
     }
 with
+    /// Get the AI patrols of a coalition
     member this.AiPatrolsOf(coalition, state : WarState) =
         this.AiPatrols
         |> List.filter (fun patrol -> state.GetOwner(state.World.Airfields.[patrol.HomeAirfield].Region) = Some coalition)
 
+    /// Create the groups suitable for a multiplayer "dogfight" misison
     member this.BuildMission(random, settings : MissionGenSettings, state : WarState) =
         let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile (state.World.Scenario + ".Mission"))
         let options = Seq.head strategyMissionData.ListOfOptions
@@ -506,8 +610,13 @@ with
                 Mcu.addTargetLink missionBegin block.Start.Index
             [ axisGroup; alliesGroup ]
 
+        // Spawns
+        let spawns =
+            this.PlayerSpawns
+            |> List.map (fun ps -> ps.BuildMCUs(store, state))
         ()
 
+/// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
 let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float32<H>) (state : WarState) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
 
@@ -581,10 +690,7 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
                     |> Seq.choose (fun (planeId, num) ->
                         if num >= 1.0f then
                             let plane = state.World.PlaneSet.[planeId]
-                            Some {
-                                Model = plane
-                                Mods = [Interval(0, 99)]
-                            }
+                            Some (PlayerSpawnPlane.Default plane)
                         else
                             None)
                     |> List.ofSeq
