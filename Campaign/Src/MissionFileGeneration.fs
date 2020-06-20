@@ -35,6 +35,8 @@ open NewWorldDescription
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
+open SturmovikMission.Blocks.Battlefield
+open SturmovikMission.Blocks.Vehicles
 
 
 type AiStartPoint =
@@ -508,8 +510,15 @@ type GroundBattleNumbers =
         NumTanks : int
     }
 
+type private AreaLocation =
+    | DefenseBack
+    | DefenseMiddle
+    | AttackBack
+    | AttackMiddle
+
 type GroundBattle =
     {
+        Region : RegionId
         Boundary : Vector2 list
         Pos : OrientedPosition
         Defending : CountryId
@@ -529,6 +538,7 @@ with
                 }
             let getCountryInCoalition coalition = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun kvp -> kvp.Key
             Some {
+                Region = mission.Objective
                 Boundary = area
                 Pos = pos
                 Defending = getCountryInCoalition initiator.Other
@@ -538,6 +548,128 @@ with
             }
         | _ ->
             None
+
+    member this.CreateMCUs(random : System.Random, store, lcStore, region) =
+        let defendingCoalition = this.Defending.Coalition
+        // Get a random position within the bounding rectangle of the boundary
+        let getRandomPos(areaLocation) =
+            let dir = Vector2.FromYOri(float this.Pos.Rotation)
+            let back =
+                this.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - this.Pos.Pos, dir))
+                |> Seq.min
+            let front =
+                this.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - this.Pos.Pos, dir))
+                |> Seq.max
+            let side = Vector2.FromYOri (float this.Pos.Rotation + 90.0)
+            let left =
+                this.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - this.Pos.Pos, side))
+                |> Seq.min
+            let right =
+                this.Boundary
+                |> Seq.map (fun v -> Vector2.Dot(v - this.Pos.Pos, side))
+                |> Seq.max
+            let r0 =
+                let r = random.NextDouble() |> float32
+                match areaLocation with
+                | AttackBack -> 0.25f * r
+                | DefenseBack -> 1.0f - 0.25f * r
+                | AttackMiddle -> 0.25f * r + 0.25f
+                | DefenseMiddle -> 0.75f - 0.25f * r
+            let r1 = random.NextDouble() |> float32
+            let dx = (back * (1.0f - r0) + front * r0) * dir
+            let dz = (left * (1.0f - r1) + right * r1) * side
+            this.Pos.Pos + dx + dz
+        // Get a random position within the boundary
+        let getRandomPos(areaLocation) =
+            Seq.initInfinite (fun _ -> getRandomPos areaLocation)
+            |> Seq.find (fun v -> v.IsInConvexPolygon(this.Boundary))
+        // Build an attacking tank
+        let buildTank (country : CountryId) (model : VehicleTypeData) =
+            let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack), country.ToMcuValue)
+            let role = if country.Coalition = defendingCoalition then "D" else "A"
+            tank.Tank.Name <- sprintf "B-%s-%s-%s" region role "medium"
+            model.AssignTo(tank.Tank)
+            tank |> Choice1Of2
+        // Build a supporting object (dug-in tank or rocket artillery)
+        let buildCannon (country : CountryId) (location, model : VehicleTypeData, wallModel : VehicleTypeData) =
+            let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack), country.ToMcuValue)
+            let role = if country.Coalition = defendingCoalition then "D" else "A"
+            arty.Canon.Name <- sprintf "B-%s-%s-%s" region role "medium"
+            wallModel.AssignTo(arty.Wall)
+            model.AssignTo(arty.Canon)
+            arty |> Choice2Of2
+        // Build moving and fixed tanks/guns
+        let buildTanksAndSupport(country, composition : GroundBattleNumbers) =
+            let attackers, support =
+                let buildCannon = buildCannon country
+                let buildTank = buildTank country
+                let backPosition =
+                    if country.Coalition = defendingCoalition then
+                        DefenseBack
+                    else
+                        AttackBack
+                seq {
+                    for _ in 1 .. composition.NumTanks do
+                        if country.Coalition = defendingCoalition then
+                            match country with
+                            | Russia -> (DefenseBack, vehicles.RussianMediumTank, vehicles.AntiTankPosition) |> buildCannon
+                            | Italy | Germany -> (DefenseBack, vehicles.GermanMediumTank, vehicles.AntiTankPosition) |> buildCannon
+                            | GreatBritain | UnitedStates -> (DefenseBack, vehicles.AmericanMediumTank, vehicles.AntiTankPosition) |> buildCannon
+                        else
+                            match country with
+                            | Russia -> vehicles.RussianMediumTank |> buildTank
+                            | Italy | Germany -> vehicles.GermanMediumTank |> buildTank
+                            | GreatBritain | UnitedStates -> vehicles.AmericanMediumTank |> buildTank
+                    for _ in 1 .. composition.NumAntiTankGuns do
+                        match country with
+                        | Russia -> (backPosition, vehicles.RussianAntiTankCanon, vehicles.AntiTankPosition) |> buildCannon
+                        | Italy | Germany -> (backPosition, vehicles.GermanAntiTankCanon, vehicles.AntiTankPosition) |> buildCannon
+                        | GreatBritain | UnitedStates -> (backPosition, vehicles.AmericanAntiTankCanon, vehicles.AntiTankPosition) |> buildCannon
+                    for _ in 1 .. composition.NumArtillery do
+                        match country with
+                        | Russia -> (backPosition, vehicles.RussianArtillery, vehicles.ArtilleryPosition) |> buildCannon
+                        | Italy | Germany -> (backPosition, vehicles.GermanArtillery, vehicles.ArtilleryPosition) |> buildCannon
+                        | GreatBritain | UnitedStates -> (backPosition, vehicles.AmericanArtillery, vehicles.ArtilleryPosition) |> buildCannon
+                    for _ in 1 .. composition.NumRocketArtillery do
+                        match country with
+                        | Russia -> (backPosition, vehicles.RussianRocketArtillery, vehicles.TankPosition) |> buildCannon
+                        | Italy | Germany -> (backPosition, vehicles.GermanRocketArtillery, vehicles.TankPosition) |> buildCannon
+                        | GreatBritain | UnitedStates -> (backPosition, vehicles.AmericanArtillery, vehicles.ArtilleryPosition) |> buildCannon
+                }
+                |> List.ofSeq
+                |> List.partition (function Choice1Of2 _ -> true | _ -> false)
+            let attackers = attackers |> List.map (function Choice1Of2 x -> x | _ -> failwith "Not a Choice1Of2")
+            let support = support |> List.map (function Choice2Of2 x -> x | _ -> failwith "Not a Choice2Of2")
+            attackers, support
+        // Instantiate attacker blobks
+        let attackers, support = buildTanksAndSupport(this.Attacking, this.NumAttacking)
+        // Instantiate defender blocks
+        let defenders, canons = buildTanksAndSupport(this.Defending, this.NumDefending)
+
+        // Icons
+        let icon1 = BattleIcons.Create(store, lcStore, this.Pos.Pos, this.Pos.Rotation, this.NumDefending.NumTanks, this.NumAttacking.NumTanks, Defenders defendingCoalition.ToCoalition)
+        let icon2 = BattleIcons.Create(store, lcStore, this.Pos.Pos, this.Pos.Rotation, this.NumAttacking.NumTanks, this.NumDefending.NumTanks, Attackers defendingCoalition.Other.ToCoalition)
+
+        // Result
+        { new McuUtil.IMcuGroup with
+            member x.Content = []
+            member x.LcStrings = []
+            member x.SubGroups = [
+                for s in support do
+                    yield s.All
+                for a in attackers do
+                    yield a.All
+                for d in defenders do
+                    yield d.All
+                for d in canons do
+                    yield d.All
+                yield icon1.All
+                yield icon2.All
+            ]
+        }
 
 type ConvoyMember =
     | Train
@@ -591,12 +723,22 @@ with
         let missionBegin = newMissionBegin (getId 1)
         let missionLength = 1.0f<H> * float32 settings.MissionLength / 60.0f
 
+        // Spawns
+        let spawns =
+            this.PlayerSpawns
+            |> List.map (fun ps -> ps.BuildMCUs(store, state))
+
         // AA
         let retainedAA =
             this.AntiAirNests
             |> StaticDefenseOptimization.select random settings.MaxAntiAirCannons
             |> StaticDefenseOptimization.instantiateAll store lcStore random missionBegin
             |> List.map (fun grp -> grp :> IMcuGroup)
+
+        // Ground patrols
+        let battles =
+            this.GroundBattles
+            |> List.map (fun battle -> battle.CreateMCUs(random, store, lcStore, string battle.Region))
 
         // Patrols
         let allPatrols =
@@ -610,10 +752,6 @@ with
                 Mcu.addTargetLink missionBegin block.Start.Index
             [ axisGroup; alliesGroup ]
 
-        // Spawns
-        let spawns =
-            this.PlayerSpawns
-            |> List.map (fun ps -> ps.BuildMCUs(store, state))
         ()
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
@@ -889,9 +1027,17 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
         [
             for mission in missions.GroundMissions do
                 match mission.MissionType with
-                | GroundBattle _ ->
+                | GroundBattle initiator ->
                     match locator.TryGetBattleLocation(mission.Objective) with
                     | Some(p, area) ->
+                        let owner = state.GetOwner(mission.Objective)
+                        let aimedTowardsCapital = Vector2.Dot(state.World.Regions.[mission.Objective].Position - p.Pos, Vector2.FromYOri(float p.Rotation)) > 0.0f
+                        let p =
+                            // Make sure direction is so that initiators move along the battle direction, and region owners stand closer to the region capital
+                            if aimedTowardsCapital && Some initiator = owner then
+                                p
+                            else
+                                { p with Rotation = (p.Rotation + 180.0f) % 360.0f }
                         match GroundBattle.TryFromGroundMission(state, mission, p, area) with
                         | Some battle -> yield battle
                         | None -> ()
