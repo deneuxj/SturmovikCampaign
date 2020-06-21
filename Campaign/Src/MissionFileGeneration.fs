@@ -552,7 +552,7 @@ with
         | _ ->
             None
 
-    member this.CreateMCUs(random : System.Random, store, lcStore, region) =
+    member this.CreateMCUs(random : System.Random, store, lcStore, region, startTrigger) =
         let defendingCoalition = this.Defending.Coalition
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
@@ -650,11 +650,21 @@ with
         // Instantiate attacker blobks
         let attackers, support = buildTanksAndSupport(this.Attacking, this.NumAttacking)
         // Instantiate defender blocks
-        let defenders, canons = buildTanksAndSupport(this.Defending, this.NumDefending)
+        let defenders, cannons = buildTanksAndSupport(this.Defending, this.NumDefending)
 
         // Icons
         let icon1 = BattleIcons.Create(store, lcStore, this.Pos.Pos, this.Pos.Rotation, this.NumDefending.NumTanks, this.NumAttacking.NumTanks, Defenders defendingCoalition.ToCoalition)
         let icon2 = BattleIcons.Create(store, lcStore, this.Pos.Pos, this.Pos.Rotation, this.NumAttacking.NumTanks, this.NumDefending.NumTanks, Attackers defendingCoalition.Other.ToCoalition)
+
+        // Start
+        for support in support do
+            Mcu.addTargetLink startTrigger support.Start.Index
+        for x in attackers do
+            Mcu.addTargetLink startTrigger x.Start.Index
+        for x in defenders do
+            Mcu.addTargetLink startTrigger x.Start.Index
+        for x in cannons do
+            Mcu.addTargetLink startTrigger x.Start.Index
 
         // Result
         { new McuUtil.IMcuGroup with
@@ -667,7 +677,7 @@ with
                     yield a.All
                 for d in defenders do
                     yield d.All
-                for d in canons do
+                for d in cannons do
                     yield d.All
                 yield icon1.All
                 yield icon2.All
@@ -794,7 +804,7 @@ with
         // Ground patrols
         let battles =
             this.GroundBattles
-            |> List.map (fun battle -> battle.CreateMCUs(random, store, lcStore, string battle.Region))
+            |> List.map (fun battle -> battle.CreateMCUs(random, store, lcStore, string battle.Region, missionBegin))
 
         // Patrols
         let allPatrols =
@@ -840,7 +850,7 @@ with
             axisAttacks @ alliesAttacks |> List.map fst
 
         // Convoys
-        let convoys : IMcuGroup list=
+        let convoys : IMcuGroup list =
             this.Convoys
             |> List.mapi (fun i convoy -> convoy.CreateMCUs(store, lcStore, sprintf "convoy%02d" (i + 1), missionBegin))
 
