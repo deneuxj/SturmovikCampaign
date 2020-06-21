@@ -37,6 +37,9 @@ open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.Battlefield
 open SturmovikMission.Blocks.Vehicles
+open SturmovikMission.Blocks
+open SturmovikMission.Blocks.VirtualConvoy
+open SturmovikMission.Blocks.Train
 
 
 type AiStartPoint =
@@ -678,13 +681,61 @@ type ConvoyMember =
     | ArmoredCar
     | AntiAirTruck
     | StaffCar
+with
+    member this.VehicleData(country : CountryId) =
+        match country, this with
+        | (Russia | UnitedStates | GreatBritain), Train -> vehicles.RussianTrain
+        | (Germany | Italy), Train -> vehicles.GermanTrain
+        | Russia, Truck -> vehicles.RussianTruck
+        | (UnitedStates | GreatBritain), Truck -> vehicles.AmericanTruck
+        | (Germany | Italy), Truck -> vehicles.GermanTruck
+        | Russia, Tank -> vehicles.RussianMediumTank
+        | (UnitedStates | GreatBritain), Tank -> vehicles.AmericanMediumTank
+        | (Germany | Italy), Tank -> vehicles.GermanMediumTank
+        | (Russia | UnitedStates | GreatBritain), ArmoredCar -> vehicles.RussianLightArmor
+        | (Germany | Italy), ArmoredCar -> vehicles.GermanLightArmor
+        | Russia, AntiAirTruck -> vehicles.RussianMobileAA
+        | (UnitedStates | GreatBritain), AntiAirTruck -> vehicles.AmericanMobileAA
+        | (Germany | Italy), AntiAirTruck -> vehicles.GermanMobileAA
+        | Russia, StaffCar -> vehicles.RussianCar
+        | (UnitedStates | GreatBritain), StaffCar -> vehicles.AmericanCar
+        | (Germany | Italy), StaffCar -> vehicles.GermanCar
 
 type Convoy =
     {
+        Country : CountryId
         Members : ConvoyMember list
         Start : OrientedPosition
+        StartPositions : OrientedPosition list
         Destination : OrientedPosition
     }
+with
+    member this.CreateMCUs(store, lcStore, columnName, startTrigger) =
+        let pathVertices : Factory.PathVertex list=
+            [ this.Start; this.Destination ]
+            |> List.map (fun p ->
+                {
+                    Factory.Pos = p.Pos
+                    Ori = p.Rotation
+                    Radius = 50
+                    Speed = 50
+                    Priority = 1
+                    SpawnSide = Types.SpawnSide.Center
+                    Role = Factory.PathVertexRole.Intermediate
+                }
+            )
+        match this.Members with
+        | [Train] ->
+            let train = TrainWithNotification.Create(store, lcStore, true, pathVertices, [], this.Country.ToMcuValue, columnName)
+            Mcu.addTargetLink startTrigger train.TheTrain.Start.Index
+            train :> IMcuGroup
+        | _ ->
+            let columnContent =
+                this.Members
+                |> List.map (fun x -> x.VehicleData(this.Country))
+            let column = Factory.VirtualConvoy.CreateColumn(store, lcStore, pathVertices, [], columnContent, this.Country.ToMcuValue, this.Country.Coalition.ToCoalition, columnName, 0)
+            Mcu.addTargetLink startTrigger column.Api.Start.Index
+            column :> IMcuGroup
 
 type MissionGenSettings =
     {
@@ -710,6 +761,11 @@ with
     /// Get the AI patrols of a coalition
     member this.AiPatrolsOf(coalition, state : WarState) =
         this.AiPatrols
+        |> List.filter (fun patrol -> state.GetOwner(state.World.Airfields.[patrol.HomeAirfield].Region) = Some coalition)
+
+    /// Get the AI attacks of a coalition
+    member this.AiAttacksOf(coalition, state : WarState) =
+        this.AiAttacks
         |> List.filter (fun patrol -> state.GetOwner(state.World.Airfields.[patrol.HomeAirfield].Region) = Some coalition)
 
     /// Create the groups suitable for a multiplayer "dogfight" misison
@@ -751,6 +807,44 @@ with
             for block in axisPatrols @ alliesPatrols do
                 Mcu.addTargetLink missionBegin block.Start.Index
             [ axisGroup; alliesGroup ]
+
+        // Attacks
+        let allAttacks =
+            let axisAttacks =
+                this.AiAttacksOf(Axis, state)
+                |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
+            let alliesAttacks =
+                this.AiAttacksOf(Allies, state)
+                |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore))
+            let mkAttackStarts (attacks : (_ * GroundAttack.Attacker list) list) =
+                // Spawn "wing" immediately after "leader"
+                for (_, blocks) in attacks do
+                    for b1, b2 in Seq.pairwise blocks do
+                        Mcu.addTargetLink b1.Spawned b2.Start.Index
+                // Spawn pairs one minute after previous pair
+                for (_, block1), (_, block2) in Seq.pairwise attacks do
+                    match block1, block2 with
+                    | b1 :: _, b2 :: _ ->
+                        b2.StartDelay <- 60.0
+                        Mcu.addTargetLink b1.Spawned b2.Start.Index
+                    | _, _ ->
+                        failwith "Expected at least one block in each attack list"
+                // Start first pair one minute after mission start
+                match attacks with
+                | (_, hd :: _) :: _ ->
+                    hd.StartDelay <- 60.0
+                    Mcu.addTargetLink missionBegin hd.Start.Index
+                | _ -> ()
+            mkAttackStarts axisAttacks
+            mkAttackStarts alliesAttacks
+            axisAttacks @ alliesAttacks |> List.map fst
+
+        // Convoys
+        let convoys : IMcuGroup list=
+            this.Convoys
+            |> List.mapi (fun i convoy -> convoy.CreateMCUs(store, lcStore, sprintf "convoy%02d" (i + 1), missionBegin))
+
+        // Parked planes
 
         ()
 
