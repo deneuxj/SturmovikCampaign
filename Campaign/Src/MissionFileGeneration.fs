@@ -765,7 +765,7 @@ type MultiplayerMissionContent =
         AiPatrols : AiPatrol list
         AiAttacks : AiAttack list
         Convoys : Convoy list
-        ParkedPlanes : Map<AirfieldId, PlaneModelId>
+        ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
     }
 with
     /// Get the AI patrols of a coalition
@@ -855,6 +855,24 @@ with
             |> List.mapi (fun i convoy -> convoy.CreateMCUs(store, lcStore, sprintf "convoy%02d" (i + 1), missionBegin))
 
         // Parked planes
+        let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
+            let modelScript = model.StaticScriptModel
+            let mcus =
+                let durability =
+                    match model.Kind with
+                    | PlaneType.Fighter -> 8000
+                    | PlaneType.Attacker -> 11000
+                    | PlaneType.Bomber | PlaneType.Transport -> 12000
+                let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script durability
+                [ block; upcast entity ]
+            for mcu in mcus do
+                pos.Pos.AssignTo mcu.Pos
+                mcu.Ori.Y <- float pos.Rotation
+            McuUtil.groupFromList mcus
+
+        let parkedPlanes =
+            this.ParkedPlanes
+            |> List.map (fun (plane, pos, country) -> mkParkedPlane(state.World.PlaneSet.[plane], pos, int country.ToMcuValue))
 
         ()
 
@@ -1228,6 +1246,6 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
         AiPatrols = patrols
         AiAttacks = attacks
         Convoys = []
-        ParkedPlanes = Map.empty
+        ParkedPlanes = []
     }
 

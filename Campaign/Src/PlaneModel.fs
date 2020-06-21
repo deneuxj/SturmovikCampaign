@@ -74,6 +74,7 @@ type PlaneModel =
       Roles : PlaneRole list
       Coalition : CoalitionId
       ScriptModel : Vehicles.VehicleTypeData
+      StaticBasename : string
       Cost : float32<E>
       BombCapacity : float32<K>
       CargoCapacity : float32<K>
@@ -86,6 +87,12 @@ with
     member this.Id = PlaneModelId this.Name
 
     member this.MaxRange = 800000.0f<M>
+
+    member this.StaticScriptModel : Vehicles.VehicleTypeData =
+        {
+            Script = sprintf @"graphics\blocks\static_%s.txt" this.StaticBasename
+            Model = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.mgm" this.StaticBasename
+        }
 
 [<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.json"
@@ -138,6 +145,7 @@ with
             Roles = json.Roles |> Seq.map PlaneRole.FromString |> List.ofSeq
             Coalition = CoalitionId.FromString json.Coalition
             ScriptModel = { Script = json.Script; Model = json.Model }
+            StaticBasename = json.Static
             Cost = 1.0f<E> * float32 json.Cost
             BombCapacity = 1.0f<K> * float32 json.BombCapacity
             CargoCapacity = 1.0f<K> * float32 json.CargoCapacity
@@ -179,6 +187,7 @@ with
                 string this.Coalition,
                 this.ScriptModel.Script,
                 this.ScriptModel.Model,
+                this.StaticBasename,
                 decimal this.Cost,
                 decimal this.BombCapacity,
                 decimal this.CargoCapacity,
