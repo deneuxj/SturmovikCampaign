@@ -74,10 +74,11 @@ type PlaneModel =
       Roles : PlaneRole list
       Coalition : CoalitionId
       ScriptModel : Vehicles.VehicleTypeData
+      StaticBasename : string
       Cost : float32<E>
       BombCapacity : float32<K>
       CargoCapacity : float32<K>
-      Payloads : Map<PlaneRole, int*int>
+      Payloads : Map<PlaneRole, int64*int>
       BombLoads : (int * float32<K>) list
       SpecialLoadsCosts : (int * float32<E>) list
       EmptyPayload : int
@@ -86,6 +87,12 @@ with
     member this.Id = PlaneModelId this.Name
 
     member this.MaxRange = 800000.0f<M>
+
+    member this.StaticScriptModel : Vehicles.VehicleTypeData =
+        {
+            Script = sprintf @"graphics\blocks\static_%s.txt" this.StaticBasename
+            Model = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.mgm" this.StaticBasename
+        }
 
 [<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.json"
@@ -108,7 +115,7 @@ with
             json.Payloads
             |> Seq.map (fun payload ->
                 PlaneRole.FromString payload.Payload.Role,
-                (payload.Payload.ModMask, payload.Payload.Id))
+                (int64 payload.Payload.ModMask, payload.Payload.Id))
             |> Map.ofSeq
         let bombloads =
             json.Bombs
@@ -138,6 +145,7 @@ with
             Roles = json.Roles |> Seq.map PlaneRole.FromString |> List.ofSeq
             Coalition = CoalitionId.FromString json.Coalition
             ScriptModel = { Script = json.Script; Model = json.Model }
+            StaticBasename = json.Static
             Cost = 1.0f<E> * float32 json.Cost
             BombCapacity = 1.0f<K> * float32 json.BombCapacity
             CargoCapacity = 1.0f<K> * float32 json.CargoCapacity
@@ -160,7 +168,7 @@ with
             this.Payloads
             |> Map.toSeq
             |> Seq.map (fun (role, (mask, id)) ->
-                PlaneDbFile.Payload(PlaneDbFile.Payload2(string role, mask, id)))
+                PlaneDbFile.Payload(PlaneDbFile.Payload2(string role, int32 mask, id)))
             |> Array.ofSeq
         let specials =
             this.SpecialLoadsCosts
@@ -179,6 +187,7 @@ with
                 string this.Coalition,
                 this.ScriptModel.Script,
                 this.ScriptModel.Model,
+                this.StaticBasename,
                 decimal this.Cost,
                 decimal this.BombCapacity,
                 decimal this.CargoCapacity,
@@ -195,7 +204,7 @@ with
         let bombLoadWeight =
             this.BombLoads
             |> List.tryPick (fun (loadout, weight) -> if loadout = payload then Some weight else None)
-            |> Option.defaultVal 0.0f<K>
+            |> Option.defaultValue 0.0f<K>
 
         let loadoutCost =
             this.SpecialLoadsCosts

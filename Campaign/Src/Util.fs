@@ -146,13 +146,15 @@ let cachedProperty f =
 
 /// Extensions to Option module
 module Option =
-    let defaultVal x y = defaultArg y x
-
     /// Turn result of TryGetValue-like functions into an option
     let ofPair =
         function
         | true, x -> Some x
         | false, _ -> None
+
+    /// Turn option content to a pair using y as the second component
+    let attach y =
+        Option.map (fun x -> x, y)
 
 /// Extensions to Array module
 module Array =
@@ -192,11 +194,11 @@ module Map =
                 let n1 =
                     m1
                     |> Map.tryFind k
-                    |> Option.defaultVal z
+                    |> Option.defaultValue z
                 let n2 =
                     m2
                     |> Map.tryFind k
-                    |> Option.defaultVal z
+                    |> Option.defaultValue z
                 yield k, n1 + n2
         }
         |> Map.ofSeq
@@ -393,6 +395,9 @@ module Map =
         |> Seq.map fst
         |> takeUntil pred
         |> Seq.last
+
+    /// Given sequences x1 ... xn, y1 ... yn', z1 ... zn'', return the sequence x1, y1, z1, x2, y2, z2...
+    let interleave xs = xs |> Seq.transpose |> Seq.concat
 
 /// Misc useful algorithms.
 module Algo =

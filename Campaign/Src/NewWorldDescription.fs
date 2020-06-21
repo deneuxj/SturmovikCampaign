@@ -76,6 +76,22 @@ type Region = {
     IndustryBuildings : BuildingInstanceId list
 }
 
+/// Return the edge in regA's boundary that is shared with regB's boundary, if any.
+let commonBorder (regA : Region, regB : Region) =
+    (regA.Boundary, regB.Boundary)
+    ||> Seq.allPairs
+    |> Seq.filter (fun (p1, p2) -> (p1 - p2).Length() < 2000.0f)
+    |> List.ofSeq
+    |> function
+        | [(p1, _); (p2, _)] -> Some (p1, p2)
+        | [] | [_] -> None
+        | xs ->
+            // Normally two regions should have at most one common edge, as their boundaries are convex.
+            // If for whatever reason we get more than two vertices, pick the two with the largest distance between them.
+            Seq.allPairs xs xs
+            |> Seq.maxBy (fun ((p1, _), (p2, _)) -> (p1 - p2).LengthSquared())
+            |> fun ((p1, _), (p2, _)) -> Some (p1, p2)
+
 /// A node in the logistics network
 type NetworkNode = {
     Id : int
@@ -192,6 +208,63 @@ type NetworkQuickAccess =
         GetNode : int -> NetworkNode
         GetLink : int -> int seq * (int -> NetworkLink)
     }
+with
+    /// Get shortest path from set of nodes to another set of nodes
+    member this.FindPath(sources : Set<int>, goals : Set<int>) =
+        let distToGoals idx =
+            let node = this.GetNode idx
+            goals
+            |> Seq.map (fun goal -> (this.GetNode(goal).Pos - node.Pos).Length(), goal)
+            |> Seq.minBy fst
+
+        let working =
+            sources
+            |> Seq.map (fun src -> fst(distToGoals src), src)
+            |> Set
+        
+        let prec = Seq.mutableDict []
+
+        let rec walkBack idx =
+            seq {
+                yield idx
+                match prec.TryGetValue(idx) with
+                | true, idx ->
+                    yield! walkBack idx
+                | false, _ ->
+                    ()
+            }
+            |> Seq.rev
+
+        let rec work(working : Set<float32 * int>, visited) =
+            if Set.isEmpty working then
+                None
+            else
+                let (_, curr) as x = Set.minElement working
+                if goals.Contains curr then
+                    walkBack curr
+                    |> Some
+                else
+                    let working = Set.remove x working
+                    let visited = Set.add curr visited
+                    let succs, _ = this.GetLink curr
+                    for succ in succs do
+                        prec.[succ] <- curr
+                    let working =
+                        (working, succs)
+                        ||> Seq.fold (fun working succ ->
+                            if visited.Contains succ then
+                                working
+                            else
+                                working.Add(distToGoals succ)
+                        )
+                    work(working, visited)
+
+        work(working, Set.empty)
+        |> Option.map (fun path ->
+            path
+            |> Seq.pairwise
+            |> Seq.map (fun (nodeA, nodeB) -> snd(this.GetLink(nodeA)) nodeB)
+        )
 
 type Network with
     member this.GetQuickAccess() =
@@ -221,6 +294,7 @@ type Network with
 type Runway = {
     SpawnPos : OrientedPosition
     PathToRunway : Vector2 list
+    PathOffRunway : Vector2 list
     Start : Vector2
     End : Vector2
 }
@@ -274,12 +348,18 @@ type World = {
     Bridges : IDictionary<BuildingInstanceId, BuildingInstance>
     /// Mapping from plane model identifiers to plane model descriptions
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
+    /// Participating countries and their coalition
+    Countries : IDictionary<CountryId, CoalitionId>
 }
 with
     /// Get building or bridge instance by its ID
     member this.GetBuildingInstance(bid : BuildingInstanceId) =
         [this.Buildings; this.Bridges]
         |> Seq.pick (fun d -> d.TryGetValue(bid) |> Option.ofPair)
+
+    member this.GetAnyCountryInCoalition(coalition) =
+        this.Countries
+        |> Seq.pick(fun kvp -> if kvp.Value = coalition then Some kvp.Key else None)
 
 module Init =
     open System.IO
@@ -515,9 +595,16 @@ module Init =
             let p2, _ =
                 vecs
                 |> List.findBack (fun (_, t) -> t = 2)
+            let exit =
+                vecs
+                |> List.rev
+                |> List.takeWhile (fun (_, t) -> t < 2)
+                |> List.map fst
+                |> List.rev
             {
                 SpawnPos = pos
                 PathToRunway = path
+                PathOffRunway = exit
                 Start = p1
                 End = p2
             }
@@ -685,6 +772,13 @@ module Init =
             Buildings = buildingsDict
             Bridges = bridges
             PlaneSet = dict[]
+            Countries =
+                dict [
+                    Germany, Axis
+                    Russia, Allies
+                    GreatBritain, Allies
+                    UnitedStates, Allies
+                ]
         }
 
 module IO =

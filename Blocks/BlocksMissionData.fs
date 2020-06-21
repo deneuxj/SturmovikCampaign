@@ -6,21 +6,20 @@ open System.IO
 open VectorExtension
 
 [<Literal>]
-let private dataDir = __SOURCE_DIRECTORY__ + "/../data"
-[<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + "/Sample.Mission"
-[<Literal>]
-let private blocksFile = dataDir + "/Blocks/Blocks.Mission"
-[<Literal>]
-let private vehiclesFile = dataDir + "/Blocks/Vehicles.mission"
 
 type T = SturmovikMissionTypes.Provider<sampleFile>
 
 let blocksData =
     let blockMission =
         let path = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location)
-        //let path = System.Environment.CurrentDirectory
         Path.Combine(path, "Blocks.Mission")
+    T.GroupData.Parse(Parsing.Stream.FromFile blockMission)
+
+let blocks2Data =
+    let blockMission =
+        let path = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location)
+        Path.Combine(path, "Blocks2.Mission")
     T.GroupData.Parse(Parsing.Stream.FromFile blockMission)
 
 // Utility functions to create MCU programmatically.
@@ -119,7 +118,7 @@ let newAirfieldPlane(modFilter, payloadFilter, mods, payload, skinFilter, name, 
         .SetNumber(T.Integer.N number)
         .SetSpotter(T.Integer.N -1)
         .SetVulnerable(T.Boolean.N true)
-        .SetWMMask(T.Integer.N mods)
+        .SetWMMask(T.Mask.N mods)
         .SetRenewable(T.Boolean.N false)
 
 let newAirfieldTank(name, model, script, number) =

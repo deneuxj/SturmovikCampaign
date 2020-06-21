@@ -11,6 +11,7 @@
     <Compile Include="Links.fs" />
     <Compile Include="Predicates.fs" />
     <Compile Include="BlocksMissionData.fs" />
+    <Compile Include="McuInstantiation.fs" />
     <Compile Include="Vehicles.fs" />
     <Compile Include="MapGraphics.fs" />
     <Compile Include="Conjunction.fs" />
@@ -30,8 +31,9 @@
     <Compile Include="ResourcePool.fs" />
     <Compile Include="Proximity.fs" />
     <Compile Include="Effect.fs" />
-    <Compile Include="Patrol.fs" />
     <Compile Include="GroundAttack.fs" />
+    <Compile Include="Patrol.fs" />
+    <Compile Include="Escort.fs" />
     <Compile Include="TransportFlight.fs" />
     <Compile Include="FerryFlight.fs" />
     <Compile Include="FireLoop.fs" />
@@ -40,12 +42,19 @@
     <Compile Include="Battlefield.fs" />
     <Compile Include="LandingTee.fs" />
     <Compile Include="Spotter.fs" />
+    <None Include="Scratch.fsx" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="..\data\Blocks\Blocks.Mission">
       <Link>Blocks.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\data\Blocks\Blocks2.eng" Link="Blocks2.eng">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\data\Blocks\Blocks2.Mission" Link="Blocks2.Mission">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="..\data\Blocks\Vehicles.Mission">
@@ -58,7 +67,7 @@
 
   <ItemGroup>
     <PackageReference Include="NLog" Version="4.5.11" />
-    <PackageReference Include="SturmovikMission.DataProvider" Version="7.0.3" />
+    <PackageReference Include="SturmovikMission.DataProvider" Version="8.0.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
   </ItemGroup>
 

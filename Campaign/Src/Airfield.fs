@@ -176,7 +176,7 @@ let mkPlaneSpecs (planeSet : PlaneSet.PlaneSet) supplies (planes2 : PlaneSpecsPl
                 data.AllowedMods
                 |> List.map (fun m -> m.ModFilter)
                 |> String.concat "/"
-        let planeSpec = newAirfieldPlane(modFilter, constr, 0, defaultPayload, "", plane.Name, -1)
+        let planeSpec = newAirfieldPlane(modFilter, constr, 0L, defaultPayload, "", plane.Name, -1)
                             .SetScript(T.String.N model.Script)
                             .SetModel(T.String.N model.Model)
                             .SetStartInAir(T.Integer.N 2)

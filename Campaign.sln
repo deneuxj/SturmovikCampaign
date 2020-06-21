@@ -13,7 +13,9 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "WebController", "WebControl
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FreeAreas", "FreeAreas\FreeAreas.fsproj", "{DD3FA1E7-A0C9-49D1-8DA2-9FC766C138B0}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FitArea", "FitArea\FitArea.fsproj", "{7F3C641D-941E-4D87-96EB-5130CEB0DA2A}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FitArea", "FitArea\FitArea.fsproj", "{7F3C641D-941E-4D87-96EB-5130CEB0DA2A}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GroupInstantiator", "GroupInstantiator\GroupInstantiator.fsproj", "{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{7F3C641D-941E-4D87-96EB-5130CEB0DA2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F3C641D-941E-4D87-96EB-5130CEB0DA2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F3C641D-941E-4D87-96EB-5130CEB0DA2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

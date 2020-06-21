@@ -68,6 +68,12 @@ type VehicleDataTypeStore() =
           Model = truck.GetModel().Value
         }
 
+    member this.AmericanCar =
+        let truck = vehicles.["CarUS"]
+        { Script = truck.GetScript().Value
+          Model = truck.GetModel().Value
+        }
+
     member this.RussianTruck =
         let truck = vehicles.["TruckRUS"]
         { Script = truck.GetScript().Value
@@ -80,6 +86,12 @@ type VehicleDataTypeStore() =
           Model = truck.GetModel().Value
         }
 
+    member this.AmericanTruck =
+        let truck = vehicles.["TruckUS"]
+        { Script = truck.GetScript().Value
+          Model = truck.GetModel().Value
+        }
+
     member this.RussianAntiTankCanon =
         let canon = vehicles.["AntiTankRUS"]
         { Script = canon.GetScript().Value
@@ -88,6 +100,12 @@ type VehicleDataTypeStore() =
 
     member this.GermanAntiTankCanon =
         let canon = vehicles.["AntiTankGER"]
+        { Script = canon.GetScript().Value
+          Model = canon.GetModel().Value
+        }
+
+    member this.AmericanAntiTankCanon =
+        let canon = vehicles.["AntiTankUS"]
         { Script = canon.GetScript().Value
           Model = canon.GetModel().Value
         }
@@ -110,6 +128,12 @@ type VehicleDataTypeStore() =
           Model = canon.GetModel().Value
         }
 
+    member this.AmericanAntiAirMachineGun =
+        let canon = vehicles.["MgAAUS"]
+        { Script = canon.GetScript().Value
+          Model = canon.GetModel().Value
+        }
+
     member this.GermanAntiAirCanon =
         let canon = vehicles.["AntiAirGER"]
         { Script = canon.GetScript().Value
@@ -128,6 +152,12 @@ type VehicleDataTypeStore() =
           Model = canon.GetModel().Value
         }
 
+    member this.AmericanFlak =
+        let canon = vehicles.["FlakUS"]
+        { Script = canon.GetScript().Value
+          Model = canon.GetModel().Value
+        }
+
     member this.RussianHeavyTank =
         let tank = vehicles.["HeavyTankRUS"]
         { Script = tank.GetScript().Value
@@ -136,6 +166,12 @@ type VehicleDataTypeStore() =
 
     member this.GermanHeavyTank =
         let tank = vehicles.["HeavyTankGER"]
+        { Script = tank.GetScript().Value
+          Model = tank.GetModel().Value
+        }
+
+    member this.AmericanHeavyTank =
+        let tank = vehicles.["HeavyTankUS"]
         { Script = tank.GetScript().Value
           Model = tank.GetModel().Value
         }
@@ -152,6 +188,12 @@ type VehicleDataTypeStore() =
           Model = tank.GetModel().Value
         }
 
+    member this.AmericanMediumTank =
+        let tank = vehicles.["MediumTankUS"]
+        { Script = tank.GetScript().Value
+          Model = tank.GetModel().Value
+        }
+
     member this.RussianMobileAA =
         let tank = vehicles.["MobileAntiAirRUS"]
         { Script = tank.GetScript().Value
@@ -160,6 +202,12 @@ type VehicleDataTypeStore() =
 
     member this.GermanMobileAA =
         let tank = vehicles.["MobileAntiAirGER"]
+        { Script = tank.GetScript().Value
+          Model = tank.GetModel().Value
+        }
+
+    member this.AmericanMobileAA =
+        let tank = vehicles.["MobileAntiAirUS"]
         { Script = tank.GetScript().Value
           Model = tank.GetModel().Value
         }
@@ -188,6 +236,12 @@ type VehicleDataTypeStore() =
           Model = gun.GetModel().Value
         }
 
+    member this.AmericanMachineGun =
+        let gun = vehicles.["MgUS"]
+        { Script = gun.GetScript().Value
+          Model = gun.GetModel().Value
+        }
+
     member this.GermanArtillery =
         let gun = vehicles.["ArtilleryGER"]
         { Script = gun.GetScript().Value
@@ -196,6 +250,12 @@ type VehicleDataTypeStore() =
 
     member this.RussianArtillery =
         let gun = vehicles.["ArtilleryRUS"]
+        { Script = gun.GetScript().Value
+          Model = gun.GetModel().Value
+        }
+
+    member this.AmericanArtillery =
+        let gun = vehicles.["ArtilleryUS"]
         { Script = gun.GetScript().Value
           Model = gun.GetModel().Value
         }

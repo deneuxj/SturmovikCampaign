@@ -139,12 +139,12 @@ with
     member this.GetNumVehicles(vehicle : GroundAttackVehicle) =
         this.NumVehicles
         |> Map.tryFind vehicle
-        |> Option.defaultVal 0
+        |> Option.defaultValue 0
 
     member this.GetNumInvadingVehicles(vehicle : GroundAttackVehicle) =
         this.NumInvadingVehicles
         |> Map.tryFind vehicle
-        |> Option.defaultVal 0
+        |> Option.defaultValue 0
 
     member this.GetNumVehicles(coalition: CoalitionId, vehicle : GroundAttackVehicle) =
         match this.Owner with
@@ -716,7 +716,7 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
                 | Some owner ->
                     let hops =
                         Map.tryFind region.RegionId (distanceFromStrongRegions owner)
-                        |> Option.defaultVal 10
+                        |> Option.defaultValue 10
                         |> min 10
                     let scale x =
                         x * (1.0f - (float32 hops) / (float32 cutoffHops))
@@ -777,7 +777,7 @@ let mkInitialState(config : Configuration, world : World, windDirection : float3
             | Some owner ->
                 let hops =
                     Map.tryFind airfield.Region (distanceFromStrongRegions owner)
-                    |> Option.defaultVal cutoffHops
+                    |> Option.defaultValue cutoffHops
                     |> min cutoffHops
                 let scale (x : float32) =
                     x * (1.0f - (float32 hops) / (float32 cutoffHops)) |> max 0.0f
