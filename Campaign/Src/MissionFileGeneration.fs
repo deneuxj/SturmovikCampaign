@@ -753,6 +753,7 @@ type MissionGenSettings =
         MissionLength : int
         MaxAntiAirCannons : int
         MaxAiPatrolPlanes : int
+        OutFilename : string
     }
 
 /// Data needed to create a multiplayer "dogfight" mission
@@ -874,7 +875,19 @@ with
             this.ParkedPlanes
             |> List.map (fun (plane, pos, country) -> mkParkedPlane(state.World.PlaneSet.[plane], pos, int country.ToMcuValue))
 
-        ()
+        // Result
+        let allGroups =
+            [
+                yield McuUtil.groupFromList [ missionBegin ]
+                yield! retainedAA
+                yield! battles
+                yield! allPatrols
+                yield! allAttacks
+                yield! convoys
+                yield! parkedPlanes
+            ]
+
+        McuOutput.writeMissionFiles "eng" settings.OutFilename options allGroups
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
 let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float32<H>) (state : WarState) (missions : MissionSelection) =
