@@ -30,6 +30,7 @@
     <Compile Include="Src\MissionFileGeneration.fs" />
     <Compile Include="Src\CampaignScenario.fs" />
     <Compile Include="Src\Scenario.Bodenplatte.fs" />
+    <Compile Include="Src\GameServerSync.fs" />
     <Compile Include="Src\WorldState.fs" />
     <Compile Include="Src\PlayerHangar.fs" />
     <Compile Include="Src\Orders.fs" />
