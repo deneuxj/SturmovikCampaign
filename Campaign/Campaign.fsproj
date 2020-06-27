@@ -30,6 +30,7 @@
     <Compile Include="Src\MissionFileGeneration.fs" />
     <Compile Include="Src\CampaignScenario.fs" />
     <Compile Include="Src\Scenario.Bodenplatte.fs" />
+    <Compile Include="Src\DServerRConClient.fs" />
     <Compile Include="Src\GameServerSync.fs" />
     <Compile Include="Src\WorldState.fs" />
     <Compile Include="Src\PlayerHangar.fs" />
@@ -182,6 +183,7 @@
     <PackageReference Include="FSharp.Collections.ParallelSeq" Version="1.1.3" />
     <PackageReference Include="FSharp.Control.ASyncSeq" Version="2.0.23" />
     <PackageReference Include="FSharp.Data" Version="3.3.3" />
+    <PackageReference Include="FSharp.Json" Version="0.4.0" />
     <PackageReference Include="FSPickler" Version="5.3.2" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="NLog" Version="4.6.8" />
