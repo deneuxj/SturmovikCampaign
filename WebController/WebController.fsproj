@@ -1,12 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
   </PropertyGroup>
-
   <ItemGroup>
+    <None Include="paket.dependencies" />
+    <None Include="paket.references" />
     <Compile Include="Basic.Dto.fs" />
     <Compile Include="World.Dto.fs" />
     <Compile Include="War.Dto.fs" />
@@ -14,22 +15,9 @@
     <Compile Include="Controller.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Blocks\Blocks.fsproj" />
     <ProjectReference Include="..\Campaign\Campaign.fsproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="FSharp.Core">
-      <HintPath>packages\FSharp.Core\lib\netstandard2.0\FSharp.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>packages\Newtonsoft.Json\lib\netstandard2.0\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="Suave">
-      <HintPath>packages\Suave\lib\netstandard2.0\Suave.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
+  <Import Project=".paket\Paket.Restore.targets" />
 </Project>
