@@ -37,9 +37,9 @@ type Settings =
 with
     member this.MissionPath = IO.Path.Combine(this.WorkDir, "Multiplayer", "Dogfight")
 
+
 module IO =
     open FSharp.Json
-    open System
 
     type IOSettings =
         {
@@ -77,6 +77,7 @@ module IO =
 type SyncState =
     | PreparingMission
     | RunningMission of EndTime: DateTime
+    | ExtractingResults
 with
     static member FileName = "sync.xml"
 
@@ -297,66 +298,137 @@ type RConGameServerControl(settings : Settings) =
                 checkIfRunning()
 
 
+/// Controls execution of DServer, depending on status of campaign scenario controller.
 type Sync(settings : Settings, gameServer : IGameServerControl) =
     let mutable serverProcess = None
     let mutable state = SyncState.TryLoad(settings.WorkDir) |> Option.defaultValue PreparingMission
 
-    let missionCompletedEvent = Event<string>()
+    let cancellation = new System.Threading.CancellationTokenSource()
 
-    member this.MissionCompleted = missionCompletedEvent.Publish
+    // Number of DServer restart attempts
+    let maxRetries = 3
 
+    let missionCompleted = Event<Result<unit, string>>()
+
+    let missionPrepared = Event<Result<unit, string>>()
+
+    let missionLogsExtracted = Event<Result<unit, string>>()
+
+    let terminated = Event<string>()
+
+    /// Campaign scenario controller triggers this when mission file has been generated
+    member this.NotifyMissionPreparred(result) = missionPrepared.Trigger(result)
+
+    /// Campaign scenario controller triggers this when the mission log have been extracted
+    member this.NotifyMissionLogsExtracted(result) = missionLogsExtracted.Trigger(result)
+
+    /// Campaign scenario controller subscribes to this event to know when a round is over
+    member this.MissionCompleted = missionCompleted.Publish
+
+    /// Campaign scenario controller subscribes to this event to know when sync is terminated
+    member this.Terminated = terminated.Publish
+
+    /// Stop synchonization, typically after an unrecoverable error.
     member this.Die(msg) =
-        async {
-            printfn "Game server sync terminated: %s" msg
-            return()
-        }
+        state.Save(settings.WorkDir)
+        let msg =
+            sprintf "Game server sync terminated: %s" msg
+        terminated.Trigger(msg)
 
-    member this.StartServer() =
+    member this.Interrupt(msg) =
+        cancellation.Cancel()
+
+    /// Start DServer
+    member this.StartServerAsync(?retriesLeft) =
+        let retriesLeft = defaultArg retriesLeft maxRetries
         async {
+            if retriesLeft < 0 then
+                return this.Die("Server start aborted after max retries reached")
+            else
             let! s = gameServer.StartProcessWithSds(settings.SdsFile)
             match s with
             | Ok proc ->
                 serverProcess <- Some proc
+                state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
+                state.Save(settings.WorkDir)
                 let! _ = gameServer.AttachRcon()
-                return! this.Resume()
+                return! this.ResumeAsync(retriesLeft - 1)
             | Error msg ->
                 serverProcess <- None
-                return! this.Die(msg)
+                return this.Die(msg)
         }
 
-    member this.Resume() =
+    /// Check current state and act accordingly
+    member this.ResumeAsync(?restartsLeft) =
+        let restartsLeft = defaultArg restartsLeft maxRetries
         async {
             match state with
             | PreparingMission ->
-                let rec waitMissionReady() =
-                    async {
-                        do! Async.Sleep(15000)
-                        if IO.File.Exists(IO.Path.Combine(settings.WorkDir)) then
-                            do! Async.Sleep(5000)
-                        else
-                            return! waitMissionReady()
-                    }
-                do! waitMissionReady()
-                if gameServer.IsRunning serverProcess then
-                    let! s = gameServer.RotateMission()
-                    match s with
-                    | Ok() ->
-                        state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
-                        return! this.Resume()
-                    | Error msg ->
-                        return! this.Die(msg)
-                else
-                    return! this.StartServer()
+                match! Async.AwaitEvent(missionPrepared.Publish, fun () -> this.Die("Interrupted")) with
+                | Ok() ->
+                    if gameServer.IsRunning serverProcess then
+                        let! s = gameServer.RotateMission()
+                        match s with
+                        | Ok() ->
+                            state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
+                            state.Save(settings.WorkDir)
+                            return! this.ResumeAsync()
+                        | Error msg ->
+                            return this.Die(msg)
+                    else
+                        return! this.StartServerAsync()
+                | Error msg ->
+                    return this.Die(msg)
 
             | RunningMission deadline ->
                 if not(gameServer.IsRunning serverProcess) then
-                    return! this.StartServer()
+                    return! this.StartServerAsync(restartsLeft)
                 else
-                let untilDeadLine = (deadline - DateTime.UtcNow).TotalMilliseconds
-                if untilDeadLine > 0.0 then
-                    do! Async.Sleep(int untilDeadLine)
+                // Check that DServer is running every 15s until the deadline has passed
+                // If DServer dies before, restart it.
+                let rec monitor() =
+                    async {
+                        let untilDeadLine = (deadline - DateTime.UtcNow).TotalMilliseconds
+                        if untilDeadLine > 0.0 then
+                            if not (gameServer.IsRunning serverProcess) then
+                                return! this.StartServerAsync(restartsLeft)
+                            else
+                                try
+                                    do!  Async.Sleep(15000)
+                                    return! monitor()
+                                with
+                                | :? OperationCanceledException ->
+                                    return this.Die("Interrupted")
+                        else
+                            return()
+                    }
+                do! monitor()
                 let! _ = gameServer.SignalMissionEnd()
-                missionCompletedEvent.Trigger(settings.MissionBaseName)
+                missionCompleted.Trigger(Ok())
                 state <- PreparingMission
-                return! this.Resume()
+                state.Save(settings.WorkDir)
+                return! this.ResumeAsync()
+
+            | ExtractingResults ->
+                match! Async.AwaitEvent(missionLogsExtracted.Publish, fun () -> this.Die("Interrupted")) with
+                | Ok() ->
+                    state <- PreparingMission
+                    state.Save(settings.WorkDir)
+                    return! this.ResumeAsync()
+                | Error msg ->
+                    // Result extraction failed, try running the mission again
+                    return this.Die(msg)
         }
+
+    /// Token to use with ResumeAsync in order for Interrupt to work.
+    member this.CancellationToken = cancellation.Token
+
+    /// Start synchronization.
+    member this.Resume() =
+        Async.StartImmediate(this.ResumeAsync(), this.CancellationToken)
+
+    member this.Dispose() =
+        cancellation.Dispose()
+
+    interface IDisposable with
+        member this.Dispose() = this.Dispose()
