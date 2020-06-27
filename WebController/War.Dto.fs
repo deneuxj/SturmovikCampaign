@@ -16,8 +16,6 @@
 
 namespace Campaign.WebController.Dto
 
-open System.Collections.Generic
-
 type Weather =
     {
         CloudDensity : float32
@@ -61,21 +59,21 @@ type WarState =
         GroundForces : GroundForces[]
         RoadTransport : TransportCapacity[]
         RailTransport : TransportCapacity[]
-        SupplyStatus : IDictionary<string, float32>
-        Planes : IDictionary<string, IDictionary<string, float32>>
-        RegionOwner : IDictionary<string, string>
+        SupplyStatus : Map<string, float32>
+        Planes : Map<string, Map<string, float32>>
+        RegionOwner : Map<string, string>
     }
 
 type Command =
     {
         Verb : string
-        Args : IDictionary<string, obj>
+        Args : Map<string, obj>
     }
 
 type Result =
     {
         ChangeDescription : string
-        Values : IDictionary<string, obj>
+        Values : Map<string, obj>
     }
 
 type SimulationStep =

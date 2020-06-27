@@ -26,7 +26,7 @@ type BuildingProperties =
         Durability : int
         NumParts : int
         /// Storage capacity of the entire building, or null for bridges
-        Capacity : System.Nullable<float32>
+        Capacity : float32 option
     }
 
 type BuildingInstance =

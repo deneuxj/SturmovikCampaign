@@ -42,7 +42,7 @@ module internal Extensions =
                 Script = this.Script
                 Durability = this.Durability
                 NumParts = this.SubParts.Length
-                Capacity = if useCapacity then System.Nullable(float32 this.Capacity) else System.Nullable()
+                Capacity = if useCapacity then Some(float32 this.Capacity) else None
             }
 
     let mkIdMaps(buildings : NewWorldDescription.BuildingInstance seq, bridges : _ seq) =
@@ -230,7 +230,7 @@ module internal Extensions =
                     for rid in this.World.Regions.Keys do
                         yield string rid, float32(x rid)
                 }
-                |> dict
+                |> Map.ofSeq
 
             let planes =
                 seq {
@@ -239,10 +239,10 @@ module internal Extensions =
                             this.GetNumPlanes(afid)
                             |> Map.toSeq
                             |> Seq.map (fun (planeId, qty) -> string planeId, qty)
-                            |> dict
+                            |> Map.ofSeq
                         yield afid.AirfieldName, nofPlanes
                 }
-                |> dict
+                |> Map.ofSeq
 
             let owners =
                 seq {
@@ -251,7 +251,7 @@ module internal Extensions =
                         | None -> ()
                         | Some coalition -> yield (string rid, string coalition)
                 }
-                |> dict
+                |> Map.ofSeq
             {
                 Date = this.Date.ToDto()
                 Weather = this.Weather.ToDto()
@@ -275,54 +275,54 @@ module internal Extensions =
                     [ "BuildingAt", building.Pos.ToDto() :> obj
                       "Part", box part
                       "Damage", box damage
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.RepairBuildingPart(bid, part, repair) ->
                     let building = state.World.GetBuildingInstance(bid)
                     "RepairBuildingPart",
                     [ "BuildingAt", building.Pos.ToDto() :> obj
                       "Part", box part
                       "Repair", box repair
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.RemovePlane(afId, plane, health) ->
                     "RemovePlane",
                     [ "Airfield", afId.AirfieldName :> obj
                       "Plane", string plane :> obj
                       "Amount", box health
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.AddPlane(afId, plane, health) ->
                     "AddPlane",
                     [ "Airfield", afId.AirfieldName :> obj
                       "Plane", string plane :> obj
                       "Amount", box health
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.AddGroundForces(region, coalition, amount) ->
                     "AddGroundForces",
                     [ "Region", string region :> obj
                       "Coalition", string coalition :> obj
                       "Amount", box amount
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.DestroyGroundForces(region, coalition, amount) ->
                     "DestroyGroundForces",
                     [ "Region", string region :> obj
                       "Coalition", string coalition :> obj
                       "Amount", box amount
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.MoveGroundForces(regionA, regionB, coalition, amount) ->
                     "MoveGroundForces",
                     [ "Start", string regionA :> obj
                       "Destination", string regionB :> obj
                       "Coalition", string coalition :> obj
                       "Amount", box amount
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.SetRegionOwner(region, coalition) ->
                     "SetRegionOwner",
                     [ "Region", string region :> obj
                       "Coalition", coalition |> Option.map string |> Option.defaultValue "Neutral" :> obj
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.AdvanceTime(span) ->
                     "AdvanceTime",
                     [ "Hours", span.TotalHours |> box
-                    ] |> dict
+                    ] |> Map.ofSeq
             { Verb = verb
               Args = args
             }
@@ -335,7 +335,7 @@ module internal Extensions =
                     "UpdatedStorageValue",
                     [ "BuildingAt", state.World.GetBuildingInstance(bid).Pos.ToDto() :> obj
                       "Amount", box amount
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.UpdatedPlanesAtAirfield(afId, content) ->
                     "UpdatedPlanesAtAirfield",
                     [ "Airfield", afId.AirfieldName :> obj
@@ -343,24 +343,24 @@ module internal Extensions =
                         content
                         |> Map.toSeq
                         |> Seq.map (fun (k, v) -> string k, box v)
-                        |> dict
+                        |> Map.ofSeq
                         :> obj
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.UpdatedGroundForces(region, coalition, forces) ->
                     "UpdatedGroundForces",
                     [ "Region", string region :> obj
                       "Coalition", string coalition :> obj
                       "Forces", box forces
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.RegionOwnerSet(region, coalition) ->
                     "RegionOwnerSet",
                     [ "Region", string region :> obj
                       "Coalition", coalition |> Option.map string |> Option.defaultValue "Neutral" :> obj
-                    ] |> dict
+                    ] |> Map.ofSeq
                 | WarStateUpdate.TimeSet(time) ->
                     "TimeSet",
                     [ "DateTime", time.ToDto() :> obj
-                    ] |> dict
+                    ] |> Map.ofSeq
             { ChangeDescription = desc
               Values = values
             }
@@ -370,7 +370,6 @@ open Campaign.NewWorldDescription.IO
 open Campaign.WarState
 open Campaign.WarState.IO
 open Campaign.BasicTypes
-open System.Collections.Generic
 open Util
 open Campaign.CampaignScenario
 open Campaign.CampaignScenario.IO
