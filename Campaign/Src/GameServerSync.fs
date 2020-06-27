@@ -20,6 +20,7 @@ namespace Campaign.GameServerSync
 open System
 open MBrace.FsPickler
 open System.Diagnostics
+open NLog
 
 type Settings =
     {
@@ -111,7 +112,8 @@ type IGameServerControl =
     abstract CopyRenameMission : string -> Async<Result<unit, string>>
 
 
-type RConGameServerControl(settings : Settings) =
+type RConGameServerControl(settings : Settings, ?logger) =
+    let mutable logger = defaultArg logger (LogManager.GetCurrentClassLogger())
     let mutable client = None
     let mutable proc = None
 
@@ -121,9 +123,11 @@ type RConGameServerControl(settings : Settings) =
                 let cl = new RConClient.Client(settings.Address, settings.Port, settings.Login, settings.Password)
                 client <- Some cl
                 let! s = cl.Auth()
+                logger.Info s
                 return Ok ()
             with
             | e ->
+                logger.Error e
                 return Error <| sprintf "connect() failed: %s" e.Message
         }
 
@@ -136,10 +140,13 @@ type RConGameServerControl(settings : Settings) =
             si.WorkingDirectory <- IO.Path.GetDirectoryName(exePath)
             si.UseShellExecute <- false
             let p = Process.Start(si)
+            logger.Info p
             proc <- Some p
             Ok (p :> obj)
         with
-        | e -> Error (sprintf "Failed to start DServer: %s" e.Message)
+        | e ->
+            logger.Error e
+            Error (sprintf "Failed to start DServer: %s" e.Message)
 
     let checkIfRunning() =
         let startDir =
@@ -148,7 +155,9 @@ type RConGameServerControl(settings : Settings) =
         let procs =
             Process.GetProcessesByName("DServer")
             |> Array.filter (fun proc -> IO.Path.GetFullPath(IO.Path.GetDirectoryName(proc.MainModule.FileName)) = startDir)
+        logger.Debug procs
         if procs.Length > 0 then
+            logger.Info procs.[0]
             proc <- Some procs.[0]
             true
         else
@@ -162,7 +171,9 @@ type RConGameServerControl(settings : Settings) =
             proc |> Option.iter (fun proc -> proc.Kill())
             proc <- None
             Ok()
-        with e -> Error (sprintf "Failed to kill DServer: %s" e.Message)
+        with e ->
+            logger.Error e
+            Error (sprintf "Failed to kill DServer: %s" e.Message)
 
     let rotateMission() =
         async {
@@ -171,7 +182,8 @@ type RConGameServerControl(settings : Settings) =
                 ()
             match client with
             | Some client ->
-                let! _ = client.ServerInput(settings.RotateMissionServerInputName)
+                let! s = client.ServerInput(settings.RotateMissionServerInputName)
+                logger.Info s
                 return Ok ()
             | None ->
                 return Error "No connection to DServer"
@@ -184,7 +196,8 @@ type RConGameServerControl(settings : Settings) =
                 ()
             match client with
             | Some client ->
-                let! _ = client.MessageAll "Mission has ended. Actions beyond that point will not affect the campaign."
+                let! s = client.MessageAll "Mission has ended. Actions beyond that point will not affect the campaign."
+                logger.Info s
                 return Ok()
             | None ->
                 return Error "No connection to DServer"
@@ -197,7 +210,8 @@ type RConGameServerControl(settings : Settings) =
                 ()
             match client with
             | Some client ->
-                let! _ = client.OpenSds(sds)
+                let! s = client.OpenSds(sds)
+                logger.Info s
                 return Ok ()
             | None ->
                 return Error "No connection to DServer"
@@ -213,13 +227,16 @@ type RConGameServerControl(settings : Settings) =
                 p.WorkingDirectory <- resaverDir
                 p.UseShellExecute <- true
                 let proc = Process.Start(p)
+                logger.Debug proc
                 let! _ = Async.AwaitEvent proc.Exited
                 if proc.ExitCode <> 0 then
+                    logger.Info proc
                     return Error "Resaver failed"
                 else
                     return Ok()
             with
             | e ->
+                logger.Error e
                 return Error <| sprintf "ResaveMission failed: %s" e.Message
         }
 
@@ -237,6 +254,7 @@ type RConGameServerControl(settings : Settings) =
                         else
                             filename2 + "_2" + ext
                     let file2 = IO.Path.Combine(IO.Path.GetDirectoryName(file), filename2)
+                    logger.Debug (file, file2)
                     IO.File.Copy(file, file2)
                 return Ok ()
             with e ->
@@ -299,7 +317,8 @@ type RConGameServerControl(settings : Settings) =
 
 
 /// Controls execution of DServer, depending on status of campaign scenario controller.
-type Sync(settings : Settings, gameServer : IGameServerControl) =
+type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
+    let mutable logger = LogManager.GetCurrentClassLogger()
     let mutable serverProcess = None
     let mutable state = SyncState.TryLoad(settings.WorkDir) |> Option.defaultValue PreparingMission
 
@@ -333,6 +352,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl) =
         state.Save(settings.WorkDir)
         let msg =
             sprintf "Game server sync terminated: %s" msg
+        logger.Info msg
         terminated.Trigger(msg)
 
     member this.Interrupt(msg) =
@@ -342,6 +362,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl) =
     member this.StartServerAsync(?retriesLeft) =
         let retriesLeft = defaultArg retriesLeft maxRetries
         async {
+            logger.Trace retriesLeft
             if retriesLeft < 0 then
                 return this.Die("Server start aborted after max retries reached")
             else
@@ -350,8 +371,10 @@ type Sync(settings : Settings, gameServer : IGameServerControl) =
             | Ok proc ->
                 serverProcess <- Some proc
                 state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
+                logger.Debug state
                 state.Save(settings.WorkDir)
-                let! _ = gameServer.AttachRcon()
+                let! s = gameServer.AttachRcon()
+                logger.Debug s
                 return! this.ResumeAsync(retriesLeft - 1)
             | Error msg ->
                 serverProcess <- None
@@ -362,15 +385,18 @@ type Sync(settings : Settings, gameServer : IGameServerControl) =
     member this.ResumeAsync(?restartsLeft) =
         let restartsLeft = defaultArg restartsLeft maxRetries
         async {
+            logger.Trace restartsLeft
             match state with
             | PreparingMission ->
                 match! Async.AwaitEvent(missionPrepared.Publish, fun () -> this.Die("Interrupted")) with
                 | Ok() ->
                     if gameServer.IsRunning serverProcess then
                         let! s = gameServer.RotateMission()
+                        logger.Debug s
                         match s with
                         | Ok() ->
                             state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
+                            logger.Info state
                             state.Save(settings.WorkDir)
                             return! this.ResumeAsync()
                         | Error msg ->
@@ -405,7 +431,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl) =
                 do! monitor()
                 let! _ = gameServer.SignalMissionEnd()
                 missionCompleted.Trigger(Ok())
-                state <- PreparingMission
+                state <- ExtractingResults
+                logger.Info state
                 state.Save(settings.WorkDir)
                 return! this.ResumeAsync()
 
@@ -413,6 +440,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl) =
                 match! Async.AwaitEvent(missionLogsExtracted.Publish, fun () -> this.Die("Interrupted")) with
                 | Ok() ->
                     state <- PreparingMission
+                    logger.Info state
                     state.Save(settings.WorkDir)
                     return! this.ResumeAsync()
                 | Error msg ->
