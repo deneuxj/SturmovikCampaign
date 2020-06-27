@@ -22,6 +22,7 @@ open Suave.Operators
 open Suave.Successful
 open Suave.RequestErrors
 open Suave.Writers
+open FSharp.Json
 
 open Campaign.WebController.Dto
 
@@ -59,7 +60,12 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
             let webpart =
                 match x with
                 | Ok x ->
-                    let json = Newtonsoft.Json.JsonConvert.SerializeObject(box x)
+                    let json =
+                        try
+                            Json.serializeEx { JsonConfig.Default with allowUntyped = true } x
+                        with
+                        | :? JsonSerializationError ->
+                            Json.serializeEx { JsonConfig.Default with allowUntyped = true } {| Value = x |}
                     OK json >=> setJsonMimeType
                 | Error s ->
                     CONFLICT s >=> setTextMimeType
