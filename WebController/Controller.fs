@@ -684,16 +684,16 @@ type Controller(settings : Settings) =
                 | _ ->
                     Error "Internal error: world, state or controller data not set"
 
-            let res =
-                prepareDir()
-                |> Result.bind initData
-                |> Result.bind writeData
-
-            let userRes =
-                res
-                |> Result.bind (fun _ -> Ok "Success")
-
             return! mb.PostAndAsyncReply <| fun channel s -> async {
+                let res =
+                    prepareDir()
+                    |> Result.bind initData
+                    |> Result.bind writeData
+
+                let userRes =
+                    res
+                    |> Result.bind (fun _ -> Ok "Success")
+
                 channel.Reply(userRes)
 
                 return
