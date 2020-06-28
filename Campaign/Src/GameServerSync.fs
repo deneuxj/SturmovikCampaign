@@ -318,7 +318,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
 
 /// Controls execution of DServer, depending on status of campaign scenario controller.
 type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
-    let mutable logger = LogManager.GetCurrentClassLogger()
+    let mutable logger = defaultArg logger (LogManager.GetCurrentClassLogger())
     let mutable serverProcess = None
     let mutable state = SyncState.TryLoad(settings.WorkDir) |> Option.defaultValue PreparingMission
 
