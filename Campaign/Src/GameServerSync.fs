@@ -38,6 +38,9 @@ type Settings =
 with
     member this.MissionPath = IO.Path.Combine(this.WorkDir, "Multiplayer", "Dogfight")
 
+    member this.MissionFile = IO.Path.Combine(this.MissionPath, sprintf "%s_1.Mission" this.MissionBaseName)
+
+    member this.MissionLogs = IO.Path.Combine(this.GameDir, "data", "logs")
 
 module IO =
     open FSharp.Json
@@ -49,7 +52,7 @@ module IO =
             login : string option
             password : string option
             sds_file : string option
-            work_dir : string
+            work_dir : string option
             game_dir : string
             mission_basename : string option
             mission_duration : int option
@@ -63,22 +66,29 @@ module IO =
                 Login = defaultArg this.login "admin"
                 Password = defaultArg this.password ""
                 SdsFile = defaultArg this.sds_file "campaign.sds"
-                WorkDir = this.work_dir
+                WorkDir = defaultArg this.work_dir ""
                 GameDir = this.game_dir
                 MissionBaseName = defaultArg this.mission_basename "CocoCampaign"
                 MissionDuration = defaultArg this.mission_duration 180
                 RotateMissionServerInputName = defaultArg this.rotate_input "EndMission"
             }
 
+    /// Load settings from a file, and set the WorkDir value to the directory of the file if it's not set in the file.
     let loadFromFile path =
         let content = IO.File.ReadAllText(path)
-        Json.deserializeEx<IOSettings> { JsonConfig.Default with deserializeOption = DeserializeOption.AllowOmit } content
+        let loaded = Json.deserializeEx<IOSettings> { JsonConfig.Default with deserializeOption = DeserializeOption.AllowOmit } content
+        let loaded =
+            { loaded with
+                work_dir =
+                    loaded.work_dir
+                    |> Option.orElse (Some(path |> IO.Path.GetDirectoryName |> IO.Path.GetFullPath)) }
+        loaded.AsSettings
 
 
 type SyncState =
-    | PreparingMission
+    | PreparingMission of Path: string
     | RunningMission of EndTime: DateTime
-    | ExtractingResults
+    | ExtractingResults of Path: string
 with
     static member FileName = "sync.xml"
 
@@ -320,14 +330,16 @@ type RConGameServerControl(settings : Settings, ?logger) =
 type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     let mutable logger = defaultArg logger (LogManager.GetCurrentClassLogger())
     let mutable serverProcess = None
-    let mutable state = SyncState.TryLoad(settings.WorkDir) |> Option.defaultValue PreparingMission
+    let mutable state =
+        SyncState.TryLoad(settings.WorkDir)
+        |> Option.defaultValue (PreparingMission settings.MissionFile)
 
     let cancellation = new System.Threading.CancellationTokenSource()
 
     // Number of DServer restart attempts
     let maxRetries = 3
 
-    let missionCompleted = Event<Result<unit, string>>()
+    let missionCompleted = Event<Result<string, string>>()
 
     let missionPrepared = Event<Result<unit, string>>()
 
@@ -335,8 +347,11 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     let terminated = Event<string>()
 
+    /// Get the current synchronization state
+    member this.SyncState = state
+
     /// Campaign scenario controller triggers this when mission file has been generated
-    member this.NotifyMissionPreparred(result) = missionPrepared.Trigger(result)
+    member this.NotifyMissionPrepared(result) = missionPrepared.Trigger(result)
 
     /// Campaign scenario controller triggers this when the mission log have been extracted
     member this.NotifyMissionLogsExtracted(result) = missionLogsExtracted.Trigger(result)
@@ -355,7 +370,10 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         logger.Info msg
         terminated.Trigger(msg)
 
-    member this.Interrupt(msg) =
+    member this.Interrupt(msg, killServer) =
+        if killServer then
+            gameServer.KillProcess(serverProcess)
+            |> ignore
         cancellation.Cancel()
 
     /// Start DServer
@@ -430,16 +448,31 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     }
                 do! monitor()
                 let! _ = gameServer.SignalMissionEnd()
-                missionCompleted.Trigger(Ok())
-                state <- ExtractingResults
-                logger.Info state
-                state.Save(settings.WorkDir)
-                return! this.ResumeAsync()
+                let latestStartingMissionReport =
+                    try
+                        IO.Directory.GetFiles(settings.MissionLogs, "missionReport*.txt")
+                        |> Seq.filter (fun file -> IO.Path.GetFileNameWithoutExtension(file).EndsWith("[0]"))
+                        |> Seq.maxBy (fun file -> IO.File.GetCreationTimeUtc(file))
+                        |> Some
+                    with _ -> None
+                match latestStartingMissionReport with
+                | Some path ->
+                    missionCompleted.Trigger(Ok path)
+                    state <- ExtractingResults path
+                    logger.Info state
+                    state.Save(settings.WorkDir)
+                    return! this.ResumeAsync()
+                | None ->
+                    missionCompleted.Trigger(Error "No logs found")
+                    // Restart mission
+                    gameServer.KillProcess(serverProcess) |> ignore
+                    do! Async.Sleep(5000)
+                    return! this.ResumeAsync()
 
             | ExtractingResults ->
                 match! Async.AwaitEvent(missionLogsExtracted.Publish, fun () -> this.Die("Interrupted")) with
                 | Ok() ->
-                    state <- PreparingMission
+                    state <- PreparingMission settings.MissionFile
                     logger.Info state
                     state.Save(settings.WorkDir)
                     return! this.ResumeAsync()
@@ -454,6 +487,15 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     /// Start synchronization.
     member this.Resume() =
         Async.StartImmediate(this.ResumeAsync(), this.CancellationToken)
+
+    /// Create a game server controller and a Sync.
+    static member Create(workDir : string, ?logger) =
+        let settings = IO.loadFromFile (IO.Path.Combine(workDir, "sync.json"))
+        let sync =
+            logger
+            |> Option.map(fun logger -> new Sync(settings, new RConGameServerControl(settings, logger), logger))
+            |> Option.defaultWith (fun () -> new Sync(settings, new RConGameServerControl(settings)))
+        sync
 
     member this.Dispose() =
         cancellation.Dispose()

@@ -406,6 +406,8 @@ type private ControllerState =
         DtoSimulationCache : Map<int, Dto.SimulationStep[]>
         ScenarioController : IScenarioController option
         Step : ScenarioStep option
+        Sync : GameServerSync.Sync option
+        CancelSync : (unit -> unit) option
     }
 
 /// Interface between the web service and the campaign
@@ -436,6 +438,8 @@ type Controller(settings : Settings) =
             DtoSimulationCache = Map.empty
             ScenarioController = None
             Step = None
+            Sync = None
+            CancelSync = None
         }
     )
     do mb.Start()
@@ -672,6 +676,8 @@ type Controller(settings : Settings) =
                         State = Some state0
                         ScenarioController = Some sctrl
                         Step = Some step
+                        Sync = None
+                        CancelSync = None
                     }
 
             let writeData (s : ControllerState) =
@@ -685,6 +691,17 @@ type Controller(settings : Settings) =
                     Error "Internal error: world, state or controller data not set"
 
             return! mb.PostAndAsyncReply <| fun channel s -> async {
+                // Stop our async flow to prepare missions, await mission end and extract results from mission logs
+                s.CancelSync |> Option.iter (fun f -> f())
+
+                // Tell the game server synchronization to stop, and kill DServer
+                match s.Sync with
+                | Some sync ->
+                    sync.Interrupt("Campaign reset", true)
+                    sync.Dispose()
+                | None ->
+                    ()
+
                 let res =
                     prepareDir()
                     |> Result.bind initData
@@ -772,6 +789,140 @@ type Controller(settings : Settings) =
                 }
             work maxSteps
 
+        member this.GetSyncState() =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                channel.Reply(
+                    s.Sync
+                    |> Option.map (fun sync ->
+                        match sync.SyncState with
+                        | GameServerSync.PreparingMission -> "Preparing mission"
+                        | GameServerSync.ExtractingResults -> "Extracting results"
+                        | GameServerSync.RunningMission deadline -> sprintf "Running mission (%03d minutes left)" (int (deadline - System.DateTime.UtcNow).TotalMinutes))
+                    |> Option.defaultValue "Not running"
+                    |> Ok
+                    )
+                return s
+            }
+
+        member this.PrepareMission(path : string) =
+            async {
+                return failwith "TODO"
+            }
+
+        member this.ExtractMissionLog(path : string) =
+            async {
+                return failwith "TODO"
+            }
+
+        member this.StartSync(doLoop : bool) =
+            let sync = GameServerSync.Sync.Create(settings.WorkDir)
+            let rec prepareMission(path) =
+                async {
+                    do! this.PrepareMission(path)
+                    sync.NotifyMissionPrepared(Ok ())
+                    if doLoop then
+                        return! awaitMissionEnd()
+                }
+            and awaitMissionEnd() =
+                async {
+                    let! s = Async.AwaitEvent sync.MissionCompleted
+                    match s with
+                    | Ok path ->
+                        return! extractMissionLog(path)
+                    | Error _ ->
+                        doOnState (fun s -> async.Return { s with Sync = None })
+                        return()
+                }
+            and extractMissionLog(path) =
+                async {
+                    let! s = this.ExtractMissionLog(path)
+                    sync.NotifyMissionLogsExtracted(s)
+                    match s with
+                    | Ok() -> return! awaitPrepareMission()
+                    | Error _ ->
+                        doOnState (fun s -> async.Return { s with Sync = None })
+                        return()
+                }
+            and awaitPrepareMission() =
+                async {
+                    do! Async.Sleep(1000)
+                    match sync.SyncState with
+                    | GameServerSync.PreparingMission path ->
+                        return! prepareMission(path)
+                    | _ ->
+                        return! awaitPrepareMission()
+                }
+            let task =
+                match sync.SyncState with
+                | GameServerSync.PreparingMission path ->
+                    prepareMission(path)
+                | GameServerSync.ExtractingResults path ->
+                    extractMissionLog(path)
+                | GameServerSync.RunningMission _ ->
+                    awaitMissionEnd()
+            let cancelSource = new System.Threading.CancellationTokenSource()
+            Async.StartImmediate(task, cancelSource.Token)
+            sync, cancelSource
+
+        member this.StartSyncAsync(doLoop) =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                match s.Sync with
+                | Some _ ->
+                    channel.Reply(Error "Already started")
+                    return s
+                | None ->
+                    let sync, cancelSource = this.StartSync(doLoop)
+                    channel.Reply(Ok "Done")
+                    return { s with
+                                Sync = Some sync
+                                CancelSync = Some (fun () -> cancelSource.Cancel(); cancelSource.Dispose())}
+            }
+
+        member this.StopSyncAfterMission() =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                match s.CancelSync with
+                | Some f ->
+                    f()
+                    channel.Reply(Ok "Done")
+                | None ->
+                    channel.Reply(Error "Not running, or already cancelled")
+
+                match s.Sync with
+                | Some sync ->
+                    match sync.SyncState with
+                    | GameServerSync.RunningMission _ ->
+                        async {
+                            let! _ = Async.AwaitEvent sync.MissionCompleted
+                            sync.Interrupt("Synchronization stopped after mission ended", true)
+                            sync.Dispose()
+                            return ()
+                        } |> Async.Start
+                    | _ ->
+                        sync.Interrupt("Synchronization stopped", true)
+                        sync.Dispose()
+                | None ->
+                    ()
+                return { s with CancelSync = None; Sync = None }
+            }
+
+        member this.InterruputSync() =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                match s.CancelSync with
+                | Some f ->
+                    f()
+                    channel.Reply(Ok "Done")
+                | None ->
+                    channel.Reply(Error "Not running, or already cancelled")
+
+                match s.Sync with
+                | Some sync ->
+                    sync.Interrupt("Synchronization interrupted", true)
+                    sync.Dispose()
+                | None ->
+                    ()
+                return { s with CancelSync = None; Sync = None }
+            }
+
         interface IRoutingResponse with
             member this.GetWarState(idx) =
                 match idx with
@@ -781,8 +932,13 @@ type Controller(settings : Settings) =
             member this.GetWorld() = this.GetWorldDto()
             member this.GetSimulation(idx) = this.GetSimulationDto(idx)
             member this.GetDates() = this.GetDates()
+            member this.GetSyncState() = this.GetSyncState()
 
         interface IControllerInteraction with
             member this.Advance() = this.Advance(0)
             member this.Run() = this.Run(0, 15)
             member this.ResetCampaign(scenario) = this.ResetCampaign()
+            member this.StartSyncLoop() = this.StartSyncAsync(true)
+            member this.StartSyncOnce() = this.StartSyncAsync(false)
+            member this.StopSyncAfterMission() = this.StopSyncAfterMission()
+            member this.InterruptSync() = this.InterruputSync()
