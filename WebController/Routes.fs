@@ -51,6 +51,7 @@ GET /query/dates
 
 PUT /control/reset
 PUT /control/advance
+PUT /control/run
 """
 
 let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
