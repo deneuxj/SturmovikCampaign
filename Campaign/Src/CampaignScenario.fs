@@ -26,6 +26,7 @@ open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.Missions
 open Campaign.PlaneModel
+open Campaign.MissionSelection
 
 open Util
 
@@ -37,7 +38,7 @@ type ScenarioStep =
     | Victory of CoalitionId * string
     | Ongoing of StepData
 
-/// Content of a round, and a generator function to produce the next step, given the updated state of the war.
+/// Content of a round
 and StepData =
     {
         Briefing : string
@@ -57,6 +58,7 @@ type IScenarioController =
     abstract member Start : IWarStateQuery -> ScenarioStep
     abstract member NewDay : IWarStateQuery -> (Commands option * string) seq
     abstract member NextStep : StepData -> (IWarStateQuery -> ScenarioStep)
+    abstract member SelectMissions : StepData * IWarStateQuery -> MissionSelection
 
 /// Resources available at an airfield.
 /// Decreased whenever a flight is planned taking off from that airfield.

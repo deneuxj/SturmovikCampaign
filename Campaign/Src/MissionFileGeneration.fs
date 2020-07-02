@@ -125,7 +125,7 @@ type AiPatrol with
 
 /// Compute groups of buildings or bridges in a region that are still 50% functional or more.
 /// The result is not a partitition, i.e. each building may appear in more than one groups.
-let computeHealthyBuildingClusters(radius, state : WarState, buildings : BuildingInstance seq, regId : RegionId) =
+let computeHealthyBuildingClusters(radius, state : IWarStateQuery, buildings : BuildingInstance seq, regId : RegionId) =
     let region = state.World.Regions.[regId]
     // Find the largest cluster of healthy buildings, and use that
     let healthyBuildings =
@@ -143,7 +143,7 @@ let computeHealthyBuildingClusters(radius, state : WarState, buildings : Buildin
     |> Seq.map (fun (rep, group) -> rep, group |> Seq.map snd)
 
 
-type TargetLocator(random : System.Random, state : WarState) =
+type TargetLocator(random : System.Random, state : IWarStateQuery) =
     let freeAreas : FreeAreas.FreeAreasNode option =
         let path =
             match state.World.Map.ToLowerInvariant() with
@@ -420,7 +420,7 @@ type PlayerSpawn =
         Flight : PlayerFlight
     }
 with
-    member this.BuildMCUs(store : NumericalIdentifiers.IdStore, state : WarState) =
+    member this.BuildMCUs(store : NumericalIdentifiers.IdStore, state : IWarStateQuery) =
         let subst = Mcu.substId(store.GetIdMapper())
         let af = state.World.Airfields.[this.Airfield]
         let coalition = state.GetOwner(af.Region)
@@ -749,8 +749,6 @@ with
 
 type MissionGenSettings =
     {
-        /// Mission length in minutes
-        MissionLength : int
         MaxAntiAirCannons : int
         MaxAiPatrolPlanes : int
         OutFilename : string
@@ -770,17 +768,17 @@ type MultiplayerMissionContent =
     }
 with
     /// Get the AI patrols of a coalition
-    member this.AiPatrolsOf(coalition, state : WarState) =
+    member this.AiPatrolsOf(coalition, state : IWarStateQuery) =
         this.AiPatrols
         |> List.filter (fun patrol -> state.GetOwner(state.World.Airfields.[patrol.HomeAirfield].Region) = Some coalition)
 
     /// Get the AI attacks of a coalition
-    member this.AiAttacksOf(coalition, state : WarState) =
+    member this.AiAttacksOf(coalition, state : IWarStateQuery) =
         this.AiAttacks
         |> List.filter (fun patrol -> state.GetOwner(state.World.Airfields.[patrol.HomeAirfield].Region) = Some coalition)
 
     /// Create the groups suitable for a multiplayer "dogfight" misison
-    member this.BuildMission(random, settings : MissionGenSettings, state : WarState) =
+    member this.BuildMission(random, settings : MissionGenSettings, state : IWarStateQuery) =
         let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile (state.World.Scenario + ".Mission"))
         let options = Seq.head strategyMissionData.ListOfOptions
         let store = NumericalIdentifiers.IdStore()
@@ -788,7 +786,6 @@ with
         lcStore.SetNextId 3
         let getId = store.GetIdMapper()
         let missionBegin = newMissionBegin (getId 1)
-        let missionLength = 1.0f<H> * float32 settings.MissionLength / 60.0f
 
         // Spawns
         let spawns =
@@ -878,6 +875,7 @@ with
         // Result
         let allGroups =
             [
+                yield! spawns
                 yield McuUtil.groupFromList [ missionBegin ]
                 yield! retainedAA
                 yield! battles
@@ -890,8 +888,9 @@ with
         McuOutput.writeMissionFiles "eng" settings.OutFilename options allGroups
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
-let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float32<H>) (state : WarState) (missions : MissionSelection) =
+let mkMultiplayerMissionContent (random : System.Random) (state : WarState) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
+    let warmedUp = true
 
     // All regions that are involved in some mission
     let primaryRegions = missions.Regions(state.World)
@@ -981,7 +980,9 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
     let aaNests =
         [
             let gunsPerNest = 5
-            let aaCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * missionLength
+            // Resource planning aims to avoid running dry before next resupply, which is assumed to be one day of combat
+            let combatTimeBeforeResuply = 12.0f<H>
+            let aaCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * combatTimeBeforeResuply
             // Airfields
             for afId in spawns |> Seq.map (fun spawn -> spawn.Airfield) do
                 let country = 

@@ -805,8 +805,27 @@ type Controller(settings : Settings) =
             }
 
         member this.PrepareMission(path : string) =
+            mb.PostAndAsyncReply <| fun channel s ->
             async {
-                return failwith "TODO"
+                match s.ScenarioController, s.Step, s.State with
+                | Some(ctrl), Some(Ongoing stepData), Some state ->
+                    try
+                        let selection = ctrl.SelectMissions(stepData, state)
+                        let random = System.Random()
+                        let missionGenSettings : MissionFileGeneration.MissionGenSettings =
+                            {
+                                MissionFileGeneration.MaxAiPatrolPlanes = 6
+                                MissionFileGeneration.MaxAntiAirCannons = 100
+                                MissionFileGeneration.OutFilename = path
+                            }
+                        let mission = MissionFileGeneration.mkMultiplayerMissionContent random state selection
+                        mission.BuildMission(random, missionGenSettings, state)
+                        channel.Reply(Ok())
+                    with
+                    e -> channel.Reply(Error e.Message)
+                | _ ->
+                    channel.Reply(Error "Cannot select missions in the current state")
+                return s
             }
 
         member this.ExtractMissionLog(path : string) =
@@ -818,8 +837,8 @@ type Controller(settings : Settings) =
             let sync = GameServerSync.Sync.Create(settings.WorkDir)
             let rec prepareMission(path) =
                 async {
-                    do! this.PrepareMission(path)
-                    sync.NotifyMissionPrepared(Ok ())
+                    let! res = this.PrepareMission(path)
+                    sync.NotifyMissionPrepared(res)
                     if doLoop then
                         return! awaitMissionEnd()
                 }

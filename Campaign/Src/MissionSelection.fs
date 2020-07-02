@@ -104,7 +104,7 @@ with
                 | _ -> ()
         }
 
-let enumerateGroundAttackMissions (state : WarState) (coalition : CoalitionId) (missions : Mission list) =
+let enumerateGroundAttackMissions (state : IWarStateQuery) (coalition : CoalitionId) (missions : Mission list) =
     let airMissionCoalition (mission : AirMission) =
         state.World.Airfields.[mission.StartAirfield].Region |> state.GetOwner
 

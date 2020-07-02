@@ -829,3 +829,8 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
 
         member this.Start(war) =
             oneSideStrikes Axis "Axis opens the hostilities" 1 war
+
+        member this.SelectMissions(stepData, war) =
+            let data = stepData.Data :?> ImplData
+            Campaign.MissionSelection.enumerateGroundAttackMissions war data.OffensiveCoalition stepData.Missions
+            |> Seq.head
