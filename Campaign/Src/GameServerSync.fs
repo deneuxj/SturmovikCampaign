@@ -21,6 +21,7 @@ open System
 open MBrace.FsPickler
 open System.Diagnostics
 open NLog
+open Campaign.BasicTypes
 
 type Settings =
     {
@@ -34,6 +35,9 @@ type Settings =
         MissionBaseName : string
         MissionDuration : int
         RotateMissionServerInputName : string
+        RoadsCapacity : float32
+        RailsCapacity : float32
+        SimulatedDuration : float32
     }
 with
     member this.MissionPath = IO.Path.Combine(this.WorkDir, "Multiplayer", "Dogfight")
@@ -41,6 +45,8 @@ with
     member this.MissionFile = IO.Path.Combine(this.MissionPath, sprintf "%s_1.Mission" this.MissionBaseName)
 
     member this.MissionLogs = IO.Path.Combine(this.GameDir, "data", "logs")
+
+    static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign")
 
 module IO =
     open FSharp.Json
@@ -57,21 +63,62 @@ module IO =
             mission_basename : string option
             mission_duration : int option
             rotate_input : string option
+            roads_capacity : float option
+            rails_capacity : float option
+            simulated_duration : float option
         }
     with
         member this.AsSettings =
+            let truck = 5.0<M^3>
+            let separation = 10.0<M>
+            let speed = 50000.0<M/H>
+            let numTrucks = speed / separation
+            let roadCapacity = float(numTrucks * truck)
             {
                 Address = defaultArg this.address "127.0.0.1"
                 Port = defaultArg this.port 9001
                 Login = defaultArg this.login "admin"
                 Password = defaultArg this.password ""
                 SdsFile = defaultArg this.sds_file "campaign.sds"
-                WorkDir = defaultArg this.work_dir ""
+                WorkDir = defaultArg this.work_dir "campaign"
                 GameDir = this.game_dir
                 MissionBaseName = defaultArg this.mission_basename "CocoCampaign"
                 MissionDuration = defaultArg this.mission_duration 180
                 RotateMissionServerInputName = defaultArg this.rotate_input "EndMission"
+                RoadsCapacity = defaultArg this.roads_capacity roadCapacity |> float32
+                RailsCapacity = defaultArg this.rails_capacity (3.0 * roadCapacity) |> float32
+                SimulatedDuration = defaultArg this.simulated_duration 180.0 |> float32
             }
+
+    /// Create a default settings file and return its content.
+    let createDefaultFile path =
+        let dirName = IO.Path.GetDirectoryName(path)
+        if not(IO.Directory.Exists(dirName)) then
+            try
+                IO.Directory.CreateDirectory(dirName)
+                |> ignore
+            with _ ->
+                eprintfn "Failed to create work area '%s'" dirName
+
+        let content =
+            {
+                address = None
+                port = None
+                login = None
+                password = None
+                sds_file = None
+                work_dir = None
+                game_dir = "edit this"
+                mission_basename = None
+                mission_duration = None
+                rotate_input = None
+                roads_capacity = None
+                rails_capacity = None
+                simulated_duration = None
+            }
+        let json = Json.serialize content
+        IO.File.WriteAllText(path, json)
+        content.AsSettings
 
     /// Load settings from a file, and set the WorkDir value to the directory of the file if it's not set in the file.
     let loadFromFile path =
@@ -489,8 +536,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         Async.StartImmediate(this.ResumeAsync(), this.CancellationToken)
 
     /// Create a game server controller and a Sync.
-    static member Create(workDir : string, ?logger) =
-        let settings = IO.loadFromFile (IO.Path.Combine(workDir, "sync.json"))
+    static member Create(settings : Settings, ?logger) =
         let sync =
             logger
             |> Option.map(fun logger -> new Sync(settings, new RConGameServerControl(settings, logger), logger))

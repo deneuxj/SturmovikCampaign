@@ -375,28 +375,6 @@ open Campaign.CampaignScenario
 open Campaign.CampaignScenario.IO
 open Campaign.WarStateUpdate.CommandExecution
 
-type Settings =
-    {
-        WorkDir : string
-        RoadsCapacity : float32
-        RailsCapacity : float32
-        SimulatedDuration : float32
-    }
-with
-    static member Default =
-        let truck = 5.0f<M^3>
-        let separation = 10.0f<M>
-        let speed = 50000.0f<M/H>
-        let numTrucks = speed / separation
-        let roadCapacity = float32(numTrucks * truck)
-
-        {
-            WorkDir = "CampaignData"
-            RoadsCapacity = roadCapacity
-            RailsCapacity = 3.0f * roadCapacity
-            SimulatedDuration = 10.0f
-        }
-
 /// Internal state of a controller
 type private ControllerState =
     {
@@ -411,7 +389,7 @@ type private ControllerState =
     }
 
 /// Interface between the web service and the campaign
-type Controller(settings : Settings) =
+type Controller(settings : GameServerSync.Settings) =
     let worldFilename = "world.xml"
     let stateBaseFilename = "-state.xml"
     let stepBaseFilename = "-step.xml"
@@ -834,7 +812,7 @@ type Controller(settings : Settings) =
             }
 
         member this.StartSync(doLoop : bool) =
-            let sync = GameServerSync.Sync.Create(settings.WorkDir)
+            let sync = GameServerSync.Sync.Create(settings)
             let rec prepareMission(path) =
                 async {
                     let! res = this.PrepareMission(path)
