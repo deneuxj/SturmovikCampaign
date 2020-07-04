@@ -32,8 +32,8 @@ open Util
 module BodenplatteInternal =
     type ImplData =
         {
+            // The side that is launching attacks against ground assets (airfields, troops...)
             OffensiveCoalition : CoalitionId
-            Comment : string
         }
 
     type Constants =
@@ -777,11 +777,10 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 else
                     "striking against"
             Ongoing {
-                Briefing = sprintf "%s. %s is %s %s assets on the ground with %s" comment (string side) momentum (string side.Other) description
+                Briefing = sprintf "%s. %s is %s %s assets with %s" comment (string side) momentum (string side.Other) description
                 Missions = missions @ covers
                 Data = {
-                    OffensiveCoalition = side.Other
-                    Comment = sprintf "%s takes the initiative" (string side.Other)
+                    OffensiveCoalition = side
                 }
             }
 
@@ -791,7 +790,10 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
 
         member this.NextStep(stepData) =
             let data = stepData.Data :?> ImplData
-            oneSideStrikes data.OffensiveCoalition data.Comment 1
+            // Switch the initiative to the other side.
+            let side = data.OffensiveCoalition.Other
+            let comment = sprintf "%s has the initiative" (string side)
+            oneSideStrikes side comment 1
 
         member this.NewDay(war) =
             seq {
