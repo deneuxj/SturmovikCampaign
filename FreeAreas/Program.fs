@@ -10,17 +10,18 @@ open MBrace.FsPickler
 let parseNum x = Single.Parse(x, System.Globalization.CultureInfo.InvariantCulture)
 
 let mkScaleCoords mapName =
-    // lower and upper corners, using the game's coordinates (X -> north, Y -> east).
+    // lower corner and size, using the game's coordinates (X -> north, Y -> east).
     // Actually, in the game it's Z that goes east, but we skip elevation Y.
-    let ll, ur =
+    // Uses the sizes from https://github.com/dpm314/il2_map_analysis/blob/master/workspace.py#L30 rather than the game's.
+    let ll, ext =
         match mapName with
-        | "kuban" -> Vector2(35000.0f, 35000.0f), Vector2(323000.0f, 450000.0f)
-        | "moscow" -> Vector2.Zero, Vector2(281000.0f, 281000.0f)
-        | "rheinland" -> Vector2(30000.0f, 30000.0f), Vector2(351000.0f, 431000.0f)
-        | "stalingrad" -> Vector2.Zero, Vector2(230000.0f, 358000.0f)
+        | "kuban" -> let o = Vector2(35000.0f, 35000.0f) in o, Vector2(323148.0f, 450925.0f) - o
+        | "moscow" -> Vector2.Zero, Vector2(281600.0f, 281600.0f)
+        | "rheinland" -> let o = Vector2(30000.0f, 30000.0f) in o, Vector2(354042.73f, 430842.86f) - o
+        | "stalingrad" -> Vector2.Zero, Vector2(230400.0f, 358400.0f)
         | _ -> failwithf "Unsupported map '%s'" mapName
     fun (x, y) ->
-        ll + Vector2(y * (ur.X - ll.X), x * (ur.Y - ll.Y))
+        ll + Vector2(y * ext.X, x * ext.Y)
 
 let getPoints scaleCoords (path : string) =
     seq {
