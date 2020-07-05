@@ -4,6 +4,7 @@ open Campaign.SpacePartition
 
 open System
 open System.Numerics
+open VectorExtension
 
 let (|BinFilePath|_|) =
     function
@@ -102,11 +103,22 @@ module Debug =
         for area in areas do
             debugFile.Write(area)
 
+let makeDirect name shape =
+    match shape with
+    | p0 :: p1 :: p2 :: _ ->
+        if Vector2.Cross(p1 - p0, p2 - p1) < 0.0f then
+            List.rev shape
+        else
+            shape
+    | _ -> failwithf "%s must have at least three vertices" name
+
 [<EntryPoint>]
 let main argv =
     match argv |> List.ofSeq with
     | Candidates(numCandidates, BinFilePath(path, "-o" :: Poly(shape, "-r" :: (Poly(region, Random (random, rest)) | Square(region, Random(random, rest)))))) ->
         try
+            let shape = makeDirect "shape" shape
+            let region = makeDirect "region" region
             use freeAreasFile =
                 try
                     IO.File.OpenRead(path)
