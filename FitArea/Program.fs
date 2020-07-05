@@ -59,10 +59,15 @@ let (|Rectangle|_|) args =
     | _ ->
         None
 
+let (|WithDebugGroup|_|) =
+    function
+    | "-d" :: path :: rest -> Some(path, rest)
+    | _ -> None
+
 module Debug =
     open SturmovikMission.Blocks.BlocksMissionData
 
-    let mkDebugGroup (region : Vector2 list, shape : Vector2 list, node : FreeAreas.FreeAreasNode, candidates : Vector2 seq) =
+    let mkDebugGroup (path : string, region : Vector2 list, shape : Vector2 list, node : FreeAreas.FreeAreasNode, candidates : Vector2 seq) =
         let nodesInRegion = FreeAreas.filterLeaves (FreeAreas.intersectsWithRegion region) node
         let shapeCenter =
             let x = shape |> Seq.sum
@@ -93,14 +98,14 @@ module Debug =
                     .SetBoundary(T.MCU_TR_InfluenceArea.Boundary.FromList <| List.map toFloatPair vertices)
                     .AsString()
             )
-        use debugFile = IO.File.CreateText("FreeAreas.Group")
+        use debugFile = IO.File.CreateText(path)
         for area in areas do
             debugFile.Write(area)
 
 [<EntryPoint>]
 let main argv =
     match argv |> List.ofSeq with
-    | Candidates(numCandidates, BinFilePath(path, "-o" :: Poly(shape, "-r" :: (Poly(region, Random (random, [])) | Square(region, Random(random, [])))))) ->
+    | Candidates(numCandidates, BinFilePath(path, "-o" :: Poly(shape, "-r" :: (Poly(region, Random (random, rest)) | Square(region, Random(random, rest)))))) ->
         try
             use freeAreasFile =
                 try
@@ -119,7 +124,11 @@ let main argv =
                     FreeAreas.findPositionCandidates rank root shape region
                     |> Seq.truncate numCandidates
                     |> Seq.cache
-                Debug.mkDebugGroup(region, shape, root, candidates)
+                match rest with
+                | WithDebugGroup(path, _) ->
+                    Debug.mkDebugGroup(path, region, shape, root, candidates)
+                    printfn "wrote debug group to %s" path
+                | _ -> ()
                 if Seq.isEmpty candidates then
                     failwith "Failed to find a fit"
                 candidates
@@ -132,7 +141,7 @@ let main argv =
             1
     | _ ->
         eprintfn "Invalid commandline."
-        eprintfn "Usage: FitArea [-n <num candidates] <free area bin file> -o <shape outline> -r <constraint region outline> [-s <seed>]"
+        eprintfn "Usage: FitArea [-n <num candidates] <free area bin file> -o <shape outline> -r <constraint region outline> [-s <seed>] [-d <editor group file>]"
         eprintfn "Example: FitArea -n 10 rheinland.bin -o 100.0 50.0 150.0 50.0 100.0 75.0 -r 0.0 0.0 1.0e4 -s 1234"
         eprintfn " Tries to fit a triangle with vertices (100, 50), (150, 50), (100, 75) into the square that is 10000m wide and its south-west corner in (0, 0), using the map data from rheinland.bin."
         eprintfn " The coordinates are specified using the x and z components, using the mission editor's system (x goes north, z goes east)."
