@@ -3,6 +3,8 @@
 **/obj/
 ./*.suo
 devenv*.vspx
+**/*.fsproj.user
+**/*.pubxml.user
 *.userprefs
 **/Properties/launchSettings.json
 .nuget/
