@@ -12,7 +12,6 @@
     <Compile Include="Src\AssemblyInfo.fs" />
     <Compile Include="Src\StringResources.fs" />
     <Compile Include="Src\Util.fs" />
-    <Compile Include="Src\SpacePartition.fs" />
     <Compile Include="Src\WatchLogs.fs" />
     <Compile Include="Src\BasicTypes.fs" />
     <Compile Include="Src\PlaneModel.fs" />
@@ -180,7 +179,6 @@
 
   <ItemGroup>
     <PackageReference Include="Fastenshtein" Version="1.0.0.5" />
-    <PackageReference Include="FSharp.Collections.ParallelSeq" Version="1.1.3" />
     <PackageReference Include="FSharp.Control.ASyncSeq" Version="2.0.23" />
     <PackageReference Include="FSharp.Data" Version="3.3.3" />
     <PackageReference Include="FSharp.Json" Version="0.4.0" />
@@ -197,6 +195,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Blocks\Blocks.fsproj" />
     <ProjectReference Include="..\ploggy\ploggy.csproj" />
+    <ProjectReference Include="..\Util\Util.fsproj" />
   </ItemGroup>
 
 </Project>
