@@ -66,6 +66,9 @@ let (|WithDebugGroup|_|) =
     | _ -> None
 
 module Debug =
+#if DEBUG_GROUP_FILE
+    // Add a reference to Blocks.dll to enable building group files to visualize free areas and candidate locations.
+    // Not enabled by default to avoid bringing in data mission files (vehicles, logic templates...)
     open SturmovikMission.Blocks.BlocksMissionData
 
     let mkDebugGroup (path : string, region : Vector2 list, shape : Vector2 list, node : FreeAreas.FreeAreasNode, candidates : Vector2 seq) =
@@ -102,6 +105,10 @@ module Debug =
         use debugFile = IO.File.CreateText(path)
         for area in areas do
             debugFile.Write(area)
+#else
+    let mkDebugGroup _ =
+        failwith "Support for generating debug group files is not included in this build"
+#endif
 
 let makeDirect name shape =
     match shape with
