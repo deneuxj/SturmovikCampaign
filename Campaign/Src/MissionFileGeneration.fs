@@ -870,6 +870,15 @@ with
                 yield! parkedPlanes
             ]
 
+        // Create directories in path to file, if needed
+        let outDir = System.IO.Path.GetDirectoryName(settings.OutFilename)
+        if not(System.IO.Directory.Exists(outDir)) then
+            try
+                System.IO.Directory.CreateDirectory(outDir)
+                |> ignore
+            with _ -> ()
+
+        // Write file
         McuOutput.writeMissionFiles "eng" settings.OutFilename options allGroups
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
