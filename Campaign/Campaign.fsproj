@@ -174,7 +174,19 @@
       <Link>Buildings.Mission</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Sample.Mission" />
+    <Content Include="Sample.Mission" />
+    <Content Include="..\FitArea\kuban.bin" Link="kuban.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\FitArea\moscow.bin" Link="moscow.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\FitArea\rheinland.bin" Link="rheinland.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\FitArea\stalingrad.bin" Link="stalingrad.bin">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

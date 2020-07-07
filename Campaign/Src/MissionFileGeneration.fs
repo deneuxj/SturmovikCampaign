@@ -147,9 +147,12 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
     let freeAreas : FreeAreas.FreeAreasNode option =
         let path =
             match state.World.Map.ToLowerInvariant() with
-            | "rheinland-summer"
-            | _ ->
-                "rheinland.bin"
+            | "moscow-winter" | "moscow-autumn" -> "moscow.bin"
+            | "kuban-spring" | "kuban-summer" | "kuban-autumn" -> "kuban.bin"
+            | "stalingrad-winter" | "stalingrad-summer" | "stalingrad-autumn" -> "stalingrad.bin"
+            | "rheinland-summer" | "rheinland-winter" | "rheinland-spring" -> "rheinland.bin"
+            | unsupported ->
+                failwithf "Unsupported map '%s'" unsupported
         use freeAreasFile =
             try
                 System.IO.File.OpenRead(path)
@@ -159,31 +162,13 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
             serializer.Deserialize(freeAreasFile)
         with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
 
-    let mapExtent =
-        match state.World.Map.ToLowerInvariant() with
-        | "rheinland-summer"
-        | _ ->
-            Vector2(30.0e3f, 30.0e3f), 324.0e3f, 400.0e3f
-
     let getGroundLocationCandidates(region, shape) =
         match freeAreas with
         | Some root ->
-            // Transform from mission editor coordinates to free areas coordinates, and the inverse
-            let transform, transform' =
-                // bin data uses coordinate system where x goes east and y goes north, from 0 to 400000 on both axes.
-                let origin, sx, sy = mapExtent
-                let t(v : Vector2) =
-                    Vector2(400.0e3f * (v.Y - origin.Y) / sy, 400.e3f * (v.X - origin.X) / sx)
-                let t'(v : Vector2) =
-                    Vector2(origin.X + sx * v.Y / 400.0e3f, origin.Y + sy * v.X / 400.0e3f)
-                t, t'
-            let region2 = List.map transform region
-            let shape2 = List.map transform shape
             let rank _ = 
                 random.Next()
             let candidates =
-                FreeAreas.findPositionCandidates rank root shape2 region2
-                |> Seq.map transform'
+                FreeAreas.findPositionCandidates rank root shape region
                 |> Seq.cache
             candidates
         | None ->
