@@ -940,7 +940,7 @@ let mkMultiplayerMissionContent (random : System.Random) (state : WarState) (mis
         [
             let within =
                 state.World.Airfields.Values
-                |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary)
+                |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary && not af.Runways.IsEmpty)
             let wind = Vector2.FromYOri(state.Weather.Wind.Direction)
             for af in within do
                 let runway =
