@@ -350,6 +350,12 @@ type PlayerSpawnType =
     | Airborne
     | Runway
     | Parking of WarmedUp: bool
+with
+    member this.IntValue =
+        match this with
+        | Airborne -> 0
+        | Runway -> 1
+        | Parking -> 2
 
 type PlayerSpawnPlane =
     {
@@ -397,6 +403,45 @@ type PlayerFlight =
     | Unconstrained of PlayerSpawnPlane list
     | Directed of PlayerDirectedFlight
 
+type Campaign.NewWorldDescription.Runway with
+    member this.Chart =
+        let chart = T.Airfield.Chart.Default
+        let getRelativeXZ =
+            let x = Vector2.FromYOri(float this.SpawnPos.Rotation)
+            let z = x.Rotate(90.0f)
+            fun (v : Vector2) ->
+                let v2 = v - this.SpawnPos.Pos
+                float(Vector2.Dot(v2, x)), float(Vector2.Dot(v2, z))
+        let mkPoint(v, t) =
+            let x, z = getRelativeXZ v
+            T.Airfield.Chart.Point.Default
+                .SetX(T.Float.N x)
+                .SetY(T.Float.N z)
+                .SetType(T.Integer.N t)
+        let points =
+            [
+                match this.PathToRunway with
+                | initial :: path ->
+                    yield mkPoint(initial, 0)
+                    for v in path do
+                        yield mkPoint(v, 1)
+                | [] ->
+                    ()
+                yield mkPoint(this.Start, 2)
+                yield mkPoint(this.End, 2)
+                match List.rev this.PathOffRunway with
+                | last :: rpath ->
+                    yield! List.rev [
+                        yield mkPoint(last, 0)
+                        for v in rpath do
+                            yield mkPoint(v, 1)
+                    ]
+                | [] ->
+                    ()
+            ]
+        chart
+            .SetPoint(points)
+
 type PlayerSpawn =
     {
         Airfield : AirfieldId
@@ -421,13 +466,12 @@ with
             match this.Flight with
             | Unconstrained planes ->
                 let runway =
-                    lazy
-                        let windDir = Vector2.FromYOri(float state.Weather.Wind.Direction)
-                        try
-                            af.Runways
-                            |> Seq.maxBy (fun runway -> Vector2.Dot(windDir, runway.End - runway.Start))
-                            |> Some
-                        with _ -> None
+                    let windDir = Vector2.FromYOri(float state.Weather.Wind.Direction)
+                    try
+                        af.Runways
+                        |> Seq.maxBy (fun runway -> Vector2.Dot(windDir, (runway.End - runway.Start).Rotate(runway.SpawnPos.Rotation)))
+                        |> Some
+                    with _ -> None
                 let spawn =
                     T.Airfield.Default
                         .SetIndex(T.Integer.N 1)
@@ -440,6 +484,15 @@ with
                         .SetRefuelTime(T.Integer.N 30)
                         .SetRearmTime(T.Integer.N 30)
                         .SetRepairTime(T.Integer.N 30)
+                        .SetModel(T.String.N @"graphics\airfields\fakefield.mgm")
+                        .SetScript(T.String.N @"LuaScripts\WorldObjects\Airfields\fakefield.txt")
+                        .SetCountry(T.Integer.N (int (state.World.GetAnyCountryInCoalition coalition).ToMcuValue))
+                let spawn =
+                    match runway with
+                    | Some runway ->
+                        spawn.SetChart(Some runway.Chart)
+                    | None ->
+                        spawn
                 let spawn =
                     match this.SpawnType with
                     | Airborne ->
@@ -451,7 +504,7 @@ with
                     | Runway ->
                         let pos, ori =
                             match runway with
-                            | Lazy(Some runway) ->
+                            | Some runway ->
                                 runway.Start, (runway.End - runway.Start).YOri
                             | _ ->
                                 this.Pos.Pos, this.Pos.Rotation
@@ -462,7 +515,7 @@ with
                     | Parking _ ->
                         let pos, ori =
                             match runway with
-                            | Lazy(Some runway) ->
+                            | Some runway ->
                                 runway.SpawnPos.Pos, runway.SpawnPos.Rotation
                             | _ ->
                                 this.Pos.Pos, this.Pos.Rotation
@@ -478,6 +531,10 @@ with
                         let skinFilters = ModRange.ModFilters plane.AllowedSkins
                         let afPlane = newAirfieldPlane(modFilters, payloadFilters, plane.Mods, plane.Payload, skinFilters, plane.Model.Name, -1)
                         afPlane
+                            .SetAILevel(T.Integer.N 2)  // Normal
+                            .SetStartInAir(T.Integer.N this.SpawnType.IntValue)
+                            .SetModel(T.String.N plane.Model.ScriptModel.Model)
+                            .SetScript(T.String.N plane.Model.ScriptModel.Script)
                     )
                 let spawn =
                     spawn.SetPlanes(Some(T.Airfield.Planes.Default.SetPlane planes))
