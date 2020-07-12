@@ -245,3 +245,12 @@ module CommonMethods =
 
     let inline setLinkTrId (index : ^D) (x : ^T) =
         (^T : (member SetLinkTrId : ^D -> ^T) x, index)
+
+    let inline getCountry (x : ^T) : ^R =
+        (^T : (member GetCountry : unit -> ^R) x)
+
+    let inline setCountry (country : ^D) (x : ^T) =
+        (^T : (member SetCountry : ^D -> ^T) x, country)
+
+    let inline setItem (idx : int) (item : ^D) (x : ^T) =
+        (^T : (member SetItem : int * ^D -> ^T) x, idx, item)
