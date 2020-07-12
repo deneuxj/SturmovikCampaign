@@ -141,6 +141,8 @@ type IWarStateQuery =
     abstract member Weather : WeatherState
     /// Level of health of a subpart of a building or bridge
     abstract member GetBuildingPartHealthLevel : BuildingInstanceId * int -> float32
+    /// Get buildings and parts that have damages
+    abstract member BuildingDamages : (BuildingInstanceId * int * float32) seq
     /// Storage room in a building, taking health into account.
     abstract member GetBuildingCapacity : BuildingInstanceId -> float32<M^3>
     /// Level of functionality of a subpart of a building or bridge
@@ -345,6 +347,10 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         | true, x -> x
         | false, _ -> 1.0f
 
+    member this.BuildingDamages =
+        buildingPartHealthLevel
+        |> Seq.map (fun kvp -> fst kvp.Key, snd kvp.Key, kvp.Value)
+
     member this.GetBuildingCapacity(bid) =
         assert(this.World.Buildings.ContainsKey(bid))
         let building = this.World.Buildings.[bid]
@@ -513,6 +519,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.GetBuildingFunctionalityLevel(arg1) = this.GetBuildingFunctionalityLevel(arg1)
         member this.GetBuildingPartFunctionalityLevel(arg1, arg2) = this.GetBuildingPartFunctionalityLevel(arg1, arg2)
         member this.GetBuildingPartHealthLevel(arg1, arg2) = this.GetBuildingPartHealthLevel(arg1, arg2)
+        member this.BuildingDamages = this.BuildingDamages
         member this.GetFlowCapacity(arg1) = this.GetFlowCapacity(arg1)
         member this.GetGroundForces(arg1, arg2) = this.GetGroundForces(arg1, arg2)
         member this.GetNumPlanes(arg1) = this.GetNumPlanes(arg1)
