@@ -797,26 +797,26 @@ type MissionGenSettings =
         OutFilename : string
     }
 
-/// Create the MCUs for all static blocks within a convex hull, creating entities for those that need entities (typically objectives for AI ground attackers).
-let mkStaticMCUs (store : NumericalIdentifiers.IdStore, state : IWarStateQuery, mission : T.GroupData, hull, hasEntity) =
-    let blocks = mission.GetGroup("Static").ListOfBlock |> List.ofSeq
+/// Create the MCUs for all static blocks or bridges within a convex hull, creating entities for those that need entities (typically objectives for AI ground attackers).
+let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, state : IWarStateQuery, blocks, hull, hasEntity, filterDamages) =
     let blockAt =
         blocks
         |> Seq.map (fun block -> OrientedPosition.FromMission block, block)
         |> Seq.distinctBy fst
         |> Seq.mutableDict
     // Apply damages
-    for (bId, part, health) in state.BuildingDamages do
+    for (bId, part, health) in state.BuildingDamages |> Seq.filter filterDamages do
         let building = state.World.GetBuildingInstance(bId)
         match blockAt.TryGetValue(building.Pos) with
         | true, block ->
-            let damages = block.TryGetDamaged() |> Option.defaultValue T.Block.Damaged.Default
-            let damages = damages.SetItem(part, T.Float.N(float health))
-            let block = block.SetDamaged(Some damages)
+            let damages = CommonMethods.getDamaged block
+            let damages = CommonMethods.setItem part (T.Float.N(float health)) damages
+            let block = CommonMethods.setDamaged damages block
+            let block = CommonMethods.setDurability (T.Integer.N(building.Properties.Durability)) block
             blockAt.[building.Pos] <- block
         | false, _ ->
             // No block at position. Maybe the mission file was edited after the campaign started. Bad, but not worth dying with an exception.
-            logger.Warn(sprintf "Failed to set damage on building at %s. No building found at that position in the campaign mission file." (string building.Pos))
+            logger.Warn(sprintf "Failed to set damage on building or bridge at %s. No building found at that position in the campaign mission file." (string building.Pos))
             ()
     // Cull everything not in the hull
     let blocks =
@@ -835,7 +835,7 @@ let mkStaticMCUs (store : NumericalIdentifiers.IdStore, state : IWarStateQuery, 
                 |> Option.map (fun coalition -> state.World.GetAnyCountryInCoalition coalition)
             let block =
                 match country with
-                | Some country -> kvp.Value.SetCountry(T.Integer.N (int country.ToMcuValue))
+                | Some country -> CommonMethods.setCountry (T.Integer.N (int country.ToMcuValue)) kvp.Value
                 | None -> kvp.Value
             pos, block
         )
@@ -845,15 +845,22 @@ let mkStaticMCUs (store : NumericalIdentifiers.IdStore, state : IWarStateQuery, 
         [
             for pos, block in blocks do
                 if hasEntity pos.Pos then
-                    let mcu1, mcu2 = newBlockWithEntityMcu store (block.GetCountry().Value) (block.GetModel().Value) (block.GetScript().Value) (block.GetDurability().Value)
+                    let subst = Mcu.substId <| store.GetIdMapper()
+                    let mcu1 = CommonMethods.createMcu block
+                    let mcu2 = newEntity (mcu1.Index + 1)
+                    Mcu.connectEntity (mcu1 :?> Mcu.HasEntity) mcu2
                     for mcu in [mcu1; upcast mcu2] do
+                        subst mcu
                         pos.Pos.AssignTo mcu.Pos
                         mcu.Pos.Y <- float pos.Altitude
                         mcu.Ori.Y <- float pos.Rotation
                     yield mcu1
                     yield upcast mcu2
                 else
-                    let mcu = block.SetLinkTrId(T.Integer.N 0).CreateMcu()
+                    let mcu =
+                        block
+                        |> CommonMethods.setLinkTrId (T.Integer.N 0)
+                        |> CommonMethods.createMcu
                     subst mcu
                     yield mcu
         ]
@@ -893,13 +900,25 @@ with
         let getId = store.GetIdMapper()
         let missionBegin = newMissionBegin (getId 1)
 
-        let inTargettedArea(pos : Vector2) =
+        let inTargetedArea(pos : Vector2) =
             this.AiAttacks
             |> Seq.exists(fun attack -> (attack.Target - pos).Length() < 10000.0f)
 
         // Static buildings and blocks
         let buildings =
-            mkStaticMCUs(store, state, strategyMissionData, this.Boundary, inTargettedArea)
+            let isBuilding (bId : BuildingInstanceId, _, _) =
+                state.World.Buildings.ContainsKey bId
+            mkStaticMCUs(store, state, strategyMissionData.GetGroup("Static").ListOfBlock, this.Boundary, inTargetedArea, isBuilding)
+
+        // Bridges
+        let bridges =
+            let isBridge (bId : BuildingInstanceId, _, _) =
+                state.World.Bridges.ContainsKey bId
+            let bridges =
+                [ "BridgesHW" ; "BridgesRW" ]
+                |> Seq.map strategyMissionData.GetGroup
+                |> Seq.collect (fun g -> g.ListOfBridge)
+            mkStaticMCUs(store, state, bridges, this.Boundary, inTargetedArea, isBridge)
 
         // Spawns
         let spawns =
@@ -990,6 +1009,7 @@ with
         let allGroups =
             [
                 yield buildings
+                yield bridges
                 yield! spawns
                 yield McuUtil.groupFromList [ missionBegin ]
                 yield! retainedAA
