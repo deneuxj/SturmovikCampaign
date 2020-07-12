@@ -41,6 +41,7 @@ open SturmovikMission.Blocks
 open SturmovikMission.Blocks.VirtualConvoy
 open SturmovikMission.Blocks.Train
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
 
 type AiStartPoint =
     | StartAtIngress of float32<M>
@@ -796,6 +797,69 @@ type MissionGenSettings =
         OutFilename : string
     }
 
+/// Create the MCUs for all static blocks within a convex hull, creating entities for those that need entities (typically objectives for AI ground attackers).
+let mkStaticMCUs (store : NumericalIdentifiers.IdStore, state : IWarStateQuery, mission : T.GroupData, hull, hasEntity) =
+    let blocks = mission.GetGroup("Static").ListOfBlock |> List.ofSeq
+    let blockAt =
+        blocks
+        |> Seq.map (fun block -> OrientedPosition.FromMission block, block)
+        |> Seq.distinctBy fst
+        |> Seq.mutableDict
+    // Apply damages
+    for (bId, part, health) in state.BuildingDamages do
+        let building = state.World.GetBuildingInstance(bId)
+        match blockAt.TryGetValue(building.Pos) with
+        | true, block ->
+            let damages = block.TryGetDamaged() |> Option.defaultValue T.Block.Damaged.Default
+            let damages = damages.SetItem(part, T.Float.N(float health))
+            let block = block.SetDamaged(Some damages)
+            blockAt.[building.Pos] <- block
+        | false, _ ->
+            // No block at position. Maybe the mission file was edited after the campaign started. Bad, but not worth dying with an exception.
+            logger.Warn(sprintf "Failed to set damage on building at %s. No building found at that position in the campaign mission file." (string building.Pos))
+            ()
+    // Cull everything not in the hull
+    let blocks =
+        blockAt
+        |> Seq.filter (fun kvp -> kvp.Key.Pos.IsInConvexPolygon hull)
+        |> List.ofSeq
+    // Set country
+    let blocks =
+        blocks
+        |> List.map (fun kvp ->
+            let pos = kvp.Key
+            let country =
+                state.World.Regions.Values
+                |> Seq.tryFind (fun region -> pos.Pos.IsInConvexPolygon region.Boundary)
+                |> Option.bind (fun region -> state.GetOwner region.RegionId)
+                |> Option.map (fun coalition -> state.World.GetAnyCountryInCoalition coalition)
+            let block =
+                match country with
+                | Some country -> kvp.Value.SetCountry(T.Integer.N (int country.ToMcuValue))
+                | None -> kvp.Value
+            pos, block
+        )
+    // Create entities when needed, and create unique IDs
+    let mcus =
+        let subst = Mcu.substId <| store.GetIdMapper()
+        [
+            for pos, block in blocks do
+                if hasEntity pos.Pos then
+                    let mcu1, mcu2 = newBlockWithEntityMcu store (block.GetCountry().Value) (block.GetModel().Value) (block.GetScript().Value) (block.GetDurability().Value)
+                    for mcu in [mcu1; upcast mcu2] do
+                        pos.Pos.AssignTo mcu.Pos
+                        mcu.Pos.Y <- float pos.Altitude
+                        mcu.Ori.Y <- float pos.Rotation
+                    yield mcu1
+                    yield upcast mcu2
+                else
+                    let mcu = block.SetLinkTrId(T.Integer.N 0).CreateMcu()
+                    subst mcu
+                    yield mcu
+        ]
+    // Result
+    McuUtil.groupFromList mcus
+
 /// Data needed to create a multiplayer "dogfight" mission
 type MultiplayerMissionContent =
     {
@@ -828,6 +892,14 @@ with
         lcStore.SetNextId 3
         let getId = store.GetIdMapper()
         let missionBegin = newMissionBegin (getId 1)
+
+        let inTargettedArea(pos : Vector2) =
+            this.AiAttacks
+            |> Seq.exists(fun attack -> (attack.Target - pos).Length() < 10000.0f)
+
+        // Static buildings and blocks
+        let buildings =
+            mkStaticMCUs(store, state, strategyMissionData, this.Boundary, inTargettedArea)
 
         // Spawns
         let spawns =
@@ -917,6 +989,7 @@ with
         // Result
         let allGroups =
             [
+                yield buildings
                 yield! spawns
                 yield McuUtil.groupFromList [ missionBegin ]
                 yield! retainedAA
