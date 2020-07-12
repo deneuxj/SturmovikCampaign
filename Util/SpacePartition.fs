@@ -365,5 +365,8 @@ module FreeAreas =
                 None
 
         candidates root
-        |> Seq.sortByDescending rankCandidate
+        |> Seq.map (fun x -> rankCandidate x, x)
+        |> Seq.cache
+        |> Seq.sortByDescending fst
+        |> Seq.map snd
         |> Seq.choose validate
