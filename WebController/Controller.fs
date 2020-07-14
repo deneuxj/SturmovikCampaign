@@ -796,7 +796,7 @@ type Controller(settings : GameServerSync.Settings) =
                                 MissionFileGeneration.MaxAntiAirCannons = 100
                                 MissionFileGeneration.OutFilename = path
                             }
-                        let mission = MissionFileGeneration.mkMultiplayerMissionContent random state selection
+                        let mission = MissionFileGeneration.mkMultiplayerMissionContent random stepData.Briefing state selection
                         mission.BuildMission(random, missionGenSettings, state)
                         channel.Reply(Ok())
                     with

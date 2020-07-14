@@ -877,6 +877,7 @@ let private addMultiplayerPlaneConfigs (world : NewWorldDescription.World) (opti
 /// Data needed to create a multiplayer "dogfight" mission
 type MultiplayerMissionContent =
     {
+        Briefing : string
         Boundary : Vector2 list
         PlayerSpawns : PlayerSpawn list
         AntiAirNests : Nest list
@@ -911,6 +912,17 @@ with
             this.AiAttacks
             |> Seq.exists(fun attack -> (attack.Target - pos).Length() < 10000.0f)
 
+        // Mission name, briefing, author
+        let optionStrings =
+            { new McuUtil.IMcuGroup with
+                  member x.Content = []
+                  member x.LcStrings =
+                    [ (0, "Dynamic online campaign " + state.World.Scenario)
+                      (1, this.Briefing)
+                      (2, "auto-generated-coconut-campaign")
+                    ]
+                  member x.SubGroups = []
+            }
         // Weather and player planes
         let options =
             (Weather.setOptions random state.Weather state.Date options)
@@ -1021,6 +1033,7 @@ with
         // Result
         let allGroups =
             [
+                yield optionStrings
                 yield buildings
                 yield bridges
                 yield! spawns
@@ -1045,7 +1058,7 @@ with
         McuOutput.writeMissionFiles "eng" settings.OutFilename options allGroups
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
-let mkMultiplayerMissionContent (random : System.Random) (state : WarState) (missions : MissionSelection) =
+let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarState) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
     let warmedUp = true
 
@@ -1410,6 +1423,7 @@ let mkMultiplayerMissionContent (random : System.Random) (state : WarState) (mis
 
     // Result
     {
+        Briefing = briefing
         Boundary = boundary
         PlayerSpawns = spawns
         AntiAirNests = aaNests
