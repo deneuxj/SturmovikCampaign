@@ -867,6 +867,13 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, state : I
     // Result
     McuUtil.groupFromList mcus
 
+/// Set the list of planes in the options of a mission file
+let private addMultiplayerPlaneConfigs (world : NewWorldDescription.World) (options : T.Options) =
+    let configs =
+        world.PlaneSet.Values
+        |> Seq.map (fun model -> T.String.N (model.ScriptModel.Script))
+    options.SetMultiplayerPlaneConfig(List.ofSeq configs)
+
 /// Data needed to create a multiplayer "dogfight" mission
 type MultiplayerMissionContent =
     {
@@ -903,6 +910,12 @@ with
         let inTargetedArea(pos : Vector2) =
             this.AiAttacks
             |> Seq.exists(fun attack -> (attack.Target - pos).Length() < 10000.0f)
+
+        // Weather and player planes
+        let options =
+            (Weather.setOptions random state.Weather state.Date options)
+                .SetMissionType(T.Integer.N 2) // deathmatch
+                |> addMultiplayerPlaneConfigs state.World
 
         // Static buildings and blocks
         let buildings =
