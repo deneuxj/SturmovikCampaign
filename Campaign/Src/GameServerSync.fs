@@ -46,7 +46,7 @@ with
 
     member this.MissionLogs = IO.Path.Combine(this.GameDir, "data", "logs")
 
-    static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign")
+    static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign", "Current")
 
 module IO =
     open FSharp.Json
@@ -107,8 +107,8 @@ module IO =
                 login = None
                 password = None
                 sds_file = None
-                work_dir = None
-                game_dir = "edit this"
+                work_dir = IO.Path.Combine(dirName, "Current") |> IO.Path.GetFullPath |> Some
+                game_dir = @"C:\Program Files\IL-2 Sturmovik Battle of Stalingrad"
                 mission_basename = None
                 mission_duration = None
                 rotate_input = None
@@ -128,7 +128,7 @@ module IO =
             { loaded with
                 work_dir =
                     loaded.work_dir
-                    |> Option.orElse (Some(path |> IO.Path.GetDirectoryName |> IO.Path.GetFullPath)) }
+                    |> Option.orElse (Some(path |> IO.Path.GetDirectoryName |> fun x -> IO.Path.Combine(x, "Current") |> IO.Path.GetFullPath)) }
         loaded.AsSettings
 
 

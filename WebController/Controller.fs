@@ -611,7 +611,7 @@ type Controller(settings : GameServerSync.Settings) =
         async {
             let bakDir =
                 let up = Path.GetDirectoryName(Path.GetFullPath(settings.WorkDir))
-                Seq.initInfinite (fun i -> sprintf "%s.bak%03d" settings.WorkDir i)
+                Seq.initInfinite (fun i -> sprintf "Archived-%03d" i)
                 |> Seq.find (fun dirname -> not(Directory.Exists(Path.Combine(up, dirname))))
 
             let moveDir _ =
@@ -636,7 +636,7 @@ type Controller(settings : GameServerSync.Settings) =
                     Ok "No old campaign data to backup before reset"
 
             let initData _ =
-                let scenario = "RheinlandSummer.Mission"
+                let scenario = "RheinLandSummer.Mission"
                 let world = Init.mkWorld(scenario, settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
                 let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
                     let planeSet = BodenplatteInternal.PlaneSet.Default
@@ -858,6 +858,7 @@ type Controller(settings : GameServerSync.Settings) =
                 | GameServerSync.RunningMission _ ->
                     awaitMissionEnd()
             let cancelSource = new System.Threading.CancellationTokenSource()
+            Async.StartImmediate(sync.ResumeAsync(), cancelSource.Token)
             Async.StartImmediate(task, cancelSource.Token)
             sync, cancelSource
 

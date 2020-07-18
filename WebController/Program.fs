@@ -8,7 +8,7 @@ open Campaign.WebController.Routes
 let main argv =
     let cts = new CancellationTokenSource()
     let conf = { defaultConfig with cancellationToken = cts.Token }
-    let campaignSettingsPath = IO.Path.Combine(Campaign.GameServerSync.Settings.DefaultWorkDir, "campaign.cfg")
+    let campaignSettingsPath = IO.Path.Combine(Campaign.GameServerSync.Settings.DefaultWorkDir, "..", "campaign.cfg")
     let settings =
         if IO.File.Exists(campaignSettingsPath) then
             Campaign.GameServerSync.IO.loadFromFile campaignSettingsPath
