@@ -774,6 +774,7 @@ type Controller(settings : GameServerSync.Settings) =
                     |> Option.map (fun sync ->
                         match sync.SyncState with
                         | GameServerSync.PreparingMission -> "Preparing mission"
+                        | GameServerSync.ResavingMission -> "Resaving missions"
                         | GameServerSync.ExtractingResults -> "Extracting results"
                         | GameServerSync.RunningMission deadline -> sprintf "Running mission (%03d minutes left)" (int (deadline - System.DateTime.UtcNow).TotalMinutes))
                     |> Option.defaultValue "Not running"
@@ -820,6 +821,10 @@ type Controller(settings : GameServerSync.Settings) =
                     if doLoop then
                         return! awaitMissionEnd()
                 }
+            and resaveMissions() =
+                async {
+                    return! awaitMissionEnd()
+                }
             and awaitMissionEnd() =
                 async {
                     let! s = Async.AwaitEvent sync.MissionCompleted
@@ -853,6 +858,8 @@ type Controller(settings : GameServerSync.Settings) =
                 match sync.SyncState with
                 | GameServerSync.PreparingMission path ->
                     prepareMission(path)
+                | GameServerSync.ResavingMission ->
+                    resaveMissions()
                 | GameServerSync.ExtractingResults path ->
                     extractMissionLog(path)
                 | GameServerSync.RunningMission _ ->

@@ -42,7 +42,11 @@ type Settings =
 with
     member this.MissionPath = IO.Path.Combine(this.WorkDir, "Multiplayer", "Dogfight")
 
+    member this.GameMissionPath = IO.Path.Combine(this.GameDir, "Multiplayer", "Dogfight")
+
     member this.MissionFile = IO.Path.Combine(this.MissionPath, sprintf "%s_1.Mission" this.MissionBaseName)
+
+    member this.AltMissionFile = IO.Path.Combine(this.MissionPath, sprintf "%s_2.Mission" this.MissionBaseName)
 
     member this.MissionLogs = IO.Path.Combine(this.GameDir, "data", "logs")
 
@@ -134,6 +138,7 @@ module IO =
 
 type SyncState =
     | PreparingMission of Path: string
+    | ResavingMission
     | RunningMission of EndTime: DateTime
     | ExtractingResults of Path: string
 with
@@ -274,18 +279,22 @@ type RConGameServerControl(settings : Settings, ?logger) =
                 return Error "No connection to DServer"
         }
 
-    let resaveMission(path : string) =
+    let resaveMission(virtDataPath : string, path : string) =
         async {
             try
-                let filename = IO.Path.GetFileName(path)
-                let dirpath = IO.Path.GetDirectoryName(path)
                 let resaverDir = IO.Path.Combine(settings.GameDir, "bin", "resaver")
-                let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d \"%s\" -f \"%s\"" dirpath filename)
+                let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d \"%s\" -f \"%s\"" virtDataPath path)
                 p.WorkingDirectory <- resaverDir
                 p.UseShellExecute <- true
                 let proc = Process.Start(p)
                 logger.Debug proc
-                let! _ = Async.AwaitEvent proc.Exited
+                let rec awaitExited() =
+                    async {
+                        if not proc.HasExited then
+                            do! Async.Sleep(5000)
+                            return! awaitExited()
+                    }
+                do! awaitExited()
                 if proc.ExitCode <> 0 then
                     logger.Info proc
                     return Error "Resaver failed"
@@ -312,7 +321,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
                             filename2 + "_2" + ext
                     let file2 = IO.Path.Combine(IO.Path.GetDirectoryName(file), filename2)
                     logger.Debug (file, file2)
-                    IO.File.Copy(file, file2)
+                    IO.File.Copy(file, file2, true)
                 return Ok ()
             with e ->
                 return Error <| sprintf "CopyRename failed: %s" e.Message
@@ -352,7 +361,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
             loadSds(sds)
 
         member this.ResaveMission(path) =
-            resaveMission(path)
+            resaveMission(settings.WorkDir, path)
 
         member this.RotateMission() =
             rotateMission()
@@ -417,11 +426,25 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         logger.Info msg
         terminated.Trigger(msg)
 
+    /// Cancel any ongoing task.
     member this.Interrupt(msg, killServer) =
+        let msg =
+            sprintf "Game server sync interrupted: %s" msg
+        logger.Info msg
         if killServer then
             gameServer.KillProcess(serverProcess)
             |> ignore
         cancellation.Cancel()
+
+    member this.PublishMissionFiles() =
+        for file in IO.Directory.EnumerateFiles(settings.MissionPath) do
+            try
+                if IO.Path.GetExtension(file).ToLowerInvariant() = ".mission" then
+                    IO.File.Delete(IO.Path.Combine(settings.GameDir, IO.Path.GetFileName(file)))
+                else
+                    IO.File.Copy(file, IO.Path.Combine(settings.GameDir, IO.Path.GetFileName(file)), true)
+            with
+            | exc -> logger.Warn(sprintf "Failed to copy %s: %s" file exc.Message)
 
     /// Start DServer
     member this.StartServerAsync(?retriesLeft) =
@@ -455,22 +478,40 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             | PreparingMission ->
                 match! Async.AwaitEvent(missionPrepared.Publish, fun () -> this.Die("Interrupted")) with
                 | Ok() ->
-                    if gameServer.IsRunning serverProcess then
-                        let! s = gameServer.RotateMission()
-                        logger.Debug s
-                        match s with
-                        | Ok() ->
-                            state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
-                            logger.Info state
-                            state.Save(settings.WorkDir)
-                            return! this.ResumeAsync()
-                        | Error msg ->
-                            return this.Die(msg)
-                    else
-                        return! this.StartServerAsync()
+                    state <- ResavingMission
+                    logger.Info state
+                    state.Save(settings.WorkDir)
+                    return! this.ResumeAsync()
                 | Error msg ->
                     return this.Die(msg)
 
+            | ResavingMission ->
+                match! gameServer.CopyRenameMission settings.MissionFile with
+                | Error msg ->
+                    return this.Die(msg)
+                | Ok() ->
+                match! gameServer.ResaveMission settings.MissionFile with
+                | Error msg ->
+                    return this.Die(msg)
+                | Ok() ->
+                match! gameServer.ResaveMission settings.AltMissionFile with
+                | Error msg ->
+                    return this.Die(msg)
+                | Ok() ->
+                this.PublishMissionFiles()
+                if gameServer.IsRunning serverProcess then
+                    let! s = gameServer.RotateMission()
+                    logger.Debug s
+                    match s with
+                    | Ok() ->
+                        state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
+                        logger.Info state
+                        state.Save(settings.WorkDir)
+                        return! this.ResumeAsync()
+                    | Error msg ->
+                        return this.Die(msg)
+                else
+                    return! this.StartServerAsync()
             | RunningMission deadline ->
                 if not(gameServer.IsRunning serverProcess) then
                     return! this.StartServerAsync(restartsLeft)
