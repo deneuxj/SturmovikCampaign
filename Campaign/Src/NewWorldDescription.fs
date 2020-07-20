@@ -65,6 +65,10 @@ type BuildingInstance = {
 with
     member this.Id = BuildingInstanceId this.Pos
 
+    member this.Boundary =
+        this.Properties.Boundary
+        |> List.map (fun v -> v.Rotate(this.Pos.Rotation) + this.Pos.Pos)
+
 type Region = {
     RegionId : RegionId
     Boundary : Vector2 list

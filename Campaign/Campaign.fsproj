@@ -12,6 +12,7 @@
     <Compile Include="Src\AssemblyInfo.fs" />
     <Compile Include="Src\StringResources.fs" />
     <Compile Include="Src\Util.fs" />
+    <Compile Include="Src\GameLogEvents.fs" />
     <Compile Include="Src\WatchLogs.fs" />
     <Compile Include="Src\BasicTypes.fs" />
     <Compile Include="Src\PlaneModel.fs" />
@@ -30,6 +31,7 @@
     <Compile Include="Src\CampaignScenario.fs" />
     <Compile Include="Src\Scenario.Bodenplatte.fs" />
     <Compile Include="Src\DServerRConClient.fs" />
+    <Compile Include="Src\MissionResults.fs" />
     <Compile Include="Src\GameServerSync.fs" />
     <Compile Include="Src\WorldState.fs" />
     <Compile Include="Src\PlayerHangar.fs" />

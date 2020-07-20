@@ -576,3 +576,33 @@ module Async =
                 return s
             }
         keepTrying wait exch attempt (retries, items)
+
+module RegexActivePatterns =
+    open System.Text.RegularExpressions
+    
+    let (|MatchesRegex|_|) (regex : Regex) s =
+        let m = regex.Match(s)
+        if m.Success then
+            Some m
+        else
+            None
+    
+    let (|GroupList|) (m : Match) =
+        if m.Success then
+            GroupList [
+                for idx in 1 .. m.Groups.Count do
+                    yield m.Groups.[idx].Value
+            ]
+        else
+            GroupList []
+    
+    let (|AsInt|_|) s =
+        match System.Int32.TryParse(s) with
+        | true, x -> Some x
+        | false, _ -> None
+
+    let (|AsFloat|_|) s =
+        let invCulture = System.Globalization.CultureInfo.InvariantCulture
+        match System.Single.TryParse(s, System.Globalization.NumberStyles.Float, invCulture) with
+        | true, x -> Some x
+        | false, _ -> None
