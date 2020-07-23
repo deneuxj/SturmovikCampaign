@@ -139,7 +139,7 @@ module IO =
 type SyncState =
     | PreparingMission of Path: string
     | ResavingMission
-    | RunningMission of EndTime: DateTime
+    | RunningMission of StartTime: DateTime * EndTime: DateTime
     | ExtractingResults of Path: string
 with
     static member FileName = "sync.xml"
@@ -458,7 +458,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             match s with
             | Ok proc ->
                 serverProcess <- Some proc
-                state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
+                let now = DateTime.UtcNow
+                state <- RunningMission (now, now + TimeSpan.FromMinutes(float settings.MissionDuration))
                 logger.Debug state
                 state.Save(settings.WorkDir)
                 let! s = gameServer.AttachRcon()
@@ -504,7 +505,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     logger.Debug s
                     match s with
                     | Ok() ->
-                        state <- RunningMission (DateTime.UtcNow + TimeSpan.FromMinutes(float settings.MissionDuration))
+                        let now = DateTime.UtcNow
+                        state <- RunningMission (now, now + TimeSpan.FromMinutes(float settings.MissionDuration))
                         logger.Info state
                         state.Save(settings.WorkDir)
                         return! this.ResumeAsync()
@@ -512,7 +514,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         return this.Die(msg)
                 else
                     return! this.StartServerAsync()
-            | RunningMission deadline ->
+            | RunningMission(startTime, endTime) ->
                 if not(gameServer.IsRunning serverProcess) then
                     return! this.StartServerAsync(restartsLeft)
                 else
@@ -520,7 +522,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 // If DServer dies before, restart it.
                 let rec monitor() =
                     async {
-                        let untilDeadLine = (deadline - DateTime.UtcNow).TotalMilliseconds
+                        let untilDeadLine = (endTime - DateTime.UtcNow).TotalMilliseconds
                         if untilDeadLine > 0.0 then
                             if not (gameServer.IsRunning serverProcess) then
                                 return! this.StartServerAsync(restartsLeft)
@@ -536,11 +538,12 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     }
                 do! monitor()
                 let! _ = gameServer.SignalMissionEnd()
+                // Find the set of log files to use. Pick the first file with suffix [0] that is newer than the mission start time.
                 let latestStartingMissionReport =
                     try
                         IO.Directory.GetFiles(settings.MissionLogs, "missionReport*.txt")
-                        |> Seq.filter (fun file -> IO.Path.GetFileNameWithoutExtension(file).EndsWith("[0]"))
-                        |> Seq.maxBy (fun file -> IO.File.GetCreationTimeUtc(file))
+                        |> Seq.filter (fun file -> IO.Path.GetFileNameWithoutExtension(file).EndsWith("[0]") && IO.File.GetCreationTimeUtc(file) > startTime)
+                        |> Seq.minBy (fun file -> IO.File.GetCreationTimeUtc(file))
                         |> Some
                     with _ -> None
                 match latestStartingMissionReport with

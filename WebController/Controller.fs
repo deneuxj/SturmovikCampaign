@@ -4,6 +4,7 @@ open System.IO
 open Campaign.WebController.Routes
 open Util
 open Campaign
+open Campaign.WarStateUpdate.CommandExecution
 
 [<AutoOpen>]
 module internal Extensions =
@@ -374,6 +375,7 @@ open Util
 open Campaign.CampaignScenario
 open Campaign.CampaignScenario.IO
 open Campaign.WarStateUpdate.CommandExecution
+open FSharp.Control
 
 /// Internal state of a controller
 type private ControllerState =
@@ -394,10 +396,13 @@ type Controller(settings : GameServerSync.Settings) =
     let stateBaseFilename = "-state.xml"
     let stepBaseFilename = "-step.xml"
     let simulationBaseFilename = "-simulation.xml"
+    // Files that contain state update commands extracted from the game logs, and the results of the commands
+    let effectsBaseFilename = "-effects.xml"
 
     let getStateFilename idx = sprintf "%03d%s" idx stateBaseFilename
     let getStepFilename idx = sprintf "%03d%s" idx stepBaseFilename
     let getSimulationFilename idx = sprintf "%03d%s" idx simulationBaseFilename
+    let getEffectsFilename idx = sprintf "%03d%s" idx effectsBaseFilename
 
     let wkPath f = Path.Combine(settings.WorkDir, f)
 
@@ -776,7 +781,7 @@ type Controller(settings : GameServerSync.Settings) =
                         | GameServerSync.PreparingMission -> "Preparing mission"
                         | GameServerSync.ResavingMission -> "Resaving missions"
                         | GameServerSync.ExtractingResults -> "Extracting results"
-                        | GameServerSync.RunningMission deadline -> sprintf "Running mission (%03d minutes left)" (int (deadline - System.DateTime.UtcNow).TotalMinutes))
+                        | GameServerSync.RunningMission(startTime, endTime) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes))
                     |> Option.defaultValue "Not running"
                     |> Ok
                     )
@@ -807,9 +812,49 @@ type Controller(settings : GameServerSync.Settings) =
                 return s
             }
 
-        member this.ExtractMissionLog(path : string) =
+        member this.ExtractMissionLog(firstLogFile : string) =
+            mb.PostAndAsyncReply <| fun channel s ->
             async {
-                return failwith "TODO"
+                match s.State with
+                | Some state ->
+                    // Find initial log file created right after the mission was started
+                    let dir = System.IO.Path.GetDirectoryName(firstLogFile)
+                    let filename = System.IO.Path.GetFileNameWithoutExtension(firstLogFile)
+                    // Replace final [0] by * in the pattern, and add .txt extension
+                    let pattern = filename.Substring(0, filename.Length - "[0]".Length) + "*.txt"
+                    let lines =
+                        asyncSeq {
+                            for file in System.IO.Directory.EnumerateFiles(dir, pattern) |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file)) do
+                                yield! AsyncSeq.ofSeq (System.IO.File.ReadAllLines(file))
+                        }
+                    let commands = MissionResults.commandsFromLogs state lines
+                    let! effects =
+                        asyncSeq {
+                            for command in commands do
+                                let effects = command.Execute(state)
+                                yield (command, effects)
+                        }
+                        |> AsyncSeq.toArrayAsync
+                    // Write effects to file
+                    // Write war state and campaign step files
+                    let effectsFile =
+                        Seq.initInfinite (fun i -> (wkPath(getEffectsFilename i)))
+                        |> Seq.find (fun effectsFile -> not(File.Exists effectsFile))
+                    let results =
+                        effects
+                        |> Seq.map (fun (cmd, results) ->
+                            { Dto.SimulationStep.Description = "From played mission"
+                              Dto.Command = [| cmd.ToDto(state) |]
+                              Dto.Results = results |> List.map (fun res -> res.ToDto(state)) |> Array.ofSeq
+                            })
+                        |> Array.ofSeq
+                    use writer = new StreamWriter(effectsFile)
+                    let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+                    serializer.SerializeSequence(writer, results) |> ignore
+                    channel.Reply(Ok())
+                | None ->
+                    channel.Reply(Error "No war state")
+                return s // Note that s.State has been mutated
             }
 
         member this.StartSync(doLoop : bool) =
@@ -835,9 +880,9 @@ type Controller(settings : GameServerSync.Settings) =
                         doOnState (fun s -> async.Return { s with Sync = None })
                         return()
                 }
-            and extractMissionLog(path) =
+            and extractMissionLog(startTime) =
                 async {
-                    let! s = this.ExtractMissionLog(path)
+                    let! s = this.ExtractMissionLog(startTime)
                     sync.NotifyMissionLogsExtracted(s)
                     match s with
                     | Ok() -> return! awaitPrepareMission()
