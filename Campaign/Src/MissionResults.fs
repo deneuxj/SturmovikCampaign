@@ -130,6 +130,27 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 | _ ->
                     ()
 
+            | ObjectEvent(_, ObjectKilled killed) ->
+                // Update mappings
+                let oldHealth =
+                    healthOf.TryGetValue(killed.TargetId)
+                    |> Option.ofPair
+                    |> Option.defaultValue 1.0f
+                healthOf.[killed.TargetId] <- 0.0f
+                // Emit DamageBuildingPart
+                // Emit RemovePlane for damages to static planes
+                match bindings.TryGetValue(killed.TargetId) with
+                | true, binding ->
+                    for building in state.GetBuildingsAt(binding.Name, binding.Sub, killed.Position) do
+                        yield DamageBuildingPart(building.Id, binding.Sub, oldHealth)
+                    match state.TryGetStaticPlaneAt(binding.Name, killed.Position) with
+                    | Some(afId, plane) ->
+                        yield RemovePlane(afId, plane.Id, oldHealth)
+                    | None ->
+                        ()
+                | _ ->
+                    ()
+
             | PlayerEvent(_, PlayerEndsMission missionEnded) ->
                 // Emit AddPlane command
                 match bindings.TryGetValue(missionEnded.VehicleId), flights.TryGetValue(missionEnded.VehicleId), healthOf.TryGetValue(missionEnded.VehicleId) with
