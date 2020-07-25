@@ -7,10 +7,13 @@ open Util
 open VectorExtension
 
 open Campaign.GameLogEvents
+open Campaign.BasicTypes
 open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.WorldDescription
+open Campaign.Missions
+open Campaign.Missions.TargetType
 
 /// Transform a name from a log: lower case, delete all non-alphanum chars.
 let normalizeLogName (name : string) =
@@ -61,6 +64,13 @@ type IWarStateQuery with
         else
             None
 
+    /// Try to get the region at some position
+    member this.TryGetRegionAt((x, _, z)) =
+        let pos = Vector2(x, z)
+        this.World.Regions.Values
+        |> Seq.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary)
+
+
 /// The status of a plane piloted by a human pilot.
 type FlightStatus =
     | Spawned of AirfieldId
@@ -75,6 +85,41 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
         let vehicleOf = Seq.mutableDict []
         let flights = Seq.mutableDict []
         let healthOf = Seq.mutableDict []
+
+        let handleDamage(amount, targetId, position) =
+            asyncSeq {
+                match bindings.TryGetValue(targetId) with
+                | true, binding ->
+                    // Emit DamageBuildingPart
+                    let sub = binding.Sub |> Option.defaultValue -1
+                    for building in state.GetBuildingsAt(binding.Name, sub, position) do
+                        yield DamageBuildingPart(building.Id, sub, amount)
+
+                    // Emit RemovePlane for damages to static planes
+                    match state.TryGetStaticPlaneAt(binding.Name, position) with
+                    | Some(afId, plane) ->
+                        yield RemovePlane(afId, plane.Id, amount)
+                    | None ->
+                        ()
+
+                    // Emit DestroyGroundForces for damages to ground forces
+                    match binding.Name with
+                    | TargetTypeByName target when target.GroundForceValue > 0.0f<MGF> ->
+                        let country : SturmovikMission.DataProvider.Mcu.CountryValue = enum binding.Country
+                        match CountryId.FromMcuValue country, state.TryGetRegionAt(position) with
+                        | Some country, Some region ->
+                            match state.World.Countries.TryGetValue(country) with
+                            | true, coalition ->
+                                yield DestroyGroundForces(region.RegionId, coalition, amount * target.GroundForceValue)
+                            | false, _ ->
+                                ()
+                        | _ ->
+                            ()
+                    | _ ->
+                        ()
+                | _ ->
+                    ()
+            }
 
         for line in logs do
             match line with
@@ -116,19 +161,8 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     |> Option.defaultValue 1.0f
                 let health = health - damaged.Damage
                 healthOf.[damaged.TargetId] <- health
-                // Emit DamageBuildingPart
-                // Emit RemovePlane for damages to static planes
-                match bindings.TryGetValue(damaged.TargetId) with
-                | true, binding ->
-                    for building in state.GetBuildingsAt(binding.Name, binding.Sub, damaged.Position) do
-                        yield DamageBuildingPart(building.Id, binding.Sub, damaged.Damage)
-                    match state.TryGetStaticPlaneAt(binding.Name, damaged.Position) with
-                    | Some(afId, plane) ->
-                        yield RemovePlane(afId, plane.Id, damaged.Damage)
-                    | None ->
-                        ()
-                | _ ->
-                    ()
+                // Emit commands
+                yield! handleDamage(damaged.Damage, damaged.TargetId, damaged.Position)
 
             | ObjectEvent(_, ObjectKilled killed) ->
                 // Update mappings
@@ -137,19 +171,8 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     |> Option.ofPair
                     |> Option.defaultValue 1.0f
                 healthOf.[killed.TargetId] <- 0.0f
-                // Emit DamageBuildingPart
-                // Emit RemovePlane for damages to static planes
-                match bindings.TryGetValue(killed.TargetId) with
-                | true, binding ->
-                    for building in state.GetBuildingsAt(binding.Name, binding.Sub, killed.Position) do
-                        yield DamageBuildingPart(building.Id, binding.Sub, oldHealth)
-                    match state.TryGetStaticPlaneAt(binding.Name, killed.Position) with
-                    | Some(afId, plane) ->
-                        yield RemovePlane(afId, plane.Id, oldHealth)
-                    | None ->
-                        ()
-                | _ ->
-                    ()
+                // Emit commands
+                yield! handleDamage(oldHealth, killed.TargetId, killed.Position)
 
             | PlayerEvent(_, PlayerEndsMission missionEnded) ->
                 // Emit AddPlane command

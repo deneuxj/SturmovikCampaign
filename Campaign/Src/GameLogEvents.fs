@@ -10,8 +10,17 @@ type MissionEvent =
     | MissionStarts of {| GameDate : System.DateTime; MissionFile : string |}
     | MissionEnds
 
+type Binding = {
+    Id : int
+    Typ : string
+    Sub : int option
+    Country : int
+    Name : string
+    Parent : int
+}
+
 type ObjectEvent =
-    | ObjectBound of {| Id : int; Typ : string; Sub : int; Country : int; Name : string; Parent : int |}
+    | ObjectBound of Binding
     | ObjectHit of {| AttackerId : int; TargetId : int; Ammo : string |}
     | ObjectDamaged of {| AttackerId : int; TargetId : int; Position : Position; Damage : float32 |}
     | ObjectKilled of {| AttackerId : int; TargetId : int; Position : Position |}
@@ -169,9 +178,13 @@ let (|MissionEvent|ObjectEvent|PlayerEvent|OtherEvent|InvalidLine|) (line : stri
         | 12 ->
             match eventData with
             | MatchesRegex reBind m ->
-                match m.Groups.["id"].Value, m.Groups.["country"].Value, m.Groups.["pid"].Value, m.Groups.["sub"].Value with
-                | AsInt id, AsInt country, AsInt parent, AsInt sub ->
-                    ObjectEvent(timeStamp, ObjectBound {| Id = id; Typ = m.Groups.["type"].Value; Sub = sub; Country = country; Name = m.Groups.["name"].Value; Parent = parent |})
+                match m.Groups.["id"].Value, m.Groups.["country"].Value, m.Groups.["pid"].Value with
+                | AsInt id, AsInt country, AsInt parent ->
+                    let sub =
+                        match m.Groups.["sub"].Value with
+                        | AsInt sub -> Some sub
+                        | _ -> None
+                    ObjectEvent(timeStamp, ObjectBound { Id = id; Typ = m.Groups.["type"].Value; Sub = sub; Country = country; Name = m.Groups.["name"].Value; Parent = parent })
                 | _ ->
                     InvalidLine
             | _ ->

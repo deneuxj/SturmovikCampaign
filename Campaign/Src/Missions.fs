@@ -54,6 +54,13 @@ module TargetType =
             Some value
         else None
 
+    /// Match the name of an object from the log with a target type.
+    // This is dependent on the MCUs in the mission and their naming.
+    let (|TargetTypeByName|_|) (name : string) =
+        match name with
+        | "CANNON" -> Some Artillery
+        | _ -> None
+
 type Target =
     {
         Kind : TargetType

@@ -590,7 +590,7 @@ module RegexActivePatterns =
     let (|GroupList|) (m : Match) =
         if m.Success then
             GroupList [
-                for idx in 1 .. m.Groups.Count do
+                for idx in 1 .. m.Groups.Count - 1 do
                     yield m.Groups.[idx].Value
             ]
         else
