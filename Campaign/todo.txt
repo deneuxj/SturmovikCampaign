@@ -1,5 +1,4 @@
 TODO:
-Use Json for sync state
 Add server input for mission end
 Add client GUI for server control
 Add non-ground attack mission selections

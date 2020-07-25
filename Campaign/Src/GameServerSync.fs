@@ -142,21 +142,20 @@ type SyncState =
     | RunningMission of StartTime: DateTime * EndTime: DateTime
     | ExtractingResults of Path: string
 with
-    static member FileName = "sync.xml"
+    static member FileName = "sync.json"
 
     member this.Save(workDir : string) =
-        let serializer = FsPickler.CreateXmlSerializer()
         let tmpFile = IO.Path.Combine(workDir, SyncState.FileName + ".tmp")
         use file = IO.File.CreateText(tmpFile)
-        serializer.Serialize(file, this)
-        IO.File.Copy(tmpFile, IO.Path.Combine(workDir, "sync.xml"), true)
+        let json = FSharp.Json.Json.serialize this
+        file.Write(json)
+        IO.File.Copy(tmpFile, IO.Path.Combine(workDir, SyncState.FileName), true)
         IO.File.Delete(tmpFile)
 
     static member TryLoad(workDir) =
-        let serializer = FsPickler.CreateXmlSerializer()
         try
             use file = IO.File.OpenText(IO.Path.Combine(workDir, SyncState.FileName))
-            serializer.Deserialize<SyncState>(file)
+            FSharp.Json.Json.deserialize<SyncState>(file.ReadToEnd())
             |> Some
         with _ -> None
 
