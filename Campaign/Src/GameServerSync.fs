@@ -149,6 +149,7 @@ with
         use file = IO.File.CreateText(tmpFile)
         let json = FSharp.Json.Json.serialize this
         file.Write(json)
+        file.Close()
         IO.File.Copy(tmpFile, IO.Path.Combine(workDir, SyncState.FileName), true)
         IO.File.Delete(tmpFile)
 
