@@ -12,6 +12,20 @@ open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.WorldDescription
 
+/// Transform a name from a log: lower case, delete all non-alphanum chars.
+let normalizeLogName (name : string) =
+    name.ToLowerInvariant()
+    |> Array.ofSeq
+    |> Array.filter System.Char.IsLetterOrDigit
+    |> System.String
+
+/// Transform a script or model name: retain filename only, lower case, delete all non-alphanum chars.
+let normalizeScript (path : string) =
+    System.IO.Path.GetFileNameWithoutExtension(path).ToLowerInvariant()
+    |> Array.ofSeq
+    |> Array.filter System.Char.IsLetterOrDigit
+    |> System.String
+
 type IWarStateQuery with
     /// Get the nearest airfield to a position
     member this.GetNearestAirfield((x, _, z) : Position) =
@@ -21,16 +35,17 @@ type IWarStateQuery with
 
     /// Try to get a plane by its name as it appears in the logs
     member this.TryGetPlane(logName : string) =
+        let logName = logName.ToLowerInvariant()
         this.World.PlaneSet.Values
-        |> Seq.tryFind (fun plane -> logName.Contains(plane.LogName))
+        |> Seq.tryFind (fun plane -> logName.Contains(plane.LogName.ToLowerInvariant()))
 
     /// Get all buildings that match a name, have the given subpart as reported as important, and cover the given position.
     member this.GetBuildingsAt(logName : string, part : int, (x, _, z) : Position) =
-        let logName = logName.ToLowerInvariant()
+        let logName = normalizeLogName logName
         let pos = Vector2(x, z)
         Seq.append this.World.Buildings.Values this.World.Bridges.Values
         |> Seq.filter (fun building ->
-            building.Properties.Model.ToLowerInvariant().Contains(logName) &&
+            normalizeScript(building.Properties.Script) = logName &&
             List.contains part building.Properties.SubParts &&
             pos.IsInConvexPolygon building.Boundary)
 
@@ -39,9 +54,9 @@ type IWarStateQuery with
         // We don't check that there actually is a plane at that position, only that's it's "close enough" to the nearest airfield.
         let af = this.GetNearestAirfield(pos)
         if (af.Position - Vector2(x, z)).Length() < 3000.0f then
-            let logName = logName.ToLowerInvariant()
+            let logName = normalizeLogName logName
             this.World.PlaneSet.Values
-            |> Seq.tryFind (fun plane -> logName.Contains(plane.StaticBasename.ToLowerInvariant()))
+            |> Seq.tryFind (fun plane -> normalizeScript(plane.StaticScriptModel.Script) = logName)
             |> Option.map (fun plane -> af.AirfieldId, plane)
         else
             None
