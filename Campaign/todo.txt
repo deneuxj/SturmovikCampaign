@@ -1,7 +1,6 @@
 TODO:
 Use Json for sync state
 Add server input for mission end
-Configure logging to console and file
 Add client GUI for server control
 Add non-ground attack mission selections
 Add other missions in mission selections

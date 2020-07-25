@@ -8,6 +8,9 @@
   <ItemGroup>
     <None Include="paket.dependencies" />
     <None Include="paket.references" />
+    <None Include="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="Basic.Dto.fs" />
     <Compile Include="World.Dto.fs" />
     <Compile Include="War.Dto.fs" />
