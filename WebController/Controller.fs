@@ -838,8 +838,9 @@ type Controller(settings : GameServerSync.Settings) =
                     // Write effects to file
                     // Write war state and campaign step files
                     let effectsFile =
-                        Seq.initInfinite (fun i -> (wkPath(getEffectsFilename i)))
-                        |> Seq.find (fun effectsFile -> not(File.Exists effectsFile))
+                        Seq.initInfinite (fun i -> (wkPath(getEffectsFilename i), wkPath(getStateFilename i)))
+                        |> Seq.pairwise
+                        |> Seq.pick (fun ((effectsFile, _), (_, stateFile)) -> if not(File.Exists stateFile) then Some effectsFile else None)
                     let results =
                         effects
                         |> Seq.map (fun (cmd, results) ->
