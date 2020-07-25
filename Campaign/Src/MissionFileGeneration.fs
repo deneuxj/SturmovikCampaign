@@ -1030,6 +1030,9 @@ with
             this.ParkedPlanes
             |> List.map (fun (plane, pos, country) -> mkParkedPlane(state.World.PlaneSet.[plane], pos, int country.ToMcuValue))
 
+        // Mission end triggered by server input
+        let serverInputMissionEnd = MissionEnd.MissionEnd.Create(store)
+
         // Result
         let allGroups =
             [
@@ -1044,6 +1047,7 @@ with
                 yield! allAttacks
                 yield! convoys
                 yield! parkedPlanes
+                yield serverInputMissionEnd.All
             ]
 
         // Create directories in path to file, if needed
