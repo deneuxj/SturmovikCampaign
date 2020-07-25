@@ -1,48 +1,14 @@
-X Initial state: Only regions with factories have supplies
-X Mission building: mission start
-X Mission building: ammo storage, factories
-X Mission building: weather, time, date
-X Mission building: airfields
-X Order: road convoy
-X Mission building: convoys
-X Order: resupply by train
-X Mission building: trains
-X Mission building: parked planes
-X Mission building: parked vehicles
-X Mission building: platoon
-X Order: platoon relocation
-X Order: platoon attack
-X Feedback: convoy arrival
-X Feedback: train arrival
-X Feedback: Ammo storage destruction
-X Feedback: Factory destruction
-X Feedback: conquest
-X Feedback: Parked aircraft loss
-X Feedback: Parked vehicle loss
-X Feedback: Aircraft loss
-X Feedback: AT destruction
-X Feedback: AAA destruction
-X Feedback: Vehicle loss
-X Feedback: air supply
-X Feedback: paratrooper drop
-X Mission building: limit bomb payload depending on storage
-X Order: air defense
-X Order: ground attack
-X Order: air supremacy
-X Mission building: battles
-X Feedback: battle results
-X Campaign logic: battle results affect capture mechanism
-Feedback: bridge destroyed
-Order: level bombing
-Order: paratrooper drop
-Order: air supply
-X Order: ship supply
-X Feedback: ship supply
-
---- bugs & small improvements ---
-
-? Generate mission logic for AI transports
-Make landing crafts move faster.
-Notify players when their units are under attack (with a delay)
-Only factories in rear most region are active.
-Asymetric scenario: One side has production, other side has tank force initial advantage, and veteran bonus.
+TODO:
+Use Json for sync state
+Add server input for mission end
+Configure logging to console and file
+Add client GUI for server control
+Add non-ground attack mission selections
+Add other missions in mission selections
+Add pilot stats and bonuses
+Add map icons and lines
+Add static planes in mission gen
+Add windsocks
+Add spotters
+Add landlights
+Add NDBs
