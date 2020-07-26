@@ -781,7 +781,8 @@ type Controller(settings : GameServerSync.Settings) =
                         | GameServerSync.PreparingMission -> "Preparing mission"
                         | GameServerSync.ResavingMission -> "Resaving missions"
                         | GameServerSync.ExtractingResults -> "Extracting results"
-                        | GameServerSync.RunningMission(startTime, endTime) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes))
+                        | GameServerSync.AdvancingScenario -> "Advancing scenario"
+                        | GameServerSync.RunningMission(_, endTime) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes))
                     |> Option.defaultValue "Not running"
                     |> Ok
                     )
@@ -886,7 +887,27 @@ type Controller(settings : GameServerSync.Settings) =
                     let! s = this.ExtractMissionLog(startTime)
                     sync.NotifyMissionLogsExtracted(s)
                     match s with
-                    | Ok() -> return! awaitPrepareMission()
+                    | Ok() -> return! advanceScenario()
+                    | Error _ ->
+                        doOnState (fun s -> async.Return { s with Sync = None })
+                        return()
+                }
+            and advanceScenario() =
+                async {
+                    let! status =
+                        mb.PostAndAsyncReply <| fun channel s ->
+                            async {
+                                let seed =
+                                    match s.State with
+                                    | Some war -> int (war.Date.Ticks &&& 0x7FFFFFFFL)
+                                    | None -> 0
+                                let! result = this.Advance(seed)
+                                sync.NotifyScenarioAdvanced(result |> Result.map ignore)
+                                channel.Reply(result)
+                                return s
+                            }
+                    match status with
+                    | Ok _ -> return! awaitPrepareMission()
                     | Error _ ->
                         doOnState (fun s -> async.Return { s with Sync = None })
                         return()
@@ -908,6 +929,8 @@ type Controller(settings : GameServerSync.Settings) =
                     resaveMissions()
                 | GameServerSync.ExtractingResults path ->
                     extractMissionLog(path)
+                | GameServerSync.AdvancingScenario ->
+                    advanceScenario()
                 | GameServerSync.RunningMission _ ->
                     awaitMissionEnd()
             let cancelSource = new System.Threading.CancellationTokenSource()

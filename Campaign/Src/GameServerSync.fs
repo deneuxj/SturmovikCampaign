@@ -141,6 +141,7 @@ type SyncState =
     | ResavingMission
     | RunningMission of StartTime: DateTime * EndTime: DateTime
     | ExtractingResults of Path: string
+    | AdvancingScenario
 with
     static member FileName = "sync.json"
 
@@ -401,6 +402,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     let missionLogsExtracted = Event<Result<unit, string>>()
 
+    let scenarioAdvanced = Event<Result<unit, string>>()
+
     let terminated = Event<string>()
 
     /// Get the current synchronization state
@@ -411,6 +414,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     /// Campaign scenario controller triggers this when the mission log have been extracted
     member this.NotifyMissionLogsExtracted(result) = missionLogsExtracted.Trigger(result)
+
+    /// Campaign scenario controller triggers this when scenario simulation is done
+    member this.NotifyScenarioAdvanced(result) = scenarioAdvanced.Trigger(result)
 
     /// Campaign scenario controller subscribes to this event to know when a round is over
     member this.MissionCompleted = missionCompleted.Publish
@@ -563,13 +569,25 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             | ExtractingResults ->
                 match! Async.AwaitEvent(missionLogsExtracted.Publish, fun () -> this.Die("Interrupted")) with
                 | Ok() ->
+                    state <- AdvancingScenario
+                    logger.Info state
+                    state.Save(settings.WorkDir)
+                    return! this.ResumeAsync()
+                | Error msg ->
+                    // Result extraction failed, stop sync.
+                    return this.Die(msg)
+
+            | AdvancingScenario ->
+                match! Async.AwaitEvent(scenarioAdvanced.Publish, fun () -> this.Die("Interrupted")) with
+                | Ok() ->
                     state <- PreparingMission settings.MissionFile
                     logger.Info state
                     state.Save(settings.WorkDir)
                     return! this.ResumeAsync()
                 | Error msg ->
-                    // Result extraction failed, try running the mission again
+                    // Scenario failed, stop sync.
                     return this.Die(msg)
+
         }
 
     /// Token to use with ResumeAsync in order for Interrupt to work.
