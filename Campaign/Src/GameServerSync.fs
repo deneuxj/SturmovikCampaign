@@ -52,6 +52,17 @@ with
 
     static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign", "Current")
 
+
+type SyncState =
+    | PreparingMission of Path: string
+    | ResavingMission
+    | RunningMission of StartTime: DateTime * EndTime: DateTime
+    | ExtractingResults of Path: string
+    | AdvancingScenario
+with
+    static member FileName = "sync.json"
+
+
 module IO =
     open FSharp.Json
 
@@ -135,31 +146,29 @@ module IO =
                     |> Option.orElse (Some(path |> IO.Path.GetDirectoryName |> fun x -> IO.Path.Combine(x, "Current") |> IO.Path.GetFullPath)) }
         loaded.AsSettings
 
+    /// Wrap SyncState in a record so that fieldless cases, which are saved as strings, can be saved as valid json.
+    type SyncStateVessel =
+        {
+            SyncState : SyncState
+        }
 
-type SyncState =
-    | PreparingMission of Path: string
-    | ResavingMission
-    | RunningMission of StartTime: DateTime * EndTime: DateTime
-    | ExtractingResults of Path: string
-    | AdvancingScenario
-with
-    static member FileName = "sync.json"
+    type SyncState with
+        member this.Save(workDir : string) =
+            let tmpFile = IO.Path.Combine(workDir, SyncState.FileName + ".tmp")
+            use file = IO.File.CreateText(tmpFile)
+            let json = FSharp.Json.Json.serialize { SyncState = this }
+            file.Write(json)
+            file.Close()
+            IO.File.Copy(tmpFile, IO.Path.Combine(workDir, SyncState.FileName), true)
+            IO.File.Delete(tmpFile)
 
-    member this.Save(workDir : string) =
-        let tmpFile = IO.Path.Combine(workDir, SyncState.FileName + ".tmp")
-        use file = IO.File.CreateText(tmpFile)
-        let json = FSharp.Json.Json.serialize this
-        file.Write(json)
-        file.Close()
-        IO.File.Copy(tmpFile, IO.Path.Combine(workDir, SyncState.FileName), true)
-        IO.File.Delete(tmpFile)
-
-    static member TryLoad(workDir) =
-        try
-            use file = IO.File.OpenText(IO.Path.Combine(workDir, SyncState.FileName))
-            FSharp.Json.Json.deserialize<SyncState>(file.ReadToEnd())
-            |> Some
-        with _ -> None
+        static member TryLoad(workDir) =
+            try
+                use file = IO.File.OpenText(IO.Path.Combine(workDir, SyncState.FileName))
+                FSharp.Json.Json.deserialize<SyncStateVessel>(file.ReadToEnd())
+                |> Some
+            with _ -> None
+            |> Option.map (fun vessel -> vessel.SyncState)
 
 
 type IGameServerControl =
@@ -382,6 +391,8 @@ type RConGameServerControl(settings : Settings, ?logger) =
             | None ->
                 checkIfRunning()
 
+
+open IO
 
 /// Controls execution of DServer, depending on status of campaign scenario controller.
 type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
