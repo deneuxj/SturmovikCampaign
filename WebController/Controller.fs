@@ -894,18 +894,18 @@ type Controller(settings : GameServerSync.Settings) =
                 }
             and advanceScenario() =
                 async {
-                    let! status =
+                    let! seed =
                         mb.PostAndAsyncReply <| fun channel s ->
                             async {
                                 let seed =
                                     match s.State with
                                     | Some war -> int (war.Date.Ticks &&& 0x7FFFFFFFL)
                                     | None -> 0
-                                let! result = this.Advance(seed)
-                                sync.NotifyScenarioAdvanced(result |> Result.map ignore)
-                                channel.Reply(result)
+                                channel.Reply(seed)
                                 return s
                             }
+                    let! status = this.Advance(seed)
+                    sync.NotifyScenarioAdvanced(status |> Result.map ignore)
                     match status with
                     | Ok _ -> return! awaitPrepareMission()
                     | Error _ ->
