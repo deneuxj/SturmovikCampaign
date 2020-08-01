@@ -35,7 +35,7 @@ type IRoutingResponse =
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
-    abstract Advance : unit -> Async<Result<SimulationStep[], string>>
+    abstract Advance : unit -> Async<Result<string, string>>
     abstract Run : unit -> Async<Result<string, string>>
     abstract StartSyncLoop : unit -> Async<Result<string, string>>
     abstract StartSyncOnce : unit -> Async<Result<string, string>>

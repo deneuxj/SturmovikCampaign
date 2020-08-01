@@ -4,7 +4,6 @@ open System.IO
 open Campaign.WebController.Routes
 open Util
 open Campaign
-open Campaign.WarStateUpdate.CommandExecution
 
 [<AutoOpen>]
 module internal Extensions =
@@ -370,42 +369,23 @@ open Campaign.NewWorldDescription
 open Campaign.NewWorldDescription.IO
 open Campaign.WarState
 open Campaign.WarState.IO
-open Campaign.BasicTypes
 open Util
-open Campaign.CampaignScenario
-open Campaign.CampaignScenario.IO
-open Campaign.WarStateUpdate.CommandExecution
 open FSharp.Control
+open Campaign.GameServerSync.BaseFileNames
 
 /// Internal state of a controller
 type private ControllerState =
     {
-        World : World option
-        State : WarState option
+        DtoWorld : Dto.World option
         DtoStateCache : Map<int, Dto.WarState>
         DtoSimulationCache : Map<int, Dto.SimulationStep[]>
-        ScenarioController : IScenarioController option
-        Step : ScenarioStep option
         Sync : GameServerSync.Sync option
-        CancelSync : (unit -> unit) option
     }
 
 /// Interface between the web service and the campaign
 type Controller(settings : GameServerSync.Settings) =
-    let worldFilename = "world.xml"
-    let stateBaseFilename = "-state.xml"
-    let stepBaseFilename = "-step.xml"
-    let simulationBaseFilename = "-simulation.xml"
-    // Files that contain state update commands extracted from the game logs, and the results of the commands
-    let effectsBaseFilename = "-effects.xml"
-
-    let getStateFilename idx = sprintf "%03d%s" idx stateBaseFilename
-    let getStepFilename idx = sprintf "%03d%s" idx stepBaseFilename
-    let getSimulationFilename idx = sprintf "%03d%s" idx simulationBaseFilename
-    let getEffectsFilename idx = sprintf "%03d%s" idx effectsBaseFilename
-
-    let wkPath f = Path.Combine(settings.WorkDir, f)
-
+    let logger = NLog.LogManager.GetCurrentClassLogger()
+    
     // A mailbox processor to serialize access to the ControllerState
     let mb = new MailboxProcessor<_>(fun mb ->
         let rec work (state : ControllerState) =
@@ -415,19 +395,17 @@ type Controller(settings : GameServerSync.Settings) =
                 return! work state
             }
         work {
-            World = None
-            State = None
+            DtoWorld = None
             DtoStateCache = Map.empty
             DtoSimulationCache = Map.empty
-            ScenarioController = None
-            Step = None
             Sync = None
-            CancelSync = None
         }
     )
     do mb.Start()
 
     let doOnState fn = mb.Post fn
+    
+    let wkPath f = Path.Combine(settings.WorkDir, f)
 
     do
         // Create work area if it doesn't exist
@@ -438,102 +416,36 @@ type Controller(settings : GameServerSync.Settings) =
             with
             | e -> failwithf "Directory '%s' not found, and could not be created because: %s" settings.WorkDir e.Message
 
-        // Load world
-        let path = wkPath worldFilename
-        if File.Exists path then
-            fun s -> async {
-                return
-                    try
-                        let w = World.LoadFromFile path
-                        { s with World = Some w}
-                    with e ->
-                        eprintfn "Failed to load '%s': %s" path e.Message
-                        s
-            } |> doOnState
-
-        // Load latest state
-        let latestState =
-            Directory.EnumerateFiles(settings.WorkDir, "*.xml")
-            |> Seq.filter (fun s -> s.EndsWith(stateBaseFilename))
-            |> Seq.sortDescending
-            |> Seq.tryHead
-
-        match latestState with
-        | Some latestState ->
-            fun s -> async {
-                match s.World with
-                | Some world ->
-                    return
-                        try
-                            let war = WarState.LoadFromFile(latestState, world)
-                            { s with State = Some war }
-                        with e ->
-                            eprintfn "Failed to load '%s': %s" latestState e.Message
-                            s
-                | None ->
-                    eprintfn "Cannot load '%s' because world data could not be loaded." path
-                    return s
-            } |> doOnState
-        | None ->
-            ()
-
-        // Restore scenario controller
-        // TODO. For now we just create a controller for Bodenplatte
-        fun s -> async {
-            return
-                match s.World with
-                | Some world ->
-                    let sctrl : IScenarioController =
-                        let planeSet = BodenplatteInternal.PlaneSet.Default
-                        upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet))
-                    { s with ScenarioController = Some sctrl}
-                | None ->
-                    s
-        } |> doOnState
-
-        // Load scenario state
-        let latestStep =
-            Directory.EnumerateFiles(settings.WorkDir, "*.xml")
-            |> Seq.filter (fun s -> s.EndsWith(stepBaseFilename))
-            |> Seq.sortDescending
-            |> Seq.tryHead
-        fun s -> async {
-            return
-                match s.ScenarioController, s.State with
-                | Some sctrl, Some state ->
-                    match latestStep with
-                    | Some path ->
-                        use reader = new StreamReader(path)
-                        let step = ScenarioStep.Deserialize(reader)
-                        { s with Step = Some step }
-                    | None ->
-                        { s with Step = Some(sctrl.Start state) }
-                | _ ->
-                    s
-        } |> doOnState
 
     member this.GetWorldDto() =
         mb.PostAndAsyncReply <| fun channel s -> async {
             return
-                match s.World with
-                | None ->
-                    channel.Reply(Error "Campaign not initialized")
-                    s
+                match s.DtoWorld with
                 | Some world ->
-                    channel.Reply(Ok(world.ToDto()))
+                    channel.Reply(Ok(world))
                     s
+                | None ->
+                    let path = wkPath worldFilename
+                    if not(File.Exists(path)) then
+                        channel.Reply(Error "Campaign not initialized")
+                        s
+                    else
+                        try
+                            let world = World.LoadFromFile(path)
+                            let dto = world.ToDto()
+                            channel.Reply(Ok(dto))
+                            { s with DtoWorld = Some dto }
+                        with e ->
+                            logger.Warn(sprintf "Failed to load world: %s" e.Message)
+                            logger.Warn(e)
+                            channel.Reply(Error "Failed to load world")
+                            s
         }
 
     member this.GetStateDto() =
-        mb.PostAndAsyncReply <| fun channel s -> async {
-            return
-                match s.State with
-                | None ->
-                    channel.Reply(Error "Campaign not started")
-                    s
-                | Some war ->
-                    channel.Reply(Ok(war.ToDto()))
-                    s
+        async {
+            let idx = getCurrentIndex settings.WorkDir
+            return! this.GetStateDto(idx)
         }
 
     /// Try to get a recorded state by its number
@@ -545,20 +457,17 @@ type Controller(settings : GameServerSync.Settings) =
                     channel.Reply(Ok x)
                     s
                 | false, _ ->
-                    match s.World with
-                    | None ->
-                        channel.Reply(Error "Campaign not initialized")
+                    let path = wkPath(getStateFilename idx)
+                    try
+                        let world = World.LoadFromFile(wkPath worldFilename)
+                        let state = WarState.LoadFromFile(path, world).ToDto()
+                        channel.Reply(Ok state)
+                        { s with DtoStateCache = s.DtoStateCache.Add(idx, state) }
+                    with
+                    | e ->
+                        channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
+                        logger.Warn e
                         s
-                    | Some world ->
-                        let path = wkPath(getStateFilename idx)
-                        try
-                            let state = WarState.LoadFromFile(path, world).ToDto()
-                            channel.Reply(Ok state)
-                            { s with DtoStateCache = s.DtoStateCache.Add(idx, state) }
-                        with
-                        | _ ->
-                            channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
-                            s
         }
 
     /// Try to get the simulation steps leading to the state identified by the given index
@@ -580,22 +489,25 @@ type Controller(settings : GameServerSync.Settings) =
                         channel.Reply(Ok steps)
                         { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
                     with
-                    | _ ->
+                    | e ->
                         channel.Reply(Error <| sprintf "Failed to load simulation n.%d" idx)
+                        logger.Warn e
                         s
         }
 
     member this.GetDates() =
         mb.PostAndAsyncReply <| fun channel s -> async {
-            match s.World with
-            | Some world ->
+            try
+                let world =
+                    lazy
+                        World.LoadFromFile(wkPath worldFilename)
                 let dates =
                     Directory.EnumerateFiles(settings.WorkDir, "*.xml")
                     |> Seq.filter (fun filename -> filename.EndsWith(stateBaseFilename))
                     |> Seq.sort
                     |> Seq.map (fun path ->
                         try
-                            WarState.LoadFromFile(path, world).Date.ToDto()
+                            WarState.LoadFromFile(path, world.Value).Date.ToDto()
                         with _ ->
                             { Year = -1
                               Month = -1
@@ -606,171 +518,33 @@ type Controller(settings : GameServerSync.Settings) =
                         )
                     |> Array.ofSeq
                 channel.Reply(Ok dates)
-                return s
-            | None ->
-                channel.Reply(Error "Campaign not initialized")
-                return s
+            with e ->
+                channel.Reply(Error "Failed to retrieve dates")
+                logger.Warn e
+            return s
         }
 
-    member this.ResetCampaign() =
-        async {
-            let bakDir =
-                let up = Path.GetDirectoryName(Path.GetFullPath(settings.WorkDir))
-                Seq.initInfinite (fun i -> sprintf "Archived-%03d" i)
-                |> Seq.find (fun dirname -> not(Directory.Exists(Path.Combine(up, dirname))))
-
-            let moveDir _ =
-                try
-                    Directory.Move(settings.WorkDir, bakDir)
-                    Ok "Old working dir backed up"
-                with
-                | _ -> Error <| sprintf "Failed to back up working dir '%s'" settings.WorkDir
-
-            let recreateDir _ =
-                try
-                    Directory.CreateDirectory(settings.WorkDir) |> ignore
-                    Ok "Fresh working dir created"
-                with
-                | _ -> Error <| sprintf "Failed to create fresh working dir '%s'" settings.WorkDir
-
-            let prepareDir _ =
-                if not(Directory.Exists(settings.WorkDir)) || not (Seq.isEmpty(Directory.EnumerateFileSystemEntries(settings.WorkDir))) then
-                    moveDir()
-                    |> Result.bind recreateDir
-                else
-                    Ok "No old campaign data to backup before reset"
-
-            let initData _ =
-                let scenario = "RheinLandSummer.Mission"
-                let world = Init.mkWorld(scenario, settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
-                let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
-                    let planeSet = BodenplatteInternal.PlaneSet.Default
-                    let world = planeSet.Setup world
-                    world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet)), 1.5f, 1.0f
-                let state0 = Init.mkWar world
-                sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
-                sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
-                let step = sctrl.Start state0
-                Ok
-                    {
-                        DtoStateCache = Map.empty
-                        DtoSimulationCache = Map.empty
-                        World = Some world
-                        State = Some state0
-                        ScenarioController = Some sctrl
-                        Step = Some step
-                        Sync = None
-                        CancelSync = None
-                    }
-
-            let writeData (s : ControllerState) =
-                match s.World, s.State, s.ScenarioController, s.Step with
-                | Some world, Some state, _, Some step ->
-                    world.SaveToFile(wkPath worldFilename)
-                    state.SaveToFile(wkPath(getStateFilename 0))
-                    step.SaveToFile(wkPath(getStepFilename 0))
-                    Ok s
-                | _ ->
-                    Error "Internal error: world, state or controller data not set"
-
-            return! mb.PostAndAsyncReply <| fun channel s -> async {
-                // Stop our async flow to prepare missions, await mission end and extract results from mission logs
-                s.CancelSync |> Option.iter (fun f -> f())
-
-                // Tell the game server synchronization to stop, and kill DServer
-                match s.Sync with
-                | Some sync ->
-                    sync.Interrupt("Campaign reset", true)
-                    sync.Dispose()
-                | None ->
-                    ()
-
-                let res =
-                    prepareDir()
-                    |> Result.bind initData
-                    |> Result.bind writeData
-
-                let userRes =
-                    res
-                    |> Result.bind (fun _ -> Ok "Success")
-
-                channel.Reply(userRes)
-
-                return
-                    match res with
-                    | Ok s2 -> s2
-                    | Error _ -> s
-            }
-        }
-
-        member this.Advance(seed) =
+        member this.Run(maxSteps) =
             mb.PostAndAsyncReply <| fun channel s -> async {
-                match s.State, s.ScenarioController, s.Step with
-                | Some state, Some sctrl, Some(Ongoing stepData) ->
-                    let random = System.Random(seed)
-                    // Simulate missions
-                    let sim = Campaign.Missions.MissionSimulator(random, state, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
-                    let events = 
-                        seq {
-                            yield! sim.DoAll()
-                            for cmd in sctrl.NewDay(state) do
-                                yield cmd
-                        }
-                    let results =
-                        events
-                        |> Seq.map(fun (cmd, description) ->
-                            let results =
-                                cmd
-                                |> Option.map (fun cmd -> cmd.Execute(state))
-                                |> Option.defaultValue []
-                            description, cmd, results)
-                        |> List.ofSeq
-                    // Plan next round
-                    let advance = sctrl.NextStep(stepData)
-                    let nextStep = advance state
-                    // Write war state and campaign step files
-                    let stateFile, stepFile, simFile =
-                        Seq.initInfinite (fun i -> (wkPath(getStateFilename i), wkPath(getStepFilename i), wkPath(getSimulationFilename i)))
-                        |> Seq.find (fun (stateFile, stepFile, simFile) ->
-                            [stateFile; stepFile; simFile]
-                            |> Seq.forall (File.Exists >> not))
-                    state.SaveToFile(stateFile)
-                    nextStep.SaveToFile(stepFile)
-                    // Results from the commands generated by the simulation
-                    let results =
-                        results
-                        |> Seq.map (fun (description, cmd, results) ->
-                            { Dto.SimulationStep.Description = description
-                              Dto.Command = cmd |> Option.map(fun cmd -> [| cmd.ToDto(state) |]) |> Option.defaultValue [||]
-                              Dto.Results = results |> Seq.map(fun res -> res.ToDto(state)) |> Array.ofSeq
-                            })
-                        |> Array.ofSeq
-                    use writer = new StreamWriter(simFile)
-                    let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-                    serializer.SerializeSequence(writer, results) |> ignore
-                    channel.Reply(Ok results)
-                    // state changed was done by mutating s.State
-                    return { s with Step = Some nextStep }
-                | _, _, Some _ ->
-                    channel.Reply(Error "Cannot advance campaign, it has reached its final state")
-                    return s
-                | _ ->
-                    channel.Reply(Error "Campaign data missing")
-                    return s
+                let sync =
+                    match s.Sync with
+                    | Some sync -> sync
+                    | None -> GameServerSync.Sync.Create(settings)
+                let rec work stepsLeft =
+                    async {
+                        if stepsLeft <= 0 then
+                            channel.Reply(Ok "Scenario advanced")
+                        else
+                            let! r = sync.Advance()
+                            match r with
+                            | Error s -> channel.Reply(Error s)
+                            | Ok _ -> return! work (stepsLeft - 1)
+                    }
+                do! work maxSteps
+                sync.Die("Scenario was forcibly advanced")
+                sync.Dispose()
+                return { s with Sync = None } 
             }
-
-        member this.Run(seed, maxSteps) =
-            let rec work stepsLeft =
-                async {
-                    if stepsLeft <= 0 then
-                        return Error ""
-                    else
-                        let! r = this.Advance(seed)
-                        match r with
-                        | Error s -> return Ok s
-                        | Ok _ -> return! work (stepsLeft - 1)
-                }
-            work maxSteps
 
         member this.GetSyncState() =
             mb.PostAndAsyncReply <| fun channel s -> async {
@@ -778,223 +552,93 @@ type Controller(settings : GameServerSync.Settings) =
                     s.Sync
                     |> Option.map (fun sync ->
                         match sync.SyncState with
-                        | GameServerSync.PreparingMission -> "Preparing mission"
-                        | GameServerSync.ResavingMission -> "Resaving missions"
-                        | GameServerSync.ExtractingResults -> "Extracting results"
-                        | GameServerSync.AdvancingScenario -> "Advancing scenario"
-                        | GameServerSync.RunningMission(_, endTime) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes))
+                        | Some GameServerSync.PreparingMission -> "Preparing mission"
+                        | Some GameServerSync.ResavingMission -> "Resaving missions"
+                        | Some GameServerSync.ExtractingResults -> "Extracting results"
+                        | Some GameServerSync.AdvancingScenario -> "Advancing scenario"
+                        | Some(GameServerSync.RunningMission(_, endTime)) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes)
+                        | None -> "Unknown")
                     |> Option.defaultValue "Not running"
                     |> Ok
                     )
                 return s
             }
 
-        member this.PrepareMission(path : string) =
-            mb.PostAndAsyncReply <| fun channel s ->
-            async {
-                match s.ScenarioController, s.Step, s.State with
-                | Some(ctrl), Some(Ongoing stepData), Some state ->
-                    try
-                        let selection = ctrl.SelectMissions(stepData, state)
-                        let random = System.Random()
-                        let missionGenSettings : MissionFileGeneration.MissionGenSettings =
-                            {
-                                MissionFileGeneration.MaxAiPatrolPlanes = 6
-                                MissionFileGeneration.MaxAntiAirCannons = 100
-                                MissionFileGeneration.OutFilename = path
-                            }
-                        let mission = MissionFileGeneration.mkMultiplayerMissionContent random stepData.Briefing state selection
-                        mission.BuildMission(random, missionGenSettings, state)
-                        channel.Reply(Ok())
-                    with
-                    e -> channel.Reply(Error e.Message)
-                | _ ->
-                    channel.Reply(Error "Cannot select missions in the current state")
-                return s
-            }
-
-        member this.ExtractMissionLog(firstLogFile : string) =
-            mb.PostAndAsyncReply <| fun channel s ->
-            async {
-                match s.State with
-                | Some state ->
-                    // Find initial log file created right after the mission was started
-                    let dir = System.IO.Path.GetDirectoryName(firstLogFile)
-                    let filename = System.IO.Path.GetFileNameWithoutExtension(firstLogFile)
-                    // Replace final [0] by * in the pattern, and add .txt extension
-                    let pattern = filename.Substring(0, filename.Length - "[0]".Length) + "*.txt"
-                    let lines =
-                        asyncSeq {
-                            for file in System.IO.Directory.EnumerateFiles(dir, pattern) |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file)) do
-                                yield! AsyncSeq.ofSeq (System.IO.File.ReadAllLines(file))
-                        }
-                    let commands = MissionResults.commandsFromLogs state lines
-                    let! effects =
-                        asyncSeq {
-                            for command in commands do
-                                let effects = command.Execute(state)
-                                yield (command, effects)
-                        }
-                        |> AsyncSeq.toArrayAsync
-                    // Write effects to file
-                    // Write war state and campaign step files
-                    let effectsFile =
-                        Seq.initInfinite (fun i -> (wkPath(getEffectsFilename i), wkPath(getStateFilename i)))
-                        |> Seq.pairwise
-                        |> Seq.pick (fun ((effectsFile, _), (_, stateFile)) -> if not(File.Exists stateFile) then Some effectsFile else None)
-                    let results =
-                        effects
-                        |> Seq.map (fun (cmd, results) ->
-                            { Dto.SimulationStep.Description = "From played mission"
-                              Dto.Command = [| cmd.ToDto(state) |]
-                              Dto.Results = results |> List.map (fun res -> res.ToDto(state)) |> Array.ofSeq
-                            })
-                        |> Array.ofSeq
-                    use writer = new StreamWriter(effectsFile)
-                    let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-                    serializer.SerializeSequence(writer, results) |> ignore
-                    channel.Reply(Ok())
-                | None ->
-                    channel.Reply(Error "No war state")
-                return s // Note that s.State has been mutated
-            }
-
         member this.StartSync(doLoop : bool) =
-            let sync = GameServerSync.Sync.Create(settings)
-            let rec prepareMission(path) =
-                async {
-                    let! res = this.PrepareMission(path)
-                    sync.NotifyMissionPrepared(res)
-                    if doLoop then
-                        return! awaitMissionEnd()
-                }
-            and resaveMissions() =
-                async {
-                    return! awaitMissionEnd()
-                }
-            and awaitMissionEnd() =
-                async {
-                    let! s = Async.AwaitEvent sync.MissionCompleted
-                    match s with
-                    | Ok path ->
-                        return! extractMissionLog(path)
-                    | Error _ ->
-                        doOnState (fun s -> async.Return { s with Sync = None })
-                        return()
-                }
-            and extractMissionLog(startTime) =
-                async {
-                    let! s = this.ExtractMissionLog(startTime)
-                    sync.NotifyMissionLogsExtracted(s)
-                    match s with
-                    | Ok() -> return! advanceScenario()
-                    | Error _ ->
-                        doOnState (fun s -> async.Return { s with Sync = None })
-                        return()
-                }
-            and advanceScenario() =
-                async {
-                    let! seed =
-                        mb.PostAndAsyncReply <| fun channel s ->
-                            async {
-                                let seed =
-                                    match s.State with
-                                    | Some war -> int (war.Date.Ticks &&& 0x7FFFFFFFL)
-                                    | None -> 0
-                                channel.Reply(seed)
-                                return s
-                            }
-                    let! status = this.Advance(seed)
-                    sync.NotifyScenarioAdvanced(status |> Result.map ignore)
-                    match status with
-                    | Ok _ -> return! awaitPrepareMission()
-                    | Error _ ->
-                        doOnState (fun s -> async.Return { s with Sync = None })
-                        return()
-                }
-            and awaitPrepareMission() =
-                async {
-                    do! Async.Sleep(1000)
-                    match sync.SyncState with
-                    | GameServerSync.PreparingMission path ->
-                        return! prepareMission(path)
-                    | _ ->
-                        return! awaitPrepareMission()
-                }
-            let task =
-                match sync.SyncState with
-                | GameServerSync.PreparingMission path ->
-                    prepareMission(path)
-                | GameServerSync.ResavingMission ->
-                    resaveMissions()
-                | GameServerSync.ExtractingResults path ->
-                    extractMissionLog(path)
-                | GameServerSync.AdvancingScenario ->
-                    advanceScenario()
-                | GameServerSync.RunningMission _ ->
-                    awaitMissionEnd()
-            let cancelSource = new System.Threading.CancellationTokenSource()
-            Async.StartImmediate(sync.ResumeAsync(), cancelSource.Token)
-            Async.StartImmediate(task, cancelSource.Token)
-            sync, cancelSource
-
-        member this.StartSyncAsync(doLoop) =
             mb.PostAndAsyncReply <| fun channel s -> async {
-                match s.Sync with
-                | Some _ ->
-                    channel.Reply(Error "Already started")
-                    return s
-                | None ->
-                    let sync, cancelSource = this.StartSync(doLoop)
-                    channel.Reply(Ok "Done")
-                    return { s with
-                                Sync = Some sync
-                                CancelSync = Some (fun () -> cancelSource.Cancel(); cancelSource.Dispose())}
+                let! sync =
+                    match s.Sync with
+                    | None ->
+                        async {
+                            let sync = GameServerSync.Sync.Create(settings)
+                            sync.StopAfterMission <- not doLoop
+                            do! sync.Init()
+                            return sync
+                        }
+                    | Some sync ->
+                        async.Return sync
+                sync.Resume()
+                channel.Reply(Ok "Synchronization started")
+                return { s with Sync = Some sync }
             }
+
+        member private this.RegisterSyncCleanUp(sync : GameServerSync.Sync) =
+            // Run clean-up after sync is terminated
+            async {
+                let! condemned = Async.AwaitEvent(sync.Terminated)
+                doOnState <| fun s -> async {
+                    try
+                        condemned.Dispose()
+                    with _ -> ()
+                    return { s with Sync = None }
+                }
+            }
+            |> Async.Start
 
         member this.StopSyncAfterMission() =
             mb.PostAndAsyncReply <| fun channel s -> async {
-                match s.CancelSync with
-                | Some f ->
-                    f()
-                    channel.Reply(Ok "Done")
-                | None ->
-                    channel.Reply(Error "Not running, or already cancelled")
-
                 match s.Sync with
                 | Some sync ->
-                    match sync.SyncState with
-                    | GameServerSync.RunningMission _ ->
-                        async {
-                            let! _ = Async.AwaitEvent sync.MissionCompleted
-                            sync.Interrupt("Synchronization stopped after mission ended", true)
-                            sync.Dispose()
-                            return ()
-                        } |> Async.Start
-                    | _ ->
-                        sync.Interrupt("Synchronization stopped", true)
-                        sync.Dispose()
+                    this.RegisterSyncCleanUp(sync)
+                    sync.StopAfterMission <- true
+                    channel.Reply(Ok "Synchronization will stop after mission ends")
                 | None ->
-                    ()
-                return { s with CancelSync = None; Sync = None }
+                    channel.Reply(Error "Synchronization is not active")
+                return s
             }
 
-        member this.InterruputSync() =
+        member this.InterruptSync() =
             mb.PostAndAsyncReply <| fun channel s -> async {
-                match s.CancelSync with
-                | Some f ->
-                    f()
-                    channel.Reply(Ok "Done")
-                | None ->
-                    channel.Reply(Error "Not running, or already cancelled")
-
                 match s.Sync with
                 | Some sync ->
-                    sync.Interrupt("Synchronization interrupted", true)
-                    sync.Dispose()
+                    this.RegisterSyncCleanUp(sync)
+                    sync.Die("Synchronization interrupted")
+                    channel.Reply(Ok "Synchronization interruputed")
                 | None ->
-                    ()
-                return { s with CancelSync = None; Sync = None }
+                    channel.Reply(Error "Synchronization is not active")
+                return s
+            }
+
+        member this.ResetCampaign(scenario) =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                let sync =
+                    match s.Sync with
+                    | Some sync -> sync
+                    | None ->
+                        // Create a temporary sync
+                        GameServerSync.Sync.Create(settings)
+                let! status = sync.ResetCampaign(scenario)
+                // If we had to create a temporary sync, dispose it
+                match s.Sync with
+                | None -> sync.Dispose()
+                | Some -> ()
+                // Reply and retain old sync, if any.
+                match status with
+                | Ok ->
+                    channel.Reply(Ok "New campaign ready")
+                | Error msg ->
+                    channel.Reply(Error msg)
+                return s
             }
 
         interface IRoutingResponse with
@@ -1009,10 +653,10 @@ type Controller(settings : GameServerSync.Settings) =
             member this.GetSyncState() = this.GetSyncState()
 
         interface IControllerInteraction with
-            member this.Advance() = this.Advance(0)
-            member this.Run() = this.Run(0, 15)
-            member this.ResetCampaign(scenario) = this.ResetCampaign()
-            member this.StartSyncLoop() = this.StartSyncAsync(true)
-            member this.StartSyncOnce() = this.StartSyncAsync(false)
+            member this.Advance() = this.Run(1)
+            member this.Run() = this.Run(15)
+            member this.ResetCampaign(scenario) = this.ResetCampaign(scenario)
+            member this.StartSyncLoop() = this.StartSync(true)
+            member this.StartSyncOnce() = this.StartSync(false)
             member this.StopSyncAfterMission() = this.StopSyncAfterMission()
-            member this.InterruptSync() = this.InterruputSync()
+            member this.InterruptSync() = this.InterruptSync()

@@ -21,7 +21,19 @@ open System
 open MBrace.FsPickler
 open System.Diagnostics
 open NLog
+
+open FSharp.Control
+
 open Campaign.BasicTypes
+open Campaign.NewWorldDescription
+open Campaign.NewWorldDescription.IO
+open Campaign.WarState
+open Campaign.WarState.IO
+open Campaign.BasicTypes
+open Util
+open Campaign.CampaignScenario
+open Campaign.CampaignScenario.IO
+open Campaign.WarStateUpdate.CommandExecution
 
 type Settings =
     {
@@ -40,14 +52,19 @@ type Settings =
         SimulatedDuration : float32
     }
 with
+    /// Directory where the mission file is generated
     member this.MissionPath = IO.Path.Combine(this.WorkDir, "Multiplayer", "Dogfight")
 
+    /// Directory where the generated mission is copied
     member this.GameMissionPath = IO.Path.Combine(this.GameDir, "Multiplayer", "Dogfight")
 
+    /// Path with filename of the first variant of the generated mission
     member this.MissionFile = IO.Path.Combine(this.MissionPath, sprintf "%s_1.Mission" this.MissionBaseName)
 
+    /// Path with filename of the alternative generated mission
     member this.AltMissionFile = IO.Path.Combine(this.MissionPath, sprintf "%s_2.Mission" this.MissionBaseName)
 
+    /// Directory where DServer saves logs
     member this.MissionLogs = IO.Path.Combine(this.GameDir, "data", "logs")
 
     static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign", "Current")
@@ -161,6 +178,9 @@ module IO =
             file.Close()
             IO.File.Copy(tmpFile, IO.Path.Combine(workDir, SyncState.FileName), true)
             IO.File.Delete(tmpFile)
+
+        static member Delete(workDir : string) =
+            IO.File.Delete(IO.Path.Combine(workDir, SyncState.FileName))
 
         static member TryLoad(workDir) =
             try
@@ -393,58 +413,104 @@ type RConGameServerControl(settings : Settings, ?logger) =
 
 
 open IO
+open Campaign
+
+module BaseFileNames =
+    open System.Text.RegularExpressions
+    open RegexActivePatterns
+
+    let worldFilename = "world.xml"
+    let stateBaseFilename = "-state.xml"
+    let stepBaseFilename = "-step.xml"
+    let simulationBaseFilename = "-simulation.xml"
+    /// Files that contain state update commands extracted from the game logs, and the results of the commands
+    let effectsBaseFilename = "-effects.xml"
+
+    let getStateFilename idx = sprintf "%03d%s" idx stateBaseFilename
+    let getStepFilename idx = sprintf "%03d%s" idx stepBaseFilename
+    let getSimulationFilename idx = sprintf "%03d%s" idx simulationBaseFilename
+    let getEffectsFilename idx = sprintf "%03d%s" idx effectsBaseFilename
+
+    /// Get the highest N such that N-state.xml exists
+    let getCurrentIndex (path : string) =
+        let pattern = Regex(@"^(\d*)-state.xml")
+        try
+            IO.Directory.EnumerateFiles(path, "*" + stateBaseFilename)
+            |> Seq.choose (fun path ->
+                let filename = Path.GetFileName(path)
+                match filename with
+                | MatchesRegex(pattern) (GroupList [AsInt index]) ->
+                    Some index
+                | _ -> None)
+            |> Seq.max
+        with _ -> 0
+
+open BaseFileNames
 
 /// Controls execution of DServer, depending on status of campaign scenario controller.
 type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     let mutable logger = defaultArg logger (LogManager.GetCurrentClassLogger())
+    let mutable controller : IScenarioController option = None
+    let mutable war : WarState option = None
+    let mutable step : ScenarioStep option = None
+
     let mutable serverProcess = None
-    let mutable state =
-        SyncState.TryLoad(settings.WorkDir)
-        |> Option.defaultValue (PreparingMission settings.MissionFile)
+    let mutable state : SyncState option = None
+
+    let mutable stopAfterMission = false
+    let mutable isRunning = false
 
     let cancellation = new System.Threading.CancellationTokenSource()
 
     // Number of DServer restart attempts
     let maxRetries = 3
 
-    let missionCompleted = Event<Result<string, string>>()
+    let terminated = Event<Sync>()
+    let stateChanged = Event<WarState>()
 
-    let missionPrepared = Event<Result<unit, string>>()
-
-    let missionLogsExtracted = Event<Result<unit, string>>()
-
-    let scenarioAdvanced = Event<Result<unit, string>>()
-
-    let terminated = Event<string>()
+    let wkPath f = Path.Combine(settings.WorkDir, f)
 
     /// Get the current synchronization state
     member this.SyncState = state
 
-    /// Campaign scenario controller triggers this when mission file has been generated
-    member this.NotifyMissionPrepared(result) = missionPrepared.Trigger(result)
-
-    /// Campaign scenario controller triggers this when the mission log have been extracted
-    member this.NotifyMissionLogsExtracted(result) = missionLogsExtracted.Trigger(result)
-
-    /// Campaign scenario controller triggers this when scenario simulation is done
-    member this.NotifyScenarioAdvanced(result) = scenarioAdvanced.Trigger(result)
-
-    /// Campaign scenario controller subscribes to this event to know when a round is over
-    member this.MissionCompleted = missionCompleted.Publish
-
     /// Campaign scenario controller subscribes to this event to know when sync is terminated
     member this.Terminated = terminated.Publish
 
+    /// Campaign scenario controller subscribes to this event to know when war state has changed
+    member this.StateChanged = stateChanged.Publish
+
+    /// Controls whether the workflow should be terminated when the current mission (or the one being prepared) ends.
+    member this.StopAfterMission
+        with get() = stopAfterMission
+        and set x = stopAfterMission <- x
+
+    /// Get a seed computed from the state of the war
+    member this.Seed =
+        match war with
+        | Some war -> int (war.Date.Ticks &&& 0x7FFFFFFFL)
+        | None -> 0
+
+    member this.SaveState() =
+        match state with
+        | Some state -> state.Save(settings.WorkDir)
+        | None ->
+            try
+                SyncState.Delete(settings.WorkDir)
+            with e ->
+                logger.Warn("Failed to delete sync state file")
+                logger.Warn e
+
     /// Stop synchonization, typically after an unrecoverable error.
     member this.Die(msg) =
-        state.Save(settings.WorkDir)
+        state |> Option.iter(fun state -> state.Save(settings.WorkDir))
         let msg =
             sprintf "Game server sync terminated: %s" msg
         logger.Info msg
-        terminated.Trigger(msg)
+        terminated.Trigger(this)
+        isRunning <- false
 
     /// Cancel any ongoing task.
-    member this.Interrupt(msg, killServer) =
+    member private this.Interrupt(msg, killServer) =
         let msg =
             sprintf "Game server sync interrupted: %s" msg
         logger.Info msg
@@ -452,16 +518,100 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             gameServer.KillProcess(serverProcess)
             |> ignore
         cancellation.Cancel()
+        isRunning <- false
 
+    member this.Init() =
+        async {
+            // Load world
+            let path = wkPath worldFilename
+            let world = 
+                if File.Exists path then
+                    try
+                        let w = World.LoadFromFile path
+                        Some w
+                    with e ->
+                        eprintfn "Failed to load '%s': %s" path e.Message
+                        None
+                else
+                    None
+
+            // Load latest state
+            let latestState =
+                Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+                |> Seq.filter (fun s -> s.EndsWith(stateBaseFilename))
+                |> Seq.sortDescending
+                |> Seq.tryHead
+
+            let war0 =
+                match world, latestState with
+                | Some world, Some latestState ->
+                    try
+                        let war = WarState.LoadFromFile(latestState, world)
+                        Some war
+                    with e ->
+                        eprintfn "Failed to load '%s': %s" latestState e.Message
+                        None
+                | _ ->
+                    None
+
+            // Restore scenario controller
+            // TODO. For now we just create a controller for Bodenplatte
+            let controller0 =
+                match war0 with
+                | Some war ->
+                    let sctrl : IScenarioController =
+                        let planeSet = BodenplatteInternal.PlaneSet.Default
+                        upcast(Bodenplatte(war.World, BodenplatteInternal.Constants.Default, planeSet))
+                    Some sctrl
+                | None ->
+                    None
+
+            // Load scenario state
+            let latestStep =
+                Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+                |> Seq.filter (fun s -> s.EndsWith(stepBaseFilename))
+                |> Seq.sortDescending
+                |> Seq.tryHead
+            let step0 =
+                match controller0, war0 with
+                | Some sctrl, Some state ->
+                    match latestStep with
+                    | Some path ->
+                        use reader = new StreamReader(path)
+                        let step = ScenarioStep.Deserialize(reader)
+                        Some step
+                    | None ->
+                        None
+                | _ ->
+                    None
+
+            let syncState =
+                SyncState.TryLoad(settings.WorkDir)
+                |> Option.defaultValue (PreparingMission settings.MissionFile)
+
+            controller <- controller0
+            war <- war0
+            step <- step0
+            state <- Some syncState
+        }
+
+    /// Copy mission files from preparation area to DServer's data dir.
     member this.PublishMissionFiles() =
         for file in IO.Directory.EnumerateFiles(settings.MissionPath) do
-            try
-                if IO.Path.GetExtension(file).ToLowerInvariant() = ".mission" then
-                    IO.File.Delete(IO.Path.Combine(settings.GameDir, IO.Path.GetFileName(file)))
-                else
+            if IO.Path.GetExtension(file).ToLowerInvariant() = ".mission" then
+                // Do not copy text mission file, forcing DServer to use the .msnbin file. which is faster.
+                // Remove the file if it's found in DServer's directory.
+                let path = IO.Path.Combine(settings.GameDir, IO.Path.GetFileName(file))
+                if File.Exists(path) then
+                    try
+                        IO.File.Delete(path)
+                    with
+                    | exc -> logger.Warn(sprintf "Failed to delete %s: %s" path exc.Message)
+            else
+                try
                     IO.File.Copy(file, IO.Path.Combine(settings.GameDir, IO.Path.GetFileName(file)), true)
-            with
-            | exc -> logger.Warn(sprintf "Failed to copy %s: %s" file exc.Message)
+                with
+                | exc -> logger.Warn(sprintf "Failed to copy %s: %s" file exc.Message)
 
     /// Start DServer
     member this.StartServerAsync(?retriesLeft) =
@@ -476,9 +626,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             | Ok proc ->
                 serverProcess <- Some proc
                 let now = DateTime.UtcNow
-                state <- RunningMission (now, now + TimeSpan.FromMinutes(float settings.MissionDuration))
+                state <- Some(RunningMission (now, now + TimeSpan.FromMinutes(float settings.MissionDuration)))
                 logger.Debug state
-                state.Save(settings.WorkDir)
+                this.SaveState()
                 let! s = gameServer.AttachRcon()
                 logger.Debug s
                 return! this.ResumeAsync(retriesLeft - 1)
@@ -487,23 +637,221 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 return this.Die(msg)
         }
 
+    /// Archive current campaign, and create a new one
+    member this.ResetCampaign(scenario : string) =
+        async {
+            // Stop any ongoing activity
+            this.Interrupt("Reset campaign", true)
+
+            let bakDir =
+                let up = Path.GetDirectoryName(Path.GetFullPath(settings.WorkDir))
+                Seq.initInfinite (fun i -> sprintf "Archived-%03d" i)
+                |> Seq.find (fun dirname -> not(Directory.Exists(Path.Combine(up, dirname))))
+
+            let moveDir _ =
+                try
+                    Directory.Move(settings.WorkDir, bakDir)
+                    Ok "Old working dir backed up"
+                with
+                | _ -> Error <| sprintf "Failed to back up working dir '%s'" settings.WorkDir
+
+            let recreateDir _ =
+                try
+                    Directory.CreateDirectory(settings.WorkDir) |> ignore
+                    Ok "Fresh working dir created"
+                with
+                | _ -> Error <| sprintf "Failed to create fresh working dir '%s'" settings.WorkDir
+
+            let prepareDir _ =
+                if not(Directory.Exists(settings.WorkDir)) || not (Seq.isEmpty(Directory.EnumerateFileSystemEntries(settings.WorkDir))) then
+                    moveDir()
+                    |> Result.bind recreateDir
+                else
+                    Ok "No old campaign data to backup before reset"
+
+            let initData _ =
+                let world = Init.mkWorld(scenario, settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
+                let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
+                    let planeSet = BodenplatteInternal.PlaneSet.Default
+                    let world = planeSet.Setup world
+                    world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet)), 1.5f, 1.0f
+                let state0 = Init.mkWar world
+                sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
+                sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
+                let step = sctrl.Start state0
+                Ok(world, state0, step, sctrl)
+
+            let writeData (world : World, state0 : WarState, step0 : ScenarioStep, sctrl : IScenarioController) =
+                try
+                    world.SaveToFile(wkPath worldFilename)
+                    state0.SaveToFile(wkPath(getStateFilename 0))
+                    step0.SaveToFile(wkPath(getStepFilename 0))
+                    controller <- Some sctrl
+                    war <- Some state0
+                    step <- Some step0
+                    stateChanged.Trigger(state0)
+                    Ok()
+                with 
+                | _ ->
+                    Error "Internal error: world, state or controller data not set"
+
+            let res =
+                prepareDir()
+                |> Result.bind initData
+                |> Result.bind writeData
+
+            return res
+        }
+
+    /// Advance scenario to next step
+    member this.Advance() =
+        async {
+            match state with
+            | Some AdvancingScenario -> ()
+            | None -> ()
+            | Some _ when isRunning ->
+                failwith "Cannot force advance while running"
+            | _ ->
+                // Force advancing
+                logger.Info("State is not AdvancingScenario, forcing advance and clearing state.")
+                state <- None
+                this.SaveState()
+
+            match war, controller, step with
+            | Some war, Some sctrl, Some(Ongoing stepData) ->
+                let random = System.Random(this.Seed)
+                // Simulate missions
+                let sim = Campaign.Missions.MissionSimulator(random, war, stepData.Missions, settings.SimulatedDuration * 1.0f<H>)
+                let events = 
+                    seq {
+                        yield! sim.DoAll()
+                        for cmd in sctrl.NewDay(war) do
+                            yield cmd
+                    }
+                let results =
+                    events
+                    |> Seq.map(fun (cmd, description) ->
+                        let results =
+                            cmd
+                            |> Option.map (fun cmd -> cmd.Execute(war))
+                            |> Option.defaultValue []
+                        description, cmd, results)
+                    |> List.ofSeq
+                // Plan next round
+                let advance = sctrl.NextStep(stepData)
+                let nextStep = advance war
+                // Write war state and campaign step files
+                let stateFile, stepFile, simFile =
+                    Seq.initInfinite (fun i -> (wkPath(getStateFilename i), wkPath(getStepFilename i), wkPath(getSimulationFilename i)))
+                    |> Seq.find (fun (stateFile, stepFile, simFile) ->
+                        [stateFile; stepFile; simFile]
+                        |> Seq.forall (File.Exists >> not))
+                war.SaveToFile(stateFile)
+                stateChanged.Trigger(war)
+                nextStep.SaveToFile(stepFile)
+                use writer = new StreamWriter(simFile)
+                let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+                serializer.SerializeSequence(writer, results) |> ignore
+                step <- Some nextStep
+                return Ok(results)
+            | _, _, Some _ ->
+                return (Error "Cannot advance campaign, it has reached its final state")
+            | _ ->
+                return (Error "Campaign data missing")
+        }
+
+    /// Prepare mission file
+    member this.PrepareMission() =
+        async {
+            match state with
+            | Some PreparingMission -> ()
+            | _ -> failwith "State is not PreparingMission"
+
+            match controller, step, war with
+            | Some(ctrl), Some(Ongoing stepData), Some state ->
+                try
+                    let selection = ctrl.SelectMissions(stepData, state)
+                    let random = System.Random(this.Seed)
+                    let missionGenSettings : MissionFileGeneration.MissionGenSettings =
+                        {
+                            MissionFileGeneration.MaxAiPatrolPlanes = 6
+                            MissionFileGeneration.MaxAntiAirCannons = 100
+                            MissionFileGeneration.OutFilename = settings.MissionFile
+                        }
+                    let mission = MissionFileGeneration.mkMultiplayerMissionContent random stepData.Briefing state selection
+                    mission.BuildMission(random, missionGenSettings, state)
+                    return Ok()
+                with
+                e -> return (Error e.Message)
+            | _ ->
+                return (Error "Cannot select missions in the current state")
+        }
+
+    /// Extract mission log
+    member this.ExtractMissionLog(firstLogFile : string) =
+        async {
+            match state with
+            | Some ExtractingResults -> ()
+            | _ -> failwith "State is not ExtractingResults"
+
+            match war with
+            | Some war ->
+                // Find initial log file created right after the mission was started
+                let dir = System.IO.Path.GetDirectoryName(firstLogFile)
+                let filename = System.IO.Path.GetFileNameWithoutExtension(firstLogFile)
+                // Replace final [0] by * in the pattern, and add .txt extension
+                let pattern = filename.Substring(0, filename.Length - "[0]".Length) + "*.txt"
+                let lines =
+                    asyncSeq {
+                        for file in System.IO.Directory.EnumerateFiles(dir, pattern) |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file)) do
+                            yield! AsyncSeq.ofSeq (System.IO.File.ReadAllLines(file))
+                    }
+                let commands = MissionResults.commandsFromLogs war lines
+                let! effects =
+                    asyncSeq {
+                        for command in commands do
+                            let effects = command.Execute(war)
+                            yield (command, effects)
+                    }
+                    |> AsyncSeq.toArrayAsync
+                stateChanged.Trigger(war)
+                // Write effects to file
+                // Write war state and campaign step files
+                let effectsFile =
+                    Seq.initInfinite (fun i -> (wkPath(getEffectsFilename i), wkPath(getStateFilename i)))
+                    |> Seq.pairwise
+                    |> Seq.pick (fun ((effectsFile, _), (_, stateFile)) -> if not(File.Exists stateFile) then Some effectsFile else None)
+                let results =
+                    effects
+                    |> Seq.map (fun (cmd, results) -> "From played mission", cmd, results)
+                    |> Array.ofSeq
+                use writer = new StreamWriter(effectsFile)
+                let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+                serializer.SerializeSequence(writer, results) |> ignore
+                return Ok()
+            | None ->
+                return (Error "No war state")
+        }
+
     /// Check current state and act accordingly
     member this.ResumeAsync(?restartsLeft) =
         let restartsLeft = defaultArg restartsLeft maxRetries
         async {
             logger.Trace restartsLeft
             match state with
-            | PreparingMission ->
-                match! Async.AwaitEvent(missionPrepared.Publish, fun () -> this.Die("Interrupted")) with
+            | None
+            | Some PreparingMission ->
+                let! status = this.PrepareMission()
+                match status with
                 | Ok() ->
-                    state <- ResavingMission
+                    state <- Some ResavingMission
                     logger.Info state
-                    state.Save(settings.WorkDir)
+                    this.SaveState()
                     return! this.ResumeAsync()
                 | Error msg ->
                     return this.Die(msg)
 
-            | ResavingMission ->
+            | Some ResavingMission ->
                 match! gameServer.CopyRenameMission settings.MissionFile with
                 | Error msg ->
                     return this.Die(msg)
@@ -523,15 +871,16 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     match s with
                     | Ok() ->
                         let now = DateTime.UtcNow
-                        state <- RunningMission (now, now + TimeSpan.FromMinutes(float settings.MissionDuration))
+                        state <- Some(RunningMission (now, now + TimeSpan.FromMinutes(float settings.MissionDuration)))
                         logger.Info state
-                        state.Save(settings.WorkDir)
+                        this.SaveState()
                         return! this.ResumeAsync()
                     | Error msg ->
                         return this.Die(msg)
                 else
                     return! this.StartServerAsync()
-            | RunningMission(startTime, endTime) ->
+
+            | Some(RunningMission(startTime, endTime)) ->
                 if not(gameServer.IsRunning serverProcess) then
                     return! this.StartServerAsync(restartsLeft)
                 else
@@ -565,35 +914,39 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     with _ -> None
                 match latestStartingMissionReport with
                 | Some path ->
-                    missionCompleted.Trigger(Ok path)
-                    state <- ExtractingResults path
+                    state <- Some(ExtractingResults path)
                     logger.Info state
-                    state.Save(settings.WorkDir)
-                    return! this.ResumeAsync()
+                    this.SaveState()
+                    if not stopAfterMission then
+                        return! this.ResumeAsync()
+                    else
+                        this.Die("Stop after mission is enabled")
+                        return ()
                 | None ->
-                    missionCompleted.Trigger(Error "No logs found")
                     // Restart mission
                     gameServer.KillProcess(serverProcess) |> ignore
                     do! Async.Sleep(5000)
                     return! this.ResumeAsync()
 
-            | ExtractingResults ->
-                match! Async.AwaitEvent(missionLogsExtracted.Publish, fun () -> this.Die("Interrupted")) with
+            | Some(ExtractingResults path) ->
+                let! status = this.ExtractMissionLog(path)
+                match status with
                 | Ok() ->
-                    state <- AdvancingScenario
+                    state <- Some AdvancingScenario
                     logger.Info state
-                    state.Save(settings.WorkDir)
+                    this.SaveState()
                     return! this.ResumeAsync()
                 | Error msg ->
                     // Result extraction failed, stop sync.
                     return this.Die(msg)
 
-            | AdvancingScenario ->
-                match! Async.AwaitEvent(scenarioAdvanced.Publish, fun () -> this.Die("Interrupted")) with
-                | Ok() ->
-                    state <- PreparingMission settings.MissionFile
+            | Some AdvancingScenario ->
+                let! status = this.Advance()
+                match status with
+                | Ok ->
+                    state <- Some(PreparingMission settings.MissionFile)
                     logger.Info state
-                    state.Save(settings.WorkDir)
+                    this.SaveState()
                     return! this.ResumeAsync()
                 | Error msg ->
                     // Scenario failed, stop sync.
@@ -604,9 +957,11 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     /// Token to use with ResumeAsync in order for Interrupt to work.
     member this.CancellationToken = cancellation.Token
 
-    /// Start synchronization.
+    /// Start synchronization and resume flow, unless already running.
     member this.Resume() =
-        Async.StartImmediate(this.ResumeAsync(), this.CancellationToken)
+        if not isRunning then
+            isRunning <- true
+            Async.StartImmediate(this.ResumeAsync(), this.CancellationToken)
 
     /// Create a game server controller and a Sync.
     static member Create(settings : Settings, ?logger) =
