@@ -52,17 +52,23 @@ type Settings =
         SimulatedDuration : float32
     }
 with
+    /// Root of the data dir, passed to resaver.exe
+    member this.GameDataPath = IO.Path.Combine(this.GameDir, "data")
+
     /// Directory where the mission file is generated
-    member this.MissionPath = IO.Path.Combine(this.WorkDir, "Multiplayer", "Dogfight")
+    member this.MissionPath = IO.Path.Combine(this.WorkDir, "Staging", "data", "Multiplayer", "Dogfight")
 
     /// Directory where the generated mission is copied
-    member this.GameMissionPath = IO.Path.Combine(this.GameDir, "Multiplayer", "Dogfight")
+    member this.GameMissionPath = IO.Path.Combine(this.GameDir, "data", "Multiplayer", "Dogfight")
 
-    /// Path with filename of the first variant of the generated mission
-    member this.MissionFile = IO.Path.Combine(this.MissionPath, sprintf "%s_1.Mission" this.MissionBaseName)
+    /// Filename without extension of the first variant of the generated mission
+    member this.MissionFile = sprintf "%s_1" this.MissionBaseName
 
-    /// Path with filename of the alternative generated mission
-    member this.AltMissionFile = IO.Path.Combine(this.MissionPath, sprintf "%s_2.Mission" this.MissionBaseName)
+    /// Path to the first variant of the generated mission
+    member this.MissionFilePath = IO.Path.Combine(this.MissionPath, this.MissionFile) + ".Mission"
+
+    /// Filename without extension of the alternative generated mission
+    member this.AltMissionFile = sprintf "%s_2" this.MissionBaseName
 
     /// Directory where DServer saves logs
     member this.MissionLogs = IO.Path.Combine(this.GameDir, "data", "logs")
@@ -309,15 +315,34 @@ type RConGameServerControl(settings : Settings, ?logger) =
                 return Error "No connection to DServer"
         }
 
-    let resaveMission(virtDataPath : string, path : string) =
+    let resaveMission(filename : string) =
         async {
             try
+                // Copy mission files to game's dir
+                for file in IO.Directory.EnumerateFiles(settings.MissionPath, sprintf "%s.*" filename) do
+                    try
+                        IO.File.Copy(file, IO.Path.Combine(settings.GameMissionPath, IO.Path.GetFileName(file)), true)
+                    with
+                    | exc ->
+                        logger.Warn(sprintf "Failed to copy %s: %s" file exc.Message)
+                        logger.Warn(exc)
+                        failwith "Failed to copy mission to game's dir"
+
                 let resaverDir = IO.Path.Combine(settings.GameDir, "bin", "resaver")
-                let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d \"%s\" -f \"%s\"" virtDataPath path)
+                let path = IO.Path.Combine(settings.GameMissionPath, filename) + ".Mission"
+                let p = ProcessStartInfo("MissionResaver.exe", sprintf "-d \"%s\" -f \"%s\"" settings.GameDataPath path)
                 p.WorkingDirectory <- resaverDir
-                p.UseShellExecute <- true
-                let proc = Process.Start(p)
-                logger.Debug proc
+                p.UseShellExecute <- false
+                p.RedirectStandardError <- true
+                p.RedirectStandardOutput <- true
+                let oldCwd = Environment.CurrentDirectory
+                let proc =
+                    try
+                        Environment.CurrentDirectory <- resaverDir
+                        Process.Start(p)
+                    finally
+                        Environment.CurrentDirectory <- oldCwd
+                logger.Debug proc.StartInfo.Arguments
                 let rec awaitExited() =
                     async {
                         if not proc.HasExited then
@@ -325,22 +350,35 @@ type RConGameServerControl(settings : Settings, ?logger) =
                             return! awaitExited()
                     }
                 do! awaitExited()
+                logger.Info(proc.StandardOutput.ReadToEnd())
+                logger.Warn(proc.StandardError.ReadToEnd())
                 if proc.ExitCode <> 0 then
                     logger.Info proc
                     return Error "Resaver failed"
                 else
-                    return Ok()
+                    let listFile = IO.Path.GetFileNameWithoutExtension(path) + ".list"
+                    try
+                        // Check that the list file exists, and contains at least one line
+                        IO.File.ReadAllLines(IO.Path.Combine(settings.GameMissionPath, listFile)).[0] |> ignore
+                        // Remove text mission file, forcing DServer to use the msnbin file, which is faster
+                        try
+                            IO.File.Delete(IO.Path.Combine(settings.GameMissionPath, filename) + ".Mission")
+                        with exc ->
+                            logger.Warn("Failed to delete text mission file after resaving")
+                            logger.Warn(exc)
+                        return Ok()
+                    with _ ->
+                        return Error "Failed to produce non-empty list file"
             with
             | e ->
                 logger.Error e
                 return Error <| sprintf "ResaveMission failed: %s" e.Message
         }
 
-    let copyRenameMission(path : string) =
+    let copyRenameMission(filename : string) =
         async {
             try
-                let dirname = IO.Path.GetDirectoryName(path)
-                let filename = IO.Path.GetFileNameWithoutExtension(path)
+                let dirname = settings.MissionPath
                 for file in IO.Directory.GetFiles(dirname, sprintf "%s.*" filename) do
                     let filename2 = IO.Path.GetFileNameWithoutExtension(file)
                     let ext = IO.Path.GetExtension(file)
@@ -390,8 +428,8 @@ type RConGameServerControl(settings : Settings, ?logger) =
         member this.LoadSds(sds) =
             loadSds(sds)
 
-        member this.ResaveMission(path) =
-            resaveMission(settings.WorkDir, path)
+        member this.ResaveMission(filename) =
+            resaveMission(filename)
 
         member this.RotateMission() =
             rotateMission()
@@ -587,31 +625,13 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
             let syncState =
                 SyncState.TryLoad(settings.WorkDir)
-                |> Option.defaultValue (PreparingMission settings.MissionFile)
+                |> Option.defaultValue (PreparingMission settings.MissionFilePath)
 
             controller <- controller0
             war <- war0
             step <- step0
             state <- Some syncState
         }
-
-    /// Copy mission files from preparation area to DServer's data dir.
-    member this.PublishMissionFiles() =
-        for file in IO.Directory.EnumerateFiles(settings.MissionPath) do
-            if IO.Path.GetExtension(file).ToLowerInvariant() = ".mission" then
-                // Do not copy text mission file, forcing DServer to use the .msnbin file. which is faster.
-                // Remove the file if it's found in DServer's directory.
-                let path = IO.Path.Combine(settings.GameDir, IO.Path.GetFileName(file))
-                if File.Exists(path) then
-                    try
-                        IO.File.Delete(path)
-                    with
-                    | exc -> logger.Warn(sprintf "Failed to delete %s: %s" path exc.Message)
-            else
-                try
-                    IO.File.Copy(file, IO.Path.Combine(settings.GameDir, IO.Path.GetFileName(file)), true)
-                with
-                | exc -> logger.Warn(sprintf "Failed to copy %s: %s" file exc.Message)
 
     /// Start DServer
     member this.StartServerAsync(?retriesLeft) =
@@ -670,7 +690,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     Ok "No old campaign data to backup before reset"
 
             let initData _ =
-                let world = Init.mkWorld(scenario, settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
+                let world = Init.mkWorld(scenario + ".Mission", settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
                 let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
                     let planeSet = BodenplatteInternal.PlaneSet.Default
                     let world = planeSet.Setup world
@@ -776,7 +796,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         {
                             MissionFileGeneration.MaxAiPatrolPlanes = 6
                             MissionFileGeneration.MaxAntiAirCannons = 100
-                            MissionFileGeneration.OutFilename = settings.MissionFile
+                            MissionFileGeneration.OutFilename = settings.MissionFilePath
                         }
                     let mission = MissionFileGeneration.mkMultiplayerMissionContent random stepData.Briefing state selection
                     mission.BuildMission(random, missionGenSettings, state)
@@ -856,15 +876,16 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 | Error msg ->
                     return this.Die(msg)
                 | Ok() ->
-                match! gameServer.ResaveMission settings.MissionFile with
-                | Error msg ->
-                    return this.Die(msg)
-                | Ok() ->
-                match! gameServer.ResaveMission settings.AltMissionFile with
-                | Error msg ->
-                    return this.Die(msg)
-                | Ok() ->
-                this.PublishMissionFiles()
+                let! resavers =
+                    Async.Sequential(
+                        [ gameServer.ResaveMission settings.MissionFile
+                          gameServer.ResaveMission settings.AltMissionFile ])
+                match resavers with
+                | [| Error _; Error _ |] ->
+                    // It's not unusual for one of the alternatives to fail, e.g. because DServer is locking one of the files
+                    // Fail if both resavings failed.
+                    return this.Die("Resaving failed")
+                | _ ->
                 if gameServer.IsRunning serverProcess then
                     let! s = gameServer.RotateMission()
                     logger.Debug s
@@ -944,7 +965,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let! status = this.Advance()
                 match status with
                 | Ok ->
-                    state <- Some(PreparingMission settings.MissionFile)
+                    state <- Some(PreparingMission settings.MissionFilePath)
                     logger.Info state
                     this.SaveState()
                     return! this.ResumeAsync()

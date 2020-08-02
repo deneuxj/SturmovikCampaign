@@ -526,10 +526,15 @@ type Controller(settings : GameServerSync.Settings) =
 
         member this.Run(maxSteps) =
             mb.PostAndAsyncReply <| fun channel s -> async {
-                let sync =
+                let! sync =
                     match s.Sync with
-                    | Some sync -> sync
-                    | None -> GameServerSync.Sync.Create(settings)
+                    | Some sync -> async.Return sync
+                    | None ->
+                        async {
+                            let sync = GameServerSync.Sync.Create(settings)
+                            do! sync.Init()
+                            return sync
+                        }
                 let rec work stepsLeft =
                     async {
                         if stepsLeft <= 0 then
@@ -625,12 +630,16 @@ type Controller(settings : GameServerSync.Settings) =
                     match s.Sync with
                     | Some sync -> sync
                     | None ->
+                        logger.Debug("Creating temporary sync")
                         // Create a temporary sync
                         GameServerSync.Sync.Create(settings)
                 let! status = sync.ResetCampaign(scenario)
+                logger.Debug("Campaign reset")
                 // If we had to create a temporary sync, dispose it
                 match s.Sync with
-                | None -> sync.Dispose()
+                | None ->
+                    logger.Debug("Dispose temporary sync")
+                    sync.Dispose()
                 | Some -> ()
                 // Reply and retain old sync, if any.
                 match status with
