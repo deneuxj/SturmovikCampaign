@@ -540,7 +540,6 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     /// Stop synchonization, typically after an unrecoverable error.
     member this.Die(msg) =
-        state |> Option.iter(fun state -> state.Save(settings.WorkDir))
         let msg =
             sprintf "Game server sync terminated: %s" msg
         logger.Info msg
@@ -941,7 +940,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     if not stopAfterMission then
                         return! this.ResumeAsync()
                     else
-                        this.Die("Stop after mission is enabled")
+                        this.Interrupt("Stop after mission", true)
+                        this.Die("Terminate sync after mission")
                         return ()
                 | None ->
                     // Restart mission
