@@ -540,7 +540,7 @@ with
                 let spawn =
                     spawn.SetPlanes(Some(T.Airfield.Planes.Default.SetPlane planes))
                 let spawnEntity =
-                    T.MCU_TR_Entity.Default.SetIndex(T.Integer.N 2).SetMisObjID(T.Integer.N 1)
+                    T.MCU_TR_Entity.Default.SetIndex(T.Integer.N 2).SetMisObjID(T.Integer.N 1).SetEnabled(T.Boolean.N true)
                 let mcus =
                     [ spawn.CreateMcu(); spawnEntity.CreateMcu() ]
                 for mcu in mcus do subst mcu
