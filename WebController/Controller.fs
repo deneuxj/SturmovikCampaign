@@ -481,10 +481,18 @@ type Controller(settings : GameServerSync.Settings) =
                 | false, _ ->
                     let path = wkPath(getSimulationFilename idx)
                     try
-                        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+                        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer()
+                        let world = World.LoadFromFile(wkPath worldFilename)
+                        let state = WarState.LoadFromFile(wkPath (getStateFilename idx), world)
                         use reader = new StreamReader(path)
                         let steps =
                             serializer.DeserializeSequence(reader)
+                            |> Seq.map (fun (description : string, command : WarStateUpdate.Commands option, results : WarStateUpdate.Results list) ->
+                                { Dto.Description = description
+                                  Dto.Command = command |> Option.map Array.singleton |> Option.defaultValue [||] |> Array.map (fun x -> x.ToDto(state))
+                                  Dto.Results = results |> List.map (fun r -> r.ToDto(state)) |> Array.ofList
+                                }
+                            )
                             |> Array.ofSeq
                         channel.Reply(Ok steps)
                         { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
