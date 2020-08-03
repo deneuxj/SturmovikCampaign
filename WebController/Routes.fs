@@ -66,26 +66,6 @@ PUT /control/sync/interrupt
 
 let fromBase64 = System.Convert.FromBase64String >> System.Text.Encoding.UTF8.GetString
 
-let withBasicAuthentication checkUser realm apply (ctx : HttpContext) =
-    let unauth msg =
-        UNAUTHORIZED msg
-        >=> setHeader "WWW-Authenticate" (sprintf "Basic Realm=\"%s\", charset=\"UTF-8\"" realm)
-        >=> setTextMimeType
-
-    match ctx.request.["Authorization"] with
-    | None ->
-        unauth "This resource requires authentication"
-    | Some encoded when encoded.TrimStart().StartsWith("Basic") ->
-        let base64 = encoded.Substring(5).Trim()
-        let pair = fromBase64 base64
-        match pair.Split(':', 2) with
-        | [| user; password |] when checkUser(user, password)->
-            apply ctx
-        | _ ->
-            unauth "Authentication failed"
-    | _ ->
-        unauth "Authentication failed"
-
 let getEncoder (ctx : HttpContext) =
     match ctx.request.header "Content-Type" with
     | Choice1Of2 value ->
@@ -131,7 +111,7 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
                     CONFLICT s >=> setTextMimeType
             return! webpart ctx
         }
-    let inControlRoom = withBasicAuthentication (function ("admin", password) -> passwords.Validate("admin", password) | _ -> false) "Control room"
+    let inControlRoom = Suave.Authentication.authenticateBasic (function ("admin", password) -> passwords.Validate("admin", password) | _ -> false)
     choose [
         GET >=> choose [
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
@@ -142,13 +122,13 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
         ]
         POST >=> choose [
-            path "/control/reset" >=> context (inControlRoom (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync))
-            path "/control/advance" >=> context (inControlRoom (fun _ -> ctrl.Advance() |> serializeAsync))
-            path "/control/run" >=> context (inControlRoom(fun _ -> ctrl.Run() |> serializeAsync))
-            path "/control/sync/loop" >=> context (inControlRoom(fun _ -> ctrl.StartSyncLoop() |> serializeAsync))
-            path "/control/sync/once" >=> context (inControlRoom(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
-            path "/control/sync/stop" >=> context (inControlRoom(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))
-            path "/control/sync/interrupt" >=> context (inControlRoom(fun _ -> ctrl.InterruptSync() |> serializeAsync))
+            path "/control/reset" >=> inControlRoom (context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync))
+            path "/control/advance" >=> inControlRoom (context (fun _ -> ctrl.Advance() |> serializeAsync))
+            path "/control/run" >=> inControlRoom (context (fun _ -> ctrl.Run() |> serializeAsync))
+            path "/control/sync/loop" >=> inControlRoom(context( fun _ -> ctrl.StartSyncLoop() |> serializeAsync))
+            path "/control/sync/once" >=> inControlRoom(context(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
+            path "/control/sync/stop" >=> inControlRoom(context(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))
+            path "/control/sync/interrupt" >=> inControlRoom(context(fun _ -> ctrl.InterruptSync() |> serializeAsync))
         ]
         POST >=> choose [
             if allowAdminPasswordChange then
