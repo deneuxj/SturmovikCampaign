@@ -25,6 +25,7 @@ open Suave.Writers
 open FSharp.Json
 
 open Campaign.WebController.Dto
+open Campaign.Passwords
 
 type IRoutingResponse =
     abstract GetWorld : unit -> Async<Result<World, string>>
@@ -63,7 +64,43 @@ PUT /control/sync/stop
 PUT /control/sync/interrupt
 """
 
-let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
+let fromBase64 = System.Convert.FromBase64String >> System.Text.Encoding.UTF8.GetString
+
+let withBasicAuthentication checkUser realm apply (ctx : HttpContext) =
+    let unauth msg =
+        UNAUTHORIZED msg
+        >=> setHeader "WWW-Authenticate" (sprintf "Basic Realm=\"%s\", charset=\"UTF-8\"" realm)
+        >=> setTextMimeType
+
+    match ctx.request.["Authorization"] with
+    | None ->
+        unauth "This resource requires authentication"
+    | Some encoded when encoded.TrimStart().StartsWith("Basic") ->
+        let base64 = encoded.Substring(5).Trim()
+        let pair = fromBase64 base64
+        match pair.Split(':', 2) with
+        | [| user; password |] when checkUser(user, password)->
+            apply ctx
+        | _ ->
+            unauth "Authentication failed"
+    | _ ->
+        unauth "Authentication failed"
+
+let setPassword (passwords : PasswordsManager) (ctx : HttpContext) =
+    match ctx.request.["Coco-SetPassword"] with
+    | Some base64 ->
+        let pair = fromBase64 base64
+        match pair.Split(':', 2) with
+        | [| user; password |] ->
+            match passwords.SetPassword(user, password) with
+            | Ok -> OK (sprintf "Password set for %s" user) >=> setTextMimeType
+            | Error err -> CONFLICT err >=> setTextMimeType
+        | _ ->
+            BAD_REQUEST "Value of header must be the base64-utf8 encoding of user:password" >=> setTextMimeType
+    | None ->
+        BAD_REQUEST "Missing Coco-SetPassword header"
+
+let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr : IRoutingResponse, ctrl : IControllerInteraction) =
     let inline serializeAsync task (ctx : HttpContext) =
         async {
             let! x = task
@@ -81,6 +118,7 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
                     CONFLICT s >=> setTextMimeType
             return! webpart ctx
         }
+    let inControlRoom = withBasicAuthentication passwords.Validate "Control room"
     choose [
         GET >=> choose [
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
@@ -91,13 +129,17 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
         ]
         PUT >=> choose [
-            path "/control/reset" >=> context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync)
-            path "/control/advance" >=> context (fun _ -> ctrl.Advance() |> serializeAsync)
-            path "/control/run" >=> context (fun _ -> ctrl.Run() |> serializeAsync)
-            path "/control/sync/loop" >=> context (fun _ -> ctrl.StartSyncLoop() |> serializeAsync)
-            path "/control/sync/once" >=> context (fun _ -> ctrl.StartSyncOnce() |> serializeAsync)
-            path "/control/sync/stop" >=> context (fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync)
-            path "/control/sync/interrupt" >=> context (fun _ -> ctrl.InterruptSync() |> serializeAsync)
+            path "/control/reset" >=> context (inControlRoom (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync))
+            path "/control/advance" >=> context (inControlRoom (fun _ -> ctrl.Advance() |> serializeAsync))
+            path "/control/run" >=> context (inControlRoom(fun _ -> ctrl.Run() |> serializeAsync))
+            path "/control/sync/loop" >=> context (inControlRoom(fun _ -> ctrl.StartSyncLoop() |> serializeAsync))
+            path "/control/sync/once" >=> context (inControlRoom(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
+            path "/control/sync/stop" >=> context (inControlRoom(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))
+            path "/control/sync/interrupt" >=> context (inControlRoom(fun _ -> ctrl.InterruptSync() |> serializeAsync))
+        ]
+        PUT >=> choose [
+            if allowAdminPasswordChange then
+                yield path "/admin/setpassord" >=> context (setPassword passwords)
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
         GET >=> pathStarts "/html/" >=> Files.browseHome
