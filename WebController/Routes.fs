@@ -100,6 +100,8 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
             path "/control/sync/interrupt" >=> context (fun _ -> ctrl.InterruptSync() |> serializeAsync)
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
+        GET >=> pathStarts "/html/" >=> Files.browseHome
+        GET >=> pathStarts "/js/" >=> Files.browseHome
         context (fun ctx ->
             "Invalid request. Try 'GET <url>/help' for a list of valid requests."
             |> NOT_FOUND) >=> setTextMimeType

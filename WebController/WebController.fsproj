@@ -14,6 +14,7 @@
     <Compile Include="Basic.Dto.fs" />
     <Compile Include="World.Dto.fs" />
     <Compile Include="War.Dto.fs" />
+    <Compile Include="Config.fs" />
     <Compile Include="Routes.fs" />
     <Compile Include="Controller.fs" />
     <Compile Include="Program.fs" />

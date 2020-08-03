@@ -8,8 +8,20 @@ let private logger = NLog.LogManager.GetCurrentClassLogger()
 
 [<EntryPoint>]
 let main argv =
+    let myConfig =
+        let filename = "webcontroller.config"
+        try
+            Config.Config.LoadFromFile filename
+        with exc ->
+            logger.Warn("Failed to load config file, using defaults")
+            logger.Warn(exc)
+            let config =
+                Config.Config.Default
+            config.Save(filename)
+            config
+
     let cts = new CancellationTokenSource()
-    let conf = { defaultConfig with cancellationToken = cts.Token }
+    let conf = { defaultConfig with cancellationToken = cts.Token; homeFolder = Some (IO.Path.GetFullPath(myConfig.SitePath)) }
     let campaignSettingsPath = IO.Path.Combine(Campaign.GameServerSync.Settings.DefaultWorkDir, "..", "campaign.cfg")
     let settings =
         if IO.File.Exists(campaignSettingsPath) then
