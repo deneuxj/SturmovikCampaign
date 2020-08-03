@@ -22,6 +22,7 @@ open Suave.Operators
 open Suave.Successful
 open Suave.RequestErrors
 open Suave.Writers
+open FSharp.Json
 
 open Campaign.WebController.Dto
 
@@ -30,11 +31,16 @@ type IRoutingResponse =
     abstract GetWarState : int option -> Async<Result<WarState, string>>
     abstract GetSimulation : int -> Async<Result<SimulationStep[], string>>
     abstract GetDates : unit -> Async<Result<DateTime[], string>>
+    abstract GetSyncState : unit -> Async<Result<string, string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
-    abstract Advance : unit -> Async<Result<SimulationStep[], string>>
+    abstract Advance : unit -> Async<Result<string, string>>
     abstract Run : unit -> Async<Result<string, string>>
+    abstract StartSyncLoop : unit -> Async<Result<string, string>>
+    abstract StartSyncOnce : unit -> Async<Result<string, string>>
+    abstract StopSyncAfterMission : unit -> Async<Result<string, string>>
+    abstract InterruptSync : unit -> Async<Result<string, string>>
 
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 let setTextMimeType = setMimeType "application/text; charset=utf-8"
@@ -50,6 +56,11 @@ GET /query/dates
 
 PUT /control/reset
 PUT /control/advance
+PUT /control/run
+PUT /control/sync/loop
+PUT /control/sync/once
+PUT /control/sync/stop
+PUT /control/sync/interrupt
 """
 
 let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
@@ -59,7 +70,12 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
             let webpart =
                 match x with
                 | Ok x ->
-                    let json = Newtonsoft.Json.JsonConvert.SerializeObject(box x)
+                    let json =
+                        try
+                            Json.serializeEx { JsonConfig.Default with allowUntyped = true } x
+                        with
+                        | :? JsonSerializationError ->
+                            Json.serializeEx { JsonConfig.Default with allowUntyped = true } {| Value = x |}
                     OK json >=> setJsonMimeType
                 | Error s ->
                     CONFLICT s >=> setTextMimeType
@@ -70,6 +86,7 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
             path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync)
             path "/query/dates" >=> context (fun _ -> rr.GetDates() |> serializeAsync)
+            path "/query/sync/state" >=> context (fun _ -> rr.GetSyncState() |> serializeAsync)
             pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
         ]
@@ -77,6 +94,10 @@ let mkRoutes (rr : IRoutingResponse, ctrl : IControllerInteraction) =
             path "/control/reset" >=> context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync)
             path "/control/advance" >=> context (fun _ -> ctrl.Advance() |> serializeAsync)
             path "/control/run" >=> context (fun _ -> ctrl.Run() |> serializeAsync)
+            path "/control/sync/loop" >=> context (fun _ -> ctrl.StartSyncLoop() |> serializeAsync)
+            path "/control/sync/once" >=> context (fun _ -> ctrl.StartSyncOnce() |> serializeAsync)
+            path "/control/sync/stop" >=> context (fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync)
+            path "/control/sync/interrupt" >=> context (fun _ -> ctrl.InterruptSync() |> serializeAsync)
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
         context (fun ctx ->

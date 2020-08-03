@@ -67,8 +67,12 @@
 
   <ItemGroup>
     <PackageReference Include="NLog" Version="4.5.11" />
-    <PackageReference Include="SturmovikMission.DataProvider" Version="8.0.0" />
+    <PackageReference Include="SturmovikMission.DataProvider" Version="8.0.1" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Util\Util.fsproj" />
   </ItemGroup>
 
 </Project>

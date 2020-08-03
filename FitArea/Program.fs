@@ -4,6 +4,7 @@ open Campaign.SpacePartition
 
 open System
 open System.Numerics
+open VectorExtension
 
 let (|BinFilePath|_|) =
     function
@@ -47,6 +48,11 @@ let (|Random|_|) =
     | "-s" :: (Integer seed) :: rest -> Some(System.Random(seed), rest)
     | rest -> Some(System.Random(), rest)
 
+let (|Candidates|_|) =
+    function
+    | "-n" :: (Integer n) :: rest -> Some(n, rest)
+    | rest -> Some(10, rest)
+
 let (|Rectangle|_|) args =
     match args with
     | Num(x0) :: Num(y0) :: Num(dx) :: Num(dy) :: rest ->
@@ -54,18 +60,18 @@ let (|Rectangle|_|) args =
     | _ ->
         None
 
-let (|MapExtent|_|) args =
-    match args with
-    | "-m" :: Rectangle(rect, rest) ->
-        Some(rect, rest)
-    | "-m" :: "rheinland" :: rest
-    | rest ->
-        Some((Vector2(30.0e3f, 30.0e3f), 324.0e3f, 400.0e3f), rest)
+let (|WithDebugGroup|_|) =
+    function
+    | "-d" :: path :: rest -> Some(path, rest)
+    | _ -> None
 
 module Debug =
+#if DEBUG_GROUP_FILE
+    // Add a reference to Blocks.dll to enable building group files to visualize free areas and candidate locations.
+    // Not enabled by default to avoid bringing in data mission files (vehicles, logic templates...)
     open SturmovikMission.Blocks.BlocksMissionData
 
-    let mkDebugGroup (transform' : Vector2 -> Vector2, region : Vector2 list, shape : Vector2 list, node : FreeAreas.FreeAreasNode, candidates : Vector2 seq) =
+    let mkDebugGroup (path : string, region : Vector2 list, shape : Vector2 list, node : FreeAreas.FreeAreasNode, candidates : Vector2 seq) =
         let nodesInRegion = FreeAreas.filterLeaves (FreeAreas.intersectsWithRegion region) node
         let shapeCenter =
             let x = shape |> Seq.sum
@@ -77,9 +83,8 @@ module Debug =
                 for node in nodesInRegion do
                     let center =
                         Vector2(0.5f * (node.Min.X + node.Max.X), 0.5f * (node.Min.Y + node.Max.Y))
-                        |> transform'
                     yield
-                        center, List.map transform' [
+                        center, [
                             Vector2(node.Min.X, node.Min.Y)
                             Vector2(node.Min.X, node.Max.Y)
                             Vector2(node.Max.X, node.Max.Y)
@@ -97,15 +102,30 @@ module Debug =
                     .SetBoundary(T.MCU_TR_InfluenceArea.Boundary.FromList <| List.map toFloatPair vertices)
                     .AsString()
             )
-        use debugFile = IO.File.CreateText("FreeAreas.Group")
+        use debugFile = IO.File.CreateText(path)
         for area in areas do
             debugFile.Write(area)
+#else
+    let mkDebugGroup _ =
+        failwith "Support for generating debug group files is not included in this build"
+#endif
+
+let makeDirect name shape =
+    match shape with
+    | p0 :: p1 :: p2 :: _ ->
+        if Vector2.Cross(p1 - p0, p2 - p1) < 0.0f then
+            List.rev shape
+        else
+            shape
+    | _ -> failwithf "%s must have at least three vertices" name
 
 [<EntryPoint>]
 let main argv =
     match argv |> List.ofSeq with
-    | BinFilePath(path, "-o" :: Poly(shape, "-r" :: (Poly(region, Random (random, MapExtent(extent, []))) | Square(region, Random(random, MapExtent(extent, [])))))) ->
+    | Candidates(numCandidates, BinFilePath(path, "-o" :: Poly(shape, "-r" :: (Poly(region, Random (random, rest)) | Square(region, Random(random, rest)))))) ->
         try
+            let shape = makeDirect "shape" shape
+            let region = makeDirect "region" region
             use freeAreasFile =
                 try
                     IO.File.OpenRead(path)
@@ -117,25 +137,17 @@ let main argv =
                 with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
             match freeAreas with
             | Some root ->
-                // Transform from mission editor coordinates to free areas coordinates, and the inverse
-                let transform, transform' =
-                    // bin data uses coordinate system where x goes east and y goes north, from 0 to 400000 on both axes.
-                    let origin, sx, sy = extent
-                    let t(v : Vector2) =
-                        Vector2(400.0e3f * (v.Y - origin.Y) / sy, 400.e3f * (v.X - origin.X) / sx)
-                    let t'(v : Vector2) =
-                        Vector2(origin.X + sx * v.Y / 400.0e3f, origin.Y + sy * v.X / 400.0e3f)
-                    t, t'
-                let region2 = List.map transform region
-                let shape2 = List.map transform shape
                 let rank _ = 
                     random.Next()
                 let candidates =
-                    FreeAreas.findPositionCandidates rank root shape2 region2
-                    |> Seq.truncate 10
-                    |> Seq.map transform'
+                    FreeAreas.findPositionCandidates rank root shape region
+                    |> Seq.truncate numCandidates
                     |> Seq.cache
-                Debug.mkDebugGroup(transform', region2, shape, root, candidates)
+                match rest with
+                | WithDebugGroup(path, _) ->
+                    Debug.mkDebugGroup(path, region, shape, root, candidates)
+                    printfn "wrote debug group to %s" path
+                | _ -> ()
                 if Seq.isEmpty candidates then
                     failwith "Failed to find a fit"
                 candidates
@@ -148,8 +160,8 @@ let main argv =
             1
     | _ ->
         eprintfn "Invalid commandline."
-        eprintfn "Usage: FitArea <free area bin file> -o <shape outline> -r <constraint region outline> [-s <seed>] [-m <map name>]"
-        eprintfn "Example: FitArea rheinland.bin -o 100.0 50.0 150.0 50.0 100.0 75.0 -r 0.0 0.0 1.0e4 -s 1234"
+        eprintfn "Usage: FitArea [-n <num candidates] <free area bin file> -o <shape outline> -r <constraint region outline> [-s <seed>] [-d <editor group file>]"
+        eprintfn "Example: FitArea -n 10 rheinland.bin -o 100.0 50.0 150.0 50.0 100.0 75.0 -r 0.0 0.0 1.0e4 -s 1234"
         eprintfn " Tries to fit a triangle with vertices (100, 50), (150, 50), (100, 75) into the square that is 10000m wide and its south-west corner in (0, 0), using the map data from rheinland.bin."
         eprintfn " The coordinates are specified using the x and z components, using the mission editor's system (x goes north, z goes east)."
         eprintfn " Outputs 10 candidates, printing the position of the centers of the shape."

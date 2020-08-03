@@ -143,6 +143,9 @@ with
     member private this.AsTuple =
         (this.Pos.X, this.Pos.Y, this.Rotation, this.Altitude)
 
+    override this.ToString() =
+        string this.AsTuple
+
     override this.Equals(other) =
         match other with
         | :? OrientedPosition as other ->

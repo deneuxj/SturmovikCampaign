@@ -15,7 +15,9 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FreeAreas", "FreeAreas\Free
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FitArea", "FitArea\FitArea.fsproj", "{7F3C641D-941E-4D87-96EB-5130CEB0DA2A}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GroupInstantiator", "GroupInstantiator\GroupInstantiator.fsproj", "{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GroupInstantiator", "GroupInstantiator\GroupInstantiator.fsproj", "{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Util", "Util\Util.fsproj", "{1B5F58AD-EBD9-479D-A29F-DB641FC38813}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B5F58AD-EBD9-479D-A29F-DB641FC38813}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B5F58AD-EBD9-479D-A29F-DB641FC38813}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B5F58AD-EBD9-479D-A29F-DB641FC38813}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B5F58AD-EBD9-479D-A29F-DB641FC38813}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

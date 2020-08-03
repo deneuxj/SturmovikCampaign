@@ -41,6 +41,7 @@ open SturmovikMission.Blocks
 open SturmovikMission.Blocks.VirtualConvoy
 open SturmovikMission.Blocks.Train
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
 
 type AiStartPoint =
     | StartAtIngress of float32<M>
@@ -125,7 +126,7 @@ type AiPatrol with
 
 /// Compute groups of buildings or bridges in a region that are still 50% functional or more.
 /// The result is not a partitition, i.e. each building may appear in more than one groups.
-let computeHealthyBuildingClusters(radius, state : WarState, buildings : BuildingInstance seq, regId : RegionId) =
+let computeHealthyBuildingClusters(radius, state : IWarStateQuery, buildings : BuildingInstance seq, regId : RegionId) =
     let region = state.World.Regions.[regId]
     // Find the largest cluster of healthy buildings, and use that
     let healthyBuildings =
@@ -143,13 +144,16 @@ let computeHealthyBuildingClusters(radius, state : WarState, buildings : Buildin
     |> Seq.map (fun (rep, group) -> rep, group |> Seq.map snd)
 
 
-type TargetLocator(random : System.Random, state : WarState) =
+type TargetLocator(random : System.Random, state : IWarStateQuery) =
     let freeAreas : FreeAreas.FreeAreasNode option =
         let path =
             match state.World.Map.ToLowerInvariant() with
-            | "rheinland-summer"
-            | _ ->
-                "rheinland.bin"
+            | "moscow-winter" | "moscow-autumn" -> "moscow.bin"
+            | "kuban-spring" | "kuban-summer" | "kuban-autumn" -> "kuban.bin"
+            | "stalingrad-winter" | "stalingrad-summer" | "stalingrad-autumn" -> "stalingrad.bin"
+            | "rheinland-summer" | "rheinland-winter" | "rheinland-spring" -> "rheinland.bin"
+            | unsupported ->
+                failwithf "Unsupported map '%s'" unsupported
         use freeAreasFile =
             try
                 System.IO.File.OpenRead(path)
@@ -159,31 +163,13 @@ type TargetLocator(random : System.Random, state : WarState) =
             serializer.Deserialize(freeAreasFile)
         with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
 
-    let mapExtent =
-        match state.World.Map.ToLowerInvariant() with
-        | "rheinland-summer"
-        | _ ->
-            Vector2(30.0e3f, 30.0e3f), 324.0e3f, 400.0e3f
-
     let getGroundLocationCandidates(region, shape) =
         match freeAreas with
         | Some root ->
-            // Transform from mission editor coordinates to free areas coordinates, and the inverse
-            let transform, transform' =
-                // bin data uses coordinate system where x goes east and y goes north, from 0 to 400000 on both axes.
-                let origin, sx, sy = mapExtent
-                let t(v : Vector2) =
-                    Vector2(400.0e3f * (v.Y - origin.Y) / sy, 400.e3f * (v.X - origin.X) / sx)
-                let t'(v : Vector2) =
-                    Vector2(origin.X + sx * v.Y / 400.0e3f, origin.Y + sy * v.X / 400.0e3f)
-                t, t'
-            let region2 = List.map transform region
-            let shape2 = List.map transform shape
             let rank _ = 
                 random.Next()
             let candidates =
-                FreeAreas.findPositionCandidates rank root shape2 region2
-                |> Seq.map transform'
+                FreeAreas.findPositionCandidates rank root shape region
                 |> Seq.cache
             candidates
         | None ->
@@ -365,6 +351,12 @@ type PlayerSpawnType =
     | Airborne
     | Runway
     | Parking of WarmedUp: bool
+with
+    member this.IntValue =
+        match this with
+        | Airborne -> 0
+        | Runway -> 1
+        | Parking -> 2
 
 type PlayerSpawnPlane =
     {
@@ -412,6 +404,45 @@ type PlayerFlight =
     | Unconstrained of PlayerSpawnPlane list
     | Directed of PlayerDirectedFlight
 
+type Campaign.NewWorldDescription.Runway with
+    member this.Chart =
+        let chart = T.Airfield.Chart.Default
+        let getRelativeXZ =
+            let x = Vector2.FromYOri(float this.SpawnPos.Rotation)
+            let z = x.Rotate(90.0f)
+            fun (v : Vector2) ->
+                let v2 = v - this.SpawnPos.Pos
+                float(Vector2.Dot(v2, x)), float(Vector2.Dot(v2, z))
+        let mkPoint(v, t) =
+            let x, z = getRelativeXZ v
+            T.Airfield.Chart.Point.Default
+                .SetX(T.Float.N x)
+                .SetY(T.Float.N z)
+                .SetType(T.Integer.N t)
+        let points =
+            [
+                match this.PathToRunway with
+                | initial :: path ->
+                    yield mkPoint(initial, 0)
+                    for v in path do
+                        yield mkPoint(v, 1)
+                | [] ->
+                    ()
+                yield mkPoint(this.Start, 2)
+                yield mkPoint(this.End, 2)
+                match List.rev this.PathOffRunway with
+                | last :: rpath ->
+                    yield! List.rev [
+                        yield mkPoint(last, 0)
+                        for v in rpath do
+                            yield mkPoint(v, 1)
+                    ]
+                | [] ->
+                    ()
+            ]
+        chart
+            .SetPoint(points)
+
 type PlayerSpawn =
     {
         Airfield : AirfieldId
@@ -420,7 +451,7 @@ type PlayerSpawn =
         Flight : PlayerFlight
     }
 with
-    member this.BuildMCUs(store : NumericalIdentifiers.IdStore, state : WarState) =
+    member this.BuildMCUs(store : NumericalIdentifiers.IdStore, state : IWarStateQuery) =
         let subst = Mcu.substId(store.GetIdMapper())
         let af = state.World.Airfields.[this.Airfield]
         let coalition = state.GetOwner(af.Region)
@@ -436,13 +467,12 @@ with
             match this.Flight with
             | Unconstrained planes ->
                 let runway =
-                    lazy
-                        let windDir = Vector2.FromYOri(float state.Weather.Wind.Direction)
-                        try
-                            af.Runways
-                            |> Seq.maxBy (fun runway -> Vector2.Dot(windDir, runway.End - runway.Start))
-                            |> Some
-                        with _ -> None
+                    let windDir = Vector2.FromYOri(float state.Weather.Wind.Direction)
+                    try
+                        af.Runways
+                        |> Seq.maxBy (fun runway -> Vector2.Dot(windDir, (runway.End - runway.Start).Rotate(runway.SpawnPos.Rotation)))
+                        |> Some
+                    with _ -> None
                 let spawn =
                     T.Airfield.Default
                         .SetIndex(T.Integer.N 1)
@@ -455,6 +485,15 @@ with
                         .SetRefuelTime(T.Integer.N 30)
                         .SetRearmTime(T.Integer.N 30)
                         .SetRepairTime(T.Integer.N 30)
+                        .SetModel(T.String.N @"graphics\airfields\fakefield.mgm")
+                        .SetScript(T.String.N @"LuaScripts\WorldObjects\Airfields\fakefield.txt")
+                        .SetCountry(T.Integer.N (int (state.World.GetAnyCountryInCoalition coalition).ToMcuValue))
+                let spawn =
+                    match runway with
+                    | Some runway ->
+                        spawn.SetChart(Some runway.Chart)
+                    | None ->
+                        spawn
                 let spawn =
                     match this.SpawnType with
                     | Airborne ->
@@ -466,7 +505,7 @@ with
                     | Runway ->
                         let pos, ori =
                             match runway with
-                            | Lazy(Some runway) ->
+                            | Some runway ->
                                 runway.Start, (runway.End - runway.Start).YOri
                             | _ ->
                                 this.Pos.Pos, this.Pos.Rotation
@@ -477,7 +516,7 @@ with
                     | Parking _ ->
                         let pos, ori =
                             match runway with
-                            | Lazy(Some runway) ->
+                            | Some runway ->
                                 runway.SpawnPos.Pos, runway.SpawnPos.Rotation
                             | _ ->
                                 this.Pos.Pos, this.Pos.Rotation
@@ -493,11 +532,15 @@ with
                         let skinFilters = ModRange.ModFilters plane.AllowedSkins
                         let afPlane = newAirfieldPlane(modFilters, payloadFilters, plane.Mods, plane.Payload, skinFilters, plane.Model.Name, -1)
                         afPlane
+                            .SetAILevel(T.Integer.N 2)  // Normal
+                            .SetStartInAir(T.Integer.N this.SpawnType.IntValue)
+                            .SetModel(T.String.N plane.Model.ScriptModel.Model)
+                            .SetScript(T.String.N plane.Model.ScriptModel.Script)
                     )
                 let spawn =
                     spawn.SetPlanes(Some(T.Airfield.Planes.Default.SetPlane planes))
                 let spawnEntity =
-                    T.MCU_TR_Entity.Default.SetIndex(T.Integer.N 2).SetMisObjID(T.Integer.N 1)
+                    T.MCU_TR_Entity.Default.SetIndex(T.Integer.N 2).SetMisObjID(T.Integer.N 1).SetEnabled(T.Boolean.N true)
                 let mcus =
                     [ spawn.CreateMcu(); spawnEntity.CreateMcu() ]
                 for mcu in mcus do subst mcu
@@ -749,16 +792,92 @@ with
 
 type MissionGenSettings =
     {
-        /// Mission length in minutes
-        MissionLength : int
         MaxAntiAirCannons : int
         MaxAiPatrolPlanes : int
         OutFilename : string
     }
 
+/// Create the MCUs for all static blocks or bridges within a convex hull, creating entities for those that need entities (typically objectives for AI ground attackers).
+let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, state : IWarStateQuery, blocks, hull, hasEntity, filterDamages) =
+    let blockAt =
+        blocks
+        |> Seq.map (fun block -> OrientedPosition.FromMission block, block)
+        |> Seq.distinctBy fst
+        |> Seq.mutableDict
+    // Apply damages
+    for (bId, part, health) in state.BuildingDamages |> Seq.filter filterDamages do
+        let building = state.World.GetBuildingInstance(bId)
+        match blockAt.TryGetValue(building.Pos) with
+        | true, block ->
+            let damages = CommonMethods.getDamaged block
+            let damages = CommonMethods.setItem part (T.Float.N(float health)) damages
+            let block = CommonMethods.setDamaged damages block
+            let block = CommonMethods.setDurability (T.Integer.N(building.Properties.Durability)) block
+            blockAt.[building.Pos] <- block
+        | false, _ ->
+            // No block at position. Maybe the mission file was edited after the campaign started. Bad, but not worth dying with an exception.
+            logger.Warn(sprintf "Failed to set damage on building or bridge at %s. No building found at that position in the campaign mission file." (string building.Pos))
+            ()
+    // Cull everything not in the hull
+    let blocks =
+        blockAt
+        |> Seq.filter (fun kvp -> kvp.Key.Pos.IsInConvexPolygon hull)
+        |> List.ofSeq
+    // Set country
+    let blocks =
+        blocks
+        |> List.map (fun kvp ->
+            let pos = kvp.Key
+            let country =
+                state.World.Regions.Values
+                |> Seq.tryFind (fun region -> pos.Pos.IsInConvexPolygon region.Boundary)
+                |> Option.bind (fun region -> state.GetOwner region.RegionId)
+                |> Option.map (fun coalition -> state.World.GetAnyCountryInCoalition coalition)
+            let block =
+                match country with
+                | Some country -> CommonMethods.setCountry (T.Integer.N (int country.ToMcuValue)) kvp.Value
+                | None -> kvp.Value
+            pos, block
+        )
+    // Create entities when needed, and create unique IDs
+    let mcus =
+        let subst = Mcu.substId <| store.GetIdMapper()
+        [
+            for pos, block in blocks do
+                if hasEntity pos.Pos then
+                    let subst = Mcu.substId <| store.GetIdMapper()
+                    let mcu1 = CommonMethods.createMcu block
+                    let mcu2 = newEntity (mcu1.Index + 1)
+                    Mcu.connectEntity (mcu1 :?> Mcu.HasEntity) mcu2
+                    for mcu in [mcu1; upcast mcu2] do
+                        subst mcu
+                        pos.Pos.AssignTo mcu.Pos
+                        mcu.Pos.Y <- float pos.Altitude
+                        mcu.Ori.Y <- float pos.Rotation
+                    yield mcu1
+                    yield upcast mcu2
+                else
+                    let mcu =
+                        block
+                        |> CommonMethods.setLinkTrId (T.Integer.N 0)
+                        |> CommonMethods.createMcu
+                    subst mcu
+                    yield mcu
+        ]
+    // Result
+    McuUtil.groupFromList mcus
+
+/// Set the list of planes in the options of a mission file
+let private addMultiplayerPlaneConfigs (world : NewWorldDescription.World) (options : T.Options) =
+    let configs =
+        world.PlaneSet.Values
+        |> Seq.map (fun model -> T.String.N (model.ScriptModel.Script))
+    options.SetMultiplayerPlaneConfig(List.ofSeq configs)
+
 /// Data needed to create a multiplayer "dogfight" mission
 type MultiplayerMissionContent =
     {
+        Briefing : string
         Boundary : Vector2 list
         PlayerSpawns : PlayerSpawn list
         AntiAirNests : Nest list
@@ -770,17 +889,17 @@ type MultiplayerMissionContent =
     }
 with
     /// Get the AI patrols of a coalition
-    member this.AiPatrolsOf(coalition, state : WarState) =
+    member this.AiPatrolsOf(coalition, state : IWarStateQuery) =
         this.AiPatrols
         |> List.filter (fun patrol -> state.GetOwner(state.World.Airfields.[patrol.HomeAirfield].Region) = Some coalition)
 
     /// Get the AI attacks of a coalition
-    member this.AiAttacksOf(coalition, state : WarState) =
+    member this.AiAttacksOf(coalition, state : IWarStateQuery) =
         this.AiAttacks
         |> List.filter (fun patrol -> state.GetOwner(state.World.Airfields.[patrol.HomeAirfield].Region) = Some coalition)
 
     /// Create the groups suitable for a multiplayer "dogfight" misison
-    member this.BuildMission(random, settings : MissionGenSettings, state : WarState) =
+    member this.BuildMission(random, settings : MissionGenSettings, state : IWarStateQuery) =
         let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile (state.World.Scenario + ".Mission"))
         let options = Seq.head strategyMissionData.ListOfOptions
         let store = NumericalIdentifiers.IdStore()
@@ -788,7 +907,43 @@ with
         lcStore.SetNextId 3
         let getId = store.GetIdMapper()
         let missionBegin = newMissionBegin (getId 1)
-        let missionLength = 1.0f<H> * float32 settings.MissionLength / 60.0f
+
+        let inTargetedArea(pos : Vector2) =
+            this.AiAttacks
+            |> Seq.exists(fun attack -> (attack.Target - pos).Length() < 10000.0f)
+
+        // Mission name, briefing, author
+        let optionStrings =
+            { new McuUtil.IMcuGroup with
+                  member x.Content = []
+                  member x.LcStrings =
+                    [ (0, "Dynamic online campaign " + state.World.Scenario)
+                      (1, this.Briefing)
+                      (2, "auto-generated-coconut-campaign")
+                    ]
+                  member x.SubGroups = []
+            }
+        // Weather and player planes
+        let options =
+            (Weather.setOptions random state.Weather state.Date options)
+                .SetMissionType(T.Integer.N 2) // deathmatch
+                |> addMultiplayerPlaneConfigs state.World
+
+        // Static buildings and blocks
+        let buildings =
+            let isBuilding (bId : BuildingInstanceId, _, _) =
+                state.World.Buildings.ContainsKey bId
+            mkStaticMCUs(store, state, strategyMissionData.GetGroup("Static").ListOfBlock, this.Boundary, inTargetedArea, isBuilding)
+
+        // Bridges
+        let bridges =
+            let isBridge (bId : BuildingInstanceId, _, _) =
+                state.World.Bridges.ContainsKey bId
+            let bridges =
+                [ "BridgesHW" ; "BridgesRW" ]
+                |> Seq.map strategyMissionData.GetGroup
+                |> Seq.collect (fun g -> g.ListOfBridge)
+            mkStaticMCUs(store, state, bridges, this.Boundary, inTargetedArea, isBridge)
 
         // Spawns
         let spawns =
@@ -875,9 +1030,16 @@ with
             this.ParkedPlanes
             |> List.map (fun (plane, pos, country) -> mkParkedPlane(state.World.PlaneSet.[plane], pos, int country.ToMcuValue))
 
+        // Mission end triggered by server input
+        let serverInputMissionEnd = MissionEnd.MissionEnd.Create(store)
+
         // Result
         let allGroups =
             [
+                yield optionStrings
+                yield buildings
+                yield bridges
+                yield! spawns
                 yield McuUtil.groupFromList [ missionBegin ]
                 yield! retainedAA
                 yield! battles
@@ -885,13 +1047,24 @@ with
                 yield! allAttacks
                 yield! convoys
                 yield! parkedPlanes
+                yield serverInputMissionEnd.All
             ]
 
+        // Create directories in path to file, if needed
+        let outDir = System.IO.Path.GetDirectoryName(settings.OutFilename)
+        if not(System.IO.Directory.Exists(outDir)) then
+            try
+                System.IO.Directory.CreateDirectory(outDir)
+                |> ignore
+            with _ -> ()
+
+        // Write file
         McuOutput.writeMissionFiles "eng" settings.OutFilename options allGroups
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
-let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float32<H>) (state : WarState) (missions : MissionSelection) =
+let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarState) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
+    let warmedUp = true
 
     // All regions that are involved in some mission
     let primaryRegions = missions.Regions(state.World)
@@ -947,7 +1120,7 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
         [
             let within =
                 state.World.Airfields.Values
-                |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary)
+                |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary && not af.Runways.IsEmpty)
             let wind = Vector2.FromYOri(state.Weather.Wind.Direction)
             for af in within do
                 let runway =
@@ -981,7 +1154,9 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
     let aaNests =
         [
             let gunsPerNest = 5
-            let aaCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * missionLength
+            // Resource planning aims to avoid running dry before next resupply, which is assumed to be one day of combat
+            let combatTimeBeforeResuply = 12.0f<H>
+            let aaCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * combatTimeBeforeResuply
             // Airfields
             for afId in spawns |> Seq.map (fun spawn -> spawn.Airfield) do
                 let country = 
@@ -1252,6 +1427,7 @@ let mkMultiplayerMissionContent (random, warmedUp : bool, missionLength : float3
 
     // Result
     {
+        Briefing = briefing
         Boundary = boundary
         PlayerSpawns = spawns
         AntiAirNests = aaNests

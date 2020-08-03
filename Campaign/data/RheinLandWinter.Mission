@@ -1,0 +1,490 @@
+# Mission File Version = 1.0;
+
+Options
+{
+  LCName = 0;
+  LCDesc = 1;
+  LCAuthor = 2;
+  PlayerConfig = "";
+  Time = 12:30:0;
+  Date = 16.12.1944;
+  HMap = "graphics\LANDSCAPE_Rheinland_wi\height.hini";
+  Textures = "graphics\LANDSCAPE_Rheinland_wi\textures.tini";
+  Forests = "graphics\LANDSCAPE_Rheinland_wi\trees\woods.wds";
+  Layers = "";
+  GuiMap = "rheinland-winter";
+  SeasonPrefix = "wi";
+  MissionType = 0;
+  AqmId = 0;
+  CloudLevel = 500;
+  CloudHeight = 200;
+  PrecLevel = 0;
+  PrecType = 0;
+  CloudConfig = "winter\00_clear_00\sky.ini";
+  SeaState = 0;
+  Turbulence = 0;
+  TempPressLevel = 0;
+  Temperature = 25;
+  Pressure = 760;
+  WindLayers
+  {
+    0 :     0 :     0;
+    500 :     0 :     0;
+    1000 :     0 :     0;
+    2000 :     0 :     0;
+    5000 :     0 :     0;
+  }
+  Countries
+  {
+    0 : 0;
+    101 : 1;
+    102 : 1;
+    103 : 1;
+    201 : 2;
+    202 : 2;
+    203 : 2;
+    301 : 3;
+    302 : 3;
+    303 : 3;
+    304 : 3;
+    305 : 3;
+    401 : 4;
+    402 : 4;
+  }
+}
+
+MCU_TR_InfluenceArea
+{
+  Index = 2;
+  Name = "Manhay";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 81436.215;
+  YPos = 437.505;
+  ZPos = 176349.208;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 201;
+  Boundary
+  {
+    77214.9, 185392;
+    78096.5, 169871;
+    88120.8, 173744;
+    92497.5, 185930;
+    89531.6, 192461;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 4;
+  Name = "Barvaux";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 87983.628;
+  YPos = 437.505;
+  ZPos = 163752.712;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 103;
+  Boundary
+  {
+    80919.8, 163795;
+    86167.2, 162010;
+    92252.1, 161621;
+    94534.5, 168876;
+    88215.1, 173279;
+    78143.9, 169634;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 5;
+  Name = "Spa";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 102816.028;
+  YPos = 437.505;
+  ZPos = 190418.869;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 201;
+  Boundary
+  {
+    92910, 186055;
+    102932, 183652;
+    105379, 193403;
+    99426.1, 198811;
+    91904.4, 197362;
+    89641.3, 192556;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 6;
+  Name = "Aywaille";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 101298.324;
+  YPos = 437.505;
+  ZPos = 176830.834;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 103;
+  Boundary
+  {
+    103425, 168914;
+    105756, 179010;
+    102904, 183515;
+    92808, 185819;
+    88355.1, 173644;
+    94655.5, 169096;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 7;
+  Name = "X2516";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 108379.685;
+  YPos = 437.505;
+  ZPos = 186888.920;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 201;
+  Boundary
+  {
+    103211, 183757;
+    105914, 179287;
+    115396, 179878;
+    115483, 185824;
+    105816, 193336;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 8;
+  Name = "X2515";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 109081.352;
+  YPos = 437.505;
+  ZPos = 175548.156;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 201;
+  Boundary
+  {
+    103723, 168816;
+    114796, 164138;
+    115387, 179622;
+    106044, 178917;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 9;
+  Name = "X2614";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 98902.684;
+  YPos = 437.505;
+  ZPos = 161791.065;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 103;
+  Boundary
+  {
+    92502.1, 161549;
+    97386.8, 154871;
+    103503, 168660;
+    94823.3, 168854;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 10;
+  Name = "X2713";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 87297.833;
+  YPos = 437.505;
+  ZPos = 159654.348;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 103;
+  Boundary
+  {
+    91133.7, 147576;
+    98150.9, 148948;
+    97292, 154729;
+    92318, 161266;
+    86060.8, 161886;
+    80482.6, 154241;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 11;
+  Name = "X2613";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 102740.974;
+  YPos = 437.505;
+  ZPos = 155959.364;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 103;
+  Boundary
+  {
+    98377.4, 148943;
+    106583, 149138;
+    114654, 163948;
+    103663, 168449;
+    97572.1, 154733;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 12;
+  Name = "X2812";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 81129.658;
+  YPos = 437.505;
+  ZPos = 145307.600;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 103;
+  Boundary
+  {
+    71413.1, 150418;
+    75945.7, 135136;
+    90987.9, 147344;
+    80387.9, 154099;
+    74444.9, 155734;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 13;
+  Name = "Verviers";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 114160.137;
+  YPos = 437.505;
+  ZPos = 191002.965;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 201;
+  Boundary
+  {
+    115339, 186213;
+    122029, 187971;
+    119376, 198791;
+    105959, 193566;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 14;
+  Name = "Florennes";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 79997.855;
+  YPos = 437.505;
+  ZPos = 99822.955;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 103;
+  Boundary
+  {
+    68481.1, 78547.7;
+    94924.9, 81205.7;
+    98097.5, 148805;
+    91276, 147337;
+    76069.7, 134925;
+    63933.5, 114134;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 15;
+  Name = "Euskirchen";
+  Desc = "***";
+  Targets = [];
+  Objects = [];
+  XPos = 120744.739;
+  YPos = 437.505;
+  ZPos = 257105.080;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 201;
+  Boundary
+  {
+    99469.5, 198927;
+    105668, 193473;
+    119690, 199157;
+    140686, 218919;
+    142387, 254632;
+    129656, 268142;
+    110365, 263458;
+    102209, 234576;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 16;
+  Name = "Wavre";
+  Desc = "***";
+  Targets = [];
+  Objects = [];
+  XPos = 131352.967;
+  YPos = 437.505;
+  ZPos = 103709.617;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 103;
+  Boundary
+  {
+    135848, 79213.1;
+    140880, 116642;
+    106762, 148860;
+    98300.5, 148693;
+    95031.9, 81283.5;
+    121559, 77528.9;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 17;
+  Name = "Translator Influence Area";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 147613.131;
+  YPos = 437.505;
+  ZPos = 85213.873;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    146613, 84213.7;
+    148613, 85213.7;
+    146613, 86213.7;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 18;
+  Name = "Ourthe";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 79760.666;
+  YPos = 184.101;
+  ZPos = 159806.037;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    80358.7, 154244;
+    85990.5, 161927;
+    80879.9, 163688;
+    74431.5, 155838;
+  }
+}
+
+
+# end of file

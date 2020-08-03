@@ -65,6 +65,10 @@ type BuildingInstance = {
 with
     member this.Id = BuildingInstanceId this.Pos
 
+    member this.Boundary =
+        this.Properties.Boundary
+        |> List.map (fun v -> v.Rotate(this.Pos.Rotation) + this.Pos.Pos)
+
 type Region = {
     RegionId : RegionId
     Boundary : Vector2 list
@@ -677,6 +681,9 @@ module Init =
                 |> String.concat "\n"
                 |> eprintfn "%s"
                 failwithf "Failed to parse scenario '%s'" scenario
+            | exc ->
+                failwithf "Failed to parse scenario '%s': %s" scenario exc.Message
+
         // Region boundaries
         let regionAreas =
             missionData.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
