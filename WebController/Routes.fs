@@ -131,7 +131,7 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
                     CONFLICT s >=> setTextMimeType
             return! webpart ctx
         }
-    let inControlRoom = withBasicAuthentication passwords.Validate "Control room"
+    let inControlRoom = withBasicAuthentication (function ("admin", password) -> passwords.Validate("admin", password) | _ -> false) "Control room"
     choose [
         GET >=> choose [
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
