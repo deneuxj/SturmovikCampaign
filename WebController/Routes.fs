@@ -141,7 +141,7 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
             pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
         ]
-        PUT >=> choose [
+        POST >=> choose [
             path "/control/reset" >=> context (inControlRoom (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync))
             path "/control/advance" >=> context (inControlRoom (fun _ -> ctrl.Advance() |> serializeAsync))
             path "/control/run" >=> context (inControlRoom(fun _ -> ctrl.Run() |> serializeAsync))
@@ -150,7 +150,7 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
             path "/control/sync/stop" >=> context (inControlRoom(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))
             path "/control/sync/interrupt" >=> context (inControlRoom(fun _ -> ctrl.InterruptSync() |> serializeAsync))
         ]
-        PUT >=> choose [
+        POST >=> choose [
             if allowAdminPasswordChange then
                 yield path "/admin/set-password" >=> context (setPassword passwords)
         ]
