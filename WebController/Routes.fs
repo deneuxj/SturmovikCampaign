@@ -86,19 +86,32 @@ let withBasicAuthentication checkUser realm apply (ctx : HttpContext) =
     | _ ->
         unauth "Authentication failed"
 
+let getEncoder (ctx : HttpContext) =
+    match ctx.request.header "Content-Type" with
+    | Choice1Of2 value ->
+        let m = System.Text.RegularExpressions.Regex.Match(value, @"application=.*; charset=(.*)")
+        if m.Success then
+            try
+                System.Text.Encoding.GetEncoding(m.Groups.[1].Value)
+            with _ ->
+                System.Text.Encoding.UTF8
+        else
+            System.Text.Encoding.UTF8
+    | _ ->
+        System.Text.Encoding.UTF8
+
 let setPassword (passwords : PasswordsManager) (ctx : HttpContext) =
-    match ctx.request.["Coco-SetPassword"] with
-    | Some base64 ->
-        let pair = fromBase64 base64
-        match pair.Split(':', 2) with
-        | [| user; password |] ->
-            match passwords.SetPassword(user, password) with
-            | Ok -> OK (sprintf "Password set for %s" user) >=> setTextMimeType
-            | Error err -> CONFLICT err >=> setTextMimeType
-        | _ ->
-            BAD_REQUEST "Value of header must be the base64-utf8 encoding of user:password" >=> setTextMimeType
-    | None ->
-        BAD_REQUEST "Missing Coco-SetPassword header"
+    let encoder = getEncoder ctx
+    let json = ctx.request.rawForm |> encoder.GetString
+    try
+        let data = Json.deserialize<{| User: string; Password: string |}> json
+        match passwords.SetPassword(data.User, data.Password) with
+        | Ok ->
+            OK (sprintf "Password set for %s" data.User) >=> setTextMimeType
+        | Error err ->
+            CONFLICT err >=> setTextMimeType
+    with
+    | _ -> BAD_REQUEST "Invalid content"
 
 let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr : IRoutingResponse, ctrl : IControllerInteraction) =
     let inline serializeAsync task (ctx : HttpContext) =
@@ -139,7 +152,7 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
         ]
         PUT >=> choose [
             if allowAdminPasswordChange then
-                yield path "/admin/setpassord" >=> context (setPassword passwords)
+                yield path "/admin/set-password" >=> context (setPassword passwords)
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
         GET >=> pathStarts "/html/" >=> Files.browseHome
