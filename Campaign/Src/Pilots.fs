@@ -39,6 +39,12 @@ type RanksDatabase =
     {
         Ranks: Map<CountryId, Rank list>
     }
+with
+    static member Default =
+        CountryId.All
+        |> Seq.map (fun country -> country, [ {RankName = "Rookie"; Flights = 0 } ])
+        |> Map.ofSeq
+        |> fun ranks -> { Ranks = ranks }
 
 type Award =
     {
@@ -95,8 +101,14 @@ let computeInstancesOfAwards (awards : Award list) (flights : FlightRecord list)
 
 type AwardDatabase =
     {
-        Awards : Map<CountryId, Award>
+        Awards : Map<CountryId, Award list>
     }
+with
+    static member Default =
+        CountryId.All
+        |> Seq.map (fun country -> country, [])
+        |> Map.ofSeq
+        |> fun awards -> { Awards = awards }
 
 type Pilot =
     {

@@ -92,6 +92,13 @@ type CountryId =
     | Germany
     | Italy
 with
+    static member All = [
+        Russia
+        UnitedStates
+        GreatBritain
+        Germany
+        Italy
+    ]
     member this.Coalition =
         match this with
         | Russia | UnitedStates | GreatBritain -> Allies
