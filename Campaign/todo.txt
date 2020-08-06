@@ -1,10 +1,8 @@
 TODO:
-Add client GUI for server control
-Add non-ground attack mission selections
-Add other missions in mission selections
 Add pilot stats and bonuses
 Add map icons and lines
 Add static planes in mission gen
+Add other missions in mission selections
 Add windsocks
 Add spotters
 Add landlights
