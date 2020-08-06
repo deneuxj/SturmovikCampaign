@@ -21,6 +21,7 @@
     <Compile Include="Src\WorldDescription.fs" />
     <Compile Include="Src\NewWorldDescription.fs" />
     <Compile Include="Src\Weather.fs" />
+    <Compile Include="Src\Targets.fs" />
     <Compile Include="Src\WarState.fs" />
     <Compile Include="Src\WarStateUpdate.fs" />
     <Compile Include="Src\Missions.fs" />
