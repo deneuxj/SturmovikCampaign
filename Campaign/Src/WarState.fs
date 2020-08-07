@@ -31,6 +31,7 @@ open SturmovikMission
 open Util
 open Campaign.Buildings
 open Campaign.Pilots
+open Campaign.Targets
 
 /// Complex algorithms using data from WarState
 module private Algo =
@@ -181,6 +182,8 @@ type IWarStateQuery =
     abstract member NextPilotId : unit -> PilotId
     /// Get all pilots of a player
     abstract member GetPlayerPilots : string -> Pilot seq
+    /// Try to get the current airfield where a pilot is located
+    abstract member TryGetPilotHome : PilotId -> AirfieldId option
 
 [<AutoOpen>]
 module IWarStateExtensions = 
@@ -551,6 +554,29 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         |> Seq.filter (fun pilot -> pilot.PlayerGuid = guid)
         |> Seq.sortBy (fun pilot -> pilot.Id)
 
+    member this.TryGetPilotHome(pilotId) =
+        let pilot = pilots.[pilotId]
+        pilot.Flights
+        |> List.tryLast
+        |> Option.bind (fun flight ->
+            match flight.Return with
+            | CrashedInEnemyTerritory -> None
+            | CrashedInFriendlyTerritory pos ->
+                try
+                    world.Airfields.Values
+                    |> Seq.filter (fun af -> // Airfields controlled by the player's side
+                        owners.TryGetValue(af.Region)
+                        |> Option.ofPair
+                        |> Option.map (fun coalition -> world.Countries.[pilot.Country] = coalition)
+                        |> Option.defaultValue false)
+                    |> Seq.minBy (fun af -> (af.Position - pos).LengthSquared()) // Pick closest airfield
+                    |> fun af -> af.AirfieldId
+                    |> Some
+                with _ -> None
+            | AtAirfield afId ->
+                Some afId
+        )
+
     interface IWarState with
         member this.ComputeDistancesToAirfields() = upcast(this.ComputeDistancesToAirfields())
         member this.ComputeDistancesToCoalition(arg1) = upcast(this.ComputeDistancesToCoalition(arg1))
@@ -583,6 +609,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
         member this.NextPilotId() = this.NextPilotId()
         member this.GetPlayerPilots(guid : string) = this.GetPlayerPilots(guid)
+        member this.TryGetPilotHome(id : PilotId) = this.TryGetPilotHome(id)
 
 
 [<RequireQualifiedAccess>]

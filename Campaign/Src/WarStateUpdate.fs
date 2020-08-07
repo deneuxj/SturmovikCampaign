@@ -67,7 +67,7 @@ type Results =
     | TimeSet of System.DateTime
     | PlayerUpdated of NickName: string
     | PlayerBanUpdated of NickName: string * Ban: BanStatus
-    | PilotUpdated of PilotId * Pilot
+    | PilotUpdated of Pilot
 
 module Results =
     let asString (war : IWarStateQuery) result =
@@ -104,8 +104,8 @@ module Results =
             sprintf "Registration of %s was updated" nickName
         | PlayerBanUpdated(nickName, ban) ->
             sprintf "Status of %s is %s" nickName (string ban)
-        | PilotUpdated(pid, pilot) ->
-            sprintf "Recorded additional flight for %s %s, who is now %s" pilot.PilotFistName pilot.PilotLastName (string pilot.Health)
+        | PilotUpdated(pilot) ->
+            sprintf "Pilot %s %s updated, who is now %s" pilot.PilotFistName pilot.PilotLastName (string pilot.Health)
 
 module CommandExecution =
     type IWarState with
@@ -211,4 +211,4 @@ module CommandExecution =
                 let pilot = state.GetPilot(pid)
                 let pilot = { pilot with Flights = pilot.Flights @ [flight]; Health = health }
                 state.UpdatePilot(pilot)
-                [ PilotUpdated(pid, pilot) ]
+                [ PilotUpdated(pilot) ]

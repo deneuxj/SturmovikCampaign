@@ -323,6 +323,23 @@ module internal Extensions =
                     "AdvanceTime",
                     [ "Hours", span.TotalHours |> box
                     ] |> Map.ofSeq
+                | WarStateUpdate.UpdatePlayer(_, nickName) ->
+                    "UpdatePlayer",
+                    [ "Name", nickName :> obj
+                    ] |> Map.ofSeq
+                | WarStateUpdate.UpdatePlayerBan(_, ban) ->
+                    "UpdatePlayerBan",
+                    [ "Ban", (string ban) :> obj
+                    ] |> Map.ofSeq
+                | WarStateUpdate.RegisterPilotFlight(pid, flight, health) ->
+                    "RegisterPilotFlight",
+                    [ "PilotId", box pid.AsInt
+                      "Health", string health :> obj
+                      "FlightStart", flight.Date.ToDto() :> obj
+                      "Duration", box flight.Length.TotalMinutes
+                      "Return", string flight.Return :> obj
+                    ] |> Map.ofSeq
+
             { Verb = verb
               Args = args
             }
@@ -361,6 +378,25 @@ module internal Extensions =
                     "TimeSet",
                     [ "DateTime", time.ToDto() :> obj
                     ] |> Map.ofSeq
+                | WarStateUpdate.PlayerUpdated(nickName) ->
+                    "PlayerUpdated",
+                    [ "Name", nickName :> obj
+                    ] |> Map.ofSeq
+                | WarStateUpdate.PlayerBanUpdated(nickName, ban) ->
+                    "PlayerBanUpdated",
+                    [ "Name", nickName :> obj
+                      "Ban", string ban :> obj
+                    ] |> Map.ofSeq
+                | WarStateUpdate.PilotUpdated(pilot) ->
+                    "PilotUpdated",
+                    [ "FirstName", pilot.PilotFistName :> obj
+                      "LastName", pilot.PilotLastName :> obj
+                      "Health", string pilot.Health :> obj
+                      "Country", string pilot.Country :> obj
+                      "Flights", box pilot.Flights.Length
+                      "Airfield", state.TryGetPilotHome(pilot.Id) |> Option.map (fun afId -> string afId :> obj) |> Option.defaultValue null
+                    ] |> Map.ofSeq
+
             { ChangeDescription = desc
               Values = values
             }

@@ -80,6 +80,10 @@ let computeInstancesOfAwards (awards : Award list) (flights : FlightRecord list)
 
 [<Struct>]
 type PilotId = PilotId of int
+with
+    member this.AsInt =
+        match this with
+        | PilotId x -> x
 
 type Pilot =
     {
@@ -89,7 +93,6 @@ type Pilot =
         PilotLastName : string
         Health : PilotHealth
         Country : CountryId
-        Home : AirfieldId option
         Flights : FlightRecord list
     }
 
