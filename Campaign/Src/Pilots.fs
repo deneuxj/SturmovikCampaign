@@ -89,7 +89,7 @@ type Pilot =
     {
         Id : PilotId
         PlayerGuid : string
-        PilotFistName : string
+        PilotFirstName : string
         PilotLastName : string
         Health : PilotHealth
         Country : CountryId

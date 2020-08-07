@@ -389,7 +389,7 @@ module internal Extensions =
                     ] |> Map.ofSeq
                 | WarStateUpdate.PilotUpdated(pilot) ->
                     "PilotUpdated",
-                    [ "FirstName", pilot.PilotFistName :> obj
+                    [ "FirstName", pilot.PilotFirstName :> obj
                       "LastName", pilot.PilotLastName :> obj
                       "Health", string pilot.Health :> obj
                       "Country", string pilot.Country :> obj
