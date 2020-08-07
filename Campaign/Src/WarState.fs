@@ -30,6 +30,7 @@ open Campaign.Weather
 open SturmovikMission
 open Util
 open Campaign.Buildings
+open Campaign.Pilots
 
 /// Complex algorithms using data from WarState
 module private Algo =
@@ -172,6 +173,14 @@ type IWarStateQuery =
     abstract member GetNumPlanes : AirfieldId -> Map<PlaneModelId, float32>
     /// Get the owner of a region
     abstract member GetOwner : RegionId -> CoalitionId option
+    /// Try to get a player by its GUID
+    abstract member TryGetPlayer : string -> Player option
+    /// Get a pilot by its ID
+    abstract member GetPilot : PilotId -> Pilot
+    /// Get next available pilot ID
+    abstract member NextPilotId : unit -> PilotId
+    /// Get all pilots of a player
+    abstract member GetPlayerPilots : string -> Pilot seq
 
 [<AutoOpen>]
 module IWarStateExtensions = 
@@ -203,6 +212,10 @@ type IWarStateUpdate =
     abstract member SetNumPlanes : AirfieldId * PlaneModelId * float32 -> unit
     /// Set the owner of a region
     abstract member SetOwner : RegionId * CoalitionId option -> unit
+    /// Add/update player
+    abstract member UpdatePlayer : Player -> unit
+    /// Add/update pilot
+    abstract member UpdatePilot : Pilot -> unit
 
 type IWarState =
     inherit IWarStateQuery
@@ -218,18 +231,22 @@ type private WarStateSerialization =
         Owners : IDictionary<RegionId, CoalitionId>
         GroundForces : IDictionary<CoalitionId * RegionId, float32>
         AirfieldPlanes : IDictionary<AirfieldId, IDictionary<PlaneModelId, float32>>
+        Players : IDictionary<string, Player>
+        Pilots : IDictionary<PilotId, Pilot>
     }
 with
     static member Default =
         {
             FormatVersionMajor = 1
-            FormatVersionMinor = 0
+            FormatVersionMinor = 1
             Date = DateTime(0L)
             Weather = WeatherState.Default
             BuildingPartHealthLevel = dict []
             Owners = dict []
             GroundForces = dict []
             AirfieldPlanes = dict []
+            Players = dict []
+            Pilots = dict []
         }
 
     member this.Version = sprintf "%d.%d" this.FormatVersionMajor this.FormatVersionMinor
@@ -259,6 +276,10 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
 
     // Ground forces
     let groundForces = Seq.mutableDict groundForces
+
+    // Players and pilots
+    let players = Seq.mutableDict []
+    let pilots = Seq.mutableDict []
 
     let distancesToSources sources =
         let distances =
@@ -309,6 +330,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                 Owners = owners
                 GroundForces = groundForces |> unmeasure
                 AirfieldPlanes = airfieldPlanes |> Seq.map (fun kvp -> kvp.Key, kvp.Value :> IDictionary<_, _>) |> dict
+                Players = players
+                Pilots = pilots
             }
         let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
         serializer.Serialize(writer, data)
@@ -508,6 +531,26 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             if needClear then
                 this.ClearCachesAfterOwnerChanged()
 
+    member this.UpdatePlayer(player : Player) =
+        players.[player.Guid] <- player
+
+    member this.UpdatePilot(pilot : Pilot) =
+        pilots.[pilot.Id] <- pilot
+
+    member this.TryGetPlayer(guid : string) =
+        players.TryGetValue(guid)
+        |> Option.ofPair
+
+    member this.GetPilot(id : PilotId) =
+        pilots.[id]
+
+    member this.NextPilotId() = PilotId(pilots.Count)
+
+    member this.GetPlayerPilots(guid : string) =
+        pilots.Values
+        |> Seq.filter (fun pilot -> pilot.PlayerGuid = guid)
+        |> Seq.sortBy (fun pilot -> pilot.Id)
+
     interface IWarState with
         member this.ComputeDistancesToAirfields() = upcast(this.ComputeDistancesToAirfields())
         member this.ComputeDistancesToCoalition(arg1) = upcast(this.ComputeDistancesToCoalition(arg1))
@@ -534,6 +577,13 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.SetWeather(arg) = this.SetWeather(arg)
         member this.Weather = this.Weather
         member this.World = this.World
+        member this.UpdatePlayer(player : Player) = this.UpdatePlayer(player)
+        member this.UpdatePilot(pilot : Pilot) = this.UpdatePilot(pilot)
+        member this.TryGetPlayer(guid : string) = this.TryGetPlayer(guid)
+        member this.GetPilot(id : PilotId) = this.GetPilot(id)
+        member this.NextPilotId() = this.NextPilotId()
+        member this.GetPlayerPilots(guid : string) = this.GetPlayerPilots(guid)
+
 
 [<RequireQualifiedAccess>]
 module Init =

@@ -27,6 +27,7 @@ open Campaign.BasicTypes
 open Campaign.PlaneModel
 open Campaign.WorldDescription
 open Campaign.Buildings
+open PilotRanks
 
 type Region = {
     RegionId : RegionId
@@ -313,6 +314,12 @@ type World = {
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
     /// Participating countries and their coalition
     Countries : IDictionary<CountryId, CoalitionId>
+    /// Typical names for each country
+    Names : NameDatabase
+    /// Ranks in the air force of each country
+    Ranks : RanksDatabase
+    /// Awards in the air force of each country
+    Awards : AwardDatabase
 }
 with
     /// Get building or bridge instance by its ID
@@ -745,6 +752,9 @@ module Init =
                     GreatBritain, Allies
                     UnitedStates, Allies
                 ]
+            Names = NameDatabase.Default
+            Ranks = RanksDatabase.Default
+            Awards = AwardDatabase.Default
         }
 
 module IO =

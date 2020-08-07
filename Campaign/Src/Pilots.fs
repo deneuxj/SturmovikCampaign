@@ -67,13 +67,17 @@ let computeInstancesOfAwards (awards : Award list) (flights : FlightRecord list)
     awards
     |> Seq.collect (fun award -> computeInstancesOfAward award flights)
 
+[<Struct>]
+type PilotId = PilotId of int
+
 type Pilot =
     {
+        Id : PilotId
         PlayerGuid : string
         PilotFistName : string
         PilotLastName : string
+        Health : PilotHealth
         Country : CountryId
-        Index : int
         Home : AirfieldId option
         Flights : FlightRecord list
     }
