@@ -7,6 +7,7 @@ open WorldDescription
 open PlaneModel
 open BasicTypes
 open Buildings
+open Util
 
 type TargetType =
     | Truck | Train | Ship | Battleship | GunBoat | Artillery | Tank | ArmoredCar
@@ -34,8 +35,15 @@ module ActivePatterns =
     /// Match the name of an object from the log with a target type.
     // This is dependent on the MCUs in the mission and their naming.
     let (|TargetTypeByName|_|) (name : string) =
-        match name with
-        | "CANNON" -> Some Artillery
+        match name.Trim().ToLowerInvariant() with
+        | Contains "cannon" -> Some Artillery
+        | Contains "truck" -> Some Truck
+        | Contains "train" -> Some Train
+        | Contains "ship" -> Some Ship
+        | Contains "battleship" -> Some Battleship
+        | Contains "gunboat" -> Some GunBoat
+        | Contains "tank" -> Some Tank
+        | Contains "car" -> Some ArmoredCar
         | _ -> None
 
 type Target =
@@ -64,6 +72,6 @@ type FlightRecord =
         Length : TimeSpan
         Plane : PlaneModelId
         Start : AirfieldId
-        TargetsDamaged : (Target * AmmoType * float32) list
+        TargetsDamaged : (TargetType * AmmoType * float32) list
         Return : ReturnType
     }

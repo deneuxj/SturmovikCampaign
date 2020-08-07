@@ -56,7 +56,7 @@ let computeInstancesOfAward (award : Award) (flights : FlightRecord list) =
                 yield! forEachFlight damage flights
             | (target, _, dmg) :: targets ->
                 let isMatch =
-                    match award.Target, target.Kind with
+                    match award.Target, target with
                     | (Bridge | Building), (Bridge | Building)
                     | ParkedPlane, ParkedPlane
                     | Air, Air -> true

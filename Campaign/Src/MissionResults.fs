@@ -86,6 +86,10 @@ type IWarStateQuery with
             |> Option.defaultWith (fun () -> this.NewPilot(playerGuid, country))
         pilot
 
+type AmmoType with
+    static member FromLogName(logName : string) : AmmoType =
+        failwith "TODO"
+
 /// The status of a plane piloted by a human pilot.
 type FlightStatus =
     | Spawned of AirfieldId
@@ -101,6 +105,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
         let flights = Seq.mutableDict []
         let flightRecords = Seq.mutableDict []
         let healthOf = Seq.mutableDict []
+        let latestHit = Seq.mutableDict []
 
         let handleDamage(amount, targetId, position) =
             asyncSeq {
@@ -136,6 +141,63 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 | _ ->
                     ()
             }
+
+        /// Generate all the damage entries corresponding to a target.
+        // Typically should be one or zero, but it's OK if they are more. Players won't complain if they are assigned victories incorrectly.
+        let recordedDamages(amount : float32, targetId, position) =
+            [
+                let ammo =
+                    match latestHit.TryGetValue(targetId) with
+                    | true, hit ->
+                        AmmoType.FromLogName("")
+                    | false, _ ->
+                        AmmoType.Bullets
+                match bindings.TryGetValue(targetId) with
+                | true, binding ->
+                    // Buildings
+                    let sub = binding.Sub |> Option.defaultValue -1
+                    for building in state.GetBuildingsAt(binding.Name, sub, position) do
+                        yield (TargetType.Building(building.Id, sub), ammo, amount)
+
+                    // Parked planes
+                    match state.TryGetStaticPlaneAt(binding.Name, position) with
+                    | Some(afId, plane) ->
+                        yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
+                    | None ->
+                        ()
+
+                    // Flying planes
+                    match state.TryGetPlane(binding.Name) with
+                    | Some plane ->
+                        yield (TargetType.Air(plane.Id), ammo, amount)
+                    | None ->
+                        ()
+
+                    // Others
+                    match binding.Name with
+                    | TargetTypeByName target ->
+                        yield (target, ammo, amount)
+                    | _ ->
+                        ()
+                | false, _ ->
+                    ()
+            ]
+
+        /// Update flight record with damage
+        let updateFlightRecord(attackerId, damage, targetId, position) =
+            match pilotOf.TryGetValue(attackerId) with
+            | true, (taken : ObjectTaken) ->
+                match flightRecords.TryGetValue(taken.UserId) with
+                | true, (x : {| Pilot : Pilot; Record : FlightRecord |}) ->
+                    let flight =
+                        { x.Record with
+                            TargetsDamaged = x.Record.TargetsDamaged @ recordedDamages(damage, targetId, position)
+                        }
+                    flightRecords.[taken.UserId] <- {| x with Record = flight |}
+                | false, _ ->
+                    ()
+            | false, _ ->
+                ()
 
         for line in logs do
             match line with
@@ -201,6 +263,9 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     |> Option.defaultValue 1.0f
                 let health = health - damaged.Damage
                 healthOf.[damaged.TargetId] <- health
+                // Update flight record
+                updateFlightRecord(damaged.AttackerId, damaged.Damage, damaged.TargetId, damaged.Position)
+
                 // Emit commands
                 yield! handleDamage(damaged.Damage, damaged.TargetId, damaged.Position)
 
@@ -211,6 +276,9 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     |> Option.ofPair
                     |> Option.defaultValue 1.0f
                 healthOf.[killed.TargetId] <- 0.0f
+                // Update flight record
+                updateFlightRecord(killed.AttackerId, oldHealth, killed.TargetId, killed.Position)
+
                 // Emit commands
                 yield! handleDamage(oldHealth, killed.TargetId, killed.Position)
 
