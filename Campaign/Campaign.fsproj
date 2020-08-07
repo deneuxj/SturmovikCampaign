@@ -19,9 +19,11 @@
     <Compile Include="Src\PlaneSet.fs" />
     <Compile Include="Src\Config.fs" />
     <Compile Include="Src\WorldDescription.fs" />
+    <Compile Include="Src\Buildings.fs" />
+    <Compile Include="Src\Targets.fs" />
+    <Compile Include="Src\PilotRanks.fs" />
     <Compile Include="Src\NewWorldDescription.fs" />
     <Compile Include="Src\Weather.fs" />
-    <Compile Include="Src\Targets.fs" />
     <Compile Include="Src\Pilots.fs" />
     <Compile Include="Src\WarState.fs" />
     <Compile Include="Src\WarStateUpdate.fs" />

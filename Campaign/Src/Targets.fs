@@ -1,12 +1,12 @@
 ﻿module Campaign.Targets
 
 open System
+open System.Numerics
 
-open NewWorldDescription
 open WorldDescription
 open PlaneModel
 open BasicTypes
-open System.Numerics
+open Buildings
 
 type TargetType =
     | Truck | Train | Ship | Battleship | GunBoat | Artillery | Tank | ArmoredCar
@@ -24,7 +24,7 @@ with
         | ArmoredCar -> 5.0f<MGF>
         | _ -> 0.0f<MGF>
 
-module TargetType =
+module ActivePatterns =
     let (|GroundForceTarget|_|) (kind : TargetType) =
         let value = kind.GroundForceValue
         if value > 0.0f<MGF> then

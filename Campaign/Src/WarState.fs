@@ -29,6 +29,7 @@ open Campaign.NewWorldDescription
 open Campaign.Weather
 open SturmovikMission
 open Util
+open Campaign.Buildings
 
 /// Complex algorithms using data from WarState
 module private Algo =

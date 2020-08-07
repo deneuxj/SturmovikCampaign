@@ -24,6 +24,7 @@ open Campaign.WarState
 open Campaign.BasicTypes
 open Campaign.WorldDescription
 open Campaign.PlaneModel
+open Campaign.Buildings
 
 // We use explicit command and result types for all changes to the state of the war.
 // This makes it easier to present relevant data to players and help them understand what effect their actions have.

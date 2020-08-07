@@ -12,8 +12,7 @@ open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.WorldDescription
-open Campaign.Missions
-open Campaign.Missions.TargetType
+open Campaign.Targets.ActivePatterns
 
 /// Transform a name from a log: lower case, delete all non-alphanum chars.
 let normalizeLogName (name : string) =

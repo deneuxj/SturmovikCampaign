@@ -30,6 +30,7 @@ open Campaign.Targets
 open Campaign.WarState
 open Campaign.WarStateUpdate
 open Util
+open Campaign.Buildings
 
 type AltitudeLevel = LowAltitude | MediumAltitude | HighAltitude
 with
@@ -585,7 +586,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                 Some(DamageBuildingPart(bid, part, 1.0f))
                             | { Kind = TargetType.ParkedPlane(afId, planeId) } ->
                                 Some(RemovePlane(afId, planeId, 1.0f))
-                            | { Kind = TargetType.GroundForceTarget value; Owner = Some owner } ->
+                            | { Kind = ActivePatterns.GroundForceTarget value; Owner = Some owner } ->
                                 Some(DestroyGroundForces(mission.Objective, owner, value))
                             | _ ->
                                 None

@@ -4,6 +4,7 @@ open System
 open WorldDescription
 open Targets
 open BasicTypes
+open PilotRanks
 
 [<RequireQualifiedAccess>]
 type BanStatus =
@@ -22,39 +23,6 @@ type Player =
 type PilotHealth =
     | Healthy
     | Injured of Until: DateTime // game time
-
-type NameDatabase =
-    {
-        FirstNames: Map<CountryId, Set<string>>
-        LastNames: Map<CountryId, Set<string>>
-    }
-
-type Rank =
-    {
-        RankName : string
-        Flights : int
-    }
-
-type RanksDatabase =
-    {
-        Ranks: Map<CountryId, Rank list>
-    }
-with
-    static member Default =
-        CountryId.All
-        |> Seq.map (fun country -> country, [ {RankName = "Rookie"; Flights = 0 } ])
-        |> Map.ofSeq
-        |> fun ranks -> { Ranks = ranks }
-
-type Award =
-    {
-        AwardName : string
-        Description : string
-        Target : TargetType
-        MinDamage : float32
-        SingleFlight : bool
-        Unique : bool
-    }
 
 let computeInstancesOfAward (award : Award) (flights : FlightRecord list) =
     let rec forEachFlight damage flights =
@@ -98,17 +66,6 @@ let computeInstancesOfAward (award : Award) (flights : FlightRecord list) =
 let computeInstancesOfAwards (awards : Award list) (flights : FlightRecord list) =
     awards
     |> Seq.collect (fun award -> computeInstancesOfAward award flights)
-
-type AwardDatabase =
-    {
-        Awards : Map<CountryId, Award list>
-    }
-with
-    static member Default =
-        CountryId.All
-        |> Seq.map (fun country -> country, [])
-        |> Map.ofSeq
-        |> fun awards -> { Awards = awards }
 
 type Pilot =
     {

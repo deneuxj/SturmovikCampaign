@@ -34,7 +34,7 @@ module internal Extensions =
                 Minute = this.Minute
             }
 
-    type NewWorldDescription.BuildingProperties with
+    type Buildings.BuildingProperties with
         member this.ToDto(nid, useCapacity) =
             {
                 Id = nid
@@ -45,11 +45,11 @@ module internal Extensions =
                 Capacity = if useCapacity then Some(float32 this.Capacity) else None
             }
 
-    let mkIdMaps(buildings : NewWorldDescription.BuildingInstance seq, bridges : _ seq) =
+    let mkIdMaps(buildings : Buildings.BuildingInstance seq, bridges : _ seq) =
         let allBuildingProperties =
-            System.Collections.Generic.Dictionary<NewWorldDescription.BuildingProperties, int * bool>()
+            System.Collections.Generic.Dictionary<Buildings.BuildingProperties, int * bool>()
 
-        let assignId isBridge (instance : NewWorldDescription.BuildingInstance) =
+        let assignId isBridge (instance : Buildings.BuildingInstance) =
             if not(allBuildingProperties.ContainsKey(instance.Properties)) then
                 let nextId = allBuildingProperties.Count
                 allBuildingProperties.[instance.Properties] <- (nextId, not isBridge)
@@ -77,7 +77,7 @@ module internal Extensions =
             
         tryGetDtoParams, getPropertiesId
 
-    let mkBuildingPropertiesDtos(properties : NewWorldDescription.BuildingProperties seq, tryGetDtoParams) =
+    let mkBuildingPropertiesDtos(properties : Buildings.BuildingProperties seq, tryGetDtoParams) =
         let dtos =
             properties
             |> Seq.mapi (fun i props ->
@@ -92,7 +92,7 @@ module internal Extensions =
 
     type NewWorldDescription.Region with
         member this.ToDto(getPropertiesId) =
-            let bidToDto (NewWorldDescription.BuildingInstanceId pos) =
+            let bidToDto (Buildings.BuildingInstanceId pos) =
                 {
                     Position = pos.ToDto()
                     PropertiesId = getPropertiesId pos
@@ -109,7 +109,7 @@ module internal Extensions =
 
     type NewWorldDescription.Airfield with
         member this.ToDto(getPropertiesId) =
-            let bidToDto (NewWorldDescription.BuildingInstanceId pos) =
+            let bidToDto (Buildings.BuildingInstanceId pos) =
                 {
                     Position = pos.ToDto()
                     PropertiesId = getPropertiesId pos
@@ -189,7 +189,7 @@ module internal Extensions =
                     for bid in bids do
                         let health = this.GetBuildingHealth(bid)
                         if health < 1.0f then
-                            let (NewWorldDescription.BuildingInstanceId pos) = bid
+                            let (Buildings.BuildingInstanceId pos) = bid
                             yield
                                 {
                                     Position = pos.ToDto()

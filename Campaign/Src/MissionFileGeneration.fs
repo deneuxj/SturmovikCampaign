@@ -40,6 +40,8 @@ open SturmovikMission.Blocks.Vehicles
 open SturmovikMission.Blocks
 open SturmovikMission.Blocks.VirtualConvoy
 open SturmovikMission.Blocks.Train
+open Buildings
+open Targets
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
