@@ -13,6 +13,8 @@ open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.WorldDescription
 open Campaign.Targets.ActivePatterns
+open Campaign.Targets
+open Campaign.Pilots
 
 /// Transform a name from a log: lower case, delete all non-alphanum chars.
 let normalizeLogName (name : string) =
@@ -69,6 +71,20 @@ type IWarStateQuery with
         this.World.Regions.Values
         |> Seq.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary)
 
+    /// Get an existing pilot of a player given the starting airfield, or create a new pilot
+    member this.GetPlayerPilotFrom(playerGuid : string, afId : AirfieldId, country) =
+        let latestPilot =
+            try
+                this.GetPlayerPilots(playerGuid)
+                |> Seq.filter (fun pilot -> this.IsPilotHealty(pilot.Id))
+                |> Seq.filter (fun pilot -> this.IsPilotAvailableFrom(pilot.Id, afId))
+                |> Seq.maxBy (fun pilot -> pilot.Id)
+                |> Some
+            with _ -> None
+        let pilot =
+            latestPilot
+            |> Option.defaultWith (fun () -> this.NewPilot(playerGuid, country))
+        pilot
 
 /// The status of a plane piloted by a human pilot.
 type FlightStatus =
@@ -83,6 +99,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
         let pilotOf = Seq.mutableDict []
         let vehicleOf = Seq.mutableDict []
         let flights = Seq.mutableDict []
+        let flightRecords = Seq.mutableDict []
         let healthOf = Seq.mutableDict []
 
         let handleDamage(amount, targetId, position) =
@@ -144,13 +161,37 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 | false, _ ->
                     ()
 
-            | ObjectEvent(_, ObjectTakesOff takeOff) ->
+                // Emit UpdatePlayer command
+                yield UpdatePlayer(taken.UserId, taken.Name)
+
+            | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
                 // Update mappings
-                match flights.TryGetValue(takeOff.Id) with
-                | true, Spawned afId | true, Landed afId ->
-                    flights.[takeOff.Id] <- InAir afId
-                | _ ->
-                    flights.[takeOff.Id] <- InAir (state.GetNearestAirfield(takeOff.Position).AirfieldId)
+                let afId =
+                    match flights.TryGetValue(takeOff.Id) with
+                    | true, Spawned afId | true, Landed afId -> afId
+                    | _ -> state.GetNearestAirfield(takeOff.Position).AirfieldId
+                flights.[takeOff.Id] <- InAir afId
+                // Start flight record
+                match pilotOf.TryGetValue(takeOff.Id) with
+                | true, taken ->
+                    let country =
+                        CountryId.FromMcuValue(enum taken.Country)
+                    let plane = state.TryGetPlane(taken.Typ)
+                    match country, plane with
+                    | Some country, Some plane ->
+                        let pilot = state.GetPlayerPilotFrom(taken.UserId, afId, country)
+                        let record : FlightRecord =
+                            { Date = state.Date + timeStamp
+                              Length = System.TimeSpan(0L)
+                              Plane = plane.Id
+                              Start = afId
+                              TargetsDamaged = []
+                              Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
+                            }
+                        flightRecords.[taken.UserId] <- {| Pilot = pilot; Record = record |}
+                    | _ ->
+                        ()
+                | false, _ -> ()
 
             | ObjectEvent(_, ObjectDamaged damaged) ->
                 // Update mappings

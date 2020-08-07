@@ -104,7 +104,10 @@ let reEndFlight = Regex(@"PLID:([\d\-]+) PID:([\d\-]+) BUL:([\d\-]+) SH:([\d\-]+
 
 let (|MissionEvent|ObjectEvent|PlayerEvent|OtherEvent|InvalidLine|) (line : string) =
     match line with
-    | MatchesRegex reBase (GroupList [AsInt timeStamp; AsInt eventType; eventData]) ->
+    | MatchesRegex reBase (GroupList [AsInt ticks; AsInt eventType; eventData]) ->
+        let gameTicksPerSecond = 50L
+        let netTicksPerSecond = 10000000L
+        let timeStamp = System.TimeSpan(int64 ticks * netTicksPerSecond / gameTicksPerSecond)
         match eventType with
         | 0 ->
             match eventData with

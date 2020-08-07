@@ -182,8 +182,6 @@ type IWarStateQuery =
     abstract member NextPilotId : unit -> PilotId
     /// Get all pilots of a player
     abstract member GetPlayerPilots : string -> Pilot seq
-    /// Try to get the current airfield where a pilot is located
-    abstract member TryGetPilotHome : PilotId -> AirfieldId option
 
 [<AutoOpen>]
 module IWarStateExtensions = 
@@ -201,6 +199,81 @@ module IWarStateExtensions =
             let building = this.World.GetBuildingInstance(bid)
             building.Properties.SubParts
             |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part))
+
+        member this.IsPilotHealty(pilotId : PilotId) =
+            match this.GetPilot(pilotId).Health with
+            | Healthy -> true
+            | Injured(until) -> until < this.Date
+
+        member this.AirfieldsOfCoalition(coalition : CoalitionId) =
+            this.World.Airfields.Values
+            |> Seq.filter(fun af -> this.GetOwner(af.Region) = Some coalition)
+
+        member this.IsPilotAvailableFrom(pilotId : PilotId, afId : AirfieldId) =
+            let pilot = this.GetPilot(pilotId)
+            // Early exit if the owner of the airfield is not the pilot's coalition
+            match this.GetOwner(this.World.Airfields.[afId].Region) with
+            | None -> false
+            | Some coalition when this.World.Countries.[pilot.Country] <> coalition -> false
+            | _ ->
+            match pilot.Flights |> List.tryLast with
+            | None ->
+                // No flights yet: pilot can start from any airfield
+                true
+            | Some { Return = AtAirfield afId2 } ->
+                // Can start if airfield is same as landing of latest recorded mission
+                afId2 = afId
+            | Some { Return = CrashedInFriendlyTerritory pos } ->
+                // Can start if crash-landed within 25km of airfield, or ...
+                (this.World.Airfields.[afId].Position - pos).Length() < 25000.0f ||
+                try
+                    // ... airfield is the closest one to the crash site
+                    this.AirfieldsOfCoalition(this.World.Countries.[pilot.Country])
+                    |> Seq.minBy (fun af -> (af.Position - pos).LengthSquared())
+                    |> fun af -> af.AirfieldId = afId
+                with _ -> false
+            | Some { Return = CrashedInEnemyTerritory } ->
+                false
+
+        member this.TryGetPilotHome(pilotId) =
+            let pilot = this.GetPilot(pilotId)
+            pilot.Flights
+            |> List.tryLast
+            |> Option.bind (fun flight ->
+                match flight.Return with
+                | CrashedInEnemyTerritory -> None
+                | CrashedInFriendlyTerritory pos ->
+                    try
+                        this.World.Airfields.Values
+                        |> Seq.filter (fun af -> // Airfields controlled by the player's side
+                            this.GetOwner(af.Region)
+                            |> Option.map (fun coalition -> this.World.Countries.[pilot.Country] = coalition)
+                            |> Option.defaultValue false)
+                        |> Seq.minBy (fun af -> (af.Position - pos).LengthSquared()) // Pick closest airfield
+                        |> fun af -> af.AirfieldId
+                        |> Some
+                    with _ -> None
+                | AtAirfield afId ->
+                    Some afId
+            )
+
+        member this.GetNewNames(country : CountryId, seed : int) : string * string =
+            let random = System.Random(seed)
+            let firstNames = this.World.Names.FirstNames.[country] |> Set.toArray
+            let lastNames = this.World.Names.LastNames.[country] |> Set.toArray
+            firstNames.[random.Next(firstNames.Length)], lastNames.[random.Next(lastNames.Length)]
+
+        member this.NewPilot(guid : string, country : CountryId) : Pilot =
+            let id = this.NextPilotId()
+            let firstName, lastName = this.GetNewNames(country, id.AsInt)
+            { Id = id
+              Country = country
+              PilotFistName = firstName
+              PilotLastName = lastName
+              PlayerGuid = guid
+              Health = Healthy
+              Flights = []
+            }
 
 type IWarStateUpdate =
     /// Set the date and time
@@ -554,29 +627,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         |> Seq.filter (fun pilot -> pilot.PlayerGuid = guid)
         |> Seq.sortBy (fun pilot -> pilot.Id)
 
-    member this.TryGetPilotHome(pilotId) =
-        let pilot = pilots.[pilotId]
-        pilot.Flights
-        |> List.tryLast
-        |> Option.bind (fun flight ->
-            match flight.Return with
-            | CrashedInEnemyTerritory -> None
-            | CrashedInFriendlyTerritory pos ->
-                try
-                    world.Airfields.Values
-                    |> Seq.filter (fun af -> // Airfields controlled by the player's side
-                        owners.TryGetValue(af.Region)
-                        |> Option.ofPair
-                        |> Option.map (fun coalition -> world.Countries.[pilot.Country] = coalition)
-                        |> Option.defaultValue false)
-                    |> Seq.minBy (fun af -> (af.Position - pos).LengthSquared()) // Pick closest airfield
-                    |> fun af -> af.AirfieldId
-                    |> Some
-                with _ -> None
-            | AtAirfield afId ->
-                Some afId
-        )
-
     interface IWarState with
         member this.ComputeDistancesToAirfields() = upcast(this.ComputeDistancesToAirfields())
         member this.ComputeDistancesToCoalition(arg1) = upcast(this.ComputeDistancesToCoalition(arg1))
@@ -609,7 +659,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
         member this.NextPilotId() = this.NextPilotId()
         member this.GetPlayerPilots(guid : string) = this.GetPlayerPilots(guid)
-        member this.TryGetPilotHome(id : PilotId) = this.TryGetPilotHome(id)
 
 
 [<RequireQualifiedAccess>]

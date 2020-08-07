@@ -62,7 +62,7 @@ type FlightRecord =
     {
         Date : DateTime
         Length : TimeSpan
-        Plane : PlaneModel
+        Plane : PlaneModelId
         Start : AirfieldId
         TargetsDamaged : (Target * AmmoType * float32) list
         Return : ReturnType
