@@ -11,6 +11,12 @@ type BanStatus =
     | Clear
     | Banned of Since: DateTime * Duration: TimeSpan
     | Probation of {| Since: DateTime; Duration: TimeSpan; Penality: TimeSpan |}
+with
+    override this.ToString() =
+        match this with
+        | Clear -> "No ban"
+        | Banned(since, duration) -> sprintf "Banned until %s" ((since + duration).ToShortDateString())
+        | Probation x -> sprintf "On probation until %s (penalty of %d days)" ((x.Since + x.Duration).ToShortDateString()) (int(ceil x.Penality.TotalDays))
 
 type Player =
     {
@@ -23,6 +29,11 @@ type Player =
 type PilotHealth =
     | Healthy
     | Injured of Until: DateTime // game time
+with
+    override this.ToString() =
+        match this with
+        | Healthy -> "healthy"
+        | Injured until -> sprintf "injured until %s" (until.ToShortDateString())
 
 let computeInstancesOfAward (award : Award) (flights : FlightRecord list) =
     let rec forEachFlight damage flights =

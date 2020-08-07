@@ -10,10 +10,18 @@ type NameDatabase =
     }
 with
     static member Default =
-        let firstNames country = Map [country, Set ["John"]]
-        let lastNames country = Map [country, Set ["Doe"]]
-        CountryId.All
-        |> Seq.map (fun country -> country, { FirstNames = firstNames country; LastNames = lastNames country })
+        let firstNames =
+            CountryId.All
+            |> Seq.map (fun country -> country, Set ["John"])
+            |> Map.ofSeq
+        let lastNames =
+            CountryId.All
+            |> Seq.map (fun country -> country, Set ["Doe"])
+            |> Map.ofSeq
+        {
+            FirstNames = firstNames
+            LastNames = lastNames
+        }
 
 type Rank =
     {

@@ -25,6 +25,8 @@ open Campaign.BasicTypes
 open Campaign.WorldDescription
 open Campaign.PlaneModel
 open Campaign.Buildings
+open Campaign.Pilots
+open Campaign.Targets
 
 // We use explicit command and result types for all changes to the state of the war.
 // This makes it easier to present relevant data to players and help them understand what effect their actions have.
@@ -49,6 +51,12 @@ type Commands =
     | SetRegionOwner of RegionId * CoalitionId option
     // Advance time
     | AdvanceTime of System.TimeSpan
+    // Update player registration
+    | UpdatePlayer of Guid: string * NickName: string
+    // Update player ban status
+    | UpdatePlayerBan of Guid: string * Ban: BanStatus
+    // Register flight and health status of pilot
+    | RegisterPilotFlight of PilotId * FlightRecord * PilotHealth
 
 /// Interesting data to report from execution of commands
 type Results =
@@ -57,6 +65,9 @@ type Results =
     | UpdatedGroundForces of RegionId * CoalitionId * float32<MGF>
     | RegionOwnerSet of RegionId * CoalitionId option
     | TimeSet of System.DateTime
+    | PlayerUpdated of NickName: string
+    | PlayerBanUpdated of NickName: string * Ban: BanStatus
+    | PilotUpdated of PilotId * Pilot
 
 module Results =
     let asString (war : IWarStateQuery) result =
@@ -89,6 +100,12 @@ module Results =
             sprintf "%s is now controlled by %s" (string rid) (string coalition)
         | TimeSet t ->
             sprintf "Time set to %s" (t.ToString("F"))
+        | PlayerUpdated(nickName) ->
+            sprintf "Registration of %s was updated" nickName
+        | PlayerBanUpdated(nickName, ban) ->
+            sprintf "Status of %s is %s" nickName (string ban)
+        | PilotUpdated(pid, pilot) ->
+            sprintf "Recorded additional flight for %s %s, who is now %s" pilot.PilotFistName pilot.PilotLastName (string pilot.Health)
 
 module CommandExecution =
     type IWarState with
@@ -157,3 +174,41 @@ module CommandExecution =
                 let newTime = state.Date + span
                 state.SetDate(newTime)
                 [ TimeSet(newTime) ]
+            | UpdatePlayer(guid, nickName) ->
+                let player =
+                    state.TryGetPlayer(guid)
+                    |> Option.defaultValue 
+                        {
+                            Guid = guid
+                            Name = nickName
+                            OtherNames = Set.empty
+                            BanStatus = BanStatus.Clear
+                        }
+                let player =
+                    if player.Name = nickName then
+                        player
+                    else
+                        { player with
+                            Name = nickName
+                            OtherNames = player.OtherNames.Add(player.Name)
+                        }
+                state.UpdatePlayer(player)
+                [ PlayerUpdated nickName ]
+            | UpdatePlayerBan(guid, ban) ->
+                let player =
+                    state.TryGetPlayer(guid)
+                    |> Option.defaultValue 
+                        {
+                            Guid = guid
+                            Name = ""
+                            OtherNames = Set.empty
+                            BanStatus = BanStatus.Clear
+                        }
+                let player = { player with BanStatus = ban }
+                state.UpdatePlayer(player)
+                [ PlayerBanUpdated(player.Name, ban) ]
+            | RegisterPilotFlight(pid, flight, health) ->
+                let pilot = state.GetPilot(pid)
+                let pilot = { pilot with Flights = pilot.Flights @ [flight]; Health = health }
+                state.UpdatePilot(pilot)
+                [ PilotUpdated(pid, pilot) ]
