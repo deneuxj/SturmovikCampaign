@@ -87,6 +87,14 @@ type IWarStateQuery with
             |> Option.defaultWith (fun () -> this.NewPilot(playerGuid, country))
         pilot
 
+    /// Try to get the coalition of a country from its event log value
+    member this.TryGetCoalitionOfCountry(country : int) =
+        let country = CountryId.FromMcuValue(enum country)
+        country
+        |> Option.bind (fun country ->
+            this.World.Countries.TryGetValue(country)
+            |> Option.ofPair)
+
 type AmmoType with
     static member FromLogName(logName : string) : AmmoType =
         failwith "TODO"
@@ -186,6 +194,19 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
 
         /// Update flight record with damage
         let updateFlightRecord(attackerId, damage, targetId, position) =
+            let differentCoalitions =
+                match bindings.TryGetValue(attackerId), bindings.TryGetValue(targetId) with
+                | (true, attacker), (true, target) ->
+                    // Both IDs have bindings, and their respective coalitions could be identified, and they are different
+                    (state.TryGetCoalitionOfCountry(attacker.Country), state.TryGetCoalitionOfCountry(target.Country))
+                    ||> Option.map2 (fun c1 c2 -> c1 <> c2)
+                    |> Option.defaultValue false // Default: coalitions aren't known to be different
+                | _ ->
+                    false
+            if not differentCoalitions then
+                ()
+            else
+
             match pilotOf.TryGetValue(attackerId) with
             | true, (taken : ObjectTaken) ->
                 match flightRecords.TryGetValue(taken.PilotId) with
