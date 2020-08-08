@@ -203,6 +203,7 @@ module IWarStateExtensions =
         member this.IsPilotHealty(pilotId : PilotId) =
             match this.GetPilot(pilotId).Health with
             | Healthy -> true
+            | Dead -> false
             | Injured(until) -> until < this.Date
 
         member this.AirfieldsOfCoalition(coalition : CoalitionId) =
@@ -235,27 +236,28 @@ module IWarStateExtensions =
             | Some { Return = CrashedInEnemyTerritory } ->
                 false
 
+        member this.TryGetReturnAirfield(flight : FlightRecord, coalition) =
+            match flight.Return with
+            | CrashedInEnemyTerritory -> None
+            | CrashedInFriendlyTerritory pos ->
+                try
+                    this.World.Airfields.Values
+                    |> Seq.filter (fun af -> // Airfields controlled by the player's side
+                        this.GetOwner(af.Region)
+                        |> Option.map (fun coalition2 -> coalition2 = coalition)
+                        |> Option.defaultValue false)
+                    |> Seq.minBy (fun af -> (af.Position - pos).LengthSquared()) // Pick closest airfield
+                    |> fun af -> af.AirfieldId
+                    |> Some
+                with _ -> None
+            | AtAirfield afId ->
+                Some afId
+
         member this.TryGetPilotHome(pilotId) =
             let pilot = this.GetPilot(pilotId)
             pilot.Flights
             |> List.tryLast
-            |> Option.bind (fun flight ->
-                match flight.Return with
-                | CrashedInEnemyTerritory -> None
-                | CrashedInFriendlyTerritory pos ->
-                    try
-                        this.World.Airfields.Values
-                        |> Seq.filter (fun af -> // Airfields controlled by the player's side
-                            this.GetOwner(af.Region)
-                            |> Option.map (fun coalition -> this.World.Countries.[pilot.Country] = coalition)
-                            |> Option.defaultValue false)
-                        |> Seq.minBy (fun af -> (af.Position - pos).LengthSquared()) // Pick closest airfield
-                        |> fun af -> af.AirfieldId
-                        |> Some
-                    with _ -> None
-                | AtAirfield afId ->
-                    Some afId
-            )
+            |> Option.bind (fun flight -> this.TryGetReturnAirfield(flight, this.World.Countries.[pilot.Country]))
 
         member this.GetNewNames(country : CountryId, seed : int) : string * string =
             let random = System.Random(seed)

@@ -55,6 +55,8 @@ type Commands =
     | UpdatePlayer of Guid: string * NickName: string
     // Update player ban status
     | UpdatePlayerBan of Guid: string * Ban: BanStatus
+    // Update pilot registration
+    | UpdatePilot of Pilot
     // Register flight and health status of pilot
     | RegisterPilotFlight of PilotId * FlightRecord * PilotHealth
 
@@ -207,6 +209,9 @@ module CommandExecution =
                 let player = { player with BanStatus = ban }
                 state.UpdatePlayer(player)
                 [ PlayerBanUpdated(player.Name, ban) ]
+            | UpdatePilot(pilot) ->
+                state.UpdatePilot(pilot)
+                [ PilotUpdated(pilot) ]
             | RegisterPilotFlight(pid, flight, health) ->
                 let pilot = state.GetPilot(pid)
                 let pilot = { pilot with Flights = pilot.Flights @ [flight]; Health = health }

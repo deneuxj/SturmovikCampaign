@@ -28,11 +28,13 @@ type Player =
 
 type PilotHealth =
     | Healthy
+    | Dead
     | Injured of Until: DateTime // game time
 with
     override this.ToString() =
         match this with
         | Healthy -> "healthy"
+        | Dead -> "dead"
         | Injured until -> sprintf "injured until %s" (until.ToShortDateString())
 
 let computeInstancesOfAward (award : Award) (flights : FlightRecord list) =

@@ -15,6 +15,7 @@ open Campaign.WorldDescription
 open Campaign.Targets.ActivePatterns
 open Campaign.Targets
 open Campaign.Pilots
+open System.Collections.Generic
 
 /// Transform a name from a log: lower case, delete all non-alphanum chars.
 let normalizeLogName (name : string) =
@@ -90,21 +91,21 @@ type AmmoType with
     static member FromLogName(logName : string) : AmmoType =
         failwith "TODO"
 
-/// The status of a plane piloted by a human pilot.
-type FlightStatus =
-    | Spawned of AirfieldId
-    | InAir of TookOffFrom: AirfieldId
-    | Landed of AirfieldId
-
 /// Extract war state updade commands from the game logs.
+/// Note: The state must be updated as soon as a command is yielded.
 let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
     asyncSeq {
+        // Object ID to Binding
         let bindings = Seq.mutableDict []
+        // Vehicle ID to ObjectTaken
         let pilotOf = Seq.mutableDict []
+        // Pilot ID to ObjectTaken
         let vehicleOf = Seq.mutableDict []
-        let flights = Seq.mutableDict []
-        let flightRecords = Seq.mutableDict []
+        // Log Pilot ID to Pilot and FlightRecord
+        let flightRecords : Dictionary<int, {| Pilot : Pilot; Record : FlightRecord |}> = Seq.mutableDict []
+        // Object ID to float32
         let healthOf = Seq.mutableDict []
+        // Vehicle ID to ObjectHit
         let latestHit = Seq.mutableDict []
 
         let handleDamage(amount, targetId, position) =
@@ -187,13 +188,13 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
         let updateFlightRecord(attackerId, damage, targetId, position) =
             match pilotOf.TryGetValue(attackerId) with
             | true, (taken : ObjectTaken) ->
-                match flightRecords.TryGetValue(taken.UserId) with
-                | true, (x : {| Pilot : Pilot; Record : FlightRecord |}) ->
+                match flightRecords.TryGetValue(taken.PilotId) with
+                | true, x ->
                     let flight =
                         { x.Record with
                             TargetsDamaged = x.Record.TargetsDamaged @ recordedDamages(damage, targetId, position)
                         }
-                    flightRecords.[taken.UserId] <- {| x with Record = flight |}
+                    flightRecords.[taken.PilotId] <- {| x with Record = flight |}
                 | false, _ ->
                     ()
             | false, _ ->
@@ -210,7 +211,6 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 // Update mappings
                 pilotOf.[taken.VehicleId] <- taken
                 vehicleOf.[taken.PilotId] <- taken
-                flights.[taken.VehicleId] <- Spawned(state.GetNearestAirfield(taken.Position).AirfieldId)
 
                 // Emit RemovePlane command
                 match bindings.TryGetValue(taken.VehicleId) with
@@ -227,13 +227,8 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 yield UpdatePlayer(taken.UserId, taken.Name)
 
             | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
-                // Update mappings
-                let afId =
-                    match flights.TryGetValue(takeOff.Id) with
-                    | true, Spawned afId | true, Landed afId -> afId
-                    | _ -> state.GetNearestAirfield(takeOff.Position).AirfieldId
-                flights.[takeOff.Id] <- InAir afId
                 // Start flight record
+                let afId = state.GetNearestAirfield(takeOff.Position).AirfieldId
                 match pilotOf.TryGetValue(takeOff.Id) with
                 | true, taken ->
                     let country =
@@ -250,10 +245,29 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                               TargetsDamaged = []
                               Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
                             }
-                        flightRecords.[taken.UserId] <- {| Pilot = pilot; Record = record |}
+                        flightRecords.[taken.PilotId] <- {| Pilot = pilot; Record = record |}
+                        yield UpdatePilot(pilot)
                     | _ ->
                         ()
                 | false, _ -> ()
+
+            | ObjectEvent(timeStamp, ObjectLands landing) ->
+                // Update flight record
+                let afId = state.GetNearestAirfield(landing.Position).AirfieldId
+                match pilotOf.TryGetValue(landing.Id) with
+                | true, taken ->
+                    match flightRecords.TryGetValue(taken.PilotId) with
+                    | true, x ->
+                        let flight =
+                            { x.Record with
+                                Length = state.Date + timeStamp - x.Record.Date
+                                Return = AtAirfield afId
+                            }
+                        flightRecords.[taken.PilotId] <- {| x with Record = flight |}
+                    | false, _ ->
+                        ()
+                | false, _ ->
+                    ()
 
             | ObjectEvent(_, ObjectDamaged damaged) ->
                 // Update mappings
@@ -282,10 +296,14 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 // Emit commands
                 yield! handleDamage(oldHealth, killed.TargetId, killed.Position)
 
-            | PlayerEvent(_, PlayerEndsMission missionEnded) ->
+            | PlayerEvent(timeStamp, PlayerEndsMission missionEnded) ->
+                let afId =
+                    flightRecords.TryGetValue(missionEnded.PilotId)
+                    |> Option.ofPair
+                    |> Option.bind (fun x -> state.TryGetReturnAirfield(x.Record, state.World.Countries.[x.Pilot.Country]))
                 // Emit AddPlane command
-                match bindings.TryGetValue(missionEnded.VehicleId), flights.TryGetValue(missionEnded.VehicleId), healthOf.TryGetValue(missionEnded.VehicleId) with
-                | (true, binding), (true, Landed afId), (true, health) when health > 0.0f ->
+                match bindings.TryGetValue(missionEnded.VehicleId), afId, healthOf.TryGetValue(missionEnded.VehicleId) with
+                | (true, binding), Some afId, (true, health) when health > 0.0f ->
                     match state.TryGetPlane(binding.Name) with
                     | Some plane ->
                         yield AddPlane(afId, plane.Id, health)
@@ -293,12 +311,31 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         ()
                 | _ ->
                     ()
+                // Emit RegisterPilotFlight
+                let pilotHealth =
+                    healthOf.TryGetValue(missionEnded.PilotId)
+                    |> Option.ofPair
+                    |> Option.defaultValue 1.0f
+                match flightRecords.TryGetValue(missionEnded.PilotId) with
+                | true, x ->
+                    let injury =
+                        1.0f - pilotHealth
+                    let healthStatus =
+                        if injury < 0.01f then
+                            Healthy
+                        else if injury >= 1.0f then
+                            Dead
+                        else
+                            state.Date + timeStamp + System.TimeSpan(int(ceil(injury * 30.0f)), 0, 0, 0)
+                            |> Injured
+                    yield RegisterPilotFlight(x.Pilot.Id, x.Record, healthStatus)
+                | false, _ ->
+                    ()
                 // Update mappings
                 pilotOf.Remove(missionEnded.VehicleId) |> ignore
                 vehicleOf.Remove(missionEnded.PilotId) |> ignore
-                flights.Remove(missionEnded.VehicleId) |> ignore
                 healthOf.Remove(missionEnded.VehicleId) |> ignore
-
+                flightRecords.Remove(missionEnded.PilotId) |> ignore
             | _ ->
                 ()
     }

@@ -331,6 +331,13 @@ module internal Extensions =
                     "UpdatePlayerBan",
                     [ "Ban", (string ban) :> obj
                     ] |> Map.ofSeq
+                | WarStateUpdate.UpdatePilot(pilot) ->
+                    "RegisterPilot",
+                    [ "PilotId", box pilot.Id.AsInt
+                      "Health", string pilot.Health :> obj
+                      "FirstName", pilot.PilotFirstName :> obj
+                      "LastName", pilot.PilotLastName :> obj
+                    ] |> Map.ofSeq
                 | WarStateUpdate.RegisterPilotFlight(pid, flight, health) ->
                     "RegisterPilotFlight",
                     [ "PilotId", box pid.AsInt
