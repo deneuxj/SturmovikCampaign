@@ -53,8 +53,7 @@ type Target =
         Pos : OrientedPosition
     }
 
-type AmmoType =
-    Rocket | Bullets | Bomb
+type AmmoType = AmmoName of string
 
 type ReturnType =
     CrashedInEnemyTerritory | CrashedInFriendlyTerritory of Vector2 | AtAirfield of AirfieldId

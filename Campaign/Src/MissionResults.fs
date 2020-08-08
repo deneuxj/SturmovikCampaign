@@ -96,8 +96,7 @@ type IWarStateQuery with
             |> Option.ofPair)
 
 type AmmoType with
-    static member FromLogName(logName : string) : AmmoType =
-        failwith "TODO"
+    static member FromLogName(logName : string) : AmmoType = AmmoName logName
 
 /// Extract war state updade commands from the game logs.
 /// Note: The state must be updated as soon as a command is yielded.
@@ -114,7 +113,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
         // Object ID to float32
         let healthOf = Seq.mutableDict []
         // Vehicle ID to ObjectHit
-        let latestHit = Seq.mutableDict []
+        let latestHit : Dictionary<int, {| Ammo : string; AttackerId : int; TargetId : int |}> = Seq.mutableDict []
 
         let handleDamage(amount, targetId, position) =
             asyncSeq {
@@ -158,38 +157,41 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 let ammo =
                     match latestHit.TryGetValue(targetId) with
                     | true, hit ->
-                        AmmoType.FromLogName("")
+                        Some(AmmoType.FromLogName(hit.Ammo))
                     | false, _ ->
-                        AmmoType.Bullets
-                match bindings.TryGetValue(targetId) with
-                | true, binding ->
-                    // Buildings
-                    let sub = binding.Sub |> Option.defaultValue -1
-                    for building in state.GetBuildingsAt(binding.Name, sub, position) do
-                        yield (TargetType.Building(building.Id, sub), ammo, amount)
+                        None
+                match ammo with
+                | Some ammo ->
+                    match bindings.TryGetValue(targetId) with
+                    | true, binding ->
+                        // Buildings
+                        let sub = binding.Sub |> Option.defaultValue -1
+                        for building in state.GetBuildingsAt(binding.Name, sub, position) do
+                            yield (TargetType.Building(building.Id, sub), ammo, amount)
 
-                    // Parked planes
-                    match state.TryGetStaticPlaneAt(binding.Name, position) with
-                    | Some(afId, plane) ->
-                        yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
-                    | None ->
-                        ()
+                        // Parked planes
+                        match state.TryGetStaticPlaneAt(binding.Name, position) with
+                        | Some(afId, plane) ->
+                            yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
+                        | None ->
+                            ()
 
-                    // Flying planes
-                    match state.TryGetPlane(binding.Name) with
-                    | Some plane ->
-                        yield (TargetType.Air(plane.Id), ammo, amount)
-                    | None ->
-                        ()
+                        // Flying planes
+                        match state.TryGetPlane(binding.Name) with
+                        | Some plane ->
+                            yield (TargetType.Air(plane.Id), ammo, amount)
+                        | None ->
+                            ()
 
-                    // Others
-                    match binding.Name with
-                    | TargetTypeByName target ->
-                        yield (target, ammo, amount)
-                    | _ ->
+                        // Others
+                        match binding.Name with
+                        | TargetTypeByName target ->
+                            yield (target, ammo, amount)
+                        | _ ->
+                            ()
+                    | false, _ ->
                         ()
-                | false, _ ->
-                    ()
+                | None -> ()
             ]
 
         /// Update flight record with damage
@@ -289,6 +291,9 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         ()
                 | false, _ ->
                     ()
+
+            | ObjectEvent(_, ObjectHit hit) ->
+                latestHit.[hit.TargetId] <- hit
 
             | ObjectEvent(_, ObjectDamaged damaged) ->
                 // Update mappings
