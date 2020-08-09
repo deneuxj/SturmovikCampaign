@@ -665,7 +665,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             let bakDir =
                 let up = Path.GetDirectoryName(Path.GetFullPath(settings.WorkDir))
                 Seq.initInfinite (fun i -> sprintf "Archived-%03d" i)
-                |> Seq.find (fun dirname -> not(Directory.Exists(Path.Combine(up, dirname))))
+                |> Seq.map (fun dirname -> Path.Combine(up, dirname))
+                |> Seq.find (fun dirname -> not(Directory.Exists(dirname)))
 
             let moveDir _ =
                 try
