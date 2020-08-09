@@ -669,11 +669,14 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 |> Seq.find (fun dirname -> not(Directory.Exists(dirname)))
 
             let moveDir _ =
-                try
-                    Directory.Move(settings.WorkDir, bakDir)
-                    Ok "Old working dir backed up"
-                with
-                | _ -> Error <| sprintf "Failed to back up working dir '%s'" settings.WorkDir
+                if Directory.Exists(settings.WorkDir) then
+                    try
+                        Directory.Move(settings.WorkDir, bakDir)
+                        Ok "Old working dir backed up"
+                    with
+                    | _ -> Error <| sprintf "Failed to back up working dir '%s'" settings.WorkDir
+                else
+                    Ok "No current campaign to backup"
 
             let recreateDir _ =
                 try
@@ -690,16 +693,25 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     Ok "No old campaign data to backup before reset"
 
             let initData _ =
-                let world = Init.mkWorld(scenario + ".Mission", settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
-                let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
-                    let planeSet = BodenplatteInternal.PlaneSet.Default
-                    let world = planeSet.Setup world
-                    world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet)), 1.5f, 1.0f
-                let state0 = Init.mkWar world
-                sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
-                sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
-                let step = sctrl.Start state0
-                Ok(world, state0, step, sctrl)
+                let world =
+                    try
+                        Init.mkWorld(scenario + ".Mission", settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
+                        |> Ok
+                    with exc ->
+                        Error (sprintf "Failed to init world: %s" exc.Message)
+                match world with
+                | Error e ->
+                    Error e
+                | Ok world ->
+                    let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
+                        let planeSet = BodenplatteInternal.PlaneSet.Default
+                        let world = planeSet.Setup world
+                        world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet)), 1.5f, 1.0f
+                    let state0 = Init.mkWar world
+                    sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
+                    sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
+                    let step = sctrl.Start state0
+                    Ok(world, state0, step, sctrl)
 
             let writeData (world : World, state0 : WarState, step0 : ScenarioStep, sctrl : IScenarioController) =
                 try
