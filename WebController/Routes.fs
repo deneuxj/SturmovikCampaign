@@ -80,18 +80,34 @@ let getEncoder (ctx : HttpContext) =
     | _ ->
         System.Text.Encoding.UTF8
 
-let setPassword (passwords : PasswordsManager) (ctx : HttpContext) =
+let handleJson<'T> handler (ctx : HttpContext) : WebPart =
     let encoder = getEncoder ctx
     let json = ctx.request.rawForm |> encoder.GetString
-    try
-        let data = Json.deserialize<{| User: string; Password: string |}> json
-        match passwords.SetPassword(data.User, data.Password) with
-        | Ok ->
-            OK (sprintf "Password set for %s" data.User) >=> setTextMimeType
-        | Error err ->
-            CONFLICT err >=> setTextMimeType
-    with
-    | _ -> BAD_REQUEST "Invalid content"
+    let data =
+        try
+            Json.deserialize<'T> json
+            |> Ok
+        with
+        | _ -> Error(BAD_REQUEST "Invalid json payload")
+    match data with
+    | Ok data ->
+        handler data
+    | Error wb ->
+        wb
+
+let setPassword (passwords : PasswordsManager) =
+    handleJson<{| User: string; Password: string |}>
+        (fun data ->
+            match passwords.SetPassword(data.User, data.Password) with
+            | Ok ->
+                OK (sprintf "Password set for %s" data.User) >=> setTextMimeType
+            | Error err ->
+                CONFLICT err >=> setTextMimeType
+        )
+
+let resetCampaign reset =
+    handleJson<{| Scenario: string |}>
+        (fun data -> reset data.Scenario)
 
 let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr : IRoutingResponse, ctrl : IControllerInteraction) =
     let inline serializeAsync task (ctx : HttpContext) =
@@ -122,7 +138,13 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
         ]
         POST >=> choose [
-            path "/control/reset" >=> inControlRoom (context (fun _ -> ctrl.ResetCampaign("RheinlandSummer") |> serializeAsync))
+            path "/control/reset" >=>
+                inControlRoom
+                    (context
+                        (resetCampaign
+                            (fun scenario ->
+                                ctrl.ResetCampaign(scenario)
+                                |> serializeAsync)))
             path "/control/advance" >=> inControlRoom (context (fun _ -> ctrl.Advance() |> serializeAsync))
             path "/control/run" >=> inControlRoom (context (fun _ -> ctrl.Run() |> serializeAsync))
             path "/control/sync/loop" >=> inControlRoom(context( fun _ -> ctrl.StartSyncLoop() |> serializeAsync))
