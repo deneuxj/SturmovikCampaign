@@ -117,50 +117,6 @@
     <None Include="MyScripts\StateStats.fsx" />
     <None Include="MyScripts\ShowSupplies.fsx" />
     <None Include="MyScripts\Scratch.fsx" />
-    <None Include="data\KubanAutumn.Mission">
-      <Link>KubanAutumn.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\KubanSpring.Mission">
-      <Link>KubanSpring.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\KubanSpringFC.Mission">
-      <Link>KubanSpringFC.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\MoscowAutumn1.Mission">
-      <Link>MoscowAutumn1.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\MoscowAutumn2.Mission">
-      <Link>MoscowAutumn2.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\MoscowWinter.Mission">
-      <Link>MoscowWinter.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\VLuki.Mission">
-      <Link>VLuki.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\StalingradSummer.Mission">
-      <Link>StalingradSummer.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\StalingradAutumn.Mission">
-      <Link>StalingradAutumn.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\StalingradFC.Mission">
-      <Link>StalingradFC.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="data\RheinLandSummer.Mission">
-      <Link>RheinLandSummer.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <Content Include="Installation.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -193,6 +149,10 @@
     <Content Include="..\FitArea\stalingrad.bin" Link="stalingrad.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <None Include="data\OperationBodenPlatte.Mission">
+      <Link>OperationBodenplatte.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
