@@ -77,9 +77,13 @@ type Pilot =
         AirKills : int
     }
 
+type BanStatus =
+    | NotBanned
+    | Banned of DateTime
+
 type Player =
     {
         Name : string
-        OtherNames : string
-        Pilots : Pilot list
+        BanStatus : BanStatus
+        Pilots : int list
     }

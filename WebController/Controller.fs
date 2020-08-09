@@ -1,6 +1,9 @@
 ﻿namespace Campaign.WebController
 
 open System.IO
+open System.Security.Cryptography
+open System.Text
+
 open Campaign.WebController.Routes
 open Util
 open Campaign
@@ -517,6 +520,54 @@ module internal Extensions =
                     Dto.Description = ""
                 }
             )
+
+    type Pilots.Pilot with
+        member this.ToDto(state : WarState.IWarStateQuery) : Dto.Pilot =
+            let playerName =
+                state.TryGetPlayer(this.PlayerGuid)
+                |> Option.map (fun player -> player.Name)
+                |> Option.defaultValue ""
+            let flights = this.InitialNumFlights + Pilots.countCompletedFlights(this.Flights)
+            let airKills = this.InitialAirKills + (this.Flights |> List.sumBy(fun flight -> flight.AirKills))
+            {
+                Id = this.Id.AsInt
+                FirstName = this.PilotFirstName
+                LastName = this.PilotLastName
+                Country = string this.Country
+                PlayerName = playerName
+                Health = this.Health.ToDto()
+                Flights = flights
+                AirKills = airKills
+            }
+
+    type Pilots.BanStatus with
+        member this.ToDto() =
+            match this with
+            | Pilots.BanStatus.Clear | Pilots.BanStatus.Probation -> NotBanned
+            | Pilots.BanStatus.Banned(since, duration) ->
+                (since + duration).ToDto()
+                |> Banned
+
+    type Pilots.Player with
+        /// Hash the player's unique GUID, and encode it to base64
+        // The userIDs from the logs should probably not be exposed to the public.
+        member this.GuidHash =
+            use hasher = HashAlgorithm.Create("SHA256")
+            this.Guid
+            |> Encoding.ASCII.GetBytes
+            |> hasher.ComputeHash
+            |> System.Convert.ToBase64String
+
+        member this.ToDto(state : WarState.IWarStateQuery) : Dto.Player =
+            let pilots =
+                state.GetPlayerPilots(this.Guid)
+                |> Seq.map (fun pilot -> pilot.Id.AsInt)
+                |> List.ofSeq
+            {
+                Name = this.Name
+                BanStatus = this.BanStatus.ToDto()
+                Pilots = pilots
+            }
 
 open Campaign.NewWorldDescription
 open Campaign.NewWorldDescription.IO
