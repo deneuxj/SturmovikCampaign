@@ -55,13 +55,13 @@ GET /query/past/<n>
 GET /query/simulation/<n>
 GET /query/dates
 
-PUT /control/reset
-PUT /control/advance
-PUT /control/run
-PUT /control/sync/loop
-PUT /control/sync/once
-PUT /control/sync/stop
-PUT /control/sync/interrupt
+POST /control/reset
+POST /control/advance
+POST /control/run
+POST /control/sync/loop
+POST /control/sync/once
+POST /control/sync/stop
+POST /control/sync/interrupt
 """
 
 let fromBase64 = System.Convert.FromBase64String >> System.Text.Encoding.UTF8.GetString
