@@ -408,6 +408,116 @@ module internal Extensions =
               Values = values
             }
 
+    type Pilots.PilotHealth with
+        member this.ToDto() : Dto.HealthStatus =
+            match this with
+            | Pilots.Healthy -> Dto.Healthy
+            | Pilots.Dead -> Dto.Dead
+            | Pilots.Injured until -> Dto.Injured {| Until = until.ToDto() |}
+
+    type Targets.ReturnType with
+        member this.ToDto() : Dto.ReturnStatus =
+            match this with
+            | Targets.AtAirfield afId -> Dto.LandedAtAirfield afId.AirfieldName
+            | Targets.CrashedInEnemyTerritory -> Dto.CrashedInEnemyTerritory
+            | Targets.CrashedInFriendlyTerritory -> Dto.CrashedInFriendlyTerritory
+
+    type Targets.TargetType with
+        member this.ToDto(world : NewWorldDescription.World) : Dto.TargetType =
+            match this with
+            | Targets.Truck -> Dto.Vehicle "truck"
+            | Targets.Train -> Dto.Vehicle "train" 
+            | Targets.Ship -> Dto.Ship "cargo"
+            | Targets.Battleship -> Dto.Ship "battleship"
+            | Targets.GunBoat -> Dto.Ship "gunboat"
+            | Targets.Artillery -> Dto.Artillery "artillery"
+            | Targets.Tank -> Dto.Artillery "tank"
+            | Targets.ArmoredCar -> Dto.Artillery "armored car"
+            | Targets.Bridge(bid, _) ->
+                world.Bridges.TryGetValue(bid)
+                |> Option.ofPair
+                |> Option.map (fun building -> building.Properties.Script)
+                |> Option.defaultValue ""
+                |> Dto.Bridge
+            | Targets.Building(bid, _) ->
+                world.Buildings.TryGetValue(bid)
+                |> Option.ofPair
+                |> Option.map (fun building -> building.Properties.Script)
+                |> Option.defaultValue ""
+                |> Dto.Building
+            | Targets.ParkedPlane(_, plane) ->
+                world.PlaneSet.TryGetValue(plane)
+                |> Option.ofPair
+                |> Option.map (fun plane -> plane.ScriptModel.Script)
+                |> Option.defaultValue (string plane)
+                |> Dto.ParkedPlane
+            | Targets.Air(plane) ->
+                world.PlaneSet.TryGetValue(plane)
+                |> Option.ofPair
+                |> Option.map (fun plane -> plane.ScriptModel.Script)
+                |> Option.defaultValue (string plane)
+                |> Dto.Plane
+
+    type Dto.DamagedTarget with
+        static member OfTuple (world : NewWorldDescription.World) (target : Targets.TargetType, Targets.AmmoName ammo, amount : float32) =
+            {
+                Dto.Amount = float amount
+                Dto.Ammo = ammo
+                Dto.Target = target.ToDto(world)
+            }
+
+    type Targets.FlightRecord with
+        member this.ToDto(world) : Dto.MissionRecord =
+            let startAirfield = this.Start.AirfieldName
+            let startDate = this.Date.ToDto()
+            let endDate = (this.Date + this.Length).ToDto()
+            let damages =
+                this.TargetsDamaged
+                |> List.map (Dto.DamagedTarget.OfTuple world)
+            let returnStatus = this.Return.ToDto()
+            let plane =
+                world.PlaneSet.TryGetValue(this.Plane)
+                |> Option.ofPair
+                |> Option.map (fun plane -> plane.ScriptModel.Script)
+                |> Option.defaultValue (string this.Plane)
+            let planeHealth = 1.0
+            {
+                Dto.StartAirfield = startAirfield
+                Dto.StartDate = startDate
+                Dto.EndDate = endDate
+                Dto.DamagedTargets = damages
+                Dto.ReturnStatus = returnStatus
+                Dto.Plane = plane
+                Dto.PlaneHealth = planeHealth
+            }
+
+    type Dto.Rank with
+        static member ofName (name : string) =
+            { Dto.RankName = name }
+
+    type Dto.Award with
+        static member ofName (world : NewWorldDescription.World) (country : BasicTypes.CountryId, name : string) : Dto.Award =
+            world.Awards.Awards.TryGetValue(country)
+            |> Option.ofPair
+            |> Option.bind (fun awards ->
+                awards
+                |> List.tryPick (fun award ->
+                    if award.AwardName = name then
+                        {
+                            Dto.AwardName = award.AwardName
+                            Dto.Description = award.Description
+                        } |> Some
+                    else
+                        None
+                )
+            )
+            |> Option.defaultValue (
+                {
+                    Dto.AwardName = name
+                    Dto.Description = ""
+                }
+            )
+
 open Campaign.NewWorldDescription
 open Campaign.NewWorldDescription.IO
 open Campaign.WarState
@@ -531,7 +641,7 @@ type Controller(settings : GameServerSync.Settings) =
                         let steps =
                             serializer.DeserializeSequence(reader)
                             |> Seq.map (fun (description : string, command : WarStateUpdate.Commands option, results : WarStateUpdate.Results list) ->
-                                { Dto.Description = description
+                                { Dto.SimulationStep.Description = description
                                   Dto.Command = command |> Option.map Array.singleton |> Option.defaultValue [||] |> Array.map (fun x -> x.ToDto(state))
                                   Dto.Results = results |> List.map (fun r -> r.ToDto(state)) |> Array.ofList
                                 }
