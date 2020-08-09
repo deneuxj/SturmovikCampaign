@@ -48,6 +48,7 @@ type MissionRecord =
         StartDate : DateTime
         EndDate : DateTime
         DamagedTargets : DamagedTarget list
+        AirKills : int
         ReturnStatus : ReturnStatus
         Plane : string
         PlaneHealth : float

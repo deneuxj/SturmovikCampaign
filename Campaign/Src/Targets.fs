@@ -71,7 +71,9 @@ type FlightRecord =
         Length : TimeSpan
         Plane : PlaneModelId
         PlaneHealth : float32
+        AirKills : int
         Start : AirfieldId
         TargetsDamaged : (TargetType * AmmoType * float32) list
         Return : ReturnType
+        PilotHealth : float32
     }

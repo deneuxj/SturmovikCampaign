@@ -40,14 +40,16 @@ with
         |> Map.ofSeq
         |> fun ranks -> { Ranks = ranks }
 
+type AwardObjectType =
+    | AirKills of SingleFlight: bool * int
+    | Wounded of float32
+    | Damaged of float32
+
 type Award =
     {
         AwardName : string
         Description : string
-        Target : TargetType
-        MinDamage : float32
-        SingleFlight : bool
-        Unique : bool
+        Target : AwardObjectType
     }
 
 type AwardDatabase =

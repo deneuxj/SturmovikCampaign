@@ -275,6 +275,9 @@ module IWarStateExtensions =
               PlayerGuid = guid
               Health = Healthy
               Flights = []
+              InitialAwards = []
+              InitialAirKills = 0
+              InitialNumFlights = 0
             }
 
 type IWarStateUpdate =

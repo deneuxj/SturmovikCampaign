@@ -37,48 +37,28 @@ with
         | Dead -> "dead"
         | Injured until -> sprintf "injured until %s" (until.ToShortDateString())
 
-let computeInstancesOfAward (award : Award) (flights : FlightRecord list) =
-    let rec forEachFlight damage flights =
+let computeInstancesOfAward (airKills0 : int, award : Award, flights : FlightRecord list) =
+    let rec forEachFlight airKills flights =
         seq {
             match flights with
             | [] -> ()
             | (flight : FlightRecord) :: flights ->
-                let damage =
-                    if award.SingleFlight then
-                        0.0f
-                    else
-                        damage
-                yield! forEachDamage flights damage flight.TargetsDamaged
-        }
-
-    and forEachDamage flights damage targets =
-        seq {
-            match targets with
-            | [] ->
-                yield! forEachFlight damage flights
-            | (target, _, dmg) :: targets ->
-                let isMatch =
-                    match award.Target, target with
-                    | (Bridge | Building), (Bridge | Building)
-                    | ParkedPlane, ParkedPlane
-                    | Air, Air -> true
-                    | x, y -> x = y
-                if isMatch then
-                    if damage < award.MinDamage && damage + dmg >= award.MinDamage then
+                match award.Target with
+                | AirKills(singleFlight, threshold) ->
+                    if singleFlight && flight.AirKills > threshold then
                         yield award.AwardName
-                        if not award.Unique then
-                            yield! forEachDamage flights (damage + dmg) targets
-                    else
-                        yield! forEachDamage flights (damage + dmg) targets
-                else
-                    yield! forEachDamage flights (damage + dmg) targets
+                    if not singleFlight && flight.AirKills + airKills > threshold then
+                        yield award.AwardName
+                | Wounded threshold ->
+                    if flight.PilotHealth <= threshold then
+                        yield award.AwardName
+                | Damaged threshold ->
+                    if flight.PlaneHealth <= threshold then
+                        yield award.AwardName
+                yield! forEachFlight (flight.AirKills + airKills) flights
         }
 
-    forEachFlight 0.0f flights
-
-let computeInstancesOfAwards (awards : Award list) (flights : FlightRecord list) =
-    awards
-    |> Seq.collect (fun award -> computeInstancesOfAward award flights)
+    forEachFlight 0 flights
 
 [<Struct>]
 type PilotId = PilotId of int
@@ -95,6 +75,9 @@ type Pilot =
         PilotLastName : string
         Health : PilotHealth
         Country : CountryId
+        InitialAwards : string list
+        InitialAirKills : int
+        InitialNumFlights : int
         Flights : FlightRecord list
     }
 
@@ -102,9 +85,7 @@ let countCompletedFlights (flights : FlightRecord list) =
     (0, flights)
     ||> List.fold (fun flights flight ->
         match flight.Return with
-        | CrashedInFriendlyTerritory _ when flight.TargetsDamaged |> List.isEmpty |> not ->
-            flights + 1
-        | AtAirfield _ ->
+        | AtAirfield | CrashedInFriendlyTerritory ->
             if flight.TargetsDamaged |> List.isEmpty |> not then
                 flights + 1
             elif flight.Length >= TimeSpan(0, 20, 0) then // 20 minutes
@@ -120,5 +101,5 @@ let tryComputeRank (db : RanksDatabase) (pilot : Pilot) =
     db.Ranks.TryFind(pilot.Country)
     |> Option.bind (fun ranks ->
         ranks
-        |> Seq.tryFindBack (fun rank -> rank.Flights <= completedFlights)
+        |> Seq.tryFindBack (fun rank -> rank.Flights <= completedFlights + pilot.InitialNumFlights)
     )

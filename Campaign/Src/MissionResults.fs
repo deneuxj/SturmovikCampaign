@@ -223,6 +223,22 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
             | false, _ ->
                 ()
 
+        /// Update flight record with air kills
+        let updateAirKills(pilotId, targetId) =
+            match bindings.TryGetValue(targetId), flightRecords.TryGetValue(pilotId) with
+            | (true, binding), (true, x) ->
+                let differentCoalitions =
+                    match state.TryGetCoalitionOfCountry(binding.Country), state.World.Countries.[x.Pilot.Country] with
+                    | Some country1, country2 -> country1 <> country2
+                    | _ -> false
+                if differentCoalitions && state.TryGetPlane(binding.Typ).IsSome then
+                    flightRecords.[pilotId] <-
+                        {| x with
+                            Record = { x.Record with AirKills = x.Record.AirKills + 1 }
+                        |}
+            | _ ->
+                ()
+
         for line in logs do
             match line with
             | ObjectEvent(_, ObjectBound binding) ->
@@ -258,6 +274,10 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     |> Option.defaultValue 1.0f
                 match pilotOf.TryGetValue(takeOff.Id) with
                 | true, taken ->
+                    let pilotHealth =
+                        healthOf.TryGetValue(taken.PilotId)
+                        |> Option.ofPair
+                        |> Option.defaultValue 1.0f
                     let country =
                         CountryId.FromMcuValue(enum taken.Country)
                     let plane = state.TryGetPlane(taken.Typ)
@@ -269,7 +289,9 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                               Length = System.TimeSpan(0L)
                               Plane = plane.Id
                               PlaneHealth = planeHealth
+                              PilotHealth = pilotHealth
                               Start = afId
+                              AirKills = 0
                               TargetsDamaged = []
                               Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
                             }
@@ -314,8 +336,11 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 let health = health - damaged.Damage
                 healthOf.[damaged.TargetId] <- health
                 // Update flight record
-                updateFlightRecord(damaged.AttackerId, damaged.Damage, damaged.TargetId, damaged.Position)
-
+                match pilotOf.TryGetValue(damaged.AttackerId) with
+                | true, taken ->
+                    updateFlightRecord(taken.PilotId, damaged.Damage, damaged.TargetId, damaged.Position)
+                | false, _ ->
+                    ()
                 // Emit commands
                 yield! handleDamage(damaged.Damage, damaged.TargetId, damaged.Position)
 
@@ -327,8 +352,12 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     |> Option.defaultValue 1.0f
                 healthOf.[killed.TargetId] <- 0.0f
                 // Update flight record
-                updateFlightRecord(killed.AttackerId, oldHealth, killed.TargetId, killed.Position)
-
+                match pilotOf.TryGetValue(killed.AttackerId) with
+                | true, taken ->
+                    updateFlightRecord(taken.PilotId, oldHealth, killed.TargetId, killed.Position)
+                    updateAirKills(taken.PilotId, killed.TargetId)
+                | false, _ ->
+                    ()
                 // Emit commands
                 yield! handleDamage(oldHealth, killed.TargetId, killed.Position)
 
@@ -352,6 +381,10 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     healthOf.TryGetValue(missionEnded.PilotId)
                     |> Option.ofPair
                     |> Option.defaultValue 1.0f
+                let planeHealth =
+                    healthOf.TryGetValue(missionEnded.VehicleId)
+                    |> Option.ofPair
+                    |> Option.defaultValue 1.0f
                 match flightRecords.TryGetValue(missionEnded.PilotId) with
                 | true, x ->
                     let injury =
@@ -364,7 +397,12 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         else
                             state.Date + timeStamp + System.TimeSpan(int(ceil(injury * 30.0f)), 0, 0, 0)
                             |> Injured
-                    yield RegisterPilotFlight(x.Pilot.Id, x.Record, healthStatus)
+                    let flight =
+                        { x.Record with
+                            PilotHealth = pilotHealth
+                            PlaneHealth = planeHealth
+                        }
+                    yield RegisterPilotFlight(x.Pilot.Id, flight, healthStatus)
                 | false, _ ->
                     ()
                 // Update mappings

@@ -485,6 +485,7 @@ module internal Extensions =
                 Dto.StartDate = startDate
                 Dto.EndDate = endDate
                 Dto.DamagedTargets = damages
+                Dto.AirKills = this.AirKills
                 Dto.ReturnStatus = returnStatus
                 Dto.Plane = plane
                 Dto.PlaneHealth = float this.PlaneHealth
