@@ -480,7 +480,6 @@ module internal Extensions =
                 |> Option.ofPair
                 |> Option.map (fun plane -> plane.ScriptModel.Script)
                 |> Option.defaultValue (string this.Plane)
-            let planeHealth = 1.0
             {
                 Dto.StartAirfield = startAirfield
                 Dto.StartDate = startDate
@@ -488,7 +487,7 @@ module internal Extensions =
                 Dto.DamagedTargets = damages
                 Dto.ReturnStatus = returnStatus
                 Dto.Plane = plane
-                Dto.PlaneHealth = planeHealth
+                Dto.PlaneHealth = float this.PlaneHealth
             }
 
     type Dto.Rank with

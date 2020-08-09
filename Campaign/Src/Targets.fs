@@ -70,6 +70,7 @@ type FlightRecord =
         Date : DateTime
         Length : TimeSpan
         Plane : PlaneModelId
+        PlaneHealth : float32
         Start : AirfieldId
         TargetsDamaged : (TargetType * AmmoType * float32) list
         Return : ReturnType

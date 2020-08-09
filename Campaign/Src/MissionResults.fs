@@ -252,6 +252,10 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
             | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
                 // Start flight record
                 let afId = state.GetNearestAirfield(takeOff.Position).AirfieldId
+                let planeHealth =
+                    healthOf.TryGetValue(takeOff.Id)
+                    |> Option.ofPair
+                    |> Option.defaultValue 1.0f
                 match pilotOf.TryGetValue(takeOff.Id) with
                 | true, taken ->
                     let country =
@@ -264,6 +268,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                             { Date = state.Date + timeStamp
                               Length = System.TimeSpan(0L)
                               Plane = plane.Id
+                              PlaneHealth = planeHealth
                               Start = afId
                               TargetsDamaged = []
                               Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
@@ -277,6 +282,10 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
             | ObjectEvent(timeStamp, ObjectLands landing) ->
                 // Update flight record
                 let afId = state.GetNearestAirfield(landing.Position).AirfieldId
+                let planeHealth =
+                    healthOf.TryGetValue(landing.Id)
+                    |> Option.ofPair
+                    |> Option.defaultValue 1.0f
                 match pilotOf.TryGetValue(landing.Id) with
                 | true, taken ->
                     match flightRecords.TryGetValue(taken.PilotId) with
@@ -284,6 +293,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         let flight =
                             { x.Record with
                                 Length = state.Date + timeStamp - x.Record.Date
+                                PlaneHealth = planeHealth
                                 Return = AtAirfield afId
                             }
                         flightRecords.[taken.PilotId] <- {| x with Record = flight |}
