@@ -7,6 +7,7 @@
   <ItemGroup>
     <Compile Include="Vector.fs" />
     <Compile Include="SpacePartition.fs" />
+    <Compile Include="StringPatterns.fs" />
   </ItemGroup>
 
   <ItemGroup>
