@@ -46,6 +46,14 @@ type MGF
 
 type CoalitionId = Axis | Allies
 with
+    /// Try to convert from an MCU coalition value
+    static member FromMcuValue(v) =
+        match v with
+        | Mcu.CoalitionValue.Axis -> Some Axis
+        | Mcu.CoalitionValue.Allies -> Some Allies
+        | Mcu.CoalitionValue.CentralPowers -> Some Axis
+        | Mcu.CoalitionValue.Entente -> Some Allies
+        | _ -> None
 
     /// <summary>
     /// Convert a country value from a MCU in a mission to a CoalitionId option.
