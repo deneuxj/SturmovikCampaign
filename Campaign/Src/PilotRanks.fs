@@ -26,6 +26,7 @@ with
 type Rank =
     {
         RankName : string
+        RankAbbrev : string
         Flights : int
     }
 
@@ -36,7 +37,7 @@ type RanksDatabase =
 with
     static member Default =
         CountryId.All
-        |> Seq.map (fun country -> country, [ {RankName = "Rookie"; Flights = 0 } ])
+        |> Seq.map (fun country -> country, [ { RankName = "Flight Officer"; RankAbbrev = "FO"; Flights = 0 } ])
         |> Map.ofSeq
         |> fun ranks -> { Ranks = ranks }
 

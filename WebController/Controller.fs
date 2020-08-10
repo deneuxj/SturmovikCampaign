@@ -495,8 +495,11 @@ module internal Extensions =
             }
 
     type Dto.Rank with
-        static member ofName (name : string) =
-            { Dto.RankName = name }
+        static member ofName (name : string, abbrev : string) =
+            {
+                Dto.RankName = name
+                Dto.RankAbbrev = abbrev
+            }
 
     type Dto.Award with
         static member ofName (world : NewWorldDescription.World) (country : BasicTypes.CountryId, name : string) : Dto.Award =
@@ -529,8 +532,11 @@ module internal Extensions =
                 |> Option.defaultValue ""
             let flights = this.InitialNumFlights + Pilots.countCompletedFlights(this.Flights)
             let airKills = this.InitialAirKills + (this.Flights |> List.sumBy(fun flight -> flight.AirKills))
+            let rank = Pilots.tryComputeRank state.World.Ranks this
             {
                 Id = this.Id.AsInt
+                Rank = rank |> Option.map (fun rank -> rank.RankName) |> Option.defaultValue ""
+                RankAbbrev = rank |> Option.map (fun rank -> rank.RankAbbrev) |> Option.defaultValue ""
                 FirstName = this.PilotFirstName
                 LastName = this.PilotLastName
                 Country = string this.Country

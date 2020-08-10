@@ -57,6 +57,7 @@ type MissionRecord =
 type Rank =
     {
         RankName : string
+        RankAbbrev : string
     }
 
 type Award =
@@ -68,6 +69,8 @@ type Award =
 type Pilot =
     {
         Id : int
+        Rank : string
+        RankAbbrev : string
         FirstName : string
         LastName : string
         Country : string
