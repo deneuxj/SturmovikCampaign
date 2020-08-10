@@ -36,8 +36,8 @@ type HealthFilter =
 type PilotSearchFilter =
     {
         Health : HealthFilter option
-        Country : int option
-        Coalition : int option
+        Country : string option
+        Coalition : string option
         NamePattern : string option
     }
 
@@ -134,11 +134,11 @@ let searchPilots handler (ctx : HttpContext) =
         | _ -> None
     let country =
         match ctx.request.queryParam "country" with
-        | Choice1Of2(AsInt32 n) -> Some n
+        | Choice1Of2(s) -> Some s
         | _ -> None
     let coalition =
         match ctx.request.queryParam "coalition" with
-        | Choice1Of2(AsInt32 n) -> Some n
+        | Choice1Of2(s) -> Some s
         | _ -> None
     let namePattern =
         match ctx.request.queryParam "name" with

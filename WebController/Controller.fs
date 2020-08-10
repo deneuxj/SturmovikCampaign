@@ -825,7 +825,12 @@ type Controller(settings : GameServerSync.Settings) =
 
                             match filter.Coalition with
                             | Some value ->
-                                match BasicTypes.CoalitionId.FromMcuValue (enum value) with
+                                match
+                                    (try
+                                        BasicTypes.CoalitionId.FromString value
+                                        |> Some
+                                     with _ -> None)
+                                    with
                                 | None ->
                                     yield fun _ -> false
                                 | Some coalition ->
@@ -837,7 +842,7 @@ type Controller(settings : GameServerSync.Settings) =
 
                             match filter.Country with
                             | Some value ->
-                                match BasicTypes.CountryId.FromMcuValue (enum value) with
+                                match BasicTypes.CountryId.FromString value with
                                 | None ->
                                     yield fun _ -> false
                                 | Some country ->

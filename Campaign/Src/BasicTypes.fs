@@ -87,10 +87,10 @@ with
         | Axis -> "Axis"
         | Allies -> "Allies"
 
-    static member FromString(s) =
-        match s with
-        | "Axis" -> Axis
-        | "Allies" -> Allies
+    static member FromString(s : string) =
+        match s.ToLowerInvariant() with
+        | "axis" -> Axis
+        | "allies" -> Allies
         | _ -> failwithf "Invalid coalition '%s'" s
 
 type CountryId =
@@ -138,6 +138,15 @@ with
         | ploggy.Country.USSR | ploggy.Country.OtherAllies -> Some Russia
         | ploggy.Country.None | ploggy.Country.Neutral -> None // Should not happen
         | _ -> failwithf "Unknown country value %d" (int country)
+
+    static member FromString(s : string) =
+        match (s.ToLowerInvariant()) with
+        | "russia" -> Some Russia
+        | "unitedstates" | "usa" | "us" -> Some UnitedStates
+        | "greatbritain" | "uk" -> Some GreatBritain
+        | "germany" -> Some Germany
+        | "italy" -> Some Italy
+        | _ -> None
 
 /// A position on the map and a rotation around the vertical axis.
 [<CustomComparison>]
