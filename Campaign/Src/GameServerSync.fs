@@ -21,6 +21,7 @@ open System
 open MBrace.FsPickler
 open System.Diagnostics
 open NLog
+open FSharp.Json
 
 open FSharp.Control
 
@@ -87,8 +88,6 @@ with
 
 
 module IO =
-    open FSharp.Json
-
     type IOSettings =
         {
             address : string option
@@ -835,13 +834,21 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let pattern = filename.Substring(0, filename.Length - "[0]".Length) + "*.txt"
                 let lines =
                     asyncSeq {
-                        for file in System.IO.Directory.EnumerateFiles(dir, pattern) |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file)) do
-                            yield! AsyncSeq.ofSeq (System.IO.File.ReadAllLines(file))
+                        let files =
+                            System.IO.Directory.EnumerateFiles(dir, pattern)
+                            |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file))
+                            |> List.ofSeq
+                        for file in files do
+                            use f = File.OpenText(file)
+                            while not f.EndOfStream do
+                                let! line = Async.AwaitTask(f.ReadLineAsync())
+                                yield line
                     }
                 let commands = MissionResults.commandsFromLogs war lines
                 let! effects =
                     asyncSeq {
                         for command in commands do
+                            logger.Debug("Command from game logs: " + Json.serialize command)
                             let effects = command.Execute(war)
                             yield (command, effects)
                     }
