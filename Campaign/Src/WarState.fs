@@ -176,12 +176,12 @@ type IWarStateQuery =
     abstract member GetOwner : RegionId -> CoalitionId option
     /// Try to get a player by its GUID
     abstract member TryGetPlayer : string -> Player option
+    /// Get all pilots
+    abstract member Pilots : Pilot list
     /// Get a pilot by its ID
     abstract member GetPilot : PilotId -> Pilot
     /// Get next available pilot ID
     abstract member NextPilotId : unit -> PilotId
-    /// Get all pilots of a player
-    abstract member GetPlayerPilots : string -> Pilot seq
 
 [<AutoOpen>]
 module IWarStateExtensions = 
@@ -279,6 +279,12 @@ module IWarStateExtensions =
               InitialAirKills = 0
               InitialNumFlights = 0
             }
+
+        member this.GetPlayerPilots(guid : string) =
+            this.Pilots
+            |> Seq.filter (fun pilot -> pilot.PlayerGuid = guid)
+            |> Seq.sortBy (fun pilot -> pilot.Id)
+
 
 type IWarStateUpdate =
     /// Set the date and time
@@ -622,15 +628,14 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         players.TryGetValue(guid)
         |> Option.ofPair
 
+    member this.Pilots =
+        pilots.Values
+        |> List.ofSeq
+
     member this.GetPilot(id : PilotId) =
         pilots.[id]
 
     member this.NextPilotId() = PilotId(pilots.Count)
-
-    member this.GetPlayerPilots(guid : string) =
-        pilots.Values
-        |> Seq.filter (fun pilot -> pilot.PlayerGuid = guid)
-        |> Seq.sortBy (fun pilot -> pilot.Id)
 
     interface IWarState with
         member this.ComputeDistancesToAirfields() = upcast(this.ComputeDistancesToAirfields())
@@ -663,7 +668,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.TryGetPlayer(guid : string) = this.TryGetPlayer(guid)
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
         member this.NextPilotId() = this.NextPilotId()
-        member this.GetPlayerPilots(guid : string) = this.GetPlayerPilots(guid)
+        member this.Pilots = this.Pilots
 
 
 [<RequireQualifiedAccess>]

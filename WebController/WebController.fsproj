@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Blocks\Blocks.fsproj" />
     <ProjectReference Include="..\Campaign\Campaign.fsproj" />
+    <ProjectReference Include="..\Util\Util.fsproj" />
   </ItemGroup>
   <Import Project=".paket\Paket.Restore.targets" />
 </Project>

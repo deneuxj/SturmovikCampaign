@@ -16,6 +16,8 @@
 
 module Campaign.WebController.Routes
 
+open Util.StringPatterns
+
 open Suave
 open Suave.Filters
 open Suave.Operators
@@ -27,12 +29,26 @@ open FSharp.Json
 open Campaign.WebController.Dto
 open Campaign.Passwords
 
+type HealthFilter =
+    | OnlyHealthy
+    | NoDead
+
+type PilotSearchFilter =
+    {
+        Health : HealthFilter option
+        Country : int option
+        Coalition : int option
+        NamePattern : string option
+    }
+
 type IRoutingResponse =
     abstract GetWorld : unit -> Async<Result<World, string>>
     abstract GetWarState : int option -> Async<Result<WarState, string>>
     abstract GetSimulation : int -> Async<Result<SimulationStep[], string>>
     abstract GetDates : unit -> Async<Result<DateTime[], string>>
     abstract GetSyncState : unit -> Async<Result<string, string>>
+    abstract GetPilots : PilotSearchFilter -> Async<Result<Pilot list, string>>
+    abstract GetPilot : int -> Async<Result<Pilot * MissionRecord list, string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
@@ -109,6 +125,34 @@ let resetCampaign reset =
     handleJson<{| Scenario: string |}>
         (fun data -> reset data.Scenario)
 
+/// Extract pilot search filter from URL args and run search
+let searchPilots handler (ctx : HttpContext) =
+    let healthFilter =
+        match ctx.request.queryParam "health" with
+        | Choice1Of2 "OnlyHealthy" -> Some OnlyHealthy
+        | Choice1Of2 "NoDead" -> Some NoDead
+        | _ -> None
+    let country =
+        match ctx.request.queryParam "country" with
+        | Choice1Of2(AsInt32 n) -> Some n
+        | _ -> None
+    let coalition =
+        match ctx.request.queryParam "coalition" with
+        | Choice1Of2(AsInt32 n) -> Some n
+        | _ -> None
+    let namePattern =
+        match ctx.request.queryParam "name" with
+        | Choice1Of2(pattern) -> Some pattern
+        | _ -> None
+    let filter =
+        {
+            Health = healthFilter
+            Country = country
+            Coalition = coalition
+            NamePattern = namePattern
+        }
+    handler filter
+
 let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr : IRoutingResponse, ctrl : IControllerInteraction) =
     let inline serializeAsync task (ctx : HttpContext) =
         async {
@@ -134,8 +178,10 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
             path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync)
             path "/query/dates" >=> context (fun _ -> rr.GetDates() |> serializeAsync)
             path "/query/sync/state" >=> context (fun _ -> rr.GetSyncState() |> serializeAsync)
+            path "/query/pilots" >=> context (fun ctx -> searchPilots rr.GetPilots ctx |> serializeAsync)
             pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
+            pathScan "/query/pilot/%d" (fun n -> rr.GetPilot(n) |> serializeAsync)
         ]
         POST >=> choose [
             path "/control/reset" >=>

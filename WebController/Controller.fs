@@ -586,6 +586,7 @@ open Campaign.GameServerSync.BaseFileNames
 /// Internal state of a controller
 type private ControllerState =
     {
+        War : IWarStateQuery option
         DtoWorld : Dto.World option
         DtoStateCache : Map<int, Dto.WarState>
         DtoSimulationCache : Map<int, Dto.SimulationStep[]>
@@ -605,6 +606,7 @@ type Controller(settings : GameServerSync.Settings) =
                 return! work state
             }
         work {
+            War = None
             DtoWorld = None
             DtoStateCache = Map.empty
             DtoSimulationCache = Map.empty
@@ -787,6 +789,101 @@ type Controller(settings : GameServerSync.Settings) =
                 return s
             }
 
+        member this.WarState =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                match s.War with
+                | Some war ->
+                    channel.Reply(Ok war)
+                    return s
+                | None ->
+                    let idx = getCurrentIndex settings.WorkDir
+                    let path = wkPath(getStateFilename idx)
+                    try
+                        let world = World.LoadFromFile(wkPath worldFilename)
+                        let war = WarState.LoadFromFile(path, world)
+                        channel.Reply(Ok (upcast war))
+                        return { s with War = Some(upcast war) }
+                    with exc ->
+                        channel.Reply(Error "Failed to load current war state")
+                        return s
+            }
+
+        member this.GetPilots(filter : PilotSearchFilter) =
+            async {
+                let! war = this.WarState
+                match war with
+                | Ok war ->
+                    let filterFuns =
+                        [
+                            match filter.Health with
+                            | Some OnlyHealthy ->
+                                yield fun (pilot : Pilots.Pilot) -> pilot.Health = Pilots.PilotHealth.Healthy
+                            | Some NoDead ->
+                                yield fun pilot -> not(pilot.Health = Pilots.PilotHealth.Dead)
+                            | None ->
+                                ()
+
+                            match filter.Coalition with
+                            | Some value ->
+                                match BasicTypes.CoalitionId.FromMcuValue (enum value) with
+                                | None ->
+                                    yield fun _ -> false
+                                | Some coalition ->
+                                    yield
+                                        fun pilot ->
+                                            war.World.Countries.TryGetValue(pilot.Country) = (true, coalition)
+                            | None ->
+                                ()
+
+                            match filter.Country with
+                            | Some value ->
+                                match BasicTypes.CountryId.FromMcuValue (enum value) with
+                                | None ->
+                                    yield fun _ -> false
+                                | Some country ->
+                                    yield
+                                        fun pilot -> pilot.Country = country
+                            | None ->
+                                ()
+
+                            match filter.NamePattern with
+                            | Some pattern ->
+                                let pattern = pattern.Trim().ToLowerInvariant()
+                                yield
+                                    fun pilot ->
+                                        (pilot.PilotFirstName + " " + pilot.PilotLastName).ToLowerInvariant().Contains(pattern)
+                            | None ->
+                                ()
+                        ]
+                    return
+                        war.Pilots
+                        |> List.choose (fun pilot ->
+                            if filterFuns |> List.forall (fun f -> f pilot) then
+                                pilot.ToDto(war) |> Some
+                            else
+                                None)
+                        |> Ok
+                | Error e ->
+                    return Error e
+            }
+
+        member this.GetPilot(id : int) =
+            async {
+                let! war = this.WarState
+                return
+                    match war with
+                    | Ok war ->
+                        try
+                            let pilot = war.GetPilot(Pilots.PilotId id)
+                            let flights =
+                                pilot.Flights
+                                |> List.map (fun flight -> flight.ToDto(war.World))
+                            Ok (pilot.ToDto(war), flights)
+                        with _ -> Error "Pilot not found"
+                    | Error e ->
+                        Error e
+            }
+
         member this.StartSync(doLoop : bool) =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 let! sync =
@@ -878,6 +975,8 @@ type Controller(settings : GameServerSync.Settings) =
             member this.GetSimulation(idx) = this.GetSimulationDto(idx)
             member this.GetDates() = this.GetDates()
             member this.GetSyncState() = this.GetSyncState()
+            member this.GetPilots(filter) = this.GetPilots(filter)
+            member this.GetPilot(id) = this.GetPilot(id)
 
         interface IControllerInteraction with
             member this.Advance() = this.Run(1)
