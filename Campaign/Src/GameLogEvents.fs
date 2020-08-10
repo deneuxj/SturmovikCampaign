@@ -77,7 +77,7 @@ let (|AsMask|_|) (s : string) =
         | [] -> res
         | '0' :: s-> work (res <<< 1) s
         | '1' :: s -> work ((res <<< 1) ||| 1UL) s
-        | _ -> failwith "Must be 0 or 1"
+        | c -> failwithf "Must be 0 or 1, was %s" (string c)
     try
         List.ofSeq (s.Trim())
         |> work 0UL
@@ -156,7 +156,7 @@ let (|MissionEvent|ObjectEvent|PlayerEvent|OtherEvent|InvalidLine|) (line : stri
             MissionEvent(timeStamp, MissionEnds)
         | 10 ->
             match eventData with
-            | MatchesRegex reTake (GroupList [AsInt vehId; AsInt pilotId; AsInt bullets; AsInt shells; AsInt bombs; AsInt rockets; AsPos position; userNickId; userId; name; typ; AsInt country; _; _; AsInt spawnType; AsInt parent; AsInt payload; AsFloat fuel; skin; AsMask modMask]) ->
+            | MatchesRegex reTake (GroupList [AsInt vehId; AsInt pilotId; AsInt bullets; AsInt shells; AsInt bombs; AsInt rockets; AsPos position; userNickId; userId; name; typ; AsInt country; _; _; AsInt spawnType; AsInt parent; AsInt payload; AsFloat fuel; skin; AsInt modMask]) ->
                 let taken = {
                     VehicleId = vehId
                     PilotId = pilotId
@@ -173,7 +173,7 @@ let (|MissionEvent|ObjectEvent|PlayerEvent|OtherEvent|InvalidLine|) (line : stri
                     Payload = payload
                     Fuel = fuel
                     Skin = skin
-                    WeaponMods = modMask
+                    WeaponMods = uint64 modMask
                 }
                 PlayerEvent(timeStamp, PlayerTakesObject taken)
             | _ ->
