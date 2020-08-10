@@ -1,6 +1,7 @@
 ﻿module Campaign.MissionResults
 
 open FSharp.Control
+open FSharp.Json
 open System.Numerics
 
 open Util
@@ -101,6 +102,7 @@ type AmmoType with
 /// Extract war state updade commands from the game logs.
 /// Note: The state must be updated as soon as a command is yielded.
 let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
+    let logger = NLog.LogManager.GetCurrentClassLogger()
     asyncSeq {
         // Object ID to Binding
         let bindings = Seq.mutableDict []
@@ -239,177 +241,195 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
             | _ ->
                 ()
 
-        for line in logs do
-            match line with
-            | ObjectEvent(_, ObjectBound binding) ->
-                // Update mappings
-                bindings.[binding.Id] <- binding
-                healthOf.[binding.Id] <- 1.0f
+        let handleLine line =
+            asyncSeq {
+                match line with
+                | ObjectEvent(_, ObjectBound binding) ->
+                    logger.Debug("Updating mappings with binding " + Json.serialize binding)
+                    // Update mappings
+                    bindings.[binding.Id] <- binding
+                    healthOf.[binding.Id] <- 1.0f
 
-            | PlayerEvent(_, PlayerTakesObject taken) ->
-                // Update mappings
-                pilotOf.[taken.VehicleId] <- taken
-                vehicleOf.[taken.PilotId] <- taken
+                | PlayerEvent(_, PlayerTakesObject taken) ->
+                    logger.Debug("Updating mappings with taken " + Json.serialize taken)
+                    // Update mappings
+                    pilotOf.[taken.VehicleId] <- taken
+                    vehicleOf.[taken.PilotId] <- taken
 
-                // Emit RemovePlane command
-                match bindings.TryGetValue(taken.VehicleId) with
-                | true, binding ->
-                    match state.TryGetPlane(binding.Name) with
-                    | Some plane ->
-                        yield RemovePlane(state.GetNearestAirfield(taken.Position).AirfieldId, plane.Id, 1.0f)
-                    | None ->
-                        ()
-                | false, _ ->
-                    ()
-
-                // Emit UpdatePlayer command
-                yield UpdatePlayer(taken.UserId, taken.Name)
-
-            | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
-                // Start flight record
-                let afId = state.GetNearestAirfield(takeOff.Position).AirfieldId
-                let planeHealth =
-                    healthOf.TryGetValue(takeOff.Id)
-                    |> Option.ofPair
-                    |> Option.defaultValue 1.0f
-                match pilotOf.TryGetValue(takeOff.Id) with
-                | true, taken ->
-                    let pilotHealth =
-                        healthOf.TryGetValue(taken.PilotId)
-                        |> Option.ofPair
-                        |> Option.defaultValue 1.0f
-                    let country =
-                        CountryId.FromMcuValue(enum taken.Country)
-                    let plane = state.TryGetPlane(taken.Typ)
-                    match country, plane with
-                    | Some country, Some plane ->
-                        let pilot = state.GetPlayerPilotFrom(taken.UserId, afId, country)
-                        let record : FlightRecord =
-                            { Date = state.Date + timeStamp
-                              Length = System.TimeSpan(0L)
-                              Plane = plane.Id
-                              PlaneHealth = planeHealth
-                              PilotHealth = pilotHealth
-                              Start = afId
-                              AirKills = 0
-                              TargetsDamaged = []
-                              Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
-                            }
-                        flightRecords.[taken.PilotId] <- {| Pilot = pilot; Record = record |}
-                        yield UpdatePilot(pilot)
-                    | _ ->
-                        ()
-                | false, _ -> ()
-
-            | ObjectEvent(timeStamp, ObjectLands landing) ->
-                // Update flight record
-                let afId = state.GetNearestAirfield(landing.Position).AirfieldId
-                let planeHealth =
-                    healthOf.TryGetValue(landing.Id)
-                    |> Option.ofPair
-                    |> Option.defaultValue 1.0f
-                match pilotOf.TryGetValue(landing.Id) with
-                | true, taken ->
-                    match flightRecords.TryGetValue(taken.PilotId) with
-                    | true, x ->
-                        let flight =
-                            { x.Record with
-                                Length = state.Date + timeStamp - x.Record.Date
-                                PlaneHealth = planeHealth
-                                Return = AtAirfield afId
-                            }
-                        flightRecords.[taken.PilotId] <- {| x with Record = flight |}
+                    // Emit RemovePlane command
+                    match bindings.TryGetValue(taken.VehicleId) with
+                    | true, binding ->
+                        match state.TryGetPlane(binding.Name) with
+                        | Some plane ->
+                            yield RemovePlane(state.GetNearestAirfield(taken.Position).AirfieldId, plane.Id, 1.0f)
+                        | None ->
+                            ()
                     | false, _ ->
                         ()
-                | false, _ ->
-                    ()
 
-            | ObjectEvent(_, ObjectHit hit) ->
-                latestHit.[hit.TargetId] <- hit
+                    // Emit UpdatePlayer command
+                    yield UpdatePlayer(taken.UserId, taken.Name)
 
-            | ObjectEvent(_, ObjectDamaged damaged) ->
-                // Update mappings
-                let health =
-                    healthOf.TryGetValue(damaged.TargetId)
-                    |> Option.ofPair
-                    |> Option.defaultValue 1.0f
-                let health = health - damaged.Damage
-                healthOf.[damaged.TargetId] <- health
-                // Update flight record
-                match pilotOf.TryGetValue(damaged.AttackerId) with
-                | true, taken ->
-                    updateFlightRecord(taken.PilotId, damaged.Damage, damaged.TargetId, damaged.Position)
-                | false, _ ->
-                    ()
-                // Emit commands
-                yield! handleDamage(damaged.Damage, damaged.TargetId, damaged.Position)
+                | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
+                    logger.Debug("Updating mappings with takenOff " + Json.serialize takeOff)
+                    // Start flight record
+                    let afId = state.GetNearestAirfield(takeOff.Position).AirfieldId
+                    let planeHealth =
+                        healthOf.TryGetValue(takeOff.Id)
+                        |> Option.ofPair
+                        |> Option.defaultValue 1.0f
+                    match pilotOf.TryGetValue(takeOff.Id) with
+                    | true, taken ->
+                        let pilotHealth =
+                            healthOf.TryGetValue(taken.PilotId)
+                            |> Option.ofPair
+                            |> Option.defaultValue 1.0f
+                        let country =
+                            CountryId.FromMcuValue(enum taken.Country)
+                        let plane = state.TryGetPlane(taken.Typ)
+                        match country, plane with
+                        | Some country, Some plane ->
+                            let pilot = state.GetPlayerPilotFrom(taken.UserId, afId, country)
+                            let record : FlightRecord =
+                                {
+                                    Date = state.Date + timeStamp
+                                    Length = System.TimeSpan(0L)
+                                    Plane = plane.Id
+                                    PlaneHealth = planeHealth
+                                    PilotHealth = pilotHealth
+                                    Start = afId
+                                    AirKills = 0
+                                    TargetsDamaged = []
+                                    Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
+                                }
+                            flightRecords.[taken.PilotId] <- {| Pilot = pilot; Record = record |}
+                            yield UpdatePilot(pilot)
+                        | _ ->
+                            ()
+                    | false, _ -> ()
 
-            | ObjectEvent(_, ObjectKilled killed) ->
-                // Update mappings
-                let oldHealth =
-                    healthOf.TryGetValue(killed.TargetId)
-                    |> Option.ofPair
-                    |> Option.defaultValue 1.0f
-                healthOf.[killed.TargetId] <- 0.0f
-                // Update flight record
-                match pilotOf.TryGetValue(killed.AttackerId) with
-                | true, taken ->
-                    updateFlightRecord(taken.PilotId, oldHealth, killed.TargetId, killed.Position)
-                    updateAirKills(taken.PilotId, killed.TargetId)
-                | false, _ ->
-                    ()
-                // Emit commands
-                yield! handleDamage(oldHealth, killed.TargetId, killed.Position)
-
-            | PlayerEvent(timeStamp, PlayerEndsMission missionEnded) ->
-                let afId =
-                    flightRecords.TryGetValue(missionEnded.PilotId)
-                    |> Option.ofPair
-                    |> Option.bind (fun x -> state.TryGetReturnAirfield(x.Record, state.World.Countries.[x.Pilot.Country]))
-                // Emit AddPlane command
-                match bindings.TryGetValue(missionEnded.VehicleId), afId, healthOf.TryGetValue(missionEnded.VehicleId) with
-                | (true, binding), Some afId, (true, health) when health > 0.0f ->
-                    match state.TryGetPlane(binding.Name) with
-                    | Some plane ->
-                        yield AddPlane(afId, plane.Id, health)
-                    | None ->
+                | ObjectEvent(timeStamp, ObjectLands landing) ->
+                    logger.Debug("Updating mappings with landing " + Json.serialize landing)
+                    // Update flight record
+                    let afId = state.GetNearestAirfield(landing.Position).AirfieldId
+                    let planeHealth =
+                        healthOf.TryGetValue(landing.Id)
+                        |> Option.ofPair
+                        |> Option.defaultValue 1.0f
+                    match pilotOf.TryGetValue(landing.Id) with
+                    | true, taken ->
+                        match flightRecords.TryGetValue(taken.PilotId) with
+                        | true, x ->
+                            let flight =
+                                { x.Record with
+                                    Length = state.Date + timeStamp - x.Record.Date
+                                    PlaneHealth = planeHealth
+                                    Return = AtAirfield afId
+                                }
+                            flightRecords.[taken.PilotId] <- {| x with Record = flight |}
+                        | false, _ ->
+                            ()
+                    | false, _ ->
                         ()
+
+                | ObjectEvent(_, ObjectHit hit) ->
+                    logger.Debug("Updating mappings with hit " + Json.serialize hit)
+                    latestHit.[hit.TargetId] <- hit
+
+                | ObjectEvent(_, ObjectDamaged damaged) ->
+                    logger.Debug("Updating mappings with damaged " + Json.serialize damaged)
+                    // Update mappings
+                    let health =
+                        healthOf.TryGetValue(damaged.TargetId)
+                        |> Option.ofPair
+                        |> Option.defaultValue 1.0f
+                    let health = health - damaged.Damage
+                    healthOf.[damaged.TargetId] <- health
+                    // Update flight record
+                    match pilotOf.TryGetValue(damaged.AttackerId) with
+                    | true, taken ->
+                        updateFlightRecord(taken.PilotId, damaged.Damage, damaged.TargetId, damaged.Position)
+                    | false, _ ->
+                        ()
+                    // Emit commands
+                    yield! handleDamage(damaged.Damage, damaged.TargetId, damaged.Position)
+
+                | ObjectEvent(_, ObjectKilled killed) ->
+                    logger.Debug("Updating mappings with killed " + Json.serialize killed)
+                    // Update mappings
+                    let oldHealth =
+                        healthOf.TryGetValue(killed.TargetId)
+                        |> Option.ofPair
+                        |> Option.defaultValue 1.0f
+                    healthOf.[killed.TargetId] <- 0.0f
+                    // Update flight record
+                    match pilotOf.TryGetValue(killed.AttackerId) with
+                    | true, taken ->
+                        updateFlightRecord(taken.PilotId, oldHealth, killed.TargetId, killed.Position)
+                        updateAirKills(taken.PilotId, killed.TargetId)
+                    | false, _ ->
+                        ()
+                    // Emit commands
+                    yield! handleDamage(oldHealth, killed.TargetId, killed.Position)
+
+                | PlayerEvent(timeStamp, PlayerEndsMission missionEnded) ->
+                    logger.Debug("Updating mappings with missionEnded " + Json.serialize missionEnded)
+                    let afId =
+                        flightRecords.TryGetValue(missionEnded.PilotId)
+                        |> Option.ofPair
+                        |> Option.bind (fun x -> state.TryGetReturnAirfield(x.Record, state.World.Countries.[x.Pilot.Country]))
+                    // Emit AddPlane command
+                    match bindings.TryGetValue(missionEnded.VehicleId), afId, healthOf.TryGetValue(missionEnded.VehicleId) with
+                    | (true, binding), Some afId, (true, health) when health > 0.0f ->
+                        match state.TryGetPlane(binding.Name) with
+                        | Some plane ->
+                            yield AddPlane(afId, plane.Id, health)
+                        | None ->
+                            ()
+                    | _ ->
+                        ()
+                    // Emit RegisterPilotFlight
+                    let pilotHealth =
+                        healthOf.TryGetValue(missionEnded.PilotId)
+                        |> Option.ofPair
+                        |> Option.defaultValue 1.0f
+                    let planeHealth =
+                        healthOf.TryGetValue(missionEnded.VehicleId)
+                        |> Option.ofPair
+                        |> Option.defaultValue 1.0f
+                    match flightRecords.TryGetValue(missionEnded.PilotId) with
+                    | true, x ->
+                        let injury =
+                            1.0f - pilotHealth
+                        let healthStatus =
+                            if injury < 0.01f then
+                                Healthy
+                            else if injury >= 1.0f then
+                                Dead
+                            else
+                                state.Date + timeStamp + System.TimeSpan(int(ceil(injury * 30.0f)), 0, 0, 0)
+                                |> Injured
+                        let flight =
+                            { x.Record with
+                                PilotHealth = pilotHealth
+                                PlaneHealth = planeHealth
+                            }
+                        yield RegisterPilotFlight(x.Pilot.Id, flight, healthStatus)
+                    | false, _ ->
+                        ()
+                    // Update mappings
+                    pilotOf.Remove(missionEnded.VehicleId) |> ignore
+                    vehicleOf.Remove(missionEnded.PilotId) |> ignore
+                    healthOf.Remove(missionEnded.VehicleId) |> ignore
+                    flightRecords.Remove(missionEnded.PilotId) |> ignore
                 | _ ->
                     ()
-                // Emit RegisterPilotFlight
-                let pilotHealth =
-                    healthOf.TryGetValue(missionEnded.PilotId)
-                    |> Option.ofPair
-                    |> Option.defaultValue 1.0f
-                let planeHealth =
-                    healthOf.TryGetValue(missionEnded.VehicleId)
-                    |> Option.ofPair
-                    |> Option.defaultValue 1.0f
-                match flightRecords.TryGetValue(missionEnded.PilotId) with
-                | true, x ->
-                    let injury =
-                        1.0f - pilotHealth
-                    let healthStatus =
-                        if injury < 0.01f then
-                            Healthy
-                        else if injury >= 1.0f then
-                            Dead
-                        else
-                            state.Date + timeStamp + System.TimeSpan(int(ceil(injury * 30.0f)), 0, 0, 0)
-                            |> Injured
-                    let flight =
-                        { x.Record with
-                            PilotHealth = pilotHealth
-                            PlaneHealth = planeHealth
-                        }
-                    yield RegisterPilotFlight(x.Pilot.Id, flight, healthStatus)
-                | false, _ ->
-                    ()
-                // Update mappings
-                pilotOf.Remove(missionEnded.VehicleId) |> ignore
-                vehicleOf.Remove(missionEnded.PilotId) |> ignore
-                healthOf.Remove(missionEnded.VehicleId) |> ignore
-                flightRecords.Remove(missionEnded.PilotId) |> ignore
-            | _ ->
-                ()
+            }
+
+        for line in logs do
+            try
+                yield! handleLine line
+            with exc ->
+                logger.Error("Exception while processing log")
+                logger.Error(exc)
     }
