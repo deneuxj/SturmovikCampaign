@@ -244,14 +244,14 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
         let handleLine line =
             asyncSeq {
                 match line with
-                | ObjectEvent(_, ObjectBound binding) ->
-                    logger.Debug("Updating mappings with binding " + Json.serialize binding)
+                | ObjectEvent(timeStamp, ObjectBound binding) ->
+                    logger.Debug(string timeStamp + " Updating mappings with binding " + Json.serialize binding)
                     // Update mappings
                     bindings.[binding.Id] <- binding
                     healthOf.[binding.Id] <- 1.0f
 
-                | PlayerEvent(_, PlayerTakesObject taken) ->
-                    logger.Debug("Updating mappings with taken " + Json.serialize taken)
+                | PlayerEvent(timeStamp, PlayerTakesObject taken) ->
+                    logger.Debug(string timeStamp + " Updating mappings with taken " + Json.serialize taken)
                     // Update mappings
                     pilotOf.[taken.VehicleId] <- taken
                     vehicleOf.[taken.PilotId] <- taken
@@ -271,7 +271,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     yield UpdatePlayer(taken.UserId, taken.Name)
 
                 | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
-                    logger.Debug("Updating mappings with takenOff " + Json.serialize takeOff)
+                    logger.Debug(string timeStamp + " Updating mappings with takenOff " + Json.serialize takeOff)
                     // Start flight record
                     let afId = state.GetNearestAirfield(takeOff.Position).AirfieldId
                     let planeHealth =
@@ -309,7 +309,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     | false, _ -> ()
 
                 | ObjectEvent(timeStamp, ObjectLands landing) ->
-                    logger.Debug("Updating mappings with landing " + Json.serialize landing)
+                    logger.Debug(string timeStamp + " Updating mappings with landing " + Json.serialize landing)
                     // Update flight record
                     let afId = state.GetNearestAirfield(landing.Position).AirfieldId
                     let planeHealth =
@@ -332,12 +332,12 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     | false, _ ->
                         ()
 
-                | ObjectEvent(_, ObjectHit hit) ->
-                    logger.Debug("Updating mappings with hit " + Json.serialize hit)
+                | ObjectEvent(timeStamp, ObjectHit hit) ->
+                    logger.Debug(string timeStamp + " Updating mappings with hit " + Json.serialize hit)
                     latestHit.[hit.TargetId] <- hit
 
-                | ObjectEvent(_, ObjectDamaged damaged) ->
-                    logger.Debug("Updating mappings with damaged " + Json.serialize damaged)
+                | ObjectEvent(timeStamp, ObjectDamaged damaged) ->
+                    logger.Debug(string timeStamp + " Updating mappings with damaged " + Json.serialize damaged)
                     // Update mappings
                     let health =
                         healthOf.TryGetValue(damaged.TargetId)
@@ -350,8 +350,8 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     // Emit commands
                     yield! handleDamage(damaged.Damage, damaged.TargetId, damaged.Position)
 
-                | ObjectEvent(_, ObjectKilled killed) ->
-                    logger.Debug("Updating mappings with killed " + Json.serialize killed)
+                | ObjectEvent(timeStamp, ObjectKilled killed) ->
+                    logger.Debug(string timeStamp + " Updating mappings with killed " + Json.serialize killed)
                     // Update mappings
                     let oldHealth =
                         healthOf.TryGetValue(killed.TargetId)
@@ -369,7 +369,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     yield! handleDamage(oldHealth, killed.TargetId, killed.Position)
 
                 | PlayerEvent(timeStamp, PlayerEndsMission missionEnded) ->
-                    logger.Debug("Updating mappings with missionEnded " + Json.serialize missionEnded)
+                    logger.Debug(string timeStamp + " Updating mappings with missionEnded " + Json.serialize missionEnded)
                     let afId =
                         flightRecords.TryGetValue(missionEnded.PilotId)
                         |> Option.ofPair
