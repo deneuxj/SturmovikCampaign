@@ -119,7 +119,7 @@ let setPassword (passwords : PasswordsManager) =
     handleJson<{| User: string; Password: string |}>
         (fun data ->
             match passwords.SetPassword(data.User, data.Password) with
-            | Ok ->
+            | Ok _ ->
                 OK (sprintf "Password set for %s" data.User) >=> setTextMimeType
             | Error err ->
                 CONFLICT err >=> setTextMimeType

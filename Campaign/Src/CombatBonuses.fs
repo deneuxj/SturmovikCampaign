@@ -111,7 +111,7 @@ with
                         let isBanned =
                             lazy
                                 war.TryGetPlayer(pilot.PlayerGuid)
-                                |> Option.map (fun player -> match player.BanStatus with BanStatus.Banned -> true | _ -> false)
+                                |> Option.map (fun player -> match player.BanStatus with BanStatus.Banned _ -> true | _ -> false)
                                 |> Option.defaultValue false
                         pilot.Health = Healthy && not isBanned.Value)
                     |> List.groupBy(fun pilot -> pilot.PlayerGuid) // At most one pilot per player per airfield

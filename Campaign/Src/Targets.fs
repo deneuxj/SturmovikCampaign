@@ -61,7 +61,7 @@ with
     override this.ToString() =
         match this with
         | CrashedInEnemyTerritory -> "crashed in enemy territory"
-        | CrashedInFriendlyTerritory -> "crashed in friendly territory"
+        | CrashedInFriendlyTerritory _ -> "crashed in friendly territory"
         | AtAirfield afId -> sprintf "landed at %s" (string afId)
 
 /// The results of a flight by a player, used to build success rates of missions.

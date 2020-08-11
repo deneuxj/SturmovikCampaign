@@ -795,7 +795,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     member this.PrepareMission() =
         async {
             match state with
-            | Some PreparingMission -> ()
+            | Some(PreparingMission _)-> ()
             | _ -> failwith "State is not PreparingMission"
 
             match controller, step, war with
@@ -822,7 +822,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     member this.ExtractMissionLog(firstLogFile : string) =
         async {
             match state with
-            | Some ExtractingResults -> ()
+            | Some(ExtractingResults _) -> ()
             | _ -> failwith "State is not ExtractingResults"
 
             match war with
@@ -883,7 +883,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             logger.Trace restartsLeft
             match state with
             | None
-            | Some PreparingMission ->
+            | Some(PreparingMission _)->
                 let! status = this.PrepareMission()
                 match status with
                 | Ok() ->
@@ -988,7 +988,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             | Some AdvancingScenario ->
                 let! status = this.Advance()
                 match status with
-                | Ok ->
+                | Ok _ ->
                     state <- Some(PreparingMission settings.MissionFilePath)
                     logger.Info state
                     this.SaveState()

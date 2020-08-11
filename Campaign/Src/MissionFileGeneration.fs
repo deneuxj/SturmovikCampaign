@@ -71,8 +71,8 @@ type AiAttack with
                     state.World.Airfields.[mission.StartAirfield].Position
             let roles =
                 match mission.MissionType with
-                | Strafing -> [PlaneRole.GroundAttacker]
-                | Bombing -> [PlaneRole.GroundAttacker; PlaneRole.LevelBomber]
+                | Strafing _ -> [PlaneRole.GroundAttacker]
+                | Bombing _ -> [PlaneRole.GroundAttacker; PlaneRole.LevelBomber]
                 | _ -> []
             let role =
                 roles
@@ -363,7 +363,7 @@ with
         match this with
         | Airborne -> 0
         | Runway -> 1
-        | Parking -> 2
+        | Parking _ -> 2
 
 type PlayerSpawnPlane =
     {

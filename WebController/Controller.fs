@@ -423,7 +423,7 @@ module internal Extensions =
             match this with
             | Targets.AtAirfield afId -> Dto.LandedAtAirfield afId.AirfieldName
             | Targets.CrashedInEnemyTerritory -> Dto.CrashedInEnemyTerritory
-            | Targets.CrashedInFriendlyTerritory -> Dto.CrashedInFriendlyTerritory
+            | Targets.CrashedInFriendlyTerritory _ -> Dto.CrashedInFriendlyTerritory
 
     type Targets.TargetType with
         member this.ToDto(world : NewWorldDescription.World) : Dto.TargetType =
@@ -549,7 +549,7 @@ module internal Extensions =
     type Pilots.BanStatus with
         member this.ToDto() =
             match this with
-            | Pilots.BanStatus.Clear | Pilots.BanStatus.Probation -> NotBanned
+            | Pilots.BanStatus.Clear | Pilots.BanStatus.Probation _ -> NotBanned
             | Pilots.BanStatus.Banned(since, duration) ->
                 (since + duration).ToDto()
                 |> Banned
@@ -784,9 +784,9 @@ type Controller(settings : GameServerSync.Settings) =
                     s.Sync
                     |> Option.map (fun sync ->
                         match sync.SyncState with
-                        | Some GameServerSync.PreparingMission -> "Preparing mission"
+                        | Some(GameServerSync.PreparingMission _) -> "Preparing mission"
                         | Some GameServerSync.ResavingMission -> "Resaving missions"
-                        | Some GameServerSync.ExtractingResults -> "Extracting results"
+                        | Some(GameServerSync.ExtractingResults _) -> "Extracting results"
                         | Some GameServerSync.AdvancingScenario -> "Advancing scenario"
                         | Some(GameServerSync.RunningMission(_, endTime)) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes)
                         | None -> "Unknown")
@@ -985,10 +985,10 @@ type Controller(settings : GameServerSync.Settings) =
                 | None ->
                     logger.Debug("Dispose temporary sync")
                     sync.Dispose()
-                | Some -> ()
+                | Some _ -> ()
                 // Reply and retain old sync, if any.
                 match status with
-                | Ok ->
+                | Ok _ ->
                     channel.Reply(Ok "New campaign ready")
                 | Error msg ->
                     channel.Reply(Error msg)

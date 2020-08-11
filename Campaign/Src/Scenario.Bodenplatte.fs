@@ -204,7 +204,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             1.0f<M> * (world.Regions.[mission.Objective].Position - world.Airfields.[mission.StartAirfield].Position).Length()
         let bombs =
             match mission.MissionType with
-            | Strafing | Bombing -> world.PlaneSet.[mission.Plane].BombCapacity * bombCost
+            | Strafing _ | Bombing _ -> world.PlaneSet.[mission.Plane].BombCapacity * bombCost
             | AreaProtection -> 0.0f<M^3>
             | PlaneTransfer _ -> 0.0f<M^3>
         (mission.Plane, distance * planeRunCost + bombs, float32 mission.NumPlanes)

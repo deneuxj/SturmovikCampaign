@@ -593,7 +593,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
             for mId, mission in airMissions do
                 let numPlanes = numPlanes.[mId] |> int |> max 0
                 match mission.MissionType with
-                | AreaProtection | Bombing | Strafing ->
+                | AreaProtection | Bombing _ | Strafing _ ->
                     let plane = war.World.PlaneSet.[mission.Plane].Name
                     let afid = mission.StartAirfield
                     yield
