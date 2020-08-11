@@ -32,40 +32,6 @@ open Campaign.WarStateUpdate
 open Util
 open Campaign.Buildings
 
-/// Domains of combat affected by experience bonuses
-type ExperienceDomain =
-    | AirSupremacy of PlaneModelId // Attacks by a specific plane model on fighters
-    | Interception of PlaneModelId // Attacks by a specific plane model on bombers and ground attackers
-    | GroundAttack of PlaneModelId // Attacks by a specific plane model on ground targets
-
-/// Experience bonuses granted by successful flight records
-type ExperienceBonus =
-    {
-        Start : AirfieldId
-        Region : RegionId
-        Domain : ExperienceDomain
-        Bonus : float32
-    }
-with
-    member this.Key =
-        this.Start, this.Region, this.Domain
-
-/// Mapping from start airfields, objective regions and experience domains to bonus values
-type ExperienceBonuses =
-    {
-        Bonuses : Map<AirfieldId * RegionId * ExperienceDomain, float32>
-    }
-with
-    member this.GetBonus(key) =
-        this.Bonuses.TryFind(key)
-        |> Option.defaultValue 0.0f
-
-    member this.Update(bonus : ExperienceBonus) =
-        let oldValue =
-            this.GetBonus(bonus.Key)
-        { this with
-            Bonuses = this.Bonuses.Add(bonus.Key, oldValue + bonus.Bonus) }
-
 /// Kind of targets on the ground
 type GroundTargetType =
     | GroundForces of CoalitionId
