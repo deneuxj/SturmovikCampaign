@@ -558,77 +558,85 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     member this.Init() =
         async {
-            // Load world
-            let path = wkPath worldFilename
-            let world = 
-                if File.Exists path then
-                    try
-                        let w = World.LoadFromFile path
-                        Some w
-                    with e ->
-                        eprintfn "Failed to load '%s': %s" path e.Message
+            try
+                // Load world
+                let path = wkPath worldFilename
+                let world = 
+                    if File.Exists path then
+                        try
+                            let w = World.LoadFromFile path
+                            Some w
+                        with e ->
+                            eprintfn "Failed to load '%s': %s" path e.Message
+                            None
+                    else
                         None
-                else
-                    None
 
-            // Load latest state
-            let latestState =
-                Directory.EnumerateFiles(settings.WorkDir, "*.xml")
-                |> Seq.filter (fun s -> s.EndsWith(stateBaseFilename))
-                |> Seq.sortDescending
-                |> Seq.tryHead
+                // Load latest state
+                let latestState =
+                    Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+                    |> Seq.filter (fun s -> s.EndsWith(stateBaseFilename))
+                    |> Seq.sortDescending
+                    |> Seq.tryHead
 
-            let war0 =
-                match world, latestState with
-                | Some world, Some latestState ->
-                    try
-                        let war = WarState.LoadFromFile(latestState, world)
-                        Some war
-                    with e ->
-                        eprintfn "Failed to load '%s': %s" latestState e.Message
+                let war0 =
+                    match world, latestState with
+                    | Some world, Some latestState ->
+                        try
+                            let war = WarState.LoadFromFile(latestState, world)
+                            Some war
+                        with e ->
+                            eprintfn "Failed to load '%s': %s" latestState e.Message
+                            None
+                    | _ ->
                         None
-                | _ ->
-                    None
 
-            // Restore scenario controller
-            // TODO. For now we just create a controller for Bodenplatte
-            let controller0 =
-                match war0 with
-                | Some war ->
-                    let sctrl : IScenarioController =
-                        let planeSet = BodenplatteInternal.PlaneSet.Default
-                        upcast(Bodenplatte(war.World, BodenplatteInternal.Constants.Default, planeSet))
-                    Some sctrl
-                | None ->
-                    None
-
-            // Load scenario state
-            let latestStep =
-                Directory.EnumerateFiles(settings.WorkDir, "*.xml")
-                |> Seq.filter (fun s -> s.EndsWith(stepBaseFilename))
-                |> Seq.sortDescending
-                |> Seq.tryHead
-            let step0 =
-                match controller0, war0 with
-                | Some sctrl, Some state ->
-                    match latestStep with
-                    | Some path ->
-                        use reader = new StreamReader(path)
-                        let step = ScenarioStep.Deserialize(reader)
-                        Some step
+                // Restore scenario controller
+                // TODO. For now we just create a controller for Bodenplatte
+                let controller0 =
+                    match war0 with
+                    | Some war ->
+                        let sctrl : IScenarioController =
+                            let planeSet = BodenplatteInternal.PlaneSet.Default
+                            upcast(Bodenplatte(war.World, BodenplatteInternal.Constants.Default, planeSet))
+                        Some sctrl
                     | None ->
                         None
-                | _ ->
-                    None
 
-            let syncState =
-                SyncState.TryLoad(settings.WorkDir)
-                |> Option.defaultValue (PreparingMission settings.MissionFilePath)
+                // Load scenario state
+                let latestStep =
+                    Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+                    |> Seq.filter (fun s -> s.EndsWith(stepBaseFilename))
+                    |> Seq.sortDescending
+                    |> Seq.tryHead
+                let step0 =
+                    match controller0, war0 with
+                    | Some sctrl, Some state ->
+                        match latestStep with
+                        | Some path ->
+                            use reader = new StreamReader(path)
+                            let step = ScenarioStep.Deserialize(reader)
+                            Some step
+                        | None ->
+                            None
+                    | _ ->
+                        None
 
-            controller <- controller0
-            war <- war0
-            step <- step0
-            state <- Some syncState
+                let syncState =
+                    SyncState.TryLoad(settings.WorkDir)
+                    |> Option.defaultValue (PreparingMission settings.MissionFilePath)
+
+                controller <- controller0
+                war <- war0
+                step <- step0
+                state <- Some syncState
+
+                return Ok()
+            with
+            | exc ->
+                logger.Debug("Failed to initialize:")
+                logger.Debug(exc)
+                return Error "Initialization failure"
         }
 
     /// Start DServer

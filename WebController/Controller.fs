@@ -755,27 +755,34 @@ type Controller(settings : GameServerSync.Settings) =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 let! sync =
                     match s.Sync with
-                    | Some sync -> async.Return sync
+                    | Some sync -> async.Return (Ok sync)
                     | None ->
                         async {
                             let sync = GameServerSync.Sync.Create(settings)
-                            do! sync.Init()
-                            return sync
+                            let! status = sync.Init()
+                            match status with
+                            | Ok _ -> return Ok sync
+                            | Error e -> return Error e
                         }
-                let rec work stepsLeft =
-                    async {
-                        if stepsLeft <= 0 then
-                            channel.Reply(Ok "Scenario advanced")
-                        else
-                            let! r = sync.Advance()
-                            match r with
-                            | Error s -> channel.Reply(Error s)
-                            | Ok _ -> return! work (stepsLeft - 1)
-                    }
-                do! work maxSteps
-                sync.Die("Scenario was forcibly advanced")
-                sync.Dispose()
-                return { s with Sync = None } 
+                match sync with
+                | Ok sync ->
+                    let rec work stepsLeft =
+                        async {
+                            if stepsLeft <= 0 then
+                                channel.Reply(Ok "Scenario advanced")
+                            else
+                                let! r = sync.Advance()
+                                match r with
+                                | Error s -> channel.Reply(Error s)
+                                | Ok _ -> return! work (stepsLeft - 1)
+                        }
+                    do! work maxSteps
+                    sync.Die("Scenario was forcibly advanced")
+                    sync.Dispose()
+                    return { s with Sync = None }
+                | Error e ->
+                    channel.Reply(Error e)
+                    return { s with Sync = None }
             }
 
         member this.GetSyncState() =
@@ -921,15 +928,24 @@ type Controller(settings : GameServerSync.Settings) =
                         async {
                             let sync = GameServerSync.Sync.Create(settings)
                             sync.StopAfterMission <- not doLoop
-                            do! sync.Init()
-                            return sync
+                            let! status = sync.Init()
+                            match status with
+                            | Ok _ ->
+                                return Ok sync
+                            | Error e ->
+                                return Error e
                         }
                     | Some sync ->
-                        async.Return sync
-                sync.StateChanged.Add(fun war -> doOnState (fun s -> async.Return { s with War = Some war }))
-                sync.Resume()
-                channel.Reply(Ok "Synchronization started")
-                return { s with Sync = Some sync }
+                        async.Return (Ok sync)
+                match sync with
+                | Ok sync ->
+                    sync.StateChanged.Add(fun war -> doOnState (fun s -> async.Return { s with War = Some war }))
+                    sync.Resume()
+                    channel.Reply(Ok "Synchronization started")
+                    return { s with Sync = Some sync }
+                | Error e ->
+                    channel.Reply(Error e)
+                    return { s with Sync = None }
             }
 
         member private this.RegisterSyncCleanUp(sync : GameServerSync.Sync) =
