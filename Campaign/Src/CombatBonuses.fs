@@ -72,7 +72,7 @@ with
                                     Bonus = 0.01f * amount
                                     Domain = Interception plane.Id
                                 }
-                        | (Bridge | Building | Ship | Battleship ), AmmoName "explosion" ->
+                        | _, AmmoName "explosion" ->
                             {
                                 Start = airfield.Region
                                 Bonus = 0.01f * amount
@@ -81,7 +81,7 @@ with
                         | _, _ ->
                             {
                                 Start = airfield.Region
-                                Bonus = 0.1f * amount
+                                Bonus = 0.01f * amount
                                 Domain = Strafing plane.Id
                             }
             }
