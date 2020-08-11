@@ -70,6 +70,8 @@ GET /query/current
 GET /query/past/<n>
 GET /query/simulation/<n>
 GET /query/dates
+GET /query/pilots?country=<country>&coalition=<coalition>&health=<Healthy or NoDead>&name=<substring>
+GET /query/pilot/<n>
 
 POST /control/reset
 POST /control/advance
