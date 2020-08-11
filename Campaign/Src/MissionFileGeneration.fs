@@ -484,6 +484,7 @@ with
                     T.Airfield.Default
                         .SetIndex(T.Integer.N 1)
                         .SetLinkTrId(T.Integer.N 2)
+                        .SetName(T.String.N this.Airfield.AirfieldName)
                         .SetReturnPlanes(T.Boolean.N true)
                         .SetRefuelFriendlies(T.Boolean.N true)
                         .SetRearmFriendlies(T.Boolean.N true)
