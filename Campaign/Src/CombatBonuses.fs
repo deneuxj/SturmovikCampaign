@@ -132,8 +132,10 @@ with
         )
 
     member this.GetBonus(key) =
-        this.Bonuses.TryFind(key)
-        |> Option.defaultValue 0.0f
+        let x =
+            this.Bonuses.TryFind(key)
+            |> Option.defaultValue 0.0f
+        1.0f - 1.0f / exp(x)
 
     member this.Update(bonus : ExperienceBonus) =
         let oldValue =
