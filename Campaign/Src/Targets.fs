@@ -68,6 +68,7 @@ with
 type FlightRecord =
     {
         Date : DateTime
+        [<FSharp.Json.JsonField(Transform=typeof<TimeSpanTransform>)>]
         Length : TimeSpan
         Plane : PlaneModelId
         PlaneHealth : float32
