@@ -21,6 +21,7 @@ namespace Campaign.Missions
 open System
 open System.Numerics
 open VectorExtension
+open Util
 
 open Campaign.BasicTypes
 open Campaign.PlaneModel
@@ -29,8 +30,8 @@ open Campaign.NewWorldDescription
 open Campaign.Targets
 open Campaign.WarState
 open Campaign.WarStateUpdate
-open Util
 open Campaign.Buildings
+open Campaign.CombatBonuses
 
 /// Kind of targets on the ground
 type GroundTargetType =
@@ -89,8 +90,9 @@ type Mission =
     }
 
 type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : Mission list, duration : float32<H>) =
-    let missions =
-        List.indexed missions
+    let bonuses = ExperienceBonuses.Create(war)
+
+    let missions = List.indexed missions
 
     let airMissions =
         missions
@@ -316,9 +318,10 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             war.GetOwner(war.World.Airfields.[mission.StartAirfield].Region)
                         targetCoalition <> intercepterCoalition)
                     // Same objective
-                    |> Seq.filter (fun (_, mission) -> mission.Objective = mission.Objective)
+                    |> Seq.filter (fun (_, mission2) -> mission2.Objective = mission.Objective)
                     // Is area protection
                     |> Seq.filter (function _, { MissionType = AreaProtection _ } -> true | _ -> false)
+
                 for interId, interception in interceptors |> Seq.filter (fst >> earlyRTB.Contains >> not) do
                     let interceptorsName = war.World.PlaneSet.[interception.Plane].Name
                     let interceptedName = war.World.PlaneSet.[mission.Plane].Name
@@ -329,19 +332,42 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             interceptedName
                             interceptorsName
                             (string interception.Objective)
+
+                    // Kill rates, affected by experience bonuses
+                    let interceptorExperience, defenderKillRate =
+                        match war.World.PlaneSet.[mission.Plane].Kind with
+                        | PlaneType.Fighter ->
+                            let loadoutKillRateModifier =
+                                match mission.MissionType with
+                                | AreaProtection _ -> 1.0f
+                                | _ -> 0.75f
+                            AirSupremacy, loadoutKillRateModifier * getFighterAttackRate()
+                        | _ ->
+                            Interception, getBomberDefenseRate()
+                    let defendersBonus =
+                        if defenderKillRate >= 1.0f then
+                            bonuses.GetBonus(war.World.Airfields.[mission.StartAirfield].Region, AirSupremacy mission.Plane)
+                        else
+                            0.0f
+                    let defenderKillRate = defenderKillRate + defendersBonus
+                    let interceptorsBonus =
+                        bonuses.GetBonus(war.World.Airfields.[interception.StartAirfield].Region, interceptorExperience interception.Plane)
+                    let interceptorKillRate =
+                        getFighterAttackRate() * (1.0f + interceptorsBonus)
+                    // Notify kill rate bonuses
+                    if defendersBonus > 0.0f then
+                        yield
+                            None,
+                            sprintf "%5.2f%% bonus for %s" (defendersBonus * 100.0f) interceptedName
+                    if interceptorsBonus > 0.0f then
+                        yield
+                            None,
+                            sprintf "%5.2f%% bonus for %s" (interceptorsBonus * 100.0f) interceptorsName
+
+                    // Simulate attack passes by the interceptors
                     for pass in 1..numInterceptorPasses do
                         if lossesBeforeAbort > 0.0f then
-                            let interceptorKillRate = getFighterAttackRate()
-                            let defenderKillRate =
-                                match war.World.PlaneSet.[mission.Plane].Kind with
-                                | PlaneType.Fighter ->
-                                    let loadoutKillRateModifier =
-                                        match mission.MissionType with
-                                        | AreaProtection _ -> 1.0f
-                                        | _ -> 0.75f
-                                    loadoutKillRateModifier * getFighterAttackRate()
-                                | _ ->
-                                    getBomberDefenseRate()
+                            // Update numbers
                             let numInterceptors = numPlanes.[interId]
                             let numIntercepted = numPlanes.[mId]
                             let numInterceptorsShotDown =
@@ -356,6 +382,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             numPlanes.[interId] <- numInterceptors2
                             numPlanes.[mId] <- numIntercepted2
                             assert(numPlanes |> Seq.forall (fun kvp -> kvp.Value >= 0.0f))
+                            // Notifications
                             if numInterceptorsShotDown > 0.0f then
                                 yield
                                     None,
@@ -372,6 +399,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                         interceptedName
                                         interceptorsName
                                         (string interception.Objective)
+                            // RTB decision for the interceptors
                             if lossesBeforeAbort <= 0.0f then
                                 earlyRTB <- earlyRTB.Add(interId)
                         else if not(Single.IsNegativeInfinity lossesBeforeAbort) then
@@ -394,6 +422,12 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                     // Effect of area protection already handled during interception phase
                     ()
                 | Bombing(targetType) | Strafing(targetType) ->
+                    let bonus =
+                        let domain =
+                            match mission.MissionType with
+                            | Bombing _ -> ExperienceDomain.Bombing
+                            | _ -> ExperienceDomain.Strafing
+                        bonuses.GetBonus(war.World.Airfields.[mission.StartAirfield].Region, domain mission.Plane)
                     let region = war.World.Regions.[mission.Objective]
                     let plane = war.World.PlaneSet.[mission.Plane].Name
                     let numBridgePartsDamaged, volumeBuildingDamaged =
@@ -529,7 +563,10 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             |> Seq.cache
                             |> Seq.map (function Choice1Of2 x | Choice2Of2 x -> x)
 
-                    for target in targets |> Seq.truncate numPlanes do
+                    yield
+                        None,
+                        sprintf "Bonus for ground attack at %s by %s: %5.2f" (string mission.Objective) plane (100.0f * bonus)
+                    for target in targets |> Seq.truncate (int(ceil(float32 numPlanes * (1.0f + bonus)))) do
                         let command =
                             match target with
                             | { Kind = TargetType.Building(bid, part) } ->
