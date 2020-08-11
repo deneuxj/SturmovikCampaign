@@ -503,7 +503,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     let maxRetries = 3
 
     let terminated = Event<Sync>()
-    let stateChanged = Event<WarState>()
+    let stateChanged = Event<IWarStateQuery>()
 
     let wkPath f = Path.Combine(settings.WorkDir, f)
 

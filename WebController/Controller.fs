@@ -902,6 +902,7 @@ type Controller(settings : GameServerSync.Settings) =
                         }
                     | Some sync ->
                         async.Return sync
+                sync.StateChanged.Add(fun war -> doOnState (fun s -> async.Return { s with War = Some war }))
                 sync.Resume()
                 channel.Reply(Ok "Synchronization started")
                 return { s with Sync = Some sync }
