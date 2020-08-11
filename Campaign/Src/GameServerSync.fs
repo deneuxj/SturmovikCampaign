@@ -848,7 +848,11 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let! effects =
                     asyncSeq {
                         for command in commands do
-                            logger.Debug("Command from game logs: " + Json.serialize command)
+                            try
+                                logger.Debug("Command from game logs: " + Json.serialize command)
+                            with exc ->
+                                logger.Debug("Command from game logs.")
+                                logger.Debug(exc)
                             let effects = command.Execute(war)
                             yield (command, effects)
                     }
