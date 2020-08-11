@@ -346,11 +346,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     let health = health - damaged.Damage
                     healthOf.[damaged.TargetId] <- health
                     // Update flight record
-                    match pilotOf.TryGetValue(damaged.AttackerId) with
-                    | true, taken ->
-                        updateFlightRecord(taken.PilotId, damaged.Damage, damaged.TargetId, damaged.Position)
-                    | false, _ ->
-                        ()
+                    updateFlightRecord(damaged.AttackerId, damaged.Damage, damaged.TargetId, damaged.Position)
                     // Emit commands
                     yield! handleDamage(damaged.Damage, damaged.TargetId, damaged.Position)
 
