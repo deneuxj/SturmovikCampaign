@@ -554,15 +554,18 @@ module internal Extensions =
                 (since + duration).ToDto()
                 |> Banned
 
+    /// Hash a player's unique GUID, and encode it to base64
+    // The userIDs from the logs should probably not be exposed to the public
+    let hashGuid (guid : string) =
+        use hasher = HashAlgorithm.Create("SHA256")
+        guid
+        |> Encoding.ASCII.GetBytes
+        |> hasher.ComputeHash
+        |> System.Convert.ToBase64String
+
     type Pilots.Player with
-        /// Hash the player's unique GUID, and encode it to base64
-        // The userIDs from the logs should probably not be exposed to the public.
         member this.GuidHash =
-            use hasher = HashAlgorithm.Create("SHA256")
-            this.Guid
-            |> Encoding.ASCII.GetBytes
-            |> hasher.ComputeHash
-            |> System.Convert.ToBase64String
+            hashGuid this.Guid
 
         member this.ToDto(state : WarState.IWarStateQuery) : Dto.Player =
             let pilots =
@@ -596,7 +599,11 @@ type private ControllerState =
 /// Interface between the web service and the campaign
 type Controller(settings : GameServerSync.Settings) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
-    
+
+    // Cache Player GUID hashes
+    let cache = Seq.mutableDict []
+    let hashGuid = SturmovikMission.Cached.cached cache hashGuid
+
     // A mailbox processor to serialize access to the ControllerState
     let mb = new MailboxProcessor<_>(fun mb ->
         let rec work (state : ControllerState) =
@@ -889,6 +896,23 @@ type Controller(settings : GameServerSync.Settings) =
                         Error e
             }
 
+        member this.GetPlayerPilots(hashedGuid : string) =
+            async {
+                match! this.WarState with
+                | Ok war ->
+                    return
+                        war.Pilots
+                        |> Seq.choose (fun pilot ->
+                            if hashGuid pilot.PlayerGuid = hashedGuid then
+                                Some(pilot.ToDto(war))
+                            else
+                                None)
+                        |> List.ofSeq
+                        |> Ok
+                | Error e ->
+                    return Error e
+            }
+
         member this.StartSync(doLoop : bool) =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 let! sync =
@@ -983,6 +1007,7 @@ type Controller(settings : GameServerSync.Settings) =
             member this.GetSyncState() = this.GetSyncState()
             member this.GetPilots(filter) = this.GetPilots(filter)
             member this.GetPilot(id) = this.GetPilot(id)
+            member this.GetPlayerPilots(hashedGuid) = this.GetPlayerPilots(hashedGuid)
 
         interface IControllerInteraction with
             member this.Advance() = this.Run(1)

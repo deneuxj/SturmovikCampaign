@@ -49,6 +49,7 @@ type IRoutingResponse =
     abstract GetSyncState : unit -> Async<Result<string, string>>
     abstract GetPilots : PilotSearchFilter -> Async<Result<Pilot list, string>>
     abstract GetPilot : int -> Async<Result<Pilot * MissionRecord list, string>>
+    abstract GetPlayerPilots : string -> Async<Result<Pilot list, string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
@@ -72,6 +73,7 @@ GET /query/simulation/<n>
 GET /query/dates
 GET /query/pilots?country=<country>&coalition=<coalition>&health=<Healthy or NoDead>&name=<substring>
 GET /query/pilot/<n>
+GET /query/players/<guid>/pilots
 
 POST /control/reset
 POST /control/advance
@@ -184,6 +186,7 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
             pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
             pathScan "/query/pilot/%d" (fun n -> rr.GetPilot(n) |> serializeAsync)
+            pathScan "/query/players/%s/pilots" (rr.GetPlayerPilots >> serializeAsync)
         ]
         POST >=> choose [
             path "/control/reset" >=>
