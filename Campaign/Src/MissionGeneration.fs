@@ -187,10 +187,10 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         missionData.AxisOrders.Attacks @ missionData.AlliesOrders.Attacks
         |> List.exists (fun attack -> (attack.Target - pos).Length() < 3000.0f)
     let staticDefenses = mkAADefenses(includeSearchLights, missionData.World, missionData.State)
-    let icons = MapIcons.CreateRegions(store, lcStore, missionData.World, missionData.State)
-    let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, missionLength, missionData.World, missionData.State)
-    let spotting =
-        createStorageIcons missionParams.MaxBuildingIcons store lcStore missionBegin missionData.World missionData.State
+    //let icons = MapIcons.CreateRegions(store, lcStore, missionData.World, missionData.State)
+    //let icons2 = MapIcons.CreateSupplyLevels(store, lcStore, missionLength, missionData.World, missionData.State)
+    //let spotting =
+    //    createStorageIcons missionParams.MaxBuildingIcons store lcStore missionBegin missionData.World missionData.State
     let blocks =
         let allBlocks = strategyMissionData.ListOfBlock
         let parkedPlanes =
@@ -311,27 +311,27 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
         orders
         |> createColumns missionData.Random store lcStore missionData.World missionData.State missionBegin (60.0 * float missionParams.ColumnSplitInterval) maxColumnSplit missionParams.MissionLength bridgeEntities bridgesOfVertex
     let columns = mkColumns Axis @ mkColumns Allies
-    let arrows =
-        let startOfOrder =
-            seq {
-                for orderId, start, _ in axisConvoys do
-                    yield orderId, start
-                for orderId, start, _ in alliesConvoys do
-                    yield orderId, start
-                for orderId, start, _ in columns do
-                    yield orderId, upcast start
-            }
-            |> dict
-        [Axis; Allies]
-        |> List.collect (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
-        |> List.map (fun (orderId, arrow) ->
-            match startOfOrder.TryGetValue(orderId), arrow.Show with
-            | (true, start), Some show ->
-                Mcu.addTargetLink start show.Index
-                arrow.All
-            | _, _ ->
-                arrow.All)
-        |> List.map McuUtil.groupFromList
+    //let arrows =
+    //    let startOfOrder =
+    //        seq {
+    //            for orderId, start, _ in axisConvoys do
+    //                yield orderId, start
+    //            for orderId, start, _ in alliesConvoys do
+    //                yield orderId, start
+    //            for orderId, start, _ in columns do
+    //                yield orderId, upcast start
+    //        }
+    //        |> dict
+    //    [Axis; Allies]
+    //    |> List.collect (fun coalition -> MapGraphics.MapIcons.CreateArrows(store, lcStore, missionData.World, missionData.State, missionData.AxisOrders, missionData.AlliesOrders, coalition))
+    //    |> List.map (fun (orderId, arrow) ->
+    //        match startOfOrder.TryGetValue(orderId), arrow.Show with
+    //        | (true, start), Some show ->
+    //            Mcu.addTargetLink start show.Index
+    //            arrow.All
+    //        | _, _ ->
+    //            arrow.All)
+    //    |> List.map McuUtil.groupFromList
     let axisConvoys =
         axisConvoys
         |> List.map (fun (_, _, group) -> group)
@@ -490,8 +490,8 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
     let allGroups =
         [ optionStrings
           McuUtil.groupFromList [missionBegin]
-          upcast icons
-          upcast icons2
+          //upcast icons
+          //upcast icons2
           McuUtil.groupFromList blocks
           McuUtil.groupFromList bridges
           McuUtil.groupFromList bridgeEntities
@@ -507,7 +507,7 @@ let writeMissionFile (missionParams : MissionGenerationParameters) (missionData 
           axisPlaneFerries
           alliesPlaneFerries
           serverInputMissionEnd.All ] @
-        retainedAA @ axisConvoys @ alliesConvoys @ spotting @ landFires @ arrows @ allPatrols @ allAttacks @
+        retainedAA @ axisConvoys @ alliesConvoys @ landFires @ allPatrols @ allAttacks @
         buildingFires @ columns @ battles @ paraDrops @ ndbIcons @ landingDirections @ spotters @
         artilleryFields
     McuOutput.writeMissionFiles "eng" filename options allGroups

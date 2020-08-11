@@ -42,6 +42,7 @@ open SturmovikMission.Blocks.VirtualConvoy
 open SturmovikMission.Blocks.Train
 open Buildings
 open Targets
+open Campaign.MapGraphics
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -1041,6 +1042,10 @@ with
         // Mission end triggered by server input
         let serverInputMissionEnd = MissionEnd.MissionEnd.Create(store)
 
+        // Region outlines and capitals
+        let borders = MapGraphics.MapIcons.CreateRegions(store, lcStore, state)
+        let capitals = MapGraphics.MapIcons.CreateSupplyLevels(store, lcStore, state)
+
         // Result
         let allGroups =
             [
@@ -1056,6 +1061,8 @@ with
                 yield! convoys
                 yield! parkedPlanes
                 yield serverInputMissionEnd.All
+                yield upcast borders
+                yield upcast capitals
             ]
 
         // Create directories in path to file, if needed

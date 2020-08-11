@@ -154,6 +154,8 @@ type IWarStateQuery =
     abstract member GetBuildingFunctionalityLevel : BuildingInstanceId -> float32
     /// Storage room in a region, taking health into account.
     abstract member GetRegionBuildingCapacity : RegionId -> float32<M^3>
+    /// Storage room in a region, assuming full health
+    abstract member GetRegionBuildingFullCapacity : RegionId -> float32<M^3>
     /// Level of functionality of a bridge
     abstract member GetBridgeFunctionalityLevel : BuildingInstanceId -> float32
     /// Get the ground forces of a coalition in a region
@@ -464,6 +466,11 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         buildingPartHealthLevel
         |> Seq.map (fun kvp -> fst kvp.Key, snd kvp.Key, kvp.Value)
 
+    member this.GetBuildingFullCapacity(bid) =
+        assert(this.World.Buildings.ContainsKey(bid))
+        let building = this.World.Buildings.[bid]
+        (float32 building.Properties.SubParts.Length) * building.Properties.PartCapacity
+
     member this.GetBuildingCapacity(bid) =
         assert(this.World.Buildings.ContainsKey(bid))
         let building = this.World.Buildings.[bid]
@@ -496,6 +503,10 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.GetRegionBuildingCapacity(rid : RegionId) =
         this.World.Regions.[rid].IndustryBuildings
         |> Seq.sumBy this.GetBuildingCapacity
+
+    member this.GetRegionBuildingFullCapacity(rid : RegionId) =
+        this.World.Regions.[rid].IndustryBuildings
+        |> Seq.sumBy this.GetBuildingFullCapacity
 
     member this.GetBridgeFunctionalityLevel(bid) =
         let building = this.World.Bridges.[bid]
@@ -657,6 +668,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.GetNumPlanes(arg1) = this.GetNumPlanes(arg1)
         member this.GetOwner(arg1) = this.GetOwner(arg1)
         member this.GetRegionBuildingCapacity(arg1) = this.GetRegionBuildingCapacity(arg1)
+        member this.GetRegionBuildingFullCapacity(arg1) = this.GetRegionBuildingFullCapacity(arg1)
         member this.SetBuildingPartHealthLevel(arg1, arg2, arg3) = this.SetBuildingPartHealthLevel(arg1, arg2, arg3)
         member this.SetDate(arg1) = this.SetDate(arg1)
         member this.SetGroundForces(coalition, region, forces) = this.SetGroundForces(coalition, region, forces)

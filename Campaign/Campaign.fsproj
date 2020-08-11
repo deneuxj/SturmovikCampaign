@@ -32,6 +32,7 @@
     <Compile Include="Src\MissionSelection.fs" />
     <Compile Include="Src\StaticDefenseOptimization.fs" />
     <Compile Include="Src\AiPlanes.fs" />
+    <Compile Include="Src\MapGraphics.fs" />
     <Compile Include="Src\MissionFileGeneration.fs" />
     <Compile Include="Src\CampaignScenario.fs" />
     <Compile Include="Src\Scenario.Bodenplatte.fs" />
@@ -46,7 +47,6 @@
     <Compile Include="Src\ResultExtraction.fs" />
     <Compile Include="Src\NewWorldState.fs" />
     <Compile Include="Src\AfterActionReport.fs" />
-    <Compile Include="Src\MapGraphics.fs" />
     <Compile Include="Src\PlaneFerry.fs" />
     <Compile Include="Src\Battlefield.fs" />
     <Compile Include="Src\AntiAirDefenses.fs" />

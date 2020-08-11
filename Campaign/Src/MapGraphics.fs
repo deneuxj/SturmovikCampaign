@@ -30,7 +30,8 @@ open SturmovikMission.Blocks.IconDisplay
 open SturmovikMission.Blocks.MapGraphics
 
 open Campaign.WorldDescription
-open Campaign.WorldState
+open Campaign.NewWorldDescription
+open Campaign.WarState
 open Util
 open Campaign.BasicTypes
 
@@ -43,7 +44,7 @@ let getRepresentative (world : World) =
     let areSimilar (v1 : Vector2) (v2 : Vector2) =
         (v1 - v2).LengthSquared() < dist2
     let allVecs =
-        world.Regions
+        world.Regions.Values
         |> Seq.map (fun region -> region.Boundary)
         |> List.concat
     let equivClasses = Algo.computePartition areSimilar allVecs
@@ -69,16 +70,14 @@ with
     member this.Region = this.Kind.Region
 
     /// Build segments at the border of regions
-    static member CreateSegments(world : World, state : WorldState) =
-        let wg = world.FastAccess
-        let sg = state.FastAccess
+    static member CreateSegments(state : IWarStateQuery) =
+        let world = state.World
         let segments =
             [
                 let dist2 =
                     let dist = 1000.0f
                     dist * dist
-                for region in world.Regions do
-                    let state = sg.GetRegion(region.RegionId)
+                for region in world.Regions.Values do
                     let getCycled vertices =
                         match vertices with
                         | [] -> []
@@ -88,7 +87,7 @@ with
                         let sharedEdges =
                             seq {
                                 for next in region.Neighbours do
-                                    let nextRegion = wg.GetRegion(next)
+                                    let nextRegion = world.Regions.[next]
                                     let boundary2 = getCycled nextRegion.Boundary
                                     let haveShared =
                                         boundary2
@@ -114,21 +113,20 @@ with
         segments
 
     /// Turn a list of segments to lits of loops, i.e. list of connected segments.
-    static member MakeLoops(state : WorldState, segments : Segment list) =
-        let sg = state.FastAccess
+    static member MakeLoops(state : IWarStateQuery, segments : Segment list) =
         let rec pullString (bit : Segment) (working : Segment list) loop =
             match working with
             | [] -> bit :: loop, []
             | _ :: _ ->
-                let owner = sg.GetRegion(bit.Region).Owner
+                let owner = state.GetOwner(bit.Region)
                 let next =
                     working
                     |> List.tryFind (fun next ->
-                        let nextOwner = sg.GetRegion(next.Region).Owner
+                        let nextOwner = state.GetOwner(next.Region)
                         let isBorder =
                             match next.Kind with
                             | OuterBorder _ -> true
-                            | InnerBorder(_, other) -> sg.GetRegion(other).Owner <> owner
+                            | InnerBorder(_, other) -> state.GetOwner(other) <> owner
                         let isClose = ((fst next.Edge) - (snd bit.Edge)).Length() < 1000.0f
                         isClose && nextOwner = owner && isBorder)
                 match next with
@@ -148,7 +146,7 @@ with
                     | OuterBorder _ ->
                         true
                     | InnerBorder(r1, r2) ->
-                        sg.GetRegion(r1).Owner <> sg.GetRegion(r2).Owner
+                        state.GetOwner(r1) <> state.GetOwner(r2)
                 if proceed then
                     let loop, working = pullString start working []
                     let loop = List.rev loop
@@ -159,26 +157,16 @@ with
 
 type SturmovikMission.Blocks.MapGraphics.MapIcons with
     /// Render region boundaries
-    static member CreateRegions(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState) =
-        let getState =
-            let m =
-                state.Regions
-                |> Seq.map (fun region -> region.RegionId, region)
-                |> dict
-            fun x -> m.[x]
-        let getRegion =
-            let m =
-                world.Regions
-                |> Seq.map (fun region -> region.RegionId, region)
-                |> dict
-            fun x -> m.[x]
+    static member CreateRegions(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, state : IWarStateQuery) =
+        let world = state.World
+        let getRegion x = world.Regions.[x]
         let segments =
             [
                 let dist2 =
                     let dist = 1000.0f
                     dist * dist
-                for region in world.Regions do
-                    let state = getState region.RegionId
+                for region in world.Regions.Values do
+                    let owner = state.GetOwner(region.RegionId)
                     let getCycled vertices =
                         match vertices with
                         | [] -> []
@@ -223,10 +211,10 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                         match segment.Kind with
                         | OuterBorder _ -> ()
                         | InnerBorder(home, other) ->
-                            let homeState = getState home
-                            let otherState = getState other
-                            match homeState, otherState with
-                            | { Owner = Some Allies }, { Owner = Some Axis } ->
+                            let homeOwner = state.GetOwner(home)
+                            let otherOwner = state.GetOwner(other)
+                            match homeOwner, otherOwner with
+                            | Some Allies, Some Axis ->
                                 yield! mkSegment segment.Edge
                             | _ ->
                                 ()
@@ -261,20 +249,20 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
             for segment in segments do
                 match segment.Kind with
                 | OuterBorder region ->
-                    let owner = (getState region).Owner
+                    let owner = state.GetOwner(region)
                     match owner with
                     // Outer border of non-neutral coalition rendered using the coalition's color.
                     | Some coalition -> mkCoalitionSegment coalition segment.Edge
                     // Outer border of neutral coalition not rendered at all.
                     | None -> ()
                 | InnerBorder(home, other) ->
-                    let homeState = getState home
-                    let otherState = getState other
-                    match homeState, otherState with
-                    | { Owner = Some coalition }, { Owner = None } ->
+                    let homeOwner = state.GetOwner(home)
+                    let otherOwner = state.GetOwner(other)
+                    match homeOwner, otherOwner with
+                    | Some coalition, None ->
                         // Inner border of non-neutral with neutral rendered using coalition's color
                         mkCoalitionSegment coalition segment.Edge
-                    | { Owner = Some coalition1 }, { Owner = Some coalition2 } when coalition1 = coalition2 ->
+                    | Some coalition1, Some coalition2 when coalition1 = coalition2 ->
                         // Internal border rendered as thin dark segment
                         //mkDarkSegment segment.Edge
                         ()
@@ -306,7 +294,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
         }
 
     /// Create health bars for each region showing supply and damage levels.
-    static member CreateSupplyLevels(store, lcStore, missionLength, world, state) =
+    static member CreateSupplyLevels(store, lcStore, state : IWarStateQuery) =
         let length = 2000.0f
         let renderSupplyBar (pos : Vector2) health color =
             let mkIcon = mkIcon store lcStore
@@ -319,24 +307,23 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
             l0.Targets <- [l1.Index]
             h0.Targets <- [h1.Index]
             [ l0; l1; h0; h1 ]
-        let fullCapacities = AutoOrder.computeStorageCapacity world
-        let actualCapacities = AutoOrder.computeActualStorageCapacity world state
+        let fullCapacities = state.GetRegionBuildingFullCapacity
+        let actualCapacities = state.GetRegionBuildingCapacity
         let icons = [
-            let fills = state.GetAmmoFillLevelPerRegion(world, missionLength)
-            for region in world.Regions do
-                let fill = fills.TryFind(region.RegionId) |> Option.defaultValue 0.0f |> max 0.0f |> min 1.0f
-                let capacity =
-                    Map.tryFind region.RegionId actualCapacities
-                    |> Option.defaultValue 0.0f<E>
-                let fullCapacity =
-                    Map.tryFind region.RegionId fullCapacities
-                    |> Option.defaultValue 0.0f<E>
+            for region in state.World.Regions.Values do
+                let capacity = actualCapacities region.RegionId
+                let fullCapacity = fullCapacities region.RegionId
+                let fill = 
+                    if fullCapacity = 0.0f<M^3> then
+                        1.0f
+                    else
+                        capacity / fullCapacity
                 let color =
                     let red = 200.0f * (1.0f - fill)
                     let green = 255.0f * fill
                     (int red, int green, 0)
                 let health =
-                    if fullCapacity = 0.0f<E> then
+                    if fullCapacity = 0.0f<M^3> then
                         0.0f
                     else
                         capacity / fullCapacity
@@ -345,16 +332,17 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
                 yield! renderSupplyBar region.Position health color
         ]
         let capitals = [
-            for region, regState in List.zip world.Regions state.Regions do
-                let pos = region.Position // region.Parking |> Seq.sum |> ((*) (1.0f / float32 region.Parking.Length))
+            for region in state.World.Regions.Values do
+                let pos = region.Position
                 let capital = mkIcon store lcStore 0 (106, 0, 0) (pos + Vector2(0.1f * length, 0.5f * length))
                 let (RegionId name) = region.RegionId
                 let label =
                     // Show number of vehicles beside the region's name
                     let numVehicles =
-                        regState.NumVehicles
-                        |> Map.toSeq
-                        |> Seq.sumBy snd
+                        match state.GetOwner(region.RegionId) with
+                        | None -> 0
+                        | Some coalition ->
+                            int(state.GetGroundForces(coalition, region.RegionId) / Targets.ArmoredCar.GroundForceValue)
                     if numVehicles > 0 then
                         sprintf "%s (%d)" name numVehicles
                     else
@@ -387,6 +375,7 @@ type SturmovikMission.Blocks.MapGraphics.MapIcons with
           Hide = None
         }
 
+#if DISABLED_OLD_CODE
     static member CreateArrows(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, world : World, state : WorldState, axisOrders : Orders.OrderPackage, alliesOrders : Orders.OrderPackage, coalition : CoalitionId) =
         let sg = state.FastAccess
         let wg = world.FastAccess
@@ -548,3 +537,4 @@ let createStorageIcons maxItems store lcStore missionBegin (world : World) (stat
             | [] ->
                 ()
     ]
+#endif
