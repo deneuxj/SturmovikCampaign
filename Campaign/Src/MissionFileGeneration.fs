@@ -54,7 +54,8 @@ type AiAttack with
         let aiStartPoint = defaultArg aiStartPoint (StartAtIngress 50000.0f<M>)
         let coalition = state.GetOwner(state.World.Airfields.[mission.StartAirfield].Region)
         match mission, coalition with
-        | { MissionType = GroundTargetAttack(target, altitude) }, Some coalition ->
+        | { MissionType = Strafing(target) }, Some coalition
+        | { MissionType = Bombing(target) }, Some coalition ->
             let planeModel = state.World.PlaneSet.[mission.Plane]
             let numPlanes = min (defaultArg maxFlightSize 5) mission.NumPlanes
             let reserve = mission.NumPlanes - numPlanes
@@ -68,16 +69,20 @@ type AiAttack with
                     targetPos - (dist / 1.0f<M>) * toTarget
                 | StartOverAirfield ->
                     state.World.Airfields.[mission.StartAirfield].Position
-            let altitude, roles =
-                match altitude with
-                | LowAltitude -> 1000.0f, [PlaneRole.GroundAttacker]
-                | MediumAltitude -> 2500.0f, [PlaneRole.GroundAttacker; PlaneRole.LevelBomber]
-                | HighAltitude -> 4500.0f, [PlaneRole.LevelBomber; PlaneRole.GroundAttacker]
+            let roles =
+                match mission.MissionType with
+                | Strafing -> [PlaneRole.GroundAttacker]
+                | Bombing -> [PlaneRole.GroundAttacker; PlaneRole.LevelBomber]
+                | _ -> []
             let role =
                 roles
                 |> List.tryFind (fun role -> planeModel.Payloads.ContainsKey role)
             role
             |> Option.map (fun role ->
+                let altitude =
+                    match role with
+                    | PlaneRole.LevelBomber -> 5000.0f
+                    | _ -> 3500.0f
                 {
                     Attacker = planeModel
                     NumPlanes = numPlanes
@@ -1377,7 +1382,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                 |> Option.bind (fun cover ->
                     let targetType =
                         match missions.MainMission.MissionType with
-                        | GroundTargetAttack(t, _) -> t
+                        | Strafing t | Bombing t -> t
                         | _ -> GroundTargetType.BuildingTarget
                     let targetPos = locator.TryGetGroundTargetLocation(missions.MainMission.Objective, targetType)
                     targetPos
@@ -1419,7 +1424,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
         [
             let mainTargetType =
                 match missions.MainMission.MissionType with
-                | GroundTargetAttack(t, _) -> t
+                | Bombing t | Strafing t -> t
                 | _ -> GroundTargetType.BuildingTarget
             yield
                 locator.TryGetGroundTargetLocation(missions.MainMission.Objective, mainTargetType)

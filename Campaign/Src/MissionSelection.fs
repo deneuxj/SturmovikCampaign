@@ -127,7 +127,8 @@ let enumerateGroundAttackMissions (state : IWarStateQuery) (coalition : Coalitio
         seq {
             for mission in missions do
                 match mission.Kind with
-                | AirMission ({ MissionType = GroundTargetAttack _ } as airMission) ->
+                | AirMission ({ MissionType = Strafing _ } as airMission)
+                | AirMission ({ MissionType = Bombing _ } as airMission) ->
                     if airMissionCoalition airMission = Some coalition then
                         let interceptions =
                             airMissions
@@ -234,7 +235,8 @@ let enumerateGroundAttackMissions (state : IWarStateQuery) (coalition : Coalitio
     groundAttackMissions
     |> Seq.collect (fun selection ->
         match selection.MainMission.MissionType with
-        | GroundTargetAttack(GroundForces coalition, _) ->
+        | Strafing(GroundForces coalition)
+        | Bombing(GroundForces coalition) ->
             let groundBattles =
                 groundMissions
                 |> Seq.filter (fun gm ->

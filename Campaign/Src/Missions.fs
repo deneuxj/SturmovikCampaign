@@ -32,27 +32,11 @@ open Campaign.WarStateUpdate
 open Util
 open Campaign.Buildings
 
-type AltitudeLevel = LowAltitude | MediumAltitude | HighAltitude
-with
-    member this.Roof =
-        match this with
-        | LowAltitude -> 1500.0f
-        | MediumAltitude -> 3000.0f
-        | HighAltitude -> System.Single.PositiveInfinity
-
-    member this.Ground =
-        match this with
-        | LowAltitude -> System.Single.NegativeInfinity
-        | MediumAltitude -> LowAltitude.Roof
-        | HighAltitude -> MediumAltitude.Roof
-
 /// Domains of combat affected by experience bonuses
 type ExperienceDomain =
-    | AirSupremacy // Fighter attacks on fighters
-    | Interception of AltitudeLevel // Fighter and ground attackers on bombers and ground attackers
-    | Defense // Gunners on fighters
-    | GroundAttack of PlaneType // Any plane on ground targets using gun and rockets
-    | Bombing of PlaneType // Any plane on ground targets using bombs
+    | AirSupremacy of PlaneModelId // Attacks by a specific plane model on fighters
+    | Interception of PlaneModelId // Attacks by a specific plane model on bombers and ground attackers
+    | GroundAttack of PlaneModelId // Attacks by a specific plane model on ground targets
 
 /// Experience bonuses granted by successful flight records
 type ExperienceBonus =
@@ -98,15 +82,15 @@ with
 
 type AirMissionType =
     | AreaProtection
-    | GroundTargetAttack of GroundTargetType * AltitudeLevel
+    | Bombing of GroundTargetType
+    | Strafing of GroundTargetType
     | PlaneTransfer of Destination: AirfieldId
 with
     member this.Description =
         match this with
         | AreaProtection -> "CAP"
-        | GroundTargetAttack(target, HighAltitude) -> sprintf "high-altitude bombing of %s" target.Description
-        | GroundTargetAttack(target, MediumAltitude) -> sprintf "dive bombing of %s" target.Description
-        | GroundTargetAttack(target, LowAltitude) -> sprintf "strafing of %s" target.Description
+        | Bombing target -> sprintf "bombing of %s" target.Description
+        | Strafing target -> sprintf "strafing of %s" target.Description
         | PlaneTransfer(afId) -> sprintf "plane transfer to %s" afId.AirfieldName
 
 type AirMission =
@@ -443,7 +427,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                 | AreaProtection ->
                     // Effect of area protection already handled during interception phase
                     ()
-                | GroundTargetAttack(targetType, _) ->
+                | Bombing(targetType) | Strafing(targetType) ->
                     let region = war.World.Regions.[mission.Objective]
                     let plane = war.World.PlaneSet.[mission.Plane].Name
                     let numBridgePartsDamaged, volumeBuildingDamaged =
@@ -606,7 +590,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
             for mId, mission in airMissions do
                 let numPlanes = numPlanes.[mId] |> int |> max 0
                 match mission.MissionType with
-                | AreaProtection | GroundTargetAttack _ ->
+                | AreaProtection | Bombing | Strafing ->
                     let plane = war.World.PlaneSet.[mission.Plane].Name
                     let afid = mission.StartAirfield
                     yield
