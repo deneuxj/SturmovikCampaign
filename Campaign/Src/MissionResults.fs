@@ -123,7 +123,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 | true, binding ->
                     // Emit DamageBuildingPart
                     let sub = binding.Sub |> Option.defaultValue -1
-                    for building in state.GetBuildingsAt(binding.Name, sub, position) do
+                    for building in state.GetBuildingsAt(binding.Typ, sub, position) do
                         yield DamageBuildingPart(building.Id, sub, amount)
 
                     // Emit RemovePlane for damages to static planes
@@ -159,41 +159,38 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 let ammo =
                     match latestHit.TryGetValue(targetId) with
                     | true, hit ->
-                        Some(AmmoType.FromLogName(hit.Ammo))
+                        AmmoType.FromLogName(hit.Ammo)
                     | false, _ ->
-                        None
-                match ammo with
-                | Some ammo ->
-                    match bindings.TryGetValue(targetId) with
-                    | true, binding ->
-                        // Buildings
-                        let sub = binding.Sub |> Option.defaultValue -1
-                        for building in state.GetBuildingsAt(binding.Name, sub, position) do
-                            yield (TargetType.Building(building.Id, sub), ammo, amount)
+                        AmmoName "explosion"
+                match bindings.TryGetValue(targetId) with
+                | true, binding ->
+                    // Buildings
+                    let sub = binding.Sub |> Option.defaultValue -1
+                    for building in state.GetBuildingsAt(binding.Typ, sub, position) do
+                        yield (TargetType.Building(building.Id, sub), ammo, amount)
 
-                        // Parked planes
-                        match state.TryGetStaticPlaneAt(binding.Name, position) with
-                        | Some(afId, plane) ->
-                            yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
-                        | None ->
-                            ()
-
-                        // Flying planes
-                        match state.TryGetPlane(binding.Name) with
-                        | Some plane ->
-                            yield (TargetType.Air(plane.Id), ammo, amount)
-                        | None ->
-                            ()
-
-                        // Others
-                        match binding.Name with
-                        | TargetTypeByName target ->
-                            yield (target, ammo, amount)
-                        | _ ->
-                            ()
-                    | false, _ ->
+                    // Parked planes
+                    match state.TryGetStaticPlaneAt(binding.Name, position) with
+                    | Some(afId, plane) ->
+                        yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
+                    | None ->
                         ()
-                | None -> ()
+
+                    // Flying planes
+                    match state.TryGetPlane(binding.Name) with
+                    | Some plane ->
+                        yield (TargetType.Air(plane.Id), ammo, amount)
+                    | None ->
+                        ()
+
+                    // Others
+                    match binding.Name with
+                    | TargetTypeByName target ->
+                        yield (target, ammo, amount)
+                    | _ ->
+                        ()
+                | false, _ ->
+                    ()
             ]
 
         /// Update flight record with damage
