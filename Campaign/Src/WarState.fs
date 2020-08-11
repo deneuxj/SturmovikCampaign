@@ -339,7 +339,7 @@ with
     member this.Version = sprintf "%d.%d" this.FormatVersionMajor this.FormatVersionMinor
 
 /// The overall status of the war.
-type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces, date, weather) =
+type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces, date, weather, players, pilots) =
 
     let mutable date = date
     let mutable weather = weather
@@ -365,8 +365,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     let groundForces = Seq.mutableDict groundForces
 
     // Players and pilots
-    let players = Seq.mutableDict []
-    let pilots = Seq.mutableDict []
+    let players = Seq.mutableDict players
+    let pilots = Seq.mutableDict pilots
 
     let distancesToSources sources =
         let distances =
@@ -441,7 +441,9 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
             data.GroundForces
             |> toList
             |> List.map (fun (k, v) -> k, v * 1.0f<MGF>)
-        WarState(world, toList data.Owners, toList data.BuildingPartHealthLevel, airfieldPlanes, groundForces, data.Date, data.Weather)
+        let players = toList data.Players
+        let pilots = toList data.Pilots
+        WarState(world, toList data.Owners, toList data.BuildingPartHealthLevel, airfieldPlanes, groundForces, data.Date, data.Weather, players, pilots)
 
     member this.World : World = world
 
@@ -702,7 +704,7 @@ module Init =
             |> List.ofSeq
         let weather = getWeather (System.Random()) world.StartDate
         let war =
-            WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate, weather)
+            WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate, weather, [], [])
         // Set forces on the frontline according to the region's storage capacity
         for (coalition, rid), _ in frontGroundForces do
             let capacity =
