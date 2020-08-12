@@ -706,10 +706,17 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         |> Ok
                     with exc ->
                         Error (sprintf "Failed to init world: %s" exc.Message)
+                let names =
+                    let path = Path.Combine("Config", "names.json")
+                    if File.Exists path then
+                        PilotRanks.NameDatabase.FromFile path
+                    else
+                        PilotRanks.NameDatabase.Default
                 match world with
                 | Error e ->
                     Error e
                 | Ok world ->
+                    let world = { world with Names = names }
                     let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
                         let planeSet = BodenplatteInternal.PlaneSet.Default
                         let world = planeSet.Setup world
