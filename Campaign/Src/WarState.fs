@@ -267,9 +267,12 @@ module IWarStateExtensions =
             let lastNames = this.World.Names.LastNames.[country] |> Set.toArray
             firstNames.[random.Next(firstNames.Length)], lastNames.[random.Next(lastNames.Length)]
 
+        /// Return a new pilot, without registering it. The name is deterministically selected in a pseudo-random manner.
+        /// The seed is computed from the date of the war state, the numeric id of the pilot, the scenario, the country and the player GUID.
         member this.NewPilot(guid : string, country : CountryId) : Pilot =
             let id = this.NextPilotId()
-            let firstName, lastName = this.GetNewNames(country, id.AsInt)
+            let seed = hash(this.Date, id, this.World.Scenario, country, guid)
+            let firstName, lastName = this.GetNewNames(country, seed)
             { Id = id
               Country = country
               PilotFirstName = firstName
