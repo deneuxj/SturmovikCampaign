@@ -793,7 +793,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         [stateFile; stepFile; simFile]
                         |> Seq.forall (File.Exists >> not))
                 war.SaveToFile(stateFile)
-                stateChanged.Trigger(war)
+                stateChanged.Trigger(war.Clone())
                 nextStep.SaveToFile(stepFile)
                 use writer = new StreamWriter(simFile)
                 let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
@@ -872,7 +872,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             yield (command, effects)
                     }
                     |> AsyncSeq.toArrayAsync
-                stateChanged.Trigger(war)
+                stateChanged.Trigger(war.Clone())
                 // Write effects to file
                 // Write war state and campaign step files
                 let effectsFile =

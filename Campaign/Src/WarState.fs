@@ -410,6 +410,14 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         railsCapacities.Clear()
         supplyAvailability.Clear()
 
+    /// Make a deep copy of this object
+    member this.Clone() =
+        use inMemory = new System.IO.MemoryStream()
+        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer()
+        serializer.Serialize(inMemory, this, leaveOpen=true)
+        inMemory.Seek(0L, IO.SeekOrigin.Begin) |> ignore
+        serializer.Deserialize<WarState>(inMemory)
+
     member this.Serialize(writer : System.IO.StreamWriter) =
         let unmeasure = Seq.map (fun (kvp : KeyValuePair<_, _>) -> kvp.Key, float32 kvp.Value) >> dict
         let data =
