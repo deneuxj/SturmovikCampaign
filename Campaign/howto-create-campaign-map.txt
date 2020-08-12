@@ -23,6 +23,7 @@ Other regions are supplied depending on their distance to the nearest strong bas
 Create influence areas in a group named "Terminals". Each region should have at least one.
 Those areas should cover cities that are communication hubs, for roads and railroads.
 Any segment of road or rails inside these areas are locations where supplies can be loaded to and from other regions.
+In order for a path over roads or rails to connect two regions that share an edge in their boundaries, the entire path must be covered by the two regions.
 
 4. Define airfield areas
 Use influence areas. The point of reference of each area must be inside a region.
