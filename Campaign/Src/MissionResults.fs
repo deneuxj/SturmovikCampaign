@@ -5,6 +5,7 @@ open FSharp.Json
 open System.Numerics
 
 open Util
+open Util.RegexActivePatterns
 open VectorExtension
 
 open Campaign.GameLogEvents
@@ -95,6 +96,19 @@ type IWarStateQuery with
         |> Option.bind (fun country ->
             this.World.Countries.TryGetValue(country)
             |> Option.ofPair)
+
+    member this.HealthStatusFromHealthLevel(timeStamp : System.TimeSpan, pilotHealth : float32) =
+        let injury =
+            1.0f - pilotHealth
+        let healthStatus =
+            if injury < 0.01f then
+                Healthy
+            else if injury >= 1.0f then
+                Dead
+            else
+                this.Date + timeStamp + System.TimeSpan(int(ceil(injury * 30.0f)), 0, 0, 0)
+                |> Injured
+        healthStatus
 
 type AmmoType with
     static member FromLogName(logName : string) : AmmoType = AmmoName logName
@@ -392,16 +406,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         |> Option.defaultValue 1.0f
                     match flightRecords.TryGetValue(missionEnded.PilotId) with
                     | true, x ->
-                        let injury =
-                            1.0f - pilotHealth
-                        let healthStatus =
-                            if injury < 0.01f then
-                                Healthy
-                            else if injury >= 1.0f then
-                                Dead
-                            else
-                                state.Date + timeStamp + System.TimeSpan(int(ceil(injury * 30.0f)), 0, 0, 0)
-                                |> Injured
+                        let healthStatus = state.HealthStatusFromHealthLevel(timeStamp, pilotHealth)
                         let flight =
                             { x.Record with
                                 PilotHealth = pilotHealth
@@ -419,10 +424,22 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     ()
             }
 
+        let mutable finalTimeStamp = System.TimeSpan(0L)
         for line in logs do
             try
                 yield! handleLine line
+                match line with
+                | MatchesRegex reBase (GroupList (AsInt ticks :: _)) when ticks > 0 ->
+                    finalTimeStamp <- System.TimeSpan.OfGameTicks(ticks)
+                | _ ->
+                    ()
             with exc ->
                 logger.Error("Exception while processing log")
                 logger.Error(exc)
+
+        // Update health status of players still in the air after the log ends.
+        // Do not register their flight, that'll teach them to get back in time on the ground.
+        for x in flightRecords.Values do
+            let healthStatus = state.HealthStatusFromHealthLevel(finalTimeStamp, x.Record.PilotHealth)
+            yield UpdatePilot { x.Pilot with Health = healthStatus }
     }

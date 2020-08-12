@@ -102,12 +102,16 @@ let reDamage = Regex(@"DMG:([\d\.\-]+) AID:([\d\-]+) TID:([\d\-]+) POS\(([\d,\.\
 let reKill = Regex(@"AID:([\d\-]+) TID:([\d\-]+) POS\(([\d,\.\s\-#QO]+)\)")
 let reEndFlight = Regex(@"PLID:([\d\-]+) PID:([\d\-]+) BUL:([\d\-]+) SH:([\d\-]+) BOMB:([\d\-]+) RCT:([\d\-]+) \(([\d,\.\s\-#QO]+)\)")
 
+type System.TimeSpan with
+    static member OfGameTicks(ticks : int) =
+        let gameTicksPerSecond = 50L
+        let netTicksPerSecond = 10000000L
+        System.TimeSpan(int64 ticks * netTicksPerSecond / gameTicksPerSecond)
+
 let (|MissionEvent|ObjectEvent|PlayerEvent|OtherEvent|InvalidLine|) (line : string) =
     match line with
     | MatchesRegex reBase (GroupList [AsInt ticks; AsInt eventType; eventData]) ->
-        let gameTicksPerSecond = 50L
-        let netTicksPerSecond = 10000000L
-        let timeStamp = System.TimeSpan(int64 ticks * netTicksPerSecond / gameTicksPerSecond)
+        let timeStamp = System.TimeSpan.OfGameTicks(ticks)
         match eventType with
         | 0 ->
             match eventData with
