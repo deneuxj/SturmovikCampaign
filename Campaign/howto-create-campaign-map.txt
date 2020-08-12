@@ -7,6 +7,7 @@ Done in the mission properties dialog.
 Use influence areas.
 They cannot overlap.
 Each region's boundary must be convex.
+Each region must have a country, cannot be neutral.
 Neighbouring regions must share contiguous segments. Corresponding vertices must be close.
 In a region's boundary, vertices must be separated by at least 2km.
 Airfields that participate in the campaign must all be located within some region.
@@ -62,6 +63,5 @@ They must not be located under the "Static" group (see below).
 Buildings of strategic value as well as "valueless" buildings should be under a group named "Static".
 
 12. Other data
-Create a fakefield outside of the play area, set the planes that can be used in this campaign.
-Make sure to include all planes that players might want to use, including exotic choices in ahistorical uses of the campaign.
+Create a non-neutral fakefield outside of the play area, add at least a plane to it (any plane will do)
 Set the mission type to deathmatch.
