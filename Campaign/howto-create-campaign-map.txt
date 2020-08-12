@@ -30,14 +30,13 @@ Buildings within the area will be counted as operational buildings of that airfi
 All these areas must be in group named "Airfields".
 
 5. Define spawns and runways
-Use fakefields for planes with runways. Include *** in the Description field to specify that this runway is suitable for the me262 and bombers with 1500Kg of bombs or more.
+Use fakefields for planes with runways.
 Optionally, set the name of the fakefield to the name of the runway. This is often the direction of take-off and landing in degrees divided by 10.
 If there are parallel runways, use a suffix to differentiate them (e.g. R for right). This is only for the players' convenience, it does not affect the campaign system.
 Put the fakefields inside the group named "Airfields".
 Do create the chart. It's needed for picking spawn points according to wind, and also for AIs that are landing.
-The taxi points leading to the runway will be used to put direction signs in the game to help spawning players to get to the runway.
+The taxi points leading to the runway are meant for the AIs, not players. Keep the initial taxi point away from the spawn.
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
-These alternative waypoints should all have the same name (typically the name of the airfield).
 Airfields without runways are allowed. These can be used by players as alternative landing sites, but are otherwise ignored by the campaign system.
 
 6. Windsocks
