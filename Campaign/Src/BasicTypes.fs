@@ -148,6 +148,15 @@ with
         | "italy" -> Some Italy
         | _ -> None
 
+    member this.CultureInfo =
+        match this with
+        | Russia -> "ru-RU"
+        | UnitedStates -> "en-US"
+        | GreatBritain -> "en-GB"
+        | Germany -> "de-DE"
+        | Italy -> "it-IT"
+        |> fun (lc : string) -> System.Globalization.CultureInfo.GetCultureInfo(lc)
+
 /// A position on the map and a rotation around the vertical axis.
 [<CustomComparison>]
 [<CustomEquality>]
