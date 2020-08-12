@@ -208,6 +208,12 @@ type IGameServerControl =
     abstract ResaveMission : string -> Async<Result<unit, string>>
     abstract CopyRenameMission : string -> Async<Result<unit, string>>
 
+type IPlayerNotifier =
+    abstract MessageAll : string -> Async<Result<unit, string>>
+    abstract MessageCoalition : CoalitionId * string -> Async<Result<unit, string>>
+    abstract MessagePlayer : guidOrName:string * message:string -> Async<Result<unit, string>>
+    abstract KickPlayer : string -> Async<Result<unit, string>>
+    abstract BanPlayer : string -> Async<Result<unit, string>>
 
 type RConGameServerControl(settings : Settings, ?logger) =
     let mutable logger = defaultArg logger (LogManager.GetCurrentClassLogger())
@@ -272,46 +278,42 @@ type RConGameServerControl(settings : Settings, ?logger) =
             logger.Error e
             Error (sprintf "Failed to kill DServer: %s" e.Message)
 
-    let rotateMission() =
+    let tryOnClient task =
         async {
             if client.IsNone then
                 let! _ = connect()
                 ()
             match client with
             | Some client ->
-                let! s = client.ServerInput(settings.RotateMissionServerInputName)
-                logger.Info s
-                return Ok ()
+                try
+                    return! task client
+                with
+                | exc ->
+                    logger.Debug(exc)
+                    return Error "Failed RConClient task"
             | None ->
                 return Error "No connection to DServer"
+        }
+
+    let rotateMission() =
+        tryOnClient <| fun client -> async {
+            let! s = client.ServerInput(settings.RotateMissionServerInputName)
+            logger.Info s
+            return Ok ()
         }
 
     let signalMissionEnd() =
-        async {
-            if client.IsNone then
-                let! _ = connect()
-                ()
-            match client with
-            | Some client ->
-                let! s = client.MessageAll "Mission has ended. Actions beyond that point will not affect the campaign."
-                logger.Info s
-                return Ok()
-            | None ->
-                return Error "No connection to DServer"
+        tryOnClient <| fun client -> async {
+            let! s = client.MessageAll "Mission has ended. Actions beyond that point will not affect the campaign."
+            logger.Info s
+            return Ok()
         }
 
     let loadSds(sds : string) =
-        async {
-            if client.IsNone then
-                let! _ = connect()
-                ()
-            match client with
-            | Some client ->
-                let! s = client.OpenSds(sds)
-                logger.Info s
-                return Ok ()
-            | None ->
-                return Error "No connection to DServer"
+        tryOnClient <| fun client -> async {
+            let! s = client.OpenSds(sds)
+            logger.Info s
+            return Ok ()
         }
 
     let resaveMission(filename : string) =
@@ -394,6 +396,76 @@ type RConGameServerControl(settings : Settings, ?logger) =
                 return Error <| sprintf "CopyRename failed: %s" e.Message
         }
 
+    let messageAll(msg : string) =
+        tryOnClient <| fun client -> async {
+            let! s = client.MessageAll(msg)
+            logger.Info s
+            return Ok ()
+        }
+
+    let messageCoalition(coalition : CoalitionId, msg : string) =
+        tryOnClient <| fun client -> async {
+            let team =
+                match coalition with
+                | Axis -> 1
+                | Allies -> 2
+            let! s = client.MessageTeam(team, msg)
+            logger.Info s
+            return Ok ()
+        }
+
+    let getPlayer(client : RConClient.Client, guidOrName : string) =
+        async {
+            match! client.GetPlayerList() with
+            | Some players ->
+                match
+                    (players
+                     |> Array.tryFind (fun player ->
+                        player.PlayerId = guidOrName ||
+                        player.ProfileId = guidOrName ||
+                        player.Name = guidOrName)
+                    )
+                    with
+                | Some player ->
+                    return Some player
+                | None ->
+                    return None
+            | _ -> return None
+        }
+
+    let messagePlayer(guidOrName : string, msg : string) =
+        tryOnClient <| fun client -> async {
+            match! getPlayer(client, guidOrName) with
+            | Some player ->
+                let! s = client.MessagePlayer(player.ClientId, msg)
+                logger.Info s
+                return Ok ()
+            | None ->
+                return Error "Failed to find player to message"
+        }
+
+    let kickPlayer(guidOrName : string) =
+        tryOnClient <| fun client -> async {
+            match! getPlayer(client, guidOrName) with
+            | Some player ->
+                let! s = client.KickPlayer(player.ClientId)
+                logger.Info s
+                return Ok()
+            | None ->
+                return Error "Failed to find player to kick"
+        }
+
+    let banPlayer(guidOrName : string) =
+        tryOnClient <| fun client -> async {
+            match! getPlayer(client, guidOrName) with
+            | Some player ->
+                let! s = client.BanPlayer(player.ClientId)
+                logger.Info s
+                return Ok()
+            | None ->
+                return Error "Failed to find player to kick"
+        }
+
     member this.Dispose() =
         proc |> Option.iter (fun proc -> proc.Dispose())
         client |> Option.iter (fun client -> client.Dispose())
@@ -447,6 +519,13 @@ type RConGameServerControl(settings : Settings, ?logger) =
                 invalidArg "proc2" "Must be of type Process option"
             | None ->
                 checkIfRunning()
+
+    interface IPlayerNotifier with
+        member this.BanPlayer(player) = banPlayer(player)
+        member this.KickPlayer(player) = kickPlayer(player)
+        member this.MessageAll(msg) = messageAll(msg)
+        member this.MessageCoalition(coalition, msg) = messageCoalition(coalition, msg)
+        member this.MessagePlayer(player, msg) = messagePlayer(player, msg)
 
 
 open IO
