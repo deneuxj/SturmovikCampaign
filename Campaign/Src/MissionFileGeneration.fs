@@ -52,7 +52,7 @@ type AiStartPoint =
 
 type AiAttack with
     static member TryFromAirMission(state : WarState, mission : AirMission, targetPos : Vector2, ?maxFlightSize, ?aiStartPoint) =
-        let aiStartPoint = defaultArg aiStartPoint (StartAtIngress 50000.0f<M>)
+        let aiStartPoint = defaultArg aiStartPoint StartOverAirfield
         let coalition = state.GetOwner(state.World.Airfields.[mission.StartAirfield].Region)
         match mission, coalition with
         | { MissionType = Strafing(target) }, Some coalition
