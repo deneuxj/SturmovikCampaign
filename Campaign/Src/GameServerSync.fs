@@ -217,53 +217,62 @@ type IPlayerNotifier =
 type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, notifier : IPlayerNotifier) =
     let mutable isMuted = true
 
-    member this.UnMute() = isMuted <- false
+    let logger = NLog.LogManager.GetCurrentClassLogger()
+
+    member this.UnMute() =
+        if isMuted then
+            logger.Debug("LiveNotifier is unmuted")
+            isMuted <- false
 
     member this.Run() =
-        commands
-        |> AsyncSeq.iterAsync(fun command -> async {
-            if not isMuted then
-                match command with
-                | WarStateUpdate.Commands.RegisterPilotFlight(pid, flight, health) ->
-                    let pilot = war.GetPilot(pid)
-                    let rank =
-                        Pilots.tryComputeRank war.World.Ranks pilot
-                        |> Option.map (fun rank -> rank.RankAbbrev)
-                        |> Option.defaultValue ""
-                    let eventDescription =
-                        match flight.Return with
-                        | Targets.CrashedInEnemyTerritory -> "crashed in enemy territory"
-                        | Targets.CrashedInFriendlyTerritory _ -> "crash-landed"
-                        | Targets.AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
-                    let msg = sprintf "%s %s %s (%d) has %s" rank pilot.PilotFirstName pilot.PilotLastName pid.AsInt eventDescription
-                    let coalition = war.World.Countries.[pilot.Country]
-                    let! s = notifier.MessageCoalition(coalition, msg)
-                    match health with
-                    | Pilots.Healthy -> ()
-                    | Pilots.Dead ->
-                        let msg = sprintf "The career of %s %s has ended" rank pilot.PilotLastName
-                        let! s = notifier.MessageCoalition(coalition, msg)
-                        ()
-                    | Pilots.Injured until ->
-                        let msg = sprintf "%s %s is injured until at least %s" rank pilot.PilotLastName (until.ToString(pilot.Country.CultureInfo))
-                        let! s = notifier.MessageCoalition(coalition, msg)
-                        ()
-                | WarStateUpdate.Commands.UpdatePilot(pilot) ->
-                    let player =
-                        match war.TryGetPlayer(pilot.PlayerGuid) with
-                        | Some player -> player.Name
-                        | None -> "<incognito>"
-                    let rank =
-                        Pilots.tryComputeRank war.World.Ranks pilot
-                        |> Option.map (fun rank -> rank.RankAbbrev)
-                        |> Option.defaultValue ""
-                    let msg = sprintf "%s has taken control of %s %s %s (%d)" player rank pilot.PilotFirstName pilot.PilotLastName pilot.Id.AsInt
-                    let! s = notifier.MessageAll(msg)
-                    ()
-                | _ ->
-                    ()
-            command.Execute(war) |> ignore
-        })
+        async {
+            logger.Info("LiveNotifier is now running")
+            return!
+                commands
+                |> AsyncSeq.iterAsync(fun command -> async {
+                    if not isMuted then
+                        match command with
+                        | WarStateUpdate.Commands.RegisterPilotFlight(pid, flight, health) ->
+                            let pilot = war.GetPilot(pid)
+                            let rank =
+                                Pilots.tryComputeRank war.World.Ranks pilot
+                                |> Option.map (fun rank -> rank.RankAbbrev)
+                                |> Option.defaultValue ""
+                            let eventDescription =
+                                match flight.Return with
+                                | Targets.CrashedInEnemyTerritory -> "crashed in enemy territory"
+                                | Targets.CrashedInFriendlyTerritory _ -> "crash-landed"
+                                | Targets.AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
+                            let msg = sprintf "%s %s %s (%d) has %s" rank pilot.PilotFirstName pilot.PilotLastName pid.AsInt eventDescription
+                            let coalition = war.World.Countries.[pilot.Country]
+                            let! s = notifier.MessageCoalition(coalition, msg)
+                            match health with
+                            | Pilots.Healthy -> ()
+                            | Pilots.Dead ->
+                                let msg = sprintf "The career of %s %s has ended" rank pilot.PilotLastName
+                                let! s = notifier.MessageCoalition(coalition, msg)
+                                ()
+                            | Pilots.Injured until ->
+                                let msg = sprintf "%s %s is injured until at least %s" rank pilot.PilotLastName (until.ToString(pilot.Country.CultureInfo))
+                                let! s = notifier.MessageCoalition(coalition, msg)
+                                ()
+                        | WarStateUpdate.Commands.UpdatePilot(pilot) ->
+                            let player =
+                                match war.TryGetPlayer(pilot.PlayerGuid) with
+                                | Some player -> player.Name
+                                | None -> "<incognito>"
+                            let rank =
+                                Pilots.tryComputeRank war.World.Ranks pilot
+                                |> Option.map (fun rank -> rank.RankAbbrev)
+                                |> Option.defaultValue ""
+                            let msg = sprintf "%s has taken control of %s %s %s (%d)" player rank pilot.PilotFirstName pilot.PilotLastName pilot.Id.AsInt
+                            let! s = notifier.MessageAll(msg)
+                            ()
+                        | _ ->
+                            ()
+                    command.Execute(war) |> ignore
+                })
+        }
 
 type RConGameServerControl(settings : Settings, ?logger) =
     let mutable logger = defaultArg logger (LogManager.GetCurrentClassLogger())
@@ -1005,9 +1014,12 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         // Give time to execute old commands
                         do! Async.Sleep(15000)
                         liveReporter.UnMute()
-                        return fun () -> cancellation.Cancel()
+                        return
+                            fun () ->
+                                logger.Info("LiveNotifier terminated")
+                                cancellation.Cancel()
                     | _ ->
-                        logger.Warn("No live notifier started")
+                        logger.Warn("LiveNotifier NOT started")
                         return ignore
                 }
 
