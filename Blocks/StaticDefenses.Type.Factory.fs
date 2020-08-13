@@ -89,7 +89,7 @@ with
             ]
         let enemyClose =
             // For ATs, show when an enemy ground vehicle is near, reduce scanning range.
-            let wec = WhileEnemyClose.Create(true, true, store, center, coalition)
+            let wec = WhileEnemyClose.Create(true, true, store, center, coalition, 10000)
             match specialty with
             | RearDefenseArea ->
                 let otherCoalition = McuUtil.swapCoalition coalition

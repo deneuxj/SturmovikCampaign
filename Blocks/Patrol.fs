@@ -26,7 +26,7 @@ with
         let group = blocksData.GetGroup("Patrol").CreateMcuList()
         for mcu in group do
             subst mcu
-        let wec = WhileEnemyClose.Create(true, false, store, pos, coalition)
+        let wec = WhileEnemyClose.Create(true, false, store, pos, coalition, 20000)
         // Get key nodes
         let start = getTriggerByName group "DelayedStart"
         let plane = getVehicleByName group "Plane"

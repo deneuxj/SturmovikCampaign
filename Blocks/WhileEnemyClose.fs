@@ -19,7 +19,7 @@ type WhileEnemyClose =
       All : McuUtil.IMcuGroup
     }
 with
-    static member Create(usePulses : bool, checkzoneOnly : bool, store : NumericalIdentifiers.IdStore, pos : Vector2, coalition : Mcu.CoalitionValue) =
+    static member Create(usePulses : bool, checkzoneOnly : bool, store : NumericalIdentifiers.IdStore, pos : Vector2, coalition : Mcu.CoalitionValue, range : int) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let db = blocksData.CreateMcuList()
@@ -55,6 +55,9 @@ with
         for mcu in group do
             let pos2 = diff + Vector2.FromMcu(mcu.Pos)
             pos2.AssignTo(mcu.Pos)
+        // Ranges
+        enemyEnters.Distance <- range
+        proximity.Distance <- range
         // Result
         { StartMonitoring = start
           StopMonitoring = stop

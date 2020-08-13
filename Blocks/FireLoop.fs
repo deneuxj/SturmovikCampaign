@@ -48,7 +48,7 @@ with
         effect1.Script <- fireType.Script
         effect2.Script <- fireType.Script
         // Proximity logic
-        let wec = WhileEnemyClose.Create(true, true, store, pos, Mcu.CoalitionValue.Neutral)
+        let wec = WhileEnemyClose.Create(true, true, store, pos, Mcu.CoalitionValue.Neutral, 10000)
         // Set coalitions to both Axis and Allies
         match wec.Proximity with
         | :? Mcu.McuProximity as prox ->
