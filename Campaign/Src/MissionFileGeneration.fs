@@ -1198,22 +1198,20 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
 
             // Bridges on the paths from regions to the neighbours
             let getCriticialBridges (network : Network) (regionA, regionB) =
-                let nodes = network.Nodes |> List.filter (fun node -> node.Region = regionA || node.Region = regionB)
                 let links =
                     network.Links
                     |> List.filter (fun link -> link.Bridges |> Seq.forall (fun bid -> state.GetBridgeFunctionalityLevel(bid) > 0.5f))
                 let network =
                     { network with
-                        Nodes = nodes
                         Links = links
                     }
                 let sources =
-                    nodes
+                    network.Nodes
                     |> Seq.filter (fun node -> node.Region = regionA && node.HasTerminal)
                     |> Seq.map (fun node -> node.Id)
                     |> Set
                 let goals =
-                    nodes
+                    network.Nodes
                     |> Seq.filter (fun node -> node.Region = regionB && node.HasTerminal)
                     |> Seq.map (fun node -> node.Id)
                     |> Set
