@@ -195,7 +195,7 @@ module IO =
             |> Option.map (fun vessel -> vessel.SyncState)
 
 type IGameServerControl =
-    abstract IsRunning : obj option -> bool
+    abstract IsRunning : obj option -> Process option
     abstract StartProcessWithSds : string -> Async<Result<obj, string>>
     abstract KillProcess : obj option -> Result<unit, string>
     abstract AttachRcon : unit -> Async<Result<unit, string>>
@@ -317,13 +317,19 @@ type RConGameServerControl(settings : Settings, ?logger) =
         let procs =
             Process.GetProcessesByName("DServer")
             |> Array.filter (fun proc -> IO.Path.GetFullPath(IO.Path.GetDirectoryName(proc.MainModule.FileName)) = startDir)
-        logger.Debug procs
         if procs.Length > 0 then
+            if procs.Length > 1 then
+                logger.Warn(
+                    let pids =
+                        procs
+                        |> Seq.map (fun proc -> string proc.Id)
+                        |> String.concat ", "
+                    sprintf "Multiple DServer processes found: %s" pids)
             logger.Info procs.[0]
             proc <- Some procs.[0]
-            true
+            proc
         else
-            false
+            None
 
     let kill() =
         if proc.IsNone then
@@ -573,11 +579,21 @@ type RConGameServerControl(settings : Settings, ?logger) =
         member this.IsRunning(proc2) =
             match proc2 with
             | Some (:? Process as proc2) ->
-                not proc2.HasExited
+                if not proc2.HasExited then
+                    Some proc2
+                else
+                    None
             | Some _ ->
                 invalidArg "proc2" "Must be of type Process option"
             | None ->
-                checkIfRunning()
+                match proc with
+                | Some proc ->
+                    if not proc.HasExited then
+                        Some proc
+                    else
+                        None
+                | None ->
+                    checkIfRunning()
 
     interface IPlayerNotifier with
         member this.BanPlayer(player) = banPlayer(player)
@@ -967,9 +983,11 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     member this.RunMission(startTime, endTime, restartsLeft) =
         async {
-            if not(gameServer.IsRunning serverProcess) then
+            match gameServer.IsRunning serverProcess with
+            | None ->
                 return! this.StartServerAsync(restartsLeft)
-            else
+            | Some proc ->
+                serverProcess <- Some(upcast proc)
 
             // Find the set of log files to use. Pick the first file with suffix [0] that is newer than the mission start time.
             let tryGetLatestStartingMissionReport() =
@@ -1008,7 +1026,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                     | WatchLogs.Old x | WatchLogs.Fresh x -> yield x
                             }
                             |> MissionResults.commandsFromLogs war
-                        let liveReporter = LiveNotifier(commands, war, messaging)
+                        let liveReporter = LiveNotifier(commands, war.Clone(), messaging)
                         let cancellation = new Threading.CancellationTokenSource()
                         Async.StartImmediate(liveReporter.Run(), cancellation.Token)
                         // Give time to execute old commands
@@ -1032,10 +1050,12 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 async {
                     let untilDeadLine = (endTime - DateTime.UtcNow).TotalMilliseconds
                     if untilDeadLine > 0.0 then
-                        if not (gameServer.IsRunning serverProcess) then
+                        match gameServer.IsRunning serverProcess with
+                        | None ->
                             cancelLiveReporting()
                             return! this.StartServerAsync(restartsLeft)
-                        else
+                        | Some proc ->
+                            serverProcess <- Some(upcast proc)
                             try
                                 do! Async.Sleep(15000)
                                 return! monitor()
@@ -1143,7 +1163,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     // Fail if both resavings failed.
                     return this.Die("Resaving failed")
                 | _ ->
-                if gameServer.IsRunning serverProcess then
+                match gameServer.IsRunning serverProcess with
+                | Some proc ->
+                    serverProcess <- Some(upcast proc)
                     let! s = gameServer.RotateMission()
                     logger.Debug s
                     match s with
@@ -1155,7 +1177,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         return! this.ResumeAsync()
                     | Error msg ->
                         return this.Die(msg)
-                else
+                | None ->
                     return! this.StartServerAsync()
 
             | Some(RunningMission(startTime, endTime)) ->
