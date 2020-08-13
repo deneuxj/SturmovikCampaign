@@ -29,6 +29,8 @@ open Campaign.WorldDescription
 open Campaign.Buildings
 open PilotRanks
 
+let private logger = NLog.LogManager.GetCurrentClassLogger()
+
 type Region = {
     RegionId : RegionId
     Boundary : Vector2 list
@@ -161,6 +163,24 @@ with
                     |> List.exists(fun area -> node.Pos.IsInConvexPolygon area)
                 { node with HasTerminal = hasTerminal }
             )
+        // If a region has nodes, but none are in terminal areas, force some
+        let regionsWithoutTerminals =
+            nodes
+            |> Seq.groupBy (fun node -> node.Region)
+            |> Seq.filter (fun (_, nodes) -> nodes |> Seq.exists (fun node -> node.HasTerminal) |> not)
+            |> Seq.map fst
+            |> Set.ofSeq
+        let nodes =
+            ((regionsWithoutTerminals, None), nodes)
+            ||> List.scan (fun (regionsWithoutTerminals, _) node ->
+                if regionsWithoutTerminals.Contains(node.Region) then
+                    logger.Warn(sprintf "Region %s has transport nodes but terminal area does not cover any (check both roads and railways)" (string node.Region))
+                    regionsWithoutTerminals.Remove(node.Region), Some { node with HasTerminal = true }
+                else
+                    regionsWithoutTerminals, Some node
+            )
+            |> List.choose snd
+        // Result
         { this with
             Nodes = nodes
         }
