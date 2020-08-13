@@ -581,11 +581,15 @@ module BaseFileNames =
     open System.Text.RegularExpressions
     open RegexActivePatterns
 
+    /// Name of the world description file, one file for the entire campaign
     let worldFilename = "world.xml"
+    /// Current state of the campaign
     let stateBaseFilename = "-state.xml"
+    /// Current campaign scenario step and its data
     let stepBaseFilename = "-step.xml"
+    /// Commands and results that lead to the current state
     let simulationBaseFilename = "-simulation.xml"
-    /// Files that contain state update commands extracted from the game logs, and the results of the commands
+    /// Commands extracted from the game logs, and the results of the commands, precedes simulation when advancing the campaign state.
     let effectsBaseFilename = "-effects.xml"
 
     let getStateFilename idx = sprintf "%03d%s" idx stateBaseFilename
@@ -911,11 +915,10 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let advance = sctrl.NextStep(stepData)
                 let nextStep = advance war
                 // Write war state and campaign step files
-                let stateFile, stepFile, simFile =
-                    Seq.initInfinite (fun i -> (wkPath(getStateFilename i), wkPath(getStepFilename i), wkPath(getSimulationFilename i)))
-                    |> Seq.find (fun (stateFile, stepFile, simFile) ->
-                        [stateFile; stepFile; simFile]
-                        |> Seq.forall (File.Exists >> not))
+                let index = getCurrentIndex settings.WorkDir + 1
+                let stateFile = wkPath(getStateFilename index)
+                let stepFile = wkPath(getStepFilename index)
+                let simFile = wkPath(getSimulationFilename index)
                 war.SaveToFile(stateFile)
                 stateChanged.Trigger(war.Clone())
                 nextStep.SaveToFile(stepFile)
