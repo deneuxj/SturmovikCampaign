@@ -78,10 +78,10 @@ with
     static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign", "Current")
 
 type SyncState =
-    | PreparingMission of Path: string
+    | PreparingMission
     | ResavingMission
     | RunningMission of StartTime: DateTime * EndTime: DateTime
-    | ExtractingResults of Path: string
+    | ExtractingResults of Pattern: string
     | AdvancingScenario
 with
     static member FileName = "sync.json"
@@ -750,7 +750,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
                 let syncState =
                     SyncState.TryLoad(settings.WorkDir)
-                    |> Option.defaultValue (PreparingMission settings.MissionFilePath)
+                    |> Option.defaultValue PreparingMission
 
                 controller <- controller0
                 war <- war0
@@ -933,10 +933,6 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     /// Prepare mission file
     member this.PrepareMission() =
         async {
-            match state with
-            | Some(PreparingMission _)-> ()
-            | _ -> failwith "State is not PreparingMission"
-
             match controller, step, war with
             | Some(ctrl), Some(Ongoing stepData), Some state ->
                 try
@@ -957,24 +953,108 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 return (Error "Cannot select missions in the current state")
         }
 
-    /// Extract mission log
-    member this.ExtractMissionLog(firstLogFile : string) =
+    member this.RunMission(startTime, endTime, restartsLeft) =
         async {
-            match state with
-            | Some(ExtractingResults _) -> ()
-            | _ -> failwith "State is not ExtractingResults"
+            if not(gameServer.IsRunning serverProcess) then
+                return! this.StartServerAsync(restartsLeft)
+            else
 
+            // Find the set of log files to use. Pick the first file with suffix [0] that is newer than the mission start time.
+            let tryGetLatestStartingMissionReport() =
+                try
+                    IO.Directory.GetFiles(settings.MissionLogs, "missionReport*.txt")
+                    |> Seq.filter (fun file -> IO.Path.GetFileNameWithoutExtension(file).EndsWith("[0]") && IO.File.GetCreationTimeUtc(file) > startTime)
+                    |> Seq.minBy (fun file -> IO.File.GetCreationTimeUtc(file))
+                    |> fun filePath ->
+                        let basename = Path.GetFileNameWithoutExtension(filePath)
+                        let basename = basename.Substring(0, basename.IndexOf('['))
+                        basename
+                    |> Some
+                with _ -> None
+
+            let! latestStartingMissionReport =
+                let rec keepTrying() =
+                    async {
+                        match tryGetLatestStartingMissionReport() with
+                        | Some x -> return x
+                        | None ->
+                            do! Async.Sleep(15000)
+                            return! keepTrying()
+                    }
+                keepTrying()
+
+            let! cancelLiveReporting =
+                async {
+                    // Start live reporting
+                    match war, gameServer with
+                    | Some war, (:? IPlayerNotifier as messaging) ->
+                        let commands =
+                            let basename = latestStartingMissionReport
+                            asyncSeq {
+                                for log in WatchLogs.watchLogs settings.MissionLogs basename DateTime.UtcNow do
+                                    match log with
+                                    | WatchLogs.Old x | WatchLogs.Fresh x -> yield x
+                            }
+                            |> MissionResults.commandsFromLogs war
+                        let liveReporter = LiveNotifier(commands, war, messaging)
+                        let cancellation = new Threading.CancellationTokenSource()
+                        Async.StartImmediate(liveReporter.Run(), cancellation.Token)
+                        // Give time to execute old commands
+                        do! Async.Sleep(15000)
+                        liveReporter.UnMute()
+                        return fun () -> cancellation.Cancel()
+                    | _ ->
+                        logger.Warn("No live notifier started")
+                        return ignore
+                }
+
+            let! ourCancellation = Async.CancellationToken
+            ourCancellation.Register(fun () -> cancelLiveReporting()) |> ignore
+
+            // Check that DServer is running every 15s until the deadline has passed
+            // If DServer dies before, restart it.
+            let rec monitor() =
+                async {
+                    let untilDeadLine = (endTime - DateTime.UtcNow).TotalMilliseconds
+                    if untilDeadLine > 0.0 then
+                        if not (gameServer.IsRunning serverProcess) then
+                            cancelLiveReporting()
+                            return! this.StartServerAsync(restartsLeft)
+                        else
+                            try
+                                do! Async.Sleep(15000)
+                                return! monitor()
+                            with
+                            | :? OperationCanceledException ->
+                                return this.Die("Interrupted")
+                    else
+                        cancelLiveReporting()
+                        return()
+                }
+            do! monitor()
+            let! _ = gameServer.SignalMissionEnd()
+            state <- Some(ExtractingResults(latestStartingMissionReport + "[*].txt" ))
+            logger.Info state
+            this.SaveState()
+            if not stopAfterMission then
+                return! this.ResumeAsync()
+            else
+                this.Interrupt("Stop after mission", true)
+                this.Die("Terminate sync after mission")
+                return ()
+
+        }
+
+    /// Extract mission log
+    member this.ExtractMissionLog(pattern : string) =
+        async {
             match war with
             | Some war ->
                 // Find initial log file created right after the mission was started
-                let dir = System.IO.Path.GetDirectoryName(firstLogFile)
-                let filename = System.IO.Path.GetFileNameWithoutExtension(firstLogFile)
-                // Replace final [0] by * in the pattern, and add .txt extension
-                let pattern = filename.Substring(0, filename.Length - "[0]".Length) + "*.txt"
                 let lines =
                     asyncSeq {
                         let files =
-                            System.IO.Directory.EnumerateFiles(dir, pattern)
+                            System.IO.Directory.EnumerateFiles(settings.MissionLogs, pattern)
                             |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file))
                             |> List.ofSeq
                         for file in files do
@@ -1064,92 +1144,10 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     return! this.StartServerAsync()
 
             | Some(RunningMission(startTime, endTime)) ->
-                if not(gameServer.IsRunning serverProcess) then
-                    return! this.StartServerAsync(restartsLeft)
-                else
+                return! this.RunMission(startTime, endTime, restartsLeft)
 
-                // Find the set of log files to use. Pick the first file with suffix [0] that is newer than the mission start time.
-                let tryGetLatestStartingMissionReport() =
-                    try
-                        IO.Directory.GetFiles(settings.MissionLogs, "missionReport*.txt")
-                        |> Seq.filter (fun file -> IO.Path.GetFileNameWithoutExtension(file).EndsWith("[0]") && IO.File.GetCreationTimeUtc(file) > startTime)
-                        |> Seq.minBy (fun file -> IO.File.GetCreationTimeUtc(file))
-                        |> Some
-                    with _ -> None
-
-                let! latestStartingMissionReport =
-                    let rec keepTrying() =
-                        async {
-                            match tryGetLatestStartingMissionReport() with
-                            | Some x -> return x
-                            | None ->
-                                do! Async.Sleep(15000)
-                                return! keepTrying()
-                        }
-                    keepTrying()
-
-                let! cancelLiveReporting =
-                    async {
-                        // Start live reporting
-                        match war, gameServer with
-                        | Some war, (:? IPlayerNotifier as messaging) ->
-                            let commands =
-                                let basename = Path.GetFileNameWithoutExtension(latestStartingMissionReport.Substring(0, latestStartingMissionReport.IndexOf('[')))
-                                asyncSeq {
-                                    for log in WatchLogs.watchLogs settings.MissionLogs basename DateTime.UtcNow do
-                                        match log with
-                                        | WatchLogs.Old x | WatchLogs.Fresh x -> yield x
-                                }
-                                |> MissionResults.commandsFromLogs war
-                            let liveReporter = LiveNotifier(commands, war, messaging)
-                            let cancellation = new Threading.CancellationTokenSource()
-                            Async.StartImmediate(liveReporter.Run(), cancellation.Token)
-                            // Give time to execute old commands
-                            do! Async.Sleep(15000)
-                            liveReporter.UnMute()
-                            return fun () -> cancellation.Cancel()
-                        | _ ->
-                            logger.Warn("No live notifier started")
-                            return ignore
-                    }
-
-                let! ourCancellation = Async.CancellationToken
-                ourCancellation.Register(fun () -> cancelLiveReporting()) |> ignore
-
-                // Check that DServer is running every 15s until the deadline has passed
-                // If DServer dies before, restart it.
-                let rec monitor() =
-                    async {
-                        let untilDeadLine = (endTime - DateTime.UtcNow).TotalMilliseconds
-                        if untilDeadLine > 0.0 then
-                            if not (gameServer.IsRunning serverProcess) then
-                                cancelLiveReporting()
-                                return! this.StartServerAsync(restartsLeft)
-                            else
-                                try
-                                    do! Async.Sleep(15000)
-                                    return! monitor()
-                                with
-                                | :? OperationCanceledException ->
-                                    return this.Die("Interrupted")
-                        else
-                            cancelLiveReporting()
-                            return()
-                    }
-                do! monitor()
-                let! _ = gameServer.SignalMissionEnd()
-                state <- Some(ExtractingResults latestStartingMissionReport)
-                logger.Info state
-                this.SaveState()
-                if not stopAfterMission then
-                    return! this.ResumeAsync()
-                else
-                    this.Interrupt("Stop after mission", true)
-                    this.Die("Terminate sync after mission")
-                    return ()
-
-            | Some(ExtractingResults path) ->
-                let! status = this.ExtractMissionLog(path)
+            | Some(ExtractingResults(pattern)) ->
+                let! status = this.ExtractMissionLog(pattern)
                 match status with
                 | Ok() ->
                     state <- Some AdvancingScenario
@@ -1164,7 +1162,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let! status = this.Advance()
                 match status with
                 | Ok _ ->
-                    state <- Some(PreparingMission settings.MissionFilePath)
+                    state <- Some PreparingMission
                     logger.Info state
                     this.SaveState()
                     return! this.ResumeAsync()
