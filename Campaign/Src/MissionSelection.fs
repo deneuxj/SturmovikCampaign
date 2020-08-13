@@ -33,6 +33,18 @@ type MissionSelection =
         RiskLevel : float32
     }
 with
+    member this.NumMissions =
+        let copt = function Some _ -> 1 | _ -> 0
+        List.sum [
+            1
+            copt this.HomeCover
+            copt this.TargetCover
+            copt this.Interception
+            copt this.HomeAttack
+            copt this.GroundBattleAtTarget
+            List.length this.OtherMissions
+        ]
+
     member this.AreMissionsDistinct =
         let optDiff opt1 opt2 =
             match opt1, opt2 with

@@ -58,7 +58,7 @@ type IScenarioController =
     abstract member Start : IWarStateQuery -> ScenarioStep
     abstract member NewDay : IWarStateQuery -> (Commands option * string) seq
     abstract member NextStep : StepData -> (IWarStateQuery -> ScenarioStep)
-    abstract member SelectMissions : StepData * IWarStateQuery -> MissionSelection
+    abstract member SelectMissions : StepData * IWarStateQuery * seed:int * numSelected:int -> MissionSelection
 
 /// Resources available at an airfield.
 /// Decreased whenever a flight is planned taking off from that airfield.

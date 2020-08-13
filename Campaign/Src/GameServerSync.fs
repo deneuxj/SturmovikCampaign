@@ -940,16 +940,16 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             match controller, step, war with
             | Some(ctrl), Some(Ongoing stepData), Some state ->
                 try
-                    let selection = ctrl.SelectMissions(stepData, state)
-                    let random = System.Random(this.Seed)
+                    let seed = this.Seed
+                    let selection = ctrl.SelectMissions(stepData, state, seed, 25)
                     let missionGenSettings : MissionFileGeneration.MissionGenSettings =
                         {
                             MissionFileGeneration.MaxAiPatrolPlanes = 6
-                            MissionFileGeneration.MaxAntiAirCannons = 100
+                            MissionFileGeneration.MaxAntiAirCannons = 1000
                             MissionFileGeneration.OutFilename = settings.MissionFilePath
                         }
-                    let mission = MissionFileGeneration.mkMultiplayerMissionContent random stepData.Briefing state selection
-                    mission.BuildMission(random, missionGenSettings, state)
+                    let mission = MissionFileGeneration.mkMultiplayerMissionContent (Random(seed)) stepData.Briefing state selection
+                    mission.BuildMission(Random(seed), missionGenSettings, state)
                     return Ok()
                 with
                 e -> return (Error e.Message)
