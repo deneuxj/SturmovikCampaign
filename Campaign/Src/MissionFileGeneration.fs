@@ -1197,22 +1197,30 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                     yield nest
 
             // Bridges on the paths from regions to the neighbours
-            let getCriticialBridges (network : Network) (regionA, regionB) =
-                let links =
-                    network.Links
-                    |> List.filter (fun link -> link.Bridges |> Seq.forall (fun bid -> state.GetBridgeFunctionalityLevel(bid) > 0.5f))
-                let network =
-                    { network with
-                        Links = links
-                    }
+            let getCriticalBridges (network : Network) (regionA, regionB) =
+                // Nodes in other regions
+                let nodesToRemove =
+                    network.Nodes
+                    |> Seq.choose (fun node ->
+                        match node.Region with
+                        | Some region ->
+                            if region <> regionA && region <> regionB then
+                                Some node.Id
+                            else
+                                None
+                        | None ->
+                            None)
+                    |> Set.ofSeq
+                let network = network.RemoveNodes(nodesToRemove)
+                // Find shortest path from any terminal node in region A to any terminal node in region B
                 let sources =
                     network.Nodes
-                    |> Seq.filter (fun node -> node.Region = regionA && node.HasTerminal)
+                    |> Seq.filter (fun node -> node.Region = Some regionA && node.HasTerminal)
                     |> Seq.map (fun node -> node.Id)
                     |> Set
                 let goals =
                     network.Nodes
-                    |> Seq.filter (fun node -> node.Region = regionB && node.HasTerminal)
+                    |> Seq.filter (fun node -> node.Region = Some regionB && node.HasTerminal)
                     |> Seq.map (fun node -> node.Id)
                     |> Set
                 network.GetQuickAccess().FindPath(sources, goals)
@@ -1225,7 +1233,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                 gameRegions
                 |> Seq.collect (fun region -> Seq.allPairs [region.RegionId] region.Neighbours)
                 |> Seq.distinctBy (fun (regionA, regionB) -> min regionA regionB, max regionA regionB)
-                |> Seq.collect (fun regs -> Seq.append (getCriticialBridges state.World.Roads regs) (getCriticialBridges state.World.Rails regs))
+                |> Seq.collect (fun regs -> Seq.append (getCriticalBridges state.World.Roads regs) (getCriticalBridges state.World.Rails regs))
                 |> Seq.distinct
 
             for BuildingInstanceId pos in allCriticalBridges do

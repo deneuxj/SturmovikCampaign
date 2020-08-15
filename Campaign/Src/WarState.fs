@@ -66,8 +66,13 @@ module private Algo =
                 let successors =
                     successors
                     |> Seq.filter (fun node ->
-                        let region = network.GetNode(node).Region
-                        regions.Contains(region))
+                        match network.GetNode(node).Region with
+                        | Some region ->
+                            regions.Contains(region)
+                        | None ->
+                            // Retain nodes outside regions. As there can be space between the borders of regions,
+                            // there's a risk than a node in that space might cut the search, which we don't want
+                            true)
                     |> List.ofSeq
                 handleSuccessors getLink node successors
         and handleSuccessors getLink node successors =
@@ -121,13 +126,13 @@ module private Algo =
     let terminalsInRegion network region =
         network.Data.Nodes
         |> Seq.filter (fun node ->
-            node.Region = region && node.HasTerminal)
+            node.Region = Some region && node.HasTerminal)
         |> Seq.map (fun node -> node.Id)
         |> Set.ofSeq
 
     /// Compute transport capacity between two adjacent regions
     let computeTransportCapacityBetweenRegions getFlowCapacity network =
-        fun (regionA, regionB) ->
+        fun (regionA : RegionId, regionB : RegionId) ->
             let regions = Set [regionA; regionB]
             let regionA, regionB =
                 min regionA regionB, max regionA regionB
@@ -599,7 +604,12 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                     let computeFlow (network : NetworkQuickAccess) =
                         let sources = 
                             network.Data.Nodes
-                            |> List.filter (fun node -> node.HasTerminal && sourceRegions.Contains node.Region)
+                            |> List.filter (fun node ->
+                                match node.Region with
+                                | Some region ->
+                                    node.HasTerminal && sourceRegions.Contains region
+                                | None ->
+                                    false)
                             |> Seq.map (fun node -> node.Id)
                             |> Set
                         let sinks = Algo.terminalsInRegion network region

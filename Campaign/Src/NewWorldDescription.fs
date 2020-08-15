@@ -62,7 +62,7 @@ let commonBorder (regA : Region, regB : Region) =
 type NetworkNode = {
     Id : int
     Pos : Vector2
-    Region : RegionId
+    Region : RegionId option
     HasTerminal : bool
 }
 
@@ -79,30 +79,47 @@ type Network = {
     Links : NetworkLink list
 }
 with
-    /// Set the region of each node, and remove nodes that are not in a region
-    member this.SetRegions(regions : Region list) =
-        // Set region, drop nodes outside all regions
+    /// Remove nodes and links refering to these nodes
+    member this.RemoveNodes(nodeIds : Set<int>) =
         let nodes =
             this.Nodes
-            |> List.choose (fun node ->
+            |> List.filter (fun node -> not(nodeIds.Contains(node.Id)))
+        let links =
+            this.Links
+            |> List.filter (fun link -> not(nodeIds.Contains(link.NodeA)) && not(nodeIds.Contains(link.NodeB)))
+        {
+            Nodes = nodes
+            Links = links
+        }
+
+    /// Set the region of each node, and remove nodes that are not in a region
+    member this.SetRegions(regions : Region list) =
+        // Drop nodes outside hull of all regions
+        let hull = VectorExtension.convexHull (regions |> List.collect (fun region -> region.Boundary))
+        let outOfHull =
+            this.Nodes
+            |> Seq.choose (fun node ->
+                if node.Pos.IsInConvexPolygon(hull) then
+                    None
+                else
+                    Some node.Id)
+            |> Set.ofSeq
+        let this = this.RemoveNodes(outOfHull)
+        // Set regions
+        let nodes =
+            this.Nodes
+            |> List.map (fun node ->
                 let region =
                     regions
                     |> List.tryFind (fun region -> node.Pos.IsInConvexPolygon(region.Boundary))
                 match region with
                 | Some region ->
-                    Some { node with Region = region.RegionId }
-                | None -> None
+                    { node with Region = Some region.RegionId }
+                | None ->
+                    node
             )
-        // Remove links to nodes that were dropped
-        let retained =
-            nodes
-            |> Seq.map (fun node -> node.Id)
-            |> Set.ofSeq
-        let links =
-            this.Links
-            |> List.filter (fun link -> retained.Contains(link.NodeA) && retained.Contains(link.NodeB))
         // Result
-        { this with Nodes = nodes; Links = links }
+        { this with Nodes = nodes }
 
     /// Set the bridges located on each link
     member this.SetBridges(bridges : BuildingInstance list) =
@@ -168,15 +185,19 @@ with
             nodes
             |> Seq.groupBy (fun node -> node.Region)
             |> Seq.filter (fun (_, nodes) -> nodes |> Seq.exists (fun node -> node.HasTerminal) |> not)
-            |> Seq.map fst
+            |> Seq.choose fst
             |> Set.ofSeq
         let nodes =
             ((regionsWithoutTerminals, None), nodes)
             ||> List.scan (fun (regionsWithoutTerminals, _) node ->
-                if regionsWithoutTerminals.Contains(node.Region) then
-                    logger.Warn(sprintf "Region %s has transport nodes but terminal area does not cover any (check both roads and railways)" (string node.Region))
-                    regionsWithoutTerminals.Remove(node.Region), Some { node with HasTerminal = true }
-                else
+                match node.Region with
+                | Some region ->
+                    if regionsWithoutTerminals.Contains(region) then
+                        logger.Warn(sprintf "Region %s has transport nodes but terminal area does not cover any (check both roads and railways)" (string region))
+                        regionsWithoutTerminals.Remove(region), Some { node with HasTerminal = true }
+                    else
+                        regionsWithoutTerminals, Some node
+                | None ->
                     regionsWithoutTerminals, Some node
             )
             |> List.choose snd
@@ -542,7 +563,7 @@ module Init =
                         {
                             Id = node.Id
                             Pos = Vector2(float32 node.Pos.[0], float32 node.Pos.[1])
-                            Region = RegionId ""
+                            Region = None
                             HasTerminal = false
                         }
                     for ngh in node.Neighbours do
