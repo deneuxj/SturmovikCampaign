@@ -597,7 +597,7 @@ type private ControllerState =
     }
 
 /// Interface between the web service and the campaign
-type Controller(settings : GameServerSync.Settings) =
+type Controller(settings : GameServerControl.Settings) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     // Cache Player GUID hashes

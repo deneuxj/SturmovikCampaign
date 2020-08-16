@@ -42,14 +42,14 @@ let main argv =
     let conf = { defaultConfig with cancellationToken = cts.Token; homeFolder = Some (IO.Path.GetFullPath(myConfig.SitePath)) }
 
     // Campaign settings
-    let campaignSettingsPath = IO.Path.Combine(Campaign.GameServerSync.Settings.DefaultWorkDir, "..", "campaign.cfg")
+    let campaignSettingsPath = IO.Path.Combine(Campaign.GameServerControl.Settings.DefaultWorkDir, "..", "campaign.cfg")
     let settings =
         if IO.File.Exists(campaignSettingsPath) then
             logger.Info(sprintf "Will load settings from %s" campaignSettingsPath)
-            Campaign.GameServerSync.IO.loadFromFile campaignSettingsPath
+            Campaign.GameServerControl.IO.loadFromFile campaignSettingsPath
         else
             logger.Info(sprintf "Will create default settings in %s" campaignSettingsPath)
-            let defaultSettings = Campaign.GameServerSync.IO.createDefaultFile campaignSettingsPath
+            let defaultSettings = Campaign.GameServerControl.IO.createDefaultFile campaignSettingsPath
             printfn "Created default config in %s. Please edit as needed." campaignSettingsPath
             printfn "Running with default settings, but they are unlikely to work."
             defaultSettings

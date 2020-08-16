@@ -38,6 +38,7 @@
     <Compile Include="Src\Scenario.Bodenplatte.fs" />
     <Compile Include="Src\DServerRConClient.fs" />
     <Compile Include="Src\MissionResults.fs" />
+    <Compile Include="Src\GameServerControl.fs" />
     <Compile Include="Src\GameServerSync.fs" />
     <Compile Include="Src\WorldState.fs" />
     <Compile Include="Src\PlayerHangar.fs" />
