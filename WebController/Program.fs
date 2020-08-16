@@ -26,7 +26,7 @@ let main argv =
         )
 
     let myConfig =
-        let filename = "webcontroller.config"
+        let filename = "webcontroller.cfg"
         try
             Config.Config.LoadFromFile filename
         with exc ->
