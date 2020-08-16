@@ -297,7 +297,11 @@ type RConGameServerControl(settings : Settings, ?logger) =
         try
             let exePath = IO.Path.Combine(settings.GameDir, "bin", "game", "DServer.exe")
             let filename =
-                IO.Path.Combine("..", "..", "data", sds)
+                if IO.Path.IsPathRooted(sds) then
+                    sds
+                else
+                    IO.Path.Combine("..", "..", "data", sds)
+            logger.Debug("Path to DServer config file: " + sds)
             let si = ProcessStartInfo(exePath, filename)
             si.WorkingDirectory <- IO.Path.GetDirectoryName(exePath)
             si.UseShellExecute <- false
