@@ -553,22 +553,31 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     |> Some
                 with _ -> None
 
-            let! latestStartingMissionReport =
+            let latestStartingMissionReport =
+                let maxTries = 8
                 let rec keepTrying(i) =
                     async {
                         match tryGetLatestStartingMissionReport() with
                         | Some x ->
                             logger.Info("Found logs " + x)
-                            return x
+                            return Ok x
                         | None ->
                             // Warn every minute if logs have not been found yet
                             if i > 0 && i % 4 = 0 then
                                 logger.Warn("Still no logs found. This can happen if the server is slow to load the mission, or if logging isn't enabled in startup.cfg.")
-                            do! Async.Sleep(15000)
-                            return! keepTrying(i + 1)
+                            if i >= maxTries then
+                                return Error "Failed to locate game logs"
+                            else
+                                do! Async.Sleep(15000)
+                                return! keepTrying(i + 1)
                     }
                 keepTrying(0)
 
+            match! latestStartingMissionReport with
+            | Error msg ->
+                this.Interrupt(msg, true)
+                failwith "Failure to locate game logs"
+            | Ok latestStartingMissionReport ->
             let! cancelLiveReporting =
                 async {
                     // Start live reporting
