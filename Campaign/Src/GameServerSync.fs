@@ -563,7 +563,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         | None ->
                             // Warn every minute if logs have not been found yet
                             if i > 0 && i % 4 = 0 then
-                                logger.Warn("Still no logs found. This can happen if the server is slow to load the mission, or if logging is enabled in startup.cfg.")
+                                logger.Warn("Still no logs found. This can happen if the server is slow to load the mission, or if logging isn't enabled in startup.cfg.")
                             do! Async.Sleep(15000)
                             return! keepTrying(i + 1)
                     }
