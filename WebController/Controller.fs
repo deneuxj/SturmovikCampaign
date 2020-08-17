@@ -980,7 +980,7 @@ type Controller(settings : GameServerControl.Settings) =
                 | Some sync ->
                     this.RegisterSyncCleanUp(sync)
                     sync.Die("Synchronization interrupted")
-                    channel.Reply(Ok "Synchronization interruputed")
+                    channel.Reply(Ok "Synchronization interrupted")
                 | None ->
                     channel.Reply(Error "Synchronization is not active")
                 return s
