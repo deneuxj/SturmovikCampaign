@@ -1,4 +1,3 @@
-Add map icons and lines
 Add static planes in mission gen
 Add other missions in mission selections
 Update names of units in all groups to fit the result extractor needs
