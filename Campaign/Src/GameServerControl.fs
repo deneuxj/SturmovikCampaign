@@ -175,7 +175,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
                 let cl = new RConClient.Client(settings.Address, settings.Port, settings.Login, settings.Password)
                 client <- Some cl
                 let! s = cl.Auth()
-                logger.Info s
+                logger.Info("RCon auth response:" + s)
                 return Ok ()
             with
             | e ->
@@ -240,8 +240,13 @@ type RConGameServerControl(settings : Settings, ?logger) =
     let tryOnClient task =
         async {
             if client.IsNone then
-                let! _ = connect()
-                ()
+                let! s = connect()
+                logger.Debug(
+                    let status =
+                        match s with
+                        | Ok() -> "OK"
+                        | Error s -> "Error: " + s
+                    "Status of RCon connection: " + status)
             match client with
             | Some client ->
                 try
@@ -257,21 +262,21 @@ type RConGameServerControl(settings : Settings, ?logger) =
     let rotateMission() =
         tryOnClient <| fun client -> async {
             let! s = client.ServerInput(settings.RotateMissionServerInputName)
-            logger.Info s
+            logger.Info("RCON Rotate mission: " + s)
             return Ok ()
         }
 
     let signalMissionEnd() =
         tryOnClient <| fun client -> async {
             let! s = client.MessageAll "Mission has ended. Actions beyond that point will not affect the campaign."
-            logger.Info s
+            logger.Info("RCON Inform mission ended: " + s)
             return Ok()
         }
 
     let loadSds(sds : string) =
         tryOnClient <| fun client -> async {
             let! s = client.OpenSds(sds)
-            logger.Info s
+            logger.Info("RCON Open SDS: " + s)
             return Ok ()
         }
 
