@@ -59,6 +59,7 @@ type IControllerInteraction =
     abstract StartSyncOnce : unit -> Async<Result<string, string>>
     abstract StopSyncAfterMission : unit -> Async<Result<string, string>>
     abstract InterruptSync : unit -> Async<Result<string, string>>
+    abstract ResolveError : unit -> Async<Result<string, string>>
 
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 let setTextMimeType = setMimeType "application/text; charset=utf-8"
@@ -82,6 +83,7 @@ POST /control/sync/loop
 POST /control/sync/once
 POST /control/sync/stop
 POST /control/sync/interrupt
+POST /control/resolve
 """
 
 let fromBase64 = System.Convert.FromBase64String >> System.Text.Encoding.UTF8.GetString
@@ -198,6 +200,7 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
                                 |> serializeAsync)))
             path "/control/advance" >=> inControlRoom (context (fun _ -> ctrl.Advance() |> serializeAsync))
             path "/control/run" >=> inControlRoom (context (fun _ -> ctrl.Run() |> serializeAsync))
+            path "/control/resolve" >=> inControlRoom (context (fun _ -> ctrl.ResolveError() |> serializeAsync))
             path "/control/sync/loop" >=> inControlRoom(context( fun _ -> ctrl.StartSyncLoop() |> serializeAsync))
             path "/control/sync/once" >=> inControlRoom(context(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
             path "/control/sync/stop" >=> inControlRoom(context(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))

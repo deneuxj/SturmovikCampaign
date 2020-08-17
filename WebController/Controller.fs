@@ -796,6 +796,7 @@ type Controller(settings : GameServerControl.Settings) =
                         | Some(GameServerSync.ExtractingResults _) -> "Extracting results"
                         | Some GameServerSync.AdvancingScenario -> "Advancing scenario"
                         | Some(GameServerSync.RunningMission(_, endTime)) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes)
+                        | Some(GameServerSync.ErrorState(msg, _)) -> sprintf "Error: %s" msg
                         | None -> "Unknown")
                     |> Option.defaultValue "Not running"
                     |> Ok
@@ -1011,6 +1012,29 @@ type Controller(settings : GameServerControl.Settings) =
                 return s
             }
 
+        member this.ResolveError() =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                let! sync =
+                    match s.Sync with
+                    | Some sync -> async.Return(Ok sync)
+                    | None ->
+                        async {
+                            let sync = GameServerSync.Sync.Create(settings)
+                            let! status = sync.Init()
+                            match status with
+                            | Ok _ -> return Ok sync
+                            | Error e -> return Error e
+                        }
+                match sync with
+                | Error e -> channel.Reply(Error e)
+                | Ok sync ->
+                    let status = sync.ResolveError()
+                    channel.Reply(status)
+                    sync.Die("Stop sync after resolving error state")
+                    sync.Dispose()
+                return { s with Sync = None }
+            }
+
         interface IRoutingResponse with
             member this.GetWarState(idx) =
                 match idx with
@@ -1033,3 +1057,4 @@ type Controller(settings : GameServerControl.Settings) =
             member this.StartSyncOnce() = this.StartSync(false)
             member this.StopSyncAfterMission() = this.StopSyncAfterMission()
             member this.InterruptSync() = this.InterruptSync()
+            member this.ResolveError() = this.ResolveError()

@@ -44,8 +44,23 @@ type SyncState =
     | RunningMission of StartTime: DateTime * EndTime: DateTime
     | ExtractingResults of Pattern: string
     | AdvancingScenario
+    | ErrorState of Message: string * InnerState: SyncState option
 with
     static member FileName = "sync.json"
+
+    member this.Description =
+        match this with
+        | PreparingMission -> "Preparing mission"
+        | ResavingMission -> "Resaving mission"
+        | ExtractingResults _ -> "Extracting results"
+        | AdvancingScenario -> "Advancing scenario"
+        | RunningMission(_, endTime) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes)
+        | ErrorState(msg, state) ->
+            let inner =
+                state
+                |> Option.map (fun state -> state.Description)
+                |> Option.defaultValue "None"
+            sprintf "Error while in state %s: %s" inner msg
 
 module IO =
     /// Wrap SyncState in a record so that fieldless cases, which are saved as strings, can be saved as valid json.
@@ -675,79 +690,87 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     member this.ResumeAsync(?restartsLeft) =
         let restartsLeft = defaultArg restartsLeft maxRetries
         async {
-            logger.Trace restartsLeft
-            match state with
-            | None
-            | Some(PreparingMission _)->
-                let! status = this.PrepareMission()
-                match status with
-                | Ok() ->
-                    state <- Some ResavingMission
-                    logger.Info state
-                    this.SaveState()
-                    return! this.ResumeAsync()
-                | Error msg ->
-                    return this.Die(msg)
-
-            | Some ResavingMission ->
-                match! gameServer.CopyRenameMission settings.MissionFile with
-                | Error msg ->
-                    return this.Die(msg)
-                | Ok() ->
-                let! resavers =
-                    Async.Sequential(
-                        [ gameServer.ResaveMission settings.MissionFile
-                          gameServer.ResaveMission settings.AltMissionFile ])
-                match resavers with
-                | [| Error _; Error _ |] ->
-                    // It's not unusual for one of the alternatives to fail, e.g. because DServer is locking one of the files
-                    // Fail if both resavings failed.
-                    return this.Die("Resaving failed")
-                | _ ->
-                match gameServer.IsRunning serverProcess with
-                | Some proc ->
-                    serverProcess <- Some(upcast proc)
-                    let! s = gameServer.RotateMission()
-                    logger.Debug s
-                    match s with
+            try
+                logger.Trace restartsLeft
+                match state with
+                | Some(ErrorState(msg, _)) ->
+                    return this.Die("In error state: " + msg)
+                | None
+                | Some(PreparingMission)->
+                    let! status = this.PrepareMission()
+                    match status with
                     | Ok() ->
-                        let now = DateTime.UtcNow
-                        state <- Some(RunningMission (now, now + TimeSpan.FromMinutes(float settings.MissionDuration)))
+                        state <- Some ResavingMission
                         logger.Info state
                         this.SaveState()
                         return! this.ResumeAsync()
                     | Error msg ->
                         return this.Die(msg)
-                | None ->
-                    return! this.StartServerAsync()
 
-            | Some(RunningMission(startTime, endTime)) ->
-                return! this.RunMission(startTime, endTime, restartsLeft)
+                | Some ResavingMission ->
+                    match! gameServer.CopyRenameMission settings.MissionFile with
+                    | Error msg ->
+                        return this.Die(msg)
+                    | Ok() ->
+                    let! resavers =
+                        Async.Sequential(
+                            [ gameServer.ResaveMission settings.MissionFile
+                              gameServer.ResaveMission settings.AltMissionFile ])
+                    match resavers with
+                    | [| Error _; Error _ |] ->
+                        // It's not unusual for one of the alternatives to fail, e.g. because DServer is locking one of the files
+                        // Fail if both resavings failed.
+                        return this.Die("Resaving failed")
+                    | _ ->
+                    match gameServer.IsRunning serverProcess with
+                    | Some proc ->
+                        serverProcess <- Some(upcast proc)
+                        let! s = gameServer.RotateMission()
+                        logger.Debug s
+                        match s with
+                        | Ok() ->
+                            let now = DateTime.UtcNow
+                            state <- Some(RunningMission (now, now + TimeSpan.FromMinutes(float settings.MissionDuration)))
+                            logger.Info state
+                            this.SaveState()
+                            return! this.ResumeAsync()
+                        | Error msg ->
+                            return this.Die(msg)
+                    | None ->
+                        return! this.StartServerAsync()
 
-            | Some(ExtractingResults(pattern)) ->
-                let! status = this.ExtractMissionLog(pattern)
-                match status with
-                | Ok() ->
-                    state <- Some AdvancingScenario
-                    logger.Info state
-                    this.SaveState()
-                    return! this.ResumeAsync()
-                | Error msg ->
-                    // Result extraction failed, stop sync.
-                    return this.Die(msg)
+                | Some(RunningMission(startTime, endTime)) ->
+                    return! this.RunMission(startTime, endTime, restartsLeft)
 
-            | Some AdvancingScenario ->
-                let! status = this.Advance()
-                match status with
-                | Ok _ ->
-                    state <- Some PreparingMission
-                    logger.Info state
-                    this.SaveState()
-                    return! this.ResumeAsync()
-                | Error msg ->
-                    // Scenario failed, stop sync.
-                    return this.Die(msg)
+                | Some(ExtractingResults(pattern)) ->
+                    let! status = this.ExtractMissionLog(pattern)
+                    match status with
+                    | Ok() ->
+                        state <- Some AdvancingScenario
+                        logger.Info state
+                        this.SaveState()
+                        return! this.ResumeAsync()
+                    | Error msg ->
+                        // Result extraction failed, stop sync.
+                        return this.Die(msg)
 
+                | Some AdvancingScenario ->
+                    let! status = this.Advance()
+                    match status with
+                    | Ok _ ->
+                        state <- Some PreparingMission
+                        logger.Info state
+                        this.SaveState()
+                        return! this.ResumeAsync()
+                    | Error msg ->
+                        // Scenario failed, stop sync.
+                        return this.Die(msg)
+            with exc ->
+                state <- Some(ErrorState(exc.Message, state))
+                logger.Error("Sync interrupted because of uncaught exception")
+                logger.Error(exc)
+                this.SaveState()
+                return this.Die("Error: " + exc.Message)
         }
 
     /// Token to use with ResumeAsync in order for Interrupt to work.
@@ -758,6 +781,36 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         if not isRunning then
             isRunning <- true
             Async.StartImmediate(this.ResumeAsync(), this.CancellationToken)
+
+    /// Change the error state to a non-error one, going back in the workflow
+    member this.ResolveError() =
+        if not isRunning then
+            let state2 =
+                match state with
+                | Some(ErrorState(_, None)) | Some(ErrorState(_, Some(ErrorState _))) ->
+                    // Go back
+                    Some PreparingMission
+                | Some(RunningMission _)
+                | Some(ErrorState(_, Some (RunningMission _))) ->
+                    // Retry
+                    let startTime = DateTime.UtcNow
+                    let endTime = startTime + TimeSpan(settings.MissionDuration / 60, settings.MissionDuration % 60, 0)
+                    Some (RunningMission(startTime, endTime))
+                | Some(ErrorState(_, _)) ->
+                    // Go back
+                    Some PreparingMission
+                | Some _ ->
+                    // Not an error state, keep it
+                    state
+                | None ->
+                    // No state, set to first state in the flow.
+                    Some PreparingMission
+            logger.Info("Resolved error state to " + string state2)
+            state <- state2
+            this.SaveState()
+            Ok ("New state is " + (state2 |> Option.map (fun s -> s.Description) |> Option.defaultValue ""))
+        else
+            Error "Cannot change state while sync is active"
 
     /// Create a game server controller and a Sync.
     static member Create(settings : Settings, ?logger) =
