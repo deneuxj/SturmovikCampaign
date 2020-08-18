@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-module Campaign.PlaneModel
+module Campaign.PlaneModelDb
+
+open Campaign.PlaneModel
 
 open SturmovikMission.Blocks
 
@@ -23,76 +25,6 @@ open Util
 open System.Numerics
 open FSharp.Data
 
-type PlaneType  =
-    | Fighter
-    | Attacker
-    | Bomber
-    | Transport
-with
-    override this.ToString() =
-        match this with
-        | Fighter -> "Fighter"
-        | Attacker -> "Attacker"
-        | Bomber -> "Bomber"
-        | Transport -> "Transport"
-
-    static member FromString(s) =
-        match s with
-        | "Fighter" -> Fighter
-        | "Attacker" -> Attacker
-        | "Bomber" -> Bomber
-        | "Transport" -> Transport
-        | _ -> failwithf "Invalid plane type '%s'" s
-
-type PlaneRole =
-    | Interceptor
-    | Patroller
-    | GroundAttacker
-    | LevelBomber
-    | CargoTransporter
-with
-    static member FromString(s) =
-        match s with
-        | "Interceptor" -> Interceptor
-        | "Patroller" -> Patroller
-        | "GroundAttacker" -> GroundAttacker
-        | "LevelBomber" -> LevelBomber
-        | "CargoTransporter" -> CargoTransporter
-        | _ -> failwithf "Invalid plane role '%s'" s
-
-[<Struct>]
-type PlaneModelId = PlaneModelId of string
-with
-    override this.ToString() =
-        let (PlaneModelId name) = this
-        name
-
-type PlaneModel =
-    { Kind : PlaneType
-      Name : string
-      LogName : string
-      Roles : PlaneRole list
-      Coalition : CoalitionId
-      ScriptModel : Vehicles.VehicleTypeData
-      StaticBasename : string
-      Cost : float32<E>
-      BombCapacity : float32<K>
-      CargoCapacity : float32<K>
-      Payloads : Map<PlaneRole, int64*int>
-      BombLoads : (int * float32<K>) list
-      SpecialLoadsCosts : (int * float32<E>) list
-      EmptyPayload : int
-    }
-with
-    member this.Id = PlaneModelId this.Name
-
-    member this.MaxRange = 800000.0f<M>
-
-    member this.StaticScriptModel : Vehicles.VehicleTypeData =
-        {
-            Script = sprintf @"graphics\blocks\static_%s.txt" this.StaticBasename
-            Model = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.mgm" this.StaticBasename
-        }
 
 [<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.json"
@@ -108,7 +40,7 @@ let private xTimes offsets xs =
                 yield (n + offset, x)
     ]
 
-type PlaneModel
+type Campaign.PlaneModel.PlaneModel
 with
     static member FromJson(json : PlaneDbFile.Plane2) =
         let payloads =

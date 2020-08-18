@@ -10,15 +10,12 @@
 
   <ItemGroup>
     <Compile Include="Src\AssemblyInfo.fs" />
-    <Compile Include="Src\StringResources.fs" />
     <Compile Include="Src\Util.fs" />
     <Compile Include="Src\GameLogEvents.fs" />
     <Compile Include="Src\WatchLogs.fs" />
-    <Compile Include="Src\BasicTypes.fs" />
-    <Compile Include="Src\PlaneModel.fs" />
+    <Compile Include="Src\PlaneModelDb.fs" />
     <Compile Include="Src\PlaneSet.fs" />
     <Compile Include="Src\Config.fs" />
-    <Compile Include="Src\WorldDescription.fs" />
     <Compile Include="Src\Buildings.fs" />
     <Compile Include="Src\Targets.fs" />
     <Compile Include="Src\PilotRanks.fs" />
@@ -40,26 +37,6 @@
     <Compile Include="Src\MissionResults.fs" />
     <Compile Include="Src\GameServerControl.fs" />
     <Compile Include="Src\GameServerSync.fs" />
-    <Compile Include="Src\WorldState.fs" />
-    <Compile Include="Src\PlayerHangar.fs" />
-    <Compile Include="Src\Orders.fs" />
-    <Compile Include="Src\MinMax.fs" />
-    <Compile Include="Src\AutoOrder.fs" />
-    <Compile Include="Src\ResultExtraction.fs" />
-    <Compile Include="Src\NewWorldState.fs" />
-    <Compile Include="Src\AfterActionReport.fs" />
-    <Compile Include="Src\PlaneFerry.fs" />
-    <Compile Include="Src\Battlefield.fs" />
-    <Compile Include="Src\AntiAirDefenses.fs" />
-    <Compile Include="Src\StaticBlocks.fs" />
-    <Compile Include="Src\Airfield.fs" />
-    <Compile Include="Src\Convoys.fs" />
-    <Compile Include="Src\TankParks.fs" />
-    <Compile Include="Src\MissionGeneration.fs" />
-    <Compile Include="Src\PlayerDiscipline.fs" />
-    <Compile Include="Src\PlaneChecksContext.fs" />
-    <Compile Include="Src\PlaneChecksStatus.fs" />
-    <Compile Include="Src\PlaneAvailabilityChecks.fs" />
     <Content Include="Config\names.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -197,7 +174,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Blocks\Blocks.fsproj" />
-    <ProjectReference Include="..\ploggy\ploggy.csproj" />
+    <ProjectReference Include="..\Common\Common.fsproj" />
+    <ProjectReference Include="..\MissionGen\MissionGen.fsproj" />
     <ProjectReference Include="..\Util\Util.fsproj" />
   </ItemGroup>
 

@@ -23,9 +23,8 @@ open System.Collections.Generic
 open SturmovikMission.Blocks
 open Util
 
-open Campaign.BasicTypes
-open Campaign.PlaneModel
-open Campaign.WorldDescription
+open Campaign.Common.BasicTypes
+open Campaign.Common.PlaneModel
 open Campaign.Buildings
 open PilotRanks
 

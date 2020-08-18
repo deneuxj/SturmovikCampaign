@@ -17,7 +17,11 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FitArea", "FitArea\FitArea.
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GroupInstantiator", "GroupInstantiator\GroupInstantiator.fsproj", "{479599C0-4192-4DB7-AD0A-21B9C0B9EE5A}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Util", "Util\Util.fsproj", "{1B5F58AD-EBD9-479D-A29F-DB641FC38813}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Util", "Util\Util.fsproj", "{1B5F58AD-EBD9-479D-A29F-DB641FC38813}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MissionGen", "MissionGen\MissionGen.fsproj", "{57BFC829-EC42-43EB-A4C5-59FBDD0B3D16}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Common", "Common\Common.fsproj", "{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +61,14 @@ Global
 		{1B5F58AD-EBD9-479D-A29F-DB641FC38813}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1B5F58AD-EBD9-479D-A29F-DB641FC38813}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1B5F58AD-EBD9-479D-A29F-DB641FC38813}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57BFC829-EC42-43EB-A4C5-59FBDD0B3D16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57BFC829-EC42-43EB-A4C5-59FBDD0B3D16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57BFC829-EC42-43EB-A4C5-59FBDD0B3D16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57BFC829-EC42-43EB-A4C5-59FBDD0B3D16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

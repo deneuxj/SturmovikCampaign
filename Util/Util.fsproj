@@ -6,12 +6,16 @@
 
   <ItemGroup>
     <Compile Include="Vector.fs" />
+    <Compile Include="StdExt.fs" />
     <Compile Include="SpacePartition.fs" />
     <Compile Include="StringPatterns.fs" />
+    <Compile Include="Caching.fs" />
+    <Compile Include="Json.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FSharp.Collections.ParallelSeq" Version="1.1.3" />
+    <PackageReference Include="FSharp.Json" Version="0.4.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
   </ItemGroup>
 
