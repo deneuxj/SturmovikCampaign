@@ -3,7 +3,7 @@
 open System.IO
 open FSharp.Json
 
-open BasicTypes
+open Campaign.Common.BasicTypes
 
 type NameDatabase =
     {

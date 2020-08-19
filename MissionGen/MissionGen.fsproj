@@ -5,6 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="MapGraphics.fs" />
+    <Compile Include="StaticDefenseOptimization.fs" />
     <Compile Include="MissionFileGeneration.fs" />
   </ItemGroup>
 

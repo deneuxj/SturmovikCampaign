@@ -17,8 +17,9 @@
 /// Selection of missions from the campaign to create a small subset to be included in a game mission file.
 module Campaign.MissionSelection
 
+open Campaign.Common.BasicTypes
+
 open Campaign.WarState
-open BasicTypes
 open Campaign.Missions
 
 type MissionSelection =

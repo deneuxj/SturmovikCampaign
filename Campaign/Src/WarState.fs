@@ -19,19 +19,17 @@ namespace Campaign.WarState
 open System
 open System.Numerics
 open System.Collections.Generic
-
-open Newtonsoft.Json
-
-open Campaign.BasicTypes
-open Campaign.PlaneModel
-open Campaign.WorldDescription
-open Campaign.NewWorldDescription
-open Campaign.Weather
-open SturmovikMission
 open Util
-open Campaign.Buildings
+
+open Campaign.Common.BasicTypes
+open Campaign.Common.PlaneModel
+open Campaign.Common.Targets
+open Campaign.Common.Buildings
+open Campaign.Common.Weather
+
+open Campaign.NewWorldDescription
+open SturmovikMission
 open Campaign.Pilots
-open Campaign.Targets
 
 /// Complex algorithms using data from WarState
 module private Algo =

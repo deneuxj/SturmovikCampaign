@@ -23,14 +23,14 @@ open System.Numerics
 open VectorExtension
 open Util
 
-open Campaign.BasicTypes
-open Campaign.PlaneModel
-open Campaign.WorldDescription
+open Campaign.Common.BasicTypes
+open Campaign.Common.PlaneModel
+open Campaign.Common.Targets
+open Campaign.Common.Buildings
+
 open Campaign.NewWorldDescription
-open Campaign.Targets
 open Campaign.WarState
 open Campaign.WarStateUpdate
-open Campaign.Buildings
 open Campaign.CombatBonuses
 
 /// Kind of targets on the ground

@@ -215,3 +215,16 @@ type IRegion =
     abstract Position : Vector2
     abstract Neighbours : RegionId list
     abstract InitialOwner : CoalitionId option
+
+type IRunway =
+    abstract SpawnPos : OrientedPosition
+    abstract PathToRunway : Vector2 list
+    abstract PathOffRunway : Vector2 list
+    abstract Start : Vector2
+    abstract End : Vector2
+
+type IAirfield =
+    abstract AirfieldId : AirfieldId
+    abstract Position : Vector2
+    abstract Boundary : Vector2 list
+    abstract Runways : IRunway list

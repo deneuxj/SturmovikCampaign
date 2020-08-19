@@ -19,15 +19,16 @@ namespace Campaign.CampaignScenario
 
 open System.Numerics
 open VectorExtension
+open Util
 
-open Campaign.BasicTypes
+open Campaign.Common.BasicTypes
+open Campaign.Common.PlaneModel
+
 open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.Missions
-open Campaign.PlaneModel
 
-open Util
 
 module BodenplatteInternal =
     type ImplData =
@@ -171,7 +172,7 @@ module BodenplatteInternal =
                 |> List.map PlaneModelId
 
             let planeDb =
-                planeDb
+                Campaign.PlaneModelDb.planeDb
                 |> List.map (fun plane -> plane.Id, plane)
                 |> Map.ofList
                     

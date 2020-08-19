@@ -21,7 +21,7 @@ open System.Diagnostics
 open System
 open FSharp.Json
 
-open BasicTypes
+open Campaign.Common.BasicTypes
 
 type IGameServerControl =
     abstract IsRunning : obj option -> Process option

@@ -4,9 +4,12 @@ open System.IO
 open System.Security.Cryptography
 open System.Text
 
-open Campaign.WebController.Routes
 open Util
+
 open Campaign
+open Campaign.Common
+
+open Campaign.WebController.Routes
 
 [<AutoOpen>]
 module internal Extensions =

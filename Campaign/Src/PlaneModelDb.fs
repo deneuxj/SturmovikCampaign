@@ -16,15 +16,14 @@
 
 module Campaign.PlaneModelDb
 
-open Campaign.PlaneModel
-
-open SturmovikMission.Blocks
-
-open Campaign.BasicTypes
 open Util
 open System.Numerics
 open FSharp.Data
 
+open SturmovikMission.Blocks
+
+open Campaign.Common.BasicTypes
+open Campaign.Common.PlaneModel
 
 [<Literal>]
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\SamplePlaneDb.json"
@@ -40,7 +39,7 @@ let private xTimes offsets xs =
                 yield (n + offset, x)
     ]
 
-type Campaign.PlaneModel.PlaneModel
+type Campaign.Common.PlaneModel.PlaneModel
 with
     static member FromJson(json : PlaneDbFile.Plane2) =
         let payloads =

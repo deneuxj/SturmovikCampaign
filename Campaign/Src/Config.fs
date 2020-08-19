@@ -17,15 +17,16 @@
 module Campaign.Configuration
 
 open System.IO
-open Util
+open Util.StringPatterns
+
 open SturmovikMission.DataProvider.Parsing
 open SturmovikMission.Blocks.BlocksMissionData
+
 open Campaign.PlaneSet
-open Campaign.BasicTypes
+open Campaign.Common.BasicTypes
 
-open NLog
 
-let private logger = LogManager.GetCurrentClassLogger()
+let private logger = NLog.LogManager.GetCurrentClassLogger()
 
 /// Get the region and date of a scenario
 let extractRegionAndDate (strategyFile : string) =

@@ -25,7 +25,8 @@ open Util
 
 open Campaign.Common.BasicTypes
 open Campaign.Common.PlaneModel
-open Campaign.Buildings
+open Campaign.Common.Buildings
+
 open PilotRanks
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
@@ -40,6 +41,18 @@ type Region = {
     IsEntry : bool
     IndustryBuildings : BuildingInstanceId list
 }
+with
+    interface IRegion with
+        member this.Boundary: Vector2 list = 
+            this.Boundary
+        member this.InitialOwner: CoalitionId option = 
+            this.InitialOwner
+        member this.Neighbours: RegionId list = 
+            this.Neighbours
+        member this.Position: Vector2 = 
+            this.Position
+        member this.RegionId: RegionId = 
+            this.RegionId
 
 /// Return the edge in regA's boundary that is shared with regB's boundary, if any.
 let commonBorder (regA : Region, regB : Region) =
@@ -302,6 +315,18 @@ type Runway = {
     Start : Vector2
     End : Vector2
 }
+with
+    interface IRunway with
+        member this.End: Vector2 = 
+            this.End
+        member this.PathOffRunway: Vector2 list = 
+            this.PathOffRunway
+        member this.PathToRunway: Vector2 list = 
+            this.PathToRunway
+        member this.SpawnPos: OrientedPosition = 
+            this.SpawnPos
+        member this.Start: Vector2 = 
+            this.Start
 
 type Airfield = {
     AirfieldId : AirfieldId
@@ -312,6 +337,16 @@ type Airfield = {
     Facilities : BuildingInstanceId list
 }
 with
+    interface IAirfield with
+        member this.AirfieldId: AirfieldId = 
+            this.AirfieldId
+        member this.Boundary: Vector2 list = 
+            this.Boundary
+        member this.Position: Vector2 = 
+            this.Position
+        member this.Runways: IRunway list = 
+            this.Runways |> List.map (fun runway -> runway :> IRunway)
+
     // Airfields without runways can be used by players for emergency landings, but are otherwise unused.
     member this.IsActive = not this.Runways.IsEmpty
 

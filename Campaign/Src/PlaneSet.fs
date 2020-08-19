@@ -16,15 +16,17 @@
 
 module Campaign.PlaneSet
 
-open BasicTypes
-open Campaign.PlaneModel
-open SturmovikMission.Blocks.Vehicles
-open SturmovikMission.Blocks
 open System
+open System.IO
 open FSharp.Data
 open NLog
 open Util
-open System.IO
+
+open SturmovikMission.Blocks.Vehicles
+open SturmovikMission.Blocks
+
+open Campaign.Common.BasicTypes
+open Campaign.Common.PlaneModel
 
 let private logger = LogManager.GetCurrentClassLogger()
 
@@ -32,30 +34,6 @@ let private logger = LogManager.GetCurrentClassLogger()
 let private sampleFile = __SOURCE_DIRECTORY__ + @"\..\Config\PlaneSet-Moscow.json"
 type PlaneSetFile = JsonProvider<sampleFile>
 
-/// <summary>
-/// Range of plane modifications: Can be a single value or an interval (both bounds included)
-/// </summary>
-type ModRange =
-    | One of int
-    | Interval of int * int
-with
-    static member FromList(xs) =
-        match xs with
-        | [x] -> One x
-        | [x; y] -> Interval(x, y)
-        | _ -> failwith "Range must be a singleton or a pair"
-
-    static member All : ModRange list = []
-
-    member this.ModFilter =
-        match this with
-        | One x -> sprintf "%d" x
-        | Interval (x, y) -> sprintf "%d..%d" x y
-
-    static member ModFilters(ranges : ModRange seq) =
-        ranges
-        |> Seq.map (fun range -> range.ModFilter)
-        |> String.concat ","
 
 /// <summary>
 /// Data associated to a plane. The plane model itself is not included.
@@ -77,7 +55,7 @@ with
     static member TryFromJson(data : PlaneSetFile.Plane) =
         let model = data.Model.ToLowerInvariant()
         let plane =
-            PlaneModel.planeDb
+            PlaneModelDb.planeDb
             |> List.tryFind(fun plane -> model.Contains(plane.Name.ToLowerInvariant()))
         let idx = data.Static
         let factor = data.Factor |> Option.map float32 |> Option.defaultValue 1.0f

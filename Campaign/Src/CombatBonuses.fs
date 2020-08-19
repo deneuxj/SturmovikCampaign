@@ -18,15 +18,14 @@
 /// Success rate is affected by player actions.
 namespace Campaign.CombatBonuses
 
-open System
-
-open Campaign.BasicTypes
-open Campaign.PlaneModel
-open Campaign.WorldDescription
-open Campaign.NewWorldDescription
-open Campaign.Targets
-open Campaign.WarState
 open Util
+
+open Campaign.Common.BasicTypes
+open Campaign.Common.PlaneModel
+open Campaign.Common.Targets
+
+open Campaign.NewWorldDescription
+open Campaign.WarState
 open Campaign.Pilots
 
 /// Domains of combat affected by experience bonuses

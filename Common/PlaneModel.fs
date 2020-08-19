@@ -90,3 +90,28 @@ with
             Script = sprintf @"graphics\blocks\static_%s.txt" this.StaticBasename
             Model = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.mgm" this.StaticBasename
         }
+
+/// <summary>
+/// Range of plane modifications: Can be a single value or an interval (both bounds included)
+/// </summary>
+type ModRange =
+    | One of int
+    | Interval of int * int
+with
+    static member FromList(xs) =
+        match xs with
+        | [x] -> One x
+        | [x; y] -> Interval(x, y)
+        | _ -> failwith "Range must be a singleton or a pair"
+
+    static member All : ModRange list = []
+
+    member this.ModFilter =
+        match this with
+        | One x -> sprintf "%d" x
+        | Interval (x, y) -> sprintf "%d..%d" x y
+
+    static member ModFilters(ranges : ModRange seq) =
+        ranges
+        |> Seq.map (fun range -> range.ModFilter)
+        |> String.concat ","

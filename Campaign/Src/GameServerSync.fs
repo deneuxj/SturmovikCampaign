@@ -19,21 +19,25 @@ namespace Campaign.GameServerSync
 
 open System
 open System.IO
-open System.Diagnostics
-open NLog
+open System.Numerics
 open FSharp.Json
-
 open FSharp.Control
 
+open Util
+open VectorExtension
+
+open Campaign.Common.BasicTypes
+open Campaign.Common.Targets
+open Campaign.Common.Targets.ActivePatterns
+
+open Campaign.MissionGen.MissionFileGeneration
+
 open Campaign
-open Campaign.BasicTypes
 open Campaign.NewWorldDescription
 open Campaign.NewWorldDescription.IO
 open Campaign.WarState
 open Campaign.WarState.IO
-open Campaign.BasicTypes
 open Campaign.GameServerControl
-open Util
 open Campaign.CampaignScenario
 open Campaign.CampaignScenario.IO
 open Campaign.WarStateUpdate.CommandExecution
@@ -118,9 +122,9 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                 |> Option.defaultValue ""
                             let eventDescription =
                                 match flight.Return with
-                                | Targets.CrashedInEnemyTerritory -> "crashed in enemy territory"
-                                | Targets.CrashedInFriendlyTerritory _ -> "crash-landed"
-                                | Targets.AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
+                                | CrashedInEnemyTerritory -> "crashed in enemy territory"
+                                | CrashedInFriendlyTerritory _ -> "crash-landed"
+                                | AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
                             let msg = sprintf "%s %s %s (%d) has %s" rank pilot.PilotFirstName pilot.PilotLastName pid.AsInt eventDescription
                             let coalition = war.World.Countries.[pilot.Country]
                             let! s = notifier.MessageCoalition(coalition, msg)
@@ -187,12 +191,50 @@ module BaseFileNames =
             |> Seq.max
         with _ -> 0
 
+module WarStateExt =
+    open Campaign.MissionGen.MissionFileGeneration
+
+    let mkMissionBuilderDataAccess (war : WarState) =
+        { new IMissionBuilderData with
+              member this.Airfields: IAirfield list =
+                  war.World.Airfields.Values |> Seq.map (fun af -> af :> IAirfield) |> List.ofSeq
+              member this.BuildingDamages: (Common.Buildings.BuildingInstanceId * int * float32) list =
+                  war.BuildingDamages |> List.ofSeq
+              member this.GetAirfield(afId: AirfieldId): IAirfield = 
+                  war.World.Airfields.[afId] :> IAirfield
+              member this.GetBuildingInstance(bid: Common.Buildings.BuildingInstanceId): Common.Buildings.BuildingInstance = 
+                  war.World.GetBuildingInstance(bid)
+              member this.GetCountryCoalition(country: CountryId): CoalitionId = 
+                  war.World.Countries.[country]
+              member this.GetOwner(rId: RegionId): CoalitionId option = 
+                  war.GetOwner(rId)
+              member this.GetOwner(afId: AirfieldId): CountryId option = 
+                  war.GetOwner(war.World.Airfields.[afId].Region)
+                  |> Option.map war.World.GetAnyCountryInCoalition
+              member this.GetOwner(bId: Common.Buildings.BuildingInstanceId): CountryId option = 
+                  let (Common.Buildings.BuildingInstanceId pos) = bId
+                  war.World.Regions.Values
+                  |> Seq.tryFind (fun region -> pos.Pos.IsInConvexPolygon(region.Boundary))
+                  |> Option.bind (fun region -> war.GetOwner(region.RegionId))
+                  |> Option.map war.World.GetAnyCountryInCoalition
+              member this.GetPlaneModel(plane: Common.PlaneModel.PlaneModelId): Common.PlaneModel.PlaneModel = 
+                  war.World.PlaneSet.[plane]
+              member this.GetRegion(rId: RegionId): IRegion = 
+                  war.World.Regions.[rId] :> IRegion
+              member this.Regions: IRegion list = 
+                  war.World.Regions.Values |> Seq.map (fun region -> region :> IRegion) |> List.ofSeq
+        }
+
+    type WarState with
+        member this.AsMissionBuilderData = mkMissionBuilderDataAccess this
+
 open BaseFileNames
 open IO
+open WarStateExt
 
 /// Controls execution of DServer, depending on status of campaign scenario controller.
 type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
-    let mutable logger = defaultArg logger (LogManager.GetCurrentClassLogger())
+    let mutable logger = defaultArg logger (NLog.LogManager.GetCurrentClassLogger())
     let mutable controller : IScenarioController option = None
     let mutable war : WarState option = None
     let mutable step : ScenarioStep option = None
@@ -517,14 +559,22 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 try
                     let seed = this.Seed
                     let selection = ctrl.SelectMissions(stepData, state, seed, 25)
-                    let missionGenSettings : MissionFileGeneration.MissionGenSettings =
+                    let missionGenSettings : MissionGenSettings =
                         {
-                            MissionFileGeneration.MaxAiPatrolPlanes = 6
-                            MissionFileGeneration.MaxAntiAirCannons = 1000
-                            MissionFileGeneration.OutFilename = settings.MissionFilePath
+                            MaxAiPatrolPlanes = 6
+                            MaxAntiAirCannons = 1000
+                            OutFilename = settings.MissionFilePath
+                            Planes = state.World.PlaneSet.Values |> List.ofSeq
                         }
-                    let mission = MissionFileGeneration.mkMultiplayerMissionContent (Random(seed)) stepData.Briefing state selection
-                    mission.BuildMission(Random(seed), missionGenSettings, state)
+                    let mission = MissionFilePreparation.mkMultiplayerMissionContent (Random(seed)) stepData.Briefing state selection
+                    mission.BuildMission(
+                        Random(seed),
+                        missionGenSettings,
+                        state.World.Scenario,
+                        state.Date,
+                        state.Weather,
+                        state.World.Bridges.ContainsKey,
+                        state.AsMissionBuilderData)
                     return Ok()
                 with
                 e -> return (Error e.Message)

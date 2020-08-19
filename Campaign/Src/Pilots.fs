@@ -1,9 +1,10 @@
 ﻿module Campaign.Pilots
 
 open System
-open WorldDescription
-open Targets
-open BasicTypes
+
+open Campaign.Common.Targets
+open Campaign.Common.BasicTypes
+
 open PilotRanks
 
 [<RequireQualifiedAccess>]

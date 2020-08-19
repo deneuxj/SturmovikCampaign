@@ -19,18 +19,16 @@ namespace Campaign.CampaignScenario
 
 open System.Numerics
 open VectorExtension
+open Util
 
-open Campaign.BasicTypes
+open Campaign.Common.BasicTypes
+open Campaign.Common.PlaneModel
+
 open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.Missions
-open Campaign.PlaneModel
 open Campaign.MissionSelection
-
-open Util
-
-type AirfieldId = Campaign.WorldDescription.AirfieldId
 
 /// A step in the sequence of rounds making up a campaign.
 type ScenarioStep =
@@ -87,7 +85,7 @@ with
 type ForcesAvailability =
     {
         Airfields : Map<AirfieldId, AirfieldStatus>
-        Regions : Map<Campaign.WorldDescription.RegionId * CoalitionId, float32<MGF>>
+        Regions : Map<RegionId * CoalitionId, float32<MGF>>
     }
 with
     static member Create(war : IWarStateQuery) =
@@ -132,7 +130,7 @@ with
 type TargetAdapter<'Target> =
     abstract GetPos : 'Target -> Vector2
     abstract MkGroundTarget : 'Target -> GroundTargetType
-    abstract GetRegion : 'Target -> Campaign.WorldDescription.RegionId
+    abstract GetRegion : 'Target -> RegionId
 
 /// Adapter to plan raids on airfields
 type AirfieldTargetAdapter() =

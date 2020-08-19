@@ -25,14 +25,14 @@ open Util
 open Util.RegexActivePatterns
 open VectorExtension
 
+open Campaign.Common.BasicTypes
+open Campaign.Common.Targets.ActivePatterns
+open Campaign.Common.Targets
+
 open Campaign.GameLogEvents
-open Campaign.BasicTypes
 open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.WarStateUpdate
-open Campaign.WorldDescription
-open Campaign.Targets.ActivePatterns
-open Campaign.Targets
 open Campaign.Pilots
 open System.Collections.Generic
 
