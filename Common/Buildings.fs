@@ -11,6 +11,7 @@ type BuildingProperties = {
     Boundary : Vector2 list
     SubParts : int list
     Durability : int
+    ParkingSpots : ParkingSpot list
 }
 
 module private BuildingProperties_ =

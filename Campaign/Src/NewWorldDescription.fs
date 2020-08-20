@@ -442,6 +442,7 @@ module Init =
             Boundary = vertices
             SubParts = subparts
             Durability = durability
+            ParkingSpots = []
         }
 
     /// Load a list of BuildingProperties from a .Mission file
@@ -479,6 +480,46 @@ module Init =
             ]
         [ build blocks ; build bridges ]
         |> List.concat
+
+    /// Build a mapping from building script to its parking spots
+    let loadBuildingParkingSpots(path : string) =
+        // Extract buildings and waypoints from the mission file
+        let data =
+            try
+                T.GroupData.Parse(Stream.FromFile path)
+            with
+            | :? ParseError as e ->
+                printParseError e
+                |> String.concat "\n"
+                |> failwith
+        let buildings = data.ListOfBlock
+        let spots = data.ListOfMCU_Waypoint
+        /// Find the closest block to a given position
+        let buildingAt (pos : Vector2) =
+            buildings
+            |> Seq.map (fun block ->
+                let bpos = Vector2.FromPos block
+                (pos - bpos).Length(), block)
+            |> Seq.minBy fst
+            |> fun (dist, block) ->
+                if dist < 1000.0f then
+                    Some block
+                else
+                    None
+        // group waypoints, which denote parking spots, by building script.
+        // Position of parking spot is adjusted to be relative to the building's position.
+        spots
+        |> Seq.map (fun spot -> { Pos = OrientedPosition.FromMission spot; Radius = float32(spot.GetArea().Value) })
+        |> Seq.groupBy (fun spot -> buildingAt spot.Pos.Pos |> Option.map (fun block -> block.GetScript().Value, Vector2.FromPos block))
+        |> Seq.choose (
+            function
+            | (Some (script, bpos), spots) ->
+                Some (
+                    script,
+                    spots
+                    |> Seq.map (fun spot -> { spot with Pos = { spot.Pos with Pos = spot.Pos.Pos - bpos } }))
+            | _ -> None)
+        |> dict
 
     /// Extract a list of building instances from a list of blocks from a .Mission file using a database of known building types 
     let inline extractBuildingInstances(db : BuildingProperties list, blocks : ^Block list) =
@@ -712,7 +753,15 @@ module Init =
     /// Load a scenario mission file and create a world description.
     let mkWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+        let parkingSpots = loadBuildingParkingSpots (Path.Combine(exeDir, "Parking.Mission"))
         let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
+        let buildingDb =
+            buildingDb
+            |> List.map (fun building ->
+                match parkingSpots.TryGetValue(building.Script) with
+                | true, spots -> { building with ParkingSpots = List.ofSeq spots }
+                | false, _ -> building
+            )
         let missionData =
             try
                 T.GroupData.Parse(Stream.FromFile scenario)

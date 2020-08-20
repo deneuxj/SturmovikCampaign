@@ -209,6 +209,11 @@ with
             | _ ->
                 invalidArg "other" "Must be an OrientedPosition"
 
+type ParkingSpot = {
+    Pos : OrientedPosition
+    Radius : float32
+}
+
 type IRegion =
     abstract RegionId : RegionId
     abstract Boundary : Vector2 list

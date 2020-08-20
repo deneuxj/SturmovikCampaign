@@ -128,6 +128,9 @@
       <Link>Buildings.Mission</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\data\Blocks\Parking.Mission" Link="Parking.Mission">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <Content Include="Sample.Mission" />
     <Content Include="..\FitArea\kuban.bin" Link="kuban.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
