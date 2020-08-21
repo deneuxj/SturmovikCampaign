@@ -700,6 +700,61 @@ let mkMultiplayerMissionContent (random : System.Random) missionLength briefing 
         ]
         |> List.choose id
 
+    // Parked planes
+    let parkedPlanes =
+        /// Match planes with parking positions. Assumes that the list of planes and the list of positions
+        /// are both sorted in descending wing span and radius, respectively
+        let rec assign country (planes : (PlaneModel * int) list, spots : ParkingSpot list) =
+            [
+                match planes, spots with
+                | [], _ | _, [] ->
+                    // No planes left to park, or no spots left
+                    ()
+                | (_, 0) :: planes, _ ->
+                    // Count of current plane model has reached 0, move to next one
+                    yield! assign country (planes, spots)
+                | (plane, num) :: planes, spot :: spots2 ->
+                    if plane.WingSpan > 1.0f<M> * spot.Radius then
+                        // No more sufficiently wide spots available, skip to next plane model
+                        yield! assign country (planes, spots)
+                    else
+                        // Match, yield result
+                        yield (plane.Id, spot.Pos, country)
+                        // Decrease number of planes of the current model, move to next spot.
+                        yield! assign country ((plane, num - 1) :: planes, spots2)
+            ]
+        [
+            for airfield in state.World.Airfields.Values do
+                match state.GetOwner(airfield.Region) with
+                | Some coalition ->
+                    let planes =
+                        state.GetNumPlanes(airfield.AirfieldId)
+                        |> Map.toSeq
+                        |> Seq.map (fun (plane, num) -> state.World.PlaneSet.[plane], int num)
+                        |> Seq.sortByDescending (fun (plane, num) -> plane.WingSpan)
+                        |> List.ofSeq
+                    let spots =
+                        airfield.Facilities
+                        |> List.collect (fun ((BuildingInstanceId pos) as bid) ->
+                            state.World.GetBuildingInstance(bid).Properties.ParkingSpots
+                            |> List.map (fun spot ->
+                                { spot with
+                                    Pos =
+                                        let rot = spot.Pos.Rotation + pos.Rotation
+                                        { spot.Pos with
+                                            Rotation = rot
+                                            Pos = spot.Pos.Pos.Rotate(rot) + pos.Pos
+                                        }
+                                }
+                            )
+                        )
+                        |> List.sortByDescending(fun spot -> spot.Radius)
+                    let country = state.World.GetAnyCountryInCoalition(coalition)
+                    yield! assign country (planes, spots)
+                | None ->
+                    ()
+        ]
+
     // Result
     {
         Date = state.Date
@@ -711,6 +766,6 @@ let mkMultiplayerMissionContent (random : System.Random) missionLength briefing 
         AiPatrols = patrols
         AiAttacks = attacks
         Convoys = []
-        ParkedPlanes = []
+        ParkedPlanes = parkedPlanes
     }
 

@@ -83,6 +83,12 @@ type PlaneModel =
 with
     member this.Id = PlaneModelId this.Name
 
+    member this.WingSpan =
+        match this.Kind with
+        | Fighter -> 7.0f<M>
+        | Attacker -> 11.0f<M>
+        | Bomber | Transport -> 17.0f<M>
+
     member this.MaxRange = 800000.0f<M>
 
     member this.StaticScriptModel : Vehicles.VehicleTypeData =
