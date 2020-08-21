@@ -564,6 +564,7 @@ type IMissionBuilderData =
 /// Data needed to create a multiplayer "dogfight" mission
 type MultiplayerMissionContent =
     {
+        Date : System.DateTime
         Briefing : string
         Boundary : Vector2 list
         PlayerSpawns : PlayerSpawn list
@@ -603,6 +604,8 @@ with
         // Weather and player planes
         let options =
             (Campaign.Common.Weather.setOptions random weather date options)
+                .SetDate(T.Date.FromDate(this.Date.Year, this.Date.Month, this.Date.Day))
+                .SetTime(T.Options.Time.Create(T.Integer.N this.Date.Hour, T.Integer.N this.Date.Minute, T.Integer.N this.Date.Second))
                 .SetMissionType(T.Integer.N 2) // deathmatch
                 |> addMultiplayerPlaneConfigs settings.Planes
 

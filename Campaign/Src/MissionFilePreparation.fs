@@ -702,6 +702,7 @@ let mkMultiplayerMissionContent (random : System.Random) missionLength briefing 
 
     // Result
     {
+        Date = state.Date
         Briefing = briefing
         Boundary = boundary
         PlayerSpawns = spawns
