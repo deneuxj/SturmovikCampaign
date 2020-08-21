@@ -576,7 +576,7 @@ type MultiplayerMissionContent =
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
     }
 with
-    /// Create the groups suitable for a multiplayer "dogfight" misison
+    /// Create the groups suitable for a multiplayer "dogfight" mission
     member this.BuildMission(random, settings : MissionGenSettings, scenario, date, weather, isBridge, data : IMissionBuilderData) =
         let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile (scenario + ".Mission"))
         let options = Seq.head strategyMissionData.ListOfOptions
