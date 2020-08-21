@@ -371,7 +371,7 @@ with
             None
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
-let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarState) (missions : MissionSelection) =
+let mkMultiplayerMissionContent (random : System.Random) missionLength briefing (state : WarState) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
     let warmedUp = true
 
@@ -381,6 +381,8 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
         |> Seq.collect (fun region -> region.Boundary)
         |> List.ofSeq
         |> convexHull
+
+    let hasLowLight = state.HasLowLight(missionLength)
 
     // Player spawns
     let spawns =
@@ -442,7 +444,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                           Rotation = 0.0f
                           Settings = CanonGenerationSettings.Strong
                           Specialty = DefenseSpecialty.AntiAirCanon
-                          IncludeSearchLights = true
+                          IncludeSearchLights = hasLowLight
                           IncludeFlak = true
                           Country = country.ToMcuValue
                         }
@@ -510,7 +512,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                               Rotation = 0.0f
                               Settings = CanonGenerationSettings.Default
                               Specialty = DefenseSpecialty.AntiAirMg
-                              IncludeSearchLights = true
+                              IncludeSearchLights = hasLowLight
                               IncludeFlak = true
                               Country = country.ToMcuValue
                             }
@@ -551,7 +553,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                                           Rotation = 0.0f
                                           Settings = CanonGenerationSettings.Default
                                           Specialty = DefenseSpecialty.AntiAirCanon
-                                          IncludeSearchLights = true
+                                          IncludeSearchLights = hasLowLight
                                           IncludeFlak = true
                                           Country = country.ToMcuValue
                                         }
@@ -594,7 +596,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                                     Rotation = 0.0f
                                     Settings = CanonGenerationSettings.Default
                                     Specialty = DefenseSpecialty.AntiAirMg
-                                    IncludeSearchLights = true
+                                    IncludeSearchLights = hasLowLight
                                     IncludeFlak = true
                                     Country = country
                                 }
@@ -653,7 +655,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                     let targetPos = locator.TryGetGroundTargetLocation(missions.MainMission.Objective, targetType)
                     targetPos
                     |> Option.bind (fun targetPos -> AiPatrol.TryFromAirMission(state, cover, targetPos)))
-            // Interception is 15kw away from the target
+            // Interception is 15km away from the target
             yield
                 missions.Interception
                 |> Option.bind (fun interception ->

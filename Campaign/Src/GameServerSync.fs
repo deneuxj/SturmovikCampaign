@@ -566,7 +566,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             OutFilename = settings.MissionFilePath
                             Planes = state.World.PlaneSet.Values |> List.ofSeq
                         }
-                    let mission = MissionFilePreparation.mkMultiplayerMissionContent (Random(seed)) stepData.Briefing state selection
+                    let missionLength = TimeSpan.FromMinutes(float settings.MissionDuration)
+                    let mission = MissionFilePreparation.mkMultiplayerMissionContent (Random(seed)) missionLength stepData.Briefing state selection
                     mission.BuildMission(
                         Random(seed),
                         missionGenSettings,

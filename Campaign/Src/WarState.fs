@@ -293,6 +293,12 @@ module IWarStateExtensions =
             |> Seq.filter (fun pilot -> pilot.PlayerGuid = guid)
             |> Seq.sortBy (fun pilot -> pilot.Id)
 
+        /// Check if the start or end of the mission is outside of day-time
+        member this.HasLowLight(missionLength : TimeSpan) =
+            let sunrise, sunset = Util.suntimes(this.Date)
+            [this.Date; this.Date + missionLength]
+            |> List.exists (fun t -> t <= sunrise || t >= sunset)
+
 
 type IWarStateUpdate =
     /// Set the date and time

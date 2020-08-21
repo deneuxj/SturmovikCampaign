@@ -122,7 +122,7 @@ let suntimes(date : System.DateTime) =
     let set = 13.0 + 0.5 * dayLength
     let sunrise = System.DateTime(date.Year, date.Month, date.Day, int rise, 0, 0)
     let sunset = System.DateTime(date.Year, date.Month, date.Day, int set, 0, 0)
-    sunrise, sunset
+    (sunrise, sunset)
 
 module AsyncSeq =
     let mergeChoice3 xa xb xc =
