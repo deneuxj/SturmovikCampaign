@@ -375,51 +375,9 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
     let locator = TargetLocator(random, state)
     let warmedUp = true
 
-    // All regions that are involved in some mission
-    let primaryRegions = missions.Regions(state.World)
-    // All regions, including the primary ones, that are within 50km of the primary regions
-    let nearRegions =
-        let primaryRegionsVertices =
-            primaryRegions
-            |> Seq.collect (fun regId -> state.World.Regions.[regId].Boundary)
-        state.World.Regions.Values
-        |> Seq.map (fun region ->
-            region,
-            region.Boundary
-            |> Seq.allPairs primaryRegionsVertices
-            |> Seq.map (fun (v1, v2) -> (v1 - v2).Length())
-            |> Seq.min)
-        // Sort by increasing distance to the primary regions
-        |> Seq.sortBy snd
-        |> Seq.cache
-    // Count number of airfields in each coalition in the regions in the prefixes of nearRegions
-    let numAfs =
-        nearRegions
-        |> Seq.scan (fun (numAxisAfs, numAlliesAfs) (region, _) ->
-            let airfieldsInRegion =
-                state.World.Airfields.Values
-                |> Seq.filter (fun af ->
-                    af.Region = region.RegionId &&
-                    not af.Runways.IsEmpty &&
-                    state.GetNumPlanes(af.AirfieldId) |> Seq.sumBy (fun kvp -> kvp.Value) > 10.0f)
-                |> Seq.length
-            match state.GetOwner(region.RegionId) with
-            | Some Axis -> numAxisAfs + airfieldsInRegion, numAlliesAfs
-            | Some Allies -> numAxisAfs, numAlliesAfs + airfieldsInRegion
-            | None -> numAxisAfs, numAlliesAfs) (0, 0)
-    // Take all regions within 50km, and until each coalition has at least 5 airfields
-    let gameRegions =
-        Seq.zip nearRegions numAfs
-        |> Seq.takeWhile (fun ((region, dist), (numAxisAfs, numAlliesAfs)) ->
-            dist < 50000.0f || numAxisAfs < 5 || numAlliesAfs < 5)
-        |> Seq.map (fun ((x, _), _) -> x)
-        // Include all the entry regions
-        |> Seq.append (state.World.Regions.Values |> Seq.filter (fun region -> region.IsEntry))
-        |> Seq.distinct
-        |> List.ofSeq
-    // Play area is the convex hull of all these regions
+    // Play area is the convex hull of all regions
     let boundary =
-        gameRegions
+        state.World.Regions.Values
         |> Seq.collect (fun region -> region.Boundary)
         |> List.ofSeq
         |> convexHull
@@ -429,7 +387,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
         [
             let within =
                 state.World.Airfields.Values
-                |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary && not af.Runways.IsEmpty)
+                |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary && af.IsActive)
             let wind = Vector2.FromYOri(state.Weather.Wind.Direction)
             for af in within do
                 let runway =
@@ -524,7 +482,7 @@ let mkMultiplayerMissionContent (random : System.Random) briefing (state : WarSt
                 |> Option.defaultValue Seq.empty
 
             let allCriticalBridges =
-                gameRegions
+                state.World.Regions.Values
                 |> Seq.collect (fun region -> Seq.allPairs [region.RegionId] region.Neighbours)
                 |> Seq.distinctBy (fun (regionA, regionB) -> min regionA regionB, max regionA regionB)
                 |> Seq.collect (fun regs -> Seq.append (getCriticalBridges state.World.Roads regs) (getCriticalBridges state.World.Rails regs))
