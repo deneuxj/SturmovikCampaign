@@ -93,8 +93,8 @@ with
 
     member this.StaticScriptModel : Vehicles.VehicleTypeData =
         {
-            Script = sprintf @"graphics\blocks\static_%s.txt" this.StaticBasename
-            Model = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.mgm" this.StaticBasename
+            Model = sprintf @"graphics\blocks\static_%s.mgm" this.StaticBasename
+            Script = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.txt" this.StaticBasename
         }
 
 /// <summary>
