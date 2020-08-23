@@ -47,7 +47,7 @@ type AiStartPoint =
     | StartOverAirfield
 
 type AiAttack with
-    static member TryFromAirMission(state : WarState, mission : AirMission, targetPos : Vector2, ?maxFlightSize, ?aiStartPoint) =
+    static member TryFromAirMission(state : IWarStateQuery, mission : AirMission, targetPos : Vector2, ?maxFlightSize, ?aiStartPoint) =
         let aiStartPoint = defaultArg aiStartPoint StartOverAirfield
         let coalition = state.GetOwner(state.World.Airfields.[mission.StartAirfield].Region)
         match mission, coalition with
@@ -95,7 +95,7 @@ type AiAttack with
         | _ -> None
 
 type AiPatrol with
-    static member TryFromAirMission(state : WarState, mission : AirMission, targetPos : Vector2, ?maxFlightSize) =
+    static member TryFromAirMission(state : IWarStateQuery, mission : AirMission, targetPos : Vector2, ?maxFlightSize) =
         let maxFlightSize = defaultArg maxFlightSize 2
         let coalition = state.GetOwner(state.World.Airfields.[mission.StartAirfield].Region)
         match mission, coalition with
@@ -348,7 +348,7 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
 
 type Campaign.MissionGen.MissionFileGeneration.GroundBattle
 with
-    static member TryFromGroundMission(state : WarState, mission : GroundMission, pos : OrientedPosition, area : Vector2 list) =
+    static member TryFromGroundMission(state : IWarStateQuery, mission : GroundMission, pos : OrientedPosition, area : Vector2 list) =
         match mission with
         | { MissionType = GroundBattle initiator } ->
             let computeNum (force : float32<MGF>) =
@@ -371,7 +371,7 @@ with
             None
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
-let mkMultiplayerMissionContent (random : System.Random) missionLength briefing (state : WarState) (missions : MissionSelection) =
+let mkMultiplayerMissionContent (random : System.Random) missionLength briefing (state : IWarStateQuery) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
     let warmedUp = true
 
