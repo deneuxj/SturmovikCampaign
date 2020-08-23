@@ -559,6 +559,12 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 try
                     let seed = this.Seed
                     let selection = ctrl.SelectMissions(stepData, state, seed, 25)
+                    let missionPrepSettings : MissionFilePreparation.PreparationSettings =
+                        {
+                            MissionFilePreparation.MaxTrainsPerSide = 5
+                            MissionFilePreparation.MaxTruckColumnsPerSide = 3
+                            MissionFilePreparation.MissionLength = TimeSpan.FromMinutes(float settings.MissionDuration)
+                        }
                     let missionGenSettings : MissionGenSettings =
                         {
                             MaxAiPatrolPlanes = 6
@@ -566,8 +572,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             OutFilename = settings.MissionFilePath
                             Planes = state.World.PlaneSet.Values |> List.ofSeq
                         }
-                    let missionLength = TimeSpan.FromMinutes(float settings.MissionDuration)
-                    let mission = MissionFilePreparation.mkMultiplayerMissionContent (Random(seed)) missionLength stepData.Briefing state selection
+                    let mission = MissionFilePreparation.mkMultiplayerMissionContent (Random(seed)) missionPrepSettings stepData.Briefing state selection
                     mission.BuildMission(
                         Random(seed),
                         missionGenSettings,

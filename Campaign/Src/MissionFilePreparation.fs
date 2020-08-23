@@ -370,8 +370,14 @@ with
         | _ ->
             None
 
+type PreparationSettings = {
+    MaxTrainsPerSide : int
+    MaxTruckColumnsPerSide : int
+    MissionLength : System.TimeSpan
+}
+
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
-let mkMultiplayerMissionContent (random : System.Random) missionLength briefing (state : IWarStateQuery) (missions : MissionSelection) =
+let mkMultiplayerMissionContent (random : System.Random) (settings : PreparationSettings) briefing (state : IWarStateQuery) (missions : MissionSelection) =
     let locator = TargetLocator(random, state)
     let warmedUp = true
 
@@ -382,7 +388,7 @@ let mkMultiplayerMissionContent (random : System.Random) missionLength briefing 
         |> List.ofSeq
         |> convexHull
 
-    let hasLowLight = state.HasLowLight(missionLength)
+    let hasLowLight = state.HasLowLight(settings.MissionLength)
 
     // Player spawns
     let spawns =
