@@ -2123,4 +2123,293 @@ Airfield
 }
 
 
+
+Block
+{
+  Name = "Block";
+  Index = 99;
+  LinkTrId = 0;
+  XPos = 23446.685;
+  YPos = 145.823;
+  ZPos = 33586.114;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_nets_1_4.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_nets_1_4.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 100;
+  LinkTrId = 0;
+  XPos = 22995.738;
+  YPos = 149.279;
+  ZPos = 33588.751;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_nets_2_5.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_nets_2_5.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "Block";
+  Index = 101;
+  LinkTrId = 0;
+  XPos = 22634.453;
+  YPos = 149.751;
+  ZPos = 33599.300;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\arf_nets_3_3.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\arf_nets_3_3.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 103;
+  Name = "8m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 23448.554;
+  YPos = 149.887;
+  ZPos = 33555.028;
+  XOri = 0.00;
+  YOri = 3.79;
+  ZOri = 0.00;
+  Area = 8;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 105;
+  Name = "8m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 23447.068;
+  YPos = 149.887;
+  ZPos = 33624.253;
+  XOri = 0.00;
+  YOri = 10.54;
+  ZOri = 0.00;
+  Area = 8;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 106;
+  Name = "10m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 23002.543;
+  YPos = 149.887;
+  ZPos = 33514.447;
+  XOri = 0.00;
+  YOri = 8.27;
+  ZOri = 0.00;
+  Area = 10;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 107;
+  Name = "10m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 22999.673;
+  YPos = 149.887;
+  ZPos = 33632.968;
+  XOri = 0.00;
+  YOri = 8.27;
+  ZOri = 0.00;
+  Area = 10;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 108;
+  Name = "10m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 23449.689;
+  YPos = 149.887;
+  ZPos = 33513.108;
+  XOri = 0.00;
+  YOri = 8.27;
+  ZOri = 0.00;
+  Area = 10;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 110;
+  Name = "8m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 23446.892;
+  YPos = 149.887;
+  ZPos = 33653.675;
+  XOri = 0.00;
+  YOri = 352.84;
+  ZOri = 0.00;
+  Area = 8;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 111;
+  Name = "8m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 22994.399;
+  YPos = 149.887;
+  ZPos = 33553.901;
+  XOri = 0.00;
+  YOri = 6.32;
+  ZOri = 0.00;
+  Area = 8;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 112;
+  Name = "8m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 22996.927;
+  YPos = 149.887;
+  ZPos = 33589.985;
+  XOri = 0.00;
+  YOri = 354.74;
+  ZOri = 0.00;
+  Area = 8;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 113;
+  Name = "8m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 22996.355;
+  YPos = 149.887;
+  ZPos = 33678.025;
+  XOri = 0.00;
+  YOri = 354.44;
+  ZOri = 0.00;
+  Area = 8;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 114;
+  Name = "8m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 22652.938;
+  YPos = 149.887;
+  ZPos = 33605.948;
+  XOri = 0.00;
+  YOri = 4.56;
+  ZOri = 0.00;
+  Area = 8;
+  Speed = 100;
+  Priority = 1;
+}
+
+
+
+MCU_Waypoint
+{
+  Index = 115;
+  Name = "8m";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 22635.917;
+  YPos = 149.887;
+  ZPos = 33668.941;
+  XOri = 0.00;
+  YOri = 353.51;
+  ZOri = 0.00;
+  Area = 8;
+  Speed = 100;
+  Priority = 1;
+}
+
+
 # end of file
