@@ -246,7 +246,6 @@ with
 
         let rec walkBack idx =
             [
-                logger.Debug(sprintf "Path finding walk back yield %d" idx)
                 yield idx
                 if not(sources.Contains idx) then
                     assert prec.ContainsKey(idx)
@@ -255,15 +254,16 @@ with
 
         let rec work(working : Set<float32 * int>, visited : Set<int>) =
             if Set.isEmpty working then
+                logger.Debug(sprintf "Path finding found no path after %d visited nodes" visited.Count)
                 None
             else
                 let (_, curr) as x = Set.minElement working
                 if goals.Contains curr then
-                    logger.Debug(sprintf "Path finding walk back started after %d search steps" visited.Count)
+                    logger.Debug(sprintf "Path finding walk back started after visiting %d nodes" visited.Count)
                     let path =
                         walkBack curr
                         |> List.rev
-                    logger.Debug("Path finding walk back done")
+                    logger.Debug(sprintf "Path finding walk back done, found %d-steps long path" path.Length)
                     Some path
                 else
                     let working = Set.remove x working
@@ -281,10 +281,8 @@ with
                     work(working, visited)
 
         let res =
-            logger.Debug("Starting path search")
             work(working, Set.empty)
             |> Option.map (fun path ->
-                logger.Debug("Mapping node pairs to links")
                 path
                 |> Seq.pairwise
                 |> Seq.map (fun (nodeA, nodeB) ->
@@ -293,7 +291,6 @@ with
                     f nodeB)
                 |> List.ofSeq
             )
-        logger.Debug("Path search done")
         res
 
 type Network with

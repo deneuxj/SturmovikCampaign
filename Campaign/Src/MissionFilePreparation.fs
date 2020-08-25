@@ -783,6 +783,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         ]
 
     // Trains
+    logger.Debug("Starting to prepare train convoys")
     let trains =
         let terminalsInRegion =
             state.World.Rails.Nodes
@@ -799,6 +800,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     | Some owner, Some owner2 when owner = owner2 ->
                         match terminalsInRegion.TryGetValue(startRegion.RegionId), terminalsInRegion.TryGetValue(destRegionId) with
                         | (true, starts), (true, dests) ->
+                            logger.Debug(sprintf "Considering train between %s and %s" (string startRegion.RegionId) (string destRegionId))
                             match state.TryGetTrainPath(starts, dests, Some owner) with
                             | Some links ->
                                 let path =
@@ -813,13 +815,16 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                         }
                                     )
                                     |> List.ofSeq
+                                logger.Debug("Found train path")
                                 yield {
                                     Country = state.World.GetAnyCountryInCoalition(owner)
                                     Members = [ ConvoyMember.Train ]
                                     Path = path
                                     StartPositions = [ path.Head ]
                                 }
-                            | None -> ()
+                            | None ->
+                                logger.Debug("No path found for train")
+                                ()
                         | _ -> ()
                     | _ -> ()
         ]
@@ -830,6 +835,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             |> Array.shuffle (System.Random(state.Seed))
             |> List.ofArray
             |> List.truncate settings.MaxTrainsPerSide)
+    logger.Debug(sprintf "Generated a total of %d trains" trains.Length)
 
     // Result
     {
