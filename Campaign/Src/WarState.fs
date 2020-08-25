@@ -190,7 +190,7 @@ type IWarStateQuery =
     /// Get next available pilot ID
     abstract member NextPilotId : unit -> PilotId
     /// Find a path on railways from one set of nodes to another, optionally restricted within the territory of a coalition
-    abstract member TryGetTrainPath : sources: NetworkNode list * objectives: NetworkNode list * coalition: CoalitionId option -> NetworkLink seq option
+    abstract member TryGetTrainPath : sources: NetworkNode list * objectives: NetworkNode list * coalition: CoalitionId option -> NetworkLink list option
 
 [<AutoOpen>]
 module IWarStateExtensions = 
@@ -688,8 +688,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                 network.Nodes
                 |> Seq.filter (fun node ->
                     match node.Region |> Option.bind this.GetOwner with
-                    | None -> true
-                    | Some c -> c = coalition)
+                    | None -> false
+                    | Some c -> c <> coalition)
                 |> Seq.map (fun node -> node.Id)
                 |> Set.ofSeq
             |> fun rm ->
@@ -697,7 +697,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                 network.Links
                 |> Seq.filter (fun link ->
                     link.Bridges
-                    |> List.forall (fun bid -> this.GetBridgeFunctionalityLevel(bid) > 0.5f))
+                    |> List.forall (fun bid -> this.GetBridgeFunctionalityLevel(bid) < 0.5f))
                 |> Seq.collect (fun link -> [link.NodeA; link.NodeB])
                 |> Set.ofSeq
                 |> Set.union rm
@@ -706,10 +706,12 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         let starts =
             starts
             |> Seq.map (fun node -> node.Id)
+            |> Seq.filter (nodesToRemove.Contains >> not)
             |> Set.ofSeq
         let objectives =
             objectives
             |> Seq.map (fun node -> node.Id)
+            |> Seq.filter (nodesToRemove.Contains >> not)
             |> Set.ofSeq
         network.GetQuickAccess().FindPath(starts, objectives)
 

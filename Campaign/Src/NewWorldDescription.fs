@@ -231,57 +231,70 @@ with
         let distToGoals idx =
             let node = this.GetNode idx
             goals
-            |> Seq.map (fun goal -> (this.GetNode(goal).Pos - node.Pos).Length(), goal)
-            |> Seq.minBy fst
+            |> Seq.map (fun goal -> (this.GetNode(goal).Pos - node.Pos).Length())
+            |> Seq.min
 
         let working =
-            sources
-            |> Seq.map (fun src -> fst(distToGoals src), src)
-            |> Set
-        
+            if goals.IsEmpty then
+                Set.empty
+            else
+                sources
+                |> Seq.map (fun src -> distToGoals src, src)
+                |> Set
+
         let prec = Seq.mutableDict []
 
         let rec walkBack idx =
-            seq {
+            [
+                logger.Debug(sprintf "Path finding walk back yield %d" idx)
                 yield idx
-                match prec.TryGetValue(idx) with
-                | true, idx ->
-                    yield! walkBack idx
-                | false, _ ->
-                    ()
-            }
-            |> Seq.rev
+                if not(sources.Contains idx) then
+                    assert prec.ContainsKey(idx)
+                    yield! walkBack prec.[idx]
+            ]
 
-        let rec work(working : Set<float32 * int>, visited) =
+        let rec work(working : Set<float32 * int>, visited : Set<int>) =
             if Set.isEmpty working then
                 None
             else
                 let (_, curr) as x = Set.minElement working
                 if goals.Contains curr then
-                    walkBack curr
-                    |> Some
+                    logger.Debug(sprintf "Path finding walk back started after %d search steps" visited.Count)
+                    let path =
+                        walkBack curr
+                        |> List.rev
+                    logger.Debug("Path finding walk back done")
+                    Some path
                 else
                     let working = Set.remove x working
                     let visited = Set.add curr visited
                     let succs, _ = this.GetLink curr
-                    for succ in succs do
-                        prec.[succ] <- curr
                     let working =
                         (working, succs)
                         ||> Seq.fold (fun working succ ->
                             if visited.Contains succ then
                                 working
                             else
-                                working.Add(distToGoals succ)
+                                prec.[succ] <- curr
+                                working.Add (distToGoals succ, succ)
                         )
                     work(working, visited)
 
-        work(working, Set.empty)
-        |> Option.map (fun path ->
-            path
-            |> Seq.pairwise
-            |> Seq.map (fun (nodeA, nodeB) -> snd(this.GetLink(nodeA)) nodeB)
-        )
+        let res =
+            logger.Debug("Starting path search")
+            work(working, Set.empty)
+            |> Option.map (fun path ->
+                logger.Debug("Mapping node pairs to links")
+                path
+                |> Seq.pairwise
+                |> Seq.map (fun (nodeA, nodeB) ->
+                    let asuccs, f = this.GetLink(nodeA)
+                    assert(asuccs |> Seq.exists ((=) nodeB))
+                    f nodeB)
+                |> List.ofSeq
+            )
+        logger.Debug("Path search done")
+        res
 
 type Network with
     member this.GetQuickAccess() =
@@ -295,17 +308,25 @@ type Network with
             |> Seq.append this.Links
             |> Seq.groupBy (fun link -> link.NodeA)
             |> Seq.map (fun (nodeA, links) ->
+                assert(nodes.ContainsKey(nodeA))
                 nodeA,
                 links
-                |> Seq.map (fun link -> link.NodeB, link)
+                |> Seq.map (fun link ->
+                    assert(nodes.ContainsKey(link.NodeB))
+                    link.NodeB, link)
                 |> dict)
             |> dict
         {
             Data = this
-            GetNode = fun x -> nodes.[x]
+            GetNode = fun x ->
+                assert(nodes.ContainsKey(x))
+                nodes.[x]
             GetLink = fun x ->
-                let dict = links.[x]
-                upcast dict.Keys, fun y -> dict.[y]
+                match links.TryGetValue x with
+                | true, dict ->
+                    upcast dict.Keys, fun y -> dict.[y]
+                | false, _ ->
+                    upcast Seq.empty, fun y -> failwithf "No link from %d to %d" x y
         }
 
 type Runway = {

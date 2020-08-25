@@ -482,14 +482,14 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 network.GetQuickAccess().FindPath(sources, goals)
                 |> Option.map (fun links ->
                     links
-                    |> Seq.collect (fun link -> link.Bridges))
-                |> Option.defaultValue Seq.empty
+                    |> List.collect (fun link -> link.Bridges))
+                |> Option.defaultValue []
 
             let allCriticalBridges =
                 state.World.Regions.Values
                 |> Seq.collect (fun region -> Seq.allPairs [region.RegionId] region.Neighbours)
                 |> Seq.distinctBy (fun (regionA, regionB) -> min regionA regionB, max regionA regionB)
-                |> Seq.collect (fun regs -> Seq.append (getCriticalBridges state.World.Roads regs) (getCriticalBridges state.World.Rails regs))
+                |> Seq.collect (fun regs -> List.append (getCriticalBridges state.World.Roads regs) (getCriticalBridges state.World.Rails regs))
                 |> Seq.distinct
 
             for BuildingInstanceId pos in allCriticalBridges do
