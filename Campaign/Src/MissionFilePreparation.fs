@@ -185,10 +185,10 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
         // A rectangular area 4km x 2km
         let battleShape =
             [
-                Vector2(2000.0f, -1000.0f)
-                Vector2(-2000.0f, -1000.0f)
-                Vector2(-2000.0f, 1000.0f)
                 Vector2(2000.0f, 1000.0f)
+                Vector2(-2000.0f, 1000.0f)
+                Vector2(-2000.0f, -1000.0f)
+                Vector2(2000.0f, -1000.0f)
             ]
         // The areas rotated by increments of 45 degrees
         let battleShapes =
@@ -360,7 +360,7 @@ with
             let getCountryInCoalition coalition = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun kvp -> kvp.Key
             Some {
                 Region = mission.Objective
-                Boundary = area
+                Boundary = area |> List.map (fun v -> pos.Pos + v.Rotate(pos.Rotation))
                 Pos = pos
                 Defending = getCountryInCoalition initiator.Other
                 Attacking = getCountryInCoalition initiator
