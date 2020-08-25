@@ -436,14 +436,13 @@ type Convoy =
     {
         Country : CountryId
         Members : ConvoyMember list
-        Start : OrientedPosition
+        Path : OrientedPosition list
         StartPositions : OrientedPosition list
-        Destination : OrientedPosition
     }
 with
     member this.CreateMCUs(store, lcStore, columnName, startTrigger) =
         let pathVertices : Factory.PathVertex list=
-            [ this.Start; this.Destination ]
+            this.Path
             |> List.map (fun p ->
                 {
                     Factory.Pos = p.Pos

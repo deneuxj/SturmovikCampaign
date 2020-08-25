@@ -761,6 +761,50 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     ()
         ]
 
+    // Trains
+    let trains =
+        let terminalsInRegion =
+            state.World.Rails.Nodes
+            |> Seq.filter (fun node -> node.HasTerminal)
+            |> Seq.choose (fun node -> node.Region |> Option.map (fun region -> region, node))
+            |> Seq.groupBy fst
+            |> Seq.map (fun (region, nodes) -> region, nodes |> Seq.map snd |> List.ofSeq)
+            |> dict
+        let rails = state.World.Rails.GetQuickAccess()
+        [|
+            for startRegion in state.World.Regions.Values do
+                for destRegionId in startRegion.Neighbours do
+                    match state.GetOwner(startRegion.RegionId), state.GetOwner(destRegionId) with
+                    | Some owner, Some owner2 when owner = owner2 ->
+                        match terminalsInRegion.TryGetValue(startRegion.RegionId), terminalsInRegion.TryGetValue(destRegionId) with
+                        | (true, starts), (true, dests) ->
+                            match state.TryGetTrainPath(starts, dests, Some owner) with
+                            | Some links ->
+                                let path =
+                                    links
+                                    |> Seq.map (fun link ->
+                                        let pos = rails.GetNode(link.NodeA).Pos
+                                        let dir = rails.GetNode(link.NodeB).Pos - pos
+                                        {
+                                            Pos = pos
+                                            Rotation = dir.YOri
+                                            Altitude = 0.0f
+                                        }
+                                    )
+                                    |> List.ofSeq
+                                yield {
+                                    Country = state.World.GetAnyCountryInCoalition(owner)
+                                    Members = [ ConvoyMember.Train ]
+                                    Path = path
+                                    StartPositions = [ path.Head ]
+                                }
+                            | None -> ()
+                        | _ -> ()
+                    | _ -> ()
+        |]
+        |> Array.shuffle (System.Random(state.Seed))
+        |> List.ofArray
+
     // Result
     {
         Date = state.Date
@@ -771,7 +815,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         GroundBattles = battles
         AiPatrols = patrols
         AiAttacks = attacks
-        Convoys = []
+        Convoys = trains
         ParkedPlanes = parkedPlanes
     }
 

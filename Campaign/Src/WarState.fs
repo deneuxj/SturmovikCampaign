@@ -139,6 +139,8 @@ module private Algo =
             computeTransportCapacity(getFlowCapacity, network, regions, sources, sinks)
 
 type IWarStateQuery =
+    /// Deterministically get a seed for random generators
+    abstract member Seed : int
     /// Get the immutable description of the world
     abstract member World : World
     /// Get the current date and time
@@ -187,6 +189,8 @@ type IWarStateQuery =
     abstract member GetPilot : PilotId -> Pilot
     /// Get next available pilot ID
     abstract member NextPilotId : unit -> PilotId
+    /// Find a path on railways from one set of nodes to another, optionally restricted within the territory of a coalition
+    abstract member TryGetTrainPath : sources: NetworkNode list * objectives: NetworkNode list * coalition: CoalitionId option -> NetworkLink seq option
 
 [<AutoOpen>]
 module IWarStateExtensions = 
@@ -675,7 +679,45 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
 
     member this.NextPilotId() = PilotId(pilots.Count)
 
+    member this.FindPath(network : Network, starts : NetworkNode list, objectives : NetworkNode list, coalition : CoalitionId option) =
+        let nodesToRemove =
+            // Wrong coalition
+            match coalition with
+            | None -> Set.empty
+            | Some coalition ->
+                network.Nodes
+                |> Seq.filter (fun node ->
+                    match node.Region |> Option.bind this.GetOwner with
+                    | None -> true
+                    | Some c -> c = coalition)
+                |> Seq.map (fun node -> node.Id)
+                |> Set.ofSeq
+            |> fun rm ->
+                // Damaged bridges
+                network.Links
+                |> Seq.filter (fun link ->
+                    link.Bridges
+                    |> List.forall (fun bid -> this.GetBridgeFunctionalityLevel(bid) > 0.5f))
+                |> Seq.collect (fun link -> [link.NodeA; link.NodeB])
+                |> Set.ofSeq
+                |> Set.union rm
+        let network = network.RemoveNodes nodesToRemove
+        // Find path
+        let starts =
+            starts
+            |> Seq.map (fun node -> node.Id)
+            |> Set.ofSeq
+        let objectives =
+            objectives
+            |> Seq.map (fun node -> node.Id)
+            |> Set.ofSeq
+        network.GetQuickAccess().FindPath(starts, objectives)
+
+    member this.Seed =
+        hash (this.Date, this.World.Scenario, this.Weather)
+
     interface IWarState with
+        member this.TryGetTrainPath(sources, objectives, coalition) = this.FindPath(world.Rails, sources, objectives, coalition)
         member this.ComputeDistancesToAirfields() = upcast(this.ComputeDistancesToAirfields())
         member this.ComputeDistancesToCoalition(arg1) = upcast(this.ComputeDistancesToCoalition(arg1))
         member this.ComputeRailCapacity() = this.ComputeRailCapacity()
@@ -708,6 +750,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
         member this.NextPilotId() = this.NextPilotId()
         member this.Pilots = this.Pilots
+        member this.Seed = this.Seed
 
 
 [<RequireQualifiedAccess>]
