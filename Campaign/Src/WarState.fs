@@ -697,7 +697,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                 network.Links
                 |> Seq.filter (fun link ->
                     link.Bridges
-                    |> List.forall (fun bid -> this.GetBridgeFunctionalityLevel(bid) < 0.5f))
+                    |> List.exists (fun bid -> this.GetBridgeFunctionalityLevel(bid) < 0.5f))
                 |> Seq.collect (fun link -> [link.NodeA; link.NodeB])
                 |> Set.ofSeq
                 |> Set.union rm
