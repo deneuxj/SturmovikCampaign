@@ -792,7 +792,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             |> Seq.map (fun (region, nodes) -> region, nodes |> Seq.map snd |> List.ofSeq)
             |> dict
         let rails = state.World.Rails.GetQuickAccess()
-        [|
+        [
             for startRegion in state.World.Regions.Values do
                 for destRegionId in startRegion.Neighbours do
                     match state.GetOwner(startRegion.RegionId), state.GetOwner(destRegionId) with
@@ -822,9 +822,14 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             | None -> ()
                         | _ -> ()
                     | _ -> ()
-        |]
-        |> Array.shuffle (System.Random(state.Seed))
-        |> List.ofArray
+        ]
+        |> List.groupBy (fun convoy -> state.World.Countries.[convoy.Country])
+        |> List.collect (fun (coalition, convoys) ->
+            convoys
+            |> Array.ofList
+            |> Array.shuffle (System.Random(state.Seed))
+            |> List.ofArray
+            |> List.truncate settings.MaxTrainsPerSide)
 
     // Result
     {
