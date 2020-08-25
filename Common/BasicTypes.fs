@@ -233,3 +233,15 @@ type IAirfield =
     abstract Position : Vector2
     abstract Boundary : Vector2 list
     abstract Runways : IRunway list
+
+[<AutoOpen>]
+module Extensions =
+    type IAirfield with
+        /// Pick the wunway that has best alignment against the provided direction
+        member this.PickAgainstWind (wind : Vector2) =
+            this.Runways
+            |> List.maxBy (fun runway ->
+                let direction =
+                    runway.End - runway.Start
+                let direction = direction / direction.Length()
+                -Vector2.Dot(direction, wind))

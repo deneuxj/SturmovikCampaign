@@ -390,21 +390,17 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
 
     let hasLowLight = state.HasLowLight(settings.MissionLength)
 
+    let wind = Vector2.FromYOri(state.Weather.Wind.Direction)
+
     // Player spawns
     let spawns =
         [
             let within =
                 state.World.Airfields.Values
                 |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary && af.IsActive)
-            let wind = Vector2.FromYOri(state.Weather.Wind.Direction)
             for af in within do
                 let runway =
-                    af.Runways
-                    |> List.maxBy(fun runway ->
-                        let direction =
-                            runway.End - runway.Start
-                        let direction = direction / direction.Length()
-                        Vector2.Dot(direction, wind))
+                    af.PickAgainstWind(wind)
                 let planes =
                     state.GetNumPlanes(af.AirfieldId)
                     |> Map.toSeq
@@ -755,8 +751,33 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             )
                         )
                         |> List.sortByDescending(fun spot -> spot.Radius)
+                    let alongRunway =
+                        if airfield.IsActive then
+                            let runway = airfield.PickAgainstWind(wind)
+                            runway.PathToRunway
+                            |> Seq.pairwise
+                            |> Seq.collect (fun (v1, v2) ->
+                                let ori = (v2 - v1).YOri
+                                let dir = Vector2.FromYOri (float ori)
+                                let len = (v2 - v1).Length()
+                                let stepSize = 1.0f / (len / 25.0f)
+                                seq {
+                                    for t in stepSize / 2.0f .. stepSize .. 1.0f - stepSize do
+                                        yield {
+                                            Pos = {
+                                                Pos = v1 + t * dir * len
+                                                Rotation = ori
+                                                Altitude = 0.0f
+                                            }
+                                            Radius = 12.5f
+                                        }
+                                }
+                            )
+                            |> List.ofSeq
+                        else
+                            []
                     let country = state.World.GetAnyCountryInCoalition(coalition)
-                    yield! assign country (planes, spots)
+                    yield! assign country (planes, spots @ alongRunway)
                 | None ->
                     ()
         ]
