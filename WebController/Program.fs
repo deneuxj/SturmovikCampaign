@@ -27,28 +27,17 @@ let main argv =
 
     let myConfig =
         let filename = "webcontroller.cfg"
-        try
+        if IO.File.Exists(filename) then
             logger.Info("Preparing to load config file " + filename)
             let config = Config.Config.LoadFromFile filename
             logger.Info("Config file loaded")
             config
-        with exc ->
-            logger.Warn("Failed to load config file, using defaults")
-            logger.Warn(exc)
+        else
+            logger.Warn("No config file " + filename + " found. Will create one with default values.")
             let config =
                 Config.Config.Default
-            if IO.File.Exists(filename) then
-                try
-                    IO.File.Copy(filename, filename + ".bak")
-                    logger.Info("Successfully backed up old config file")
-                    config.Save(filename)
-                    logger.Info("Successfully saved new file with default values. Please exit, edit config and restart program.")
-                with exc ->
-                    logger.Warn("Failed to back up old config and save new one")
-                    logger.Warn(exc)
-            else
-                config.Save(filename)
-                logger.Info("Created config file with default values. Please exit, edit config and restart program.")
+            config.Save(filename)
+            logger.Info("Successfully saved new file with default values. Please exit, edit config and restart program.")
             config
 
     // Suave setup
