@@ -4,10 +4,12 @@ open FSharp.Json
 open System
 
 type Config = {
-    /// Path to the root of the web site, containing the html/ and js/ subdirectories
-    SitePath : string
     /// IPs and ports to listen on
     Listen : {| IP : string; Port : uint16 |} list
+    /// Location of campaign data dir
+    CampaignPath : string
+    /// Path to the root of the web site, containing the html/ and js/ subdirectories
+    SitePath : string
 }
 with
     static member LoadFromFile(path : string) =
@@ -21,6 +23,7 @@ with
 
     static member Default =
         {
-            SitePath = "."
+            SitePath = @"..\Web"
             Listen = [ {| IP = "127.0.0.1"; Port = 8080us |}]
+            CampaignPath = IO.Path.GetDirectoryName(Campaign.GameServerControl.Settings.DefaultWorkDir)
         }

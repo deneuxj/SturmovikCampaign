@@ -28,13 +28,27 @@ let main argv =
     let myConfig =
         let filename = "webcontroller.cfg"
         try
-            Config.Config.LoadFromFile filename
+            logger.Info("Preparing to load config file " + filename)
+            let config = Config.Config.LoadFromFile filename
+            logger.Info("Config file loaded")
+            config
         with exc ->
             logger.Warn("Failed to load config file, using defaults")
             logger.Warn(exc)
             let config =
                 Config.Config.Default
-            config.Save(filename)
+            if IO.File.Exists(filename) then
+                try
+                    IO.File.Copy(filename, filename + ".bak")
+                    logger.Info("Successfully backed up old config file")
+                    config.Save(filename)
+                    logger.Info("Successfully saved new file with default values. Please exit, edit config and restart program.")
+                with exc ->
+                    logger.Warn("Failed to back up old config and save new one")
+                    logger.Warn(exc)
+            else
+                config.Save(filename)
+                logger.Info("Created config file with default values. Please exit, edit config and restart program.")
             config
 
     // Suave setup
@@ -48,7 +62,7 @@ let main argv =
             homeFolder = Some (IO.Path.GetFullPath(myConfig.SitePath)) }
 
     // Campaign settings
-    let campaignSettingsPath = IO.Path.Combine(Campaign.GameServerControl.Settings.DefaultWorkDir, "..", "campaign.cfg")
+    let campaignSettingsPath = IO.Path.Combine(myConfig.CampaignPath, "campaign.cfg")
     let settings =
         if IO.File.Exists(campaignSettingsPath) then
             logger.Info(sprintf "Will load settings from %s" campaignSettingsPath)
