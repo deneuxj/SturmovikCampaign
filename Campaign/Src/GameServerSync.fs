@@ -762,14 +762,17 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     return this.Die("In error state: " + msg)
                 | None
                 | Some(PreparingMission)->
-                    let! status = this.PrepareMission()
-                    match status with
+                    let! status =
+                        let timeout = 5 * 60 * 1000 // 5 minutes
+                        Async.StartChild (this.PrepareMission(), timeout)
+                    match! status with
                     | Ok() ->
                         state <- Some ResavingMission
                         logger.Info state
                         this.SaveState()
                         return! this.ResumeAsync()
                     | Error msg ->
+                        gameServer.KillProcess(serverProcess) |> ignore
                         return this.Die(msg)
 
                 | Some ResavingMission ->
