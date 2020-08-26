@@ -1,4 +1,5 @@
-Add static planes in mission gen
+Add truck columns
+Add tank columns
 Add other missions in mission selections
 Update names of units in all groups to fit the result extractor needs
 Add windsocks
