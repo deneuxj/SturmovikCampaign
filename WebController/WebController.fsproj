@@ -11,9 +11,6 @@
     <None Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="webcontroller.cfg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <Compile Include="Basic.Dto.fs" />
     <Compile Include="World.Dto.fs" />
     <Compile Include="War.Dto.fs" />
