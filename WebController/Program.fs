@@ -1,8 +1,11 @@
 ﻿open System
 open System.Threading
+open System.Text.RegularExpressions
+
 open Suave
 open Campaign.WebController
 open Campaign.WebController.Routes
+open Util.RegexActivePatterns
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -25,8 +28,18 @@ let main argv =
                 None
         )
 
+    let myConfigFile =
+        let re = Regex("/Config:(.*)")
+        argv
+        |> Array.tryPick (
+            function
+            | MatchesRegex re (GroupList [path]) -> Some path
+            | _ -> None
+        )
+        |> Option.defaultValue "webcontroller.cfg"
+
     let myConfig =
-        let filename = "webcontroller.cfg"
+        let filename = myConfigFile
         if IO.File.Exists(filename) then
             logger.Info("Preparing to load config file " + filename)
             let config = Config.Config.LoadFromFile filename
