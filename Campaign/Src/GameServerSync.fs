@@ -272,7 +272,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     /// Get a seed computed from the state of the war
     member this.Seed =
         match war with
-        | Some war -> int (war.Date.Ticks &&& 0x7FFFFFFFL)
+        | Some war -> war.Seed
         | None -> 0
 
     member this.SaveState() =
