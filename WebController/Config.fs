@@ -6,6 +6,8 @@ open System
 type Config = {
     /// Path to the root of the web site, containing the html/ and js/ subdirectories
     SitePath : string
+    /// IPs and ports to listen on
+    Listen : {| IP : string; Port : uint16 |} list
 }
 with
     static member LoadFromFile(path : string) =
@@ -20,4 +22,5 @@ with
     static member Default =
         {
             SitePath = "."
+            Listen = [ {| IP = "127.0.0.1"; Port = 8080us |}]
         }

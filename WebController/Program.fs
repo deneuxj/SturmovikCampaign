@@ -39,7 +39,13 @@ let main argv =
 
     // Suave setup
     let cts = new CancellationTokenSource()
-    let conf = { defaultConfig with cancellationToken = cts.Token; homeFolder = Some (IO.Path.GetFullPath(myConfig.SitePath)) }
+    let conf =
+        { defaultConfig with
+            bindings =
+                myConfig.Listen
+                |> List.map (fun x -> HttpBinding.createSimple Protocol.HTTP x.IP (int x.Port))
+            cancellationToken = cts.Token
+            homeFolder = Some (IO.Path.GetFullPath(myConfig.SitePath)) }
 
     // Campaign settings
     let campaignSettingsPath = IO.Path.Combine(Campaign.GameServerControl.Settings.DefaultWorkDir, "..", "campaign.cfg")
