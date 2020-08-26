@@ -571,7 +571,8 @@ type MultiplayerMissionContent =
         GroundBattles : GroundBattle list
         AiPatrols : AiPatrol list
         AiAttacks : AiAttack list
-        Convoys : Convoy list
+        /// List of chains of convoys, convoys in each chain start after the previous one reaches completion.
+        Convoys : Convoy list list
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
     }
 with
@@ -688,20 +689,23 @@ with
 
         // Convoys
         let convoys : IMcuGroup list =
-            ((1, missionBegin, None), this.Convoys)
-            ||> List.scan (fun (i, trigger, _) convoy ->
-                let mcus = convoy.CreateMCUs(store, lcStore, sprintf "convoy%02d" i, trigger)
-                let completed =
-                    match mcus with
-                    | :? TrainWithNotification as train ->
-                        train.TheTrain.Completed
-                    | :? Factory.VirtualConvoy as convoy ->
-                        convoy.Api.Completed
-                    | _ ->
-                        trigger
-                (i + 1, completed, Some mcus)
-            )
-            |> List.choose (fun (_, _, x) -> x)
+            this.Convoys
+            |> List.mapi(fun i convoys ->
+                ((i * 100, missionBegin, None), convoys)
+                ||> List.scan (fun (i, trigger, _) convoy ->
+                    let mcus = convoy.CreateMCUs(store, lcStore, sprintf "convoy%02d" i, trigger)
+                    let completed =
+                        match mcus with
+                        | :? TrainWithNotification as train ->
+                            train.TheTrain.Completed
+                        | :? Factory.VirtualConvoy as convoy ->
+                            convoy.Api.Completed
+                        | _ ->
+                            trigger
+                    (i + 1, completed, Some mcus)
+                )
+                |> List.choose (fun (_, _, x) -> x))
+            |> List.concat
 
         // Parked planes
         let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =

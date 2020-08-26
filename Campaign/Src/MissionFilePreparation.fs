@@ -829,7 +829,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     | _ -> ()
         ]
         |> List.groupBy (fun convoy -> state.World.Countries.[convoy.Country])
-        |> List.collect (fun (coalition, convoys) ->
+        |> List.map (fun (coalition, convoys) ->
             convoys
             |> Array.ofList
             |> Array.shuffle (System.Random(state.Seed))
