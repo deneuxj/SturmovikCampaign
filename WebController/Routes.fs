@@ -117,16 +117,6 @@ let handleJson<'T> handler (ctx : HttpContext) : WebPart =
     | Error wb ->
         wb
 
-let setPassword (passwords : PasswordsManager) =
-    handleJson<{| User: string; Password: string |}>
-        (fun data ->
-            match passwords.SetPassword(data.User, data.Password) with
-            | Ok _ ->
-                OK (sprintf "Password set for %s" data.User) >=> setTextMimeType
-            | Error err ->
-                CONFLICT err >=> setTextMimeType
-        )
-
 let resetCampaign reset =
     handleJson<{| Scenario: string |}>
         (fun data -> reset data.Scenario)
@@ -159,7 +149,7 @@ let searchPilots handler (ctx : HttpContext) =
         }
     handler filter
 
-let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr : IRoutingResponse, ctrl : IControllerInteraction) =
+let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IControllerInteraction) =
     let inline serializeAsync task (ctx : HttpContext) =
         async {
             let! x = task
@@ -205,10 +195,6 @@ let mkRoutes (passwords : PasswordsManager, allowAdminPasswordChange : bool, rr 
             path "/control/sync/once" >=> inControlRoom(context(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
             path "/control/sync/stop" >=> inControlRoom(context(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))
             path "/control/sync/interrupt" >=> inControlRoom(context(fun _ -> ctrl.InterruptSync() |> serializeAsync))
-        ]
-        POST >=> choose [
-            if allowAdminPasswordChange then
-                yield path "/admin/set-password" >=> context (setPassword passwords)
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
         GET >=> pathStarts "/html/" >=> Files.browseHome

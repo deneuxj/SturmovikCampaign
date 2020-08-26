@@ -11,11 +11,7 @@ let private logger = NLog.LogManager.GetCurrentClassLogger()
 
 [<EntryPoint>]
 let main argv =
-    let allowAdminPasswordChange =
-        argv
-        |> Array.exists (function "/Allow:AdminPasswordChange" -> true | _ -> false)
-
-    let setAdminPasswordChange =
+    let setAdminPassword =
         argv
         |> Array.tryPick (fun s ->
             if s.StartsWith("/SetAdminPassword:") then
@@ -77,18 +73,16 @@ let main argv =
             defaultSettings
 
     let passwords = Campaign.Passwords.PasswordsManager()
-    if allowAdminPasswordChange then
-        logger.Warn("Unprotected setting of user passwords is enabled")
 
     // Set password from commandline
-    setAdminPasswordChange
+    setAdminPassword
     |> Option.iter(fun password ->
         passwords.SetPassword("admin", password)
         |> Result.mapError (fun msg -> logger.Warn(msg))
         |> ignore)
     // Create route handler
     let controller = Controller(settings)
-    let routes = mkRoutes(passwords, allowAdminPasswordChange, controller, controller)
+    let routes = mkRoutes(passwords, controller, controller)
     // Start
     let listening, server = startWebServerAsync conf routes
     Async.StartImmediate(server, cts.Token)
