@@ -78,8 +78,10 @@ let main argv =
     setAdminPassword
     |> Option.iter(fun password ->
         passwords.SetPassword("admin", password)
-        |> Result.mapError (fun msg -> logger.Warn(msg))
+        |> Result.mapError (fun msg -> logger.Warn(msg); failwithf "Failed to change adming password: %s" msg)
+        |> Result.map (fun () -> logger.Warn("Admin password was changed. Exiting"); System.Environment.Exit(0))
         |> ignore)
+
     // Create route handler
     let controller = Controller(settings)
     let routes = mkRoutes(passwords, controller, controller)
