@@ -57,6 +57,10 @@ type Settings =
         RoadsCapacity : float32
         RailsCapacity : float32
         SimulatedDuration : float32
+        MaxTrainsPerCoalition : int
+        MaxTruckConvoysPerCoalition : int
+        MaxActivePatrolsPerCoalition : int
+        MaxAAGuns : int
     }
 with
     /// Root of the data dir, passed to resaver.exe
@@ -98,6 +102,10 @@ module IO =
             roads_capacity : float option
             rails_capacity : float option
             simulated_duration : float option
+            max_trains : int option
+            max_truck_convoys : int option
+            max_active_patrols : int option
+            max_aa : int option
         }
     with
         member this.AsSettings =
@@ -120,6 +128,10 @@ module IO =
                 RoadsCapacity = defaultArg this.roads_capacity roadCapacity |> float32
                 RailsCapacity = defaultArg this.rails_capacity (3.0 * roadCapacity) |> float32
                 SimulatedDuration = defaultArg this.simulated_duration 180.0 |> float32
+                MaxTrainsPerCoalition = defaultArg this.max_trains 3
+                MaxTruckConvoysPerCoalition = defaultArg this.max_truck_convoys 2
+                MaxActivePatrolsPerCoalition = defaultArg this.max_active_patrols 4
+                MaxAAGuns = defaultArg this.max_aa 1000
             }
 
     /// Create a default settings file and return its content.
@@ -147,6 +159,10 @@ module IO =
                 roads_capacity = None
                 rails_capacity = None
                 simulated_duration = None
+                max_active_patrols = None
+                max_trains = None
+                max_truck_convoys = None
+                max_aa = None
             }
         let json = Json.serialize content
         IO.File.WriteAllText(path, json)

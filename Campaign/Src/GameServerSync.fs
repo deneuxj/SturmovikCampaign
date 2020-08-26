@@ -561,14 +561,14 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     let selection = ctrl.SelectMissions(stepData, state, seed, 25)
                     let missionPrepSettings : MissionFilePreparation.PreparationSettings =
                         {
-                            MissionFilePreparation.MaxTrainsPerSide = 5
-                            MissionFilePreparation.MaxTruckColumnsPerSide = 3
+                            MissionFilePreparation.MaxTrainsPerSide = settings.MaxTrainsPerCoalition
+                            MissionFilePreparation.MaxTruckColumnsPerSide = settings.MaxTruckConvoysPerCoalition
                             MissionFilePreparation.MissionLength = TimeSpan.FromMinutes(float settings.MissionDuration)
                         }
                     let missionGenSettings : MissionGenSettings =
                         {
-                            MaxAiPatrolPlanes = 6
-                            MaxAntiAirCannons = 1000
+                            MaxAiPatrolPlanes = settings.MaxActivePatrolsPerCoalition
+                            MaxAntiAirCannons = settings.MaxAAGuns
                             OutFilename = settings.MissionFilePath
                             Planes = state.World.PlaneSet.Values |> List.ofSeq
                         }
