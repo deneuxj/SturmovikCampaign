@@ -688,8 +688,20 @@ with
 
         // Convoys
         let convoys : IMcuGroup list =
-            this.Convoys
-            |> List.mapi (fun i convoy -> convoy.CreateMCUs(store, lcStore, sprintf "convoy%02d" (i + 1), missionBegin))
+            ((1, missionBegin, None), this.Convoys)
+            ||> List.scan (fun (i, trigger, _) convoy ->
+                let mcus = convoy.CreateMCUs(store, lcStore, sprintf "convoy%02d" i, trigger)
+                let completed =
+                    match mcus with
+                    | :? TrainWithNotification as train ->
+                        train.TheTrain.Completed
+                    | :? Factory.VirtualConvoy as convoy ->
+                        convoy.Api.Completed
+                    | _ ->
+                        trigger
+                (i + 1, completed, Some mcus)
+            )
+            |> List.choose (fun (_, _, x) -> x)
 
         // Parked planes
         let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
