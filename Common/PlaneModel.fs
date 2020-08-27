@@ -91,6 +91,15 @@ with
 
     member this.MaxRange = 800000.0f<M>
 
+    member this.CruiseSpeed =
+        match this.Name, this.Kind with
+        | "me262", _ -> 500.0f
+        | _, Fighter -> 400.0f
+        | _, Attacker -> 400.0f
+        | _, Bomber -> 350.0f
+        | _, Transport -> 300.0f
+        |> (*) 1000.0f<M/H>
+
     member this.StaticScriptModel : Vehicles.VehicleTypeData =
         {
             Model = sprintf @"graphics\blocks\static_%s.mgm" this.StaticBasename
