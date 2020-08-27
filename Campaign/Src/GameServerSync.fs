@@ -642,14 +642,17 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         let commands =
                             let basename = latestStartingMissionReport
                             asyncSeq {
-                                for log in WatchLogs.watchLogs settings.MissionLogs basename DateTime.UtcNow do
-                                    match log with
-                                    | WatchLogs.Old x | WatchLogs.Fresh x -> yield x
+                                for logFile in WatchLogs.watchLogs settings.MissionLogs basename DateTime.UtcNow do
+                                    let logFile =
+                                        match logFile with
+                                        | WatchLogs.Old x | WatchLogs.Fresh x -> x
+                                    let lines = IO.File.ReadAllLines(logFile)
+                                    yield! AsyncSeq.ofSeq lines
                             }
                             |> MissionResults.commandsFromLogs war
                         let liveReporter = LiveNotifier(commands, war.Clone(), messaging)
                         let cancellation = new Threading.CancellationTokenSource()
-                        Async.StartImmediate(liveReporter.Run(), cancellation.Token)
+                        Async.Start(liveReporter.Run(), cancellation.Token)
                         // Give time to execute old commands
                         do! Async.Sleep(15000)
                         liveReporter.UnMute()

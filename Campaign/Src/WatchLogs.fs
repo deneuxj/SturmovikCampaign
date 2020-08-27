@@ -40,12 +40,16 @@ type System.IO.Directory with
             let existingFiles =
                 Directory.EnumerateFiles(path, filter)
                 |> Seq.sortBy (fun file -> File.GetCreationTimeUtc(Path.Combine(path, file)))
+                |> List.ofSeq
+            logger.Debug("List of existing files")
+            logger.Debug(existingFiles)
             let newFiles = ConcurrentQueue<string>(existingFiles)
             // Race condition: we might miss files created after this point, and before watcher is started
             use watcher = new FileSystemWatcher(path, filter)
             use semaphore = new SemaphoreSlim(newFiles.Count)
             watcher.Created.Add(fun ev ->
-                newFiles.Enqueue(ev.Name)
+                logger.Debug("New log file created: " + ev.Name)
+                newFiles.Enqueue(IO.Path.Combine(path, ev.Name))
                 semaphore.Release() |> ignore)
             watcher.EnableRaisingEvents <- true
             let rec loop() =
@@ -53,6 +57,7 @@ type System.IO.Directory with
                     do! Async.AwaitTask(semaphore.WaitAsync())
                     match newFiles.TryDequeue() with
                     | true, s ->
+                        logger.Debug("Yield file " + s)
                         yield s
                     | false, _ ->
                         ()
