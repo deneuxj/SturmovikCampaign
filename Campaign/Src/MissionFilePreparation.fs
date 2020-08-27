@@ -792,7 +792,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> dict
 
     let getPaths (network : Network) =
-        let terminalsInRegion = mkTerminalsInRegion state.World.Rails
+        let terminalsInRegion = mkTerminalsInRegion network
         let qa = network.GetQuickAccess()
         [
             for startRegion in state.World.Regions.Values do
@@ -802,7 +802,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         match terminalsInRegion.TryGetValue(startRegion.RegionId), terminalsInRegion.TryGetValue(destRegionId) with
                         | (true, starts), (true, dests) ->
                             logger.Debug(sprintf "Considering path between %s and %s" (string startRegion.RegionId) (string destRegionId))
-                            match state.TryGetTrainPath(starts, dests, Some owner) with
+                            match state.TryFindPath(network, starts, dests, Some owner) with
                             | Some links ->
                                 let path =
                                     links

@@ -189,8 +189,8 @@ type IWarStateQuery =
     abstract member GetPilot : PilotId -> Pilot
     /// Get next available pilot ID
     abstract member NextPilotId : unit -> PilotId
-    /// Find a path on railways from one set of nodes to another, optionally restricted within the territory of a coalition
-    abstract member TryGetTrainPath : sources: NetworkNode list * objectives: NetworkNode list * coalition: CoalitionId option -> NetworkLink list option
+    /// Find a path through road/rail network from one set of nodes to another, optionally restricted within the territory of a coalition
+    abstract member TryFindPath : network : Network * sources: NetworkNode list * objectives: NetworkNode list * coalition: CoalitionId option -> NetworkLink list option
 
 [<AutoOpen>]
 module IWarStateExtensions = 
@@ -679,7 +679,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
 
     member this.NextPilotId() = PilotId(pilots.Count)
 
-    member this.FindPath(network : Network, starts : NetworkNode list, objectives : NetworkNode list, coalition : CoalitionId option) =
+    member this.TryFindPath(network : Network, starts : NetworkNode list, objectives : NetworkNode list, coalition : CoalitionId option) =
         let nodesToRemove =
             // Wrong coalition
             match coalition with
@@ -719,7 +719,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         hash (this.Date, this.World.Scenario, this.Weather)
 
     interface IWarState with
-        member this.TryGetTrainPath(sources, objectives, coalition) = this.FindPath(world.Rails, sources, objectives, coalition)
+        member this.TryFindPath(network, sources, objectives, coalition) = this.TryFindPath(network, sources, objectives, coalition)
         member this.ComputeDistancesToAirfields() = upcast(this.ComputeDistancesToAirfields())
         member this.ComputeDistancesToCoalition(arg1) = upcast(this.ComputeDistancesToCoalition(arg1))
         member this.ComputeRailCapacity() = this.ComputeRailCapacity()
