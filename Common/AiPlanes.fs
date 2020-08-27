@@ -147,7 +147,7 @@ with
         let blocks =
             [
                 for i in 1..numPlanes do
-                    let block = Attacker.Create(store, lcStore, this.Start + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Target, landOrder)
+                    let block = Attacker.Create(store, lcStore, this.Start + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), int (this.Attacker.CruiseSpeed / 1000.0f), this.Target, landOrder)
                     let modmask, payload = this.Attacker.Payloads.[this.Role]
                     block.Plane.Country <- Some this.Country.ToMcuValue
                     this.Attacker.ScriptModel.AssignTo(block.Plane)

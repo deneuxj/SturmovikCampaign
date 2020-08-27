@@ -25,7 +25,7 @@ type Attacker = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, pos : Vector2, planeAlt : float32, target : Vector2, landOrder : OptionalLandOrder) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, pos : Vector2, planeAlt : float32, cruiseSpeed : int, target : Vector2, landOrder : OptionalLandOrder) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("GroundAttack").CreateMcuList()
@@ -47,7 +47,12 @@ with
         let landDelay = getTriggerByName group "LandDelay" :?> Mcu.McuTimer
         // Respawn timing, depends on travel time
         respawnDelay.Time <-
-            attackDuration.Time + 3.6 * 2.0 * (float <| (target - pos).Length()) / float ingress.Speed
+            let takeOffAndLandingTime = 900.0 // 15min
+            takeOffAndLandingTime + attackDuration.Time + 3.6 * 2.0 * (float <| (target - pos).Length()) / float cruiseSpeed
+        // Speeds
+        ingress.Speed <- cruiseSpeed
+        egress.Speed <- cruiseSpeed
+        exit.Speed <- cruiseSpeed
         // Position of all nodes
         let refPoint = Vector2.FromMcu(plane.Pos)
         let dv = pos - refPoint
