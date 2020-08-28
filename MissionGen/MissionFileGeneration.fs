@@ -435,6 +435,7 @@ with
 type Convoy =
     {
         Country : CountryId
+        Coalition : CoalitionId
         Members : ConvoyMember list
         Path : OrientedPosition list
         StartPositions : OrientedPosition list
@@ -456,14 +457,14 @@ with
             )
         match this.Members with
         | [Train] ->
-            let train = TrainWithNotification.Create(store, lcStore, true, pathVertices, [], this.Country.ToMcuValue, columnName)
+            let train = TrainWithNotification.Create(store, lcStore, true, pathVertices, [], this.Country.ToMcuValue, this.Coalition.ToCoalition, columnName)
             Mcu.addTargetLink startTrigger train.TheTrain.Start.Index
             train :> IMcuGroup
         | _ ->
             let columnContent =
                 this.Members
                 |> List.map (fun x -> x.VehicleData(this.Country))
-            let column = Factory.VirtualConvoy.CreateColumn(store, lcStore, pathVertices, [], columnContent, this.Country.ToMcuValue, this.Country.Coalition.ToCoalition, columnName, 0)
+            let column = Factory.VirtualConvoy.CreateColumn(store, lcStore, pathVertices, [], columnContent, this.Country.ToMcuValue, this.Coalition.ToCoalition, columnName, 0)
             Mcu.addTargetLink startTrigger column.Api.Start.Index
             column :> IMcuGroup
 

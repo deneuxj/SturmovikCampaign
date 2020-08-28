@@ -97,7 +97,7 @@ with
         // Truck model. Every fifth truck is a mobile AA truck.
         let m =
             match country with
-            | Mcu.CountryValue.Germany ->
+            | Mcu.CountryValue.Germany | Mcu.CountryValue.Italy ->
                 if withAA && inFormation % 5 = 0 then
                     vehicles.GermanMobileAA
                 else
@@ -107,6 +107,11 @@ with
                     vehicles.RussianMobileAA
                 else
                     vehicles.RussianTruck
+            | Mcu.CountryValue.UnitedStates | Mcu.CountryValue.GreatBritain ->
+                if withAA && inFormation % 5 = 0 then
+                    vehicles.AmericanMobileAA
+                else
+                    vehicles.AmericanTruck
             | _ ->
                 failwith "Unsupported country"
         m.AssignTo(truck)

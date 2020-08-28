@@ -26,7 +26,7 @@ type Train = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, isHeavyAA : bool, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, country : Mcu.CountryValue) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, isHeavyAA : bool, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         if path.IsEmpty then
             failwith "Cannot create train with empty path"
         let startV = List.head path
@@ -136,7 +136,7 @@ with
         train2.Ori.Y <- float startV.Ori
         train2.AILevel <- Some 2
         // Watch for enemy planes
-        enemyPlaneClose.PlaneCoalitions <- [ country |> McuUtil.coalitionOf |> McuUtil.swapCoalition ]
+        enemyPlaneClose.PlaneCoalitions <- [ McuUtil.swapCoalition coalition ]
         // Position of all nodes
         let refPoint = Vector2(float32 train.Pos.X, float32 train.Pos.Z)
         let dv = startV.Pos - refPoint
@@ -148,11 +148,6 @@ with
         // Icons
         let iconPos =
             0.5f * (startV.Pos + destV.Pos)
-        let coalition =
-            match country with
-            | Mcu.CountryValue.Germany -> Mcu.CoalitionValue.Axis
-            | Mcu.CountryValue.Russia -> Mcu.CoalitionValue.Allies
-            | _ -> invalidArg "country" "Must be Germany or Russia"
         let iconCover, iconAttack = IconDisplay.CreatePair(store, lcStore, iconPos, "", coalition, Mcu.IconIdValue.CoverTrains)
         // Hide icon when train is blocked and stopped
         Mcu.addTargetLink stopTravel iconCover.Hide.Index
@@ -202,12 +197,12 @@ with
                 yield this.Blocked.All
             ]
 
-    static member Create(store, lcStore, withHeavyAA, path : PathVertex list, bridges, country, eventName) =
+    static member Create(store, lcStore, withHeavyAA, path : PathVertex list, bridges, country, coalition, eventName) =
         if path.IsEmpty then
             failwith "Cannot create train with empty path"
         let pos = path.Head.Pos
         let destinationPos = (List.last path).Pos
-        let train = Train.Create(store, lcStore, withHeavyAA, path, bridges, country)
+        let train = Train.Create(store, lcStore, withHeavyAA, path, bridges, country, coalition)
         let startEventName = sprintf "%s-D-0" eventName
         let started = EventReporting.Create(store, country, pos + Vector2(0.0f, 100.0f), startEventName)
         let arrivedEventName = sprintf "%s-A-0" eventName

@@ -842,6 +842,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             for x in getPaths state.World.Rails do
                 yield {
                     Country = x.Country
+                    Coalition = state.World.Countries.[x.Country]
                     Members = [ ConvoyMember.Train ]
                     Path = x.Path
                     StartPositions = [ x.Path.Head ]
@@ -866,6 +867,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     |> List.truncate (x.Path.Length - 1)
                 yield {
                     Country = x.Country
+                    Coalition = state.World.Countries.[x.Country]
                     Members = ConvoyMember.StaffCar :: rest
                     Path = x.Path
                     StartPositions = x.Path |> List.truncate (rest.Length + 1) |> List.rev
