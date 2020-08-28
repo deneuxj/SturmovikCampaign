@@ -29,8 +29,9 @@ with
     static member Create(store : NumericalIdentifiers.IdStore, lcStore, isHeavyAA : bool, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         if path.IsEmpty then
             failwith "Cannot create train with empty path"
-        let startV = List.head path
-        let destV = List.last path
+        let startV, midV, destV =
+            let x = Array.ofList path
+            x.[0], x.[x.Length / 2], Array.last x
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let group = blocksData.GetGroup("Train").CreateMcuList()
@@ -146,8 +147,7 @@ with
         // Position waypoint
         destV.Pos.AssignTo destWp.Pos
         // Icons
-        let iconPos =
-            0.5f * (startV.Pos + destV.Pos)
+        let iconPos = midV.Pos
         let iconCover, iconAttack = IconDisplay.CreatePair(store, lcStore, iconPos, "", coalition, Mcu.IconIdValue.CoverTrains)
         // Hide icon when train is blocked and stopped
         Mcu.addTargetLink stopTravel iconCover.Hide.Index
