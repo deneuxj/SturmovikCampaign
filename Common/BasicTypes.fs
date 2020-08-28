@@ -212,6 +212,7 @@ type IRunway =
     abstract PathOffRunway : Vector2 list
     abstract Start : Vector2
     abstract End : Vector2
+    abstract Name : string
 
 type IAirfield =
     abstract AirfieldId : AirfieldId

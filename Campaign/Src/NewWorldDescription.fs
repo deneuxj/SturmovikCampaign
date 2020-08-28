@@ -334,6 +334,10 @@ type Runway = {
     End : Vector2
 }
 with
+    member this.Name =
+        int((this.End - this.Start).YOri / 10.0f)
+        |> sprintf "%02d"
+
     interface IRunway with
         member this.End: Vector2 = 
             this.End
@@ -345,6 +349,8 @@ with
             this.SpawnPos
         member this.Start: Vector2 = 
             this.Start
+        member this.Name =
+            this.Name
 
 type Airfield = {
     AirfieldId : AirfieldId

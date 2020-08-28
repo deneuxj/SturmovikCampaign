@@ -149,6 +149,7 @@ type IAirfieldQuery =
 type PlayerSpawn =
     {
         Airfield : AirfieldId
+        RunwayName : string
         SpawnType : PlayerSpawnType
         Pos : OrientedPosition
         Flight : PlayerFlight
@@ -175,7 +176,7 @@ with
                     T.Airfield.Default
                         .SetIndex(T.Integer.N 1)
                         .SetLinkTrId(T.Integer.N 2)
-                        .SetName(T.String.N this.Airfield.AirfieldName)
+                        .SetName(T.String.N ((this.Airfield.AirfieldName + " " + this.RunwayName).Trim()))
                         .SetReturnPlanes(T.Boolean.N true)
                         .SetRefuelFriendlies(T.Boolean.N true)
                         .SetRearmFriendlies(T.Boolean.N true)

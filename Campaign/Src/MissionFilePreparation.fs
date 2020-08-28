@@ -424,6 +424,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         Airfield = af.AirfieldId
                         SpawnType = Parking warmedUp
                         Pos = runway.SpawnPos
+                        RunwayName = runway.Name
                         Flight = Unconstrained planes
                     }
                 yield spawn
