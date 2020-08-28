@@ -868,6 +868,14 @@ module Init =
             airfields
             |> Seq.map (fun af -> af.AirfieldId, af)
             |> dict
+        let countries =
+            options.GetCountries().Value
+            |> Seq.choose (fun x ->
+                let country, coalition = x.Value
+                match CountryId.FromMcuValue(enum country.Value), CoalitionId.FromMcuValue(enum coalition.Value) with
+                | Some country, Some coalition -> Some(country, coalition)
+                | _ -> None)
+            |> dict
         {
             Scenario = scenario
             Map = mapName
@@ -887,13 +895,7 @@ module Init =
             Buildings = buildingsDict
             Bridges = bridges
             PlaneSet = dict[]
-            Countries =
-                dict [
-                    Germany, Axis
-                    Russia, Allies
-                    GreatBritain, Allies
-                    UnitedStates, Allies
-                ]
+            Countries = countries
             Names = NameDatabase.Default
             Ranks = RanksDatabase.Default
             Awards = AwardDatabase.Default
