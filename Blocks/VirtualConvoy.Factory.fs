@@ -205,9 +205,8 @@ with
             EventReporting.Create(store, country, apiPos + Vector2(-100.0f, -200.0f), name)
 
         let iconPos =
-            let tip = (List.head path).Pos
-            let top = (List.last path).Pos
-            0.5f * (tip + top)
+            let mid = List.item (List.length path / 2) path
+            mid.Pos
 
         let coverIcon, attackIcon = IconDisplay.CreatePair(store, lcStore, iconPos, "", coalition, Mcu.IconIdValue.CoverTransportColumn)
 
