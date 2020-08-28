@@ -559,9 +559,12 @@ module Init =
         ]
 
     /// Extract a list of regions from a list of influence areas and a list of building instances
-    let extractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list) =
+    let extractRegions(regions : T.MCU_TR_InfluenceArea list, buildings : BuildingInstance list, coalitionOf : CountryId -> CoalitionId) =
         let extractOne (region : T.MCU_TR_InfluenceArea) : Region =
-            let coalition = CoalitionId.FromCountry (enum(region.GetCountry().Value))
+            let coalition =
+                enum(region.GetCountry().Value)
+                |> CountryId.FromMcuValue
+                |> Option.map coalitionOf
             let boundary = region.GetBoundary().Value |> Seq.map(fun coord -> Vector2.FromPair(coord)) |> List.ofSeq
             let buildings =
                 buildings
@@ -816,16 +819,25 @@ module Init =
             buildings
             |> Seq.map (fun b -> b.Id, b)
             |> dict
+        // Map name
+        let options = Seq.head missionData.ListOfOptions
+        let mapName = options.GetGuiMap().Value
+        // Mapping from countries to coalitions
+        let countries =
+            options.GetCountries().Value
+            |> Seq.choose (fun x ->
+                let country, coalition = x.Value
+                match CountryId.FromMcuValue(enum country.Value), CoalitionId.FromMcuValue(enum coalition.Value) with
+                | Some country, Some coalition -> Some(country, coalition)
+                | _ -> None)
+            |> dict
         // Regions
-        let regions = extractRegions(regionAreas, buildings)
+        let regions = extractRegions(regionAreas, buildings, fun x -> countries.[x])
         // Airfields
         let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea |> List.ofSeq
         let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield |> List.ofSeq
         let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions, fun bid -> buildingsDict.[bid])
         let regions = cleanRegionBuildings(regions, airfields)
-        // Map name
-        let options = Seq.head missionData.ListOfOptions
-        let mapName = options.GetGuiMap().Value
         // Terminal areas
         let terminals =
             missionData.GetGroup("Terminals").ListOfMCU_TR_InfluenceArea
@@ -867,14 +879,6 @@ module Init =
         let airfields =
             airfields
             |> Seq.map (fun af -> af.AirfieldId, af)
-            |> dict
-        let countries =
-            options.GetCountries().Value
-            |> Seq.choose (fun x ->
-                let country, coalition = x.Value
-                match CountryId.FromMcuValue(enum country.Value), CoalitionId.FromMcuValue(enum coalition.Value) with
-                | Some country, Some coalition -> Some(country, coalition)
-                | _ -> None)
             |> dict
         {
             Scenario = scenario

@@ -34,6 +34,7 @@ type AiPatrol =
       NumPlanes : int
       HomeAirfield : AirfieldId
       Country : CountryId
+      Coalition : CoalitionId
       Pos : Vector2
       Altitude : float32
       ProtectedRegion : RegionId option
@@ -41,8 +42,6 @@ type AiPatrol =
       PlaneReserve : int // Max number of planes that can be use for that patrol
     }
 with
-    member this.Coalition = this.Country.Coalition
-
     member this.ToPatrolBlock(store, lcStore) =
         let blocks =
             [
@@ -129,6 +128,7 @@ type AiAttack =
       AttackerReserve : int
       NumPlanes : int
       Country : CountryId
+      Coalition : CoalitionId
       Start : Vector2
       Target : Vector2
       Altitude : float32
@@ -136,8 +136,6 @@ type AiAttack =
       Role : PlaneRole
     }
 with
-    member this.Coalition = this.Country.Coalition
-
     member this.ToPatrolBlock(store, lcStore) =
         let numPlanes = this.NumPlanes
         let landOrder =

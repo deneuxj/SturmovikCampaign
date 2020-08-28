@@ -268,13 +268,13 @@ type GroundBattle =
         Pos : OrientedPosition
         Defending : CountryId
         Attacking : CountryId
+        DefendingCoalition : CoalitionId
         NumDefending : GroundBattleNumbers
         NumAttacking : GroundBattleNumbers
     }
 with
 
     member this.CreateMCUs(random : System.Random, store, lcStore, region, startTrigger) =
-        let defendingCoalition = this.Defending.Coalition
         // Get a random position within the bounding rectangle of the boundary
         let getRandomPos(areaLocation) =
             let dir = Vector2.FromYOri(float this.Pos.Rotation)
@@ -313,14 +313,14 @@ with
         // Build an attacking tank
         let buildTank (country : CountryId) (model : VehicleTypeData) =
             let tank = RespawningTank.Create(store, getRandomPos(AttackMiddle), getRandomPos(DefenseBack), country.ToMcuValue)
-            let role = if country.Coalition = defendingCoalition then "D" else "A"
+            let role = if country = this.Defending then "D" else "A"
             tank.Tank.Name <- sprintf "B-%s-%s-%s" region role "medium"
             model.AssignTo(tank.Tank)
             tank |> Choice1Of2
         // Build a supporting object (dug-in tank or rocket artillery)
         let buildCannon (country : CountryId) (location, model : VehicleTypeData, wallModel : VehicleTypeData) =
             let arty = RespawningCanon.Create(store, getRandomPos(location), getRandomPos(AttackBack), country.ToMcuValue)
-            let role = if country.Coalition = defendingCoalition then "D" else "A"
+            let role = if country = this.Defending then "D" else "A"
             arty.Canon.Name <- sprintf "B-%s-%s-%s" region role "medium"
             wallModel.AssignTo(arty.Wall)
             model.AssignTo(arty.Canon)
@@ -331,13 +331,13 @@ with
                 let buildCannon = buildCannon country
                 let buildTank = buildTank country
                 let backPosition =
-                    if country.Coalition = defendingCoalition then
+                    if country = this.Defending then
                         DefenseBack
                     else
                         AttackBack
                 seq {
                     for _ in 1 .. composition.NumTanks do
-                        if country.Coalition = defendingCoalition then
+                        if country = this.Defending then
                             match country with
                             | Russia -> (DefenseBack, vehicles.RussianMediumTank, vehicles.AntiTankPosition) |> buildCannon
                             | Italy | Germany -> (DefenseBack, vehicles.GermanMediumTank, vehicles.AntiTankPosition) |> buildCannon
@@ -374,8 +374,8 @@ with
         let defenders, cannons = buildTanksAndSupport(this.Defending, this.NumDefending)
 
         // Icons
-        let icon1 = BattleIcons.Create(store, lcStore, this.Pos.Pos, this.Pos.Rotation, this.NumDefending.NumTanks, this.NumAttacking.NumTanks, Defenders defendingCoalition.ToCoalition)
-        let icon2 = BattleIcons.Create(store, lcStore, this.Pos.Pos, this.Pos.Rotation, this.NumAttacking.NumTanks, this.NumDefending.NumTanks, Attackers defendingCoalition.Other.ToCoalition)
+        let icon1 = BattleIcons.Create(store, lcStore, this.Pos.Pos, this.Pos.Rotation, this.NumDefending.NumTanks, this.NumAttacking.NumTanks, Defenders this.DefendingCoalition.ToCoalition)
+        let icon2 = BattleIcons.Create(store, lcStore, this.Pos.Pos, this.Pos.Rotation, this.NumAttacking.NumTanks, this.NumDefending.NumTanks, Attackers this.DefendingCoalition.Other.ToCoalition)
 
         // Start
         for support in support do
@@ -661,7 +661,7 @@ with
         let allAttacks =
             let attacksByCoalition =
                 this.AiAttacks
-                |> List.groupBy (fun attack -> attack.Country.Coalition)
+                |> List.groupBy (fun attack -> attack.Country)
                 |> List.collect (fun (coalition, attacks) ->
                     attacks
                     |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore)))

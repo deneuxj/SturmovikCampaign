@@ -56,7 +56,7 @@ type AiAttack with
             let planeModel = state.World.PlaneSet.[mission.Plane]
             let numPlanes = min (defaultArg maxFlightSize 5) mission.NumPlanes
             let reserve = mission.NumPlanes - numPlanes
-            let country = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun x -> x.Key
+            let country = state.World.GetAnyCountryInCoalition(coalition)
             let toTarget =
                 let v = targetPos - state.World.Airfields.[mission.StartAirfield].Position
                 v / v.Length()
@@ -86,6 +86,7 @@ type AiAttack with
                     AttackerReserve = reserve
                     HomeAirfield = mission.StartAirfield
                     Country = country
+                    Coalition = coalition
                     Start = startPos
                     Target = targetPos
                     Altitude = altitude
@@ -103,7 +104,7 @@ type AiPatrol with
             let planeModel = state.World.PlaneSet.[mission.Plane]
             let numPlanes = min maxFlightSize mission.NumPlanes
             let reserve = mission.NumPlanes - numPlanes
-            let country = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun x -> x.Key
+            let country = state.World.GetAnyCountryInCoalition(coalition)
             let roles, protectedRegion =
                 if state.GetOwner(mission.Objective) = Some coalition then
                     [PlaneRole.Interceptor; PlaneRole.Patroller], Some mission.Objective
@@ -120,6 +121,7 @@ type AiPatrol with
                     PlaneReserve = reserve
                     HomeAirfield = mission.StartAirfield
                     Country = country
+                    Coalition = coalition
                     Pos = targetPos
                     Altitude = 3500.0f
                     Role = role
@@ -357,12 +359,13 @@ with
                   NumAntiTankGuns = int(0.25f * force / TargetType.Artillery.GroundForceValue)
                   NumTanks = int(0.25f * force / TargetType.Tank.GroundForceValue)
                 }
-            let getCountryInCoalition coalition = state.World.Countries |> Seq.find (fun kvp -> kvp.Value = coalition) |> fun kvp -> kvp.Key
+            let getCountryInCoalition coalition = state.World.GetAnyCountryInCoalition coalition
             Some {
                 Region = mission.Objective
                 Boundary = area |> List.map (fun v -> pos.Pos + v.Rotate(pos.Rotation))
                 Pos = pos
                 Defending = getCountryInCoalition initiator.Other
+                DefendingCoalition = initiator.Other
                 Attacking = getCountryInCoalition initiator
                 NumDefending = computeNum(state.GetGroundForces(initiator.Other, mission.Objective))
                 NumAttacking = computeNum(state.GetGroundForces(initiator, mission.Objective))
