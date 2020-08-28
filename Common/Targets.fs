@@ -71,19 +71,22 @@ type Target =
 type AmmoType = AmmoName of string
 
 type ReturnType =
-    CrashedInEnemyTerritory | CrashedInFriendlyTerritory of Vector2 | AtAirfield of AirfieldId
+    | CrashedInEnemyTerritory
+    | CrashedInFriendlyTerritory of AirfieldId option
+    | AtAirfield of AirfieldId
 with
     override this.ToString() =
         match this with
         | CrashedInEnemyTerritory -> "crashed in enemy territory"
-        | CrashedInFriendlyTerritory _ -> "crashed in friendly territory"
+        | CrashedInFriendlyTerritory(Some afId) -> sprintf "crashed in friendly territory near %s" afId.AirfieldName
+        | CrashedInFriendlyTerritory None -> "crashed in friendly territory, far from all airfields"
         | AtAirfield afId -> sprintf "landed at %s" (string afId)
 
 /// The results of a flight by a player, used to build success rates of missions.
 type FlightRecord =
     {
         Date : DateTime
-        [<FSharp.Json.JsonField(Transform=typeof<Util.Json.TimeSpanTransform>)>]
+        [<Util.Json.TimeSpanJsonField>]
         Length : TimeSpan
         Plane : PlaneModelId
         PlaneHealth : float32

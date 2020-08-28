@@ -233,34 +233,18 @@ module IWarStateExtensions =
             | Some { Return = AtAirfield afId2 } ->
                 // Can start if airfield is same as landing of latest recorded mission
                 afId2 = afId
-            | Some { Return = CrashedInFriendlyTerritory pos } ->
-                // Can start if crash-landed within 25km of airfield, or ...
-                (this.World.Airfields.[afId].Position - pos).Length() < 25000.0f ||
-                try
-                    // ... airfield is the closest one to the crash site
-                    this.AirfieldsOfCoalition(this.World.Countries.[pilot.Country])
-                    |> Seq.minBy (fun af -> (af.Position - pos).LengthSquared())
-                    |> fun af -> af.AirfieldId = afId
-                with _ -> false
+            | Some { Return = CrashedInFriendlyTerritory(Some afId2) } ->
+                afId2 = afId
+            | Some { Return = CrashedInFriendlyTerritory None } ->
+                false
             | Some { Return = CrashedInEnemyTerritory } ->
                 false
 
         member this.TryGetReturnAirfield(flight : FlightRecord, coalition) =
             match flight.Return with
             | CrashedInEnemyTerritory -> None
-            | CrashedInFriendlyTerritory pos ->
-                try
-                    this.World.Airfields.Values
-                    |> Seq.filter (fun af -> // Airfields controlled by the player's side
-                        this.GetOwner(af.Region)
-                        |> Option.map (fun coalition2 -> coalition2 = coalition)
-                        |> Option.defaultValue false)
-                    |> Seq.minBy (fun af -> (af.Position - pos).LengthSquared()) // Pick closest airfield
-                    |> fun af -> af.AirfieldId
-                    |> Some
-                with _ -> None
-            | AtAirfield afId ->
-                Some afId
+            | CrashedInFriendlyTerritory afId -> afId
+            | AtAirfield afId -> Some afId
 
         member this.TryGetPilotHome(pilotId) =
             let pilot = this.GetPilot(pilotId)

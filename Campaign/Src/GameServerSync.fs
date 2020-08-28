@@ -113,46 +113,54 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                 commands
                 |> AsyncSeq.iterAsync(fun command -> async {
                     if not isMuted then
-                        match command with
-                        | WarStateUpdate.Commands.RegisterPilotFlight(pid, flight, health) ->
-                            let pilot = war.GetPilot(pid)
-                            let rank =
-                                Pilots.tryComputeRank war.World.Ranks pilot
-                                |> Option.map (fun rank -> rank.RankAbbrev)
-                                |> Option.defaultValue ""
-                            let eventDescription =
-                                match flight.Return with
-                                | CrashedInEnemyTerritory -> "crashed in enemy territory"
-                                | CrashedInFriendlyTerritory _ -> "crash-landed"
-                                | AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
-                            let msg = sprintf "%s %s %s (%d) has %s" rank pilot.PilotFirstName pilot.PilotLastName pid.AsInt eventDescription
-                            let coalition = war.World.Countries.[pilot.Country]
-                            let! s = notifier.MessageCoalition(coalition, msg)
-                            match health with
-                            | Pilots.Healthy -> ()
-                            | Pilots.Dead ->
-                                let msg = sprintf "The career of %s %s has ended" rank pilot.PilotLastName
+                        try
+                            match command with
+                            | WarStateUpdate.Commands.RegisterPilotFlight(pid, flight, health) ->
+                                let pilot = war.GetPilot(pid)
+                                let rank =
+                                    Pilots.tryComputeRank war.World.Ranks pilot
+                                    |> Option.map (fun rank -> rank.RankAbbrev)
+                                    |> Option.defaultValue ""
+                                let eventDescription =
+                                    match flight.Return with
+                                    | CrashedInEnemyTerritory _ -> "crashed in enemy territory"
+                                    | CrashedInFriendlyTerritory _ -> "crash-landed"
+                                    | AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
+                                let msg = sprintf "%s %s %s (%d) has %s" rank pilot.PilotFirstName pilot.PilotLastName pid.AsInt eventDescription
+                                let coalition = war.World.Countries.[pilot.Country]
                                 let! s = notifier.MessageCoalition(coalition, msg)
+                                match health with
+                                | Pilots.Healthy -> ()
+                                | Pilots.Dead ->
+                                    let msg = sprintf "The career of %s %s has ended" rank pilot.PilotLastName
+                                    let! s = notifier.MessageCoalition(coalition, msg)
+                                    ()
+                                | Pilots.Injured until ->
+                                    let msg = sprintf "%s %s is injured until at least %s" rank pilot.PilotLastName (until.ToString(pilot.Country.CultureInfo))
+                                    let! s = notifier.MessageCoalition(coalition, msg)
+                                    ()
+                            | WarStateUpdate.Commands.UpdatePilot(pilot) ->
+                                let player =
+                                    match war.TryGetPlayer(pilot.PlayerGuid) with
+                                    | Some player -> player.Name
+                                    | None -> "<incognito>"
+                                let rank =
+                                    Pilots.tryComputeRank war.World.Ranks pilot
+                                    |> Option.map (fun rank -> rank.RankAbbrev)
+                                    |> Option.defaultValue ""
+                                let msg = sprintf "%s has taken control of %s %s %s (%d)" player rank pilot.PilotFirstName pilot.PilotLastName pilot.Id.AsInt
+                                let! s = notifier.MessageAll(msg)
                                 ()
-                            | Pilots.Injured until ->
-                                let msg = sprintf "%s %s is injured until at least %s" rank pilot.PilotLastName (until.ToString(pilot.Country.CultureInfo))
-                                let! s = notifier.MessageCoalition(coalition, msg)
+                            | _ ->
                                 ()
-                        | WarStateUpdate.Commands.UpdatePilot(pilot) ->
-                            let player =
-                                match war.TryGetPlayer(pilot.PlayerGuid) with
-                                | Some player -> player.Name
-                                | None -> "<incognito>"
-                            let rank =
-                                Pilots.tryComputeRank war.World.Ranks pilot
-                                |> Option.map (fun rank -> rank.RankAbbrev)
-                                |> Option.defaultValue ""
-                            let msg = sprintf "%s has taken control of %s %s %s (%d)" player rank pilot.PilotFirstName pilot.PilotLastName pilot.Id.AsInt
-                            let! s = notifier.MessageAll(msg)
-                            ()
-                        | _ ->
-                            ()
-                    command.Execute(war) |> ignore
+                        with exc ->
+                            logger.Warn("Live notifier command-handling failed")
+                            logger.Debug(exc)
+                    try
+                        command.Execute(war) |> ignore
+                    with exc ->
+                        logger.Warn("Command execution in live notifier failed")
+                        logger.Debug(exc)
                 })
         }
 
@@ -382,7 +390,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 return Ok()
             with
             | exc ->
-                logger.Debug("Failed to initialize:")
+                logger.Warn("Failed to initialize:")
                 logger.Debug(exc)
                 return Error "Initialization failure"
         }
@@ -730,7 +738,6 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                 logger.Debug("Command from game logs: " + Json.serialize command)
                             with exc ->
                                 logger.Debug("Command from game logs.")
-                                logger.Debug(exc)
                             let effects = command.Execute(war)
                             yield (command, effects)
                     }

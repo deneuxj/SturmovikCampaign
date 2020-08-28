@@ -85,15 +85,11 @@ type Pilot =
 let countCompletedFlights (flights : FlightRecord list) =
     (0, flights)
     ||> List.fold (fun flights flight ->
-        match flight.Return with
-        | AtAirfield _ | CrashedInFriendlyTerritory _ ->
-            if flight.TargetsDamaged |> List.isEmpty |> not then
-                flights + 1
-            elif flight.Length >= TimeSpan(0, 20, 0) then // 20 minutes
-                flights + 1
-            else
-                flights
-        | _ ->
+        if flight.TargetsDamaged |> List.isEmpty |> not then
+            flights + 1
+        elif flight.Length >= TimeSpan(0, 20, 0) then // 20 minutes
+            flights + 1
+        else
             flights
     )
 

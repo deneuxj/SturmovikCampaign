@@ -52,10 +52,19 @@ let normalizeScript (path : string) =
 
 type IWarStateQuery with
     /// Get the nearest airfield to a position
-    member this.GetNearestAirfield((x, _, z) : Position) =
+    member this.TryGetNearestAirfield((x, _, z) : Position, coalitionFilter : CoalitionId option) =
         let p = Vector2(x, z)
-        this.World.Airfields.Values
-        |> Seq.minBy (fun af -> (af.Position - p).Length())
+        try
+            this.World.Airfields.Values
+            |> Seq.filter (fun af ->
+                match coalitionFilter, this.GetOwner(af.Region) with
+                | None, _ -> true
+                | Some c, Some owner -> c = owner
+                | Some _, None -> false)
+            |> Seq.map (fun af -> af, (af.Position - p).Length())
+            |> Seq.minBy snd
+            |> Some
+        with _ -> None
 
     /// Try to get a plane by its name as it appears in the logs
     member this.TryGetPlane(logName : string) =
@@ -76,13 +85,13 @@ type IWarStateQuery with
     /// Try to get the static plane at the given position, and the airfield it is assigned to.
     member this.TryGetStaticPlaneAt(logName : string, ((x, _, z) as pos)) =
         // We don't check that there actually is a plane at that position, only that's it's "close enough" to the nearest airfield.
-        let af = this.GetNearestAirfield(pos)
-        if (af.Position - Vector2(x, z)).Length() < 3000.0f then
+        match this.TryGetNearestAirfield(pos, None) with
+        | Some (af, dist) when dist < 3000.0f ->
             let logName = normalizeLogName logName
             this.World.PlaneSet.Values
             |> Seq.tryFind (fun plane -> normalizeScript(plane.StaticScriptModel.Script) = logName)
             |> Option.map (fun plane -> af.AirfieldId, plane)
-        else
+        | _ ->
             None
 
     /// Try to get the region at some position
@@ -289,7 +298,11 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     | true, binding ->
                         match state.TryGetPlane(binding.Name) with
                         | Some plane ->
-                            yield RemovePlane(state.GetNearestAirfield(taken.Position).AirfieldId, plane.Id, 1.0f)
+                            match state.TryGetNearestAirfield(taken.Position, None) with
+                            | Some (airfield, _) ->
+                                yield RemovePlane(airfield.AirfieldId, plane.Id, 1.0f)
+                            | None ->
+                                ()
                         | None ->
                             ()
                     | false, _ ->
@@ -301,7 +314,6 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
                     logger.Debug(string timeStamp + " Updating mappings with takenOff " + Json.serialize takeOff)
                     // Start flight record
-                    let afId = state.GetNearestAirfield(takeOff.Position).AirfieldId
                     let planeHealth =
                         healthOf.TryGetValue(takeOff.Id)
                         |> Option.ofPair
@@ -317,21 +329,25 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         let plane = state.TryGetPlane(taken.Typ)
                         match country, plane with
                         | Some country, Some plane ->
-                            let pilot = state.GetPlayerPilotFrom(taken.UserId, afId, country)
-                            let record : FlightRecord =
-                                {
-                                    Date = state.Date + timeStamp
-                                    Length = System.TimeSpan(0L)
-                                    Plane = plane.Id
-                                    PlaneHealth = planeHealth
-                                    PilotHealth = pilotHealth
-                                    Start = afId
-                                    AirKills = 0
-                                    TargetsDamaged = []
-                                    Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
-                                }
-                            flightRecords.[taken.PilotId] <- {| Pilot = pilot; Record = record |}
-                            yield UpdatePilot(pilot)
+                            match state.TryGetNearestAirfield(takeOff.Position, None) with
+                            | Some (airfield, _) ->
+                                let pilot = state.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country)
+                                let record : FlightRecord =
+                                    {
+                                        Date = state.Date + timeStamp
+                                        Length = System.TimeSpan(0L)
+                                        Plane = plane.Id
+                                        PlaneHealth = planeHealth
+                                        PilotHealth = pilotHealth
+                                        Start = airfield.AirfieldId
+                                        AirKills = 0
+                                        TargetsDamaged = []
+                                        Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
+                                    }
+                                flightRecords.[taken.PilotId] <- {| Pilot = pilot; Record = record |}
+                                yield UpdatePilot(pilot)
+                            | None ->
+                                logger.Warn("Could not find airfield of take-off")
                         | _ ->
                             ()
                     | false, _ -> ()
@@ -339,20 +355,41 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                 | ObjectEvent(timeStamp, ObjectLands landing) ->
                     logger.Debug(string timeStamp + " Updating mappings with landing " + Json.serialize landing)
                     // Update flight record
-                    let afId = state.GetNearestAirfield(landing.Position).AirfieldId
+                    let territory = state.TryGetRegionAt(landing.Position) |> Option.map (fun r -> r.RegionId) |> Option.bind state.GetOwner
+                    let landSite = state.TryGetNearestAirfield(landing.Position, territory)
                     let planeHealth =
                         healthOf.TryGetValue(landing.Id)
                         |> Option.ofPair
                         |> Option.defaultValue 1.0f
                     match pilotOf.TryGetValue(landing.Id) with
                     | true, taken ->
+                        let coalitionOfPilot =
+                            enum taken.Country
+                            |> CountryId.FromMcuValue
+                            |> Option.map (fun country -> state.World.Countries.[country])
+                        let inEnemyTerritory =
+                            match coalitionOfPilot with
+                            | Some c -> Some c.Other = territory
+                            | _ -> false
+                        let retAf =
+                            if inEnemyTerritory then
+                                CrashedInEnemyTerritory
+                            else
+                                match landSite with
+                                | Some (af, dist) ->
+                                    if dist < 3000.0f then
+                                        AtAirfield af.AirfieldId
+                                    else
+                                        CrashedInFriendlyTerritory (Some af.AirfieldId)
+                                | _ ->
+                                    CrashedInFriendlyTerritory None
                         match flightRecords.TryGetValue(taken.PilotId) with
                         | true, x ->
                             let flight =
                                 { x.Record with
                                     Length = state.Date + timeStamp - x.Record.Date
                                     PlaneHealth = planeHealth
-                                    Return = AtAirfield afId
+                                    Return = retAf
                                 }
                             flightRecords.[taken.PilotId] <- {| x with Record = flight |}
                         | false, _ ->
