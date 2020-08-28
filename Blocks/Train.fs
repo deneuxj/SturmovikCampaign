@@ -126,12 +126,17 @@ with
                     vehicles.MkRussianTrainMcu()
                 else
                     vehicles.MkRussianTrainMgAAMcu()
-            | Mcu.CountryValue.Germany 
-            | _ ->
+            | Mcu.CountryValue.Germany ->
                 if isHeavyAA then
                     vehicles.MkGermanTrainMcu()
                 else
                     vehicles.MkGermanTrainMgAAMcu()
+            | Mcu.CountryValue.UnitedStates | Mcu.CountryValue.GreatBritain ->
+                if isHeavyAA then
+                    vehicles.MkRussianTrainMgAAMcu()
+                else
+                    vehicles.MkRussianTrainMcu()
+            | _ -> failwith "Unsupported country when making train"
         train2.Index <- train.Index
         train2.LinkTrId <- train.LinkTrId
         train2.Ori.Y <- float startV.Ori
