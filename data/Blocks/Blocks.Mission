@@ -3286,7 +3286,7 @@ Group
     CoopStart = 0;
     NumberInFormation = 0;
     Vulnerable = 1;
-    Engageable = 0;
+    Engageable = 1;
     LimitAmmo = 1;
     StartInAir = 0;
     Callsign = 12;
@@ -3316,7 +3316,7 @@ Group
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    Enabled = 1;
+    Enabled = 0;
     MisObjID = 265;
     OnEvents
     {
@@ -3345,13 +3345,13 @@ Group
     Desc = "";
     Targets = [];
     Objects = [266];
-    XPos = 36470.157;
+    XPos = 36466.294;
     YPos = 187.048;
-    ZPos = 36683.632;
+    ZPos = 36408.845;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
-    SpawnAtMe = 0;
+    SpawnAtMe = 1;
   }
   
 
@@ -3362,9 +3362,9 @@ Group
     Desc = "";
     Targets = [273];
     Objects = [];
-    XPos = 36467.660;
+    XPos = 36466.297;
     YPos = 183.180;
-    ZPos = 36157.065;
+    ZPos = 36246.133;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -3601,33 +3601,6 @@ Group
   }
   
 
-  MCU_CMD_Behaviour
-  {
-    Index = 296;
-    Name = "SetGerman";
-    Desc = "";
-    Targets = [];
-    Objects = [266];
-    XPos = 36359.369;
-    YPos = 52.051;
-    ZPos = 36260.597;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Filter = 18;
-    Vulnerable = 1;
-    Engageable = 1;
-    LimitAmmo = 1;
-    RepairFriendlies = 0;
-    RehealFriendlies = 1;
-    RearmFriendlies = 0;
-    RefuelFriendlies = 0;
-    AILevel = 2;
-    Country = 201;
-    FloatParam = 0;
-  }
-  
-
   MCU_Timer
   {
     Index = 273;
@@ -3643,33 +3616,6 @@ Group
     ZOri = 0.00;
     Time = 1;
     Random = 100;
-  }
-  
-
-  MCU_CMD_Behaviour
-  {
-    Index = 298;
-    Name = "SetRussian";
-    Desc = "";
-    Targets = [];
-    Objects = [266];
-    XPos = 36415.600;
-    YPos = 52.051;
-    ZPos = 36259.262;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Filter = 18;
-    Vulnerable = 1;
-    Engageable = 1;
-    LimitAmmo = 1;
-    RepairFriendlies = 0;
-    RehealFriendlies = 1;
-    RearmFriendlies = 0;
-    RefuelFriendlies = 0;
-    AILevel = 2;
-    Country = 101;
-    FloatParam = 0;
   }
   
 

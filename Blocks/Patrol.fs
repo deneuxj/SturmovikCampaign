@@ -32,8 +32,6 @@ with
         let plane = getVehicleByName group "Plane"
         let killed = getTriggerByName group "Killed"
         let spawned = getTriggerByName group "Spawned"
-        let setGerman = getTriggerByName group "SetGerman"
-        let setRussian = getTriggerByName group "SetRussian"
         let completed = getTriggerByName group "Completed"
         // Connection with wec
         let wakeup = getTriggerByName group "WakeUp"
@@ -43,11 +41,6 @@ with
         Mcu.addTargetLink wec.Sleep sleep.Index
         Mcu.addTargetLink startMonitoring wec.StartMonitoring.Index
         Mcu.addObjectLink wec.Proximity plane.LinkTrId
-        // Set country upon spawning
-        match coalition with
-        | Mcu.CoalitionValue.Axis -> Mcu.addTargetLink spawned setGerman.Index
-        | Mcu.CoalitionValue.Allies -> Mcu.addTargetLink spawned setRussian.Index
-        | _ -> failwith "Unsupported coalition value"
         // Position of all nodes
         let refPoint = Vector2.FromMcu(plane.Pos)
         let dv = pos - refPoint
