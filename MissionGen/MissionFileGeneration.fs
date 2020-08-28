@@ -641,7 +641,7 @@ with
             |> Campaign.MissionGen.StaticDefenseOptimization.instantiateAll store lcStore random missionBegin
             |> List.map (fun grp -> grp :> IMcuGroup)
 
-        // Ground patrols
+        // Ground battles
         let battles =
             this.GroundBattles
             |> List.map (fun battle -> battle.CreateMCUs(random, store, lcStore, string battle.Region, missionBegin))
