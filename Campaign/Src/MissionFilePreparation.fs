@@ -404,13 +404,18 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             for af in within do
                 let runway =
                     af.PickAgainstWind(wind)
+                let coalition =
+                    state.GetOwner(af.Region)
                 let planes =
                     state.GetNumPlanes(af.AirfieldId)
                     |> Map.toSeq
                     |> Seq.choose (fun (planeId, num) ->
                         if num >= 1.0f then
                             let plane = state.World.PlaneSet.[planeId]
-                            Some (PlayerSpawnPlane.Default plane)
+                            if Some plane.Coalition = coalition then
+                                Some (PlayerSpawnPlane.Default plane)
+                            else
+                                None
                         else
                             None)
                     |> List.ofSeq
