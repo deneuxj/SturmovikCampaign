@@ -888,7 +888,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     // Result
     {
         Date = state.Date
-        Briefing = briefing
+        Briefing = state.Weather.Description + "<br>" + briefing
         Boundary = boundary
         PlayerSpawns = spawns
         AntiAirNests = aaNests

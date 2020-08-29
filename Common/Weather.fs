@@ -89,6 +89,9 @@ with
         else
             "overcast"
 
+    member this.Description =
+        sprintf "Temperature %1f C, %s, wind from %3f %3f m/s" this.Temperature this.CloudDescription ((this.Wind.Direction + 180.0) % 360.0) this.Wind.Speed
+
 let wave mag period pow x =
     let y = sin (2.0 * System.Math.PI * x / period)
     let y =
