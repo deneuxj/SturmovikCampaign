@@ -465,17 +465,40 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let world =
                     world
                     |> Result.map (fun world -> { world with WeatherDaysOffset = weatherDaysOffset })
-                let names =
-                    let path = Path.Combine("Config", "names.json")
-                    if File.Exists path then
-                        PilotRanks.NameDatabase.FromFile path
-                    else
-                        PilotRanks.NameDatabase.Default
+                // Load names
+                let world =
+                    world
+                    |> Result.map (fun world ->
+                        let names =
+                            (PilotRanks.NameDatabase.Default, world.Countries.Keys)
+                            ||> Seq.fold (fun names country ->
+                                let countrySuffix =
+                                    match country with
+                                    | GreatBritain -> "Britain"
+                                    | Russia -> "Russia"
+                                    | UnitedStates -> "USA"
+                                    | Germany -> "Germany"
+                                    | Italy -> "Italy"
+                                let firstNames = Path.Combine("Config", sprintf "FirstNames%s.txt" countrySuffix)
+                                let lastNames = Path.Combine("Config", sprintf "LastNames%s.txt" countrySuffix)
+                                let names =
+                                    if File.Exists firstNames then
+                                        names.AddFirstNamesFromFile(country, firstNames)
+                                    else
+                                        names
+                                let names =
+                                    if File.Exists lastNames then
+                                        names.AddLastNamesFromFile(country, lastNames)
+                                    else
+                                        names
+                                names
+                            )
+                        { world with Names = names }
+                    )
                 match world with
                 | Error e ->
                     Error e
                 | Ok world ->
-                    let world = { world with Names = names }
                     let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
                         let planeSet = BodenplatteInternal.PlaneSet.Default
                         let world = planeSet.Setup world

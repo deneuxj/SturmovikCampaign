@@ -12,20 +12,12 @@ type NameDatabase =
     }
 with
     static member Default =
-        let firstNames =
-            CountryId.All
-            |> Seq.map (fun country -> country, Set ["John"])
-            |> Map.ofSeq
-        let lastNames =
-            CountryId.All
-            |> Seq.map (fun country -> country, Set ["Doe"])
-            |> Map.ofSeq
         {
-            FirstNames = firstNames
-            LastNames = lastNames
+            FirstNames = Map.empty
+            LastNames = Map.empty
         }
 
-    static member FromFile(path : string) =
+    static member FromJsonFile(path : string) =
         use file = File.OpenText(path)
         let names = Json.deserialize<{| Countries : {| Country : string; FirstNames : string list; LastNames : string list |} list |}>(file.ReadToEnd())
         let mergeMap =
@@ -57,6 +49,38 @@ with
             FirstNames = firstNames
             LastNames = lastNames
         }
+
+    member private this.AddNamesFromFile(getOldNames, setNewNames, country, path : string) =
+        let names =
+            seq {
+                use file = File.OpenText(path)
+                while not file.EndOfStream do
+                    let name = file.ReadLine()
+                    if not(System.String.IsNullOrWhiteSpace(name)) then
+                        yield name.Trim()
+            }
+            |> Set.ofSeq
+        let added =
+            getOldNames(country)
+            |> Option.defaultValue Set.empty
+            |> Set.union names
+        setNewNames(added, country)
+
+    member this.AddFirstNamesFromFile(country, path) =
+        this.AddNamesFromFile(
+            (fun country -> this.FirstNames.TryFind country),
+            (fun (added, country) -> { this with FirstNames = this.FirstNames.Add(country, added) }),
+            country,
+            path
+        )
+
+    member this.AddLastNamesFromFile(country, path) =
+        this.AddNamesFromFile(
+            (fun country -> this.LastNames.TryFind country),
+            (fun (added, country) -> { this with LastNames = this.LastNames.Add(country, added) }),
+            country,
+            path
+        )
 
 type Rank =
     {
