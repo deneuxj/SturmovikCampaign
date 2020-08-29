@@ -435,8 +435,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             let aaCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * combatTimeBeforeResuply
             // Airfields
             for afId in spawns |> Seq.map (fun spawn -> spawn.Airfield) do
+                let airfield = state.World.Airfields.[afId]
                 let country = 
-                    state.GetOwner(state.World.Airfields.[afId].Region)
+                    state.GetOwner(airfield.Region)
                     |> Option.map state.World.GetAnyCountryInCoalition
                     |> Option.defaultWith (fun () -> failwith "Spawn in neutral region")
                 let numNests = int(state.GetAirfieldCapacity(afId) / aaCost) |> max 1
@@ -449,7 +450,11 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                           Number = gunsPerNest
                           Boundary = shape
                           Rotation = 0.0f
-                          Settings = CanonGenerationSettings.Strong
+                          Settings =
+                            if state.World.Regions.[airfield.Region].IsEntry then
+                                CanonGenerationSettings.StrongRespawning
+                            else
+                                CanonGenerationSettings.Skilled15min
                           Specialty = DefenseSpecialty.AntiAirCanon
                           IncludeSearchLights = hasLowLight
                           IncludeFlak = true

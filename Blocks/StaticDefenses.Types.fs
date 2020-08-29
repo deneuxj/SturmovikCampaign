@@ -101,7 +101,8 @@ type CanonGenerationSettings =
     }
 with
     static member Default = { SkillLevel = 2; RepairDelay = None }
-    static member Strong = { SkillLevel = 3; RepairDelay = Some(180.0, 120.0) }
+    static member Skilled15min = { SkillLevel = 3; RepairDelay = Some(1200.0, 300.0)} 
+    static member StrongRespawning = { SkillLevel = 3; RepairDelay = Some(180.0, 120.0) }
 
 type Canon = {
     Cannon : Mcu.McuEntity
