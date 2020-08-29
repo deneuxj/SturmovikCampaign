@@ -672,7 +672,6 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         logger.Warn("LiveNotifier NOT started")
                         return ignore
                 }
-
             let! ourCancellation = Async.CancellationToken
             ourCancellation.Register(fun () -> cancelLiveReporting()) |> ignore
 
@@ -684,7 +683,6 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     if untilDeadLine > 0.0 then
                         match gameServer.IsRunning serverProcess with
                         | None ->
-                            cancelLiveReporting()
                             return! this.StartServerAsync(restartsLeft)
                         | Some proc ->
                             serverProcess <- Some(upcast proc)
@@ -695,11 +693,11 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             | :? OperationCanceledException ->
                                 return this.Die("Interrupted")
                     else
-                        cancelLiveReporting()
                         return()
                 }
             do! monitor()
             let! _ = gameServer.SignalMissionEnd()
+            cancelLiveReporting()
             state <- Some(ExtractingResults(latestStartingMissionReport + "[*].txt" ))
             logger.Info state
             this.SaveState()
