@@ -254,18 +254,22 @@ module IWarStateExtensions =
 
         member this.GetNewNames(country : CountryId, seed : int) : string * string =
             let random = System.Random(seed)
-            let firstNames = this.World.Names.FirstNames.[country] |> Set.toArray
-            let lastNames = this.World.Names.LastNames.[country] |> Set.toArray
+            let firstNames =
+                this.World.Names.FirstNames.TryFind(country)
+                |> Option.defaultValue Set.empty
+            let lastNames =
+                this.World.Names.LastNames.TryFind(country)
+                |> Option.defaultValue Set.empty
             let firstName =
-                if firstNames.Length = 0 then
+                if Set.isEmpty firstNames then
                     "J."
                 else
-                    firstNames.[random.Next(firstNames.Length)]
+                    Seq.item (random.Next(Set.count firstNames)) firstNames
             let lastName =
-                if lastNames.Length = 0 then
+                if Seq.isEmpty lastNames then
                     "D."
                 else
-                    lastNames.[random.Next(lastNames.Length)]
+                    Seq.item (random.Next(Set.count lastNames)) lastNames
             firstName, lastName
 
         /// Return a new pilot, without registering it. The name is deterministically selected in a pseudo-random manner.
