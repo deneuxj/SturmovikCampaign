@@ -385,10 +385,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
 
     let messageCoalition(coalition : CoalitionId, msg : string) =
         tryOnClient <| fun client -> async {
-            let team =
-                match coalition with
-                | Axis -> 1
-                | Allies -> 2
+            let team = int coalition.ToCoalition
             let! s = client.MessageTeam(team, msg)
             logger.Info s
             return Ok ()
