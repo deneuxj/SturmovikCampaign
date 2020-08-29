@@ -328,12 +328,8 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
 
     let getAirfieldAALocations (afId : AirfieldId) =
         let airfield = state.World.Airfields.[afId]
-        let shape = VectorExtension.mkCircle(Vector2.Zero, 50.0f)
-        let area radius = VectorExtension.mkCircle(airfield.Position, radius)
-        seq { 2000.0f .. 500.0f .. 10000.0f }
-        |> Seq.collect (fun radius -> getGroundLocationCandidates(area radius, shape))
-        |> Seq.filter (fun v -> not(v.IsInConvexPolygon(airfield.Boundary)))
-        |> Seq.map (fun v -> v, VectorExtension.mkCircle(v, 50.0f))
+        airfield.Boundary
+        |> Seq.map (fun v -> v, VectorExtension.mkCircle(v, 100.0f))
 
     let groundTargetLocationCache = Seq.mutableDict []
 
