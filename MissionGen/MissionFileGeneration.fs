@@ -719,9 +719,9 @@ with
             let mcus =
                 let durability =
                     match model.Kind with
-                    | PlaneType.Fighter -> 8000
-                    | PlaneType.Attacker -> 11000
-                    | PlaneType.Bomber | PlaneType.Transport -> 12000
+                    | PlaneType.Fighter -> 1000
+                    | PlaneType.Attacker -> 1250
+                    | PlaneType.Bomber | PlaneType.Transport -> 1500
                 let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script durability
                 [ block; upcast entity ]
             for mcu in mcus do
