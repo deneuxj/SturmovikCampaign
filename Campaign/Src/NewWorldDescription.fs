@@ -430,6 +430,10 @@ with
         this.Countries
         |> Seq.pick(fun kvp -> if kvp.Value = coalition then Some kvp.Key else None)
 
+    /// A seed which can be used pseudo-random generation that is reproducible for a given world.
+    /// Can be used e.g. for weather updates.
+    member this.Seed = hash(this.Scenario, this.Map, this.StartDate, this.WeatherDaysOffset)
+
 module Init =
     open System.IO
     open System.Reflection

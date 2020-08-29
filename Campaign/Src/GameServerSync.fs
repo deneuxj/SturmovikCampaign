@@ -460,6 +460,11 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         |> Ok
                     with exc ->
                         Error (sprintf "Failed to init world: %s" exc.Message)
+                // Randomize weather state
+                let weatherDaysOffset = (System.Random().NextDouble() - 0.5) * 30.0
+                let world =
+                    world
+                    |> Result.map (fun world -> { world with WeatherDaysOffset = weatherDaysOffset })
                 let names =
                     let path = Path.Combine("Config", "names.json")
                     if File.Exists path then
@@ -540,6 +545,11 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 // Plan next round
                 let advance = sctrl.NextStep(stepData)
                 let nextStep = advance war
+                // Update weather
+                let weather =
+                    let world = war.World
+                    Campaign.Common.Weather.getWeather (System.Random(world.Seed)) (world.StartDate + System.TimeSpan.FromDays(world.WeatherDaysOffset))
+                war.SetWeather(weather)
                 // Write war state and campaign step files
                 let index = getCurrentIndex settings.WorkDir + 1
                 let stateFile = wkPath(getStateFilename index)

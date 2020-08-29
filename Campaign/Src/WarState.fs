@@ -768,7 +768,7 @@ module Init =
                     else
                         None))
             |> List.ofSeq
-        let weather = getWeather (System.Random()) world.StartDate
+        let weather = getWeather (System.Random(world.Seed)) (world.StartDate + System.TimeSpan.FromDays(world.WeatherDaysOffset))
         let war =
             WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate, weather, [], [])
         // Set forces on the frontline according to the region's storage capacity
