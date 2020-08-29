@@ -378,6 +378,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
 
     let messageAll(msg : string) =
         tryOnClient <| fun client -> async {
+            logger.Debug("Message all: " + msg)
             let! s = client.MessageAll(msg)
             logger.Info s
             return Ok ()
@@ -385,6 +386,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
 
     let messageCoalition(coalition : CoalitionId, msg : string) =
         tryOnClient <| fun client -> async {
+            logger.Debug("Message " + string coalition + ": " + msg)
             let team = int coalition.ToCoalition
             let! s = client.MessageTeam(team, msg)
             logger.Info s
@@ -412,6 +414,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
 
     let messagePlayer(guidOrName : string, msg : string) =
         tryOnClient <| fun client -> async {
+            logger.Debug("Message " + guidOrName + ": " + msg)
             match! getPlayer(client, guidOrName) with
             | Some player ->
                 let! s = client.MessagePlayer(player.ClientId, msg)
