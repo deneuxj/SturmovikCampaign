@@ -780,7 +780,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let effectsFile = wkPath(getEffectsFilename index)
                 let results =
                     effects
-                    |> Seq.map (fun (cmd, results) -> "From played mission", cmd, results)
+                    |> Seq.map (fun (cmd, results) -> "From played mission", Some cmd, results)
                     |> Array.ofSeq
                 use writer = new StreamWriter(effectsFile, false)
                 let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
