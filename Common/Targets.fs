@@ -40,6 +40,21 @@ with
         | ArmoredCar -> 5.0f<MGF>
         | _ -> 0.0f<MGF>
 
+    member this.Description =
+        match this with
+        | Truck -> "truck"
+        | Train -> "train"
+        | Ship -> "ship"
+        | Battleship -> "battleship"
+        | GunBoat -> "gunboat"
+        | Artillery -> "artillery"
+        | Tank -> "tank"
+        | ArmoredCar -> "car"
+        | Bridge _ -> "bridge"
+        | Building _ -> "building"
+        | ParkedPlane (_, plane) -> sprintf "parked %s" (string plane)
+        | Air plane -> string plane
+
 module ActivePatterns =
     let (|GroundForceTarget|_|) (kind : TargetType) =
         let value = kind.GroundForceValue

@@ -691,6 +691,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                     yield! AsyncSeq.ofSeq lines
                             }
                             |> MissionResults.commandsFromLogs war
+                            |> AsyncSeq.choose snd
                         let liveReporter = LiveNotifier(commands, war.Clone(), messaging)
                         let cancellation = new Threading.CancellationTokenSource()
                         Async.Start(liveReporter.Run(), cancellation.Token)
@@ -764,14 +765,19 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let commands = MissionResults.commandsFromLogs war lines
                 let! effects =
                     asyncSeq {
-                        for command in commands do
-                            try
-                                logger.Debug("Command from game logs: " + Json.serialize command)
-                            with exc ->
-                                logger.Debug("Command from game logs.")
-                                logger.Debug(exc)
-                            let effects = command.Execute(war)
-                            yield (command, effects)
+                        for description, command in commands do
+                            logger.Info(description)
+                            match command with
+                            | Some command ->
+                                try
+                                    logger.Debug("Command from game logs: " + Json.serialize command)
+                                with exc ->
+                                    logger.Debug("Command from game logs.")
+                                    logger.Debug(exc)
+                                let effects = command.Execute(war)
+                                yield (description, Some command, effects)
+                            | None ->
+                                yield (description, None, [])
                     }
                     |> AsyncSeq.toArrayAsync
                 stateChanged.Trigger(war.Clone())
@@ -781,7 +787,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let effectsFile = wkPath(getEffectsFilename index)
                 let results =
                     effects
-                    |> Seq.map (fun (cmd, results) -> "From played mission", Some cmd, results)
+                    |> Seq.map (fun (description, cmd, results) -> description, cmd, results)
                     |> Array.ofSeq
                 use writer = new StreamWriter(effectsFile, false)
                 let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
