@@ -776,10 +776,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 stateChanged.Trigger(war.Clone())
                 // Write effects to file
                 // Write war state and campaign step files
-                let effectsFile =
-                    Seq.initInfinite (fun i -> (wkPath(getEffectsFilename i), wkPath(getStateFilename i)))
-                    |> Seq.pairwise
-                    |> Seq.pick (fun ((effectsFile, _), (_, stateFile)) -> if not(File.Exists stateFile) then Some effectsFile else None)
+                let index = getCurrentIndex settings.WorkDir + 1
+                let effectsFile = wkPath(getEffectsFilename index)
                 let results =
                     effects
                     |> Seq.map (fun (cmd, results) -> "From played mission", cmd, results)
