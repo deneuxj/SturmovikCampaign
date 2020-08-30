@@ -18,6 +18,7 @@
     <Compile Include="Config.fs" />
     <Compile Include="Passwords.fs" />
     <Compile Include="Routes.fs" />
+    <Compile Include="DtoCreation.fs" />
     <Compile Include="Controller.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
