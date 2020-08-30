@@ -108,15 +108,19 @@ type Controller(settings : GameServerControl.Settings) =
                     s
                 | false, _ ->
                     let path = wkPath(getStateFilename idx)
-                    try
-                        let world = World.LoadFromFile(wkPath worldFilename)
-                        let state = WarState.LoadFromFile(path, world).ToDto()
-                        channel.Reply(Ok state)
-                        { s with DtoStateCache = s.DtoStateCache.Add(idx, state) }
-                    with
-                    | e ->
-                        channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
-                        logger.Warn e
+                    if File.Exists path then
+                        try
+                            let world = World.LoadFromFile(wkPath worldFilename)
+                            let state = WarState.LoadFromFile(path, world).ToDto()
+                            channel.Reply(Ok state)
+                            { s with DtoStateCache = s.DtoStateCache.Add(idx, state) }
+                        with
+                        | e ->
+                            channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
+                            logger.Warn e
+                            s
+                    else
+                        channel.Reply(Error <| sprintf "No state n.%d" idx)
                         s
         }
 
@@ -129,27 +133,40 @@ type Controller(settings : GameServerControl.Settings) =
                     channel.Reply(Ok x)
                     s
                 | false, _ ->
-                    let path = wkPath(getSimulationFilename idx)
-                    try
-                        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer()
-                        let world = World.LoadFromFile(wkPath worldFilename)
-                        let state = WarState.LoadFromFile(wkPath (getStateFilename idx), world)
-                        use reader = new StreamReader(path)
-                        let steps =
-                            serializer.DeserializeSequence(reader)
-                            |> Seq.map (fun (description : string, command : WarStateUpdate.Commands option, results : WarStateUpdate.Results list) ->
-                                { Dto.SimulationStep.Description = description
-                                  Dto.Command = command |> Option.map Array.singleton |> Option.defaultValue [||] |> Array.map (fun x -> x.ToDto(state))
-                                  Dto.Results = results |> List.map (fun r -> r.ToDto(state)) |> Array.ofList
-                                }
-                            )
-                            |> Array.ofSeq
-                        channel.Reply(Ok steps)
-                        { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
-                    with
-                    | e ->
-                        channel.Reply(Error <| sprintf "Failed to load simulation n.%d" idx)
-                        logger.Warn e
+                    // Optional effects file
+                    let path1 = wkPath(getEffectsFilename idx)
+                    // Mandatory simulation file
+                    let path2 = wkPath(getSimulationFilename idx)
+                    if File.Exists path2 then
+                        try
+                            let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer()
+                            let world = World.LoadFromFile(wkPath worldFilename)
+                            let state = WarState.LoadFromFile(wkPath (getStateFilename idx), world)
+                            let effects =
+                                if File.Exists path1 then
+                                    serializer.DeserializeSequence(new StreamReader(path1))
+                                else
+                                    Seq.empty
+                            let simulation =
+                                serializer.DeserializeSequence(new StreamReader(path2))
+                            let steps =
+                                Seq.append effects simulation
+                                |> Seq.map (fun (description : string, command : WarStateUpdate.Commands option, results : WarStateUpdate.Results list) ->
+                                    { Dto.SimulationStep.Description = description
+                                      Dto.Command = command |> Option.map Array.singleton |> Option.defaultValue [||] |> Array.map (fun x -> x.ToDto(state))
+                                      Dto.Results = results |> List.map (fun r -> r.ToDto(state)) |> Array.ofList
+                                    }
+                                )
+                                |> Array.ofSeq
+                            channel.Reply(Ok steps)
+                            { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
+                        with
+                        | e ->
+                            channel.Reply(Error <| sprintf "Failed to load simulation n.%d" idx)
+                            logger.Warn e
+                            s
+                    else
+                        channel.Reply(Error <| sprintf "No simulation n.%d" idx)
                         s
         }
 
