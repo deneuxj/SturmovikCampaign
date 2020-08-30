@@ -68,9 +68,9 @@ type IWarStateQuery with
 
     /// Try to get a plane by its name as it appears in the logs
     member this.TryGetPlane(logName : string) =
-        let logName = logName.ToLowerInvariant()
+        let logName = normalizeLogName logName
         this.World.PlaneSet.Values
-        |> Seq.tryFind (fun plane -> logName.Contains(plane.LogName.ToLowerInvariant()))
+        |> Seq.tryFind (fun plane -> logName.Contains(normalizeLogName plane.LogName))
 
     /// Get all buildings that match a name, have the given subpart as reported as important, and cover the given position.
     member this.GetBuildingsAt(logName : string, part : int, (x, _, z) : Position) =
