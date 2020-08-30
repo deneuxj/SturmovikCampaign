@@ -8175,7 +8175,7 @@
         "Plane": {
           "Kind": "Fighter",
           "Name": "p38",
-          "LogName": "p38-j-25",
+          "LogName": "p-38j-25",
           "Roles": [
             "Interceptor",
             "GroundAttacker"
