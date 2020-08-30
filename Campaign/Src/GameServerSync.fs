@@ -571,7 +571,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 // Update weather
                 let weather =
                     let world = war.World
-                    Campaign.Common.Weather.getWeather (System.Random(world.Seed)) (world.StartDate + System.TimeSpan.FromDays(world.WeatherDaysOffset))
+                    Campaign.Common.Weather.getWeather (System.Random(world.Seed)) (war.Date + System.TimeSpan.FromDays(world.WeatherDaysOffset))
                 war.SetWeather(weather)
                 // Write war state and campaign step files
                 let index = getCurrentIndex settings.WorkDir + 1
