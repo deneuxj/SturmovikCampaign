@@ -424,12 +424,11 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     /// Make a deep copy of this object
     member this.Clone() =
         use inMemory = new System.IO.MemoryStream()
-        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer()
-        serializer.Serialize(inMemory, this, leaveOpen=true)
+        this.Serialize(inMemory)
         inMemory.Seek(0L, IO.SeekOrigin.Begin) |> ignore
-        serializer.Deserialize<WarState>(inMemory)
+        WarState.Deserialize(inMemory, this.World)
 
-    member this.Serialize(writer : System.IO.StreamWriter) =
+    member private this.PrepareIOData() =
         let unmeasure = Seq.map (fun (kvp : KeyValuePair<_, _>) -> kvp.Key, float32 kvp.Value) >> dict
         let data =
             {
@@ -444,12 +443,19 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                 Players = players
                 Pilots = pilots
             }
-        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-        serializer.Serialize(writer, data)
+        data
 
-    static member Deserialize(reader : System.IO.StreamReader, world) =
+    member this.Serialize(stream : System.IO.Stream) =
         let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-        let data = serializer.Deserialize<WarStateSerialization>(reader)
+        let data = this.PrepareIOData()
+        serializer.Serialize(stream, data, leaveOpen=true)
+
+    member this.Serialize(writer : System.IO.TextWriter) =
+        let data = this.PrepareIOData()
+        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+        serializer.Serialize(writer, data, leaveOpen=true)
+
+    static member private FromIOData(data : WarStateSerialization, world) =
         let expected = WarStateSerialization.Default
         if data.FormatVersionMajor <> expected.FormatVersionMajor then
             failwithf "Cannot load data with version %s, incompatible with %s" data.Version expected.Version
@@ -468,6 +474,16 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         let players = toList data.Players
         let pilots = toList data.Pilots
         WarState(world, toList data.Owners, toList data.BuildingPartHealthLevel, airfieldPlanes, groundForces, data.Date, data.Weather, players, pilots)
+
+    static member Deserialize(stream : System.IO.Stream, world) =
+        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+        let data = serializer.Deserialize<WarStateSerialization>(stream)
+        WarState.FromIOData(data, world)
+
+    static member Deserialize(reader : System.IO.TextReader, world) =
+        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
+        let data = serializer.Deserialize<WarStateSerialization>(reader)
+        WarState.FromIOData(data, world)
 
     member this.World : World = world
 
