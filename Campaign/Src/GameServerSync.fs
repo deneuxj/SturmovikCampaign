@@ -785,13 +785,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 // Write war state and campaign step files
                 let index = getCurrentIndex settings.WorkDir + 1
                 let effectsFile = wkPath(getEffectsFilename index)
-                let results =
-                    effects
-                    |> Seq.map (fun (description, cmd, results) -> description, cmd, results)
-                    |> Array.ofSeq
                 use writer = new StreamWriter(effectsFile, false)
                 let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-                serializer.SerializeSequence(writer, results) |> ignore
+                serializer.SerializeSequence(writer, effects) |> ignore
                 return Ok()
             | None ->
                 return (Error "No war state")
