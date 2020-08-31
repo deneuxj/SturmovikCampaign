@@ -565,14 +565,14 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             |> Option.defaultValue []
                         description, cmd, results)
                     |> List.ofSeq
-                // Plan next round
-                let advance = sctrl.NextStep(stepData)
-                let nextStep = advance war
                 // Update weather
                 let weather =
                     let world = war.World
                     Campaign.Common.Weather.getWeather (System.Random(world.Seed)) (war.Date + System.TimeSpan.FromDays(world.WeatherDaysOffset))
                 war.SetWeather(weather)
+                // Plan next round
+                let advance = sctrl.NextStep(stepData)
+                let nextStep = advance war
                 // Write war state and campaign step files
                 let index = getCurrentIndex settings.WorkDir + 1
                 let stateFile = wkPath(getStateFilename index)
