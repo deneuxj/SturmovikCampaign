@@ -81,16 +81,16 @@ with
         if x < 0.1 then
             "clear sky"
         elif x < 0.3 then
-            "light clouds"
+            sprintf "light clouds at %4.0f m" this.CloudHeight
         elif x < 0.6 then
-            "medium clouds"
+            sprintf "medium clouds at %4.0f m" this.CloudHeight
         elif not this.IsOvercast then
-            "heavy clouds"
+            sprintf "heavy clouds at %4.0f m" this.CloudHeight
         else
-            "overcast"
+            sprintf "overcast with clouds at %4.0f m" this.CloudHeight
 
     member this.Description =
-        sprintf "Temperature %1f C, %s, wind from %3f %3f m/s" this.Temperature this.CloudDescription ((this.Wind.Direction + 180.0) % 360.0) this.Wind.Speed
+        sprintf "Temperature %1.0f C, %s, wind from %3.0f at %2.1f m/s" this.Temperature this.CloudDescription ((this.Wind.Direction + 180.0) % 360.0) this.Wind.Speed
 
 let wave mag period pow x =
     let y = sin (2.0 * System.Math.PI * x / period)
