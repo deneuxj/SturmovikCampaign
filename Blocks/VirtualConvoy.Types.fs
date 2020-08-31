@@ -42,10 +42,12 @@ with
         let leadCar = getVehicleByName group "LeadCar"
         leadCar.Country <- Some country
         match country with
-        | Mcu.CountryValue.Germany ->
+        | Mcu.CountryValue.Germany | Mcu.CountryValue.Italy ->
             vehicles.GermanCar.AssignTo(leadCar)
         | Mcu.CountryValue.Russia ->
             vehicles.RussianCar.AssignTo(leadCar)
+        | Mcu.CountryValue.UnitedStates | Mcu.CountryValue.GreatBritain ->
+            vehicles.AmericanCar.AssignTo(leadCar)
         | _ ->
             ()
         let center = Vector2.FromMcu(leadCar.Pos)

@@ -32,38 +32,42 @@ let getRandomPositionInArea(random : System.Random, area : Vector2 list, forward
     |> Seq.find(fun v -> v.IsInConvexPolygon(area))
 
 type DefenseSpecialty =
-    | RearDefenseArea
-    | FrontDefenseArea
+    | AntiTank
+    | Artillery
     | AntiAirMg
     | AntiAirCanon
 with
     member this.GroupName =
         match this with
-        | RearDefenseArea -> "AntiTank"
-        | FrontDefenseArea -> "Artillery"
+        | AntiTank -> "AntiTank"
+        | Artillery -> "Artillery"
         | AntiAirMg | AntiAirCanon -> "AntiAir"
 
     member this.SetModel(thing : Mcu.HasEntity, isFlak : bool) =
         match this with
-        | RearDefenseArea ->
+        | AntiTank ->
             match thing.Country with
-            | Some Mcu.CountryValue.Germany ->
+            | Some Mcu.CountryValue.Germany | Some Mcu.CountryValue.Italy ->
                 vehicles.GermanAntiTankCanon.AssignTo(thing)
             | Some Mcu.CountryValue.Russia ->
                 vehicles.RussianAntiTankCanon.AssignTo(thing)
+            | Some Mcu.CountryValue.UnitedStates | Some Mcu.CountryValue.GreatBritain ->
+                vehicles.AmericanAntiTankCanon.AssignTo(thing)
             | _ ->
                 ()
-        | FrontDefenseArea ->
+        | Artillery ->
             match thing.Country with
-            | Some Mcu.CountryValue.Germany ->
+            | Some Mcu.CountryValue.Germany | Some Mcu.CountryValue.Italy ->
                 vehicles.GermanArtillery.AssignTo(thing)
             | Some Mcu.CountryValue.Russia ->
                 vehicles.RussianArtillery.AssignTo(thing)
+            | Some Mcu.CountryValue.UnitedStates | Some Mcu.CountryValue.GreatBritain ->
+                vehicles.AmericanArtillery.AssignTo(thing)
             | _ ->
                 ()
         | AntiAirCanon ->
             match thing.Country with
-            | Some Mcu.CountryValue.Germany ->
+            | Some Mcu.CountryValue.Germany | Some Mcu.CountryValue.Italy ->
                 if isFlak then
                     vehicles.GermanFlak.AssignTo(thing)
                 else
@@ -73,11 +77,16 @@ with
                     vehicles.RussianFlak.AssignTo(thing)
                 else
                     vehicles.RussianAntiAirCanon.AssignTo(thing)
+            | Some Mcu.CountryValue.UnitedStates | Some Mcu.CountryValue.GreatBritain ->
+                if isFlak then
+                    vehicles.AmericanFlak.AssignTo(thing)
+                else
+                    vehicles.AmericanAntiAirCanon.AssignTo(thing)
             | _ ->
                 ()
         | AntiAirMg ->
             match thing.Country with
-            | Some Mcu.CountryValue.Germany ->
+            | Some Mcu.CountryValue.Germany | Some Mcu.CountryValue.Italy ->
                 if isFlak then
                     vehicles.GermanFlak.AssignTo(thing)
                 else
@@ -87,11 +96,20 @@ with
                     vehicles.RussianFlak.AssignTo(thing)
                 else
                     vehicles.RussianAntiAirMachineGun.AssignTo(thing)
+            | Some Mcu.CountryValue.UnitedStates | Some Mcu.CountryValue.GreatBritain ->
+                if isFlak then
+                    vehicles.AmericanFlak.AssignTo(thing)
+                else
+                    vehicles.AmericanAntiAirMachineGun.AssignTo(thing)
             | _ ->
                 ()
 
 [<Literal>]
 let CannonObjectName = "CANNON"
+
+[<Literal>]
+let AntiAirGunName = "GUNAA"
+
 [<Literal>]
 let MachineGunAAName = "MGAA"
 
@@ -146,15 +164,16 @@ with
         // Set object name, used for identifying damages from the log
         let name =
             match specialty with
-            | RearDefenseArea | FrontDefenseArea | AntiAirCanon -> CannonObjectName
-            | AntiAirMg when isFlak -> CannonObjectName
+            | AntiTank | Artillery -> CannonObjectName
+            | AntiAirCanon -> AntiAirGunName
+            | AntiAirMg when isFlak -> AntiAirGunName
             | AntiAirMg -> MachineGunAAName
         cannon.Name <- name
         // Set attack radius according to gun type
         let range =
             match specialty with
             | _ when isFlak -> 9000
-            | RearDefenseArea | FrontDefenseArea | AntiAirCanon -> 2000
+            | AntiTank | Artillery | AntiAirCanon -> 2000
             | AntiAirMg -> 1500
         match attackOrder with
         | Some (:? Mcu.McuAttackArea as attackOrder) ->
@@ -203,7 +222,7 @@ with
         searchOrder.Index <- attackAirOrder.Index
         let canon = getHasEntityByIndex this.Cannon.MisObjID mcus
         match canon.Country with
-        | Some Mcu.CountryValue.Germany ->
+        | Some Mcu.CountryValue.Germany | Some Mcu.CountryValue.Italy ->
             vehicles.GermanSearchLight.AssignTo(canon)
         | _ ->
             vehicles.RussianSearchLight.AssignTo(canon)

@@ -128,6 +128,12 @@ type VehicleDataTypeStore() =
           Model = canon.GetModel().Value
         }
 
+    member this.AmericanAntiAirCanon =
+        let canon = vehicles.["AntiAirUS"]
+        { Script = canon.GetScript().Value
+          Model = canon.GetModel().Value
+        }
+
     member this.AmericanAntiAirMachineGun =
         let canon = vehicles.["MgAAUS"]
         { Script = canon.GetScript().Value
@@ -340,6 +346,12 @@ type VehicleDataTypeStore() =
 
     member this.GermanSearchLight =
         let light = vehicles.["SearchLightGER"]
+        { Script = light.GetScript().Value
+          Model = light.GetModel().Value
+        }
+
+    member this.AmericanSearchLight =
+        let light = vehicles.["SearchLightUS"]
         { Script = light.GetScript().Value
           Model = light.GetModel().Value
         }
@@ -578,6 +590,12 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.AmericanTransport =
+        let fighter = planes.["transportUS"]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
     member this.RussianStaI16 =
         let block = statics.["staI16"]
         { Script = block.GetScript().Value
@@ -748,6 +766,12 @@ type VehicleDataTypeStore() =
 
     member this.RussianLandLight =
         let light = vehicles.["LandLightRUS"]
+        { Script = light.GetScript().Value
+          Model = light.GetModel().Value
+        }
+
+    member this.AmericanLandLight =
+        let light = vehicles.["LandLightUS"]
         { Script = light.GetScript().Value
           Model = light.GetModel().Value
         }

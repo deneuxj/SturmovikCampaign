@@ -46,8 +46,9 @@ with
         plane1.Country <- Some country
         let model =
             match country with
-            | Mcu.CountryValue.Germany -> vehicles.GermanTransport
+            | Mcu.CountryValue.Germany | Mcu.CountryValue.Italy -> vehicles.GermanTransport
             | Mcu.CountryValue.Russia -> vehicles.RussianTransport
+            | Mcu.CountryValue.UnitedStates | Mcu.CountryValue.GreatBritain -> vehicles.AmericanTransport
             | _ -> failwith "Unsupported country value"
         model.AssignTo(plane1)
         // Icons
