@@ -403,7 +403,7 @@ module DtoCreation =
                       "Health", string pilot.Health :> obj
                       "Country", string pilot.Country :> obj
                       "Flights", box pilot.Flights.Length
-                      "Airfield", state.TryGetPilotHome(pilot.Id) |> Option.map (fun afId -> string afId :> obj) |> Option.defaultValue null
+                      "Airfield", state.TryGetPilotHome(pilot.Id) |> Option.map (fun afId -> string afId) |> Option.defaultValue "" :> obj
                     ] |> Map.ofSeq
 
             { ChangeDescription = desc
