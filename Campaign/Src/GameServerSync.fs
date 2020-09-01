@@ -680,6 +680,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     // Start live reporting
                     match war, gameServer with
                     | Some war, (:? IPlayerNotifier as messaging) ->
+                        let war2 = war.Clone()
                         let commands =
                             let basename = latestStartingMissionReport
                             asyncSeq {
@@ -690,9 +691,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                     let lines = IO.File.ReadAllLines(logFile)
                                     yield! AsyncSeq.ofSeq lines
                             }
-                            |> MissionResults.commandsFromLogs war
+                            |> MissionResults.commandsFromLogs war2
                             |> AsyncSeq.choose snd
-                        let liveReporter = LiveNotifier(commands, war.Clone(), messaging)
+                        let liveReporter = LiveNotifier(commands, war2, messaging)
                         let cancellation = new Threading.CancellationTokenSource()
                         Async.Start(liveReporter.Run(), cancellation.Token)
                         // Give time to execute old commands
