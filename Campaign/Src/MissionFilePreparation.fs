@@ -756,6 +756,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                         { spot.Pos with
                                             Rotation = rot
                                             Pos = spot.Pos.Pos.Rotate(rot) + pos.Pos
+                                            Altitude = pos.Altitude
                                         }
                                 }
                             )
@@ -777,7 +778,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                             Pos = {
                                                 Pos = v1 + t * dir * len
                                                 Rotation = ori
-                                                Altitude = 0.0f
+                                                Altitude = runway.SpawnPos.Altitude
                                             }
                                             Radius = 12.5f
                                         }
