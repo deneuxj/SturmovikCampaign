@@ -137,6 +137,7 @@ with
                 else
                     vehicles.MkRussianTrainMcu()
             | _ -> failwith "Unsupported country when making train"
+        train2.Country <- Some country
         train2.Index <- train.Index
         train2.LinkTrId <- train.LinkTrId
         train2.Ori.Y <- float startV.Ori
