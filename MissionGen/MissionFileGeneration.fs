@@ -723,6 +723,7 @@ with
                     | PlaneType.Attacker -> 1250
                     | PlaneType.Bomber | PlaneType.Transport -> 1500
                 let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script durability
+                entity.Enabled <- true
                 [ block; upcast entity ]
             for mcu in mcus do
                 pos.Pos.AssignTo mcu.Pos
