@@ -599,7 +599,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             | Some(ctrl), Some(Ongoing stepData), Some state ->
                 try
                     let seed = this.Seed
-                    let selection = ctrl.SelectMissions(stepData, state, seed, 25)
+                    let selection = ctrl.TrySelectMissions(stepData, state, seed, 25)
                     let missionPrepSettings : MissionFilePreparation.PreparationSettings =
                         {
                             MissionFilePreparation.MaxTrainsPerSide = settings.MaxTrainsPerCoalition

@@ -269,3 +269,195 @@ let enumerateGroundAttackMissions (state : IWarStateQuery) (coalition : Coalitio
         | _ ->
             Seq.singleton selection
     )
+
+/// Enumerate missions where the main mission is an air patrol mission
+let enumerateOffensivePatrols (state : IWarStateQuery) (coalition : CoalitionId) (missions : Mission list) =
+    let airMissionCoalition (mission : AirMission) =
+        state.World.Airfields.[mission.StartAirfield].Region |> state.GetOwner
+
+    let airMissions =
+        missions
+        |> Seq.choose (
+            function
+                | { Kind = AirMission airMission } -> Some airMission
+                | _ -> None)
+
+    seq {
+        // Offensive patrols
+        for mission in missions do
+            match mission with
+            | { Kind = AirMission ({ MissionType = AreaProtection } as airMission) } when
+                airMissionCoalition airMission = Some coalition &&
+                state.GetOwner(airMission.Objective) <> Some coalition ->
+
+                let interceptions =
+                    airMissions
+                    |> Seq.filter (
+                        function
+                            | { MissionType = AreaProtection; Objective = objective } as mission ->
+                                airMission.Objective = objective && airMissionCoalition mission <> Some coalition
+                            | _ -> false)
+
+                let homeAttacks =
+                    airMissions
+                    |> Seq.filter (
+                        function
+                            | { MissionType = AreaProtection; Objective = objective } as mission ->
+                                state.World.Airfields.[airMission.StartAirfield].Region = objective && airMissionCoalition mission <> Some coalition
+                            | _ -> false)
+
+                for interception in interceptions do
+                    for homeAttack in homeAttacks do
+                        let otherMissions =
+                            missions
+                            |> List.filter (fun other ->
+                                other <> mission &&
+                                match other.Kind with
+                                | AirMission other ->
+                                    other <> interception && other <> homeAttack
+                                | _ ->
+                                    true)
+
+                        yield {
+                            MainMission = airMission
+                            HomeCover = None
+                            TargetCover = None
+                            Interception = Some interception
+                            HomeAttack = Some homeAttack
+                            GroundBattleAtTarget = None
+                            OtherMissions = otherMissions
+                            RiskLevel = 5.0f
+                        }
+
+                    let otherMissions =
+                        missions
+                        |> List.filter (fun other ->
+                            other <> mission &&
+                            match other.Kind with
+                            | AirMission other ->
+                                other <> interception
+                            | _ ->
+                                true)
+
+                    yield {
+                        MainMission = airMission
+                        HomeCover = None
+                        TargetCover = None
+                        Interception = Some interception
+                        HomeAttack = None
+                        GroundBattleAtTarget = None
+                        OtherMissions = otherMissions
+                        RiskLevel = 3.0f
+                    }
+
+                let otherMissions =
+                    missions
+                    |> List.filter (fun other -> other <> mission)
+
+                yield {
+                    MainMission = airMission
+                    HomeCover = None
+                    TargetCover = None
+                    Interception = None
+                    HomeAttack = None
+                    GroundBattleAtTarget = None
+                    OtherMissions = otherMissions
+                    RiskLevel = 1.0f
+                }
+
+            | _ ->
+                ()
+    }
+
+let enumerateTransfers (state : IWarStateQuery) (coalition : CoalitionId) (missions : Mission list) =
+    let airMissionCoalition (mission : AirMission) =
+        state.World.Airfields.[mission.StartAirfield].Region |> state.GetOwner
+
+    let airMissions =
+        missions
+        |> Seq.choose (
+            function
+                | { Kind = AirMission airMission } -> Some airMission
+                | _ -> None)
+
+    seq {
+        for mission in missions do
+            match mission.Kind with
+            | AirMission ({ MissionType = PlaneTransfer _ } as airMission) when airMissionCoalition airMission = Some coalition ->
+                let interceptions =
+                    airMissions
+                    |> Seq.filter (
+                        function
+                            | { MissionType = AreaProtection; Objective = objective } as mission ->
+                                airMission.Objective = objective && airMissionCoalition mission <> Some coalition
+                            | _ -> false)
+
+                let targetCovers =
+                    airMissions
+                    |> Seq.filter (
+                        function
+                            | { MissionType = AreaProtection; Objective = objective } as mission ->
+                                airMission.Objective = objective && airMissionCoalition mission = Some coalition
+                            | _ -> false)
+
+                for interception in interceptions do
+                    for cover in targetCovers do
+                        let otherMissions =
+                            missions
+                            |> List.filter (fun other ->
+                                other <> mission &&
+                                match other.Kind with
+                                | AirMission other ->
+                                    other <> interception && other <> cover
+                                | _ ->
+                                    true)
+
+                        yield {
+                            MainMission = airMission
+                            HomeCover = None
+                            TargetCover = Some cover
+                            Interception = Some interception
+                            HomeAttack = None
+                            GroundBattleAtTarget = None
+                            OtherMissions = otherMissions
+                            RiskLevel = 2.0f
+                        }
+
+                    let otherMissions =
+                        missions
+                        |> List.filter (fun other ->
+                            other <> mission &&
+                            match other.Kind with
+                            | AirMission other ->
+                                other <> interception
+                            | _ ->
+                                true)
+
+                    yield {
+                        MainMission = airMission
+                        HomeCover = None
+                        TargetCover = None
+                        Interception = Some interception
+                        HomeAttack = None
+                        GroundBattleAtTarget = None
+                        OtherMissions = otherMissions
+                        RiskLevel = 3.0f
+                    }
+
+                let otherMissions =
+                    missions
+                    |> List.filter (fun other -> other <> mission)
+
+                yield {
+                    MainMission = airMission
+                    HomeCover = None
+                    TargetCover = None
+                    Interception = None
+                    HomeAttack = None
+                    GroundBattleAtTarget = None
+                    OtherMissions = otherMissions
+                    RiskLevel = 0.0f
+                }
+            | _ ->
+                ()
+    }

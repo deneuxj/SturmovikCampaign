@@ -833,12 +833,21 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         member this.Start(war) =
             oneSideStrikes Axis "Axis opens the hostilities" 1 war
 
-        member this.SelectMissions(stepData, war, seed, numSelected) =
+        member this.TrySelectMissions(stepData, war, seed, numSelected) =
             let data = stepData.Data :?> ImplData
             let candidates =
                 Campaign.MissionSelection.enumerateGroundAttackMissions war data.OffensiveCoalition stepData.Missions
                 |> Seq.sortByDescending (fun selection -> selection.NumMissions)
+                |> fun missions ->
+                    Seq.concat [
+                        missions
+                        Campaign.MissionSelection.enumerateOffensivePatrols war data.OffensiveCoalition stepData.Missions
+                        Campaign.MissionSelection.enumerateTransfers war data.OffensiveCoalition stepData.Missions
+                    ]
                 |> Seq.truncate numSelected
                 |> Array.ofSeq
-            let random = System.Random(seed)
-            candidates.[random.Next(candidates.Length)]
+            if candidates.Length = 0 then
+                None
+            else
+                let random = System.Random(seed)
+                Some(candidates.[random.Next(candidates.Length)])
