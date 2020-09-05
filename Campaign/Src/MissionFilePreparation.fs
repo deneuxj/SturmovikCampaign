@@ -899,5 +899,6 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         AiAttacks = attacks
         Convoys = trains @ trucks
         ParkedPlanes = parkedPlanes
+        ParkedVehicles = []
     }
 

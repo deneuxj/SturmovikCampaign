@@ -35,6 +35,7 @@ open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.Pilots
 open System.Collections.Generic
+open Campaign.MissionGen.MissionFileGeneration
 
 /// Transform a name from a log: lower case, delete all non-alphanum chars.
 let normalizeLogName (name : string) =
@@ -139,6 +140,29 @@ type IWarStateQuery with
 type AmmoType with
     static member FromLogName(logName : string) : AmmoType = AmmoName logName
 
+type Binding with
+    member this.TargetType =
+        match this.Name with
+        | TargetTypeByName tt -> Some tt
+        | _ ->
+        let logName = normalizeLogName this.Typ
+        seq {
+            for v in ConvoyMember.All do
+                for c in CountryId.All do
+                    yield v, c
+        }
+        |> Seq.tryFind (fun (vehicle, country) -> this.Name = vehicle.Name || normalizeScript (vehicle.StaticVehicleData country).Script = logName)
+        |> Option.map (
+            fst
+            >> function
+            | Train -> TargetType.Train
+            | Truck -> TargetType.Truck
+            | Tank -> TargetType.Tank
+            | ArmoredCar -> TargetType.ArmoredCar
+            | AntiAirTruck -> TargetType.Artillery
+            | StaffCar -> TargetType.ArmoredCar
+        )
+
 /// Extract war state updade commands from the game logs.
 /// Note: The state must be updated as soon as a command is yielded.
 let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
@@ -174,8 +198,8 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         ()
 
                     // Emit DestroyGroundForces for damages to ground forces
-                    match binding.Name with
-                    | TargetTypeByName target when target.GroundForceValue > 0.0f<MGF> ->
+                    match binding.TargetType with
+                    | Some target when target.GroundForceValue > 0.0f<MGF> ->
                         let country : SturmovikMission.DataProvider.Mcu.CountryValue = enum binding.Country
                         match CountryId.FromMcuValue country, state.TryGetRegionAt(position) with
                         | Some country, Some region ->
@@ -224,8 +248,8 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         ()
 
                     // Others
-                    match binding.Name with
-                    | TargetTypeByName target ->
+                    match binding.TargetType with
+                    | Some target ->
                         yield (target, ammo, amount)
                     | _ ->
                         ()

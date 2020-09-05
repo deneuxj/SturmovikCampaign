@@ -433,6 +433,51 @@ with
         | (UnitedStates | GreatBritain), StaffCar -> vehicles.AmericanCar
         | (Germany | Italy), StaffCar -> vehicles.GermanCar
 
+    member this.StaticVehicleData(country : CountryId) =
+        match country, this with
+        | _, Train ->
+            vehicles.StaticTrain
+        | Russia, (Truck | AntiAirTruck) ->
+            vehicles.StaticRussianTruck
+        | (UnitedStates | GreatBritain), (Truck | AntiAirTruck) ->
+            vehicles.StaticAmericanTruck
+        | (Germany | Italy), (Truck | AntiAirTruck)->
+            vehicles.StaticGermanTruck
+        | Russia, Tank ->
+            vehicles.RussianStaticMediumTank
+        | (UnitedStates | GreatBritain), (Tank | ArmoredCar) ->
+            vehicles.AmericanStaticTank
+        | (Germany | Italy), Tank ->
+            vehicles.GermanStaticMediumTank
+        | Russia, ArmoredCar ->
+            vehicles.RussianStaticLightArmor
+        | (Germany | Italy), ArmoredCar ->
+            vehicles.GermanStaticLightArmor
+        | Russia, StaffCar ->
+            vehicles.StaticRussianCar
+        | (UnitedStates | GreatBritain), StaffCar ->
+            vehicles.StaticAmericanCar
+        | (Germany | Italy), StaffCar ->
+            vehicles.StaticGermanCar
+
+    member this.Name =
+        match this with
+        | Train -> "TRAIN_CAR"
+        | Truck -> "TRUCK"
+        | Tank -> "TANK"
+        | ArmoredCar -> "ARMORED_CAR"
+        | AntiAirTruck -> "AATRUCK"
+        | StaffCar -> "CAR"
+
+    static member All = [
+        Train
+        Truck
+        Tank
+        ArmoredCar
+        AntiAirTruck
+        StaffCar
+    ]
+
 type Convoy =
     {
         Country : CountryId
@@ -580,6 +625,7 @@ type MultiplayerMissionContent =
         /// List of chains of convoys, convoys in each chain start after the previous one reaches completion.
         Convoys : Convoy list list
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
+        ParkedVehicles : (ConvoyMember * OrientedPosition * CountryId) list
     }
 with
     /// Create the groups suitable for a multiplayer "dogfight" mission
@@ -723,6 +769,9 @@ with
                     | PlaneType.Attacker -> 1250
                     | PlaneType.Bomber | PlaneType.Transport -> 1500
                 let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script durability
+                match block with
+                | :? Mcu.HasEntity as block -> block.Name <- model.Name
+                | _ -> ()
                 entity.Enabled <- true
                 [ block; upcast entity ]
             for mcu in mcus do
@@ -733,6 +782,29 @@ with
         let parkedPlanes =
             this.ParkedPlanes
             |> List.map (fun (plane, pos, country) -> mkParkedPlane(data.GetPlaneModel(plane), pos, int country.ToMcuValue))
+
+        // Parked vehicles
+        let mkParkedVehicle(model : ConvoyMember, pos : OrientedPosition, country) =
+            let modelScript = model.StaticVehicleData country
+            let mcus =
+                let durability =
+                    match model with
+                    | Tank -> 2000
+                    | _ -> 1250
+                let block, entity = newBlockWithEntityMcu store (int country.ToMcuValue) modelScript.Model modelScript.Script durability
+                match block with
+                | :? Mcu.HasEntity as block -> block.Name <- model.Name
+                | _ -> ()
+                entity.Enabled <- true
+                [ block; upcast entity ]
+            for mcu in mcus do
+                pos.Pos.AssignTo mcu.Pos
+                mcu.Ori.Y <- float pos.Rotation
+            McuUtil.groupFromList mcus
+
+        let parkedVehicles =
+            this.ParkedVehicles
+            |> List.map (fun (vehicle, pos, country) -> mkParkedVehicle(vehicle, pos, country))
 
         // Mission end triggered by server input
         let serverInputMissionEnd = MissionEnd.MissionEnd.Create(store)
@@ -754,6 +826,7 @@ with
                 yield! allAttacks
                 yield! convoys
                 yield! parkedPlanes
+                yield! parkedVehicles
                 yield serverInputMissionEnd.All
                 yield upcast borders
             ]

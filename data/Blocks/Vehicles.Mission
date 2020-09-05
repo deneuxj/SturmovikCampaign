@@ -5835,7 +5835,7 @@ Vehicle
 Vehicle
 {
   Name = "SearchLightUS";
-  Index = 169;
+  Index = 164;
   LinkTrId = 0;
   XPos = 28932.186;
   YPos = 108.585;
@@ -5880,7 +5880,7 @@ Vehicle
 Vehicle
 {
   Name = "LandLightUS";
-  Index = 170;
+  Index = 165;
   LinkTrId = 0;
   XPos = 28932.840;
   YPos = 108.585;
@@ -5925,7 +5925,7 @@ Vehicle
 Plane
 {
   Name = "transportUS";
-  Index = 171;
+  Index = 166;
   LinkTrId = 0;
   XPos = 29046.016;
   YPos = 111.015;
@@ -5956,6 +5956,144 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticCarUS";
+  Index = 167;
+  LinkTrId = 0;
+  XPos = 29146.568;
+  YPos = 108.585;
+  ZPos = 20287.597;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_willysmb.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_willysmb.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticTrain";
+  Index = 168;
+  LinkTrId = 0;
+  XPos = 29116.060;
+  YPos = 108.585;
+  ZPos = 20373.895;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_tanknb_5.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_tanknb_5.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticTankUS";
+  Index = 169;
+  LinkTrId = 0;
+  XPos = 29147.087;
+  YPos = 108.585;
+  ZPos = 20318.423;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_m4a3.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_m4a3.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticCarGER";
+  Index = 170;
+  LinkTrId = 0;
+  XPos = 29122.551;
+  YPos = 108.585;
+  ZPos = 20286.543;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_horch830.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_horch830.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticTruckUS";
+  Index = 171;
+  LinkTrId = 0;
+  XPos = 29146.213;
+  YPos = 108.585;
+  ZPos = 20352.415;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_gmc-cckw.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_gmc-cckw.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
+}
+
+
+
+Block
+{
+  Name = "StaticCarRUS";
+  Index = 172;
+  LinkTrId = 0;
+  XPos = 29135.043;
+  YPos = 108.585;
+  ZPos = 20287.038;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Model = "graphics\blocks\static_gaz-m.mgm";
+  Script = "LuaScripts\WorldObjects\Blocks\static_gaz-m.txt";
+  Country = 0;
+  Desc = "";
+  Durability = 25000;
+  DamageReport = 50;
+  DamageThreshold = 1;
+  DeleteAfterDeath = 1;
 }
 
 

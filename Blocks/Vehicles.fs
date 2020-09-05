@@ -284,6 +284,12 @@ type VehicleDataTypeStore() =
           Model = tank.GetModel().Value
         }
 
+    member this.AmericanStaticTank =
+        let tank = statics.["StaticTankUS"]
+        { Script = tank.GetScript().Value
+          Model = tank.GetModel().Value
+        }
+
     member this.GermanStaticMediumTank =
         let tank = statics.["StaticMediumTankGER"]
         { Script = tank.GetScript().Value
@@ -1000,8 +1006,38 @@ type VehicleDataTypeStore() =
           Model = vehicle.GetModel().Value
         }
 
+    member this.StaticAmericanTruck =
+        let vehicle = statics.["StaticTruckUS"]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
     member this.StaticGermanTruck =
         let vehicle = statics.["StaticTruckGER"]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.StaticTrain =
+        let vehicle = statics.["StaticTrain"]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.StaticGermanCar =
+        let vehicle = statics.["StaticCarGER"]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.StaticRussianCar =
+        let vehicle = statics.["StaticCarRUS"]
+        { Script = vehicle.GetScript().Value
+          Model = vehicle.GetModel().Value
+        }
+
+    member this.StaticAmericanCar =
+        let vehicle = statics.["StaticCarUS"]
         { Script = vehicle.GetScript().Value
           Model = vehicle.GetModel().Value
         }
