@@ -139,6 +139,7 @@ with
         // Get key nodes
         let cannon = getVehicleByName db "CANNON"
         let show = getTriggerByName db "SHOW"
+        let showDelay = getTriggerByName db "ShowDelay" :?> Mcu.McuTimer
         let hide = getTriggerByName db "HIDE"
         let repairDelay = getTriggerByName db "RepairDelay" :?> Mcu.McuTimer
         let attackOrder =
@@ -202,6 +203,8 @@ with
         if delay > 0.0 then
             let killed = getTriggerByName db "Killed"
             Mcu.addTargetLink killed repairDelay.Index
+        // Random delay after show, to minimize stutters when spawning multiple cannons
+        showDelay.Time <- float(random.Next())
         // Result
         { Cannon = McuUtil.getEntityByIndex cannon.LinkTrId db
           Show = show
