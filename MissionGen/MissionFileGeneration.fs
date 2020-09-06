@@ -37,6 +37,7 @@ open Campaign.Common.AiPlanes
 
 open Campaign.MissionGen.StaticDefenseOptimization
 open Campaign.MissionGen.MapGraphics
+open Campaign.Common.Targets
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -432,6 +433,15 @@ with
         | Russia, StaffCar -> vehicles.RussianCar
         | (UnitedStates | GreatBritain), StaffCar -> vehicles.AmericanCar
         | (Germany | Italy), StaffCar -> vehicles.GermanCar
+
+    member this.AsTargetType =
+        match this with
+        | Train -> TargetType.Train
+        | Truck -> TargetType.Truck
+        | Tank -> TargetType.Tank
+        | ArmoredCar -> TargetType.ArmoredCar
+        | AntiAirTruck -> TargetType.Artillery
+        | StaffCar -> TargetType.Truck
 
     member this.StaticVehicleData(country : CountryId) =
         match country, this with

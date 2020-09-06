@@ -331,6 +331,15 @@ let mkCircle(center, radius : float32) =
             yield Vector2.FromYOri(float alpha) * radius + center
     ]
 
+let mkSquare(center, halfSide : float32) =
+    [
+        Vector2(halfSide, halfSide)
+        Vector2(-halfSide, halfSide)
+        Vector2(-halfSide, -halfSide)
+        Vector2(halfSide, -halfSide)
+    ]
+    |> List.map ((+) center)
+
 let testConvexHull (random : System.Random) N =
     let nextFloat() =
         random.NextDouble()
