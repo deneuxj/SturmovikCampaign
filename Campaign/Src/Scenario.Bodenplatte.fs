@@ -55,6 +55,10 @@ module BodenplatteInternal =
             NewPlanesPeriod : float32<H>
             /// Numbers of planes delivered
             NumNewPlanes : float32
+            /// New troops delivery period
+            NewTroopsPeriod : float32<H>
+            /// Amount of ground forces delivered
+            NumNewTroops : float32<MGF>
             /// Earliest mission time, in time from midnight
             EarliestStart : float32<H>
             /// Latest missiont time
@@ -80,6 +84,8 @@ module BodenplatteInternal =
                 MinRegionBuildingCapacity = minRegionBuildingCapacity
                 NewPlanesPeriod = 3.0f * day
                 NumNewPlanes = 300.0f
+                NewTroopsPeriod = 3.0f * day
+                NumNewTroops = 2000.0f<MGF>
                 EarliestStart = 5.0f<H>
                 LatestStart = 19.0f<H>
                 MinStartDiff = 5.0f<H>
@@ -826,6 +832,20 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                             for plane, qty in newPlanes.[coalition] do
                                 let plane = PlaneModelId plane
                                 yield Some(AddPlane(af.AirfieldId, plane, qty / numAirfields)), "New plane delivery"
+                // Add new troops
+                let period (t : System.DateTime) =
+                    int(24.0f<H> * float32 (t - war.World.StartDate).Days / C.NewTroopsPeriod)
+                if period war.Date < period newTime then
+                    for coalition in [Axis; Allies] do
+                        let region =
+                            war.World.Regions.Values
+                            |> Seq.filter (fun region -> war.GetOwner(region.RegionId) = Some coalition)
+                            |> Seq.tryFind (fun region -> region.IsEntry)
+                        match region with
+                        | Some region ->
+                            yield Some(AddGroundForces(region.RegionId, coalition, C.NumNewTroops)), sprintf "Reinforcements for %s" (string coalition)
+                        | None ->
+                            yield None, sprintf "Reinforcements for %s cancelled" (string coalition)
                 // Update time
                 yield Some(AdvanceTime(newTime - war.Date)), "Advance time"
             }
