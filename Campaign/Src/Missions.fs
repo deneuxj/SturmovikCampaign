@@ -604,6 +604,18 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                     ()
         }
 
+    // Conquests due to invaders entering an unprotected region
+    member this.DoWalkInConquests() =
+        seq {
+            for region in war.World.Regions.Keys do
+                let owner = war.GetOwner(region)
+                for coalition in [Axis; Allies] do
+                    if owner <> Some coalition && war.GetGroundForces(coalition, region) > 0.0f<MGF> && war.GetGroundForces(coalition.Other, region) <= 0.0f<MGF> then
+                        yield
+                            Some(SetRegionOwner(region, Some coalition)),
+                            sprintf "%s captured unprotected region %s" (string coalition) (string region)
+        }
+
     member this.DoAll() =
         seq {
             yield! this.DoGroundForcesMovements()
@@ -612,4 +624,5 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
             yield! this.DoObjectives()
             yield! this.DoBattles()
             yield! this.DoReturnToBase()
+            yield! this.DoWalkInConquests()
         }
