@@ -635,7 +635,7 @@ type MultiplayerMissionContent =
         /// List of chains of convoys, convoys in each chain start after the previous one reaches completion.
         Convoys : Convoy list list
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
-        ParkedVehicles : (ConvoyMember * OrientedPosition * CountryId) list
+        ParkedVehicles : (CoalitionId * (ConvoyMember * OrientedPosition * CountryId) list) list
     }
 with
     /// Create the groups suitable for a multiplayer "dogfight" mission
@@ -814,7 +814,32 @@ with
 
         let parkedVehicles =
             this.ParkedVehicles
-            |> List.map (fun (vehicle, pos, country) -> mkParkedVehicle(vehicle, pos, country))
+            |> List.collect (fun (_, group) ->
+                group
+                |> List.map (fun (vehicle, pos, country) -> mkParkedVehicle(vehicle, pos, country)))
+
+        // Parked vehicles recon
+        let campRecons =
+            this.ParkedVehicles
+            |> List.choose (fun (coalition, group) ->
+                group
+                |> List.tryHead
+                |> Option.map (fun (_, pos, country) ->
+                    let iconCover, iconAttack = IconDisplay.IconDisplay.CreatePair(store, lcStore, pos.Pos, "Camp", coalition.ToCoalition, Mcu.IconIdValue.CoverTankPlatoon)
+                    let proximity = Proximity.Proximity.Create(store, coalition.Other.ToCoalition, 1000, pos.Pos)
+                    Mcu.addTargetLink proximity.Out iconCover.Show.Index
+                    Mcu.addTargetLink proximity.Out iconAttack.Show.Index
+                    { new IMcuGroup with
+                          member this.Content = []
+                          member this.LcStrings = []
+                          member this.SubGroups = [
+                            iconCover.All
+                            iconAttack.All
+                            proximity.All
+                          ]
+                    }
+                )
+            )
 
         // Mission end triggered by server input
         let serverInputMissionEnd = MissionEnd.MissionEnd.Create(store)
@@ -837,6 +862,7 @@ with
                 yield! convoys
                 yield! parkedPlanes
                 yield! parkedVehicles
+                yield! campRecons
                 yield serverInputMissionEnd.All
                 yield upcast borders
             ]

@@ -480,18 +480,24 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     let yori = float32(random.NextDouble() * 350.0)
                     match Seq.tryHead locations with
                     | Some location ->
-                        // Put random vehicles in a grid, where each spot has 80% chance of being empty
-                        for x in -halfSideSize .. spacing .. halfSideSize do
-                            for z in -halfSideSize .. spacing .. halfSideSize do
-                                let yori = yori + float32(random.NextDouble() * 9.99)
-                                if random.NextDouble() <= 0.2 then
-                                    let vehicle = getRandomVehicle()
-                                    let pos =
-                                        { Pos = location + Vector2(x, z)
-                                          Rotation = yori
-                                          Altitude = 0.0f
-                                        }
-                                    yield vehicle, pos, country
+                        let positions =
+                            [
+                                // Put random vehicles in a grid, where each spot has 80% chance of being empty
+                                for x in -halfSideSize .. spacing .. halfSideSize do
+                                    for z in -halfSideSize .. spacing .. halfSideSize do
+                                        let yori = yori + float32(random.NextDouble() * 9.99)
+                                        if random.NextDouble() <= 0.2 then
+                                            let vehicle = getRandomVehicle()
+                                            let pos =
+                                                { Pos = location + Vector2(x, z)
+                                                  Rotation = yori
+                                                  Altitude = 0.0f
+                                                }
+                                            yield vehicle, pos, country
+                            ]
+                        match positions with
+                        | [] -> ()
+                        | _ -> yield coalition, positions
                     | None ->
                         ()
         ]
