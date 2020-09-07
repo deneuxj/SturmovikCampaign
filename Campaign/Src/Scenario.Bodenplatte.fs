@@ -724,6 +724,67 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             | [] -> Plan("No region suitable for invasion", [], budget)
             | _ :: _ -> Plan("Insufficient forces to invade", [], budget))
 
+    let tryPlanReinforcements (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
+        let suitableSources =
+            war.World.Regions.Values
+            |> Seq.filter (fun source ->
+                war.GetOwner(source.RegionId) = Some friendly &&
+                let available =
+                    budget.Regions.TryFind(source.RegionId, friendly)
+                    |> Option.defaultValue 0.0f<MGF>
+                available > 0.0f<MGF>)
+            |> List.ofSeq
+        match suitableSources with
+        | [] ->
+            Plan("No region with excess forces to move to the front", [], budget)
+        | _ ->
+        let missions =
+            [
+                let enemy = friendly.Other
+                let distanceToEnemy = war.ComputeDistancesToCoalition enemy
+                let mutable budget = budget
+                for source in suitableSources do
+                    if war.GetOwner(source.RegionId) = Some friendly then
+                        let friendlyForces = budget.Regions.TryFind(source.RegionId, friendly) |> Option.defaultValue 0.0f<MGF>
+                        let availableToMove = friendlyForces - war.GetGroundForces(enemy, source.RegionId)
+                        if availableToMove > 0.0f<MGF> then
+                            let destination =
+                                source.Neighbours
+                                |> List.filter (fun ngh -> war.GetOwner(ngh) = Some friendly)
+                                |> List.map (fun ngh ->
+                                    let friendlyForces2 = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
+                                    distanceToEnemy.[ngh], war.GetGroundForces(enemy, ngh) - friendlyForces2, ngh)
+                                |> List.filter (fun (dist, excess, _) -> excess >= 0.0f<MGF> && dist <= distanceToEnemy.[source.RegionId])
+                                |> function
+                                    | [] -> None
+                                    | nghs -> List.min nghs |> Some
+                            match destination with
+                            | Some (dist, enemyExcess, ngh) ->
+                                let amountToMove = min enemyExcess availableToMove
+                                match budget.TryCheckoutGroundForce(friendly, source.RegionId, amountToMove) with
+                                | Some budget2 ->
+                                    budget <- budget2
+                                    yield {
+                                        Kind = GroundMission
+                                                {
+                                                    Objective = ngh
+                                                    MissionType = GroundForcesTransfer(friendly, source.RegionId, amountToMove)
+                                                }
+                                        Description = sprintf "Reinforcement %s -> %s" (string source.RegionId) (string ngh)
+                                    }, budget2
+                                | None ->
+                                    ()
+                            | None ->
+                                ()
+            ]
+        match missions with
+        | [] ->
+            Plan("No region needs or can receive reinforcements", [], budget)
+        | _ ->
+            let budget = List.last missions |> snd
+            let missions = missions |> List.map fst
+            Plan("Reinforcement of regions close to the front", missions, budget)
+
     let tryPlanBattles (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         [
             for region in war.World.Regions.Values do
@@ -751,7 +812,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         let tryMakeGroundForcesSupport = tryMakeOffensiveGroundForcesRaids war true side
         let tryMakeGroundForcesDefense = tryMakeDefensiveGroundForcesRaids war side
         let tryTransferPlanesForward = tryTransferPlanesForward war side
-        let tryPlanTroops = Planning.chain [ tryPlanInvasions war side; tryPlanBattles war side ]
+        let tryPlanTroops = Planning.chain [ tryPlanInvasions war side; tryPlanBattles war side; tryPlanReinforcements war side ]
 
         let sideAttacks =
             Planning.orElse [
