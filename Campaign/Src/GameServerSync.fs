@@ -506,7 +506,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     let state0 = Init.mkWar world
                     sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
                     sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
-                    let step = sctrl.Start state0
+                    let step = sctrl.Start(state0, settings.SimulatedDuration * 1.0f<H>)
                     Ok(world, state0, step, sctrl)
 
             let writeData (world : World, state0 : WarState, step0 : ScenarioStep, sctrl : IScenarioController) =
@@ -572,7 +572,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 war.SetWeather(weather)
                 // Plan next round
                 let advance = sctrl.NextStep(stepData)
-                let nextStep = advance war
+                let nextStep = advance(war, settings.SimulatedDuration * 1.0f<H>)
                 // Write war state and campaign step files
                 let index = getCurrentIndex settings.WorkDir + 1
                 let stateFile = wkPath(getStateFilename index)

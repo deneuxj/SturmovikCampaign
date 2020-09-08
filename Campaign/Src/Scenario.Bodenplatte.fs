@@ -745,13 +745,15 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         | _ ->
         let missions =
             [
+                let railCapacity = war.ComputeRailCapacity()
+                let roadCapacity = war.ComputeRoadCapacity()
                 let distanceToEnemy = war.ComputeDistancesToCoalition enemy
                 let mutable budget = budget
                 for source in suitableSources do
                     logger.Debug(sprintf "Considering source region %s for %s" (string source.RegionId) (string friendly))
                     let friendlyForces = budget.Regions.TryFind(source.RegionId, friendly) |> Option.defaultValue 0.0f<MGF>
                     let availableToMove = friendlyForces - war.GetGroundForces(enemy, source.RegionId)
-                    let destination =
+                    let destinations =
                         source.Neighbours
                         |> List.filter (fun ngh -> war.GetOwner(ngh) = Some friendly)
                         |> List.map (fun ngh ->
@@ -761,35 +763,51 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                             logger.Debug(sprintf "Potential destination: %s with excess %f and hops %d" (string ngh) excess dist)
                             excess, dist, ngh)
                         |> List.filter (fun (excess, dist, _) -> excess < 0.0f<MGF> || dist < distanceToEnemy.[source.RegionId])
-                        |> function
-                            | [] -> None
-                            | nghs -> List.min nghs |> Some
-                    match destination with
-                    | Some (excess, dist, ngh) ->
-                        logger.Debug(sprintf "Picked %s" (string ngh))
-                        match budget.TryCheckoutGroundForce(friendly, source.RegionId, availableToMove) with
-                        | Some budget2 ->
-                            logger.Debug("Confirmed, allowed by budget")
-                            budget <- budget2
-                            yield {
-                                Kind = GroundMission
+
+                    let missions, budget2 =
+                        (([], budget), destinations)
+                        ||> List.fold (fun (missions, budget) (excess, dist, ngh) ->
+                            logger.Debug(sprintf "Picked %s" (string ngh))
+                            let maxTransport =
+                                let capacity = railCapacity(source.RegionId, ngh) + roadCapacity(source.RegionId, ngh)
+                                capacity / war.World.GroundForcesTransportCost
+                            let availableToMove = min availableToMove maxTransport
+                            if availableToMove > 0.0f<MGF> then
+                                match budget.TryCheckoutGroundForce(friendly, source.RegionId, availableToMove) with
+                                | Some budget2 ->
+                                    logger.Debug("Confirmed, allowed by budget")
+                                    let mission =
                                         {
-                                            Objective = ngh
-                                            MissionType = GroundForcesTransfer(friendly, source.RegionId, availableToMove)
+                                            Kind = GroundMission
+                                                    {
+                                                        Objective = ngh
+                                                        MissionType = GroundForcesTransfer(friendly, source.RegionId, availableToMove)
+                                                    }
+                                            Description = sprintf "Reinforcement %s -> %s" (string source.RegionId) (string ngh)
                                         }
-                                Description = sprintf "Reinforcement %s -> %s" (string source.RegionId) (string ngh)
-                            }, budget2
-                        | None ->
-                            logger.Debug("Cancelled, insufficient budget ?!")
-                    | None ->
-                        logger.Debug("No suitable destination")
+                                    mission :: missions, budget2
+                                | None ->
+                                    logger.Debug("Cancelled, insufficient budget ?!")
+                                    missions, budget
+                            else
+                                logger.Debug("No transport ways available")
+                                missions, budget)
+                    yield! List.rev missions
+                    budget <- budget2
             ]
         match missions with
         | [] ->
             Plan("No region needs or can receive reinforcements", [], budget)
         | _ ->
-            let budget = List.last missions |> snd
-            let missions = missions |> List.map fst
+            let budget =
+                (budget, missions)
+                ||> List.fold (fun budget mission ->
+                    match mission with
+                    | { Kind = GroundMission { MissionType = GroundForcesTransfer(coalition, region, forces) } } ->
+                        budget.TryCheckoutGroundForce(coalition, region, forces)
+                        |> Option.defaultValue budget
+                    | _ ->
+                        budget)
             Plan("Reinforcement of regions close to the front", missions, budget)
 
     let tryPlanBattles (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
@@ -811,7 +829,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             | [] -> Plan("No battle to start", [], budget)
             | ms -> Plan(sprintf "Battles started by %s" (string friendly), ms, budget)
 
-    let rec oneSideStrikes (side : CoalitionId) comment depth (war : IWarStateQuery) =
+    let rec oneSideStrikes (side : CoalitionId) comment depth (war : IWarStateQuery, timeSpan : float32<H>) =
         let tryMakeAirfieldRaids = tryMakeAirfieldRaids war side
         let tryMakeIndustryRaids = tryMakeIndustryRaids war side
         let tryMakeOtherDefensiveGroundForcesRaids = tryMakeDefensiveGroundForcesRaids war side.Other
@@ -836,7 +854,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         | Plan(comment, [], _) ->
             let comment2 = sprintf "%s loses initiative because of %s" (string side) comment
             if depth > 0 then
-                oneSideStrikes side.Other comment2 (depth - 1) war
+                oneSideStrikes side.Other comment2 (depth - 1) (war, timeSpan)
             else
                 Stalemate (sprintf "%s and %s" comment comment2)
         | Plan(description, missions, budget) ->
@@ -918,8 +936,8 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 yield Some(AdvanceTime(newTime - war.Date)), "Advance time"
             }
 
-        member this.Start(war) =
-            oneSideStrikes Axis "Axis opens the hostilities" 1 war
+        member this.Start(war, timeSpan) =
+            oneSideStrikes Axis "Axis opens the hostilities" 1 (war, timeSpan)
 
         member this.TrySelectMissions(stepData, war, seed, numSelected) =
             let data = stepData.Data :?> ImplData
