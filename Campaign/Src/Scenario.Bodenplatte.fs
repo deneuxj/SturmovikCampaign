@@ -196,6 +196,8 @@ module BodenplatteInternal =
 open BodenplatteInternal
 
 type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
+    let logger = NLog.LogManager.GetCurrentClassLogger()
+
     let totalPlanes : Map<_, float32> -> float32 =
         Map.toSeq >> Seq.sumBy (snd >> floor)
 
@@ -725,6 +727,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             | _ :: _ -> Plan("Insufficient forces to invade", [], budget))
 
     let tryPlanReinforcements (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
+        let enemy = friendly.Other
         let suitableSources =
             war.World.Regions.Values
             |> Seq.filter (fun source ->
@@ -732,50 +735,54 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 let available =
                     budget.Regions.TryFind(source.RegionId, friendly)
                     |> Option.defaultValue 0.0f<MGF>
-                available > 0.0f<MGF>)
+                let needed = war.GetGroundForces(enemy, source.RegionId)
+                available > needed)
             |> List.ofSeq
         match suitableSources with
         | [] ->
+            logger.Debug("No region with excess forces available to send reinforcements")
             Plan("No region with excess forces to move to the front", [], budget)
         | _ ->
         let missions =
             [
-                let enemy = friendly.Other
                 let distanceToEnemy = war.ComputeDistancesToCoalition enemy
                 let mutable budget = budget
                 for source in suitableSources do
-                    if war.GetOwner(source.RegionId) = Some friendly then
-                        let friendlyForces = budget.Regions.TryFind(source.RegionId, friendly) |> Option.defaultValue 0.0f<MGF>
-                        let availableToMove = friendlyForces - war.GetGroundForces(enemy, source.RegionId)
-                        if availableToMove > 0.0f<MGF> then
-                            let destination =
-                                source.Neighbours
-                                |> List.filter (fun ngh -> war.GetOwner(ngh) = Some friendly)
-                                |> List.map (fun ngh ->
-                                    let friendlyForces2 = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
-                                    distanceToEnemy.[ngh], war.GetGroundForces(enemy, ngh) - friendlyForces2, ngh)
-                                |> List.filter (fun (dist, excess, _) -> excess >= 0.0f<MGF> && dist <= distanceToEnemy.[source.RegionId])
-                                |> function
-                                    | [] -> None
-                                    | nghs -> List.min nghs |> Some
-                            match destination with
-                            | Some (dist, enemyExcess, ngh) ->
-                                let amountToMove = min enemyExcess availableToMove
-                                match budget.TryCheckoutGroundForce(friendly, source.RegionId, amountToMove) with
-                                | Some budget2 ->
-                                    budget <- budget2
-                                    yield {
-                                        Kind = GroundMission
-                                                {
-                                                    Objective = ngh
-                                                    MissionType = GroundForcesTransfer(friendly, source.RegionId, amountToMove)
-                                                }
-                                        Description = sprintf "Reinforcement %s -> %s" (string source.RegionId) (string ngh)
-                                    }, budget2
-                                | None ->
-                                    ()
-                            | None ->
-                                ()
+                    logger.Debug(sprintf "Considering source region %s for %s" (string source.RegionId) (string friendly))
+                    let friendlyForces = budget.Regions.TryFind(source.RegionId, friendly) |> Option.defaultValue 0.0f<MGF>
+                    let availableToMove = friendlyForces - war.GetGroundForces(enemy, source.RegionId)
+                    let destination =
+                        source.Neighbours
+                        |> List.filter (fun ngh -> war.GetOwner(ngh) = Some friendly)
+                        |> List.map (fun ngh ->
+                            let friendlyForces2 = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
+                            let excess = friendlyForces2 - war.GetGroundForces(enemy, ngh) |> min 0.0f<MGF>
+                            let dist = distanceToEnemy.[ngh]
+                            logger.Debug(sprintf "Potential destination: %s with excess %f and hops %d" (string ngh) excess dist)
+                            excess, dist, ngh)
+                        |> List.filter (fun (excess, dist, _) -> excess < 0.0f<MGF> || dist < distanceToEnemy.[source.RegionId])
+                        |> function
+                            | [] -> None
+                            | nghs -> List.min nghs |> Some
+                    match destination with
+                    | Some (excess, dist, ngh) ->
+                        logger.Debug(sprintf "Picked %s" (string ngh))
+                        match budget.TryCheckoutGroundForce(friendly, source.RegionId, availableToMove) with
+                        | Some budget2 ->
+                            logger.Debug("Confirmed, allowed by budget")
+                            budget <- budget2
+                            yield {
+                                Kind = GroundMission
+                                        {
+                                            Objective = ngh
+                                            MissionType = GroundForcesTransfer(friendly, source.RegionId, availableToMove)
+                                        }
+                                Description = sprintf "Reinforcement %s -> %s" (string source.RegionId) (string ngh)
+                            }, budget2
+                        | None ->
+                            logger.Debug("Cancelled, insufficient budget ?!")
+                    | None ->
+                        logger.Debug("No suitable destination")
             ]
         match missions with
         | [] ->
