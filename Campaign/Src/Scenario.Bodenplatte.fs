@@ -844,7 +844,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 missions
                 |> List.choose (function { Kind = AirMission x } -> Some x | _ -> None)
             let covers, budget =
-                Planning.chain [ tryMakeCovers war side.Other raids; tryMakeOtherDefensiveGroundForcesRaids; tryTransferPlanesForward ] budget
+                Planning.chain [ tryMakeCovers war side.Other raids; tryMakeOtherDefensiveGroundForcesRaids; tryTransferPlanesForward; tryPlanTroops ] budget
                 |> MissionPlanningResult.getMissions budget
             let momentum =
                 if depth = 0 then
