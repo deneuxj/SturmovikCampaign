@@ -204,7 +204,7 @@ with
             let killed = getTriggerByName db "Killed"
             Mcu.addTargetLink killed repairDelay.Index
         // Random delay after show, to minimize stutters when spawning multiple cannons
-        showDelay.Time <- float(random.Next())
+        showDelay.Time <- float(random.NextDouble() * 30.0)
         // Result
         { Cannon = McuUtil.getEntityByIndex cannon.LinkTrId db
           Show = show
