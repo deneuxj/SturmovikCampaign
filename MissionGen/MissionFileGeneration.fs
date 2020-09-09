@@ -826,7 +826,8 @@ with
                 |> List.tryHead
                 |> Option.map (fun (_, pos, country) ->
                     let iconCover, iconAttack = IconDisplay.IconDisplay.CreatePair(store, lcStore, pos.Pos, "Camp", coalition.ToCoalition, Mcu.IconIdValue.CoverTankPlatoon)
-                    let proximity = Proximity.Proximity.Create(store, coalition.Other.ToCoalition, 1000, pos.Pos)
+                    let proximity = Proximity.Proximity.Create(store, coalition.Other.ToCoalition, 2000, pos.Pos)
+                    Mcu.addTargetLink missionBegin proximity.Start.Index
                     Mcu.addTargetLink proximity.Out iconCover.Show.Index
                     Mcu.addTargetLink proximity.Out iconAttack.Show.Index
                     { new IMcuGroup with
