@@ -460,6 +460,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 for coalition in [ Axis; Allies ] do
                     let country = state.World.GetAnyCountryInCoalition(coalition)
                     let forces = state.GetGroundForces(coalition, region.RegionId)
+                    if forces < TargetType.Truck.GroundForceValue then
+                        () // Skip
+                    else
                     // At most 20% of the forces, unless it's less than 5 tanks
                     let inCamp = 0.2f * forces
                     let inCamp =
