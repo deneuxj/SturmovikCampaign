@@ -526,7 +526,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     |> Seq.truncate numNests
                 for _, shape in positions do
                     let nest =
-                        { Priority = 2.0f
+                        { Priority = 5.0f
                           Number = gunsPerNest
                           Boundary = shape
                           Rotation = 0.0f
@@ -682,7 +682,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             let shape = VectorExtension.mkCircle(Vector2.Zero, 500.0f)
                             let mkNest(p, country) =
                                 {
-                                    Priority = 0.0f
+                                    Priority = 2.0f
                                     Number = gunsPerNest
                                     Boundary = shape |> List.map ((+) p)
                                     Rotation = 0.0f
@@ -697,6 +697,31 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         | None -> ()
                     | None -> ()
                 | _ -> ()
+
+            // Camps
+            for coalition, vehicles in parkedVehicles do
+                let positions = vehicles |> List.map (fun (_, pos, _) -> pos.Pos)
+                let minX = positions |> Seq.map (fun v -> v.X) |> Seq.min
+                let maxX = positions |> Seq.map (fun v -> v.X) |> Seq.max
+                let minY = positions |> Seq.map (fun v -> v.Y) |> Seq.min
+                let maxY = positions |> Seq.map (fun v -> v.Y) |> Seq.max
+                let center = 0.5f * (Vector2(minX, minY) + Vector2(maxX, maxY))
+                let extent = sqrt(let dx = maxX - minX in let dy = maxY - minY in dx * dx + dy * dy)
+                let pos = center + (extent + 200.0f) * Vector2.FromYOri(random.NextDouble() * 359.0)
+                let country = state.World.GetAnyCountryInCoalition(coalition)
+                let shape = mkCircle(pos, 150.0f)
+                yield
+                    {
+                        Priority = 1.0f
+                        Number = gunsPerNest
+                        Boundary = shape
+                        Rotation = 0.0f
+                        Settings = CanonGenerationSettings.Default
+                        Specialty = DefenseSpecialty.AntiAirCanon
+                        IncludeSearchLights = hasLowLight
+                        IncludeFlak = true
+                        Country = country.ToMcuValue
+                    }
         ]
 
     // Ground battles
