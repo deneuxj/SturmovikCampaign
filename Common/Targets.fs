@@ -38,6 +38,7 @@ with
         | Artillery -> 10.0f<MGF>
         | Tank -> 25.0f<MGF>
         | ArmoredCar -> 5.0f<MGF>
+        | Truck -> 2.0f<MGF>
         | _ -> 0.0f<MGF>
 
     member this.Description =

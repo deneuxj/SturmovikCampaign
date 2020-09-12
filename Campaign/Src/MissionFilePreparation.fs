@@ -436,7 +436,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         [
             let random = System.Random(state.Seed)
             // Vehicles to choose from for the random picking.
-            let vehicles = [| Tank; ArmoredCar; ArmoredCar; Truck; Truck; Truck |]
+            let vehicles = [| Tank; ArmoredCar; ArmoredCar; ArmoredCar; Truck; Truck |]
             let avgCost =
                 vehicles
                 |> Seq.sumBy (fun v -> v.AsTargetType.GroundForceValue)
@@ -458,51 +458,52 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 |> Seq.filter (fun region -> not(regionsWithBattles.Contains region.RegionId))
             for region in regionsWithoutBattles do
                 for coalition in [ Axis; Allies ] do
-                    let country = state.World.GetAnyCountryInCoalition(coalition)
                     let forces = state.GetGroundForces(coalition, region.RegionId)
-                    if forces < TargetType.Truck.GroundForceValue then
-                        () // Skip
-                    else
-                    // At most 20% of the forces, unless it's less than 5 tanks
-                    let inCamp = 0.2f * forces
-                    let inCamp =
-                        if inCamp < 5.0f * TargetType.Tank.GroundForceValue then
-                            forces
-                        else
-                            inCamp
-                    // Get room for 5 times the planned parking spots
-                    // About 20% of the spots will be used, to avoid excessively compact camps
-                    let numSpots =
-                        5.0f * ceil(inCamp / avgCost)
-                    // Find an area
-                    let spacing = 20.0f
-                    let halfSideSize =
-                        0.5f * (1.0f + ceil(sqrt(numSpots))) * spacing
-                    let shape = mkSquare(Vector2.Zero, halfSideSize)
-                    let locations = locator.GetGroundLocationCandidates (region.Boundary, shape)
-                    let yori = float32(random.NextDouble() * 350.0)
-                    match Seq.tryHead locations with
-                    | Some location ->
-                        let positions =
-                            [
-                                // Put random vehicles in a grid, where each spot has 80% chance of being empty
-                                for x in -halfSideSize .. spacing .. halfSideSize do
-                                    for z in -halfSideSize .. spacing .. halfSideSize do
-                                        let yori = yori + float32(random.NextDouble() * 9.99)
-                                        if random.NextDouble() <= 0.2 then
-                                            let vehicle = getRandomVehicle()
-                                            let pos =
-                                                { Pos = location + Vector2(x, z)
-                                                  Rotation = yori
-                                                  Altitude = 0.0f
-                                                }
-                                            yield vehicle, pos, country
-                            ]
-                        match positions with
-                        | [] -> ()
-                        | _ -> yield coalition, positions
-                    | None ->
-                        ()
+                    if forces > 10.0f * TargetType.ArmoredCar.GroundForceValue then
+                        // At most 20% of the forces, unless it's less than 5 tanks
+                        let inCamp = 0.2f * forces
+                        let inCamp =
+                            if inCamp < 15.0f * TargetType.ArmoredCar.GroundForceValue then
+                                forces
+                            else
+                                inCamp
+                        // Get room for 5 times the planned parking spots
+                        // About 20% of the spots will be used, to avoid excessively compact camps
+                        let numSpots =
+                            5.0f * ceil(inCamp / avgCost)
+                        // Find an area
+                        let spacing = 20.0f
+                        let halfSideSize =
+                            0.5f * (1.0f + ceil(sqrt(numSpots))) * spacing
+                        let shape = mkSquare(Vector2.Zero, halfSideSize)
+                        let locations = locator.GetGroundLocationCandidates (region.Boundary, shape)
+                        let yori = float32(random.NextDouble() * 350.0)
+                        match Seq.tryHead locations with
+                        | Some location ->
+                            let positions =
+                                [
+                                    let country = state.World.GetAnyCountryInCoalition(coalition)
+                                    // Put random vehicles in a grid, where each spot has 80% chance of being empty
+                                    for x in -halfSideSize .. spacing .. halfSideSize do
+                                        for z in -halfSideSize .. spacing .. halfSideSize do
+                                            let yori = yori + float32(random.NextDouble() * 9.99)
+                                            let displacement = 3.0f * float32 (random.NextDouble()) * Vector2.FromYOri(random.NextDouble() * 359.0)
+                                            if random.NextDouble() <= 0.2 then
+                                                let vehicle = getRandomVehicle()
+                                                let pos =
+                                                    { Pos = location + Vector2(x, z) + displacement
+                                                      Rotation = yori
+                                                      Altitude = 0.0f
+                                                    }
+                                                yield vehicle, pos, country
+                                ]
+                                |> let mutable s = 0.0f<MGF> in
+                                   List.takeWhile(fun (vehicle, _, _) -> s <- s + vehicle.AsTargetType.GroundForceValue; s <= inCamp)
+                            match positions with
+                            | [] -> ()
+                            | _ -> yield coalition, positions
+                        | None ->
+                            ()
         ]
 
     // AA nests
