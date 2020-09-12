@@ -982,9 +982,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         [
             let rnd = System.Random(state.Seed)
             for x in getPaths state.World.Roads do
-                let rest =
+                let convoy =
                     List.init 2 (fun _ ->
-                        AntiAirTruck :: List.init 6 (fun _ -> Truck))
+                        AntiAirTruck :: List.init 3 (fun _ -> Truck))
                     |> List.concat
                     |> Array.ofList
                     |> Array.shuffle rnd
@@ -993,9 +993,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 yield {
                     Country = x.Country
                     Coalition = state.World.Countries.[x.Country]
-                    Members = ConvoyMember.StaffCar :: rest
+                    Members = convoy
                     Path = x.Path
-                    StartPositions = x.Path |> List.truncate (rest.Length + 1) |> List.rev
+                    StartPositions = x.Path |> List.truncate (convoy.Length + 1) |> List.rev
                 }
         ]
         |> organizeConvoys settings.MaxTrainsPerSide
