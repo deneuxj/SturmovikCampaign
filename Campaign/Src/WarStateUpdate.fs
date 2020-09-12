@@ -107,7 +107,7 @@ module Results =
         | PlayerBanUpdated(nickName, ban) ->
             sprintf "Status of %s is %s" nickName (string ban)
         | PilotUpdated(pilot) ->
-            sprintf "Pilot %s %s updated, who is now %s" pilot.PilotFirstName pilot.PilotLastName (string pilot.Health)
+            sprintf "Pilot %s updated, who is now %s" pilot.FullName (string pilot.Health)
 
 module CommandExecution =
     type IWarState with

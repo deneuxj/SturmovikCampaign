@@ -81,6 +81,9 @@ type Pilot =
         InitialNumFlights : int
         Flights : FlightRecord list
     }
+with
+    member this.FullName =
+        sprintf "%s %s (%d)" this.PilotFirstName this.PilotLastName this.Id.AsInt
 
 let countCompletedFlights (flights : FlightRecord list) =
     (0, flights)

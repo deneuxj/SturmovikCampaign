@@ -126,7 +126,7 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                     | CrashedInEnemyTerritory _ -> "crashed in enemy territory"
                                     | CrashedInFriendlyTerritory _ -> "crash-landed"
                                     | AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
-                                let msg = sprintf "%s %s %s (%d) has %s" rank pilot.PilotFirstName pilot.PilotLastName pid.AsInt eventDescription
+                                let msg = sprintf "%s %s has %s" rank pilot.FullName eventDescription
                                 let coalition = war.World.Countries.[pilot.Country]
                                 let! s = notifier.MessageCoalition(coalition, msg)
                                 match health with
@@ -148,7 +148,7 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                     Pilots.tryComputeRank war.World.Ranks pilot
                                     |> Option.map (fun rank -> rank.RankAbbrev)
                                     |> Option.defaultValue ""
-                                let msg = sprintf "%s has taken control of %s %s %s (%d)" player rank pilot.PilotFirstName pilot.PilotLastName pilot.Id.AsInt
+                                let msg = sprintf "%s has taken control of %s %s" player rank pilot.FullName
                                 let! s = notifier.MessageAll(msg)
                                 ()
                             | _ ->
