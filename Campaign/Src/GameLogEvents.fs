@@ -27,6 +27,9 @@ type ObjectEvent =
     | ObjectTakesOff of {| Id : int; Position : Position |}
     | ObjectLands of {| Id : int; Position : Position |}
 
+type BotEvent =
+    | BotEject of {| BotId : int; ParentId : int; Position : Position |}
+
 type ObjectTaken = {
     VehicleId : int
     PilotId : int
@@ -53,7 +56,7 @@ type UserIds = {
 
 type PlayerEvent =
     | PlayerJoins of UserIds
-    | PlayerEndsMission of {| VehicleId : int; PilotId : int; Bullets : int; Shells : int; Bombs : int; Rockets : int; Position : Position |}
+    | PlayerEndsMission of {| VehicleId : int; PilotId : int; Bullets : int; Shells : int; Bombs : int; Rockets : int |}
     | PlayerTakesObject of ObjectTaken
     | PlayerLeaves of UserIds
 
@@ -101,14 +104,14 @@ let reHit = Regex(@"AMMO:(.+) AID:([\d\-]+) TID:([\d\-]+)")
 let reDamage = Regex(@"DMG:([\d\.\-]+) AID:([\d\-]+) TID:([\d\-]+) POS\(([\d,\.\s\-#QO]+)\)")
 let reKill = Regex(@"AID:([\d\-]+) TID:([\d\-]+) POS\(([\d,\.\s\-#QO]+)\)")
 let reEndFlight = Regex(@"PLID:([\d\-]+) PID:([\d\-]+) BUL:([\d\-]+) SH:([\d\-]+) BOMB:([\d\-]+) RCT:([\d\-]+) \(([\d,\.\s\-#QO]+)\)")
-
+let reEject = Regex(@"BOTID:([\d\-]+) PARENTID:([\d\-]+) POS\(([\d,\.\s\-#QO]+)\)")
 type System.TimeSpan with
     static member OfGameTicks(ticks : int) =
         let gameTicksPerSecond = 50L
         let netTicksPerSecond = 10000000L
         System.TimeSpan(int64 ticks * netTicksPerSecond / gameTicksPerSecond)
 
-let (|MissionEvent|ObjectEvent|PlayerEvent|OtherEvent|InvalidLine|) (line : string) =
+let (|MissionEvent|ObjectEvent|PlayerEvent|BotEvent|OtherEvent|InvalidLine|) (line : string) =
     match line with
     | MatchesRegex reBase (GroupList [AsInt ticks; AsInt eventType; eventData]) ->
         let timeStamp = System.TimeSpan.OfGameTicks(ticks)
@@ -140,8 +143,8 @@ let (|MissionEvent|ObjectEvent|PlayerEvent|OtherEvent|InvalidLine|) (line : stri
                 InvalidLine
         | 4 ->
             match eventData with
-            | MatchesRegex reEndFlight (GroupList [AsInt vehId; AsInt pilotId; AsInt bullets; AsInt shells; AsInt bombs; AsInt rockets; AsPos position]) ->
-                PlayerEvent(timeStamp, PlayerEndsMission {| VehicleId = vehId; PilotId = pilotId; Bullets = bullets; Shells = shells; Bombs = bombs; Rockets = rockets; Position = position |})
+            | MatchesRegex reEndFlight (GroupList [AsInt vehId; AsInt pilotId; AsInt bullets; AsInt shells; AsInt bombs; AsInt rockets; AsPos _]) ->
+                PlayerEvent(timeStamp, PlayerEndsMission {| VehicleId = vehId; PilotId = pilotId; Bullets = bullets; Shells = shells; Bombs = bombs; Rockets = rockets |})
             | _ ->
                 InvalidLine
         | 5 ->
@@ -196,6 +199,11 @@ let (|MissionEvent|ObjectEvent|PlayerEvent|OtherEvent|InvalidLine|) (line : stri
                     InvalidLine
             | _ ->
                 InvalidLine
+        | 18 ->
+            match eventData with
+            | MatchesRegex reEject (GroupList [AsInt botId; AsInt parentId; AsPos pos]) ->
+                BotEvent(timeStamp, BotEject {| BotId = botId; ParentId = parentId; Position = pos |})
+            | _ -> InvalidLine
         | 20 ->
             match eventData with
             | MatchesRegex reJoins (GroupList [userId; userNickId]) ->
