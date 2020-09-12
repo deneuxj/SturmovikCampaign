@@ -633,7 +633,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         async {
             match gameServer.IsRunning serverProcess with
             | None ->
-                return! this.StartServerAsync(restartsLeft)
+                do! this.StartServerAsync(restartsLeft)
             | Some proc ->
                 serverProcess <- Some(upcast proc)
 
@@ -672,8 +672,24 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
             match! latestStartingMissionReport with
             | Error msg ->
-                this.Interrupt(msg, true)
-                failwith "Failure to locate game logs"
+                if restartsLeft > 0 then
+                    logger.Warn("No logs found. Will attempt to restart DServer.")
+                    let killed = gameServer.KillProcess(serverProcess)
+                    match killed with
+                    | Ok() ->
+                        logger.Info("DServer successfully killed")
+                    | _ ->
+                        logger.Warn("Failed to kill DServer")
+                    serverProcess <- None
+                    let duration = endTime - startTime
+                    let startTime = DateTime.UtcNow
+                    let endTime = startTime + duration
+                    state <- Some(RunningMission(startTime, endTime))
+                    this.SaveState()
+                    return! this.ResumeAsync(restartsLeft - 1)
+                else
+                    this.Interrupt(msg, true)
+                    failwith "Failure to locate game logs"
             | Ok latestStartingMissionReport ->
             let! cancelLiveReporting =
                 async {
