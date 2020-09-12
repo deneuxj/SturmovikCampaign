@@ -25,7 +25,9 @@ type BuildingProperties with
 
     /// Total capacity of all parts in the building
     member this.Capacity =
-        BuildingProperties.CapacityDensity * this.Area
+        match this.SubParts.Length with
+        | 0 -> 0.0f<M^3>
+        | _ -> BuildingProperties.CapacityDensity * this.Area
 
     /// Volume of storage in a single part
     member this.PartCapacity =
