@@ -359,7 +359,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         yield
                             sprintf "%s has %s"
                                 x.Pilot.FullName
-                                (string x.Record.Return),
+                                (string flight.Return),
                             Some(RegisterPilotFlight(x.Pilot.Id, flight, healthStatus))
                         flightRecords.Remove(taken.PilotId) |> ignore
                     | false, _ ->

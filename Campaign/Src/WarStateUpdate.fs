@@ -210,10 +210,10 @@ module CommandExecution =
                 state.UpdatePlayer(player)
                 [ PlayerBanUpdated(player.Name, ban) ]
             | UpdatePilot(pilot) ->
-                state.UpdatePilot(pilot)
+                state.UpdatePilot(pilot, false)
                 [ PilotUpdated(pilot) ]
             | RegisterPilotFlight(pid, flight, health) ->
                 let pilot = state.GetPilot(pid)
                 let pilot = { pilot with Flights = pilot.Flights @ [flight]; Health = health }
-                state.UpdatePilot(pilot)
+                state.UpdatePilot(pilot, true)
                 [ PilotUpdated(pilot) ]

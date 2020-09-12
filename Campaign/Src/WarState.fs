@@ -318,7 +318,7 @@ type IWarStateUpdate =
     /// Add/update player
     abstract member UpdatePlayer : Player -> unit
     /// Add/update pilot
-    abstract member UpdatePilot : Pilot -> unit
+    abstract member UpdatePilot : Pilot * bool -> unit
 
 type IWarState =
     inherit IWarStateQuery
@@ -677,8 +677,15 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.UpdatePlayer(player : Player) =
         players.[player.Guid] <- player
 
-    member this.UpdatePilot(pilot : Pilot) =
-        pilots.[pilot.Id] <- pilot
+    member this.UpdatePilot(pilot : Pilot, updateFlights : bool) =
+        if updateFlights then
+            pilots.[pilot.Id] <- pilot
+        else
+            match pilots.TryGetValue(pilot.Id) with
+            | true, oldPilot ->
+                pilots.[pilot.Id] <- { pilot with Flights = oldPilot.Flights }
+            | false, _ ->
+                pilots.[pilot.Id] <- pilot
 
     member this.TryGetPlayer(guid : string) =
         players.TryGetValue(guid)
@@ -761,7 +768,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.Weather = this.Weather
         member this.World = this.World
         member this.UpdatePlayer(player : Player) = this.UpdatePlayer(player)
-        member this.UpdatePilot(pilot : Pilot) = this.UpdatePilot(pilot)
+        member this.UpdatePilot(pilot : Pilot, updateFlights : bool) = this.UpdatePilot(pilot, updateFlights)
         member this.TryGetPlayer(guid : string) = this.TryGetPlayer(guid)
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
         member this.NextPilotId() = this.NextPilotId()
