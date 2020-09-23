@@ -868,7 +868,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             this.SaveState()
                             return! this.ResumeAsync()
                         | Error msg ->
-                            return this.Die(msg)
+                            logger.Warn(msg)
+                            gameServer.KillProcess(serverProcess) |> ignore
+                            return! this.StartServerAsync(restartsLeft - 1)
                     | None ->
                         return! this.StartServerAsync()
 
