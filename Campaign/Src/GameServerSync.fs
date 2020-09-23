@@ -822,9 +822,15 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 | None
                 | Some(PreparingMission)->
                     let! status =
-                        let timeout = 5 * 60 * 1000 // 5 minutes
-                        Async.StartChild (this.PrepareMission(), timeout)
-                    match! status with
+                        async {
+                            try
+                                let timeout = 5 * 60 * 1000 // 5 minutes
+                                let! child = Async.StartChild (this.PrepareMission(), timeout)
+                                return! child
+                            with _ ->
+                                return Error "Failed to prepare mission in time"
+                        }
+                    match status with
                     | Ok() ->
                         state <- Some ResavingMission
                         logger.Info state
