@@ -67,6 +67,7 @@ let setTextMimeType = setMimeType "application/text; charset=utf-8"
 let allowAnyOrigin = setHeader "Access-Control-Allow-Origin" "*"
 
 let private usage = """
+GET /query/sync/state
 GET /query/world
 GET /query/current
 GET /query/past/<n>
