@@ -28,6 +28,7 @@ Options
   TempPressLevel = 0;
   Temperature = -15;
   Pressure = 760;
+  Haze = 0;
   WindLayers
   {
     0 :     0 :     0;
@@ -2195,7 +2196,7 @@ Block
 
 MCU_Waypoint
 {
-  Index = 103;
+  Index = 102;
   Name = "8m";
   Desc = "";
   Targets = [];
@@ -2215,7 +2216,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 105;
+  Index = 103;
   Name = "8m";
   Desc = "";
   Targets = [];
@@ -2235,7 +2236,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 106;
+  Index = 104;
   Name = "10m";
   Desc = "";
   Targets = [];
@@ -2255,7 +2256,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 107;
+  Index = 105;
   Name = "10m";
   Desc = "";
   Targets = [];
@@ -2275,7 +2276,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 108;
+  Index = 106;
   Name = "10m";
   Desc = "";
   Targets = [];
@@ -2295,7 +2296,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 110;
+  Index = 107;
   Name = "8m";
   Desc = "";
   Targets = [];
@@ -2315,7 +2316,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 111;
+  Index = 108;
   Name = "8m";
   Desc = "";
   Targets = [];
@@ -2335,7 +2336,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 112;
+  Index = 109;
   Name = "8m";
   Desc = "";
   Targets = [];
@@ -2355,7 +2356,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 113;
+  Index = 110;
   Name = "8m";
   Desc = "";
   Targets = [];
@@ -2375,7 +2376,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 114;
+  Index = 111;
   Name = "8m";
   Desc = "";
   Targets = [];
@@ -2395,7 +2396,7 @@ MCU_Waypoint
 
 MCU_Waypoint
 {
-  Index = 115;
+  Index = 112;
   Name = "8m";
   Desc = "";
   Targets = [];

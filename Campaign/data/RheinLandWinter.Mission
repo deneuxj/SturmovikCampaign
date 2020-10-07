@@ -26,6 +26,7 @@ Options
   TempPressLevel = 0;
   Temperature = 25;
   Pressure = 760;
+  Haze = 0;
   WindLayers
   {
     0 :     0 :     0;
@@ -70,11 +71,11 @@ MCU_TR_InfluenceArea
   Country = 201;
   Boundary
   {
-    77214.9, 185392;
-    78096.5, 169871;
-    88120.8, 173744;
-    92497.5, 185930;
-    89531.6, 192461;
+    77214, 185392;
+    78096, 169871;
+    88120, 173744;
+    92497, 185930;
+    89531, 192461;
   }
 }
 
@@ -82,7 +83,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 4;
+  Index = 3;
   Name = "Barvaux";
   Desc = "";
   Targets = [];
@@ -97,12 +98,12 @@ MCU_TR_InfluenceArea
   Country = 103;
   Boundary
   {
-    80919.8, 163795;
-    86167.2, 162010;
-    92252.1, 161621;
-    94534.5, 168876;
-    88215.1, 173279;
-    78143.9, 169634;
+    80919, 163795;
+    86167, 162010;
+    92252, 161621;
+    94534, 168876;
+    88215, 173279;
+    78143, 169634;
   }
 }
 
@@ -110,7 +111,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 5;
+  Index = 4;
   Name = "Spa";
   Desc = "";
   Targets = [];
@@ -128,9 +129,9 @@ MCU_TR_InfluenceArea
     92910, 186055;
     102932, 183652;
     105379, 193403;
-    99426.1, 198811;
-    91904.4, 197362;
-    89641.3, 192556;
+    99426, 198811;
+    91904, 197362;
+    89641, 192556;
   }
 }
 
@@ -138,7 +139,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 6;
+  Index = 5;
   Name = "Aywaille";
   Desc = "";
   Targets = [];
@@ -157,8 +158,8 @@ MCU_TR_InfluenceArea
     105756, 179010;
     102904, 183515;
     92808, 185819;
-    88355.1, 173644;
-    94655.5, 169096;
+    88355, 173644;
+    94655, 169096;
   }
 }
 
@@ -166,7 +167,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 7;
+  Index = 6;
   Name = "X2516";
   Desc = "";
   Targets = [];
@@ -193,7 +194,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 8;
+  Index = 7;
   Name = "X2515";
   Desc = "";
   Targets = [];
@@ -219,7 +220,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 9;
+  Index = 8;
   Name = "X2614";
   Desc = "";
   Targets = [];
@@ -234,10 +235,10 @@ MCU_TR_InfluenceArea
   Country = 103;
   Boundary
   {
-    92502.1, 161549;
-    97386.8, 154871;
+    92502, 161549;
+    97386, 154871;
     103503, 168660;
-    94823.3, 168854;
+    94823, 168854;
   }
 }
 
@@ -245,7 +246,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 10;
+  Index = 9;
   Name = "X2713";
   Desc = "";
   Targets = [];
@@ -260,12 +261,12 @@ MCU_TR_InfluenceArea
   Country = 103;
   Boundary
   {
-    91133.7, 147576;
-    98150.9, 148948;
+    91133, 147576;
+    98150, 148948;
     97292, 154729;
     92318, 161266;
-    86060.8, 161886;
-    80482.6, 154241;
+    86060, 161886;
+    80482, 154241;
   }
 }
 
@@ -273,7 +274,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 11;
+  Index = 10;
   Name = "X2613";
   Desc = "";
   Targets = [];
@@ -288,11 +289,11 @@ MCU_TR_InfluenceArea
   Country = 103;
   Boundary
   {
-    98377.4, 148943;
+    98377, 148943;
     106583, 149138;
     114654, 163948;
     103663, 168449;
-    97572.1, 154733;
+    97572, 154733;
   }
 }
 
@@ -300,7 +301,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 12;
+  Index = 11;
   Name = "X2812";
   Desc = "";
   Targets = [];
@@ -315,11 +316,11 @@ MCU_TR_InfluenceArea
   Country = 103;
   Boundary
   {
-    71413.1, 150418;
-    75945.7, 135136;
-    90987.9, 147344;
-    80387.9, 154099;
-    74444.9, 155734;
+    71413, 150418;
+    75945, 135136;
+    90987, 147344;
+    80387, 154099;
+    74444, 155734;
   }
 }
 
@@ -327,7 +328,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 13;
+  Index = 12;
   Name = "Verviers";
   Desc = "";
   Targets = [];
@@ -353,7 +354,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 14;
+  Index = 13;
   Name = "Florennes";
   Desc = "";
   Targets = [];
@@ -368,12 +369,12 @@ MCU_TR_InfluenceArea
   Country = 103;
   Boundary
   {
-    68481.1, 78547.7;
-    94924.9, 81205.7;
-    98097.5, 148805;
+    68481, 78547;
+    94924, 81205;
+    98097, 148805;
     91276, 147337;
-    76069.7, 134925;
-    63933.5, 114134;
+    76069, 134925;
+    63933, 114134;
   }
 }
 
@@ -381,7 +382,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 15;
+  Index = 14;
   Name = "Euskirchen";
   Desc = "***";
   Targets = [];
@@ -396,7 +397,7 @@ MCU_TR_InfluenceArea
   Country = 201;
   Boundary
   {
-    99469.5, 198927;
+    99469, 198927;
     105668, 193473;
     119690, 199157;
     140686, 218919;
@@ -411,7 +412,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 16;
+  Index = 15;
   Name = "Wavre";
   Desc = "***";
   Targets = [];
@@ -426,12 +427,12 @@ MCU_TR_InfluenceArea
   Country = 103;
   Boundary
   {
-    135848, 79213.1;
+    135848, 79213;
     140880, 116642;
     106762, 148860;
-    98300.5, 148693;
-    95031.9, 81283.5;
-    121559, 77528.9;
+    98300, 148693;
+    95031, 81283;
+    121559, 77528;
   }
 }
 
@@ -439,7 +440,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 17;
+  Index = 16;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -454,9 +455,9 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    146613, 84213.7;
-    148613, 85213.7;
-    146613, 86213.7;
+    146613, 84213;
+    148613, 85213;
+    146613, 86213;
   }
 }
 
@@ -464,7 +465,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 18;
+  Index = 17;
   Name = "Ourthe";
   Desc = "";
   Targets = [];
@@ -479,10 +480,10 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    80358.7, 154244;
-    85990.5, 161927;
-    80879.9, 163688;
-    74431.5, 155838;
+    80358, 154244;
+    85990, 161927;
+    80879, 163688;
+    74431, 155838;
   }
 }
 

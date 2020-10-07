@@ -26,6 +26,7 @@ Options
   TempPressLevel = 0;
   Temperature = 15;
   Pressure = 760;
+  Haze = 0;
   WindLayers
   {
     0 :     0 :     0;
@@ -9612,9 +9613,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -9684,9 +9687,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -9756,9 +9761,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -9828,9 +9835,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -9900,9 +9909,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -9972,9 +9983,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10044,9 +10057,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10116,9 +10131,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10188,9 +10205,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10260,9 +10279,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10332,9 +10353,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10404,9 +10427,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10476,9 +10501,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10548,9 +10575,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10620,9 +10649,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -10692,9 +10723,11 @@ Group
     ReturnPlanes = 0;
     Hydrodrome = 0;
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 1000;
@@ -57758,9 +57791,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -57818,9 +57853,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61256,9 +61293,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61316,9 +61355,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61376,9 +61417,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61436,9 +61479,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61496,9 +61541,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61556,9 +61603,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61616,9 +61665,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61676,9 +61727,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61736,9 +61789,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61796,9 +61851,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61856,9 +61913,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61916,9 +61975,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -61976,9 +62037,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62036,9 +62099,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62096,9 +62161,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62156,9 +62223,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62216,9 +62285,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62276,9 +62347,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62336,9 +62409,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62396,9 +62471,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62456,9 +62533,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62516,9 +62595,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62576,9 +62657,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62636,9 +62719,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62696,9 +62781,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62756,9 +62843,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62816,9 +62905,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62876,9 +62967,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62936,9 +63029,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -62996,9 +63091,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -63056,9 +63153,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -63116,9 +63215,11 @@ Group
     Callnum = 0;
     Skin = "";
     RepairFriendlies = 0;
+    RehealFriendlies = 0;
     RearmFriendlies = 0;
     RefuelFriendlies = 0;
     RepairTime = 0;
+    RehealTime = 0;
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
@@ -75942,7 +76043,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3830;
+    Index = 3829;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -75967,7 +76068,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3831;
+    Index = 3830;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -75992,7 +76093,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3832;
+    Index = 3831;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -76017,7 +76118,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3833;
+    Index = 3832;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -76042,7 +76143,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3834;
+    Index = 3833;
     Name = "Artillery field";
     Desc = "";
     Targets = [];
@@ -76067,7 +76168,7 @@ Group
 
   MCU_TR_InfluenceArea
   {
-    Index = 3835;
+    Index = 3834;
     Name = "Artillery field";
     Desc = "";
     Targets = [];

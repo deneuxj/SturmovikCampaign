@@ -27,6 +27,7 @@ Options
   TempPressLevel = 0;
   Temperature = -15;
   Pressure = 760;
+  Haze = 0;
   WindLayers
   {
     0 :     0 :     0;
@@ -12788,7 +12789,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 459;
+  Index = 458;
   LinkTrId = 0;
   XPos = 46359.414;
   YPos = 80.696;
@@ -12811,7 +12812,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 460;
+  Index = 459;
   LinkTrId = 0;
   XPos = 46164.291;
   YPos = 82.719;
@@ -12834,7 +12835,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 461;
+  Index = 460;
   LinkTrId = 0;
   XPos = 45876.088;
   YPos = 84.181;
@@ -12857,7 +12858,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 462;
+  Index = 461;
   LinkTrId = 0;
   XPos = 45618.826;
   YPos = 82.547;
@@ -12880,7 +12881,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 463;
+  Index = 462;
   LinkTrId = 0;
   XPos = 45328.969;
   YPos = 82.872;
@@ -12903,7 +12904,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 464;
+  Index = 463;
   LinkTrId = 0;
   XPos = 44941.943;
   YPos = 82.619;
@@ -12926,7 +12927,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 465;
+  Index = 464;
   LinkTrId = 0;
   XPos = 44372.519;
   YPos = 82.600;
@@ -12949,7 +12950,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 466;
+  Index = 465;
   LinkTrId = 0;
   XPos = 44026.636;
   YPos = 82.600;
@@ -12972,7 +12973,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 467;
+  Index = 466;
   LinkTrId = 0;
   XPos = 43717.641;
   YPos = 82.600;
@@ -12995,7 +12996,7 @@ Block
 Block
 {
   Name = "Block";
-  Index = 468;
+  Index = 467;
   LinkTrId = 0;
   XPos = 43311.774;
   YPos = 82.600;
@@ -13017,7 +13018,7 @@ Block
 
 MCU_TR_InfluenceArea
 {
-  Index = 469;
+  Index = 468;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13032,10 +13033,10 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    46656.4, 6294.28;
-    46768.4, 6294.86;
-    46767.8, 6542.7;
-    46656.4, 6551.35;
+    46656, 6294;
+    46768, 6294;
+    46767, 6542;
+    46656, 6551;
   }
 }
 
@@ -13044,7 +13045,7 @@ MCU_TR_InfluenceArea
 Block
 {
   Name = "Block";
-  Index = 471;
+  Index = 469;
   LinkTrId = 0;
   XPos = 46519.937;
   YPos = 80.340;
@@ -13066,7 +13067,7 @@ Block
 
 MCU_TR_InfluenceArea
 {
-  Index = 472;
+  Index = 470;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13081,10 +13082,10 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    46486.9, 6276.32;
-    46610.4, 6273.76;
-    46609.4, 6597.3;
-    46483, 6561.49;
+    46486, 6276;
+    46610, 6273;
+    46609, 6597;
+    46483, 6561;
   }
 }
 
@@ -13092,7 +13093,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 473;
+  Index = 471;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13107,10 +13108,10 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    46319.6, 6268.32;
-    46443.6, 6265.32;
-    46442.6, 6589.32;
-    46316.6, 6553.32;
+    46319, 6268;
+    46443, 6265;
+    46442, 6589;
+    46316, 6553;
   }
 }
 
@@ -13118,7 +13119,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 474;
+  Index = 472;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13133,11 +13134,11 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    46101.4, 6250.79;
-    46261.2, 6297.73;
-    46261.5, 6523.14;
-    46102.2, 6553.72;
-    46057.5, 6404.91;
+    46101, 6250;
+    46261, 6297;
+    46261, 6523;
+    46102, 6553;
+    46057, 6404;
   }
 }
 
@@ -13145,7 +13146,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 475;
+  Index = 473;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13160,11 +13161,11 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    45811, 6257.68;
-    45971, 6304.68;
-    45971, 6530.68;
-    45812, 6560.68;
-    45767, 6411.68;
+    45811, 6257;
+    45971, 6304;
+    45971, 6530;
+    45812, 6560;
+    45767, 6411;
   }
 }
 
@@ -13172,7 +13173,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 476;
+  Index = 474;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13187,11 +13188,11 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    45555.3, 6253.69;
-    45715.3, 6300.69;
-    45715.3, 6526.69;
-    45556.3, 6556.69;
-    45511.3, 6407.69;
+    45555, 6253;
+    45715, 6300;
+    45715, 6526;
+    45556, 6556;
+    45511, 6407;
   }
 }
 
@@ -13199,7 +13200,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 477;
+  Index = 475;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13214,11 +13215,11 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    45193.1, 6149.07;
-    45417.1, 6210.15;
-    45458.1, 6560.34;
-    45228.7, 6672.28;
-    45133.7, 6450.3;
+    45193, 6149;
+    45417, 6210;
+    45458, 6560;
+    45228, 6672;
+    45133, 6450;
   }
 }
 
@@ -13226,7 +13227,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 478;
+  Index = 476;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13241,11 +13242,11 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    44805.6, 6158.24;
-    45029.6, 6219.24;
-    45070.6, 6569.24;
-    44840.6, 6681.24;
-    44745.6, 6459.24;
+    44805, 6158;
+    45029, 6219;
+    45070, 6569;
+    44840, 6681;
+    44745, 6459;
   }
 }
 
@@ -13253,7 +13254,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 479;
+  Index = 477;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13268,11 +13269,11 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    44332, 6364.58;
-    44430.5, 6309.66;
-    44472.7, 6390.37;
-    44411.7, 6591.73;
-    44322.8, 6608.83;
+    44332, 6364;
+    44430, 6309;
+    44472, 6390;
+    44411, 6591;
+    44322, 6608;
   }
 }
 
@@ -13280,7 +13281,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 480;
+  Index = 478;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13295,11 +13296,11 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    43987.8, 6343.72;
-    44085.8, 6288.72;
-    44127.8, 6369.72;
-    44066.8, 6570.72;
-    43977.8, 6587.72;
+    43987, 6343;
+    44085, 6288;
+    44127, 6369;
+    44066, 6570;
+    43977, 6587;
   }
 }
 
@@ -13307,7 +13308,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 481;
+  Index = 479;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13322,11 +13323,11 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    43670.9, 6569.75;
-    43683.6, 6357.31;
-    43746.9, 6350.26;
-    43812.7, 6616.63;
-    43722.3, 6632.3;
+    43670, 6569;
+    43683, 6357;
+    43746, 6350;
+    43812, 6616;
+    43722, 6632;
   }
 }
 
@@ -13334,7 +13335,7 @@ MCU_TR_InfluenceArea
 
 MCU_TR_InfluenceArea
 {
-  Index = 482;
+  Index = 480;
   Name = "Translator Influence Area";
   Desc = "";
   Targets = [];
@@ -13349,10 +13350,10 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    43285.4, 6574.09;
-    43279.8, 6367.43;
-    43368.1, 6367.1;
-    43360.1, 6598.4;
+    43285, 6574;
+    43279, 6367;
+    43368, 6367;
+    43360, 6598;
   }
 }
 
