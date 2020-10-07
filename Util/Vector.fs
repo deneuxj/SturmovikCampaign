@@ -233,7 +233,7 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
     let loop1 = toPolyNode poly1
     let loop2 = toPolyNode poly2
 
-    // Find intersection between edge starting at node1 and the segments between node2 and start2
+    // Find the first intersection between the edge starting at node1 and the segments between node2 and start2
     let rec findIntersection (start2, node1 : PolygonIntersectionNode, node2 : PolygonIntersectionNode) =
         match Vector2.Intersection(node1.Edge, node2.Edge) with
         | Some posI ->
@@ -248,16 +248,20 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
     let allIntersections(poly1, poly2) =
         let rec work(start1, start2) =
             seq {
+                // Each vertex has at most two intersections.
+                // Check for the first one
                 match findIntersection (start2, start1, start2) with
                 | None ->
                     ()
                 | Some(node2, posI) ->
                     yield start1, node2, posI
+                    // Check for the second one, starting from after the edge where we found the first intersection
                     match findIntersection (start2, start1, node2.Next) with
                     | Some(node2, posI) ->
                         yield start1, node2, posI
                     | None -> ()
                 if start1.Next <> poly1 then
+                    // Move to next edge after start1, unless we have come back to the initial vertex
                     yield! work(start1.Next, start2)
             }
         work(poly1, poly2)
@@ -266,42 +270,38 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
     let intersectionOutline =
         if Seq.isEmpty (allIntersections(loop1, loop2)) then
             if loop1.Vertices |> Seq.forall loop2.Contains then
+                // poly1 inside poly2
                 Some poly1
             elif loop2.Vertices |> Seq.forall loop1.Contains then
+                // poly2 inside poly2
                 Some poly2
             else
+                // No overlap
                 None
         else
-            let rec start(loop1, loop2) =
+            // Find the first intersection after start1 and start2
+            let rec start(start1, start2) =
                 let node1, node2, pos =
-                    allIntersections(loop1, loop2)
-                    |> Seq.groupBy (fun (node1, _, _) -> node1)
+                    allIntersections(start1, start2)
                     |> Seq.head
-                    |> fun (node1, xs) ->
-                        xs
-                        |> Seq.minBy (fun (_, _, pos) -> (pos - node1.Pos).LengthSquared())
-                decide(node1, node2, pos, loop1, loop2)
+                decide(node1, node2, pos, start1, start2)
+            // Decide what to do at an intersection point
             and decide(node1, node2, pos, loop1 : PolygonIntersectionNode, loop2 : PolygonIntersectionNode) =
                 seq {
+                    // All intersection points are always part of the outline
                     yield pos
                     if loop2.Contains(node1.Next.Pos) then
+                        // Vertex after node1 is in poly2, yield all successors in poly1 until next intersection point
                         yield! direct(node1.Next, loop1, loop2)
                     elif loop1.Contains(node2.Next.Pos) then
+                        // Vertex after node2 is in poly1, yield all successors in poly2 until next intersection point
                         yield! direct(node2.Next, loop2, loop1)
-                    elif loop1.Contains(node2.Pos) then
-                        loop2.Reverse()
-                        yield! direct(node2, loop2, loop1)
                     else
-                        let nextIntersection =
-                            allIntersections(node1, node2)
-                            |> Seq.tryFind (fun (n1, n2, p) -> p <> pos && n1 = node1)
-                        match nextIntersection with
-                        | Some (_, node2, pos2) ->
-                            yield pos2
-                        | None ->
-                            ()
-                        yield! start(node1.Next, loop2)
+                        // Neither successors are part of the outline.
+                        // Look for next intersection and pick up from there
+                        yield! start(node1, node2.Next)
                 }
+            // Yield node1 and its successors that are in the intersection
             and direct(node1, loop1, loop2) =
                 seq {
                     yield node1.Pos
@@ -310,8 +310,10 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
                     else
                         yield! start(node1, loop2)
                 }
+            // The sequence of vertices in the outline, repeating.
             let looping = start(loop1, loop2)
             let p1 = looping |> Seq.head
+            // The first occurrence of the repeating loop.
             seq {
                 yield p1
                 yield!
