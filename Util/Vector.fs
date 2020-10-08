@@ -234,16 +234,16 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
     let loop2 = toPolyNode poly2
 
 
-    // Find the first edge in poly1 that has an intersection with some edge in poly2. Return the
+    // Find the first edge in poly1 that has an intersection with some edge between start2 and end2. Return the
     // start vertex of the first such edge in poly2, if any.
-    let findIntersection(poly1, poly2) =
+    let findIntersection(poly1, start2, end2) =
 
         let rec loop2 (node1 : PolygonIntersectionNode, node2 : PolygonIntersectionNode) =
             match Vector2.Intersection(node1.Edge, node2.Edge) with
             | Some posI ->
                 Some(node2, posI)
             | None ->
-                if node2.Next = poly2 then
+                if node2.Next = end2 then
                     None
                 else
                     loop2(node1, node2.Next)
@@ -258,11 +258,11 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
                 else
                     loop1(start1.Next, start2)
 
-        loop1(poly1, poly2)
+        loop1(poly1, start2)
 
     // Walk over the outlines of two polygons, yielding the intersections and vertices inside the other polygon
     let intersectionOutline =
-        match findIntersection(loop1, loop2) with
+        match findIntersection(loop1, loop2, loop2) with
         | None ->
             if loop1.Vertices |> Seq.forall loop2.Contains then
                 // poly1 inside poly2
@@ -288,7 +288,7 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
                     else
                         // Neither successors are part of the outline.
                         // Look for next intersection and pick up from there
-                        match findIntersection(node1, node2.Next) with
+                        match findIntersection(node1, node2.Next, node2) with
                         | Some(node1, node2, pos) ->
                             yield! decide(node2, node1, pos)
                         | None ->
@@ -301,7 +301,7 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
                     if node2.Contains(node1.Next.Pos) then
                         yield! direct(node1.Next, node2)
                     else
-                        match findIntersection(node1, node2) with
+                        match findIntersection(node1, node2, node2) with
                         | Some(node1, node2, pos) ->
                             yield! decide(node1, node2, pos)
                         | None ->
