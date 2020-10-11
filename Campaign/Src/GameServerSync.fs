@@ -139,7 +139,7 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                     let msg = sprintf "%s %s is injured until at least %s" rank pilot.PilotLastName (until.ToString(pilot.Country.CultureInfo))
                                     let! s = notifier.MessageCoalition(coalition, msg)
                                     ()
-                            | WarStateUpdate.Commands.UpdatePilot(pilot) ->
+                            | WarStateUpdate.Commands.UpdatePilot(pilot) when pilot.Health = Pilots.PilotHealth.Healthy ->
                                 let player =
                                     match war.TryGetPlayer(pilot.PlayerGuid) with
                                     | Some player -> player.Name
