@@ -187,8 +187,6 @@ type IWarStateQuery =
     abstract member Pilots : Pilot list
     /// Get a pilot by its ID
     abstract member GetPilot : PilotId -> Pilot
-    /// Get next available pilot ID
-    abstract member NextPilotId : unit -> PilotId
     /// Find a path through road/rail network from one set of nodes to another, optionally restricted within the territory of a coalition
     abstract member TryFindPath : network : Network * sources: NetworkNode list * objectives: NetworkNode list * coalition: CoalitionId option -> NetworkLink list option
 
@@ -275,7 +273,7 @@ module IWarStateExtensions =
         /// Return a new pilot, without registering it. The name is deterministically selected in a pseudo-random manner.
         /// The seed is computed from the date of the war state, the numeric id of the pilot, the scenario, the country and the player GUID.
         member this.NewPilot(guid : string, country : CountryId) : Pilot =
-            let id = this.NextPilotId()
+            let id = PilotId(Guid.NewGuid())
             let seed = hash(this.Date, id, this.World.Scenario, country, guid)
             let firstName, lastName = this.GetNewNames(country, seed)
             { Id = id
@@ -698,8 +696,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.GetPilot(id : PilotId) =
         pilots.[id]
 
-    member this.NextPilotId() = PilotId(pilots.Count)
-
     member this.TryFindPath(network : Network, starts : NetworkNode list, objectives : NetworkNode list, coalition : CoalitionId option) =
         let nodesToRemove =
             // Wrong coalition
@@ -771,7 +767,6 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.UpdatePilot(pilot : Pilot, updateFlights : bool) = this.UpdatePilot(pilot, updateFlights)
         member this.TryGetPlayer(guid : string) = this.TryGetPlayer(guid)
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
-        member this.NextPilotId() = this.NextPilotId()
         member this.Pilots = this.Pilots
         member this.Seed = this.Seed
 

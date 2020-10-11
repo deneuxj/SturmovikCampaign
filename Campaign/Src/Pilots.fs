@@ -62,9 +62,9 @@ let computeInstancesOfAward (airKills0 : int, award : Award, flights : FlightRec
     forEachFlight 0 flights
 
 [<Struct>]
-type PilotId = PilotId of int
+type PilotId = PilotId of Guid
 with
-    member this.AsInt =
+    member this.Guid =
         match this with
         | PilotId x -> x
 
@@ -83,7 +83,7 @@ type Pilot =
     }
 with
     member this.FullName =
-        sprintf "%s %s (%d)" this.PilotFirstName this.PilotLastName this.Id.AsInt
+        sprintf "%s %s" this.PilotFirstName this.PilotLastName
 
 let countCompletedFlights (flights : FlightRecord list) =
     (0, flights)

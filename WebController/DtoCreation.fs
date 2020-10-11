@@ -335,14 +335,14 @@ module DtoCreation =
                     ] |> Map.ofSeq
                 | WarStateUpdate.UpdatePilot(pilot) ->
                     "RegisterPilot",
-                    [ "PilotId", box pilot.Id.AsInt
+                    [ "PilotId", box pilot.Id.Guid
                       "Health", string pilot.Health :> obj
                       "FirstName", pilot.PilotFirstName :> obj
                       "LastName", pilot.PilotLastName :> obj
                     ] |> Map.ofSeq
                 | WarStateUpdate.RegisterPilotFlight(pid, flight, health) ->
                     "RegisterPilotFlight",
-                    [ "PilotId", box pid.AsInt
+                    [ "PilotId", box pid.Guid
                       "Health", string health :> obj
                       "FlightStart", flight.Date.ToDto() :> obj
                       "Duration", box flight.Length.TotalMinutes
@@ -533,7 +533,7 @@ module DtoCreation =
             let airKills = this.InitialAirKills + (this.Flights |> List.sumBy(fun flight -> flight.AirKills))
             let rank = Pilots.tryComputeRank state.World.Ranks this
             {
-                Id = this.Id.AsInt
+                Id = string this.Id.Guid
                 Rank = rank |> Option.map (fun rank -> rank.RankName) |> Option.defaultValue ""
                 RankAbbrev = rank |> Option.map (fun rank -> rank.RankAbbrev) |> Option.defaultValue ""
                 FirstName = this.PilotFirstName
@@ -569,7 +569,7 @@ module DtoCreation =
         member this.ToDto(state : WarState.IWarStateQuery) : Dto.Player =
             let pilots =
                 state.GetPlayerPilots(this.Guid)
-                |> Seq.map (fun pilot -> pilot.Id.AsInt)
+                |> Seq.map (fun pilot -> string pilot.Id.Guid)
                 |> List.ofSeq
             {
                 Name = this.Name

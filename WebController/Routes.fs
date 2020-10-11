@@ -48,7 +48,7 @@ type IRoutingResponse =
     abstract GetDates : unit -> Async<Result<DateTime[], string>>
     abstract GetSyncState : unit -> Async<Result<string, string>>
     abstract GetPilots : PilotSearchFilter -> Async<Result<Pilot list, string>>
-    abstract GetPilot : int -> Async<Result<Pilot * MissionRecord list, string>>
+    abstract GetPilot : string -> Async<Result<Pilot * MissionRecord list, string>>
     abstract GetPlayerPilots : string -> Async<Result<Pilot list, string>>
 
 type IControllerInteraction =
@@ -178,7 +178,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             path "/query/pilots" >=> context (fun ctx -> searchPilots rr.GetPilots ctx |> serializeAsync)
             pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
-            pathScan "/query/pilot/%d" (fun n -> rr.GetPilot(n) |> serializeAsync)
+            pathScan "/query/pilot/%s" (fun n -> rr.GetPilot(n) |> serializeAsync)
             pathScan "/query/players/%s/pilots" (rr.GetPlayerPilots >> serializeAsync)
         ]
         POST >=> choose [

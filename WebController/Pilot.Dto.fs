@@ -68,7 +68,7 @@ type Award =
 
 type Pilot =
     {
-        Id : int
+        Id : string
         Rank : string
         RankAbbrev : string
         FirstName : string
@@ -88,5 +88,5 @@ type Player =
     {
         Name : string
         BanStatus : BanStatus
-        Pilots : int list
+        Pilots : string list
     }

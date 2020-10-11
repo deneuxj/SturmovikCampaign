@@ -335,14 +335,15 @@ type Controller(settings : GameServerControl.Settings) =
                     return Error e
             }
 
-        member this.GetPilot(id : int) =
+        member this.GetPilot(id : string) =
             async {
                 let! war = this.WarState
                 return
                     match war with
                     | Ok war ->
                         try
-                            let pilot = war.GetPilot(Pilots.PilotId id)
+                            let id = Pilots.PilotId(System.Guid(id))
+                            let pilot = war.GetPilot(id)
                             let flights =
                                 pilot.Flights
                                 |> List.map (fun flight -> flight.ToDto(war.World))
