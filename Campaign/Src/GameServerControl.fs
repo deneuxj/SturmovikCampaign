@@ -254,6 +254,27 @@ type RConGameServerControl(settings : Settings, ?logger) =
             Error (sprintf "Failed to kill DServer: %s" e.Message)
 
     let tryOnClient task =
+        let rec attempt (attemptsLeft : int) =
+            async {
+                match client with
+                | Some client' ->
+                    try
+                        return! task client'
+                    with
+                    | exc ->
+                        logger.Debug("Failed RConClient task")
+                        logger.Debug(exc)
+                        client <- None
+                        if attemptsLeft > 0 then
+                            return! attempt (attemptsLeft - 1)
+                        else
+                            return Error "Failed RConClient task"
+                | None ->
+                    if attemptsLeft > 0 then
+                        return! attempt (attemptsLeft - 1)
+                    else
+                        return Error "No connection to DServer"
+            }
         async {
             if client.IsNone then
                 let! s = connect()
@@ -263,16 +284,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
                         | Ok() -> "OK"
                         | Error s -> "Error: " + s
                     "Status of RCon connection: " + status)
-            match client with
-            | Some client ->
-                try
-                    return! task client
-                with
-                | exc ->
-                    logger.Debug(exc)
-                    return Error "Failed RConClient task"
-            | None ->
-                return Error "No connection to DServer"
+            return! attempt 1
         }
 
     let rotateMission() =
