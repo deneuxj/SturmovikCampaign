@@ -662,43 +662,47 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 | Some owner when owner <> friendly ->
                     region.Neighbours
                     |> Seq.exists (fun ngh -> war.GetGroundForces(friendly, ngh) > 0.0f<MGF>)
-                | Some _ | None ->
+                | None ->
+                    true
+                | Some _ ->
                     false)
             |> Seq.sortBy (fun region -> distanceToAirfields.[region.RegionId])
             |> List.ofSeq
         seq {
             for target in targets do
+                logger.Debug(sprintf "Considering invasion of %s" (string target.RegionId))
                 let friendlyForces = war.GetGroundForces(friendly, target.RegionId)
                 let ennemyForces = war.GetGroundForces(friendly.Other, target.RegionId)
-                let targetForceDifference = friendlyForces - ennemyForces
-                let mutable forceDifference = targetForceDifference
                 let localDifferences = Seq.mutableDict []
                 for ngh in target.Neighbours do
                     let capacity = roads(ngh, target.RegionId)
                     let diff = war.GetGroundForces(friendly, ngh) - war.GetGroundForces(friendly.Other, ngh)
                     let transportable = war.World.GroundForcesTransport(capacity, diff, timeSpan)
-                    localDifferences.[ngh] <- transportable
-                    forceDifference <- forceDifference + transportable
-                if forceDifference > 0.0f<MGF> then
-                    let neighbours =
-                        target.Neighbours
-                        |> Seq.sortByDescending (fun ngh -> localDifferences.[ngh])
+                    if transportable > 0.0f<MGF> then
+                        logger.Debug(sprintf "Can transport %0.0f from %s" transportable (string ngh))
+                        localDifferences.[ngh] <- transportable
+                let neighbours =
+                    localDifferences.Keys
+                    |> Seq.sortByDescending (fun ngh -> localDifferences.[ngh])
+                let totalTransportable = localDifferences.Values |> Seq.sum
+                if friendlyForces + totalTransportable >= 0.5f * ennemyForces then
                     let mutable desiredForceAddition = 2.0f * ennemyForces - friendlyForces
-                    let mutable minimumForceAddition = 1.5f * ennemyForces - friendlyForces
                     let missions =
                         [
                             for ngh in neighbours do
-                                let force = min localDifferences.[ngh] desiredForceAddition
-                                if force > 0.0f<MGF> then
+                                let force = localDifferences.[ngh]
+                                if force > 0.0f<MGF> && desiredForceAddition >= 0.0f<MGF> then
                                     desiredForceAddition <- desiredForceAddition - force
-                                    minimumForceAddition <- minimumForceAddition - force
+                                    logger.Debug(sprintf "Will move %0.0f from %s" force (string ngh))
                                     yield {
                                         Objective = target.RegionId
                                         MissionType = GroundForcesTransfer(friendly, ngh, force)
                                     }
                         ]
-                    if minimumForceAddition <= 0.0f<MGF> && not missions.IsEmpty then
+                    if not missions.IsEmpty then
                         yield missions
+                else
+                    logger.Debug("Insufficient forces to send for invasion compared to defenses")
         }
         |> Seq.choose (fun missions ->
             missions
@@ -763,7 +767,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                             let friendlyForces2 = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
                             let excess = friendlyForces2 - war.GetGroundForces(enemy, ngh) |> min 0.0f<MGF>
                             let dist = distanceToEnemy.[ngh]
-                            logger.Debug(sprintf "Potential destination: %s with excess %f and hops %d" (string ngh) excess dist)
+                            logger.Debug(sprintf "Potential destination: %s with excess friendly forces %0.0f and hops %d" (string ngh) excess dist)
                             excess, dist, ngh)
                         |> List.filter (fun (excess, dist, _) -> excess < 0.0f<MGF> || dist < distanceToEnemy.[source.RegionId])
                         |> List.map (fun (_, _, ngh) -> ngh)
