@@ -565,6 +565,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             |> Option.defaultValue []
                         description, cmd, results)
                     |> List.ofSeq
+                // Pilots that have recovered become healthy
+                war.RefreshPilotHealths()
                 // Update weather
                 let weather =
                     let world = war.World

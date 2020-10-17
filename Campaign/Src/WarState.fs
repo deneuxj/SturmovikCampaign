@@ -317,6 +317,8 @@ type IWarStateUpdate =
     abstract member UpdatePlayer : Player -> unit
     /// Add/update pilot
     abstract member UpdatePilot : Pilot * bool -> unit
+    /// Refresh pilots healths: Pilots who have healed become healthy again
+    abstract member RefreshPilotHealths : unit -> unit
 
 type IWarState =
     inherit IWarStateQuery
@@ -696,6 +698,13 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.GetPilot(id : PilotId) =
         pilots.[id]
 
+    member this.RefreshPilotHealths() =
+        for pilot in pilots.Values |> Array.ofSeq do
+            match pilot.Health with
+            | Injured recoveryDate when recoveryDate <= this.Date ->
+                pilots.[pilot.Id] <- { pilot with Health = Healthy }
+            | _ -> ()
+
     member this.TryFindPath(network : Network, starts : NetworkNode list, objectives : NetworkNode list, coalition : CoalitionId option) =
         let nodesToRemove =
             // Wrong coalition
@@ -768,6 +777,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.TryGetPlayer(guid : string) = this.TryGetPlayer(guid)
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
         member this.Pilots = this.Pilots
+        member this.RefreshPilotHealths() = this.RefreshPilotHealths()
         member this.Seed = this.Seed
 
 
