@@ -434,6 +434,16 @@ with
     /// Can be used e.g. for weather updates.
     member this.Seed = hash(this.Scenario, this.Map, this.StartDate, this.WeatherDaysOffset)
 
+    /// Compute the forces that can travel over a transport link during a given time duration.
+    member this.GroundForcesTransport(linkCapacity : float32<M^3/H>, forces : float32<MGF>, duration : float32<H>) =
+        if forces = 0.0f<MGF> then
+            0.0f<MGF>
+        else
+            let desired = forces * this.GroundForcesTransportCost * duration
+            let available = linkCapacity * duration
+            let actual = min desired available
+            forces * actual / desired
+
 module Init =
     open System.IO
     open System.Reflection
