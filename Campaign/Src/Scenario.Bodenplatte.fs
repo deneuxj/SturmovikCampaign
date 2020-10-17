@@ -71,7 +71,7 @@ module BodenplatteInternal =
             let typicalRange = 400.0e3f<M>
             let planeRunCost = 5.0f<M^3> / typicalRange
             let bombCost = 0.01f<M^3/K>
-            let maxPlanesAtAirfield = 100.0f
+            let maxPlanesAtAirfield = 200.0f
             let minActiveAirfieldResources = planeRunCost * 10.0f * typicalRange
             let minRegionBuildingCapacity = 1000.0f<M^3>
             let day = 24.0f<H>
@@ -255,8 +255,17 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         let airfields =
             war.World.Airfields.Values
             |> Seq.filter (fun af -> af.IsActive && war.GetOwner(af.Region) = Some friendly)
-            |> Seq.sortBy (fun af -> distanceToEnemy.[af.Region])
+            |> Seq.sortByDescending (fun af -> distanceToEnemy.[af.Region])
             |> List.ofSeq
+
+        let avgCost =
+            let allPlanes = allPlanesOf CoalitionId.Allies @ allPlanesOf CoalitionId.Axis
+            allPlanes
+            |> Seq.map (fun plane -> war.World.PlaneSet.[plane].Cost)
+            |> Seq.sum
+            |> fun total -> total / (float32 (List.length allPlanes))
+        
+        let mutable planesCostLeft = 3.0f * C.NumNewPlanes * avgCost
 
         // Non-transport planes: Set according to airfield resources and respective cost
         let planeRunCost = typicalRange * planeRunCost
@@ -268,25 +277,22 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                     war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
                 war.SetNumPlanes(af.AirfieldId, plane.Id, factor * numPlanes)
         | expansive :: regular ->
-            // Rear airfields get regular planes and the expansive plane
+            // Rear airfields get regular planes and the expensive plane
             // Front airfields get regular planes and the cheap plane
             let regular = List.rev regular
             let cheap, regular = List.head regular, List.tail regular
-            let numAirfields = List.length airfields
-            let numFrontAirfields = numAirfields / 2 |> max 1
-            let numRearAirfields = numAirfields - numFrontAirfields |> max 1
             airfields
             |> List.iteri (fun i af ->
                 let planes =
                     regular
                 let planes =
-                    if i < numFrontAirfields then
+                    if distanceToEnemy.[af.Region] <= 2 then
                         cheap :: planes
                     else
                         planes
                 let planes =
-                    if i >= numAirfields - numRearAirfields then
-                        expansive :: planes
+                    if war.World.Regions.[af.Region].IsEntry then
+                        planes @ [expansive]
                     else
                         planes
                 let totalInvCost =
@@ -296,8 +302,10 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                     war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
                     |> min maxPlanesAtAirfield
                 for plane in planes do
-                    let qty = numPlanes * (1.0f / plane.Cost) / totalInvCost |> max 1.0f
-                    war.SetNumPlanes(af.AirfieldId, plane.Id, factor * qty)
+                    if planesCostLeft > 0.0f<E> then
+                        let qty = numPlanes * (1.0f / plane.Cost) / totalInvCost |> max 1.0f
+                        planesCostLeft <- planesCostLeft - qty * plane.Cost
+                        war.SetNumPlanes(af.AirfieldId, plane.Id, factor * qty)
                 )
 
         // Transport planes at the rearmost airfield
