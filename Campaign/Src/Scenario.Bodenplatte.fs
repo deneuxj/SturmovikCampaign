@@ -828,7 +828,9 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                             let dist = distanceToEnemy.[ngh]
                             logger.Debug(sprintf "Potential destination: %s with excess friendly forces %0.0f and hops %d" (string ngh) excess dist)
                             excess, dist, ngh)
-                        |> List.filter (fun (excess, dist, ngh) -> excess < 0.0f<MGF> && (dist < distanceToEnemy.[source.RegionId] || war.World.RegionHasAirfield(ngh) && not sourceHasAirfield))
+                        |> List.filter (fun (excess, dist, ngh) ->
+                            // Destination has a defense deficit, or it's closer to the front, or it has an airfield and the source hasn't
+                            excess < 0.0f<MGF> || dist < distanceToEnemy.[source.RegionId] || war.World.RegionHasAirfield(ngh) && not sourceHasAirfield)
                         |> List.sortBy (fun (excess, dist, ngh) -> excess, dist)
                         |> List.map (fun (_, _, ngh) -> ngh)
 
