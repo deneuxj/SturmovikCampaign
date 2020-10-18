@@ -619,6 +619,9 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                 match owners.TryGetValue region with
                 | false, _ -> 0.0f<E/H>
                 | true, owner ->
+                    if world.Regions.[region].IsEntry then
+                        this.GetRegionBuildingCapacity(region) * world.ResourceProductionRate
+                    else
                     let regions =
                         owners
                         |> Seq.filter (fun kvp -> kvp.Value = owner)
