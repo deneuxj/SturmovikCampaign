@@ -684,10 +684,16 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 let friendlyForces = war.GetGroundForces(friendly, target.RegionId)
                 let ennemyForces = war.GetGroundForces(friendly.Other, target.RegionId)
                 let transportableFrom = Seq.mutableDict []
+                let targetOwner = war.GetOwner(target.RegionId)
                 for ngh in target.Neighbours do
                     let capacity = roads(ngh, target.RegionId)
                     let available = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
-                    let transportable = war.World.GroundForcesTransport(capacity, available, timeSpan)
+                    let transportable =
+                        // Prevent moves within enemy territory
+                        if targetOwner <> Some friendly && war.GetOwner(ngh) <> Some friendly then
+                            0.0f<MGF>
+                        else
+                            war.World.GroundForcesTransport(capacity, available, timeSpan)
                     if transportable > 0.0f<MGF> then
                         logger.Debug(sprintf "Can transport %0.0f from %s" transportable (string ngh))
                         transportableFrom.[ngh] <- transportable
