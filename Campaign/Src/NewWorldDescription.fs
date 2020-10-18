@@ -399,6 +399,8 @@ type World = {
     GroundForcesTransportCost : float32<M^3/H/MGF>
     /// Descriptions of regions
     Regions : IDictionary<RegionId, Region>
+    /// Max capacity of a large bridge
+    BridgeCapacity : float32<M^3/H>
     /// The road network
     Roads : Network
     /// The rail network
@@ -447,6 +449,19 @@ with
     member this.RegionHasAirfield(region : RegionId) =
         this.Airfields.Values
         |> Seq.exists (fun af -> af.Region = region)
+
+    /// Find the region that covers a coordinate, or failing that the one with the closest boundary vertex.
+    member this.FindRegionAt(pos : Vector2) =
+        this.Regions.Values
+        |> Seq.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary)
+        |> Option.defaultWith (fun () ->
+            this.Regions.Values
+            |> Seq.minBy (fun region ->
+                region.Boundary
+                |> Seq.map (fun v -> (v - pos).LengthSquared())
+                |> Seq.min
+            )
+        )
 
 module Init =
     open System.IO
@@ -917,6 +932,7 @@ module Init =
             ResourceVolume = 1.0f<M^3/E>
             ResourceProductionRate = 1.0f<E/H/M^3>
             Regions = regions
+            BridgeCapacity = railsCapacity
             Roads = roads
             Rails = rails
             Airfields = airfields

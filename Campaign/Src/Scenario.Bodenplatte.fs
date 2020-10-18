@@ -1004,6 +1004,51 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                             yield Some(AddGroundForces(region.RegionId, coalition, C.NumNewTroops)), sprintf "Reinforcements for %s" (string coalition)
                         | None ->
                             yield None, sprintf "Reinforcements for %s cancelled" (string coalition)
+                // Repairs
+                let supplies = war.ComputeSupplyAvailability()
+                // Repairs at airfields require supplies from the rear regions, and limited by the max repair speed
+                let availableForBuildings = Seq.mutableDict (war.World.Regions.Keys |> Seq.map (fun region -> region, timeDiff * (min war.World.RepairSpeed (supplies region))))
+                // Repairs of bridges are only limited by the max repair speed
+                let availableForBridges = Seq.mutableDict (war.World.Regions.Keys |> Seq.map (fun region -> region, timeDiff * war.World.RepairSpeed))
+                let repairObjects =
+                    [|
+                        for af in war.World.Airfields.Values do
+                            for bid in af.Facilities do
+                                let building = world.GetBuildingInstance(bid)
+                                for part in building.Properties.SubParts do
+                                    let health = war.GetBuildingPartHealthLevel(bid, part)
+                                    if health < 1.0f then
+                                        yield Choice1Of2(building, bid, part, health, af)
+                        for bridge in world.Bridges.Values do
+                            let bid = bridge.Id
+                            let region = war.World.FindRegionAt(bridge.Pos.Pos)
+                            for part in bridge.Properties.SubParts do
+                                let health = war.GetBuildingPartHealthLevel(bid, part)
+                                if health < 1.0f then
+                                    yield Choice2Of2(bridge, bid, part, health, region)
+                    |]
+                let repairObjects = Array.shuffle random repairObjects
+                for repairObj in repairObjects do
+                    match repairObj with
+                    | Choice1Of2(building, bid, part, health, af) ->
+                        let healing = 1.0f - health
+                        let cost = healing * war.World.RepairCostRatio * building.Properties.PartCapacity * (float32 building.Properties.Durability / 50000.0f)
+                        let avail = availableForBuildings.[af.Region]
+                        let spent = min cost avail |> max 0.0f<E>
+                        availableForBuildings.[af.Region] <- avail - cost
+                        let healing = spent / cost
+                        if healing > 0.0f then
+                            yield Some(RepairBuildingPart(bid, part, healing)), sprintf "Repairs to building part to %0.0f%% at %s airfield" (100.0f * (health + healing)) af.AirfieldId.AirfieldName
+                    | Choice2Of2(bridge, bid, part, health, region) ->
+                        let healing = 1.0f - health
+                        let cost = healing * war.World.TransportRepairCostRatio * war.World.BridgeCapacity * (float32 bridge.Properties.Durability / 50000.0f)
+                        let avail = availableForBridges.[region.RegionId]
+                        let spent = min cost avail |> max 0.0f<E>
+                        availableForBridges.[region.RegionId] <- avail - cost
+                        let healing = spent / cost
+                        if healing > 0.0f then
+                            yield Some(RepairBuildingPart(bid, part, healing)), sprintf "Repairs of bridge section to %0.0f%% in %s" (100.0f * (health + healing)) (string region.RegionId)
+
                 // Update time
                 yield Some(AdvanceTime(newTime - war.Date)), "Advance time"
             }
