@@ -190,6 +190,7 @@ module MissionPlanningResult =
 
 /// Combinators for mission planning functions
 module Planning =
+    /// Perform plans in a sequence, unconditionally
     let chain planners =
         fun budget ->
             planners
@@ -200,16 +201,21 @@ module Planning =
             ) ([], budget)
             |> fun (m, b) -> Plan("Chain of missions", m, b)
 
-    let andThen also first =
+    /// Perform the first plan, then continue with the rest.
+    let always rest first = chain [first; rest]
+
+    /// If the first planning results in no missions, stop. Otherwise, continue with the rest.
+    let andThen rest first =
         fun budget ->
             match first budget with
             | Plan(description, ((_ :: _) as missions), budget) ->
                 let missions2, budget =
-                    (chain also) budget
+                    rest budget
                     |> MissionPlanningResult.getMissions budget
                 Plan(description, missions @ missions2, budget)
             | nogo -> nogo
 
+    /// Pick the first planning that results in the non-empty list of missions
     let orElse alternatives =
         fun budget ->
             alternatives

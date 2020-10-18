@@ -678,35 +678,40 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             |> Seq.sortBy (fun region -> distanceToAirfields.[region.RegionId])
             |> List.ofSeq
         seq {
+            let mutable budget = budget
             for target in targets do
                 logger.Debug(sprintf "Considering invasion of %s" (string target.RegionId))
                 let friendlyForces = war.GetGroundForces(friendly, target.RegionId)
                 let ennemyForces = war.GetGroundForces(friendly.Other, target.RegionId)
-                let localDifferences = Seq.mutableDict []
+                let transportableFrom = Seq.mutableDict []
                 for ngh in target.Neighbours do
                     let capacity = roads(ngh, target.RegionId)
-                    let diff = war.GetGroundForces(friendly, ngh) - war.GetGroundForces(friendly.Other, ngh)
-                    let transportable = war.World.GroundForcesTransport(capacity, diff, timeSpan)
+                    let available = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
+                    let transportable = war.World.GroundForcesTransport(capacity, available, timeSpan)
                     if transportable > 0.0f<MGF> then
                         logger.Debug(sprintf "Can transport %0.0f from %s" transportable (string ngh))
-                        localDifferences.[ngh] <- transportable
+                        transportableFrom.[ngh] <- transportable
                 let neighbours =
-                    localDifferences.Keys
-                    |> Seq.sortByDescending (fun ngh -> localDifferences.[ngh])
-                let totalTransportable = localDifferences.Values |> Seq.sum
+                    transportableFrom.Keys
+                    |> Seq.sortByDescending (fun ngh -> transportableFrom.[ngh])
+                let totalTransportable = transportableFrom.Values |> Seq.sum
                 if friendlyForces + totalTransportable >= 0.5f * ennemyForces then
                     let mutable desiredForceAddition = 2.0f * ennemyForces - friendlyForces
                     let missions =
                         [
                             for ngh in neighbours do
-                                let force = localDifferences.[ngh]
-                                if force > 0.0f<MGF> && desiredForceAddition >= 0.0f<MGF> then
-                                    desiredForceAddition <- desiredForceAddition - force
-                                    logger.Debug(sprintf "Will move %0.0f from %s" force (string ngh))
-                                    yield {
-                                        Objective = target.RegionId
-                                        MissionType = GroundForcesTransfer(friendly, ngh, force)
-                                    }
+                                let force = transportableFrom.[ngh]
+                                match budget.TryCheckoutGroundForce(friendly, ngh, force) with
+                                | None -> ()
+                                | Some budget2 ->
+                                    budget <- budget2
+                                    if force > 0.0f<MGF> && desiredForceAddition >= 0.0f<MGF> then
+                                        desiredForceAddition <- desiredForceAddition - force
+                                        logger.Debug(sprintf "Will move %0.0f from %s" force (string ngh))
+                                        yield {
+                                            Objective = target.RegionId
+                                            MissionType = GroundForcesTransfer(friendly, ngh, force)
+                                        }
                         ]
                     if not missions.IsEmpty then
                         yield missions
@@ -759,12 +764,15 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                         budget.Regions.TryFind(region.RegionId, friendly)
                         |> Option.defaultValue 0.0f<MGF>
                     let locked = min needed available
+                    if locked > 0.0f<MGF> then
+                        logger.Debug(sprintf "Lock %0.1f%% of forces in %s" (100.0f * locked / available) (string region.RegionId))
                     budget.TryCheckoutGroundForce(friendly, region.RegionId, locked)
                     |> Option.defaultValue budget
                 else
                     budget
             )
         Plan("Assignment of defense forces", [], budget)
+
     /// Try to plan troop movements in friendly territory
     let tryPlanReinforcements (timeSpan : float32<H>) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let enemy = friendly.Other
@@ -798,6 +806,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                             else
                                 0.25f
                         friendlyForces - war.GetGroundForces(enemy, source.RegionId) - threatsFactor * war.GroundThreatsToRegion(source.RegionId, friendly)
+                    let sourceHasAirfield = war.World.RegionHasAirfield(source.RegionId)
                     let destinations =
                         source.Neighbours
                         |> List.filter (fun ngh -> war.GetOwner(ngh) = Some friendly)
@@ -813,7 +822,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                             let dist = distanceToEnemy.[ngh]
                             logger.Debug(sprintf "Potential destination: %s with excess friendly forces %0.0f and hops %d" (string ngh) excess dist)
                             excess, dist, ngh)
-                        |> List.filter (fun (excess, dist, _) -> excess < 0.0f<MGF> || dist <= distanceToEnemy.[source.RegionId])
+                        |> List.filter (fun (excess, dist, ngh) -> excess < 0.0f<MGF> && (dist < distanceToEnemy.[source.RegionId] || war.World.RegionHasAirfield(ngh) && not sourceHasAirfield))
                         |> List.sortBy (fun (excess, dist, ngh) -> excess, dist)
                         |> List.map (fun (_, _, ngh) -> ngh)
 
@@ -885,20 +894,24 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
     let rec oneSideStrikes (side : CoalitionId) comment depth (war : IWarStateQuery, timeSpan : float32<H>) =
         let tryMakeAirfieldRaids = tryMakeAirfieldRaids war side
         let tryMakeIndustryRaids = tryMakeIndustryRaids war side
-        let tryMakeOtherDefensiveGroundForcesRaids = tryMakeDefensiveGroundForcesRaids war side.Other
         let tryMakeGroundForcesHarassment = tryMakeOffensiveGroundForcesRaids war false side
         let tryMakeGroundForcesSupport = tryMakeOffensiveGroundForcesRaids war true side
         let tryMakeGroundForcesDefense = tryMakeDefensiveGroundForcesRaids war side
-        let tryTransferPlanesForward = tryTransferPlanesForward war side
-        let tryPlanTroops = Planning.chain [ lockDefenses war side; tryPlanReinforcements timeSpan war side; tryPlanInvasions timeSpan war side; tryPlanBattles war side ]
+        let tryTransferPlanesForward side = tryTransferPlanesForward war side
+        let tryPlanTroops = Planning.chain [ tryPlanInvasions timeSpan war side; tryPlanBattles war side ]
 
         let sideAttacks =
-            Planning.orElse [
-                tryMakeAirfieldRaids |> Planning.andThen [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeIndustryRaids; tryMakeGroundForcesHarassment; tryPlanTroops ]
-                tryMakeIndustryRaids |> Planning.andThen [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryPlanTroops ]
-                tryMakeGroundForcesHarassment |> Planning.andThen [ tryMakeGroundForcesSupport; tryPlanTroops ]
-                tryPlanTroops
-            ] |> Planning.andThen [ tryTransferPlanesForward ]
+            lockDefenses war side
+            |> Planning.always (
+                Planning.orElse [
+                    tryMakeAirfieldRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeIndustryRaids; tryMakeGroundForcesHarassment; tryPlanTroops ])
+                    tryMakeIndustryRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryPlanTroops ])
+                    tryMakeGroundForcesHarassment |> Planning.andThen (Planning.chain [ tryMakeGroundForcesSupport; tryPlanTroops ])
+                    tryPlanTroops
+                ]
+                // Do not plan basic defense and transfers here, will be done as part of the defensive side's planning if we have no attacks to perform
+                |> Planning.andThen (Planning.chain [ tryTransferPlanesForward side; tryPlanReinforcements timeSpan war side ])
+            )
 
         let budget = ForcesAvailability.Create war
         match sideAttacks budget with
@@ -915,7 +928,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 missions
                 |> List.choose (function { Kind = AirMission x } -> Some x | _ -> None)
             let covers, budget =
-                Planning.chain [ tryMakeCovers war side.Other raids; tryMakeOtherDefensiveGroundForcesRaids; tryTransferPlanesForward; tryPlanTroops ] budget
+                Planning.chain [ tryMakeCovers war side.Other raids; tryMakeDefensiveGroundForcesRaids war side.Other; tryTransferPlanesForward side.Other; lockDefenses war side.Other; tryPlanReinforcements timeSpan war side.Other ] budget
                 |> MissionPlanningResult.getMissions budget
             let momentum =
                 if depth = 0 then
