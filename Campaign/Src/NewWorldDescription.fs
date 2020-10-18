@@ -444,6 +444,10 @@ with
             let actual = min desired available
             forces * actual / desired
 
+    member this.RegionHasAirfield(region : RegionId) =
+        this.Airfields.Values
+        |> Seq.exists (fun af -> af.Region = region)
+
 module Init =
     open System.IO
     open System.Reflection

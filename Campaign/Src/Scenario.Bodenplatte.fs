@@ -659,6 +659,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                   Description = description })
         Plan ("Transfers", missions, budget)
 
+    /// Try to plan troop movements in enemy territory
     let tryPlanInvasions (timeSpan : float32<H>) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let distanceToAirfields =
             war.ComputeDistancesToAirfields()
@@ -741,6 +742,30 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             | [] -> Plan("No region suitable for invasion", [], budget)
             | _ :: _ -> Plan("Insufficient forces to invade", [], budget))
 
+    /// Remove ground forces required for defense purposes from the available budget
+    let lockDefenses (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
+        let enemy = friendly.Other
+        let budget =
+            (budget, war.World.Regions.Values)
+            ||> Seq.fold (fun budget region ->
+                if war.GetOwner(region.RegionId) = Some friendly then
+                    let threatsFactor =
+                        if war.World.RegionHasAirfield(region.RegionId) then
+                            1.0f
+                        else
+                            0.25f
+                    let needed = war.GetGroundForces(enemy, region.RegionId) + threatsFactor * war.GroundThreatsToRegion(region.RegionId, friendly)
+                    let available =
+                        budget.Regions.TryFind(region.RegionId, friendly)
+                        |> Option.defaultValue 0.0f<MGF>
+                    let locked = min needed available
+                    budget.TryCheckoutGroundForce(friendly, region.RegionId, locked)
+                    |> Option.defaultValue budget
+                else
+                    budget
+            )
+        Plan("Assignment of defense forces", [], budget)
+    /// Try to plan troop movements in friendly territory
     let tryPlanReinforcements (timeSpan : float32<H>) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let enemy = friendly.Other
         let suitableSources =
@@ -750,8 +775,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 let available =
                     budget.Regions.TryFind(source.RegionId, friendly)
                     |> Option.defaultValue 0.0f<MGF>
-                let needed = war.GetGroundForces(enemy, source.RegionId)
-                available > needed)
+                available > 0.0f<MGF>)
             |> List.ofSeq
         match suitableSources with
         | [] ->
@@ -767,17 +791,30 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 for source in suitableSources do
                     logger.Debug(sprintf "Considering source region %s for %s" (string source.RegionId) (string friendly))
                     let friendlyForces = budget.Regions.TryFind(source.RegionId, friendly) |> Option.defaultValue 0.0f<MGF>
-                    let availableToMove = friendlyForces - war.GetGroundForces(enemy, source.RegionId)
+                    let availableToMove =
+                        let threatsFactor =
+                            if war.World.RegionHasAirfield(source.RegionId) then
+                                1.0f
+                            else
+                                0.25f
+                        friendlyForces - war.GetGroundForces(enemy, source.RegionId) - threatsFactor * war.GroundThreatsToRegion(source.RegionId, friendly)
                     let destinations =
                         source.Neighbours
                         |> List.filter (fun ngh -> war.GetOwner(ngh) = Some friendly)
                         |> List.map (fun ngh ->
                             let friendlyForces2 = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
-                            let excess = friendlyForces2 - war.GetGroundForces(enemy, ngh) |> min 0.0f<MGF>
+                            let threatsFactor =
+                                if war.World.RegionHasAirfield(ngh) then
+                                    1.0f
+                                else
+                                    0.25f
+                            let threats = war.GetGroundForces(enemy, ngh) + threatsFactor * war.GroundThreatsToRegion(ngh, friendly)
+                            let excess = friendlyForces2 - threats
                             let dist = distanceToEnemy.[ngh]
                             logger.Debug(sprintf "Potential destination: %s with excess friendly forces %0.0f and hops %d" (string ngh) excess dist)
                             excess, dist, ngh)
-                        |> List.filter (fun (excess, dist, _) -> excess < 0.0f<MGF> || dist < distanceToEnemy.[source.RegionId])
+                        |> List.filter (fun (excess, dist, _) -> excess < 0.0f<MGF> || dist <= distanceToEnemy.[source.RegionId])
+                        |> List.sortBy (fun (excess, dist, ngh) -> excess, dist)
                         |> List.map (fun (_, _, ngh) -> ngh)
 
                     let missions, budget2, _ =
@@ -853,7 +890,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         let tryMakeGroundForcesSupport = tryMakeOffensiveGroundForcesRaids war true side
         let tryMakeGroundForcesDefense = tryMakeDefensiveGroundForcesRaids war side
         let tryTransferPlanesForward = tryTransferPlanesForward war side
-        let tryPlanTroops = Planning.chain [ tryPlanInvasions timeSpan war side; tryPlanBattles war side; tryPlanReinforcements timeSpan war side ]
+        let tryPlanTroops = Planning.chain [ lockDefenses war side; tryPlanReinforcements timeSpan war side; tryPlanInvasions timeSpan war side; tryPlanBattles war side ]
 
         let sideAttacks =
             Planning.orElse [

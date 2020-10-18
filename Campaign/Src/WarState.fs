@@ -299,6 +299,12 @@ module IWarStateExtensions =
             [this.Date; this.Date + missionLength]
             |> List.exists (fun t -> t <= sunrise || t >= sunset)
 
+        /// Compute the enemy forces in neighbouring regions
+        member this.GroundThreatsToRegion(region : RegionId, friendly : CoalitionId) =
+            let neighbours = this.World.Regions.[region].Neighbours
+            neighbours
+            |> Seq.map (fun ngh -> this.GetGroundForces(friendly.Other, ngh))
+            |> Seq.sum
 
 type IWarStateUpdate =
     /// Set the date and time
