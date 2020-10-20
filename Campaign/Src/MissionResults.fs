@@ -72,6 +72,22 @@ type IWarStateQuery with
         let logName = normalizeLogName logName
         this.World.PlaneSet.Values
         |> Seq.tryFind (fun plane -> logName.Contains(normalizeLogName plane.LogName))
+        |> Option.orElseWith (fun () ->
+            // Look in plane alternatives, and if found return the plane it replaces.
+            // There should be at most one such plane, otherwise the plane that's returned is whichever is matched first.
+            this.World.PlaneAlts
+            |> Seq.tryPick (fun kvp ->
+                let plane, planeAlts = kvp.Key, kvp.Value
+                let found =
+                    planeAlts
+                    |> List.exists (fun planeAlt -> logName.Contains(normalizeLogName planeAlt.LogName))
+                if found then
+                    this.World.PlaneSet.TryGetValue plane
+                    |> Option.ofPair
+                else
+                    None
+            )
+        )
 
     /// Get all buildings that match a name, have the given subpart as reported as important, and cover the given position.
     member this.GetBuildingsAt(logName : string, part : int, (x, _, z) : Position) =
