@@ -198,7 +198,16 @@ module BodenplatteInternal =
                 |> Seq.map (fun plane -> plane.Id, plane)
                 |> dict
 
-            { world with PlaneSet = planeSet }
+            let planeAlts =
+                match planeDb.TryFind (PlaneModelId "b25"), planeDb.TryFind (PlaneModelId "a20") with
+                | Some b25, Some a20 ->
+                    [ b25.Id, [a20] ]
+                | Some b25, None ->
+                    [ b25.Id, [] ]
+                | None, _ ->
+                    []
+                |> dict 
+            { world with PlaneSet = planeSet; PlaneAlts = planeAlts }
 
         interface IScenarioWorldSetup with
             member this.Setup(world) = this.Setup(world)

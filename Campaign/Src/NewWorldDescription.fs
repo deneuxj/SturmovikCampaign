@@ -413,6 +413,9 @@ type World = {
     Bridges : IDictionary<BuildingInstanceId, BuildingInstance>
     /// Mapping from plane model identifiers to plane model descriptions
     PlaneSet : IDictionary<PlaneModelId, PlaneModel>
+    /// Alternative planes to make available to players, can be used to allow players who don't own a plane to spawn anyway in similar planes.
+    /// Can also be used for AI-only planes, such as the B-25.
+    PlaneAlts : IDictionary<PlaneModelId, PlaneModel list>
     /// Participating countries and their coalition
     Countries : IDictionary<CountryId, CoalitionId>
     /// Typical names for each country
@@ -939,6 +942,7 @@ module Init =
             Buildings = buildingsDict
             Bridges = bridges
             PlaneSet = dict[]
+            PlaneAlts = dict[]
             Countries = countries
             Names = NameDatabase.Default
             Ranks = RanksDatabase.Default

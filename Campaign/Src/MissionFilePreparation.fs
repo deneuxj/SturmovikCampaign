@@ -418,15 +418,20 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 let planes =
                     state.GetNumPlanes(af.AirfieldId)
                     |> Map.toSeq
-                    |> Seq.choose (fun (planeId, num) ->
+                    |> Seq.collect (fun (planeId, num) ->
                         if num >= 1.0f then
-                            let plane = state.World.PlaneSet.[planeId]
-                            if Some plane.Coalition = coalition then
-                                Some (PlayerSpawnPlane.Default plane)
-                            else
-                                None
+                            let planes =
+                                match state.World.PlaneAlts.TryGetValue planeId with
+                                | true, planes -> planes
+                                | false, _ -> [state.World.PlaneSet.[planeId]]
+                            planes
+                            |> Seq.choose (fun plane ->
+                                if Some plane.Coalition = coalition then
+                                    Some (PlayerSpawnPlane.Default plane)
+                                else
+                                    None)
                         else
-                            None)
+                            Seq.empty)
                     |> List.ofSeq
                 let spawn =
                     {
