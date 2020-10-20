@@ -103,6 +103,7 @@ module BodenplatteInternal =
             IdP47 : string
             IdSpitfire : string
             IdTempest : string
+            IdB25 : string
         }
     with
         static member Default =
@@ -117,6 +118,7 @@ module BodenplatteInternal =
                 IdP47 = "p47"
                 IdSpitfire = "spitfireMkIXe"
                 IdTempest = "Tempest MkV s2"
+                IdB25 = "b25"
             }
 
         member this.NewPlanesDelivery(numPlanes : float32) =
@@ -127,11 +129,12 @@ module BodenplatteInternal =
                     this.IdFw190d9, 0.2f * numPlanes
                 ]
                 Allies, [
-                    this.IdP51, 0.4f * numPlanes
-                    this.IdP38, 0.2f * numPlanes
+                    this.IdP51, 0.3f * numPlanes
+                    this.IdP38, 0.15f * numPlanes
                     this.IdP47, 0.1f * numPlanes
-                    this.IdSpitfire, 0.2f * numPlanes
+                    this.IdSpitfire, 0.15f * numPlanes
                     this.IdTempest, 0.1f * numPlanes
+                    this.IdB25, 0.2f * numPlanes
                 ]
             ]
 
@@ -144,6 +147,7 @@ module BodenplatteInternal =
                     this.IdFw190a8
                     this.IdBf109k4
                     this.IdFw190d9
+                    this.IdB25
                 ]
             | Allies ->
                 [
@@ -171,6 +175,12 @@ module BodenplatteInternal =
             function
             | Axis -> [ this.IdBf109g14; this.IdFw190a8; this.IdBf109k4; this.IdFw190d9 ]
             | Allies -> [ this.IdP51; this.IdSpitfire; this.IdTempest; this.IdP47; this.IdP38 ]
+
+        /// Get the list of bombers of a coalition, preferred ones first
+        member this.BombersOf =
+            function
+            | Axis -> []
+            | Allies -> [ this.IdB25 ]
 
         member this.Setup(world: World): World = 
             let planes =
@@ -226,9 +236,10 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
     let attackersOf = PS.Attackers >> List.map PlaneModelId
     let interceptorsOf = PS.InterceptorsOf >> List.map PlaneModelId
     let fightersOf = PS.FightersOf >> List.map PlaneModelId
+    let bombersOf = PS.BombersOf >> List.map PlaneModelId
 
     let allPlanesOf coalition =
-        [attackersOf; interceptorsOf; fightersOf]
+        [bombersOf; attackersOf; interceptorsOf; fightersOf]
         |> List.collect (fun f -> f coalition)
         |> List.distinct
 
@@ -373,12 +384,12 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                                         None)
                         let groupAndBudget =
                             seq {
-                                for attacker in attackersOf friendly do
+                                for mType, attacker in (List.allPairs [Bombing] (bombersOf friendly)) @ (List.allPairs [Strafing] (attackersOf friendly)) do
                                 for numAttackers in [15; 10; 5] do
                                 let mkAttackerMission af =
                                     { StartAirfield = af.AirfieldId
                                       Objective = targetRegion
-                                      MissionType = Strafing(adapter.MkGroundTarget target)
+                                      MissionType = mType(adapter.MkGroundTarget target)
                                       Plane = attacker
                                       NumPlanes = numAttackers
                                     }

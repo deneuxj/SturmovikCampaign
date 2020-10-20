@@ -77,8 +77,11 @@ type AiAttack with
             role
             |> Option.map (fun role ->
                 let altitude =
-                    match role with
-                    | PlaneRole.LevelBomber -> 5000.0f
+                    match mission.MissionType, role with
+                    | Bombing _, PlaneRole.LevelBomber -> 5000.0f
+                    | Bombing _, PlaneRole.GroundAttacker -> 3500.0f
+                    | Bombing _, _ -> 2000.0f
+                    | Strafing _, _ -> 2000.0f
                     | _ -> 3500.0f
                 {
                     Attacker = planeModel
@@ -115,6 +118,11 @@ type AiPatrol with
                 |> List.tryFind (fun role -> planeModel.Payloads.ContainsKey role)
             role
             |> Option.map (fun role ->
+                let altitude =
+                    match role with
+                    | PlaneRole.Patroller -> 3500.0f
+                    | PlaneRole.Interceptor -> 5000.0f
+                    | _ -> 3500.0f
                 {
                     Plane = planeModel
                     NumPlanes = numPlanes
@@ -123,7 +131,7 @@ type AiPatrol with
                     Country = country
                     Coalition = coalition
                     Pos = targetPos
-                    Altitude = 3500.0f
+                    Altitude = altitude
                     Role = role
                     ProtectedRegion = protectedRegion
                 })
