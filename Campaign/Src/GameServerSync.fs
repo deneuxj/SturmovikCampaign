@@ -157,6 +157,7 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                             logger.Warn("Live notifier command-handling failed")
                             logger.Debug(exc)
                     try
+                        logger.Debug("Execute command")
                         command.Execute(war) |> ignore
                     with exc ->
                         logger.Warn("Command execution in live notifier failed")
