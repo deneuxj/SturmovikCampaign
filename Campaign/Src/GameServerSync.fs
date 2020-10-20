@@ -148,7 +148,7 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                     Pilots.tryComputeRank war.World.Ranks pilot
                                     |> Option.map (fun rank -> rank.RankAbbrev)
                                     |> Option.defaultValue ""
-                                let msg = sprintf "%s has taken control of %s %s" player rank pilot.FullName
+                                let msg = sprintf "%s controls %s %s" player rank pilot.FullName
                                 let! s = notifier.MessageAll(msg)
                                 ()
                             | _ ->
