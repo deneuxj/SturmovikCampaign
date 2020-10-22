@@ -185,6 +185,8 @@ type IWarStateQuery =
     abstract member TryGetPlayer : string -> Player option
     /// Get all pilots
     abstract member Pilots : Pilot list
+    /// Get number of pilots
+    abstract member NumPilots : int
     /// Get a pilot by its ID
     abstract member GetPilot : PilotId -> Pilot
     /// Find a path through road/rail network from one set of nodes to another, optionally restricted within the territory of a coalition
@@ -271,10 +273,10 @@ module IWarStateExtensions =
             firstName, lastName
 
         /// Return a new pilot, without registering it. The name is deterministically selected in a pseudo-random manner.
-        /// The seed is computed from the date of the war state, the numeric id of the pilot, the scenario, the country and the player GUID.
+        /// The seed is computed from the date of the war state, the scenario, the country, the player GUID and number of existing pilots.
         member this.NewPilot(guid : string, country : CountryId) : Pilot =
             let id = PilotId(Guid.NewGuid())
-            let seed = hash(this.Date, id, this.World.Scenario, country, guid)
+            let seed = hash(this.Date, this.World.Scenario, country, guid, this.NumPilots)
             let firstName, lastName = this.GetNewNames(country, seed)
             { Id = id
               Country = country
@@ -704,6 +706,9 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         pilots.Values
         |> List.ofSeq
 
+    member this.NumPilots =
+        pilots.Count
+
     member this.GetPilot(id : PilotId) =
         pilots.[id]
 
@@ -786,6 +791,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.TryGetPlayer(guid : string) = this.TryGetPlayer(guid)
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
         member this.Pilots = this.Pilots
+        member this.NumPilots = this.NumPilots
         member this.RefreshPilotHealths() = this.RefreshPilotHealths()
         member this.Seed = this.Seed
 
