@@ -198,6 +198,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             path "/control/sync/interrupt" >=> inControlRoom(context(fun _ -> ctrl.InterruptSync() |> serializeAsync))
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
+        GET >=> pathStarts "/doc/" >=> Files.browse (System.IO.Path.Combine(System.Environment.CurrentDirectory))
         GET >=> pathStarts "/html/" >=> Files.browseHome
         GET >=> pathStarts "/js/" >=> Files.browseHome
         context (fun ctx ->
