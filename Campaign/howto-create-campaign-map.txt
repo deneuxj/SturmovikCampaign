@@ -7,6 +7,7 @@ Done in the mission properties dialog.
 Use influence areas.
 They cannot overlap.
 Each region's boundary must be convex.
+Try to put region boundaries at natural obstacles, e.g. large rivers.
 Each region must have a country, cannot be neutral.
 Neighbouring regions must share contiguous segments. Corresponding vertices must be close.
 In a region's boundary, vertices must be separated by at least 2km.
@@ -16,14 +17,16 @@ Avoid holes between regions, they will look ugly in the mission map and confuse 
 Put region icons on identifiable cities, need not be in the center of the region.
 Put all regions in a group named "Regions".
 Set region owners. Each coalition must own at least one region with factories.
-In the initial world state, regions which have "***" in their Description are fully supplied. Those are the "strong bases".
-Other regions are supplied depending on their distance to the nearest strong base.
+In the initial world state, regions which have "***" in their Description are called "entry regions". Reinforcements appear in these regions.
+The logistics system uses these entry regions as the place of reference for efficiency calculations:
+A region which is isolated from all entry regions cannot function properly, meaning e.g. that ground forces there are weaker than normal.
 
 3. Define logistics terminals
 Create influence areas in a group named "Terminals". Each region should have at least one.
 Those areas should cover cities that are communication hubs, for roads and railroads.
 Any segment of road or rails inside these areas are locations where supplies can be loaded to and from other regions.
 In order for a path over roads or rails to connect two regions that share an edge in their boundaries, the entire path must be covered by the two regions.
+If you intend for a bridge to play an important role in the tactics, avoid spanning both sides of the bridge with terminal zones.
 
 4. Define airfield areas
 Use influence areas. The point of reference of each area must be inside a region.
@@ -41,18 +44,18 @@ The taxi points leading to the runway are meant for the AIs, not players. Keep t
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 Airfields without runways are allowed. These can be used by players as alternative landing sites, but are otherwise ignored by the campaign system.
 
-6. Windsocks
+6. Windsocks (opt.)
 Create windsocks with entities in a group named "Windsocks"
 
-7. Non-directional beacons
+7. Non-directional beacons (opt.)
 Create non-directional beacons (ndb under "vehicles") with entities in a group named "NDBs".
 Set beacon channel to 1 in the advanced properties.
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
-8. Landing fires
+8. Landing fires (opt.)
 Create landing fire effects with entities named "LandFire" in a group named "Land fires". Don't forget to set them on the ground.
 
-9. Landing lights
+9. Landing lights (opt.)
 Create land lights with entities named "LandLight" in a group named "Land lights".
 Create a pair for each runway so that planes will take off and land with the lights in their back.
 
@@ -66,3 +69,10 @@ Buildings of strategic value as well as "valueless" buildings should be under a 
 12. Other data
 Create a non-neutral fakefield outside of the play area, add at least a plane to it (any plane will do)
 Set the mission type to deathmatch.
+
+13. Countries
+The participating countries and their coalition are edited in the dialog that open when clicking on "Countries..." in the mission's properties.
+Set all non-participating to Neutral.
+
+14. Briefing
+Write a short description of the object of the fight in the description of the mission.
