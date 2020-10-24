@@ -773,19 +773,34 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             | [] -> Plan("No region suitable for invasion", [], budget)
             | _ :: _ -> Plan("Insufficient forces to invade", [], budget))
 
+    /// Compute forces needed to defend a region under one's control
+    let neededForDefenses (war : IWarStateQuery, friendly : CoalitionId, rId : RegionId) =
+        if war.GetOwner(rId) = Some friendly then
+            let numAirfields =
+                war.World.Airfields.Values
+                |> Seq.filter (fun af -> af.Region = rId)
+                |> Seq.length
+            let threatsFactor =
+                if numAirfields > 0 then
+                    1.0f
+                else
+                    0.25f
+            let neededForAA =
+                let numNests = 3.0f
+                let numGuns = 5.0f
+                (float32 numAirfields) * numNests * numGuns * Campaign.Common.Targets.TargetType.Artillery.GroundForceValue / war.World.AntiAirGroundForcesRatio
+            let needed = max neededForAA (war.GetGroundForces(friendly.Other, rId) + threatsFactor * war.GroundThreatsToRegion(rId, friendly))
+            needed
+        else
+            0.0f<MGF>
+
     /// Remove ground forces required for defense purposes from the available budget
     let lockDefenses (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
-        let enemy = friendly.Other
         let budget =
             (budget, war.World.Regions.Values)
             ||> Seq.fold (fun budget region ->
                 if war.GetOwner(region.RegionId) = Some friendly then
-                    let threatsFactor =
-                        if war.World.RegionHasAirfield(region.RegionId) then
-                            1.0f
-                        else
-                            0.25f
-                    let needed = war.GetGroundForces(enemy, region.RegionId) + threatsFactor * war.GroundThreatsToRegion(region.RegionId, friendly)
+                    let needed = neededForDefenses(war, friendly, region.RegionId)
                     let available =
                         budget.Regions.TryFind(region.RegionId, friendly)
                         |> Option.defaultValue 0.0f<MGF>
@@ -824,27 +839,15 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 let mutable budget = budget
                 for source in suitableSources do
                     logger.Debug(sprintf "Considering source region %s for %s" (string source.RegionId) (string friendly))
-                    let friendlyForces = budget.Regions.TryFind(source.RegionId, friendly) |> Option.defaultValue 0.0f<MGF>
-                    let availableToMove =
-                        let threatsFactor =
-                            if war.World.RegionHasAirfield(source.RegionId) then
-                                1.0f
-                            else
-                                0.25f
-                        friendlyForces - war.GetGroundForces(enemy, source.RegionId) - threatsFactor * war.GroundThreatsToRegion(source.RegionId, friendly)
+                    let availableToMove = budget.Regions.TryFind(source.RegionId, friendly) |> Option.defaultValue 0.0f<MGF>
                     let sourceHasAirfield = war.World.RegionHasAirfield(source.RegionId)
                     let destinations =
                         source.Neighbours
                         |> List.filter (fun ngh -> war.GetOwner(ngh) = Some friendly)
                         |> List.map (fun ngh ->
                             let friendlyForces2 = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
-                            let threatsFactor =
-                                if war.World.RegionHasAirfield(ngh) then
-                                    1.0f
-                                else
-                                    0.25f
-                            let threats = war.GetGroundForces(enemy, ngh) + threatsFactor * war.GroundThreatsToRegion(ngh, friendly)
-                            let excess = friendlyForces2 - threats
+                            let needed = neededForDefenses(war, friendly, ngh)
+                            let excess = friendlyForces2 - needed
                             let dist = distanceToEnemy.[ngh]
                             logger.Debug(sprintf "Potential destination: %s with excess friendly forces %0.0f and hops %d" (string ngh) excess dist)
                             excess, dist, ngh)
