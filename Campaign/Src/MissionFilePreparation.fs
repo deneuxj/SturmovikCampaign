@@ -533,7 +533,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             let gunsPerNest = 5
             // Resource planning aims to avoid running dry before next resupply, which is assumed to be one day of combat
             let combatTimeBeforeResuply = 12.0f<H>
-            let aaCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * combatTimeBeforeResuply
+            let nestCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * combatTimeBeforeResuply
             // Airfields
             for afId in spawns |> Seq.map (fun spawn -> spawn.Airfield) do
                 let airfield = state.World.Airfields.[afId]
@@ -541,10 +541,8 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     state.GetOwner(airfield.Region)
                     |> Option.map state.World.GetAnyCountryInCoalition
                     |> Option.defaultWith (fun () -> failwith "Spawn in neutral region")
-                let numNests = int(state.GetAirfieldCapacity(afId) / aaCost) |> max 1
                 let positions =
                     locator.GetAirfieldAA(afId)
-                    |> Seq.truncate numNests
                 for _, shape in positions do
                     let nest =
                         { Priority = 5.0f
@@ -560,6 +558,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                           IncludeSearchLights = hasLowLight
                           IncludeFlak = true
                           Country = country.ToMcuValue
+                          Coalition = state.World.Countries.[country]
+                          Group = airfield.Region :> System.IComparable
+                          Cost = float32 nestCost
                         }
                     yield nest
 
@@ -616,6 +617,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         |> Seq.tryFind (fun region -> pos.Pos.IsInConvexPolygon region.Boundary)
                         |> Option.bind (fun region -> state.GetOwner(region.RegionId))
                         |> Option.map state.World.GetAnyCountryInCoalition
+                    let region = state.World.FindRegionAt p
                     match country with
                     | Some country ->
                         let nest =
@@ -628,6 +630,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                               IncludeSearchLights = hasLowLight
                               IncludeFlak = true
                               Country = country.ToMcuValue
+                              Coalition = state.World.Countries.[country]
+                              Group = region.RegionId :> System.IComparable
+                              Cost = float32 nestCost
                             }
                         yield nest
                     | None ->
@@ -651,7 +656,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             seq {
                                 let shape = VectorExtension.mkCircle(Vector2.Zero, 50.0f)
                                 let location =
-                                    seq { 2000.0f .. 500.0f .. 5000.0f }
+                                    seq { 500.0f .. 250.0f .. 1500.0f }
                                     |> Seq.map (fun radius -> VectorExtension.mkCircle(rep.Pos.Pos, radius))
                                     |> Seq.collect (fun area -> locator.GetGroundLocationCandidates(area, shape))
                                     |> Seq.tryHead
@@ -669,6 +674,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                           IncludeSearchLights = hasLowLight
                                           IncludeFlak = true
                                           Country = country.ToMcuValue
+                                          Coalition = state.World.Countries.[country]
+                                          Group = region.RegionId :> System.IComparable
+                                          Cost = float32 nestCost
                                         }
                                     yield nest
                                     let covered =
@@ -698,10 +706,10 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                     posNeg, posPos
                                 else
                                     posPos, posNeg
-                            let countryOwner = state.World.GetAnyCountryInCoalition(owner).ToMcuValue
-                            let countryInvader = state.World.GetAnyCountryInCoalition(owner.Other).ToMcuValue
+                            let countryOwner = state.World.GetAnyCountryInCoalition(owner)
+                            let countryInvader = state.World.GetAnyCountryInCoalition(owner.Other)
                             let shape = VectorExtension.mkCircle(Vector2.Zero, 500.0f)
-                            let mkNest(p, country) =
+                            let mkNest(p, country : CountryId) =
                                 {
                                     Priority = 2.0f
                                     Number = gunsPerNest
@@ -711,7 +719,10 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                     Specialty = DefenseSpecialty.AntiAirMg
                                     IncludeSearchLights = hasLowLight
                                     IncludeFlak = true
-                                    Country = country
+                                    Country = country.ToMcuValue
+                                    Coalition = state.World.Countries.[country]
+                                    Group = region.RegionId :> System.IComparable
+                                    Cost = float32 nestCost
                                 }
                             yield mkNest(posOwner, countryOwner)
                             yield mkNest(posInvader, countryInvader)
@@ -731,6 +742,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 let pos = center + (extent + 200.0f) * Vector2.FromYOri(random.NextDouble() * 359.0)
                 let country = state.World.GetAnyCountryInCoalition(coalition)
                 let shape = mkCircle(pos, 150.0f)
+                let region = state.World.FindRegionAt(pos)
                 yield
                     {
                         Priority = 1.0f
@@ -742,6 +754,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         IncludeSearchLights = hasLowLight
                         IncludeFlak = true
                         Country = country.ToMcuValue
+                        Coalition = state.World.Countries.[country]
+                        Group = region.RegionId :> System.IComparable
+                        Cost = float32 nestCost
                     }
         ]
 

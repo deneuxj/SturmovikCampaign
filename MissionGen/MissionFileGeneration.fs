@@ -692,9 +692,14 @@ with
             |> List.map (fun ps -> ps.BuildMCUs(store, data, windDir))
 
         // AA
+        let groupBudget =
+            List.allPairs data.Regions [Axis; Allies]
+            |> List.map (fun (region, coalition) -> (region.RegionId :> System.IComparable, coalition), data.GetRegionAntiAirCapacity(region.RegionId, coalition))
+            |> Map.ofList
+
         let retainedAA =
             this.AntiAirNests
-            |> Campaign.MissionGen.StaticDefenseOptimization.select random settings.MaxAntiAirCannons
+            |> Campaign.MissionGen.StaticDefenseOptimization.select random (settings.MaxAntiAirCannons, groupBudget)
             |> Campaign.MissionGen.StaticDefenseOptimization.instantiateAll store lcStore random missionBegin
             |> List.map (fun grp -> grp :> IMcuGroup)
 

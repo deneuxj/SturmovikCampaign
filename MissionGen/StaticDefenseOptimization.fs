@@ -20,10 +20,12 @@ open System.Numerics
 open SturmovikMission.Blocks.StaticDefenses.Types
 open SturmovikMission.Blocks.StaticDefenses.Factory
 open SturmovikMission.DataProvider
+open Campaign.Common.BasicTypes
+
 open Util
 
 type Nest = {
-    Priority : float32
+    Priority : System.IComparable
     Number : int
     Boundary : Vector2 list
     Rotation : float32
@@ -32,6 +34,9 @@ type Nest = {
     IncludeSearchLights : bool
     IncludeFlak : bool
     Country : Mcu.CountryValue
+    Coalition : CoalitionId
+    Group : System.IComparable
+    Cost : float32
 }
 with
     member this.Generate(store, lcStore, random) =
@@ -40,19 +45,26 @@ with
         group
 
 /// Select nests by priority so that the total number of cannons and guns does not exceed the given limit
-let select random (limit : int) nests =
+let select random (limit : int, groupBudget : Map<System.IComparable * CoalitionId, float32>) nests =
     let sorted =
         nests
         |> List.sortByDescending (fun nest -> nest.Priority, nest.Number)
+    // Get the most important nests, up to half the limit
     let untouched, excess =
         [
             let limit = limit / 2
             let mutable acc = 0
+            let mutable budget = groupBudget
             for nest in sorted do
                 acc <- acc + nest.Number
-                yield acc <= limit, nest
+                let available = budget.TryFind(nest.Group, nest.Coalition) |> Option.defaultValue 0.0f
+                let remaining = available - nest.Cost
+                if remaining >= 0.0f then
+                    budget <- budget.Add((nest.Group, nest.Coalition), remaining)
+                yield acc <= limit && remaining >= 0.0f, nest
         ]
         |> List.partition fst
+    // Fill the rest with randomly selected nests
     let randomized =
         excess
         |> Array.ofList
@@ -60,12 +72,20 @@ let select random (limit : int) nests =
         |> List.ofArray
     [
         let mutable acc = 0
+        let mutable budget = groupBudget
         for _, nest in untouched do
             acc <- acc + nest.Number
+            let available = budget.TryFind(nest.Group, nest.Coalition) |> Option.defaultValue 0.0f
+            let remaining = available - nest.Cost
+            budget <- budget.Add((nest.Group, nest.Coalition), remaining)
             yield nest
         for _, nest in randomized do
             acc <- acc + nest.Number
-            if acc <= limit then
+            let available = budget.TryFind(nest.Group, nest.Coalition) |> Option.defaultValue 0.0f
+            let remaining = available - nest.Cost
+            if remaining >= 0.0f then
+                budget <- budget.Add((nest.Group, nest.Coalition), remaining)
+            if acc <= limit && remaining >= 0.0f then
                 yield nest
     ]
 

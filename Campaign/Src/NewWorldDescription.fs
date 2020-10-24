@@ -426,6 +426,9 @@ type World = {
     Awards : AwardDatabase
 }
 with
+    /// Portion of ground forces dedicated to anti-air
+    member this.AntiAirGroundForcesRatio = 0.15f
+
     /// Get building or bridge instance by its ID
     member this.GetBuildingInstance(bid : BuildingInstanceId) =
         [this.Buildings; this.Bridges]

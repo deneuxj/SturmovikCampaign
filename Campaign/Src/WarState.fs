@@ -209,6 +209,32 @@ module IWarStateExtensions =
             building.Properties.SubParts
             |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part))
 
+        /// Get the amount of resources available for anti-air defenses. The consumption factor is the duration of the period divided by the amount of fighting time in a day.
+        member this.ComputeRegionAntiAirBudget(transport : RegionId * RegionId -> float32<M^3/H>, supplies : RegionId -> float32<M^3/H>, rId : RegionId, coalition : CoalitionId, consumptionFactor : float32) =
+            let owner = this.GetOwner(rId)
+            let resupplyPeriod = 24.0f<H>
+            let region = this.World.Regions.[rId]
+            let viaGround =
+                if owner = Some coalition then
+                    supplies rId
+                else
+                    region.Neighbours
+                    |> Seq.filter (fun ngh -> this.GetOwner(ngh) = Some coalition)
+                    |> Seq.sumBy (fun ngh -> min (transport(ngh, rId)) (supplies ngh))
+            let viaAir =
+                if owner = Some coalition then
+                    this.World.Airfields.Values
+                    |> Seq.filter (fun af -> af.Region = rId)
+                    |> Seq.sumBy (fun af -> this.GetAirfieldCapacity(af.AirfieldId))
+                else
+                    0.0f<M^3>
+            let viaAir = viaAir * consumptionFactor / resupplyPeriod
+
+            let troops =
+                this.GetGroundForces(coalition, rId) * this.World.GroundForcesCost * this.World.AntiAirGroundForcesRatio * this.World.ResourceVolume
+
+            min troops (viaGround + viaAir)
+
         member this.IsPilotHealty(pilotId : PilotId) =
             match this.GetPilot(pilotId).Health with
             | Healthy -> true

@@ -150,6 +150,7 @@ type IRegionQuery =
     abstract Regions : IRegion list
     abstract GetRegion : RegionId -> IRegion
     abstract GetOwner : RegionId -> CoalitionId option
+    abstract GetRegionAntiAirCapacity : RegionId * CoalitionId -> float32
 
 type SturmovikMission.Blocks.MapGraphics.MapIcons with
     /// Render region boundaries
