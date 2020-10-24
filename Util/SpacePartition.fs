@@ -295,6 +295,64 @@ module FreeAreas =
                     Children = subs
                 }
 
+    /// Remove a convex polygon from the free areas
+    let rec subtract (minArea : float32, node : FreeAreasNode, poly : Vector2 list) =
+        let nodeShape = [node.Max; Vector2(node.Min.X, node.Max.Y); node.Min; Vector2(node.Max.X, node.Min.Y)]
+        // Reject entire node if it's entirely inside the polygon
+        let nodeIsInside =
+            nodeShape
+            |> List.forall (fun v -> v.IsInConvexPolygon(poly))
+        if nodeIsInside then
+            // Return
+            None
+        else
+
+        // Check if the node and the polygon overlap
+        let overlap =
+            Functions.intersectWithBoundingBox (fun () -> poly) () (node.Min, node.Max)
+        // If not, return the node as it is
+        if not overlap then
+            // Return
+            Some node
+        else
+
+        // Check size of area of node. If too small, drop it
+        let sx = node.Max.X - node.Min.X
+        let sy = node.Max.Y - node.Min.Y
+        let size = sx * sy
+        if size < minArea then
+            // Return
+            None
+        else
+
+        // Recursively deal with children
+        match node.Children with
+        | [| |] ->
+            // Break up node if it had no children
+            let children = 
+                [|
+                    for lower, upper in QuadNode.divideBounds(node.Min, node.Max) do
+                        let sub = {
+                            Min = lower
+                            Max = upper
+                            Children = [||]
+                        }
+                        match subtract (minArea, sub, poly) with
+                        | Some sub -> yield sub
+                        | None -> ()
+                |]
+            Some { node with Children = children }
+        | children ->
+            // Process existing children
+            let children2 =
+                children
+                |> Array.choose (fun child -> subtract(minArea, child, poly))
+            // If all children were dropped, drop this as well. Too much of the current node is covered.
+            if children.Length = 0 then
+                None
+            else
+                Some { node with Children = children2 }
+
     /// Retrieve the leaves that are accepted by a predicate. Can be used to e.g. find all leaves inside an area.
     /// The predicate must be so that if it accepts a child, it must also accept its parent, or conversely,
     /// if it rejects a node it must also reject all its children.

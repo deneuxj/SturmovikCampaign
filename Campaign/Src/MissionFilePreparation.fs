@@ -176,6 +176,14 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
         try
             serializer.Deserialize(freeAreasFile)
         with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
+        // Remove airfields from free areas, to avoid putting AA protecting e.g. industry on runways
+        |> (fun topNode ->
+            (topNode, state.World.Airfields.Values)
+            ||> Seq.fold (fun node af ->
+                node
+                |> Option.bind (fun node -> FreeAreas.subtract(100.0f * 100.0f, node, af.Boundary))
+            )
+        )
 
     let getGroundLocationCandidates(region, shape) =
         match freeAreas with
