@@ -199,6 +199,10 @@
       <Link>OperationBodenplatte.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\RheinLandWinter.Mission">
+      <Link>RheinlandWinter.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\Eindhoven.Mission">
       <Link>Eindhoven.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
