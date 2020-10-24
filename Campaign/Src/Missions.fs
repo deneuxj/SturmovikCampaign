@@ -298,6 +298,12 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                         if defenders <> initiator then
                             yield Some(SetRegionOwner(rid, Some initiator)),
                                 sprintf "%s took over %s" (string initiator) (string rid)
+                            // All captured planes get destroyed
+                            for af in war.World.Airfields.Values |> Seq.filter (fun af -> af.Region = rid) do
+                                let planes = war.GetNumPlanes(af.AirfieldId)
+                                for plane, _ in planes |> Map.toSeq do
+                                    yield Some(RemovePlane(af.AirfieldId, plane, System.Single.PositiveInfinity)),
+                                        sprintf "All %s at %s destroyed during capture" (string plane) (af.AirfieldId.AirfieldName)
                 | None ->
                     ()
         }
