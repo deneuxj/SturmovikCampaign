@@ -519,6 +519,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     let state0 = Init.mkWar world
                     sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
                     sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
+                    sctrl.InitGroundForces(1.0f, Axis, state0)
+                    sctrl.InitGroundForces(1.0f, Allies, state0)
                     let step = sctrl.Start(state0, settings.SimulatedDuration * 1.0f<H>)
                     Ok(world, state0, step, sctrl)
 

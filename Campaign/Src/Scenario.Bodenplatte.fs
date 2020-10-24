@@ -339,6 +339,46 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         | None ->
             ()
 
+    /// Compute forces needed to defend a region under one's control
+    let neededForDefenses (war : IWarStateQuery, friendly : CoalitionId, rId : RegionId) =
+        if war.GetOwner(rId) = Some friendly then
+            let numAirfields =
+                war.World.Airfields.Values
+                |> Seq.filter (fun af -> af.Region = rId)
+                |> Seq.length
+            let threatsFactor =
+                if numAirfields > 0 then
+                    1.0f
+                else
+                    0.25f
+            let neededForAA =
+                let numNests = 3.0f
+                let numGuns = 5.0f
+                (float32 numAirfields) * numNests * numGuns * Campaign.Common.Targets.TargetType.Artillery.GroundForceValue / war.World.AntiAirGroundForcesRatio
+            let needed = max neededForAA (war.GetGroundForces(friendly.Other, rId) + threatsFactor * war.GroundThreatsToRegion(rId, friendly))
+            needed
+        else
+            0.0f<MGF>
+
+    /// Set ground forces of a coalition in each region
+    let initGroundForces (factor : float32, coalition : CoalitionId, war : IWarState) =
+        for region in war.World.Regions.Values do
+            let rId = region.RegionId
+            let owner = war.GetOwner(region.RegionId)
+            if owner = Some coalition then
+                let numAirfields =
+                    war.World.Airfields.Values
+                    |> Seq.filter (fun af -> af.Region = rId)
+                    |> Seq.length
+                let neededForAA =
+                    let numNests = 3.0f
+                    let numGuns = 5.0f
+                    (1.0f + float32 numAirfields) * numNests * numGuns * Campaign.Common.Targets.TargetType.Artillery.GroundForceValue / war.World.AntiAirGroundForcesRatio
+                let needed = neededForAA
+                war.SetGroundForces(coalition, region.RegionId, needed * factor)
+            else
+                war.SetGroundForces(coalition, region.RegionId, 0.0f<MGF>)
+
     /// Try to make missions to attack generic enemy ground targets, with sufficient cover over target, and over home airfield
     let tryMakeAirRaids (war : IWarStateQuery) (adapter : TargetAdapter<'Target>) (description : string) (raidTargets : 'Target list) (friendly : CoalitionId) (budget : ForcesAvailability)  =
         let enemy = friendly.Other
@@ -773,27 +813,6 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             | [] -> Plan("No region suitable for invasion", [], budget)
             | _ :: _ -> Plan("Insufficient forces to invade", [], budget))
 
-    /// Compute forces needed to defend a region under one's control
-    let neededForDefenses (war : IWarStateQuery, friendly : CoalitionId, rId : RegionId) =
-        if war.GetOwner(rId) = Some friendly then
-            let numAirfields =
-                war.World.Airfields.Values
-                |> Seq.filter (fun af -> af.Region = rId)
-                |> Seq.length
-            let threatsFactor =
-                if numAirfields > 0 then
-                    1.0f
-                else
-                    0.25f
-            let neededForAA =
-                let numNests = 3.0f
-                let numGuns = 5.0f
-                (float32 numAirfields) * numNests * numGuns * Campaign.Common.Targets.TargetType.Artillery.GroundForceValue / war.World.AntiAirGroundForcesRatio
-            let needed = max neededForAA (war.GetGroundForces(friendly.Other, rId) + threatsFactor * war.GroundThreatsToRegion(rId, friendly))
-            needed
-        else
-            0.0f<MGF>
-
     /// Remove ground forces required for defense purposes from the available budget
     let lockDefenses (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let budget =
@@ -975,6 +994,9 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             }
 
     interface IScenarioController with
+        member this.InitGroundForces(forcesNumberCoefficient, coalition, war) =
+            initGroundForces(forcesNumberCoefficient, coalition, war)
+
         member this.InitAirfields(planeNumberCoefficient, coalition, war) =
             initAirfields planeNumberCoefficient coalition war
 

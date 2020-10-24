@@ -51,6 +51,8 @@ type IScenarioWorldSetup =
 
 /// Interface of scenario controllers
 type IScenarioController =
+    /// Set ground forces in each region
+    abstract member InitGroundForces : forcesNumberCoefficient: float32 * CoalitionId * IWarState -> unit
     /// Set plane numbers at the airfields of a coalition
     abstract member InitAirfields : planeNumberCoefficient: float32 * CoalitionId * IWarState -> unit
     abstract member Start : IWarStateQuery * float32<H> -> ScenarioStep

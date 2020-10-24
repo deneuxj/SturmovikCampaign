@@ -824,7 +824,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
 
 [<RequireQualifiedAccess>]
 module Init =
-    /// Create the initial status of the war
+    /// Create the initial status of the war, without planes or ground forces.
     let mkWar (world : World) =
         let regionOwners =
             world.Regions.Values
@@ -834,34 +834,9 @@ module Init =
             world.Airfields.Keys
             |> Seq.map (fun afid -> afid, [])
             |> List.ofSeq
-        let frontGroundForces =
-            let regionOwners = dict regionOwners
-            let getOwner rid =
-                regionOwners.TryGetValue(rid)
-                |> Option.ofPair
-            world.Regions.Values
-            |> Seq.choose (fun region ->
-                getOwner region.RegionId
-                |> Option.bind (fun owner ->
-                    let isOnBorder = 
-                        region.Neighbours
-                        |> Seq.exists (fun ngh -> getOwner ngh <> Some owner)
-                    if isOnBorder then
-                        Some ((owner, region.RegionId), 0.0f<MGF>)
-                    else
-                        None))
-            |> List.ofSeq
         let weather = getWeather (System.Random(world.Seed)) (world.StartDate + System.TimeSpan.FromDays(world.WeatherDaysOffset))
         let war =
-            WarState(world, regionOwners, [], airfields, frontGroundForces, world.StartDate, weather, [], [])
-        // Set forces on the frontline according to the region's storage capacity
-        for (coalition, rid), _ in frontGroundForces do
-            let capacity =
-                world.Regions.[rid].IndustryBuildings
-                |> Seq.sumBy war.GetBuildingCapacity
-            let battleDuration = 10.0f<H>
-            let optimalForces = capacity / (battleDuration * world.GroundForcesCost * world.ResourceVolume)
-            war.SetGroundForces(coalition, rid, optimalForces)
+            WarState(world, regionOwners, [], airfields, [], world.StartDate, weather, [], [])
         war
 
 module IO =
