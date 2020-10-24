@@ -29,7 +29,7 @@ Options
   TempPressLevel = 10;
   Temperature = -15;
   Pressure = 760;
-  Haze = 0;
+  Haze = 0.5;
   WindLayers
   {
     0 :     10 :     10;
