@@ -657,7 +657,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                         |> Set
                     let sourceRegions =
                         world.Regions
-                        |> Seq.filter (fun kvp -> kvp.Value.IsEntry)
+                        |> Seq.filter (fun kvp -> regions.Contains(kvp.Key) && kvp.Value.IsEntry)
                         |> Seq.map (fun kvp -> kvp.Key)
                         |> Set
                     let computeFlow (network : NetworkQuickAccess) =
