@@ -48,22 +48,33 @@ type System.IO.Directory with
             use watcher = new FileSystemWatcher(path, filter)
             use semaphore = new SemaphoreSlim(newFiles.Count)
             watcher.Created.Add(fun ev ->
-                logger.Debug("New log file created: " + ev.Name)
-                newFiles.Enqueue(IO.Path.Combine(path, ev.Name))
-                semaphore.Release() |> ignore)
+                try
+                    logger.Debug("New log file created: " + ev.Name)
+                    newFiles.Enqueue(IO.Path.Combine(path, ev.Name))
+                    semaphore.Release() |> ignore
+                with exc ->
+                    logger.Error("Exception in watcher.Created handler")
+                    logger.Debug(exc))
             watcher.EnableRaisingEvents <- true
-            let rec loop() =
+            let loop() =
                 asyncSeq {
-                    do! Async.AwaitTask(semaphore.WaitAsync())
-                    match newFiles.TryDequeue() with
-                    | true, s ->
-                        logger.Debug("Yield file " + s)
-                        yield s
-                    | false, _ ->
-                        ()
-                    yield! loop()
+                    let! token = Async.CancellationToken
+                    while not(token.IsCancellationRequested) do
+                        try
+                            do! Async.AwaitTask(semaphore.WaitAsync())
+                        with exc ->
+                            logger.Debug("Exception while awaiting for new log file semaphore")
+                            logger.Debug(exc)
+                        match newFiles.TryDequeue() with
+                        | true, s ->
+                            logger.Debug("Yield file " + s)
+                            yield s
+                        | false, _ ->
+                            logger.Debug("No new files in the queue")
+                            do! Async.Sleep(30000)
                 }
             yield! loop()
+            logger.Debug("Log file watcher shutting down")
         }
 
 let watchLogs path baseName startTime =
