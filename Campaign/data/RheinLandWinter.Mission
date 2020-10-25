@@ -1738,14 +1738,14 @@ Group
 
   Airfield
   {
-    Name = "8";
+    Name = "08";
     Index = 60;
     LinkTrId = 0;
-    XPos = 79002.220;
-    YPos = 137.465;
-    ZPos = 102335.732;
+    XPos = 79002.941;
+    YPos = 273.336;
+    ZPos = 102344.856;
     XOri = 0.00;
-    YOri = 272.05;
+    YOri = 183.89;
     ZOri = 0.00;
     Model = "graphics\airfields\fakefield.mgm";
     Script = "LuaScripts\WorldObjects\Airfields\fakefield.txt";
@@ -1762,44 +1762,50 @@ Group
       Point
       {
         Type = 0;
-        X = -57.9306;
-        Y = -996.346;
+        X = 1007.48;
+        Y = -271.597;
       }
       Point
       {
         Type = 1;
-        X = -15.4397;
-        Y = -967.457;
+        X = 999.799;
+        Y = -78.6984;
       }
       Point
       {
         Type = 1;
-        X = 3.50738;
-        Y = -880.037;
+        X = 973.729;
+        Y = -36.7569;
+      }
+      Point
+      {
+        Type = 1;
+        X = 875.1;
+        Y = -9.64582;
       }
       Point
       {
         Type = 2;
-        X = -53.9917;
-        Y = -818.09;
+        X = 833.584;
+        Y = -46.2149;
       }
       Point
       {
         Type = 2;
-        X = -1576.37;
-        Y = -548.426;
+        X = 502.021;
+        Y = -1589.04;
       }
       Point
       {
         Type = 1;
-        X = -1616.53;
-        Y = -568.839;
+        X = 467.076;
+        Y = -1618.56;
       }
       Point
       {
         Type = 0;
-        X = -1629.96;
-        Y = -623.037;
+        X = 423.714;
+        Y = -1597.73;
       }
     }
     ReturnPlanes = 0;
@@ -1821,11 +1827,11 @@ Group
     Name = "34";
     Index = 61;
     LinkTrId = 0;
-    XPos = 77969.671;
+    XPos = 77654.662;
     YPos = 273.336;
-    ZPos = 103785.881;
+    ZPos = 103224.743;
     XOri = 0.00;
-    YOri = 257.44;
+    YOri = 122.82;
     ZOri = 0.00;
     Model = "graphics\airfields\fakefield.mgm";
     Script = "LuaScripts\WorldObjects\Airfields\fakefield.txt";
@@ -1842,44 +1848,44 @@ Group
       Point
       {
         Type = 0;
-        X = 357.186;
-        Y = -119.881;
+        X = 336.888;
+        Y = -562.625;
       }
       Point
       {
         Type = 1;
-        X = 307.155;
-        Y = -121.305;
+        X = 308.466;
+        Y = -509.217;
       }
       Point
       {
         Type = 1;
-        X = 226.305;
-        Y = -98.7779;
+        X = 242.73;
+        Y = -396.233;
       }
       Point
       {
         Type = 2;
-        X = 202.44;
-        Y = -37.4263;
+        X = 196.249;
+        Y = -384.77;
       }
       Point
       {
         Type = 2;
-        X = 315.271;
-        Y = 1174.14;
+        X = -760.101;
+        Y = -1171.62;
       }
       Point
       {
         Type = 1;
-        X = 356.74;
-        Y = 1203.16;
+        X = -808.711;
+        Y = -1157.99;
       }
       Point
       {
         Type = 0;
-        X = 430.005;
-        Y = 1189.02;
+        X = -887.175;
+        Y = -1024.17;
       }
     }
     ReturnPlanes = 0;
@@ -1898,14 +1904,14 @@ Group
 
   Airfield
   {
-    Name = "4";
+    Name = "04";
     Index = 62;
     LinkTrId = 0;
-    XPos = 134185.020;
+    XPos = 134345.792;
     YPos = 102.800;
-    ZPos = 113937.223;
+    ZPos = 113655.923;
     XOri = 0.00;
-    YOri = 57.55;
+    YOri = 51.70;
     ZOri = 0.00;
     Model = "graphics\airfields\fakefield.mgm";
     Script = "LuaScripts\WorldObjects\Airfields\fakefield.txt";
@@ -1922,62 +1928,62 @@ Group
       Point
       {
         Type = 0;
-        X = -170.559;
-        Y = -738.492;
+        X = 18.5087;
+        Y = -487.608;
       }
       Point
       {
         Type = 1;
-        X = -164.549;
-        Y = -617.605;
+        X = 18.0184;
+        Y = -422.046;
       }
       Point
       {
         Type = 1;
-        X = -163.189;
-        Y = -523.945;
+        X = 19.1881;
+        Y = -358.412;
       }
       Point
       {
         Type = 1;
-        X = -132.915;
-        Y = -497.068;
+        X = 19.2375;
+        Y = -293.261;
       }
       Point
       {
         Type = 1;
-        X = -75.3597;
-        Y = -513.106;
+        X = 18.2808;
+        Y = -227.638;
       }
       Point
       {
         Type = 2;
-        X = -22.2059;
-        Y = -535.585;
+        X = 134.806;
+        Y = -222.451;
       }
       Point
       {
         Type = 2;
-        X = 1523.49;
-        Y = -976.834;
+        X = 1721.46;
+        Y = -517.585;
       }
       Point
       {
         Type = 1;
-        X = 1579.82;
-        Y = -947.159;
+        X = 1777.55;
+        Y = -527.967;
       }
       Point
       {
         Type = 1;
-        X = 1568.79;
-        Y = -860.353;
+        X = 1784.88;
+        Y = -575.453;
       }
       Point
       {
         Type = 0;
-        X = 1538.69;
-        Y = -767.869;
+        X = 1753.34;
+        Y = -659.473;
       }
     }
     ReturnPlanes = 0;
@@ -1999,11 +2005,11 @@ Group
     Name = "25";
     Index = 63;
     LinkTrId = 0;
-    XPos = 152914.653;
+    XPos = 153081.840;
     YPos = 38.251;
-    ZPos = 96333.656;
+    ZPos = 95119.348;
     XOri = 0.00;
-    YOri = 286.24;
+    YOri = 159.26;
     ZOri = 0.00;
     Model = "graphics\airfields\fakefield.mgm";
     Script = "LuaScripts\WorldObjects\Airfields\fakefield.txt";
@@ -2020,56 +2026,148 @@ Group
       Point
       {
         Type = 0;
-        X = 741.427;
-        Y = 187.873;
+        X = 386.058;
+        Y = -1046.17;
       }
       Point
       {
         Type = 1;
-        X = 677.07;
-        Y = 232.588;
+        X = 267.852;
+        Y = -1125;
       }
       Point
       {
         Type = 1;
-        X = 598.445;
-        Y = 278.475;
+        X = 214.676;
+        Y = -1159.6;
       }
       Point
       {
         Type = 1;
-        X = 511.711;
-        Y = 247.253;
+        X = 185.969;
+        Y = -1164.24;
       }
       Point
       {
         Type = 2;
-        X = 438.639;
-        Y = 217.043;
+        X = 149.684;
+        Y = -1090.44;
       }
       Point
       {
         Type = 2;
-        X = 2055.78;
-        Y = -1081.04;
+        X = 207.394;
+        Y = 1215.43;
       }
       Point
       {
         Type = 1;
-        X = 2131.65;
-        Y = -1082.49;
+        X = 183.924;
+        Y = 1277;
       }
       Point
       {
         Type = 1;
-        X = 2189.72;
-        Y = -1009.46;
+        X = 72.0325;
+        Y = 1280.64;
       }
       Point
       {
         Type = 0;
-        X = 2156.94;
-        Y = -947.98;
+        X = 51.7174;
+        Y = 1236.13;
+      }
+    }
+    ReturnPlanes = 0;
+    Hydrodrome = 0;
+    RepairFriendlies = 0;
+    RehealFriendlies = 0;
+    RearmFriendlies = 0;
+    RefuelFriendlies = 0;
+    RepairTime = 0;
+    RehealTime = 0;
+    RearmTime = 0;
+    RefuelTime = 0;
+    MaintenanceRadius = 1000;
+  }
+  
+
+  Airfield
+  {
+    Name = "07";
+    Index = 18764;
+    LinkTrId = 0;
+    XPos = 152666.273;
+    YPos = 38.251;
+    ZPos = 94102.321;
+    XOri = 0.00;
+    YOri = 159.26;
+    ZOri = 0.00;
+    Model = "graphics\airfields\fakefield.mgm";
+    Script = "LuaScripts\WorldObjects\Airfields\fakefield.txt";
+    Country = 0;
+    Desc = "";
+    Durability = 25000;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Callsign = 0;
+    Callnum = 0;
+    Chart
+    {
+      Point
+      {
+        Type = 0;
+        X = 72.1458;
+        Y = 558.267;
+      }
+      Point
+      {
+        Type = 1;
+        X = 55.0348;
+        Y = 429.181;
+      }
+      Point
+      {
+        Type = 1;
+        X = 33.8441;
+        Y = 298.717;
+      }
+      Point
+      {
+        Type = 1;
+        X = 27.3932;
+        Y = 241.232;
+      }
+      Point
+      {
+        Type = 2;
+        X = 181.046;
+        Y = 98.3893;
+      }
+      Point
+      {
+        Type = 2;
+        X = 117.298;
+        Y = -2196.22;
+      }
+      Point
+      {
+        Type = 1;
+        X = 157.575;
+        Y = -2257.36;
+      }
+      Point
+      {
+        Type = 1;
+        X = 195.314;
+        Y = -2255.36;
+      }
+      Point
+      {
+        Type = 0;
+        X = 288.81;
+        Y = -2189.82;
       }
     }
     ReturnPlanes = 0;
@@ -132845,6 +132943,1488 @@ Group
       }
       
 
+    }
+    
+
+  }
+  
+
+  Group
+  {
+    Name = "Signs";
+    Index = 18720;
+    Desc = "";
+    Block
+    {
+      Name = "Block";
+      Index = 18713;
+      LinkTrId = 0;
+      XPos = 77645.192;
+      YPos = 273.336;
+      ZPos = 103239.258;
+      XOri = 0.00;
+      YOri = 127.93;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_left.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_left.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18716;
+      LinkTrId = 0;
+      XPos = 77775.088;
+      YPos = 273.336;
+      ZPos = 103281.535;
+      XOri = 0.00;
+      YOri = 267.85;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18714;
+      LinkTrId = 0;
+      XPos = 77776.853;
+      YPos = 273.336;
+      ZPos = 103299.388;
+      XOri = 0.00;
+      YOri = 358.21;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_right.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_right.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18715;
+      LinkTrId = 0;
+      XPos = 77760.172;
+      YPos = 273.336;
+      ZPos = 103282.252;
+      XOri = 0.00;
+      YOri = 267.85;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18717;
+      LinkTrId = 0;
+      XPos = 77737.099;
+      YPos = 273.336;
+      ZPos = 103309.135;
+      XOri = 0.00;
+      YOri = 87.25;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_left.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_left.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18718;
+      LinkTrId = 0;
+      XPos = 77762.258;
+      YPos = 273.336;
+      ZPos = 103427.879;
+      XOri = 0.00;
+      YOri = 86.64;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18719;
+      LinkTrId = 0;
+      XPos = 77786.223;
+      YPos = 273.336;
+      ZPos = 103425.743;
+      XOri = 0.00;
+      YOri = 86.64;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18721;
+      LinkTrId = 0;
+      XPos = 77867.162;
+      YPos = 273.336;
+      ZPos = 103569.926;
+      XOri = 0.00;
+      YOri = 339.10;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18722;
+      LinkTrId = 0;
+      XPos = 77884.907;
+      YPos = 273.336;
+      ZPos = 103626.710;
+      XOri = 0.00;
+      YOri = 339.10;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18723;
+      LinkTrId = 0;
+      XPos = 77869.465;
+      YPos = 273.336;
+      ZPos = 103659.904;
+      XOri = 0.00;
+      YOri = 59.77;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18724;
+      LinkTrId = 0;
+      XPos = 77855.288;
+      YPos = 273.336;
+      ZPos = 103667.878;
+      XOri = 0.00;
+      YOri = 59.77;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18725;
+      LinkTrId = 0;
+      XPos = 78976.713;
+      YPos = 273.336;
+      ZPos = 102343.089;
+      XOri = 0.00;
+      YOri = 187.96;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_left.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_left.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18726;
+      LinkTrId = 0;
+      XPos = 78966.643;
+      YPos = 273.336;
+      ZPos = 102533.738;
+      XOri = 0.00;
+      YOri = 94.43;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_right.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_right.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18727;
+      LinkTrId = 0;
+      XPos = 78983.572;
+      YPos = 273.336;
+      ZPos = 102534.507;
+      XOri = 0.00;
+      YOri = 94.43;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_right.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_right.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18728;
+      LinkTrId = 0;
+      XPos = 78967.600;
+      YPos = 273.336;
+      ZPos = 102558.957;
+      XOri = 0.00;
+      YOri = 116.47;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18729;
+      LinkTrId = 0;
+      XPos = 78987.801;
+      YPos = 273.336;
+      ZPos = 102550.565;
+      XOri = 0.00;
+      YOri = 19.14;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18730;
+      LinkTrId = 0;
+      XPos = 78982.767;
+      YPos = 273.336;
+      ZPos = 102564.025;
+      XOri = 0.00;
+      YOri = 19.14;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18731;
+      LinkTrId = 0;
+      XPos = 78980.965;
+      YPos = 273.336;
+      ZPos = 102564.242;
+      XOri = 0.00;
+      YOri = 116.47;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18732;
+      LinkTrId = 0;
+      XPos = 78960.115;
+      YPos = 273.336;
+      ZPos = 102538.816;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18733;
+      LinkTrId = 0;
+      XPos = 78954.820;
+      YPos = 273.336;
+      ZPos = 102552.316;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18734;
+      LinkTrId = 0;
+      XPos = 78928.526;
+      YPos = 273.336;
+      ZPos = 102524.906;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18735;
+      LinkTrId = 0;
+      XPos = 78923.231;
+      YPos = 273.336;
+      ZPos = 102538.406;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18736;
+      LinkTrId = 0;
+      XPos = 78900.358;
+      YPos = 273.336;
+      ZPos = 102512.911;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18737;
+      LinkTrId = 0;
+      XPos = 78895.063;
+      YPos = 273.336;
+      ZPos = 102526.411;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18738;
+      LinkTrId = 0;
+      XPos = 78919.587;
+      YPos = 273.336;
+      ZPos = 102542.521;
+      XOri = 0.00;
+      YOri = 116.47;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18739;
+      LinkTrId = 0;
+      XPos = 78906.222;
+      YPos = 273.336;
+      ZPos = 102537.236;
+      XOri = 0.00;
+      YOri = 116.47;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18740;
+      LinkTrId = 0;
+      XPos = 78764.789;
+      YPos = 273.336;
+      ZPos = 102456.725;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18741;
+      LinkTrId = 0;
+      XPos = 78759.494;
+      YPos = 273.336;
+      ZPos = 102470.225;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18742;
+      LinkTrId = 0;
+      XPos = 78506.853;
+      YPos = 273.336;
+      ZPos = 102347.029;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18743;
+      LinkTrId = 0;
+      XPos = 78501.558;
+      YPos = 273.336;
+      ZPos = 102360.529;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18744;
+      LinkTrId = 0;
+      XPos = 78344.948;
+      YPos = 273.336;
+      ZPos = 102279.146;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18745;
+      LinkTrId = 0;
+      XPos = 78339.653;
+      YPos = 273.336;
+      ZPos = 102292.646;
+      XOri = 0.00;
+      YOri = 200.86;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18746;
+      LinkTrId = 0;
+      XPos = 78138.470;
+      YPos = 273.336;
+      ZPos = 102322.817;
+      XOri = 0.00;
+      YOri = 79.27;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18747;
+      LinkTrId = 0;
+      XPos = 78198.884;
+      YPos = 273.336;
+      ZPos = 102311.877;
+      XOri = 0.00;
+      YOri = 79.27;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18748;
+      LinkTrId = 0;
+      XPos = 78131.887;
+      YPos = 273.336;
+      ZPos = 102288.260;
+      XOri = 0.00;
+      YOri = 171.28;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18749;
+      LinkTrId = 0;
+      XPos = 78134.165;
+      YPos = 273.336;
+      ZPos = 102302.329;
+      XOri = 0.00;
+      YOri = 171.28;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18751;
+      LinkTrId = 0;
+      XPos = 153058.540;
+      YPos = 38.251;
+      ZPos = 95128.190;
+      XOri = 0.00;
+      YOri = 156.53;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_left.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_left.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18752;
+      LinkTrId = 0;
+      XPos = 153091.113;
+      YPos = 38.251;
+      ZPos = 95173.125;
+      XOri = 0.00;
+      YOri = 59.92;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18753;
+      LinkTrId = 0;
+      XPos = 153078.247;
+      YPos = 38.251;
+      ZPos = 95178.691;
+      XOri = 0.00;
+      YOri = 59.92;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18754;
+      LinkTrId = 0;
+      XPos = 153208.915;
+      YPos = 38.251;
+      ZPos = 95462.011;
+      XOri = 0.00;
+      YOri = 59.92;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18755;
+      LinkTrId = 0;
+      XPos = 153196.049;
+      YPos = 38.251;
+      ZPos = 95467.577;
+      XOri = 0.00;
+      YOri = 59.92;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18756;
+      LinkTrId = 0;
+      XPos = 153347.292;
+      YPos = 38.251;
+      ZPos = 95799.821;
+      XOri = 0.00;
+      YOri = 59.92;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18757;
+      LinkTrId = 0;
+      XPos = 153334.426;
+      YPos = 38.251;
+      ZPos = 95805.387;
+      XOri = 0.00;
+      YOri = 59.92;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18758;
+      LinkTrId = 0;
+      XPos = 153054.989;
+      YPos = 38.251;
+      ZPos = 95085.376;
+      XOri = 0.00;
+      YOri = 243.53;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18759;
+      LinkTrId = 0;
+      XPos = 153042.841;
+      YPos = 38.251;
+      ZPos = 95090.563;
+      XOri = 0.00;
+      YOri = 243.53;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18760;
+      LinkTrId = 0;
+      XPos = 153033.377;
+      YPos = 38.251;
+      ZPos = 95031.001;
+      XOri = 0.00;
+      YOri = 243.53;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18761;
+      LinkTrId = 0;
+      XPos = 153021.229;
+      YPos = 38.251;
+      ZPos = 95036.188;
+      XOri = 0.00;
+      YOri = 243.53;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18762;
+      LinkTrId = 0;
+      XPos = 153015.933;
+      YPos = 38.251;
+      ZPos = 94989.164;
+      XOri = 0.00;
+      YOri = 243.53;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18763;
+      LinkTrId = 0;
+      XPos = 153003.785;
+      YPos = 38.251;
+      ZPos = 94994.351;
+      XOri = 0.00;
+      YOri = 243.53;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18765;
+      LinkTrId = 0;
+      XPos = 152644.078;
+      YPos = 38.251;
+      ZPos = 94110.788;
+      XOri = 0.00;
+      YOri = 155.99;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_right.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_right.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18766;
+      LinkTrId = 0;
+      XPos = 152645.309;
+      YPos = 38.251;
+      ZPos = 94075.427;
+      XOri = 0.00;
+      YOri = 237.01;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18767;
+      LinkTrId = 0;
+      XPos = 152631.097;
+      YPos = 38.251;
+      ZPos = 94081.704;
+      XOri = 0.00;
+      YOri = 237.01;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18768;
+      LinkTrId = 0;
+      XPos = 152599.164;
+      YPos = 38.251;
+      ZPos = 94003.271;
+      XOri = 0.00;
+      YOri = 237.01;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18769;
+      LinkTrId = 0;
+      XPos = 152613.376;
+      YPos = 38.251;
+      ZPos = 93996.994;
+      XOri = 0.00;
+      YOri = 237.01;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18770;
+      LinkTrId = 0;
+      XPos = 152581.037;
+      YPos = 38.251;
+      ZPos = 93915.545;
+      XOri = 0.00;
+      YOri = 245.15;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18771;
+      LinkTrId = 0;
+      XPos = 152565.627;
+      YPos = 38.251;
+      ZPos = 93919.799;
+      XOri = 0.00;
+      YOri = 245.15;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18772;
+      LinkTrId = 0;
+      XPos = 134361.392;
+      YPos = 102.800;
+      ZPos = 113675.699;
+      XOri = 0.00;
+      YOri = 49.18;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_left.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_left.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18773;
+      LinkTrId = 0;
+      XPos = 134496.302;
+      YPos = 102.800;
+      ZPos = 113548.606;
+      XOri = 0.00;
+      YOri = 323.27;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_right.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_right.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18774;
+      LinkTrId = 0;
+      XPos = 134507.193;
+      YPos = 102.800;
+      ZPos = 113563.323;
+      XOri = 0.00;
+      YOri = 323.27;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_right.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_right.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18775;
+      LinkTrId = 0;
+      XPos = 134546.367;
+      YPos = 102.800;
+      ZPos = 113532.140;
+      XOri = 0.00;
+      YOri = 324.17;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18776;
+      LinkTrId = 0;
+      XPos = 134535.927;
+      YPos = 102.800;
+      ZPos = 113517.696;
+      XOri = 0.00;
+      YOri = 324.17;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18777;
+      LinkTrId = 0;
+      XPos = 134548.081;
+      YPos = 102.800;
+      ZPos = 113559.496;
+      XOri = 0.00;
+      YOri = 40.35;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18778;
+      LinkTrId = 0;
+      XPos = 134535.449;
+      YPos = 102.800;
+      ZPos = 113574.409;
+      XOri = 0.00;
+      YOri = 40.35;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_forward.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_forward.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18779;
+      LinkTrId = 0;
+      XPos = 134322.249;
+      YPos = 102.800;
+      ZPos = 113683.285;
+      XOri = 0.00;
+      YOri = 138.61;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18780;
+      LinkTrId = 0;
+      XPos = 134333.651;
+      YPos = 102.800;
+      ZPos = 113697.927;
+      XOri = 0.00;
+      YOri = 138.61;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18781;
+      LinkTrId = 0;
+      XPos = 134234.498;
+      YPos = 102.800;
+      ZPos = 113750.883;
+      XOri = 0.00;
+      YOri = 138.61;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
+    }
+    
+
+    Block
+    {
+      Name = "Block";
+      Index = 18782;
+      LinkTrId = 0;
+      XPos = 134245.900;
+      YPos = 102.800;
+      ZPos = 113765.525;
+      XOri = 0.00;
+      YOri = 138.61;
+      ZOri = 0.00;
+      Model = "graphics\blocks\arf_sign_noway.mgm";
+      Script = "LuaScripts\WorldObjects\Blocks\arf_sign_noway.txt";
+      Country = 0;
+      Desc = "";
+      Durability = 25000;
+      DamageReport = 50;
+      DamageThreshold = 1;
+      DeleteAfterDeath = 1;
     }
     
 
