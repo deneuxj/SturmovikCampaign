@@ -672,7 +672,10 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                             |> Seq.map (fun node -> node.Id)
                             |> Set
                         let sinks = Algo.terminalsInRegion network rId
-                        let flow = Algo.computeTransportCapacity(this.GetFlowCapacity, network, regions, sources, sinks)
+                        // Note: Swap sources and sinks. For isolated regions, it typically takes
+                        //       less time to go over all nodes in that region than to go over all
+                        //       the nodes connected to the entry region.
+                        let flow = Algo.computeTransportCapacity(this.GetFlowCapacity, network, regions, sinks, sources)
                         flow / world.ResourceVolume
                     let production =
                         owners
