@@ -531,9 +531,8 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     let aaNests =
         [
             let gunsPerNest = 5
-            // Resource planning aims to avoid running dry before next resupply, which is assumed to be one day of combat
-            let combatTimeBeforeResuply = 12.0f<H>
-            let nestCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * combatTimeBeforeResuply
+            let nestCost = float32 gunsPerNest * TargetType.Artillery.GroundForceValue * state.World.GroundForcesCost * state.World.ResourceVolume * (1.0f<H> * float32 settings.MissionLength.TotalHours)
+            let nestCost = nestCost / 1.0f<M^3>
             // Airfields
             for afId in spawns |> Seq.map (fun spawn -> spawn.Airfield) do
                 let airfield = state.World.Airfields.[afId]
@@ -560,7 +559,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                           Country = country.ToMcuValue
                           Coalition = state.World.Countries.[country]
                           Group = airfield.Region :> System.IComparable
-                          Cost = float32 nestCost
+                          Cost = nestCost
                         }
                     yield nest
 
@@ -632,7 +631,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                               Country = country.ToMcuValue
                               Coalition = state.World.Countries.[country]
                               Group = region.RegionId :> System.IComparable
-                              Cost = float32 nestCost
+                              Cost = nestCost
                             }
                         yield nest
                     | None ->
@@ -676,7 +675,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                           Country = country.ToMcuValue
                                           Coalition = state.World.Countries.[country]
                                           Group = region.RegionId :> System.IComparable
-                                          Cost = float32 nestCost
+                                          Cost = nestCost
                                         }
                                     yield nest
                                     let covered =
@@ -722,7 +721,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                     Country = country.ToMcuValue
                                     Coalition = state.World.Countries.[country]
                                     Group = region.RegionId :> System.IComparable
-                                    Cost = float32 nestCost
+                                    Cost = nestCost
                                 }
                             yield mkNest(posOwner, countryOwner)
                             yield mkNest(posInvader, countryInvader)
@@ -756,7 +755,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         Country = country.ToMcuValue
                         Coalition = state.World.Countries.[country]
                         Group = region.RegionId :> System.IComparable
-                        Cost = float32 nestCost
+                        Cost = nestCost
                     }
         ]
 

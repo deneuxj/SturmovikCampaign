@@ -209,8 +209,8 @@ module IWarStateExtensions =
             building.Properties.SubParts
             |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part))
 
-        /// Get the amount of resources available for anti-air defenses. The consumption factor is the duration of the period divided by the amount of fighting time in a day.
-        member this.ComputeRegionAntiAirBudget(transport : RegionId * RegionId -> float32<M^3/H>, supplies : RegionId -> float32<M^3/H>, rId : RegionId, coalition : CoalitionId, consumptionFactor : float32) =
+        /// Get the amount of resources available for anti-air defenses.
+        member this.ComputeRegionAntiAirBudget(transport : RegionId * RegionId -> float32<M^3/H>, supplies : RegionId -> float32<M^3/H>, rId : RegionId, coalition : CoalitionId) =
             let owner = this.GetOwner(rId)
             let resupplyPeriod = 24.0f<H>
             let region = this.World.Regions.[rId]
@@ -228,7 +228,7 @@ module IWarStateExtensions =
                     |> Seq.sumBy (fun af -> this.GetAirfieldCapacity(af.AirfieldId))
                 else
                     0.0f<M^3>
-            let viaAir = viaAir * consumptionFactor / resupplyPeriod
+            let viaAir = viaAir / resupplyPeriod
 
             let troops =
                 this.GetGroundForces(coalition, rId) * this.World.GroundForcesCost * this.World.AntiAirGroundForcesRatio * this.World.ResourceVolume

@@ -203,7 +203,7 @@ module BaseFileNames =
 module WarStateExt =
     open Campaign.MissionGen.MissionFileGeneration
 
-    let mkMissionBuilderDataAccess (war : WarState, fightDayFactor) =
+    let mkMissionBuilderDataAccess (war : WarState, duration) =
         let supplies = war.ComputeSupplyAvailability()
         let road = war.ComputeRoadCapacity()
         let rail = war.ComputeRailCapacity()
@@ -215,8 +215,7 @@ module WarStateExt =
         { new IMissionBuilderData with
               member this.GetRegionAntiAirCapacity(region, coalition) =
                   let supplies rId = supplies rId * war.World.ResourceVolume
-                  war.ComputeRegionAntiAirBudget(transport, supplies, region, coalition, fightDayFactor)
-                  |> float32
+                  (war.ComputeRegionAntiAirBudget(transport, supplies, region, coalition) * duration) / 1.0f<M^3>
               member this.Airfields: IAirfield list =
                   war.World.Airfields.Values |> Seq.map (fun af -> af :> IAirfield) |> List.ofSeq
               member this.BuildingDamages: (Common.Buildings.BuildingInstanceId * int * float32) list =
@@ -631,7 +630,6 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             Planes = state.World.PlaneSet.Values |> List.ofSeq
                         }
                     let mission = MissionFilePreparation.mkMultiplayerMissionContent (Random(seed)) missionPrepSettings stepData.Briefing state selection
-                    let fightDayRatio = (float32 missionPrepSettings.MissionLength.TotalHours) / 12.0f
                     mission.BuildMission(
                         Random(seed),
                         missionGenSettings,
@@ -639,7 +637,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         state.Date,
                         state.Weather,
                         state.World.Bridges.ContainsKey,
-                        state.AsMissionBuilderData(fightDayRatio))
+                        state.AsMissionBuilderData(1.0f<H> * float32 missionPrepSettings.MissionLength.TotalHours))
                     return Ok()
                 with
                 e -> return (Error e.Message)
