@@ -643,12 +643,12 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.ComputeSupplyAvailability() =
         Cached.cached
             supplyAvailability
-            (fun region ->
-                match owners.TryGetValue region with
+            (fun rId ->
+                match owners.TryGetValue rId with
                 | false, _ -> 0.0f<E/H>
                 | true, owner ->
-                    if world.Regions.[region].IsEntry then
-                        this.GetRegionBuildingCapacity(region) * world.ResourceProductionRate
+                    if world.Regions.[rId].IsEntry then
+                        this.GetRegionBuildingCapacity(rId) * world.ResourceProductionRate
                     else
                     let regions =
                         owners
@@ -671,7 +671,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                                     false)
                             |> Seq.map (fun node -> node.Id)
                             |> Set
-                        let sinks = Algo.terminalsInRegion network region
+                        let sinks = Algo.terminalsInRegion network rId
                         let flow = Algo.computeTransportCapacity(this.GetFlowCapacity, network, regions, sources, sinks)
                         flow / world.ResourceVolume
                     let production =
