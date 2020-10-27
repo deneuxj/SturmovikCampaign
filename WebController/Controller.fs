@@ -484,7 +484,89 @@ type Controller(settings : GameServerControl.Settings) =
                 return { s with Sync = None }
             }
 
+        member this.UpdatePlayerBan(player : string, duration : System.TimeSpan option) =
+            async {
+                let! war = this.WarState
+                match war with
+                | Ok war ->
+                    return!
+                        mb.PostAndAsyncReply <| fun channel s -> async {
+                            let! sync =
+                                match s.Sync with
+                                | Some sync -> async.Return(Ok sync)
+                                | None ->
+                                    async {
+                                        let sync = GameServerSync.Sync.Create(settings)
+                                        let! status = sync.Init()
+                                        match status with
+                                        | Ok _ -> return Ok sync
+                                        | Error e -> return Error e
+                                    }
+
+                            let! player =
+                                match sync with
+                                | Ok sync ->
+                                    sync.ModifyPlayer(player,
+                                        fun player ->
+                                            let banStatus =
+                                                match duration with
+                                                | Some duration ->
+                                                    Pilots.BanStatus.Banned (System.DateTime.UtcNow, duration)
+                                                | None ->
+                                                    Pilots.BanStatus.Clear
+                                            { player with BanStatus = banStatus }
+                                    )
+                                | Error e ->
+                                    async.Return(Error e)
+
+                            match player with
+                            | Ok player ->
+                                channel.Reply(Ok(player.ToDto(war)))
+                            | Error msg ->
+                                channel.Reply(Error msg)
+                            return s
+                        }
+                | Error e ->
+                    return Error e
+            }
+
+        member this.FindPlayers(name : string) =
+            async {
+                let! war = this.WarState
+                match war with
+                | Ok war ->
+                    let name = name.ToLowerInvariant()
+                    let found =
+                        war.Players
+                        |> List.filter (fun player ->
+                            player.OtherNames.Add(player.Name)
+                            |> Set.exists (fun name2 ->
+                                name2.ToLowerInvariant().Contains(name)
+                            )
+                        )
+                        |> List.map (fun player -> player.ToDto(war))
+                    return Ok found
+                | Error e ->
+                    return Error e
+            }
+
+        member this.GetPlayer(playerId) =
+            async {
+                let! war = this.WarState
+                match war with
+                | Ok war ->
+                    let player =
+                        war.Players
+                        |> List.tryFind (fun player -> hashGuid player.Guid = playerId)
+                        |> Option.map (fun player -> player.ToDto(war))
+                    return Ok(player)
+                | Error e ->
+                    return Error e
+            }
+
         interface IRoutingResponse with
+            member this.FindPlayersByName(name) = this.FindPlayers(name)
+            member this.GetPlayer(playerId) = this.GetPlayer(playerId)
             member this.GetWarState(idx) =
                 match idx with
                 | None -> this.GetStateDto()
@@ -499,6 +581,8 @@ type Controller(settings : GameServerControl.Settings) =
             member this.GetPlayerPilots(hashedGuid) = this.GetPlayerPilots(hashedGuid)
 
         interface IControllerInteraction with
+            member this.BanPlayer(player, duration) = this.UpdatePlayerBan(player, Some duration)
+            member this.ClearBan(player) = this.UpdatePlayerBan(player, None)
             member this.Advance() = this.Run(1)
             member this.Run() = this.Run(15)
             member this.ResetCampaign(scenario) = this.ResetCampaign(scenario)

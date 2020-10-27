@@ -183,6 +183,8 @@ type IWarStateQuery =
     abstract member GetOwner : RegionId -> CoalitionId option
     /// Try to get a player by its GUID
     abstract member TryGetPlayer : string -> Player option
+    /// Get all players
+    abstract member Players : Player list
     /// Get all pilots
     abstract member Pilots : Pilot list
     /// Get number of pilots
@@ -787,6 +789,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     member this.Seed =
         hash (this.Date, this.World.Scenario, this.Weather)
 
+    member this.Players = players.Values |> List.ofSeq
+
     interface IWarState with
         member this.TryFindPath(network, sources, objectives, coalition) = this.TryFindPath(network, sources, objectives, coalition)
         member this.ComputeDistancesToAirfields() = upcast(this.ComputeDistancesToAirfields())
@@ -820,6 +824,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         member this.TryGetPlayer(guid : string) = this.TryGetPlayer(guid)
         member this.GetPilot(id : PilotId) = this.GetPilot(id)
         member this.Pilots = this.Pilots
+        member this.Players = this.Players
         member this.NumPilots = this.NumPilots
         member this.RefreshPilotHealths() = this.RefreshPilotHealths()
         member this.Seed = this.Seed

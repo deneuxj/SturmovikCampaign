@@ -50,6 +50,8 @@ type IRoutingResponse =
     abstract GetPilots : PilotSearchFilter -> Async<Result<Pilot list, string>>
     abstract GetPilot : string -> Async<Result<Pilot * MissionRecord list, string>>
     abstract GetPlayerPilots : string -> Async<Result<Pilot list, string>>
+    abstract FindPlayersByName : string -> Async<Result<Player list, string>>
+    abstract GetPlayer : string -> Async<Result<Player option, string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
@@ -60,6 +62,8 @@ type IControllerInteraction =
     abstract StopSyncAfterMission : unit -> Async<Result<string, string>>
     abstract InterruptSync : unit -> Async<Result<string, string>>
     abstract ResolveError : unit -> Async<Result<string, string>>
+    abstract BanPlayer : string * System.TimeSpan -> Async<Result<Player, string>> // Player GUID, days, hours, minutes
+    abstract ClearBan : string -> Async<Result<Player, string>>
 
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 let setTextMimeType = setMimeType "application/text; charset=utf-8"
@@ -122,6 +126,10 @@ let resetCampaign reset =
     handleJson<{| Scenario: string |}>
         (fun data -> reset data.Scenario)
 
+let banPlayer (player : string) func =
+    handleJson<{| Days : int option; Hours : int option; Minutes : int option |}>
+        (fun data -> func(player, System.TimeSpan(defaultArg data.Days 0, defaultArg data.Hours 0, defaultArg data.Minutes 0)))
+
 /// Extract pilot search filter from URL args and run search
 let searchPilots handler (ctx : HttpContext) =
     let healthFilter =
@@ -180,6 +188,19 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
             pathScan "/query/pilot/%s" (fun n -> rr.GetPilot(n) |> serializeAsync)
             pathScan "/query/players/%s/pilots" (rr.GetPlayerPilots >> serializeAsync)
+            pathScan "/query/players/%s" (rr.GetPlayer >> serializeAsync)
+            path "/query/playersByName" >=>
+                (context
+                    (fun ctx ->
+                        match ctx.request.queryParam("name") with
+                        | Choice1Of2 name ->
+                            rr.FindPlayersByName(name)
+                            |> serializeAsync
+                        | Choice2Of2 _ ->
+                            async.Return(Error "Missing parameter 'name'")
+                            |> serializeAsync
+                    )
+                )
         ]
         POST >=> choose [
             path "/control/reset" >=>
@@ -196,6 +217,26 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             path "/control/sync/once" >=> inControlRoom(context(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
             path "/control/sync/stop" >=> inControlRoom(context(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))
             path "/control/sync/interrupt" >=> inControlRoom(context(fun _ -> ctrl.InterruptSync() |> serializeAsync))
+            pathScan "/admin/players/%s/ban"
+                (fun player ->
+                    inControlRoom
+                        (context
+                            (banPlayer player
+                                (ctrl.BanPlayer >> serializeAsync)
+                            )
+                        )
+                )
+        ]
+        DELETE >=> choose [
+            pathScan "/admin/players/%s/ban"
+                (fun player ->
+                    inControlRoom
+                        (context
+                            (fun _ ->
+                                ctrl.ClearBan player
+                                |> serializeAsync)
+                        )
+                )
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
         GET >=> pathStarts "/doc/" >=> Files.browse (System.IO.Path.Combine(System.Environment.CurrentDirectory))
