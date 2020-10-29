@@ -455,7 +455,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
                 logger.Info s
                 return Ok()
             | None ->
-                return Error "Failed to find player to kick"
+                return Error "Failed to find player to ban"
         }
 
     member this.Dispose() =
