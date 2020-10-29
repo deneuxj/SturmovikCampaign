@@ -84,9 +84,17 @@ type BanStatus =
     | NotBanned
     | Banned of DateTime
 
+type HashedGuid =
+    {
+        Guid : string
+    }
+with
+    static member Create(guid) = { Guid = guid }
+
 type Player =
     {
         Name : string
+        Guid : HashedGuid
         BanStatus : BanStatus
         Pilots : string list
     }

@@ -561,6 +561,7 @@ module DtoCreation =
         |> Encoding.ASCII.GetBytes
         |> hasher.ComputeHash
         |> System.Convert.ToBase64String
+        |> HashedGuid.Create
 
     type Pilots.Player with
         member this.GuidHash =
@@ -573,6 +574,7 @@ module DtoCreation =
                 |> List.ofSeq
             {
                 Name = this.Name
+                Guid = hashGuid(this.Guid)
                 BanStatus = this.BanStatus.ToDto()
                 Pilots = pilots
             }

@@ -353,7 +353,7 @@ type Controller(settings : GameServerControl.Settings) =
                         Error e
             }
 
-        member this.GetPlayerPilots(hashedGuid : string) =
+        member this.GetPlayerPilots(hashedGuid : HashedGuid) =
             async {
                 match! this.WarState with
                 | Ok war ->
@@ -484,7 +484,7 @@ type Controller(settings : GameServerControl.Settings) =
                 return { s with Sync = None }
             }
 
-        member this.UpdatePlayerBan(player : string, duration : System.TimeSpan option) =
+        member this.UpdatePlayerBan(playerId : HashedGuid, duration : System.TimeSpan option) =
             async {
                 let! war = this.WarState
                 match war with
@@ -503,10 +503,14 @@ type Controller(settings : GameServerControl.Settings) =
                                         | Error e -> return Error e
                                     }
 
+                            let player =
+                                war.Players
+                                |> List.tryFind (fun player -> hashGuid player.Guid = playerId)
+
                             let! player =
-                                match sync with
-                                | Ok sync ->
-                                    sync.ModifyPlayer(player,
+                                match sync, player with
+                                | Ok sync, Some player ->
+                                    sync.ModifyPlayer(player.Guid,
                                         fun player ->
                                             let banStatus =
                                                 match duration with
@@ -516,8 +520,10 @@ type Controller(settings : GameServerControl.Settings) =
                                                     Pilots.BanStatus.Clear
                                             { player with BanStatus = banStatus }
                                     )
-                                | Error e ->
+                                | Error e, Some _ ->
                                     async.Return(Error e)
+                                | _, None ->
+                                    async.Return(Error "Player not found")
 
                             match player with
                             | Ok player ->
@@ -550,7 +556,7 @@ type Controller(settings : GameServerControl.Settings) =
                     return Error e
             }
 
-        member this.GetPlayer(playerId) =
+        member this.GetPlayer(playerId) : Async<Result<Player option, string>>=
             async {
                 let! war = this.WarState
                 match war with
@@ -566,7 +572,7 @@ type Controller(settings : GameServerControl.Settings) =
 
         interface IRoutingResponse with
             member this.FindPlayersByName(name) = this.FindPlayers(name)
-            member this.GetPlayer(playerId) = this.GetPlayer(playerId)
+            member this.GetPlayer(hashedGuid) = this.GetPlayer(HashedGuid.Create hashedGuid)
             member this.GetWarState(idx) =
                 match idx with
                 | None -> this.GetStateDto()
@@ -578,11 +584,11 @@ type Controller(settings : GameServerControl.Settings) =
             member this.GetSyncState() = this.GetSyncState()
             member this.GetPilots(filter) = this.GetPilots(filter)
             member this.GetPilot(id) = this.GetPilot(id)
-            member this.GetPlayerPilots(hashedGuid) = this.GetPlayerPilots(hashedGuid)
+            member this.GetPlayerPilots(hashedGuid) = this.GetPlayerPilots(HashedGuid.Create hashedGuid)
 
         interface IControllerInteraction with
-            member this.BanPlayer(player, duration) = this.UpdatePlayerBan(player, Some duration)
-            member this.ClearBan(player) = this.UpdatePlayerBan(player, None)
+            member this.BanPlayer(hashedGuid, duration) = this.UpdatePlayerBan(HashedGuid.Create hashedGuid, Some duration)
+            member this.ClearBan(hashedGuid) = this.UpdatePlayerBan(HashedGuid.Create hashedGuid, None)
             member this.Advance() = this.Run(1)
             member this.Run() = this.Run(15)
             member this.ResetCampaign(scenario) = this.ResetCampaign(scenario)
