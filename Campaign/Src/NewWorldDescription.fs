@@ -625,7 +625,8 @@ module Init =
         let withBoundaries =
             regions
             |> List.map extractOne
-        let cellRadius = 1000.0f
+        // Assign each vertex to the 4 nearest coordinates that are multiple of cellRadius
+        let cellRadius = 500.0f
         let cellRadius2 = cellRadius * cellRadius
         let floor1 x : float32 =
             let un1t = 2.0f * cellRadius
@@ -644,20 +645,21 @@ module Init =
                 (x1, y0)
                 (x1, y1)
             ]
+        // Mapping from multiples of cellRadius to Region, vertex index and vertex itself
         let located =
             withBoundaries
-            |> List.map (fun region ->
+            |> List.collect (fun region ->
                 region.Boundary
                 |> List.mapi(fun i v ->
                     nearestCenters v
                     |> List.map (fun center -> center, (region.RegionId, i, v))
                 )
+                |> List.concat
             )
-            |> List.concat
-            |> List.concat
             |> Seq.groupBy fst
             |> Seq.map (fun (k, items) -> k, items |> Seq.map snd |> List.ofSeq)
             |> dict
+        // Check all vertices and regions that are assigned to the same multiple, retain all pairs that are closer than the cell radius
         let neighbours =
             located
             |> Seq.map (fun kvp ->
