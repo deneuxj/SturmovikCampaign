@@ -652,14 +652,15 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
                     if world.Regions.[rId].IsEntry then
                         this.GetRegionBuildingCapacity(rId) * world.ResourceProductionRate
                     else
+                    // Regions through which a the owner coalition can travel: neutral, and the ones under one's control.
                     let regions =
-                        owners
-                        |> Seq.filter (fun kvp -> kvp.Value = owner)
-                        |> Seq.map (fun kvp -> kvp.Key)
+                        world.Regions.Keys
+                        |> Seq.filter (fun regId -> match this.GetOwner(regId) with Some coalition -> coalition = owner | None -> true)
                         |> Set
+                    // Regions that can produce supplies: entry regions under the owner's control.
                     let sourceRegions =
                         world.Regions
-                        |> Seq.filter (fun kvp -> regions.Contains(kvp.Key) && kvp.Value.IsEntry)
+                        |> Seq.filter (fun kvp -> kvp.Value.IsEntry && this.GetOwner(kvp.Key) = Some owner)
                         |> Seq.map (fun kvp -> kvp.Key)
                         |> Set
                     let computeFlow (network : NetworkQuickAccess) =
