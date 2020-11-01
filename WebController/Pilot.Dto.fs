@@ -82,7 +82,7 @@ type Pilot =
 
 type BanStatus =
     | NotBanned
-    | Banned of DateTime
+    | Banned of {| Until : DateTime |}
 
 type HashedGuid =
     {

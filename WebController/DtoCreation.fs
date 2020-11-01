@@ -550,8 +550,7 @@ module DtoCreation =
             match this with
             | Pilots.BanStatus.Clear | Pilots.BanStatus.Probation _ -> NotBanned
             | Pilots.BanStatus.Banned(since, duration) ->
-                (since + duration).ToDto()
-                |> Banned
+                Banned {| Until = (since + duration).ToDto() |}
 
     /// Hash a player's unique GUID, and encode it to base64
     // The userIDs from the logs should probably not be exposed to the public

@@ -51,6 +51,7 @@ type IRoutingResponse =
     abstract GetPilot : string -> Async<Result<Pilot * MissionRecord list, string>>
     abstract GetPlayerPilots : string -> Async<Result<Pilot list, string>>
     abstract FindPlayersByName : string -> Async<Result<Player list, string>>
+    abstract AllPlayers : unit -> Async<Result<Player list, string>>
     abstract GetPlayer : string -> Async<Result<Player option, string>>
 
 type IControllerInteraction =
@@ -78,7 +79,9 @@ GET /query/past/<n>
 GET /query/simulation/<n>
 GET /query/dates
 GET /query/pilots?country=<country>&coalition=<coalition>&health=<Healthy or NoDead>&name=<substring>
-GET /query/pilot/<n>
+GET /query/pilot/<guid>
+GET /query/players?name=<name>
+GET /query/players/<guid>
 GET /query/players/<guid>/pilots
 
 POST /control/reset
@@ -89,6 +92,9 @@ POST /control/sync/once
 POST /control/sync/stop
 POST /control/sync/interrupt
 POST /control/resolve
+POST /admin/players/<guid>/ban
+
+DELETE /admin/players/<guid>/ban
 """
 
 let fromBase64 = System.Convert.FromBase64String >> System.Text.Encoding.UTF8.GetString
@@ -189,7 +195,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             pathScan "/query/pilot/%s" (fun n -> rr.GetPilot(n) |> serializeAsync)
             pathScan "/query/players/%s/pilots" (rr.GetPlayerPilots >> serializeAsync)
             pathScan "/query/players/%s" (rr.GetPlayer >> serializeAsync)
-            path "/query/playersByName" >=>
+            path "/query/players" >=>
                 (context
                     (fun ctx ->
                         match ctx.request.queryParam("name") with
@@ -197,7 +203,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
                             rr.FindPlayersByName(name)
                             |> serializeAsync
                         | Choice2Of2 _ ->
-                            async.Return(Error "Missing parameter 'name'")
+                            rr.AllPlayers()
                             |> serializeAsync
                     )
                 )

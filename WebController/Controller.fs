@@ -571,6 +571,7 @@ type Controller(settings : GameServerControl.Settings) =
             }
 
         interface IRoutingResponse with
+            member this.AllPlayers() = this.FindPlayers("")
             member this.FindPlayersByName(name) = this.FindPlayers(name)
             member this.GetPlayer(hashedGuid) = this.GetPlayer(HashedGuid.Create hashedGuid)
             member this.GetWarState(idx) =
