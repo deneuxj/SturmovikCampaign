@@ -75,13 +75,18 @@ type PlaneModel =
       Cost : float32<E>
       BombCapacity : float32<K>
       CargoCapacity : float32<K>
-      Payloads : Map<PlaneRole, int64*int>
+      Payloads : (PlaneRole * (int64*int)) list
       BombLoads : (int * float32<K>) list
       SpecialLoadsCosts : (int * float32<E>) list
       EmptyPayload : int
     }
 with
     member this.Id = PlaneModelId this.Name
+
+    member this.PayloadOfRole(role : PlaneRole) =
+        this.Payloads
+        |> List.tryFind (fun (role2, _) -> role2 = role)
+        |> Option.map snd
 
     member this.WingSpan =
         match this.Kind with

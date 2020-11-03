@@ -47,7 +47,7 @@ with
             |> Seq.map (fun payload ->
                 PlaneRole.FromString payload.Payload.Role,
                 (int64 payload.Payload.ModMask, payload.Payload.Id))
-            |> Map.ofSeq
+            |> List.ofSeq
         let bombloads =
             json.Bombs
             |> Seq.map (fun group ->
@@ -97,7 +97,6 @@ with
             |> Array.ofList
         let payloads =
             this.Payloads
-            |> Map.toSeq
             |> Seq.map (fun (role, (mask, id)) ->
                 PlaneDbFile.Payload(PlaneDbFile.Payload2(string role, int32 mask, id)))
             |> Array.ofSeq

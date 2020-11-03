@@ -73,7 +73,7 @@ type AiAttack with
                 | _ -> []
             let role =
                 roles
-                |> List.tryFind (fun role -> planeModel.Payloads.ContainsKey role)
+                |> List.tryFind (fun role -> planeModel.PayloadOfRole role |> Option.isSome)
             role
             |> Option.map (fun role ->
                 let altitude =
@@ -115,7 +115,7 @@ type AiPatrol with
                     [PlaneRole.Patroller; PlaneRole.Interceptor], None
             let role =
                 roles
-                |> List.tryFind (fun role -> planeModel.Payloads.ContainsKey role)
+                |> List.tryFind (fun role -> planeModel.PayloadOfRole role |> Option.isSome)
             role
             |> Option.map (fun role ->
                 let altitude =

@@ -47,7 +47,7 @@ with
             [
                 for i in 1..this.NumPlanes do
                     let block = Patrol.Create(store, lcStore, this.Pos + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), this.Coalition.ToCoalition)
-                    let modmask, payload = this.Plane.Payloads.[this.Role]
+                    let modmask, payload = this.Plane.PayloadOfRole this.Role |> Option.defaultWith (fun () -> failwithf "No payload found for role %s in %s" (string this.Role) this.Plane.Name)
                     block.Plane.Country <- Some this.Country.ToMcuValue
                     this.Plane.ScriptModel.AssignTo(block.Plane)
                     block.Plane.PayloadId <- Some payload
@@ -146,7 +146,7 @@ with
             [
                 for i in 1..numPlanes do
                     let block = Attacker.Create(store, lcStore, this.Start + (float32 i) * Vector2(500.0f, 500.0f), this.Altitude + 250.0f * (float32 i), int (this.Attacker.CruiseSpeed / 1000.0f), this.Target, landOrder)
-                    let modmask, payload = this.Attacker.Payloads.[this.Role]
+                    let modmask, payload = this.Attacker.PayloadOfRole this.Role |> Option.defaultWith (fun () -> failwithf "No payload found for role %s in %s" (string this.Role) this.Attacker.Name)
                     block.Plane.Country <- Some this.Country.ToMcuValue
                     this.Attacker.ScriptModel.AssignTo(block.Plane)
                     block.Plane.WMMask <- Some modmask
