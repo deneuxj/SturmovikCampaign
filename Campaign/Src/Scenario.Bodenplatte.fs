@@ -195,8 +195,6 @@ module BodenplatteInternal =
             let planeSet =
                 planes
                 |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> eprintfn "%s missing" (string plane); None))
-                |> Seq.map (fun plane -> plane.Id, plane)
-                |> dict
 
             let planeAlts =
                 match planeDb.TryFind (PlaneModelId "b25"), planeDb.TryFind (PlaneModelId "a20") with
@@ -206,8 +204,7 @@ module BodenplatteInternal =
                     [ b25.Id, [] ]
                 | None, _ ->
                     []
-                |> dict 
-            { world with PlaneSet = planeSet; PlaneAlts = planeAlts }
+            { world with PlaneModelsList = planeSet; PlaneAltsList = planeAlts }
 
         interface IScenarioWorldSetup with
             member this.Setup(world) = this.Setup(world)

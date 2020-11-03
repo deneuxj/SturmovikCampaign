@@ -22,6 +22,7 @@ open System.Collections.Generic
 
 open SturmovikMission.Blocks
 open Util
+open Util.MapExt
 
 open Campaign.Common.BasicTypes
 open Campaign.Common.PlaneModel
@@ -33,7 +34,9 @@ let private logger = NLog.LogManager.GetCurrentClassLogger()
 
 type Region = {
     RegionId : RegionId
+    [<Json.Vector2ListJsonField>]
     Boundary : Vector2 list
+    [<Json.Vector2JsonField>]
     Position : Vector2
     Neighbours : RegionId list
     InitialOwner : CoalitionId option
@@ -73,6 +76,7 @@ let commonBorder (regA : Region, regB : Region) =
 /// A node in the logistics network
 type NetworkNode = {
     Id : int
+    [<Json.Vector2JsonField>]
     Pos : Vector2
     Region : RegionId option
     HasTerminal : bool
@@ -328,9 +332,13 @@ type Network with
 
 type Runway = {
     SpawnPos : OrientedPosition
+    [<Json.Vector2ListJsonField>]
     PathToRunway : Vector2 list
+    [<Json.Vector2ListJsonField>]
     PathOffRunway : Vector2 list
+    [<Json.Vector2JsonField>]
     Start : Vector2
+    [<Json.Vector2JsonField>]
     End : Vector2
 }
 with
@@ -354,8 +362,10 @@ with
 
 type Airfield = {
     AirfieldId : AirfieldId
+    [<Json.Vector2JsonField>]
     Position : Vector2
     Region : RegionId
+    [<Json.Vector2ListJsonField>]
     Boundary : Vector2 list
     Runways : Runway list
     Facilities : BuildingInstanceId list
@@ -398,7 +408,7 @@ type World = {
     /// Transport capacity required per unit of ground force
     GroundForcesTransportCost : float32<M^3/H/MGF>
     /// Descriptions of regions
-    Regions : IDictionary<RegionId, Region>
+    RegionsList : Region list
     /// Max capacity of a large bridge
     BridgeCapacity : float32<M^3/H>
     /// The road network
@@ -406,18 +416,18 @@ type World = {
     /// The rail network
     Rails : Network
     /// Descriptions of all airfields
-    Airfields : IDictionary<AirfieldId, Airfield>
-    /// Mapping from building instance identifiers to building instances
-    Buildings : IDictionary<BuildingInstanceId, BuildingInstance>
-    /// Mapping from bridge instance identifiers to bridge instances
-    Bridges : IDictionary<BuildingInstanceId, BuildingInstance>
-    /// Mapping from plane model identifiers to plane model descriptions
-    PlaneSet : IDictionary<PlaneModelId, PlaneModel>
+    AirfieldsList : Airfield list
+    /// Building instances, excluding bridges
+    BuildingsList : BuildingInstance list
+    /// Bridge instances
+    BridgesList : BuildingInstance list
+    /// All plane models
+    PlaneModelsList : PlaneModel list
     /// Alternative planes to make available to players, can be used to allow players who don't own a plane to spawn anyway in similar planes.
     /// Can also be used for AI-only planes, such as the B-25.
-    PlaneAlts : IDictionary<PlaneModelId, PlaneModel list>
+    PlaneAltsList : (PlaneModelId * PlaneModel list) list
     /// Participating countries and their coalition
-    Countries : IDictionary<CountryId, CoalitionId>
+    CountriesList : (CountryId * CoalitionId) list
     /// Typical names for each country
     Names : NameDatabase
     /// Ranks in the air force of each country
@@ -429,14 +439,71 @@ with
     /// Portion of ground forces dedicated to anti-air
     member this.AntiAirGroundForcesRatio = 0.15f
 
+module private DynProps =
+    let cacheBy getXs getKey =
+        Util.Caching.cachedProperty (fun (world : World) -> getXs world |> Seq.map (fun x -> getKey x, x) |> dict)
+
+    let cacheByKvp getXs =
+        Util.Caching.cachedProperty (fun (world : World) -> getXs world |> dict)
+    
+    let regions = cacheBy (fun world -> world.RegionsList) (fun region -> region.RegionId)
+
+    let airfields = cacheBy (fun world -> world.AirfieldsList) (fun af -> af.AirfieldId)
+
+    let buildings = cacheBy (fun world -> world.BuildingsList) (fun building -> BuildingInstanceId building.Pos)
+
+    let bridges = cacheBy (fun world -> world.BridgesList) (fun building -> BuildingInstanceId building.Pos)
+
+    let planeSet = cacheBy (fun world -> world.PlaneModelsList) (fun plane -> plane.Id)
+
+    let planeAlts = cacheByKvp (fun world -> world.PlaneAltsList)
+
+    let countries = cacheByKvp (fun world -> world.CountriesList)
+
+
+type World with
+    /// Mapping from RegionId to Region
+    member this.Regions = DynProps.regions this
+
+    /// Mapping from AirfieldId to Airfield
+    member this.Airfields = DynProps.airfields this
+
+    /// Mapping from building instance identifiers to building instances
+    member this.Buildings = DynProps.buildings this
+
+    /// Mapping from bridge instance identifiers to bridge instances
+    member this.Bridges = DynProps.bridges this
+
+    /// Mapping from plane model identifiers to plane model descriptions
+    member this.PlaneSet = DynProps.planeSet this
+
+    /// Mapping from plane model identifiers to alternative plane models
+    member this.PlaneAlts = DynProps.planeAlts this
+
+    /// Mapping from country to the coalition they are belong to
+    member this.Countries = DynProps.countries this
+
+    /// Find the region that covers a coordinate, or failing that the one with the closest boundary vertex.
+    member this.FindRegionAt(pos : Vector2) =
+        this.Regions.Values
+        |> Seq.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary)
+        |> Option.defaultWith (fun () ->
+            this.Regions.Values
+            |> Seq.minBy (fun region ->
+                region.Boundary
+                |> Seq.map (fun v -> (v - pos).LengthSquared())
+                |> Seq.min
+            )
+        )
+
     /// Get building or bridge instance by its ID
     member this.GetBuildingInstance(bid : BuildingInstanceId) =
         [this.Buildings; this.Bridges]
         |> Seq.pick (fun d -> d.TryGetValue(bid) |> Option.ofPair)
 
     member this.GetAnyCountryInCoalition(coalition) =
-        this.Countries
-        |> Seq.pick(fun kvp -> if kvp.Value = coalition then Some kvp.Key else None)
+        this.CountriesList
+        |> Seq.pick(fun (country, coalition2) -> if coalition2 = coalition then Some country else None)
 
     /// A seed which can be used pseudo-random generation that is reproducible for a given world.
     /// Can be used e.g. for weather updates.
@@ -453,21 +520,9 @@ with
             forces * actual / desired
 
     member this.RegionHasAirfield(region : RegionId) =
-        this.Airfields.Values
+        this.AirfieldsList
         |> Seq.exists (fun af -> af.Region = region)
 
-    /// Find the region that covers a coordinate, or failing that the one with the closest boundary vertex.
-    member this.FindRegionAt(pos : Vector2) =
-        this.Regions.Values
-        |> Seq.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary)
-        |> Option.defaultWith (fun () ->
-            this.Regions.Values
-            |> Seq.minBy (fun region ->
-                region.Boundary
-                |> Seq.map (fun v -> (v - pos).LengthSquared())
-                |> Seq.min
-            )
-        )
 
 module Init =
     open System.IO
@@ -862,10 +917,10 @@ module Init =
             |> List.ofSeq
         // Building instances
         let buildings = extractBuildingInstances(buildingDb, blocks)
-        let buildingsDict =
+        let buildingsMap =
             buildings
             |> Seq.map (fun b -> b.Id, b)
-            |> dict
+            |> Map
         // Map name
         let options = Seq.head missionData.ListOfOptions
         let mapName = options.GetGuiMap().Value
@@ -877,13 +932,15 @@ module Init =
                 match CountryId.FromMcuValue(enum country.Value), CoalitionId.FromMcuValue(enum coalition.Value) with
                 | Some country, Some coalition -> Some(country, coalition)
                 | _ -> None)
-            |> dict
+            |> List.ofSeq
         // Regions
-        let regions = extractRegions(regionAreas, buildings, fun x -> countries.[x])
+        let regions =
+            let countries = Map countries
+            extractRegions(regionAreas, buildings, fun x -> countries.[x])
         // Airfields
         let airfieldAreas = missionData.GetGroup("Airfields").ListOfMCU_TR_InfluenceArea |> List.ofSeq
         let airfieldSpawns = missionData.GetGroup("Airfields").ListOfAirfield |> List.ofSeq
-        let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions, fun bid -> buildingsDict.[bid])
+        let airfields = extractAirfields(airfieldSpawns, airfieldAreas, regions, fun bid -> buildingsMap.[bid])
         let regions = cleanRegionBuildings(regions, airfields)
         // Terminal areas
         let terminals =
@@ -911,22 +968,11 @@ module Init =
         let roads, roadBridges = loadRoads "BridgesHW" (Path.Combine(exeDir, "Config", sprintf "Roads-%s.json" mapName)) roadsCapacity
         // Railroads
         let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapName)) railsCapacity
-        let bridges =
-            Seq.concat [roadBridges; railBridges]
-            |> Seq.map (fun bridge -> bridge.Id, bridge)
-            |> dict
+        let bridges = roadBridges @ railBridges
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
         let hour, minute, second = options.GetTime().Value
-        let regions =
-            regions
-            |> Seq.map (fun r -> r.RegionId, r)
-            |> dict
-        let airfields =
-            airfields
-            |> Seq.map (fun af -> af.AirfieldId, af)
-            |> dict
         {
             Scenario = scenario
             Map = mapName
@@ -939,16 +985,16 @@ module Init =
             GroundForcesTransportCost = 5.0f<M^3/H/MGF>
             ResourceVolume = 1.0f<M^3/E>
             ResourceProductionRate = 1.0f<E/H/M^3>
-            Regions = regions
+            RegionsList = regions
             BridgeCapacity = railsCapacity
             Roads = roads
             Rails = rails
-            Airfields = airfields
-            Buildings = buildingsDict
-            Bridges = bridges
-            PlaneSet = dict[]
-            PlaneAlts = dict[]
-            Countries = countries
+            AirfieldsList = airfields
+            BuildingsList = buildings
+            BridgesList = bridges
+            PlaneModelsList = []
+            PlaneAltsList = []
+            CountriesList = countries
             Names = NameDatabase.Default
             Ranks = RanksDatabase.Default
             Awards = AwardDatabase.Default
@@ -957,14 +1003,55 @@ module Init =
 module IO =
     open MBrace.FsPickler
     open System.IO
+    open FSharp.Json
 
     type World with
-        member this.SaveToFile(path : string) =
-            let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            use outStream = File.CreateText(path)
-            serializer.Serialize(outStream, this)
+        //member this.ToSerializable() =
+        //    {|
+        //        Scenario = this.Scenario
+        //        Map = this.Map
+        //        StartDate = this.StartDate.ToBinary()
+        //        WeatherDaysOffset = this.WeatherDaysOffset
+        //        RepairSpeed = this.RepairSpeed
+        //        RepairCostRatio = this.RepairCostRatio
+        //        TransportRepairCostRatio = this.TransportRepairCostRatio
+        //        GroundForcesCost = this.GroundForcesCost
+        //        ResourceVolume = this.ResourceVolume
+        //        ResourceProductionRate = this.ResourceProductionRate
+        //        Regions = this.Regions.Values |> Array.ofSeq
+        //        BridgeCapacity = this.BridgeCapacity
+        //        Roads = this.Roads
+        //        Rails = this.Rails
+        //        Airfields = this.Airfields.Values |> Array.ofSeq
+        //        Buildings = this.Buildings.Values |> Array.ofSeq
+        //        Bridges = this.Bridges.Values |> Array.ofSeq
+        //        PlaneSet = this.PlaneSet.Values |> Array.ofSeq
+        //        PlaneAlts = this.PlaneAlts |> Seq.map (fun kvp -> {| Key = string kvp.Key; Alts = kvp.Value |> List.map string |})
+        //        Countries = this.Countries |> Seq.map (fun kvp -> {| Country = kvp.Key; Coalition = kvp.Value |})
+        //        Names = this.Names
+        //        Ranks = this.Ranks
+        //        Awards = this.Awards
+        //    |}
 
-        static member LoadFromFile(path : string) =
-            let serializer = FsPickler.CreateXmlSerializer(indent = true)
+        member this.SaveToFile(path : string) =
+            let json =
+                try
+                    Json.serialize this
+                with exc ->
+                    logger.Error("Failed to serialize world to json")
+                    logger.Debug(exc)
+                    failwith "Failed to serialize world to json"
+            use outStream = File.CreateText(path)
+            outStream.Write(json)
+
+        static member LoadFromFile(path : string) : World =
             use inStream = File.OpenText(path)
-            serializer.Deserialize<World>(inStream)
+            let json = inStream.ReadToEnd()
+            let data =
+                try
+                    Json.deserialize json
+                with exc ->
+                    logger.Error("Failed to deserialize world from json")
+                    logger.Debug(exc)
+                    failwith "Failed to deserialize world from json"
+            data

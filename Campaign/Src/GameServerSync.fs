@@ -171,7 +171,7 @@ module BaseFileNames =
     open RegexActivePatterns
 
     /// Name of the world description file, one file for the entire campaign
-    let worldFilename = "world.xml"
+    let worldFilename = "world.json"
     /// Current state of the campaign
     let stateBaseFilename = "-state.xml"
     /// Current campaign scenario step and its data

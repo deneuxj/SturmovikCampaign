@@ -3,11 +3,14 @@
 open System.Numerics
 
 open VectorExtension
+open Util
+
 open Campaign.Common.BasicTypes
 
 type BuildingProperties = {
     Model : string
     Script : string
+    [<Json.Vector2ListJsonField>]
     Boundary : Vector2 list
     SubParts : int list
     Durability : int

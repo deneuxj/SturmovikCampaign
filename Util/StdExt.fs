@@ -65,6 +65,12 @@ module Map =
         |> Seq.sumBy snd
         |> ((=) 0)
 
+[<AutoOpen>]
+module MapExt =
+    type Map<'K, 'V when 'K : comparison> with
+        member this.Keys = this |> Seq.map (fun kvp -> kvp.Key)
+        member this.Values = this |> Seq.map (fun kvp -> kvp.Value)
+
  module Seq =
     open System.Collections.Generic
 

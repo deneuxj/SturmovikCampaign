@@ -35,7 +35,26 @@ type Vector2Transform() =
         member this.toTargetType(arg1: obj): obj =
             match arg1 with
             | :? Vector2 as v -> box(v.X, v.Y)
-            | _ -> failwith "Not a TimeSpan"
+            | _ -> failwith "Not a Vector2"
+
+type Vector2ListTransform() =
+    interface ITypeTransform with
+        member this.targetType(): System.Type =
+            typeof<(float32 * float32) list>
+
+        member this.fromTargetType(arg1: obj): obj =
+            let xys : (float32 * float32) list = unbox arg1
+            xys
+            |> List.map (fun (x, y) -> Vector2(x, y))
+            :> obj
+
+        member this.toTargetType(arg1: obj): obj =
+            match arg1 with
+            | :? (Vector2 list) as vs -> vs |> List.map (fun v -> (v.X, v.Y)) |> box
+            | _ -> failwith "Not a Vector2 list"
 
 type Vector2JsonField() =
     inherit JsonField(Transform = typeof<Vector2Transform>)
+
+type Vector2ListJsonField() =
+    inherit JsonField(Transform = typeof<Vector2ListTransform>)

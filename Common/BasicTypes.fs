@@ -23,6 +23,7 @@ open SturmovikMission.DataProvider
 open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 
 open Util.StringPatterns
+open Util
 
 [<Measure>]
 /// Cost (energy)
@@ -154,6 +155,7 @@ with
 [<CustomComparison>]
 [<CustomEquality>]
 type OrientedPosition = {
+    [<Json.Vector2JsonField>]
     Pos : Vector2
     Rotation : float32
     Altitude : float32
