@@ -2,52 +2,22 @@
 
 open System.IO
 open FSharp.Json
+open Util
 
 open Campaign.Common.BasicTypes
 
 type NameDatabase =
     {
-        FirstNames: Map<CountryId, Set<string>>
-        LastNames: Map<CountryId, Set<string>>
+        [<Json.AsArrayJsonField(typeof<CountryId>, typeof<string[]>)>]
+        FirstNames: Map<CountryId, string[]>
+        [<Json.AsArrayJsonField(typeof<CountryId>, typeof<string[]>)>]
+        LastNames: Map<CountryId, string[]>
     }
 with
     static member Default =
         {
             FirstNames = Map.empty
             LastNames = Map.empty
-        }
-
-    static member FromJsonFile(path : string) =
-        use file = File.OpenText(path)
-        let names = Json.deserialize<{| Countries : {| Country : string; FirstNames : string list; LastNames : string list |} list |}>(file.ReadToEnd())
-        let mergeMap =
-            Seq.groupBy fst
-            >> Seq.map (fun (country, nameSets) ->
-                country,
-                nameSets
-                |> Seq.map snd
-                |> Set.unionMany
-            )
-            >> Map.ofSeq
-        let firstNames =
-            names.Countries
-            |> Seq.choose (fun country ->
-                match CountryId.FromString country.Country with
-                | None -> None
-                | Some countryId -> Some(countryId, country.FirstNames |> Set.ofList)
-            )
-            |> mergeMap
-        let lastNames =
-            names.Countries
-            |> Seq.choose (fun country ->
-                match CountryId.FromString country.Country with
-                | None -> None
-                | Some countryId -> Some(countryId, country.LastNames |> Set.ofList)
-            )
-            |> mergeMap
-        {
-            FirstNames = firstNames
-            LastNames = lastNames
         }
 
     member private this.AddNamesFromFile(getOldNames, setNewNames, country, path : string) =
@@ -59,11 +29,13 @@ with
                     if not(System.String.IsNullOrWhiteSpace(name)) then
                         yield name.Trim()
             }
-            |> Set.ofSeq
+            |> Seq.distinct
         let added =
             getOldNames(country)
-            |> Option.defaultValue Set.empty
-            |> Set.union names
+            |> Option.defaultValue [||]
+            |> Seq.append names
+            |> Seq.distinct
+            |> Array.ofSeq
         setNewNames(added, country)
 
     member this.AddFirstNamesFromFile(country, path) =
@@ -91,6 +63,7 @@ type Rank =
 
 type RanksDatabase =
     {
+        [<Json.AsArrayJsonField(typeof<CountryId>, typeof<Rank list>)>]
         Ranks: Map<CountryId, Rank list>
     }
 with
@@ -114,6 +87,7 @@ type Award =
 
 type AwardDatabase =
     {
+        [<Json.AsArrayJsonField(typeof<CountryId>, typeof<Award list>)>]
         Awards : Map<CountryId, Award list>
     }
 with

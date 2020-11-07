@@ -58,3 +58,40 @@ type Vector2JsonField() =
 
 type Vector2ListJsonField() =
     inherit JsonField(Transform = typeof<Vector2ListTransform>)
+
+type AsArrayTransform<'K, 'V when 'K : comparison>() =
+    interface ITypeTransform with
+        member this.targetType(): System.Type =
+            typedefof<_[]>.MakeGenericType(typedefof<_ * _>.MakeGenericType(typeof<'K>, typeof<'V>))
+
+        member this.fromTargetType(arg1: obj): obj =
+            let xs : ('K * 'V)[] = unbox arg1
+            Map.ofArray xs
+            :> obj
+
+        member this.toTargetType(arg1: obj): obj =
+            let argType = arg1.GetType()
+            if argType.IsGenericType then
+                if argType.GetGenericTypeDefinition() = typedefof<Map<_, _>> then
+                    let keyType = argType.GetGenericArguments().[0]
+                    let argType = argType.GetGenericArguments().[1]
+                    let kvpType = typedefof<System.Collections.Generic.KeyValuePair<_, _>>.MakeGenericType(keyType, argType)
+                    let getKeyM = kvpType.GetProperty("Key")
+                    let getValueM = kvpType.GetProperty("Value")
+                    let getKey x = getKeyM.GetMethod.Invoke(x, [||])
+                    let getValue x = getValueM.GetMethod.Invoke(x, [||])
+                    let kvps = arg1 :?> System.Collections.IEnumerable
+                    let arr =
+                        [|
+                            for kvp in kvps do
+                                yield getKey kvp, getValue kvp
+                        |]
+                    arr :> obj
+                else
+                    failwith "Not a map"
+            else
+                failwith "Not a map"
+
+/// Informs FSharp.Json that a map is to be serialized as an array. Useful when the keys cannot be converted to/from strings
+type AsArrayJsonField(keyType, valueType) =
+    inherit JsonField(Transform = typedefof<AsArrayTransform<_, _>>.MakeGenericType(keyType, valueType))

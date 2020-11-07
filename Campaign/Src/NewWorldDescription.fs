@@ -1036,7 +1036,15 @@ module IO =
         member this.SaveToFile(path : string) =
             let json =
                 try
-                    Json.serialize this
+                    let config : JsonConfig = {
+                        unformatted = false
+                        serializeNone = SerializeNone.Omit
+                        deserializeOption = DeserializeOption.AllowOmit
+                        jsonFieldNaming = Json.snakeCase
+                        allowUntyped = true
+                        enumValue = EnumMode.Name
+                    }
+                    Json.serializeEx config this
                 with exc ->
                     logger.Error("Failed to serialize world to json")
                     logger.Debug(exc)
@@ -1049,7 +1057,15 @@ module IO =
             let json = inStream.ReadToEnd()
             let data =
                 try
-                    Json.deserialize json
+                    let config : JsonConfig = {
+                        unformatted = false
+                        serializeNone = SerializeNone.Omit
+                        deserializeOption = DeserializeOption.AllowOmit
+                        jsonFieldNaming = Json.snakeCase
+                        allowUntyped = true
+                        enumValue = EnumMode.Name
+                    }
+                    Json.deserializeEx config json
                 with exc ->
                     logger.Error("Failed to deserialize world from json")
                     logger.Debug(exc)
