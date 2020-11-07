@@ -173,7 +173,7 @@ module BaseFileNames =
     /// Name of the world description file, one file for the entire campaign
     let worldFilename = "world.json"
     /// Current state of the campaign
-    let stateBaseFilename = "-state.xml"
+    let stateBaseFilename = "-state.json"
     /// Current campaign scenario step and its data
     let stepBaseFilename = "-step.xml"
     /// Commands and results that lead to the current state
@@ -188,7 +188,7 @@ module BaseFileNames =
 
     /// Get the highest N such that N-state.xml exists
     let getCurrentIndex (path : string) =
-        let pattern = Regex(@"^(\d*)-state.xml")
+        let pattern = Regex(@"^(\d*)-state.json")
         try
             IO.Directory.EnumerateFiles(path, "*" + stateBaseFilename)
             |> Seq.choose (fun path ->
@@ -342,7 +342,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
                 // Load latest state
                 let latestState =
-                    Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+                    Directory.EnumerateFiles(settings.WorkDir, "*.json")
                     |> Seq.filter (fun s -> s.EndsWith(stateBaseFilename))
                     |> Seq.sortDescending
                     |> Seq.tryHead

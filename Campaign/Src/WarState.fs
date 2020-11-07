@@ -19,6 +19,7 @@ namespace Campaign.WarState
 open System
 open System.Numerics
 open System.Collections.Generic
+open FSharp.Json
 open Util
 
 open Campaign.Common.BasicTypes
@@ -360,38 +361,48 @@ type IWarState =
     inherit IWarStateQuery
     inherit IWarStateUpdate
 
-type private WarStateSerialization =
+type WarStateSerialization =
     {
         FormatVersionMajor : int
         FormatVersionMinor : int
         Date : DateTime
         Weather : WeatherState
-        BuildingPartHealthLevel : IDictionary<BuildingInstanceId * int, float32>
-        Owners : IDictionary<RegionId, CoalitionId>
-        GroundForces : IDictionary<CoalitionId * RegionId, float32>
-        AirfieldPlanes : IDictionary<AirfieldId, IDictionary<PlaneModelId, float32>>
-        Players : IDictionary<string, Player>
-        Pilots : IDictionary<PilotId, Pilot>
+        BuildingPartHealthLevel : ((BuildingInstanceId * int) * float32) list
+        Owners : Map<string, CoalitionId>
+        GroundForces : ((CoalitionId * RegionId) * float32) list
+        AirfieldPlanes : Map<string, Map<string, float32>>
+        Players : Map<string, Player>
+        Pilots : Map<string, Pilot>
     }
 with
     static member Default =
         {
             FormatVersionMajor = 1
-            FormatVersionMinor = 1
+            FormatVersionMinor = 0
             Date = DateTime(0L)
             Weather = WeatherState.Default
-            BuildingPartHealthLevel = dict []
-            Owners = dict []
-            GroundForces = dict []
-            AirfieldPlanes = dict []
-            Players = dict []
-            Pilots = dict []
+            BuildingPartHealthLevel = []
+            Owners = Map.empty
+            GroundForces = []
+            AirfieldPlanes = Map.empty
+            Players = Map.empty
+            Pilots = Map.empty
         }
 
     member this.Version = sprintf "%d.%d" this.FormatVersionMajor this.FormatVersionMinor
 
 /// The overall status of the war.
-type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForces, date, weather, players, pilots) =
+type WarState
+    (
+        world,
+        owners : (RegionId * CoalitionId) seq,
+        buildingPartHealthLevel : ((BuildingInstanceId * int) * float32) seq,
+        airfieldPlanes : (AirfieldId * (PlaneModelId * float32) seq) seq,
+        groundForces : ((CoalitionId * RegionId) * float32<MGF>) list,
+        date : DateTime,
+        weather : WeatherState,
+        players : (string * Player) seq,
+        pilots : (PilotId * Pilot) seq) =
 
     let mutable date = date
     let mutable weather = weather
@@ -399,7 +410,7 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
     let owners = Seq.mutableDict owners
     let airfieldPlanes =
         airfieldPlanes
-        |> Seq.map (fun (af, planes : (PlaneModelId * float32) list) -> af, Seq.mutableDict planes)
+        |> Seq.map (fun (af : AirfieldId, planes : (PlaneModelId * float32) seq) -> af, Seq.mutableDict planes)
         |> Seq.mutableDict
     let roads = world.Roads.GetQuickAccess()
     let rails = world.Rails.GetQuickAccess()
@@ -465,19 +476,28 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         WarState.Deserialize(inMemory, this.World)
 
     member private this.PrepareIOData() =
-        let unmeasure = Seq.map (fun (kvp : KeyValuePair<_, _>) -> kvp.Key, float32 kvp.Value) >> dict
+        let asPairSeq x = x |> Seq.map (fun (kvp : KeyValuePair<_, _>) -> kvp.Key, kvp.Value)
+        let toStringMap x = x |> Seq.map (fun (k, v) -> k.ToString(), v) |> Map.ofSeq
+        let unmeasure = asPairSeq >> Seq.map (fun (k, v) -> k, float32 v) >> List.ofSeq
+        let listify = asPairSeq >> List.ofSeq
+        let airfieldPlanes =
+            airfieldPlanes
+            |> Seq.map (fun kvp ->
+                string kvp.Key,
+                kvp.Value
+                |> asPairSeq
+                |> toStringMap)
+            |> Map.ofSeq
         let data =
-            {
-                FormatVersionMajor = 1
-                FormatVersionMinor = 0
+            { WarStateSerialization.Default with
                 Date = date
                 Weather = weather
-                BuildingPartHealthLevel = buildingPartHealthLevel
-                Owners = owners
+                BuildingPartHealthLevel = listify buildingPartHealthLevel
+                Owners = owners |> asPairSeq |> Seq.map (fun (k, v) -> string k, v) |> Map.ofSeq
                 GroundForces = groundForces |> unmeasure
-                AirfieldPlanes = airfieldPlanes |> Seq.map (fun kvp -> kvp.Key, kvp.Value :> IDictionary<_, _>) |> dict
-                Players = players
-                Pilots = pilots
+                AirfieldPlanes = airfieldPlanes
+                Players = players |> asPairSeq |> Map.ofSeq
+                Pilots = pilots |> asPairSeq |> toStringMap
             }
         data
 
@@ -488,28 +508,27 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
 
     member this.Serialize(writer : System.IO.TextWriter) =
         let data = this.PrepareIOData()
-        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-        serializer.Serialize(writer, data, leaveOpen=true)
+        let json = Json.serialize data
+        writer.Write(json)
 
     static member private FromIOData(data : WarStateSerialization, world) =
         let expected = WarStateSerialization.Default
         if data.FormatVersionMajor <> expected.FormatVersionMajor then
             failwithf "Cannot load data with version %s, incompatible with %s" data.Version expected.Version
-        let inline toList (x : IDictionary<'K, 'V>) =
-            x
-            |> Seq.map (fun kvp -> kvp.Key, kvp.Value)
-            |> List.ofSeq
+        let owners =
+            data.Owners
+            |> Map.toList
+            |> List.map (fun (k, v) -> RegionId k, v)
         let airfieldPlanes =
             data.AirfieldPlanes
-            |> toList
-            |> List.map (fun (k, v) -> k, toList v)
+            |> Map.toSeq
+            |> Seq.map (fun (k, v) -> AirfieldId k, v |> Map.toSeq |> Seq.map (fun (k, v) -> PlaneModelId k, v))
         let groundForces =
             data.GroundForces
-            |> toList
             |> List.map (fun (k, v) -> k, v * 1.0f<MGF>)
-        let players = toList data.Players
-        let pilots = toList data.Pilots
-        WarState(world, toList data.Owners, toList data.BuildingPartHealthLevel, airfieldPlanes, groundForces, data.Date, data.Weather, players, pilots)
+        let players = data.Players |> Map.toSeq
+        let pilots = data.Pilots |> Map.toSeq |> Seq.map (fun (k, v) -> PilotId(Guid k), v)
+        WarState(world, owners, data.BuildingPartHealthLevel, airfieldPlanes, groundForces, data.Date, data.Weather, players, pilots)
 
     static member Deserialize(stream : System.IO.Stream, world) =
         let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
@@ -517,8 +536,8 @@ type WarState(world, owners, buildingPartHealthLevel, airfieldPlanes, groundForc
         WarState.FromIOData(data, world)
 
     static member Deserialize(reader : System.IO.TextReader, world) =
-        let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-        let data = serializer.Deserialize<WarStateSerialization>(reader)
+        let json = reader.ReadToEnd()
+        let data = Json.deserialize json
         WarState.FromIOData(data, world)
 
     member this.World : World = world
@@ -841,8 +860,7 @@ module Init =
             |> List.ofSeq
         let airfields =
             world.Airfields.Keys
-            |> Seq.map (fun afid -> afid, [])
-            |> List.ofSeq
+            |> Seq.map (fun afid -> afid, Seq.empty)
         let weather = getWeather (System.Random(world.Seed)) (world.StartDate + System.TimeSpan.FromDays(world.WeatherDaysOffset))
         let war =
             WarState(world, regionOwners, [], airfields, [], world.StartDate, weather, [], [])
