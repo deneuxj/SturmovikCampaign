@@ -1001,9 +1001,9 @@ module Init =
         }
 
 module IO =
-    open MBrace.FsPickler
     open System.IO
     open FSharp.Json
+    open Util.Json
 
     type World with
         //member this.ToSerializable() =
@@ -1036,15 +1036,7 @@ module IO =
         member this.SaveToFile(path : string) =
             let json =
                 try
-                    let config : JsonConfig = {
-                        unformatted = false
-                        serializeNone = SerializeNone.Omit
-                        deserializeOption = DeserializeOption.AllowOmit
-                        jsonFieldNaming = Json.snakeCase
-                        allowUntyped = true
-                        enumValue = EnumMode.Name
-                    }
-                    Json.serializeEx config this
+                    Json.serializeEx JsonConfig.IL2Default this
                 with exc ->
                     logger.Error("Failed to serialize world to json")
                     logger.Debug(exc)
@@ -1057,15 +1049,7 @@ module IO =
             let json = inStream.ReadToEnd()
             let data =
                 try
-                    let config : JsonConfig = {
-                        unformatted = false
-                        serializeNone = SerializeNone.Omit
-                        deserializeOption = DeserializeOption.AllowOmit
-                        jsonFieldNaming = Json.snakeCase
-                        allowUntyped = true
-                        enumValue = EnumMode.Name
-                    }
-                    Json.deserializeEx config json
+                    Json.deserializeEx JsonConfig.IL2Default json
                 with exc ->
                     logger.Error("Failed to deserialize world from json")
                     logger.Debug(exc)

@@ -87,6 +87,8 @@ with
     static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign", "Current")
 
 module IO =
+    open Util.Json
+
     type IOSettings =
         {
             address : string option
@@ -171,7 +173,7 @@ module IO =
     /// Load settings from a file, and set the WorkDir value to the directory of the file if it's not set in the file.
     let loadFromFile path =
         let content = IO.File.ReadAllText(path)
-        let loaded = Json.deserializeEx<IOSettings> { JsonConfig.Default with deserializeOption = DeserializeOption.AllowOmit } content
+        let loaded = Json.deserializeEx<IOSettings> JsonConfig.IL2Default content
         let loaded =
             { loaded with
                 work_dir =

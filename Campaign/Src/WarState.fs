@@ -21,6 +21,7 @@ open System.Numerics
 open System.Collections.Generic
 open FSharp.Json
 open Util
+open Util.Json
 
 open Campaign.Common.BasicTypes
 open Campaign.Common.PlaneModel
@@ -508,7 +509,7 @@ type WarState
 
     member this.Serialize(writer : System.IO.TextWriter) =
         let data = this.PrepareIOData()
-        let json = Json.serialize data
+        let json = Json.serializeEx JsonConfig.IL2Default data
         writer.Write(json)
 
     static member private FromIOData(data : WarStateSerialization, world) =
@@ -537,7 +538,7 @@ type WarState
 
     static member Deserialize(reader : System.IO.TextReader, world) =
         let json = reader.ReadToEnd()
-        let data = Json.deserialize json
+        let data = Json.deserializeEx JsonConfig.IL2Default json
         WarState.FromIOData(data, world)
 
     member this.World : World = world
