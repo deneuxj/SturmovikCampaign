@@ -62,11 +62,11 @@ type Vector2ListJsonField() =
 type AsArrayTransform<'K, 'V when 'K : comparison>() =
     interface ITypeTransform with
         member this.targetType(): System.Type =
-            typedefof<_[]>.MakeGenericType(typedefof<_ * _>.MakeGenericType(typeof<'K>, typeof<'V>))
+            typedefof<_ list>.MakeGenericType(typedefof<_ * _>.MakeGenericType(typeof<'K>, typeof<'V>))
 
         member this.fromTargetType(arg1: obj): obj =
-            let xs : ('K * 'V)[] = unbox arg1
-            Map.ofArray xs
+            let xs : ('K * 'V) list = unbox arg1
+            Map.ofList xs
             :> obj
 
         member this.toTargetType(arg1: obj): obj =
@@ -82,10 +82,10 @@ type AsArrayTransform<'K, 'V when 'K : comparison>() =
                     let getValue x = getValueM.GetMethod.Invoke(x, [||])
                     let kvps = arg1 :?> System.Collections.IEnumerable
                     let arr =
-                        [|
+                        [
                             for kvp in kvps do
                                 yield getKey kvp, getValue kvp
-                        |]
+                        ]
                     arr :> obj
                 else
                     failwith "Not a map"

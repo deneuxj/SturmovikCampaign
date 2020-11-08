@@ -383,7 +383,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         match latestStep with
                         | Some path ->
                             use reader = new StreamReader(path)
-                            let step = ScenarioStep.Deserialize(reader)
+                            let step = ScenarioStep.Deserialize(reader, sctrl.DeserializeStepData)
                             Some step
                         | None ->
                             None

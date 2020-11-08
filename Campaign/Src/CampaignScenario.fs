@@ -59,6 +59,7 @@ type IScenarioController =
     abstract member NewDay : IWarStateQuery -> (Commands option * string) seq
     abstract member NextStep : StepData -> (IWarStateQuery * float32<H> -> ScenarioStep)
     abstract member TrySelectMissions : StepData * IWarStateQuery * seed:int * numSelected:int -> MissionSelection option
+    abstract member DeserializeStepData : string -> obj
 
 /// Resources available at an airfield.
 /// Decreased whenever a flight is planned taking off from that airfield.
@@ -234,9 +235,16 @@ module IO =
             let json = Json.serializeEx JsonConfig.IL2Default this
             writer.Write(json)
 
-        static member Deserialize(reader : StreamReader) =
+        static member Deserialize(reader : StreamReader, deserializeData) =
             let json = reader.ReadToEnd()
             let data : ScenarioStep = Json.deserializeEx JsonConfig.IL2Default json
+            let data =
+                match data with
+                | Ongoing stepData ->
+                    let stepDataJson = Json.serializeEx JsonConfig.IL2Default stepData.Data
+                    Ongoing { stepData with Data = deserializeData stepDataJson }
+                | other ->
+                    other
             data
 
         member this.SaveToFile(path : string) =

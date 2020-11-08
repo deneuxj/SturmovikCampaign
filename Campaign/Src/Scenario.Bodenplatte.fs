@@ -210,6 +210,8 @@ module BodenplatteInternal =
             member this.Setup(world) = this.Setup(world)
 
 open BodenplatteInternal
+open FSharp.Json
+open Util.Json
 
 type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
@@ -1118,3 +1120,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             else
                 let random = System.Random(seed)
                 Some(candidates.[random.Next(candidates.Length)])
+
+        member this.DeserializeStepData(json : string) =
+            let implData : ImplData = Json.deserializeEx JsonConfig.IL2Default json
+            implData :> obj
