@@ -95,3 +95,13 @@ type AsArrayTransform<'K, 'V when 'K : comparison>() =
 /// Informs FSharp.Json that a map is to be serialized as an array. Useful when the keys cannot be converted to/from strings
 type AsArrayJsonField(keyType, valueType) =
     inherit JsonField(Transform = typedefof<AsArrayTransform<_, _>>.MakeGenericType(keyType, valueType))
+
+[<AutoOpen>]
+module Extensions =
+    type JsonConfig with
+        static member IL2Default =
+            { JsonConfig.Default with
+                serializeNone = SerializeNone.Omit
+                deserializeOption = DeserializeOption.AllowOmit
+                allowUntyped = true
+            }

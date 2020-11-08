@@ -225,17 +225,19 @@ module Planning =
             |> MissionPlanningResult.firstWithNonEmptyPlan
 
 module IO =
-    open MBrace.FsPickler
+    open FSharp.Json
+    open Util.Json
     open System.IO
 
     type ScenarioStep with
         member this.Serialize(writer : StreamWriter) =
-            let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            serializer.Serialize(writer, this)
+            let json = Json.serializeEx JsonConfig.IL2Default this
+            writer.Write(json)
 
         static member Deserialize(reader : StreamReader) =
-            let serializer = FsPickler.CreateXmlSerializer(indent = true)
-            serializer.Deserialize<ScenarioStep>(reader)
+            let json = reader.ReadToEnd()
+            let data : ScenarioStep = Json.deserializeEx JsonConfig.IL2Default json
+            data
 
         member this.SaveToFile(path : string) =
             if File.Exists(path) then

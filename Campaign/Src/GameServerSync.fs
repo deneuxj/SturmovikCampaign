@@ -175,7 +175,7 @@ module BaseFileNames =
     /// Current state of the campaign
     let stateBaseFilename = "-state.json"
     /// Current campaign scenario step and its data
-    let stepBaseFilename = "-step.xml"
+    let stepBaseFilename = "-step.json"
     /// Commands and results that lead to the current state
     let simulationBaseFilename = "-simulation.xml"
     /// Commands extracted from the game logs, and the results of the commands, precedes simulation when advancing the campaign state.
@@ -373,7 +373,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
                 // Load scenario state
                 let latestStep =
-                    Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+                    Directory.EnumerateFiles(settings.WorkDir, "*.json")
                     |> Seq.filter (fun s -> s.EndsWith(stepBaseFilename))
                     |> Seq.sortDescending
                     |> Seq.tryHead
