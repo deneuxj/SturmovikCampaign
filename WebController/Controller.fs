@@ -149,20 +149,20 @@ type Controller(settings : GameServerControl.Settings) =
                                     let json = reader.ReadToEnd()
                                     Json.deserializeEx JsonConfig.IL2Default json
                                 else
-                                    Seq.empty
+                                    []
                             let simulation =
                                 use reader = new StreamReader(path2)
                                 let json = reader.ReadToEnd()
                                 Json.deserializeEx JsonConfig.IL2Default json
                             let steps =
-                                Seq.append effects simulation
-                                |> Seq.map (fun (description : string, command : WarStateUpdate.Commands option, results : WarStateUpdate.Results list) ->
+                                List.append effects simulation
+                                |> List.map (fun (description : string, command : WarStateUpdate.Commands option, results : WarStateUpdate.Results list) ->
                                     { Dto.SimulationStep.Description = description
                                       Dto.Command = command |> Option.map Array.singleton |> Option.defaultValue [||] |> Array.map (fun x -> x.ToDto(state))
                                       Dto.Results = results |> List.map (fun r -> r.ToDto(state)) |> Array.ofList
                                     }
                                 )
-                                |> Array.ofSeq
+                                |> Array.ofList
                             channel.Reply(Ok steps)
                             { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
                         with
