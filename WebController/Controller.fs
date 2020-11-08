@@ -182,7 +182,7 @@ type Controller(settings : GameServerControl.Settings) =
                     lazy
                         World.LoadFromFile(wkPath worldFilename)
                 let dates =
-                    Directory.EnumerateFiles(settings.WorkDir, "*.xml")
+                    Directory.EnumerateFiles(settings.WorkDir, "*.json")
                     |> Seq.filter (fun filename -> filename.EndsWith(stateBaseFilename))
                     |> Seq.sort
                     |> Seq.map (fun path ->
