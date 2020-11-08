@@ -1,29 +1,45 @@
 ﻿module Campaign.Pilots
 
 open System
+open Util
 
 open Campaign.Common.Targets
 open Campaign.Common.BasicTypes
 
 open PilotRanks
 
+type BanData =
+    {
+        BannedSince : DateTime
+        [<Json.TimeSpanJsonField>]
+        Duration : TimeSpan
+    }
+type ProbationData =
+    {
+        ProbationSince: DateTime
+        [<Json.TimeSpanJsonField>]
+        Duration: TimeSpan
+        [<Json.TimeSpanJsonField>]
+        Penality: TimeSpan
+    }
+
 [<RequireQualifiedAccess>]
 type BanStatus =
     | Clear
-    | Banned of Since: DateTime * Duration: TimeSpan
-    | Probation of {| Since: DateTime; Duration: TimeSpan; Penality: TimeSpan |}
+    | Banned of BanData
+    | Probation of ProbationData
 with
     override this.ToString() =
         match this with
         | Clear -> "No ban"
-        | Banned(since, duration) -> sprintf "Banned until %s" ((since + duration).ToShortDateString())
-        | Probation x -> sprintf "On probation until %s (penalty of %d days)" ((x.Since + x.Duration).ToShortDateString()) (int(ceil x.Penality.TotalDays))
+        | Banned ban -> sprintf "Banned until %s" ((ban.BannedSince + ban.Duration).ToShortDateString())
+        | Probation x -> sprintf "On probation until %s (penalty of %d days)" ((x.ProbationSince + x.Duration).ToShortDateString()) (int(ceil x.Penality.TotalDays))
 
 type Player =
     {
         Guid : string
         Name : string
-        OtherNames : Set<string>
+        OtherNames : string list
         BanStatus : BanStatus
     }
 

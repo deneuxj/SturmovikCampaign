@@ -323,7 +323,7 @@ module DtoCreation =
                     ] |> Map.ofSeq
                 | WarStateUpdate.AdvanceTime(span) ->
                     "AdvanceTime",
-                    [ "Hours", span.TotalHours |> box
+                    [ "Hours", span.Span.TotalHours |> box
                     ] |> Map.ofSeq
                 | WarStateUpdate.UpdatePlayer(_, nickName) ->
                     "UpdatePlayer",
@@ -549,7 +549,7 @@ module DtoCreation =
         member this.ToDto() =
             match this with
             | Pilots.BanStatus.Clear | Pilots.BanStatus.Probation _ -> NotBanned
-            | Pilots.BanStatus.Banned(since, duration) ->
+            | Pilots.BanStatus.Banned { BannedSince = since; Duration = duration } ->
                 Banned {| Until = (since + duration).ToDto() |}
 
     /// Hash a player's unique GUID, and encode it to base64

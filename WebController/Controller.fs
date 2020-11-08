@@ -520,7 +520,7 @@ type Controller(settings : GameServerControl.Settings) =
                                             let banStatus =
                                                 match duration with
                                                 | Some duration ->
-                                                    Pilots.BanStatus.Banned (System.DateTime.UtcNow, duration)
+                                                    Pilots.BanStatus.Banned { BannedSince = System.DateTime.UtcNow; Duration = duration }
                                                 | None ->
                                                     Pilots.BanStatus.Clear
                                             { player with BanStatus = banStatus }
@@ -550,8 +550,8 @@ type Controller(settings : GameServerControl.Settings) =
                     let found =
                         war.Players
                         |> List.filter (fun player ->
-                            player.OtherNames.Add(player.Name)
-                            |> Set.exists (fun name2 ->
+                            player.Name :: player.OtherNames
+                            |> List.exists (fun name2 ->
                                 name2.ToLowerInvariant().Contains(name)
                             )
                         )

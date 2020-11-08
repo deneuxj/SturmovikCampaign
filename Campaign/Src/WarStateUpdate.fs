@@ -18,6 +18,7 @@ namespace Campaign.WarStateUpdate
 
 open System.Numerics
 open VectorExtension
+open Util
 
 open Campaign.Common.BasicTypes
 open Campaign.Common.PlaneModel
@@ -30,6 +31,12 @@ open Campaign.Pilots
 
 // We use explicit command and result types for all changes to the state of the war.
 // This makes it easier to present relevant data to players and help them understand what effect their actions have.
+
+type AdvanceTimeData =
+    {
+        [<Json.TimeSpanJsonField>]
+        Span : System.TimeSpan
+    }
 
 /// Commands to change a WarState
 type Commands =
@@ -50,7 +57,7 @@ type Commands =
     // Set the owner of a region, typically after a conquest
     | SetRegionOwner of RegionId * CoalitionId option
     // Advance time
-    | AdvanceTime of System.TimeSpan
+    | AdvanceTime of AdvanceTimeData
     // Update player registration
     | UpdatePlayer of Guid: string * NickName: string
     // Update player ban status
@@ -182,7 +189,7 @@ module CommandExecution =
                 state.SetOwner(rid, owner)
                 [ RegionOwnerSet(rid, owner) ]
             | AdvanceTime span ->
-                let newTime = state.Date + span
+                let newTime = state.Date + span.Span
                 state.SetDate(newTime)
                 [ TimeSet(newTime) ]
             | UpdatePlayer(guid, nickName) ->
@@ -192,7 +199,7 @@ module CommandExecution =
                         {
                             Guid = guid
                             Name = nickName
-                            OtherNames = Set.empty
+                            OtherNames = []
                             BanStatus = BanStatus.Clear
                         }
                 let player =
@@ -201,7 +208,7 @@ module CommandExecution =
                     else
                         { player with
                             Name = nickName
-                            OtherNames = player.OtherNames.Add(player.Name)
+                            OtherNames = (player.Name :: player.OtherNames) |> List.distinct
                         }
                 state.UpdatePlayer(player)
                 [ PlayerUpdated nickName ]
@@ -212,7 +219,7 @@ module CommandExecution =
                         {
                             Guid = guid
                             Name = ""
-                            OtherNames = Set.empty
+                            OtherNames = []
                             BanStatus = BanStatus.Clear
                         }
                 let player = { player with BanStatus = ban }

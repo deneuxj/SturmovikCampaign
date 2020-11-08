@@ -1096,7 +1096,7 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                             yield Some(RepairBuildingPart(bid, part, healing)), sprintf "Repairs of bridge section to %0.0f%% in %s" (100.0f * (health + healing)) (string region.RegionId)
 
                 // Update time
-                yield Some(AdvanceTime(newTime - war.Date)), "Advance time"
+                yield Some(AdvanceTime { Span = newTime - war.Date }), "Advance time"
             }
 
         member this.Start(war, timeSpan) =

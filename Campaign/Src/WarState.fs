@@ -373,7 +373,7 @@ type WarStateSerialization =
         GroundForces : ((CoalitionId * RegionId) * float32) list
         AirfieldPlanes : Map<string, Map<string, float32>>
         Players : Map<string, Player>
-        Pilots : Map<string, Pilot>
+        Pilots : Pilot list
     }
 with
     static member Default =
@@ -387,7 +387,7 @@ with
             GroundForces = []
             AirfieldPlanes = Map.empty
             Players = Map.empty
-            Pilots = Map.empty
+            Pilots = []
         }
 
     member this.Version = sprintf "%d.%d" this.FormatVersionMajor this.FormatVersionMinor
@@ -498,7 +498,7 @@ type WarState
                 GroundForces = groundForces |> unmeasure
                 AirfieldPlanes = airfieldPlanes
                 Players = players |> asPairSeq |> Map.ofSeq
-                Pilots = pilots |> asPairSeq |> toStringMap
+                Pilots = pilots |> asPairSeq |> Seq.map snd |> List.ofSeq
             }
         data
 
@@ -528,7 +528,7 @@ type WarState
             data.GroundForces
             |> List.map (fun (k, v) -> k, v * 1.0f<MGF>)
         let players = data.Players |> Map.toSeq
-        let pilots = data.Pilots |> Map.toSeq |> Seq.map (fun (k, v) -> PilotId(Guid k), v)
+        let pilots = data.Pilots |> List.map (fun pilot -> pilot.Id, pilot)
         WarState(world, owners, data.BuildingPartHealthLevel, airfieldPlanes, groundForces, data.Date, data.Weather, players, pilots)
 
     static member Deserialize(stream : System.IO.Stream, world) =
