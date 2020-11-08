@@ -362,7 +362,7 @@ module DtoCreation =
                     [ "BuildingAt", state.World.GetBuildingInstance(bid).Pos.ToDto() :> obj
                       "Amount", box amount
                     ] |> Map.ofSeq
-                | WarStateUpdate.UpdatedPlanesAtAirfield(afId, content) ->
+                | WarStateUpdate.UpdatedPlanesAtAirfield { Airfield = afId; Planes = content } ->
                     "UpdatedPlanesAtAirfield",
                     [ "Airfield", afId.AirfieldName :> obj
                       "Planes",

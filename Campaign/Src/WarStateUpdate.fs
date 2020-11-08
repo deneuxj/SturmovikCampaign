@@ -60,12 +60,21 @@ type Commands =
     // Register flight and health status of pilot
     | RegisterPilotFlight of PilotId * FlightRecord * PilotHealth
 
+open Util
+
+type PlanesAtAirfieldResult =
+    {
+        Airfield: AirfieldId
+        [<Json.AsArrayJsonField(typeof<PlaneModelId>, typeof<float32>)>]
+        Planes: Map<PlaneModelId, float32>
+    }
+
 /// Interesting data to report from execution of commands
 type Results =
     | UpdatedStorageValue of Instance: BuildingInstanceId * Amount: float32<M^3>
-    | UpdatedPlanesAtAirfield of AirfieldId * Map<PlaneModelId, float32>
-    | UpdatedGroundForces of RegionId * CoalitionId * float32<MGF>
-    | RegionOwnerSet of RegionId * CoalitionId option
+    | UpdatedPlanesAtAirfield of PlanesAtAirfieldResult
+    | UpdatedGroundForces of Region: RegionId * Coalition: CoalitionId * GroundForces: float32<MGF>
+    | RegionOwnerSet of Region: RegionId * Owner: CoalitionId option
     | TimeSet of System.DateTime
     | PlayerUpdated of NickName: string
     | PlayerBanUpdated of NickName: string * Ban: BanStatus
@@ -86,7 +95,7 @@ module Results =
                     | false, _ ->
                         "Unknown bridge or building"
             sprintf "%s at %4.0f, %4.0f now has capacity %1.0f" buildingDescr orPos.Pos.X orPos.Pos.Y amount
-        | UpdatedPlanesAtAirfield(AirfieldId name, planes) ->
+        | UpdatedPlanesAtAirfield { Airfield = AirfieldId name; Planes = planes } ->
             let planeStr =
                 planes
                 |> Map.toSeq
@@ -152,10 +161,10 @@ module CommandExecution =
                 [ UpdatedStorageValue(bid, storage) ]
             | AddPlane(afid, plane, health) ->
                 let newStatus = state.ChangePlanes(afid, plane, health)
-                [ UpdatedPlanesAtAirfield(afid, newStatus) ]
+                [ UpdatedPlanesAtAirfield { Airfield = afid; Planes = newStatus } ]
             | RemovePlane(afid, plane, health) ->
                 let newStatus = state.ChangePlanes(afid, plane, -health)
-                [ UpdatedPlanesAtAirfield(afid, newStatus) ]
+                [ UpdatedPlanesAtAirfield { Airfield = afid; Planes = newStatus } ]
             | AddGroundForces(rid, coalition, amount) ->
                 let newForces = state.ChangeGroundForces(rid, coalition, amount)
                 [ UpdatedGroundForces(rid, coalition, newForces) ]
