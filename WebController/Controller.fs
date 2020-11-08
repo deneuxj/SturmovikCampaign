@@ -2,8 +2,10 @@
 
 open System.IO
 open FSharp.Control
+open FSharp.Json
 
 open Util
+open Util.Json
 
 open Campaign
 open Campaign.Common
@@ -139,16 +141,19 @@ type Controller(settings : GameServerControl.Settings) =
                     let path2 = wkPath(getSimulationFilename idx)
                     if File.Exists path2 then
                         try
-                            let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer()
                             let world = World.LoadFromFile(wkPath worldFilename)
                             let state = WarState.LoadFromFile(wkPath (getStateFilename idx), world)
                             let effects =
                                 if File.Exists path1 then
-                                    serializer.DeserializeSequence(new StreamReader(path1))
+                                    use reader = new StreamReader(path1)
+                                    let json = reader.ReadToEnd()
+                                    Json.deserializeEx JsonConfig.IL2Default json
                                 else
                                     Seq.empty
                             let simulation =
-                                serializer.DeserializeSequence(new StreamReader(path2))
+                                use reader = new StreamReader(path2)
+                                let json = reader.ReadToEnd()
+                                Json.deserializeEx JsonConfig.IL2Default json
                             let steps =
                                 Seq.append effects simulation
                                 |> Seq.map (fun (description : string, command : WarStateUpdate.Commands option, results : WarStateUpdate.Results list) ->

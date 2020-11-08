@@ -24,6 +24,7 @@ open FSharp.Json
 open FSharp.Control
 
 open Util
+open Util.Json
 open VectorExtension
 
 open Campaign.Common.BasicTypes
@@ -177,9 +178,9 @@ module BaseFileNames =
     /// Current campaign scenario step and its data
     let stepBaseFilename = "-step.json"
     /// Commands and results that lead to the current state
-    let simulationBaseFilename = "-simulation.xml"
+    let simulationBaseFilename = "-simulation.json"
     /// Commands extracted from the game logs, and the results of the commands, precedes simulation when advancing the campaign state.
-    let effectsBaseFilename = "-effects.xml"
+    let effectsBaseFilename = "-effects.json"
 
     let getStateFilename idx = sprintf "%03d%s" idx stateBaseFilename
     let getStepFilename idx = sprintf "%03d%s" idx stepBaseFilename
@@ -598,8 +599,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 stateChanged.Trigger(war.Clone())
                 nextStep.SaveToFile(stepFile)
                 use writer = new StreamWriter(simFile)
-                let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-                serializer.SerializeSequence(writer, results) |> ignore
+                let json = Json.serializeEx JsonConfig.IL2Default results
+                writer.Write(json)
                 step <- Some nextStep
                 return Ok(results)
             | _, _, Some _ ->
@@ -819,8 +820,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let index = getCurrentIndex settings.WorkDir + 1
                 let effectsFile = wkPath(getEffectsFilename index)
                 use writer = new StreamWriter(effectsFile, false)
-                let serializer = MBrace.FsPickler.FsPickler.CreateXmlSerializer(indent = true)
-                serializer.SerializeSequence(writer, effects) |> ignore
+                let json = Json.serializeEx JsonConfig.IL2Default effects
+                writer.Write(json)
                 return Ok()
             | None ->
                 return (Error "No war state")
