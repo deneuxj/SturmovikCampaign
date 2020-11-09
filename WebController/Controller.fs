@@ -352,7 +352,7 @@ type Controller(settings : GameServerControl.Settings) =
                             let flights =
                                 pilot.Flights
                                 |> List.map (fun flight -> flight.ToDto(war.World))
-                            Ok (pilot.ToDto(war), flights)
+                            Ok {| Pilot = pilot.ToDto(war); Missions = flights |}
                         with _ -> Error "Pilot not found"
                     | Error e ->
                         Error e

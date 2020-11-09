@@ -48,7 +48,7 @@ type IRoutingResponse =
     abstract GetDates : unit -> Async<Result<DateTime[], string>>
     abstract GetSyncState : unit -> Async<Result<string, string>>
     abstract GetPilots : PilotSearchFilter -> Async<Result<Pilot list, string>>
-    abstract GetPilot : string -> Async<Result<Pilot * MissionRecord list, string>>
+    abstract GetPilot : string -> Async<Result<{| Pilot: Pilot; Missions: MissionRecord list |}, string>>
     abstract GetPlayerPilots : string -> Async<Result<Pilot list, string>>
     abstract FindPlayersByName : string -> Async<Result<Player list, string>>
     abstract AllPlayers : unit -> Async<Result<Player list, string>>

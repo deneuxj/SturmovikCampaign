@@ -480,7 +480,7 @@ module DtoCreation =
             let plane =
                 world.PlaneSet.TryGetValue(this.Plane)
                 |> Option.ofPair
-                |> Option.map (fun plane -> plane.ScriptModel.Script)
+                |> Option.map (fun plane -> string plane.Id)
                 |> Option.defaultValue (string this.Plane)
             {
                 Dto.StartAirfield = startAirfield
