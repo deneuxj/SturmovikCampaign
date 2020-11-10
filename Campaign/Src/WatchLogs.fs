@@ -37,28 +37,49 @@ module LogData =
 type System.IO.Directory with
     static member EnumerateFilesAsync(path, filter) =
         asyncSeq {
+            let! token = Async.CancellationToken
             let existingFiles =
                 Directory.EnumerateFiles(path, filter)
                 |> Seq.sortBy (fun file -> File.GetCreationTimeUtc(Path.Combine(path, file)))
                 |> List.ofSeq
+            // Race condition: we might miss files created after this point, and before watcher is started
             logger.Debug("List of existing files")
             logger.Debug(existingFiles)
             let newFiles = ConcurrentQueue<string>(existingFiles)
-            // Race condition: we might miss files created after this point, and before watcher is started
-            use watcher = new FileSystemWatcher(path, filter)
+            // Avoid adding the same file multiple times to the queue
+            let seen = System.Collections.Generic.HashSet<string>(existingFiles)
+            let seenLock = obj()
             use semaphore = new SemaphoreSlim(newFiles.Count)
-            watcher.Created.Add(fun ev ->
-                try
-                    logger.Debug("New log file created: " + ev.Name)
-                    newFiles.Enqueue(IO.Path.Combine(path, ev.Name))
-                    semaphore.Release() |> ignore
-                with exc ->
-                    logger.Error("Exception in watcher.Created handler")
-                    logger.Debug(exc))
-            watcher.EnableRaisingEvents <- true
-            let loop() =
+            // Repeatedly start new FileSystemWatcher, use them for 5 minutes, then throw away.
+            // FileSystemWatchers tend to stop responding after a while, for unknown reasons.
+            // Starting a new one every 5 minutes works around that problem.
+            let rec producer(stopPrev) =
+                async {
+                    let watcher = new FileSystemWatcher(path, filter)
+                    watcher.Created.Add(fun ev ->
+                        try
+                            logger.Debug("Log file written: " + ev.Name)
+                            let path = IO.Path.Combine(path, ev.Name)
+                            lock seenLock (fun () ->
+                                if not (seen.Contains(path)) then
+                                    seen.Add(path) |> ignore
+                                    newFiles.Enqueue(path)
+                                    semaphore.Release() |> ignore)
+                        with exc ->
+                            logger.Error("Exception in watcher.Created handler")
+                            logger.Debug(exc))
+                    watcher.EnableRaisingEvents <- true
+                    logger.Debug("New FileSystemWatcher started")
+                    // Stop previous file system watcher after starting the new one, so that no log
+                    // file creation may happen while no watcher is active.
+                    stopPrev()
+                    do! Async.Sleep(300000)
+                    watcher.EnableRaisingEvents <- false
+                    if not(token.IsCancellationRequested) then
+                        return! producer(fun() -> watcher.Dispose(); logger.Debug("Previous FileSystemWatcher stopped"))
+                }
+            let consumer() =
                 asyncSeq {
-                    let! token = Async.CancellationToken
                     while not(token.IsCancellationRequested) do
                         try
                             do! Async.AwaitTask(semaphore.WaitAsync())
@@ -67,13 +88,19 @@ type System.IO.Directory with
                             logger.Debug(exc)
                         match newFiles.TryDequeue() with
                         | true, s ->
+                            lock seenLock (fun () -> seen.Remove(s) |> ignore)
                             logger.Debug("Yield file " + s)
                             yield s
                         | false, _ ->
                             logger.Debug("No new files in the queue")
                             do! Async.Sleep(30000)
                 }
-            yield! loop()
+            // Start the producer loop
+            Async.Start(producer(ignore), token)
+            // Wait for one file to be detected, but do nothing with it. Then start the consumer. We
+            // want to yield a file after the next file has been created, to avoid read/write conflicts.
+            do! Async.AwaitTask(semaphore.WaitAsync())
+            yield! consumer()
             logger.Debug("Log file watcher shutting down")
         }
 
