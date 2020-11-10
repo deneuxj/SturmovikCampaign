@@ -423,8 +423,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     try
                         state.GetNumPlanes(af.AirfieldId)
                         |> Map.toSeq
-                        |> Seq.map fst
-                        |> Seq.map (fun planeId -> state.World.PlaneSet.[planeId].MinRunwayLength)
+                        |> Seq.map (fun (planeId, qty) -> if qty >= 1.0f then state.World.PlaneSet.[planeId].MinRunwayLength else 0.0f)
                         |> Seq.max
                     with _ -> 0.0f
                 let runway =
