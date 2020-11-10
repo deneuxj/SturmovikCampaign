@@ -419,8 +419,16 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 state.World.Airfields.Values
                 |> Seq.filter (fun af -> af.Position.IsInConvexPolygon boundary && af.IsActive)
             for af in within do
+                let minLength =
+                    try
+                        state.GetNumPlanes(af.AirfieldId)
+                        |> Map.toSeq
+                        |> Seq.map fst
+                        |> Seq.map (fun planeId -> state.World.PlaneSet.[planeId].MinRunwayLength)
+                        |> Seq.max
+                    with _ -> 0.0f
                 let runway =
-                    af.PickAgainstWind(wind)
+                    af.PickAgainstWind(wind, minLength)
                 let coalition =
                     state.GetOwner(af.Region)
                 let planes =
@@ -913,7 +921,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         |> List.sortByDescending(fun spot -> spot.Radius)
                     let alongRunway =
                         if airfield.IsActive then
-                            let runway = airfield.PickAgainstWind(wind)
+                            let runway = airfield.PickAgainstWind(wind, 0.0f)
                             runway.PathToRunway
                             |> Seq.pairwise
                             |> Seq.collect (fun (v1, v2) ->

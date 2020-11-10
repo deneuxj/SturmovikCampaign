@@ -226,8 +226,15 @@ type IAirfield =
 module Extensions =
     type IAirfield with
         /// Pick the wunway that has best alignment against the provided direction
-        member this.PickAgainstWind (wind : Vector2) =
-            this.Runways
+        member this.PickAgainstWind (wind : Vector2, minRunwayLength : float32) =
+            let runways =
+                this.Runways
+                |> List.filter (fun rw -> (rw.End - rw.Start).Length() >= minRunwayLength)
+            let runways =
+                match runways with
+                | [] -> this.Runways
+                | _ -> runways
+            runways
             |> List.maxBy (fun runway ->
                 let direction =
                     runway.End - runway.Start

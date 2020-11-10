@@ -314,6 +314,12 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                         planes @ [expansive]
                     else
                         planes
+                // Remove planes that require longer runways than available
+                let planes =
+                    planes
+                    |> List.filter (fun plane ->
+                        af.Runways
+                        |> List.exists (fun rw -> (rw.End - rw.Start).Length() >= plane.MinRunwayLength))
                 let totalInvCost =
                     planes
                     |> List.sumBy (fun plane -> 1.0f / plane.Cost)
@@ -693,7 +699,14 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                                 |> min excessPlanes
                                 |> int
                                 |> min 25
-                            if numPlanes > 0 then
+                            let planeModel = war.World.PlaneSet.[plane]
+                            let runwayLength =
+                                try
+                                    af2.Runways
+                                    |> List.map (fun rw -> (rw.End - rw.Start).Length())
+                                    |> List.max
+                                with _ -> 0.0f
+                            if numPlanes > 0 && planeModel.MinRunwayLength <= runwayLength then
                                 let mission =
                                     {
                                         StartAirfield = af1.AirfieldId

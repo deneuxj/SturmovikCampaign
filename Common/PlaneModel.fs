@@ -105,6 +105,11 @@ with
         | _, Transport -> 300.0f
         |> (*) 1000.0f<M/H>
 
+    member this.MinRunwayLength =
+        match this.Name with
+        | "me262" -> 1500.0f
+        | _ -> 0.0f
+
     member this.StaticScriptModel : Vehicles.VehicleTypeData =
         {
             Model = sprintf @"graphics\blocks\static_%s.mgm" this.StaticBasename
