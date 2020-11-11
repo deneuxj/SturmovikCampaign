@@ -450,13 +450,13 @@ module DtoCreation =
             | Targets.ParkedPlane(_, plane) ->
                 world.PlaneSet.TryGetValue(plane)
                 |> Option.ofPair
-                |> Option.map (fun plane -> plane.ScriptModel.Script)
+                |> Option.map (fun plane -> plane.Name)
                 |> Option.defaultValue (string plane)
                 |> Dto.ParkedPlane
             | Targets.Air(plane) ->
                 world.PlaneSet.TryGetValue(plane)
                 |> Option.ofPair
-                |> Option.map (fun plane -> plane.ScriptModel.Script)
+                |> Option.map (fun plane -> plane.Name)
                 |> Option.defaultValue (string plane)
                 |> Dto.Plane
 
