@@ -666,7 +666,7 @@ with
         // Weather and player planes
         let options =
             (Campaign.Common.Weather.setOptions random weather date options)
-                .SetDate(T.Date.FromDate(this.Date.Year, this.Date.Month, this.Date.Day))
+                .SetDate(T.Date.FromDate(this.Date.Day, this.Date.Month, this.Date.Year))
                 .SetTime(T.Options.Time.Create(T.Integer.N this.Date.Hour, T.Integer.N this.Date.Minute, T.Integer.N this.Date.Second))
                 .SetMissionType(T.Integer.N 2) // deathmatch
                 |> addMultiplayerPlaneConfigs settings.Planes
