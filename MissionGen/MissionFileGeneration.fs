@@ -669,6 +669,7 @@ with
                 .SetDate(T.Date.FromDate(this.Date.Day, this.Date.Month, this.Date.Year))
                 .SetTime(T.Options.Time.Create(T.Integer.N this.Date.Hour, T.Integer.N this.Date.Minute, T.Integer.N this.Date.Second))
                 .SetMissionType(T.Integer.N 2) // deathmatch
+                .SetLCAuthor(T.Integer.N 2)
                 |> addMultiplayerPlaneConfigs settings.Planes
 
         // Static buildings and blocks
