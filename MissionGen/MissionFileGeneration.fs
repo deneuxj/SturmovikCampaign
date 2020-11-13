@@ -619,6 +619,7 @@ type IMissionBuilderData =
     inherit IBuildingQuery
     inherit IAirfieldQuery
     abstract GetCountryCoalition : CountryId -> CoalitionId
+    abstract GetCoalitionMainCountry : CoalitionId -> CountryId
     abstract GetPlaneModel : PlaneModelId -> PlaneModel
 
 /// Data needed to create a multiplayer "dogfight" mission
@@ -860,6 +861,17 @@ with
             let subst = Mcu.substId <| store.GetIdMapper()
             let lcSubst = Mcu.substLCId <| lcStore.GetIdMapper()
             for mcu in other do
+                // Set country to region's owner
+                match mcu with
+                | :? Mcu.HasEntity as x when x.Country.IsSome ->
+                    let pos = Vector2.FromMcu mcu.Pos
+                    let country =
+                        data.Regions
+                        |> List.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary)
+                        |> Option.bind (fun region -> data.GetOwner(region.RegionId))
+                        |> Option.map (fun coalition -> data.GetCoalitionMainCountry(coalition).ToMcuValue)
+                    x.Country <- country
+                | _ -> ()
                 subst mcu
                 lcSubst mcu
 

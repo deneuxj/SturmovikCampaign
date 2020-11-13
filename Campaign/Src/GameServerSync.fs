@@ -227,6 +227,8 @@ module WarStateExt =
                   war.World.GetBuildingInstance(bid)
               member this.GetCountryCoalition(country: CountryId): CoalitionId = 
                   war.World.Countries.[country]
+              member this.GetCoalitionMainCountry(coalition: CoalitionId): CountryId =
+                  war.World.GetAnyCountryInCoalition(coalition)
               member this.GetOwner(rId: RegionId): CoalitionId option = 
                   war.GetOwner(rId)
               member this.GetOwner(afId: AirfieldId): CountryId option = 

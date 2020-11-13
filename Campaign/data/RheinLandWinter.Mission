@@ -162795,13 +162795,13 @@ Group
 Group
 {
   Name = "Other";
-  Index = 7605;
+  Index = 7473;
   Desc = "";
   Effect
   {
     Name = "LandLight";
-    Index = 7606;
-    LinkTrId = 7607;
+    Index = 7474;
+    LinkTrId = 7475;
     XPos = 124404.615;
     YPos = 146.629;
     ZPos = 263795.972;
@@ -162816,7 +162816,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7607;
+    Index = 7475;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -162828,15 +162828,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7606;
+    MisObjID = 7474;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7609;
-    LinkTrId = 7610;
+    Index = 7477;
+    LinkTrId = 7478;
     XPos = 124310.645;
     YPos = 146.629;
     ZPos = 263821.690;
@@ -162851,7 +162851,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7610;
+    Index = 7478;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -162863,17 +162863,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7609;
+    MisObjID = 7477;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7612;
+    Index = 7480;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7610];
+    Objects = [7478];
     XPos = 124300.547;
     YPos = 146.629;
     ZPos = 263822.127;
@@ -162886,11 +162886,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7613;
+    Index = 7481;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7607];
+    Objects = [7475];
     XPos = 124412.754;
     YPos = 146.629;
     ZPos = 263791.326;
@@ -162904,8 +162904,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7614;
-    LinkTrId = 7615;
+    Index = 7482;
+    LinkTrId = 7483;
     XPos = 124175.384;
     YPos = 146.629;
     ZPos = 263122.361;
@@ -162920,7 +162920,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7615;
+    Index = 7483;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -162932,15 +162932,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7614;
+    MisObjID = 7482;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7617;
-    LinkTrId = 7618;
+    Index = 7485;
+    LinkTrId = 7486;
     XPos = 124081.414;
     YPos = 146.629;
     ZPos = 263148.079;
@@ -162955,7 +162955,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7618;
+    Index = 7486;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -162967,17 +162967,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7617;
+    MisObjID = 7485;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7620;
+    Index = 7488;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7618];
+    Objects = [7486];
     XPos = 124071.316;
     YPos = 146.629;
     ZPos = 263148.516;
@@ -162990,11 +162990,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7621;
+    Index = 7489;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7615];
+    Objects = [7483];
     XPos = 124183.523;
     YPos = 146.629;
     ZPos = 263117.715;
@@ -163008,8 +163008,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7622;
-    LinkTrId = 7623;
+    Index = 7490;
+    LinkTrId = 7491;
     XPos = 123906.801;
     YPos = 146.629;
     ZPos = 262338.315;
@@ -163024,7 +163024,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7623;
+    Index = 7491;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163036,15 +163036,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7622;
+    MisObjID = 7490;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7625;
-    LinkTrId = 7626;
+    Index = 7493;
+    LinkTrId = 7494;
     XPos = 123812.831;
     YPos = 146.629;
     ZPos = 262364.033;
@@ -163059,7 +163059,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7626;
+    Index = 7494;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163071,17 +163071,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7625;
+    MisObjID = 7493;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7628;
+    Index = 7496;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7626];
+    Objects = [7494];
     XPos = 123802.733;
     YPos = 146.629;
     ZPos = 262364.470;
@@ -163094,11 +163094,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7629;
+    Index = 7497;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7623];
+    Objects = [7491];
     XPos = 123914.940;
     YPos = 146.629;
     ZPos = 262333.669;
@@ -163112,8 +163112,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7630;
-    LinkTrId = 7631;
+    Index = 7498;
+    LinkTrId = 7499;
     XPos = 123451.717;
     YPos = 146.629;
     ZPos = 261020.914;
@@ -163128,7 +163128,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7631;
+    Index = 7499;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163140,15 +163140,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7630;
+    MisObjID = 7498;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7633;
-    LinkTrId = 7634;
+    Index = 7501;
+    LinkTrId = 7502;
     XPos = 123357.747;
     YPos = 146.629;
     ZPos = 261046.632;
@@ -163163,7 +163163,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7634;
+    Index = 7502;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163175,17 +163175,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7633;
+    MisObjID = 7501;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7636;
+    Index = 7504;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7634];
+    Objects = [7502];
     XPos = 123347.649;
     YPos = 146.629;
     ZPos = 261047.069;
@@ -163198,11 +163198,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7637;
+    Index = 7505;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7631];
+    Objects = [7499];
     XPos = 123459.856;
     YPos = 146.629;
     ZPos = 261016.268;
@@ -163216,8 +163216,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7638;
-    LinkTrId = 7639;
+    Index = 7506;
+    LinkTrId = 7507;
     XPos = 123697.240;
     YPos = 146.629;
     ZPos = 261742.561;
@@ -163232,7 +163232,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7639;
+    Index = 7507;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163244,15 +163244,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7638;
+    MisObjID = 7506;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7641;
-    LinkTrId = 7642;
+    Index = 7509;
+    LinkTrId = 7510;
     XPos = 123603.270;
     YPos = 146.629;
     ZPos = 261768.279;
@@ -163267,7 +163267,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7642;
+    Index = 7510;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163279,17 +163279,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7641;
+    MisObjID = 7509;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7644;
+    Index = 7512;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7642];
+    Objects = [7510];
     XPos = 123593.172;
     YPos = 146.629;
     ZPos = 261768.716;
@@ -163302,11 +163302,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7645;
+    Index = 7513;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7639];
+    Objects = [7507];
     XPos = 123705.379;
     YPos = 146.629;
     ZPos = 261737.915;
@@ -163319,10 +163319,10 @@ Group
 
   MCU_DateTime
   {
-    Index = 7646;
+    Index = 7514;
     Name = "Sunset";
     Desc = "";
-    Targets = [7612,7613,7620,7621,7628,7629,7644,7645,7636,7637];
+    Targets = [7480,7481,7488,7489,7496,7497,7512,7513,7504,7505];
     Objects = [];
     XPos = 123655.484;
     YPos = 146.629;
@@ -163340,10 +163340,10 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 7647;
+    Index = 7515;
     Name = "Translator Mission Begin";
     Desc = "";
-    Targets = [7648];
+    Targets = [7516];
     Objects = [];
     XPos = 123537.959;
     YPos = 146.629;
@@ -163357,10 +163357,10 @@ Group
 
   MCU_Timer
   {
-    Index = 7648;
+    Index = 7516;
     Name = "Trigger Timer";
     Desc = "";
-    Targets = [7646];
+    Targets = [7514];
     Objects = [];
     XPos = 123590.515;
     YPos = 146.629;
@@ -163376,8 +163376,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7650;
-    LinkTrId = 7651;
+    Index = 7518;
+    LinkTrId = 7519;
     XPos = 153368.644;
     YPos = 38.251;
     ZPos = 96172.340;
@@ -163392,7 +163392,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7651;
+    Index = 7519;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163404,15 +163404,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7650;
+    MisObjID = 7518;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7653;
-    LinkTrId = 7654;
+    Index = 7521;
+    LinkTrId = 7522;
     XPos = 153275.899;
     YPos = 38.251;
     ZPos = 96202.176;
@@ -163427,7 +163427,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7654;
+    Index = 7522;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163439,17 +163439,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7653;
+    MisObjID = 7521;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7656;
+    Index = 7524;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7654];
+    Objects = [7522];
     XPos = 153265.830;
     YPos = 38.251;
     ZPos = 96203.058;
@@ -163462,11 +163462,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7657;
+    Index = 7525;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7651];
+    Objects = [7519];
     XPos = 153376.570;
     YPos = 38.251;
     ZPos = 96167.340;
@@ -163480,8 +163480,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7658;
-    LinkTrId = 7659;
+    Index = 7526;
+    LinkTrId = 7527;
     XPos = 153109.934;
     YPos = 38.251;
     ZPos = 95509.491;
@@ -163496,7 +163496,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7659;
+    Index = 7527;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163508,15 +163508,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7658;
+    MisObjID = 7526;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7661;
-    LinkTrId = 7662;
+    Index = 7529;
+    LinkTrId = 7530;
     XPos = 153017.190;
     YPos = 38.251;
     ZPos = 95539.328;
@@ -163531,7 +163531,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7662;
+    Index = 7530;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163543,17 +163543,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7661;
+    MisObjID = 7529;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7664;
+    Index = 7532;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7662];
+    Objects = [7530];
     XPos = 153007.121;
     YPos = 38.251;
     ZPos = 95540.209;
@@ -163566,11 +163566,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7665;
+    Index = 7533;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7659];
+    Objects = [7527];
     XPos = 153117.861;
     YPos = 38.251;
     ZPos = 95504.491;
@@ -163584,8 +163584,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7666;
-    LinkTrId = 7667;
+    Index = 7534;
+    LinkTrId = 7535;
     XPos = 152795.763;
     YPos = 38.251;
     ZPos = 94747.718;
@@ -163600,7 +163600,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7667;
+    Index = 7535;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163612,15 +163612,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7666;
+    MisObjID = 7534;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7669;
-    LinkTrId = 7670;
+    Index = 7537;
+    LinkTrId = 7538;
     XPos = 152703.019;
     YPos = 38.251;
     ZPos = 94777.554;
@@ -163635,7 +163635,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7670;
+    Index = 7538;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163647,17 +163647,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7669;
+    MisObjID = 7537;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7672;
+    Index = 7540;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7670];
+    Objects = [7538];
     XPos = 152692.950;
     YPos = 38.251;
     ZPos = 94778.436;
@@ -163670,11 +163670,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7673;
+    Index = 7541;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7667];
+    Objects = [7535];
     XPos = 152803.690;
     YPos = 38.251;
     ZPos = 94742.718;
@@ -163688,8 +163688,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7674;
-    LinkTrId = 7675;
+    Index = 7542;
+    LinkTrId = 7543;
     XPos = 152498.470;
     YPos = 38.251;
     ZPos = 94035.655;
@@ -163704,7 +163704,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7675;
+    Index = 7543;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163716,15 +163716,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7674;
+    MisObjID = 7542;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7677;
-    LinkTrId = 7678;
+    Index = 7545;
+    LinkTrId = 7546;
     XPos = 152405.725;
     YPos = 38.251;
     ZPos = 94065.492;
@@ -163739,7 +163739,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7678;
+    Index = 7546;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163751,17 +163751,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7677;
+    MisObjID = 7545;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7680;
+    Index = 7548;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7678];
+    Objects = [7546];
     XPos = 152395.656;
     YPos = 38.251;
     ZPos = 94066.374;
@@ -163774,11 +163774,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7681;
+    Index = 7549;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7675];
+    Objects = [7543];
     XPos = 152506.396;
     YPos = 38.251;
     ZPos = 94030.655;
@@ -163791,10 +163791,10 @@ Group
 
   MCU_DateTime
   {
-    Index = 7682;
+    Index = 7550;
     Name = "Sunset";
     Desc = "";
-    Targets = [7656,7657,7664,7665,7672,7673,7680,7681];
+    Targets = [7524,7525,7532,7533,7540,7541,7548,7549];
     Objects = [];
     XPos = 152555.631;
     YPos = 38.251;
@@ -163812,10 +163812,10 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 7683;
+    Index = 7551;
     Name = "Translator Mission Begin";
     Desc = "";
-    Targets = [7684];
+    Targets = [7552];
     Objects = [];
     XPos = 152440.991;
     YPos = 38.251;
@@ -163829,10 +163829,10 @@ Group
 
   MCU_Timer
   {
-    Index = 7684;
+    Index = 7552;
     Name = "Trigger Timer";
     Desc = "";
-    Targets = [7682];
+    Targets = [7550];
     Objects = [];
     XPos = 152492.155;
     YPos = 38.251;
@@ -163848,8 +163848,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7686;
-    LinkTrId = 7687;
+    Index = 7554;
+    LinkTrId = 7555;
     XPos = 135861.334;
     YPos = 102.800;
     ZPos = 114661.672;
@@ -163864,7 +163864,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7687;
+    Index = 7555;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163876,15 +163876,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7686;
+    MisObjID = 7554;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7689;
-    LinkTrId = 7690;
+    Index = 7557;
+    LinkTrId = 7558;
     XPos = 135791.733;
     YPos = 102.800;
     ZPos = 114729.845;
@@ -163899,7 +163899,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7690;
+    Index = 7558;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163911,17 +163911,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7689;
+    MisObjID = 7557;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7692;
+    Index = 7560;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7690];
+    Objects = [7558];
     XPos = 135783.123;
     YPos = 102.800;
     ZPos = 114735.138;
@@ -163934,11 +163934,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7693;
+    Index = 7561;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7687];
+    Objects = [7555];
     XPos = 135866.186;
     YPos = 102.800;
     ZPos = 114653.654;
@@ -163952,8 +163952,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7694;
-    LinkTrId = 7695;
+    Index = 7562;
+    LinkTrId = 7563;
     XPos = 135490.472;
     YPos = 102.800;
     ZPos = 114331.281;
@@ -163968,7 +163968,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7695;
+    Index = 7563;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -163980,15 +163980,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7694;
+    MisObjID = 7562;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7697;
-    LinkTrId = 7698;
+    Index = 7565;
+    LinkTrId = 7566;
     XPos = 135431.667;
     YPos = 102.800;
     ZPos = 114397.039;
@@ -164003,7 +164003,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7698;
+    Index = 7566;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -164015,17 +164015,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7697;
+    MisObjID = 7565;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7700;
+    Index = 7568;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7698];
+    Objects = [7566];
     XPos = 135412.261;
     YPos = 102.800;
     ZPos = 114404.746;
@@ -164038,11 +164038,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7701;
+    Index = 7569;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7695];
+    Objects = [7563];
     XPos = 135495.324;
     YPos = 102.800;
     ZPos = 114323.263;
@@ -164056,8 +164056,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7702;
-    LinkTrId = 7703;
+    Index = 7570;
+    LinkTrId = 7571;
     XPos = 134658.959;
     YPos = 102.800;
     ZPos = 113608.326;
@@ -164072,7 +164072,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7703;
+    Index = 7571;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -164084,15 +164084,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7702;
+    MisObjID = 7570;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7705;
-    LinkTrId = 7706;
+    Index = 7573;
+    LinkTrId = 7574;
     XPos = 134589.358;
     YPos = 102.800;
     ZPos = 113676.499;
@@ -164107,7 +164107,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7706;
+    Index = 7574;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -164119,17 +164119,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7705;
+    MisObjID = 7573;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7708;
+    Index = 7576;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7706];
+    Objects = [7574];
     XPos = 134580.748;
     YPos = 102.800;
     ZPos = 113681.792;
@@ -164142,11 +164142,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7709;
+    Index = 7577;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7703];
+    Objects = [7571];
     XPos = 134663.811;
     YPos = 102.800;
     ZPos = 113600.308;
@@ -164160,8 +164160,8 @@ Group
   Effect
   {
     Name = "LandLight";
-    Index = 7710;
-    LinkTrId = 7711;
+    Index = 7578;
+    LinkTrId = 7579;
     XPos = 135071.248;
     YPos = 102.800;
     ZPos = 113958.607;
@@ -164176,7 +164176,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7711;
+    Index = 7579;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -164188,15 +164188,15 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7710;
+    MisObjID = 7578;
   }
   
 
   Effect
   {
     Name = "LandLight";
-    Index = 7713;
-    LinkTrId = 7714;
+    Index = 7581;
+    LinkTrId = 7582;
     XPos = 135001.648;
     YPos = 102.800;
     ZPos = 114026.780;
@@ -164211,7 +164211,7 @@ Group
 
   MCU_TR_Entity
   {
-    Index = 7714;
+    Index = 7582;
     Name = "Effect entity";
     Desc = "";
     Targets = [];
@@ -164223,17 +164223,17 @@ Group
     YOri = 0.00;
     ZOri = 0.00;
     Enabled = 1;
-    MisObjID = 7713;
+    MisObjID = 7581;
   }
   
 
   MCU_CMD_Effect
   {
-    Index = 7716;
+    Index = 7584;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7714];
+    Objects = [7582];
     XPos = 134993.037;
     YPos = 102.800;
     ZPos = 114032.073;
@@ -164246,11 +164246,11 @@ Group
 
   MCU_CMD_Effect
   {
-    Index = 7717;
+    Index = 7585;
     Name = "Start";
     Desc = "";
     Targets = [];
-    Objects = [7711];
+    Objects = [7579];
     XPos = 135076.100;
     YPos = 102.800;
     ZPos = 113950.589;
@@ -164263,10 +164263,10 @@ Group
 
   MCU_DateTime
   {
-    Index = 7718;
+    Index = 7586;
     Name = "Sunset";
     Desc = "";
-    Targets = [7692,7693,7700,7701,7716,7717,7708,7709];
+    Targets = [7560,7561,7568,7569,7584,7585,7576,7577];
     Objects = [];
     XPos = 135022.013;
     YPos = 102.800;
@@ -164284,10 +164284,10 @@ Group
 
   MCU_TR_MissionBegin
   {
-    Index = 7719;
+    Index = 7587;
     Name = "Translator Mission Begin";
     Desc = "";
-    Targets = [7720];
+    Targets = [7588];
     Objects = [];
     XPos = 134949.883;
     YPos = 102.800;
@@ -164301,10 +164301,10 @@ Group
 
   MCU_Timer
   {
-    Index = 7720;
+    Index = 7588;
     Name = "Trigger Timer";
     Desc = "";
-    Targets = [7718];
+    Targets = [7586];
     Objects = [];
     XPos = 134981.014;
     YPos = 102.800;
@@ -164314,6 +164314,388 @@ Group
     ZOri = 0.00;
     Time = 15;
     Random = 100;
+  }
+  
+
+  Flag
+  {
+    Name = "Flag";
+    Index = 7590;
+    LinkTrId = 7591;
+    XPos = 123884.325;
+    YPos = 146.629;
+    ZPos = 262218.649;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Model = "graphics\flag\windsock.mgm";
+    Desc = "";
+    Script = "LuaScripts\WorldObjects\Flags\windsock.txt";
+    Country = 0;
+    StartHeight = 0;
+    SpeedFactor = 1;
+    BlockThreshold = 1;
+    Radius = 1000;
+    Type = 0;
+    CountPlanes = 0;
+    CountVehicles = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7591;
+    Name = "Flag entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 123884.325;
+    YPos = 146.829;
+    ZPos = 262218.649;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7590;
+  }
+  
+
+  Flag
+  {
+    Name = "Flag";
+    Index = 7592;
+    LinkTrId = 7593;
+    XPos = 130731.511;
+    YPos = 146.629;
+    ZPos = 244062.700;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Model = "graphics\flag\windsock.mgm";
+    Desc = "";
+    Script = "LuaScripts\WorldObjects\Flags\windsock.txt";
+    Country = 0;
+    StartHeight = 0;
+    SpeedFactor = 1;
+    BlockThreshold = 1;
+    Radius = 1000;
+    Type = 0;
+    CountPlanes = 0;
+    CountVehicles = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7593;
+    Name = "Flag entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 130731.511;
+    YPos = 146.829;
+    ZPos = 244062.700;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7592;
+  }
+  
+
+  Flag
+  {
+    Name = "Flag";
+    Index = 7595;
+    LinkTrId = 7596;
+    XPos = 78440.034;
+    YPos = 146.629;
+    ZPos = 103253.785;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Model = "graphics\flag\windsock.mgm";
+    Desc = "";
+    Script = "LuaScripts\WorldObjects\Flags\windsock.txt";
+    Country = 0;
+    StartHeight = 0;
+    SpeedFactor = 1;
+    BlockThreshold = 1;
+    Radius = 1000;
+    Type = 0;
+    CountPlanes = 0;
+    CountVehicles = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7596;
+    Name = "Flag entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 78440.034;
+    YPos = 146.829;
+    ZPos = 103253.785;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7595;
+  }
+  
+
+  Flag
+  {
+    Name = "Flag";
+    Index = 7598;
+    LinkTrId = 7599;
+    XPos = 135044.581;
+    YPos = 146.629;
+    ZPos = 114165.027;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Model = "graphics\flag\windsock.mgm";
+    Desc = "";
+    Script = "LuaScripts\WorldObjects\Flags\windsock.txt";
+    Country = 0;
+    StartHeight = 0;
+    SpeedFactor = 1;
+    BlockThreshold = 1;
+    Radius = 1000;
+    Type = 0;
+    CountPlanes = 0;
+    CountVehicles = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7599;
+    Name = "Flag entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 135044.581;
+    YPos = 146.829;
+    ZPos = 114165.027;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7598;
+  }
+  
+
+  Flag
+  {
+    Name = "Flag";
+    Index = 7601;
+    LinkTrId = 7602;
+    XPos = 152252.336;
+    YPos = 146.629;
+    ZPos = 95209.031;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Model = "graphics\flag\windsock.mgm";
+    Desc = "";
+    Script = "LuaScripts\WorldObjects\Flags\windsock.txt";
+    Country = 0;
+    StartHeight = 0;
+    SpeedFactor = 1;
+    BlockThreshold = 1;
+    Radius = 1000;
+    Type = 0;
+    CountPlanes = 0;
+    CountVehicles = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7602;
+    Name = "Flag entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 152252.336;
+    YPos = 146.829;
+    ZPos = 95209.031;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7601;
+  }
+  
+
+  Flag
+  {
+    Name = "Flag";
+    Index = 7604;
+    LinkTrId = 7605;
+    XPos = 152980.337;
+    YPos = 146.629;
+    ZPos = 95090.855;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Model = "graphics\flag\windsock.mgm";
+    Desc = "";
+    Script = "LuaScripts\WorldObjects\Flags\windsock.txt";
+    Country = 0;
+    StartHeight = 0;
+    SpeedFactor = 1;
+    BlockThreshold = 1;
+    Radius = 1000;
+    Type = 0;
+    CountPlanes = 0;
+    CountVehicles = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7605;
+    Name = "Flag entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 152980.337;
+    YPos = 146.829;
+    ZPos = 95090.855;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7604;
+  }
+  
+
+  Vehicle
+  {
+    Name = "NDB";
+    Index = 7607;
+    LinkTrId = 7608;
+    XPos = 153376.506;
+    YPos = 34.240;
+    ZPos = 97175.450;
+    XOri = 0.76;
+    YOri = 24.07;
+    ZOri = 358.91;
+    Script = "LuaScripts\WorldObjects\vehicles\ndb.txt";
+    Model = "graphics\vehicles\ndb\ndb.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 1;
+    Callsign = 0;
+    PayloadId = 0;
+    WMMask = 1;
+    Fuel = 1;
+    Callnum = 0;
+    Skin = "";
+    RepairFriendlies = 0;
+    RehealFriendlies = 0;
+    RearmFriendlies = 0;
+    RefuelFriendlies = 0;
+    RepairTime = 0;
+    RehealTime = 0;
+    RearmTime = 0;
+    RefuelTime = 0;
+    MaintenanceRadius = 10;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7608;
+    Name = "NDB entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 153376.506;
+    YPos = 34.440;
+    ZPos = 97175.450;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7607;
+  }
+  
+
+  Vehicle
+  {
+    Name = "NDB";
+    Index = 7609;
+    LinkTrId = 7610;
+    XPos = 123948.169;
+    YPos = 146.541;
+    ZPos = 264172.237;
+    XOri = 0.20;
+    YOri = 29.97;
+    ZOri = 359.89;
+    Script = "LuaScripts\WorldObjects\vehicles\ndb.txt";
+    Model = "graphics\vehicles\ndb\ndb.mgm";
+    Desc = "";
+    Country = 0;
+    NumberInFormation = 0;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    CoopStart = 0;
+    Spotter = -1;
+    BeaconChannel = 1;
+    Callsign = 0;
+    PayloadId = 0;
+    WMMask = 1;
+    Fuel = 1;
+    Callnum = 0;
+    Skin = "";
+    RepairFriendlies = 0;
+    RehealFriendlies = 0;
+    RearmFriendlies = 0;
+    RefuelFriendlies = 0;
+    RepairTime = 0;
+    RehealTime = 0;
+    RearmTime = 0;
+    RefuelTime = 0;
+    MaintenanceRadius = 10;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7610;
+    Name = "NDB entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 123948.169;
+    YPos = 146.741;
+    ZPos = 264172.237;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7609;
   }
   
 
