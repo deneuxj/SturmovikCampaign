@@ -320,7 +320,7 @@ module Async =
     /// <summary>
     /// Repeatedly try to perform an action on a list of items. Return number of tries and list of failed items wrapped in Error, or OK if successful.
     /// </summary>
-    let keepTryingPaced retries wait action (items : 'F list) =
+    let keepTryingPaced retries (wait : int) action (items : 'F list) =
         let failed files =
             seq {
                 for file in files do
