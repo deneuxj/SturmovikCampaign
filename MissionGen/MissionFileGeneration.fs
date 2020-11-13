@@ -854,6 +854,15 @@ with
         // Region outlines and capitals
         let borders = MapGraphics.MapIcons.CreateRegions(store, lcStore, data)
 
+        // Other
+        let other = strategyMissionData.GetGroup("Other").CreateMcuList()
+        do
+            let subst = Mcu.substId <| store.GetIdMapper()
+            let lcSubst = Mcu.substLCId <| lcStore.GetIdMapper()
+            for mcu in other do
+                subst mcu
+                lcSubst mcu
+
         // Result
         let allGroups =
             [
@@ -872,6 +881,7 @@ with
                 yield! campRecons
                 yield serverInputMissionEnd.All
                 yield upcast borders
+                yield McuUtil.groupFromList other
             ]
 
         // Create directories in path to file, if needed

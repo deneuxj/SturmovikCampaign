@@ -49,8 +49,8 @@ Create non-directional beacons (ndb under "vehicles") with entities in a group n
 Set beacon channel to 1 in the advanced properties.
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
-7. Landing fires and other airfield scenery (opt.)
-Create landing fires in the "Static" group, using landfire effects with entities, and the associated logic to trigger them.
+7. Landing fires and other decorating objects (opt.)
+Create landing fires in a "Other" group, using landfire effects with entities, and the associated logic to trigger them.
 Don't forget to set them on the ground.
 The same can be done for landing light projectors, windsocks, signs on the airfield...
 
