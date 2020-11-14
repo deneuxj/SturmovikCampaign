@@ -566,7 +566,7 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
         match blockAt.TryGetValue(roundedPos) with
         | true, block ->
             let damages = CommonMethods.getDamaged block
-            let damages = CommonMethods.setItem part (T.Float.N(float health)) damages
+            let damages = CommonMethods.setItem part (T.Float.N(1.0 - float health)) damages
             let block = CommonMethods.setDamaged damages block
             let block = CommonMethods.setDurability (T.Integer.N(building.Properties.Durability)) block
             blockAt.[roundedPos] <- block
