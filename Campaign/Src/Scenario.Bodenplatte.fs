@@ -67,7 +67,7 @@ module BodenplatteInternal =
             MinStartDiff : float32<H>
         }
     with
-        static member Default =
+        static member Default(startDate : System.DateTime) =
             let typicalRange = 400.0e3f<M>
             let planeRunCost = 5.0f<M^3> / typicalRange
             let bombCost = 0.01f<M^3/K>
@@ -75,6 +75,13 @@ module BodenplatteInternal =
             let minActiveAirfieldResources = planeRunCost * 10.0f * typicalRange
             let minRegionBuildingCapacity = 1000.0f<M^3>
             let day = 24.0f<H>
+            let seasonShorten =
+                if startDate.Month <= 3 || startDate.Month >= 11 then
+                    2.0f<H>
+                elif startDate.Month <= 5 || startDate.Month >= 9 then
+                    1.0f<H>
+                else
+                    0.0f<H>
             {
                 TypicalRange = typicalRange
                 PlaneRunCost = planeRunCost
@@ -86,8 +93,8 @@ module BodenplatteInternal =
                 NumNewPlanes = 300.0f
                 NewTroopsPeriod = 3.0f * day
                 NumNewTroops = 1000.0f<MGF>
-                EarliestStart = 5.0f<H>
-                LatestStart = 19.0f<H>
+                EarliestStart = 5.0f<H> + seasonShorten
+                LatestStart = 19.0f<H> - seasonShorten
                 MinStartDiff = 5.0f<H>
             }
 

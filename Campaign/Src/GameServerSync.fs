@@ -368,7 +368,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     | Some war ->
                         let sctrl : IScenarioController =
                             let planeSet = BodenplatteInternal.PlaneSet.Default
-                            upcast(Bodenplatte(war.World, BodenplatteInternal.Constants.Default, planeSet))
+                            upcast(Bodenplatte(war.World, BodenplatteInternal.Constants.Default(war.World.StartDate), planeSet))
                         Some sctrl
                     | None ->
                         None
@@ -516,7 +516,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
                         let planeSet = BodenplatteInternal.PlaneSet.Default
                         let world = planeSet.Setup world
-                        world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default, planeSet)), 1.0f, 1.25f
+                        world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default(world.StartDate), planeSet)), 1.0f, 1.25f
                     let state0 = Init.mkWar world
                     sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
                     sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
