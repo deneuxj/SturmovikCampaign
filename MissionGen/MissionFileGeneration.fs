@@ -539,25 +539,37 @@ type MissionGenSettings =
 type IBuildingQuery =
     abstract BuildingDamages : (BuildingInstanceId * int * float32) list
     abstract GetBuildingInstance : BuildingInstanceId -> BuildingInstance
-    abstract GetOwner : BuildingInstanceId -> CountryId option
+    abstract GetOwnerAt : Vector2 -> CountryId option
 
 /// Create the MCUs for all static blocks or bridges within a convex hull, creating entities for those that need entities (typically objectives for AI ground attackers).
 let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings : IBuildingQuery, blocks, hull, hasEntity, filterDamages) =
+    // Round position of a block to nearest integer X and Z coordinates.
+    // This is needed in case the coordinates which come from JSON files do not match coordinates from the Mission file exactly.
+    // The loss of precision in the order of a meter in lookups shouldn't be a problem for buildings.
+    let inline roundPos block =
+        let v = Vector2.FromPos block
+        (round v.X, round v.Y)
+
+    // Round position of an OrientedPosition, i.e. typically a position from the world or war state data.
+    let roundPos2 (pos : OrientedPosition) =
+        (round pos.Pos.X, round pos.Pos.Y)
+
     let blockAt =
         blocks
-        |> Seq.map (fun block -> OrientedPosition.FromMission block, block)
+        |> Seq.map (fun block -> roundPos block, block)
         |> Seq.distinctBy fst
         |> Seq.mutableDict
     // Apply damages
     for (bId, part, health) in buildings.BuildingDamages |> Seq.filter filterDamages do
         let building = buildings.GetBuildingInstance(bId)
-        match blockAt.TryGetValue(building.Pos) with
+        let roundedPos = roundPos2 building.Pos
+        match blockAt.TryGetValue(roundedPos) with
         | true, block ->
             let damages = CommonMethods.getDamaged block
             let damages = CommonMethods.setItem part (T.Float.N(float health)) damages
             let block = CommonMethods.setDamaged damages block
             let block = CommonMethods.setDurability (T.Integer.N(building.Properties.Durability)) block
-            blockAt.[building.Pos] <- block
+            blockAt.[roundedPos] <- block
         | false, _ ->
             // No block at position. Maybe the mission file was edited after the campaign started. Bad, but not worth dying with an exception.
             logger.Warn(sprintf "Failed to set damage on building or bridge at %s. No building found at that position in the campaign mission file." (string building.Pos))
@@ -565,19 +577,18 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
     // Cull everything not in the hull
     let blocks =
         blockAt
-        |> Seq.filter (fun kvp -> kvp.Key.Pos.IsInConvexPolygon hull)
+        |> Seq.filter (fun kvp -> Vector2.FromPos(kvp.Value).IsInConvexPolygon hull)
         |> List.ofSeq
     // Set country
     let blocks =
         blocks
         |> List.map (fun kvp ->
-            let pos = kvp.Key
-            let country = buildings.GetOwner(BuildingInstanceId pos)
+            let country = buildings.GetOwnerAt(Vector2.FromPos kvp.Value)
             let block =
                 match country with
                 | Some country -> CommonMethods.setCountry (T.Integer.N (int country.ToMcuValue)) kvp.Value
                 | None -> kvp.Value
-            pos, block
+            OrientedPosition.FromMission block , block
         )
     // Create entities when needed, and create unique IDs
     let mcus =

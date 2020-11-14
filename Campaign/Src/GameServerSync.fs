@@ -234,10 +234,9 @@ module WarStateExt =
               member this.GetOwner(afId: AirfieldId): CountryId option = 
                   war.GetOwner(war.World.Airfields.[afId].Region)
                   |> Option.map war.World.GetAnyCountryInCoalition
-              member this.GetOwner(bId: Common.Buildings.BuildingInstanceId): CountryId option = 
-                  let (Common.Buildings.BuildingInstanceId pos) = bId
+              member this.GetOwnerAt(pos : Vector2): CountryId option = 
                   war.World.Regions.Values
-                  |> Seq.tryFind (fun region -> pos.Pos.IsInConvexPolygon(region.Boundary))
+                  |> Seq.tryFind (fun region -> pos.IsInConvexPolygon(region.Boundary))
                   |> Option.bind (fun region -> war.GetOwner(region.RegionId))
                   |> Option.map war.World.GetAnyCountryInCoalition
               member this.GetPlaneModel(plane: Common.PlaneModel.PlaneModelId): Common.PlaneModel.PlaneModel = 
