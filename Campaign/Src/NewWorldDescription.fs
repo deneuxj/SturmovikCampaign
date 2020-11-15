@@ -537,6 +537,8 @@ module Init =
     open SturmovikMission.DataProvider.Parsing
     open FSharp.Data
 
+    open Util.StringPatterns
+
     open SturmovikMission.Blocks.BlocksMissionData
     open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
 
@@ -545,7 +547,7 @@ module Init =
     type private JsonNetwork = JsonProvider<sampleFile>
 
     /// Extract BuildingProperties from a block inside a delimiting influence area
-    let inline extractBuildingProperties(building : ^Block, boundary : T.MCU_TR_InfluenceArea) =
+    let inline extractBuildingProperties(building : ^Block, boundary : T.MCU_TR_InfluenceArea, tryGetDurability) =
         let pos = Vector2.FromPos(building)
         let rot = float32(building |> getYOri |> valueOf)
         let vertices =
@@ -560,7 +562,9 @@ module Init =
             |> Map.toSeq
             |> Seq.map fst
             |> List.ofSeq
-        let durability = building |> getDurability |> valueOf
+        let durability =
+            tryGetDurability (CommonMethods.getScript(building) |> CommonMethods.valueOf)
+            |> Option.defaultValue (building |> getDurability |> valueOf)
         {
             Model = building |> getModel |> valueOf
             Script = building |> getScript |> valueOf
@@ -571,7 +575,7 @@ module Init =
         }
 
     /// Load a list of BuildingProperties from a .Mission file
-    let loadBuildingPropertiesList(path : string) =
+    let loadBuildingPropertiesList(path : string, tryGetDurability) =
         let data =
             try
                 T.GroupData.Parse(Stream.FromFile path)
@@ -600,7 +604,7 @@ module Init =
                     let pos = Vector2.FromPos block
                     match zones |> List.tryFind (fun (f, _) -> f pos) with
                     | Some (_, data) ->
-                        yield extractBuildingProperties(block, data)
+                        yield extractBuildingProperties(block, data, tryGetDurability)
                     | None ->   ()
             ]
         [ build blocks ; build bridges ]
@@ -880,11 +884,35 @@ module Init =
                 IndustryBuildings = buildings
             })
 
+    let tryGetDurability path =
+        if File.Exists path then
+            let lines = File.ReadAllLines path
+            // The csv file uses the names from the mission editor GUI, which does not always match the script name
+            let prefixes = [ "af_"; "arf_"; "arf_eu_"; "bf_" ]
+            let m =
+                dict [
+                    for line in lines do
+                        match List.ofSeq(line.Split ';') with
+                        | name :: AsInt32 durability :: _ ->
+                            yield name, durability
+                            for prefix in prefixes do
+                                if name.StartsWith prefix then
+                                    yield name.Substring(prefix.Length), durability
+                        | _ -> ()
+                ]
+            fun script ->
+                Path.GetFileNameWithoutExtension(script)
+                |> m.TryGetValue
+                |> Option.ofPair
+        else
+            fun _ -> None
+
     /// Load a scenario mission file and create a world description.
     let mkWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+        let tryGetDurability = tryGetDurability (Path.Combine(exeDir, "Config", "durability.csv"))
         let parkingSpots = loadBuildingParkingSpots (Path.Combine(exeDir, "Parking.Mission"))
-        let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"))
+        let buildingDb = loadBuildingPropertiesList (Path.Combine(exeDir, "Buildings.Mission"), tryGetDurability)
         let buildingDb =
             buildingDb
             |> List.map (fun building ->

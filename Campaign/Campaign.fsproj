@@ -37,6 +37,9 @@
     <Compile Include="Src\MissionResults.fs" />
     <Compile Include="Src\GameServerControl.fs" />
     <Compile Include="Src\GameServerSync.fs" />
+    <Content Include="Config\durability.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Config\RanksGermany.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
