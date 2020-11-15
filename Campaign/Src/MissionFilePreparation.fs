@@ -904,18 +904,21 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     let spots =
                         airfield.Facilities
                         |> List.collect (fun ((BuildingInstanceId pos) as bid) ->
-                            state.World.GetBuildingInstance(bid).Properties.ParkingSpots
-                            |> List.map (fun spot ->
-                                { spot with
-                                    Pos =
-                                        let rot = spot.Pos.Rotation + pos.Rotation
-                                        { spot.Pos with
-                                            Rotation = rot
-                                            Pos = spot.Pos.Pos.Rotate(rot) + pos.Pos
-                                            Altitude = pos.Altitude
-                                        }
-                                }
-                            )
+                            if state.GetBuildingFunctionalityLevel(bid) > 0.5f then
+                                state.World.GetBuildingInstance(bid).Properties.ParkingSpots
+                                |> List.map (fun spot ->
+                                    { spot with
+                                        Pos =
+                                            let rot = spot.Pos.Rotation + pos.Rotation
+                                            { spot.Pos with
+                                                Rotation = rot
+                                                Pos = spot.Pos.Pos.Rotate(rot) + pos.Pos
+                                                Altitude = pos.Altitude
+                                            }
+                                    }
+                                )
+                            else
+                                []
                         )
                         |> List.sortByDescending(fun spot -> spot.Radius)
                     let alongRunway =
