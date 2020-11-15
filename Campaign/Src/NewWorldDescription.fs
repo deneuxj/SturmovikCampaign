@@ -460,6 +460,10 @@ module private DynProps =
 
     let countries = cacheByKvp (fun world -> world.CountriesList)
 
+    let buildingProps = cacheByKvp (fun world ->
+        world.BuildingsList @ world.BridgesList
+        |> List.map (fun building -> building.Properties.Script, building.Properties)
+        |> List.distinctBy fst)
 
 type World with
     /// Mapping from RegionId to Region
@@ -482,6 +486,9 @@ type World with
 
     /// Mapping from country to the coalition they are belong to
     member this.Countries = DynProps.countries this
+
+    /// Mapping from building and bridge script to building properties
+    member this.BuildingProperties = DynProps.buildingProps this
 
     /// Find the region that covers a coordinate, or failing that the one with the closest boundary vertex.
     member this.FindRegionAt(pos : Vector2) =
@@ -909,7 +916,7 @@ module Init =
                 |> List.ofSeq)
         // Blocks inside regions
         let blocks =
-            missionData.GetGroup("Static").ListOfBlock
+            Seq.append (missionData.GetGroup("Static").ListOfBlock) (missionData.GetGroup("Airfields").ListOfBlock)
             |> Seq.filter (fun block ->
                 let pos = Vector2.FromPos block
                 regionBoundaries
