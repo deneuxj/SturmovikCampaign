@@ -245,6 +245,10 @@ module WarStateExt =
                   war.World.Regions.[rId] :> IRegion
               member this.Regions: IRegion list = 
                   war.World.Regions.Values |> Seq.map (fun region -> region :> IRegion) |> List.ofSeq
+              member this.GetBuildingDurability(script : string) =
+                  match war.World.BuildingProperties.TryGetValue(script) with
+                  | true, x -> Some x.Durability
+                  | false, _ -> None
         }
 
     type WarState with

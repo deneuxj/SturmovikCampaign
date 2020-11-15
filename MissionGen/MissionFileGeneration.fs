@@ -540,6 +540,7 @@ type IBuildingQuery =
     abstract BuildingDamages : (BuildingInstanceId * int * float32) list
     abstract GetBuildingInstance : BuildingInstanceId -> BuildingInstance
     abstract GetOwnerAt : Vector2 -> CountryId option
+    abstract GetBuildingDurability : ScriptName: string -> int option
 
 /// Create the MCUs for all static blocks or bridges within a convex hull, creating entities for those that need entities (typically objectives for AI ground attackers).
 let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings : IBuildingQuery, blocks, hull, hasEntity, filterDamages) =
@@ -579,7 +580,7 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
         blockAt
         |> Seq.filter (fun kvp -> Vector2.FromPos(kvp.Value).IsInConvexPolygon hull)
         |> List.ofSeq
-    // Set country
+    // Set country and durability
     let blocks =
         blocks
         |> List.map (fun kvp ->
@@ -588,7 +589,13 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
                 match country with
                 | Some country -> CommonMethods.setCountry (T.Integer.N (int country.ToMcuValue)) kvp.Value
                 | None -> kvp.Value
-            OrientedPosition.FromMission block , block
+            let block =
+                match buildings.GetBuildingDurability(CommonMethods.getScript block |> CommonMethods.valueOf) with
+                | Some d ->
+                    CommonMethods.setDurability (T.Integer.N d) block
+                | None ->
+                    block
+            OrientedPosition.FromMission block, block
         )
     // Create entities when needed, and create unique IDs
     let mcus =
