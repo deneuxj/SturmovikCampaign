@@ -60,6 +60,19 @@ type Rank =
         RankAbbrev : string
         Flights : int
     }
+with
+    static member FromFile(path) =
+        let lines = System.IO.File.ReadAllLines(path)
+        [
+            for line in lines do
+                let fields = line.Split(',')
+                match List.ofArray fields with
+                | rank :: abbrev :: flights :: _ ->
+                    match System.Int32.TryParse (flights.Trim()) with
+                    | true, n -> yield { RankName = rank.Trim(); RankAbbrev = abbrev.Trim(); Flights = n }
+                    | false, _ -> ()
+                | _ -> ()
+        ]
 
 type RanksDatabase =
     {

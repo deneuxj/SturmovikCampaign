@@ -1,0 +1,8 @@
+﻿Second Lieutenant, Slt, 0
+First Lieutenant, Flt, 2
+Captain, Cap, 5
+Major, Maj, 8
+Lieutenant Colonel, Ltc, 11
+Colonel, Col, 15
+Brigadier General, Brg, 20
+Major General, Mag, 30

@@ -1,0 +1,8 @@
+﻿Lieutenant, Lt, 0
+Senior Lieutenant, Sen, 2
+Captain, Cap, 5
+Major, Maj, 8
+Lieutenant Colonel, LtC, 11
+Colonel, Col, 15
+Major General, Mag, 20
+Lieutenant General, LtG, 30

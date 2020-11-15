@@ -37,6 +37,18 @@
     <Compile Include="Src\MissionResults.fs" />
     <Compile Include="Src\GameServerControl.fs" />
     <Compile Include="Src\GameServerSync.fs" />
+    <Content Include="Config\RanksGermany.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\RanksUSA.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\RanksBritain.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Config\RanksRussia.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Config\FirstNamesBritain.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

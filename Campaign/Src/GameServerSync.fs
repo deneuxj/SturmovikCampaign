@@ -380,16 +380,21 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     |> Seq.sortDescending
                     |> Seq.tryHead
                 let step0 =
-                    match controller0, war0 with
-                    | Some sctrl, Some state ->
-                        match latestStep with
-                        | Some path ->
-                            use reader = new StreamReader(path)
-                            let step = ScenarioStep.Deserialize(reader, sctrl.DeserializeStepData)
-                            Some step
-                        | None ->
+                    try
+                        match controller0 with
+                        | Some sctrl ->
+                            match latestStep with
+                            | Some path ->
+                                use reader = new StreamReader(path)
+                                let step = ScenarioStep.Deserialize(reader, sctrl.DeserializeStepData)
+                                Some step
+                            | None ->
+                                None
+                        | _ ->
                             None
-                    | _ ->
+                    with e ->
+                        logger.Error("Failed to load scenario state")
+                        logger.Debug(e)
                         None
 
                 let syncState =
@@ -489,19 +494,20 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     world
                     |> Result.map (fun world -> { world with WeatherDaysOffset = weatherDaysOffset })
                 // Load names
+                let countrySuffix country =
+                    match country with
+                    | GreatBritain -> "Britain"
+                    | Russia -> "Russia"
+                    | UnitedStates -> "USA"
+                    | Germany -> "Germany"
+                    | Italy -> "Italy"
                 let world =
                     world
                     |> Result.map (fun world ->
                         let names =
                             (PilotRanks.NameDatabase.Default, world.Countries.Keys)
                             ||> Seq.fold (fun names country ->
-                                let countrySuffix =
-                                    match country with
-                                    | GreatBritain -> "Britain"
-                                    | Russia -> "Russia"
-                                    | UnitedStates -> "USA"
-                                    | Germany -> "Germany"
-                                    | Italy -> "Italy"
+                                let countrySuffix = countrySuffix country
                                 let firstNames = Path.Combine("Config", sprintf "FirstNames%s.txt" countrySuffix)
                                 let lastNames = Path.Combine("Config", sprintf "LastNames%s.txt" countrySuffix)
                                 let names =
@@ -517,6 +523,23 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                 names
                             )
                         { world with Names = names }
+                    )
+                // Load ranks
+                let world =
+                    world
+                    |> Result.map  (fun world ->
+                        let ranks =
+                            (Map.empty, world.Countries.Keys)
+                            ||> Seq.fold (fun ranks country ->
+                                let countrySuffix = countrySuffix country
+                                let path = Path.Combine("Config", sprintf "Ranks%s.txt" countrySuffix)
+                                if File.Exists path then
+                                    let countryRanks = PilotRanks.Rank.FromFile path
+                                    Map.add country countryRanks ranks
+                                else
+                                    ranks
+                            )
+                        { world with Ranks = { Ranks = ranks } }
                     )
                 match world with
                 | Error e ->

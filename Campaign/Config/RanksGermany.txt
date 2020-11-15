@@ -1,0 +1,8 @@
+﻿Leutnant, Lt, 0
+Oberleutnant, Olt, 2
+Hauptmann, Hpt, 5
+Major, Maj, 8
+Oberstleutnant, Obl, 11
+Oberst, Obs, 15
+Generalmajor, Gm, 20
+Generalleutnant, Gl, 30
