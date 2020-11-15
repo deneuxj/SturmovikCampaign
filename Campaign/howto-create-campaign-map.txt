@@ -44,30 +44,35 @@ The taxi points leading to the runway are meant for the AIs, not players. Keep t
 Create multiple spawn points, typically one at each runway end. This allows the mission generator to pick a takeoff and landing direction that faces the wind.
 Airfields without runways are allowed. These can be used by players as alternative landing sites, but are otherwise ignored by the campaign system.
 
-6. Landing fires and other decorating objects (opt.)
+6. Additional parking spots
+Caponiers and hangars automatically provide parking spots for planes.
+To add more parking spots, use waypoints named "P" in the "Airfields" group.
+The direction indicates the orientation of the plane, and the radius specifies the maximum wingspan of the plane that will fit there.
+
+7. Landing fires and other decorating objects (opt.)
 Create landing fires in a "Other" group, using landfire effects with entities, and the associated logic to trigger them.
 Don't forget to set them on the ground.
 The same can be done for landing light projectors, windsocks, signs on the airfield...
 
-7. Non-directional beacons (opt.)
+8. Non-directional beacons (opt.)
 Create non-directional beacons (ndb under "vehicles") with entities in the group named "Other".
 Set beacon channel to 1 in the advanced properties.
 Keep the the number of NDBs low. The game puts them all in the same channel, so having too many of them will confuse players.
 
-8. Bridges
+9. Bridges
 Road and rail bridges should be located in groups named "BridgesHW" and "BridgesRW", respectively.
 They must not be located under the "Static" group (see below).
 
-9. Other buildings
+10. Other buildings
 Buildings of strategic value as well as "valueless" buildings should be under a group named "Static".
 
-10. Other data
+11. Other data
 Create a non-neutral fakefield outside of the play area, add at least a plane to it (any plane will do)
 Set the mission type to deathmatch.
 
-11. Countries
+12. Countries
 The participating countries and their coalition are edited in the dialog that open when clicking on "Countries..." in the mission's properties.
 Set all non-participating to Neutral.
 
-12. Briefing
+13. Briefing
 Write a short description of the object of the fight in the description of the mission.
