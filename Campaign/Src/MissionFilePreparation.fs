@@ -38,6 +38,8 @@ open Campaign.MissionSelection
 open Campaign.Missions
 open Campaign.SpacePartition
 open Campaign.NewWorldDescription
+open SturmovikMission.Blocks.BlocksMissionData
+open SturmovikMission.DataProvider
 
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
@@ -393,6 +395,7 @@ type PreparationSettings = {
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
 let mkMultiplayerMissionContent (random : System.Random) (settings : PreparationSettings) briefing (state : IWarStateQuery) (missions : MissionSelection option) =
+    let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile (state.World.Scenario + ".Mission"))
     let locator = TargetLocator(random, state)
     let warmedUp = true
 
@@ -901,7 +904,15 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         |> Seq.map (fun (plane, num) -> state.World.PlaneSet.[plane], int num)
                         |> Seq.sortByDescending (fun (plane, num) -> plane.WingSpan)
                         |> List.ofSeq
-                    let spots =
+                    let exposed =
+                        strategyMissionData.GetGroup("Airfields").ListOfMCU_Waypoint
+                        |> Seq.map (fun wp ->
+                            {
+                                Pos = OrientedPosition.FromMission wp
+                                Radius = float32(wp.GetArea().Value)
+                            })
+                        |> List.ofSeq
+                    let inFacilities =
                         airfield.Facilities
                         |> List.collect (fun ((BuildingInstanceId pos) as bid) ->
                             if state.GetBuildingFunctionalityLevel(bid) > 0.5f then
@@ -920,7 +931,6 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             else
                                 []
                         )
-                        |> List.sortByDescending(fun spot -> spot.Radius)
                     let alongRunway =
                         if airfield.IsActive then
                             let runway = airfield.PickAgainstWind(wind, 0.0f)
@@ -947,7 +957,10 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         else
                             []
                     let country = state.World.GetAnyCountryInCoalition(coalition)
-                    yield! assign country (planes, spots @ alongRunway)
+                    let spots =
+                        inFacilities @ alongRunway @ exposed
+                        |> List.sortByDescending(fun spot -> spot.Radius)
+                    yield! assign country (planes, spots)
                 | None ->
                     ()
         ]
