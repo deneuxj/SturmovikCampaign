@@ -854,7 +854,7 @@ type WarState
 [<RequireQualifiedAccess>]
 module Init =
     /// Create the initial status of the war, without planes or ground forces.
-    let mkWar (world : World) =
+    let mkWar (world : World, players : Player list, pilots : Pilot list) =
         let regionOwners =
             world.Regions.Values
             |> Seq.choose (fun desc-> desc.InitialOwner |> Option.map (fun owner -> desc.RegionId, owner))
@@ -863,8 +863,14 @@ module Init =
             world.Airfields.Keys
             |> Seq.map (fun afid -> afid, Seq.empty)
         let weather = getWeather (System.Random(world.Seed)) (world.StartDate + System.TimeSpan.FromDays(world.WeatherDaysOffset))
+        let players =
+            players
+            |> Seq.map (fun player -> player.Guid, player)
+        let pilots =
+            pilots
+            |> Seq.map (fun pilot -> pilot.Id, pilot)
         let war =
-            WarState(world, regionOwners, [], airfields, [], world.StartDate, weather, [], [])
+            WarState(world, regionOwners, [], airfields, [], world.StartDate, weather, players, pilots)
         war
 
 module IO =

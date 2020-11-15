@@ -119,3 +119,14 @@ let tryComputeRank (db : RanksDatabase) (pilot : Pilot) =
         ranks
         |> Seq.tryFindBack (fun rank -> rank.Flights <= completedFlights + pilot.InitialNumFlights)
     )
+
+let clearFlights (pilot : Pilot) =
+    let numFlights = countCompletedFlights pilot.Flights
+    let airKills =
+        pilot.Flights
+        |> List.sumBy (fun flight -> flight.AirKills)
+    { pilot with
+        Flights = []
+        InitialAirKills = pilot.InitialAirKills + airKills
+        InitialNumFlights = pilot.InitialNumFlights + numFlights
+    }

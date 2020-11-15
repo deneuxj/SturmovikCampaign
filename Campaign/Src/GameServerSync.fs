@@ -434,6 +434,15 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
     /// Archive current campaign, and create a new one
     member this.ResetCampaign(scenario : string) =
         async {
+            // Keep player and pilots database
+            if war.IsNone then
+                do! this.Init() |> Async.Ignore
+
+            let players, pilots =
+                match war with
+                | Some war -> war.Players, war.Pilots
+                | None -> [], []
+
             // Stop any ongoing activity
             this.Interrupt("Reset campaign", true)
 
@@ -517,7 +526,10 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         let planeSet = BodenplatteInternal.PlaneSet.Default
                         let world = planeSet.Setup world
                         world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default(world.StartDate), planeSet)), 1.0f, 1.25f
-                    let state0 = Init.mkWar world
+                    let pilots =
+                        pilots
+                        |> List.map (fun pilot -> Campaign.Pilots.clearFlights pilot)
+                    let state0 = Init.mkWar(world, players, pilots)
                     sctrl.InitAirfields(axisPlanesFactor, Axis, state0)
                     sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
                     sctrl.InitGroundForces(1.0f, Axis, state0)
