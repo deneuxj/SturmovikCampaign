@@ -911,6 +911,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                 Pos = OrientedPosition.FromMission wp
                                 Radius = float32(wp.GetArea().Value)
                             })
+                        |> Seq.filter (fun spot -> spot.Pos.Pos.IsInConvexPolygon airfield.Boundary)
                         |> List.ofSeq
                     let inFacilities =
                         airfield.Facilities
