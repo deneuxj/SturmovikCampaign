@@ -693,8 +693,10 @@ with
 
         // Static buildings and blocks
         let buildings =
+            let blocks =
+                Seq.append (strategyMissionData.GetGroup("Static").ListOfBlock) (strategyMissionData.GetGroup("Airfields").ListOfBlock)
             let isBuilding (bId : BuildingInstanceId, _, _) = not(isBridge bId)
-            mkStaticMCUs(store, data, strategyMissionData.GetGroup("Static").ListOfBlock, this.Boundary, inTargetedArea, isBuilding)
+            mkStaticMCUs(store, data, blocks, this.Boundary, inTargetedArea, isBuilding)
 
         // Bridges
         let bridges =
