@@ -31,6 +31,8 @@ open Campaign.Missions
 
 
 module BodenplatteInternal =
+    let logger = NLog.LogManager.GetCurrentClassLogger()
+
     type ImplData =
         {
             // The side that is launching attacks against ground assets (airfields, troops...)
@@ -189,7 +191,7 @@ module BodenplatteInternal =
             | Axis -> []
             | Allies -> [ this.IdB25 ]
 
-        member this.Setup(world: World): World = 
+        member this.Setup(world: World): World =
             let planes =
                 List.concat [ this.AllPlanesOf Axis; this.AllPlanesOf Allies ]
                 |> List.map PlaneModelId
@@ -201,7 +203,7 @@ module BodenplatteInternal =
                     
             let planeSet =
                 planes
-                |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> eprintfn "%s missing" (string plane); None))
+                |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> logger.Error(sprintf "%s missing" (string plane)); None))
 
             let planeAlts =
                 match planeDb.TryFind (PlaneModelId "b25"), planeDb.TryFind (PlaneModelId "a20") with
@@ -304,18 +306,12 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
                 war.SetNumPlanes(af.AirfieldId, plane.Id, factor * numPlanes)
         | expansive :: regular ->
             // Rear airfields get regular planes and the expensive plane
-            // Front airfields get regular planes and the cheap plane
+            // Other airfields get only regular planes
             let regular = List.rev regular
-            let cheap, regular = List.head regular, List.tail regular
             airfields
             |> List.iteri (fun i af ->
                 let planes =
                     regular
-                let planes =
-                    if distanceToEnemy.[af.Region] <= 2 then
-                        cheap :: planes
-                    else
-                        planes
                 let planes =
                     if war.World.Regions.[af.Region].IsEntry then
                         planes @ [expansive]
