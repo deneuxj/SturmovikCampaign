@@ -132,9 +132,13 @@ let resetCampaign reset =
     handleJson<{| Scenario: string |}>
         (fun data -> reset data.Scenario)
 
-let banPlayer (player : string) func =
-    handleJson<{| Days : int option; Hours : int option; Minutes : int option |}>
-        (fun data -> func(player, System.TimeSpan(defaultArg data.Days 0, defaultArg data.Hours 0, defaultArg data.Minutes 0)))
+let banPlayer func =
+    handleJson<{| Player : string; Days : int option; Hours : int option; Minutes : int option |}>
+        (fun data -> func(data.Player, System.TimeSpan(defaultArg data.Days 0, defaultArg data.Hours 0, defaultArg data.Minutes 0)))
+
+let unbanPlayer func =
+    handleJson<{| Player : string |}>
+        (fun data -> func(data.Player))
 
 /// Extract pilot search filter from URL args and run search
 let searchPilots handler (ctx : HttpContext) =
@@ -223,26 +227,18 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             path "/control/sync/once" >=> inControlRoom(context(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
             path "/control/sync/stop" >=> inControlRoom(context(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))
             path "/control/sync/interrupt" >=> inControlRoom(context(fun _ -> ctrl.InterruptSync() |> serializeAsync))
-            pathScan "/admin/players/%s/ban"
-                (fun player ->
-                    inControlRoom
-                        (context
-                            (banPlayer player
-                                (ctrl.BanPlayer >> serializeAsync)
-                            )
-                        )
-                )
+            path "/admin/ban" >=>
+                inControlRoom
+                    (context
+                        (banPlayer (ctrl.BanPlayer >> serializeAsync))
+                    )
         ]
         DELETE >=> choose [
-            pathScan "/admin/players/%s/ban"
-                (fun player ->
-                    inControlRoom
-                        (context
-                            (fun _ ->
-                                ctrl.ClearBan player
-                                |> serializeAsync)
-                        )
-                )
+            path "/admin/ban" >=>
+                inControlRoom
+                    (context
+                        (unbanPlayer (ctrl.ClearBan >> serializeAsync))
+                    )
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
         GET >=> pathStarts "/doc/" >=> Files.browse (System.IO.Path.Combine(System.Environment.CurrentDirectory))
