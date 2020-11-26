@@ -65,8 +65,10 @@ module BodenplatteInternal =
             EarliestStart : float32<H>
             /// Latest missiont time
             LatestStart : float32<H>
-            /// MinimumTime between mission starts
+            /// Minimum time between mission starts
             MinStartDiff : float32<H>
+            /// Maximum time between mission starts
+            MaxStartDiff : float32<H>
         }
     with
         static member Default(startDate : System.DateTime) =
@@ -95,9 +97,10 @@ module BodenplatteInternal =
                 NumNewPlanes = 300.0f
                 NewTroopsPeriod = 3.0f * day
                 NumNewTroops = 1000.0f<MGF>
-                EarliestStart = 5.0f<H> + seasonShorten
-                LatestStart = 19.0f<H> - seasonShorten
+                EarliestStart = 7.0f<H> + seasonShorten
+                LatestStart = 17.0f<H> - seasonShorten
                 MinStartDiff = 5.0f<H>
+                MaxStartDiff = 12.0f<H>
             }
 
     type PlaneSet =
@@ -1025,9 +1028,9 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
         member this.NewDay(war) =
             seq {
                 let random = System.Random(int32(war.Date.Ticks &&& 0x7FFFFFFFL))
-                let timeDiff = C.MinStartDiff + float32(random.NextDouble() * (24.0 - double C.MinStartDiff)) * 1.0f<H>
+                let timeDiff = C.MinStartDiff + float32(random.NextDouble() * double(C.MaxStartDiff - C.MinStartDiff)) * 1.0f<H>
                 let span(h : float32<H>) =
-                    System.TimeSpan(int h, int(60.0f * h % 1.0f<H>), 0)
+                    System.TimeSpan(int h, int(60.0f * (float32 h - floor(float32 h))), 0)
                 let newTime = war.Date + span timeDiff
                 let hour = 1.0f<H> * float32 newTime.Hour
                 let newTime =
