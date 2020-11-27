@@ -390,6 +390,25 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             else
                 war.SetGroundForces(coalition, region.RegionId, 0.0f<MGF>)
 
+    // Balance ground forces by giving the coalition with fewest troops the difference at the first rear region
+    let balanceGroundForces (axisFactor : float32, alliesFactor : float32, war : IWarState) =
+        let axisForces =
+            war.World.Regions.Values
+            |> Seq.sumBy (fun region -> war.GetGroundForces(Axis, region.RegionId))
+        let alliesForces =
+            war.World.Regions.Values
+            |> Seq.sumBy (fun region -> war.GetGroundForces(Allies, region.RegionId))
+        let axisUnder = alliesForces / alliesFactor - axisForces / axisFactor
+        let alliesUnder = -axisUnder
+        let balance(coalition, amount) =
+            war.World.Regions.Values
+            |> Seq.tryFind (fun region -> region.InitialOwner = Some coalition && region.IsEntry)
+            |> Option.iter (fun region -> war.SetGroundForces(coalition, region.RegionId, war.GetGroundForces(coalition, region.RegionId) + amount))
+        if axisUnder > 0.0f<MGF> then
+            balance(Axis, axisUnder * axisFactor)
+        if alliesUnder > 0.0f<MGF> then
+            balance(Allies, alliesUnder * alliesFactor)
+
     /// Try to make missions to attack generic enemy ground targets, with sufficient cover over target, and over home airfield
     let tryMakeAirRaids (war : IWarStateQuery) (adapter : TargetAdapter<'Target>) (description : string) (raidTargets : 'Target list) (friendly : CoalitionId) (budget : ForcesAvailability)  =
         let enemy = friendly.Other
@@ -1012,8 +1031,10 @@ type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
             }
 
     interface IScenarioController with
-        member this.InitGroundForces(forcesNumberCoefficient, coalition, war) =
-            initGroundForces(forcesNumberCoefficient, coalition, war)
+        member this.InitGroundForces(axisForcesNumberCoefficient, alliesForcesNumberCoefficient, war) =
+            initGroundForces(axisForcesNumberCoefficient, Axis, war)
+            initGroundForces(alliesForcesNumberCoefficient, Allies, war)
+            balanceGroundForces(axisForcesNumberCoefficient, alliesForcesNumberCoefficient, war)
 
         member this.InitAirfields(planeNumberCoefficient, coalition, war) =
             initAirfields planeNumberCoefficient coalition war
