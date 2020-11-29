@@ -535,6 +535,12 @@ type Controller(settings : GameServerControl.Settings) =
                                 channel.Reply(Ok(player.ToDto(war)))
                             | Error msg ->
                                 channel.Reply(Error msg)
+
+                            // Dispose sync object if we created one.
+                            match s.Sync, sync with
+                            | Some _, Ok sync -> sync.Dispose()
+                            | _ -> ()
+
                             return s
                         }
                 | Error e ->
