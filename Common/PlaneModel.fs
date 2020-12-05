@@ -73,11 +73,10 @@ type PlaneModel =
       ScriptModel : Vehicles.VehicleTypeData
       StaticBasename : string
       Cost : float32<E>
+      WeaponModsCosts : (int * float32<E>) list
       BombCapacity : float32<K>
       CargoCapacity : float32<K>
       Payloads : (PlaneRole * (int64*int)) list
-      BombLoads : (int * float32<K>) list
-      SpecialLoadsCosts : (int * float32<E>) list
       EmptyPayload : int
     }
 with

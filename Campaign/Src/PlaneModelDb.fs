@@ -48,26 +48,12 @@ with
                 PlaneRole.FromString payload.Payload.Role,
                 (int64 payload.Payload.ModMask, payload.Payload.Id))
             |> List.ofSeq
-        let bombloads =
-            json.Bombs
-            |> Seq.map (fun group ->
-                let offsets = group.Repeat.Offsets |> List.ofSeq
-                let loads =
-                    group.Repeat.Loads
-                    |> Seq.map (fun x -> x.Load.Id, 1.0f<K> * float32 x.Load.Weight)
-                    |> List.ofSeq
-                xTimes offsets loads)
-            |> List.concat
-        let specials =
-            json.Specials
-            |> Seq.map (fun group ->
-                let offsets = group.Repeat.Offsets |> List.ofSeq
-                let loads =
-                    group.Repeat.Loads
-                    |> Seq.map (fun x -> x.Load.Id, 1.0f<E> * float32 x.Load.Cost)
-                    |> List.ofSeq
-                xTimes offsets loads)
-            |> List.concat
+        let weaponModsCosts =
+            json.WeaponModsCosts
+            |> Seq.map (fun spec ->
+                spec.Mod, float32 spec.Cost * 1.0f<E>
+            )
+            |> List.ofSeq
 
         {
             Kind = PlaneType.FromString json.Kind
@@ -81,32 +67,20 @@ with
             BombCapacity = 1.0f<K> * float32 json.BombCapacity
             CargoCapacity = 1.0f<K> * float32 json.CargoCapacity
             Payloads = payloads
-            BombLoads = bombloads
-            SpecialLoadsCosts = specials
             EmptyPayload = 0
+            WeaponModsCosts = weaponModsCosts
         }
 
     member this.ToJson() : PlaneDbFile.Plane2 =
-        let bombs =
-            this.BombLoads
-            |> List.map (fun (id, w) ->
-                let load = new PlaneDbFile.Load(PlaneDbFile.Load2(id, decimal w))
-                let repeat = PlaneDbFile.Repeat([|0|], [|load|])
-                let bomb = PlaneDbFile.Bomb(repeat)
-                bomb)
-            |> Array.ofList
         let payloads =
             this.Payloads
             |> Seq.map (fun (role, (mask, id)) ->
                 PlaneDbFile.Payload(PlaneDbFile.Payload2(string role, int32 mask, id)))
             |> Array.ofSeq
-        let specials =
-            this.SpecialLoadsCosts
-            |> Seq.map (fun (id, cost) ->
-                let load = new PlaneDbFile.Load3(PlaneDbFile.Load4(id, decimal cost))
-                let repeat = PlaneDbFile.Repeat2([|0|], [|load|])
-                let bomb = PlaneDbFile.Special(repeat)
-                bomb)
+        let weaponModsCosts =
+            this.WeaponModsCosts
+            |> Seq.map (fun (modId, cost) ->
+                PlaneDbFile.WeaponModsCost(modId, decimal cost))
             |> Array.ofSeq
         let json =
             PlaneDbFile.Plane2(
@@ -121,28 +95,14 @@ with
                 decimal this.Cost,
                 decimal this.BombCapacity,
                 decimal this.CargoCapacity,
-                bombs,
                 payloads,
-                specials,
-                this.EmptyPayload
+                this.EmptyPayload,
+                weaponModsCosts
             )
         json
 
     member this.HasRole(role) = this.Roles |> List.exists ((=) role)
 
-    member this.GetPayLoadCost(payload, bombCost) =
-        let bombLoadWeight =
-            this.BombLoads
-            |> List.tryPick (fun (loadout, weight) -> if loadout = payload then Some weight else None)
-            |> Option.defaultValue 0.0f<K>
-
-        let loadoutCost =
-            this.SpecialLoadsCosts
-            |> List.tryPick (fun (loadout, cost) -> if loadout = payload then Some cost else None)
-            |> Option.defaultValue 0.0f<E>
-
-        let cost = bombLoadWeight * bombCost + loadoutCost
-        cost
 
 let planeDb =
     let location = System.Reflection.Assembly.GetExecutingAssembly().Location |> System.IO.Path.GetDirectoryName

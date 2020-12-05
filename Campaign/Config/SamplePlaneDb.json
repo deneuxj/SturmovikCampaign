@@ -1,69 +1,37 @@
 ﻿{
-   "Planes": [
-      {
-         "Plane": {
-            "Kind": "Attacker",
-            "Name": "Ju87",
-            "LogName": "ju87",
-            "Roles": [
-               "GroundAttacker"
-            ],
-            "Coalition": "Axis",
-            "Script": "a",
-            "Model": "a",
-            "Static": "b",
-            "Cost": 500.5,
-            "BombCapacity": 2000.1,
-            "CargoCapacity": 0.1,
-            "Bombs": [
-               {
-                  "Repeat": {
-                     "Offsets": [
-                        0,
-                        5,
-                        10
-                     ],
-                     "Loads": [
-                        {
-                           "Load": {
-                              "Id": 0,
-                              "Weight": 100.1
-                           }
-                        }
-                     ]
-                  }
-               }
-            ],
-            "Payloads": [
-               {
-                  "Payload": {
-                     "Role": "Attacker",
-                     "ModMask": 31,
-                     "Id": 12
-                  }
-               }
-            ],
-            "Specials": [
-               {
-                  "Repeat": {
-                     "Offsets": [
-                        0,
-                        5,
-                        10
-                     ],
-                     "Loads": [
-                        {
-                           "Load": {
-                              "Id": 0,
-                              "Cost": 100.5
-                           }
-                        }
-                     ]
-                  }
-               }
-            ],
-            "EmptyPayload": 0
-         }
+  "Planes": [
+    {
+      "Plane": {
+        "Kind": "Attacker",
+        "Name": "Ju87",
+        "LogName": "ju87",
+        "Roles": [
+          "GroundAttacker"
+        ],
+        "Coalition": "Axis",
+        "Script": "a",
+        "Model": "a",
+        "Static": "b",
+        "Cost": 500.5,
+        "BombCapacity": 2000.1,
+        "CargoCapacity": 0.1,
+        "Payloads": [
+          {
+            "Payload": {
+              "Role": "Attacker",
+              "ModMask": 31,
+              "Id": 12
+            }
+          }
+        ],
+        "EmptyPayload": 0,
+        "WeaponModsCosts": [
+          {
+            "Mod": 1,
+            "Cost": 123.45
+          }
+        ]
       }
-   ]
+    }
+  ]
 }
