@@ -20,8 +20,6 @@
     <Compile Include="Src\GameLogEvents.fs" />
     <Compile Include="Src\WatchLogs.fs" />
     <Compile Include="Src\PlaneModelDb.fs" />
-    <Compile Include="Src\PlaneSet.fs" />
-    <Compile Include="Src\Config.fs" />
     <Compile Include="Src\PilotRanks.fs" />
     <Compile Include="Src\NewWorldDescription.fs" />
     <Compile Include="Src\Pilots.fs" />
