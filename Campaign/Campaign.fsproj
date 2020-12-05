@@ -98,15 +98,6 @@
     <Content Include="Config\LastNamesUSA.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <None Include="Config\SubBlocksWWI.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Config\SubBlocks.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Config\SampleConfig.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="Config\PlaneSet-FC1.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
