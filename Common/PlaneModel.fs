@@ -106,7 +106,7 @@ with
 
     member this.MinRunwayLength =
         match this.Name with
-        | "me262" -> 1500.0f
+        | "me262" -> 2200.0f
         | _ -> 0.0f
 
     member this.StaticScriptModel : Vehicles.VehicleTypeData =
