@@ -491,7 +491,8 @@
             }
           }
         ],
-        "EmptyPayload": 10
+        "EmptyPayload": 10,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -620,7 +621,8 @@
             }
           }
         ],
-        "EmptyPayload": 5
+        "EmptyPayload": 5,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -655,7 +657,8 @@
             }
           }
         ],
-        "EmptyPayload": 9
+        "EmptyPayload": 9,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -690,7 +693,8 @@
             }
           }
         ],
-        "EmptyPayload": 15
+        "EmptyPayload": 15,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -717,7 +721,8 @@
             }
           }
         ],
-        "EmptyPayload": 12
+        "EmptyPayload": 12,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -744,7 +749,8 @@
             }
           }
         ],
-        "EmptyPayload": 3
+        "EmptyPayload": 3,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -771,7 +777,8 @@
             }
           }
         ],
-        "EmptyPayload": 22
+        "EmptyPayload": 22,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -798,7 +805,8 @@
             }
           }
         ],
-        "EmptyPayload": 72
+        "EmptyPayload": 72,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -825,7 +833,8 @@
             }
           }
         ],
-        "EmptyPayload": 87
+        "EmptyPayload": 87,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -852,7 +861,8 @@
             }
           }
         ],
-        "EmptyPayload": 104
+        "EmptyPayload": 104,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -879,7 +889,8 @@
             }
           }
         ],
-        "EmptyPayload": 24
+        "EmptyPayload": 24,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -963,7 +974,8 @@
             }
           }
         ],
-        "EmptyPayload": 18
+        "EmptyPayload": 18,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -998,7 +1010,8 @@
             }
           }
         ],
-        "EmptyPayload": 36
+        "EmptyPayload": 36,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1143,7 +1156,8 @@
             }
           }
         ],
-        "EmptyPayload": 11
+        "EmptyPayload": 11,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1178,7 +1192,8 @@
             }
           }
         ],
-        "EmptyPayload": 3
+        "EmptyPayload": 3,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1213,7 +1228,8 @@
             }
           }
         ],
-        "EmptyPayload": 3
+        "EmptyPayload": 3,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1248,7 +1264,8 @@
             }
           }
         ],
-        "EmptyPayload": 9
+        "EmptyPayload": 9,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1283,7 +1300,8 @@
             }
           }
         ],
-        "EmptyPayload": 9
+        "EmptyPayload": 9,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1318,7 +1336,8 @@
             }
           }
         ],
-        "EmptyPayload": 49
+        "EmptyPayload": 49,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1353,7 +1372,8 @@
             }
           }
         ],
-        "EmptyPayload": 1
+        "EmptyPayload": 1,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1543,7 +1563,8 @@
             }
           }
         ],
-        "EmptyPayload": 11
+        "EmptyPayload": 11,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1578,7 +1599,8 @@
             }
           }
         ],
-        "EmptyPayload": 11
+        "EmptyPayload": 11,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1605,7 +1627,8 @@
             }
           }
         ],
-        "EmptyPayload": 11
+        "EmptyPayload": 11,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1632,7 +1655,8 @@
             }
           }
         ],
-        "EmptyPayload": 13
+        "EmptyPayload": 13,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1659,7 +1683,8 @@
             }
           }
         ],
-        "EmptyPayload": 19
+        "EmptyPayload": 19,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1686,7 +1711,8 @@
             }
           }
         ],
-        "EmptyPayload": 34
+        "EmptyPayload": 34,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1713,7 +1739,8 @@
             }
           }
         ],
-        "EmptyPayload": 0
+        "EmptyPayload": 0,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1740,7 +1767,8 @@
             }
           }
         ],
-        "EmptyPayload": 2
+        "EmptyPayload": 2,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1767,7 +1795,8 @@
             }
           }
         ],
-        "EmptyPayload": 2
+        "EmptyPayload": 2,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1794,7 +1823,8 @@
             }
           }
         ],
-        "EmptyPayload": 2
+        "EmptyPayload": 2,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1821,7 +1851,8 @@
             }
           }
         ],
-        "EmptyPayload": 2
+        "EmptyPayload": 2,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1856,7 +1887,8 @@
             }
           }
         ],
-        "EmptyPayload": 4
+        "EmptyPayload": 4,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1891,7 +1923,8 @@
             }
           }
         ],
-        "EmptyPayload": 13
+        "EmptyPayload": 13,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1926,7 +1959,8 @@
             }
           }
         ],
-        "EmptyPayload": 7
+        "EmptyPayload": 7,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1953,7 +1987,8 @@
             }
           }
         ],
-        "EmptyPayload": 3
+        "EmptyPayload": 3,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -1988,7 +2023,8 @@
             }
           }
         ],
-        "EmptyPayload": 12
+        "EmptyPayload": 12,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -2023,7 +2059,8 @@
             }
           }
         ],
-        "EmptyPayload": 12
+        "EmptyPayload": 12,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -2058,7 +2095,8 @@
             }
           }
         ],
-        "EmptyPayload": 10
+        "EmptyPayload": 10,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -2093,7 +2131,8 @@
             }
           }
         ],
-        "EmptyPayload": 10
+        "EmptyPayload": 10,
+        "WeaponModsCosts": []
       }
     },
     {
@@ -2128,7 +2167,8 @@
             }
           }
         ],
-        "EmptyPayload": 9
+        "EmptyPayload": 9,
+        "WeaponModsCosts": []
       }
     }
   ]
