@@ -30,7 +30,7 @@ open Campaign.WarStateUpdate
 open Campaign.Missions
 
 
-module BodenplatteInternal =
+module WorldWar2Internal =
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     type ImplData =
@@ -221,11 +221,12 @@ module BodenplatteInternal =
         interface IScenarioWorldSetup with
             member this.Setup(world) = this.Setup(world)
 
-open BodenplatteInternal
+open WorldWar2Internal
 open FSharp.Json
 open Util.Json
 
-type Bodenplatte(world : World, C : Constants, PS : PlaneSet) =
+/// A campaign scenario implementation for WWII in the European and East front theaters: Bomb industry, airfields, harass and protect ground troops
+type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     let totalPlanes : Map<_, float32> -> float32 =

@@ -29,7 +29,7 @@
     <Compile Include="Src\MissionSelection.fs" />
     <Compile Include="Src\MissionFilePreparation.fs" />
     <Compile Include="Src\CampaignScenario.fs" />
-    <Compile Include="Src\Scenario.Bodenplatte.fs" />
+    <Compile Include="Src\Scenario.WorldWar2.fs" />
     <Compile Include="Src\DServerRConClient.fs" />
     <Compile Include="Src\MissionResults.fs" />
     <Compile Include="Src\GameServerControl.fs" />

@@ -371,8 +371,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     match war0 with
                     | Some war ->
                         let sctrl : IScenarioController =
-                            let planeSet = BodenplatteInternal.PlaneSet.Default
-                            upcast(Bodenplatte(war.World, BodenplatteInternal.Constants.Default(war.World.StartDate), planeSet))
+                            let planeSet = WorldWar2Internal.PlaneSet.Default
+                            upcast(WorldWar2(war.World, WorldWar2Internal.Constants.Default(war.World.StartDate), planeSet))
                         Some sctrl
                     | None ->
                         None
@@ -550,9 +550,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     Error e
                 | Ok world ->
                     let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
-                        let planeSet = BodenplatteInternal.PlaneSet.Default
+                        let planeSet = WorldWar2Internal.PlaneSet.Default
                         let world = planeSet.Setup world
-                        world, upcast(Bodenplatte(world, BodenplatteInternal.Constants.Default(world.StartDate), planeSet)), 1.0f, 1.25f
+                        world, upcast(WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate), planeSet)), 1.0f, 1.25f
                     let pilots =
                         pilots
                         |> List.map (fun pilot -> Campaign.Pilots.clearFlights pilot)
