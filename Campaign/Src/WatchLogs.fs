@@ -57,6 +57,9 @@ type System.IO.Directory with
                 async {
                     let watcher = new FileSystemWatcher(path, filter)
                     watcher.Created.Add(fun ev ->
+                        if token.IsCancellationRequested then
+                            watcher.EnableRaisingEvents <- false
+                        else
                         try
                             logger.Debug("Log file written: " + ev.Name)
                             let path = IO.Path.Combine(path, ev.Name)
@@ -64,7 +67,12 @@ type System.IO.Directory with
                                 if not (seen.Contains(path)) then
                                     seen.Add(path) |> ignore
                                     newFiles.Enqueue(path)
-                                    semaphore.Release() |> ignore)
+                                    try
+                                        semaphore.Release() |> ignore
+                                    with
+                                    | :? ObjectDisposedException ->
+                                        watcher.EnableRaisingEvents <- false
+                                    )
                         with exc ->
                             logger.Error("Exception in watcher.Created handler")
                             logger.Debug(exc))
@@ -77,6 +85,9 @@ type System.IO.Directory with
                     watcher.EnableRaisingEvents <- false
                     if not(token.IsCancellationRequested) then
                         return! producer(fun() -> watcher.Dispose(); logger.Debug("Previous FileSystemWatcher stopped"))
+                    else
+                        watcher.Dispose()
+                        logger.Debug("Last FileSystemWatcher stopped")
                 }
             let consumer() =
                 asyncSeq {
