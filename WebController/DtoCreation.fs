@@ -4,6 +4,7 @@ open System.Security.Cryptography
 open System.Text
 
 open Util
+open Util.StringPatterns
 
 open Campaign
 open Campaign.Common
@@ -155,8 +156,11 @@ module DtoCreation =
                 )
             let mapSE, mapNE =
                 match this.Map.ToLowerInvariant() with
-                | _
-                | "rheinland" -> { X = 30.0e3f; Y = 30.0e3f }, { X = 354.0e3f; Y = 431.0e3f }
+                | Contains "kuban" -> { X = 35000.0f; Y = 35000.0f }, { X = 323148.0f; Y = 450925.0f }
+                | Contains "moscow" -> { X = 0.0f; Y = 0.0f }, { X = 281600.0f; Y = 281600.0f }
+                | Contains "rheinland" -> { X = 30.0e3f; Y = 30.0e3f }, { X = 354.0e3f; Y = 431.0e3f }
+                | Contains "stalingrad" | _ ->
+                    { X = 0.0f; Y = 0.0f }, { X = 230400.0f; Y = 358400.0f }
             {
                 Scenario = this.Scenario
                 Map = this.Map
