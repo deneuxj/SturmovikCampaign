@@ -25,6 +25,7 @@ open FSharp.Control
 
 open Util
 open Util.Json
+open Util.StringPatterns
 open VectorExtension
 
 open Campaign.Common.BasicTypes
@@ -173,6 +174,8 @@ module BaseFileNames =
 
     /// Name of the world description file, one file for the entire campaign
     let worldFilename = "world.json"
+    /// Name of the scenario parameters file, one file for the entire campaign
+    let scenarioCtrlFilename = "scenarioParameters.json"
     /// Current state of the campaign
     let stateBaseFilename = "-state.json"
     /// Current campaign scenario step and its data
@@ -366,14 +369,18 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         None
 
                 // Restore scenario controller
-                // TODO. For now we just create a controller for Bodenplatte
                 let controller0 =
                     match war0 with
                     | Some war ->
-                        let sctrl : IScenarioController =
-                            let planeSet = WorldWar2Internal.PlaneSet.Default
-                            upcast(WorldWar2(war.World, WorldWar2Internal.Constants.Default(war.World.StartDate), planeSet))
-                        Some sctrl
+                        let path = Path.Combine(settings.WorkDir, scenarioCtrlFilename)
+                        try
+                            WorldWar2.LoadFromFile(war.World, path)
+                            :> IScenarioController
+                            |> Some
+                        with exc ->
+                            logger.Error("Failed to restore scenario controller")
+                            logger.Debug(exc)
+                            None
                     | None ->
                         None
 
@@ -550,7 +557,15 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     Error e
                 | Ok world ->
                     let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
-                        let planeSet = WorldWar2Internal.PlaneSet.Default
+                        let planeSet =
+                            match world.Map with
+                            | Contains "kuban" -> WorldWar2Internal.PlaneSet.KubanEarly
+                            | Contains "moscow" -> WorldWar2Internal.PlaneSet.Moscow
+                            | Contains "rheinland" -> WorldWar2Internal.PlaneSet.Bodenplatte
+                            | Contains "stalingrad" -> WorldWar2Internal.PlaneSet.StalingradEarly
+                            | _ ->
+                                logger.Error("Failed to determine planeset to use")
+                                WorldWar2Internal.PlaneSet.StalingradEarly
                         let world = planeSet.Setup world
                         world, upcast(WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate), planeSet)), 1.0f, 1.25f
                     let pilots =

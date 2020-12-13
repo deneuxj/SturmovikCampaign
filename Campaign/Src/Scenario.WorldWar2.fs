@@ -105,94 +105,106 @@ module WorldWar2Internal =
 
     type PlaneSet =
         {
-            IdMe262 : string
-            IdBf109g14 : string
-            IdFw190a8 : string
-            IdBf109k4 : string
-            IdFw190d9 : string
-            IdP51 : string
-            IdP38 : string
-            IdP47 : string
-            IdSpitfire : string
-            IdTempest : string
-            IdB25 : string
+            AxisPlanes : string list
+            AlliesPlanes : string list
         }
     with
-        static member Default =
+
+        static member Bodenplatte =
             {
-                IdMe262 = "me262"
-                IdBf109g14 = "bf109g14"
-                IdFw190a8 = "fw190a8"
-                IdBf109k4 = "bf109k4"
-                IdFw190d9 = "fw190d9"
-                IdP51 = "p51"
-                IdP38 = "p38"
-                IdP47 = "p47"
-                IdSpitfire = "spitfireMkIXe"
-                IdTempest = "Tempest MkV s2"
-                IdB25 = "b25"
+                AxisPlanes = [
+                    "me262"
+                    "bf109g14"
+                    "fw190a8"
+                    "bf109k4"
+                    "fw190d9"
+                ]
+                AlliesPlanes = [
+                    "p51"
+                    "p38"
+                    "p47"
+                    "spitfireMkIXe"
+                    "Tempest MkV s2"
+                    "b25"
+                ]
             }
 
-        member this.NewPlanesDelivery(numPlanes : float32) =
+        static member StalingradEarly =
+            {
+                AxisPlanes = [
+                    "bf109e7"
+                    "bf109f4"
+                    "mc202"
+                    "bf110e"
+                    "hs129b2"
+                    "ju87"
+                    "ju88"
+                    "he111h6"
+                    "ju52"
+                ]
+                AlliesPlanes = [
+                    "i16"
+                    "il2mod41"
+                    "il2mod42"
+                    "mig3"
+                    "p40"
+                    "yak1s69"
+                    "lagg3s29"
+                    "pe2s35"
+                    "u2vs"
+                ]
+            }
+
+        static member KubanEarly = PlaneSet.StalingradEarly
+
+        static member Moscow = PlaneSet.StalingradEarly
+
+        member this.NewPlanesDelivery(numPlanes : float32, planeSet : PlaneModelId -> PlaneModel) =
+            let forCoalition (coalition : CoalitionId) =
+                let planes = 
+                    this.AllPlanesOf(coalition)
+                    |> List.map (fun name -> planeSet(PlaneModelId name))
+                let totalCost =
+                    planes
+                    |> List.sumBy (fun plane -> plane.Cost)
+                planes
+                |> List.map (fun plane -> plane, numPlanes * plane.Cost / totalCost)
+
             Map.ofList [
-                Axis, [
-                    this.IdMe262, 0.1f * numPlanes
-                    this.IdBf109k4, 0.3f * numPlanes
-                    this.IdFw190d9, 0.2f * numPlanes
-                ]
-                Allies, [
-                    this.IdP51, 0.3f * numPlanes
-                    this.IdP38, 0.15f * numPlanes
-                    this.IdP47, 0.1f * numPlanes
-                    this.IdSpitfire, 0.15f * numPlanes
-                    this.IdTempest, 0.1f * numPlanes
-                    this.IdB25, 0.2f * numPlanes
-                ]
+                Axis, forCoalition Axis
+                Allies, forCoalition Allies
             ]
 
         member this.AllPlanesOf coalition =
             match coalition with
-            | Axis ->
-                [
-                    this.IdMe262
-                    this.IdBf109g14
-                    this.IdFw190a8
-                    this.IdBf109k4
-                    this.IdFw190d9
-                    this.IdB25
-                ]
-            | Allies ->
-                [
-                    this.IdP51
-                    this.IdP38
-                    this.IdP47
-                    this.IdSpitfire
-                    this.IdTempest
-                ]
+            | Axis -> this.AxisPlanes
+            | Allies -> this.AlliesPlanes
 
         /// Get the list of attackers of a coalition, preferred ones first
-        member this.Attackers =
-            function
-            | Axis -> [ this.IdMe262; this.IdFw190d9; this.IdFw190a8; this.IdBf109k4; this.IdBf109g14]
-            | Allies -> [ this.IdP38; this.IdP47; this.IdP51 ]
+        member this.WithRole(planeRole, coalition, planeSet : PlaneModelId -> PlaneModel) =
+            this.AllPlanesOf coalition
+            |> List.map (fun name -> planeSet (PlaneModelId name))
+            |> List.filter (fun plane -> List.contains planeRole plane.Roles)
+            |> List.sortByDescending (fun plane -> plane.Cost)
+
+        /// Get the list of attackers of a coalition, preferred ones first
+        member this.Attackers(coalition, planeSet) =
+            this.WithRole(PlaneRole.GroundAttacker, coalition, planeSet)
 
         /// Get the list of interceptors of a coalition, preferred ones first
-        member this.InterceptorsOf =
-            function
-            | Axis -> [ this.IdFw190d9; this.IdBf109k4; this.IdFw190a8; this.IdBf109g14 ]
-            | Allies -> [ this.IdP38; this.IdP51; this.IdTempest; this.IdP47; this.IdSpitfire ]
+        member this.InterceptorsOf(coalition, planeSet) =
+            this.WithRole(PlaneRole.Interceptor, coalition, planeSet)
 
         /// Get the list of fighters of a coalition, preferred ones first
-        member this.FightersOf =
-            function
-            | Axis -> [ this.IdBf109g14; this.IdFw190a8; this.IdBf109k4; this.IdFw190d9 ]
-            | Allies -> [ this.IdP51; this.IdSpitfire; this.IdTempest; this.IdP47; this.IdP38 ]
+        member this.FightersOf(coalition, planeSet) =
+            [ PlaneRole.Patroller; PlaneRole.Patroller ]
+            |> List.collect (fun role -> this.WithRole(role, coalition, planeSet))
+            |> List.distinct
+            |> List.sortByDescending (fun plane -> plane.Cost)
 
         /// Get the list of bombers of a coalition, preferred ones first
-        member this.BombersOf =
-            function
-            | Axis -> []
-            | Allies -> [ this.IdB25 ]
+        member this.BombersOf(coalition, planeSet) =
+            this.WithRole(PlaneRole.LevelBomber, coalition, planeSet)
 
         member this.Setup(world: World): World =
             let planes =
@@ -254,10 +266,10 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
             | { MissionType = GroundBattle _ } -> None
             | { MissionType = GroundForcesTransfer(coalition, start, forces) } -> Some(coalition, start, forces)
 
-    let attackersOf = PS.Attackers >> List.map PlaneModelId
-    let interceptorsOf = PS.InterceptorsOf >> List.map PlaneModelId
-    let fightersOf = PS.FightersOf >> List.map PlaneModelId
-    let bombersOf = PS.BombersOf >> List.map PlaneModelId
+    let attackersOf = fun coalition -> PS.Attackers(coalition, fun x -> world.PlaneSet.[x])
+    let interceptorsOf = fun coalition -> PS.InterceptorsOf(coalition, fun x -> world.PlaneSet.[x])
+    let fightersOf = fun coalition -> PS.FightersOf(coalition, fun x -> world.PlaneSet.[x])
+    let bombersOf = fun coalition -> PS.BombersOf(coalition, fun x -> world.PlaneSet.[x])
 
     let allPlanesOf coalition =
         [bombersOf; attackersOf; interceptorsOf; fightersOf]
@@ -279,7 +291,6 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
 
         let planes =
             allPlanesOf friendly
-            |> Seq.map (fun planeId -> war.World.PlaneSet.[planeId])
             |> Seq.filter (fun plane -> plane.Kind <> PlaneType.Transport)
             |> Seq.sortByDescending (fun plane -> plane.Cost)
             |> List.ofSeq
@@ -293,7 +304,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
         let avgCost =
             let allPlanes = allPlanesOf CoalitionId.Allies @ allPlanesOf CoalitionId.Axis
             allPlanes
-            |> Seq.map (fun plane -> war.World.PlaneSet.[plane].Cost)
+            |> Seq.map (fun plane -> plane.Cost)
             |> Seq.sum
             |> fun total -> total / (float32 (List.length allPlanes))
         
@@ -345,9 +356,9 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
         | Some rear ->
             let transport =
                 allPlanesOf friendly
-                |> List.filter (fun planeId -> war.World.PlaneSet.[planeId].Kind = PlaneType.Transport)
+                |> List.filter (fun plane -> plane.Kind = PlaneType.Transport)
             for plane in transport do
-                war.SetNumPlanes(rear.AirfieldId, plane, 20.0f)
+                war.SetNumPlanes(rear.AirfieldId, plane.Id, 20.0f)
         | None ->
             ()
 
@@ -470,7 +481,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                                     { StartAirfield = af.AirfieldId
                                       Objective = targetRegion
                                       MissionType = mType(adapter.MkGroundTarget target)
-                                      Plane = attacker
+                                      Plane = attacker.Id
                                       NumPlanes = numAttackers
                                     }
                                 for attackerMission, budget in missionAlternatives readyAttackAirfields budget mkAttackerMission targetPos do
@@ -481,7 +492,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                                     { StartAirfield = af.AirfieldId
                                       Objective = targetRegion
                                       MissionType = AreaProtection
-                                      Plane = fighter
+                                      Plane = fighter.Id
                                       NumPlanes = numFighters }
                                 for fighterMission, budget in missionAlternatives readyCAPAirfields budget mkFighterMission targetPos do
                                 for numInterceptors in [4; 3; 2] do
@@ -490,7 +501,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                                     { StartAirfield = af.AirfieldId
                                       Objective = attackerStart.Region
                                       MissionType = AreaProtection
-                                      Plane = interceptor
+                                      Plane = interceptor.Id
                                       NumPlanes = numInterceptors }
                                 // Do not use the same airfield as the CAP mission for the interception
                                 let readyCAPAirfields2 =
@@ -655,7 +666,6 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                             |> Seq.allPairs planes
                             |> Seq.allPairs numbers
                             |> Seq.tryPick (fun (planes, (plane, start)) ->
-                                let plane = war.World.PlaneSet.[plane]
                                 let distance =
                                     (war.World.Regions.[target].Position - start.Boundary.Head).Length() * 1.0f<M>
                                 if distance <= plane.MaxRange then
@@ -717,15 +727,15 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                         (af.Resources - totalPlanes af.Planes * planeRunCost) / planeRunCost
                     let allButTransport =
                         allPlanesOf friendly
-                        |> List.filter (fun planeId -> war.World.PlaneSet.[planeId].Kind <> PlaneType.Transport)
+                        |> List.filter (fun plane -> plane.Kind <> PlaneType.Transport)
                     for plane in allButTransport do
                         if excessPlanes > 0.0f && sustainable > 0.0f then
                             let numPlanes =
-                                sumPlanes budget.Airfields.[af1.AirfieldId].Planes [plane]
+                                sumPlanes budget.Airfields.[af1.AirfieldId].Planes [plane.Id]
                                 |> min excessPlanes
                                 |> int
                                 |> min 25
-                            let planeModel = war.World.PlaneSet.[plane]
+                            let planeModel = war.World.PlaneSet.[plane.Id]
                             let runwayLength =
                                 try
                                     af2.Runways
@@ -739,7 +749,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                                         Objective = af2.Region
                                         MissionType = PlaneTransfer af2.AirfieldId
                                         NumPlanes = numPlanes
-                                        Plane = plane
+                                        Plane = plane.Id
                                     }
                                 let budget2 = budget.TryCheckoutPlane(af1.AirfieldId, checkoutDataAir mission)
                                 match budget2 with
@@ -1066,7 +1076,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                     int(24.0f<H> * float32 (t - war.World.StartDate).Days / C.NewPlanesPeriod)
                 // Add new planes
                 if period war.Date < period newTime then
-                    let newPlanes = PS.NewPlanesDelivery(C.NumNewPlanes)
+                    let newPlanes = PS.NewPlanesDelivery(C.NumNewPlanes, fun x -> war.World.PlaneSet.[x])
                     for coalition in [Axis; Allies] do
                         let airfields =
                             war.World.Airfields.Values
@@ -1075,8 +1085,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                         let numAirfields = float32 airfields.Length
                         for af in airfields do
                             for plane, qty in newPlanes.[coalition] do
-                                let plane = PlaneModelId plane
-                                yield Some(AddPlane(af.AirfieldId, plane, qty / numAirfields)), "New plane delivery"
+                                yield Some(AddPlane(af.AirfieldId, plane.Id, qty / numAirfields)), "New plane delivery"
                 // Add new troops
                 let period (t : System.DateTime) =
                     int(24.0f<H> * float32 (t - war.World.StartDate).Days / C.NewTroopsPeriod)
@@ -1165,3 +1174,13 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
         member this.DeserializeStepData(json : string) =
             let implData : ImplData = Json.deserializeEx JsonConfig.IL2Default json
             implData :> obj
+
+    static member LoadFromFile(world : World, path : string) =
+        let json = System.IO.File.ReadAllText(path)
+        let constructorData : {| Constants : Constants; PlaneSet : PlaneSet |} =
+            Json.deserializeEx JsonConfig.IL2Default json
+        WorldWar2(world, constructorData.Constants, constructorData.PlaneSet)
+
+    member this.SaveToFile(path : string) =
+        let json = Json.serializeEx JsonConfig.IL2Default {| Constants = C; PlaneSet = PS |}
+        System.IO.File.WriteAllText(path, json)
