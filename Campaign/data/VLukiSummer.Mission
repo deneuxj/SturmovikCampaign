@@ -1,0 +1,306 @@
+# Mission File Version = 1.0;
+
+Options
+{
+  LCName = 0;
+  LCDesc = 1;
+  LCAuthor = 2;
+  PlayerConfig = "";
+  Time = 12:30:0;
+  Date = 1.6.1942;
+  HMap = "graphics\LANDSCAPE_velikie_luki_s\height.hini";
+  Textures = "graphics\LANDSCAPE_velikie_luki_s\textures.tini";
+  Forests = "graphics\LANDSCAPE_velikie_luki_s\trees\woods.wds";
+  Layers = "";
+  GuiMap = "vluki-summer";
+  SeasonPrefix = "su";
+  MissionType = 0;
+  AqmId = 0;
+  CloudLevel = 500;
+  CloudHeight = 200;
+  PrecLevel = 0;
+  PrecType = 0;
+  CloudConfig = "summer\00_clear_00\sky.ini";
+  SeaState = 0;
+  Turbulence = 0;
+  TempPressLevel = 0;
+  Temperature = 25;
+  Pressure = 760;
+  Haze = 0;
+  WindLayers
+  {
+    0 :     0 :     0;
+    500 :     0 :     0;
+    1000 :     0 :     0;
+    2000 :     0 :     0;
+    5000 :     0 :     0;
+  }
+  Countries
+  {
+    0 : 0;
+    101 : 1;
+    102 : 1;
+    103 : 1;
+    201 : 2;
+    202 : 2;
+    203 : 2;
+    301 : 3;
+    302 : 3;
+    303 : 3;
+    304 : 3;
+    305 : 3;
+    401 : 4;
+    402 : 4;
+  }
+}
+
+MCU_TR_InfluenceArea
+{
+  Index = 2;
+  Name = "Velikie Luki East";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 53073.443;
+  YPos = 61.757;
+  ZPos = 68704.438;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    52073.4, 67704.4;
+    54073.4, 68704.4;
+    52073.4, 69704.4;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 3;
+  Name = "Velikie Luki Center";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 53276.083;
+  YPos = 61.757;
+  ZPos = 65914.247;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    52275.6, 64913.8;
+    54275.6, 65913.8;
+    52275.6, 66913.8;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 4;
+  Name = "Velikie Luki West";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 53977.527;
+  YPos = 61.757;
+  ZPos = 64495.770;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    52977.1, 63495.3;
+    54977.1, 64495.3;
+    52977.1, 65495.3;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 5;
+  Name = "Bulynino";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 46659.722;
+  YPos = 107.904;
+  ZPos = 64702.141;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    45659.7, 63702.1;
+    47659.7, 64702.1;
+    45659.7, 65702.1;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 6;
+  Name = "Velikie Luki AF";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 56627.603;
+  YPos = 56.779;
+  ZPos = 71721.775;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    55627.6, 70721.8;
+    57627.6, 71721.8;
+    55627.6, 72721.8;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 7;
+  Name = "Lakomitsa";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 58242.103;
+  YPos = 123.276;
+  ZPos = 58321.756;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    57242.1, 57321.8;
+    59242.1, 58321.8;
+    57242.1, 59321.8;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 8;
+  Name = "Zitova";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 55331.524;
+  YPos = 142.475;
+  ZPos = 54929.764;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    54331.5, 53929.8;
+    56331.5, 54929.8;
+    54331.5, 55929.8;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 9;
+  Name = "Gribushino";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 50366.260;
+  YPos = 111.403;
+  ZPos = 58380.957;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    49366.3, 57381;
+    51366.3, 58381;
+    49366.3, 59381;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 10;
+  Name = "Botovo";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 45532.219;
+  YPos = 106.820;
+  ZPos = 56613.947;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    44532.2, 55613.9;
+    46532.2, 56613.9;
+    44532.2, 57613.9;
+  }
+}
+
+
+
+MCU_TR_InfluenceArea
+{
+  Index = 11;
+  Name = "Kochegarovo";
+  Desc = "";
+  Targets = [];
+  Objects = [];
+  XPos = 42303.684;
+  YPos = 126.511;
+  ZPos = 53429.944;
+  XOri = 0.00;
+  YOri = 0.00;
+  ZOri = 0.00;
+  Enabled = 1;
+  Country = 0;
+  Boundary
+  {
+    41303.7, 52429.9;
+    43303.7, 53429.9;
+    41303.7, 54429.9;
+  }
+}
+
+
+# end of file
