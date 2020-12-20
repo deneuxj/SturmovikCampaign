@@ -152,6 +152,24 @@
     <None Include="Config\Rails-rheinland-autumn.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Config\Roads-stalingrad-summer-1942.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\Rails-stalingrad-summer-1942.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\Roads-stalingrad-autumn-1942.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\Rails-stalingrad-autumn-1942.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\Roads-stalingrad-1942.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Config\Rails-stalingrad-1942.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="MyScripts\Configuration.fsx" />
     <None Include="MyScripts\Select.fsx" />
     <None Include="MyScripts\Init.fsx" />
@@ -208,6 +226,10 @@
     </None>
     <None Include="data\Eindhoven.Mission">
       <Link>Eindhoven.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="data\StalingradSummer.Mission">
+      <Link>StalingradSummer.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
