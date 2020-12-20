@@ -556,7 +556,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 | Error e ->
                     Error e
                 | Ok world ->
-                    let (world, sctrl : IScenarioController, axisPlanesFactor, alliesPlanesFactor) =
+                    let (world, sctrl : IScenarioController, saveScenarioControoler, axisPlanesFactor, alliesPlanesFactor) =
                         let planeSet =
                             match world.Map with
                             | Contains "kuban" -> WorldWar2Internal.PlaneSet.KubanEarly
@@ -567,7 +567,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                 logger.Error("Failed to determine planeset to use")
                                 WorldWar2Internal.PlaneSet.StalingradEarly
                         let world = planeSet.Setup world
-                        world, upcast(WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate), planeSet)), 1.0f, 1.25f
+                        let ww2 = WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate), planeSet)
+                        world, upcast(ww2), (fun() -> ww2.SaveToFile(wkPath(scenarioCtrlFilename))), 1.0f, 1.25f
                     let pilots =
                         pilots
                         |> List.map (fun pilot -> Campaign.Pilots.clearFlights pilot)
@@ -576,13 +577,14 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     sctrl.InitAirfields(alliesPlanesFactor, Allies, state0)
                     sctrl.InitGroundForces(1.0f, 1.0f, state0)
                     let step = sctrl.Start(state0, settings.SimulatedDuration * 1.0f<H>)
-                    Ok(world, state0, step, sctrl)
+                    Ok(world, state0, step, sctrl, saveScenarioControoler)
 
-            let writeData (world : World, state0 : WarState, step0 : ScenarioStep, sctrl : IScenarioController) =
+            let writeData (world : World, state0 : WarState, step0 : ScenarioStep, sctrl : IScenarioController, saveScenarioController) =
                 try
                     world.SaveToFile(wkPath worldFilename)
                     state0.SaveToFile(wkPath(getStateFilename 0))
                     step0.SaveToFile(wkPath(getStepFilename 0))
+                    saveScenarioController()
                     controller <- Some sctrl
                     war <- Some state0
                     step <- Some step0
