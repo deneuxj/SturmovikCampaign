@@ -166,7 +166,7 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
             match state.World.Map.ToLowerInvariant() with
             | "moscow-winter" | "moscow-autumn" -> "moscow.bin"
             | "kuban-spring" | "kuban-summer" | "kuban-autumn" -> "kuban.bin"
-            | "stalingrad-winter" | "stalingrad-summer" | "stalingrad-autumn" -> "stalingrad.bin"
+            | "stalingrad-1942" | "stalingrad-summer-1942" | "stalingrad-autumn-1942" -> "stalingrad.bin"
             | "rheinland-summer" | "rheinland-winter" | "rheinland-spring" | "rheinland-autumn" -> "rheinland.bin"
             | unsupported ->
                 failwithf "Unsupported map '%s'" unsupported
