@@ -60,6 +60,7 @@ type Settings =
         MaxTrainsPerCoalition : int
         MaxTruckConvoysPerCoalition : int
         MaxActivePatrolsPerCoalition : int
+        MaxAttackPlanesCpuCost : float32
         MaxAAGuns : int
     }
 with
@@ -107,6 +108,7 @@ module IO =
             max_trains : int option
             max_truck_convoys : int option
             max_active_patrols : int option
+            max_attack_planes_cpu : int option
             max_aa : int option
         }
     with
@@ -133,6 +135,7 @@ module IO =
                 MaxTrainsPerCoalition = defaultArg this.max_trains 3
                 MaxTruckConvoysPerCoalition = defaultArg this.max_truck_convoys 2
                 MaxActivePatrolsPerCoalition = defaultArg this.max_active_patrols 4
+                MaxAttackPlanesCpuCost = 100.0f * float32(defaultArg this.max_attack_planes_cpu 16)
                 MaxAAGuns = defaultArg this.max_aa 1000
             }
 
@@ -164,6 +167,7 @@ module IO =
                 max_active_patrols = None
                 max_trains = None
                 max_truck_convoys = None
+                max_attack_planes_cpu = None
                 max_aa = None
             }
         let json = Json.serialize content

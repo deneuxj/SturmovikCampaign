@@ -683,6 +683,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         {
                             MaxAiPatrolPlanes = settings.MaxActivePatrolsPerCoalition
                             MaxAntiAirCannons = settings.MaxAAGuns
+                            MaxAttackPlanesCpuCost = settings.MaxAttackPlanesCpuCost
                             OutFilename = settings.MissionFilePath
                             Planes = state.World.PlaneSet.Values |> List.ofSeq
                         }

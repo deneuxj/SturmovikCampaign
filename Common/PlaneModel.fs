@@ -115,6 +115,13 @@ with
             Script = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.txt" this.StaticBasename
         }
 
+    member this.CpuCost =
+        match this.Kind with
+        | PlaneType.Attacker -> 200.0f
+        | PlaneType.Bomber -> 400.0f
+        | PlaneType.Fighter -> 100.0f
+        | PlaneType.Transport -> 400.0f
+
 /// <summary>
 /// Range of plane modifications: Can be a single value or an interval (both bounds included)
 /// </summary>

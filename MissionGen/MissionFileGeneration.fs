@@ -532,6 +532,7 @@ type MissionGenSettings =
     {
         MaxAntiAirCannons : int
         MaxAiPatrolPlanes : int
+        MaxAttackPlanesCpuCost : float32
         Planes : PlaneModel list
         OutFilename : string
     }
@@ -749,7 +750,26 @@ with
         let allAttacks =
             let attacksByCoalition =
                 this.AiAttacks
-                |> List.groupBy (fun attack -> attack.Country)
+                |> List.groupBy (fun attack -> data.GetCountryCoalition(attack.Country))
+                |> List.map (fun (coalition, attacks) ->
+                    let _, attacks =
+                        ((settings.MaxAttackPlanesCpuCost, []), attacks)
+                        ||> List.fold (fun (available, retained) attack ->
+                            let affordable = int(available / attack.Attacker.CpuCost)
+                            let numPlanes = min attack.NumPlanes affordable
+                            let attack =
+                                { attack with
+                                    NumPlanes = numPlanes
+                                }
+                            let available = available - (float32 numPlanes) * attack.Attacker.CpuCost
+                            let retained =
+                                if numPlanes >= 0 then
+                                    attack :: retained
+                                else
+                                    retained
+                            available, retained)
+                    coalition, List.rev attacks
+                )
                 |> List.collect (fun (coalition, attacks) ->
                     attacks
                     |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore)))
