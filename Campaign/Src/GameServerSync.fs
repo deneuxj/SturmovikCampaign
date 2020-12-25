@@ -49,6 +49,7 @@ type SyncState =
     | ResavingMission
     | RunningMission of StartTime: DateTime * EndTime: DateTime
     | ExtractingResults of Pattern: string
+    | SkippingMission
     | AdvancingScenario
     | ErrorState of Message: string * InnerState: SyncState option
 with
@@ -59,6 +60,7 @@ with
         | PreparingMission -> "Preparing mission"
         | ResavingMission -> "Resaving mission"
         | ExtractingResults _ -> "Extracting results"
+        | SkippingMission -> "Skipping mission"
         | AdvancingScenario -> "Advancing scenario"
         | RunningMission(_, endTime) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes)
         | ErrorState(msg, state) ->
@@ -670,6 +672,20 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         async {
             match controller, step, war with
             | Some(ctrl), Some(Ongoing stepData), Some state ->
+                let isPlayable =
+                    [Axis; Allies]
+                    |> Seq.forall(fun coalition ->
+                        let totalFighters =
+                            state.AirfieldsOfCoalition coalition
+                            |> Seq.sumBy(fun af ->
+                                state.GetNumPlanes(af.AirfieldId)
+                                |> Map.toSeq
+                                |> Seq.sumBy (fun (plane, num) -> if state.World.PlaneSet.[plane].Kind = Common.PlaneModel.PlaneType.Fighter then num else 0.0f)
+                            )
+                        totalFighters > 100.0f)
+                if not isPlayable then
+                    return Ok(false)
+                else
                 try
                     let seed = this.Seed
                     let selection = ctrl.TrySelectMissions(stepData, state, seed, 25)
@@ -696,7 +712,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         state.Weather,
                         state.World.Bridges.ContainsKey,
                         state.AsMissionBuilderData(1.0f<H> * float32 missionPrepSettings.MissionLength.TotalHours))
-                    return Ok()
+                    return Ok(true)
                 with
                 e -> return (Error e.Message)
             | _ ->
@@ -884,6 +900,18 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 return (Error "No war state")
         }
 
+    /// Prepare to advance campaign without running a mission
+    member this.SkipMission() =
+        async {
+            let index = getCurrentIndex settings.WorkDir + 1
+            let effectsFile = wkPath(getEffectsFilename index)
+            use writer = new StreamWriter(effectsFile, false)
+            let effects : (string * WarStateUpdate.Commands option * WarStateUpdate.Results list)[] = [||]
+            let json = Json.serializeEx JsonConfig.IL2Default effects
+            writer.Write(json)
+            return Ok()
+        }
+
     /// Check current state and act accordingly
     member this.ResumeAsync(?restartsLeft) =
         let restartsLeft = defaultArg restartsLeft maxRetries
@@ -905,8 +933,13 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                 return Error "Failed to prepare mission in time"
                         }
                     match status with
-                    | Ok() ->
+                    | Ok(true) ->
                         state <- Some ResavingMission
+                        logger.Info state
+                        this.SaveState()
+                        return! this.ResumeAsync()
+                    | Ok(false) ->
+                        state <- Some SkippingMission
                         logger.Info state
                         this.SaveState()
                         return! this.ResumeAsync()
@@ -961,6 +994,18 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         return! this.ResumeAsync()
                     | Error msg ->
                         // Result extraction failed, stop sync.
+                        return this.Die(msg)
+
+                | Some(SkippingMission) ->
+                    let! status = this.SkipMission()
+                    match status with
+                    | Ok() ->
+                        state <- Some AdvancingScenario
+                        logger.Info state
+                        this.SaveState()
+                        return! this.ResumeAsync()
+                    | Error msg ->
+                        // Should not happen, as skipping is expected to succeed.
                         return this.Die(msg)
 
                 | Some AdvancingScenario ->

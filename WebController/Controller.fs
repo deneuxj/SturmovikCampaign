@@ -247,6 +247,7 @@ type Controller(settings : GameServerControl.Settings) =
                         | Some(GameServerSync.PreparingMission _) -> "Preparing mission"
                         | Some GameServerSync.ResavingMission -> "Resaving missions"
                         | Some(GameServerSync.ExtractingResults _) -> "Extracting results"
+                        | Some(GameServerSync.SkippingMission) -> "Skipping mission"
                         | Some GameServerSync.AdvancingScenario -> "Advancing scenario"
                         | Some(GameServerSync.RunningMission(_, endTime)) -> sprintf "Running mission (%03d minutes left)" (int (endTime - System.DateTime.UtcNow).TotalMinutes)
                         | Some(GameServerSync.ErrorState(msg, _)) -> sprintf "Error: %s" msg
