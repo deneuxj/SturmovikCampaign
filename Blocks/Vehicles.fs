@@ -911,6 +911,12 @@ type VehicleDataTypeStore() =
           Model = fighter.GetModel().Value
         }
 
+    member this.hurricanemk2 =
+        let fighter = planes.["hurricanemkii"]
+        { Script = fighter.GetScript().Value
+          Model = fighter.GetModel().Value
+        }
+
     member this.b25 =
         let fighter = planes.["b25draf"]
         { Script = fighter.GetScript().Value

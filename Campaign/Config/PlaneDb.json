@@ -868,6 +868,51 @@
     {
       "Plane": {
         "Kind": "Fighter",
+        "Name": "hurricane mk.II",
+        "LogName": "hurricane mk.ii",
+        "Roles": [
+          "Patroller",
+          "GroundAttacker",
+          "Interceptor"
+        ],
+        "Coalition": "Allies",
+        "Script": "LuaScripts\\WorldObjects\\Planes\\hurricanemkii.txt",
+        "Model": "graphics\\planes\\hurricanemkii\\hurricanemkii.mgm",
+        "Static": "tempestmkvs2",
+        "Cost": 825.0,
+        "BombCapacity": 200,
+        "CargoCapacity": 200,
+        "Payloads": [
+          {
+            "Payload": {
+              "Role": "Interceptor",
+              "ModMask": 69,
+              "Id": 12
+            }
+          },
+          {
+            "Payload": {
+              "Role": "Patroller",
+              "ModMask": 33,
+              "Id": 17
+            }
+          },
+          {
+            "Payload": {
+              "Role": "GroundAttacker",
+              "ModMask": 33,
+              "Id": 26
+            }
+          }
+        ],
+        "EmptyPayload": 27,
+        "WeaponModsCosts": [
+        ]
+      }
+    },
+    {
+      "Plane": {
+        "Kind": "Fighter",
         "Name": "mig3",
         "LogName": "mig-3",
         "Roles": [
