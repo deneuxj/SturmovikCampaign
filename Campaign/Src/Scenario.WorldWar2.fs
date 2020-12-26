@@ -338,7 +338,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                     planes
                     |> List.filter (fun plane ->
                         af.Runways
-                        |> List.exists (fun rw -> (rw.End - rw.Start).Length() >= plane.MinRunwayLength))
+                        |> List.exists (fun rw -> (rw.End - rw.Start).Length() * 1.0f<M> >= plane.MinRunwayLength))
                 let totalInvCost =
                     planes
                     |> List.sumBy (fun plane -> 1.0f / plane.Cost)
@@ -740,9 +740,9 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                             let runwayLength =
                                 try
                                     af2.Runways
-                                    |> List.map (fun rw -> (rw.End - rw.Start).Length())
+                                    |> List.map (fun rw -> 1.0f<M> * (rw.End - rw.Start).Length())
                                     |> List.max
-                                with _ -> 0.0f
+                                with _ -> 0.0f<M>
                             if numPlanes > 0 && planeModel.MinRunwayLength <= runwayLength then
                                 let mission =
                                     {

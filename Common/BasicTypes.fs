@@ -41,6 +41,10 @@ type K
 /// Distance
 type M
 
+let KM = 1000.0f<M>
+
+let KPH = KM / 1.0f<H>
+
 [<Measure>]
 /// Military ground force
 type MGF

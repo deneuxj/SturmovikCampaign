@@ -79,6 +79,10 @@ type PlaneModel =
       Payloads : (PlaneRole * (int64*int)) list
       EmptyPayload : int
       WingSpan : float32<M>
+      MaxRange : float32<M>
+      CruiseSpeed : float32<M/H>
+      MinRunwayLength : float32<M>
+      CpuCost : float32
     }
 with
     member this.Id = PlaneModelId this.Name
@@ -88,34 +92,11 @@ with
         |> List.tryFind (fun (role2, _) -> role2 = role)
         |> Option.map snd
 
-    member this.MaxRange = 800000.0f<M>
-
-    member this.CruiseSpeed =
-        match this.Name, this.Kind with
-        | "me262", _ -> 500.0f
-        | _, Fighter -> 400.0f
-        | _, Attacker -> 400.0f
-        | _, Bomber -> 350.0f
-        | _, Transport -> 300.0f
-        |> (*) 1000.0f<M/H>
-
-    member this.MinRunwayLength =
-        match this.Name with
-        | "me262" -> 2200.0f
-        | _ -> 0.0f
-
     member this.StaticScriptModel : Vehicles.VehicleTypeData =
         {
             Model = sprintf @"graphics\blocks\static_%s.mgm" this.StaticBasename
             Script = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.txt" this.StaticBasename
         }
-
-    member this.CpuCost =
-        match this.Kind with
-        | PlaneType.Attacker -> 200.0f
-        | PlaneType.Bomber -> 400.0f
-        | PlaneType.Fighter -> 100.0f
-        | PlaneType.Transport -> 400.0f
 
 /// <summary>
 /// Range of plane modifications: Can be a single value or an interval (both bounds included)

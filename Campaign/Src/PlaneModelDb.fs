@@ -43,6 +43,10 @@ type PlaneModelDto =
         EmptyPayload : int
         WeaponModsCosts : {| Mod : int; Cost : float32 |}[]
         WingSpan : float32 option
+        MaxRange : float32 option
+        CruiseSpeed : float32 option
+        MinRunwayLength : float32 option
+        CpuCost : float32 option
     }
 
 type Campaign.Common.PlaneModel.PlaneModel
@@ -66,6 +70,33 @@ with
                 | Attacker -> 11.0f
                 | Bomber | Transport -> 17.0f
             )
+        let cruise =
+            json.CruiseSpeed
+            |> Option.defaultWith (fun () ->
+                match json.Name, json.Kind with
+                | "me262", _ -> 500.0f
+                | _, Fighter -> 400.0f
+                | _, Attacker -> 400.0f
+                | _, Bomber -> 350.0f
+                | _, Transport -> 300.0f
+            )
+        let minRunway =
+            json.MinRunwayLength
+            |> Option.defaultWith (fun () ->
+                match json.Name with
+                | "me262" -> 2.2f
+                | _ -> 0.0f)
+        let maxRange =
+            json.MaxRange
+            |> Option.defaultValue 800.0f
+        let cpuCost =
+            json.CpuCost
+            |> Option.defaultWith (fun () ->
+                match json.Kind with
+                | Fighter -> 100.0f
+                | Attacker -> 200.0f
+                | Bomber | Transport -> 400.0f
+            )
         {
             Kind = json.Kind
             Name = json.Name
@@ -81,6 +112,10 @@ with
             EmptyPayload = json.EmptyPayload
             WeaponModsCosts = weaponModsCosts
             WingSpan = 1.0f<M> * wingSpan
+            MaxRange = KM * maxRange
+            CruiseSpeed = KPH * cruise
+            CpuCost = cpuCost
+            MinRunwayLength = KM * minRunway
         }
 
     member this.ToJson() : PlaneModelDto =
@@ -123,6 +158,10 @@ with
             EmptyPayload = this.EmptyPayload
             WeaponModsCosts = weaponModsCosts
             WingSpan = Some(float32 this.WingSpan)
+            MaxRange = Some(float32 this.MaxRange)
+            CruiseSpeed = Some(float32 this.CruiseSpeed)
+            CpuCost = Some(this.CpuCost)
+            MinRunwayLength = Some(float32 this.MinRunwayLength)
         }
 
     member this.HasRole(role) =
