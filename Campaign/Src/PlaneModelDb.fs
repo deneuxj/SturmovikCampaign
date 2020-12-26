@@ -33,7 +33,8 @@ type PlaneModelDto =
         LogName : string
         Roles : PlaneRole[]
         Coalition : CoalitionId
-        ScriptModel : Vehicles.VehicleTypeData
+        Script : string
+        Model : string
         [<JsonField("Static")>]
         StaticBasename : string
         Cost : float32
@@ -41,7 +42,7 @@ type PlaneModelDto =
         CargoCapacity : float32
         Payloads : {| Payload : {| Role : PlaneRole; ModMask : int; Id : int |} |}[]
         EmptyPayload : int
-        WeaponModsCosts : {| Mod : int; Cost : float32 |}[]
+        WeaponModsCosts : {| Mod : int; Cost : float32 |}[] option
         WingSpan : float32 option
         MaxRange : float32 option
         CruiseSpeed : float32 option
@@ -60,8 +61,9 @@ with
             |> List.ofSeq
         let weaponModsCosts =
             json.WeaponModsCosts
-            |> Seq.map (fun spec ->spec.Mod, float32 spec.Cost * 1.0f<E>)
-            |> List.ofSeq
+            |> Option.defaultValue [||]
+            |> Array.map (fun spec ->spec.Mod, float32 spec.Cost * 1.0f<E>)
+            |> List.ofArray
         let wingSpan =
             json.WingSpan
             |> Option.defaultWith (fun() ->
@@ -103,7 +105,7 @@ with
             LogName = json.LogName
             Roles = json.Roles |> List.ofArray
             Coalition = json.Coalition
-            ScriptModel = json.ScriptModel
+            ScriptModel = { Script = json.Script; Model = json.Model }
             StaticBasename = json.StaticBasename
             Cost = 1.0f<E> * float32 json.Cost
             BombCapacity = 1.0f<K> * float32 json.BombCapacity
@@ -111,7 +113,7 @@ with
             Payloads = payloads
             EmptyPayload = json.EmptyPayload
             WeaponModsCosts = weaponModsCosts
-            WingSpan = 1.0f<M> * wingSpan
+            WingSpan = 1.0f<M> * float32 wingSpan
             MaxRange = KM * maxRange
             CruiseSpeed = KPH * cruise
             CpuCost = cpuCost
@@ -149,14 +151,15 @@ with
             LogName = this.LogName
             Roles = this.Roles |> Array.ofList
             Coalition = this.Coalition
-            ScriptModel = this.ScriptModel
+            Script = this.ScriptModel.Script
+            Model = this.StaticScriptModel.Model
             StaticBasename = this.StaticBasename
             Cost = float32 this.Cost
             BombCapacity = float32 this.BombCapacity
             CargoCapacity = float32 this.CargoCapacity
             Payloads = payloads
             EmptyPayload = this.EmptyPayload
-            WeaponModsCosts = weaponModsCosts
+            WeaponModsCosts = Some weaponModsCosts
             WingSpan = Some(float32 this.WingSpan)
             MaxRange = Some(float32 this.MaxRange)
             CruiseSpeed = Some(float32 this.CruiseSpeed)
