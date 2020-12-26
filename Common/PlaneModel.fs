@@ -78,6 +78,7 @@ type PlaneModel =
       CargoCapacity : float32<K>
       Payloads : (PlaneRole * (int64*int)) list
       EmptyPayload : int
+      WingSpan : float32<M>
     }
 with
     member this.Id = PlaneModelId this.Name
@@ -86,12 +87,6 @@ with
         this.Payloads
         |> List.tryFind (fun (role2, _) -> role2 = role)
         |> Option.map snd
-
-    member this.WingSpan =
-        match this.Kind with
-        | Fighter -> 7.0f<M>
-        | Attacker -> 11.0f<M>
-        | Bomber | Transport -> 17.0f<M>
 
     member this.MaxRange = 800000.0f<M>
 

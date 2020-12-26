@@ -121,7 +121,6 @@
     <None Include="Config\PlaneSet-Kuban.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Config\SamplePlaneDb.json" />
     <None Include="Config\PlaneDb.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
