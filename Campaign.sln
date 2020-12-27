@@ -19,9 +19,11 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "GroupInstantiator", "GroupI
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Util", "Util\Util.fsproj", "{1B5F58AD-EBD9-479D-A29F-DB641FC38813}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MissionGen", "MissionGen\MissionGen.fsproj", "{57BFC829-EC42-43EB-A4C5-59FBDD0B3D16}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "MissionGen", "MissionGen\MissionGen.fsproj", "{57BFC829-EC42-43EB-A4C5-59FBDD0B3D16}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Common", "Common\Common.fsproj", "{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Common", "Common\Common.fsproj", "{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "BanEnforcer", "BanEnforcer\BanEnforcer.fsproj", "{110F01D7-1FC9-4B44-9125-8D1769C33A1F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,10 @@ Global
 		{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5DA86EAA-C320-4BB7-A3A1-BFFBD6853E26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{110F01D7-1FC9-4B44-9125-8D1769C33A1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{110F01D7-1FC9-4B44-9125-8D1769C33A1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{110F01D7-1FC9-4B44-9125-8D1769C33A1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{110F01D7-1FC9-4B44-9125-8D1769C33A1F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
