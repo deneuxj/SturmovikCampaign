@@ -5,7 +5,7 @@ open FSharp.Json
 
 type Config =
     {
-        DServerRCons : {| Url : string; User : string; Password : string |} list
+        DServerRCons : {| Url : string; Port : int; User : string; Password : string |} list
         PlayerDbPath : string option
         CheckInterval : int option
         HtmlPath : string option

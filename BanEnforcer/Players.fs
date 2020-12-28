@@ -91,13 +91,17 @@ with
 
     /// Try to load the player db from a file. If the file does not exist, return the empty db.
     static member Load(path : string) =
-        if IO.File.Exists(path) then
-            let json = IO.File.ReadAllText(path)
-            Json.deserialize<PlayerDb> json
-        else
-            { Players = [] }
+        async {
+            if IO.File.Exists(path) then
+                let! json = IO.File.ReadAllTextAsync(path)
+                return Json.deserialize<PlayerDb> json
+            else
+                return { Players = [] }
+        }
 
     /// Save the db to a file
     member this.Save(path : string) =
-        let json = Json.serialize this
-        IO.File.WriteAllText(path, json)
+        async {
+            let json = Json.serialize this
+            do! IO.File.WriteAllTextAsync(path, json)
+        }
