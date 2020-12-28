@@ -17,11 +17,16 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.101
-    - name: Get paket
+    - name: Get paket for WebController
       run: |
         cd WebController
         dotnet tool restore
-        dotnet paket update
+        dotnet paket restore
+    - name: Get paket for BanEnforcer
+      run: |
+        cd BanEnforcer
+        dotnet tool restore
+        dotnet paket restore
     - name: Install dependencies
       run: dotnet restore
     - name: Build
