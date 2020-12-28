@@ -1,7 +1,7 @@
 source https://api.nuget.org/v3/index.json
 
 storage: none
-framework: netcoreapp5.0, netcoreapp3.1, netstandard2.0, netstandard2.1
+framework: auto-detect
 nuget FSharp.Core
 nuget FSharp.Json
 nuget Suave

@@ -1,5 +1,5 @@
 STORAGE: NONE
-RESTRICTION: || (== net50) (== netcoreapp3.1) (== netstandard2.0) (== netstandard2.1)
+RESTRICTION: == net50
 NUGET
   remote: https://api.nuget.org/v3/index.json
     FSharp.Core (5.0)
@@ -7,4 +7,4 @@ NUGET
       FSharp.Core (>= 4.6.2)
     NLog (4.7.6)
     Suave (2.6)
-      FSharp.Core  - restriction: || (== net50) (== netcoreapp3.1) (&& (== netstandard2.0) (>= netstandard2.1)) (== netstandard2.1)
+      FSharp.Core
