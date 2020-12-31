@@ -89,6 +89,8 @@ with
             }
         work(this.Players, guids)
 
+    static member Default = { Players = [] }
+
     /// Try to load the player db from a file. If the file does not exist, return the empty db.
     static member Load(path : string) =
         async {
@@ -96,7 +98,7 @@ with
                 let! json = IO.File.ReadAllTextAsync(path)
                 return Json.deserialize<PlayerDb> json
             else
-                return { Players = [] }
+                return PlayerDb.Default
         }
 
     /// Save the db to a file
