@@ -6,6 +6,15 @@ open NLog
 open Config
 open Players
 
+/// Type of requests passed to the mailbox processor of the Monitor
+type MonitorCommand =
+    | SetDatabase of PlayerDb
+    | GetDatabase of AsyncReplyChannel<PlayerDb option>
+    | RefreshAll of AsyncReplyChannel<unit>
+    | AddBan of {| Guid : string; Duration : TimeSpan |}
+    | ClearBan of {| Guid : string |}
+
+/// Handle interactions with the player ban db and the DServers
 type Monitor(config : Config) =
     let logger = LogManager.GetCurrentClassLogger()
 
@@ -14,61 +23,105 @@ type Monitor(config : Config) =
         |> List.map (fun x ->
             new RConClient.ClientMessageQueue(x.Url, x.Port, x.User, x.Password))
 
-    let token = Threading.CancellationToken()
+    let token = new Threading.CancellationTokenSource()
 
-    let rec monitor (db : PlayerDb) =
+    let rec processs (db : PlayerDb option) (mb : MailboxProcessor<MonitorCommand>) =
         async {
-            if not token.IsCancellationRequested then
-                do! Async.Sleep(config.GetCheckInterval() * 1000)
-                do!
-                    queues
-                    |> Seq.map (fun queue ->
-                        async {
-                            let! players = queue.Run(lazy queue.Client.GetPlayerList())
-                            match players with
-                            | Some(Some players) ->
-                                let guids =
-                                    players
-                                    |> Seq.map (fun player -> player.PlayerId)
-                                    |> List.ofSeq
-                                let toKick =
-                                    db.MatchBans(guids)
-                                    |> Set
-                                for player in players do
-                                    if toKick.Contains(player.PlayerId) then
-                                        let! status = queue.Run(lazy queue.Client.KickPlayer(player.ClientId))
-                                        let status = defaultArg status "<no status>"
-                                        logger.Info(sprintf "Kicked '%s': %s" player.Name status)
-                            | _ ->
-                                logger.Warn(sprintf "Failed to retrieve player list from %s" (queue.Client.Client.RemoteEndPoint.ToString()))
-                        })
-                    |> Async.Parallel
-                    |> Async.Ignore
-                let db = db.Refresh(DateTime.UtcNow)
-                try
-                    do! db.Save(config.GetPlayerDbPath())
-                with exc ->
-                    logger.Warn(sprintf "Failed to write refreshed ban db: '%s'" exc.Message)
-                    logger.Debug(exc)
-                return! monitor db
+            match! mb.Receive() with
+            | SetDatabase db ->
+                return! processs (Some db) mb
+
+            | GetDatabase r ->
+                r.Reply(db)
+                return! processs db mb
+
+            | RefreshAll r ->
+                match db with
+                | Some db ->
+                    do!
+                        queues
+                        |> Seq.map (fun queue ->
+                            async {
+                                let! players = queue.Run(lazy queue.Client.GetPlayerList())
+                                match players with
+                                | Some(Some players) ->
+                                    let guids =
+                                        players
+                                        |> Seq.map (fun player -> player.PlayerId)
+                                        |> List.ofSeq
+                                    let toKick =
+                                        db.MatchBans(guids)
+                                        |> Set
+                                    for player in players do
+                                        if toKick.Contains(player.PlayerId) then
+                                            let! status = queue.Run(lazy queue.Client.KickPlayer(player.ClientId))
+                                            let status = defaultArg status "<no status>"
+                                            logger.Info(sprintf "Kicked '%s': %s" player.Name status)
+                                | _ ->
+                                    logger.Warn(sprintf "Failed to retrieve player list from %s" (queue.Client.Client.RemoteEndPoint.ToString()))
+                            })
+                        |> Async.Parallel
+                        |> Async.Ignore
+                    let db = db.Refresh(DateTime.UtcNow)
+                    try
+                        let path = config.GetPlayerDbPath()
+                        do! db.Save(path)
+                        logger.Info(sprintf "Saved refreshed ban db at %s" path)
+                    with exc ->
+                        logger.Warn(sprintf "Failed to write refreshed ban db: '%s'" exc.Message)
+                        logger.Debug(exc)
+                    r.Reply()
+                    return! processs (Some db) mb
+                | None ->
+                    logger.Warn("Cannot refresh because: No player db")
+
+            | AddBan x ->
+                let db = defaultArg db (PlayerDb.Default)
+                let db = db.Add(x.Guid, x.Duration, DateTime.UtcNow)
+                return! processs (Some db) mb
+
+            | ClearBan x ->
+                let db = defaultArg db (PlayerDb.Default)
+                let db = db.Unban(x.Guid)
+                return! processs (Some db) mb
         }
+
+    let mb = new MailboxProcessor<MonitorCommand>(processs None, token.Token)
 
     let startMonitor =
         async {
             let! db = PlayerDb.Load(config.GetPlayerDbPath())
-            return! monitor db
+            mb.Start()
+            mb.Post(SetDatabase db)
         }
 
     do Async.Start(startMonitor)
 
-    member this.Add(guid : string, duration : TimeSpan) = failwith "TODO"
+    // Start loop that requests refreshes at regular intervals
+    do Async.Start(
+        async {
+            while not token.IsCancellationRequested do
+                do! Async.Sleep(config.GetCheckInterval())
+                do! mb.PostAndAsyncReply RefreshAll
+        }
+    )
 
-    member this.Clear(guid : string) = failwith "TODO"
+    /// Add or update a ban
+    member this.Add(guid : string, duration : TimeSpan) =
+        mb.Post(AddBan{| Guid = guid; Duration = duration |})
 
+    /// Clear a ban
+    member this.Clear(guid : string) =
+        mb.Post(ClearBan {| Guid = guid |})
+
+    /// Stop DServer clients and stop processing requests
     member this.Shutdown() =
+        token.Cancel()
         for queue in queues do
             queue.Dispose()
+        token.Dispose()
 
+    /// Shut down
     member this.Dispose() = this.Shutdown()
 
     interface System.IDisposable with

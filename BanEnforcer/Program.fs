@@ -58,5 +58,6 @@ module Main =
         else
             let config =
                 Config.Load(settings.ConfigPath)
+            use monitor = new Monitor(config)
 
             0
