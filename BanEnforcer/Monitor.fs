@@ -114,6 +114,31 @@ type Monitor(config : Config) =
     member this.Clear(guid : string) =
         mb.Post(ClearBan {| Guid = guid |})
 
+    /// Try to get a banned player by their GUID
+    member this.TryGetPlayer(guid : string) =
+        async {
+            let! db = mb.PostAndAsyncReply GetDatabase
+            match db with
+            | Some db ->
+                let player =
+                    db.Players
+                    |> List.tryFind (fun player -> player.Guid = guid)
+                return player
+            | None ->
+                return None
+        }
+
+    /// Find banned players by name
+    member this.Find(name : string) =
+        async {
+            let! db = mb.PostAndAsyncReply GetDatabase
+            match db with
+            | Some db ->
+                return db.FindPlayers name
+            | None ->
+                return []
+        }
+
     /// Stop DServer clients and stop processing requests
     member this.Shutdown() =
         token.Cancel()
