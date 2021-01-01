@@ -2,6 +2,10 @@
 
 open System
 open FSharp.Json
+open System.Security.Cryptography
+
+[<Literal>]
+let salt = "DFSRT"
 
 type Config =
     {
@@ -9,6 +13,7 @@ type Config =
         PlayerDbPath : string option
         CheckInterval : int option
         HtmlPath : string option
+        PasswordHash : string option
     }
 with
     /// The file that contains the player bans
@@ -26,6 +31,26 @@ with
         this.CheckInterval
         |> Option.defaultValue 15
 
+    /// Set the password hash from the password
+    member this.SetPassword(password : string) =
+        use algo = HashAlgorithm.Create("SHA256")
+        let hashed = algo.ComputeHash(Text.Encoding.UTF8.GetBytes(salt + password))
+        let hashedStr = Convert.ToBase64String hashed
+        { this with
+            PasswordHash = Some hashedStr
+        }
+
+    /// Check if the given password matches the one in the config
+    member this.CheckPassword(password : string) =
+        match this.PasswordHash with
+        | None ->
+            false
+        | Some hashedStr ->
+            use algo = HashAlgorithm.Create("SHA256")
+            let hashed = algo.ComputeHash(Text.Encoding.UTF8.GetBytes(salt + password))
+            let hashedStr2 = Convert.ToBase64String hashed
+            hashedStr = hashedStr2
+
     /// Load from Json file, or return default if file does not exist
     static member Load(path : string) =
         if IO.File.Exists(path) then
@@ -37,6 +62,7 @@ with
                 PlayerDbPath = None
                 CheckInterval = None
                 HtmlPath = None
+                PasswordHash = None
             }
 
     /// Save to Json file

@@ -9,6 +9,7 @@ open Coconutside.BanEnforcer.Players
 type CommandLineSettings =
     {
         ConfigPath : string
+        SetPassword : string option
         PrintHelp : bool
     }
 with
@@ -17,6 +18,7 @@ with
             ConfigPath = IO.Path.Combine(
                             IO.Path.GetDirectoryName(typeof<CommandLineSettings>.Assembly.Location),
                             "config.json")
+            SetPassword = None
             PrintHelp = false
         }
 
@@ -30,6 +32,11 @@ with
                         ConfigPath = path
                     }
                 work(settings, argv)
+            | "/Password:" :: password :: argv ->
+                { settings with
+                    SetPassword = Some password
+                }
+
             | ("/?" | "-h" | "--help") :: _ ->
                 { CommandLineSettings.Default with
                     PrintHelp = true
@@ -43,7 +50,7 @@ with
 
     static member PrintHelpText() =
         """
-Usage: BanEnforcer /Config: <path to config.json>
+Usage: BanEnforcer /Config: <path to config.json> [/Password: <password>]
         """
         |> eprintfn "%s\n"
 
