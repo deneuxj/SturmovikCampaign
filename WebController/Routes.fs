@@ -63,8 +63,6 @@ type IControllerInteraction =
     abstract StopSyncAfterMission : unit -> Async<Result<string, string>>
     abstract InterruptSync : unit -> Async<Result<string, string>>
     abstract ResolveError : unit -> Async<Result<string, string>>
-    abstract BanPlayer : string * System.TimeSpan -> Async<Result<Player, string>> // Player GUID, days, hours, minutes
-    abstract ClearBan : string -> Async<Result<Player, string>>
 
 let setJsonMimeType = setMimeType "application/json; charset=utf-8"
 let setTextMimeType = setMimeType "application/text; charset=utf-8"
@@ -92,9 +90,6 @@ POST /control/sync/once
 POST /control/sync/stop
 POST /control/sync/interrupt
 POST /control/resolve
-POST /admin/players/<guid>/ban
-
-DELETE /admin/players/<guid>/ban
 """
 
 let fromBase64 = System.Convert.FromBase64String >> System.Text.Encoding.UTF8.GetString
@@ -227,18 +222,6 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             path "/control/sync/once" >=> inControlRoom(context(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
             path "/control/sync/stop" >=> inControlRoom(context(fun _ -> ctrl.StopSyncAfterMission() |> serializeAsync))
             path "/control/sync/interrupt" >=> inControlRoom(context(fun _ -> ctrl.InterruptSync() |> serializeAsync))
-            path "/admin/ban" >=>
-                inControlRoom
-                    (context
-                        (banPlayer (ctrl.BanPlayer >> serializeAsync))
-                    )
-        ]
-        DELETE >=> choose [
-            path "/admin/ban" >=>
-                inControlRoom
-                    (context
-                        (unbanPlayer (ctrl.ClearBan >> serializeAsync))
-                    )
         ]
         GET >=> path "/help" >=> OK usage >=> setTextMimeType
         GET >=> pathStarts "/doc/" >=> Files.browse (System.IO.Path.Combine(System.Environment.CurrentDirectory))

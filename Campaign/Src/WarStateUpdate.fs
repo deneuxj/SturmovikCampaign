@@ -60,8 +60,6 @@ type Commands =
     | AdvanceTime of AdvanceTimeData
     // Update player registration
     | UpdatePlayer of Guid: string * NickName: string
-    // Update player ban status
-    | UpdatePlayerBan of Guid: string * Ban: BanStatus
     // Update pilot registration
     | UpdatePilot of Pilot
     // Register flight and health status of pilot
@@ -84,7 +82,6 @@ type Results =
     | RegionOwnerSet of Region: RegionId * Owner: CoalitionId option
     | TimeSet of System.DateTime
     | PlayerUpdated of NickName: string
-    | PlayerBanUpdated of NickName: string * Ban: BanStatus
     | PilotUpdated of Pilot
 
 module Results =
@@ -120,8 +117,6 @@ module Results =
             sprintf "Time set to %s" (t.ToString("F"))
         | PlayerUpdated(nickName) ->
             sprintf "Registration of %s was updated" nickName
-        | PlayerBanUpdated(nickName, ban) ->
-            sprintf "Status of %s is %s" nickName (string ban)
         | PilotUpdated(pilot) ->
             sprintf "Pilot %s updated, who is now %s" pilot.FullName (string pilot.Health)
 
@@ -200,7 +195,6 @@ module CommandExecution =
                             Guid = guid
                             Name = nickName
                             OtherNames = []
-                            BanStatus = BanStatus.Clear
                         }
                 let player =
                     if player.Name = nickName then
@@ -212,19 +206,6 @@ module CommandExecution =
                         }
                 state.UpdatePlayer(player)
                 [ PlayerUpdated nickName ]
-            | UpdatePlayerBan(guid, ban) ->
-                let player =
-                    state.TryGetPlayer(guid)
-                    |> Option.defaultValue 
-                        {
-                            Guid = guid
-                            Name = ""
-                            OtherNames = []
-                            BanStatus = BanStatus.Clear
-                        }
-                let player = { player with BanStatus = ban }
-                state.UpdatePlayer(player)
-                [ PlayerBanUpdated(player.Name, ban) ]
             | UpdatePilot(pilot) ->
                 state.UpdatePilot(pilot, false)
                 [ PilotUpdated(pilot) ]

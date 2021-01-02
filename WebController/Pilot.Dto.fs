@@ -80,10 +80,6 @@ type Pilot =
         AirKills : int
     }
 
-type BanStatus =
-    | NotBanned
-    | Banned of {| Until : DateTime |}
-
 type HashedGuid =
     {
         Guid : string
@@ -95,6 +91,5 @@ type Player =
     {
         Name : string
         Guid : HashedGuid
-        BanStatus : BanStatus
         Pilots : string list
     }

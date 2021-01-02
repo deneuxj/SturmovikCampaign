@@ -333,10 +333,6 @@ module DtoCreation =
                     "UpdatePlayer",
                     [ "Name", nickName :> obj
                     ] |> Map.ofSeq
-                | WarStateUpdate.UpdatePlayerBan(_, ban) ->
-                    "UpdatePlayerBan",
-                    [ "Ban", (string ban) :> obj
-                    ] |> Map.ofSeq
                 | WarStateUpdate.UpdatePilot(pilot) ->
                     "RegisterPilot",
                     [ "PilotId", box pilot.Id.Guid
@@ -394,11 +390,6 @@ module DtoCreation =
                 | WarStateUpdate.PlayerUpdated(nickName) ->
                     "PlayerUpdated",
                     [ "Name", nickName :> obj
-                    ] |> Map.ofSeq
-                | WarStateUpdate.PlayerBanUpdated(nickName, ban) ->
-                    "PlayerBanUpdated",
-                    [ "Name", nickName :> obj
-                      "Ban", string ban :> obj
                     ] |> Map.ofSeq
                 | WarStateUpdate.PilotUpdated(pilot) ->
                     "PilotUpdated",
@@ -549,13 +540,6 @@ module DtoCreation =
                 AirKills = airKills
             }
 
-    type Pilots.BanStatus with
-        member this.ToDto() =
-            match this with
-            | Pilots.BanStatus.Clear | Pilots.BanStatus.Probation _ -> NotBanned
-            | Pilots.BanStatus.Banned { BannedSince = since; Duration = duration } ->
-                Banned {| Until = (since + duration).ToDto() |}
-
     /// Hash a player's unique GUID, and encode it to base64
     // The userIDs from the logs should probably not be exposed to the public
     let hashGuid (guid : string) =
@@ -578,6 +562,5 @@ module DtoCreation =
             {
                 Name = this.Name
                 Guid = hashGuid(this.Guid)
-                BanStatus = this.BanStatus.ToDto()
                 Pilots = pilots
             }

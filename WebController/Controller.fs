@@ -513,29 +513,11 @@ type Controller(settings : GameServerControl.Settings) =
                                 war.Players
                                 |> List.tryFind (fun player -> hashGuid player.Guid = playerId)
 
-                            let! player =
-                                match sync, player with
-                                | Ok sync, Some player ->
-                                    sync.ModifyPlayer(player.Guid,
-                                        fun player ->
-                                            let banStatus =
-                                                match duration with
-                                                | Some duration ->
-                                                    Pilots.BanStatus.Banned { BannedSince = System.DateTime.UtcNow; Duration = duration }
-                                                | None ->
-                                                    Pilots.BanStatus.Clear
-                                            { player with BanStatus = banStatus }
-                                    )
-                                | Error e, Some _ ->
-                                    async.Return(Error e)
-                                | _, None ->
-                                    async.Return(Error "Player not found")
-
                             match player with
-                            | Ok player ->
+                            | Some player ->
                                 channel.Reply(Ok(player.ToDto(war)))
-                            | Error msg ->
-                                channel.Reply(Error msg)
+                            | None ->
+                                channel.Reply(Error "player not found")
 
                             // Dispose sync object if we created one.
                             match s.Sync, sync with
@@ -600,8 +582,6 @@ type Controller(settings : GameServerControl.Settings) =
             member this.GetPlayerPilots(hashedGuid) = this.GetPlayerPilots(HashedGuid.Create hashedGuid)
 
         interface IControllerInteraction with
-            member this.BanPlayer(hashedGuid, duration) = this.UpdatePlayerBan(HashedGuid.Create hashedGuid, Some duration)
-            member this.ClearBan(hashedGuid) = this.UpdatePlayerBan(HashedGuid.Create hashedGuid, None)
             member this.Advance() = this.Run(1)
             member this.Run() = this.Run(15)
             member this.ResetCampaign(scenario) = this.ResetCampaign(scenario)

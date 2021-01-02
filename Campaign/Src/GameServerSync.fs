@@ -1073,15 +1073,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             | Some player ->
                 async {
                     let player2 = update player
-                    // Potential race condition. Shouldn't be a problem in practice yet, but could
-                    // become one when banning/clearing a player at the same time the player hash
-                    // table is modified, e.g. when a player is auto-banned.
                     war.UpdatePlayer(player2)
-                    match player2.BanStatus, gameServer with
-                    | Pilots.BanStatus.Banned _, (:? IPlayerNotifier as notifier) ->
-                        do! Async.Ignore(notifier.BanPlayer(player2.Guid))
-                    | _ ->
-                        ()
                     return Ok player2
                 }
             | None ->

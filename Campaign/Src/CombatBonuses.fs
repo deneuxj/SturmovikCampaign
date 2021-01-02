@@ -106,13 +106,8 @@ with
                 let pilots =
                     pilots
                     |> List.filter (fun pilot ->
-                        // Remove banned and injured/dead pilots
-                        let isBanned =
-                            lazy
-                                war.TryGetPlayer(pilot.PlayerGuid)
-                                |> Option.map (fun player -> match player.BanStatus with BanStatus.Banned _ -> true | _ -> false)
-                                |> Option.defaultValue false
-                        pilot.Health = Healthy && not isBanned.Value)
+                        // Remove injured/dead pilots
+                        pilot.Health = Healthy)
                     |> List.groupBy(fun pilot -> pilot.PlayerGuid) // At most one pilot per player per airfield
                     |> List.map (fun (_, pilots) -> pilots |> List.maxBy (fun pilot -> countCompletedFlights pilot.Flights)) // Retain the pilot with the most completed flights
                 // Result
