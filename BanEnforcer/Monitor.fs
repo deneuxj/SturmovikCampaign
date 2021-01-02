@@ -82,7 +82,7 @@ type Monitor(config : Config) =
 
             | ClearBan x ->
                 let db = defaultArg db (PlayerDb.Default)
-                let db = db.Unban(x.Guid)
+                let db = db.Unban(HashedGuid x.Guid)
                 return! processs (Some db) mb
         }
 
@@ -108,21 +108,21 @@ type Monitor(config : Config) =
 
     /// Add or update a ban
     member this.Add(guid : string, duration : TimeSpan) =
-        mb.Post(AddBan{| Guid = guid; Duration = duration |})
+        mb.Post(AddBan {| Guid = guid; Duration = duration |})
 
     /// Clear a ban
     member this.Clear(guid : string) =
         mb.Post(ClearBan {| Guid = guid |})
 
-    /// Try to get a banned player by their GUID
-    member this.TryGetPlayer(guid : string) =
+    /// Try to get a banned player by their hashed GUID
+    member this.TryGetPlayer(guid : HashedGuid) =
         async {
             let! db = mb.PostAndAsyncReply GetDatabase
             match db with
             | Some db ->
                 let player =
                     db.Players
-                    |> List.tryFind (fun player -> player.Guid = guid)
+                    |> List.tryFind (fun player -> player.HashedGuid = guid)
                 return player
             | None ->
                 return None

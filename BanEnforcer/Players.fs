@@ -2,14 +2,33 @@
 
 open System
 open FSharp.Json
+open System.Security.Cryptography
+open System.Text
+
+type HashedGuid = HashedGuid of string
+with
+    member this.String =
+        let (HashedGuid s) = this
+        s
 
 /// A banned player
 type Player =
     {
+        // Game GUID. Don't expose
         Guid : string
+        // Hashed game GUID (SHA256, Base64-encoded)
+        HashedGuid : HashedGuid
         BannedUntil : DateTime
         DisplayNames : string list
     }
+
+let hashGuid (guid : string) =
+    use hasher = HashAlgorithm.Create("SHA256")
+    guid
+    |> Encoding.ASCII.GetBytes
+    |> hasher.ComputeHash
+    |> System.Convert.ToBase64String
+    |> HashedGuid
 
 /// A database of banned players
 type PlayerDb =
@@ -26,6 +45,7 @@ with
             existing
             |> Option.defaultValue {
                 Guid = guid
+                HashedGuid = hashGuid guid
                 BannedUntil = now + duration
                 DisplayNames = []
             }
@@ -37,11 +57,11 @@ with
         }.Refresh(now)
 
     /// Clear a ban
-    member this.Unban(guid : string) =
+    member this.Unban(guid : HashedGuid) =
         { this with
             Players =
                 this.Players
-                |> List.filter (fun player -> player.Guid <> guid)
+                |> List.filter (fun player -> player.HashedGuid <> guid)
         }
 
     /// Remove players whose ban has expired

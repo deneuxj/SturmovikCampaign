@@ -20,16 +20,26 @@ let allowAnyOrigin = setHeader "Access-Control-Allow-Origin" "*"
 
 let private usage = """
 GET /bans?name=<name>
- => { Results = { Guid: string; Until: date }[] }
+ => { Results = { Guid: string; Until: DateTime }[] }
 
 GET /bans/<guid>
- => { Value = { Guid: string; Until: date } }
+ => { Value = { Until: DateTime }? }
 
-POST /bans/<guid> (requires AUTH)
- with { Days : int; Hours : int }
+POST /bans/new (requires AUTH)
+ with { Guid: string; Days : int; Hours : int }
 
 DELETE /bans/<guid> (requires AUTH)
 """
+
+let toDateTime (t : DateTime) =
+    {|
+        Year = t.Year
+        Month = t.Month
+        Day = t.Day
+        Hour = t.Hour
+        Minute = t.Minute
+        Second = t.Second
+    |}
 
 let fromBase64 = System.Convert.FromBase64String >> System.Text.Encoding.UTF8.GetString
 
@@ -84,7 +94,7 @@ let mkRoutes (config : Config, monitor : Monitor) =
     
     let tryGetPlayer guid =
         async {
-            let! hit = monitor.TryGetPlayer(guid)
+            let! hit = monitor.TryGetPlayer(HashedGuid guid)
             return Ok hit
         }
 
@@ -97,8 +107,8 @@ let mkRoutes (config : Config, monitor : Monitor) =
                     hits
                     |> List.map (fun player ->
                         {|
-                            Guid = player.Guid
-                            Until = player.BannedUntil
+                            Guid = player.HashedGuid.String
+                            Until = toDateTime player.BannedUntil
                         |}
                     )
                 return Ok hits
@@ -106,9 +116,9 @@ let mkRoutes (config : Config, monitor : Monitor) =
                 return Error "Missing 'name' query parameter"
         }
 
-    let postBan guid (data : {| Days : int option; Hours : int option |}) =
+    let postBan (data : {| Guid : string; Days : int option; Hours : int option |}) =
         async {
-            monitor.Add(guid, TimeSpan(defaultArg data.Days 0, defaultArg data.Hours 0, 0, 0))
+            monitor.Add(data.Guid, TimeSpan(defaultArg data.Days 0, defaultArg data.Hours 0, 0, 0))
             return Ok()
         }
 
@@ -124,9 +134,9 @@ let mkRoutes (config : Config, monitor : Monitor) =
             path "/bans" >=> context (fun ctx -> let name = ctx.request.queryParam("name") in findPlayers name |> serializeAsync)
         ]
         POST >=> choose [
-            pathScan "/bans/%s" (fun guid ->
-                inControlRoom
-                    (context (handleJson (postBan guid >> serializeAsync))
+            path "/bans/new" >=>
+                (inControlRoom
+                    (context (handleJson (postBan >> serializeAsync))
                 )
             )
         ]
