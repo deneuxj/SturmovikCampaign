@@ -176,32 +176,23 @@ type Controller(settings : GameServerControl.Settings) =
         }
 
     member this.GetDates() =
-        mb.PostAndAsyncReply <| fun channel s -> async {
+        async {
             try
-                let world =
-                    lazy
-                        World.LoadFromFile(wkPath worldFilename)
-                let dates =
-                    Directory.EnumerateFiles(settings.WorkDir, "*.json")
-                    |> Seq.filter (fun filename -> filename.EndsWith(stateBaseFilename))
-                    |> Seq.sort
-                    |> Seq.map (fun path ->
-                        try
-                            WarState.LoadFromFile(path, world.Value).Date.ToDto()
-                        with _ ->
-                            { Year = -1
-                              Month = -1
-                              Day = -1
-                              Hour = -1
-                              Minute = -1
-                            }
-                        )
-                    |> Array.ofSeq
-                channel.Reply(Ok dates)
+                let N = getCurrentIndex settings.WorkDir
+                let! dates =
+                    AsyncSeq.initAsync (int64 N + 1L) (fun idx ->
+                        this.GetStateDto(int idx)
+                    )
+                    |> AsyncSeq.choose (fun result ->
+                        match result with
+                        | Ok state -> Some state.Date
+                        | _ -> None
+                    )
+                    |> AsyncSeq.toArrayAsync
+                return Ok dates
             with e ->
-                channel.Reply(Error "Failed to retrieve dates")
                 logger.Warn e
-            return s
+                return (Error "Failed to retrieve dates")
         }
 
         member this.Run(maxSteps) =
