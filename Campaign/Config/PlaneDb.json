@@ -165,7 +165,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\bf109g2.txt",
         "Model": "graphics\\planes\\bf109g2\\bf109g2.mgm",
         "Static": "bf109",
-        "Cost": 833.3333129882812,
+        "Cost": 900,
         "BombCapacity": 250,
         "CargoCapacity": 250,
         "Payloads": [
@@ -208,7 +208,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\bf109g4.txt",
         "Model": "graphics\\planes\\bf109g4\\bf109g4.mgm",
         "Static": "bf109",
-        "Cost": 833.3333129882812,
+        "Cost": 1000,
         "BombCapacity": 250,
         "CargoCapacity": 250,
         "Payloads": [
@@ -251,7 +251,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\bf109g6.txt",
         "Model": "graphics\\planes\\bf109g6\\bf109g6.mgm",
         "Static": "bf109",
-        "Cost": 833.3333129882812,
+        "Cost": 1100,
         "BombCapacity": 250,
         "CargoCapacity": 250,
         "Payloads": [
@@ -312,7 +312,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\bf109g14.txt",
         "Model": "graphics\\planes\\bf109g14\\bf109g14.mgm",
         "Static": "bf109",
-        "Cost": 1000,
+        "Cost": 1250,
         "BombCapacity": 280,
         "CargoCapacity": 280,
         "Payloads": [
@@ -377,7 +377,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\bf109k4.txt",
         "Model": "graphics\\planes\\bf109k4\\bf109k4.mgm",
         "Static": "bf109k4",
-        "Cost": 1000,
+        "Cost": 1250,
         "BombCapacity": 500,
         "CargoCapacity": 500,
         "Payloads": [
@@ -438,7 +438,7 @@
         "Model": "graphics\\planes\\fw190a3\\fw190a3.mgm",
         "Static": "fw190a8",
         "Cost": 833.3333129882812,
-        "BombCapacity": 500,
+        "BombCapacity": 600,
         "CargoCapacity": 500,
         "Payloads": [
           {
@@ -472,7 +472,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\fw190a5.txt",
         "Model": "graphics\\planes\\fw190a5\\fw190a5.mgm",
         "Static": "fw190a8",
-        "Cost": 833.3333129882812,
+        "Cost": 800,
         "BombCapacity": 700,
         "CargoCapacity": 700,
         "Payloads": [
@@ -557,7 +557,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\fw190d9.txt",
         "Model": "graphics\\planes\\fw190d9\\fw190d9.mgm",
         "Static": "fw190d9",
-        "Cost": 1000,
+        "Cost": 1250,
         "BombCapacity": 500,
         "CargoCapacity": 500,
         "Payloads": [
@@ -609,7 +609,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\mc202s8.txt",
         "Model": "graphics\\planes\\mc202s8\\mc202s8.mgm",
         "Static": "bf109_net",
-        "Cost": 665,
+        "Cost": 600,
         "BombCapacity": 200,
         "CargoCapacity": 200,
         "Payloads": [
@@ -638,7 +638,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\bf110e2.txt",
         "Model": "graphics\\planes\\bf110e2\\bf110e2.mgm",
         "Static": "bf110e2",
-        "Cost": 1250,
+        "Cost": 1000,
         "BombCapacity": 1250,
         "CargoCapacity": 1250,
         "Payloads": [
@@ -674,7 +674,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\bf110g2.txt",
         "Model": "graphics\\planes\\bf110g2\\bf110g2.mgm",
         "Static": "bf110e2",
-        "Cost": 1250,
+        "Cost": 1150,
         "BombCapacity": 1250,
         "CargoCapacity": 1250,
         "Payloads": [
@@ -709,7 +709,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\ju88a4.txt",
         "Model": "graphics\\planes\\ju88a4\\ju88a4.mgm",
         "Static": "ju88",
-        "Cost": 1666.6666259765625,
+        "Cost": 1500,
         "BombCapacity": 2900,
         "CargoCapacity": 2900,
         "Payloads": [
@@ -793,7 +793,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\il2m41.txt",
         "Model": "graphics\\planes\\il2m41\\il2m41.mgm",
         "Static": "il2",
-        "Cost": 1000,
+        "Cost": 950,
         "BombCapacity": 600,
         "CargoCapacity": 600,
         "Payloads": [
@@ -849,7 +849,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\il2m43.txt",
         "Model": "graphics\\planes\\il2m43\\il2m43.mgm",
         "Static": "il2",
-        "Cost": 1000,
+        "Cost": 1100,
         "BombCapacity": 600,
         "CargoCapacity": 600,
         "Payloads": [
@@ -1036,7 +1036,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\p40e1.txt",
         "Model": "graphics\\planes\\p40e1\\p40e1.mgm",
         "Static": "p40e1",
-        "Cost": 500,
+        "Cost": 600,
         "BombCapacity": 500,
         "CargoCapacity": 500,
         "Payloads": [
@@ -1182,7 +1182,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\yak1s69.txt",
         "Model": "graphics\\planes\\yak1s69\\yak1s69.mgm",
         "Static": "yak1",
-        "Cost": 833.3333129882812,
+        "Cost": 850,
         "BombCapacity": 200,
         "CargoCapacity": 200,
         "Payloads": [
@@ -1362,7 +1362,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\lagg3s29.txt",
         "Model": "graphics\\planes\\lagg3s29\\lagg3s29.mgm",
         "Static": "lagg3",
-        "Cost": 833.3333129882812,
+        "Cost": 750,
         "BombCapacity": 200,
         "CargoCapacity": 200,
         "Payloads": [
@@ -1398,7 +1398,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\spitfiremkvb.txt",
         "Model": "graphics\\planes\\spitfiremkvb\\spitfiremkvb.mgm",
         "Static": "spitfiremkixe",
-        "Cost": 833.3333129882812,
+        "Cost": 850,
         "BombCapacity": 0,
         "CargoCapacity": 0,
         "Payloads": [
@@ -1495,7 +1495,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\tempestmkvs2.txt",
         "Model": "graphics\\planes\\tempestmkvs2\\tempestmkvs2.mgm",
         "Static": "tempestmkvs2",
-        "Cost": 1000,
+        "Cost": 1300,
         "BombCapacity": 900,
         "CargoCapacity": 900,
         "Payloads": [
@@ -1544,7 +1544,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\a20b.txt",
         "Model": "graphics\\planes\\a20b\\a20b.mgm",
         "Static": "a20b",
-        "Cost": 1250,
+        "Cost": 1500,
         "BombCapacity": 2000,
         "CargoCapacity": 2000,
         "Payloads": [
@@ -1589,7 +1589,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\pe2s35.txt",
         "Model": "graphics\\planes\\pe2s35\\pe2s35.mgm",
         "Static": "pe2",
-        "Cost": 1250,
+        "Cost": 1300,
         "BombCapacity": 1000,
         "CargoCapacity": 1000,
         "Payloads": [
@@ -1625,7 +1625,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\pe2s87.txt",
         "Model": "graphics\\planes\\pe2s87\\pe2s87.mgm",
         "Static": "pe2",
-        "Cost": 1250,
+        "Cost": 1400,
         "BombCapacity": 1000,
         "CargoCapacity": 1000,
         "Payloads": [
@@ -1688,7 +1688,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\he111h6.txt",
         "Model": "graphics\\planes\\he111h6\\he111h6.mgm",
         "Static": "he111",
-        "Cost": 1666.6666259765625,
+        "Cost": 1500,
         "BombCapacity": 3600,
         "CargoCapacity": 3600,
         "Payloads": [
@@ -1716,7 +1716,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\he111h16.txt",
         "Model": "graphics\\planes\\he111h16\\he111h16.mgm",
         "Static": "he111",
-        "Cost": 1666.6666259765625,
+        "Cost": 1600,
         "BombCapacity": 3600,
         "CargoCapacity": 3600,
         "Payloads": [
@@ -1744,7 +1744,7 @@
         "Script": "LuaScripts\\WorldObjects\\Planes\\hs129b2.txt",
         "Model": "graphics\\planes\\hs129b2\\hs129b2.mgm",
         "Static": "hs129b2",
-        "Cost": 1250,
+        "Cost": 900,
         "BombCapacity": 350,
         "CargoCapacity": 350,
         "Payloads": [
