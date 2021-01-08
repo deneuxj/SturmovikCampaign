@@ -764,7 +764,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                                     let numPlanesF = (float32 numPlanes)
                                     excessPlanes <- excessPlanes - numPlanesF
                                     sustainable <- sustainable - numPlanesF
-                                    yield mission, sprintf "Transfer %d %s from %s to %s" numPlanes (string plane) af1.AirfieldId.AirfieldName af2.AirfieldId.AirfieldName
+                                    yield mission, sprintf "Transfer %d %s from %s to %s" numPlanes plane.Name af1.AirfieldId.AirfieldName af2.AirfieldId.AirfieldName
                                 | None ->
                                     ()
             ]
@@ -1005,17 +1005,16 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
         let tryPlanTroops = Planning.chain [ tryPlanInvasions timeSpan war side; tryPlanBattles war side ]
 
         let sideAttacks =
-            lockDefenses war side
-            |> Planning.always (
-                Planning.orElse [
+            Planning.chain [
+                lockDefenses war side
+                Planning.pickFirst [
                     tryMakeAirfieldRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeIndustryRaids; tryMakeGroundForcesHarassment; tryPlanTroops ])
                     tryMakeIndustryRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryPlanTroops ])
                     tryMakeGroundForcesHarassment |> Planning.andThen (Planning.chain [ tryMakeGroundForcesSupport; tryPlanTroops ])
                     tryPlanTroops
                 ]
-                // Do not plan basic defense and transfers here, will be done as part of the defensive side's planning if we have no attacks to perform
-                |> Planning.andThen (Planning.chain [ tryTransferPlanesForward side; tryPlanReinforcements timeSpan war side ])
-            )
+                Planning.chain [ tryTransferPlanesForward side; tryPlanReinforcements timeSpan war side ]
+            ]
 
         let budget = ForcesAvailability.Create war
         match sideAttacks budget with
@@ -1039,8 +1038,10 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                     "keeping the pressure on"
                 else
                     "striking against"
+            let briefing = sprintf "%s. %s is %s %s assets with %s" comment (string side) momentum (string side.Other) description
+            logger.Info(briefing)
             Ongoing {
-                Briefing = sprintf "%s. %s is %s %s assets with %s" comment (string side) momentum (string side.Other) description
+                Briefing = briefing
                 Missions = missions @ covers
                 Data = {
                     OffensiveCoalition = side

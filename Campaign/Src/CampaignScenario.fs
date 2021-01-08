@@ -196,13 +196,22 @@ module Planning =
     /// Perform plans in a sequence, unconditionally
     let chain planners =
         fun budget ->
-            planners
-            |> Seq.fold (fun (missions, budget) planner ->
-                let plan = planner budget
-                let missions2, budget = MissionPlanningResult.getMissions budget plan
-                (missions @ missions2, budget)
-            ) ([], budget)
-            |> fun (m, b) -> Plan("Chain of missions", m, b)
+            let ms, b =
+                planners
+                |> Seq.fold (fun (missions, budget) planner ->
+                    let plan = planner budget
+                    let missions2, budget = MissionPlanningResult.getMissions budget plan
+                    (missions @ missions2, budget)
+                ) ([], budget)
+            let description =
+                match ms with
+                | [] -> "Idle"
+                | [m] -> m.Description
+                | _ ->
+                    ms
+                    |> List.map (fun m -> m.Description)
+                    |> String.concat ", "
+            Plan(description, ms, b)
 
     /// Perform the first plan, then continue with the rest.
     let always rest first = chain [first; rest]
@@ -219,7 +228,7 @@ module Planning =
             | nogo -> nogo
 
     /// Pick the first planning that results in the non-empty list of missions
-    let orElse alternatives =
+    let pickFirst alternatives =
         fun budget ->
             alternatives
             |> Seq.map (fun f -> f budget)
