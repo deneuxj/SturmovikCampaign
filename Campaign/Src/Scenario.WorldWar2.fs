@@ -303,7 +303,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
             |> List.ofSeq
 
         let avgCost =
-            let allPlanes = allPlanesOf CoalitionId.Allies @ allPlanesOf CoalitionId.Axis
+            let allPlanes = allPlanesOf friendly
             allPlanes
             |> Seq.map (fun plane -> plane.Cost)
             |> Seq.sum
@@ -317,9 +317,11 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
         | [] -> ()
         | [plane] ->
             for af in airfields do
-                let numPlanes =
-                    war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
-                war.SetNumPlanes(af.AirfieldId, plane.Id, factor * numPlanes)
+                if planesCostLeft > 0.0f<E> then
+                    let numPlanes =
+                        war.GetAirfieldCapacity(af.AirfieldId) / planeRunCost
+                    war.SetNumPlanes(af.AirfieldId, plane.Id, factor * numPlanes)
+                    planesCostLeft <- planesCostLeft - numPlanes * plane.Cost
         | expansive :: regular ->
             // Rear airfields get regular planes and the expensive plane
             // Other airfields get only regular planes
@@ -352,6 +354,8 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                         war.SetNumPlanes(af.AirfieldId, plane.Id, factor * qty)
                 )
 
+        logger.Info(sprintf "Planes cost left for %s: %3.0f" (string friendly) planesCostLeft)
+
         // Transport planes at the rearmost airfield
         match List.tryLast airfields with
         | Some rear ->
@@ -362,6 +366,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                 war.SetNumPlanes(rear.AirfieldId, plane.Id, 20.0f)
         | None ->
             ()
+
 
     /// Compute forces needed to defend a region under one's control
     let neededForDefenses (war : IWarStateQuery, friendly : CoalitionId, rId : RegionId) =
