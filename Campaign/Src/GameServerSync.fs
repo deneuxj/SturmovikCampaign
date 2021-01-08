@@ -570,7 +570,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                 WorldWar2Internal.PlaneSet.StalingradEarly
                         let world = planeSet.Setup world
                         let ww2 = WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate), planeSet)
-                        world, upcast(ww2), (fun() -> ww2.SaveToFile(wkPath(scenarioCtrlFilename))), 1.0f, 1.25f
+                        world, upcast(ww2), (fun() -> ww2.SaveToFile(wkPath(scenarioCtrlFilename))), 1.0f, 1.0f
                     let pilots =
                         pilots
                         |> List.map (fun pilot -> Campaign.Pilots.clearFlights pilot)
