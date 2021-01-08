@@ -166,6 +166,11 @@ with
         | TooFewTargets _ | Plan(_, _ :: _, _) -> false
         | Plan(_, [], _) -> true
 
+    member this.Description =
+        match this with
+        | TooFewTargets s
+        | Plan(s, _, _) -> s
+
 /// Utility functions for mission planning results
 module MissionPlanningResult =
     let getMissions originalBudget =
@@ -196,21 +201,22 @@ module Planning =
     /// Perform plans in a sequence, unconditionally
     let chain planners =
         fun budget ->
-            let ms, b =
-                planners
-                |> Seq.fold (fun (missions, budget) planner ->
+            let descriptions, ms, b =
+                (([], [], budget), planners)
+                ||> Seq.fold (fun (descriptions, missions, budget) planner ->
                     let plan = planner budget
                     let missions2, budget = MissionPlanningResult.getMissions budget plan
-                    (missions @ missions2, budget)
-                ) ([], budget)
+                    let descriptions =
+                        match missions2 with
+                        | [] -> descriptions
+                        | _ :: _ -> descriptions @ [plan.Description]
+                    (descriptions, missions @ missions2, budget)
+                )
             let description =
-                match ms with
+                match descriptions with
                 | [] -> "Idle"
-                | [m] -> m.Description
-                | _ ->
-                    ms
-                    |> List.map (fun m -> m.Description)
-                    |> String.concat ", "
+                | [s] -> s
+                | xs -> String.concat ", " xs
             Plan(description, ms, b)
 
     /// Perform the first plan, then continue with the rest.
