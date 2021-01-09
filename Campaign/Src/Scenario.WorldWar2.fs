@@ -773,6 +773,53 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                   Description = description })
         Plan ("Transfers", missions, budget)
 
+    /// Evacuate airfields in regions under threat
+    let tryEvacuatePlanes (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
+        let airfields =
+            war.World.Airfields.Values
+            |> Seq.filter (fun af -> af.IsActive && war.GetOwner(af.Region) = Some friendly)
+            |> List.ofSeq
+
+        let mutable budget = budget
+        let missions =
+            [
+                for af in airfields do
+                    let enemyForces = war.GetGroundForces(friendly.Other, af.Region)
+                    let friendlyForces = war.GetGroundForces(friendly, af.Region)
+                    if enemyForces >= 0.75f * friendlyForces then
+                        let destinations =
+                            airfields
+                            |> List.sortBy (fun af2 -> (af.Position - af2.Position).LengthSquared())
+                            |> List.filter (fun af2 ->
+                                let enemyForces = war.GetGroundForces(friendly.Other, af2.Region)
+                                let friendlyForces = war.GetGroundForces(friendly, af2.Region)
+                                enemyForces <= 0.75f * friendlyForces || enemyForces = 0.0f<MGF>
+                            )
+                        for af2 in destinations do
+                            for (plane, qty) in war.GetNumPlanes(af.AirfieldId) |> Map.toSeq do
+                                let airMission =
+                                    {
+                                        StartAirfield = af.AirfieldId
+                                        Objective = af2.Region
+                                        MissionType = PlaneTransfer af2.AirfieldId
+                                        NumPlanes = int qty
+                                        Plane = plane
+                                    }
+                                let mission =
+                                    {
+                                        Kind = AirMission airMission
+                                        Description = sprintf "Evacuation of %s to from %s to %s" (string plane) af.AirfieldId.AirfieldName af2.AirfieldId.AirfieldName
+                                    }
+                                let budget2 = budget.TryCheckoutPlane(af.AirfieldId, checkoutDataAir airMission)
+                                match budget2 with
+                                | Some b ->
+                                    budget <- b
+                                    yield mission
+                                | None ->
+                                    ()
+            ]
+        Plan ("Airfield evacuation", missions, budget)
+
     /// Try to plan troop movements in enemy territory
     let tryPlanInvasions (timeSpan : float32<H>) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let distanceToAirfields =
@@ -1013,7 +1060,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                     tryMakeGroundForcesHarassment |> Planning.andThen (Planning.chain [ tryMakeGroundForcesSupport; tryPlanTroops ])
                     tryPlanTroops
                 ]
-                Planning.chain [ tryTransferPlanesForward side; tryPlanReinforcements timeSpan war side ]
+                Planning.chain [ tryTransferPlanesForward side; tryPlanReinforcements timeSpan war side; tryEvacuatePlanes war side ]
             ]
 
         let budget = ForcesAvailability.Create war
@@ -1041,6 +1088,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                     tryTransferPlanesForward side.Other
                     lockDefenses war side.Other
                     tryPlanReinforcements timeSpan war side.Other
+                    tryEvacuatePlanes war side.Other
                 ] budget
             let defenseMissions, _ = MissionPlanningResult.getMissions budget otherSideDefends
             let momentum =
