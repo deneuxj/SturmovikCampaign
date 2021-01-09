@@ -1017,11 +1017,15 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
             ]
 
         let budget = ForcesAvailability.Create war
+
+        let g1 = side.Grammar
+        let g2 = side.Other.Grammar
+
         match sideAttacks budget with
         | TooFewTargets comment ->
             Victory(side, comment)
         | Plan(comment, [], _) ->
-            let comment2 = sprintf "%s loses initiative because of %s" (string side) comment
+            let comment2 = sprintf "%s lose%s initiative because of %s" (string side) g1.Suffix3 comment
             if depth > 0 then
                 oneSideStrikes side.Other comment2 (depth - 1) (war, timeSpan)
             else
@@ -1030,19 +1034,25 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
             let raids =
                 missions
                 |> List.choose (function { Kind = AirMission x } -> Some x | _ -> None)
-            let covers, budget =
-                Planning.chain [ tryMakeCovers war side.Other raids; tryMakeDefensiveGroundForcesRaids war side.Other; tryTransferPlanesForward side.Other; lockDefenses war side.Other; tryPlanReinforcements timeSpan war side.Other ] budget
-                |> MissionPlanningResult.getMissions budget
+            let otherSideDefends =
+                Planning.chain [
+                    tryMakeCovers war side.Other raids
+                    tryMakeDefensiveGroundForcesRaids war side.Other
+                    tryTransferPlanesForward side.Other
+                    lockDefenses war side.Other
+                    tryPlanReinforcements timeSpan war side.Other
+                ] budget
+            let defenseMissions, _ = MissionPlanningResult.getMissions budget otherSideDefends
             let momentum =
                 if depth = 0 then
                     "keeping the pressure on"
                 else
                     "striking against"
-            let briefing = sprintf "%s. %s is %s %s assets with %s" comment (string side) momentum (string side.Other) description
+            let briefing = sprintf "%s. %s %s %s %s assets with %s. %s wheather%s the storm with %s" comment (string side) g1.VerbIs momentum (string side.Other) description (string side.Other) g2.Suffix3 otherSideDefends.Description
             logger.Info(briefing)
             Ongoing {
                 Briefing = briefing
-                Missions = missions @ covers
+                Missions = missions @ defenseMissions
                 Data = {
                     OffensiveCoalition = side
                 }

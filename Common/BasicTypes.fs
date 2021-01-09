@@ -81,6 +81,11 @@ with
         | Axis -> "Axis"
         | Allies -> "Allies"
 
+    member this.Grammar =
+        match this with
+        | Axis -> {| VerbIs = "is"; VerbHave = "has"; Suffix3 = "s" |}
+        | Allies -> {| VerbIs = "are"; VerbHave = "have"; Suffix3 = "" |}
+
     static member FromString(s : string) =
         match s.ToLowerInvariant() with
         | "axis" -> Axis
