@@ -364,14 +364,14 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
 
 type Campaign.MissionGen.MissionFileGeneration.GroundBattle
 with
-    static member TryFromGroundMission(state : IWarStateQuery, mission : GroundMission, pos : OrientedPosition, area : Vector2 list) =
+    static member TryFromGroundMission(state : IWarStateQuery, mission : GroundMission, pos : OrientedPosition, area : Vector2 list, limits : GroundBattleNumbers) =
         match mission with
         | { MissionType = GroundBattle initiator } ->
             let computeNum (force : float32<MGF>) =
-                { NumRocketArtillery = int(0.25f * force / TargetType.ArmoredCar.GroundForceValue)
-                  NumArtillery = int(0.25f * force / TargetType.Artillery.GroundForceValue)
-                  NumAntiTankGuns = int(0.25f * force / TargetType.Artillery.GroundForceValue)
-                  NumTanks = int(0.25f * force / TargetType.Tank.GroundForceValue)
+                { NumRocketArtillery = int(0.25f * force / TargetType.ArmoredCar.GroundForceValue) |> min limits.NumRocketArtillery
+                  NumArtillery = int(0.25f * force / TargetType.Artillery.GroundForceValue) |> min limits.NumArtillery
+                  NumAntiTankGuns = int(0.25f * force / TargetType.Artillery.GroundForceValue) |> min limits.NumAntiTankGuns
+                  NumTanks = int(0.25f * force / TargetType.Tank.GroundForceValue) |> min limits.NumTanks
                 }
             let getCountryInCoalition coalition = state.World.GetAnyCountryInCoalition coalition
             Some {
@@ -388,6 +388,7 @@ with
             None
 
 type PreparationSettings = {
+    GroundBattleLimits : GroundBattleNumbers
     MaxTrainsPerSide : int
     MaxTruckColumnsPerSide : int
     MissionLength : System.TimeSpan
@@ -785,7 +786,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                 p
                             else
                                 { p with Rotation = (p.Rotation + 180.0f) % 360.0f }
-                        match GroundBattle.TryFromGroundMission(state, mission, p, area) with
+                        match GroundBattle.TryFromGroundMission(state, mission, p, area, settings.GroundBattleLimits) with
                         | Some battle -> yield battle
                         | None -> ()
                     | None -> ()

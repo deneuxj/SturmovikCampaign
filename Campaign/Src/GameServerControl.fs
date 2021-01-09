@@ -62,6 +62,10 @@ type Settings =
         MaxActivePatrolsPerCoalition : int
         MaxAttackPlanesCpuCost : float32
         MaxAAGuns : int
+        MaxBattleArtillery : int
+        MaxBattleTanks : int
+        MaxBattleAntiTankGuns : int
+        MaxBattleRocketArtillery : int
     }
 with
     /// Root of the data dir, passed to resaver.exe
@@ -84,6 +88,15 @@ with
 
     /// Directory where DServer saves logs
     member this.MissionLogs = IO.Path.Combine(this.GameDir, "data", "logs")
+
+    /// Limits on number of entities in ground battles
+    member this.GroundBattleLimits : Campaign.MissionGen.MissionFileGeneration.GroundBattleNumbers =
+        {
+            NumTanks = this.MaxBattleTanks
+            NumRocketArtillery = this.MaxBattleRocketArtillery
+            NumArtillery = this.MaxBattleArtillery
+            NumAntiTankGuns = this.MaxBattleAntiTankGuns
+        }
 
     static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign", "Current")
 
@@ -110,6 +123,10 @@ module IO =
             max_active_patrols : int option
             max_attack_planes_cpu : int option
             max_aa : int option
+            max_battle_at_guns : int option
+            max_battle_tanks : int option
+            max_battle_artillery : int option
+            max_battle_rocket_artillery : int option
         }
     with
         member this.AsSettings =
@@ -137,6 +154,10 @@ module IO =
                 MaxActivePatrolsPerCoalition = defaultArg this.max_active_patrols 4
                 MaxAttackPlanesCpuCost = 100.0f * float32(defaultArg this.max_attack_planes_cpu 16)
                 MaxAAGuns = defaultArg this.max_aa 1000
+                MaxBattleAntiTankGuns = defaultArg this.max_battle_at_guns 15
+                MaxBattleArtillery = defaultArg this.max_battle_artillery 15
+                MaxBattleRocketArtillery = defaultArg this.max_battle_rocket_artillery 7
+                MaxBattleTanks = defaultArg this.max_battle_tanks 7
             }
 
     /// Create a default settings file and return its content.
@@ -169,6 +190,10 @@ module IO =
                 max_truck_convoys = None
                 max_attack_planes_cpu = None
                 max_aa = None
+                max_battle_tanks = None
+                max_battle_artillery = None
+                max_battle_at_guns = None
+                max_battle_rocket_artillery = None
             }
         let json = Json.serialize content
         IO.File.WriteAllText(path, json)

@@ -694,6 +694,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             MissionFilePreparation.MaxTrainsPerSide = settings.MaxTrainsPerCoalition
                             MissionFilePreparation.MaxTruckColumnsPerSide = settings.MaxTruckConvoysPerCoalition
                             MissionFilePreparation.MissionLength = TimeSpan.FromMinutes(float settings.MissionDuration)
+                            MissionFilePreparation.GroundBattleLimits = settings.GroundBattleLimits
                         }
                     let missionGenSettings : MissionGenSettings =
                         {
