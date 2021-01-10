@@ -977,6 +977,22 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
                         |> List.sortBy (fun (excess, dist, ngh) -> excess, dist)
                         |> List.map (fun (_, _, ngh) -> ngh)
 
+                    // Shuffle the 3 destinations with highest priority
+                    // to break pattern where troops tend to always follow
+                    // the same path from rear regions to the front
+                    let destinations =
+                        let random = System.Random(war.Seed)
+                        let shuffled =
+                            destinations
+                            |> List.truncate 3
+                            |> Array.ofList
+                            |> Array.shuffle random
+                            |> List.ofArray
+                        let rest =
+                            destinations
+                            |> List.skip shuffled.Length
+                        shuffled @ rest
+
                     let missions, budget2, _ =
                         (([], budget, availableToMove), destinations)
                         ||> List.fold (fun (missions, budget, availableToMove) ngh ->
