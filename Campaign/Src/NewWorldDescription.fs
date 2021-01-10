@@ -439,6 +439,9 @@ with
     /// Portion of ground forces dedicated to anti-air
     member this.AntiAirGroundForcesRatio = 0.15f
 
+    /// Resources available in entry regions for a coalition
+    member this.CoalitionEntryResources(_ : CoalitionId) = 50000.0f<E/H>
+
 module private DynProps =
     let cacheBy getXs getKey =
         Util.Caching.cachedProperty (fun (world : World) -> getXs world |> Seq.map (fun x -> getKey x, x) |> dict)

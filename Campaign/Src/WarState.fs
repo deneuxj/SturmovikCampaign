@@ -163,6 +163,8 @@ type IWarStateQuery =
     abstract member GetRegionBuildingCapacity : RegionId -> float32<M^3>
     /// Storage room in a region, assuming full health
     abstract member GetRegionBuildingFullCapacity : RegionId -> float32<M^3>
+    /// Get the relative processing capacity of a region. This depends on the regions' building capacity vs its full building capacity
+    abstract member GetRegionProcessingLevel : RegionId -> float32
     /// Level of functionality of a bridge
     abstract member GetBridgeFunctionalityLevel : BuildingInstanceId -> float32
     /// Get the ground forces of a coalition in a region
@@ -602,6 +604,13 @@ type WarState
         this.World.Regions.[rid].IndustryBuildings
         |> Seq.sumBy this.GetBuildingFullCapacity
 
+    member this.GetRegionProcessingLevel(rId : RegionId) =
+        match this.GetRegionBuildingFullCapacity(rId) with
+        | full when full > 0.0f<M^3> ->
+            0.5f + 0.5f * this.GetRegionBuildingCapacity(rId) / full
+        | _ ->
+            1.0f
+
     member this.GetBridgeFunctionalityLevel(bid) =
         let building = this.World.Bridges.[bid]
         building.Properties.SubParts
@@ -670,7 +679,7 @@ type WarState
                 | false, _ -> 0.0f<E/H>
                 | true, owner ->
                     if world.Regions.[rId].IsEntry then
-                        this.GetRegionBuildingCapacity(rId) * world.ResourceProductionRate
+                        world.CoalitionEntryResources owner * this.GetRegionProcessingLevel(rId)
                     else
                     // Regions through which a the owner coalition can travel: neutral, and the ones under one's control.
                     let regions =
@@ -698,12 +707,24 @@ type WarState
                         // Note: Swap sources and sinks. For isolated regions, it typically takes
                         //       less time to go over all nodes in that region than to go over all
                         //       the nodes connected to the entry region.
-                        let flow = Algo.computeTransportCapacity(this.GetFlowCapacity, network, regions, sinks, sources)
+                        let getFlowModifier =
+                            Cached.cached
+                                (Dictionary<RegionId, float32>())
+                                this.GetRegionProcessingLevel
+                        let getFlowModifier =
+                            Option.map getFlowModifier
+                            >> Option.defaultValue 1.0f
+                        let getFlowCapacity(link : NetworkLink) =
+                            let regionNodeA = network.GetNode(link.NodeA).Region
+                            let regionNodeB = network.GetNode(link.NodeB).Region
+                            this.GetFlowCapacity(link) * min (getFlowModifier regionNodeA) (getFlowModifier regionNodeB)
+                        let flow = Algo.computeTransportCapacity(getFlowCapacity, network, regions, sinks, sources)
                         flow / world.ResourceVolume
                     let production =
                         owners
                         |> Seq.filter (fun kvp -> kvp.Value = owner && world.Regions.[kvp.Key].IsEntry)
-                        |> Seq.sumBy (fun kvp -> this.GetRegionBuildingCapacity(kvp.Key) * world.ResourceProductionRate)
+                        |> Seq.sumBy (fun kvp -> this.GetRegionProcessingLevel(kvp.Key))
+                        |> (*) (world.CoalitionEntryResources owner)
                     // This is not strictly correct: A production region that is cut from the network should not be able to contribute.
                     // To do things properly, the production should be added as sources in the graph
                     let limit = computeFlow rails + computeFlow roads
@@ -832,6 +853,7 @@ type WarState
         member this.GetOwner(arg1) = this.GetOwner(arg1)
         member this.GetRegionBuildingCapacity(arg1) = this.GetRegionBuildingCapacity(arg1)
         member this.GetRegionBuildingFullCapacity(arg1) = this.GetRegionBuildingFullCapacity(arg1)
+        member this.GetRegionProcessingLevel(rid) = this.GetRegionProcessingLevel(rid)
         member this.SetBuildingPartHealthLevel(arg1, arg2, arg3) = this.SetBuildingPartHealthLevel(arg1, arg2, arg3)
         member this.SetDate(arg1) = this.SetDate(arg1)
         member this.SetGroundForces(coalition, region, forces) = this.SetGroundForces(coalition, region, forces)
