@@ -914,8 +914,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         }
 
     /// Check current state and act accordingly
-    member this.ResumeAsync(?restartsLeft) =
+    member this.ResumeAsync(?restartsLeft, ?skipsLeft) =
         let restartsLeft = defaultArg restartsLeft maxRetries
+        let skipsLeft = defaultArg skipsLeft 5
         async {
             try
                 logger.Trace restartsLeft
@@ -940,10 +941,14 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         this.SaveState()
                         return! this.ResumeAsync()
                     | Ok(false) ->
-                        state <- Some SkippingMission
-                        logger.Info state
-                        this.SaveState()
-                        return! this.ResumeAsync()
+                        if skipsLeft > 0 then
+                            state <- Some SkippingMission
+                            logger.Info state
+                            this.SaveState()
+                            return! this.ResumeAsync(skipsLeft = skipsLeft - 1)
+                        else
+                            gameServer.KillProcess(serverProcess) |> ignore
+                            return this.Die("Reached maximum number of missions skipped in a row")
                     | Error msg ->
                         gameServer.KillProcess(serverProcess) |> ignore
                         return this.Die(msg)
@@ -1004,7 +1009,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         state <- Some AdvancingScenario
                         logger.Info state
                         this.SaveState()
-                        return! this.ResumeAsync()
+                        return! this.ResumeAsync(skipsLeft = skipsLeft)
                     | Error msg ->
                         // Should not happen, as skipping is expected to succeed.
                         return this.Die(msg)
@@ -1016,7 +1021,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         state <- Some PreparingMission
                         logger.Info state
                         this.SaveState()
-                        return! this.ResumeAsync()
+                        return! this.ResumeAsync(skipsLeft = skipsLeft)
                     | Error msg ->
                         // Scenario failed, stop sync.
                         return this.Die(msg)
