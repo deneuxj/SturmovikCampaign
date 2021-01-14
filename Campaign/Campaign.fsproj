@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Doc\manual.html">
+    <Content Include="Doc\CoconutDynamicCampaign.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="Doc\CoconutDynamicCampaign.adoc">

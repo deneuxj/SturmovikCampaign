@@ -2,27 +2,13 @@
 ===============================================================
 Johann "coconut" Deneux <johann.deneux@gmail.com>
 
-== Preamble
-
-This dynamic campaign system is Coconut's second attempt. This new attempt builds upon it, retaining the following concepts:
-- A large play area divided in regions
-- Persistent damage
-- Logistics affected by infrastructure, such as bridges and factories
-- Campaign status update between missions
-- Plane availability affected by losses and transfers
-
-The biggest change with the previous version is the campaign simulation mechanisms.
-It used to be the case that status change was the result of an action that took place in the game: The transfer of a plane, the destruction of one side in a battle, the travelling of a truck...
-The problem with this approach is that the full logistics of a war required a number of actors (planes, tanks, trucks...) that was too big for a mission.
-Because of this, every individual in-game actor represented a sometimes excessively large asset, and its destruction could lead to unrealistically large losses.
-Such destruction was not even always the result of players' actions. Entire armies were lost to a misplaced very robust fence encroaching on a road...
-
 == Principles
 
 There are two sides, Allies and Axis, which each control _regions_. A region is a fixed geographical area, controlled by at most one side.
 A region has _infrastructure_ consisting of all buildings except civilian houses. A region can also be home to a number of _airfields_, which have their own infrastructure (typically hangars, fuel tanks...).
 
 Regions are _connected_ by _roads_ and _railways_, which can cross rivers with _bridges_. Roads and railways have a _transport capacity_. Bridges can be destroyed, resulting in a loss of capacity in the transportation network.
+Destruction of infrastructure in a region affects transport capacity into and out of that region. If all infrastructure is destroyed, the transport capacity is halved.
 
 At any given date, a region can be occupied by _ground forces_, characterized by a number. Both sides can have forces in a region simultaneously.
 When a region has forces from one side only, that region falls under the control of that side, and will remain so until the other side enters the region with their forces, while the until-then controlling side has no forces there.
@@ -50,3 +36,56 @@ Pilots can be injured, in which case they become unavailable for a period of tim
 Pilots gain experience by flying missions in which "interesting things happen", typically they inflict damage to the enemy, or receive damage from the enemy. Alternatively, long flights count also as granting experience.
 
 The number of pilots and their experience in a region affect positively the simulation of all missions that originate from that region.
+
+== What to do
+
+This sections suggests missions.
+
+=== Destroy bridges
+
+Look at the map, identify bridges in enemy territory which the enemy must traverse to reach the front.
+Roads in neutral regions or outside the play area (but within the convex hull of the play area) are accessible to vehicles of all sides.
+Destroying such bridges will prevent reinforcements, and diminish a region's fighting ability.
+Depending on the availability of ground forces in the region, some of the bridges may have active anti-air defenses.
+
+=== Patrol for enemy camps
+
+Fly around on the map, below 3000m. If you come close to an enemy camp, it will appear on the map in the game. If you are in a fighter, you can attack the camp's anti-air defenses.
+Get some altitude out of range of the anti-air defenses, then dive in at high speed. Bob and weave a bit to throw the aim of the enemy's cannons off.
+After shooting and destroying one or more cannons, extend at max speed, low altitude, bobing and weaving, for at least 3km. If you get hit disengage the target and try to make it into friendly territory.
+
+=== Destroy enemy camps
+
+After AA defenses at a camp have been destroyed, you are free to attack the vehicles there using cannon, bombs and rockets.
+
+=== Patrol for enemy planes
+
+Enemy attackers, when in the air, are marked by an icon on the map. The icon is located near the target area, not the planes themselves.
+Fly to the area, then either circle there waiting for the planes to arrive (which can take up to 45 minutes!), or fly towards the enemy's airfield where you guess the attackers are starting off.
+When you encounter the planes, shoot them down.
+
+=== Attack enemy airfields
+
+Similar tactics as for attacking anti-air defenses of camps, using fast fighters. Note that AA defenses respawn after a few minutes at rear airfields, so don't hang around for too long after destroying them.
+You may also want to leave the anti-air defenses alone, and do a single pass with bombers. Aim for hangars and static planes on the ground. Fuel tanks are also targets.
+Destroying hangars and fuel tanks prevents AI missions to start from that airfield. Destroying planes prevents AI missions to use them, and players to spawn in them. Effects apply in the next mission, not the ongoing one.
+
+=== Attack enemy infrastructure
+
+This includes factories, train stations... They may be protected by relatively weak AA if troop presence in the region supports it. Best attacked using multiple medium-sized bombs.
+Destroying this infrastructure limits reinforcements and supplies (for repairs and fighting efficiency) travelling through the region.
+
+=== Attack enemy convoys
+
+Trucks and trains are marked on the map while travelling. The icon marks the road or rails where the convoy travels, not their current position.
+Destroying a convoy removes the corresponding amount of ground forces.
+
+== Campaign status web page
+
+Look at the server's web page to get the campaign's status:
+
+- The casual server: http://coconutside.eu:8080/html/map.html
+
+- The hardcore server: http://coconutside.eu:8090/html/map.html
+
+- Other servers: Check with the server's operator
