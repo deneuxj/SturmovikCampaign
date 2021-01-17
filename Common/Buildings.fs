@@ -41,6 +41,10 @@ type BuildingProperties with
 /// Identify buildings by their position.
 [<Struct>]
 type BuildingInstanceId = BuildingInstanceId of OrientedPosition
+with
+    member this.Pos =
+        let (BuildingInstanceId pos) = this
+        pos
 
 type BuildingInstance = {
     Pos : OrientedPosition

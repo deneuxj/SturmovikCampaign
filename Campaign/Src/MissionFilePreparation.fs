@@ -1061,6 +1061,44 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> organizeConvoys settings.MaxTrainsPerSide
     logger.Debug(sprintf "Generated a total of %d truck convoys" (trucks |> List.sumBy List.length))
 
+    // Fires
+    let damagedBuildings =
+        state.World.Buildings.Values
+        |> Seq.choose (fun b ->
+            let funct = state.GetBuildingFunctionalityLevel(b.Id)
+            if funct < 0.5f then
+                Some(b, funct)
+            else
+                None)
+        |> Seq.sortBy snd
+
+    let spacedOutBuildings =
+        ([], damagedBuildings)
+        ||> Seq.fold (fun xs (b, funct) ->
+            if xs.Length >= 100 then
+                xs
+            elif xs |> List.exists (fun (b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < 10000.0f) then
+                xs
+            else
+                (b, funct) :: xs
+        )
+
+    let fires : BuildingFire list =
+        spacedOutBuildings
+        |> List.map (fun (b, funct) ->
+            {
+                Pos = { b.Pos with Rotation = float32 state.Weather.Wind.Direction }
+                Intensity =
+                    let x = (1.0f - funct) * float32 b.Properties.Durability
+                    if x >= 20000.0f then
+                        SturmovikMission.Blocks.FireLoop.CityFire
+                    elif x >= 10000.0f then
+                        SturmovikMission.Blocks.FireLoop.CityFireSmall
+                    else
+                        SturmovikMission.Blocks.FireLoop.VillageSmoke
+            }
+        )
+
     // Result
     {
         Date = state.Date
@@ -1074,5 +1112,6 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         Convoys = trains @ trucks
         ParkedPlanes = parkedPlanes
         ParkedVehicles = parkedVehicles
+        BuildingFires = fires
     }
 

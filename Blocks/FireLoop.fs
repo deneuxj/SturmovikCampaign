@@ -5,7 +5,6 @@ open VectorExtension
 open SturmovikMission.DataProvider
 open SturmovikMission.DataProvider.McuUtil
 open SturmovikMission.Blocks.BlocksMissionData
-open SturmovikMission.Blocks.WhileEnemyClose
 
 type FireType =
     | CityFire
@@ -14,12 +13,11 @@ type FireType =
 with
     member this.Script =
         match this with
-        | CityFire -> @"luascripts\worldobjects\mapemitters\city_fire.txt"
-        | CityFireSmall -> @"luascripts\worldobjects\mapemitters\city_firesmall.txt"
-        | VillageSmoke -> @"luascripts\worldobjects\mapemitters\villagesmoke.txt"
+        | CityFire -> @"luascripts\worldobjects\mapemitters\city_fire_loop.txt"
+        | CityFireSmall -> @"luascripts\worldobjects\mapemitters\city_firesmall_loop.txt"
+        | VillageSmoke -> @"luascripts\worldobjects\mapemitters\villagesmoke_loop.txt"
 
 type FireLoop = {
-    Proximity : WhileEnemyClose
     All : McuUtil.IMcuGroup
 }
 with
@@ -30,41 +28,23 @@ with
         for mcu in group do
             subst mcu
         // Get key nodes
-        let effect1 = getVehicleByName group "Effect1"
-        let effect2 = getVehicleByName group "Effect2"
-        let init = getTriggerByName group "INITIALLY"
-        let startLoop = getTriggerByName group "START_LOOP"
-        let stopLook = getTriggerByName group "STOP_LOOP"
+        let effect = getVehicleByName group "Effect1"
         // Position of all nodes
-        let refPoint = Vector2.FromMcu(effect1.Pos)
+        let refPoint = Vector2.FromMcu(effect.Pos)
         let dv = pos - refPoint
         for mcu in group do
             (Vector2.FromMcu(mcu.Pos) + dv).AssignTo(mcu.Pos)
             mcu.Pos.Y <- float alt
         // Orientation of smoke
-        effect1.Ori.Y <- float ori
-        effect2.Ori.Y <- float ori
+        effect.Ori.Y <- float ori
         // Fire type
-        effect1.Script <- fireType.Script
-        effect2.Script <- fireType.Script
-        // Proximity logic
-        let wec = WhileEnemyClose.Create(true, true, store, pos, Mcu.CoalitionValue.Neutral, 10000)
-        // Set coalitions to both Axis and Allies
-        match wec.Proximity with
-        | :? Mcu.McuProximity as prox ->
-            prox.PlaneCoalitions <- [Mcu.CoalitionValue.Axis; Mcu.CoalitionValue.Allies]
-        | _ -> ()
-        // Connection fire loop <-> proximity logic
-        Mcu.addTargetLink init wec.StartMonitoring.Index
-        Mcu.addTargetLink wec.WakeUp startLoop.Index
-        Mcu.addTargetLink wec.Sleep stopLook.Index
+        effect.Script <- fireType.Script
         // result
         {
-          Proximity = wec
           All =
             { new McuUtil.IMcuGroup with
                   member this.Content = group
                   member this.LcStrings = []
-                  member this.SubGroups = [ wec.All ]
+                  member this.SubGroups = []
             }
         }

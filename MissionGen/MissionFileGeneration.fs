@@ -528,6 +528,16 @@ with
             Mcu.addTargetLink startTrigger column.Api.Start.Index
             column :> IMcuGroup
 
+type BuildingFire =
+    {
+        Pos : OrientedPosition
+        Intensity : SturmovikMission.Blocks.FireLoop.FireType
+    }
+with
+    member this.CreateMCUs(store) =
+        let mcu = SturmovikMission.Blocks.FireLoop.FireLoop.Create(store, this.Pos.Pos, this.Pos.Altitude, this.Pos.Rotation, this.Intensity)
+        mcu
+
 type MissionGenSettings =
     {
         MaxAntiAirCannons : int
@@ -656,6 +666,7 @@ type MultiplayerMissionContent =
         Convoys : Convoy list list
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
         ParkedVehicles : (CoalitionId * (ConvoyMember * OrientedPosition * CountryId) list) list
+        BuildingFires : BuildingFire list
     }
 with
     /// Create the groups suitable for a multiplayer "dogfight" mission
@@ -915,6 +926,11 @@ with
                 subst mcu
                 lcSubst mcu
 
+        // Building fires
+        let fires =
+            this.BuildingFires
+            |> List.map (fun x -> x.CreateMCUs(store).All)
+
         // Result
         let allGroups =
             [
@@ -934,6 +950,7 @@ with
                 yield serverInputMissionEnd.All
                 yield upcast borders
                 yield McuUtil.groupFromList other
+                yield! fires
             ]
 
         // Create directories in path to file, if needed
