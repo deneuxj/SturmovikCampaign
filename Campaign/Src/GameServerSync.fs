@@ -680,7 +680,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             |> Seq.sumBy(fun af ->
                                 state.GetNumPlanes(af.AirfieldId)
                                 |> Map.toSeq
-                                |> Seq.sumBy (fun (plane, num) -> if state.World.PlaneSet.[plane].Kind = Common.PlaneModel.PlaneType.Fighter then num else 0.0f)
+                                |> Seq.sumBy (fun (plane, num) -> if state.World.PlaneSet.[plane].Kind = Common.PlaneModel.PlaneType.Fighter then (max num 0.0f) else 0.0f)
                             )
                         logger.Debug(sprintf "Coalition %s has %3.0f fighters" (string coalition) totalFighters)
                         totalFighters > 100.0f)
