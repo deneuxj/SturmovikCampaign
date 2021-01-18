@@ -682,6 +682,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                 |> Map.toSeq
                                 |> Seq.sumBy (fun (plane, num) -> if state.World.PlaneSet.[plane].Kind = Common.PlaneModel.PlaneType.Fighter then num else 0.0f)
                             )
+                        logger.Debug(sprintf "Coalition %s has %3.0f fighters" (string coalition) totalFighters)
                         totalFighters > 100.0f)
                 if not isPlayable then
                     return Ok(false)
