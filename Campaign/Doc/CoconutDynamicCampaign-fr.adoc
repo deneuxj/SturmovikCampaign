@@ -1,0 +1,73 @@
+﻿Campagne dynamique multijoueur pour l'IL-2 Great Battles par Coconut
+====================================================================
+Johann "coconut" Deneux <johann.deneux@gmail.com>
+
+== Principes
+
+Il y a deux camps, les Alliés et l'Axe qui contrôlent chacun une région. Une région est une zone géographique fixe, contrôlée par un seul camp au maximum. Une région possède une infrastructure composée de tous les bâtiments, à l'exception des maisons civiles. Une région peut également abriter un certain nombre d'aérodromes, qui ont leur propre infrastructure (généralement des hangars, des réservoirs de carburant...).
+
+Les régions sont reliées par des routes et des chemins de fer qui traversent les rivières en passant par des ponts. Les routes et les chemins de fer ont une capacité de transport. Les ponts peuvent être détruits, ce qui entraîne une perte de capacité du réseau de transport. La destruction des infrastructures dans une région affecte la capacité de transport à l'entrée et à la sortie de cette région. Si toutes les infrastructures sont détruites, la capacité de transport est réduite de moitié.
+
+A une date donnée, une région peut être occupée par des forces terrestres, caractérisées par un nombre. Les deux parties peuvent avoir des forces dans une région simultanément. Lorsque dans une région il ne reste plus que les forces d'un seul camp, cette région tombe sous son contrôle, et le restera à moins que le camp opposé parvienne à l’en chasser. Des régions peuvent également être capturées à l'issue d'une bataille, lorsque les forces appartenant au camp qui contrôle la région sont vaincues ou se rendent.
+
+Les forces terrestres sont simplement caractérisées par des chiffres, la répartition exacte par type de véhicule n'est pas prise en compte.
+
+Les aérodromes comptabilisent des avions. Un avion peut être ajouté sur un aérodrome en y atterrissant, et soustrait en décollant. Les avions peuvent être (partiellement) endommagés. Les avions sont comptés comme des "volumes", ce qui signifie que deux avions endommagés à 50 % comptent comme un seul avion intact.
+
+Les avions et les forces terrestres sont réapprovisionnés à intervalles réguliers. Elles se matérialisent dans des régions dites d'entrée, dont chaque camp dispose d'au moins une.
+
+L'efficacité des forces terrestres et la rapidité des réparations de l'infrastructure sont affectées par la connectivité entre la région (où se trouvent les forces ou les ressources) et la ou les régions d'entrée. Les forces dans une région isolée ont une efficacité réduite pendant les batailles.
+
+Les avions et les forces terrestres peuvent être détruits pendant le jeu, mais aussi entre les missions dans le cadre de la simulation. La simulation gère les batailles entre les forces terrestres, les transferts de forces terrestres ainsi que les missions aériennes. Les missions aériennes consistent en des attaques et des patrouilles. Les batailles aériennes sont simulées, et les résultats sont affectés par le nombre de participants et leur expérience.
+
+L'expérience d'une force aérienne dépend de son aérodrome d'origine et de la disponibilité de pilotes expérimentés. Les pilotes sont contrôlés par les joueurs, et leurs performances, leur santé et leur localisation sont suivies.
+
+Chaque fois qu'un joueur décolle d'un nouvel aérodrome, il prend le contrôle d'un nouveau pilote. Lorsqu'il atterrit à nouveau sur un terrain d'aviation, ou du moins à proximité d'un terrain d'aviation, ce dernier devient le nouveau lieu de résidence de ce pilote.
+
+Les pilotes peuvent être blessés, auquel cas ils deviennent indisponibles pendant une période de temps qui dépend de la blessure. De nouveaux pilotes sont enrôlés selon les besoins.
+
+Les pilotes acquièrent de l'expérience en effectuant des missions au cours desquelles "des choses intéressantes se produisent", généralement ils infligent des dommages à l'ennemi, ou en reçoivent. Les vols de longue durée comptent également comme un moyen d'acquérir de l'expérience.
+
+Le nombre de pilotes et leur expérience dans une région ont un effet positif sur la simulation de toutes les missions qui proviennent de cette région.
+
+== Que faire ?
+
+Cette section suggère des missions.
+
+=== Détruire les ponts
+
+Regardez la carte pour identifier les ponts que l'ennemi doit traverser pour atteindre le front. Les routes situées dans les régions neutres ou en dehors de la zone de jeu (mais le long de l’enveloppe convexe de la zone de jeu) sont accessibles aux véhicules de tous les côtés. La destruction de ces ponts empêchera les renforts et diminuera la capacité de combat d'une région. En fonction de la disponibilité des forces terrestres dans la région, certains des ponts peuvent être dotés de défenses anti aériennes actives.
+
+=== Patrouille en territoires ennemis
+
+Volez sur la carte en dessous de 3000 m. Si vous vous approchez d'un campement ennemi, il apparaîtra sur la carte du jeu. Si vous êtes dans un avion de chasse, vous pouvez attaquer les défenses anti-aériennes du camp. Prenez de l'altitude en restant hors de portée des défenses anti-aériennes, puis plongez à grande vitesse. Faites des mouvements avec votre avion pour détourner la visée des canons ennemis. Après avoir tiré et détruit un ou plusieurs canons, partez à vitesse maximale, à basse altitude, toujours en louvoyant, sur au moins 3 km. Si vous êtes touché, désengagez la cible et essayez de vous rendre en territoire ami.
+
+=== Détruire les campements ennemis
+
+Après la destruction des défenses AA d'un campement, vous êtes libre d'attaquer les véhicules qui s'y trouvent à l'aide de canons, de bombes et de roquettes.
+
+=== Défense des objectifs 
+
+Les avions d’attaque au sol sont marqués par une icône sur la carte. L'icône est située près de la zone cible mais n’indique pas les avions eux-mêmes. Dirigez-vous vers la zone, puis cerclez sur la zone en attendant l'arrivée des avions (ce qui peut prendre jusqu'à 45 minutes !), ou bien dirigez-vous vers le terrain d'aviation de l'ennemi depuis lequel vous supposez que les attaquants sont partis. Lorsque vous rencontrez les avions, abattez-les.
+
+=== Attaquer les aérodromes ennemis
+
+Tactiques similaires à celles utilisées pour attaquer les défenses anti-aériennes des campements en utilisant des chasseurs rapides. Notez que les défenses anti aériennes se reconstituent après quelques minutes sur les aérodromes de l’arrière, donc ne restez pas trop longtemps après les avoir détruites. Vous pouvez aussi laisser les défenses anti-aériennes tranquilles et faire une seule passe avec les bombardiers. Visez les hangars et les avions statiques au sol. Les réservoirs de carburant sont également des cibles. La destruction des hangars et des réservoirs de carburant empêche les missions IA anti aériennes de démarrer à partir de ce terrain d'aviation.
+
+La destruction des avions empêche les IA de les utiliser et les joueurs d'y spawner. Les effets s'appliquent à la mission suivante, et non à la mission en cours.
+
+=== Attaquer les convois ennemis
+
+Les camions et les trains sont marqués sur la carte pendant leur transfert. L'icône indique la route ou la voie ferrée sur laquelle le convoi se déplace, et non sa position actuelle. La destruction d'un convoi supprime la quantité correspondante de forces terrestres.
+
+== Page web sur l'état d'avancement de la campagne
+
+Consultez la page web du serveur pour connaître l'état d'avancement de la campagne :
+
+- Le serveur relaxé ("Casual") : http://coconutside.eu:8080/html/map.html
+
+- Le serveur sérieux ("Hardcore") : http://coconutside.eu:8090/html/map.html
+
+- Manuel en Anglais : http://coconutside.eu:8080/doc/CoconutDynamicCampaign.html
+
+- Autres serveurs : Vérifiez auprès de l'opérateur du serveur

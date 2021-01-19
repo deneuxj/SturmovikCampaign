@@ -15,6 +15,7 @@
     <None Include="Doc\CoconutDynamicCampaign.adoc">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Include="Doc\CoconutDynamicCampaign-fr.adoc" />
     <Compile Include="Src\Util.fs" />
     <Compile Include="Src\GameLogEvents.fs" />
     <Compile Include="Src\WatchLogs.fs" />
