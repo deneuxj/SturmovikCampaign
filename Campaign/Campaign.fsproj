@@ -12,6 +12,9 @@
     <Content Include="Doc\CoconutDynamicCampaign.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Doc\CoconutDynamicCampaign-fr.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Doc\CoconutDynamicCampaign.adoc">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
