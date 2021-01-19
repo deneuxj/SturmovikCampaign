@@ -742,16 +742,35 @@ asciidoc.install();
 <div class="sect1">
 <h2 id="_principes">Principes</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Il y a deux camps, les Alliés et l&#8217;Axe qui contrôlent chacun une région. Une région est une zone géographique fixe, contrôlée par un seul camp au maximum. Une région possède une infrastructure composée de tous les bâtiments, à l&#8217;exception des maisons civiles. Une région peut également abriter un certain nombre d&#8217;aérodromes, qui ont leur propre infrastructure (généralement des hangars, des réservoirs de carburant&#8230;).</p></div>
-<div class="paragraph"><p>Les régions sont reliées par des routes et des chemins de fer qui traversent les rivières en passant par des ponts. Les routes et les chemins de fer ont une capacité de transport. Les ponts peuvent être détruits, ce qui entraîne une perte de capacité du réseau de transport. La destruction des infrastructures dans une région affecte la capacité de transport à l&#8217;entrée et à la sortie de cette région. Si toutes les infrastructures sont détruites, la capacité de transport est réduite de moitié.</p></div>
-<div class="paragraph"><p>A une date donnée, une région peut être occupée par des forces terrestres, caractérisées par un nombre. Les deux parties peuvent avoir des forces dans une région simultanément. Lorsque dans une région il ne reste plus que les forces d&#8217;un seul camp, cette région tombe sous son contrôle, et le restera à moins que le camp opposé parvienne à l’en chasser. Des régions peuvent également être capturées à l&#8217;issue d&#8217;une bataille, lorsque les forces appartenant au camp qui contrôle la région sont vaincues ou se rendent.</p></div>
+<div class="paragraph"><p>Il y a deux camps, les Alliés et l&#8217;Axe qui contrôlent chacun une <em>région</em>.
+Une région est une zone géographique fixe, contrôlée par un seul camp au maximum.
+Une région possède une <em>infrastructure</em> composée de tous les bâtiments, à l&#8217;exception des maisons civiles.
+Une région peut également abriter un certain nombre d'<em>aérodromes</em>, qui ont leur propre infrastructure (généralement des hangars, des réservoirs de carburant&#8230;).</p></div>
+<div class="paragraph"><p>Les régions sont <em>reliées</em> par des <em>routes</em> et des <em>chemins de fer</em> qui traversent les rivières en passant par des <em>ponts</em>.
+Les routes et les chemins de fer ont une <em>capacité de transport</em>.
+Les ponts peuvent être détruits, ce qui entraîne une perte de capacité du réseau de transport.
+La destruction des infrastructures dans une région affecte la capacité de transport à l&#8217;entrée et à la sortie de cette région.
+Si toutes les infrastructures sont détruites, la capacité de transport est réduite de moitié.</p></div>
+<div class="paragraph"><p>A une date donnée, une région peut être occupée par des <em>forces terrestres</em>, caractérisées par un nombre.
+Les deux parties peuvent avoir des forces dans une région simultanément.
+Lorsque dans une région il ne reste plus que les forces d&#8217;un seul camp, cette région tombe sous son contrôle, et le restera à moins que le camp opposé parvienne à l’en chasser.
+Des régions peuvent également être capturées à l&#8217;issue d&#8217;une bataille, lorsque les forces appartenant au camp qui contrôle la région sont vaincues ou se rendent.</p></div>
 <div class="paragraph"><p>Les forces terrestres sont simplement caractérisées par des chiffres, la répartition exacte par type de véhicule n&#8217;est pas prise en compte.</p></div>
-<div class="paragraph"><p>Les aérodromes comptabilisent des avions. Un avion peut être ajouté sur un aérodrome en y atterrissant, et soustrait en décollant. Les avions peuvent être (partiellement) endommagés. Les avions sont comptés comme des "volumes", ce qui signifie que deux avions endommagés à 50 % comptent comme un seul avion intact.</p></div>
-<div class="paragraph"><p>Les avions et les forces terrestres sont réapprovisionnés à intervalles réguliers. Elles se matérialisent dans des régions dites d&#8217;entrée, dont chaque camp dispose d&#8217;au moins une.</p></div>
-<div class="paragraph"><p>L&#8217;efficacité des forces terrestres et la rapidité des réparations de l&#8217;infrastructure sont affectées par la connectivité entre la région (où se trouvent les forces ou les ressources) et la ou les régions d&#8217;entrée. Les forces dans une région isolée ont une efficacité réduite pendant les batailles.</p></div>
-<div class="paragraph"><p>Les avions et les forces terrestres peuvent être détruits pendant le jeu, mais aussi entre les missions dans le cadre de la simulation. La simulation gère les batailles entre les forces terrestres, les transferts de forces terrestres ainsi que les missions aériennes. Les missions aériennes consistent en des attaques et des patrouilles. Les batailles aériennes sont simulées, et les résultats sont affectés par le nombre de participants et leur expérience.</p></div>
-<div class="paragraph"><p>L&#8217;expérience d&#8217;une force aérienne dépend de son aérodrome d&#8217;origine et de la disponibilité de pilotes expérimentés. Les pilotes sont contrôlés par les joueurs, et leurs performances, leur santé et leur localisation sont suivies.</p></div>
-<div class="paragraph"><p>Chaque fois qu&#8217;un joueur décolle d&#8217;un nouvel aérodrome, il prend le contrôle d&#8217;un nouveau pilote. Lorsqu&#8217;il atterrit à nouveau sur un terrain d&#8217;aviation, ou du moins à proximité d&#8217;un terrain d&#8217;aviation, ce dernier devient le nouveau lieu de résidence de ce pilote.</p></div>
+<div class="paragraph"><p>Les aérodromes comptabilisent des <em>avions</em>. Un avion peut être ajouté sur un aérodrome en y atterrissant, et soustrait en décollant.
+Les avions peuvent être (partiellement) <em>endommagés</em>.
+Les avions sont comptés comme des "volumes", ce qui signifie que deux avions endommagés à 50 % comptent comme un seul avion intact.</p></div>
+<div class="paragraph"><p>Les avions et les forces terrestres sont réapprovisionnés à intervalles réguliers.
+Elles se matérialisent dans des <em>régions dites d&#8217;entrée</em>, dont chaque camp dispose d&#8217;au moins une.</p></div>
+<div class="paragraph"><p>L&#8217;efficacité des forces terrestres et la <em>rapidité</em> des réparations de l&#8217;infrastructure sont affectées par la connectivité entre la région (où se trouvent les forces ou les ressources) et la ou les régions d&#8217;entrée.
+Les forces dans une région isolée ont une efficacité réduite pendant les batailles.</p></div>
+<div class="paragraph"><p>Les avions et les forces terrestres peuvent être détruits pendant le jeu, mais aussi entre les missions dans le cadre de la <em>simulation</em>.
+La simulation gère les batailles entre les forces terrestres, les transferts de forces terrestres ainsi que les <em>missions aériennes</em>.
+Les missions aériennes consistent en des attaques et des patrouilles.
+Les batailles aériennes sont simulées, et les résultats sont affectés par le nombre de participants et leur expérience.</p></div>
+<div class="paragraph"><p>L&#8217;expérience d&#8217;une force aérienne dépend de son <em>aérodrome d&#8217;origine</em> et de la disponibilité de <em>pilotes</em> expérimentés.
+Les pilotes sont contrôlés par les joueurs, et leurs performances, leur santé et leur localisation sont suivies.</p></div>
+<div class="paragraph"><p>Chaque fois qu&#8217;un joueur décolle d&#8217;un nouvel aérodrome, il prend le contrôle d&#8217;un nouveau pilote.
+Lorsqu&#8217;il atterrit à nouveau sur un terrain d&#8217;aviation, ou du moins à proximité d&#8217;un terrain d&#8217;aviation, ce dernier devient le nouveau lieu de résidence de ce pilote.</p></div>
 <div class="paragraph"><p>Les pilotes peuvent être blessés, auquel cas ils deviennent indisponibles pendant une période de temps qui dépend de la blessure. De nouveaux pilotes sont enrôlés selon les besoins.</p></div>
 <div class="paragraph"><p>Les pilotes acquièrent de l&#8217;expérience en effectuant des missions au cours desquelles "des choses intéressantes se produisent", généralement ils infligent des dommages à l&#8217;ennemi, ou en reçoivent. Les vols de longue durée comptent également comme un moyen d&#8217;acquérir de l&#8217;expérience.</p></div>
 <div class="paragraph"><p>Le nombre de pilotes et leur expérience dans une région ont un effet positif sur la simulation de toutes les missions qui proviennent de cette région.</p></div>
@@ -821,7 +840,7 @@ Autres serveurs : Vérifiez auprès de l&#8217;opérateur du serveur
 <div id="footer">
 <div id="footer-text">
 Last updated
- 2021-01-19 21:03:51 W. Europe Standard Time
+ 2021-01-19 21:19:47 W. Europe Standard Time
 </div>
 </div>
 </body>

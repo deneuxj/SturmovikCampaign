@@ -4,25 +4,44 @@ Johann "coconut" Deneux <johann.deneux@gmail.com>
 
 == Principes
 
-Il y a deux camps, les Alliés et l'Axe qui contrôlent chacun une région. Une région est une zone géographique fixe, contrôlée par un seul camp au maximum. Une région possède une infrastructure composée de tous les bâtiments, à l'exception des maisons civiles. Une région peut également abriter un certain nombre d'aérodromes, qui ont leur propre infrastructure (généralement des hangars, des réservoirs de carburant...).
+Il y a deux camps, les Alliés et l'Axe qui contrôlent chacun une _région_.
+Une région est une zone géographique fixe, contrôlée par un seul camp au maximum.
+Une région possède une _infrastructure_ composée de tous les bâtiments, à l'exception des maisons civiles.
+Une région peut également abriter un certain nombre d'_aérodromes_, qui ont leur propre infrastructure (généralement des hangars, des réservoirs de carburant...).
 
-Les régions sont reliées par des routes et des chemins de fer qui traversent les rivières en passant par des ponts. Les routes et les chemins de fer ont une capacité de transport. Les ponts peuvent être détruits, ce qui entraîne une perte de capacité du réseau de transport. La destruction des infrastructures dans une région affecte la capacité de transport à l'entrée et à la sortie de cette région. Si toutes les infrastructures sont détruites, la capacité de transport est réduite de moitié.
+Les régions sont _reliées_ par des _routes_ et des _chemins de fer_ qui traversent les rivières en passant par des _ponts_.
+Les routes et les chemins de fer ont une _capacité de transport_.
+Les ponts peuvent être détruits, ce qui entraîne une perte de capacité du réseau de transport.
+La destruction des infrastructures dans une région affecte la capacité de transport à l'entrée et à la sortie de cette région.
+Si toutes les infrastructures sont détruites, la capacité de transport est réduite de moitié.
 
-A une date donnée, une région peut être occupée par des forces terrestres, caractérisées par un nombre. Les deux parties peuvent avoir des forces dans une région simultanément. Lorsque dans une région il ne reste plus que les forces d'un seul camp, cette région tombe sous son contrôle, et le restera à moins que le camp opposé parvienne à l’en chasser. Des régions peuvent également être capturées à l'issue d'une bataille, lorsque les forces appartenant au camp qui contrôle la région sont vaincues ou se rendent.
+A une date donnée, une région peut être occupée par des _forces terrestres_, caractérisées par un nombre.
+Les deux parties peuvent avoir des forces dans une région simultanément.
+Lorsque dans une région il ne reste plus que les forces d'un seul camp, cette région tombe sous son contrôle, et le restera à moins que le camp opposé parvienne à l’en chasser.
+Des régions peuvent également être capturées à l'issue d'une bataille, lorsque les forces appartenant au camp qui contrôle la région sont vaincues ou se rendent.
 
 Les forces terrestres sont simplement caractérisées par des chiffres, la répartition exacte par type de véhicule n'est pas prise en compte.
 
-Les aérodromes comptabilisent des avions. Un avion peut être ajouté sur un aérodrome en y atterrissant, et soustrait en décollant. Les avions peuvent être (partiellement) endommagés. Les avions sont comptés comme des "volumes", ce qui signifie que deux avions endommagés à 50 % comptent comme un seul avion intact.
+Les aérodromes comptabilisent des _avions_. Un avion peut être ajouté sur un aérodrome en y atterrissant, et soustrait en décollant.
+Les avions peuvent être (partiellement) _endommagés_.
+Les avions sont comptés comme des "volumes", ce qui signifie que deux avions endommagés à 50 % comptent comme un seul avion intact.
 
-Les avions et les forces terrestres sont réapprovisionnés à intervalles réguliers. Elles se matérialisent dans des régions dites d'entrée, dont chaque camp dispose d'au moins une.
+Les avions et les forces terrestres sont réapprovisionnés à intervalles réguliers.
+Elles se matérialisent dans des _régions dites d'entrée_, dont chaque camp dispose d'au moins une.
 
-L'efficacité des forces terrestres et la rapidité des réparations de l'infrastructure sont affectées par la connectivité entre la région (où se trouvent les forces ou les ressources) et la ou les régions d'entrée. Les forces dans une région isolée ont une efficacité réduite pendant les batailles.
+L'efficacité des forces terrestres et la _rapidité_ des réparations de l'infrastructure sont affectées par la connectivité entre la région (où se trouvent les forces ou les ressources) et la ou les régions d'entrée.
+Les forces dans une région isolée ont une efficacité réduite pendant les batailles.
 
-Les avions et les forces terrestres peuvent être détruits pendant le jeu, mais aussi entre les missions dans le cadre de la simulation. La simulation gère les batailles entre les forces terrestres, les transferts de forces terrestres ainsi que les missions aériennes. Les missions aériennes consistent en des attaques et des patrouilles. Les batailles aériennes sont simulées, et les résultats sont affectés par le nombre de participants et leur expérience.
+Les avions et les forces terrestres peuvent être détruits pendant le jeu, mais aussi entre les missions dans le cadre de la _simulation_.
+La simulation gère les batailles entre les forces terrestres, les transferts de forces terrestres ainsi que les _missions aériennes_.
+Les missions aériennes consistent en des attaques et des patrouilles.
+Les batailles aériennes sont simulées, et les résultats sont affectés par le nombre de participants et leur expérience.
 
-L'expérience d'une force aérienne dépend de son aérodrome d'origine et de la disponibilité de pilotes expérimentés. Les pilotes sont contrôlés par les joueurs, et leurs performances, leur santé et leur localisation sont suivies.
+L'expérience d'une force aérienne dépend de son _aérodrome d'origine_ et de la disponibilité de _pilotes_ expérimentés.
+Les pilotes sont contrôlés par les joueurs, et leurs performances, leur santé et leur localisation sont suivies.
 
-Chaque fois qu'un joueur décolle d'un nouvel aérodrome, il prend le contrôle d'un nouveau pilote. Lorsqu'il atterrit à nouveau sur un terrain d'aviation, ou du moins à proximité d'un terrain d'aviation, ce dernier devient le nouveau lieu de résidence de ce pilote.
+Chaque fois qu'un joueur décolle d'un nouvel aérodrome, il prend le contrôle d'un nouveau pilote.
+Lorsqu'il atterrit à nouveau sur un terrain d'aviation, ou du moins à proximité d'un terrain d'aviation, ce dernier devient le nouveau lieu de résidence de ce pilote.
 
 Les pilotes peuvent être blessés, auquel cas ils deviennent indisponibles pendant une période de temps qui dépend de la blessure. De nouveaux pilotes sont enrôlés selon les besoins.
 
