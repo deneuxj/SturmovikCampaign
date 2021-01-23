@@ -748,19 +748,27 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 let minY = positions |> Seq.map (fun v -> v.Y) |> Seq.min
                 let maxY = positions |> Seq.map (fun v -> v.Y) |> Seq.max
                 let center = 0.5f * (Vector2(minX, minY) + Vector2(maxX, maxY))
-                let extent = sqrt(let dx = maxX - minX in let dy = maxY - minY in dx * dx + dy * dy)
-                let pos = center + (extent + 200.0f) * Vector2.FromYOri(random.NextDouble() * 359.0)
                 let country = state.World.GetAnyCountryInCoalition(coalition)
-                let shape = mkCircle(pos, 150.0f)
-                let region = state.World.FindRegionAt(pos)
+                let region = state.World.FindRegionAt(center)
+                let x =
+                    if random.NextDouble() > 0.5 then
+                        maxX + 150.0f
+                    else
+                        minX - 150.0f
+                let y =
+                    if random.NextDouble() > 0.5 then
+                        maxY + 150.0f
+                    else
+                        maxY - 150.0f
+                let location = Vector2(x, y)
                 yield
                     {
                         Priority = 1.0f
                         Number = gunsPerNest
-                        Boundary = shape
+                        Boundary = mkCircle(location, 150.0f)
                         Rotation = 0.0f
                         Settings = CanonGenerationSettings.Default
-                        Specialty = DefenseSpecialty.AntiAirCanon
+                        Specialty = DefenseSpecialty.AntiAirMg
                         IncludeSearchLights = hasLowLight
                         IncludeFlak = true
                         Country = country.ToMcuValue
