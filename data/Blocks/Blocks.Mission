@@ -3837,7 +3837,7 @@ Group
     Index = 313;
     Name = "ClearA";
     Desc = "";
-    Targets = [308,314,310];
+    Targets = [308,314];
     Objects = [];
     XPos = 16707.672;
     YPos = 104.816;
@@ -3855,7 +3855,7 @@ Group
     Index = 315;
     Name = "ClearB";
     Desc = "";
-    Targets = [309,314,310];
+    Targets = [309,314];
     Objects = [];
     XPos = 16707.533;
     YPos = 104.816;
