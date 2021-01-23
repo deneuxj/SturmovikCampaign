@@ -7,6 +7,7 @@
   <ItemGroup>
     <Compile Include="Algo.fs" />
     <Compile Include="BasicTypes.fs" />
+    <Compile Include="GroundUnit.fs" />
     <Compile Include="PlaneModel.fs" />
     <Compile Include="Buildings.fs" />
     <Compile Include="Weather.fs" />
