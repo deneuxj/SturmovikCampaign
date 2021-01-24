@@ -1,0 +1,94 @@
+﻿[
+    {
+        "name": "m1gun",
+        "roles": ["Artillery"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m1gun.txt",
+        "dyn_model": "graphics\\artillery\\m1gun\\m1gun.mgm"
+    },
+    {
+        "name": "m1a1gun-aa",
+        "roles": ["Flak"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m1a1gun-aa.txt",
+        "dyn_model": "graphics\\artillery\\m1a1gun-aa\\m1a1gun-aa.mgm"
+    },
+    {
+        "name": "m2mg-aa",
+        "roles": ["AntiAirMachineGun"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m2mg-aa.txt",
+        "dyn_model": "graphics\\artillery\\m2mg\\m2mg-aa.mgm"
+    },
+    {
+        "name": "m2mg",
+        "roles": ["MachineGun"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m2mg.txt",
+        "dyn_model": "graphics\\artillery\\m2mg\\m2mg.mgm"
+    },
+    {
+        "name": "m5gun",
+        "roles": ["AntiTank"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m5gun.txt",
+        "dyn_model": "graphics\\artillery\\m5gun\\m5gun.mgm"
+    },
+    {
+        "name": "gmc-cckw",
+        "roles": ["Support"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\gmc-cckw.txt",
+        "dyn_model": "graphics\\vehicles\\gmc-cckw\\gmc-cckw.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_gmc-cckw.txt",
+        "static_model": "graphics\\blocks\\static_gmc-cckw.mgm"
+    },
+    {
+        "name": "m16",
+        "roles": ["AntiAir"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m16.txt",
+        "dyn_model": "graphics\\vehicles\\m16\\m16.mgm"
+    },
+    {
+        "name": "m4a3",
+        "roles": ["AntiTank", "MachineGun"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m4a3.txt",
+        "dyn_model": "graphics\\vehicles\\m4a3\\m4a3.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_m4a3.txt",
+        "static_model": "graphics\\blocks\\static_m4a3.mgm",
+        "durability": 2000
+    },
+    {
+        "name": "m4a2",
+        "roles": ["AntiTank", "MachineGun"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m4a2.txt",
+        "dyn_model": "graphics\\vehicles\\m4a2\\m4a2.mgm",
+        "durability": 2000
+    },
+    {
+        "name": "willys",
+        "roles": ["Command"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\willysmb.txt",
+        "dyn_model": "graphics\\vehicles\\willys\\willysmb.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_willysmb.txt",
+        "static_model": "graphics\\blocks\\static_willysmb.mgm"
+    },
+    {
+        "name": "searchlightus",
+        "roles": ["SearchLight"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\searchlightus.txt",
+        "dyn_model": "graphics\\artillery\\searchlightus\\searchlightus.mgm"
+    },
+    {
+        "name": "landlightus",
+        "roles": ["LandLight"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\landlightus.txt",
+        "dyn_model": "graphics\\artillery\\searchlightus\\landlightus.mgm"
+    }
+]

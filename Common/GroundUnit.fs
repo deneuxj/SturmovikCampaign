@@ -25,9 +25,14 @@ open Util.Json
 open SturmovikMission.Blocks
 
 type GroundRole =
+    | LandLight
+    | SearchLight
+    | Flak
     | AntiAir
     | AntiTank
-    | AntiTroop
+    | AntiAirMachineGun
+    | MachineGun
+    | Artillery
     | Support
     | Command
 
@@ -74,7 +79,7 @@ with
             StaticScriptModel =
                 (this.static_model, this.static_script)
                 ||> Option.map2 (fun model script -> { Script = script; Model = model })
-            Durability = defaultArg this.durability 500
+            Durability = defaultArg this.durability 1250
         }
 
 type GroundUnit with
