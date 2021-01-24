@@ -90,5 +90,186 @@
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\landlightus.txt",
         "dyn_model": "graphics\\artillery\\searchlightus\\landlightus.mgm"
-    }
+    },
+
+    {
+        "name": "opel-blitz",
+        "roles": ["Support"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\opel-blitz.txt",
+        "dyn_model": "graphics\\vehicles\\opel\\opel-blitz.mgm",
+        "static_model": "graphics\\blocks\\static_opel_fuel.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_opel_fuel.txt"
+    },
+    {
+        "name": "horch830",
+        "roles": ["Command"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\horch830.txt",
+        "dyn_model": "graphics\\vehicles\\horch\\horch830.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_horch830.txt",
+        "static_model": "graphics\\blocks\\static_horch830.mgm"
+    },
+    {
+        "name": "sdkfz10-flak38",
+        "roles": ["Flak"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\sdkfz10-flak38.txt",
+        "dyn_model": "graphics\\vehicles\\sdkfz10-flak38\\sdkfz10-flak38.mgm"
+    },
+    {
+        "name": "pziv-f1",
+        "roles": ["AntiTank", "MachineGun"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\pziv-f1.txt",
+        "dyn_model": "graphics\\vehicles\\pziv-f1\\pziv-f1.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_pz_ivf1.txt",
+        "static_model": "graphics\\blocks\\static_pz_ivf1.mgm",
+        "durability": 2000
+    },
+    {
+        "name": "pziii-h",
+        "roles": ["AntiTank", "MachineGun"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\pziii-h.txt",
+        "dyn_model": "graphics\\vehicles\\pziii-h\\pziii-h.mgm",
+        "dyn_script": "LuaScripts\\WorldObjects\\Blocks\\static_pz_iiih.txt",
+        "dyn_model": "graphics\\blocks\\static_pz_iiih.mgm",
+        "durability": 2000
+    },
+    {
+        "name": "sdkfz251-szf",
+        "roles": ["Artillery"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\sdkfz251-szf.txt",
+        "dyn_model": "graphics\\vehicles\\sdkfz251\\sdkfz251-szf.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_sdkfz251-1c.txt",
+        "static_model": "graphics\\blocks\\static_sdkfz251-1c.mgm",
+        "durability": 2000
+    },
+    {
+        "name": "pak40",
+        "roles": ["AntiTank"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\pak40.txt",
+        "dyn_model": "graphics\\artillery\\pak40\\pak40.mgm"
+    },
+    {
+        "name": "flak37",
+        "roles": ["Flak"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\flak37.txt",
+        "dyn_model": "graphics\\artillery\\flak37\\flak37.mgm"
+    },
+    {
+        "name": "flak36",
+        "roles": ["AntiAir"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\flak36.txt",
+        "dyn_model": "graphics\\artillery\\flak36\\flak36.mgm"
+    },
+    {
+        "name": "sdkfz251-1c",
+        "roles": ["MachineGun"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\sdkfz251-1c.txt",
+        "dyn_model": "graphics\\vehicles\\sdkfz251\\sdkfz251-1c.mgm"
+    },
+    {
+        "name": "searchlightger",
+        "roles": ["SearchLight"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\searchlightger.txt",
+        "dyn_model": "graphics\\artillery\\searchlightger\\searchlightger.mgm"
+    },
+
+    {
+        "name": "gaz-m",
+        "roles": ["Command"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\gaz-m.txt",
+        "dyn_model": "graphics\\vehicles\\gaz\\gaz-m.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_gaz-m.txt",
+        "static_model": "graphics\\blocks\\static_gaz-m.mgm"
+    },
+    {
+        "name": "gaz-aa",
+        "roles": ["Support"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\gaz-aa.txt",
+        "dyn_model": "graphics\\vehicles\\gaz\\gaz-aa.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_zis_fuel.txt",
+        "static_model": "graphics\\blocks\\static_zis_fuel.mgm"
+    },
+    {
+        "name": "zis5-72k",
+        "roles": ["AntiAir"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\zis5-72k.txt",
+        "dyn_model": "graphics\\vehicles\\zis\\zis5-72k.mgm"
+    },
+    {
+        "name": "t34-76stz-41",
+        "roles": ["AntiTank", "MachineGun"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\t34-76stz-41.txt",
+        "dyn_model": "graphics\\vehicles\\t34-76stz-41\\t34-76stz-41.mgm",
+        "static_model": "graphics\\blocks\\static_t34-76.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_t34-76.txt",
+        "durability": 2000
+    },
+    {
+        "name": "t70",
+        "roles": ["AntiTank", "MachineGun"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\t70.txt",
+        "dyn_model": "graphics\\vehicles\\t70\\t70.mgm",
+        "static_model": "graphics\\blocks\\static_t70.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_t70.txt",
+        "durability": 2000
+    },
+    {
+        "name": "bm13",
+        "roles": ["Artillery"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\bm13.txt",
+        "dyn_model": "graphics\\vehicles\\zis\\bm13.mgm"
+    },
+    {
+        "name": "zis3gun",
+        "roles": ["AntiTank"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\zis3gun.txt",
+        "dyn_model": "graphics\\artillery\\zis3gun\\zis3gun.mgm"
+    },
+    {
+        "name": "52k",
+        "roles": ["Flak"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\52k.txt",
+        "dyn_model": "graphics\\artillery\\52k\\52k.mgm"
+    },
+    {
+        "name": "61k",
+        "roles": ["AntiAir"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\61k.txt",
+        "dyn_model": "graphics\\artillery\\61k\\61k.mgm"
+    },
+    {
+        "name": "ba10m",
+        "roles": ["MachineGun"],
+        "is_mobile": true,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\ba10m.txt",
+        "dyn_model": "graphics\\vehicles\\ba10m\\ba10m.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_bt-7m.txt",
+        "static_model": "graphics\\blocks\\static_bt-7m.mgm"
+    },
+    {
+        "name": "searchlightsu",
+        "roles": ["SearchLight"],
+        "is_mobile": false,
+        "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\searchlightsu.txt",
+        "dyn_model": "graphics\\artillery\\searchlightsu\\searchlightsu.mgm"
+    },
 ]
