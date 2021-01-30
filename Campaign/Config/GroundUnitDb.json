@@ -1,6 +1,7 @@
 ﻿[
     {
         "name": "m1gun",
+        "log_name": "155 mm Howitzer M1",
         "roles": ["Artillery"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m1gun.txt",
@@ -8,6 +9,7 @@
     },
     {
         "name": "m1a1gun-aa",
+        "log_name": "M1A1 90 mm Gun",
         "roles": ["Flak"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m1a1gun-aa.txt",
@@ -15,6 +17,7 @@
     },
     {
         "name": "m2mg-aa",
+        "log_name": "M2.50 AA",
         "roles": ["AntiAirMachineGun"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m2mg-aa.txt",
@@ -22,6 +25,7 @@
     },
     {
         "name": "m2mg",
+        "log_name": "M2.50",
         "roles": ["MachineGun"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m2mg.txt",
@@ -29,6 +33,7 @@
     },
     {
         "name": "m5gun",
+        "log_name": "M5 3-inch gun",
         "roles": ["AntiTank"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m5gun.txt",
@@ -36,6 +41,7 @@
     },
     {
         "name": "gmc-cckw",
+        "log_name": "GMC CCKW 353",
         "roles": ["Support"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\gmc-cckw.txt",
@@ -45,6 +51,7 @@
     },
     {
         "name": "m16",
+        "log_name": "M16 Half-track AAA gun",
         "roles": ["AntiAir"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m16.txt",
@@ -52,6 +59,7 @@
     },
     {
         "name": "m4a3",
+        "log_name": "M4A3(75)W",
         "roles": ["AntiTank", "MachineGun"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m4a3.txt",
@@ -62,6 +70,7 @@
     },
     {
         "name": "m4a2",
+        "log_name": "M4A2(75)",
         "roles": ["AntiTank", "MachineGun"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m4a2.txt",
@@ -70,6 +79,7 @@
     },
     {
         "name": "willys",
+        "log_name": "Willys MB",
         "roles": ["Command"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\willysmb.txt",
@@ -79,6 +89,7 @@
     },
     {
         "name": "searchlightus",
+        "log_name": "US Searchlight",
         "roles": ["SearchLight"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\searchlightus.txt",
@@ -86,6 +97,7 @@
     },
     {
         "name": "landlightus",
+        "log_name": "US Landlight",
         "roles": ["LandLight"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\landlightus.txt",
@@ -94,6 +106,7 @@
 
     {
         "name": "opel-blitz",
+        "log_name": "Opel Blitz",
         "roles": ["Support"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\opel-blitz.txt",
@@ -103,6 +116,7 @@
     },
     {
         "name": "horch830",
+        "log_name": "Horch 830",
         "roles": ["Command"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\horch830.txt",
@@ -112,6 +126,7 @@
     },
     {
         "name": "sdkfz10-flak38",
+        "log_name": "Sd Kfz 10 Flak 38",
         "roles": ["Flak"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\sdkfz10-flak38.txt",
@@ -119,6 +134,7 @@
     },
     {
         "name": "pziv-f1",
+        "log_name": "Pz.Kpfw.VI Ausf.H",
         "roles": ["AntiTank", "MachineGun"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\pziv-f1.txt",
@@ -129,6 +145,7 @@
     },
     {
         "name": "pziii-h",
+        "log_name": "PzKpfw III Ausf.L",
         "roles": ["AntiTank", "MachineGun"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\pziii-h.txt",
@@ -139,6 +156,7 @@
     },
     {
         "name": "sdkfz251-szf",
+        "log_name": "Sd Kfz 251 Wurfrahmen 40",
         "roles": ["Artillery"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\sdkfz251-szf.txt",
@@ -149,6 +167,7 @@
     },
     {
         "name": "pak40",
+        "log_name": "Pak 40",
         "roles": ["AntiTank"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\pak40.txt",
@@ -156,6 +175,7 @@
     },
     {
         "name": "flak37",
+        "log_name": "Flak 37",
         "roles": ["Flak"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\flak37.txt",
@@ -163,6 +183,7 @@
     },
     {
         "name": "flak36",
+        "log_name": "Flak 36",
         "roles": ["AntiAir"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\flak36.txt",
@@ -170,6 +191,7 @@
     },
     {
         "name": "sdkfz251-1c",
+        "log_name": "Sd Kfz 251-1 Ausf.C",
         "roles": ["MachineGun"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\sdkfz251-1c.txt",
@@ -177,6 +199,7 @@
     },
     {
         "name": "searchlightger",
+        "log_name": "German Searchlight",
         "roles": ["SearchLight"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\searchlightger.txt",
@@ -185,6 +208,7 @@
 
     {
         "name": "gaz-m",
+        "log_name": "GAZ-M",
         "roles": ["Command"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\gaz-m.txt",
@@ -194,6 +218,7 @@
     },
     {
         "name": "gaz-aa",
+        "log_name": "GAZ-AA",
         "roles": ["Support"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\gaz-aa.txt",
@@ -203,6 +228,7 @@
     },
     {
         "name": "zis5-72k",
+        "log_name": "ZiS-5 72-K",
         "roles": ["AntiAir"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\zis5-72k.txt",
@@ -210,6 +236,7 @@
     },
     {
         "name": "t34-76stz-41",
+        "log_name": "T-34-76 STZ 41",
         "roles": ["AntiTank", "MachineGun"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\t34-76stz-41.txt",
@@ -220,6 +247,7 @@
     },
     {
         "name": "t70",
+        "log_name": "T-70",
         "roles": ["AntiTank", "MachineGun"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\t70.txt",
@@ -230,6 +258,7 @@
     },
     {
         "name": "bm13",
+        "log_name": "ZiS-6 BM-13",
         "roles": ["Artillery"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\bm13.txt",
@@ -237,6 +266,7 @@
     },
     {
         "name": "zis3gun",
+        "log_name": "ZIS-3",
         "roles": ["AntiTank"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\zis3gun.txt",
@@ -244,6 +274,7 @@
     },
     {
         "name": "52k",
+        "log_name": "52-K",
         "roles": ["Flak"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\52k.txt",
@@ -251,6 +282,7 @@
     },
     {
         "name": "61k",
+        "log_name": "61-K",
         "roles": ["AntiAir"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\61k.txt",
@@ -258,6 +290,7 @@
     },
     {
         "name": "ba10m",
+        "log_name": "BA-10M",
         "roles": ["MachineGun"],
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\ba10m.txt",
@@ -267,9 +300,10 @@
     },
     {
         "name": "searchlightsu",
+        "log_name": "Soviet Searchlight",
         "roles": ["SearchLight"],
         "is_mobile": false,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\searchlightsu.txt",
         "dyn_model": "graphics\\artillery\\searchlightsu\\searchlightsu.mgm"
-    },
+    }
 ]
