@@ -437,6 +437,8 @@ type World = {
     Awards : AwardDatabase
     /// Ground units database
     GroundUnitsList : GroundUnit list
+    /// Ground units of each participating country
+    GroundUnitsOfCountryList : (CountryId * GroundUnitId list) list
 }
 with
     /// Portion of ground forces dedicated to anti-air
@@ -473,6 +475,12 @@ module private DynProps =
 
     let groundUnits = cacheBy (fun world -> world.GroundUnitsList) (fun groundUnit -> groundUnit.Id)
 
+    let groundUnitsCountry =
+        cacheByKvp
+            (fun world ->
+                world.GroundUnitsOfCountryList
+                |> List.collect (fun (country, units) -> List.allPairs units [country]))
+
 type World with
     /// Mapping from RegionId to Region
     member this.Regions = DynProps.regions this
@@ -500,6 +508,16 @@ type World with
 
     /// Mapping from ground unit ID to ground units
     member this.GroundUnits = DynProps.groundUnits this
+
+    /// Get the ground units of a country
+    member this.GroundUnitsOfCountry (country : CountryId) =
+        this.GroundUnitsOfCountryList
+        |> List.tryPick (fun (c, units) -> if c = country then Some units else None)
+        |> Option.defaultValue []
+
+    /// Mapping from ground unit ID to country
+    member this.CountryOfGroundUnit =
+        DynProps.groundUnitsCountry this
 
     /// Find the region that covers a coordinate, or failing that the one with the closest boundary vertex.
     member this.FindRegionAt(pos : Vector2) =
@@ -1049,6 +1067,7 @@ module Init =
             Ranks = RanksDatabase.Default
             Awards = AwardDatabase.Default
             GroundUnitsList = groundUnits
+            GroundUnitsOfCountryList = []
         }
 
 module IO =

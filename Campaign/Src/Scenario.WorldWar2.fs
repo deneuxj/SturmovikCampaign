@@ -28,6 +28,7 @@ open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.WarStateUpdate
 open Campaign.Missions
+open Campaign.Common.GroundUnit
 
 
 module WorldWar2Internal =
@@ -103,10 +104,56 @@ module WorldWar2Internal =
                 MaxStartDiff = 12.0f<H>
             }
 
-    type PlaneSet =
+    let groundUnitsSet(date : System.DateTime) =
+        [
+            Russia, [
+                "gaz-m"
+                "gaz-aa"
+                "zis5-72k"
+                "t34-76stz-41"
+                "t70"
+                "bm13"
+                "zis3gun"
+                "52k"
+                "61k"
+                "ba10m"
+                "searchlightsu"
+            ]
+            Germany, [
+                "opel-blitz"
+                "horch830"
+                "sdkfz10-flak38"
+                "pziv-f1"
+                "pziii-h"
+                "sdkfz251-szf"
+                "pak40"
+                "flak37"
+                "flak36"
+                "sdkfz251-1c"
+                "searchlightger"
+            ]
+            UnitedStates, [
+                "m1gun"
+                "m1a1gun-aa"
+                "m2mg-aa"
+                "m2mg"
+                "m5gun"
+                "gmc-cckw"
+                "m16"
+                "m4a3"
+                "m4a2"
+                "willys"
+                "searchlightus"
+            ]
+            GreatBritain, []
+            Italy, []
+        ]
+
+    type PlaneAndUnitSet =
         {
             AxisPlanes : string list
             AlliesPlanes : string list
+            GroundUnits : (CountryId * string list) list
         }
     with
 
@@ -127,6 +174,7 @@ module WorldWar2Internal =
                     "Tempest MkV s2"
                     "b25"
                 ]
+                GroundUnits = groundUnitsSet(System.DateTime(1945, 1, 1))
             }
 
         static member StalingradEarly =
@@ -154,11 +202,12 @@ module WorldWar2Internal =
                     "pe2s35"
                     "u2vs"
                 ]
+                GroundUnits = groundUnitsSet(System.DateTime(1942, 8, 1))
             }
 
-        static member KubanEarly = PlaneSet.StalingradEarly
+        static member KubanEarly = PlaneAndUnitSet.StalingradEarly
 
-        static member Moscow = PlaneSet.StalingradEarly
+        static member Moscow = PlaneAndUnitSet.StalingradEarly
 
         member this.NewPlanesDelivery(numPlanes : float32, planeSet : PlaneModelId -> PlaneModel) =
             let forCoalition (coalition : CoalitionId) =
@@ -229,7 +278,20 @@ module WorldWar2Internal =
                     [ b25.Id, [] ]
                 | None, _ ->
                     []
-            { world with PlaneModelsList = planeSet; PlaneAltsList = planeAlts }
+
+            let groundUnits =
+                this.GroundUnits
+                |> List.map (fun (country, units) -> country, units |> List.map GroundUnitId)
+
+            for _, groundUnits in groundUnits do
+                for gu in groundUnits do
+                    match world.GroundUnits.TryGetValue(gu) with
+                    | false, _ ->
+                        logger.Error(sprintf "No unit '%s'" (string gu))
+                    | true, _ ->
+                        ()
+
+            { world with PlaneModelsList = planeSet; PlaneAltsList = planeAlts; GroundUnitsOfCountryList = groundUnits }
 
         interface IScenarioWorldSetup with
             member this.Setup(world) = this.Setup(world)
@@ -239,7 +301,7 @@ open FSharp.Json
 open Util.Json
 
 /// A campaign scenario implementation for WWII in the European and East front theaters: Bomb industry, airfields, harass and protect ground troops
-type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
+type WorldWar2(world : World, C : Constants, PS : PlaneAndUnitSet) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     let totalPlanes : Map<_, float32> -> float32 =
@@ -1258,7 +1320,7 @@ type WorldWar2(world : World, C : Constants, PS : PlaneSet) =
 
     static member LoadFromFile(world : World, path : string) =
         let json = System.IO.File.ReadAllText(path)
-        let constructorData : {| Constants : Constants; PlaneSet : PlaneSet |} =
+        let constructorData : {| Constants : Constants; PlaneSet : PlaneAndUnitSet |} =
             Json.deserializeEx JsonConfig.IL2Default json
         WorldWar2(world, constructorData.Constants, constructorData.PlaneSet)
 

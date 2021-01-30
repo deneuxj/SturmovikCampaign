@@ -561,13 +561,13 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     let (world, sctrl : IScenarioController, saveScenarioControoler, axisPlanesFactor, alliesPlanesFactor) =
                         let planeSet =
                             match world.Map with
-                            | Contains "kuban" -> WorldWar2Internal.PlaneSet.KubanEarly
-                            | Contains "moscow" -> WorldWar2Internal.PlaneSet.Moscow
-                            | Contains "rheinland" -> WorldWar2Internal.PlaneSet.Bodenplatte
-                            | Contains "stalingrad" -> WorldWar2Internal.PlaneSet.StalingradEarly
+                            | Contains "kuban" -> WorldWar2Internal.PlaneAndUnitSet.KubanEarly
+                            | Contains "moscow" -> WorldWar2Internal.PlaneAndUnitSet.Moscow
+                            | Contains "rheinland" -> WorldWar2Internal.PlaneAndUnitSet.Bodenplatte
+                            | Contains "stalingrad" -> WorldWar2Internal.PlaneAndUnitSet.StalingradEarly
                             | _ ->
                                 logger.Error("Failed to determine planeset to use")
-                                WorldWar2Internal.PlaneSet.StalingradEarly
+                                WorldWar2Internal.PlaneAndUnitSet.StalingradEarly
                         let world = planeSet.Setup world
                         let ww2 = WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate), planeSet)
                         world, upcast(ww2), (fun() -> ww2.SaveToFile(wkPath(scenarioCtrlFilename))), 1.0f, 1.0f
