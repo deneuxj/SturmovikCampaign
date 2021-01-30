@@ -886,8 +886,8 @@
           {
             "Payload": {
               "Role": "Interceptor",
-              "ModMask": 69,
-              "Id": 12
+              "ModMask": 33,
+              "Id": 17
             }
           },
           {
@@ -921,6 +921,14 @@
             },
             {
                 "Mod": 6,
+                "Cost": 999999
+            },
+            {
+                "Mod": 7,
+                "Cost": 999999
+            },
+            {
+                "Mod": 9,
                 "Cost": 999999
             }
         ]
