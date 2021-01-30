@@ -53,6 +53,8 @@ type GroundUnit =
       StaticScriptModel : Vehicles.VehicleTypeData option
       Durability : int
     }
+with
+    member this.Id = GroundUnitId this.Name
 
 type GroundUnitIO =
     { name : string
