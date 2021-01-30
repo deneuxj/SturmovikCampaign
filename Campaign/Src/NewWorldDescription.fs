@@ -27,6 +27,7 @@ open Util.MapExt
 open Campaign.Common.BasicTypes
 open Campaign.Common.PlaneModel
 open Campaign.Common.Buildings
+open Campaign.Common.GroundUnit
 
 open PilotRanks
 
@@ -434,6 +435,8 @@ type World = {
     Ranks : RanksDatabase
     /// Awards in the air force of each country
     Awards : AwardDatabase
+    /// Ground units database
+    GroundUnitsList : GroundUnit list
 }
 with
     /// Portion of ground forces dedicated to anti-air
@@ -468,6 +471,8 @@ module private DynProps =
         |> List.map (fun building -> building.Properties.Script, building.Properties)
         |> List.distinctBy fst)
 
+    let groundUnits = cacheBy (fun world -> world.GroundUnitsList) (fun groundUnit -> groundUnit.Id)
+
 type World with
     /// Mapping from RegionId to Region
     member this.Regions = DynProps.regions this
@@ -492,6 +497,9 @@ type World with
 
     /// Mapping from building and bridge script to building properties
     member this.BuildingProperties = DynProps.buildingProps this
+
+    /// Mapping from ground unit ID to ground units
+    member this.GroundUnits = DynProps.groundUnits this
 
     /// Find the region that covers a coordinate, or failing that the one with the closest boundary vertex.
     member this.FindRegionAt(pos : Vector2) =
@@ -1007,6 +1015,10 @@ module Init =
         // Railroads
         let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapName)) railsCapacity
         let bridges = roadBridges @ railBridges
+        // Ground units
+        let groundUnits =
+            loadGroundUnitsDb (Path.Combine(exeDir, "Config", "GroundUnitDb.json"))
+            |> List.ofArray
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
@@ -1036,6 +1048,7 @@ module Init =
             Names = NameDatabase.Default
             Ranks = RanksDatabase.Default
             Awards = AwardDatabase.Default
+            GroundUnitsList = groundUnits
         }
 
 module IO =

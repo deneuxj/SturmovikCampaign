@@ -128,7 +128,9 @@
     <None Include="Config\PlaneDb.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <Content Include="Config\GroundUnitDb.json" />
+    <Content Include="Config\GroundUnitDb.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="Config\Roads-Sample.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
