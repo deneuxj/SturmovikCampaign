@@ -446,7 +446,40 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             planes
                             |> Seq.choose (fun plane ->
                                 if Some plane.Coalition = coalition then
-                                    Some (PlayerSpawnPlane.Default plane)
+                                    let forbiddenMods =
+                                        plane.WeaponModsCosts
+                                        |> List.filter (fun (wmod, cost) -> (float32 cost) > state.GetCoalitionBudget(plane.Coalition))
+                                    let allowedMods =
+                                        match forbiddenMods with
+                                        | [] ->
+                                            ModRange.All
+                                        | _ ->
+                                            let sorted =
+                                                forbiddenMods
+                                                |> List.map fst
+                                                |> List.sort
+                                            ([1, 99], sorted)
+                                            ||> List.fold (fun ranges wmod ->
+                                                ranges
+                                                |> List.collect (fun (a, b) ->
+                                                    if a < wmod && wmod < b then
+                                                        [(a, wmod - 1); (wmod + 1, b)]
+                                                    elif a = wmod && wmod = b then
+                                                        []
+                                                    elif a = wmod then
+                                                        [wmod + 1, b]
+                                                    elif wmod = b then
+                                                        [a, wmod - 1]
+                                                    else
+                                                        [a, b]))
+                                            |> List.choose (fun (a, b) ->
+                                                if a < b then
+                                                    Some(Interval(a, b))
+                                                elif a = b then
+                                                    Some(One(a))
+                                                else
+                                                    None)
+                                    Some ( { PlayerSpawnPlane.Default plane with AllowedMods = allowedMods } )
                                 else
                                     None)
                         else

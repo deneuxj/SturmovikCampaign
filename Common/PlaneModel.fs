@@ -111,7 +111,7 @@ with
         | [x; y] -> Interval(x, y)
         | _ -> failwith "Range must be a singleton or a pair"
 
-    static member All : ModRange list = []
+    static member All : ModRange list = [Interval(0, 99)]
 
     member this.ModFilter =
         match this with
@@ -121,4 +121,4 @@ with
     static member ModFilters(ranges : ModRange seq) =
         ranges
         |> Seq.map (fun range -> range.ModFilter)
-        |> String.concat ","
+        |> String.concat "/"

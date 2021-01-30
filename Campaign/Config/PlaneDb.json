@@ -868,7 +868,7 @@
     {
       "Plane": {
         "Kind": "Fighter",
-        "Name": "hurricane mk.II",
+        "Name": "hurricane mk.II su",
         "LogName": "hurricane mk.ii",
         "Roles": [
           "Patroller",
@@ -907,6 +907,22 @@
         ],
         "EmptyPayload": 27,
         "WeaponModsCosts": [
+            {
+                "Mod": 2,
+                "Cost": 999999
+            },
+            {
+                "Mod": 3,
+                "Cost": 999999
+            },
+            {
+                "Mod": 4,
+                "Cost": 999999
+            },
+            {
+                "Mod": 6,
+                "Cost": 999999
+            }
         ]
       }
     },

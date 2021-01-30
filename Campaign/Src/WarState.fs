@@ -197,6 +197,8 @@ type IWarStateQuery =
     abstract member GetPilot : PilotId -> Pilot
     /// Find a path through road/rail network from one set of nodes to another, optionally restricted within the territory of a coalition
     abstract member TryFindPath : network : Network * sources: NetworkNode list * objectives: NetworkNode list * coalition: CoalitionId option -> NetworkLink list option
+    /// Get the plane and weapon mod budget of a coalition
+    abstract member GetCoalitionBudget : CoalitionId -> float32
 
 [<AutoOpen>]
 module IWarStateExtensions = 
@@ -871,6 +873,7 @@ type WarState
         member this.NumPilots = this.NumPilots
         member this.RefreshPilotHealths() = this.RefreshPilotHealths()
         member this.Seed = this.Seed
+        member this.GetCoalitionBudget(_) = 5000.0f
 
 
 [<RequireQualifiedAccess>]

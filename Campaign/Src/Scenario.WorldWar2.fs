@@ -191,7 +191,7 @@ module WorldWar2Internal =
                     "ju52"
                 ]
                 AlliesPlanes = [
-//                    "hurricane"
+                    "hurricane mk.II su"
                     "i16"
                     "il2mod41"
                     "il2mod42"
