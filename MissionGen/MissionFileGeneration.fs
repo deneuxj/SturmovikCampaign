@@ -69,13 +69,18 @@ type PlayerSpawnPlane =
     }
 with
     static member Default(plane) =
+        let modMask, payload =
+            plane.Payloads
+            |> List.tryHead
+            |> Option.map (fun (_, (modMask, payload)) -> (modMask, payload))
+            |> Option.defaultValue (1L, 0)
         {
             Model = plane
             AllowedMods = ModRange.All
             AllowedPayloads = ModRange.All
             AllowedSkins = ModRange.All
-            Mods = 0L
-            Payload = 0
+            Mods = modMask
+            Payload = payload
             Skin = 0
         }
 
