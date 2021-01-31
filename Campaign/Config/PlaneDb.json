@@ -968,16 +968,12 @@
                 "Cost": 999999
             },
             {
-                "Mod": 7,
-                "Cost": 999999
-            },
-            {
-                "Mod": 9,
+                "Mod": 8,
                 "Cost": 999999
             }
         ],
         "LastPayload": 27,
-        "LastWeaponMod": 9
+        "LastWeaponMod": 8
       }
     },
     {
