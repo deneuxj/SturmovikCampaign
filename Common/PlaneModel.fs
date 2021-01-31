@@ -74,6 +74,8 @@ type PlaneModel =
       StaticBasename : string
       Cost : float32<E>
       WeaponModsCosts : (int * float32<E>) list
+      LastWeaponMod : int
+      LastPayload : int
       BombCapacity : float32<K>
       CargoCapacity : float32<K>
       Payloads : (PlaneRole * (int64*int)) list
@@ -110,8 +112,6 @@ with
         | [x] -> One x
         | [x; y] -> Interval(x, y)
         | _ -> failwith "Range must be a singleton or a pair"
-
-    static member All : ModRange list = [Interval(0, 99)]
 
     member this.ModFilter =
         match this with

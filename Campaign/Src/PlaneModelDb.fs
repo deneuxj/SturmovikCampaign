@@ -43,6 +43,8 @@ type PlaneModelDto =
         Payloads : {| Payload : {| Role : PlaneRole; ModMask : int; Id : int |} |}[]
         EmptyPayload : int
         WeaponModsCosts : {| Mod : int; Cost : float32 |}[] option
+        LastWeaponMod : int
+        LastPayload : int
         WingSpan : float32 option
         MaxRange : float32 option
         CruiseSpeed : float32 option
@@ -118,6 +120,8 @@ with
             CruiseSpeed = KPH * cruise
             CpuCost = cpuCost
             MinRunwayLength = KM * minRunway
+            LastPayload = json.LastPayload
+            LastWeaponMod = json.LastWeaponMod
         }
 
     member this.ToJson() : PlaneModelDto =
@@ -165,6 +169,8 @@ with
             CruiseSpeed = Some(float32 this.CruiseSpeed)
             CpuCost = Some(this.CpuCost)
             MinRunwayLength = Some(float32 this.MinRunwayLength)
+            LastWeaponMod = this.LastWeaponMod
+            LastPayload = this.LastPayload
         }
 
     member this.HasRole(role) =

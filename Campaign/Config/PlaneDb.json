@@ -26,7 +26,9 @@
         ],
         "EmptyPayload": 4,
         "WeaponModsCosts": [
-        ]
+        ],
+        "LastPayload": 4,
+        "LastWeaponMod": 2
       }
     },
     {
@@ -62,7 +64,9 @@
           }
         ],
         "EmptyPayload": 3,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 3,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -105,7 +109,9 @@
             }
           }
         ],
-        "EmptyPayload": 6
+        "EmptyPayload": 6,
+        "LastPayload": 6,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -148,7 +154,9 @@
             }
           }
         ],
-        "EmptyPayload": 5
+        "EmptyPayload": 5,
+        "LastPayload": 5,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -191,7 +199,9 @@
             }
           }
         ],
-        "EmptyPayload": 4
+        "EmptyPayload": 4,
+        "LastPayload": 4,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -234,7 +244,9 @@
             }
           }
         ],
-        "EmptyPayload": 4
+        "EmptyPayload": 4,
+        "LastPayload": 4,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -295,7 +307,9 @@
             "Mod": 4,
             "Cost": 100.0
           }
-        ]
+        ],
+        "LastPayload": 8,
+        "LastWeaponMod": 7
       }
     },
     {
@@ -360,7 +374,9 @@
             "Mod": 5,
             "Cost": 100.0
           }
-        ]
+        ],
+        "LastPayload": 16,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -421,7 +437,9 @@
             "Mod": 4,
             "Cost": 200.0
           }
-        ]
+        ],
+        "LastPayload": 4,
+        "LastWeaponMod": 4
       }
     },
     {
@@ -456,7 +474,9 @@
             }
           }
         ],
-        "EmptyPayload": 6
+        "EmptyPayload": 6,
+        "LastPayload": 6,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -492,7 +512,9 @@
           }
         ],
         "EmptyPayload": 10,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 10,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -541,7 +563,9 @@
             "Mod": 6,
             "Cost": 150.0
           }
-        ]
+        ],
+        "LastPayload": 47,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -594,7 +618,9 @@
             "Mod": 6,
             "Cost": 50.0
           }
-        ]
+        ],
+        "LastPayload": 9,
+        "LastWeaponMod": 7
       }
     },
     {
@@ -622,7 +648,9 @@
           }
         ],
         "EmptyPayload": 5,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 5,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -658,7 +686,9 @@
           }
         ],
         "EmptyPayload": 9,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 9,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -694,7 +724,9 @@
           }
         ],
         "EmptyPayload": 15,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 15,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -722,7 +754,9 @@
           }
         ],
         "EmptyPayload": 12,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 12,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -750,7 +784,9 @@
           }
         ],
         "EmptyPayload": 3,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 3,
+        "LastWeaponMod": 4
       }
     },
     {
@@ -778,7 +814,9 @@
           }
         ],
         "EmptyPayload": 22,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 22,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -806,7 +844,9 @@
           }
         ],
         "EmptyPayload": 72,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 72,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -834,7 +874,9 @@
           }
         ],
         "EmptyPayload": 87,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 87,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -862,7 +904,9 @@
           }
         ],
         "EmptyPayload": 104,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 104,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -931,7 +975,9 @@
                 "Mod": 9,
                 "Cost": 999999
             }
-        ]
+        ],
+        "LastPayload": 27,
+        "LastWeaponMod": 9
       }
     },
     {
@@ -959,7 +1005,9 @@
           }
         ],
         "EmptyPayload": 24,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 24,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1008,7 +1056,9 @@
             "Mod": 4,
             "Cost": 100.0
           }
-        ]
+        ],
+        "LastPayload": 18,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1044,7 +1094,9 @@
           }
         ],
         "EmptyPayload": 18,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 18,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -1080,7 +1132,9 @@
           }
         ],
         "EmptyPayload": 36,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 36,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1137,7 +1191,9 @@
             "Mod": 8,
             "Cost": 150.0
           }
-        ]
+        ],
+        "LastPayload": 78,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -1190,7 +1246,9 @@
             "Mod": 7,
             "Cost": 50.0
           }
-        ]
+        ],
+        "LastPayload": 28,
+        "LastWeaponMod": 9
       }
     },
     {
@@ -1226,7 +1284,9 @@
           }
         ],
         "EmptyPayload": 11,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 11,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1262,7 +1322,9 @@
           }
         ],
         "EmptyPayload": 3,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 3,
+        "LastWeaponMod": 4
       }
     },
     {
@@ -1298,7 +1360,9 @@
           }
         ],
         "EmptyPayload": 3,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 3,
+        "LastWeaponMod": 4
       }
     },
     {
@@ -1334,7 +1398,9 @@
           }
         ],
         "EmptyPayload": 9,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 9,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1370,7 +1436,9 @@
           }
         ],
         "EmptyPayload": 9,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 9,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -1406,7 +1474,9 @@
           }
         ],
         "EmptyPayload": 49,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 49,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1442,7 +1512,9 @@
           }
         ],
         "EmptyPayload": 1,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 1,
+        "LastWeaponMod": 2
       }
     },
     {
@@ -1503,7 +1575,9 @@
             "Mod": 8,
             "Cost": 200.0
           }
-        ]
+        ],
+        "LastPayload": 8,
+        "LastWeaponMod": 8
       }
     },
     {
@@ -1552,7 +1626,9 @@
             "Mod": 3,
             "Cost": 200.0
           }
-        ]
+        ],
+        "LastPayload": 3,
+        "LastWeaponMod": 3
       }
     },
     {
@@ -1597,7 +1673,9 @@
             "Mod": 2,
             "Cost": 200.0
           }
-        ]
+        ],
+        "LastPayload": 6,
+        "LastWeaponMod": 3
       }
     },
     {
@@ -1633,7 +1711,9 @@
           }
         ],
         "EmptyPayload": 11,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 11,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1669,7 +1749,9 @@
           }
         ],
         "EmptyPayload": 11,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 11,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1697,7 +1779,9 @@
           }
         ],
         "EmptyPayload": 11,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 11,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1725,7 +1809,9 @@
           }
         ],
         "EmptyPayload": 13,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 13,
+        "LastWeaponMod": 5
       }
     },
     {
@@ -1753,7 +1839,9 @@
           }
         ],
         "EmptyPayload": 19,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 19,
+        "LastWeaponMod": 3
       }
     },
     {
@@ -1781,7 +1869,9 @@
           }
         ],
         "EmptyPayload": 34,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 34,
+        "LastWeaponMod": 6
       }
     },
     {
@@ -1809,399 +1899,9 @@
           }
         ],
         "EmptyPayload": 0,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Fokker D.7",
-        "LogName": "fokker d.vii",
-        "Roles": [
-          "Patroller"
-        ],
-        "Coalition": "Axis",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\fokkerd7.txt",
-        "Model": "graphics\\planes\\fokkerd7\\fokkerd7.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 0,
-        "CargoCapacity": 0,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          }
-        ],
-        "EmptyPayload": 2,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Fokker D.7F",
-        "LogName": "fokker d.viif",
-        "Roles": [
-          "Patroller"
-        ],
-        "Coalition": "Axis",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\fokkerd7f.txt",
-        "Model": "graphics\\planes\\fokkerd7f\\fokkerd7f.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 0,
-        "CargoCapacity": 0,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          }
-        ],
-        "EmptyPayload": 2,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Fokker Dr.I",
-        "LogName": "fokker dr.i",
-        "Roles": [
-          "Patroller"
-        ],
-        "Coalition": "Axis",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\fokkerdr1.txt",
-        "Model": "graphics\\planes\\fokkerdr1\\fokkerdr1.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 0,
-        "CargoCapacity": 0,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          }
-        ],
-        "EmptyPayload": 2,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Pfalz D.IIIa",
-        "LogName": "pfalz d.iiia",
-        "Roles": [
-          "Patroller"
-        ],
-        "Coalition": "Axis",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\pfalzd3a.txt",
-        "Model": "graphics\\planes\\pfalzd3a\\pfalzd3a.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 0,
-        "CargoCapacity": 0,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          }
-        ],
-        "EmptyPayload": 2,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Sopwith Camel",
-        "LogName": "sopwith camel",
-        "Roles": [
-          "Patroller",
-          "GroundAttacker"
-        ],
-        "Coalition": "Allies",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\sopcamel.txt",
-        "Model": "graphics\\planes\\sopcamel\\sopcamel.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 36,
-        "CargoCapacity": 36,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          },
-          {
-            "Payload": {
-              "Role": "GroundAttacker",
-              "ModMask": 1,
-              "Id": 2
-            }
-          }
-        ],
-        "EmptyPayload": 4,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Sopwith Dolphin",
-        "LogName": "sopwith dolphin",
-        "Roles": [
-          "Patroller",
-          "GroundAttacker"
-        ],
-        "Coalition": "Allies",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\sopdolphin.txt",
-        "Model": "graphics\\planes\\sopdolphin\\sopdolphin.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 36,
-        "CargoCapacity": 36,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          },
-          {
-            "Payload": {
-              "Role": "GroundAttacker",
-              "ModMask": 65,
-              "Id": 2
-            }
-          }
-        ],
-        "EmptyPayload": 13,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Spad 13.C1",
-        "LogName": "spad 13.c1",
-        "Roles": [
-          "Patroller",
-          "GroundAttacker"
-        ],
-        "Coalition": "Allies",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\spad13.txt",
-        "Model": "graphics\\planes\\spad13\\spad13.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 18,
-        "CargoCapacity": 18,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          },
-          {
-            "Payload": {
-              "Role": "GroundAttacker",
-              "ModMask": 33,
-              "Id": 3
-            }
-          }
-        ],
-        "EmptyPayload": 7,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Albatros D5",
-        "LogName": "albatros d.v",
-        "Roles": [
-          "Patroller"
-        ],
-        "Coalition": "Axis",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\albatrosd5.txt",
-        "Model": "graphics\\planes\\albatrosd5\\albatrosd5.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 0,
-        "CargoCapacity": 0,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          }
-        ],
-        "EmptyPayload": 3,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Haberstadt CL2",
-        "LogName": "halberstadt cl.ii",
-        "Roles": [
-          "Patroller",
-          "GroundAttacker"
-        ],
-        "Coalition": "Axis",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\halberstadtcl2.txt",
-        "Model": "graphics\\planes\\halberstadtcl2\\halberstadtcl2.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 150,
-        "CargoCapacity": 150,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          },
-          {
-            "Payload": {
-              "Role": "GroundAttacker",
-              "ModMask": 129,
-              "Id": 2
-            }
-          }
-        ],
-        "EmptyPayload": 12,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Haberstadt CL2 AU",
-        "LogName": "halberstadt cl.ii 200hp",
-        "Roles": [
-          "Patroller",
-          "GroundAttacker"
-        ],
-        "Coalition": "Axis",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\halberstadtcl2au.txt",
-        "Model": "graphics\\planes\\halberstadtcl2au\\halberstadtcl2au.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 150,
-        "CargoCapacity": 150,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          },
-          {
-            "Payload": {
-              "Role": "GroundAttacker",
-              "ModMask": 129,
-              "Id": 2
-            }
-          }
-        ],
-        "EmptyPayload": 12,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Bristol F2BF2",
-        "LogName": "bristol f2b (f.ii)",
-        "Roles": [
-          "Patroller",
-          "GroundAttacker"
-        ],
-        "Coalition": "Allies",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\bristolf2bf2.txt",
-        "Model": "graphics\\planes\\bristolf2bf2\\bristolf2bf2.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 200,
-        "CargoCapacity": 200,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          },
-          {
-            "Payload": {
-              "Role": "GroundAttacker",
-              "ModMask": 65,
-              "Id": 2
-            }
-          }
-        ],
-        "EmptyPayload": 10,
-        "WeaponModsCosts": []
-      }
-    },
-    {
-      "Plane": {
-        "Kind": "Fighter",
-        "Name": "Bristol F2BF3",
-        "LogName": "bristol f2b (f.iii)",
-        "Roles": [
-          "Patroller",
-          "GroundAttacker"
-        ],
-        "Coalition": "Allies",
-        "Script": "LuaScripts\\WorldObjects\\Planes\\bristolf2bf3.txt",
-        "Model": "graphics\\planes\\bristolf2bf3\\bristolf2bf3.mgm",
-        "Static": "u2vs",
-        "Cost": 125,
-        "BombCapacity": 200,
-        "CargoCapacity": 200,
-        "Payloads": [
-          {
-            "Payload": {
-              "Role": "Patroller",
-              "ModMask": 1,
-              "Id": 0
-            }
-          },
-          {
-            "Payload": {
-              "Role": "GroundAttacker",
-              "ModMask": 65,
-              "Id": 2
-            }
-          }
-        ],
-        "EmptyPayload": 10,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 29,
+        "LastWeaponMod": 9
       }
     },
     {
@@ -2237,7 +1937,9 @@
           }
         ],
         "EmptyPayload": 9,
-        "WeaponModsCosts": []
+        "WeaponModsCosts": [],
+        "LastPayload": 9,
+        "LastWeaponMod": 8
       }
     }
   ]

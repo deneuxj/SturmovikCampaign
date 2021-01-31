@@ -452,13 +452,13 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                     let allowedMods =
                                         match forbiddenMods with
                                         | [] ->
-                                            ModRange.All
+                                            [ModRange.Interval(1, plane.LastWeaponMod)]
                                         | _ ->
                                             let sorted =
                                                 forbiddenMods
                                                 |> List.map fst
                                                 |> List.sort
-                                            ([1, 99], sorted)
+                                            ([1, plane.LastWeaponMod], sorted)
                                             ||> List.fold (fun ranges wmod ->
                                                 ranges
                                                 |> List.collect (fun (a, b) ->

@@ -76,9 +76,9 @@ with
             |> Option.defaultValue (1L, 0)
         {
             Model = plane
-            AllowedMods = ModRange.All
-            AllowedPayloads = ModRange.All
-            AllowedSkins = ModRange.All
+            AllowedMods = [ModRange.Interval(1, plane.LastWeaponMod)]
+            AllowedPayloads = [ModRange.Interval(0, plane.LastPayload)]
+            AllowedSkins = []
             Mods = modMask
             Payload = payload
             Skin = 0
