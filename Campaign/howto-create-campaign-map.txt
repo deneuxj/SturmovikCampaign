@@ -76,3 +76,6 @@ Set all non-participating to Neutral.
 
 13. Briefing
 Write a short description of the object of the fight in the description of the mission.
+
+14. Planesets
+Create two fakefields named PlaneSet-Axis and PlaneSet-Allies. Set their planes to the planes used in this campaign.
