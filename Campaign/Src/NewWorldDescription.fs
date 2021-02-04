@@ -567,6 +567,7 @@ module Init =
     open FSharp.Data
 
     open Util.StringPatterns
+    open Util.RegexActivePatterns
 
     open SturmovikMission.Blocks.BlocksMissionData
     open SturmovikMission.Blocks.BlocksMissionData.CommonMethods
@@ -936,6 +937,39 @@ module Init =
         else
             fun _ -> None
 
+    let extractPlaneSet(fakefield : T.Airfield, coalition) =
+        let scriptsAndWeaponMods =
+            [
+                let planes =
+                    fakefield.TryGetPlanes()
+                    |> Option.map (fun planes -> planes.GetPlanes())
+                    |> Option.defaultValue Seq.empty
+                for plane in planes do
+                    let weaponModFilter =
+                        plane.GetAvMods().Value.Split '/'
+                        |> Seq.choose ModRange.TryFromString
+                        |> List.ofSeq
+                    yield plane.GetScript().Value.ToLowerInvariant().Trim(), weaponModFilter
+            ]
+        let planeDb =
+            PlaneModelDb.planeDb
+            |> List.map (fun plane -> plane.ScriptModel.Script.ToLowerInvariant().Trim(), plane)
+            |> dict
+        [
+            for script, filter in scriptsAndWeaponMods do
+                match planeDb.TryGetValue(script) with
+                | true, x ->
+                    let costs =
+                        List.init x.LastWeaponMod ((+) 1)
+                        |> List.filter (fun n ->
+                            filter
+                            |> List.exists (function One n2 -> n = n2 | Interval(n1, n2) -> n1 <= n && n <= n2)
+                        )
+                        |> List.map (fun n -> n, 1.0f<E> * System.Single.PositiveInfinity)
+                    yield { x with WeaponModsCosts = costs; Coalition = coalition }
+                | false, _ -> ()
+        ]
+
     /// Load a scenario mission file and create a world description.
     let mkWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
@@ -1037,6 +1071,20 @@ module Init =
         let groundUnits =
             loadGroundUnitsDb (Path.Combine(exeDir, "Config", "GroundUnitDb.json"))
             |> List.ofArray
+        // Planesets
+        let planeModels =
+            [
+                let countries = Map.ofList countries
+                for airfield in missionData.ListOfAirfield do
+                    let coalition =
+                        CountryId.FromMcuValue(enum (airfield.GetCountry().Value))
+                        |> Option.bind countries.TryFind
+                    match coalition with
+                    | Some coalition ->
+                        yield! extractPlaneSet(airfield, coalition)
+                    | None ->
+                        ()
+            ]
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
@@ -1060,7 +1108,7 @@ module Init =
             AirfieldsList = airfields
             BuildingsList = buildings
             BridgesList = bridges
-            PlaneModelsList = []
+            PlaneModelsList = planeModels
             PlaneAltsList = []
             CountriesList = countries
             Names = NameDatabase.Default

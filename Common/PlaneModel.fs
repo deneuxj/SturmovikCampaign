@@ -100,6 +100,9 @@ with
             Script = sprintf @"LuaScripts\WorldObjects\Blocks\static_%s.txt" this.StaticBasename
         }
 
+open Util.RegexActivePatterns
+open System.Text.RegularExpressions
+
 /// <summary>
 /// Range of plane modifications: Can be a single value or an interval (both bounds included)
 /// </summary>
@@ -112,6 +115,12 @@ with
         | [x] -> One x
         | [x; y] -> Interval(x, y)
         | _ -> failwith "Range must be a singleton or a pair"
+
+    static member TryFromString(s : string) =
+        match s.Trim() with
+        | AsInt n -> Some(One n)
+        | MatchesRegex (Regex(@"(\d+)\.\.(\d+)")) (GroupList [AsInt n1; AsInt n2]) -> Some(Interval(n1, n2))
+        | _ -> None
 
     member this.ModFilter =
         match this with
