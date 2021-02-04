@@ -1076,33 +1076,6 @@ module IO =
     open Util.Json
 
     type World with
-        //member this.ToSerializable() =
-        //    {|
-        //        Scenario = this.Scenario
-        //        Map = this.Map
-        //        StartDate = this.StartDate.ToBinary()
-        //        WeatherDaysOffset = this.WeatherDaysOffset
-        //        RepairSpeed = this.RepairSpeed
-        //        RepairCostRatio = this.RepairCostRatio
-        //        TransportRepairCostRatio = this.TransportRepairCostRatio
-        //        GroundForcesCost = this.GroundForcesCost
-        //        ResourceVolume = this.ResourceVolume
-        //        ResourceProductionRate = this.ResourceProductionRate
-        //        Regions = this.Regions.Values |> Array.ofSeq
-        //        BridgeCapacity = this.BridgeCapacity
-        //        Roads = this.Roads
-        //        Rails = this.Rails
-        //        Airfields = this.Airfields.Values |> Array.ofSeq
-        //        Buildings = this.Buildings.Values |> Array.ofSeq
-        //        Bridges = this.Bridges.Values |> Array.ofSeq
-        //        PlaneSet = this.PlaneSet.Values |> Array.ofSeq
-        //        PlaneAlts = this.PlaneAlts |> Seq.map (fun kvp -> {| Key = string kvp.Key; Alts = kvp.Value |> List.map string |})
-        //        Countries = this.Countries |> Seq.map (fun kvp -> {| Country = kvp.Key; Coalition = kvp.Value |})
-        //        Names = this.Names
-        //        Ranks = this.Ranks
-        //        Awards = this.Awards
-        //    |}
-
         member this.SaveToFile(path : string) =
             let json =
                 try
