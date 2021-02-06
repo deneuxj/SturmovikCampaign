@@ -66,7 +66,7 @@
         "dyn_model": "graphics\\vehicles\\m4a3\\m4a3.mgm",
         "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_m4a3.txt",
         "static_model": "graphics\\blocks\\static_m4a3.mgm",
-        "durability": 2000
+        "durability": 1500
     },
     {
         "name": "m4a2",
@@ -75,7 +75,7 @@
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\m4a2.txt",
         "dyn_model": "graphics\\vehicles\\m4a2\\m4a2.mgm",
-        "durability": 2000
+        "durability": 1500
     },
     {
         "name": "willys",
@@ -141,7 +141,7 @@
         "dyn_model": "graphics\\vehicles\\pziv-f1\\pziv-f1.mgm",
         "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_pz_ivf1.txt",
         "static_model": "graphics\\blocks\\static_pz_ivf1.mgm",
-        "durability": 2000
+        "durability": 1500
     },
     {
         "name": "pziii-h",
@@ -162,8 +162,7 @@
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\sdkfz251-szf.txt",
         "dyn_model": "graphics\\vehicles\\sdkfz251\\sdkfz251-szf.mgm",
         "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_sdkfz251-1c.txt",
-        "static_model": "graphics\\blocks\\static_sdkfz251-1c.mgm",
-        "durability": 2000
+        "static_model": "graphics\\blocks\\static_sdkfz251-1c.mgm"
     },
     {
         "name": "pak40",
@@ -254,7 +253,7 @@
         "dyn_model": "graphics\\vehicles\\t70\\t70.mgm",
         "static_model": "graphics\\blocks\\static_t70.mgm",
         "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_t70.txt",
-        "durability": 2000
+        "durability": 1500
     },
     {
         "name": "bm13",

@@ -81,7 +81,7 @@ with
             StaticScriptModel =
                 (this.static_model, this.static_script)
                 ||> Option.map2 (fun model script -> { Script = script; Model = model })
-            Durability = defaultArg this.durability 1250
+            Durability = defaultArg this.durability 1000
         }
 
 type GroundUnit with
