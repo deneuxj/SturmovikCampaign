@@ -838,11 +838,7 @@ with
         let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
             let modelScript = model.StaticScriptModel
             let mcus =
-                let durability =
-                    match model.Kind with
-                    | PlaneType.Fighter -> 1000
-                    | PlaneType.Attacker -> 1250
-                    | PlaneType.Bomber | PlaneType.Transport -> 1500
+                let durability = 1000
                 let block, entity = newBlockWithEntityMcu store country modelScript.Model modelScript.Script durability
                 match block with
                 | :? Mcu.HasEntity as block -> block.Name <- model.Name
