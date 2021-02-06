@@ -34,10 +34,11 @@ open Campaign.Common.Buildings
 open Campaign.Common.BasicTypes
 open Campaign.Common.PlaneModel
 open Campaign.Common.AiPlanes
+open Campaign.Common.Targets
+open Campaign.Common.GroundUnit
 
 open Campaign.MissionGen.StaticDefenseOptimization
 open Campaign.MissionGen.MapGraphics
-open Campaign.Common.Targets
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -655,6 +656,7 @@ type IMissionBuilderData =
     abstract GetCountryCoalition : CountryId -> CoalitionId
     abstract GetCoalitionMainCountry : CoalitionId -> CountryId
     abstract GetPlaneModel : PlaneModelId -> PlaneModel
+    abstract GetGroundUnit : GroundUnitId -> GroundUnit
 
 /// Data needed to create a multiplayer "dogfight" mission
 type MultiplayerMissionContent =
@@ -670,7 +672,7 @@ type MultiplayerMissionContent =
         /// List of chains of convoys, convoys in each chain start after the previous one reaches completion.
         Convoys : Convoy list list
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
-        ParkedVehicles : (CoalitionId * (ConvoyMember * OrientedPosition * CountryId) list) list
+        ParkedVehicles : (CoalitionId * (GroundUnitId * OrientedPosition * CountryId) list) list
         BuildingFires : BuildingFire list
     }
 with
@@ -857,19 +859,40 @@ with
             |> List.map (fun (plane, pos, country) -> mkParkedPlane(data.GetPlaneModel(plane), pos, int country.ToMcuValue))
 
         // Parked vehicles
-        let mkParkedVehicle(model : ConvoyMember, pos : OrientedPosition, country) =
-            let modelScript = model.StaticVehicleData country
+        let mkParkedVehicle(model : GroundUnitId, pos : OrientedPosition, country : CountryId) =
+            let model = data.GetGroundUnit(model)
             let mcus =
-                let durability =
-                    match model with
-                    | Tank -> 2000
-                    | _ -> 1250
-                let block, entity = newBlockWithEntityMcu store (int country.ToMcuValue) modelScript.Model modelScript.Script durability
-                match block with
-                | :? Mcu.HasEntity as block -> block.Name <- model.Name
-                | _ -> ()
-                entity.Enabled <- true
-                [ block; upcast entity ]
+                match model.StaticScriptModel, model.DynamicScriptModel with
+                | Some modelScript, _ ->
+                    let durability = model.Durability
+                    let block, entity = newBlockWithEntityMcu store (int country.ToMcuValue) modelScript.Model modelScript.Script durability
+                    match block with
+                    | :? Mcu.HasEntity as block -> block.Name <- model.Name
+                    | _ -> ()
+                    entity.Enabled <- true
+                    [ block; upcast entity ]
+                | None, Some modelScript ->
+                    let vehicle =
+                        T.Vehicle.Default
+                            .SetIndex(T.Integer.N 1)
+                            .SetCountry(T.Integer.N(int country.ToMcuValue))
+                            .SetDeleteAfterDeath(T.Boolean.N true)
+                            .SetEngageable(T.Boolean.N true)
+                            .SetLinkTrId(T.Integer.N 2)
+                            .SetModel(T.String.N modelScript.Model)
+                            .SetScript(T.String.N modelScript.Script)
+                            .SetName(T.String.N model.Name)
+                            .SetVulnerable(T.Boolean.N true)
+                            .CreateMcu()
+                    let entity = newEntity 2
+                    entity.MisObjID <- 1
+                    entity.Enabled <- true
+                    let subst = Mcu.substId <| store.GetIdMapper()
+                    subst vehicle
+                    subst entity
+                    [ vehicle; entity ]
+                | None, None ->
+                    []
             for mcu in mcus do
                 pos.Pos.AssignTo mcu.Pos
                 mcu.Ori.Y <- float pos.Rotation

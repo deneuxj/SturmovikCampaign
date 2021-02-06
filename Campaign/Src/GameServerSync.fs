@@ -246,6 +246,8 @@ module WarStateExt =
                   |> Option.map war.World.GetAnyCountryInCoalition
               member this.GetPlaneModel(plane: Common.PlaneModel.PlaneModelId): Common.PlaneModel.PlaneModel = 
                   war.World.PlaneSet.[plane]
+              member this.GetGroundUnit(id : Common.GroundUnit.GroundUnitId): Common.GroundUnit.GroundUnit =
+                  war.World.GroundUnits.[id]
               member this.GetRegion(rId: RegionId): IRegion = 
                   war.World.Regions.[rId] :> IRegion
               member this.Regions: IRegion list = 

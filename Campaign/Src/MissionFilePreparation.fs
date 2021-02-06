@@ -29,6 +29,7 @@ open Campaign.Common.PlaneModel
 open Campaign.Common.AiPlanes
 open Campaign.Common.Buildings
 open Campaign.Common.Targets
+open Campaign.Common.GroundUnit
 
 open Campaign.MissionGen.StaticDefenseOptimization
 open Campaign.MissionGen.MissionFileGeneration
@@ -501,13 +502,25 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         [
             let random = System.Random(state.Seed)
             // Vehicles to choose from for the random picking.
-            let vehicles = [| Tank; ArmoredCar; ArmoredCar; ArmoredCar; Truck; Truck |]
+            let vehicles = [| (ArmoredCar, 3); (Truck, 2); (StaffCar, 1); (AntiAirTruck, 1); (Tank, 1) |]
+            let totalWeight = vehicles |> Array.sumBy snd
+            let vehicles =
+                (vehicles.[0], vehicles |> Seq.skip 1)
+                ||> Seq.scan (fun (v, n) (v2, n2) ->
+                    (v2, n + n2)
+                )
+                |> List.ofSeq
             let avgCost =
                 vehicles
-                |> Seq.sumBy (fun v -> v.AsTargetType.GroundForceValue)
+                |> Seq.sumBy (fun (v, _) -> v.AsTargetType.GroundForceValue)
                 |> fun x -> x / (float32 vehicles.Length)
             let getRandomVehicle() =
-                vehicles.[random.Next(vehicles.Length)]
+                let idx =
+                    random.Next(totalWeight)
+                vehicles
+                |> List.tryFind (fun (v, w) -> (idx + 1) <= w)
+                |> Option.defaultValue vehicles.[0]
+                |> fst
             let regionsWithBattles =
                 missions
                 |> Option.map (fun missions ->
@@ -521,6 +534,15 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             let regionsWithoutBattles =
                 state.World.Regions.Values
                 |> Seq.filter (fun region -> not(regionsWithBattles.Contains region.RegionId))
+            let groundUnitRoleMapping =
+                [
+                    StaffCar, [ GroundRole.Command; GroundRole.Support ]
+                    ArmoredCar, [ GroundRole.MachineGun ]
+                    Tank, [ GroundRole.AntiTank; GroundRole.MachineGun ]
+                    AntiAirTruck, [ GroundRole.AntiAirMachineGun ]
+                    Truck, [ GroundRole.Support ]
+                ]
+                |> Map.ofList
             for region in regionsWithoutBattles do
                 for coalition in [ Axis; Allies ] do
                     let forces = state.GetGroundForces(coalition, region.RegionId)
@@ -547,26 +569,55 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         | Some location ->
                             let positions =
                                 [
-                                    let country = state.World.GetAnyCountryInCoalition(coalition)
                                     // Put random vehicles in a grid, where each spot has 80% chance of being empty
                                     for x in -halfSideSize .. spacing .. halfSideSize do
                                         for z in -halfSideSize .. spacing .. halfSideSize do
                                             let yori = yori + float32(random.NextDouble() * 9.99)
                                             let displacement = 3.0f * float32 (random.NextDouble()) * Vector2.FromYOri(random.NextDouble() * 359.0)
                                             if random.NextDouble() <= 0.2 then
-                                                let vehicle = getRandomVehicle()
-                                                let pos =
-                                                    { Pos = location + Vector2(x, z) + displacement
-                                                      Rotation = yori
-                                                      Altitude = 0.0f
-                                                    }
-                                                yield vehicle, pos, country
+                                                let convoyMember = getRandomVehicle()
+                                                let groundUnitAndCountry =
+                                                    state.World.GroundUnitsOfCountryList
+                                                    |> List.tryPick (fun (country, groundUnits) ->
+                                                        state.World.Countries.TryGetValue(country)
+                                                        |> Option.ofPair
+                                                        |> Option.bind (fun coalition2 ->
+                                                            if coalition = coalition2 then
+                                                                groundUnits
+                                                                // Get GroundUnit data
+                                                                |> List.choose (state.World.GroundUnits.TryGetValue >> Option.ofPair)
+                                                                // Prefer mobile units, weakest first
+                                                                |> List.sortBy (fun groundUnit ->
+                                                                    (if groundUnit.IsMobile then 0 else 1),
+                                                                    groundUnit.Durability
+                                                                )
+                                                                |> List.tryFind (fun groundUnit ->
+                                                                    groundUnit.Roles // Roles of ground unit
+                                                                    |> List.exists (fun role ->
+                                                                        groundUnitRoleMapping.[convoyMember] // covers one of the expected roles of the convoy member
+                                                                        |> List.exists ((=) role))
+                                                                )
+                                                                |> Option.map (fun gu -> gu, country)
+                                                            else
+                                                                None
+                                                        )
+                                                    )
+                                                match groundUnitAndCountry with
+                                                | Some (groundUnit, country) ->
+                                                    let pos =
+                                                        { Pos = location + Vector2(x, z) + displacement
+                                                          Rotation = yori
+                                                          Altitude = 0.0f
+                                                        }
+                                                    yield convoyMember, groundUnit.Id, pos, country
+                                                | None ->
+                                                    ()
                                 ]
                                 |> let mutable s = 0.0f<MGF> in
-                                   List.takeWhile(fun (vehicle, _, _) -> s <- s + vehicle.AsTargetType.GroundForceValue; s <= inCamp)
+                                   List.takeWhile(fun (vehicle : ConvoyMember, _, _, _) -> s <- s + vehicle.AsTargetType.GroundForceValue; s <= inCamp)
                             match positions with
                             | [] -> ()
-                            | _ -> yield coalition, positions
+                            | _ -> yield coalition, positions |> List.map (fun (_, x, y, z) -> (x, y, z))
                         | None ->
                             ()
         ]
