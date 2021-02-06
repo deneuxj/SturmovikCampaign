@@ -42,6 +42,7 @@
     <Compile Include="Battlefield.fs" />
     <Compile Include="LandingTee.fs" />
     <Compile Include="Spotter.fs" />
+    <Compile Include="Camp.fs" />
     <None Include="Scratch.fsx" />
     <None Include="..\data\Blocks\Blocks.eng">
       <Link>Blocks.eng</Link>

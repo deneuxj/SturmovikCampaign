@@ -498,7 +498,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         ]
 
     // Vehicle parks
-    let parkedVehicles =
+    let camps =
         [
             let random = System.Random(state.Seed)
             // Vehicles to choose from for the random picking.
@@ -581,7 +581,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                         groundUnit.Durability
                                     )
                                     |> List.tryHead
-                                    |> Option.map (fun (gu, _) -> gu, country)
+                                    |> Option.map (fun (gu, _) -> gu.Id, country)
                                 else
                                     None
                             )
@@ -590,54 +590,39 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
 
             for region in regionsWithoutBattles do
                 for coalition in [ Axis; Allies ] do
-                    let forces = state.GetGroundForces(coalition, region.RegionId)
+                    let forces =
+                        state.GetGroundForces(coalition, region.RegionId)
+                        |> min (20.0f * TargetType.Tank.GroundForceValue)
                     if forces > 10.0f * TargetType.ArmoredCar.GroundForceValue then
-                        // At most 20% of the forces, unless it's less than 5 tanks
-                        let inCamp = 0.2f * forces
-                        let inCamp =
-                            if inCamp < 15.0f * TargetType.ArmoredCar.GroundForceValue then
-                                forces
-                            else
-                                inCamp
-                        // Get room for 5 times the planned parking spots
-                        // About 20% of the spots will be used, to avoid excessively compact camps
-                        let numSpots =
-                            5.0f * ceil(inCamp / avgCost)
                         // Find an area
-                        let spacing = 20.0f
-                        let halfSideSize =
-                            0.5f * (1.0f + ceil(sqrt(numSpots))) * spacing
-                        let shape = mkSquare(Vector2.Zero, halfSideSize)
+                        let radius = 0.500f
+                        let shape = mkCircle(Vector2.Zero, radius)
                         let locations = locator.GetGroundLocationCandidates (region.Boundary, shape)
                         let yori = float32(random.NextDouble() * 350.0)
                         match Seq.tryHead locations with
                         | Some location ->
-                            let positions =
-                                [
-                                    // Put random vehicles in a grid, where each spot has 80% chance of being empty
-                                    for x in -halfSideSize .. spacing .. halfSideSize do
-                                        for z in -halfSideSize .. spacing .. halfSideSize do
-                                            let yori = yori + float32(random.NextDouble() * 9.99)
-                                            let displacement = 3.0f * float32 (random.NextDouble()) * Vector2.FromYOri(random.NextDouble() * 359.0)
-                                            if random.NextDouble() <= 0.2 then
-                                                let convoyMember = getRandomVehicle()
-                                                let groundUnitAndCountry = getGroundUnit(coalition, convoyMember)
-                                                match groundUnitAndCountry with
-                                                | Some (groundUnit, country) ->
-                                                    let pos =
-                                                        { Pos = location + Vector2(x, z) + displacement
-                                                          Rotation = yori
-                                                          Altitude = 0.0f
-                                                        }
-                                                    yield convoyMember, groundUnit.Id, pos, country
-                                                | None ->
-                                                    ()
-                                ]
-                                |> let mutable s = 0.0f<MGF> in
-                                   List.takeWhile(fun (vehicle : ConvoyMember, _, _, _) -> s <- s + vehicle.AsTargetType.GroundForceValue; s <= inCamp)
-                            match positions with
-                            | [] -> ()
-                            | _ -> yield coalition, positions |> List.map (fun (_, x, y, z) -> (x, y, z))
+                            let vehicles =
+                                Seq.initInfinite (fun _ ->
+                                    let convoyMember = getRandomVehicle()
+                                    let groundUnitAndCountry = getGroundUnit(coalition, convoyMember)
+                                    match groundUnitAndCountry with
+                                    | Some x ->
+                                        Some(convoyMember, x)
+                                    | None ->
+                                        logger.Warn(sprintf "Failed to find ground unit for %s" (string convoyMember))
+                                        None)
+                                |> Seq.cache
+                                |> Seq.choose id
+                            let vehicles =
+                                ((forces, None), vehicles)
+                                ||> Seq.scan (fun (forces, _) (convoyMember, guc) ->
+                                    forces - convoyMember.AsTargetType.GroundForceValue, Some guc
+                                )
+                                |> Seq.takeWhile (fun (forces, _) -> forces >= 0.0f<MGF>)
+                                |> Seq.choose snd
+                                
+                            if not(Seq.isEmpty vehicles) then
+                                yield { Coalition = coalition; Pos = { Pos = location; Rotation = yori; Altitude = 0.0f }; Vehicles = vehicles }
                         | None ->
                             ()
         ]
@@ -845,25 +830,21 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | _ -> ()
 
             // Camps
-            for coalition, vehicles in parkedVehicles do
-                let positions = vehicles |> List.map (fun (_, pos, _) -> pos.Pos)
-                let minX = positions |> Seq.map (fun v -> v.X) |> Seq.min
-                let maxX = positions |> Seq.map (fun v -> v.X) |> Seq.max
-                let minY = positions |> Seq.map (fun v -> v.Y) |> Seq.min
-                let maxY = positions |> Seq.map (fun v -> v.Y) |> Seq.max
-                let center = 0.5f * (Vector2(minX, minY) + Vector2(maxX, maxY))
-                let country = state.World.GetAnyCountryInCoalition(coalition)
+            for camp in camps do
+                let center = camp.Pos.Pos
+                let country = state.World.GetAnyCountryInCoalition(camp.Coalition)
                 let region = state.World.FindRegionAt(center)
+                let d = 0.7f * 500f + 150.0f
                 let x =
                     if random.NextDouble() > 0.5 then
-                        maxX + 150.0f
+                        center.X + d
                     else
-                        minX - 150.0f
+                        center.X - d
                 let y =
                     if random.NextDouble() > 0.5 then
-                        maxY + 150.0f
+                        center.Y + d
                     else
-                        maxY - 150.0f
+                        center.Y - d
                 let location = Vector2(x, y)
                 yield
                     {
@@ -1223,7 +1204,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         AiAttacks = attacks
         Convoys = trains @ trucks
         ParkedPlanes = parkedPlanes
-        ParkedVehicles = parkedVehicles
+        Camps = camps
         BuildingFires = fires
     }
 

@@ -658,6 +658,13 @@ type IMissionBuilderData =
     abstract GetPlaneModel : PlaneModelId -> PlaneModel
     abstract GetGroundUnit : GroundUnitId -> GroundUnit
 
+type Camp =
+    {
+        Coalition : CoalitionId
+        Pos : OrientedPosition
+        Vehicles : (GroundUnitId * CountryId) seq
+    }
+
 /// Data needed to create a multiplayer "dogfight" mission
 type MultiplayerMissionContent =
     {
@@ -672,7 +679,7 @@ type MultiplayerMissionContent =
         /// List of chains of convoys, convoys in each chain start after the previous one reaches completion.
         Convoys : Convoy list list
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
-        ParkedVehicles : (CoalitionId * (GroundUnitId * OrientedPosition * CountryId) list) list
+        Camps : Camp list
         BuildingFires : BuildingFire list
     }
 with
@@ -894,34 +901,35 @@ with
                 mcu.Ori.Y <- float pos.Rotation
             McuUtil.groupFromList mcus
 
-        let parkedVehicles =
-            this.ParkedVehicles
-            |> List.collect (fun (_, group) ->
-                group
-                |> List.map (fun (vehicle, pos, country) -> mkParkedVehicle(vehicle, pos, country)))
+        let camps =
+            this.Camps
+            |> List.map (fun camp ->
+                let vehicles =
+                    camp.Vehicles
+                    |> Seq.map (fun (groundUnit, country) -> mkParkedVehicle(groundUnit, camp.Pos, country))
+                let camp = Camp.Camp.Create(store, lcStore, camp.Pos.Pos, camp.Pos.Rotation, camp.Coalition.ToCoalition, "Camp", vehicles)
+                Mcu.addTargetLink missionBegin camp.Start.Index
+                camp.All
+            )
 
         // Parked vehicles recon
         let campRecons =
-            this.ParkedVehicles
-            |> List.choose (fun (coalition, group) ->
-                group
-                |> List.tryHead
-                |> Option.map (fun (_, pos, country) ->
-                    let iconCover, iconAttack = IconDisplay.IconDisplay.CreatePair(store, lcStore, pos.Pos, "Camp", coalition.ToCoalition, Mcu.IconIdValue.CoverTankPlatoon)
-                    let proximity = Proximity.Proximity.Create(store, coalition.Other.ToCoalition, 2000, pos.Pos)
-                    Mcu.addTargetLink missionBegin proximity.Start.Index
-                    Mcu.addTargetLink proximity.Out iconCover.Show.Index
-                    Mcu.addTargetLink proximity.Out iconAttack.Show.Index
-                    { new IMcuGroup with
-                          member this.Content = []
-                          member this.LcStrings = []
-                          member this.SubGroups = [
+            this.Camps
+            |> List.map (fun camp ->
+                let iconCover, iconAttack = IconDisplay.IconDisplay.CreatePair(store, lcStore, camp.Pos.Pos, "Camp", camp.Coalition.ToCoalition, Mcu.IconIdValue.CoverTankPlatoon)
+                let proximity = Proximity.Proximity.Create(store, camp.Coalition.Other.ToCoalition, 2000, camp.Pos.Pos)
+                Mcu.addTargetLink missionBegin proximity.Start.Index
+                Mcu.addTargetLink proximity.Out iconCover.Show.Index
+                Mcu.addTargetLink proximity.Out iconAttack.Show.Index
+                { new IMcuGroup with
+                    member this.Content = []
+                    member this.LcStrings = []
+                    member this.SubGroups = [
                             iconCover.All
                             iconAttack.All
                             proximity.All
-                          ]
-                    }
-                )
+                        ]
+                }
             )
 
         // Mission end triggered by server input
@@ -969,7 +977,7 @@ with
                 yield! allAttacks
                 yield! convoys
                 yield! parkedPlanes
-                yield! parkedVehicles
+                yield! camps
                 yield! campRecons
                 yield serverInputMissionEnd.All
                 yield upcast borders

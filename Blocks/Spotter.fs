@@ -30,7 +30,7 @@ type Spotter = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, country : Mcu.CountryValue, location : string) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, coalition : Mcu.CoalitionValue, location : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
         let lcSubst = Mcu.substLCId <| store.GetIdMapper()
@@ -41,11 +41,11 @@ with
         // Key nodes
         let probe = McuUtil.getTriggerByName group "PROBE" :?> Mcu.McuProximity
         let message =
-            match country with
-            | Mcu.CountryValue.Germany -> 
+            match coalition with
+            | Mcu.CoalitionValue.Axis -> 
                 McuUtil.getTriggerByName group "MESSAGE_AXIS"
             | _
-            | Mcu.CountryValue.Russia -> 
+            | Mcu.CoalitionValue.Allies -> 
                 McuUtil.getTriggerByName group "MESSAGE_ALLIES"
         let detected = McuUtil.getTriggerByName group "DETECTED"
         let start = McuUtil.getTriggerByName group "START"
@@ -57,7 +57,7 @@ with
             let rel = Vector2.FromMcu(mcu.Pos) - refPos
             (rel + pos).AssignTo mcu.Pos
         // Country
-        probe.PlaneCoalitions <- [coalitionOf country |> swapCoalition]
+        probe.PlaneCoalitions <- [swapCoalition coalition]
         Mcu.addTargetLink detected message.Index
         // Message
         let all =
