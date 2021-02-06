@@ -209,54 +209,13 @@ module WorldWar2Internal =
 
         static member Moscow = PlaneAndUnitSet.StalingradEarly
 
-        member this.NewPlanesDelivery(numPlanes : float32, planeSet : PlaneModelId -> PlaneModel) =
-            let forCoalition (coalition : CoalitionId) =
-                let planes = 
-                    this.AllPlanesOf(coalition)
-                    |> List.map (fun name -> planeSet(PlaneModelId name))
-                let totalCost =
-                    planes
-                    |> List.sumBy (fun plane -> plane.Cost)
-                planes
-                |> List.map (fun plane -> plane, numPlanes * plane.Cost / totalCost)
-
-            Map.ofList [
-                Axis, forCoalition Axis
-                Allies, forCoalition Allies
-            ]
-
         member this.AllPlanesOf coalition =
             match coalition with
             | Axis -> this.AxisPlanes
             | Allies -> this.AlliesPlanes
 
-        /// Get the list of attackers of a coalition, preferred ones first
-        member this.WithRole(planeRole, coalition, planeSet : PlaneModelId -> PlaneModel) =
-            this.AllPlanesOf coalition
-            |> List.map (fun name -> planeSet (PlaneModelId name))
-            |> List.filter (fun plane -> List.contains planeRole plane.Roles)
-            |> List.sortByDescending (fun plane -> plane.Cost)
-
-        /// Get the list of attackers of a coalition, preferred ones first
-        member this.Attackers(coalition, planeSet) =
-            this.WithRole(PlaneRole.GroundAttacker, coalition, planeSet)
-
-        /// Get the list of interceptors of a coalition, preferred ones first
-        member this.InterceptorsOf(coalition, planeSet) =
-            this.WithRole(PlaneRole.Interceptor, coalition, planeSet)
-
-        /// Get the list of fighters of a coalition, preferred ones first
-        member this.FightersOf(coalition, planeSet) =
-            [ PlaneRole.Patroller; PlaneRole.Patroller ]
-            |> List.collect (fun role -> this.WithRole(role, coalition, planeSet))
-            |> List.distinct
-            |> List.sortByDescending (fun plane -> plane.Cost)
-
-        /// Get the list of bombers of a coalition, preferred ones first
-        member this.BombersOf(coalition, planeSet) =
-            this.WithRole(PlaneRole.LevelBomber, coalition, planeSet)
-
         member this.Setup(world: World): World =
+            // Default planeset, if world's planeset isn't already set
             let planes =
                 List.concat [ this.AllPlanesOf Axis; this.AllPlanesOf Allies ]
                 |> List.map PlaneModelId
@@ -270,6 +229,7 @@ module WorldWar2Internal =
                 planes
                 |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> logger.Error(sprintf "%s missing" (string plane)); None))
 
+            // Alternatives for AI-only planes
             let planeAlts =
                 match planeDb.TryFind (PlaneModelId "b25"), planeDb.TryFind (PlaneModelId "a20") with
                 | Some b25, Some a20 ->
@@ -301,7 +261,7 @@ open FSharp.Json
 open Util.Json
 
 /// A campaign scenario implementation for WWII in the European and East front theaters: Bomb industry, airfields, harass and protect ground troops
-type WorldWar2(world : World, C : Constants, PS : PlaneAndUnitSet) =
+type WorldWar2(world : World, C : Constants) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     let totalPlanes : Map<_, float32> -> float32 =
@@ -329,15 +289,21 @@ type WorldWar2(world : World, C : Constants, PS : PlaneAndUnitSet) =
             | { MissionType = GroundBattle _ } -> None
             | { MissionType = GroundForcesTransfer(coalition, start, forces) } -> Some(coalition, start, forces)
 
-    let attackersOf = fun coalition -> PS.Attackers(coalition, fun x -> world.PlaneSet.[x])
-    let interceptorsOf = fun coalition -> PS.InterceptorsOf(coalition, fun x -> world.PlaneSet.[x])
-    let fightersOf = fun coalition -> PS.FightersOf(coalition, fun x -> world.PlaneSet.[x])
-    let bombersOf = fun coalition -> PS.BombersOf(coalition, fun x -> world.PlaneSet.[x])
+    let withRole role coalition =
+        world.PlaneModelsList
+        |> List.filter (fun plane -> plane.Coalition = coalition && plane.Roles |> List.exists ((=) role))
+        |> List.sortByDescending (fun plane -> plane.Cost)
+    let attackersOf = withRole PlaneRole.GroundAttacker
+    let interceptorsOf = withRole PlaneRole.Interceptor
+    let fightersOf coalition =
+        (withRole PlaneRole.Patroller coalition) @ (withRole PlaneRole.Interceptor coalition)
+        |> List.distinctBy (fun plane -> plane.Id)
+    let bombersOf = withRole PlaneRole.LevelBomber
 
     let allPlanesOf coalition =
-        [bombersOf; attackersOf; interceptorsOf; fightersOf]
-        |> List.collect (fun f -> f coalition)
-        |> List.distinct
+        world.PlaneModelsList
+        |> List.filter (fun plane -> plane.Coalition = coalition)
+        |> List.distinctBy (fun plane -> plane.Id)
 
     /// Get the total number of planes of give types at an airfield
     let sumPlanes (atAirfield : Map<PlaneModelId, float32>) (planes : PlaneModelId seq) =
@@ -1219,7 +1185,21 @@ type WorldWar2(world : World, C : Constants, PS : PlaneAndUnitSet) =
                     int(24.0f<H> * float32 (t - war.World.StartDate).Days / C.NewPlanesPeriod)
                 // Add new planes
                 if period war.Date < period newTime then
-                    let newPlanes = PS.NewPlanesDelivery(C.NumNewPlanes, fun x -> war.World.PlaneSet.[x])
+                    let newPlanesDelivery(numPlanes : float32) =
+                        let forCoalition (coalition : CoalitionId) =
+                            let planes = allPlanesOf coalition
+                            let totalCost =
+                                planes
+                                |> List.sumBy (fun plane -> plane.Cost)
+                            planes
+                            |> List.map (fun plane -> plane, numPlanes * plane.Cost / totalCost)
+
+                        Map.ofList [
+                            Axis, forCoalition Axis
+                            Allies, forCoalition Allies
+                        ]
+
+                    let newPlanes = newPlanesDelivery(C.NumNewPlanes)
                     for coalition in [Axis; Allies] do
                         let airfields =
                             war.World.Airfields.Values
@@ -1320,10 +1300,10 @@ type WorldWar2(world : World, C : Constants, PS : PlaneAndUnitSet) =
 
     static member LoadFromFile(world : World, path : string) =
         let json = System.IO.File.ReadAllText(path)
-        let constructorData : {| Constants : Constants; PlaneSet : PlaneAndUnitSet |} =
+        let constructorData : {| Constants : Constants |} =
             Json.deserializeEx JsonConfig.IL2Default json
-        WorldWar2(world, constructorData.Constants, constructorData.PlaneSet)
+        WorldWar2(world, constructorData.Constants)
 
     member this.SaveToFile(path : string) =
-        let json = Json.serializeEx JsonConfig.IL2Default {| Constants = C; PlaneSet = PS |}
+        let json = Json.serializeEx JsonConfig.IL2Default {| Constants = C |}
         System.IO.File.WriteAllText(path, json)

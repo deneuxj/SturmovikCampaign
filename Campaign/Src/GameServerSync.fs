@@ -566,10 +566,10 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             | Contains "rheinland" -> WorldWar2Internal.PlaneAndUnitSet.Bodenplatte
                             | Contains "stalingrad" -> WorldWar2Internal.PlaneAndUnitSet.StalingradEarly
                             | _ ->
-                                logger.Error("Failed to determine planeset to use")
+                                logger.Warn(sprintf "No default planeset for %s" world.Map)
                                 WorldWar2Internal.PlaneAndUnitSet.StalingradEarly
                         let world = planeSet.Setup world
-                        let ww2 = WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate), planeSet)
+                        let ww2 = WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate))
                         world, upcast(ww2), (fun() -> ww2.SaveToFile(wkPath(scenarioCtrlFilename))), 1.0f, 1.0f
                     let pilots =
                         pilots
