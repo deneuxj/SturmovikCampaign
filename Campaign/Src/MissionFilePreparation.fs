@@ -534,7 +534,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             let regionsWithoutBattles =
                 state.World.Regions.Values
                 |> Seq.filter (fun region -> not(regionsWithBattles.Contains region.RegionId))
-            let groundUnitRoleMapping =
+
+            // Find best match in ground units for a given coalition and convoy member
+            let desiredRoles =
                 [
                     StaffCar, [ GroundRole.Command; GroundRole.Support ]
                     ArmoredCar, [ GroundRole.MachineGun ]
@@ -543,6 +545,49 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     Truck, [ GroundRole.Support ]
                 ]
                 |> Map.ofList
+            let groundUnitCache = Seq.mutableDict []
+            let getGroundUnit =
+                SturmovikMission.Cached.cached
+                    groundUnitCache
+                    (fun (coalition : CoalitionId, convoyMember : ConvoyMember) ->
+                        state.World.GroundUnitsOfCountryList
+                        |> List.tryPick (fun (country, groundUnits) ->
+                            state.World.Countries.TryGetValue(country)
+                            |> Option.ofPair
+                            |> Option.bind (fun coalition2 ->
+                                if coalition = coalition2 then
+                                    let isMainCountry = (country = state.World.GetAnyCountryInCoalition coalition)
+                                    groundUnits
+                                    // Get GroundUnit data
+                                    |> List.choose (state.World.GroundUnits.TryGetValue >> Option.ofPair)
+                                    // Retain only the units with the proper roles, rank by desired role
+                                    |> List.choose (fun groundUnit ->
+                                        Seq.allPairs (Seq.indexed desiredRoles.[convoyMember]) groundUnit.Roles
+                                        |> Seq.tryPick (fun ((rank, desired), offered) ->
+                                            if offered = desired then
+                                                Some (groundUnit, rank)
+                                            else
+                                                None)
+                                    )
+                                    // Prefer mobile units, preferably static blocks (unless AA), units of the main country of the coalition, weakest first
+                                    |> List.sortBy (fun (groundUnit, roleRank) ->
+                                        roleRank,
+                                        (if groundUnit.IsMobile then 0 else 1),
+                                        (if convoyMember = AntiAirTruck then
+                                            if groundUnit.DynamicScriptModel.IsSome then 0 else 1
+                                         else
+                                            if groundUnit.StaticScriptModel.IsSome then 0 else 1),
+                                        (if isMainCountry then 0 else 1),
+                                        groundUnit.Durability
+                                    )
+                                    |> List.tryHead
+                                    |> Option.map (fun (gu, _) -> gu, country)
+                                else
+                                    None
+                            )
+                        )
+                    )
+
             for region in regionsWithoutBattles do
                 for coalition in [ Axis; Allies ] do
                     let forces = state.GetGroundForces(coalition, region.RegionId)
@@ -576,32 +621,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                             let displacement = 3.0f * float32 (random.NextDouble()) * Vector2.FromYOri(random.NextDouble() * 359.0)
                                             if random.NextDouble() <= 0.2 then
                                                 let convoyMember = getRandomVehicle()
-                                                let groundUnitAndCountry =
-                                                    state.World.GroundUnitsOfCountryList
-                                                    |> List.tryPick (fun (country, groundUnits) ->
-                                                        state.World.Countries.TryGetValue(country)
-                                                        |> Option.ofPair
-                                                        |> Option.bind (fun coalition2 ->
-                                                            if coalition = coalition2 then
-                                                                groundUnits
-                                                                // Get GroundUnit data
-                                                                |> List.choose (state.World.GroundUnits.TryGetValue >> Option.ofPair)
-                                                                // Prefer mobile units, weakest first
-                                                                |> List.sortBy (fun groundUnit ->
-                                                                    (if groundUnit.IsMobile then 0 else 1),
-                                                                    groundUnit.Durability
-                                                                )
-                                                                |> List.tryFind (fun groundUnit ->
-                                                                    groundUnit.Roles // Roles of ground unit
-                                                                    |> List.exists (fun role ->
-                                                                        groundUnitRoleMapping.[convoyMember] // covers one of the expected roles of the convoy member
-                                                                        |> List.exists ((=) role))
-                                                                )
-                                                                |> Option.map (fun gu -> gu, country)
-                                                            else
-                                                                None
-                                                        )
-                                                    )
+                                                let groundUnitAndCountry = getGroundUnit(coalition, convoyMember)
                                                 match groundUnitAndCountry with
                                                 | Some (groundUnit, country) ->
                                                     let pos =
