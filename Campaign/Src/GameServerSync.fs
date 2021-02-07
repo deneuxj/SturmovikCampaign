@@ -391,7 +391,12 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             logger.Debug(exc)
                             None
                     | None ->
-                        None
+                        match world with
+                        | Some world ->
+                            let ww2 = WorldWar2(world, WorldWar2Internal.Constants.Default(world.StartDate))
+                            Some(upcast ww2)
+                        | None ->
+                            None
 
                 // Load scenario state
                 let latestStep =
