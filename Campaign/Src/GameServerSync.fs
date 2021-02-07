@@ -45,7 +45,7 @@ open Campaign.CampaignScenario.IO
 open Campaign.WarStateUpdate.CommandExecution
 
 type SyncState =
-    | PreparingMission
+    | PreparingMission of IncludeBattles : bool
     | ResavingMission
     | RunningMission of StartTime: DateTime * EndTime: DateTime
     | ExtractingResults of Pattern: string
@@ -57,7 +57,8 @@ with
 
     member this.Description =
         match this with
-        | PreparingMission -> "Preparing mission"
+        | PreparingMission true -> "Preparing mission"
+        | PreparingMission false -> "Preparing mission (without battles)"
         | ResavingMission -> "Resaving mission"
         | ExtractingResults _ -> "Extracting results"
         | SkippingMission -> "Skipping mission"
@@ -418,7 +419,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
                 let syncState =
                     SyncState.TryLoad(settings.WorkDir)
-                    |> Option.defaultValue PreparingMission
+                    |> Option.defaultValue (PreparingMission true)
 
                 controller <- controller0
                 war <- war0
@@ -674,7 +675,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         }
 
     /// Prepare mission file
-    member this.PrepareMission() =
+    member this.PrepareMission(withBattles : bool) =
         async {
             match controller, step, war with
             | Some(ctrl), Some(Ongoing stepData), Some state ->
@@ -695,7 +696,13 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 else
                 try
                     let seed = this.Seed
-                    let selection = ctrl.TrySelectMissions(stepData, state, seed, 25)
+                    let selection =
+                        ctrl.TrySelectMissions(stepData, state, seed, 25)
+                        |> Option.map (fun selection ->
+                            if withBattles then
+                                selection
+                            else
+                                selection.WithoutGroundBattles)
                     let missionPrepSettings : MissionFilePreparation.PreparationSettings =
                         {
                             MissionFilePreparation.MaxTrainsPerSide = settings.MaxTrainsPerCoalition
@@ -850,7 +857,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             gameServer.KillProcess(serverProcess) |> ignore
                             return Error(
                                 async {
-                                    state <- Some PreparingMission
+                                    // Regen mission, but without battles as they are suspected to cause stalls
+                                    state <- Some(PreparingMission(false))
                                     logger.Info state
                                     this.SaveState()
                                     if not stopAfterMission then
@@ -954,12 +962,16 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 | Some(ErrorState(msg, _)) ->
                     return this.Die("In error state: " + msg)
                 | None
-                | Some(PreparingMission)->
+                | Some(PreparingMission _)->
+                    let withBattles =
+                        match state with
+                        | Some(PreparingMission x) -> x
+                        | _ -> true
                     let! status =
                         async {
                             try
                                 let timeout = 5 * 60 * 1000 // 5 minutes
-                                let! child = Async.StartChild (this.PrepareMission(), timeout)
+                                let! child = Async.StartChild (this.PrepareMission(withBattles), timeout)
                                 return! child
                             with _ ->
                                 return Error "Failed to prepare mission in time"
@@ -1048,7 +1060,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     let! status = this.Advance()
                     match status with
                     | Ok _ ->
-                        state <- Some PreparingMission
+                        state <- Some(PreparingMission true)
                         logger.Info state
                         this.SaveState()
                         return! this.ResumeAsync(skipsLeft = skipsLeft)
@@ -1079,7 +1091,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 match state with
                 | Some(ErrorState(_, None)) | Some(ErrorState(_, Some(ErrorState _))) ->
                     // Go back
-                    Some PreparingMission
+                    Some(PreparingMission true)
                 | Some(RunningMission _)
                 | Some(ErrorState(_, Some (RunningMission _))) ->
                     // Retry
@@ -1088,13 +1100,13 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     Some (RunningMission(startTime, endTime))
                 | Some(ErrorState(_, _)) ->
                     // Go back
-                    Some PreparingMission
+                    Some(PreparingMission true)
                 | Some _ ->
                     // Not an error state, keep it
                     state
                 | None ->
                     // No state, set to first state in the flow.
-                    Some PreparingMission
+                    Some(PreparingMission true)
             logger.Info("Resolved error state to " + string state2)
             state <- state2
             this.SaveState()

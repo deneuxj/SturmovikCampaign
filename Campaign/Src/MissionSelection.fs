@@ -34,6 +34,18 @@ type MissionSelection =
         RiskLevel : float32
     }
 with
+    member this.WithoutGroundBattles =
+        { this with
+            GroundBattleAtTarget = None
+            OtherMissions =
+                this.OtherMissions
+                |> List.filter (fun mission ->
+                    match mission.Kind with
+                    | GroundMission { MissionType = GroundBattle _ } -> false
+                    | _ -> true
+                )
+        }
+
     member this.NumMissions =
         let copt = function Some _ -> 1 | _ -> 0
         List.sum [
