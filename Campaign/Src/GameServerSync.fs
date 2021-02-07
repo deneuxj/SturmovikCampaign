@@ -285,6 +285,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     let terminated = Event<Sync>()
     let stateChanged = Event<IWarStateQuery>()
+    let stalled = Event<unit>()
 
     let wkPath f = Path.Combine(settings.WorkDir, f)
 
@@ -296,6 +297,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     /// Campaign scenario controller subscribes to this event to know when war state has changed
     member this.StateChanged = stateChanged.Publish
+
+    /// DServer has not produced new log files for 2 minutes
+    member this.Stalled = stalled.Publish
 
     /// Controls whether the workflow should be terminated when the current mission (or the one being prepared) ends.
     member this.StopAfterMission
@@ -785,6 +789,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     this.Interrupt(msg, true)
                     failwith "Failure to locate game logs"
             | Ok latestStartingMissionReport ->
+            let mutable stalledTriggered = false
             let! cancelLiveReporting =
                 async {
                     // Start live reporting
@@ -794,12 +799,14 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                         let commands =
                             let basename = latestStartingMissionReport
                             asyncSeq {
-                                for logFile in WatchLogs.watchLogs settings.MissionLogs basename DateTime.UtcNow do
-                                    let logFile =
-                                        match logFile with
-                                        | WatchLogs.Old x | WatchLogs.Fresh x -> x
-                                    let lines = IO.File.ReadAllLines(logFile)
-                                    yield! AsyncSeq.ofSeq lines
+                                for logFile in WatchLogs.watchLogs settings.MissionLogs basename (TimeSpan.FromMinutes(2.0)) do
+                                    match logFile with
+                                    | WatchLogs.NewLogFile x ->
+                                        let lines = IO.File.ReadAllLines(x)
+                                        yield! AsyncSeq.ofSeq lines
+                                    | WatchLogs.Stalled ->
+                                        stalled.Trigger()
+                                        stalledTriggered <- true
                             }
                             |> MissionResults.commandsFromLogs war2
                             |> AsyncSeq.choose snd
@@ -822,36 +829,56 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
             // Check that DServer is running every 15s until the deadline has passed
             // If DServer dies before, restart it.
+            // If DServer stalled, kill it, regenerate new mission and retry
             let rec monitor() =
                 async {
                     let untilDeadLine = (endTime - DateTime.UtcNow).TotalMilliseconds
                     if untilDeadLine > 0.0 then
-                        match gameServer.IsRunning serverProcess with
-                        | None ->
-                            return! this.StartServerAsync(restartsLeft)
-                        | Some proc ->
+                        match stalledTriggered, gameServer.IsRunning serverProcess with
+                        | false, None ->
+                            return Error(this.StartServerAsync(restartsLeft))
+                        | false, Some proc ->
                             serverProcess <- Some(upcast proc)
                             try
                                 do! Async.Sleep(15000)
                                 return! monitor()
                             with
                             | :? OperationCanceledException ->
-                                return this.Die("Interrupted")
+                                this.Die("Interrupted")
+                                return Error(async.Return())
+                        | true, _ ->
+                            gameServer.KillProcess(serverProcess) |> ignore
+                            return Error(
+                                async {
+                                    state <- Some PreparingMission
+                                    logger.Info state
+                                    this.SaveState()
+                                    if not stopAfterMission then
+                                        return! this.ResumeAsync(restartsLeft)
+                                    else
+                                        this.Die("Terminate sync after server stalled")
+                                        return()
+                                }
+                            )
                     else
-                        return()
+                        return Ok()
                 }
-            do! monitor()
-            let! _ = gameServer.SignalMissionEnd()
-            cancelLiveReporting()
-            state <- Some(ExtractingResults(latestStartingMissionReport + "[*].txt" ))
-            logger.Info state
-            this.SaveState()
-            if not stopAfterMission then
-                return! this.ResumeAsync()
-            else
-                this.Interrupt("Stop after mission", true)
-                this.Die("Terminate sync after mission")
-                return ()
+            match! monitor() with
+            | Error cont ->
+                cancelLiveReporting()
+                return! cont
+            | Ok () ->
+                let! _ = gameServer.SignalMissionEnd()
+                cancelLiveReporting()
+                state <- Some(ExtractingResults(latestStartingMissionReport + "[*].txt" ))
+                logger.Info state
+                this.SaveState()
+                if not stopAfterMission then
+                    return! this.ResumeAsync()
+                else
+                    this.Interrupt("Stop after mission", true)
+                    this.Die("Terminate sync after mission")
+                    return ()
 
         }
 

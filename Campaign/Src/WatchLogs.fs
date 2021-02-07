@@ -10,32 +10,12 @@ open System.Diagnostics
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
-/// <summary>
-/// Indicate if a line from a log comes from an old file, or from a file created since log monitoring started.
-/// </summary>
-type LogData<'T when 'T :> obj> =
-    | Old of 'T
-    | Fresh of 'T
-with
-    override this.ToString() =
-        match this with
-        | Old x
-        | Fresh x -> x :> obj
-        |> string
-
-    member this.Data =
-        match this with
-        | Old x
-        | Fresh x -> x
-
-module LogData =
-    let map f data =
-        match data with
-        | Old x -> Old(f x)
-        | Fresh x -> Fresh(f x)
+type LogFile =
+    | NewLogFile of string
+    | Stalled
 
 type System.IO.Directory with
-    static member EnumerateFilesAsync(path, filter) =
+    static member EnumerateFilesAsync(path, filter, maxTimeBetweenFiles : TimeSpan) =
         asyncSeq {
             let! token = Async.CancellationToken
             let existingFiles =
@@ -91,19 +71,26 @@ type System.IO.Directory with
                 }
             let consumer() =
                 asyncSeq {
-                    while not(token.IsCancellationRequested) do
-                        try
-                            do! Async.AwaitTask(semaphore.WaitAsync())
-                        with exc ->
-                            logger.Debug("Exception while awaiting for new log file semaphore")
-                            logger.Debug(exc)
-                        match newFiles.TryDequeue() with
-                        | true, s ->
-                            lock seenLock (fun () -> seen.Remove(s) |> ignore)
-                            logger.Debug("Yield file " + s)
-                            yield s
-                        | false, _ ->
-                            logger.Debug("No new files in the queue")
+                    let mutable stalled = false
+                    while not(token.IsCancellationRequested) && not stalled do
+                        let! success = Async.Catch(Async.AwaitTask(semaphore.WaitAsync(maxTimeBetweenFiles)))
+                        match success with
+                        | Choice1Of2 true ->
+                            match newFiles.TryDequeue() with
+                            | true, s ->
+                                lock seenLock (fun () -> seen.Remove(s) |> ignore)
+                                logger.Debug("Yield file " + s)
+                                yield NewLogFile s
+                            | false, _ ->
+                                logger.Debug("No new files in the queue")
+                                do! Async.Sleep(30000)
+                        | Choice1Of2 false ->
+                            logger.Error("Timeout while waiting for new log file")
+                            yield Stalled
+                            stalled <- true
+                        | Choice2Of2 exn ->
+                            logger.Warn("Exception while waiting for new log file")
+                            logger.Debug(exn)
                             do! Async.Sleep(30000)
                 }
             // Start the producer loop
@@ -115,16 +102,9 @@ type System.IO.Directory with
             logger.Debug("Log file watcher shutting down")
         }
 
-let watchLogs path baseName startTime =
+let watchLogs path baseName maxTimeBetweenFiles =
     asyncSeq {
         let searchPattern = sprintf "%s[*].txt" baseName
-        for file in Directory.EnumerateFilesAsync(path, searchPattern) do
-            try
-                let fileInfo = FileInfo(Path.Combine(path, file))
-                if fileInfo.LastWriteTimeUtc > startTime then
-                    yield Fresh file
-                else
-                    yield Old file
-            with
-            | exc -> logger.Error(sprintf "Failed to get last write time of %s: '%s'" file exc.Message)
+        for file in Directory.EnumerateFilesAsync(path, searchPattern, maxTimeBetweenFiles) do
+            yield file
     }
