@@ -200,6 +200,10 @@
       <Link>StalingradSummer.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\KubanAutumn2.Mission">
+      <Link>KubanAutumn2.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
