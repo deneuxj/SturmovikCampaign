@@ -1156,21 +1156,50 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
 
     // Fires
     let damagedBuildings =
-        state.World.Buildings.Values
-        |> Seq.choose (fun b ->
-            let funct = state.GetBuildingFunctionalityLevel(b.Id)
-            if funct < 0.5f then
-                Some(b, funct)
+        let frontRegions =
+            state.World.RegionsList
+            |> List.filter (fun region ->
+                let owner = state.GetOwner(region.RegionId)
+                match owner with
+                | None -> false
+                | Some owner ->
+                    region.Neighbours
+                    |> List.exists (fun ngh ->
+                        let nghOwner = state.GetOwner(ngh)
+                        nghOwner.IsSome && nghOwner <> Some owner)
+            )
+            |> List.map (fun region -> region.RegionId)
+            |> Set
+        state.World.RegionsList
+        |> Seq.collect (fun region -> Seq.allPairs [region.RegionId] region.IndustryBuildings)
+        |> Seq.append (
+            state.World.AirfieldsList
+            |> Seq.collect (fun af -> Seq.allPairs [af.Region] af.Facilities))
+        |> Seq.map (fun (region, bId) -> region, state.World.GetBuildingInstance bId)
+        |> Seq.choose (fun (region, b) ->
+            if b.Properties.Capacity > 0.0f<M^3> then
+                let funct = state.GetBuildingFunctionalityLevel(b.Id)
+                if funct < 0.5f then
+                    Some(region, b, funct)
+                else
+                    None
             else
                 None)
-        |> Seq.sortBy snd
+        // Prioritize front regions and then amount of capacity loss
+        |> Seq.sortByDescending (fun (region, b, funct) ->
+            let loss = (1.0f - funct) * float32 b.Properties.Capacity
+            if frontRegions.Contains region then
+                (1, loss)
+            else
+                (0, loss)
+        )
 
     let spacedOutBuildings =
         ([], damagedBuildings)
-        ||> Seq.fold (fun xs (b, funct) ->
+        ||> Seq.fold (fun xs (_, b, funct) ->
             if xs.Length >= 100 then
                 xs
-            elif xs |> List.exists (fun (b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < 10000.0f) then
+            elif xs |> List.exists (fun (b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < 1000.0f) then
                 xs
             else
                 (b, funct) :: xs
@@ -1182,10 +1211,10 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             {
                 Pos = { b.Pos with Rotation = float32 state.Weather.Wind.Direction }
                 Intensity =
-                    let x = (1.0f - funct) * float32 b.Properties.Durability
-                    if x >= 20000.0f then
+                    let x = (1.0f - funct) * float32 b.Properties.Capacity
+                    if x >= 45000.0f then
                         SturmovikMission.Blocks.FireLoop.CityFire
-                    elif x >= 10000.0f then
+                    elif x >= 22500.0f then
                         SturmovikMission.Blocks.FireLoop.CityFireSmall
                     else
                         SturmovikMission.Blocks.FireLoop.VillageSmoke
