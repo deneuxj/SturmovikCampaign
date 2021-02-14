@@ -118,7 +118,7 @@ Group
   MCU_TR_InfluenceArea
   {
     Index = 4;
-    Name = "Timashevskaya";
+    Name = "Staro-Nizhne-Steblievskaya";
     Desc = "";
     Targets = [];
     Objects = [];
@@ -144,7 +144,7 @@ Group
   MCU_TR_InfluenceArea
   {
     Index = 5;
-    Name = "Timashevskaya";
+    Name = "Krasnoarmeyskaya";
     Desc = "";
     Targets = [];
     Objects = [];
@@ -169,7 +169,7 @@ Group
   MCU_TR_InfluenceArea
   {
     Index = 6;
-    Name = "Timashevskaya";
+    Name = "Slavyanskaya";
     Desc = "";
     Targets = [];
     Objects = [];
