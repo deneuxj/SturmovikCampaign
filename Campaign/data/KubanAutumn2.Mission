@@ -36,7 +36,7 @@ Options
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\yak7bs36.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\yak9s1.txt";
   Time = 12:30:0;
-  Date = 1.7.1942;
+  Date = 15.8.1942;
   HMap = "graphics\LANDSCAPE_Kuban_a\height.hini";
   Textures = "graphics\LANDSCAPE_Kuban_a\textures.tini";
   Forests = "graphics\LANDSCAPE_Kuban_a\trees\woods.wds";
@@ -222,7 +222,7 @@ Group
   {
     Index = 8;
     Name = "Novorossiysk";
-    Desc = "";
+    Desc = "***";
     Targets = [];
     Objects = [];
     XPos = 200220.987;
@@ -602,7 +602,7 @@ Group
   {
     Index = 23;
     Name = "Gelendzhik";
-    Desc = "";
+    Desc = "***";
     Targets = [];
     Objects = [];
     XPos = 181327.025;
