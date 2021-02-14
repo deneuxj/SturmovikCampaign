@@ -562,7 +562,7 @@ type WarState
 
     member this.BuildingDamages =
         buildingPartHealthLevel
-        |> Seq.map (fun kvp -> fst kvp.Key, snd kvp.Key, kvp.Value)
+        |> Seq.map (fun kvp -> fst kvp.Key, snd kvp.Key, 1.0f - kvp.Value)
 
     member this.GetBuildingFullCapacity(bid) =
         assert(this.World.Buildings.ContainsKey(bid))
