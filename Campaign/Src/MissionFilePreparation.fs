@@ -1178,16 +1178,16 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> Seq.map (fun (region, bId) -> region, state.World.GetBuildingInstance bId)
         |> Seq.choose (fun (region, b) ->
             if b.Properties.Capacity > 0.0f<M^3> then
-                let funct = state.GetBuildingFunctionalityLevel(b.Id)
-                if funct < 0.5f then
-                    Some(region, b, funct)
+                let health = state.GetBuildingHealth(b.Id)
+                if health < 0.5f then
+                    Some(region, b, health)
                 else
                     None
             else
                 None)
         // Prioritize front regions and then amount of capacity loss
-        |> Seq.sortByDescending (fun (region, b, funct) ->
-            let loss = (1.0f - funct) * float32 b.Properties.Capacity
+        |> Seq.sortByDescending (fun (region, b, health) ->
+            let loss = (1.0f - health) * float32 b.Properties.Capacity
             if frontRegions.Contains region then
                 (1, loss)
             else
@@ -1196,25 +1196,25 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
 
     let spacedOutBuildings =
         ([], damagedBuildings)
-        ||> Seq.fold (fun xs (_, b, funct) ->
+        ||> Seq.fold (fun xs (_, b, health) ->
             if xs.Length >= 100 then
                 xs
             elif xs |> List.exists (fun (b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < 1000.0f) then
                 xs
             else
-                (b, funct) :: xs
+                (b, health) :: xs
         )
 
     let fires : BuildingFire list =
         spacedOutBuildings
-        |> List.map (fun (b, funct) ->
+        |> List.map (fun (b, health) ->
+            logger.Debug(sprintf "Health of burning buildings: %3.0f" health)
             {
                 Pos = { b.Pos with Rotation = float32 state.Weather.Wind.Direction }
                 Intensity =
-                    let x = (1.0f - funct) * float32 b.Properties.Capacity
-                    if x >= 45000.0f then
+                    if health < 0.125f then
                         SturmovikMission.Blocks.FireLoop.CityFire
-                    elif x >= 22500.0f then
+                    elif health < 0.4f then
                         SturmovikMission.Blocks.FireLoop.CityFireSmall
                     else
                         SturmovikMission.Blocks.FireLoop.VillageSmoke

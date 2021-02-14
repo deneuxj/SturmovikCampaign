@@ -578,13 +578,13 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
         |> Seq.distinctBy fst
         |> Seq.mutableDict
     // Apply damages
-    for (bId, part, health) in buildings.BuildingDamages |> Seq.filter filterDamages do
+    for (bId, part, damage) in buildings.BuildingDamages |> Seq.filter filterDamages do
         let building = buildings.GetBuildingInstance(bId)
         let roundedPos = roundPos2 building.Pos
         match blockAt.TryGetValue(roundedPos) with
         | true, block ->
             let damages = CommonMethods.getDamaged block
-            let damages = CommonMethods.setItem part (T.Float.N(1.0 - float health)) damages
+            let damages = CommonMethods.setItem part (T.Float.N(float damage)) damages
             let block = CommonMethods.setDamaged damages block
             let block = CommonMethods.setDurability (T.Integer.N(building.Properties.Durability)) block
             blockAt.[roundedPos] <- block
