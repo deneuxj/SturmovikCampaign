@@ -22,6 +22,7 @@ open Campaign.WebController.Routes
 /// Internal state of a controller
 type private ControllerState =
     {
+        World : NewWorldDescription.World option
         War : IWarStateQuery option
         DtoWorld : Dto.World option
         DtoStateCache : Map<int, Dto.WarState>
@@ -46,6 +47,7 @@ type Controller(settings : GameServerControl.Settings) =
                 return! work state
             }
         work {
+            World = None
             War = None
             DtoWorld = None
             DtoStateCache = Map.empty
@@ -83,10 +85,12 @@ type Controller(settings : GameServerControl.Settings) =
                         s
                     else
                         try
-                            let world = World.LoadFromFile(path)
+                            let world =
+                                s.World
+                                |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
                             let dto = world.ToDto()
                             channel.Reply(Ok(dto))
-                            { s with DtoWorld = Some dto }
+                            { s with World = Some world; DtoWorld = Some dto }
                         with e ->
                             logger.Warn(sprintf "Failed to load world: %s" e.Message)
                             logger.Warn(e)
@@ -112,10 +116,12 @@ type Controller(settings : GameServerControl.Settings) =
                     let path = wkPath(getStateFilename idx)
                     if File.Exists path then
                         try
-                            let world = World.LoadFromFile(wkPath worldFilename)
+                            let world =
+                                s.World
+                                |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
                             let state = WarState.LoadFromFile(path, world).ToDto()
                             channel.Reply(Ok state)
-                            { s with DtoStateCache = s.DtoStateCache.Add(idx, state) }
+                            { s with World = Some world; DtoStateCache = s.DtoStateCache.Add(idx, state) }
                         with
                         | e ->
                             channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
@@ -141,7 +147,9 @@ type Controller(settings : GameServerControl.Settings) =
                     let path2 = wkPath(getSimulationFilename idx)
                     if File.Exists path2 then
                         try
-                            let world = World.LoadFromFile(wkPath worldFilename)
+                            let world =
+                                s.World
+                                |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
                             let state = WarState.LoadFromFile(wkPath (getStateFilename idx), world)
                             let effects =
                                 if File.Exists path1 then
@@ -164,7 +172,7 @@ type Controller(settings : GameServerControl.Settings) =
                                 )
                                 |> Array.ofList
                             channel.Reply(Ok steps)
-                            { s with DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
+                            { s with World = Some world; DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
                         with
                         | e ->
                             channel.Reply(Error <| sprintf "Failed to load simulation n.%d" idx)
@@ -262,7 +270,7 @@ type Controller(settings : GameServerControl.Settings) =
                         let world = World.LoadFromFile(wkPath worldFilename)
                         let war = WarState.LoadFromFile(path, world)
                         channel.Reply(Ok (upcast war))
-                        return { s with War = Some(upcast war) }
+                        return { s with World = Some war.World; War = Some(upcast war) }
                     with exc ->
                         channel.Reply(Error "Failed to load current war state")
                         return s
