@@ -149,85 +149,22 @@ module WorldWar2Internal =
             Italy, []
         ]
 
-    type PlaneAndUnitSet =
+    type GroundUnitSet =
         {
-            AxisPlanes : string list
-            AlliesPlanes : string list
             GroundUnits : (CountryId * string list) list
         }
     with
 
-        static member Bodenplatte =
+        static member Default =
             {
-                AxisPlanes = [
-                    "me262"
-                    "bf109g14"
-                    "fw190a8"
-                    "bf109k4"
-                    "fw190d9"
-                ]
-                AlliesPlanes = [
-                    "p51"
-                    "p38"
-                    "p47"
-                    "spitfireMkIXe"
-                    "Tempest MkV s2"
-                    "b25"
-                ]
                 GroundUnits = groundUnitsSet(System.DateTime(1945, 1, 1))
             }
 
-        static member StalingradEarly =
-            {
-                AxisPlanes = [
-                    "bf109e7"
-                    "bf109f4"
-                    "mc202"
-                    "bf110e"
-                    "hs129b2"
-                    "ju87"
-                    "ju88"
-                    "he111h6"
-                    "ju52"
-                ]
-                AlliesPlanes = [
-                    "hurricane mk.II su"
-                    "i16"
-                    "il2mod41"
-                    "il2mod42"
-                    "mig3"
-                    "p40"
-                    "yak1s69"
-                    "lagg3s29"
-                    "pe2s35"
-                    "u2vs"
-                ]
-                GroundUnits = groundUnitsSet(System.DateTime(1942, 8, 1))
-            }
-
-        static member KubanEarly = PlaneAndUnitSet.StalingradEarly
-
-        static member Moscow = PlaneAndUnitSet.StalingradEarly
-
-        member this.AllPlanesOf coalition =
-            match coalition with
-            | Axis -> this.AxisPlanes
-            | Allies -> this.AlliesPlanes
-
         member this.Setup(world: World): World =
-            // Default planeset, if world's planeset isn't already set
-            let planes =
-                List.concat [ this.AllPlanesOf Axis; this.AllPlanesOf Allies ]
-                |> List.map PlaneModelId
-
             let planeDb =
                 Campaign.PlaneModelDb.planeDb
                 |> List.map (fun plane -> plane.Id, plane)
                 |> Map.ofList
-                    
-            let planeSet =
-                planes
-                |> List.choose (fun plane -> planeDb.TryFind plane |> Option.orElseWith (fun () -> logger.Error(sprintf "%s missing" (string plane)); None))
 
             // Alternatives for AI-only planes
             let planeAlts =
@@ -251,7 +188,7 @@ module WorldWar2Internal =
                     | true, _ ->
                         ()
 
-            { world with PlaneModelsList = planeSet; PlaneAltsList = planeAlts; GroundUnitsOfCountryList = groundUnits }
+            { world with PlaneAltsList = planeAlts; GroundUnitsOfCountryList = groundUnits }
 
         interface IScenarioWorldSetup with
             member this.Setup(world) = this.Setup(world)
