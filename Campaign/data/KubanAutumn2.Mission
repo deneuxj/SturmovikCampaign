@@ -13,7 +13,6 @@ Options
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\bf109g4.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\c47a.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\fw190a3.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\fw190a5.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\he111h16.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\he111h6.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\hs129b2.txt";
@@ -22,19 +21,12 @@ Options
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\ju523mg4e.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\ju87d3.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\ju88a4.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\la5fns2.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\la5s8.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\mig3s24.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\p39l1.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\p40e1.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\pe2s35.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\pe2s87.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\spitfiremkvb.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\u2vs.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\yak1s127.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\yak1s69.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\yak7bs36.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\yak9s1.txt";
   Time = 12:30:0;
   Date = 15.8.1942;
   HMap = "graphics\LANDSCAPE_Kuban_a\height.hini";
@@ -3993,34 +3985,6 @@ Airfield
       RenewTime = 1800;
       Altitude = 500;
       Spotter = -1;
-      Model = "graphics\planes\fw190a5\fw190a5.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\fw190a5.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
       Model = "graphics\planes\he111h16\he111h16.mgm";
       Script = "LuaScripts\WorldObjects\Planes\he111h16.txt";
       Name = "";
@@ -4199,34 +4163,6 @@ Airfield
       Callsign = 0;
       Callnum = 0;
     }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
-      Model = "graphics\planes\fw190a5\fw190a5.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\fw190a5.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
   }
   ReturnPlanes = 0;
   Hydrodrome = 0;
@@ -4387,34 +4323,6 @@ Airfield
       RenewTime = 1800;
       Altitude = 500;
       Spotter = -1;
-      Model = "graphics\planes\la5fns2\la5fns2.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\la5fns2.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
       Model = "graphics\planes\la5s8\la5s8.mgm";
       Script = "LuaScripts\WorldObjects\Planes\la5s8.txt";
       Name = "";
@@ -4527,34 +4435,6 @@ Airfield
       RenewTime = 1800;
       Altitude = 500;
       Spotter = -1;
-      Model = "graphics\planes\mig3s24\mig3s24.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\mig3s24.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
       Model = "graphics\planes\p39l1\p39l1.mgm";
       Script = "LuaScripts\WorldObjects\Planes\p39l1.txt";
       Name = "";
@@ -4611,148 +4491,8 @@ Airfield
       RenewTime = 1800;
       Altitude = 500;
       Spotter = -1;
-      Model = "graphics\planes\pe2s35\pe2s35.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\pe2s35.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
-      Model = "graphics\planes\pe2s87\pe2s87.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\pe2s87.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
-      Model = "graphics\planes\yak1s127\yak1s127.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\yak1s127.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
       Model = "graphics\planes\yak1s69\yak1s69.mgm";
       Script = "LuaScripts\WorldObjects\Planes\yak1s69.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
-      Model = "graphics\planes\yak7bs36\yak7bs36.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\yak7bs36.txt";
-      Name = "";
-      Skin = "";
-      AvMods = "";
-      AvSkins = "";
-      AvPayloads = "";
-      Callsign = 0;
-      Callnum = 0;
-    }
-    Plane
-    {
-      SetIndex = 0;
-      Number = 10;
-      AILevel = 2;
-      StartInAir = 2;
-      Engageable = 1;
-      Vulnerable = 1;
-      LimitAmmo = 1;
-      AIRTBDecision = 1;
-      Renewable = 1;
-      PayloadId = 0;
-      WMMask = 1;
-      Fuel = 1;
-      RouteTime = 0;
-      RenewTime = 1800;
-      Altitude = 500;
-      Spotter = -1;
-      Model = "graphics\planes\yak9s1\yak9s1.mgm";
-      Script = "LuaScripts\WorldObjects\Planes\yak9s1.txt";
       Name = "";
       Skin = "";
       AvMods = "";
