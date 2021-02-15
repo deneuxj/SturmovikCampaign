@@ -965,9 +965,11 @@ module Init =
                             filter
                             |> List.exists (function One n2 -> n = n2 | Interval(n1, n2) -> n1 <= n && n <= n2)
                         )
-                        |> List.map (fun n -> n, 1.0f<E> * System.Single.PositiveInfinity)
+                        |> List.map (fun n -> n, 1.0f<E> * System.Single.MaxValue)
                     yield { x with WeaponModsCosts = costs; Coalition = coalition }
-                | false, _ -> ()
+                | false, _ ->
+                    logger.Error(sprintf "No plane named with script '%s' found in the plane db" script)
+                    ()
         ]
 
     /// Load a scenario mission file and create a world description.
