@@ -56,6 +56,23 @@ with
         | ParkedPlane (_, plane) -> sprintf "parked %s" (string plane)
         | Air plane -> string plane
 
+    member this.IsCompatibleWith(vehicle : GroundUnit.GroundUnit) =
+        match this with
+        | Truck ->
+            vehicle.IsMobile && vehicle.Roles |> List.exists ((=) GroundUnit.Support)
+        | Artillery ->
+            not vehicle.IsMobile && vehicle.Roles |> List.exists ((=) GroundUnit.AntiTank) ||
+            let expected = Set [GroundUnit.GroundRole.AntiAir; GroundUnit.GroundRole.Artillery; GroundUnit.GroundRole.Flak]
+            vehicle.Roles |> List.exists expected.Contains
+        | Tank ->
+            vehicle.IsMobile && vehicle.Durability >= 1500 && vehicle.Roles |> List.exists ((=) GroundUnit.AntiTank)
+        | ArmoredCar ->
+            vehicle.IsMobile && vehicle.Durability >= 1500 &&
+            let expected = Set [GroundUnit.GroundRole.MachineGun; GroundUnit.GroundRole.AntiAirMachineGun]
+            vehicle.Roles |> List.exists expected.Contains
+        | Train | Ship | Battleship | GunBoat | Bridge _ | Building _ | ParkedPlane _ | Air _ ->
+            false
+
 module ActivePatterns =
     let (|GroundForceTarget|_|) (kind : TargetType) =
         let value = kind.GroundForceValue

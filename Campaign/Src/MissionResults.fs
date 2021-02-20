@@ -157,27 +157,64 @@ type AmmoType with
     static member FromLogName(logName : string) : AmmoType = AmmoName logName
 
 type Binding with
-    member this.TargetType =
+    member this.TargetType(war : IWarStateQuery) =
         match this.Name with
         | TargetTypeByName tt -> Some tt
         | _ ->
         let logName = normalizeLogName this.Typ
-        seq {
-            for v in ConvoyMember.All do
-                for c in CountryId.All do
-                    yield v, c
-        }
-        |> Seq.tryFind (fun (vehicle, country) -> this.Name = vehicle.Name || normalizeScript (vehicle.StaticVehicleData country).Script = logName)
-        |> Option.map (
-            fst
-            >> function
-            | Train -> TargetType.Train
-            | Truck -> TargetType.Truck
-            | Tank -> TargetType.Tank
-            | ArmoredCar -> TargetType.ArmoredCar
-            | AntiAirTruck -> TargetType.Artillery
-            | StaffCar -> TargetType.ArmoredCar
-        )
+        let country = CountryId.FromMcuValue (enum this.Country)
+        let countryGroundUnits =
+            war.World.GroundUnitsList
+            |> Seq.filter (fun vehicle ->
+                match war.World.CountryOfGroundUnit.TryGetValue(vehicle.Id) with
+                | false, _ -> false
+                | true, c -> Some c = country)
+
+        let dynVehicle =
+            lazy
+                countryGroundUnits
+                |> Seq.filter(fun vehicle -> Some logName = (vehicle.DynamicScriptModel |> Option.map(fun data -> normalizeScript data.Script)))
+                |> Seq.tryPick(fun vehicle ->
+                    [ TargetType.Tank; TargetType.ArmoredCar; TargetType.Artillery; TargetType.Truck ]
+                    |> List.tryFind (fun tt -> tt.IsCompatibleWith(vehicle))
+                )
+        let staVehicle =
+            lazy
+                countryGroundUnits
+                |> Seq.filter(fun vehicle -> Some logName = (vehicle.StaticScriptModel |> Option.map(fun data -> normalizeScript data.Script)))
+                |> Seq.tryPick(fun vehicle ->
+                    [ TargetType.Tank; TargetType.ArmoredCar; TargetType.Artillery; TargetType.Truck ]
+                    |> List.tryFind (fun tt -> tt.IsCompatibleWith(vehicle))
+                )
+
+        let convoyVehicle =
+            lazy
+                seq {
+                    for v in ConvoyMember.All do
+                        for c in CountryId.All do
+                            yield v, c
+                }
+                |> Seq.tryFind (fun (vehicle, country) -> this.Name = vehicle.Name || normalizeScript (vehicle.StaticVehicleData country).Script = logName)
+                |> Option.map (
+                    fst
+                    >> function
+                    | Train -> TargetType.Train
+                    | Truck -> TargetType.Truck
+                    | Tank -> TargetType.Tank
+                    | ArmoredCar -> TargetType.ArmoredCar
+                    | AntiAirTruck -> TargetType.Artillery
+                    | StaffCar -> TargetType.ArmoredCar
+                )
+        match convoyVehicle.Value with
+        | Some x -> Some x
+        | None ->
+        match dynVehicle.Value with
+        | Some x -> Some x
+        | None ->
+        match staVehicle.Value with
+        | Some x -> Some x
+        | None ->
+            None
 
 /// Extract war state updade commands from the game logs.
 /// Note: The state must be updated as soon as a command is yielded.
@@ -216,7 +253,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         ()
 
                     // Emit DestroyGroundForces for damages to ground forces
-                    match binding.TargetType with
+                    match binding.TargetType(state) with
                     | Some target when target.GroundForceValue > 0.0f<MGF> ->
                         let country : SturmovikMission.DataProvider.Mcu.CountryValue = enum binding.Country
                         match CountryId.FromMcuValue country, state.TryGetRegionAt(position) with
@@ -266,7 +303,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         ()
 
                     // Others
-                    match binding.TargetType with
+                    match binding.TargetType(state) with
                     | Some target ->
                         yield (target, ammo, amount)
                     | _ ->
