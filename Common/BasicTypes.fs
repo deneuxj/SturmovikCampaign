@@ -49,6 +49,30 @@ let KPH = KM / 1.0f<H>
 /// Military ground force
 type MGF
 
+/// Get the coordinates of the south-west and north-east corners of a map
+let getMapSize (mapName : string) =
+    let mapSW, mapNE =
+        match mapName.ToLowerInvariant() with
+        | Contains "kuban" -> Vector2(35000.0f, 35000.0f), Vector2(323148.0f, 450925.0f)
+        | Contains "moscow" -> Vector2.Zero, Vector2(281600.0f, 281600.0f)
+        | Contains "rheinland" -> Vector2(30.0e3f, 30.0e3f), Vector2(354.0e3f, 431.0e3f)
+        | Contains "stalingrad" | _ ->
+            Vector2.Zero, Vector2(230400.0f, 358400.0f)
+    mapSW, mapNE
+
+let getKeyPadCoordinates (mapName : string) (pos : Vector2) =
+    let sw, ne = getMapSize mapName
+    if pos.X < sw.X || pos.X > ne.X || pos.Y < sw.Y || pos.Y > ne.Y then
+        "OOM"
+    else
+        let maj1 = (ne.X - pos.X) / 10000.0f |> int
+        let maj2 = (pos.Y - sw.Y) / 10000.0f |> int
+        let kp =
+            let x = 3.0f * ((pos.Y - sw.Y) % 10000.0f) / 10000.0f |> int |> max 0 |> min 2
+            let y = 3.0f * (1.0f - ((ne.X - pos.X) % 10000.0f) / 10000.0f) |> int |> max 0 |> min 2
+            x + y * 3
+        sprintf "%02d%02d KP %1d" (1 + maj1) (1 + maj2) (1 + kp)
+
 type CoalitionId = Axis | Allies
 with
     /// Try to convert from an MCU coalition value

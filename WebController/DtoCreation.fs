@@ -154,18 +154,12 @@ module DtoCreation =
                         PropertiesId = getPropertiesId bridge.Pos
                     }
                 )
-            let mapSE, mapNE =
-                match this.Map.ToLowerInvariant() with
-                | Contains "kuban" -> { X = 35000.0f; Y = 35000.0f }, { X = 323148.0f; Y = 450925.0f }
-                | Contains "moscow" -> { X = 0.0f; Y = 0.0f }, { X = 281600.0f; Y = 281600.0f }
-                | Contains "rheinland" -> { X = 30.0e3f; Y = 30.0e3f }, { X = 354.0e3f; Y = 431.0e3f }
-                | Contains "stalingrad" | _ ->
-                    { X = 0.0f; Y = 0.0f }, { X = 230400.0f; Y = 358400.0f }
+            let mapSW, mapNE = Campaign.Common.BasicTypes.getMapSize this.Map
             {
                 Scenario = this.Scenario
                 Map = this.Map
-                MapSouthWest = mapSE
-                MapNorthEast = mapNE
+                MapSouthWest = mapSW.ToDto()
+                MapNorthEast = mapNE.ToDto()
                 StartDate = this.StartDate.ToDto()
                 Regions = this.Regions.Values |> Seq.map (fun r -> r.ToDto(getPropertiesId)) |> Array.ofSeq
                 Airfields = this.Airfields.Values |> Seq.map (fun af -> af.ToDto(getPropertiesId)) |> Array.ofSeq
