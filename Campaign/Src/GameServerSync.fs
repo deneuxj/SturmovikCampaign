@@ -220,6 +220,7 @@ module WarStateExt =
             else
                 road(r1, r2)
         { new IMissionBuilderData with
+              member this.GetMapName() = war.World.Map
               member this.GetRegionAntiAirCapacity(region, coalition) =
                   let supplies rId = supplies rId * war.World.ResourceVolume
                   (war.ComputeRegionAntiAirBudget(transport, supplies, region, coalition) * duration) / 1.0f<M^3>

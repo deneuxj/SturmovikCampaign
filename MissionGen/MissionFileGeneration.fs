@@ -657,6 +657,7 @@ type IMissionBuilderData =
     abstract GetCoalitionMainCountry : CoalitionId -> CountryId
     abstract GetPlaneModel : PlaneModelId -> PlaneModel
     abstract GetGroundUnit : GroundUnitId -> GroundUnit
+    abstract GetMapName : unit -> string
 
 type Camp =
     {
@@ -907,7 +908,8 @@ with
                 let vehicles =
                     camp.Vehicles
                     |> Seq.map (fun (groundUnit, country) -> mkParkedVehicle(groundUnit, camp.Pos, country))
-                let camp = Camp.Camp.Create(store, lcStore, camp.Pos.Pos, camp.Pos.Rotation, camp.Coalition.ToCoalition, "Camp", vehicles)
+                let label = sprintf "camp at %s" (getKeyPadCoordinates (data.GetMapName()) camp.Pos.Pos)
+                let camp = Camp.Camp.Create(store, lcStore, camp.Pos.Pos, camp.Pos.Rotation, camp.Coalition.ToCoalition, label, vehicles)
                 Mcu.addTargetLink missionBegin camp.Start.Index
                 camp.All
             )
