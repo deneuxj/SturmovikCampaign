@@ -261,6 +261,19 @@ module MapExt =
     /// Given sequences x1 ... xn, y1 ... yn', z1 ... zn'', return the sequence x1, y1, z1, x2, y2, z2...
     let interleave xs = xs |> Seq.transpose |> Seq.concat
 
+    let tryMaxBy proj xs =
+        if Seq.isEmpty xs then
+            None
+        else
+            Seq.maxBy proj xs
+            |> Some
+
+    let tryMinBy proj xs =
+        if Seq.isEmpty xs then
+            None
+        else
+            Seq.minBy proj xs
+            |> Some
 
 module Async =
     open System.IO
