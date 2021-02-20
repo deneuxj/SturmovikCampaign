@@ -162,7 +162,7 @@ let computeHealthyBuildingClusters(radius, state : IWarStateQuery, buildings : B
 
 
 type TargetLocator(random : System.Random, state : IWarStateQuery) =
-    let freeAreas : FreeAreas.FreeAreasNode option =
+    let mutable freeAreas : FreeAreas.FreeAreasNode option =
         let path =
             match state.World.Map.ToLowerInvariant() with
             | "moscow-winter" | "moscow-autumn" -> "moscow.bin"
@@ -334,7 +334,6 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
             Some (state.World.Airfields.[afid].Position)
 
         | BridgeTarget | BuildingTarget ->
-            let region = state.World.Regions.[regId]
             // Find the largest cluster of healthy buildings, and use that
             let clusters =
                 if targetType = BridgeTarget then
@@ -361,6 +360,14 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
     member this.GetAirfieldAA(afId) = getAirfieldAALocations afId
 
     member this.GetGroundLocationCandidates(area, shape) = getGroundLocationCandidates(area, shape)
+
+    member this.MarkArea(area : Vector2 list) =
+        match freeAreas with
+        | None -> ()
+        | Some root ->
+            let freeAreas2 =
+                FreeAreas.subtract(10000.0f, root, area)
+            freeAreas <- freeAreas2
 
 
 type Campaign.MissionGen.MissionFileGeneration.GroundBattle
@@ -494,6 +501,8 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         RunwayName = runway.Name
                         Flight = Unconstrained planes
                     }
+                // Avoid putting stuff such as enemy camps too close to spawns
+                locator.MarkArea(mkCircle(spawn.Pos.Pos, 2500.0f))
                 yield spawn
         ]
 
@@ -592,10 +601,10 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 for coalition in [ Axis; Allies ] do
                     let forces =
                         state.GetGroundForces(coalition, region.RegionId)
-                        |> min (20.0f * TargetType.Tank.GroundForceValue)
-                    if forces > 10.0f * TargetType.ArmoredCar.GroundForceValue then
+                        |> min (50.0f * TargetType.Tank.GroundForceValue)
+                    if forces > 5.0f * TargetType.Tank.GroundForceValue then
                         // Find an area
-                        let radius = 0.500f
+                        let radius = 0.700f
                         let shape = mkCircle(Vector2.Zero, radius)
                         let locations = locator.GetGroundLocationCandidates (region.Boundary, shape)
                         let yori = float32(random.NextDouble() * 350.0)
@@ -622,6 +631,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                 |> Seq.choose snd
                                 
                             if not(Seq.isEmpty vehicles) then
+                                locator.MarkArea(shape |> List.map ((+) location))
                                 yield { Coalition = coalition; Pos = { Pos = location; Rotation = yori; Altitude = 0.0f }; Vehicles = vehicles }
                         | None ->
                             ()
@@ -880,7 +890,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             else
                                 { p with Rotation = (p.Rotation + 180.0f) % 360.0f }
                         match GroundBattle.TryFromGroundMission(state, mission, p, area, settings.GroundBattleLimits) with
-                        | Some battle -> yield battle
+                        | Some battle ->
+                            locator.MarkArea(area |> List.map ((+) p.Pos))
+                            yield battle
                         | None -> ()
                     | None -> ()
                 | _ -> ()
