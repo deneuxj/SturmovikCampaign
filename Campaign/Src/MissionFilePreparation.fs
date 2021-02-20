@@ -1030,7 +1030,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                             let rot = spot.Pos.Rotation + pos.Rotation
                                             { spot.Pos with
                                                 Rotation = rot
-                                                Pos = spot.Pos.Pos.Rotate(rot) + pos.Pos
+                                                Pos = spot.Pos.Pos.Rotate(pos.Rotation) + pos.Pos
                                                 Altitude = pos.Altitude
                                             }
                                     }
