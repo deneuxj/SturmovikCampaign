@@ -563,6 +563,18 @@ type Controller(settings : GameServerControl.Settings) =
                     return Error e
             }
 
+        member this.GetOnlinePlayers() =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                match s.Sync with
+                | Some sync ->
+                    let! players = sync.GetOnlinePlayers()
+                    channel.Reply(players)
+                    return s
+                | None ->
+                    channel.Reply(Error "Synchronization is not active")
+                    return s
+            }
+
         interface IRoutingResponse with
             member this.AllPlayers() = this.FindPlayers("")
             member this.FindPlayersByName(name) = this.FindPlayers(name)
@@ -579,6 +591,13 @@ type Controller(settings : GameServerControl.Settings) =
             member this.GetPilots(filter) = this.GetPilots(filter)
             member this.GetPilot(id) = this.GetPilot(id)
             member this.GetPlayerPilots(hashedGuid) = this.GetPlayerPilots(HashedGuid.Create hashedGuid)
+            member this.GetOnlinePlayers() =
+                async {
+                    let! names = this.GetOnlinePlayers()
+                    return
+                        names
+                        |> Result.map (fun names -> {| Players = names |})
+                }
 
         interface IControllerInteraction with
             member this.Advance() = this.Run(1)

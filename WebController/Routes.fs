@@ -53,6 +53,7 @@ type IRoutingResponse =
     abstract FindPlayersByName : string -> Async<Result<Player list, string>>
     abstract AllPlayers : unit -> Async<Result<Player list, string>>
     abstract GetPlayer : string -> Async<Result<Player option, string>>
+    abstract GetOnlinePlayers : unit -> Async<Result<{| Players : string list |}, string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
@@ -81,6 +82,7 @@ GET /query/pilot/<guid>
 GET /query/players?name=<name>
 GET /query/players/<guid>
 GET /query/players/<guid>/pilots
+GET /query/online
 
 POST /control/reset
 POST /control/advance
@@ -206,6 +208,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
                             |> serializeAsync
                     )
                 )
+            path "/query/online" >=> context (fun _ -> rr.GetOnlinePlayers() |> serializeAsync)
         ]
         POST >=> choose [
             path "/control/reset" >=>

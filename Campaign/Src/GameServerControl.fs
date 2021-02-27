@@ -34,6 +34,7 @@ type IGameServerControl =
     abstract LoadSds : string -> Async<Result<unit, string>>
     abstract ResaveMission : string -> Async<Result<unit, string>>
     abstract CopyRenameMission : string -> Async<Result<unit, string>>
+    abstract GetOnlinePlayers : unit -> Async<Result<string list, string>>
 
 type IPlayerNotifier =
     abstract MessageAll : string -> Async<Result<unit, string>>
@@ -563,6 +564,19 @@ type RConGameServerControl(settings : Settings, ?logger) =
                         None
                 | None ->
                     checkIfRunning()
+
+        member this.GetOnlinePlayers() =
+            tryOnClient <| fun client -> async {
+                match! client.GetPlayerList() with
+                | Some players ->
+                    return
+                        players
+                        |> Seq.map (fun player -> player.Name)
+                        |> List.ofSeq
+                        |> Ok
+                | None ->
+                    return Error "Failed to retrieve list of players"
+            }
 
     interface IPlayerNotifier with
         member this.BanPlayer(player) = banPlayer(player)

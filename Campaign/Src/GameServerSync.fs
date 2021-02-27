@@ -1173,6 +1173,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         | None ->
             async.Return(Error "No campaign data")
 
+    member this.GetOnlinePlayers() =
+        gameServer.GetOnlinePlayers()
 
     /// Create a game server controller and a Sync.
     static member Create(settings : Settings, ?logger) =
