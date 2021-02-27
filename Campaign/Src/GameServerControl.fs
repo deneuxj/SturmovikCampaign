@@ -493,6 +493,12 @@ type RConGameServerControl(settings : Settings, ?logger) =
                 return Error "Failed to find player to ban"
         }
 
+    let cutChatLog() =
+        tryOnClient <| fun client -> async {
+            let! s = client.CutChatLog()
+            return Ok()
+        }
+
     member this.Dispose() =
         proc |> Option.iter (fun proc -> proc.Dispose())
         client |> Option.iter (fun client -> client.Dispose())
@@ -511,6 +517,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
             client.IsSome
 
         member this.KillProcess(proc) =
+            Async.RunSynchronously(cutChatLog()) |> ignore
             match proc with
             | Some(:? Process as proc) ->
                 try
