@@ -104,12 +104,19 @@ module IO =
 type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, notifier : IPlayerNotifier) =
     let mutable isMuted = true
 
+    let mutable groundForcesDestroyed = Map.empty
+    let mutable storageDestroyed = Map.empty
+
+    // To avoid spamming messages
+    let timeSinceLastUpdate = System.Diagnostics.Stopwatch()
+
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     member this.UnMute() =
         if isMuted then
             logger.Debug("LiveNotifier is unmuted")
             isMuted <- false
+            timeSinceLastUpdate.Start()
 
     member this.Run() =
         async {
@@ -156,8 +163,47 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                 let msg = sprintf "%s controls %s %s" player rank pilot.FullName
                                 let! s = notifier.MessageAll(msg)
                                 ()
+                            | WarStateUpdate.Commands.DestroyGroundForces(_, coalition, amount) ->
+                                let prevAmount = Map.tryFind coalition groundForcesDestroyed |> Option.defaultValue 0.0f<MGF>
+                                let newAmount = prevAmount + amount
+                                groundForcesDestroyed <- groundForcesDestroyed.Add(coalition, newAmount)
+                            | WarStateUpdate.Commands.DamageBuildingPart(bid, part, damage) ->
+                                let building = war.World.Buildings.[bid]
+                                let coalition =
+                                    war.World.RegionsList
+                                    |> Seq.tryFind (fun region -> bid.Pos.Pos.IsInConvexPolygon region.Boundary)
+                                    |> Option.bind (fun region -> war.GetOwner(region.RegionId))
+                                if building.Properties.SubParts |> List.exists ((=) part) then
+                                    match coalition with
+                                    | Some coalition ->
+                                        let storage = building.Properties.PartCapacity * damage
+                                        let prevAmount = Map.tryFind coalition storageDestroyed |> Option.defaultValue 0.0f<M^3>
+                                        let newAmount = prevAmount + storage
+                                        storageDestroyed <- storageDestroyed.Add(coalition, newAmount)
+                                    | None ->
+                                        ()
                             | _ ->
                                 ()
+                            if timeSinceLastUpdate.ElapsedMilliseconds > 5000L then
+                                for coalition in war.World.Countries.Values do
+                                    match groundForcesDestroyed.TryFind coalition with
+                                    | Some amount ->
+                                        let msg = sprintf "%2.0f worth of ground forces of %s destroyed" amount (string coalition)
+                                        let! s = notifier.MessageAll(msg)
+                                        do! Async.Sleep(1000)
+                                    | None ->
+                                        ()
+                                    match storageDestroyed.TryFind coalition with
+                                    | Some amount ->
+                                        let msg = sprintf "%2.0f worth of storage of %s destroyed" amount (string coalition)
+                                        let! s = notifier.MessageAll(msg)
+                                        do! Async.Sleep(1000)
+                                    | None ->
+                                        ()
+                                groundForcesDestroyed <- Map.empty
+                                storageDestroyed <- Map.empty
+                                timeSinceLastUpdate.Restart()
+
                         with exc ->
                             logger.Warn("Live notifier command-handling failed")
                             logger.Debug(exc)
