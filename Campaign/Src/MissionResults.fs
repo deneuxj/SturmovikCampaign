@@ -236,19 +236,19 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
         // Pilot ID to pilot record
         let pilotRecordOf = Seq.mutableDict []
 
-        let handleDamage(amount, targetId, position) =
+        let handleDamage(timeStamp, amount, targetId, position) =
             asyncSeq {
                 match bindings.TryGetValue(targetId) with
                 | true, binding ->
                     // Emit DamageBuildingPart
                     let sub = binding.Sub |> Option.defaultValue -1
                     for building in state.GetBuildingsAt(binding.Typ, sub, position) do
-                        yield "Damage to building", Some(DamageBuildingPart(building.Id, sub, amount))
+                        yield "Damage to building", timeStamp, Some(DamageBuildingPart(building.Id, sub, amount))
 
                     // Emit RemovePlane for damages to static planes
                     match state.TryGetStaticPlaneAt(binding.Name, position) with
                     | Some(afId, plane) ->
-                        yield sprintf "Damage to parked %s" plane.Name, Some(RemovePlane(afId, plane.Id, amount))
+                        yield sprintf "Damage to parked %s" plane.Name, timeStamp, Some(RemovePlane(afId, plane.Id, amount))
                     | None ->
                         ()
 
@@ -260,7 +260,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         | Some country, Some region ->
                             match state.World.Countries.TryGetValue(country) with
                             | true, coalition ->
-                                yield sprintf "Damage to ground forces %s" target.Description, Some(DestroyGroundForces(region.RegionId, coalition, amount * target.GroundForceValue))
+                                yield sprintf "Damage to ground forces %s" target.Description, timeStamp, Some(DestroyGroundForces(region.RegionId, coalition, amount * target.GroundForceValue))
                             | false, _ ->
                                 ()
                         | _ ->
@@ -413,6 +413,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                             sprintf "%s has %s"
                                 x.Pilot.FullName
                                 (string flight.Return),
+                            timeStamp,
                             Some(RegisterPilotFlight(x.Pilot.Id, flight, healthStatus))
                         flightRecords.Remove(taken.PilotId) |> ignore
                     | false, _ ->
@@ -425,6 +426,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
             asyncSeq {
                 match line with
                 | ObjectEvent(timeStamp, ObjectBound binding) ->
+                    yield "Timestamp", timeStamp, None
                     logger.Debug(string timeStamp + " Updating mappings with binding " + Json.serialize binding)
                     // Update mappings
                     bindings.[binding.Id] <- binding
@@ -443,7 +445,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         | Some plane ->
                             match state.TryGetNearestAirfield(taken.Position, None) with
                             | Some (airfield, _) ->
-                                yield sprintf "Plane %s taken by player" plane.Name, Some(RemovePlane(airfield.AirfieldId, plane.Id, 1.0f))
+                                yield sprintf "Plane %s taken by player" plane.Name, timeStamp, Some(RemovePlane(airfield.AirfieldId, plane.Id, 1.0f))
                             | None ->
                                 ()
                         | None ->
@@ -452,7 +454,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                         ()
 
                     // Emit UpdatePlayer command
-                    yield "Seen player " + taken.Name, Some(UpdatePlayer(taken.UserId, taken.Name))
+                    yield "Seen player " + taken.Name, timeStamp, Some(UpdatePlayer(taken.UserId, taken.Name))
 
                     // Choose pilot
                     match state.TryGetNearestAirfield(taken.Position, None) with
@@ -504,7 +506,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                                         Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
                                     }
                                 flightRecords.[taken.PilotId] <- {| Pilot = pilot; Record = record |}
-                                yield sprintf "%s takes off in %s" pilot.FullName plane.Name, Some(UpdatePilot(pilot))
+                                yield sprintf "%s takes off in %s" pilot.FullName plane.Name, timeStamp, Some(UpdatePilot(pilot))
                             | None ->
                                 logger.Warn("Could not find airfield of take-off")
                         | _ ->
@@ -534,7 +536,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     // Update flight record
                     updateFlightRecord(damaged.AttackerId, damaged.Damage, damaged.TargetId, damaged.Position)
                     // Emit commands
-                    yield! handleDamage(damaged.Damage, damaged.TargetId, damaged.Position)
+                    yield! handleDamage(timeStamp, damaged.Damage, damaged.TargetId, damaged.Position)
 
                 | ObjectEvent(timeStamp, ObjectKilled killed) ->
                     logger.Debug(string timeStamp + " Updating mappings with killed " + Json.serialize killed)
@@ -552,7 +554,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     | false, _ ->
                         ()
                     // Emit commands
-                    yield! handleDamage(oldHealth, killed.TargetId, killed.Position)
+                    yield! handleDamage(timeStamp, oldHealth, killed.TargetId, killed.Position)
 
                 | BotEvent(timeStamp, BotEject eject) ->
                     logger.Debug(string timeStamp + " Updaing mappings with eject" + Json.serialize eject)
@@ -572,7 +574,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     | (true, binding), Some afId, (true, health) when health > 0.0f ->
                         match state.TryGetPlane(binding.Name) with
                         | Some plane ->
-                            yield sprintf "%s registered back at %s" plane.Name afId.AirfieldName, Some(AddPlane(afId, plane.Id, health))
+                            yield sprintf "%s registered back at %s" plane.Name afId.AirfieldName, timeStamp, Some(AddPlane(afId, plane.Id, health))
                         | None ->
                             ()
                     | _ ->
@@ -582,7 +584,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     | true, pilot ->
                         let pilotHealth = healthOf.TryGetValue(missionEnded.PilotId) |> Option.ofPair |> Option.defaultValue 1.0f
                         let pilot = { pilot with Health = state.HealthStatusFromHealthLevel(timeStamp, pilotHealth) }
-                        yield sprintf "%s has ended their flight" pilot.FullName, Some(UpdatePilot pilot)
+                        yield sprintf "%s has ended their flight" pilot.FullName, timeStamp, Some(UpdatePilot pilot)
                     | false, _ ->
                         ()
                     // Update mappings
@@ -614,5 +616,6 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
             let healthStatus = state.HealthStatusFromHealthLevel(finalTimeStamp, x.Record.PilotHealth)
             yield
                 sprintf "%s is still in the air" x.Pilot.FullName,
+                System.TimeSpan(System.Int64.MaxValue),
                 Some(UpdatePilot { x.Pilot with Health = healthStatus })
     }

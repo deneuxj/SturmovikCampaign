@@ -101,11 +101,13 @@ module IO =
 
 
 /// Inform players of interesting events while a game is going on
-type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, notifier : IPlayerNotifier) =
+type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>, war : WarState, notifier : IPlayerNotifier, missionDuration : int) =
     let mutable isMuted = true
 
     let mutable groundForcesDestroyed = Map.empty
     let mutable storageDestroyed = Map.empty
+
+    let mutable timeLeft = [120; 90; 60; 45; 30; 20; 15; 10; 5]
 
     // To avoid spamming messages
     let timeSinceLastUpdate = System.Diagnostics.Stopwatch()
@@ -123,11 +125,20 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
             logger.Info("LiveNotifier is now running")
             return!
                 commands
-                |> AsyncSeq.iterAsync(fun command -> async {
+                |> AsyncSeq.iterAsync(fun (ts, command) -> async {
+                    if isMuted then
+                        timeLeft <- timeLeft |> List.filter (fun t -> (float missionDuration) - ts.TotalMinutes >= (float t))
                     if not isMuted then
                         try
+                            match timeLeft with
+                            | tl :: rest when (float missionDuration - ts.TotalMinutes) < (float tl) ->
+                                let msg = sprintf "%2.0f minutes left in mission" (float missionDuration - ts.TotalMinutes)
+                                let! s = notifier.MessageAll(msg)
+                                timeLeft <- rest
+                            | _ ->
+                                ()
                             match command with
-                            | WarStateUpdate.Commands.RegisterPilotFlight(pid, flight, health) ->
+                            | Some(WarStateUpdate.Commands.RegisterPilotFlight(pid, flight, health)) ->
                                 let pilot = war.GetPilot(pid)
                                 let rank =
                                     Pilots.tryComputeRank war.World.Ranks pilot
@@ -151,7 +162,7 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                     let msg = sprintf "%s %s is injured until at least %s" rank pilot.PilotLastName (until.ToString(pilot.Country.CultureInfo))
                                     let! s = notifier.MessageCoalition(coalition, msg)
                                     ()
-                            | WarStateUpdate.Commands.UpdatePilot(pilot) when pilot.Health = Pilots.PilotHealth.Healthy ->
+                            | Some(WarStateUpdate.Commands.UpdatePilot(pilot)) when pilot.Health = Pilots.PilotHealth.Healthy ->
                                 let player =
                                     match war.TryGetPlayer(pilot.PlayerGuid) with
                                     | Some player -> player.Name
@@ -163,11 +174,11 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                 let msg = sprintf "%s controls %s %s" player rank pilot.FullName
                                 let! s = notifier.MessageAll(msg)
                                 ()
-                            | WarStateUpdate.Commands.DestroyGroundForces(_, coalition, amount) ->
+                            | Some(WarStateUpdate.Commands.DestroyGroundForces(_, coalition, amount)) ->
                                 let prevAmount = Map.tryFind coalition groundForcesDestroyed |> Option.defaultValue 0.0f<MGF>
                                 let newAmount = prevAmount + amount
                                 groundForcesDestroyed <- groundForcesDestroyed.Add(coalition, newAmount)
-                            | WarStateUpdate.Commands.DamageBuildingPart(bid, part, damage) ->
+                            | Some(WarStateUpdate.Commands.DamageBuildingPart(bid, part, damage)) ->
                                 let building = war.World.Buildings.[bid]
                                 let coalition =
                                     war.World.RegionsList
@@ -188,14 +199,14 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                                 for coalition in war.World.Countries.Values do
                                     match groundForcesDestroyed.TryFind coalition with
                                     | Some amount ->
-                                        let msg = sprintf "%2.0f worth of ground forces of %s destroyed" amount (string coalition)
+                                        let msg = sprintf "%2.1f worth of ground forces of %s destroyed" amount (string coalition)
                                         let! s = notifier.MessageAll(msg)
                                         do! Async.Sleep(1000)
                                     | None ->
                                         ()
                                     match storageDestroyed.TryFind coalition with
                                     | Some amount ->
-                                        let msg = sprintf "%2.0f worth of storage of %s destroyed" amount (string coalition)
+                                        let msg = sprintf "%2.1f m3 worth of storage of %s destroyed" amount (string coalition)
                                         let! s = notifier.MessageAll(msg)
                                         do! Async.Sleep(1000)
                                     | None ->
@@ -208,8 +219,12 @@ type LiveNotifier(commands : AsyncSeq<WarStateUpdate.Commands>, war : WarState, 
                             logger.Warn("Live notifier command-handling failed")
                             logger.Debug(exc)
                     try
-                        logger.Debug("Execute command")
-                        command.Execute(war) |> ignore
+                        match command with
+                        | Some command ->
+                            logger.Debug("Execute command")
+                            command.Execute(war) |> ignore
+                        | None ->
+                            ()
                     with exc ->
                         logger.Warn("Command execution in live notifier failed")
                         logger.Debug(exc)
@@ -860,8 +875,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                         stalledTriggered <- true
                             }
                             |> MissionResults.commandsFromLogs war2
-                            |> AsyncSeq.choose snd
-                        let liveReporter = LiveNotifier(commands, war2, messaging)
+                            |> AsyncSeq.map (fun (_, ts, cmd) -> (ts, cmd))
+                        let liveReporter = LiveNotifier(commands, war2, messaging, settings.MissionDuration)
                         let cancellation = new Threading.CancellationTokenSource()
                         Async.Start(liveReporter.Run(), cancellation.Token)
                         // Give time to execute old commands
@@ -955,7 +970,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let commands = MissionResults.commandsFromLogs war lines
                 let! effects =
                     asyncSeq {
-                        for description, command in commands do
+                        for description, _, command in commands do
                             logger.Info(description)
                             match command with
                             | Some command ->
