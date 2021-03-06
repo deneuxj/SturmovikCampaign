@@ -960,12 +960,21 @@ module Init =
                 match planeDb.TryGetValue(script) with
                 | true, x ->
                     let costs =
-                        List.init x.LastWeaponMod ((+) 1)
-                        |> List.filter (fun n ->
-                            filter
-                            |> List.exists (function One n2 -> n = n2 | Interval(n1, n2) -> n1 <= n && n <= n2)
-                        )
-                        |> List.map (fun n -> n, 1.0f<E> * System.Single.MaxValue)
+                        match filter with
+                        | [] ->
+                            x.WeaponModsCosts
+                        | _ ->
+                            let costs0 = Map x.WeaponModsCosts
+                            List.init x.LastWeaponMod ((+) 1)
+                            |> List.choose (fun n ->
+                                let isInFilter =
+                                    filter
+                                    |> List.exists (function One n2 -> n = n2 | Interval(n1, n2) -> n1 <= n && n <= n2)
+                                if isInFilter then
+                                    costs0.TryFind(n) |> Option.map (fun v -> n, v)
+                                else
+                                    Some(n, 1.0f<E> * System.Single.MaxValue)
+                            )
                     yield { x with WeaponModsCosts = costs; Coalition = coalition }
                 | false, _ ->
                     logger.Error(sprintf "No plane named with script '%s' found in the plane db" script)
