@@ -1281,7 +1281,7 @@
         ],
         "EmptyPayload": 11,
         "WeaponModsCosts": [],
-        "LastPayload": 11,
+        "LastPayload": 24,
         "LastWeaponMod": 5
       }
     },
@@ -1319,7 +1319,7 @@
         ],
         "EmptyPayload": 3,
         "WeaponModsCosts": [],
-        "LastPayload": 3,
+        "LastPayload": 24,
         "LastWeaponMod": 4
       }
     },
@@ -1897,7 +1897,7 @@
         "EmptyPayload": 0,
         "WeaponModsCosts": [],
         "LastPayload": 29,
-        "LastWeaponMod": 9
+        "LastWeaponMod": 24
       }
     },
     {
