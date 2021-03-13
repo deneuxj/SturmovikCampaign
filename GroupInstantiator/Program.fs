@@ -11,7 +11,7 @@ let urls = [ "https://www.flaticon.com/authors/smashicons"
              "https://www.flaticon.com/" ]
 
 let usage = """
-This program creates complex mission groups based on simple skelettons created
+This program creates complex mission groups based on simple skeletons created
 by users. This allows to create rich missions without advanced knowledge of the
 mission editor and all its nodes.
 
@@ -23,8 +23,8 @@ https://forum.il2sturmovik.com/topic/14803-the-groups-sharing-corner/
 Static objects that are also target must have entities and a coalition.
 Save the mission file, for instance in MyMission.Mission.
 
-In a DIFFERENT MISSION FILE, create the skeletton of the complex group to
-instiante. Create the planes, set their loadout and other attributes.
+In a DIFFERENT MISSION FILE, create the skeleton of the complex group to
+instantiate. Create the planes, set their loadout and other attributes.
 Trace their mission path using waypoints.
 
 Select all objects in the mission editor and save selection to file.
@@ -39,14 +39,14 @@ For more detailed instructions, start by creating one plane, save to the group
 and run this program (see below). You should get messages instructing you on
 the next steps.
 
-Once all errors have been resolved a new group file named after the skeletton
+Once all errors have been resolved a new group file named after the skeleton
 group, but with "skel" replaced with "inst" is produced. Additionally,
 a TODO list is printed that indicates the manual steps needed to integrate
 the instantiated group with the mission (MyMission.Mission in the example
 at the top of these instructions).
 
-To process one or more skelettons, simply call this program and pass the names
-of the skeletton groups as arguments.
+To process one or more skeletons, simply call this program and pass the names
+of the skeleton groups as arguments.
 Alternatively, you may drag&drop the group file on the icon of
 GroupInstantiator.exe.
 """
