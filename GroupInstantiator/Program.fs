@@ -16,7 +16,7 @@ by users. This allows to create rich missions without advanced knowledge of the
 mission editor and all its nodes.
 
 The general process is as follows:
-Create the scenery of the mission using the file editor. No logic needed,
+Create the scenery of the mission using the mission editor. No logic needed,
 only the static objects and targets. Note that using logic is allowed, e.g.
 it is possible to use some of the pre-made groups available from
 https://forum.il2sturmovik.com/topic/14803-the-groups-sharing-corner/
