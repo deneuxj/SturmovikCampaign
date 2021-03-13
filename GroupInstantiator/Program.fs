@@ -10,7 +10,46 @@ let iconAttrib = "Icons made by Smashicons from www.flaticon.com"
 let urls = [ "https://www.flaticon.com/authors/smashicons"
              "https://www.flaticon.com/" ]
 
+let usage = """
+This program creates complex mission groups based on simple skelettons created
+by users. This allows to create rich missions without advanced knowledge of the
+mission editor and all its nodes.
 
+The general process is as follows:
+Create the scenery of the mission using the file editor. No logic needed,
+only the static objects and targets. Note that using logic is allowed, e.g.
+it is possible to use some of the pre-made groups available from
+https://forum.il2sturmovik.com/topic/14803-the-groups-sharing-corner/
+Static objects that are also target must have entities and a coalition.
+Save the mission file, for instance in MyMission.Mission.
+
+In a DIFFERENT MISSION FILE, create the skeletton of the complex group to
+instiante. Create the planes, set their loadout and other attributes.
+Trace their mission path using waypoints.
+
+Select all objects in the mission editor and save selection to file.
+The name of the file must conform to the kind of complex group to instantiate
+(replace whatever with a string of your choice, without spaces):
+
+- skel-groundattack-whatever.group for a ground attack without escorts.
+- skel-escort-whatever.group for a ground attack with escort.
+- skel-patrol-whatever.group for a fighter patrol.
+
+For more detailed instructions, start by creating one plane, save to the group
+and run this program (see below). You should get messages instructing you on
+the next steps.
+
+Once all errors have been resolved a new group file named after the skeletton
+group, but with "skel" replaced with "inst" is produced. Additionally,
+a TODO list is printed that indicates the manual steps needed to integrate
+the instantiated group with the mission (MyMission.Mission in the example
+at the top of these instructions).
+
+To process one or more skelettons, simply call this program and pass the names
+of the skeletton groups as arguments.
+Alternatively, you may drag&drop the group file on the icon of
+GroupInstantiator.exe.
+"""
 
 [<EntryPoint>]
 let main argv =
@@ -80,6 +119,9 @@ let main argv =
             printfn "%s" m
             status <- 1
 
+    if argv.Length = 0 then
+        printfn "%s" usage
+
     for file in argv do
         let filename = IO.Path.GetFileNameWithoutExtension(file).ToLowerInvariant()
 
@@ -133,4 +175,5 @@ let main argv =
             
             processSkeleton mkConfigFromGroup mkGroup "patrol" file
 
+    System.Console.ReadKey(true) |> ignore
     status // return an integer exit code
