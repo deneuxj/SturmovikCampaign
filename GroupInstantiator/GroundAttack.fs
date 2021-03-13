@@ -40,13 +40,15 @@ let extractPath (group : T.GroupData) =
                 let x = group.ListOfMCU_CMD_TakeOff |> List.ofSeq
                 match x with
                 | [x] -> x
-                | [] -> failwith "Missing take off MCU"
-                | _ -> failwith "Too many take off MCUs"
+                | [] -> failwith "Missing Command:Take off MCU"
+                | _ -> failwith "Too many Command:Take off MCUs, there must be exactly one"
             GroundStart {| EnginesRunning = running; TakeOffPoint = DirectedPoint.FromMCU(takeoff) |}
         | x -> failwithf "Invalid air/ground start value %d" x
     let waypoints =
         group.ListOfMCU_Waypoint
         |> List.ofSeq
+    if List.isEmpty waypoints then
+        failwith "There must be at least one Trigger:Waypoint MCU. Make sure the waypoint has the right altitude (e.g 3000m), speed (e.g. 300kph) and radius (e.g. 1000m)"
     let path =
         let isWaypoint =
             let items =
@@ -60,7 +62,7 @@ let extractPath (group : T.GroupData) =
                 wp.GetTargets().Value
                 |> Seq.exists (isWaypoint)
                 |> not)
-            |> Option.defaultWith (fun _ -> failwith "Could not find last waypoint")
+            |> Option.defaultWith (fun _ -> failwith "Could not find last waypoint. The waypoints must be connected in a linear fashion, from first to last, without branches or loops.")
         let rec work (current : T.MCU_Waypoint) =
             [
                 yield current

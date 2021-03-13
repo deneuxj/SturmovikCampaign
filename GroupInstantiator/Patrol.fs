@@ -29,7 +29,10 @@ let mkConfigFromGroup (group : T.GroupData) =
             let duration =
                 wp.GetDesc().Value
                 |> System.Int32.TryParse
-                |> function true, x -> x | false, _ -> 20
+                |> function true, x -> x | false, _ -> failwithf "Set patrol time in the description field of the waypoint '%s' at patrol; an integer number, in minutes" (wp.GetName().Value)
+            let radius = wp.GetArea().Value
+            if radius < 3000 then
+                failwithf "Max range of patrol area must be at least 3000m. Set it in the radius of the patrol waypoint '%s'." (wp.GetName().Value)
             Some (
                 {|
                     Center = DirectedPoint.FromMCU wp
@@ -48,7 +51,7 @@ let mkConfigFromGroup (group : T.GroupData) =
                     group.ListOfMCU_CMD_Land
                     |> List.ofSeq
                 match landing with
-                | [] -> failwith "Missing landing command"
+                | [] -> failwith "Missing Command:Land MCU"
                 | [x] -> x
                 | _ -> failwith "Too many landing commands"
             Closing {|
@@ -64,8 +67,11 @@ let mkConfigFromGroup (group : T.GroupData) =
     let numPlanes =
         prefixData.Plane.GetDesc().Value
         |> System.Int32.TryParse
-        |> function true, x -> Some x | _ -> None
+        |> function true, x -> Some x | _ -> failwithf "Set the number of planes in the patrol in the description field of '%s'" (prefixData.Plane.GetName().Value)
         |> Option.defaultValue 1
+
+    if prefixData.Path.Length <> 4 then
+        failwith "There must be exactly four waypoints: Fly to patrol, At patrol, Fly away back to base, Just before landing"
 
     let config =
         match prefixData.Path with
