@@ -12,12 +12,6 @@ open GroundAttack
 let mkConfigFromGroup (group : T.GroupData) =
     let prefixData = extractPath group
 
-    let (|Start|_|) =
-        function
-        | (startWp : T.MCU_Waypoint) :: rest ->
-            Some(rest)
-        | [] -> None
-
     let (|Waypoint|_|) =
         function
         | (wp : T.MCU_Waypoint) :: rest ->
@@ -75,7 +69,7 @@ let mkConfigFromGroup (group : T.GroupData) =
 
     let config =
         match prefixData.Path with
-        | Start(Waypoint(wp2, PatrolArea(patrol, Closing closing))) ->
+        | Waypoint(wp2, PatrolArea(patrol, Closing closing)) ->
             {
                 StartType = prefixData.StartType
                 StartPos = prefixData.StartPos
