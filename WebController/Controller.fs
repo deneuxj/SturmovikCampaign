@@ -191,15 +191,31 @@ type Controller(settings : GameServerControl.Settings) =
         async {
             try
                 let N = getCurrentIndex settings.WorkDir
+
                 let! dates =
                     AsyncSeq.initAsync (int64 N + 1L) (fun idx ->
-                        this.GetStateDto(int idx)
+                        mb.PostAndAsyncReply <| fun channel s -> async {
+                            let idx = int idx
+                            match s.DtoStateCache.TryGetValue idx with
+                            | true, x ->
+                                channel.Reply(Some x.Date)
+                            | false, _ ->
+                                let path = wkPath(getStateFilename idx)
+                                if File.Exists path then
+                                    try
+                                        let world =
+                                            s.World
+                                            |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
+                                        let state = WarState.LoadFromFile(path, world)
+                                        channel.Reply(Some (state.Date.ToDto()))
+                                    with
+                                    | e ->
+                                        channel.Reply(None)
+                                        logger.Warn e
+                            return s
+                        }
                     )
-                    |> AsyncSeq.choose (fun result ->
-                        match result with
-                        | Ok state -> Some state.Date
-                        | _ -> None
-                    )
+                    |> AsyncSeq.choose id
                     |> AsyncSeq.toArrayAsync
                 return Ok dates
             with e ->
