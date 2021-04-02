@@ -24,11 +24,23 @@ type private ControllerState =
     {
         World : NewWorldDescription.World option
         War : IWarStateQuery option
+        DtoDates : Dto.DateTime[] option
         DtoWorld : Dto.World option
         DtoStateCache : Map<int, Dto.WarState>
         DtoSimulationCache : Map<int, Dto.SimulationStep[]>
         Sync : GameServerSync.Sync option
     }
+with
+    static member Default =
+        {
+            World = None
+            War = None
+            DtoDates = None
+            DtoWorld = None
+            DtoStateCache = Map.empty
+            DtoSimulationCache = Map.empty
+            Sync = None
+        }
 
 /// Interface between the web service and the campaign
 type Controller(settings : GameServerControl.Settings) =
@@ -46,14 +58,7 @@ type Controller(settings : GameServerControl.Settings) =
                 let! state  = req state
                 return! work state
             }
-        work {
-            World = None
-            War = None
-            DtoWorld = None
-            DtoStateCache = Map.empty
-            DtoSimulationCache = Map.empty
-            Sync = None
-        }
+        work ControllerState.Default
     )
     do mb.Start()
 
@@ -193,30 +198,41 @@ type Controller(settings : GameServerControl.Settings) =
                 let N = getCurrentIndex settings.WorkDir
 
                 let! dates =
-                    AsyncSeq.initAsync (int64 N + 1L) (fun idx ->
-                        mb.PostAndAsyncReply <| fun channel s -> async {
-                            let idx = int idx
-                            match s.DtoStateCache.TryGetValue idx with
-                            | true, x ->
-                                channel.Reply(Some x.Date)
-                            | false, _ ->
-                                let path = wkPath(getStateFilename idx)
-                                if File.Exists path then
-                                    try
-                                        let world =
-                                            s.World
-                                            |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
-                                        let state = WarState.LoadFromFile(path, world)
-                                        channel.Reply(Some (state.Date.ToDto()))
-                                    with
-                                    | e ->
-                                        channel.Reply(None)
-                                        logger.Warn e
+                    mb.PostAndAsyncReply <| fun channel s -> async {
+                        match s.DtoDates with
+                        | Some dates ->
+                            channel.Reply(dates)
                             return s
-                        }
-                    )
-                    |> AsyncSeq.choose id
-                    |> AsyncSeq.toArrayAsync
+                        | None ->
+                            let! dates =
+                                AsyncSeq.initAsync (int64 N + 1L) (fun idx ->
+                                    async {
+                                        let idx = int idx
+                                        match s.DtoStateCache.TryGetValue idx with
+                                        | true, x ->
+                                            return (Some x.Date)
+                                        | false, _ ->
+                                            let path = wkPath(getStateFilename idx)
+                                            if File.Exists path then
+                                                try
+                                                    let world =
+                                                        s.World
+                                                        |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
+                                                    let state = WarState.LoadFromFile(path, world)
+                                                    return (Some (state.Date.ToDto()))
+                                                with
+                                                | e ->
+                                                    logger.Warn e
+                                                    return None
+                                            else
+                                                return None
+                                    }
+                                )
+                                |> AsyncSeq.choose id
+                                |> AsyncSeq.toArrayAsync
+                            channel.Reply(dates)
+                            return { s with DtoDates = Some dates }
+                    }
                 return Ok dates
             with e ->
                 logger.Warn e
@@ -406,6 +422,24 @@ type Controller(settings : GameServerControl.Settings) =
                             let! status = sync.Init()
                             match status with
                             | Ok _ ->
+                                sync.StateChanged.Add(fun war ->
+                                    doOnState (fun s -> async {
+                                        let dates =
+                                            match s.DtoDates with
+                                            | Some [| |] ->
+                                                Some [| war.Date.ToDto() |]
+                                            | Some dates ->
+                                                let warDate = war.Date.ToDto()
+                                                if dates.[dates.Length - 1] <> warDate then
+                                                    Array.append dates [| warDate |]
+                                                else
+                                                    dates
+                                                |> Some
+                                            | None ->
+                                                None
+                                        return { s with War = Some war; DtoDates = dates }
+                                    })
+                                )
                                 return Ok sync
                             | Error e ->
                                 return Error e
@@ -414,7 +448,6 @@ type Controller(settings : GameServerControl.Settings) =
                         async.Return (Ok sync)
                 match sync with
                 | Ok sync ->
-                    sync.StateChanged.Add(fun war -> doOnState (fun s -> async.Return { s with War = Some war }))
                     sync.Resume()
                     channel.Reply(Ok "Synchronization started")
                     return { s with Sync = Some sync }
@@ -483,7 +516,10 @@ type Controller(settings : GameServerControl.Settings) =
                     channel.Reply(Ok "New campaign ready")
                 | Error msg ->
                     channel.Reply(Error msg)
-                return s
+                return
+                    { ControllerState.Default with
+                        Sync = s.Sync
+                    }
             }
 
         member this.ResolveError() =
