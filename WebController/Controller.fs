@@ -171,7 +171,11 @@ type Controller(settings : GameServerControl.Settings) =
                                     }
                                 )
                                 |> Array.ofList
-                            channel.Reply(Ok steps)
+                            // Filter Timestamp steps with zero commands.
+                            let noTsSteps =
+                                steps
+                                |> Array.filter (fun dto -> dto.Description <> "Timestamp" || dto.Command.Length > 0 )
+                            channel.Reply(Ok noTsSteps)
                             { s with World = Some world; DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
                         with
                         | e ->
