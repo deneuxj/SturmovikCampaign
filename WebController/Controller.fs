@@ -139,11 +139,16 @@ type Controller(settings : GameServerControl.Settings) =
 
     /// Try to get the simulation steps leading to the state identified by the given index
     member this.GetSimulationDto(idx : int) =
+        // Filter Timestamp steps with zero commands.
+        let noTsSteps (steps : SimulationStep []) =
+            steps
+            |> Array.filter (fun dto -> dto.Description <> "Timestamp" || dto.Command.Length > 0 )
+
         mb.PostAndAsyncReply <| fun channel s -> async {
             return
                 match s.DtoSimulationCache.TryGetValue idx with
                 | true, x ->
-                    channel.Reply(Ok x)
+                    channel.Reply(Ok (noTsSteps x))
                     s
                 | false, _ ->
                     // Optional effects file
@@ -176,11 +181,7 @@ type Controller(settings : GameServerControl.Settings) =
                                     }
                                 )
                                 |> Array.ofList
-                            // Filter Timestamp steps with zero commands.
-                            let noTsSteps =
-                                steps
-                                |> Array.filter (fun dto -> dto.Description <> "Timestamp" || dto.Command.Length > 0 )
-                            channel.Reply(Ok noTsSteps)
+                            channel.Reply(Ok (noTsSteps steps))
                             { s with World = Some world; DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
                         with
                         | e ->
