@@ -24,6 +24,7 @@ type private ControllerState =
     {
         World : NewWorldDescription.World option
         War : IWarStateQuery option
+        WarStateCache : Map<int, IWarStateQuery>
         DtoDates : Dto.DateTime[] option
         DtoWorld : Dto.World option
         DtoStateCache : Map<int, Dto.WarState>
@@ -35,6 +36,7 @@ with
         {
             World = None
             War = None
+            WarStateCache = Map.empty
             DtoDates = None
             DtoWorld = None
             DtoStateCache = Map.empty
@@ -103,6 +105,38 @@ type Controller(settings : GameServerControl.Settings) =
                             s
         }
 
+    member this.GetState(idx : int) =
+        mb.PostAndAsyncReply <| fun channel s -> async {
+            match s.WarStateCache.TryFind idx with
+            | Some state ->
+                channel.Reply(Ok state)
+                return s
+            | None ->
+                let path = wkPath(getStateFilename idx)
+                if File.Exists path then
+                    try
+                        let world =
+                            s.World
+                            |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
+                        let state = WarState.LoadFromFile(path, world)
+                        channel.Reply(Ok(upcast state))
+                        return { s with World = Some world; WarStateCache = s.WarStateCache.Add(idx, state) }
+                    with
+                    | e ->
+                        channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
+                        logger.Warn e
+                        return s
+                else
+                    channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
+                    return s
+        }
+
+    member this.GetState() =
+        async {
+            let idx = getCurrentIndex settings.WorkDir
+            return! this.GetState(idx)
+        }
+
     member this.GetStateDto() =
         async {
             let idx = getCurrentIndex settings.WorkDir
@@ -111,30 +145,24 @@ type Controller(settings : GameServerControl.Settings) =
 
     /// Try to get a recorded state by its number
     member this.GetStateDto(idx : int) =
-        mb.PostAndAsyncReply <| fun channel s -> async {
-            return
-                match s.DtoStateCache.TryGetValue idx with
-                | true, x ->
-                    channel.Reply(Ok x)
-                    s
-                | false, _ ->
-                    let path = wkPath(getStateFilename idx)
-                    if File.Exists path then
-                        try
-                            let world =
-                                s.World
-                                |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
-                            let state = WarState.LoadFromFile(path, world).ToDto()
-                            channel.Reply(Ok state)
-                            { s with World = Some world; DtoStateCache = s.DtoStateCache.Add(idx, state) }
-                        with
-                        | e ->
-                            channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
-                            logger.Warn e
-                            s
-                    else
-                        channel.Reply(Error <| sprintf "No state n.%d" idx)
-                        s
+        async {
+            let! state = this.GetState(idx)
+            match state with
+            | Ok state ->
+                return!
+                    mb.PostAndAsyncReply <| fun channel s -> async {
+                        return
+                            match s.DtoStateCache.TryGetValue idx with
+                            | true, x ->
+                                channel.Reply(Ok x)
+                                s
+                            | false, _ ->
+                                let dto = state.ToDto()
+                                channel.Reply(Ok dto)
+                                { s with DtoStateCache = s.DtoStateCache.Add(idx, dto) }
+                    }
+            | Error e ->
+                return(Error e)
         }
 
     /// Try to get the simulation steps leading to the state identified by the given index
