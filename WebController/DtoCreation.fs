@@ -184,7 +184,7 @@ module DtoCreation =
 
     type WarState.IWarStateQuery with
         member this.ToDto() =
-            let mkBuildingHealth bids =
+            let mkBridgeHealth bids =
                 [|
                     for bid in bids do
                         let health = this.GetBuildingHealth(bid)
@@ -194,7 +194,7 @@ module DtoCreation =
                                 {
                                     Position = pos.ToDto()
                                     HealthLevel = health
-                                    FunctionalityLevel = this.GetBuildingFunctionalityLevel(bid)
+                                    FunctionalityLevel = this.GetBridgeFunctionalityLevel(bid)
                                 }
                 |]
 
@@ -234,7 +234,7 @@ module DtoCreation =
             {
                 Date = this.Date.ToDto()
                 Weather = this.Weather.ToDto()
-                BridgeHealth = mkBuildingHealth this.World.Bridges.Keys
+                BridgeHealth = mkBridgeHealth this.World.Bridges.Keys
                 GroundForces = groundForces
                 Planes = planes
                 RegionOwner = owners
