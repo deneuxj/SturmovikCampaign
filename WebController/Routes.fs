@@ -191,6 +191,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
     let inControlRoom = Suave.Authentication.authenticateBasic (function ("admin", password) -> passwords.Validate("admin", password) | _ -> false)
     choose [
         GET >=> choose [
+            path "/query/sync/state" >=> context (fun _ -> rr.GetSyncState() |> serializeAsync)
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
             path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync)
             path "/query/dates" >=> context (fun _ -> rr.GetDates() |> serializeAsync)
