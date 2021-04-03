@@ -545,46 +545,6 @@ type Controller(settings : GameServerControl.Settings) =
                 return { s with Sync = None }
             }
 
-        member this.UpdatePlayerBan(playerId : HashedGuid, duration : System.TimeSpan option) =
-            async {
-                let! war = this.WarState
-                match war with
-                | Ok war ->
-                    return!
-                        mb.PostAndAsyncReply <| fun channel s -> async {
-                            let! sync =
-                                match s.Sync with
-                                | Some sync -> async.Return(Ok sync)
-                                | None ->
-                                    async {
-                                        let sync = GameServerSync.Sync.Create(settings)
-                                        let! status = sync.Init()
-                                        match status with
-                                        | Ok _ -> return Ok sync
-                                        | Error e -> return Error e
-                                    }
-
-                            let player =
-                                war.Players
-                                |> List.tryFind (fun player -> hashGuid player.Guid = playerId)
-
-                            match player with
-                            | Some player ->
-                                channel.Reply(Ok(player.ToDto(war)))
-                            | None ->
-                                channel.Reply(Error "player not found")
-
-                            // Dispose sync object if we created one.
-                            match s.Sync, sync with
-                            | Some _, Ok sync -> sync.Dispose()
-                            | _ -> ()
-
-                            return s
-                        }
-                | Error e ->
-                    return Error e
-            }
-
         member this.FindPlayers(name : string) =
             async {
                 let! war = this.WarState
