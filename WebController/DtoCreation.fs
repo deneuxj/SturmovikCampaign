@@ -211,19 +211,6 @@ module DtoCreation =
                                 }
                 |]
 
-            let mkTransport graph =
-                [|
-                    for kvp in this.World.Regions do
-                        let rid, neighbours = kvp.Key, kvp.Value.Neighbours
-                        for ngh in neighbours do
-                            if string ngh > string rid then
-                                yield {
-                                    RegionA = string rid
-                                    RegionB = string ngh
-                                    Capacity = float32 <| graph(rid, ngh)
-                                }
-                |]
-
             let planes =
                 seq {
                     for afid in this.World.Airfields.Keys do
