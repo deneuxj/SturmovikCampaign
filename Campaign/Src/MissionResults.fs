@@ -123,7 +123,7 @@ type IWarStateQuery with
 
         let candidates =
             this.GetPlayerPilots(playerGuid)
-            |> Seq.filter (fun pilot -> this.IsPilotHealty(pilot.Id))
+            |> Seq.filter (fun pilot -> this.IsPilotHealthy(pilot.Id))
             |> Seq.filter (fun pilot -> match this.TryGetPilotHome(pilot.Id) with None -> true | Some home -> home = afId)
             |> Seq.sortByDescending (fun pilot -> pilot.LatestFlightStart, this.TryGetPilotHome(pilot.Id) = Some afId)
             |> Seq.cache
@@ -569,7 +569,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     let afId =
                         flightRecords.TryGetValue(missionEnded.PilotId)
                         |> Option.ofPair
-                        |> Option.bind (fun x -> state.TryGetReturnAirfield(x.Record, state.World.Countries.[x.Pilot.Country]))
+                        |> Option.bind (fun x -> state.TryGetReturnAirfield(x.Record))
                     // Emit AddPlane command
                     match bindings.TryGetValue(missionEnded.VehicleId), afId, healthOf.TryGetValue(missionEnded.VehicleId) with
                     | (true, binding), Some afId, (true, health) when health > 0.0f ->

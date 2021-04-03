@@ -243,7 +243,7 @@ module IWarStateExtensions =
 
             min troops (viaGround + viaAir)
 
-        member this.IsPilotHealty(pilotId : PilotId) =
+        member this.IsPilotHealthy(pilotId : PilotId) =
             match this.GetPilot(pilotId).Health with
             | Healthy -> true
             | Dead -> false
@@ -274,7 +274,7 @@ module IWarStateExtensions =
             | Some { Return = CrashedInEnemyTerritory } ->
                 false
 
-        member this.TryGetReturnAirfield(flight : FlightRecord, coalition) =
+        member this.TryGetReturnAirfield(flight : FlightRecord) =
             match flight.Return with
             | CrashedInEnemyTerritory -> None
             | CrashedInFriendlyTerritory afId -> afId
@@ -284,7 +284,7 @@ module IWarStateExtensions =
             let pilot = this.GetPilot(pilotId)
             pilot.Flights
             |> List.tryLast
-            |> Option.bind (fun flight -> this.TryGetReturnAirfield(flight, this.World.Countries.[pilot.Country]))
+            |> Option.bind (fun flight -> this.TryGetReturnAirfield(flight))
 
         member this.GetNewNames(country : CountryId, seed : int) : string * string =
             let random = System.Random(seed)
