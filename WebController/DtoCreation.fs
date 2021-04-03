@@ -224,14 +224,6 @@ module DtoCreation =
                                 }
                 |]
 
-            let supplies =
-                let x = this.ComputeSupplyAvailability()
-                seq {
-                    for rid in this.World.Regions.Keys do
-                        yield string rid, float32(x rid)
-                }
-                |> Map.ofSeq
-
             let planes =
                 seq {
                     for afid in this.World.Airfields.Keys do
@@ -255,12 +247,8 @@ module DtoCreation =
             {
                 Date = this.Date.ToDto()
                 Weather = this.Weather.ToDto()
-                BuildingHealth = mkBuildingHealth this.World.Buildings.Keys
                 BridgeHealth = mkBuildingHealth this.World.Bridges.Keys
                 GroundForces = groundForces
-                RoadTransport = this.ComputeRoadCapacity() |> mkTransport
-                RailTransport = this.ComputeRailCapacity() |> mkTransport
-                SupplyStatus = supplies
                 Planes = planes
                 RegionOwner = owners
             }

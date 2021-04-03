@@ -620,6 +620,52 @@ type Controller(settings : GameServerControl.Settings) =
                     return s
             }
 
+        member this.GetRegionCapacity(idx : int, region : string) =
+            async {
+                let! state = this.GetState(idx)
+                match state with
+                | Error e ->
+                    return Error e
+                | Ok state ->
+
+                let region = BasicTypes.RegionId region
+                if state.World.Regions.ContainsKey(region) then
+                    return Ok(float (state.GetRegionBuildingCapacity(region)))
+                else
+                    return Error "No such region"
+            }
+
+        member this.GetAirfieldCapacity(idx : int, airfield : string) =
+            async {
+                let! state = this.GetState(idx)
+                match state with
+                | Error e ->
+                    return Error e
+                | Ok state ->
+
+                let afId = BasicTypes.AirfieldId airfield
+                if state.World.Airfields.ContainsKey(afId) then
+                    return Ok(float (state.GetAirfieldBuildingCapacity(afId)))
+                else
+                    return Error "No such airfield"
+            }
+
+        member this.GetRegionSupplies(idx : int, region : string) =
+            async {
+                let! state = this.GetState(idx)
+                match state with
+                | Error e ->
+                    return Error e
+                | Ok state ->
+
+                let region = BasicTypes.RegionId region
+                if state.World.Regions.ContainsKey(region) then
+                    let computeSupplies = state.ComputeSupplyAvailability()
+                    return Ok(float(computeSupplies(region)))
+                else
+                    return Error "No such region"
+            }
+
         interface IRoutingResponse with
             member this.AllPlayers() = this.FindPlayers("")
             member this.FindPlayersByName(name) = this.FindPlayers(name)
@@ -643,6 +689,9 @@ type Controller(settings : GameServerControl.Settings) =
                         names
                         |> Result.map (fun names -> {| Players = names |})
                 }
+            member this.GetAirfieldCapacity(stateIdx, airfield) = this.GetAirfieldCapacity(stateIdx, airfield)
+            member this.GetRegionCapacity(stateIdx, region) = this.GetRegionCapacity(stateIdx, region)
+            member this.GetRegionSupplies(stateIdx, region) = this.GetRegionSupplies(stateIdx, region)
 
         interface IControllerInteraction with
             member this.Advance() = this.Run(1)

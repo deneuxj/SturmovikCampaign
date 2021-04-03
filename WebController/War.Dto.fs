@@ -54,12 +54,8 @@ type WarState =
     {
         Date : DateTime
         Weather : Weather
-        BuildingHealth : BuildingStatus[]
         BridgeHealth : BuildingStatus[]
         GroundForces : GroundForces[]
-        RoadTransport : TransportCapacity[]
-        RailTransport : TransportCapacity[]
-        SupplyStatus : Map<string, float32>
         Planes : Map<string, Map<string, float32>>
         RegionOwner : Map<string, string>
     }

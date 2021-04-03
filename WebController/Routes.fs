@@ -54,6 +54,9 @@ type IRoutingResponse =
     abstract AllPlayers : unit -> Async<Result<Player list, string>>
     abstract GetPlayer : string -> Async<Result<Player option, string>>
     abstract GetOnlinePlayers : unit -> Async<Result<{| Players : string list |}, string>>
+    abstract GetRegionSupplies : int * string -> Async<Result<float, string>>
+    abstract GetRegionCapacity : int * string -> Async<Result<float, string>>
+    abstract GetAirfieldCapacity : int * string -> Async<Result<float, string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
@@ -73,8 +76,10 @@ let allowAnyOrigin = setHeader "Access-Control-Allow-Origin" "*"
 let private usage = """
 GET /query/sync/state
 GET /query/world
-GET /query/current
-GET /query/past/<n>
+GET /query/state/<n>/summary
+GET /query/state/<n>/regions/<region>/supplies
+GET /query/state/<n>/regions/<region>/capacity
+GET /query/state/<n>/airfields/<airfield>/capacity
 GET /query/simulation/<n>
 GET /query/dates
 GET /query/pilots?country=<country>&coalition=<coalition>&health=<Healthy or NoDead>&name=<substring>
@@ -189,9 +194,11 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
             path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync)
             path "/query/dates" >=> context (fun _ -> rr.GetDates() |> serializeAsync)
-            path "/query/sync/state" >=> context (fun _ -> rr.GetSyncState() |> serializeAsync)
             path "/query/pilots" >=> context (fun ctx -> searchPilots rr.GetPilots ctx |> serializeAsync)
-            pathScan "/query/past/%d" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
+            pathScan "/query/state/%d/summary" (fun n -> rr.GetWarState(Some n) |> serializeAsync)
+            pathScan "/query/state/%d/regions/%s/capacity" (fun (idx, region) -> rr.GetRegionCapacity(idx, region) |> serializeAsync)
+            pathScan "/query/state/%d/regions/%s/supplies" (fun (idx, region) -> rr.GetRegionSupplies(idx, region) |> serializeAsync)
+            pathScan "/query/state/%d/airfields/%s/capacity" (fun (idx, airfield) -> rr.GetAirfieldCapacity(idx, airfield) |> serializeAsync)
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
             pathScan "/query/pilot/%s" (fun n -> rr.GetPilot(n) |> serializeAsync)
             pathScan "/query/players/%s/pilots" (rr.GetPlayerPilots >> serializeAsync)
