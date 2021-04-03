@@ -119,18 +119,19 @@ type IWarStateQuery with
 
     /// Get an existing pilot of a player given the starting airfield, or create a new pilot
     member this.GetPlayerPilotFrom(playerGuid : string, afId : AirfieldId, country) =
-        let latestPilot =
-            try
-                this.GetPlayerPilots(playerGuid)
-                |> Seq.filter (fun pilot -> this.IsPilotHealty(pilot.Id))
-                |> Seq.filter (fun pilot -> this.IsPilotAvailableFrom(pilot.Id, afId))
-                |> Seq.maxBy (fun pilot -> pilot.Id)
-                |> Some
-            with _ -> None
-        let pilot =
-            latestPilot
-            |> Option.defaultWith (fun () -> this.NewPilot(playerGuid, country))
-        pilot
+        let logger = NLog.LogManager.GetCurrentClassLogger()
+
+        let candidates =
+            this.GetPlayerPilots(playerGuid)
+            |> Seq.filter (fun pilot -> this.IsPilotHealty(pilot.Id))
+            |> Seq.filter (fun pilot -> match this.TryGetPilotHome(pilot.Id) with None -> true | Some home -> home = afId)
+            |> Seq.sortByDescending (fun pilot -> pilot.LatestFlightStart, this.TryGetPilotHome(pilot.Id) = Some afId)
+            |> Seq.cache
+
+        logger.Debug(sprintf "Pilots of player %s: %s" playerGuid (candidates |> Seq.map (fun pilot -> pilot.FullName) |> String.concat ", "))
+
+        Seq.tryHead candidates
+        |> Option.defaultWith (fun () -> this.NewPilot(playerGuid, country))
 
     /// Try to get the coalition of a country from its event log value
     member this.TryGetCoalitionOfCountry(country : int) =

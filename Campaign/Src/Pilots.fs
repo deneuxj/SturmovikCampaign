@@ -73,6 +73,11 @@ with
     member this.FullName =
         sprintf "%s %s" this.PilotFirstName this.PilotLastName
 
+    member this.LatestFlightStart =
+        this.Flights
+        |> List.tryLast
+        |> Option.map (fun flight -> flight.Date)
+
 let countCompletedFlights (flights : FlightRecord list) =
     (0, flights)
     ||> List.fold (fun flights flight ->
