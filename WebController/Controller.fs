@@ -395,11 +395,10 @@ type Controller(settings : GameServerControl.Settings) =
                         ]
                     return
                         war.Pilots
-                        |> List.choose (fun pilot ->
-                            if filterFuns |> List.forall (fun f -> f pilot) then
-                                pilot.ToDto(war) |> Some
-                            else
-                                None)
+                        |> List.filter (fun pilot -> filterFuns |> List.forall (fun f -> f pilot))
+                        |> List.sortByDescending (fun pilot -> pilot.LatestFlightStart)
+                        |> List.map (fun pilot -> pilot.ToDto(war))
+                        |> List.truncate 100
                         |> Ok
                 | Error e ->
                     return Error e
@@ -429,11 +428,9 @@ type Controller(settings : GameServerControl.Settings) =
                 | Ok war ->
                     return
                         war.Pilots
-                        |> Seq.choose (fun pilot ->
-                            if hashGuid pilot.PlayerGuid = hashedGuid then
-                                Some(pilot.ToDto(war))
-                            else
-                                None)
+                        |> Seq.filter (fun pilot -> hashGuid pilot.PlayerGuid = hashedGuid)
+                        |> Seq.sortByDescending (fun pilot -> pilot.LatestFlightStart)
+                        |> Seq.map (fun pilot -> pilot.ToDto(war))
                         |> List.ofSeq
                         |> Ok
                 | Error e ->
@@ -588,6 +585,7 @@ type Controller(settings : GameServerControl.Settings) =
                                 name2.ToLowerInvariant().Contains(name)
                             )
                         )
+                        |> List.sortBy (fun player -> player.Name)
                         |> List.map (fun player -> player.ToDto(war))
                     return Ok found
                 | Error e ->
