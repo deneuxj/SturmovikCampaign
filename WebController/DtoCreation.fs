@@ -526,6 +526,7 @@ module DtoCreation =
         member this.ToDto(state : WarState.IWarStateQuery) : Dto.Player =
             let pilots =
                 state.GetPlayerPilots(this.Guid)
+                |> Seq.sortByDescending(fun pilot -> pilot.LatestFlightStart)
                 |> Seq.map (fun pilot -> string pilot.Id.Guid)
                 |> List.ofSeq
             {
