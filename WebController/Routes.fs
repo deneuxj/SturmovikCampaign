@@ -42,6 +42,7 @@ type PilotSearchFilter =
     }
 
 type IRoutingResponse =
+    abstract GetScenarioNames : unit -> Async<Result<string list, string>>
     abstract GetWorld : unit -> Async<Result<World, string>>
     abstract GetWarState : int option -> Async<Result<WarState, string>>
     abstract GetSimulation : int -> Async<Result<SimulationStep[], string>>
@@ -75,6 +76,7 @@ let setTextMimeType = setMimeType "application/text; charset=utf-8"
 let allowAnyOrigin = setHeader "Access-Control-Allow-Origin" "*"
 
 let private usage = """
+GET /query/scenarios
 GET /query/sync/state
 GET /query/world
 GET /query/state/<n>/summary
@@ -193,6 +195,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
     let inControlRoom = Suave.Authentication.authenticateBasic (function ("admin", password) -> passwords.Validate("admin", password) | _ -> false)
     choose [
         GET >=> choose [
+            path "/query/scenarios" >=> context (fun _ -> rr.GetScenarioNames() |> serializeAsync)
             path "/query/sync/state" >=> context (fun _ -> rr.GetSyncState() |> serializeAsync)
             path "/query/world" >=> context (fun _ -> rr.GetWorld() |> serializeAsync)
             path "/query/current" >=> context (fun _ -> rr.GetWarState None |> serializeAsync)

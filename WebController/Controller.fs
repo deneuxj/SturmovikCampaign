@@ -694,7 +694,18 @@ type Controller(settings : GameServerControl.Settings) =
                     return Error "No such region"
             }
 
+        member this.GetScenarioNames() =
+            try
+                let exeDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+                System.IO.Directory.EnumerateFiles(exeDir, "*.mission")
+                |> Seq.map (fun file -> System.IO.Path.GetFileNameWithoutExtension(file))
+                |> List.ofSeq
+                |> Ok
+            with _ ->
+                Error "Failed to locate scenario mission files"
+
         interface IRoutingResponse with
+            member this.GetScenarioNames() = async.Return(this.GetScenarioNames())
             member this.AllPlayers() = this.FindPlayers("")
             member this.FindPlayersByName(name) = this.FindPlayers(name)
             member this.GetPlayer(hashedGuid) = this.GetPlayer(HashedGuid.Create hashedGuid)
