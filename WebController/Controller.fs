@@ -554,6 +554,28 @@ type Controller(settings : GameServerControl.Settings) =
                     }
             }
 
+        member this.RebuildWorld() =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                let sync =
+                    match s.Sync with
+                    | Some(sync, _) -> sync
+                    | None ->
+                        logger.Debug("Creating temporary sync")
+                        // Create a temporary sync
+                        GameServerSync.Sync.Create(settings)
+                let! status = sync.RebuildWorld()
+                logger.Debug("World rebuild done")
+                // If we had to create a temporary sync, dispose it
+                match s.Sync with
+                | None ->
+                    logger.Debug("Dispose temporary sync")
+                    sync.Dispose()
+                | Some _ -> ()
+                // Result
+                channel.Reply(status)
+                return s
+            }
+
         member this.ResolveError() =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 let! sync =
@@ -703,6 +725,7 @@ type Controller(settings : GameServerControl.Settings) =
             member this.Advance() = this.Run(1)
             member this.Run() = this.Run(15)
             member this.ResetCampaign(scenario) = this.ResetCampaign(scenario)
+            member this.RebuildWorld() = this.RebuildWorld()
             member this.StartSyncLoop() = this.StartSync(true)
             member this.StartSyncOnce() = this.StartSync(false)
             member this.StopSyncAfterMission() = this.StopSyncAfterMission()

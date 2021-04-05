@@ -60,6 +60,7 @@ type IRoutingResponse =
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
+    abstract RebuildWorld : unit -> Async<Result<string, string>>
     abstract Advance : unit -> Async<Result<string, string>>
     abstract Run : unit -> Async<Result<string, string>>
     abstract StartSyncLoop : unit -> Async<Result<string, string>>
@@ -90,6 +91,7 @@ GET /query/players/<guid>/pilots
 GET /query/online
 
 POST /control/reset
+POST /control/rebuild
 POST /control/advance
 POST /control/run
 POST /control/sync/loop
@@ -226,6 +228,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
                             (fun scenario ->
                                 ctrl.ResetCampaign(scenario)
                                 |> serializeAsync)))
+            path "/control/rebuild" >=> inControlRoom (context (fun _ -> ctrl.RebuildWorld() |> serializeAsync))
             path "/control/advance" >=> inControlRoom (context (fun _ -> ctrl.Advance() |> serializeAsync))
             path "/control/run" >=> inControlRoom (context (fun _ -> ctrl.Run() |> serializeAsync))
             path "/control/resolve" >=> inControlRoom (context (fun _ -> ctrl.ResolveError() |> serializeAsync))

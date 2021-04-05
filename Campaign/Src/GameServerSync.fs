@@ -352,6 +352,91 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
 
     let wkPath f = Path.Combine(settings.WorkDir, f)
 
+    let mkWorld(scenario, weatherDaysOffset) =
+        let world =
+            try
+                Init.mkWorld(scenario + ".Mission", settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
+                |> Ok
+            with exc ->
+                Error (sprintf "Failed to init world: %s" exc.Message)
+        // Randomize weather state
+        let world =
+            world
+            |> Result.map (fun world -> { world with WeatherDaysOffset = weatherDaysOffset })
+        // Load names
+        let countrySuffix country =
+            match country with
+            | GreatBritain -> "Britain"
+            | Russia -> "Russia"
+            | UnitedStates -> "USA"
+            | Germany -> "Germany"
+            | Italy -> "Italy"
+        let world =
+            world
+            |> Result.map (fun world ->
+                let names =
+                    (PilotRanks.NameDatabase.Default, Seq.allPairs [false; true] world.Countries.Keys)
+                    ||> Seq.fold (fun names (isFemale, country) ->
+                        let countrySuffix = countrySuffix country + (if isFemale then "F" else "")
+                        let firstNames = Path.Combine("Config", sprintf "FirstNames%s.txt" countrySuffix)
+                        let lastNames = Path.Combine("Config", sprintf "LastNames%s.txt" countrySuffix)
+                        let names =
+                            if File.Exists firstNames then
+                                if isFemale then
+                                    names.AddFemaleFirstNamesFromFile(country, firstNames)
+                                else
+                                    names.AddFirstNamesFromFile(country, firstNames)
+                            else
+                                names
+                        let names =
+                            if File.Exists lastNames then
+                                if isFemale then
+                                    names.AddFemaleLastNamesFromFile(country, lastNames)
+                                else
+                                    names.AddLastNamesFromFile(country, lastNames)
+                            else
+                                names
+                        names
+                    )
+                { world with Names = names }
+            )
+        // Load ranks
+        let world =
+            world
+            |> Result.map  (fun world ->
+                let ranks =
+                    (Map.empty, world.Countries.Keys)
+                    ||> Seq.fold (fun ranks country ->
+                        let countrySuffix = countrySuffix country
+                        let path = Path.Combine("Config", sprintf "Ranks%s.txt" countrySuffix)
+                        if File.Exists path then
+                            let countryRanks = PilotRanks.Rank.FromFile path
+                            Map.add country countryRanks ranks
+                        else
+                            ranks
+                    )
+                { world with Ranks = { Ranks = ranks } }
+            )
+        world
+
+    let tryLoadLatestState(world) =
+        let latestState =
+            Directory.EnumerateFiles(settings.WorkDir, "*.json")
+            |> Seq.filter (fun s -> s.EndsWith(stateBaseFilename))
+            |> Seq.sortDescending
+            |> Seq.tryHead
+
+        match latestState with
+        | Some latestState ->
+            try
+                let war = WarState.LoadFromFile(latestState, world)
+                Some war
+            with e ->
+                eprintfn "Failed to load '%s': %s" latestState e.Message
+                None
+        | _ ->
+            None
+
     /// Get the current synchronization state
     member this.SyncState = state
 
@@ -569,71 +654,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     Ok "No old campaign data to backup before reset"
 
             let initData _ =
-                let world =
-                    try
-                        Init.mkWorld(scenario + ".Mission", settings.RoadsCapacity * 1.0f<M^3/H>, settings.RailsCapacity * 1.0f<M^3/H>)
-                        |> Ok
-                    with exc ->
-                        Error (sprintf "Failed to init world: %s" exc.Message)
-                // Randomize weather state
                 let weatherDaysOffset = (System.Random().NextDouble() - 0.5) * 30.0
-                let world =
-                    world
-                    |> Result.map (fun world -> { world with WeatherDaysOffset = weatherDaysOffset })
-                // Load names
-                let countrySuffix country =
-                    match country with
-                    | GreatBritain -> "Britain"
-                    | Russia -> "Russia"
-                    | UnitedStates -> "USA"
-                    | Germany -> "Germany"
-                    | Italy -> "Italy"
-                let world =
-                    world
-                    |> Result.map (fun world ->
-                        let names =
-                            (PilotRanks.NameDatabase.Default, Seq.allPairs [false; true] world.Countries.Keys)
-                            ||> Seq.fold (fun names (isFemale, country) ->
-                                let countrySuffix = countrySuffix country + (if isFemale then "F" else "")
-                                let firstNames = Path.Combine("Config", sprintf "FirstNames%s.txt" countrySuffix)
-                                let lastNames = Path.Combine("Config", sprintf "LastNames%s.txt" countrySuffix)
-                                let names =
-                                    if File.Exists firstNames then
-                                        if isFemale then
-                                            names.AddFemaleFirstNamesFromFile(country, firstNames)
-                                        else
-                                            names.AddFirstNamesFromFile(country, firstNames)
-                                    else
-                                        names
-                                let names =
-                                    if File.Exists lastNames then
-                                        if isFemale then
-                                            names.AddFemaleLastNamesFromFile(country, lastNames)
-                                        else
-                                            names.AddLastNamesFromFile(country, lastNames)
-                                    else
-                                        names
-                                names
-                            )
-                        { world with Names = names }
-                    )
-                // Load ranks
-                let world =
-                    world
-                    |> Result.map  (fun world ->
-                        let ranks =
-                            (Map.empty, world.Countries.Keys)
-                            ||> Seq.fold (fun ranks country ->
-                                let countrySuffix = countrySuffix country
-                                let path = Path.Combine("Config", sprintf "Ranks%s.txt" countrySuffix)
-                                if File.Exists path then
-                                    let countryRanks = PilotRanks.Rank.FromFile path
-                                    Map.add country countryRanks ranks
-                                else
-                                    ranks
-                            )
-                        { world with Ranks = { Ranks = ranks } }
-                    )
+                let world = mkWorld(scenario, weatherDaysOffset)
                 match world with
                 | Error e ->
                     Error e
@@ -674,6 +696,39 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 |> Result.bind writeData
 
             return res
+        }
+
+    /// Try to rebuild world definition
+    member this.RebuildWorld() =
+        async {
+            let path = wkPath worldFilename
+            let world =
+                if File.Exists path then
+                    try
+                        let w = World.LoadFromFile path
+                        Ok w
+                    with e ->
+                        Error(sprintf "Failed to load '%s': %s" path e.Message)
+                else
+                    Error "World file not found"
+            match world with
+            | Ok world ->
+                // Stop any ongoing activity
+                this.Interrupt("Rebuild world", true)
+                let world = mkWorld(world.Scenario, world.WeatherDaysOffset)
+                match world with
+                | Error e ->
+                    return Error e
+                | Ok world ->
+                    match tryLoadLatestState(world) with
+                    | Some war2 ->
+                        world.SaveToFile(wkPath worldFilename)
+                        war <- Some war2
+                        return Ok "World rebuilt"
+                    | None ->
+                        return Error "Failed to rebuild war state from new world definition"
+            | Error e ->
+                return Error e
         }
 
     /// Advance scenario to next step
