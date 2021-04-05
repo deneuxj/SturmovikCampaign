@@ -29,7 +29,7 @@ type private ControllerState =
         DtoWorld : Dto.World option
         DtoStateCache : Map<int, Dto.WarState>
         DtoSimulationCache : Map<int, Dto.SimulationStep[]>
-        Sync : GameServerSync.Sync option
+        Sync : (GameServerSync.Sync * System.IDisposable) option
     }
 with
     static member Default =
@@ -62,13 +62,33 @@ type Controller(settings : GameServerControl.Settings) =
             }
         work ControllerState.Default
     )
-    do mb.Start()
 
     let doOnState fn = mb.Post fn
     
     let wkPath f = Path.Combine(settings.WorkDir, f)
 
+    let registerOnStateChanged(sync : GameServerSync.Sync) =
+        sync.StateChanged.Subscribe(fun war ->
+            doOnState (fun s -> async {
+                let dates =
+                    match s.DtoDates with
+                    | Some [| |] ->
+                        Some [| war.Date.ToDto() |]
+                    | Some dates ->
+                        let warDate = war.Date.ToDto()
+                        if dates.[dates.Length - 1] <> warDate then
+                            Array.append dates [| warDate |]
+                        else
+                            dates
+                        |> Some
+                    | None ->
+                        None
+                return { s with War = Some war; DtoDates = dates }
+            })
+        )
+
     do
+        mb.Start()
         // Create work area if it doesn't exist
         if not(Directory.Exists settings.WorkDir) then
             try
@@ -276,13 +296,14 @@ type Controller(settings : GameServerControl.Settings) =
                     | None ->
                         async {
                             let sync = GameServerSync.Sync.Create(settings)
+                            let disp = registerOnStateChanged sync
                             let! status = sync.Init()
                             match status with
-                            | Ok _ -> return Ok sync
+                            | Ok _ -> return Ok(sync, disp)
                             | Error e -> return Error e
                         }
                 match sync with
-                | Ok sync ->
+                | Ok(sync, onStateChanged) ->
                     let rec work stepsLeft =
                         async {
                             if stepsLeft <= 0 then
@@ -296,6 +317,7 @@ type Controller(settings : GameServerControl.Settings) =
                     do! work maxSteps
                     sync.Die("Scenario was forcibly advanced")
                     sync.Dispose()
+                    onStateChanged.Dispose()
                     return { s with Sync = None }
                 | Error e ->
                     channel.Reply(Error e)
@@ -306,7 +328,7 @@ type Controller(settings : GameServerControl.Settings) =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 channel.Reply(
                     s.Sync
-                    |> Option.map (fun sync ->
+                    |> Option.map (fun (sync, _) ->
                         match sync.SyncState with
                         | Some(GameServerSync.PreparingMission _) -> "Preparing mission"
                         | Some GameServerSync.ResavingMission -> "Resaving missions"
@@ -445,49 +467,33 @@ type Controller(settings : GameServerControl.Settings) =
                         async {
                             let sync = GameServerSync.Sync.Create(settings)
                             sync.StopAfterMission <- not doLoop
+                            let disp = registerOnStateChanged sync
                             let! status = sync.Init()
                             match status with
                             | Ok _ ->
-                                sync.StateChanged.Add(fun war ->
-                                    doOnState (fun s -> async {
-                                        let dates =
-                                            match s.DtoDates with
-                                            | Some [| |] ->
-                                                Some [| war.Date.ToDto() |]
-                                            | Some dates ->
-                                                let warDate = war.Date.ToDto()
-                                                if dates.[dates.Length - 1] <> warDate then
-                                                    Array.append dates [| warDate |]
-                                                else
-                                                    dates
-                                                |> Some
-                                            | None ->
-                                                None
-                                        return { s with War = Some war; DtoDates = dates }
-                                    })
-                                )
-                                return Ok sync
+                                return Ok(sync, disp)
                             | Error e ->
                                 return Error e
                         }
                     | Some sync ->
                         async.Return (Ok sync)
                 match sync with
-                | Ok sync ->
+                | Ok(sync, disp) ->
                     sync.Resume()
                     channel.Reply(Ok "Synchronization started")
-                    return { s with Sync = Some sync }
+                    return { s with Sync = Some(sync, disp) }
                 | Error e ->
                     channel.Reply(Error e)
                     return { s with Sync = None }
             }
 
-        member private this.RegisterSyncCleanUp(sync : GameServerSync.Sync) =
+        member private this.RegisterSyncCleanUp(sync : GameServerSync.Sync, unregisterHandlers : System.IDisposable) =
             // Run clean-up after sync is terminated
             async {
                 let! condemned = Async.AwaitEvent(sync.Terminated)
                 doOnState <| fun s -> async {
                     try
+                        unregisterHandlers.Dispose()
                         condemned.Dispose()
                     with _ -> ()
                     return { s with Sync = None }
@@ -498,8 +504,8 @@ type Controller(settings : GameServerControl.Settings) =
         member this.StopSyncAfterMission() =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 match s.Sync with
-                | Some sync ->
-                    this.RegisterSyncCleanUp(sync)
+                | Some(sync, disp) ->
+                    this.RegisterSyncCleanUp(sync, disp)
                     sync.StopAfterMission <- true
                     channel.Reply(Ok "Synchronization will stop after mission ends")
                 | None ->
@@ -510,8 +516,8 @@ type Controller(settings : GameServerControl.Settings) =
         member this.InterruptSync() =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 match s.Sync with
-                | Some sync ->
-                    this.RegisterSyncCleanUp(sync)
+                | Some(sync, disp) ->
+                    this.RegisterSyncCleanUp(sync, disp)
                     sync.Die("Synchronization interrupted")
                     channel.Reply(Ok "Synchronization interrupted")
                 | None ->
@@ -523,7 +529,7 @@ type Controller(settings : GameServerControl.Settings) =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 let sync =
                     match s.Sync with
-                    | Some sync -> sync
+                    | Some(sync, _) -> sync
                     | None ->
                         logger.Debug("Creating temporary sync")
                         // Create a temporary sync
@@ -556,17 +562,19 @@ type Controller(settings : GameServerControl.Settings) =
                     | None ->
                         async {
                             let sync = GameServerSync.Sync.Create(settings)
+                            let disp = registerOnStateChanged(sync)
                             let! status = sync.Init()
                             match status with
-                            | Ok _ -> return Ok sync
+                            | Ok _ -> return Ok(sync, disp)
                             | Error e -> return Error e
                         }
                 match sync with
                 | Error e -> channel.Reply(Error e)
-                | Ok sync ->
+                | Ok(sync, onStateChanged) ->
                     let status = sync.ResolveError()
                     channel.Reply(status)
                     sync.Die("Stop sync after resolving error state")
+                    onStateChanged.Dispose()
                     sync.Dispose()
                 return { s with Sync = None }
             }
@@ -609,7 +617,7 @@ type Controller(settings : GameServerControl.Settings) =
         member this.GetOnlinePlayers() =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 match s.Sync with
-                | Some sync ->
+                | Some(sync, _) ->
                     let! players = sync.GetOnlinePlayers()
                     channel.Reply(players)
                     return s
