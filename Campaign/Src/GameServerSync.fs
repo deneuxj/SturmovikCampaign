@@ -662,7 +662,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     controller <- Some sctrl
                     war <- Some state0
                     step <- Some step0
-                    stateChanged.Trigger(state0)
+                    stateChanged.Trigger(state0.Clone())
                     Ok()
                 with
                 | _ ->
