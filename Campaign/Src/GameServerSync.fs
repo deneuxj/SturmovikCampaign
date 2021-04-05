@@ -715,7 +715,11 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             | Ok world ->
                 // Stop any ongoing activity
                 this.Interrupt("Rebuild world", false)
-                let world = mkWorld(world.Scenario, world.WeatherDaysOffset)
+                let world =
+                    mkWorld(world.Scenario, world.WeatherDaysOffset)
+                    |> Result.map(fun world ->
+                        let groundUnitSet = WorldWar2Internal.GroundUnitSet.Default
+                        groundUnitSet.Setup world)
                 match world with
                 | Error e ->
                     return Error e
