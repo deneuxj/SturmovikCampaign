@@ -714,7 +714,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
             match world with
             | Ok world ->
                 // Stop any ongoing activity
-                this.Interrupt("Rebuild world", true)
+                this.Interrupt("Rebuild world", false)
                 let world = mkWorld(world.Scenario, world.WeatherDaysOffset)
                 match world with
                 | Error e ->
