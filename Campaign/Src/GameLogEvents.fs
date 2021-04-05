@@ -48,6 +48,8 @@ type ObjectTaken = {
     Skin : string
     WeaponMods : uint64
 }
+with
+    member this.HasFemaleCrew = (this.WeaponMods &&& (1UL <<< 24)) <> 0UL
 
 type UserIds = {
     UserId : string

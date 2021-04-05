@@ -118,7 +118,7 @@ type IWarStateQuery with
         |> Seq.tryFind (fun region -> pos.IsInConvexPolygon region.Boundary)
 
     /// Get an existing pilot of a player given the starting airfield, or create a new pilot
-    member this.GetPlayerPilotFrom(playerGuid : string, afId : AirfieldId, country) =
+    member this.GetPlayerPilotFrom(playerGuid : string, afId : AirfieldId, country, isFemale) =
         let logger = NLog.LogManager.GetCurrentClassLogger()
 
         let candidates =
@@ -132,7 +132,7 @@ type IWarStateQuery with
         logger.Debug(sprintf "Pilots of player %s: %s" playerGuid (candidates |> Seq.map (fun pilot -> pilot.FullName) |> String.concat ", "))
 
         Seq.tryHead candidates
-        |> Option.defaultWith (fun () -> this.NewPilot(playerGuid, country))
+        |> Option.defaultWith (fun () -> this.NewPilot(playerGuid, country, isFemale))
 
     /// Try to get the coalition of a country from its event log value
     member this.TryGetCoalitionOfCountry(country : int) =
@@ -463,7 +463,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                     | Some (airfield, _) ->
                         match CountryId.FromMcuValue(enum taken.Country) with
                         | Some country ->
-                            let pilot = state.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country)
+                            let pilot = state.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country, taken.HasFemaleCrew)
                             pilotRecordOf.[taken.PilotId] <- pilot
                         | _ ->
                             ()
@@ -494,7 +494,8 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
                                 let pilot =
                                     match pilotRecordOf.TryGetValue(taken.PilotId) with
                                     | true, x -> x
-                                    | false, _ -> state.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country)
+                                    | false, _ ->
+                                        state.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country, taken.HasFemaleCrew)
                                 let record : FlightRecord =
                                     {
                                         Date = state.Date + timeStamp

@@ -12,13 +12,35 @@ type NameDatabase =
         FirstNames: Map<CountryId, string[]>
         [<Json.AsArrayJsonField(typeof<CountryId>, typeof<string[]>)>]
         LastNames: Map<CountryId, string[]>
+        [<Json.AsArrayJsonField(typeof<CountryId>, typeof<string[]>)>]
+        FemaleFirstNames: Map<CountryId, string[]> option
+        [<Json.AsArrayJsonField(typeof<CountryId>, typeof<string[]>)>]
+        FemaleLastNames: Map<CountryId, string[]> option
     }
 with
     static member Default =
         {
             FirstNames = Map.empty
             LastNames = Map.empty
+            FemaleFirstNames = Some Map.empty
+            FemaleLastNames = Some Map.empty
         }
+
+    member this.TryFindFirstNames(country, isFemale) =
+        let m =
+            if isFemale then
+                this.FemaleFirstNames |> Option.defaultValue Map.empty
+            else
+                this.FirstNames
+        m.TryFind(country)
+
+    member this.TryFindLastNames(country, isFemale) =
+        let m =
+            if isFemale then
+                this.FemaleLastNames |> Option.defaultValue Map.empty
+            else
+                this.LastNames
+        m.TryFind(country)
 
     member private this.AddNamesFromFile(getOldNames, setNewNames, country, path : string) =
         let names =
@@ -50,6 +72,22 @@ with
         this.AddNamesFromFile(
             (fun country -> this.LastNames.TryFind country),
             (fun (added, country) -> { this with LastNames = this.LastNames.Add(country, added) }),
+            country,
+            path
+        )
+
+    member this.AddFemaleFirstNamesFromFile(country, path) =
+        this.AddNamesFromFile(
+            (fun country -> this.FemaleFirstNames |> Option.bind (fun m -> m.TryFind country)),
+            (fun (added, country) -> { this with FemaleFirstNames = (this.FemaleFirstNames |> Option.defaultValue Map.empty).Add(country, added) |> Some }),
+            country,
+            path
+        )
+
+    member this.AddFemaleLastNamesFromFile(country, path) =
+        this.AddNamesFromFile(
+            (fun country -> this.FemaleLastNames |> Option.bind(fun m -> m.TryFind country)),
+            (fun (added, country) -> { this with FemaleLastNames = (this.FemaleLastNames |> Option.defaultValue Map.empty).Add(country, added) |> Some }),
             country,
             path
         )

@@ -284,13 +284,13 @@ module IWarStateExtensions =
             |> List.tryLast
             |> Option.bind (fun flight -> this.TryGetReturnAirfield(flight))
 
-        member this.GetNewNames(country : CountryId, seed : int) : string * string =
+        member this.GetNewNames(country : CountryId, seed : int, isFemale) : string * string =
             let random = System.Random(seed)
             let firstNames =
-                this.World.Names.FirstNames.TryFind(country)
+                this.World.Names.TryFindFirstNames(country, isFemale)
                 |> Option.defaultValue [||]
             let lastNames =
-                this.World.Names.LastNames.TryFind(country)
+                this.World.Names.TryFindLastNames(country, isFemale)
                 |> Option.defaultValue [||]
             let firstName =
                 if Array.isEmpty firstNames then
@@ -306,10 +306,10 @@ module IWarStateExtensions =
 
         /// Return a new pilot, without registering it. The name is deterministically selected in a pseudo-random manner.
         /// The seed is computed from the date of the war state, the scenario, the country, the player GUID and number of existing pilots.
-        member this.NewPilot(guid : string, country : CountryId) : Pilot =
+        member this.NewPilot(guid : string, country : CountryId, isFemale) : Pilot =
             let id = PilotId(Guid.NewGuid())
             let seed = hash(this.Date, this.World.Scenario, country, guid, this.NumPilots)
-            let firstName, lastName = this.GetNewNames(country, seed)
+            let firstName, lastName = this.GetNewNames(country, seed, isFemale)
             { Id = id
               Country = country
               PilotFirstName = firstName

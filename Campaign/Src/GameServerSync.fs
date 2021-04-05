@@ -592,19 +592,25 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     world
                     |> Result.map (fun world ->
                         let names =
-                            (PilotRanks.NameDatabase.Default, world.Countries.Keys)
-                            ||> Seq.fold (fun names country ->
-                                let countrySuffix = countrySuffix country
+                            (PilotRanks.NameDatabase.Default, Seq.allPairs [false; true] world.Countries.Keys)
+                            ||> Seq.fold (fun names (isFemale, country) ->
+                                let countrySuffix = countrySuffix country + (if isFemale then "F" else "")
                                 let firstNames = Path.Combine("Config", sprintf "FirstNames%s.txt" countrySuffix)
                                 let lastNames = Path.Combine("Config", sprintf "LastNames%s.txt" countrySuffix)
                                 let names =
                                     if File.Exists firstNames then
-                                        names.AddFirstNamesFromFile(country, firstNames)
+                                        if isFemale then
+                                            names.AddFemaleFirstNamesFromFile(country, firstNames)
+                                        else
+                                            names.AddFirstNamesFromFile(country, firstNames)
                                     else
                                         names
                                 let names =
                                     if File.Exists lastNames then
-                                        names.AddLastNamesFromFile(country, lastNames)
+                                        if isFemale then
+                                            names.AddFemaleLastNamesFromFile(country, lastNames)
+                                        else
+                                            names.AddLastNamesFromFile(country, lastNames)
                                     else
                                         names
                                 names
