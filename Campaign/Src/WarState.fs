@@ -312,6 +312,7 @@ module IWarStateExtensions =
             let firstName, lastName = this.GetNewNames(country, seed, isFemale)
             { Id = id
               Country = country
+              IsFemaleOpt = Some isFemale
               PilotFirstName = firstName
               PilotLastName = lastName
               PlayerGuid = guid

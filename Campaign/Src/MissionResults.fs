@@ -123,7 +123,7 @@ type IWarStateQuery with
 
         let candidates =
             this.GetPlayerPilots(playerGuid)
-            |> Seq.filter (fun pilot -> pilot.Country = country)
+            |> Seq.filter (fun pilot -> pilot.Country = country && pilot.IsFemale = isFemale)
             |> Seq.filter (fun pilot -> this.IsPilotHealthy(pilot.Id))
             |> Seq.filter (fun pilot -> match this.TryGetPilotHome(pilot.Id) with None -> true | Some home -> home = afId)
             |> Seq.sortByDescending (fun pilot -> pilot.LatestFlightStart, this.TryGetPilotHome(pilot.Id) = Some afId)

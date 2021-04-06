@@ -64,6 +64,7 @@ type Pilot =
         PilotLastName : string
         Health : PilotHealth
         Country : CountryId
+        IsFemaleOpt : bool option
         InitialAwards : string list
         InitialAirKills : int
         InitialNumFlights : int
@@ -77,6 +78,8 @@ with
         this.Flights
         |> List.tryLast
         |> Option.map (fun flight -> flight.Date)
+
+    member this.IsFemale = this.IsFemaleOpt |> Option.defaultValue false
 
 let countCompletedFlights (flights : FlightRecord list) =
     (0, flights)
