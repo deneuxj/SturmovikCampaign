@@ -396,6 +396,7 @@ with
             None
 
 type PreparationSettings = {
+    SupportText : string
     GroundBattleLimits : GroundBattleNumbers
     MaxTrainsPerSide : int
     MaxTruckColumnsPerSide : int
@@ -1236,7 +1237,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     // Result
     {
         Date = state.Date
-        Briefing = state.Date.ToString("d MMM yyyy HH:mm") + "<br>" + state.Weather.Description + "<br>" + briefing
+        Briefing = state.Date.ToString("d MMM yyyy HH:mm") + "<br>" + state.Weather.Description + "<br>" + briefing + "<br><br>" + settings.SupportText
         Boundary = boundary
         PlayerSpawns = spawns
         AntiAirNests = aaNests

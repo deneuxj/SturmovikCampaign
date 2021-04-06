@@ -50,6 +50,7 @@ type Settings =
         Login : string
         Password : string
         SdsFile : string
+        SupportText : string
         WorkDir : string
         GameDir : string
         MissionBaseName : string
@@ -112,6 +113,7 @@ module IO =
             login : string option
             password : string option
             sds_file : string option
+            support_text : string option
             work_dir : string option
             game_dir : string
             mission_basename : string option
@@ -144,6 +146,7 @@ module IO =
                 Login = defaultArg this.login "admin"
                 Password = defaultArg this.password ""
                 SdsFile = defaultArg this.sds_file "campaign.sds"
+                SupportText = defaultArg this.support_text "To support this server and its software: https://www.patreon.com/il2coconut"
                 WorkDir = defaultArg this.work_dir "campaign"
                 GameDir = this.game_dir
                 MissionBaseName = defaultArg this.mission_basename "CocoCampaign"
@@ -181,6 +184,7 @@ module IO =
                 login = None
                 password = None
                 sds_file = None
+                support_text = None
                 work_dir = IO.Path.Combine(dirName, "Current") |> IO.Path.GetFullPath |> Some
                 game_dir = @"C:\Program Files\IL-2 Sturmovik Battle of Stalingrad"
                 mission_basename = None
