@@ -436,7 +436,11 @@ type WorldWar2(world : World, C : Constants) =
                         let missionAlternatives readyAirfields (budget : ForcesAvailability) mkMissionFrom destination =
                             readyAirfields 
                             |> Seq.choose (fun af ->
-                                let mission : AirMission = mkMissionFrom af
+                                let mission : AirMission option = mkMissionFrom af
+                                match mission with
+                                | None ->
+                                    None
+                                | Some mission ->
                                 match budget.TryCheckoutPlane(af.AirfieldId, checkoutDataAir mission) with
                                 | None -> None
                                 | Some budget ->
@@ -446,15 +450,18 @@ type WorldWar2(world : World, C : Constants) =
                                         None)
                         let groupAndBudget =
                             seq {
-                                for mType, attacker in (List.allPairs [Bombing] (bombersOf friendly)) @ (List.allPairs [Strafing] (attackersOf friendly)) do
+                                for (mType, minDist), attacker in (List.allPairs [Bombing, 70000.0f] (bombersOf friendly)) @ (List.allPairs [Strafing, 15000.0f] (attackersOf friendly)) do
                                 for numAttackers in [15; 10; 5] do
                                 let mkAttackerMission af =
-                                    { StartAirfield = af.AirfieldId
-                                      Objective = targetRegion
-                                      MissionType = mType(adapter.MkGroundTarget target)
-                                      Plane = attacker.Id
-                                      NumPlanes = numAttackers
-                                    }
+                                    if (af.Position - targetPos).Length() >= minDist then
+                                        { StartAirfield = af.AirfieldId
+                                          Objective = targetRegion
+                                          MissionType = mType(adapter.MkGroundTarget target)
+                                          Plane = attacker.Id
+                                          NumPlanes = numAttackers
+                                        } |> Some
+                                    else
+                                        None
                                 for attackerMission, budget in missionAlternatives readyAttackAirfields budget mkAttackerMission targetPos do
                                 let attackerStart = war.World.Airfields.[attackerMission.StartAirfield]
                                 for numFighters in [8; 4; 2] do
@@ -465,6 +472,7 @@ type WorldWar2(world : World, C : Constants) =
                                       MissionType = AreaProtection
                                       Plane = fighter.Id
                                       NumPlanes = numFighters }
+                                    |> Some
                                 for fighterMission, budget in missionAlternatives readyCAPAirfields budget mkFighterMission targetPos do
                                 for numInterceptors in [4; 3; 2] do
                                 for interceptor in interceptorsOf friendly do
@@ -474,6 +482,7 @@ type WorldWar2(world : World, C : Constants) =
                                       MissionType = AreaProtection
                                       Plane = interceptor.Id
                                       NumPlanes = numInterceptors }
+                                    |> Some
                                 // Do not use the same airfield as the CAP mission for the interception
                                 let readyCAPAirfields2 =
                                     readyCAPAirfields
