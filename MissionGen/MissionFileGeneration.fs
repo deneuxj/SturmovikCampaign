@@ -987,6 +987,21 @@ with
                 yield! fires
             ]
 
+        // Trim groups
+        let numMcus0 = allGroups |> Seq.sumBy (deepContentOf >> List.length)
+        let coalitionOf =
+            let m =
+                options.GetCountries().Value
+                |> Seq.map (fun x -> let country, coalition = x.Value in enum country.Value, coalition.Value)
+                |> Map
+            m.TryFind
+        let allGroups = McuTrim.trimMcus(coalitionOf, 7500, allGroups)
+        let numMcus1 = allGroups |> Seq.sumBy (deepContentOf >> List.length)
+        allGroups
+        |> Seq.collect deepContentOf
+        |> McuTrim.clearBrokenEntityRefs
+        logger.Info(sprintf "Trimmed mission from %d MCUs to %d" numMcus0 numMcus1)
+
         // Create directories in path to file, if needed
         let outDir = System.IO.Path.GetDirectoryName(settings.OutFilename)
         if not(System.IO.Directory.Exists(outDir)) then

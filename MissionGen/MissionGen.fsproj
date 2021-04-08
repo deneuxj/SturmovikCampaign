@@ -7,6 +7,7 @@
   <ItemGroup>
     <Compile Include="MapGraphics.fs" />
     <Compile Include="StaticDefenseOptimization.fs" />
+    <Compile Include="McuTrim.fs" />
     <Compile Include="MissionFileGeneration.fs" />
   </ItemGroup>
 
