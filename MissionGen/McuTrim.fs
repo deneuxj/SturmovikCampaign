@@ -122,10 +122,10 @@ let tryGetZoneOfInterest (mcu : McuBase) =
     | :? McuAttackArea as area -> Some(area.Pos, area.AttackArea, area.Objects)
     | _ -> None
 
-/// Try to get the country of an MCU.
+/// Try to get the entity and country of an MCU.
 let tryGetCountry (mcu : McuBase) =
     match mcu with
-    | :? HasEntity as owner -> owner.Country
+    | :? HasEntity as owner -> owner.Country |> Option.map (fun country -> owner.LinkTrId, country)
     | _ -> None
 
 /// Remove entities that are loose and aren't within a zone of interest
@@ -142,31 +142,38 @@ let cullEntities coalitionOf (groups : IMcuGroup seq) =
     logger.Info(sprintf "Found %d loose entities" loose.Count)
     let countryOf =
         mcus
-        |> Seq.choose (fun mcu -> mcu |> tryGetCountry |> Option.map (fun country -> idOf mcu, country))
+        |> Seq.choose tryGetCountry
         |> Map.ofSeq
     let zonesOfInterest =
         mcus
         |> Seq.choose tryGetZoneOfInterest
-        |> Seq.map (fun (pos, radius, objs) -> Vector2.FromMcu pos, float32 (radius * radius), objs |> List.choose countryOf.TryFind)
+        |> Seq.map (fun (pos, radius, objs) ->
+            let countries =
+                objs
+                |> List.choose countryOf.TryFind
+            Vector2.FromMcu pos,
+            float32 (radius * radius),
+            countries)
         |> Seq.sortByDescending (fun (_, rad, _) -> rad)
         |> Seq.cache
     let filter (mcu : McuBase) =
         match mcu with
         | :? McuEntity as entity ->
             let coalition =
-                entity.MisObjID
+                entity.Index
                 |> countryOf.TryFind
                 |> Option.bind coalitionOf
             (
                 not(loose.Contains entity.Index) ||
                 zonesOfInterest
                 |> Seq.exists (fun (pos, radius2, countries) ->
-                    (
+                    let isEnemy =
                         countries
-                        |> List.exists (fun country -> coalitionOf country <> coalition) &&
+                        |> List.exists (fun country -> coalitionOf country <> coalition)
+                    let isInRange =
                         let mpos = Vector2.FromMcu entity.Pos
                         (pos - mpos).LengthSquared() <= radius2
-                    )
+                    isEnemy && isInRange
                 )
             )
         | _ -> true
