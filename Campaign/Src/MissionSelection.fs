@@ -256,6 +256,7 @@ let enumerateGroundAttackMissions (state : IWarStateQuery) (coalition : Coalitio
                 | _ ->
                     ()
         }
+
     // If the main mission is targetting a ground battle, include the ground battle mission in the selection
     groundAttackMissions
     |> Seq.collect (fun selection ->
