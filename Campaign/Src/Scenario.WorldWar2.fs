@@ -1232,6 +1232,19 @@ type WorldWar2(world : World, C : Constants) =
                         Campaign.MissionSelection.enumerateOffensivePatrols war data.OffensiveCoalition stepData.Missions
                         Campaign.MissionSelection.enumerateTransfers war data.OffensiveCoalition stepData.Missions
                     ]
+                // Add ground forces transfers
+                |> Seq.map (fun selection ->
+                    let groundTraffic =
+                        stepData.Missions
+                        |> List.filter (
+                            function
+                            | { Kind = GroundMission { MissionType = GroundForcesTransfer _ } } -> true
+                            | _ -> false
+                        )
+                    { selection with
+                        OtherMissions = groundTraffic @ selection.OtherMissions
+                    }
+                )
                 |> Seq.truncate numSelected
                 |> Array.ofSeq
             if candidates.Length = 0 then

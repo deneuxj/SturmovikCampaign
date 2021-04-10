@@ -1076,38 +1076,37 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> Seq.map (fun (region, nodes) -> region, nodes |> Seq.map snd |> List.ofSeq)
         |> dict
 
-    let getPaths (network : Network) =
+    let getPaths (network : Network) (travels : (RegionId * RegionId) seq) =
         let terminalsInRegion = mkTerminalsInRegion network
         let qa = network.GetQuickAccess()
         [
-            for startRegion in state.World.Regions.Values do
-                for destRegionId in startRegion.Neighbours do
-                    match state.GetOwner(startRegion.RegionId), state.GetOwner(destRegionId) with
-                    | Some owner, Some owner2 when owner = owner2 ->
-                        match terminalsInRegion.TryGetValue(startRegion.RegionId), terminalsInRegion.TryGetValue(destRegionId) with
-                        | (true, starts), (true, dests) ->
-                            logger.Debug(sprintf "Considering path between %s and %s" (string startRegion.RegionId) (string destRegionId))
-                            match state.TryFindPath(network, starts, dests, Some owner) with
-                            | Some links ->
-                                let path =
-                                    links
-                                    |> Seq.map (fun link ->
-                                        let pos = qa.GetNode(link.NodeA).Pos
-                                        let dir = qa.GetNode(link.NodeB).Pos - pos
-                                        {
-                                            Pos = pos
-                                            Rotation = dir.YOri
-                                            Altitude = 0.0f
-                                        }
-                                    )
-                                    |> List.ofSeq
-                                logger.Debug("Found path")
-                                yield {| Country = state.World.GetAnyCountryInCoalition(owner); Path = path |}
-                            | None ->
-                                logger.Debug("No path found")
-                                ()
-                        | _ -> ()
+            for startRegionId, destRegionId in travels do
+                match state.GetOwner(startRegionId), state.GetOwner(destRegionId) with
+                | Some owner, Some owner2 when owner = owner2 ->
+                    match terminalsInRegion.TryGetValue(startRegionId), terminalsInRegion.TryGetValue(destRegionId) with
+                    | (true, starts), (true, dests) ->
+                        logger.Debug(sprintf "Considering path between %s and %s" (string startRegionId) (string destRegionId))
+                        match state.TryFindPath(network, starts, dests, Some owner) with
+                        | Some links ->
+                            let path =
+                                links
+                                |> Seq.map (fun link ->
+                                    let pos = qa.GetNode(link.NodeA).Pos
+                                    let dir = qa.GetNode(link.NodeB).Pos - pos
+                                    {
+                                        Pos = pos
+                                        Rotation = dir.YOri
+                                        Altitude = 0.0f
+                                    }
+                                )
+                                |> List.ofSeq
+                            logger.Debug("Found path")
+                            yield {| Country = state.World.GetAnyCountryInCoalition(owner); Path = path |}
+                        | None ->
+                            logger.Debug("No path found")
+                            ()
                     | _ -> ()
+                | _ -> ()
         ]
 
     let organizeConvoys limit (convoys : Convoy list) =
@@ -1121,45 +1120,57 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             |> List.truncate limit)
 
     // Trains
+    let maxRoadTransfer =
+        state.World.Roads.Links
+        |> List.tryHead
+        |> Option.map (fun link -> link.FlowCapacity / state.World.GroundForcesTransportCost)
+        |> Option.defaultValue (10.0f * Truck.AsTargetType.GroundForceValue)
+    logger.Debug(sprintf "Rail/road threshold at %4.0f" maxRoadTransfer)
     logger.Debug("Starting to prepare train convoys")
     let trains =
         [
-            for x in getPaths state.World.Rails do
-                yield {
-                    Country = x.Country
-                    Coalition = state.World.Countries.[x.Country]
-                    Members = [ ConvoyMember.Train ]
-                    Path = x.Path
-                    StartPositions = [ x.Path.Head ]
-                }
+            for m in groundMissions do
+                match m.MissionType with
+                | GroundForcesTransfer(coalition, startRegionId, forces) when forces > maxRoadTransfer ->
+                    for x in getPaths state.World.Rails [startRegionId, m.Objective] do
+                        yield {
+                            Country = x.Country
+                            Coalition = coalition
+                            Members = [ ConvoyMember.Train ]
+                            Path = x.Path
+                            StartPositions = [ x.Path.Head ]
+                        }
+                | _ ->
+                    ()
         ]
         |> organizeConvoys settings.MaxTrainsPerSide
     logger.Debug(sprintf "Generated a total of %d trains" (trains |> List.sumBy List.length))
 
-    // Trucks
-    logger.Debug("Starting to prepare truck convoys")
-    let trucks =
+    // Tank columns
+    logger.Debug("Starting to prepare tank columns")
+    let columns =
         [
-            let rnd = System.Random(state.Seed)
-            for x in getPaths state.World.Roads do
-                let convoy =
-                    List.init 2 (fun _ ->
-                        AntiAirTruck :: List.init 3 (fun _ -> Truck))
-                    |> List.concat
-                    |> Array.ofList
-                    |> Array.shuffle rnd
-                    |> List.ofArray
-                    |> List.truncate (x.Path.Length - 1)
-                yield {
-                    Country = x.Country
-                    Coalition = state.World.Countries.[x.Country]
-                    Members = convoy
-                    Path = x.Path
-                    StartPositions = x.Path |> List.truncate (convoy.Length + 1) |> List.rev
-                }
+            for m in groundMissions do
+                match m.MissionType with
+                | GroundForcesTransfer(coalition, startRegionId, forces) when forces <= maxRoadTransfer ->
+                    for x in getPaths state.World.Roads [startRegionId, m.Objective] do
+                        let convoy =
+                            AntiAirTruck :: StaffCar :: Tank :: ArmoredCar :: ArmoredCar :: Truck :: Truck :: Truck :: []
+                            |> Array.ofList
+                            |> List.ofArray
+                            |> List.truncate (x.Path.Length - 1)
+                        yield {
+                            Country = x.Country
+                            Coalition = coalition
+                            Members = convoy
+                            Path = x.Path
+                            StartPositions = x.Path |> List.truncate (convoy.Length + 1) |> List.rev
+                        }
+                | _ ->
+                    ()
         ]
-        |> organizeConvoys settings.MaxTrainsPerSide
-    logger.Debug(sprintf "Generated a total of %d truck convoys" (trucks |> List.sumBy List.length))
+        |> organizeConvoys settings.MaxTruckColumnsPerSide
+    logger.Debug(sprintf "Generated a total of %d tank columns" (columns |> List.sumBy List.length))
 
     // Fires
     let damagedBuildings =
@@ -1238,7 +1249,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         GroundBattles = battles
         AiPatrols = patrols
         AiAttacks = attacks
-        Convoys = trains @ trucks
+        Convoys = trains @ columns
         ParkedPlanes = parkedPlanes
         Camps = camps
         BuildingFires = fires
