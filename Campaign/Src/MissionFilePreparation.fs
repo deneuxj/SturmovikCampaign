@@ -160,6 +160,7 @@ let computeHealthyBuildingClusters(radius, state : IWarStateQuery, buildings : B
     |> Seq.sortByDescending (snd >> Seq.length)
     |> Seq.map (fun (rep, group) -> rep, group |> Seq.map snd)
 
+let campRadius = 700.0f
 
 type TargetLocator(random : System.Random, state : IWarStateQuery) =
     let mutable freeAreas : FreeAreas.FreeAreasNode option =
@@ -285,13 +286,7 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
             match tryGetBattleLocationCached regId with
             | None ->
                 // No battle going on, find a free location for a camp
-                let campShape =
-                    [
-                        Vector2(1000.0f, 1000.0f)
-                        Vector2(-1000.0f, 1000.0f)
-                        Vector2(-1000.0f, -1000.0f)
-                        Vector2(1000.0f, -1000.0f)
-                    ]
+                let campShape = mkCircle(Vector2.Zero, campRadius)
                 let region = state.World.Regions.[regId]
                 let candidates = getGroundLocationCandidates(region.Boundary, campShape)
                 let filters =
@@ -353,10 +348,12 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
 
     member this.TryGetBattleLocation regId = tryGetBattleLocationCached regId
 
+    /// Try to get a location for objects that can be targetted by AI missions, e.g. tank parks.
     member this.TryGetGroundTargetLocation(regId, targetType) = tryGetGroundTargetLocationCached(regId, targetType)
 
     member this.GetAirfieldAA(afId) = getAirfieldAALocations afId
 
+    /// Get candidates for location of objects that cannot be specifically targetted by AI missions, e.g. AA nests.
     member this.GetGroundLocationCandidates(area, shape) = getGroundLocationCandidates(area, shape)
 
     member this.MarkArea(area : Vector2 list) =
@@ -603,11 +600,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         |> min (50.0f * TargetType.Tank.GroundForceValue)
                     if forces > 5.0f * TargetType.Tank.GroundForceValue then
                         // Find an area
-                        let radius = 0.700f
-                        let shape = mkCircle(Vector2.Zero, radius)
-                        let locations = locator.GetGroundLocationCandidates (region.Boundary, shape)
+                        let location = locator.TryGetGroundTargetLocation(region.RegionId, GroundTargetType.GroundForces coalition)
                         let yori = float32(random.NextDouble() * 350.0)
-                        match Seq.tryHead locations with
+                        match location with
                         | Some location ->
                             let vehicles =
                                 Seq.initInfinite (fun _ ->
@@ -630,7 +625,8 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                 |> Seq.choose snd
                                 
                             if not(Seq.isEmpty vehicles) then
-                                locator.MarkArea(shape |> List.map ((+) location))
+                                let shape = mkCircle(location, campRadius)
+                                locator.MarkArea(shape)
                                 yield { Coalition = coalition; Pos = { Pos = location; Rotation = yori; Altitude = 0.0f }; Vehicles = vehicles }
                         | None ->
                             ()
