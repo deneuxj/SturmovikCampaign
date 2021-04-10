@@ -52,7 +52,6 @@ with
 
         // Position all nodes
         let refPos = Vector2.FromMcu probe.Pos
-        let dv = pos - refPos
         for mcu in group do
             let rel = Vector2.FromMcu(mcu.Pos) - refPos
             (rel + pos).AssignTo mcu.Pos
