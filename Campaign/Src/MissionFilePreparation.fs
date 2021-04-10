@@ -191,10 +191,8 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
     let getGroundLocationCandidates(region, shape) =
         match freeAreas with
         | Some root ->
-            let rank _ = 
-                random.Next()
             let candidates =
-                FreeAreas.findPositionCandidates rank root shape region
+                FreeAreas.findPositionCandidates random root shape region
                 |> Seq.cache
             candidates
         | None ->

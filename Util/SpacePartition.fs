@@ -380,51 +380,46 @@ module FreeAreas =
             |> Seq.map sumArea
             |> Seq.fold (fun (area, num) (acc0, acc1) -> (area + acc0, num + acc1)) (0.0f, 0)
 
-    /// Find candidates for the center of a shape that must fit within non-free areas, within the boundaries of a region
-    let findPositionCandidates rankCandidate (root : FreeAreasNode) (shape : Vector2 list) (region : Vector2 list) =
-        let center = Seq.sum shape / float32 (List.length shape)
-        let rec candidates (node : FreeAreasNode) =
-            seq {
-                if Functions.intersectWithBoundingBox id region (node.Min, node.Max) then
-                    if Array.isEmpty node.Children then
-                        let center = 0.5f * (node.Min + node.Max)
-                        yield center
-                    else
-                        yield!
-                            node.Children
-                            |> Seq.collect candidates
-            }
+    /// Find candidates for the reference point of a shape (0, 0) that must fit within free areas and within the boundaries of a convex region
+    let findPositionCandidates (random : System.Random) (root : FreeAreasNode) (shape : Vector2 list) (region : Vector2 list) =
+        let candidates =
+            let xs = region |> List.map (fun v -> v.X)
+            let ys = region |> List.map (fun v -> v.Y)
+            let b0 = Vector2(List.min xs, List.min ys)
+            let b1 = Vector2(List.max xs, List.max ys)
+            Seq.initInfinite (fun _ ->
+                let r0 = random.NextDouble() |> float32
+                let r1 = random.NextDouble() |> float32
+                Vector2(r0 * b0.X + (1.0f - r0) * b1.X, r1 * b0.Y + (1.0f - r1) * b1.Y))
+            |> Seq.cache
+            |> Seq.filter (fun v -> v.IsInConvexPolygon region)
+
         let validate (candidate : Vector2) =
-            let shape = shape |> List.map ((+) (candidate - center))
+            let shape = shape |> List.map ((+) candidate)
             let rec hasIntersectionWithNonFree (node : FreeAreasNode) =
                 if Array.isEmpty node.Children then
                     // Area covered by node is free
                     false
                 else
                     // Children that are fully filled with obstacles (e.g. squares in forests, lakes, cities...)
-                    let occupied =
+                    let occupied() =
                         QuadNode.divideBounds(node.Min, node.Max)
                         |> Seq.filter (fun bounds -> node.Children |> Array.exists (fun child -> (child.Min, child.Max) = bounds) |> not)
+                        |> List.ofSeq
                     // Check if bound box intersects with shape
                     let canIntersect = Functions.intersectWithBoundingBox id shape (node.Min, node.Max)
                     // Check if the fully occupied areas intersect with the shape
                     let intersectsHere() = 
-                        occupied
-                        |> Seq.exists (fun bounds -> Functions.intersectWithBoundingBox id shape bounds)
+                        occupied()
+                        |> List.exists (fun bounds -> Functions.intersectWithBoundingBox id shape bounds)
                     // Recursive check
                     let intersectsDown() =
                         node.Children
                         |> Array.exists hasIntersectionWithNonFree
                     // Result
                     canIntersect && (intersectsHere() || intersectsDown())
-            if not(hasIntersectionWithNonFree root) then
-                Some candidate
-            else
-                None
+            not(hasIntersectionWithNonFree root)
 
-        candidates root
-        |> Seq.map (fun x -> rankCandidate x, x)
-        |> Seq.cache
-        |> Seq.sortByDescending fst
-        |> Seq.map snd
-        |> Seq.choose validate
+        candidates
+        |> Seq.truncate 1000
+        |> Seq.filter validate

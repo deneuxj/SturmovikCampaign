@@ -137,10 +137,8 @@ let main argv =
                 with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
             match freeAreas with
             | Some root ->
-                let rank _ = 
-                    random.Next()
                 let candidates =
-                    FreeAreas.findPositionCandidates rank root shape region
+                    FreeAreas.findPositionCandidates random root shape region
                     |> Seq.truncate numCandidates
                     |> Seq.cache
                 match rest with
