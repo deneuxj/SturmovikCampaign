@@ -173,7 +173,7 @@ with
         // Set attack radius according to gun type
         let range =
             match specialty with
-            | _ when isFlak -> 9000
+            | _ when isFlak -> 5000
             | AntiTank | Artillery | AntiAirCanon -> 2000
             | AntiAirMg -> 1500
         match attackOrder with
