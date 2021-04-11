@@ -244,6 +244,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
         GET >=> pathStarts "/doc/" >=> Files.browse (System.IO.Path.Combine(System.Environment.CurrentDirectory))
         GET >=> pathStarts "/html/" >=> Files.browseHome
         GET >=> pathStarts "/js/" >=> Files.browseHome
+        GET >=> path "/favicon.ico" >=> Files.browse (System.IO.Path.Combine(System.Environment.CurrentDirectory, "favicon_package"))
         GET >=> path "/" >=> Redirection.found "/html/map.html"
         context (fun ctx ->
             "Invalid request. Try 'GET <url>/help' for a list of valid requests."

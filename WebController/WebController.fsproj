@@ -11,6 +11,26 @@
     <None Include="NLog.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="favicon_package\safari-pinned-tab.svg">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <None Include="favicon_package\site.webmanifest">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <Content Include="favicon_package\android-chrome-192x192.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Include="favicon_package\android-chrome-512x512.png" />
+    <Content Include="favicon_package\apple-touch-icon.png" />
+    <Content Include="favicon_package\browserconfig.xml" />
+    <Content Include="favicon_package\favicon-16x16.png" />
+    <Content Include="favicon_package\favicon-32x32.png" />
+    <None Include="favicon_package\favicon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <Content Include="favicon_package\mstile-150x150.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
     <Compile Include="Basic.Dto.fs" />
     <Compile Include="World.Dto.fs" />
     <Compile Include="War.Dto.fs" />
@@ -22,6 +42,7 @@
     <Compile Include="Controller.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\Blocks\Blocks.fsproj" />
     <ProjectReference Include="..\Campaign\Campaign.fsproj" />
