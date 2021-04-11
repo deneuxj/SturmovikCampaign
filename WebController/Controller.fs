@@ -695,10 +695,19 @@ type Controller(settings : GameServerControl.Settings) =
             }
 
         member this.GetScenarioNames() =
+            let nonScenarios =
+                Set [
+                    "Blocks"
+                    "Blocks2"
+                    "Buildings"
+                    "Parking"
+                    "Vehicles"
+                ]
             try
                 let exeDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
                 System.IO.Directory.EnumerateFiles(exeDir, "*.mission")
                 |> Seq.map (fun file -> System.IO.Path.GetFileNameWithoutExtension(file))
+                |> Seq.filter (nonScenarios.Contains >> not)
                 |> List.ofSeq
                 |> Ok
             with _ ->
