@@ -122,6 +122,7 @@ module WorldWar2Internal =
             Germany, [
                 "opel-blitz"
                 "horch830"
+                "mg34-aa"
                 "sdkfz10-flak38"
                 "pziv-f1"
                 "pziii-h"

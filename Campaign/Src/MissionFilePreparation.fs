@@ -612,7 +612,8 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                     | Some x ->
                                         Some(convoyMember, x)
                                     | None ->
-                                        logger.Warn(sprintf "Failed to find ground unit for %s" (string convoyMember))
+                                        //groundUnitCache.Remove((coalition, convoyMember)) |> ignore
+                                        logger.Warn(sprintf "Failed to find ground unit for %s %s" (string coalition) (string convoyMember))
                                         None)
                                 |> Seq.cache
                                 |> Seq.choose id
