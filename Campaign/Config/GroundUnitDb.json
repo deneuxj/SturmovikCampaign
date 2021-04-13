@@ -160,8 +160,8 @@
         "is_mobile": true,
         "dyn_script": "LuaScripts\\WorldObjects\\vehicles\\pziii-h.txt",
         "dyn_model": "graphics\\vehicles\\pziii-h\\pziii-h.mgm",
-        "dyn_script": "LuaScripts\\WorldObjects\\Blocks\\static_pz_iiih.txt",
-        "dyn_model": "graphics\\blocks\\static_pz_iiih.mgm",
+        "static_script": "LuaScripts\\WorldObjects\\Blocks\\static_pz_iiih.txt",
+        "static_model": "graphics\\blocks\\static_pz_iiih.mgm",
         "durability": 2000
     },
     {
