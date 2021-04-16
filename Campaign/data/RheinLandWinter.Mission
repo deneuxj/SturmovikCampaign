@@ -1839,7 +1839,7 @@ Group
     YPos = 189.662;
     ZPos = 214232.614;
     XOri = 0.00;
-    YOri = 255.05;
+    YOri = 164.71;
     ZOri = 0.00;
     Model = "graphics\airfields\fakefield.mgm";
     Script = "LuaScripts\WorldObjects\Airfields\fakefield.txt";
@@ -1856,44 +1856,44 @@ Group
       Point
       {
         Type = 0;
-        X = -358.44;
-        Y = -348.488;
+        X = 412.381;
+        Y = -332.398;
       }
       Point
       {
         Type = 1;
-        X = -382.428;
-        Y = -304.432;
+        X = 332.653;
+        Y = -372.737;
       }
       Point
       {
         Type = 1;
-        X = -370.651;
-        Y = -234.53;
+        X = 259.039;
+        Y = -408.201;
       }
       Point
       {
         Type = 2;
-        X = -337.442;
-        Y = -181.434;
+        X = 191.791;
+        Y = -287.672;
       }
       Point
       {
         Type = 2;
-        X = 618.909;
-        Y = -428.962;
+        X = 424.311;
+        Y = 553.616;
       }
       Point
       {
         Type = 1;
-        X = 644.387;
-        Y = -394.572;
+        X = 385.279;
+        Y = 612.19;
       }
       Point
       {
         Type = 0;
-        X = 642.003;
-        Y = -319.106;
+        X = 279.515;
+        Y = 630.447;
       }
     }
     ReturnPlanes = 0;
