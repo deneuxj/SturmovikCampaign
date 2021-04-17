@@ -211,9 +211,18 @@ module IWarStateExtensions =
             |> List.sumBy this.GetBuildingCapacity
 
         member this.GetBuildingHealth(bid) =
-            let building = this.World.GetBuildingInstance(bid)
-            building.Properties.SubParts
-            |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part))
+            match this.World.TryGetBuildingInstance(bid) with
+            | Some building ->
+                match building.Properties.SubParts.Length with
+                | n when n > 0 ->
+                    let sum =
+                        building.Properties.SubParts
+                        |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part))
+                    sum / (float32 n)
+                | _ ->
+                    1.0f
+            | None ->
+                1.0f
 
         /// Get the amount of resources available for anti-air defenses.
         member this.ComputeRegionAntiAirBudget(transport : RegionId * RegionId -> float32<M^3/H>, supplies : RegionId -> float32<M^3/H>, rId : RegionId, coalition : CoalitionId) =
@@ -588,16 +597,20 @@ type WarState
         |> Seq.map (fun kvp -> fst kvp.Key, snd kvp.Key, 1.0f - kvp.Value)
 
     member this.GetBuildingFullCapacity(bid) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        let building = this.World.Buildings.[bid]
-        (float32 building.Properties.SubParts.Length) * building.Properties.PartCapacity
+        match this.World.Buildings.TryGetValue(bid) with
+        | true, building ->
+            (float32 building.Properties.SubParts.Length) * building.Properties.PartCapacity
+        | false, _ ->
+            0.0f<M^3>
 
     member this.GetBuildingCapacity(bid) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        let building = this.World.Buildings.[bid]
-        building.Properties.SubParts
-        |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
-        |> (*) building.Properties.PartCapacity
+        match this.World.Buildings.TryGetValue(bid) with
+        | true, building ->
+            building.Properties.SubParts
+            |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
+            |> (*) building.Properties.PartCapacity
+        | false, _ ->
+            0.0f<M^3>
 
     member this.GetBuildingPartFunctionalityLevel(bid, part) =
         let health = this.GetBuildingPartHealthLevel(bid, part)
@@ -607,11 +620,13 @@ type WarState
             health
 
     member this.GetBuildingFunctionalityLevel(bid) =
-        assert(this.World.Buildings.ContainsKey(bid))
-        let building = this.World.Buildings.[bid]
-        building.Properties.SubParts
-        |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
-        |> (*) (1.0f / (building.Properties.SubParts.Length |> max 1 |> float32))
+        match this.World.Buildings.TryGetValue(bid) with
+        | true, building ->
+            building.Properties.SubParts
+            |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
+            |> (*) (1.0f / (building.Properties.SubParts.Length |> max 1 |> float32))
+        | false, _ ->
+            1.0f
 
     member this.SetBuildingPartHealthLevel(bid, part, x) =
         if x = 1.0f then
@@ -629,12 +644,15 @@ type WarState
             1.0f
 
     member this.GetBridgeFunctionalityLevel(bid) =
-        let building = this.World.Bridges.[bid]
-        building.Properties.SubParts
-        |> List.fold (fun level part ->
-            this.GetBuildingPartFunctionalityLevel(bid, part)
-            |> min level
-        ) 1.0f
+        match this.World.Bridges.TryGetValue(bid) |> Option.ofPair with
+        | Some building ->
+            building.Properties.SubParts
+            |> List.fold (fun level part ->
+                this.GetBuildingPartFunctionalityLevel(bid, part)
+                |> min level
+            ) 1.0f
+        | None ->
+            1.0f
 
     member this.GetGroundForces(coalition, region) =
         groundForces.TryGetValue((coalition, region))

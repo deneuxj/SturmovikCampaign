@@ -1180,11 +1180,14 @@ type WorldWar2(world : World, C : Constants) =
                     [|
                         for af in war.World.Airfields.Values do
                             for bid in af.Facilities do
-                                let building = world.GetBuildingInstance(bid)
-                                for part in building.Properties.SubParts do
-                                    let health = war.GetBuildingPartHealthLevel(bid, part)
-                                    if health < 1.0f then
-                                        yield Choice1Of2(building, bid, part, health, af)
+                                match world.TryGetBuildingInstance(bid) with
+                                | Some building ->
+                                    for part in building.Properties.SubParts do
+                                        let health = war.GetBuildingPartHealthLevel(bid, part)
+                                        if health < 1.0f then
+                                            yield Choice1Of2(building, bid, part, health, af)
+                                | None ->
+                                    logger.Warn(sprintf "Building or bridge %s not found" (string bid))
                         for bridge in world.Bridges.Values do
                             let bid = bridge.Id
                             let region = war.World.FindRegionAt(bridge.Pos.Pos)

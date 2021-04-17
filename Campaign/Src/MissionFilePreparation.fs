@@ -1019,7 +1019,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         airfield.Facilities
                         |> List.collect (fun ((BuildingInstanceId pos) as bid) ->
                             if state.GetBuildingFunctionalityLevel(bid) > 0.5f then
-                                state.World.GetBuildingInstance(bid).Properties.ParkingSpots
+                                state.World.TryGetBuildingInstance(bid)
+                                |> Option.map (fun b -> b.Properties.ParkingSpots)
+                                |> Option.defaultValue []
                                 |> List.map (fun spot ->
                                     { spot with
                                         Pos =
@@ -1194,15 +1196,19 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> Seq.append (
             state.World.AirfieldsList
             |> Seq.collect (fun af -> Seq.allPairs [af.Region] af.Facilities))
-        |> Seq.map (fun (region, bId) -> region, state.World.GetBuildingInstance bId)
+        |> Seq.map (fun (region, bId) -> region, state.World.TryGetBuildingInstance bId)
         |> Seq.choose (fun (region, b) ->
-            if b.Properties.Capacity > 0.0f<M^3> then
-                let health = state.GetBuildingHealth(b.Id)
-                if health < 0.5f then
-                    Some(region, b, health)
+            match b with
+            | Some b ->
+                if b.Properties.Capacity > 0.0f<M^3> then
+                    let health = state.GetBuildingHealth(b.Id)
+                    if health < 0.5f then
+                        Some(region, b, health)
+                    else
+                        None
                 else
                     None
-            else
+            | None ->
                 None)
         // Prioritize front regions and then amount of capacity loss
         |> Seq.sortByDescending (fun (region, b, health) ->

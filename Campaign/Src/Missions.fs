@@ -446,11 +446,17 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                         let subject =
                             match target.Kind with
                             | TargetType.Bridge(bid, _) ->
-                                let building = war.World.Bridges.[bid]
-                                sprintf "Bridge %s" building.Properties.Model
+                                match war.World.Bridges.TryGetValue(bid) |> Option.ofPair with
+                                | Some building ->
+                                    sprintf "Bridge %s" building.Properties.Model
+                                | None ->
+                                    "A bridge"
                             | TargetType.Building(bid, _) ->
-                                let building = war.World.Buildings.[bid]
-                                sprintf "Building %s" building.Properties.Model
+                                match war.World.Buildings.TryGetValue(bid) |> Option.ofPair with
+                                | Some building ->
+                                    sprintf "Building %s" building.Properties.Model
+                                | None ->
+                                    "A building"
                             | TargetType.ParkedPlane(afId, parked) ->
                                 sprintf "Parked plane %s at %s" (string parked) afId.AirfieldName
                             | Truck -> "Truck"
@@ -526,8 +532,10 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                 |> List.filter (fun bid -> war.World.Bridges.[bid].Pos.Pos.IsInConvexPolygon region.Boundary)
                                 |> List.sortByDescending (war.GetBridgeFunctionalityLevel)
                                 |> Seq.collect (fun bid ->
-                                    let bridge = war.World.Bridges.[bid]
-                                    getBridgeParts owner bridge)
+                                    war.World.Bridges.TryGetValue(bid)
+                                    |> Option.ofPair
+                                    |> Option.map (getBridgeParts owner)
+                                    |> Option.defaultValue Seq.empty)
                             targets
 
                         | BuildingTarget ->
@@ -536,8 +544,10 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                 region.IndustryBuildings
                                 |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
                                 |> Seq.collect (fun bid ->
-                                    let building = war.World.Buildings.[bid]
-                                    getBuildingParts owner building)
+                                    war.World.Buildings.TryGetValue(bid)
+                                    |> Option.ofPair
+                                    |> Option.map (getBuildingParts owner)
+                                    |> Option.defaultValue Seq.empty)
                             targets
 
                         | AirfieldTarget af ->
@@ -547,8 +557,10 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                 |> List.ofSeq
                                 |> List.sortByDescending (war.GetBuildingFunctionalityLevel)
                                 |> Seq.collect (fun bid ->
-                                    let building = war.World.Buildings.[bid]
-                                    getBuildingParts owner building)
+                                    war.World.Buildings.TryGetValue(bid)
+                                    |> Option.ofPair
+                                    |> Option.map (getBuildingParts owner)
+                                    |> Option.defaultValue Seq.empty)
 
                             let parkedPlanes =
                                 war.GetNumPlanes(af)

@@ -533,9 +533,9 @@ type World with
         )
 
     /// Get building or bridge instance by its ID
-    member this.GetBuildingInstance(bid : BuildingInstanceId) =
+    member this.TryGetBuildingInstance(bid : BuildingInstanceId) =
         [this.Buildings; this.Bridges]
-        |> Seq.pick (fun d -> d.TryGetValue(bid) |> Option.ofPair)
+        |> Seq.tryPick (fun d -> d.TryGetValue(bid) |> Option.ofPair)
 
     member this.GetAnyCountryInCoalition(coalition) =
         this.CountriesList

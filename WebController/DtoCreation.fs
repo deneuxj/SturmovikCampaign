@@ -245,16 +245,14 @@ module DtoCreation =
             let verb, args =
                 match this with
                 | WarStateUpdate.DamageBuildingPart(bid, part, damage) ->
-                    let building = state.World.GetBuildingInstance(bid)
                     "DamageBuildingPart",
-                    [ "BuildingAt", building.Pos.ToDto() :> obj
+                    [ "BuildingAt", bid.Pos.ToDto() :> obj
                       "Part", box part
                       "Damage", box damage
                     ] |> Map.ofSeq
                 | WarStateUpdate.RepairBuildingPart(bid, part, repair) ->
-                    let building = state.World.GetBuildingInstance(bid)
                     "RepairBuildingPart",
-                    [ "BuildingAt", building.Pos.ToDto() :> obj
+                    [ "BuildingAt", bid.Pos.ToDto() :> obj
                       "Part", box part
                       "Repair", box repair
                     ] |> Map.ofSeq
@@ -328,7 +326,7 @@ module DtoCreation =
                 match this with
                 | WarStateUpdate.UpdatedStorageValue(bid, amount) ->
                     "UpdatedStorageValue",
-                    [ "BuildingAt", state.World.GetBuildingInstance(bid).Pos.ToDto() :> obj
+                    [ "BuildingAt", bid.Pos.ToDto() :> obj
                       "Amount", box amount
                     ] |> Map.ofSeq
                 | WarStateUpdate.UpdatedPlanesAtAirfield { Airfield = afId; Planes = content } ->

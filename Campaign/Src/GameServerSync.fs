@@ -183,20 +183,23 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
                                 let newAmount = prevAmount + amount
                                 groundForcesDestroyed <- groundForcesDestroyed.Add(coalition, newAmount)
                             | Some(WarStateUpdate.Commands.DamageBuildingPart(bid, part, damage)) ->
-                                let building = war.World.Buildings.[bid]
-                                let coalition =
-                                    war.World.RegionsList
-                                    |> Seq.tryFind (fun region -> bid.Pos.Pos.IsInConvexPolygon region.Boundary)
-                                    |> Option.bind (fun region -> war.GetOwner(region.RegionId))
-                                if building.Properties.SubParts |> List.exists ((=) part) then
-                                    match coalition with
-                                    | Some coalition ->
-                                        let storage = building.Properties.PartCapacity * damage
-                                        let prevAmount = Map.tryFind coalition storageDestroyed |> Option.defaultValue 0.0f<M^3>
-                                        let newAmount = prevAmount + storage
-                                        storageDestroyed <- storageDestroyed.Add(coalition, newAmount)
-                                    | None ->
-                                        ()
+                                match war.World.TryGetBuildingInstance(bid) with
+                                | Some building ->
+                                    let coalition =
+                                        war.World.RegionsList
+                                        |> Seq.tryFind (fun region -> bid.Pos.Pos.IsInConvexPolygon region.Boundary)
+                                        |> Option.bind (fun region -> war.GetOwner(region.RegionId))
+                                    if building.Properties.SubParts |> List.exists ((=) part) then
+                                        match coalition with
+                                        | Some coalition ->
+                                            let storage = building.Properties.PartCapacity * damage
+                                            let prevAmount = Map.tryFind coalition storageDestroyed |> Option.defaultValue 0.0f<M^3>
+                                            let newAmount = prevAmount + storage
+                                            storageDestroyed <- storageDestroyed.Add(coalition, newAmount)
+                                        | None ->
+                                            ()
+                                | None ->
+                                    ()
                             | _ ->
                                 ()
                             if timeSinceLastUpdate.ElapsedMilliseconds > 5000L then
@@ -295,8 +298,8 @@ module WarStateExt =
                   war.BuildingDamages |> List.ofSeq
               member this.GetAirfield(afId: AirfieldId): IAirfield = 
                   war.World.Airfields.[afId] :> IAirfield
-              member this.GetBuildingInstance(bid: Common.Buildings.BuildingInstanceId): Common.Buildings.BuildingInstance = 
-                  war.World.GetBuildingInstance(bid)
+              member this.TryGetBuildingInstance(bid: Common.Buildings.BuildingInstanceId): Common.Buildings.BuildingInstance option = 
+                  war.World.TryGetBuildingInstance(bid)
               member this.GetCountryCoalition(country: CountryId): CoalitionId = 
                   war.World.Countries.[country]
               member this.GetCoalitionMainCountry(coalition: CoalitionId): CountryId =

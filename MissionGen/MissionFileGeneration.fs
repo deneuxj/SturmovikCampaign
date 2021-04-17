@@ -555,7 +555,7 @@ type MissionGenSettings =
 
 type IBuildingQuery =
     abstract BuildingDamages : (BuildingInstanceId * int * float32) list
-    abstract GetBuildingInstance : BuildingInstanceId -> BuildingInstance
+    abstract TryGetBuildingInstance : BuildingInstanceId -> BuildingInstance option
     abstract GetOwnerAt : Vector2 -> CountryId option
     abstract GetBuildingDurability : ScriptName: string -> int option
 
@@ -579,7 +579,10 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
         |> Seq.mutableDict
     // Apply damages
     for (bId, part, damage) in buildings.BuildingDamages |> Seq.filter filterDamages do
-        let building = buildings.GetBuildingInstance(bId)
+        match buildings.TryGetBuildingInstance(bId) with
+        | None -> ()
+        | Some building ->
+
         let roundedPos = roundPos2 building.Pos
         match blockAt.TryGetValue(roundedPos) with
         | true, block ->
