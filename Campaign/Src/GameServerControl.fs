@@ -69,6 +69,9 @@ type Settings =
         MaxBattleAntiTankGuns : int
         MaxBattleRocketArtillery : int
         MinFightersInPlayableMission : int
+        MaxTotalNumFires : int
+        MaxFiresRadius : int
+        MaxNumFiresInRadius : int
     }
 with
     /// Root of the data dir, passed to resaver.exe
@@ -132,6 +135,9 @@ module IO =
             max_battle_artillery : int option
             max_battle_rocket_artillery : int option
             min_fighters_playable_mission : int option
+            max_total_num_fires : int option
+            max_fires_radius : int option
+            max_num_fires_in_radius : int option
         }
     with
         member this.AsSettings =
@@ -165,6 +171,9 @@ module IO =
                 MaxBattleRocketArtillery = defaultArg this.max_battle_rocket_artillery 7
                 MaxBattleTanks = defaultArg this.max_battle_tanks 7
                 MinFightersInPlayableMission = defaultArg this.min_fighters_playable_mission 100
+                MaxTotalNumFires = defaultArg this.max_total_num_fires 100
+                MaxFiresRadius = defaultArg this.max_fires_radius 3500
+                MaxNumFiresInRadius = defaultArg this.max_num_fires_in_radius 2
             }
 
     /// Create a default settings file and return its content.
@@ -203,6 +212,9 @@ module IO =
                 max_battle_at_guns = None
                 max_battle_rocket_artillery = None
                 min_fighters_playable_mission = None
+                max_total_num_fires = None
+                max_num_fires_in_radius = None
+                max_fires_radius = None
             }
         let json = Json.serialize content
         IO.File.WriteAllText(path, json)

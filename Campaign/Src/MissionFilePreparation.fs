@@ -396,6 +396,9 @@ type PreparationSettings = {
     MaxTrainsPerSide : int
     MaxTruckColumnsPerSide : int
     MissionLength : System.TimeSpan
+    MaxFiresRadius : int
+    MaxNumFiresInRadius : int
+    MaxTotalNumFires : int
 }
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
@@ -1222,9 +1225,12 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     let spacedOutBuildings =
         ([], damagedBuildings)
         ||> Seq.fold (fun xs (_, b, health) ->
-            if xs.Length >= 100 then
+            let nearby =
                 xs
-            elif xs |> List.exists (fun (b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < 1000.0f) then
+                |> Seq.filter (fun (b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < (float32 settings.MaxFiresRadius))
+            if xs.Length >= settings.MaxTotalNumFires then
+                xs
+            elif Seq.length nearby > settings.MaxNumFiresInRadius then
                 xs
             else
                 (b, health) :: xs
@@ -1237,7 +1243,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             {
                 Pos = { b.Pos with Rotation = float32 state.Weather.Wind.Direction }
                 Intensity =
-                    if health < 0.125f then
+                    if health < 0.049f then
                         SturmovikMission.Blocks.FireLoop.CityFire
                     elif health < 0.4f then
                         SturmovikMission.Blocks.FireLoop.CityFireSmall

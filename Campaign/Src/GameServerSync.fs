@@ -841,6 +841,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             MissionFilePreparation.MaxTruckColumnsPerSide = settings.MaxTruckConvoysPerCoalition
                             MissionFilePreparation.MissionLength = TimeSpan.FromMinutes(float settings.MissionDuration)
                             MissionFilePreparation.GroundBattleLimits = settings.GroundBattleLimits
+                            MissionFilePreparation.MaxTotalNumFires = settings.MaxTotalNumFires
+                            MissionFilePreparation.MaxFiresRadius = settings.MaxFiresRadius
+                            MissionFilePreparation.MaxNumFiresInRadius = settings.MaxNumFiresInRadius
                         }
                     let missionGenSettings : MissionGenSettings =
                         {
