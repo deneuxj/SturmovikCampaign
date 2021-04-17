@@ -33,6 +33,7 @@ open Campaign.GameLogEvents
 open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.WarStateUpdate
+open Campaign.WarStateUpdate.CommandExecution
 open Campaign.Pilots
 open System.Collections.Generic
 open Campaign.MissionGen.MissionFileGeneration
@@ -218,11 +219,39 @@ type Binding with
         | None ->
             None
 
-/// Extract war state updade commands from the game logs.
-/// Note: The state must be updated as soon as a command is yielded.
-let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
+/// A modified asyncSeq builder that update a war state whenever a command is yielded.
+type ImpAsyncSeq(warState : IWarState) =
+    member this.Yield(v) =
+        match v with
+        | (_, _, Some (cmd : Commands)) -> cmd.Execute(warState) |> ignore
+        | _ -> ()
+        asyncSeq.Yield(v)
+
+    member this.YieldFrom(source) =
+        asyncSeq.YieldFrom(source)
+
+    member this.For(source : AsyncSeq<'T>, action) =
+        asyncSeq.For(source, action)
+
+    member this.For(source : 'T seq, action) =
+        asyncSeq.For(source, action)
+
+    member this.Zero() = asyncSeq.Zero()
+
+    member this.Combine(seq1, seq2) = asyncSeq.Combine(seq1, seq2)
+
+    member this.TryWith(body, handler) = asyncSeq.TryWith(body, handler)
+
+    member this.Delay(f) = asyncSeq.Delay(f)
+
+/// Extract war state updade commands from the game logs and update the war state.
+let processLogs (state : IWarState) (logs : AsyncSeq<string>) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
-    asyncSeq {
+
+    let impAsyncSeq =
+        ImpAsyncSeq(state)
+
+    impAsyncSeq {
         // Object ID to Binding
         let bindings = Seq.mutableDict []
         // Vehicle ID to ObjectTaken
@@ -239,7 +268,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
         let pilotRecordOf = Seq.mutableDict []
 
         let handleDamage(timeStamp, amount, targetId, position) =
-            asyncSeq {
+            impAsyncSeq {
                 match bindings.TryGetValue(targetId) with
                 | true, binding ->
                     // Emit DamageBuildingPart
@@ -373,7 +402,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
 
         /// Update flight record at landing or mission end
         let updateFlightRecordEnd(timeStamp, vehicleId, ownerOfSite, landSite, isEjection) =
-            asyncSeq {
+            impAsyncSeq {
                 match pilotOf.TryGetValue(vehicleId) with
                 | true, taken ->
                     match flightRecords.TryGetValue(taken.PilotId) with
@@ -425,7 +454,7 @@ let commandsFromLogs (state : IWarStateQuery) (logs : AsyncSeq<string>) =
             }
 
         let handleLine line =
-            asyncSeq {
+            impAsyncSeq {
                 match line with
                 | ObjectEvent(timeStamp, ObjectBound binding) ->
                     yield "Timestamp", timeStamp, None

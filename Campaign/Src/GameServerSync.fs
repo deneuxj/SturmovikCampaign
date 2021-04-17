@@ -101,7 +101,7 @@ module IO =
 
 
 /// Inform players of interesting events while a game is going on
-type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>, war : WarState, notifier : IPlayerNotifier, missionDuration : int) =
+type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>, war : IWarStateQuery, notifier : IPlayerNotifier, missionDuration : int) =
     let mutable isMuted = true
 
     let mutable groundForcesDestroyed = Map.empty
@@ -218,16 +218,6 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
                         with exc ->
                             logger.Warn("Live notifier command-handling failed")
                             logger.Debug(exc)
-                    try
-                        match command with
-                        | Some command ->
-                            logger.Debug("Execute command")
-                            command.Execute(war) |> ignore
-                        | None ->
-                            ()
-                    with exc ->
-                        logger.Warn("Command execution in live notifier failed")
-                        logger.Debug(exc)
                 })
         }
 
@@ -940,7 +930,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                         stalled.Trigger()
                                         stalledTriggered <- true
                             }
-                            |> MissionResults.commandsFromLogs war2
+                            |> MissionResults.processLogs war2
                             |> AsyncSeq.map (fun (_, ts, cmd) -> (ts, cmd))
                         let liveReporter = LiveNotifier(commands, war2, messaging, settings.MissionDuration)
                         let cancellation = new Threading.CancellationTokenSource()
@@ -1033,7 +1023,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                 let! line = Async.AwaitTask(f.ReadLineAsync())
                                 yield line
                     }
-                let commands = MissionResults.commandsFromLogs war lines
+                let commands = MissionResults.processLogs war lines
                 let! effects =
                     asyncSeq {
                         for description, _, command in commands do
