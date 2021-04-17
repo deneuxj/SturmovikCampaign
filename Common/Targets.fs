@@ -104,12 +104,14 @@ type Target =
 type AmmoType = AmmoName of string
 
 type ReturnType =
+    | KilledInAction
     | CrashedInEnemyTerritory
     | CrashedInFriendlyTerritory of AirfieldId option
     | AtAirfield of AirfieldId
 with
     override this.ToString() =
         match this with
+        | KilledInAction -> "KIA"
         | CrashedInEnemyTerritory -> "crashed in enemy territory"
         | CrashedInFriendlyTerritory(Some afId) -> sprintf "crashed in friendly territory near %s" afId.AirfieldName
         | CrashedInFriendlyTerritory None -> "crashed in friendly territory, far from all airfields"

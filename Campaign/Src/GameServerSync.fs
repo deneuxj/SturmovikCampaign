@@ -152,6 +152,7 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
                                     | CrashedInEnemyTerritory _ -> "crashed in enemy territory"
                                     | CrashedInFriendlyTerritory _ -> "crash-landed"
                                     | AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
+                                    | KilledInAction -> "was killed in action"
                                 let msg = sprintf "%s %s has %s" rank pilot.FullName eventDescription
                                 let coalition = war.World.Countries.[pilot.Country]
                                 let! s = notifier.MessageCoalition(coalition, msg)

@@ -387,6 +387,7 @@ module DtoCreation =
             | Targets.AtAirfield afId -> Dto.LandedAtAirfield afId.AirfieldName
             | Targets.CrashedInEnemyTerritory -> Dto.CrashedInEnemyTerritory
             | Targets.CrashedInFriendlyTerritory _ -> Dto.CrashedInFriendlyTerritory
+            | Targets.KilledInAction -> Dto.KilledInAction
 
     type Targets.TargetType with
         member this.ToDto(world : NewWorldDescription.World) : Dto.TargetType =

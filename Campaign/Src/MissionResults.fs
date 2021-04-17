@@ -462,6 +462,28 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                     ()
             }
 
+        /// Update flight record on death
+        let updateFlightRecordOnDeath(timeStamp, pilotId) =
+            impAsyncSeq {
+                match flightRecords.TryGetValue(pilotId) with
+                | true, x ->
+                    let flight =
+                        { x.Record with
+                            PilotHealth = 0.0f
+                            Length = state.Date + timeStamp - x.Record.Date
+                            Return = KilledInAction
+                        }
+                    flightRecords.[pilotId] <- {| x with Record = flight |}
+                    yield
+                        sprintf "%s was killed in action"
+                            x.Pilot.FullName,
+                        timeStamp,
+                        Some(RegisterPilotFlight(x.Pilot.Id, flight, Dead))
+                    flightRecords.Remove(pilotId) |> ignore
+                | false, _ ->
+                    ()
+            }
+
         let handleLine line =
             impAsyncSeq {
                 match line with
@@ -594,6 +616,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                         updateAirKills(taken.PilotId, killed.TargetId)
                     | false, _ ->
                         ()
+                    yield! updateFlightRecordOnDeath(timeStamp, killed.TargetId)
                     // Emit commands
                     yield! handleDamage(timeStamp, oldHealth, killed.TargetId, killed.Position)
 

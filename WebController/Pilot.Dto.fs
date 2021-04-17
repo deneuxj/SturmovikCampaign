@@ -25,6 +25,7 @@ type ReturnStatus =
     | LandedAtAirfield of string
     | CrashedInFriendlyTerritory
     | CrashedInEnemyTerritory
+    | KilledInAction
 
 type TargetType =
     | Ship of string

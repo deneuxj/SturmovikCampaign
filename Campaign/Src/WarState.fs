@@ -271,12 +271,15 @@ module IWarStateExtensions =
                 false
             | Some { Return = CrashedInEnemyTerritory } ->
                 false
+            | Some { Return = KilledInAction } ->
+                false
 
         member this.TryGetReturnAirfield(flight : FlightRecord) =
             match flight.Return with
             | CrashedInEnemyTerritory -> None
             | CrashedInFriendlyTerritory afId -> afId
             | AtAirfield afId -> Some afId
+            | KilledInAction -> None
 
         member this.TryGetPilotHome(pilotId) =
             let pilot = this.GetPilot(pilotId)
