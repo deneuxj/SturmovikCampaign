@@ -622,9 +622,13 @@ type WarState
     member this.GetBuildingFunctionalityLevel(bid) =
         match this.World.Buildings.TryGetValue(bid) with
         | true, building ->
-            building.Properties.SubParts
-            |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
-            |> (*) (1.0f / (building.Properties.SubParts.Length |> max 1 |> float32))
+            match building.Properties.SubParts.Length with
+            | n when n > 0 ->
+                building.Properties.SubParts
+                |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
+                |> (*) (1.0f / (float32 n))
+            | _ ->
+                1.0f
         | false, _ ->
             1.0f
 
