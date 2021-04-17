@@ -101,7 +101,7 @@ module IO =
 
 
 /// Inform players of interesting events while a game is going on
-type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>, war : IWarStateQuery, notifier : IPlayerNotifier, missionDuration : int) =
+type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>, war : WarState, notifier : IPlayerNotifier, missionDuration : int) =
     let mutable isMuted = true
 
     let mutable groundForcesDestroyed = Map.empty
@@ -113,6 +113,9 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
     let timeSinceLastUpdate = System.Diagnostics.Stopwatch()
 
     let logger = NLog.LogManager.GetCurrentClassLogger()
+
+    // The commands will be executed on a clone of the war state to avoid potential race conditions with the caller, as Run() is async.
+    let war = war.Clone()
 
     member this.UnMute() =
         if isMuted then
@@ -218,6 +221,16 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
                         with exc ->
                             logger.Warn("Live notifier command-handling failed")
                             logger.Debug(exc)
+                    try
+                        match command with
+                        | Some command ->
+                            logger.Debug("Execute command")
+                            command.Execute(war) |> ignore
+                        | None ->
+                            ()
+                    with exc ->
+                        logger.Warn("Command execution in live notifier failed")
+                        logger.Debug(exc)
                 })
         }
 
@@ -917,7 +930,6 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     // Start live reporting
                     match war, gameServer with
                     | Some war, (:? IPlayerNotifier as messaging) ->
-                        let war2 = war.Clone()
                         let commands =
                             let basename = latestStartingMissionReport
                             asyncSeq {
@@ -930,9 +942,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                         stalled.Trigger()
                                         stalledTriggered <- true
                             }
-                            |> MissionResults.processLogs war2
+                            |> MissionResults.processLogs war
                             |> AsyncSeq.map (fun (_, ts, cmd) -> (ts, cmd))
-                        let liveReporter = LiveNotifier(commands, war2, messaging, settings.MissionDuration)
+                        let liveReporter = LiveNotifier(commands, war, messaging, settings.MissionDuration)
                         let cancellation = new Threading.CancellationTokenSource()
                         Async.Start(liveReporter.Run(), cancellation.Token)
                         // Give time to execute old commands
@@ -1023,24 +1035,27 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                 let! line = Async.AwaitTask(f.ReadLineAsync())
                                 yield line
                     }
-                let commands = MissionResults.processLogs war lines
-                let! effects =
-                    asyncSeq {
+                let! commands =
+                    MissionResults.processLogs war lines
+                    |> AsyncSeq.toListAsync
+                let effects =
+                    [
                         for description, _, command in commands do
                             logger.Info(description)
                             match command with
                             | Some command ->
-                                try
-                                    logger.Debug("Command from game logs: " + Json.serialize command)
-                                with exc ->
-                                    logger.Debug("Command from game logs.")
-                                    logger.Debug(exc)
+                                let cmdAsJson =
+                                    try
+                                        Json.serialize command
+                                    with exc ->
+                                        logger.Debug(exc)
+                                        sprintf "(could not serialize command to json because %s)" exc.Message
+                                logger.Debug("Command from game logs: " + cmdAsJson)
                                 let effects = command.Execute(war)
                                 yield (description, Some command, effects)
                             | None ->
                                 yield (description, None, [])
-                    }
-                    |> AsyncSeq.toArrayAsync
+                    ]
                 stateChanged.Trigger(war.Clone())
                 // Write effects to file
                 // Write war state and campaign step files

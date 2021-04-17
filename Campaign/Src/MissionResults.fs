@@ -220,10 +220,16 @@ type Binding with
             None
 
 /// A modified asyncSeq builder that update a war state whenever a command is yielded.
-type ImpAsyncSeq(warState : IWarState) =
+type ImpAsyncSeq(warState : IWarState, logger : NLog.Logger) =
     member this.Yield(v) =
         match v with
-        | (_, _, Some (cmd : Commands)) -> cmd.Execute(warState) |> ignore
+        | (_, _, Some (cmd : Commands)) ->
+            try
+                cmd.Execute(warState) |> ignore
+            with
+            | e ->
+                logger.Error(sprintf "Execution of command in ImpAsyncSeq failed: %s" e.Message)
+                logger.Debug(e)
         | _ -> ()
         asyncSeq.Yield(v)
 
@@ -245,11 +251,14 @@ type ImpAsyncSeq(warState : IWarState) =
     member this.Delay(f) = asyncSeq.Delay(f)
 
 /// Extract war state updade commands from the game logs and update the war state.
-let processLogs (state : IWarState) (logs : AsyncSeq<string>) =
+let processLogs (state : WarState) (logs : AsyncSeq<string>) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
+    // We'll be mutating a clone of the state to avoid potential read/write race conditions with consumers (i.e. the live notifier) of the commands.
+    let state = state.Clone()
+
     let impAsyncSeq =
-        ImpAsyncSeq(state)
+        ImpAsyncSeq(state, logger)
 
     impAsyncSeq {
         // Object ID to Binding
