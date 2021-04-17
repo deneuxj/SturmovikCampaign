@@ -1195,10 +1195,10 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             |> List.map (fun region -> region.RegionId)
             |> Set
         state.World.RegionsList
-        |> Seq.collect (fun region -> Seq.allPairs [region.RegionId] region.IndustryBuildings)
+        |> Seq.collect (fun region -> Seq.allPairs [Choice1Of2 region] region.IndustryBuildings)
         |> Seq.append (
             state.World.AirfieldsList
-            |> Seq.collect (fun af -> Seq.allPairs [af.Region] af.Facilities))
+            |> Seq.collect (fun af -> Seq.allPairs [Choice2Of2 af] af.Facilities))
         |> Seq.map (fun (region, bId) -> region, state.World.TryGetBuildingInstance bId)
         |> Seq.choose (fun (region, b) ->
             match b with
@@ -1216,34 +1216,53 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         // Prioritize front regions and then amount of capacity loss
         |> Seq.sortByDescending (fun (region, b, health) ->
             let loss = (1.0f - health) * float32 b.Properties.Capacity
+            let region =
+                match region with
+                | Choice1Of2 x -> x.RegionId
+                | Choice2Of2 x -> x.Region
             if frontRegions.Contains region then
                 (1, loss)
             else
                 (0, loss)
         )
 
+    let largeFireThr = 0.05f
     let spacedOutBuildings =
         ([], damagedBuildings)
-        ||> Seq.fold (fun xs (_, b, health) ->
+        ||> Seq.fold (fun xs (area, b, health) ->
             let nearby =
                 xs
-                |> Seq.filter (fun (b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < (float32 settings.MaxFiresRadius))
+                |> Seq.filter (fun (_, b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < (float32 settings.MaxFiresRadius))
+            let minDist health2 =
+                if health < largeFireThr && health2 < largeFireThr then
+                    5000.0f
+                else
+                    300.0f
+            let tooClose =
+                xs
+                |> Seq.filter (fun (_, b2 : BuildingInstance, health2) -> (b.Pos.Pos - b2.Pos.Pos).Length() < minDist health2)
             if xs.Length >= settings.MaxTotalNumFires then
+                xs
+            elif tooClose |> Seq.isEmpty |> not then
                 xs
             elif Seq.length nearby > settings.MaxNumFiresInRadius then
                 xs
             else
-                (b, health) :: xs
+                (area, b, health) :: xs
         )
 
     let fires : BuildingFire list =
         spacedOutBuildings
-        |> List.map (fun (b, health) ->
+        |> List.map (fun (area, b, health) ->
+            let isAirfield =
+                match area with
+                | Choice2Of2 _ -> true
+                | _ -> false
             logger.Debug(sprintf "Health of burning buildings: %3.0f" health)
             {
                 Pos = { b.Pos with Rotation = float32 state.Weather.Wind.Direction }
                 Intensity =
-                    if health < 0.049f then
+                    if health < largeFireThr && not isAirfield then
                         SturmovikMission.Blocks.FireLoop.CityFire
                     elif health < 0.4f then
                         SturmovikMission.Blocks.FireLoop.CityFireSmall
