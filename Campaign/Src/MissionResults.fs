@@ -253,7 +253,8 @@ with
                 match event with
                 | ObjectEvent(_, ObjectBound binding) ->
                     { state with
-                        Bindings = state.Bindings.Add(binding.Id, binding) }
+                        Bindings = state.Bindings.Add(binding.Id, binding)
+                    }
                 | PlayerEvent(_, PlayerTakesObject taken) ->
                     { state with
                         PilotOf = state.PilotOf.Add(taken.VehicleId, taken)
@@ -266,13 +267,50 @@ with
                     }
                 | ObjectEvent(_, ObjectHit hit) ->
                     { state with
-                        LatestHit = state.LatestHit.Add(hit.TargetId, hit)}
+                        LatestHit = state.LatestHit.Add(hit.TargetId, hit)
+                    }
                 | _ ->
                     state
 
             member this.HandlePostEvent(state, preResult) = preResult, []
         }
 
+type HealthTracker =
+    {
+        HealthOf : Map<int, float32>
+    }
+with
+    static member Empty = { HealthOf = Map.empty }
+
+    static member Controller =
+        { new StateMachineController<HealthTracker, HealthTracker> with
+            member this.HandlePreEvent(state, event) =
+                match event with
+                | ObjectEvent(_, ObjectBound binding) ->
+                    { state with
+                        HealthOf = state.HealthOf.Add(binding.Id, 1.0f)
+                    }
+                | ObjectEvent(_, ObjectDamaged damaged) ->
+                    let health =
+                        state.HealthOf.TryFind(damaged.TargetId)
+                        |> Option.defaultValue 1.0f
+                    let health = health - damaged.Damage
+                    { state with
+                        HealthOf = state.HealthOf.Add(damaged.TargetId, health)
+                    }
+                | ObjectEvent(_, ObjectKilled killed) ->
+                    { state with
+                        HealthOf = state.HealthOf.Add(killed.TargetId, 0.0f)
+                    }
+                | PlayerEvent(_, PlayerEndsMission missionEnded) ->
+                    { state with
+                        HealthOf = state.HealthOf.Remove(missionEnded.VehicleId).Remove(missionEnded.PilotId)
+                    }
+                | _ ->
+                    state
+
+            member this.HandlePostEvent(state, preResult) = preResult, []
+        }
 
 /// A modified asyncSeq builder that update a war state whenever a command is yielded.
 type ImpAsyncSeq(warState : IWarState, logger : NLog.Logger) =
@@ -319,10 +357,11 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         let mutable mappings = Mappings.Empty
         let mappingsController = Mappings.Controller
 
+        let mutable healths = HealthTracker.Empty
+        let healthController = HealthTracker.Controller
+
         // Log Pilot ID to Pilot and FlightRecord
         let flightRecords : Dictionary<int, {| Pilot : Pilot; Record : FlightRecord |}> = Seq.mutableDict []
-        // Object ID to float32
-        let healthOf = Seq.mutableDict []
         // Pilot ID to pilot record
         let pilotRecordOf = Seq.mutableDict []
 
@@ -487,7 +526,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                                 | _ ->
                                     CrashedInFriendlyTerritory None
                         let pilotHealth =
-                            healthOf.TryGetValue(taken.PilotId)
+                            healths.HealthOf.TryGetValue(taken.PilotId)
                             |> Option.ofPair
                             |> Option.defaultValue 1.0f
                         let healthStatus = state.HealthStatusFromHealthLevel(timeStamp, pilotHealth)
@@ -536,14 +575,15 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
 
         let handleLine line =
             impAsyncSeq {
+                // Controllers PRE
                 let newMappings = handlePre(mappingsController, mappings, line)
+                let newHealths = handlePre(healthController, healths, line)
 
+                // Not yet converted to controllers
                 match line with
                 | ObjectEvent(timeStamp, ObjectBound binding) ->
                     yield "Timestamp", timeStamp, None
                     logger.Debug(string timeStamp + " Updating mappings with binding " + Json.serialize binding)
-                    // Update mappings
-                    healthOf.[binding.Id] <- 1.0f
 
                 | PlayerEvent(timeStamp, PlayerTakesObject taken) ->
                     logger.Debug(string timeStamp + " Updating mappings with taken " + Json.serialize taken)
@@ -583,13 +623,13 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                     logger.Debug(string timeStamp + " Updating mappings with takenOff " + Json.serialize takeOff)
                     // Start flight record
                     let planeHealth =
-                        healthOf.TryGetValue(takeOff.Id)
+                        healths.HealthOf.TryGetValue(takeOff.Id)
                         |> Option.ofPair
                         |> Option.defaultValue 1.0f
                     match mappings.PilotOf.TryGetValue(takeOff.Id) with
                     | true, taken ->
                         let pilotHealth =
-                            healthOf.TryGetValue(taken.PilotId)
+                            healths.HealthOf.TryGetValue(taken.PilotId)
                             |> Option.ofPair
                             |> Option.defaultValue 1.0f
                         let country =
@@ -633,13 +673,6 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
 
                 | ObjectEvent(timeStamp, ObjectDamaged damaged) ->
                     logger.Debug(string timeStamp + " Updating mappings with damaged " + Json.serialize damaged)
-                    // Update mappings
-                    let health =
-                        healthOf.TryGetValue(damaged.TargetId)
-                        |> Option.ofPair
-                        |> Option.defaultValue 1.0f
-                    let health = health - damaged.Damage
-                    healthOf.[damaged.TargetId] <- health
                     // Update flight record
                     updateFlightRecord(damaged.AttackerId, damaged.Damage, damaged.TargetId, damaged.Position)
                     // Emit commands
@@ -649,10 +682,9 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                     logger.Debug(string timeStamp + " Updating mappings with killed " + Json.serialize killed)
                     // Update mappings
                     let oldHealth =
-                        healthOf.TryGetValue(killed.TargetId)
+                        healths.HealthOf.TryGetValue(killed.TargetId)
                         |> Option.ofPair
                         |> Option.defaultValue 1.0f
-                    healthOf.[killed.TargetId] <- 0.0f
                     // Update flight record
                     match mappings.PilotOf.TryGetValue(killed.AttackerId) with
                     | true, taken ->
@@ -678,7 +710,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                         |> Option.ofPair
                         |> Option.bind (fun x -> state.TryGetReturnAirfield(x.Record))
                     // Emit AddPlane command
-                    match mappings.Bindings.TryGetValue(missionEnded.VehicleId), afId, healthOf.TryGetValue(missionEnded.VehicleId) with
+                    match mappings.Bindings.TryGetValue(missionEnded.VehicleId), afId, healths.HealthOf.TryGetValue(missionEnded.VehicleId) with
                     | (true, binding), Some afId, (true, health) when health > 0.0f ->
                         match state.TryGetPlane(binding.Name) with
                         | Some plane ->
@@ -690,22 +722,23 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                     // Update pilot health status
                     match pilotRecordOf.TryGetValue(missionEnded.PilotId) with
                     | true, pilot ->
-                        let pilotHealth = healthOf.TryGetValue(missionEnded.PilotId) |> Option.ofPair |> Option.defaultValue 1.0f
+                        let pilotHealth = healths.HealthOf.TryGetValue(missionEnded.PilotId) |> Option.ofPair |> Option.defaultValue 1.0f
                         let pilot = { pilot with Health = state.HealthStatusFromHealthLevel(timeStamp, pilotHealth) }
                         yield sprintf "%s has ended their flight" pilot.FullName, timeStamp, Some(UpdatePilot pilot)
                     | false, _ ->
                         ()
                     // Update mappings
-                    healthOf.Remove(missionEnded.VehicleId) |> ignore
-                    healthOf.Remove(missionEnded.PilotId) |> ignore
                     pilotRecordOf.Remove(missionEnded.PilotId) |> ignore
                 | _ ->
                     ()
 
+                // Controllers POST
                 let newMappings, cmds = handlePost(mappingsController, mappings, newMappings)
-                for cmd in cmds do
+                let newHealths, cmds2 = handlePost(healthController, healths, newHealths)
+                for cmd in Seq.concat [ cmds; cmds2 ] do
                     yield cmd
                 mappings <- newMappings
+                healths <- newHealths
             }
 
         let mutable finalTimeStamp = System.TimeSpan(0L)
