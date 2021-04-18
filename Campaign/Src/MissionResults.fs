@@ -219,6 +219,61 @@ type Binding with
         | None ->
             None
 
+type StateMachineController<'S, 'E> =
+    /// Called when a log line is received. Receives the old state, and produces intermediate data of type 'E that will be passed to HandlePostEvent
+    abstract HandlePreEvent : state:'S * event:string -> 'E
+    /// Called after HandlePreEvent with its result. Produces an updated state and a list of description, timestamp and optional command tuples.
+    abstract HandlePostEvent : state:'S * preResult:'E -> 'S * (string * System.TimeSpan * Commands option) list
+
+let handlePre (ctrl : StateMachineController<'S, 'E>, state, event) =
+    ctrl.HandlePreEvent(state, event)
+
+let handlePost (ctrl : StateMachineController<'S, 'E>, state, preResult) =
+    ctrl.HandlePostEvent(state, preResult)
+
+type Mappings =
+    {
+        Bindings : Map<int, Binding>
+        PilotOf : Map<int, ObjectTaken>
+        VehicleOf : Map<int, ObjectTaken>
+        LatestHit : Map<int, {| Ammo : string; AttackerId : int; TargetId : int |}>
+    }
+with
+    static member Empty =
+        {
+            Bindings = Map.empty
+            PilotOf = Map.empty
+            VehicleOf = Map.empty
+            LatestHit = Map.empty
+        }
+
+    static member Controller =
+        { new StateMachineController<Mappings, Mappings> with
+            member this.HandlePreEvent(state, event) =
+                match event with
+                | ObjectEvent(_, ObjectBound binding) ->
+                    { state with
+                        Bindings = state.Bindings.Add(binding.Id, binding) }
+                | PlayerEvent(_, PlayerTakesObject taken) ->
+                    { state with
+                        PilotOf = state.PilotOf.Add(taken.VehicleId, taken)
+                        VehicleOf = state.VehicleOf.Add(taken.PilotId, taken)
+                    }
+                | PlayerEvent(_, PlayerEndsMission missionEnded) ->
+                    { state with
+                        PilotOf = state.PilotOf.Remove(missionEnded.VehicleId)
+                        VehicleOf = state.VehicleOf.Remove(missionEnded.VehicleId)
+                    }
+                | ObjectEvent(_, ObjectHit hit) ->
+                    { state with
+                        LatestHit = state.LatestHit.Add(hit.TargetId, hit)}
+                | _ ->
+                    state
+
+            member this.HandlePostEvent(state, preResult) = preResult, []
+        }
+
+
 /// A modified asyncSeq builder that update a war state whenever a command is yielded.
 type ImpAsyncSeq(warState : IWarState, logger : NLog.Logger) =
     member this.Yield(v) =
@@ -261,24 +316,19 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         ImpAsyncSeq(state, logger)
 
     impAsyncSeq {
-        // Object ID to Binding
-        let bindings = Seq.mutableDict []
-        // Vehicle ID to ObjectTaken
-        let pilotOf = Seq.mutableDict []
-        // Pilot ID to ObjectTaken
-        let vehicleOf = Seq.mutableDict []
+        let mutable mappings = Mappings.Empty
+        let mappingsController = Mappings.Controller
+
         // Log Pilot ID to Pilot and FlightRecord
         let flightRecords : Dictionary<int, {| Pilot : Pilot; Record : FlightRecord |}> = Seq.mutableDict []
         // Object ID to float32
         let healthOf = Seq.mutableDict []
-        // Vehicle ID to ObjectHit
-        let latestHit : Dictionary<int, {| Ammo : string; AttackerId : int; TargetId : int |}> = Seq.mutableDict []
         // Pilot ID to pilot record
         let pilotRecordOf = Seq.mutableDict []
 
         let handleDamage(timeStamp, amount, targetId, position) =
             impAsyncSeq {
-                match bindings.TryGetValue(targetId) with
+                match mappings.Bindings.TryGetValue(targetId) with
                 | true, binding ->
                     // Emit DamageBuildingPart
                     let sub = binding.Sub |> Option.defaultValue -1
@@ -316,12 +366,12 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         let recordedDamages(amount : float32, targetId, position) =
             [
                 let ammo =
-                    match latestHit.TryGetValue(targetId) with
+                    match mappings.LatestHit.TryGetValue(targetId) with
                     | true, hit ->
                         AmmoType.FromLogName(hit.Ammo)
                     | false, _ ->
                         AmmoName "explosion"
-                match bindings.TryGetValue(targetId) with
+                match mappings.Bindings.TryGetValue(targetId) with
                 | true, binding ->
                     // Buildings
                     let sub = binding.Sub |> Option.defaultValue -1
@@ -355,12 +405,12 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         /// Update flight record with damage
         let updateFlightRecord(attackerId, damage, targetId, position) =
             // Credit attacker
-            match pilotOf.TryGetValue(attackerId) with
+            match mappings.PilotOf.TryGetValue(attackerId) with
             | true, (taken : ObjectTaken) ->
                 match flightRecords.TryGetValue(taken.PilotId) with
                 | true, x ->
                     let differentCoalitions =
-                        match bindings.TryGetValue(attackerId), bindings.TryGetValue(targetId) with
+                        match mappings.Bindings.TryGetValue(attackerId), mappings.Bindings.TryGetValue(targetId) with
                         | (true, attacker), (true, target) ->
                             // Both IDs have bindings, and their respective coalitions could be identified, and they are different
                             (state.TryGetCoalitionOfCountry(attacker.Country), state.TryGetCoalitionOfCountry(target.Country))
@@ -380,7 +430,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                 ()
 
             // Record damage to target
-            match pilotOf.TryGetValue(targetId) with
+            match mappings.PilotOf.TryGetValue(targetId) with
             | true, (taken : ObjectTaken) ->
                 match flightRecords.TryGetValue(taken.PilotId) with
                 | true, x ->
@@ -395,7 +445,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
 
         /// Update flight record with air kills
         let updateAirKills(pilotId, targetId) =
-            match bindings.TryGetValue(targetId), flightRecords.TryGetValue(pilotId) with
+            match mappings.Bindings.TryGetValue(targetId), flightRecords.TryGetValue(pilotId) with
             | (true, binding), (true, x) ->
                 let differentCoalitions =
                     match state.TryGetCoalitionOfCountry(binding.Country), state.World.Countries.[x.Pilot.Country] with
@@ -412,7 +462,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         /// Update flight record at landing or mission end
         let updateFlightRecordEnd(timeStamp, vehicleId, ownerOfSite, landSite, isEjection) =
             impAsyncSeq {
-                match pilotOf.TryGetValue(vehicleId) with
+                match mappings.PilotOf.TryGetValue(vehicleId) with
                 | true, taken ->
                     match flightRecords.TryGetValue(taken.PilotId) with
                     | true, x ->
@@ -486,22 +536,20 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
 
         let handleLine line =
             impAsyncSeq {
+                let newMappings = handlePre(mappingsController, mappings, line)
+
                 match line with
                 | ObjectEvent(timeStamp, ObjectBound binding) ->
                     yield "Timestamp", timeStamp, None
                     logger.Debug(string timeStamp + " Updating mappings with binding " + Json.serialize binding)
                     // Update mappings
-                    bindings.[binding.Id] <- binding
                     healthOf.[binding.Id] <- 1.0f
 
                 | PlayerEvent(timeStamp, PlayerTakesObject taken) ->
                     logger.Debug(string timeStamp + " Updating mappings with taken " + Json.serialize taken)
-                    // Update mappings
-                    pilotOf.[taken.VehicleId] <- taken
-                    vehicleOf.[taken.PilotId] <- taken
 
                     // Emit RemovePlane command
-                    match bindings.TryGetValue(taken.VehicleId) with
+                    match mappings.Bindings.TryGetValue(taken.VehicleId) with
                     | true, binding ->
                         match state.TryGetPlane(binding.Name) with
                         | Some plane ->
@@ -538,7 +586,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                         healthOf.TryGetValue(takeOff.Id)
                         |> Option.ofPair
                         |> Option.defaultValue 1.0f
-                    match pilotOf.TryGetValue(takeOff.Id) with
+                    match mappings.PilotOf.TryGetValue(takeOff.Id) with
                     | true, taken ->
                         let pilotHealth =
                             healthOf.TryGetValue(taken.PilotId)
@@ -583,10 +631,6 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                     let landSite = state.TryGetNearestAirfield(landing.Position, territory)
                     yield! updateFlightRecordEnd(timeStamp, landing.Id, territory, landSite, false)
 
-                | ObjectEvent(timeStamp, ObjectHit hit) ->
-                    logger.Debug(string timeStamp + " Updating mappings with hit " + Json.serialize hit)
-                    latestHit.[hit.TargetId] <- hit
-
                 | ObjectEvent(timeStamp, ObjectDamaged damaged) ->
                     logger.Debug(string timeStamp + " Updating mappings with damaged " + Json.serialize damaged)
                     // Update mappings
@@ -610,7 +654,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                         |> Option.defaultValue 1.0f
                     healthOf.[killed.TargetId] <- 0.0f
                     // Update flight record
-                    match pilotOf.TryGetValue(killed.AttackerId) with
+                    match mappings.PilotOf.TryGetValue(killed.AttackerId) with
                     | true, taken ->
                         updateFlightRecord(taken.PilotId, oldHealth, killed.TargetId, killed.Position)
                         updateAirKills(taken.PilotId, killed.TargetId)
@@ -634,7 +678,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                         |> Option.ofPair
                         |> Option.bind (fun x -> state.TryGetReturnAirfield(x.Record))
                     // Emit AddPlane command
-                    match bindings.TryGetValue(missionEnded.VehicleId), afId, healthOf.TryGetValue(missionEnded.VehicleId) with
+                    match mappings.Bindings.TryGetValue(missionEnded.VehicleId), afId, healthOf.TryGetValue(missionEnded.VehicleId) with
                     | (true, binding), Some afId, (true, health) when health > 0.0f ->
                         match state.TryGetPlane(binding.Name) with
                         | Some plane ->
@@ -652,13 +696,16 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                     | false, _ ->
                         ()
                     // Update mappings
-                    pilotOf.Remove(missionEnded.VehicleId) |> ignore
-                    vehicleOf.Remove(missionEnded.PilotId) |> ignore
                     healthOf.Remove(missionEnded.VehicleId) |> ignore
                     healthOf.Remove(missionEnded.PilotId) |> ignore
                     pilotRecordOf.Remove(missionEnded.PilotId) |> ignore
                 | _ ->
                     ()
+
+                let newMappings, cmds = handlePost(mappingsController, mappings, newMappings)
+                for cmd in cmds do
+                    yield cmd
+                mappings <- newMappings
             }
 
         let mutable finalTimeStamp = System.TimeSpan(0L)
