@@ -219,17 +219,17 @@ type Binding with
         | None ->
             None
 
-type StateMachineController<'S, 'E> =
+type StateMachineController<'S, 'E, 'Context> =
     /// Called when a log line is received. Receives the old state, and produces intermediate data of type 'E that will be passed to HandlePostEvent
-    abstract HandlePreEvent : state:'S * event:string -> 'E
+    abstract HandlePreEvent : state:'S * event:string * context:'Context -> 'E
     /// Called after HandlePreEvent with its result. Produces an updated state and a list of description, timestamp and optional command tuples.
-    abstract HandlePostEvent : state:'S * preResult:'E -> 'S * (string * System.TimeSpan * Commands option) list
+    abstract HandlePostEvent : state:'S * preResult:'E * context:'Context -> 'S * (string * System.TimeSpan * Commands option) list
 
-let handlePre (ctrl : StateMachineController<'S, 'E>, state, event) =
-    ctrl.HandlePreEvent(state, event)
+let handlePre (ctrl : StateMachineController<'S, 'E, 'C>, state, event, ctx) =
+    ctrl.HandlePreEvent(state, event, ctx)
 
-let handlePost (ctrl : StateMachineController<'S, 'E>, state, preResult) =
-    ctrl.HandlePostEvent(state, preResult)
+let handlePost (ctrl : StateMachineController<'S, 'E, 'C>, state, preResult, ctx) =
+    ctrl.HandlePostEvent(state, preResult, ctx)
 
 type Mappings =
     {
@@ -248,8 +248,8 @@ with
         }
 
     static member Controller =
-        { new StateMachineController<Mappings, Mappings> with
-            member this.HandlePreEvent(state, event) =
+        { new StateMachineController<Mappings, Mappings, unit> with
+            member this.HandlePreEvent(state, event, ()) =
                 match event with
                 | ObjectEvent(_, ObjectBound binding) ->
                     { state with
@@ -272,7 +272,7 @@ with
                 | _ ->
                     state
 
-            member this.HandlePostEvent(state, preResult) = preResult, []
+            member this.HandlePostEvent(state, preResult, ()) = preResult, []
         }
 
 type HealthTracker =
@@ -283,8 +283,8 @@ with
     static member Empty = { HealthOf = Map.empty }
 
     static member Controller =
-        { new StateMachineController<HealthTracker, HealthTracker> with
-            member this.HandlePreEvent(state, event) =
+        { new StateMachineController<HealthTracker, HealthTracker, unit> with
+            member this.HandlePreEvent(state, event, ()) =
                 match event with
                 | ObjectEvent(_, ObjectBound binding) ->
                     { state with
@@ -309,7 +309,157 @@ with
                 | _ ->
                     state
 
-            member this.HandlePostEvent(state, preResult) = preResult, []
+            member this.HandlePostEvent(state, preResult, ()) = preResult, []
+        }
+
+type PlayerFlightState =
+    | Spawned of AirfieldId
+    | InFlight
+    | BackOnGround
+    | Ended
+
+type PlayerFlightTracker =
+    {
+        PilotId : int
+        VehicleId : int
+        PilotData : Pilot
+        FlightState : PlayerFlightState
+        FlightRecord : FlightRecord
+    }
+with
+    static member Create(pId, vId, afId, date, pilot, plane) =
+        {
+            PilotId = pId
+            VehicleId = vId
+            PilotData = pilot
+            FlightState = Spawned afId
+            FlightRecord = 
+                {
+                    Date = date
+                    Length = System.TimeSpan(0L)
+                    Plane = plane
+                    PlaneHealth = 1.0f
+                    AirKills = 0
+                    Start = afId
+                    TargetsDamaged = []
+                    Return = CrashedInEnemyTerritory
+                    PilotHealth = 1.0f
+                }
+        }
+
+    static member Controller =
+        { new StateMachineController<PlayerFlightTracker, _, Mappings * HealthTracker * IWarStateQuery> with
+            member this.HandlePreEvent(state, event, (mappings, healths, war)) =
+                match event with
+                | _ -> state, []
+
+            member this.HandlePostEvent(state, (state2, preCmds), (mappings, healths, war)) =
+                state2, preCmds
+        }
+
+type PlayerFlights =
+    {
+        FlightOfPilot : Map<int, PlayerFlightTracker>
+    }
+with
+    static member Empty = { FlightOfPilot = Map.empty }
+
+    static member Controller =
+        let pftCtrl = PlayerFlightTracker.Controller
+        { new StateMachineController<PlayerFlights, _, Mappings * HealthTracker * IWarStateQuery> with
+            member this.HandlePreEvent(state, event, (mappings, healths, war)) =
+                match event with
+                | PlayerEvent(timeStamp, PlayerTakesObject taken) ->
+
+                    // Emit RemovePlane command
+                    let cmds =
+                        match mappings.Bindings.TryGetValue(taken.VehicleId) with
+                        | true, binding ->
+                            match war.TryGetPlane(binding.Name) with
+                            | Some plane ->
+                                match war.TryGetNearestAirfield(taken.Position, None) with
+                                | Some (airfield, _) ->
+                                    [sprintf "Plane %s taken by player" plane.Name, timeStamp, Some(RemovePlane(airfield.AirfieldId, plane.Id, 1.0f))]
+                                | None ->
+                                    []
+                            | None ->
+                                []
+                        | false, _ ->
+                            []
+
+                    // Emit UpdatePlayer command
+                    let cmds = cmds @ ["Seen player " + taken.Name, timeStamp, Some(UpdatePlayer(taken.UserId, taken.Name))]
+
+                    let state2, cmds =
+                        // Choose pilot
+                        match war.TryGetNearestAirfield(taken.Position, None), CountryId.FromMcuValue(enum taken.Country), war.TryGetPlane(taken.Typ) with
+                        | Some(airfield, _), Some country, Some plane ->
+                            let pilot = war.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country, taken.HasFemaleCrew)
+                            let flight = PlayerFlightTracker.Create(taken.PilotId, taken.VehicleId, airfield.AirfieldId, war.Date + timeStamp, pilot, plane.Id)
+                            let flight, flightCmds = pftCtrl.HandlePreEvent(flight, event, (mappings, healths, war))
+                            { state with
+                                FlightOfPilot = state.FlightOfPilot.Add(taken.PilotId, flight)
+                            }, cmds @ flightCmds
+                        | _ ->
+                            state, cmds
+
+                    state2, cmds
+
+                | PlayerEvent(_, PlayerEndsMission missionEnded) ->
+                    // Gather commands from ending the flight
+                    let cmds =
+                        state.FlightOfPilot.TryFind(missionEnded.PilotId)
+                        |> Option.map (fun flight -> pftCtrl.HandlePreEvent(flight, event, (mappings, healths, war)))
+                        |> Option.map snd
+                        |> Option.defaultValue []
+                    // Unregister the flight
+                    { state with
+                        FlightOfPilot = state.FlightOfPilot.Remove(missionEnded.PilotId)
+                    },
+                    cmds
+
+                | _ ->
+                    // Dispatch other events to all flights
+                    let flightsAndCmds =
+                        state.FlightOfPilot
+                        |> Map.map (fun pilotId flight -> pftCtrl.HandlePreEvent(flight, event, (mappings, healths, war)))
+                    let flights =
+                        flightsAndCmds
+                        |> Map.map (fun _ -> fst)
+                    let cmds =
+                        flightsAndCmds
+                        |> Map.toSeq
+                        |> Seq.collect (snd >> snd)
+                        |> List.ofSeq
+                    { state with
+                        FlightOfPilot = flights
+                    },
+                    cmds
+
+            member this.HandlePostEvent(state, (state2, cmds), context) =
+                // Dispatch
+                let flightsAndCmds =
+                    state.FlightOfPilot
+                    |> Map.map (fun pilotId flight ->
+                        match state2.FlightOfPilot.TryFind pilotId with
+                        | Some flight2 ->
+                            pftCtrl.HandlePostEvent(flight, (flight2, []), context)
+                        | None ->
+                            flight, [])
+                // Extract flights
+                let flights =
+                    flightsAndCmds
+                    |> Map.map (fun _ -> fst)
+                // Extract flight-generated commands and add them to the commands from the Pre handler
+                let cmds2 =
+                    ([cmds], flightsAndCmds)
+                    ||> Map.fold (fun cmdGroups _ (_, cmds) -> cmds :: cmdGroups)
+                    |> List.rev
+                    |> List.concat
+                // Result
+                { state2 with
+                    FlightOfPilot = flights
+                }, cmds2
         }
 
 /// A modified asyncSeq builder that update a war state whenever a command is yielded.
@@ -576,48 +726,14 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         let handleLine line =
             impAsyncSeq {
                 // Controllers PRE
-                let newMappings = handlePre(mappingsController, mappings, line)
-                let newHealths = handlePre(healthController, healths, line)
+                let newMappings = handlePre(mappingsController, mappings, line, ())
+                let newHealths = handlePre(healthController, healths, line, ())
 
                 // Not yet converted to controllers
                 match line with
                 | ObjectEvent(timeStamp, ObjectBound binding) ->
                     yield "Timestamp", timeStamp, None
                     logger.Debug(string timeStamp + " Updating mappings with binding " + Json.serialize binding)
-
-                | PlayerEvent(timeStamp, PlayerTakesObject taken) ->
-                    logger.Debug(string timeStamp + " Updating mappings with taken " + Json.serialize taken)
-
-                    // Emit RemovePlane command
-                    match mappings.Bindings.TryGetValue(taken.VehicleId) with
-                    | true, binding ->
-                        match state.TryGetPlane(binding.Name) with
-                        | Some plane ->
-                            match state.TryGetNearestAirfield(taken.Position, None) with
-                            | Some (airfield, _) ->
-                                yield sprintf "Plane %s taken by player" plane.Name, timeStamp, Some(RemovePlane(airfield.AirfieldId, plane.Id, 1.0f))
-                            | None ->
-                                ()
-                        | None ->
-                            ()
-                    | false, _ ->
-                        ()
-
-                    // Emit UpdatePlayer command
-                    yield "Seen player " + taken.Name, timeStamp, Some(UpdatePlayer(taken.UserId, taken.Name))
-
-                    // Choose pilot
-                    match state.TryGetNearestAirfield(taken.Position, None) with
-                    | Some (airfield, _) ->
-                        match CountryId.FromMcuValue(enum taken.Country) with
-                        | Some country ->
-                            let pilot = state.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country, taken.HasFemaleCrew)
-                            pilotRecordOf.[taken.PilotId] <- pilot
-                        | _ ->
-                            ()
-                    | _ ->
-                        ()
-                    ()
 
                 | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
                     logger.Debug(string timeStamp + " Updating mappings with takenOff " + Json.serialize takeOff)
@@ -733,8 +849,8 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                     ()
 
                 // Controllers POST
-                let newMappings, cmds = handlePost(mappingsController, mappings, newMappings)
-                let newHealths, cmds2 = handlePost(healthController, healths, newHealths)
+                let newMappings, cmds = handlePost(mappingsController, mappings, newMappings, ())
+                let newHealths, cmds2 = handlePost(healthController, healths, newHealths, ())
                 for cmd in Seq.concat [ cmds; cmds2 ] do
                     yield cmd
                 mappings <- newMappings
