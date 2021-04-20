@@ -316,6 +316,7 @@ type PlayerFlightState =
     | Spawned of AirfieldId
     | InFlight
     | BackOnGround
+    | Destroyed
     | Ended
 
 type PlayerFlightTracker =
@@ -350,8 +351,196 @@ with
     static member Controller =
         { new StateMachineController<PlayerFlightTracker, _, Mappings * HealthTracker * IWarStateQuery> with
             member this.HandlePreEvent(state, event, (mappings, healths, war)) =
+                let planeName =
+                    war.World.PlaneSet.TryGetValue(state.FlightRecord.Plane)
+                    |> Option.ofPair
+                    |> Option.map (fun plane -> plane.Name)
+                    |> Option.defaultValue (string state.FlightRecord.Plane)
+
+                let recordedDamages(amount : float32, targetId, position) =
+                    [
+                        let ammo =
+                            match mappings.LatestHit.TryGetValue(targetId) with
+                            | true, hit ->
+                                AmmoType.FromLogName(hit.Ammo)
+                            | false, _ ->
+                                AmmoName "explosion"
+                        match mappings.Bindings.TryGetValue(targetId) with
+                        | true, binding ->
+                            // Buildings
+                            let sub = binding.Sub |> Option.defaultValue -1
+                            for building in war.GetBuildingsAt(binding.Typ, sub, position) do
+                                yield (TargetType.Building(building.Id, sub), ammo, amount)
+
+                            // Parked planes
+                            match war.TryGetStaticPlaneAt(binding.Name, position) with
+                            | Some(afId, plane) ->
+                                yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
+                            | None ->
+                                ()
+
+                            // Flying planes
+                            match war.TryGetPlane(binding.Name) with
+                            | Some plane ->
+                                yield (TargetType.Air(plane.Id), ammo, amount)
+                            | None ->
+                                ()
+
+                            // Others
+                            match binding.TargetType(war) with
+                            | Some target ->
+                                yield (target, ammo, amount)
+                            | _ ->
+                                ()
+                        | false, _ ->
+                            ()
+                    ]
+
+                let updateFlightRecord(attackerId, targetId, damage, position, killDelta) =
+                    let airKillDelta =
+                        match mappings.Bindings.TryFind(targetId) with
+                        | Some binding ->
+                            match war.TryGetPlane(binding.Name) with
+                            | Some _ -> killDelta
+                            | None -> 0
+                        | _ ->
+                            0
+                    // Credit attacker
+                    if attackerId = state.PilotId then
+                        let differentCoalitions =
+                            match mappings.Bindings.TryGetValue(attackerId), mappings.Bindings.TryGetValue(targetId) with
+                            | (true, attacker), (true, target) ->
+                                // Both IDs have bindings, and their respective coalitions could be identified, and they are different
+                                (war.TryGetCoalitionOfCountry(attacker.Country), war.TryGetCoalitionOfCountry(target.Country))
+                                ||> Option.map2 (fun c1 c2 -> c1 = c2.Other)
+                                |> Option.defaultValue false // Default: coalitions aren't known to be different
+                            | _ ->
+                                false
+                        if differentCoalitions then
+                            let flight =
+                                { state.FlightRecord with
+                                    TargetsDamaged = state.FlightRecord.TargetsDamaged @ recordedDamages(damage, targetId, position)
+                                    AirKills = state.FlightRecord.AirKills + airKillDelta
+                                }
+                            { state with
+                                FlightRecord = flight
+                            },
+                            []
+                        else
+                            state, []
+                    // Damage victim's plane
+                    elif targetId = state.VehicleId then
+                        let health = state.FlightRecord.PlaneHealth - damage |> max 0.0f
+                        let flight =
+                            { state.FlightRecord with
+                                PlaneHealth = health
+                            }
+                        { state with
+                            FlightRecord = flight
+                            FlightState = if health <= 0.0f then Destroyed else state.FlightState
+                        },
+                        []
+                    // Hurt victim
+                    elif targetId = state.PilotId then
+                        let health = state.FlightRecord.PilotHealth - damage |> max 0.0f
+                        let isKilled = health <= 0.0f || killDelta > 0
+                        let flight =
+                            { state.FlightRecord with
+                                PilotHealth = health
+                                Return = if isKilled then KilledInAction else state.FlightRecord.Return
+                            }
+                        { state with
+                            FlightRecord = flight
+                        },
+                        []
+                    else
+                        state, []
+
+                let updateFlightRecordEnd(timeStamp, position, ejected) =
+                    let ownerOfSite = war.TryGetRegionAt(position) |> Option.map (fun r -> r.RegionId) |> Option.bind war.GetOwner
+                    let landSite = war.TryGetNearestAirfield(position, ownerOfSite)
+                    let coalitionOfPilot = war.World.Countries.[state.PilotData.Country]
+                    let inEnemyTerritory = (Some coalitionOfPilot.Other = ownerOfSite)
+                    let retAf =
+                        if state.FlightRecord.Return = KilledInAction then
+                            KilledInAction
+                        elif inEnemyTerritory then
+                            CrashedInEnemyTerritory
+                        elif ejected then
+                            CrashedInFriendlyTerritory (landSite |> Option.map fst |> Option.map (fun af -> af.AirfieldId))
+                        else
+                            match landSite with
+                            | Some (af, dist) ->
+                                if dist < 3000.0f then
+                                    AtAirfield af.AirfieldId
+                                else
+                                    CrashedInFriendlyTerritory (Some af.AirfieldId)
+                            | _ ->
+                                CrashedInFriendlyTerritory None
+                    let healthStatus = war.HealthStatusFromHealthLevel(timeStamp, state.FlightRecord.PilotHealth)
+                    let flight =
+                        { state.FlightRecord with
+                            Length = war.Date + timeStamp - state.FlightRecord.Date
+                            Return = retAf
+                        }
+                    { state with
+                        FlightRecord = flight
+                        FlightState = if ejected || state.FlightState = Destroyed then Destroyed else BackOnGround
+                    },
+                    [
+                        sprintf "%s has %s"
+                            state.PilotData.FullName
+                            (string flight.Return),
+                        timeStamp,
+                        Some(RegisterPilotFlight(state.PilotData.Id, flight, healthStatus));
+
+                        sprintf "%s is back on the ground" state.PilotData.FullName,
+                        timeStamp,
+                        Some(UpdatePilot state.PilotData)
+                    ]
+
                 match event with
-                | _ -> state, []
+                | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
+                    // Update take off location and time
+                    match war.TryGetNearestAirfield(takeOff.Position, None) with
+                    | Some (airfield, _) ->
+                        { state with
+                            FlightRecord =
+                                { state.FlightRecord with
+                                    Date = war.Date + timeStamp
+                                    Start = airfield.AirfieldId
+                                }
+                            FlightState = InFlight
+                        },
+                        [sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, Some(UpdatePilot(state.PilotData))]
+                    | None ->
+                        { state with
+                            FlightRecord =
+                                { state.FlightRecord with
+                                    Date = war.Date + timeStamp
+                                }
+                            FlightState = InFlight
+                        },
+                        [sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, Some(UpdatePilot(state.PilotData))]
+
+                | ObjectEvent(timeStamp, ObjectLands landing) ->
+                    updateFlightRecordEnd(timeStamp, landing.Position, false)
+
+                | ObjectEvent(timeStamp, ObjectDamaged damaged) ->
+                    updateFlightRecord(damaged.AttackerId, damaged.TargetId, damaged.Damage, damaged.Position, 0)
+
+                | ObjectEvent(timeStamp, ObjectKilled killed) ->
+                    let oldHealth =
+                        healths.HealthOf.TryGetValue(killed.TargetId)
+                        |> Option.ofPair
+                        |> Option.defaultValue 1.0f
+                    updateFlightRecord(killed.AttackerId, killed.TargetId, oldHealth, killed.Position, 1)
+
+                | BotEvent(timeStamp, BotEject eject) ->
+                    updateFlightRecordEnd(timeStamp, eject.Position, true)
+
+                | _ ->
+                    state, []
 
             member this.HandlePostEvent(state, (state2, preCmds), (mappings, healths, war)) =
                 state2, preCmds
@@ -510,351 +699,35 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         let mutable healths = HealthTracker.Empty
         let healthController = HealthTracker.Controller
 
-        // Log Pilot ID to Pilot and FlightRecord
-        let flightRecords : Dictionary<int, {| Pilot : Pilot; Record : FlightRecord |}> = Seq.mutableDict []
-        // Pilot ID to pilot record
-        let pilotRecordOf = Seq.mutableDict []
-
-        let handleDamage(timeStamp, amount, targetId, position) =
-            impAsyncSeq {
-                match mappings.Bindings.TryGetValue(targetId) with
-                | true, binding ->
-                    // Emit DamageBuildingPart
-                    let sub = binding.Sub |> Option.defaultValue -1
-                    for building in state.GetBuildingsAt(binding.Typ, sub, position) do
-                        yield "Damage to building", timeStamp, Some(DamageBuildingPart(building.Id, sub, amount))
-
-                    // Emit RemovePlane for damages to static planes
-                    match state.TryGetStaticPlaneAt(binding.Name, position) with
-                    | Some(afId, plane) ->
-                        yield sprintf "Damage to parked %s" plane.Name, timeStamp, Some(RemovePlane(afId, plane.Id, amount))
-                    | None ->
-                        ()
-
-                    // Emit DestroyGroundForces for damages to ground forces
-                    match binding.TargetType(state) with
-                    | Some target when target.GroundForceValue > 0.0f<MGF> ->
-                        let country : SturmovikMission.DataProvider.Mcu.CountryValue = enum binding.Country
-                        match CountryId.FromMcuValue country, state.TryGetRegionAt(position) with
-                        | Some country, Some region ->
-                            match state.World.Countries.TryGetValue(country) with
-                            | true, coalition ->
-                                yield sprintf "Damage to ground forces %s" target.Description, timeStamp, Some(DestroyGroundForces(region.RegionId, coalition, amount * target.GroundForceValue))
-                            | false, _ ->
-                                ()
-                        | _ ->
-                            ()
-                    | _ ->
-                        ()
-                | _ ->
-                    ()
-            }
-
-        /// Generate all the damage entries corresponding to a target.
-        // Typically should be one or zero, but it's OK if they are more. Players won't complain if they are assigned victories incorrectly.
-        let recordedDamages(amount : float32, targetId, position) =
-            [
-                let ammo =
-                    match mappings.LatestHit.TryGetValue(targetId) with
-                    | true, hit ->
-                        AmmoType.FromLogName(hit.Ammo)
-                    | false, _ ->
-                        AmmoName "explosion"
-                match mappings.Bindings.TryGetValue(targetId) with
-                | true, binding ->
-                    // Buildings
-                    let sub = binding.Sub |> Option.defaultValue -1
-                    for building in state.GetBuildingsAt(binding.Typ, sub, position) do
-                        yield (TargetType.Building(building.Id, sub), ammo, amount)
-
-                    // Parked planes
-                    match state.TryGetStaticPlaneAt(binding.Name, position) with
-                    | Some(afId, plane) ->
-                        yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
-                    | None ->
-                        ()
-
-                    // Flying planes
-                    match state.TryGetPlane(binding.Name) with
-                    | Some plane ->
-                        yield (TargetType.Air(plane.Id), ammo, amount)
-                    | None ->
-                        ()
-
-                    // Others
-                    match binding.TargetType(state) with
-                    | Some target ->
-                        yield (target, ammo, amount)
-                    | _ ->
-                        ()
-                | false, _ ->
-                    ()
-            ]
-
-        /// Update flight record with damage
-        let updateFlightRecord(attackerId, damage, targetId, position) =
-            // Credit attacker
-            match mappings.PilotOf.TryGetValue(attackerId) with
-            | true, (taken : ObjectTaken) ->
-                match flightRecords.TryGetValue(taken.PilotId) with
-                | true, x ->
-                    let differentCoalitions =
-                        match mappings.Bindings.TryGetValue(attackerId), mappings.Bindings.TryGetValue(targetId) with
-                        | (true, attacker), (true, target) ->
-                            // Both IDs have bindings, and their respective coalitions could be identified, and they are different
-                            (state.TryGetCoalitionOfCountry(attacker.Country), state.TryGetCoalitionOfCountry(target.Country))
-                            ||> Option.map2 (fun c1 c2 -> c1 <> c2)
-                            |> Option.defaultValue false // Default: coalitions aren't known to be different
-                        | _ ->
-                            false
-                    if differentCoalitions then
-                        let flight =
-                            { x.Record with
-                                TargetsDamaged = x.Record.TargetsDamaged @ recordedDamages(damage, targetId, position)
-                            }
-                        flightRecords.[taken.PilotId] <- {| x with Record = flight |}
-                | false, _ ->
-                    ()
-            | false, _ ->
-                ()
-
-            // Record damage to target
-            match mappings.PilotOf.TryGetValue(targetId) with
-            | true, (taken : ObjectTaken) ->
-                match flightRecords.TryGetValue(taken.PilotId) with
-                | true, x ->
-                    let flight =
-                        { x.Record with PlaneHealth = x.Record.PlaneHealth - damage |> max 0.0f
-                        }
-                    flightRecords.[taken.PilotId] <- {| x with Record = flight |}
-                | false, _ ->
-                    ()
-            | false, _ ->
-                ()
-
-        /// Update flight record with air kills
-        let updateAirKills(pilotId, targetId) =
-            match mappings.Bindings.TryGetValue(targetId), flightRecords.TryGetValue(pilotId) with
-            | (true, binding), (true, x) ->
-                let differentCoalitions =
-                    match state.TryGetCoalitionOfCountry(binding.Country), state.World.Countries.[x.Pilot.Country] with
-                    | Some country1, country2 -> country1 <> country2
-                    | _ -> false
-                if differentCoalitions && state.TryGetPlane(binding.Typ).IsSome then
-                    flightRecords.[pilotId] <-
-                        {| x with
-                            Record = { x.Record with AirKills = x.Record.AirKills + 1 }
-                        |}
-            | _ ->
-                ()
-
-        /// Update flight record at landing or mission end
-        let updateFlightRecordEnd(timeStamp, vehicleId, ownerOfSite, landSite, isEjection) =
-            impAsyncSeq {
-                match mappings.PilotOf.TryGetValue(vehicleId) with
-                | true, taken ->
-                    match flightRecords.TryGetValue(taken.PilotId) with
-                    | true, x ->
-                        let coalitionOfPilot =
-                            enum taken.Country
-                            |> CountryId.FromMcuValue
-                            |> Option.map (fun country -> state.World.Countries.[country])
-                        let inEnemyTerritory =
-                            match coalitionOfPilot with
-                            | Some c -> Some c.Other = ownerOfSite
-                            | _ -> false
-                        let retAf =
-                            if inEnemyTerritory then
-                                CrashedInEnemyTerritory
-                            else
-                                match landSite with
-                                | Some (af, dist) ->
-                                    if dist < 3000.0f && not isEjection then
-                                        AtAirfield af.AirfieldId
-                                    else
-                                        CrashedInFriendlyTerritory (Some af.AirfieldId)
-                                | _ ->
-                                    CrashedInFriendlyTerritory None
-                        let pilotHealth =
-                            healths.HealthOf.TryGetValue(taken.PilotId)
-                            |> Option.ofPair
-                            |> Option.defaultValue 1.0f
-                        let healthStatus = state.HealthStatusFromHealthLevel(timeStamp, pilotHealth)
-                        let flight =
-                            { x.Record with
-                                PilotHealth = pilotHealth
-                                PlaneHealth = if isEjection then 0.0f else x.Record.PlaneHealth
-                                Length = state.Date + timeStamp - x.Record.Date
-                                Return = retAf
-                            }
-                        flightRecords.[taken.PilotId] <- {| x with Record = flight |}
-                        yield
-                            sprintf "%s has %s"
-                                x.Pilot.FullName
-                                (string flight.Return),
-                            timeStamp,
-                            Some(RegisterPilotFlight(x.Pilot.Id, flight, healthStatus))
-                        flightRecords.Remove(taken.PilotId) |> ignore
-                    | false, _ ->
-                        ()
-                | false, _ ->
-                    ()
-            }
-
-        /// Update flight record on death
-        let updateFlightRecordOnDeath(timeStamp, pilotId) =
-            impAsyncSeq {
-                match flightRecords.TryGetValue(pilotId) with
-                | true, x ->
-                    let flight =
-                        { x.Record with
-                            PilotHealth = 0.0f
-                            Length = state.Date + timeStamp - x.Record.Date
-                            Return = KilledInAction
-                        }
-                    flightRecords.[pilotId] <- {| x with Record = flight |}
-                    yield
-                        sprintf "%s was killed in action"
-                            x.Pilot.FullName,
-                        timeStamp,
-                        Some(RegisterPilotFlight(x.Pilot.Id, flight, Dead))
-                    flightRecords.Remove(pilotId) |> ignore
-                | false, _ ->
-                    ()
-            }
+        let mutable pilots = PlayerFlights.Empty
+        let pilotsController = PlayerFlights.Controller
 
         let handleLine line =
             impAsyncSeq {
                 // Controllers PRE
                 let newMappings = handlePre(mappingsController, mappings, line, ())
                 let newHealths = handlePre(healthController, healths, line, ())
+                let newPilots = handlePre(pilotsController, pilots, line, (mappings, healths, upcast state))
 
-                // Not yet converted to controllers
+                // Emit timestamp, needed to inform players of time left in mission
                 match line with
-                | ObjectEvent(timeStamp, ObjectBound binding) ->
+                | ObjectEvent(timeStamp, _) | MissionEvent(timeStamp, _) | PlayerEvent(timeStamp, _) | BotEvent(timeStamp, _) ->
                     yield "Timestamp", timeStamp, None
-                    logger.Debug(string timeStamp + " Updating mappings with binding " + Json.serialize binding)
 
-                | ObjectEvent(timeStamp, ObjectTakesOff takeOff) ->
-                    logger.Debug(string timeStamp + " Updating mappings with takenOff " + Json.serialize takeOff)
-                    // Start flight record
-                    let planeHealth =
-                        healths.HealthOf.TryGetValue(takeOff.Id)
-                        |> Option.ofPair
-                        |> Option.defaultValue 1.0f
-                    match mappings.PilotOf.TryGetValue(takeOff.Id) with
-                    | true, taken ->
-                        let pilotHealth =
-                            healths.HealthOf.TryGetValue(taken.PilotId)
-                            |> Option.ofPair
-                            |> Option.defaultValue 1.0f
-                        let country =
-                            CountryId.FromMcuValue(enum taken.Country)
-                        let plane = state.TryGetPlane(taken.Typ)
-                        match country, plane with
-                        | Some country, Some plane ->
-                            match state.TryGetNearestAirfield(takeOff.Position, None) with
-                            | Some (airfield, _) ->
-                                let pilot =
-                                    match pilotRecordOf.TryGetValue(taken.PilotId) with
-                                    | true, x -> x
-                                    | false, _ ->
-                                        state.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country, taken.HasFemaleCrew)
-                                let record : FlightRecord =
-                                    {
-                                        Date = state.Date + timeStamp
-                                        Length = System.TimeSpan(0L)
-                                        Plane = plane.Id
-                                        PlaneHealth = planeHealth
-                                        PilotHealth = pilotHealth
-                                        Start = airfield.AirfieldId
-                                        AirKills = 0
-                                        TargetsDamaged = []
-                                        Return = CrashedInEnemyTerritory // Meaningless, will get updated when player lands or crashes. Might be useful as a default for in-air disconnects.
-                                    }
-                                flightRecords.[taken.PilotId] <- {| Pilot = pilot; Record = record |}
-                                yield sprintf "%s takes off in %s" pilot.FullName plane.Name, timeStamp, Some(UpdatePilot(pilot))
-                            | None ->
-                                logger.Warn("Could not find airfield of take-off")
-                        | _ ->
-                            ()
-                    | false, _ -> ()
-
-                | ObjectEvent(timeStamp, ObjectLands landing) ->
-                    logger.Debug(string timeStamp + " Updating mappings with landing " + Json.serialize landing)
-                    // Update flight record
-                    let territory = state.TryGetRegionAt(landing.Position) |> Option.map (fun r -> r.RegionId) |> Option.bind state.GetOwner
-                    let landSite = state.TryGetNearestAirfield(landing.Position, territory)
-                    yield! updateFlightRecordEnd(timeStamp, landing.Id, territory, landSite, false)
-
-                | ObjectEvent(timeStamp, ObjectDamaged damaged) ->
-                    logger.Debug(string timeStamp + " Updating mappings with damaged " + Json.serialize damaged)
-                    // Update flight record
-                    updateFlightRecord(damaged.AttackerId, damaged.Damage, damaged.TargetId, damaged.Position)
-                    // Emit commands
-                    yield! handleDamage(timeStamp, damaged.Damage, damaged.TargetId, damaged.Position)
-
-                | ObjectEvent(timeStamp, ObjectKilled killed) ->
-                    logger.Debug(string timeStamp + " Updating mappings with killed " + Json.serialize killed)
-                    // Update mappings
-                    let oldHealth =
-                        healths.HealthOf.TryGetValue(killed.TargetId)
-                        |> Option.ofPair
-                        |> Option.defaultValue 1.0f
-                    // Update flight record
-                    match mappings.PilotOf.TryGetValue(killed.AttackerId) with
-                    | true, taken ->
-                        updateFlightRecord(taken.PilotId, oldHealth, killed.TargetId, killed.Position)
-                        updateAirKills(taken.PilotId, killed.TargetId)
-                    | false, _ ->
-                        ()
-                    yield! updateFlightRecordOnDeath(timeStamp, killed.TargetId)
-                    // Emit commands
-                    yield! handleDamage(timeStamp, oldHealth, killed.TargetId, killed.Position)
-
-                | BotEvent(timeStamp, BotEject eject) ->
-                    logger.Debug(string timeStamp + " Updaing mappings with eject" + Json.serialize eject)
-                    // Update flight record
-                    let territory = state.TryGetRegionAt(eject.Position) |> Option.map (fun r -> r.RegionId) |> Option.bind state.GetOwner
-                    let landSite = state.TryGetNearestAirfield(eject.Position, territory)
-                    yield! updateFlightRecordEnd(timeStamp, eject.ParentId, territory, landSite, true)
-
-                | PlayerEvent(timeStamp, PlayerEndsMission missionEnded) ->
-                    logger.Debug(string timeStamp + " Updating mappings with missionEnded " + Json.serialize missionEnded)
-                    let afId =
-                        flightRecords.TryGetValue(missionEnded.PilotId)
-                        |> Option.ofPair
-                        |> Option.bind (fun x -> state.TryGetReturnAirfield(x.Record))
-                    // Emit AddPlane command
-                    match mappings.Bindings.TryGetValue(missionEnded.VehicleId), afId, healths.HealthOf.TryGetValue(missionEnded.VehicleId) with
-                    | (true, binding), Some afId, (true, health) when health > 0.0f ->
-                        match state.TryGetPlane(binding.Name) with
-                        | Some plane ->
-                            yield sprintf "%s registered back at %s" plane.Name afId.AirfieldName, timeStamp, Some(AddPlane(afId, plane.Id, health))
-                        | None ->
-                            ()
-                    | _ ->
-                        ()
-                    // Update pilot health status
-                    match pilotRecordOf.TryGetValue(missionEnded.PilotId) with
-                    | true, pilot ->
-                        let pilotHealth = healths.HealthOf.TryGetValue(missionEnded.PilotId) |> Option.ofPair |> Option.defaultValue 1.0f
-                        let pilot = { pilot with Health = state.HealthStatusFromHealthLevel(timeStamp, pilotHealth) }
-                        yield sprintf "%s has ended their flight" pilot.FullName, timeStamp, Some(UpdatePilot pilot)
-                    | false, _ ->
-                        ()
-                    // Update mappings
-                    pilotRecordOf.Remove(missionEnded.PilotId) |> ignore
                 | _ ->
                     ()
 
                 // Controllers POST
                 let newMappings, cmds = handlePost(mappingsController, mappings, newMappings, ())
                 let newHealths, cmds2 = handlePost(healthController, healths, newHealths, ())
-                for cmd in Seq.concat [ cmds; cmds2 ] do
+                let newPilots, cmds3 = handlePost(pilotsController, pilots, newPilots, (mappings, healths, upcast state))
+
+                for cmd in Seq.concat [ cmds; cmds2; cmds3 ] do
                     yield cmd
+
                 mappings <- newMappings
                 healths <- newHealths
+                pilots <- newPilots
             }
 
         let mutable finalTimeStamp = System.TimeSpan(0L)
@@ -872,10 +745,10 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
 
         // Update health status of players still in the air after the log ends.
         // Do not register their flight, that'll teach them to get back in time on the ground.
-        for x in flightRecords.Values do
-            let healthStatus = state.HealthStatusFromHealthLevel(finalTimeStamp, x.Record.PilotHealth)
+        for x in pilots.FlightOfPilot.Values do
+            let healthStatus = state.HealthStatusFromHealthLevel(finalTimeStamp, x.FlightRecord.PilotHealth)
             yield
-                sprintf "%s is still in the air" x.Pilot.FullName,
+                sprintf "%s is still in the air" x.PilotData.FullName,
                 System.TimeSpan(System.Int64.MaxValue),
-                Some(UpdatePilot { x.Pilot with Health = healthStatus })
+                Some(UpdatePilot { x.PilotData with Health = healthStatus })
     }
