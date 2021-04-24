@@ -461,26 +461,35 @@ with
                     },
                     cmds
 
-            member this.HandlePostEvent(state, (state2, cmds), context) =
-                // Dispatch
-                let flightsAndCmds =
-                    state.FlightOfPilot
-                    |> Map.map (fun pilotId flight ->
-                        match state2.FlightOfPilot.TryFind pilotId with
-                        | Some flight2 ->
-                            pftCtrl.HandlePostEvent(flight, (flight2, []), context)
-                        | None ->
-                            flight, [])
-                // Extract flights
+            member this.HandlePostEvent(state, (state2, preCmds), context) =
+                let oldKeys = Set(state.FlightOfPilot.Keys)
+                let newKeys = Set(state2.FlightOfPilot.Keys)
+                let shared = Set.intersect oldKeys newKeys
+                let added = newKeys - oldKeys
+                let removed = oldKeys - newKeys
+
+                // Remove
                 let flights =
-                    flightsAndCmds
-                    |> Map.map (fun _ -> fst)
-                // Extract flight-generated commands and add them to the commands from the Pre handler
-                let cmds2 =
-                    ([cmds], flightsAndCmds)
-                    ||> Map.fold (fun cmdGroups _ (_, cmds) -> cmds :: cmdGroups)
-                    |> List.rev
-                    |> List.concat
+                    (state.FlightOfPilot, removed)
+                    ||> Set.fold (fun flights key -> flights.Remove(key))
+
+                // Dispatch and update
+                let flights, postCmds =
+                    ((flights, []), shared)
+                    ||> Set.fold (fun (flights, cmds) key ->
+                        let before = flights.[key]
+                        let after = state2.FlightOfPilot.[key]
+                        let updated, cmds2 = pftCtrl.HandlePostEvent(before, (after, []), context)
+                        flights.Add(key, updated), cmds @ cmds2)
+
+                // Add
+                let flights =
+                    (flights, added)
+                    ||> Set.fold (fun flights key -> flights.Add(key, state2.FlightOfPilot.[key]))
+
+                // Add post-generated commands to the commands from the Pre handler
+                let cmds2 = preCmds @ postCmds
+
                 // Result
                 { state2 with
                     FlightOfPilot = flights
