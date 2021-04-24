@@ -1,0 +1,158 @@
+﻿Multiplayer Dynamic Campaign for IL-2: Great Battles by Coconut - Installation
+==============================================================================
+Johann "coconut" Deneux <johann.deneux@protonmail.ch>
+
+== Trademarks
+
+"IL-2: Great Battles" is a trademark owned by 1C-777 Limited.
+
+== Required knowledge
+
+Setup and operation of DServer.exe, the dedicated server of IL-2: Great Battles.
+For question about DServer.exe, please refer to https://forum.il2sturmovik.com/
+
+Usage of the commandline in your operating system.
+
+== Prerequisites
+
+.net 5, which you can get from https://dotnet.microsoft.com/download/dotnet/5.0
+
+The software has only been tested on MS Windows 10. It's possible it might work on other systems, but no guarantees.
+
+== Software packages
+
+There are two essential packages needed to run the campaign.
+The WebController is a web service that starts and monitors DServer.exe, available from https://github.com/deneuxj/SturmovikCampaign .
+The web site (HTML and javascript) is available from https://github.com/deneuxj/SturmovikCampaignWeb .
+
+The former is part of the same package as the present file, and you've likely already downloaded it if you are reading this. The latter is a separate package to be downloaded.
+
+== Installation
+
+Create a directory anywhere, preferably outside of C:\Program Files. Let's say you chose C:\CocoCampaign.
+
+Put the web site files under a directory named Web. You get C:\CocoCampaign\Web with two subdirectories, html and js.
+
+Put the web service under a directory named Soft. You get C:\CocoCampaign\Soft\net5.0\WebController.exe.
+
+Create a new subdirectory for the data tracking the state of campaigns, named Campaign. You get C:\CocoCampaign\Campaign.
+
+== Setting up the admin password to the web controller
+
+In a console window, in the directory where WebController.exe resides:
+
+WebController.exe /SetAdminPassword:yourpassword
+
+== Web service configuration
+
+Edit C:\CocoCampaign\Soft\net5.0\webcontroller.cfg, which is a json file. Make sure the syntax is correct, e.g. with https://jsonlint.com/
+
+The meaning of each entry is as follows:
+
+- SitePath: Location to the web files. "C:\\CocoCampaign\\Web"
+
+- Listen: Array of objects specifying the IP addresses and ports on which the web service will listen for connections. Make sure your firewall and operating system allow connections to these from the outside.
+IP is the IP address as a string, IPv4 format. Port is a number, the port number. Note that the website uses unencrypted http.
+
+- CampaignPath: Path to the campaign data "C:\\CocoCampaign\\Campaign"
+
+The first time you run WebController, a template config file with dummy values is created. Simply edit the values.
+
+== Campaign configuration
+
+Edit C:\CocoCampaign\Campaign\campaign.cfg, which a json file.
+
+The type role of each entry is described below.
+
+- address: string, IP address of DServer's remote console. Typically "127.0.0.1", set in DServer's SDS config file. This is not the same as IP in Listen in webcontroller.cfg.
+- port: number, the port number of DServer's remote console. Also set in DServer's SDS config file. This is not the same as Port in Listen in webcontroller.cfg.
+- login: string, login to DServer's remote console. Also set in DServer's SDS config file.
+- password: string, the password to access DServer's remote console. Also set in DServer's SDS config file.
+- game_dir: string, the path to the base installation directory of the game whose DServer.exe you will be using. For instance, "C:\\IL-2 Sturmovik Battle of Stalingrad"
+- sds_file: string, the path relative to the "data" subdirectory of the game's installation that points at the SDS config file for DServer you will be using.
+- work_dir: string, path to the current campaign's files. "C:\\CocoCampaign\\Campaign\\Current"
+- mission_duration: number, mission duration in minutes. Use 180 for three hours.
+
+The following entries are optional, and can be used to adjust mission complexity. They are all numbers.
+
+- max_trains: Max number of trains, per coalition (4)
+
+- max_truck_convoys: Max number of truck convoys and tank columns, per coalition (5)
+
+- max_active_patrols: Max number of AI patrols that can be active simultaneously, per coalition (4)
+
+- max_attack_planes_cpu: Max CPU cost of AI attack planes, both coalitions (only one coalition normally attacks in any mission) (16). Fighters count for 1, attackers count for 2, bombers for 4
+
+- max_aa: Max number of AA guns (1000)
+
+- max_battle_at_guns: Max number of anti-tank guns in every ground battle (15)
+
+- max_battle_tanks: Max number of AI tanks in every ground battle (7)
+
+- max_battle_artillery: Max number of artillery guns in every ground battle (15)
+
+- max_battle_rocket_artillery: Max number of mobile rocket artillery in every ground battle (7)
+
+- min_fighters_playable_mission: Min number of fighters for players, per coalition (100). Mission is skipped and campaign advanced if there are too few fighter planes available.
+
+- max_total_num_fires: Max number of static fires (100)
+
+- max_fires_radius: Minimum distance (in meters) between fires (3500)
+
+- max_num_fires_in_radius: Maximum number of fires within the radius above from any fire (2)
+
+== DServer configuration
+
+Make sure you set and understand the remote console settings.
+
+Set shutdown loads to some reasonable value, e.g. 5. The server will shut down automatically after this number of missions have been run. The web controller will detect this and restart DServer.exe.
+This is needed because DServer tends to become unstable after a few missions have been run.
+
+Set the max time for round to unlimited. The web controller triggers the next mission when it's ready, which is why you can use unlimited time.
+
+Set the number of clients to something reasonable, as the generated missions tend to be heavy. Use e.g. 33 for 32 players plus the DServer account.
+
+Set the two missions to run. The controller always tries to generate two identical missions, CocoCampaign_1.msnbin and CocoCampaign_2.msnbin.
+As it does so while DServer is running, there is a risk it will fail to write into one of these files, which is why it uses two alternatives.
+DServer will alternate between these two when starting the next mission.
+
+To set these from DServer's user interface, you should run WebController.exe and force it to generate the missions, then close WebController.exe by pressing Enter.
+Close DServer.exe if WebController started it. Now you can open DServer.exe, manage the SDS file from DServer, select the two missions. Save, close the file, close DServer.exe.
+
+== Operation
+
+Start WebController.exe, navigate to "http://123.456.78.9:123/html/control.html", assuming the IP and port you set in webcontroller.cfg where "123.456.78.9" and 123.
+
+Enter the admin password you set with "/SetAdminPassword" under "Admin Password" towards the bottom of the page. Do not click submit yet, or press enter.
+
+Select the command you want to perform:
+
+- Reset the campaign, in which case you must also pick a campaign scenario from the list.
+
+- Rebuild world data, to be done preferably while the campaign sync is not active. But it's really best not to use it at all, as it can corrupt the current campaign.
+
+- Force advance (1 step), to be done while campaign sync is not active. Force advancing the campaign, if you want to skip the current mission. Typically you don't want to do that, but it's useful for me to develop and balance campaign mechanics.
+
+- Force advance (multiple steps). Same as above, but many steps instead of one.
+
+- Start synchronization loop. The term synchronization refers to synchronization between the campaign system and DServer. This command starts or resumes the campaign.
+
+- Start synchronization loop (one round). Same as above, but stop after the current mission ends. So not much of a loop, really...
+
+- Stop synchronization after mission ends.
+
+- Stop synchronization now.
+
+- Rebuild or retry mission. Don't use.
+
+- Ban or clear player. Don't use, not functional yet.
+
+To stop WebController.exe, press Enter when WebController's window has focus. This will not close DServer.exe
+
+You can start WebController.exe when DServer.exe is running, and you can resume the campaign by using "Start synchronization loop".
+
+To stop DServer.exe, stop WebController first. Otherwise, WebController will notice DServer died and restart it.
+
+To force re-generating a mission, delete file sync.json in the campaign files (stop WebController.exe first), start WebController, start synchronization.
+
+WebController.exe produces a log file in webcontroller.txt, where WebController.exe is located. This file can get big over time, so keep an eye on it and delete it now and then.
