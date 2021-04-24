@@ -1263,6 +1263,41 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         else
             Error "Cannot change state while sync is active"
 
+    member this.Back(idx : int) =
+        if idx < 0 then
+            Error "Index out of range, must be at least 0"
+        else if isRunning then
+            Error "Cannot back while sync is active"
+        else
+            Seq.initInfinite (fun offset -> wkPath(getStateFilename (idx + offset + 1)))
+            |> Seq.takeWhile (fun filename -> File.Exists(filename))
+            |> Seq.iter (fun path -> File.Delete(path))
+            // Use a pattern that won't match anything. The result extraction will be done from the copied game logs file, not the original ones.
+            state <- Some(ExtractingResults "nomatch.nomatch")
+            this.SaveState()
+            // Done
+            Ok(sprintf "Backed to results of step %03d" idx)
+
+    member this.Forward() =
+        async {
+            let idx = 1 + BaseFileNames.getCurrentIndex settings.WorkDir
+            let logsFile = wkPath(BaseFileNames.getLogsCatFilename idx)
+            if File.Exists logsFile then
+                let! extraction = this.ExtractMissionLog("nomatch.nomatch")
+                match extraction with
+                | Ok _ ->
+                    let! advanced = this.Advance()
+                    match advanced with
+                    | Ok _ ->
+                        return! this.Forward()
+                    | Error e ->
+                        return Error(sprintf "Advance at step %03d failed with '%s'" idx e)
+                | Error e ->
+                    return Error(sprintf "Result extraction at step %03d failed with '%s'" idx e)
+            else
+                return Ok (sprintf "Stopped before step %03d" idx)
+        }
+
     member this.ModifyPlayer(playerId : string, update) =
         match war with
         | Some war ->

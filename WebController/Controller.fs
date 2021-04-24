@@ -324,6 +324,60 @@ type Controller(settings : GameServerControl.Settings) =
                     return { s with Sync = None }
             }
 
+        member this.BackTo(idx) =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                let! sync =
+                    match s.Sync with
+                    | Some sync -> async.Return (Ok sync)
+                    | None ->
+                        async {
+                            let sync = GameServerSync.Sync.Create(settings)
+                            let disp = registerOnStateChanged sync
+                            let! status = sync.Init()
+                            match status with
+                            | Ok _ -> return Ok(sync, disp)
+                            | Error e -> return Error e
+                        }
+                match sync with
+                | Ok(sync, onStateChanged) ->
+                    let r = sync.Back(idx)
+                    channel.Reply(r)
+                    sync.Die("Scenario was forcibly backed")
+                    sync.Dispose()
+                    onStateChanged.Dispose()
+                    return { s with Sync = None }
+                | Error e ->
+                    channel.Reply(Error e)
+                    return { s with Sync = None }
+            }
+
+        member this.Forward() =
+            mb.PostAndAsyncReply <| fun channel s -> async {
+                let! sync =
+                    match s.Sync with
+                    | Some sync -> async.Return (Ok sync)
+                    | None ->
+                        async {
+                            let sync = GameServerSync.Sync.Create(settings)
+                            let disp = registerOnStateChanged sync
+                            let! status = sync.Init()
+                            match status with
+                            | Ok _ -> return Ok(sync, disp)
+                            | Error e -> return Error e
+                        }
+                match sync with
+                | Ok(sync, onStateChanged) ->
+                    let! r = sync.Forward()
+                    channel.Reply(r)
+                    sync.Die("Scenario was forwarded using backed up game logs")
+                    sync.Dispose()
+                    onStateChanged.Dispose()
+                    return { s with Sync = None }
+                | Error e ->
+                    channel.Reply(Error e)
+                    return { s with Sync = None }
+            }
+
         member this.GetSyncState() =
             mb.PostAndAsyncReply <| fun channel s -> async {
                 channel.Reply(
@@ -743,6 +797,8 @@ type Controller(settings : GameServerControl.Settings) =
 
         interface IControllerInteraction with
             member this.Advance(n) = this.Run(n)
+            member this.BackTo(idx) = this.BackTo(idx)
+            member this.Forward() = this.Forward()
             member this.ResetCampaign(scenario) = this.ResetCampaign(scenario)
             member this.RebuildWorld() = this.RebuildWorld()
             member this.StartSyncLoop() = this.StartSync(true)
