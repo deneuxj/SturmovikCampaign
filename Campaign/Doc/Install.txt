@@ -112,6 +112,8 @@ Set the max time for round to unlimited. The web controller triggers the next mi
 
 Set the number of clients to something reasonable, as the generated missions tend to be heavy. Use e.g. 33 for 32 players plus the DServer account.
 
+Lock weapon mods (if you want, but that's how it's meant to be used).
+
 Set the two missions to run. The controller always tries to generate two identical missions, CocoCampaign_1.msnbin and CocoCampaign_2.msnbin.
 As it does so while DServer is running, there is a risk it will fail to write into one of these files, which is why it uses two alternatives.
 DServer will alternate between these two when starting the next mission.
