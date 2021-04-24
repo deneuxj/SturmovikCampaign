@@ -352,7 +352,16 @@ with
 
                 | ObjectEvent(timeStamp, ObjectLands landing) ->
                     logger.Debug(sprintf "End flight of %s after landing %s" state.PilotData.FullName event)
-                    updateFlightRecordEnd(timeStamp, landing.Position, false)
+                    let state, cmds = updateFlightRecordEnd(timeStamp, landing.Position, false)
+                    let addPlane =
+                        match war.TryGetNearestAirfield(landing.Position, None) with
+                        | Some (airfield, _) ->
+                            [sprintf "%s lands a %s at %s" state.PilotData.FullName planeName airfield.AirfieldId.AirfieldName,
+                             timeStamp,
+                             Some(AddPlane(airfield.AirfieldId, state.FlightRecord.Plane, state.FlightRecord.PlaneHealth))]
+                        | None ->
+                            []
+                    state, addPlane @ cmds
 
                 | ObjectEvent(timeStamp, ObjectDamaged damaged)
                         when Seq.allPairs [damaged.AttackerId; damaged.TargetId] [state.PilotId; state.VehicleId] |> Seq.exists (fun (x, y) -> x = y) ->
