@@ -951,26 +951,26 @@
         ],
         "EmptyPayload": 27,
         "WeaponModsCosts": [
-            {
-                "Mod": 2,
-                "Cost": 999999
-            },
-            {
-                "Mod": 3,
-                "Cost": 999999
-            },
-            {
-                "Mod": 4,
-                "Cost": 999999
-            },
-            {
-                "Mod": 6,
-                "Cost": 999999
-            },
-            {
-                "Mod": 8,
-                "Cost": 999999
-            }
+          {
+            "Mod": 2,
+            "Cost": 999999
+          },
+          {
+            "Mod": 3,
+            "Cost": 999999
+          },
+          {
+            "Mod": 4,
+            "Cost": 999999
+          },
+          {
+            "Mod": 6,
+            "Cost": 999999
+          },
+          {
+            "Mod": 8,
+            "Cost": 999999
+          }
         ],
         "LastPayload": 27,
         "LastWeaponMod": 8
@@ -1136,7 +1136,7 @@
     {
       "Plane": {
         "Kind": "Fighter",
-        "Name": "p47",
+        "Name": "p47d 28",
         "LogName": "p-47d-28",
         "Roles": [
           "Interceptor",
@@ -1166,29 +1166,46 @@
           }
         ],
         "EmptyPayload": 79,
-        "WeaponModsCosts": [
+        "WeaponModsCosts": [],
+        "LastPayload": 79,
+        "LastWeaponMod": 8
+      }
+    },
+    {
+      "Plane": {
+        "Kind": "Fighter",
+        "Name": "p47d 22",
+        "LogName": "p-47d-22",
+        "Roles": [
+          "Interceptor",
+          "GroundAttacker"
+        ],
+        "Coalition": "Allies",
+        "Script": "LuaScripts\\WorldObjects\\Planes\\p47d22.txt",
+        "Model": "graphics\\planes\\p47d28\\p47d22.mgm",
+        "Static": "p47d22",
+        "Cost": 1000,
+        "BombCapacity": 1175,
+        "CargoCapacity": 1175,
+        "Payloads": [
           {
-            "Mod": 1,
-            "Cost": 100.0
+            "Payload": {
+              "Role": "Interceptor",
+              "ModMask": 1,
+              "Id": 0
+            }
           },
           {
-            "Mod": 2,
-            "Cost": 100.0
-          },
-          {
-            "Mod": 3,
-            "Cost": 50.0
-          },
-          {
-            "Mod": 5,
-            "Cost": 100.0
-          },
-          {
-            "Mod": 8,
-            "Cost": 150.0
+            "Payload": {
+              "Role": "GroundAttacker",
+              "ModMask": 17,
+              "Id": 24
+            }
           }
         ],
-        "LastPayload": 78,
+        "EmptyPayload": 79,
+        "WeaponModsCosts": [],
+        "LastPayload": 79,
         "LastWeaponMod": 6
       }
     },
