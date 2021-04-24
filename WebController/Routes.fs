@@ -138,14 +138,6 @@ let resetCampaign reset =
     handleJson<{| Scenario: string |}>
         (fun data -> reset data.Scenario)
 
-let banPlayer func =
-    handleJson<{| Player : string; Days : int option; Hours : int option; Minutes : int option |}>
-        (fun data -> func(data.Player, System.TimeSpan(defaultArg data.Days 0, defaultArg data.Hours 0, defaultArg data.Minutes 0)))
-
-let unbanPlayer func =
-    handleJson<{| Player : string |}>
-        (fun data -> func(data.Player))
-
 /// Extract pilot search filter from URL args and run search
 let searchPilots handler (ctx : HttpContext) =
     let healthFilter =
