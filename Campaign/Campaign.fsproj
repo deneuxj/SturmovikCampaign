@@ -26,6 +26,7 @@
     <Compile Include="Src\PilotRanks.fs" />
     <Compile Include="Src\NewWorldDescription.fs" />
     <Compile Include="Src\Pilots.fs" />
+    <Compile Include="Src\IWarState.fs" />
     <Compile Include="Src\WarState.fs" />
     <Compile Include="Src\WarStateUpdate.fs" />
     <Compile Include="Src\CombatBonuses.fs" />
@@ -35,6 +36,8 @@
     <Compile Include="Src\CampaignScenario.fs" />
     <Compile Include="Src\Scenario.WorldWar2.fs" />
     <Compile Include="Src\DServerRConClient.fs" />
+    <Compile Include="Src\MissionResultsExtensions.fs" />
+    <Compile Include="Src\MissionResultsStateMachines.fs" />
     <Compile Include="Src\MissionResults.fs" />
     <Compile Include="Src\GameServerControl.fs" />
     <Compile Include="Src\GameServerSync.fs" />
