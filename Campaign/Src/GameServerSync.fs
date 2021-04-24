@@ -255,11 +255,14 @@ module BaseFileNames =
     let simulationBaseFilename = "-simulation.json"
     /// Commands extracted from the game logs, and the results of the commands, precedes simulation when advancing the campaign state.
     let effectsBaseFilename = "-effects.json"
+    /// Concatenated game logs
+    let gameLogsCatFilename = "-logs.txt"
 
     let getStateFilename idx = sprintf "%03d%s" idx stateBaseFilename
     let getStepFilename idx = sprintf "%03d%s" idx stepBaseFilename
     let getSimulationFilename idx = sprintf "%03d%s" idx simulationBaseFilename
     let getEffectsFilename idx = sprintf "%03d%s" idx effectsBaseFilename
+    let getLogsCatFilename idx = sprintf "%03d%s" idx gameLogsCatFilename
 
     /// Get the highest N such that N-state.xml exists
     let getCurrentIndex (path : string) =
@@ -1029,19 +1032,27 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
         async {
             match war with
             | Some war ->
-                // Find initial log file created right after the mission was started
+                // Current index of campaign state files
+                let index = getCurrentIndex settings.WorkDir + 1
+                let logsFile = wkPath(getLogsCatFilename index)
                 let lines =
-                    asyncSeq {
-                        let files =
-                            System.IO.Directory.EnumerateFiles(settings.MissionLogs, pattern)
-                            |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file))
-                            |> List.ofSeq
-                        for file in files do
-                            use f = File.OpenText(file)
-                            while not f.EndOfStream do
-                                let! line = Async.AwaitTask(f.ReadLineAsync())
-                                yield line
-                    }
+                    if IO.File.Exists(logsFile) then
+                        // If logs file already exists, we are redoing the interpretation of the logs.
+                        // Typically done for debugging and testing purposes
+                        AsyncSeq.ofSeq (IO.File.ReadAllLines(logsFile))
+                    else
+                        // Normal case: get the logs from the game's directory
+                        asyncSeq {
+                            let files =
+                                System.IO.Directory.EnumerateFiles(settings.MissionLogs, pattern)
+                                |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file))
+                                |> List.ofSeq
+                            for file in files do
+                                use f = File.OpenText(file)
+                                while not f.EndOfStream do
+                                    let! line = Async.AwaitTask(f.ReadLineAsync())
+                                    yield line
+                        }
                 let! commands =
                     MissionResults.processLogs war lines
                     |> AsyncSeq.toListAsync
@@ -1065,12 +1076,13 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     ]
                 stateChanged.Trigger(war.Clone())
                 // Write effects to file
-                // Write war state and campaign step files
-                let index = getCurrentIndex settings.WorkDir + 1
                 let effectsFile = wkPath(getEffectsFilename index)
                 use writer = new StreamWriter(effectsFile, false)
                 let json = Json.serializeEx JsonConfig.IL2Default effects
                 writer.Write(json)
+                // Write log lines to file
+                let! lines = AsyncSeq.toArrayAsync lines
+                IO.File.WriteAllLines(logsFile, lines)
                 return Ok()
             | None ->
                 return (Error "No war state")
