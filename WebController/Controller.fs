@@ -345,7 +345,15 @@ type Controller(settings : GameServerControl.Settings) =
                     sync.Die("Scenario was forcibly backed")
                     sync.Dispose()
                     onStateChanged.Dispose()
-                    return { s with Sync = None }
+                    return
+                        { s with
+                            War = None
+                            WarStateCache = s.WarStateCache |> Map.filter (fun idx2 _ -> idx2 <= idx)
+                            DtoDates = s.DtoDates |> Option.map (Array.truncate idx)
+                            DtoStateCache = s.DtoStateCache |> Map.filter (fun idx2 _ -> idx2 <= idx)
+                            DtoSimulationCache = s.DtoSimulationCache |> Map.filter (fun idx2 _ -> idx2 < idx)
+                            Sync = None
+                        }
                 | Error e ->
                     channel.Reply(Error e)
                     return { s with Sync = None }
