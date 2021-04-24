@@ -1162,7 +1162,7 @@
         "Coalition": "Allies",
         "Script": "LuaScripts\\WorldObjects\\Planes\\p47d22.txt",
         "Model": "graphics\\planes\\p47d28\\p47d22.mgm",
-        "Static": "p47d22",
+        "Static": "p47d28",
         "Cost": 1000,
         "BombCapacity": 1175,
         "CargoCapacity": 1175,
