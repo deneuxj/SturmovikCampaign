@@ -91,7 +91,7 @@ GET /query/players/<guid>
 GET /query/players/<guid>/pilots
 GET /query/online
 
-POST /control/reset
+POST /control/reset with json { Scenario = <name> }
 POST /control/rebuild
 POST /control/advance with json { NumSteps = <n> }
 POST /control/sync/loop
