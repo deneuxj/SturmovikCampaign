@@ -742,8 +742,7 @@ type Controller(settings : GameServerControl.Settings) =
             member this.GetRegionSupplies(stateIdx, region) = this.GetRegionSupplies(stateIdx, region)
 
         interface IControllerInteraction with
-            member this.Advance() = this.Run(1)
-            member this.Run() = this.Run(15)
+            member this.Advance(n) = this.Run(n)
             member this.ResetCampaign(scenario) = this.ResetCampaign(scenario)
             member this.RebuildWorld() = this.RebuildWorld()
             member this.StartSyncLoop() = this.StartSync(true)

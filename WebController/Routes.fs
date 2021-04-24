@@ -62,8 +62,7 @@ type IRoutingResponse =
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
     abstract RebuildWorld : unit -> Async<Result<string, string>>
-    abstract Advance : unit -> Async<Result<string, string>>
-    abstract Run : unit -> Async<Result<string, string>>
+    abstract Advance : int -> Async<Result<string, string>>
     abstract StartSyncLoop : unit -> Async<Result<string, string>>
     abstract StartSyncOnce : unit -> Async<Result<string, string>>
     abstract StopSyncAfterMission : unit -> Async<Result<string, string>>
@@ -94,8 +93,7 @@ GET /query/online
 
 POST /control/reset
 POST /control/rebuild
-POST /control/advance
-POST /control/run
+POST /control/advance with json { NumSteps = <n> }
 POST /control/sync/loop
 POST /control/sync/once
 POST /control/sync/stop
@@ -166,6 +164,9 @@ let searchPilots handler (ctx : HttpContext) =
         }
     handler filter
 
+let advance advance =
+    handleJson<{| NumSteps: int option |}>(fun data -> advance(data.NumSteps |> Option.defaultValue 1))
+
 let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IControllerInteraction) =
     let inline serializeAsync task (ctx : HttpContext) =
         async {
@@ -224,8 +225,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
                                 ctrl.ResetCampaign(scenario)
                                 |> serializeAsync)))
             path "/control/rebuild" >=> inControlRoom (context (fun _ -> ctrl.RebuildWorld() |> serializeAsync))
-            path "/control/advance" >=> inControlRoom (context (fun _ -> ctrl.Advance() |> serializeAsync))
-            path "/control/run" >=> inControlRoom (context (fun _ -> ctrl.Run() |> serializeAsync))
+            path "/control/advance" >=> inControlRoom (context (advance (fun numSteps -> ctrl.Advance(numSteps) |> serializeAsync)))
             path "/control/resolve" >=> inControlRoom (context (fun _ -> ctrl.ResolveError() |> serializeAsync))
             path "/control/sync/loop" >=> inControlRoom(context( fun _ -> ctrl.StartSyncLoop() |> serializeAsync))
             path "/control/sync/once" >=> inControlRoom(context(fun _ -> ctrl.StartSyncOnce() |> serializeAsync))
