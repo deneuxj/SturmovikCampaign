@@ -137,7 +137,21 @@ with
                                 |> Option.defaultValue planeModel.Id
                             [AnnotatedCommand.Create(sprintf "Parked %s damaged %2.1f%%" planeModel.Name amount, timestamp, RemovePlane(afId, actualPlane, amount))
                             ]
-                        | None -> []
+                        | None ->
+                        // Report damages to all building parts that cover the position, typically
+                        // that should be at most one, unless there are building groups overlaps.
+                        let part = defaultArg binding.Sub -1
+                        let buildings = war.GetBuildingsAt(binding.Name, part, position) |> Seq.cache
+                        if not(Seq.isEmpty buildings) then
+                            buildings
+                            |> Seq.map (fun building ->
+                                AnnotatedCommand.Create(
+                                    sprintf "Building %s damaged %2.1f%%" building.Properties.Model amount,
+                                    timestamp,
+                                    DamageBuildingPart(building.Id, part, amount)))
+                            |> List.ofSeq
+                        else
+                            []
                     | None ->
                         []
 
@@ -254,7 +268,7 @@ with
                                 ()
 
                             // Others
-                            match binding.TargetType(war) with
+                            match binding.TryGetVehicleTargetType(war) with
                             | Some target ->
                                 yield (target, ammo, amount)
                             | _ ->

@@ -90,7 +90,7 @@ type IWarStateQuery with
             )
         )
 
-    /// Get all buildings that match a name, have the given subpart as reported as important, and cover the given position.
+    /// Get all buildings and bridges that match a name, have the given subpart as reported as important, and cover the given position.
     member this.GetBuildingsAt(logName : string, part : int, (x, _, z) : Position) =
         let logName = normalizeLogName logName
         let pos = Vector2(x, z)
@@ -160,7 +160,8 @@ type AmmoType with
     static member FromLogName(logName : string) : AmmoType = AmmoName logName
 
 type Binding with
-    member this.TargetType(war : IWarStateQuery) =
+    /// Try to get the vehicle target type of the object in this binding
+    member this.TryGetVehicleTargetType(war : IWarStateQuery) =
         match this.Name with
         | TargetTypeByName tt -> Some tt
         | _ ->
