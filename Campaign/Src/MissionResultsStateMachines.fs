@@ -46,6 +46,7 @@ let handlePre (ctrl : StateMachineController<'S, 'E, 'C>, state, event, ctx) =
 let handlePost (ctrl : StateMachineController<'S, 'E, 'C>, state, preResult, ctx) =
     ctrl.HandlePostEvent(state, preResult, ctx)
 
+/// Vehicle and pilot IDs mappings
 type Mappings =
     {
         Bindings : Map<int, Binding>
@@ -95,6 +96,7 @@ with
             member this.HandlePostEvent(state, preResult, ()) = preResult, []
         }
 
+/// Tracks health of vehicles and pilots
 type HealthTracker =
     {
         HealthOf : Map<int, float32>
@@ -137,6 +139,7 @@ with
             member this.HandlePostEvent(state, preResult, ()) = preResult, []
         }
 
+/// Track flight status of a player
 type PlayerFlightState =
     | Spawned of AirfieldId
     | InFlight
@@ -389,6 +392,7 @@ with
                 state2, preCmds
         }
 
+/// Tracks all ongoing player flights
 type PlayerFlights =
     {
         FlightOfPilot : Map<int, PlayerFlightTracker>
