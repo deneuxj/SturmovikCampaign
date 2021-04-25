@@ -120,15 +120,34 @@ with
 
     static member Controller =
         let logger = NLog.LogManager.GetCurrentClassLogger()
-        { new StateMachineController<HealthTracker, HealthTracker * AnnotatedCommand list, IWarStateQuery> with
-            member this.HandlePreEvent(state, event, war) =
+        { new StateMachineController<HealthTracker, HealthTracker * AnnotatedCommand list, Mappings * IWarStateQuery> with
+            member this.HandlePreEvent(state, event, (mappings, war)) =
+
+                /// Generate commands that reflect the effects of inflicted damages
+                let handleDamages(timestamp, amount, objectId, position) =
+                    match mappings.Bindings.TryFind(objectId) with
+                    | Some binding ->
+                        // Check if it's a parked plane
+                        match war.TryGetStaticPlaneAt(binding.Name, position) with
+                        | Some(afId, planeModel) ->
+                            // There might be multiple planes that share the same static model. Pick the first one that is available at the airfield.
+                            let actualPlane =
+                                war.GetNumPlanes(afId)
+                                |> Map.tryFindKey (fun plane qty -> war.World.PlaneSet.[plane].StaticScriptModel = planeModel.StaticScriptModel && qty >= amount)
+                                |> Option.defaultValue planeModel.Id
+                            [AnnotatedCommand.Create(sprintf "Parked %s damaged %2.1f%%" planeModel.Name amount, timestamp, RemovePlane(afId, actualPlane, amount))
+                            ]
+                        | None -> []
+                    | None ->
+                        []
+
                 match event with
                 | ObjectEvent(_, ObjectBound binding) ->
                     logger.Debug(sprintf "Reset health after %s" event)
                     { state with
                         HealthOf = state.HealthOf.Add(binding.Id, 1.0f)
                     }, []
-                | ObjectEvent(_, ObjectDamaged damaged) ->
+                | ObjectEvent(timeStamp, ObjectDamaged damaged) ->
                     logger.Debug(sprintf "Decreasing health after %s" event)
                     let health =
                         state.HealthOf.TryFind(damaged.TargetId)
@@ -136,12 +155,17 @@ with
                     let health = health - damaged.Damage
                     { state with
                         HealthOf = state.HealthOf.Add(damaged.TargetId, health)
-                    }, failwith "TODO"
-                | ObjectEvent(_, ObjectKilled killed) ->
+                    },
+                    handleDamages(timeStamp, damaged.Damage, damaged.TargetId, damaged.Position)
+                | ObjectEvent(timeStamp, ObjectKilled killed) ->
                     logger.Debug(sprintf "Wiping health after %s" event)
+                    let health =
+                        state.HealthOf.TryFind(killed.TargetId)
+                        |> Option.defaultValue 1.0f
                     { state with
                         HealthOf = state.HealthOf.Add(killed.TargetId, 0.0f)
-                    }, failwith "TODO"
+                    },
+                    handleDamages(timeStamp, health, killed.TargetId, killed.Position)
                 | PlayerEvent(_, PlayerEndsMission missionEnded) ->
                     logger.Debug(sprintf "Clearing health entry after %s" event)
                     { state with

@@ -91,7 +91,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
             impAsyncSeq {
                 // Controllers PRE
                 let newMappings = handlePre(mappingsController, mappings, line, ())
-                let newHealths = handlePre(healthController, healths, line, upcast state)
+                let newHealths = handlePre(healthController, healths, line, (mappings, upcast state))
                 let newPilots = handlePre(pilotsController, pilots, line, (mappings, healths, upcast state))
 
                 // Emit timestamp, needed to inform players of time left in mission
@@ -104,7 +104,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
 
                 // Controllers POST
                 let newMappings, cmds = handlePost(mappingsController, mappings, newMappings, ())
-                let newHealths, cmds2 = handlePost(healthController, healths, newHealths, upcast state)
+                let newHealths, cmds2 = handlePost(healthController, healths, newHealths, (mappings, upcast state))
                 let newPilots, cmds3 = handlePost(pilotsController, pilots, newPilots, (mappings, healths, upcast state))
 
                 for cmd in Seq.concat [ cmds; cmds2; cmds3 ] do
