@@ -72,6 +72,8 @@ type Settings =
         MaxTotalNumFires : int
         MaxFiresRadius : int
         MaxNumFiresInRadius : int
+        AdMessages : string[]
+        AdPeriod : int
     }
 with
     /// Root of the data dir, passed to resaver.exe
@@ -103,6 +105,13 @@ with
             NumArtillery = this.MaxBattleArtillery
             NumAntiTankGuns = this.MaxBattleAntiTankGuns
         }
+
+    /// Get the adverts settings for the live notifier
+    member this.AdSettings =
+        if this.AdPeriod > 0 && this.AdMessages.Length > 0 then
+            Some {| Period = this.AdPeriod; Messages = this.AdMessages |}
+        else
+            None
 
     static member DefaultWorkDir = IO.Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA"), "CoconutCampaign", "Current")
 
@@ -138,6 +147,8 @@ module IO =
             max_total_num_fires : int option
             max_fires_radius : int option
             max_num_fires_in_radius : int option
+            ad_messages : string[] option
+            ad_period : int option
         }
     with
         member this.AsSettings =
@@ -174,6 +185,8 @@ module IO =
                 MaxTotalNumFires = defaultArg this.max_total_num_fires 100
                 MaxFiresRadius = defaultArg this.max_fires_radius 3500
                 MaxNumFiresInRadius = defaultArg this.max_num_fires_in_radius 2
+                AdMessages = defaultArg this.ad_messages [||]
+                AdPeriod = defaultArg this.ad_period -1
             }
 
     /// Create a default settings file and return its content.
@@ -215,6 +228,8 @@ module IO =
                 max_total_num_fires = None
                 max_num_fires_in_radius = None
                 max_fires_radius = None
+                ad_messages = None
+                ad_period = None
             }
         let json = Json.serialize content
         IO.File.WriteAllText(path, json)

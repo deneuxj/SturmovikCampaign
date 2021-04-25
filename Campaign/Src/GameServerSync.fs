@@ -101,13 +101,16 @@ module IO =
 
 
 /// Inform players of interesting events while a game is going on
-type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>, war : WarState, notifier : IPlayerNotifier, missionDuration : int) =
+type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>, war : WarState, notifier : IPlayerNotifier, missionDuration : int, advertisements : {| Period : int; Messages : string[] |} option) =
     let mutable isMuted = true
 
     let mutable groundForcesDestroyed = Map.empty
     let mutable storageDestroyed = Map.empty
 
     let mutable timeLeft = [120; 90; 60; 45; 30; 20; 15; 10; 5]
+
+    let mutable nextAdMessageIdx = 0
+    let timeSinceLastAdvertisement = System.Diagnostics.Stopwatch()
 
     // To avoid spamming messages
     let timeSinceLastUpdate = System.Diagnostics.Stopwatch()
@@ -122,6 +125,7 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
             logger.Debug("LiveNotifier is unmuted")
             isMuted <- false
             timeSinceLastUpdate.Start()
+            timeSinceLastAdvertisement.Start()
 
     member this.Run() =
         async {
@@ -221,6 +225,15 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
                                 groundForcesDestroyed <- Map.empty
                                 storageDestroyed <- Map.empty
                                 timeSinceLastUpdate.Restart()
+
+                            match advertisements with
+                            | Some ad ->
+                                if timeSinceLastAdvertisement.Elapsed.Minutes > ad.Period && ad.Messages.Length > 0 then
+                                    let! s = notifier.MessageAll(ad.Messages.[nextAdMessageIdx])
+                                    nextAdMessageIdx <- nextAdMessageIdx % ad.Messages.Length
+                                    timeSinceLastAdvertisement.Restart()
+                            | None ->
+                                ()
 
                         with exc ->
                             logger.Warn("Live notifier command-handling failed")
@@ -954,7 +967,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             }
                             |> MissionResults.processLogs war
                             |> AsyncSeq.map (fun { TimeStamp = ts; Command = cmd } -> (ts, cmd))
-                        let liveReporter = LiveNotifier(commands, war, messaging, settings.MissionDuration)
+                        let liveReporter = LiveNotifier(commands, war, messaging, settings.MissionDuration, settings.AdSettings)
                         let cancellation = new Threading.CancellationTokenSource()
                         Async.Start(liveReporter.Run(), cancellation.Token)
                         // Give time to execute old commands
