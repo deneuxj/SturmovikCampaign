@@ -40,7 +40,7 @@ open Campaign.MissionResultsStateMachines
 type ImpAsyncSeq(warState : IWarState, logger : NLog.Logger) =
     member this.Yield(v) =
         match v with
-        | (_, _, Some (cmd : Commands)) ->
+        | { Command = Some (cmd : Commands) }->
             try
                 cmd.Execute(warState) |> ignore
             with
@@ -91,20 +91,20 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
             impAsyncSeq {
                 // Controllers PRE
                 let newMappings = handlePre(mappingsController, mappings, line, ())
-                let newHealths = handlePre(healthController, healths, line, ())
+                let newHealths = handlePre(healthController, healths, line, upcast state)
                 let newPilots = handlePre(pilotsController, pilots, line, (mappings, healths, upcast state))
 
                 // Emit timestamp, needed to inform players of time left in mission
                 match line with
                 | ObjectEvent(timeStamp, _) | MissionEvent(timeStamp, _) | PlayerEvent(timeStamp, _) | BotEvent(timeStamp, _) ->
-                    yield "Timestamp", timeStamp, None
+                    yield AnnotatedCommand.Create("Timestamp", timeStamp)
 
                 | _ ->
                     ()
 
                 // Controllers POST
                 let newMappings, cmds = handlePost(mappingsController, mappings, newMappings, ())
-                let newHealths, cmds2 = handlePost(healthController, healths, newHealths, ())
+                let newHealths, cmds2 = handlePost(healthController, healths, newHealths, upcast state)
                 let newPilots, cmds3 = handlePost(pilotsController, pilots, newPilots, (mappings, healths, upcast state))
 
                 for cmd in Seq.concat [ cmds; cmds2; cmds3 ] do
@@ -133,7 +133,8 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         for x in pilots.FlightOfPilot.Values do
             let healthStatus = state.HealthStatusFromHealthLevel(finalTimeStamp, x.FlightRecord.PilotHealth)
             yield
-                sprintf "%s is still in the air" x.PilotData.FullName,
-                System.TimeSpan(System.Int64.MaxValue),
-                Some(UpdatePilot { x.PilotData with Health = healthStatus })
+                AnnotatedCommand.Create(
+                    sprintf "%s is still in the air" x.PilotData.FullName,
+                    System.TimeSpan(System.Int64.MaxValue),
+                    UpdatePilot { x.PilotData with Health = healthStatus })
     }

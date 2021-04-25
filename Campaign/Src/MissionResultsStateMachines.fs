@@ -34,11 +34,25 @@ open Campaign.WarStateUpdate
 open Campaign.Pilots
 open Campaign.MissionResultsExtensions
 
+type AnnotatedCommand =
+    {
+        Description : string
+        TimeStamp : System.TimeSpan
+        Command : Commands option
+    }
+with
+    static member Create(description, time, ?command) =
+        {
+            Description = description
+            TimeStamp = time
+            Command = command
+        }
+
 type StateMachineController<'S, 'E, 'Context> =
     /// Called when a log line is received. Receives the old state, and produces intermediate data of type 'E that will be passed to HandlePostEvent
     abstract HandlePreEvent : state:'S * event:string * context:'Context -> 'E
     /// Called after HandlePreEvent with its result. Produces an updated state and a list of description, timestamp and optional command tuples.
-    abstract HandlePostEvent : state:'S * preResult:'E * context:'Context -> 'S * (string * System.TimeSpan * Commands option) list
+    abstract HandlePostEvent : state:'S * preResult:'E * context:'Context -> 'S * AnnotatedCommand list
 
 let handlePre (ctrl : StateMachineController<'S, 'E, 'C>, state, event, ctx) =
     ctrl.HandlePreEvent(state, event, ctx)
@@ -96,7 +110,7 @@ with
             member this.HandlePostEvent(state, preResult, ()) = preResult, []
         }
 
-/// Tracks health of vehicles and pilots
+/// Tracks health of objects, vehicles and pilots
 type HealthTracker =
     {
         HealthOf : Map<int, float32>
@@ -106,14 +120,14 @@ with
 
     static member Controller =
         let logger = NLog.LogManager.GetCurrentClassLogger()
-        { new StateMachineController<HealthTracker, HealthTracker, unit> with
-            member this.HandlePreEvent(state, event, ()) =
+        { new StateMachineController<HealthTracker, HealthTracker * AnnotatedCommand list, IWarStateQuery> with
+            member this.HandlePreEvent(state, event, war) =
                 match event with
                 | ObjectEvent(_, ObjectBound binding) ->
                     logger.Debug(sprintf "Reset health after %s" event)
                     { state with
                         HealthOf = state.HealthOf.Add(binding.Id, 1.0f)
-                    }
+                    }, []
                 | ObjectEvent(_, ObjectDamaged damaged) ->
                     logger.Debug(sprintf "Decreasing health after %s" event)
                     let health =
@@ -122,21 +136,21 @@ with
                     let health = health - damaged.Damage
                     { state with
                         HealthOf = state.HealthOf.Add(damaged.TargetId, health)
-                    }
+                    }, failwith "TODO"
                 | ObjectEvent(_, ObjectKilled killed) ->
                     logger.Debug(sprintf "Wiping health after %s" event)
                     { state with
                         HealthOf = state.HealthOf.Add(killed.TargetId, 0.0f)
-                    }
+                    }, failwith "TODO"
                 | PlayerEvent(_, PlayerEndsMission missionEnded) ->
                     logger.Debug(sprintf "Clearing health entry after %s" event)
                     { state with
                         HealthOf = state.HealthOf.Remove(missionEnded.VehicleId).Remove(missionEnded.PilotId)
-                    }
+                    }, []
                 | _ ->
-                    state
+                    state, []
 
-            member this.HandlePostEvent(state, preResult, ()) = preResult, []
+            member this.HandlePostEvent(_, (newState, cmds), _) = newState, cmds
         }
 
 /// Track flight status of a player
@@ -178,7 +192,7 @@ with
 
     static member Controller =
         let logger = NLog.LogManager.GetCurrentClassLogger()
-        { new StateMachineController<PlayerFlightTracker, _, Mappings * HealthTracker * IWarStateQuery> with
+        { new StateMachineController<PlayerFlightTracker, PlayerFlightTracker * AnnotatedCommand list, Mappings * HealthTracker * IWarStateQuery> with
             member this.HandlePreEvent(state, event, (mappings, healths, war)) =
                 let planeName =
                     war.World.PlaneSet.TryGetValue(state.FlightRecord.Plane)
@@ -317,15 +331,17 @@ with
                         FlightState = if ejected || state.FlightState = Destroyed then Destroyed else BackOnGround
                     },
                     [
-                        sprintf "%s has %s"
-                            state.PilotData.FullName
-                            (string flight.Return),
-                        timeStamp,
-                        Some(RegisterPilotFlight(state.PilotData.Id, flight, healthStatus));
+                        AnnotatedCommand.Create(
+                            sprintf "%s has %s"
+                                state.PilotData.FullName
+                                (string flight.Return),
+                            timeStamp,
+                            RegisterPilotFlight(state.PilotData.Id, flight, healthStatus));
 
-                        sprintf "%s is back on the ground" state.PilotData.FullName,
-                        timeStamp,
-                        Some(UpdatePilot state.PilotData)
+                        AnnotatedCommand.Create(
+                            sprintf "%s is back on the ground" state.PilotData.FullName,
+                            timeStamp,
+                            UpdatePilot state.PilotData)
                     ]
 
                 match event with
@@ -342,7 +358,7 @@ with
                                 }
                             FlightState = InFlight
                         },
-                        [sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, Some(UpdatePilot(state.PilotData))]
+                        [AnnotatedCommand.Create(sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, UpdatePilot(state.PilotData))]
                     | None ->
                         { state with
                             FlightRecord =
@@ -351,7 +367,7 @@ with
                                 }
                             FlightState = InFlight
                         },
-                        [sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, Some(UpdatePilot(state.PilotData))]
+                        [AnnotatedCommand.Create(sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, UpdatePilot(state.PilotData))]
 
                 | ObjectEvent(timeStamp, ObjectLands landing) ->
                     logger.Debug(sprintf "End flight of %s after landing %s" state.PilotData.FullName event)
@@ -359,9 +375,12 @@ with
                     let addPlane =
                         match war.TryGetNearestAirfield(landing.Position, None) with
                         | Some (airfield, _) ->
-                            [sprintf "%s lands a %s at %s" state.PilotData.FullName planeName airfield.AirfieldId.AirfieldName,
-                             timeStamp,
-                             Some(AddPlane(airfield.AirfieldId, state.FlightRecord.Plane, state.FlightRecord.PlaneHealth))]
+                            [
+                                AnnotatedCommand.Create(
+                                    sprintf "%s lands a %s at %s" state.PilotData.FullName planeName airfield.AirfieldId.AirfieldName,
+                                    timeStamp,
+                                    AddPlane(airfield.AirfieldId, state.FlightRecord.Plane, state.FlightRecord.PlaneHealth))
+                            ]
                         | None ->
                             []
                     state, addPlane @ cmds
@@ -403,7 +422,7 @@ with
     static member Controller =
         let logger = NLog.LogManager.GetCurrentClassLogger()
         let pftCtrl = PlayerFlightTracker.Controller
-        { new StateMachineController<PlayerFlights, _, Mappings * HealthTracker * IWarStateQuery> with
+        { new StateMachineController<PlayerFlights, PlayerFlights * AnnotatedCommand list, Mappings * HealthTracker * IWarStateQuery> with
             member this.HandlePreEvent(state, event, (mappings, healths, war)) =
                 match event with
                 | PlayerEvent(timeStamp, PlayerTakesObject taken) ->
@@ -416,7 +435,7 @@ with
                             | Some plane ->
                                 match war.TryGetNearestAirfield(taken.Position, None) with
                                 | Some (airfield, _) ->
-                                    [sprintf "Plane %s taken by player" plane.Name, timeStamp, Some(RemovePlane(airfield.AirfieldId, plane.Id, 1.0f))]
+                                    [AnnotatedCommand.Create(sprintf "Plane %s taken by player" plane.Name, timeStamp, RemovePlane(airfield.AirfieldId, plane.Id, 1.0f))]
                                 | None ->
                                     []
                             | None ->
@@ -425,7 +444,7 @@ with
                             []
 
                     // Emit UpdatePlayer command
-                    let cmds = cmds @ ["Seen player " + taken.Name, timeStamp, Some(UpdatePlayer(taken.UserId, taken.Name))]
+                    let cmds = cmds @ [AnnotatedCommand.Create("Seen player " + taken.Name, timeStamp, UpdatePlayer(taken.UserId, taken.Name))]
 
                     let state2, cmds =
                         // Choose pilot

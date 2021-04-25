@@ -953,7 +953,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                         stalledTriggered <- true
                             }
                             |> MissionResults.processLogs war
-                            |> AsyncSeq.map (fun (_, ts, cmd) -> (ts, cmd))
+                            |> AsyncSeq.map (fun { TimeStamp = ts; Command = cmd } -> (ts, cmd))
                         let liveReporter = LiveNotifier(commands, war, messaging, settings.MissionDuration)
                         let cancellation = new Threading.CancellationTokenSource()
                         Async.Start(liveReporter.Run(), cancellation.Token)
@@ -1058,7 +1058,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     |> AsyncSeq.toListAsync
                 let effects =
                     [
-                        for description, _, command in commands do
+                        for { Description = description; Command = command } in commands do
                             logger.Info(description)
                             match command with
                             | Some command ->
