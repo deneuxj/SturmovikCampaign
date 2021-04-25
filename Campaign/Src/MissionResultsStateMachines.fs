@@ -135,7 +135,7 @@ with
                                 war.GetNumPlanes(afId)
                                 |> Map.tryFindKey (fun plane qty -> war.World.PlaneSet.[plane].StaticScriptModel = planeModel.StaticScriptModel && qty >= amount)
                                 |> Option.defaultValue planeModel.Id
-                            [AnnotatedCommand.Create(sprintf "Parked %s damaged with %2.1f%%" planeModel.Name amount, timestamp, RemovePlane(afId, actualPlane, amount))
+                            [AnnotatedCommand.Create(sprintf "Parked %s damaged with %2.1f%%" planeModel.Name (100.0f * amount), timestamp, RemovePlane(afId, actualPlane, amount))
                             ]
                         | None ->
 
@@ -147,7 +147,7 @@ with
                             buildings
                             |> Seq.map (fun building ->
                                 AnnotatedCommand.Create(
-                                    sprintf "Building %s damaged with %2.1f%%" building.Properties.Model amount,
+                                    sprintf "Building %s damaged with %2.1f%%" building.Properties.Model (100.0f * amount),
                                     timestamp,
                                     DamageBuildingPart(building.Id, part, amount)))
                             |> List.ofSeq
@@ -162,7 +162,7 @@ with
                                 |> Option.bind (war.World.Countries.TryGetValue >> Option.ofPair)
                             match coalition with
                             | Some coalition ->
-                                [AnnotatedCommand.Create(sprintf "%s damaged with %2.1f%%" vehicle.Description amount, timestamp, DestroyGroundForces(region.RegionId, coalition, value))]
+                                [AnnotatedCommand.Create(sprintf "%s damaged with %2.1f%%" vehicle.Description (100.0f * amount), timestamp, DestroyGroundForces(region.RegionId, coalition, value))]
                             | None ->
                                 []
                         | _ ->
