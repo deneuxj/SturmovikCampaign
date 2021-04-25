@@ -238,7 +238,7 @@ with
                     AirKills = 0
                     Start = afId
                     TargetsDamaged = []
-                    Return = CrashedInEnemyTerritory
+                    Return = AtAirfield afId
                     PilotHealth = 1.0f
                 }
         }
@@ -292,7 +292,7 @@ with
                             ()
                     ]
 
-                let updateFlightRecord(attackerId, targetId, damage, position, killDelta) =
+                let updateFlightRecord(timestamp, attackerId, targetId, damage, position, killDelta) =
                     let airKillDelta =
                         match mappings.Bindings.TryFind(targetId) with
                         | Some binding ->
@@ -301,6 +301,24 @@ with
                             | None -> 0
                         | _ ->
                             0
+                    // Update return status of the flight depending on position
+                    let retStatus =
+                        if targetId = state.VehicleId || targetId = state.PilotId then
+                            match war.TryGetRegionAt(position) with
+                            | Some region ->
+                                let owner = war.GetOwner(region.RegionId)
+                                let coalition = war.World.Countries.[state.PilotData.Country]
+                                match owner with
+                                | Some enemy when enemy = coalition.Other -> CrashedInEnemyTerritory
+                                | _ -> CrashedInFriendlyTerritory None
+                            | None ->
+                                CrashedInFriendlyTerritory None
+                        else
+                            state.FlightRecord.Return
+                    let state =
+                        { state with
+                            FlightRecord = { state.FlightRecord with Return = retStatus }
+                        }
                     // Credit attacker
                     if attackerId = state.PilotId then
                         let differentCoalitions =
@@ -340,12 +358,16 @@ with
                     elif targetId = state.PilotId then
                         let health = state.FlightRecord.PilotHealth - damage |> max 0.0f
                         let isKilled = health <= 0.0f || killDelta > 0
+                        // In case killDelta > 0 and health is very low but not 0, force to 0
+                        let health = if isKilled then 0.0f else health
                         let flight =
                             { state.FlightRecord with
                                 PilotHealth = health
                                 Return = if isKilled then KilledInAction else state.FlightRecord.Return
                             }
                         { state with
+                            PilotData = { state.PilotData with Health = war.HealthStatusFromHealthLevel(timestamp, health) }
+                            FlightState = Destroyed
                             FlightRecord = flight
                         },
                         []
@@ -379,25 +401,30 @@ with
                             Length = war.Date + timeStamp - state.FlightRecord.Date
                             Return = retAf
                         }
-                    { state with
-                        FlightRecord = flight
-                        FlightState = if ejected || state.FlightState = Destroyed then Destroyed else BackOnGround
-                    },
+                    let state =
+                        { state with
+                            FlightRecord = flight
+                            FlightState = if ejected || state.FlightState = Destroyed then Destroyed else BackOnGround
+                        }
+                    state,
                     [
+                        AnnotatedCommand.Create(
+                            sprintf "%s %s" state.PilotData.FullName (if ejected then "jumps" else "is back on the ground"),
+                            timeStamp,
+                            UpdatePilot state.PilotData)
+
                         AnnotatedCommand.Create(
                             sprintf "%s has %s"
                                 state.PilotData.FullName
                                 (string flight.Return),
                             timeStamp,
                             RegisterPilotFlight(state.PilotData.Id, flight, healthStatus));
-
-                        AnnotatedCommand.Create(
-                            sprintf "%s is back on the ground" state.PilotData.FullName,
-                            timeStamp,
-                            UpdatePilot state.PilotData)
                     ]
 
                 match event with
+                | PlayerEvent(timeStamp, PlayerTakesObject taken) when taken.PilotId = state.PilotId ->
+                    state, [AnnotatedCommand.Create(sprintf "%s enters a %s" state.PilotData.FullName planeName, timeStamp, UpdatePilot(state.PilotData))]
+
                 | ObjectEvent(timeStamp, ObjectTakesOff takeOff) when takeOff.Id = state.VehicleId ->
                     logger.Debug(sprintf "Recording take off of %s after %s" state.PilotData.FullName event)
                     // Update take off location and time
@@ -408,40 +435,36 @@ with
                                 { state.FlightRecord with
                                     Date = war.Date + timeStamp
                                     Start = airfield.AirfieldId
+                                    Return = CrashedInFriendlyTerritory(Some airfield.AirfieldId)
                                 }
                             FlightState = InFlight
                         },
-                        [AnnotatedCommand.Create(sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, UpdatePilot(state.PilotData))]
+                        [AnnotatedCommand.Create(sprintf "%s takes off in %s from %s" state.PilotData.FullName planeName airfield.AirfieldId.AirfieldName, timeStamp, UpdatePilot(state.PilotData))]
                     | None ->
                         { state with
                             FlightRecord =
                                 { state.FlightRecord with
                                     Date = war.Date + timeStamp
+                                    Return = CrashedInFriendlyTerritory None
                                 }
                             FlightState = InFlight
                         },
                         [AnnotatedCommand.Create(sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, UpdatePilot(state.PilotData))]
 
                 | ObjectEvent(timeStamp, ObjectLands landing) ->
-                    logger.Debug(sprintf "End flight of %s after landing %s" state.PilotData.FullName event)
-                    let state, cmds = updateFlightRecordEnd(timeStamp, landing.Position, false)
-                    let addPlane =
-                        match war.TryGetNearestAirfield(landing.Position, None) with
-                        | Some (airfield, _) ->
-                            [
-                                AnnotatedCommand.Create(
-                                    sprintf "%s lands a %s at %s" state.PilotData.FullName planeName airfield.AirfieldId.AirfieldName,
-                                    timeStamp,
-                                    AddPlane(airfield.AirfieldId, state.FlightRecord.Plane, state.FlightRecord.PlaneHealth))
-                            ]
-                        | None ->
-                            []
-                    state, addPlane @ cmds
+                    match state.FlightState with
+                    | InFlight ->
+                        logger.Debug(sprintf "End flight of %s after landing %s" state.PilotData.FullName event)
+                        let state, cmds = updateFlightRecordEnd(timeStamp, landing.Position, false)
+                        state, cmds
+                    | _ ->
+                        logger.Debug(sprintf "Spurious landing event for %s: %s" state.PilotData.FullName event)
+                        state, []
 
                 | ObjectEvent(timeStamp, ObjectDamaged damaged)
                         when Seq.allPairs [damaged.AttackerId; damaged.TargetId] [state.PilotId; state.VehicleId] |> Seq.exists (fun (x, y) -> x = y) ->
                     logger.Debug(sprintf "Recording damage for/to %s after damage %s" state.PilotData.FullName event)
-                    updateFlightRecord(damaged.AttackerId, damaged.TargetId, damaged.Damage, damaged.Position, 0)
+                    updateFlightRecord(timeStamp, damaged.AttackerId, damaged.TargetId, damaged.Damage, damaged.Position, 0)
 
                 | ObjectEvent(timeStamp, ObjectKilled killed)
                         when Seq.allPairs [killed.AttackerId; killed.TargetId] [state.PilotId; state.VehicleId] |> Seq.exists (fun (x, y) -> x = y) ->
@@ -450,12 +473,44 @@ with
                         healths.HealthOf.TryGetValue(killed.TargetId)
                         |> Option.ofPair
                         |> Option.defaultValue 1.0f
-                    updateFlightRecord(killed.AttackerId, killed.TargetId, oldHealth, killed.Position, 1)
+                    updateFlightRecord(timeStamp, killed.AttackerId, killed.TargetId, oldHealth, killed.Position, 1)
 
                 | BotEvent(timeStamp, BotEject eject)
                         when eject.BotId = state.PilotId || eject.ParentId = state.VehicleId ->
                     logger.Debug(sprintf "End flight of %s after ejection %s" state.PilotData.FullName event)
                     updateFlightRecordEnd(timeStamp, eject.Position, true)
+
+                | PlayerEvent(timeStamp, PlayerEndsMission missionEnded)
+                        when missionEnded.PilotId = state.PilotId ->
+                    match state.FlightState with
+                    | Ended ->
+                        logger.Debug(sprintf "Spurious mission ended for %s %s" state.PilotData.FullName event)
+                        state, []
+                    | _ ->
+                        logger.Debug(sprintf "Registering flight of %s after end of mission %s" state.PilotData.FullName event)
+                        let addPlane =
+                            match state.FlightState, state.FlightRecord.Return with
+                            | BackOnGround, (CrashedInFriendlyTerritory(Some afId) | AtAirfield afId) ->
+                                [
+                                    AnnotatedCommand.Create(
+                                        sprintf "%s returns a %s at %s" state.PilotData.FullName planeName afId.AirfieldName,
+                                        timeStamp,
+                                        AddPlane(afId, state.FlightRecord.Plane, state.FlightRecord.PlaneHealth))
+                                ]
+                            | Spawned afId, _ ->
+                                [
+                                    AnnotatedCommand.Create(
+                                        sprintf "%s cancels a flight with a %s at %s" state.PilotData.FullName planeName afId.AirfieldName,
+                                        timeStamp,
+                                        AddPlane(afId, state.FlightRecord.Plane, state.FlightRecord.PlaneHealth))
+                                ]
+                            | _ ->
+                                []
+                        let state = 
+                            { state with
+                                FlightState = Ended
+                            }
+                        state, addPlane @ [AnnotatedCommand.Create(sprintf "End of mission for %s" state.PilotData.FullName, timeStamp, RegisterPilotFlight(state.PilotData.Id, state.FlightRecord, state.PilotData.Health))]
 
                 | _ ->
                     state, []

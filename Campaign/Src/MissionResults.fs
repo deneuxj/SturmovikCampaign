@@ -128,13 +128,21 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                 logger.Error("Exception while processing log")
                 logger.Error(exc)
 
-        // Update health status of players still in the air after the log ends.
-        // Do not register their flight, that'll teach them to get back in time on the ground.
+        // Update status of players still in the air after the log ends.
+        // Wipe out record of damages inflicted to enemies as a punishment for not landing in time.
         for x in pilots.FlightOfPilot.Values do
-            let healthStatus = state.HealthStatusFromHealthLevel(finalTimeStamp, x.FlightRecord.PilotHealth)
             yield
                 AnnotatedCommand.Create(
                     sprintf "%s is still in the air" x.PilotData.FullName,
                     System.TimeSpan(System.Int64.MaxValue),
-                    UpdatePilot { x.PilotData with Health = healthStatus })
+                    UpdatePilot x.PilotData)
+            let flight =
+                match x.FlightState with
+                | InFlight -> x.FlightRecord
+                | _ -> { x.FlightRecord with TargetsDamaged = [] }
+            yield
+                AnnotatedCommand.Create(
+                    sprintf "In-air flight of %s" x.PilotData.FullName,
+                    System.TimeSpan(System.Int64.MaxValue),
+                    RegisterPilotFlight(x.PilotData.Id, flight, x.PilotData.Health))
     }

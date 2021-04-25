@@ -126,6 +126,12 @@ type IWarStateQuery with
             this.GetPlayerPilots(playerGuid)
             |> Seq.filter (fun pilot -> pilot.Country = country && pilot.IsFemale = isFemale)
             |> Seq.filter (fun pilot -> this.IsPilotHealthy(pilot.Id))
+            // Filter out captured pilots
+            |> Seq.filter (fun pilot ->
+                this.GetPilot(pilot.Id).Flights
+                |> List.tryLast
+                |> Option.map (fun flight -> flight.Return <> CrashedInEnemyTerritory)
+                |> Option.defaultValue true)
             |> Seq.filter (fun pilot -> match this.TryGetPilotHome(pilot.Id) with None -> true | Some home -> home = afId)
             |> Seq.sortByDescending (fun pilot -> pilot.LatestFlightStart, this.TryGetPilotHome(pilot.Id) = Some afId)
             |> Seq.cache
