@@ -135,9 +135,10 @@ with
                                 war.GetNumPlanes(afId)
                                 |> Map.tryFindKey (fun plane qty -> war.World.PlaneSet.[plane].StaticScriptModel = planeModel.StaticScriptModel && qty >= amount)
                                 |> Option.defaultValue planeModel.Id
-                            [AnnotatedCommand.Create(sprintf "Parked %s damaged %2.1f%%" planeModel.Name amount, timestamp, RemovePlane(afId, actualPlane, amount))
+                            [AnnotatedCommand.Create(sprintf "Parked %s damaged with %2.1f%%" planeModel.Name amount, timestamp, RemovePlane(afId, actualPlane, amount))
                             ]
                         | None ->
+
                         // Report damages to all building parts that cover the position, typically
                         // that should be at most one, unless there are building groups overlaps.
                         let part = defaultArg binding.Sub -1
@@ -146,11 +147,25 @@ with
                             buildings
                             |> Seq.map (fun building ->
                                 AnnotatedCommand.Create(
-                                    sprintf "Building %s damaged %2.1f%%" building.Properties.Model amount,
+                                    sprintf "Building %s damaged with %2.1f%%" building.Properties.Model amount,
                                     timestamp,
                                     DamageBuildingPart(building.Id, part, amount)))
                             |> List.ofSeq
                         else
+
+                        // Report damages to ground forces
+                        match binding.TryGetVehicleTargetType(war), war.TryGetRegionAt(position) with
+                        | Some vehicle, Some region ->
+                            let value = vehicle.GroundForceValue
+                            let coalition =
+                                CountryId.FromMcuValue(enum binding.Country)
+                                |> Option.bind (war.World.Countries.TryGetValue >> Option.ofPair)
+                            match coalition with
+                            | Some coalition ->
+                                [AnnotatedCommand.Create(sprintf "%s damaged with %2.1f%%" vehicle.Description amount, timestamp, DestroyGroundForces(region.RegionId, coalition, value))]
+                            | None ->
+                                []
+                        | _ ->
                             []
                     | None ->
                         []
