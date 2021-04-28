@@ -413,12 +413,12 @@ with
                             timeStamp,
                             UpdatePilot state.PilotData)
 
-                        AnnotatedCommand.Create(
-                            sprintf "%s has %s"
-                                state.PilotData.FullName
-                                (string flight.Return),
-                            timeStamp,
-                            RegisterPilotFlight(state.PilotData.Id, flight, healthStatus));
+                        //AnnotatedCommand.Create(
+                        //    sprintf "%s has %s"
+                        //        state.PilotData.FullName
+                        //        (string flight.Return),
+                        //    timeStamp,
+                        //    RegisterPilotFlight(state.PilotData.Id, flight, healthStatus));
                     ]
 
                 match event with
@@ -510,7 +510,13 @@ with
                             { state with
                                 FlightState = Ended
                             }
-                        state, addPlane @ [AnnotatedCommand.Create(sprintf "End of mission for %s" state.PilotData.FullName, timeStamp, RegisterPilotFlight(state.PilotData.Id, state.FlightRecord, state.PilotData.Health))]
+                        let recordFlight =
+                            match state.FlightState with
+                            | Spawned _ ->
+                                []
+                            | _ ->
+                                [AnnotatedCommand.Create(sprintf "End of mission for %s" state.PilotData.FullName, timeStamp, RegisterPilotFlight(state.PilotData.Id, state.FlightRecord, state.PilotData.Health))]
+                        state, addPlane @ recordFlight
 
                 | _ ->
                     state, []
