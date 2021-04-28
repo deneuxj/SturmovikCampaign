@@ -451,7 +451,7 @@ with
                         },
                         [AnnotatedCommand.Create(sprintf "%s takes off in %s" state.PilotData.FullName planeName, timeStamp, UpdatePilot(state.PilotData))]
 
-                | ObjectEvent(timeStamp, ObjectLands landing) ->
+                | ObjectEvent(timeStamp, ObjectLands landing) when landing.Id = state.VehicleId ->
                     match state.FlightState with
                     | InFlight ->
                         logger.Debug(sprintf "End flight of %s after landing %s" state.PilotData.FullName event)
