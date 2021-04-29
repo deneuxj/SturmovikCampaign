@@ -518,10 +518,6 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     (v2, n + n2)
                 )
                 |> List.ofSeq
-            let avgCost =
-                vehicles
-                |> Seq.sumBy (fun (v, _) -> v.AsTargetType.GroundForceValue)
-                |> fun x -> x / (float32 vehicles.Length)
             let getRandomVehicle() =
                 let idx =
                     random.Next(totalWeight)
