@@ -11,7 +11,6 @@ Options
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\bf109g6.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\bf109g6late.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\bf109k4.txt";
-  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\fw190a3.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\fw190a8.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\fw190d9.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\hurricanemkii.txt";
@@ -95,8 +94,8 @@ Group
     {
       77214, 185392;
       78096, 169871;
-      88169.2, 173654;
-      92653.3, 185881;
+      88169, 173654;
+      92653, 185881;
       89531, 192461;
     }
   }
@@ -122,9 +121,9 @@ Group
       80919, 163795;
       86167, 162010;
       92252, 161621;
-      94623.1, 168921;
-      88232.8, 173529;
-      78116.4, 169754;
+      94623, 168921;
+      88232, 173529;
+      78116, 169754;
     }
   }
   
@@ -146,7 +145,7 @@ Group
     Country = 201;
     Boundary
     {
-      92745.6, 185965;
+      92745, 185965;
       102932, 183652;
       105680, 193386;
       99426, 198911;
@@ -177,8 +176,8 @@ Group
       105784, 179049;
       102957, 183563;
       92755, 185839;
-      88240.4, 173638;
-      94769.3, 168945;
+      88240, 173638;
+      94769, 168945;
     }
   }
   
@@ -253,7 +252,7 @@ Group
     Country = 201;
     Boundary
     {
-      92375.6, 161461;
+      92375, 161461;
       97386, 154871;
       103503, 168660;
       94823, 168854;
@@ -278,10 +277,10 @@ Group
     Country = 201;
     Boundary
     {
-      85353.7, 151034;
+      85353, 151034;
       98150, 148948;
-      97342.4, 154767;
-      92242.4, 161442;
+      97342, 154767;
+      92242, 161442;
       86060, 161886;
       80482, 154241;
     }
@@ -305,12 +304,12 @@ Group
     Country = 201;
     Boundary
     {
-      98251.6, 148950;
+      98251, 148950;
       104957, 143554;
       107796, 149761;
       112712, 164185;
       103637, 168728;
-      97453.2, 154766;
+      97453, 154766;
     }
   }
   
@@ -334,8 +333,8 @@ Group
     {
       71413, 150418;
       75945, 135136;
-      84828.7, 142228;
-      85379.7, 150824;
+      84828, 142228;
+      85379, 150824;
       80387, 154099;
       74444, 155734;
     }
@@ -384,11 +383,11 @@ Group
     Country = 103;
     Boundary
     {
-      81745, 81247.2;
-      95160.9, 89258.2;
-      97735.5, 117132;
-      77917.2, 118677;
-      73634.2, 100248;
+      81745, 81247;
+      95160, 89258;
+      97735, 117132;
+      77917, 118677;
+      73634, 100248;
     }
   }
   
@@ -441,10 +440,10 @@ Group
       140880, 116642;
       112042, 135709;
       104283, 134469;
-      98510.2, 121005;
+      98510, 121005;
       97817, 117155;
-      95293.1, 89307.4;
-      98982.3, 85928.7;
+      95293, 89307;
+      98982, 85928;
       121559, 77528;
     }
   }
@@ -469,7 +468,7 @@ Group
     {
       136097, 79239;
       156808, 72470;
-      160861, 95411.5;
+      160861, 95411;
       141118, 116483;
     }
   }
@@ -518,10 +517,10 @@ Group
     Boundary
     {
       77558, 124121;
-      98435.9, 121076;
+      98435, 121076;
       104201, 134703;
-      84893.8, 142176;
-      76095.6, 135085;
+      84893, 142176;
+      76095, 135085;
     }
   }
   
@@ -543,10 +542,10 @@ Group
     Country = 103;
     Boundary
     {
-      78028.4, 118973;
-      97774.7, 117197;
-      98376.6, 120956;
-      77728.7, 123885;
+      78028, 118973;
+      97774, 117197;
+      98376, 120956;
+      77728, 123885;
     }
   }
   
@@ -647,11 +646,11 @@ Group
     Country = 201;
     Boundary
     {
-      91948.5, 197537;
-      99443.6, 199059;
+      91948, 197537;
+      99443, 199059;
       102039, 234640;
-      84255.3, 230344;
-      86102.8, 210306;
+      84255, 230344;
+      86102, 210306;
     }
   }
   
@@ -677,7 +676,7 @@ Group
       120351, 200291;
       128278, 211805;
       102266, 234406;
-      99547.6, 198975;
+      99547, 198975;
     }
   }
   
@@ -763,11 +762,11 @@ Group
     Country = 0;
     Boundary
     {
-      144581, 81751.3;
-      150500, 83486.1;
-      149255, 87821.4;
-      145581, 88886.9;
-      144165, 85661.8;
+      144581, 81751;
+      150500, 83486;
+      149255, 87821;
+      145581, 88886;
+      144165, 85661;
     }
   }
   
@@ -816,10 +815,10 @@ Group
     Country = 0;
     Boundary
     {
-      79172.1, 99005.5;
-      80239.1, 98680.1;
+      79172, 99005;
+      80239, 98680;
       80596, 100176;
-      79643.6, 101015;
+      79643, 101015;
     }
   }
   
@@ -841,11 +840,11 @@ Group
     Country = 0;
     Boundary
     {
-      86059.2, 119812;
-      88818.1, 119341;
-      88898.2, 120165;
+      86059, 119812;
+      88818, 119341;
+      88898, 120165;
       87359, 120459;
-      86093.7, 120721;
+      86093, 120721;
     }
   }
   
@@ -867,9 +866,9 @@ Group
     Country = 0;
     Boundary
     {
-      85654.9, 132914;
-      83941.9, 136186;
-      82473.4, 136743;
+      85654, 132914;
+      83941, 136186;
+      82473, 136743;
       81470, 135086;
     }
   }
@@ -892,10 +891,10 @@ Group
     Country = 0;
     Boundary
     {
-      77878.1, 146524;
-      78300.7, 147993;
-      77643.1, 148573;
-      76932.9, 147492;
+      77878, 146524;
+      78300, 147993;
+      77643, 148573;
+      76932, 147492;
     }
   }
   
@@ -917,10 +916,10 @@ Group
     Country = 0;
     Boundary
     {
-      77452.2, 156468;
-      78385.8, 157323;
+      77452, 156468;
+      78385, 157323;
       77925, 157920;
-      77094.6, 156848;
+      77094, 156848;
     }
   }
   
@@ -942,10 +941,10 @@ Group
     Country = 0;
     Boundary
     {
-      88339.3, 162836;
-      88546.8, 164380;
-      88018.5, 164467;
-      86869.9, 162992;
+      88339, 162836;
+      88546, 164380;
+      88018, 164467;
+      86869, 162992;
     }
   }
   
@@ -967,8 +966,8 @@ Group
     Country = 0;
     Boundary
     {
-      81738.6, 175850;
-      82036.1, 176593;
+      81738, 175850;
+      82036, 176593;
       81392, 176924;
       81046, 176247;
     }
@@ -1148,10 +1147,10 @@ Group
     Country = 0;
     Boundary
     {
-      96636.3, 166444;
-      97877.1, 166776;
-      97731.1, 167207;
-      96382.7, 166874;
+      96636, 166444;
+      97877, 166776;
+      97731, 167207;
+      96382, 166874;
     }
   }
   
@@ -1173,10 +1172,10 @@ Group
     Country = 0;
     Boundary
     {
-      86890.3, 159306;
-      87530.4, 159677;
-      87279.4, 160693;
-      86312.8, 159605;
+      86890, 159306;
+      87530, 159677;
+      87279, 160693;
+      86312, 159605;
     }
   }
   
@@ -1273,10 +1272,10 @@ Group
     Country = 0;
     Boundary
     {
-      94955.8, 199142;
+      94955, 199142;
       96208, 202159;
-      95367.4, 202679;
-      94446.5, 201411;
+      95367, 202679;
+      94446, 201411;
     }
   }
   
@@ -1327,9 +1326,9 @@ Group
     Boundary
     {
       89963, 190211;
-      90310.8, 190715;
-      90194.8, 190982;
-      89066.8, 190972;
+      90310, 190715;
+      90194, 190982;
+      89066, 190972;
     }
   }
   
@@ -1436,11 +1435,11 @@ Group
     Country = 0;
     Boundary
     {
-      151057, 93610.8;
-      152485, 93124.3;
-      153762, 96601.3;
-      151893, 97130.4;
-      150754, 95384.1;
+      151057, 93610;
+      152485, 93124;
+      153762, 96601;
+      151893, 97130;
+      150754, 95384;
     }
   }
   
@@ -1489,13 +1488,13 @@ Group
     Country = 0;
     Boundary
     {
-      77969.1, 102293;
-      78971.4, 102047;
-      79333.8, 102765;
-      79311.9, 103733;
-      78600.1, 104115;
-      77677.8, 103910;
-      77533.6, 103207;
+      77969, 102293;
+      78971, 102047;
+      79333, 102765;
+      79311, 103733;
+      78600, 104115;
+      77677, 103910;
+      77533, 103207;
     }
   }
   
@@ -5300,90 +5299,6 @@ Group
   Name = "Static";
   Index = 217;
   Desc = "";
-  Airfield
-  {
-    Name = "Airfield";
-    Index = 218;
-    LinkTrId = 219;
-    XPos = 141145.433;
-    YPos = 39.560;
-    ZPos = 50018.177;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Model = "graphics\airfields\fakefield.mgm";
-    Script = "LuaScripts\WorldObjects\Airfields\fakefield.txt";
-    Country = 103;
-    Desc = "";
-    Durability = 25000;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-    Callsign = 0;
-    Callnum = 0;
-    Planes
-    {
-      Plane
-      {
-        SetIndex = 0;
-        Number = 10;
-        AILevel = 2;
-        StartInAir = 2;
-        Engageable = 1;
-        Vulnerable = 1;
-        LimitAmmo = 1;
-        AIRTBDecision = 1;
-        Renewable = 1;
-        PayloadId = 0;
-        WMMask = 1;
-        Fuel = 1;
-        RouteTime = 0;
-        RenewTime = 1800;
-        Altitude = 500;
-        Spotter = -1;
-        Model = "graphics\planes\fw190a3\fw190a3.mgm";
-        Script = "LuaScripts\WorldObjects\Planes\fw190a3.txt";
-        Name = "";
-        Skin = "";
-        AvMods = "";
-        AvSkins = "";
-        AvPayloads = "";
-        Callsign = 0;
-        Callnum = 0;
-      }
-    }
-    ReturnPlanes = 0;
-    Hydrodrome = 0;
-    RepairFriendlies = 0;
-    RehealFriendlies = 0;
-    RearmFriendlies = 0;
-    RefuelFriendlies = 0;
-    RepairTime = 0;
-    RehealTime = 0;
-    RearmTime = 0;
-    RefuelTime = 0;
-    MaintenanceRadius = 1000;
-  }
-  
-
-  MCU_TR_Entity
-  {
-    Index = 219;
-    Name = "Airfield entity";
-    Desc = "";
-    Targets = [];
-    Objects = [];
-    XPos = 141145.433;
-    YPos = 39.760;
-    ZPos = 50018.177;
-    XOri = 0.00;
-    YOri = 0.00;
-    ZOri = 0.00;
-    Enabled = 1;
-    MisObjID = 218;
-  }
-  
-
   Group
   {
     Name = "Arf_obj_01_Volkel";
@@ -167440,6 +167355,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -167502,6 +167419,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -167577,6 +167496,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167605,6 +167526,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167633,6 +167556,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167661,6 +167586,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167689,6 +167616,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167717,6 +167646,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167745,6 +167676,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167773,6 +167706,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
@@ -167859,6 +167794,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167887,6 +167824,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167915,6 +167854,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167943,6 +167884,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167971,6 +167914,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -167999,6 +167944,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -168027,6 +167974,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -168055,6 +168004,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
