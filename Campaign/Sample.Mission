@@ -29,6 +29,7 @@ Options
   TempPressLevel = 10;
   Temperature = -15;
   Pressure = 760;
+  Haze = 0;
   WindLayers
   {
     0 :     10 :     10;
@@ -90,6 +91,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -128,6 +131,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = 50;
   Fuel = 0.5;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -184,14 +189,14 @@ MCU_TR_Entity
     OnReport
     {
       Type = 3;
-      CmdId = 11;
-      TarId = 10;
+      CmdId = 10;
+      TarId = 11;
     }
     OnReport
     {
       Type = 4;
       CmdId = 8;
-      TarId = 11;
+      TarId = 10;
     }
   }
 }
@@ -200,7 +205,7 @@ MCU_TR_Entity
 
 MCU_CMD_AttackTarget
 {
-  Index = 10;
+  Index = 11;
   Name = "command Attack";
   Desc = "";
   Targets = [];
@@ -400,7 +405,7 @@ MCU_CMD_Land
 
 MCU_CMD_TakeOff
 {
-  Index = 11;
+  Index = 10;
   Name = "command Take off";
   Desc = "";
   Targets = [];
@@ -1053,6 +1058,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1117,6 +1124,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1181,6 +1190,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1245,6 +1256,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1414,6 +1427,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1587,6 +1602,8 @@ Airfield
       AvPayloads = "";
       Callsign = 7;
       Callnum = 4;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -1615,6 +1632,8 @@ Airfield
       AvPayloads = "";
       Callsign = 7;
       Callnum = 4;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -1643,6 +1662,8 @@ Airfield
       AvPayloads = "";
       Callsign = 7;
       Callnum = 4;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   Chart
@@ -1748,7 +1769,7 @@ MCU_TR_Entity
     OnEvent
     {
       Type = 13;
-      TarId = 11;
+      TarId = 10;
     }
   }
 }
@@ -1976,6 +1997,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2033,6 +2056,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2220,6 +2245,14 @@ Airfield
       AvMods = "";
       AvSkins = "";
       AvPayloads = "";
+      Callsign = 0;
+      PayloadId = 0;
+      Skin = "";
+      Callnum = 0;
+      WMMask = 1;
+      Fuel = 1;
+      TCode = "";
+      TCodeColors = "";
     }
     Vehicle
     {
@@ -2239,6 +2272,14 @@ Airfield
       AvMods = "";
       AvSkins = "";
       AvPayloads = "";
+      Callsign = 0;
+      PayloadId = 0;
+      Skin = "";
+      Callnum = 0;
+      WMMask = 1;
+      Fuel = 1;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
@@ -2458,6 +2499,14 @@ Airfield
       AvMods = "1..10";
       AvSkins = "1..10";
       AvPayloads = "1..10";
+      Callsign = 0;
+      PayloadId = 0;
+      Skin = "";
+      Callnum = 0;
+      WMMask = 1;
+      Fuel = 1;
+      TCode = "";
+      TCodeColors = "";
     }
     Vehicle
     {
@@ -2477,6 +2526,14 @@ Airfield
       AvMods = "1..10";
       AvSkins = "1..10";
       AvPayloads = "1..10";
+      Callsign = 0;
+      PayloadId = 0;
+      Skin = "";
+      Callnum = 0;
+      WMMask = 1;
+      Fuel = 1;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   Chart
@@ -2805,6 +2862,8 @@ Vehicle
   RearmTime = 1;
   RefuelTime = 4;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
