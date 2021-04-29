@@ -96,6 +96,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -141,6 +143,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -186,6 +190,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -231,6 +237,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -276,6 +284,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -321,6 +331,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -366,6 +378,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -411,6 +425,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -456,6 +472,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -501,6 +519,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -546,6 +566,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -591,6 +613,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -636,6 +660,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -681,6 +707,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -726,6 +754,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -771,6 +801,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -816,6 +848,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -861,6 +895,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -899,6 +935,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -937,6 +975,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -975,6 +1015,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1013,6 +1055,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1051,6 +1095,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1089,6 +1135,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1127,6 +1175,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1165,6 +1215,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1203,6 +1255,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1241,6 +1295,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1279,6 +1335,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1317,6 +1375,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1355,6 +1415,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1393,6 +1455,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1617,6 +1681,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1823,6 +1889,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1868,6 +1936,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -1959,6 +2029,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2004,6 +2076,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2341,6 +2415,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2379,6 +2455,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2417,6 +2495,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2455,6 +2535,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2493,6 +2575,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2531,6 +2615,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2569,6 +2655,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2607,6 +2695,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2645,6 +2735,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2683,6 +2775,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2721,6 +2815,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -2759,6 +2855,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3057,6 +3155,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3102,6 +3202,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3147,6 +3249,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3192,6 +3296,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3230,6 +3336,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3268,6 +3376,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3336,6 +3446,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3381,6 +3493,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3738,6 +3852,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3799,6 +3915,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3837,6 +3955,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3875,6 +3995,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3913,6 +4035,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3951,6 +4075,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -3989,6 +4115,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4027,6 +4155,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4065,6 +4195,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4103,6 +4235,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4141,6 +4275,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4179,6 +4315,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4217,6 +4355,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4255,6 +4395,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4293,6 +4435,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4331,6 +4475,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4445,6 +4591,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4490,6 +4638,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4535,6 +4685,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4580,6 +4732,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4735,6 +4889,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4773,6 +4929,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4811,6 +4969,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4849,6 +5009,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4887,6 +5049,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4925,6 +5089,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -4963,6 +5129,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5001,6 +5169,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5039,6 +5209,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5077,6 +5249,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5115,6 +5289,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5153,6 +5329,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5191,6 +5369,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5229,6 +5409,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5267,6 +5449,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5321,6 +5505,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
@@ -5379,6 +5565,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5424,6 +5612,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5469,6 +5659,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5514,6 +5706,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5559,6 +5753,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5604,6 +5800,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5649,6 +5847,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5694,6 +5894,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5739,6 +5941,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5784,6 +5988,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5829,6 +6035,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5874,6 +6082,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5919,6 +6129,8 @@ Vehicle
   RearmTime = 0;
   RefuelTime = 0;
   MaintenanceRadius = 10;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -5957,6 +6169,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 
@@ -6133,6 +6347,8 @@ Plane
   DeleteAfterDeath = 1;
   Spotter = -1;
   Fuel = 1;
+  TCode = "";
+  TCodeColor = "";
 }
 
 

@@ -143396,6 +143396,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -143440,6 +143442,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -143520,6 +143524,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -147835,6 +147841,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -147879,6 +147887,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -147959,6 +147969,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148021,6 +148033,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148083,6 +148097,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148145,6 +148161,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148207,6 +148225,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148269,6 +148289,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148331,6 +148353,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148393,6 +148417,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148455,6 +148481,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -148517,6 +148545,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 

@@ -373,7 +373,7 @@ Group
       110778, 239835;
       116499, 254857;
       109932, 268787;
-      99074.8, 255119;
+      99074, 255119;
     }
   }
   
@@ -601,10 +601,10 @@ Group
     Country = 101;
     Boundary
     {
-      78741.1, 223773;
+      78741, 223773;
       110680, 239694;
-      98921.3, 255048;
-      70305.7, 238725;
+      98921, 255048;
+      70305, 238725;
     }
   }
   
@@ -626,7 +626,7 @@ Group
     Country = 101;
     Boundary
     {
-      85727.3, 210126;
+      85727, 210126;
       111129, 226569;
       110841, 239704;
       78811, 223684;
@@ -911,10 +911,10 @@ Group
     Country = 0;
     Boundary
     {
-      87092.1, 219447;
-      89109.1, 219443;
-      89104.1, 221452;
-      87092.1, 221447;
+      87092, 219447;
+      89109, 219443;
+      89104, 221452;
+      87092, 221447;
     }
   }
   
@@ -1545,10 +1545,10 @@ Group
     Country = 0;
     Boundary
     {
-      84248.3, 237510;
-      84261.4, 239590;
-      83426.6, 239562;
-      83478.1, 237638;
+      84248, 237510;
+      84261, 239590;
+      83426, 239562;
+      83478, 237638;
     }
   }
   
@@ -1570,10 +1570,10 @@ Group
     Country = 0;
     Boundary
     {
-      89314.2, 216799;
-      88582.9, 218011;
-      87471.2, 217811;
-      87809.4, 215840;
+      89314, 216799;
+      88582, 218011;
+      87471, 217811;
+      87809, 215840;
     }
   }
   
@@ -2104,7 +2104,7 @@ Group
   Airfield
   {
     Name = "09";
-    Index = 88;
+    Index = 82;
     LinkTrId = 0;
     XPos = 132562.545;
     YPos = 21.572;
@@ -2206,8 +2206,8 @@ Group
 Airfield
 {
   Name = "PlaneSet-Allies";
-  Index = 82;
-  LinkTrId = 83;
+  Index = 83;
+  LinkTrId = 84;
   XPos = 95086.050;
   YPos = 109.187;
   ZPos = 136204.935;
@@ -2253,6 +2253,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2281,6 +2283,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2309,6 +2313,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2337,6 +2343,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2365,6 +2373,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2393,6 +2403,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2421,6 +2433,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2449,6 +2463,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2477,6 +2493,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
@@ -2496,7 +2514,7 @@ Airfield
 
 MCU_TR_Entity
 {
-  Index = 83;
+  Index = 84;
   Name = "Airfield entity";
   Desc = "";
   Targets = [];
@@ -2508,7 +2526,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 82;
+  MisObjID = 83;
 }
 
 
@@ -2516,8 +2534,8 @@ MCU_TR_Entity
 Airfield
 {
   Name = "PlaneSet-Axis";
-  Index = 85;
-  LinkTrId = 86;
+  Index = 86;
+  LinkTrId = 87;
   XPos = 96304.279;
   YPos = 107.293;
   ZPos = 136164.020;
@@ -2563,6 +2581,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2591,6 +2611,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2619,6 +2641,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2647,6 +2671,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2675,6 +2701,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2703,6 +2731,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2731,6 +2761,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2759,6 +2791,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
@@ -2778,7 +2812,7 @@ Airfield
 
 MCU_TR_Entity
 {
-  Index = 86;
+  Index = 87;
   Name = "Airfield entity";
   Desc = "";
   Targets = [];
@@ -2790,7 +2824,7 @@ MCU_TR_Entity
   YOri = 0.00;
   ZOri = 0.00;
   Enabled = 1;
-  MisObjID = 85;
+  MisObjID = 86;
 }
 
 

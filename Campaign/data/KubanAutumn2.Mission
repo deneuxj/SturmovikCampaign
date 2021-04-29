@@ -3745,6 +3745,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -3807,6 +3809,8 @@ Group
     RearmTime = 0;
     RefuelTime = 0;
     MaintenanceRadius = 10;
+    TCode = "";
+    TCodeColor = "";
   }
   
 
@@ -3882,6 +3886,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -3910,6 +3916,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -3938,6 +3946,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -3966,6 +3976,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -3994,6 +4006,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4022,6 +4036,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4050,6 +4066,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4078,6 +4096,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4106,6 +4126,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4134,6 +4156,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4162,6 +4186,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
@@ -4248,6 +4274,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4276,6 +4304,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4304,6 +4334,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4332,6 +4364,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4360,6 +4394,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4388,6 +4424,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4416,6 +4454,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4444,6 +4484,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4472,6 +4514,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -4500,6 +4544,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;

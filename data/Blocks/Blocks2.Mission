@@ -242,6 +242,8 @@ Group
       DeleteAfterDeath = 1;
       Spotter = -1;
       Fuel = 1;
+      TCode = "";
+      TCodeColor = "";
     }
     
 
@@ -1217,6 +1219,8 @@ Group
       DeleteAfterDeath = 1;
       Spotter = -1;
       Fuel = 1;
+      TCode = "";
+      TCodeColor = "";
     }
     
 
@@ -1253,8 +1257,8 @@ Group
         OnReport
         {
           Type = 3;
-          CmdId = 101;
-          TarId = 100;
+          CmdId = 100;
+          TarId = 101;
         }
       }
     }
@@ -1262,7 +1266,7 @@ Group
 
     MCU_Counter
     {
-      Index = 100;
+      Index = 101;
       Name = "TookOff";
       Desc = "";
       Targets = [];
@@ -1342,7 +1346,7 @@ Group
     Desc = "";
     MCU_CMD_TakeOff
     {
-      Index = 101;
+      Index = 100;
       Name = "TakeOff";
       Desc = "";
       Targets = [];
@@ -1362,7 +1366,7 @@ Group
       Index = 45;
       Name = "5s";
       Desc = "";
-      Targets = [101];
+      Targets = [100];
       Objects = [];
       XPos = 128727.452;
       YPos = 121.322;
@@ -2391,6 +2395,8 @@ Group
       DeleteAfterDeath = 1;
       Spotter = -1;
       Fuel = 1;
+      TCode = "";
+      TCodeColor = "";
     }
     
 
@@ -3461,12 +3467,12 @@ Group
 Group
 {
   Name = "Camp";
-  Index = 313;
+  Index = 302;
   Desc = "";
   Block
   {
     Name = "Block";
-    Index = 302;
+    Index = 303;
     LinkTrId = 0;
     XPos = 117451.539;
     YPos = 124.040;
@@ -3488,7 +3494,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 303;
+    Index = 304;
     LinkTrId = 0;
     XPos = 117467.458;
     YPos = 124.040;
@@ -3510,7 +3516,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 304;
+    Index = 305;
     LinkTrId = 0;
     XPos = 117313.311;
     YPos = 124.040;
@@ -3686,7 +3692,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 314;
+    Index = 313;
     LinkTrId = 0;
     XPos = 117489.359;
     YPos = 124.040;
@@ -3708,7 +3714,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 315;
+    Index = 314;
     LinkTrId = 0;
     XPos = 117286.150;
     YPos = 124.040;
@@ -3730,7 +3736,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 316;
+    Index = 315;
     LinkTrId = 0;
     XPos = 117393.672;
     YPos = 124.040;
@@ -3752,7 +3758,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 317;
+    Index = 316;
     LinkTrId = 0;
     XPos = 117465.272;
     YPos = 124.040;
@@ -3774,7 +3780,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 318;
+    Index = 317;
     LinkTrId = 0;
     XPos = 117494.807;
     YPos = 124.040;
@@ -3796,7 +3802,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 323;
+    Index = 318;
     LinkTrId = 0;
     XPos = 117438.128;
     YPos = 124.040;
@@ -3818,7 +3824,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 324;
+    Index = 319;
     LinkTrId = 0;
     XPos = 117341.380;
     YPos = 124.040;
@@ -3840,7 +3846,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 325;
+    Index = 320;
     LinkTrId = 0;
     XPos = 117307.630;
     YPos = 124.040;
@@ -3862,7 +3868,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 326;
+    Index = 321;
     LinkTrId = 0;
     XPos = 117275.877;
     YPos = 124.040;
@@ -3884,7 +3890,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 327;
+    Index = 322;
     LinkTrId = 0;
     XPos = 117503.265;
     YPos = 124.040;
@@ -3906,7 +3912,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 328;
+    Index = 323;
     LinkTrId = 0;
     XPos = 117501.951;
     YPos = 124.040;
@@ -3928,7 +3934,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 329;
+    Index = 324;
     LinkTrId = 0;
     XPos = 117502.133;
     YPos = 124.040;
@@ -3950,7 +3956,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 330;
+    Index = 325;
     LinkTrId = 0;
     XPos = 117501.441;
     YPos = 124.040;
@@ -3972,7 +3978,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 331;
+    Index = 326;
     LinkTrId = 0;
     XPos = 117499.160;
     YPos = 124.040;
@@ -3994,7 +4000,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 332;
+    Index = 327;
     LinkTrId = 0;
     XPos = 117499.849;
     YPos = 124.040;
@@ -4016,7 +4022,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 333;
+    Index = 328;
     LinkTrId = 0;
     XPos = 117269.421;
     YPos = 124.040;
@@ -4038,7 +4044,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 334;
+    Index = 329;
     LinkTrId = 0;
     XPos = 117268.729;
     YPos = 124.040;
@@ -4060,7 +4066,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 335;
+    Index = 330;
     LinkTrId = 0;
     XPos = 117268.750;
     YPos = 124.040;
@@ -4082,7 +4088,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 336;
+    Index = 331;
     LinkTrId = 0;
     XPos = 117267.887;
     YPos = 124.040;
@@ -4104,7 +4110,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 337;
+    Index = 332;
     LinkTrId = 0;
     XPos = 117268.590;
     YPos = 124.040;
@@ -4126,7 +4132,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 338;
+    Index = 333;
     LinkTrId = 0;
     XPos = 117267.913;
     YPos = 124.040;
@@ -4148,7 +4154,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 339;
+    Index = 334;
     LinkTrId = 0;
     XPos = 117464.823;
     YPos = 124.040;
@@ -4170,7 +4176,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 340;
+    Index = 335;
     LinkTrId = 0;
     XPos = 117306.223;
     YPos = 124.040;
@@ -4192,7 +4198,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 342;
+    Index = 336;
     LinkTrId = 0;
     XPos = 117408.825;
     YPos = 124.040;
@@ -4214,7 +4220,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 343;
+    Index = 337;
     LinkTrId = 0;
     XPos = 117356.550;
     YPos = 124.040;
@@ -4236,7 +4242,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 344;
+    Index = 338;
     LinkTrId = 0;
     XPos = 117381.565;
     YPos = 124.040;
@@ -4258,7 +4264,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 347;
+    Index = 339;
     LinkTrId = 0;
     XPos = 117420.934;
     YPos = 124.040;
@@ -4280,7 +4286,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 348;
+    Index = 340;
     LinkTrId = 0;
     XPos = 117397.019;
     YPos = 124.040;
@@ -4302,7 +4308,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 349;
+    Index = 341;
     LinkTrId = 0;
     XPos = 117375.715;
     YPos = 124.040;
@@ -4324,7 +4330,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 350;
+    Index = 342;
     LinkTrId = 0;
     XPos = 117353.494;
     YPos = 124.040;
@@ -4346,7 +4352,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 351;
+    Index = 343;
     LinkTrId = 0;
     XPos = 117496.401;
     YPos = 124.040;
@@ -4368,7 +4374,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 352;
+    Index = 344;
     LinkTrId = 0;
     XPos = 117272.201;
     YPos = 124.040;
@@ -4390,7 +4396,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 353;
+    Index = 345;
     LinkTrId = 0;
     XPos = 117443.472;
     YPos = 124.040;
@@ -4412,7 +4418,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 354;
+    Index = 346;
     LinkTrId = 0;
     XPos = 117288.450;
     YPos = 124.040;
@@ -4434,7 +4440,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 355;
+    Index = 347;
     LinkTrId = 0;
     XPos = 117391.029;
     YPos = 124.040;
@@ -4455,7 +4461,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 357;
+    Index = 348;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4474,7 +4480,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 358;
+    Index = 349;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4493,7 +4499,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 359;
+    Index = 350;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4512,7 +4518,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 360;
+    Index = 351;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4531,7 +4537,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 361;
+    Index = 352;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4550,7 +4556,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 362;
+    Index = 353;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4569,7 +4575,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 363;
+    Index = 354;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4588,7 +4594,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 364;
+    Index = 355;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4607,7 +4613,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 365;
+    Index = 356;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4626,7 +4632,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 366;
+    Index = 357;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4645,7 +4651,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 367;
+    Index = 358;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4664,7 +4670,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 368;
+    Index = 359;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4683,7 +4689,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 369;
+    Index = 360;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4702,7 +4708,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 370;
+    Index = 361;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4721,7 +4727,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 371;
+    Index = 362;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4740,7 +4746,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 372;
+    Index = 363;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4759,7 +4765,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 373;
+    Index = 364;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4778,7 +4784,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 374;
+    Index = 365;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4797,7 +4803,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 375;
+    Index = 366;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4816,7 +4822,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 376;
+    Index = 367;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4835,7 +4841,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 377;
+    Index = 368;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4854,7 +4860,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 378;
+    Index = 369;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4873,7 +4879,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 379;
+    Index = 370;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4892,7 +4898,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 380;
+    Index = 371;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4911,7 +4917,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 381;
+    Index = 372;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4930,7 +4936,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 382;
+    Index = 373;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4949,7 +4955,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 383;
+    Index = 374;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4968,7 +4974,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 384;
+    Index = 375;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -4987,7 +4993,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 385;
+    Index = 376;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5006,7 +5012,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 386;
+    Index = 377;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5025,7 +5031,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 387;
+    Index = 378;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5044,7 +5050,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 388;
+    Index = 379;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5063,7 +5069,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 389;
+    Index = 380;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5082,7 +5088,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 390;
+    Index = 381;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5101,7 +5107,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 391;
+    Index = 382;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5120,7 +5126,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 392;
+    Index = 383;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5139,7 +5145,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 393;
+    Index = 384;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5158,7 +5164,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 394;
+    Index = 385;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5177,7 +5183,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 395;
+    Index = 386;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5196,7 +5202,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 396;
+    Index = 387;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5215,7 +5221,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 397;
+    Index = 388;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5234,7 +5240,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 398;
+    Index = 389;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5253,7 +5259,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 399;
+    Index = 390;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5272,7 +5278,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 400;
+    Index = 391;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5291,7 +5297,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 401;
+    Index = 392;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5310,7 +5316,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 402;
+    Index = 393;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5329,7 +5335,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 403;
+    Index = 394;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5348,7 +5354,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 404;
+    Index = 395;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5367,7 +5373,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 405;
+    Index = 396;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5386,7 +5392,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 406;
+    Index = 397;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5405,7 +5411,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 407;
+    Index = 398;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5424,7 +5430,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 408;
+    Index = 399;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5443,7 +5449,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 409;
+    Index = 400;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5462,7 +5468,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 410;
+    Index = 401;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5481,7 +5487,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 411;
+    Index = 402;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5500,7 +5506,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 412;
+    Index = 403;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5519,7 +5525,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 413;
+    Index = 404;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5538,7 +5544,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 414;
+    Index = 405;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5557,7 +5563,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 415;
+    Index = 406;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5576,7 +5582,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 416;
+    Index = 407;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5595,7 +5601,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 417;
+    Index = 408;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5614,7 +5620,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 418;
+    Index = 409;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5633,7 +5639,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 419;
+    Index = 410;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5652,7 +5658,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 420;
+    Index = 411;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5671,7 +5677,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 421;
+    Index = 412;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5690,7 +5696,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 422;
+    Index = 413;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5709,7 +5715,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 423;
+    Index = 414;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5728,7 +5734,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 424;
+    Index = 415;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5747,7 +5753,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 425;
+    Index = 416;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5766,7 +5772,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 426;
+    Index = 417;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5785,7 +5791,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 427;
+    Index = 418;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5804,7 +5810,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 428;
+    Index = 419;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5823,7 +5829,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 429;
+    Index = 420;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5842,7 +5848,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 430;
+    Index = 421;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5861,7 +5867,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 431;
+    Index = 422;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5880,7 +5886,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 432;
+    Index = 423;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5899,7 +5905,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 433;
+    Index = 424;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5918,7 +5924,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 434;
+    Index = 425;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5937,7 +5943,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 435;
+    Index = 426;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5956,7 +5962,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 436;
+    Index = 427;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5975,7 +5981,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 437;
+    Index = 428;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -5994,7 +6000,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 438;
+    Index = 429;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6013,7 +6019,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 439;
+    Index = 430;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6032,7 +6038,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 440;
+    Index = 431;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6051,7 +6057,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 441;
+    Index = 432;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6070,7 +6076,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 442;
+    Index = 433;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6089,7 +6095,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 443;
+    Index = 434;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6108,7 +6114,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 444;
+    Index = 435;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6127,7 +6133,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 445;
+    Index = 436;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6146,7 +6152,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 446;
+    Index = 437;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6165,7 +6171,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 447;
+    Index = 438;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6184,7 +6190,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 448;
+    Index = 439;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6203,7 +6209,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 449;
+    Index = 440;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6222,7 +6228,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 450;
+    Index = 441;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6241,7 +6247,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 451;
+    Index = 442;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6260,7 +6266,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 452;
+    Index = 443;
     Name = "P";
     Desc = "";
     Targets = [];
@@ -6280,7 +6286,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 453;
+    Index = 444;
     LinkTrId = 0;
     XPos = 117566.379;
     YPos = 124.040;
@@ -6302,7 +6308,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 454;
+    Index = 445;
     LinkTrId = 0;
     XPos = 117558.419;
     YPos = 124.040;
@@ -6324,7 +6330,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 455;
+    Index = 446;
     LinkTrId = 0;
     XPos = 117369.655;
     YPos = 124.040;
@@ -6346,7 +6352,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 456;
+    Index = 447;
     LinkTrId = 0;
     XPos = 117492.465;
     YPos = 124.040;
@@ -6368,7 +6374,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 457;
+    Index = 448;
     LinkTrId = 0;
     XPos = 117225.394;
     YPos = 124.040;
@@ -6390,7 +6396,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 458;
+    Index = 449;
     LinkTrId = 0;
     XPos = 117199.801;
     YPos = 124.040;
@@ -6412,7 +6418,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 459;
+    Index = 450;
     LinkTrId = 0;
     XPos = 117832.723;
     YPos = 124.040;
@@ -6434,7 +6440,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 460;
+    Index = 451;
     LinkTrId = 0;
     XPos = 117700.113;
     YPos = 124.040;
@@ -6456,7 +6462,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 461;
+    Index = 452;
     LinkTrId = 0;
     XPos = 117860.983;
     YPos = 124.040;
@@ -6478,7 +6484,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 462;
+    Index = 453;
     LinkTrId = 0;
     XPos = 117707.538;
     YPos = 124.040;
@@ -6500,7 +6506,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 463;
+    Index = 454;
     LinkTrId = 0;
     XPos = 117140.682;
     YPos = 124.040;
@@ -6522,7 +6528,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 464;
+    Index = 455;
     LinkTrId = 0;
     XPos = 117007.036;
     YPos = 124.040;
@@ -6544,7 +6550,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 465;
+    Index = 456;
     LinkTrId = 0;
     XPos = 116904.727;
     YPos = 124.040;
@@ -6566,7 +6572,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 466;
+    Index = 457;
     LinkTrId = 0;
     XPos = 117292.290;
     YPos = 124.040;
@@ -6588,7 +6594,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 467;
+    Index = 458;
     LinkTrId = 0;
     XPos = 117573.843;
     YPos = 124.040;
@@ -6610,7 +6616,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 468;
+    Index = 459;
     LinkTrId = 0;
     XPos = 117531.331;
     YPos = 124.040;
@@ -6632,7 +6638,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 469;
+    Index = 460;
     LinkTrId = 0;
     XPos = 117501.593;
     YPos = 124.040;
@@ -6654,7 +6660,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 470;
+    Index = 461;
     LinkTrId = 0;
     XPos = 117291.434;
     YPos = 124.040;
@@ -6676,7 +6682,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 471;
+    Index = 462;
     LinkTrId = 0;
     XPos = 117205.635;
     YPos = 124.040;
@@ -6698,7 +6704,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 472;
+    Index = 463;
     LinkTrId = 0;
     XPos = 117813.696;
     YPos = 124.040;
@@ -6720,7 +6726,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 473;
+    Index = 464;
     LinkTrId = 0;
     XPos = 117404.467;
     YPos = 124.040;
@@ -6742,7 +6748,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 474;
+    Index = 465;
     LinkTrId = 0;
     XPos = 116814.843;
     YPos = 124.040;
@@ -6764,7 +6770,7 @@ Group
   Block
   {
     Name = "Block";
-    Index = 475;
+    Index = 466;
     LinkTrId = 0;
     XPos = 117821.391;
     YPos = 124.040;
@@ -6785,7 +6791,7 @@ Group
 
   MCU_Activate
   {
-    Index = 484;
+    Index = 467;
     Name = "ENABLE";
     Desc = "";
     Targets = [];
@@ -6801,7 +6807,7 @@ Group
 
   MCU_Deactivate
   {
-    Index = 485;
+    Index = 468;
     Name = "DISABLE";
     Desc = "";
     Targets = [];
@@ -6817,7 +6823,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 487;
+    Index = 469;
     Name = "AA";
     Desc = "";
     Targets = [];
@@ -6836,7 +6842,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 488;
+    Index = 470;
     Name = "AA";
     Desc = "";
     Targets = [];
@@ -6855,7 +6861,7 @@ Group
 
   MCU_Waypoint
   {
-    Index = 489;
+    Index = 471;
     Name = "AA";
     Desc = "";
     Targets = [];
@@ -6874,7 +6880,7 @@ Group
 
   MCU_Timer
   {
-    Index = 490;
+    Index = 472;
     Name = "START";
     Desc = "";
     Targets = [];

@@ -12746,6 +12746,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
@@ -13417,10 +13419,10 @@ MCU_TR_InfluenceArea
   Country = 0;
   Boundary
   {
-    43178.3, 12073.4;
-    43285.5, 12073.2;
-    43285.4, 12277;
-    43175.7, 12275.6;
+    43178, 12073;
+    43285, 12073;
+    43285, 12277;
+    43175, 12275;
   }
 }
 

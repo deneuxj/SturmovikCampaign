@@ -2080,6 +2080,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
     Plane
     {
@@ -2108,6 +2110,8 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
+      TCode = "";
+      TCodeColors = "";
     }
   }
   ReturnPlanes = 0;
