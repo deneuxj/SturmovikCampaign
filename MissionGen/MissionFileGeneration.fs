@@ -735,7 +735,7 @@ with
                 [ "BridgesHW" ; "BridgesRW" ]
                 |> Seq.map strategyMissionData.GetGroup
                 |> Seq.collect (fun g -> g.ListOfBridge)
-            mkStaticMCUs(store, data, bridges, this.Boundary, inTargetedArea, isBridge)
+            mkStaticMCUs(store, data, bridges, this.Boundary, (fun _ -> false), isBridge)
 
         // Spawns
         let spawns =
