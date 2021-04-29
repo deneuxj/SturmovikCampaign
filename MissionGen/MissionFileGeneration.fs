@@ -622,7 +622,7 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
         let subst = Mcu.substId <| store.GetIdMapper()
         [
             for pos, block in blocks do
-                if hasEntity pos.Pos then
+                if buildings.TryGetBuildingInstance(BuildingInstanceId pos).IsSome && hasEntity pos.Pos then
                     let subst = Mcu.substId <| store.GetIdMapper()
                     let mcu1 = CommonMethods.createMcu block
                     let mcu2 = newEntity (mcu1.Index + 1)
