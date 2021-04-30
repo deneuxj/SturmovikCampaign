@@ -320,7 +320,7 @@ with
                             FlightRecord = { state.FlightRecord with Return = retStatus }
                         }
                     // Credit attacker
-                    if attackerId = state.PilotId then
+                    if attackerId = state.VehicleId || attackerId = state.PilotId then
                         let differentCoalitions =
                             match mappings.Bindings.TryGetValue(attackerId), mappings.Bindings.TryGetValue(targetId) with
                             | (true, attacker), (true, target) ->
