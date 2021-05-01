@@ -375,10 +375,16 @@ with
                         state, []
 
                 let updateFlightRecordEnd(timeStamp, position, ejected) =
+                    let ownerOfStart =
+                        state.FlightRecord.Start
+                        |> war.World.Airfields.TryGetValue 
+                        |> Option.ofPair
+                        |> Option.map (fun af -> af.Region)
+                        |> Option.bind war.GetOwner
                     let ownerOfSite = war.TryGetRegionAt(position) |> Option.map (fun r -> r.RegionId) |> Option.bind war.GetOwner
                     let landSite = war.TryGetNearestAirfield(position, ownerOfSite)
                     let coalitionOfPilot = war.World.Countries.[state.PilotData.Country]
-                    let inEnemyTerritory = (Some coalitionOfPilot.Other = ownerOfSite)
+                    let inEnemyTerritory = (Some coalitionOfPilot.Other = ownerOfSite) && (ownerOfSite <> ownerOfStart)
                     let retAf =
                         if state.FlightRecord.Return = KilledInAction then
                             KilledInAction
