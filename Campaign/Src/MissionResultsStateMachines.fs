@@ -303,17 +303,27 @@ with
                             0
                     // Update return status of the flight depending on position
                     let retStatus =
-                        if targetId = state.VehicleId || targetId = state.PilotId then
-                            match war.TryGetRegionAt(position) with
-                            | Some region ->
-                                let owner = war.GetOwner(region.RegionId)
-                                let coalition = war.World.Countries.[state.PilotData.Country]
-                                match owner with
-                                | Some enemy when enemy = coalition.Other -> CrashedInEnemyTerritory
-                                | _ -> CrashedInFriendlyTerritory None
-                            | None ->
-                                CrashedInFriendlyTerritory None
-                        else
+                        match state.FlightState with
+                        | InFlight ->
+                            if targetId = state.VehicleId || targetId = state.PilotId || attackerId = state.VehicleId then
+                                let startCoalition =
+                                    state.FlightRecord.Start
+                                    |> war.World.Airfields.TryGetValue
+                                    |> Option.ofPair
+                                    |> Option.map (fun af -> af.Region)
+                                    |> Option.bind war.GetOwner
+                                match war.TryGetRegionAt(position) with
+                                | Some region ->
+                                    let owner = war.GetOwner(region.RegionId)
+                                    let coalition = war.World.Countries.[state.PilotData.Country]
+                                    match owner with
+                                    | Some enemy when enemy = coalition.Other && startCoalition <> Some enemy -> CrashedInEnemyTerritory
+                                    | _ -> CrashedInFriendlyTerritory None
+                                | None ->
+                                    CrashedInFriendlyTerritory None
+                            else
+                                state.FlightRecord.Return
+                        | _ ->
                             state.FlightRecord.Return
                     let state =
                         { state with
