@@ -401,7 +401,6 @@ with
                                     CrashedInFriendlyTerritory (Some af.AirfieldId)
                             | _ ->
                                 CrashedInFriendlyTerritory None
-                    let healthStatus = war.HealthStatusFromHealthLevel(timeStamp, state.FlightRecord.PilotHealth)
                     let flight =
                         { state.FlightRecord with
                             Length = war.Date + timeStamp - state.FlightRecord.Date
@@ -418,13 +417,6 @@ with
                             sprintf "%s %s" state.PilotData.FullName (if ejected then "jumps" else "is back on the ground"),
                             timeStamp,
                             UpdatePilot state.PilotData)
-
-                        //AnnotatedCommand.Create(
-                        //    sprintf "%s has %s"
-                        //        state.PilotData.FullName
-                        //        (string flight.Return),
-                        //    timeStamp,
-                        //    RegisterPilotFlight(state.PilotData.Id, flight, healthStatus));
                     ]
 
                 match event with
