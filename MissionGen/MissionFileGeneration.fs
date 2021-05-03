@@ -998,7 +998,7 @@ with
                 |> Seq.map (fun x -> let country, coalition = x.Value in enum country.Value, coalition.Value)
                 |> Map
             m.TryFind
-        let allGroups = McuTrim.trimMcus(coalitionOf, 7500, allGroups)
+        let allGroups = McuTrim.trimMcus(coalitionOf, 3000, allGroups)
         let numMcus1 = allGroups |> Seq.sumBy (deepContentOf >> List.length)
         allGroups
         |> Seq.collect deepContentOf
