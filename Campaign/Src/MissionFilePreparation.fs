@@ -1095,13 +1095,31 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                 |> Seq.map (fun link ->
                                     let pos = qa.GetNode(link.NodeA).Pos
                                     let dir = qa.GetNode(link.NodeB).Pos - pos
+                                    let optional = 2 = (qa.GetLink(link.NodeA) |> fst |> Seq.length)
                                     {
                                         Pos = pos
                                         Rotation = dir.YOri
                                         Altitude = 0.0f
-                                    }
+                                    }, optional
                                 )
                                 |> List.ofSeq
+                            let path =
+                                match path with
+                                | [] -> []
+                                | (start, _) :: rest ->
+                                    let retained =
+                                        (rest, [])
+                                        ||> List.foldBack (fun (node, optional) retained ->
+                                            match retained, optional with
+                                            | [], _ | _, false ->
+                                                node :: retained
+                                            | prev :: _, true ->
+                                                if (prev.Pos - node.Pos).Length() > 5000.0f then
+                                                    node :: retained
+                                                else
+                                                    retained
+                                        )
+                                    start :: retained
                             logger.Debug("Found path")
                             yield {| Country = state.World.GetAnyCountryInCoalition(owner); Path = path |}
                         | None ->
