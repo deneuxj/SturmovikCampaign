@@ -128,7 +128,7 @@ with
                     match mappings.Bindings.TryFind(objectId) with
                     | Some binding ->
                         // Check if it's a parked plane
-                        match war.TryGetStaticPlaneAt(binding.Name, position) with
+                        match war.TryGetStaticPlaneAt(binding.Typ, position) with
                         | Some(afId, planeModel) ->
                             // There might be multiple planes that share the same static model. Pick the first one that is available at the airfield.
                             let actualPlane =
@@ -142,7 +142,7 @@ with
                         // Report damages to all building parts that cover the position, typically
                         // that should be at most one, unless there are building groups overlaps.
                         let part = defaultArg binding.Sub -1
-                        let buildings = war.GetBuildingsAt(binding.Name, part, position) |> Seq.cache
+                        let buildings = war.GetBuildingsAt(binding.Typ, part, position) |> Seq.cache
                         if not(Seq.isEmpty buildings) then
                             buildings
                             |> Seq.map (fun building ->
@@ -269,14 +269,14 @@ with
                                 yield (TargetType.Building(building.Id, sub), ammo, amount)
 
                             // Parked planes
-                            match war.TryGetStaticPlaneAt(binding.Name, position) with
+                            match war.TryGetStaticPlaneAt(binding.Typ, position) with
                             | Some(afId, plane) ->
                                 yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
                             | None ->
                                 ()
 
                             // Flying planes
-                            match war.TryGetPlane(binding.Name) with
+                            match war.TryGetPlane(binding.Typ) with
                             | Some plane ->
                                 yield (TargetType.Air(plane.Id), ammo, amount)
                             | None ->
@@ -293,14 +293,6 @@ with
                     ]
 
                 let updateFlightRecord(timestamp, attackerId, targetId, damage, position, killDelta) =
-                    let airKillDelta =
-                        match mappings.Bindings.TryFind(targetId) with
-                        | Some binding ->
-                            match war.TryGetPlane(binding.Name) with
-                            | Some _ -> killDelta
-                            | None -> 0
-                        | _ ->
-                            0
                     // Update return status of the flight depending on position
                     let retStatus =
                         match state.FlightState with
@@ -341,6 +333,14 @@ with
                             | _ ->
                                 false
                         if differentCoalitions then
+                            let airKillDelta =
+                                match mappings.Bindings.TryFind(targetId) with
+                                | Some binding ->
+                                    match war.TryGetPlane(binding.Typ) with
+                                    | Some _ -> killDelta
+                                    | None -> 0
+                                | _ ->
+                                    0
                             let flight =
                                 { state.FlightRecord with
                                     TargetsDamaged = state.FlightRecord.TargetsDamaged @ recordedDamages(damage, targetId, position)
@@ -553,7 +553,7 @@ with
                     let cmds =
                         match mappings.Bindings.TryGetValue(taken.VehicleId) with
                         | true, binding ->
-                            match war.TryGetPlane(binding.Name) with
+                            match war.TryGetPlane(binding.Typ) with
                             | Some plane ->
                                 match war.TryGetNearestAirfield(taken.Position, None) with
                                 | Some (airfield, _) ->
