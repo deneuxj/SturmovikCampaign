@@ -21,6 +21,7 @@ Options
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\p47d28.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\p51d15.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\spitfiremkixe.txt";
+  MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\spitfiremkxiv.txt";
   MultiplayerPlaneConfig = "LuaScripts\WorldObjects\Planes\tempestmkvs2.txt";
   Time = 12:30:0;
   Date = 16.12.1944;
@@ -168006,6 +168007,36 @@ Airfield
       Callnum = 0;
       TCode = "";
       TCodeColors = "";
+    }
+    Plane
+    {
+      SetIndex = 0;
+      Number = 10;
+      AILevel = 2;
+      StartInAir = 2;
+      Engageable = 1;
+      Vulnerable = 1;
+      LimitAmmo = 1;
+      AIRTBDecision = 1;
+      Renewable = 1;
+      PayloadId = 0;
+      WMMask = 1;
+      Fuel = 1;
+      RouteTime = 0;
+      RenewTime = 1800;
+      Altitude = 500;
+      Spotter = -1;
+      Model = "graphics\planes\spitfiremkxiv\spitfiremkxiv.mgm";
+      Script = "LuaScripts\WorldObjects\Planes\spitfiremkxiv.txt";
+      Name = "";
+      Skin = "";
+      AvMods = "";
+      AvSkins = "";
+      AvPayloads = "";
+      Callsign = 0;
+      Callnum = 0;
+      TCode = "   ";
+      TCodeColors = "000";
     }
   }
   ReturnPlanes = 0;

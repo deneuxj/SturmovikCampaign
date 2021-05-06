@@ -1575,6 +1575,52 @@
     {
       "Plane": {
         "Kind": "Fighter",
+        "Name": "spitfireMkXIV",
+        "LogName": "Spitfire Mk.XIV",
+        "Roles": [
+          "Interceptor",
+          "Patroller",
+          "GroundAttacker"
+        ],
+        "Coalition": "Allies",
+        "Script": "LuaScripts\\WorldObjects\\Planes\\spitfiremkxiv.txt",
+        "Model": "graphics\\planes\\spitfiremkxiv\\spitfiremkxiv.mgm",
+        "Static": "spitfiremkixe",
+        "Cost": 1000,
+        "BombCapacity": 900,
+        "CargoCapacity": 900,
+        "Payloads": [
+          {
+            "Payload": {
+              "Role": "Interceptor",
+              "ModMask": 9,
+              "Id": 4
+            }
+          },
+          {
+            "Payload": {
+              "Role": "Patroller",
+              "ModMask": 1,
+              "Id": 0
+            }
+          },
+          {
+            "Payload": {
+              "Role": "GroundAttacker",
+              "ModMask": 15,
+              "Id": 7
+            }
+          }
+        ],
+        "EmptyPayload": 8,
+        "WeaponModsCosts": [],
+        "LastPayload": 24,
+        "LastWeaponMod": 8
+      }
+    },
+    {
+      "Plane": {
+        "Kind": "Fighter",
         "Name": "Tempest MkV s2",
         "LogName": "Tempest Mk.V ser.2",
         "Roles": [
