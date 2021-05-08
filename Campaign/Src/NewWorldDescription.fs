@@ -930,7 +930,7 @@ module Init =
                                     yield name.Substring(prefix.Length), durability
                         | _ -> ()
                 ]
-            fun script ->
+            fun (script : string) ->
                 Path.GetFileNameWithoutExtension(script)
                 |> m.TryGetValue
                 |> Option.ofPair

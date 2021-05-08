@@ -388,12 +388,12 @@ module RegexActivePatterns =
         else
             GroupList []
     
-    let (|AsInt|_|) s =
+    let (|AsInt|_|) (s : string) =
         match System.Int32.TryParse(s) with
         | true, x -> Some x
         | false, _ -> None
 
-    let (|AsFloat|_|) s =
+    let (|AsFloat|_|) (s : string) =
         let invCulture = System.Globalization.CultureInfo.InvariantCulture
         match System.Single.TryParse(s, System.Globalization.NumberStyles.Float, invCulture) with
         | true, x -> Some x

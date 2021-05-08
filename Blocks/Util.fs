@@ -26,7 +26,7 @@ module String =
 
 
     let parsers = dict [
-                     'b', Boolean.Parse >> box
+                     'b', (fun (s : string) -> Boolean.Parse s) >> box
                      'd', int >> box
                      'i', int >> box
                      's', box

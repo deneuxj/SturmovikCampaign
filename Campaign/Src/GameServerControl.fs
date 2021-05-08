@@ -190,7 +190,7 @@ module IO =
             }
 
     /// Create a default settings file and return its content.
-    let createDefaultFile path =
+    let createDefaultFile (path : string) =
         let dirName = IO.Path.GetDirectoryName(path)
         if not(IO.Directory.Exists(dirName)) then
             try
@@ -266,7 +266,7 @@ type RConGameServerControl(settings : Settings, ?logger) =
                 return Error <| sprintf "connect() failed: %s" e.Message
         }
 
-    let start(sds) =
+    let start(sds : string) =
         try
             let exePath = IO.Path.Combine(settings.GameDir, "bin", "game", "DServer.exe")
             let filename =
