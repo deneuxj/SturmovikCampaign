@@ -75,34 +75,3 @@ module ClusterPartition =
             Clusters = clusters
             Radius = radius
         }
-
-module private Tests =
-    open FsCheck
-    open FsCheck.Xunit
-
-    [<Property>]
-    let ``Content of created clusters is identical to list of items`` (items : (int * float32 * float32) list) =
-        let cluster =
-            items
-            |> ClusterPartition.create (fun (_, x, y) -> Vector2(x, y))
-        let fromCluster =
-            cluster.Clusters
-            |> List.concat
-            |> List.map (fun (x, _) -> x)
-            |> Set
-        fromCluster = Set items
-
-    [<Property>]
-    let ``Content of refined clusters is identical to unrefined clusters`` (k : float32, unrefined : ClusterPartition<int>) =
-        let refined = ClusterPartition.refine k unrefined
-        let fromUnrefined =
-            unrefined.Clusters
-            |> List.concat
-            |> List.map fst
-            |> Set
-        let fromRefined =
-            refined.Clusters
-            |> List.concat
-            |> List.map fst
-            |> Set
-        fromRefined = fromUnrefined

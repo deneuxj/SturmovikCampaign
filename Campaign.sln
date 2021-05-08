@@ -25,6 +25,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Common", "Common\Common.fsp
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "BanEnforcer", "BanEnforcer\BanEnforcer.fsproj", "{110F01D7-1FC9-4B44-9125-8D1769C33A1F}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "UnitTests", "UnitTests\UnitTests.fsproj", "{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{110F01D7-1FC9-4B44-9125-8D1769C33A1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{110F01D7-1FC9-4B44-9125-8D1769C33A1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{110F01D7-1FC9-4B44-9125-8D1769C33A1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
