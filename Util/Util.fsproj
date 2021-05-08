@@ -8,6 +8,7 @@
     <Compile Include="Vector.fs" />
     <Compile Include="StdExt.fs" />
     <Compile Include="SpacePartition.fs" />
+    <Compile Include="Cluster.fs" />
     <Compile Include="StringPatterns.fs" />
     <Compile Include="Caching.fs" />
     <Compile Include="Json.fs" />
