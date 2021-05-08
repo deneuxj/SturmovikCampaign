@@ -68,3 +68,38 @@ with
           Proximity = proximity
           All = McuUtil.groupFromList group
         }
+
+
+type ITriggeredByEnemy =
+    abstract member Pos : Vector2
+    abstract member Coalition : Mcu.CoalitionValue
+    abstract member WakeUp : Mcu.McuTrigger
+    abstract member Sleep : Mcu.McuTrigger
+
+module Planning =
+    open Campaign.Cluster
+
+    let planWECs (usePulses, czOnly, store, range) (items : ITriggeredByEnemy seq) =
+        let clusters =
+            items
+            |> Seq.groupBy (fun item -> item.Coalition)
+            |> Seq.map (fun (coalition, items) -> coalition, items |> ClusterPartition.create (fun item -> item.Pos))
+            |> List.ofSeq
+        let refined =
+            clusters
+            |> List.map (fun (coalition, clusters) ->
+                coalition,
+                ClusterPartition.refine 0.75f (0.5f * float32 range) 100 clusters)
+        let wecs =
+            [
+                for coalition, clusters in refined do
+                    for cluster in clusters.Clusters do
+                        let d, (p1, p2) = ClusterPartition.diameter cluster.Items
+                        let pos = 0.5f * (p1 + p2)
+                        let wec = WhileEnemyClose.Create(usePulses, czOnly, store, pos, coalition, range)
+                        for item, _ in cluster.Items do
+                            Mcu.addTargetLink wec.WakeUp item.WakeUp.Index
+                            Mcu.addTargetLink wec.Sleep item.Sleep.Index
+                        yield wec
+            ]
+        wecs

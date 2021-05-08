@@ -40,7 +40,7 @@ module ClusterPartition =
             |> List.ofSeq
 
         let (minx, miny, maxx, maxy) =
-            ((System.Single.NegativeInfinity, System.Single.NegativeInfinity, System.Single.PositiveInfinity, System.Single.PositiveInfinity), posItems)
+            ((System.Single.PositiveInfinity, System.Single.PositiveInfinity, System.Single.NegativeInfinity, System.Single.NegativeInfinity), posItems)
             ||> List.fold (fun (minx, miny, maxx, maxy) (_, v) ->
                 (
                     min minx v.X,
@@ -88,21 +88,32 @@ module ClusterPartition =
 
     /// Get the maximum distance between any two items in a cluster
     let diameter (items : ('T * Vector2) list) =
-        let rec distFrom (pos : Vector2) maxDist (working : ('T * Vector2) list) =
+        let rec distFrom (pos : Vector2) ((maxDist, _) as current) (working : ('T * Vector2) list) =
             match working with
-            | [] -> maxDist
+            | [] ->
+                if maxDist < 0.0f then
+                    0.0f, (pos, pos)
+                else
+                    current
             | (_, pos2) :: working -> 
                 let dist = (pos - pos2).LengthSquared()
-                let maxDist = max maxDist dist
-                distFrom pos maxDist working
-        let rec work maxDist working =
+                let current =
+                    if dist > maxDist then
+                        (dist, (pos, pos2))
+                    else
+                        current
+                distFrom pos current working
+        let rec work current working =
             match working with
-            | [] -> maxDist
+            | [] -> current
             | (_, pos) :: working ->
-                let maxDist = distFrom pos maxDist working
-                work maxDist working
-        work 0.0f items
-        |> sqrt
+                let current = distFrom pos current working
+                work current working
+        let d, pts = work (-1.0f, (Vector2.Zero, Vector2.Zero)) items
+        if d >= 0.0f then
+            sqrt d, pts
+        else
+            d, pts
 
     /// Refine a cluster partition until all clusters have a diameter less than a specified limit
     let refine k maxDist maxIter (cp : ClusterPartition<_>) =
@@ -112,7 +123,7 @@ module ClusterPartition =
                 |> List.map (fun c -> diameter c.Items)
             let clusters =
                 (cp.Clusters, diameters)
-                ||> List.map2 (fun cluster d ->
+                ||> List.map2 (fun cluster (d, _) ->
                     if d <= maxDist then
                         [cluster]
                     else
@@ -122,7 +133,7 @@ module ClusterPartition =
                 { cp with
                     Clusters = clusters
                 }
-            if maxIter <= 0 || diameters |> List.forall (fun d -> d <= maxDist) then
+            if maxIter <= 0 || diameters |> List.forall (fun (d, _) -> d <= maxDist) then
                 cp2
             else
                 work (maxIter - 1) cp2

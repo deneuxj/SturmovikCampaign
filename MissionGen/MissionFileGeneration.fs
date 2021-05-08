@@ -753,6 +753,18 @@ with
             this.AntiAirNests
             |> Campaign.MissionGen.StaticDefenseOptimization.select random (settings.MaxAntiAirCannons, groupBudget)
             |> Campaign.MissionGen.StaticDefenseOptimization.instantiateAll store lcStore random missionBegin
+        logger.Info("Start planning WECs")
+        let wecsAA =
+            SturmovikMission.Blocks.WhileEnemyClose.Planning.planWECs (true, true, store, 10000) (retainedAA |> Seq.map (fun x -> upcast x))
+        logger.Info(sprintf "Planned %d wecs" wecsAA.Length)
+        let wecsAA =
+            [
+                for wec in wecsAA do
+                    Mcu.addTargetLink missionBegin wec.StartMonitoring.Index
+                    yield wec.All
+            ]
+        let retainedAA =
+            retainedAA
             |> List.map (fun grp -> grp :> IMcuGroup)
 
         // Ground battles
@@ -977,6 +989,7 @@ with
                 yield! spawns
                 yield McuUtil.groupFromList [ missionBegin ]
                 yield! retainedAA
+                yield! wecsAA
                 yield! battles
                 yield! allPatrols
                 yield! allAttacks

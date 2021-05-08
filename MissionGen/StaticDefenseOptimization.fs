@@ -40,8 +40,7 @@ type Nest = {
 }
 with
     member this.Generate(store, lcStore, random) =
-        let coalition = McuUtil.coalitionOf this.Country
-        let group = StaticDefenseGroup.Create(this.Settings, this.Specialty, this.IncludeFlak, this.IncludeSearchLights, random, store, lcStore, this.Boundary, this.Rotation, this.Number, this.Country, coalition)
+        let group = StaticDefenseGroup.Create(this.Settings, this.Specialty, this.IncludeFlak, this.IncludeSearchLights, random, store, this.Boundary, this.Rotation, this.Number, this.Country, this.Coalition.ToCoalition)
         group
 
 /// Select nests by priority so that the total number of cannons and guns does not exceed the given limit

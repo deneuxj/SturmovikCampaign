@@ -1,6 +1,8 @@
 ﻿module SturmovikMission.Blocks.StaticDefenses.Factory
 
 open System.Numerics
+open VectorExtension
+
 open SturmovikMission.Blocks
 open SturmovikMission.Blocks.VirtualConvoy.Factory
 open SturmovikMission.Blocks.VirtualConvoy.Types
@@ -15,8 +17,8 @@ open SturmovikMission.Blocks.WhileEnemyClose
 type CanonInstance = CanonInstance of int
 
 type StaticDefenseGroup = {
+    Coalition : Mcu.CoalitionValue
     CanonSet : Map<CanonInstance, Canon>
-    EnemyClose : WhileEnemyClose
     Decorations : Mcu.McuBase list
     Api : Api
 }
@@ -31,10 +33,22 @@ with
             [
                 yield! this.CanonSet |> Seq.map (fun kvp -> kvp.Value.All)
                 yield this.Api.All
-                yield this.EnemyClose.All
             ]
 
-    static member Create(settings : CanonGenerationSettings, specialty : DefenseSpecialty, includeFlak : bool, includeSearchLights : bool, random : System.Random, store, lcStore, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
+    interface ITriggeredByEnemy with
+        member this.Coalition =
+            this.Coalition
+        member this.Pos =
+            this.CanonSet
+            |> Map.tryPick (fun _ c -> Some c)
+            |> Option.map (fun canon -> Vector2.FromMcu canon.Cannon.Pos)
+            |> Option.defaultValue Vector2.Zero
+        member this.Sleep =
+            this.Api.Stop
+        member this.WakeUp =
+            this.Api.Start
+
+    static member Create(settings : CanonGenerationSettings, specialty : DefenseSpecialty, includeFlak : bool, includeSearchLights : bool, random : System.Random, store, boundary : Vector2 list, yori : float32, groupSize : int, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue) =
         let center =
             let n = max 1 (List.length boundary)
             let k = 1.0f / float32 n
@@ -87,25 +101,10 @@ with
                 for canon in cannonSet do
                     yield newBlock canon.Value.Cannon.Pos canon.Value.Cannon.Ori
             ]
-        let enemyClose =
-            // For ATs, show when an enemy ground vehicle is near, reduce scanning range.
-            let wec = WhileEnemyClose.Create(true, true, store, center, coalition, 10000)
-            match specialty with
-            | AntiTank ->
-                let otherCoalition = McuUtil.swapCoalition coalition
-                for mcu in McuUtil.deepContentOf wec.All do
-                    match mcu with
-                    | :? Mcu.McuProximity as prox ->
-                        prox.VehicleCoalitions <- [otherCoalition]
-                        prox.Distance <- 3000
-                    | _ -> ()
-            | _ ->
-                ()
-            wec
         // Result
         let api = Api.Create(store, center)
-        { CanonSet = cannonSet
-          EnemyClose = enemyClose
+        { Coalition = coalition
+          CanonSet = cannonSet
           Decorations = positions
           Api = api
         }
@@ -113,13 +112,10 @@ with
     member this.CreateLinks() =
         let targetLinks =
             [
-                let wec = this.EnemyClose
                 for canon in this.CanonSet do
                     let canon = canon.Value
-                    yield wec.WakeUp, canon.Show :> Mcu.McuBase
-                    yield wec.Sleep, canon.Hide :> Mcu.McuBase
-                yield this.Api.Start, upcast wec.StartMonitoring
-                yield this.Api.Stop, upcast wec.StopMonitoring
+                    yield this.Api.Start, canon.Show :> Mcu.McuBase
+                    yield this.Api.Stop, canon.Hide :> Mcu.McuBase
             ]
         { Columns = []
           Objects = []
