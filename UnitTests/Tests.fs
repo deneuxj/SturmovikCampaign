@@ -33,7 +33,7 @@ module ClusterTests =
             let cluster = items |> ClusterPartition.create (fun (_, x, y) -> Vector2(x, y))
             let fromCluster =
                 cluster.Clusters
-                |> List.concat
+                |> List.collect (fun c -> c.Items)
                 |> List.map (fun (x, _) -> x)
                 |> Set
             fromCluster = Set items
@@ -48,15 +48,15 @@ module ClusterTests =
                     genCluster
             )
         Prop.forAll arb (fun (k, unrefined) ->
-            let refined = ClusterPartition.refine k unrefined
+            let refined = ClusterPartition.refine k 5000.0f 10 unrefined
             let fromUnrefined =
                 unrefined.Clusters
-                |> List.concat
+                |> List.collect (fun c -> c.Items)
                 |> List.map fst
                 |> Set
             let fromRefined =
                 refined.Clusters
-                |> List.concat
+                |> List.collect (fun c -> c.Items)
                 |> List.map fst
                 |> Set
             fromRefined = fromUnrefined
