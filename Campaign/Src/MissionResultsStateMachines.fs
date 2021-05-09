@@ -377,7 +377,7 @@ with
                             }
                         { state with
                             PilotData = { state.PilotData with Health = war.HealthStatusFromHealthLevel(timestamp, health) }
-                            FlightState = Destroyed
+                            FlightState = if isKilled then Destroyed else state.FlightState
                             FlightRecord = flight
                         },
                         []
