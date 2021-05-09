@@ -134,6 +134,15 @@ module QuadNode =
                         |> Seq.concat
         }
 
+    let rec allItems (node : QuadNode<'T>) =
+        seq {
+            if node.Children.Length = 0 then
+                yield! node.Content
+            else
+                for child in node.Children do
+                    yield! allItems child
+        }
+
 /// A quad tree, composed of a root, constraints on the content and depth of the tree, and a function to grow or curtail the tree.
 type QuadTree<'T> =
     {
