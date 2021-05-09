@@ -549,6 +549,7 @@ type MissionGenSettings =
         MaxAntiAirCannons : int
         MaxAiPatrolPlanes : int
         MaxAttackPlanesCpuCost : float32
+        MaxBlocks : int
         Planes : PlaneModel list
         OutFilename : string
     }
@@ -1018,7 +1019,7 @@ with
                 |> Seq.map (fun x -> let country, coalition = x.Value in enum country.Value, coalition.Value)
                 |> Map
             m.TryFind
-        let allGroups = McuTrim.trimMcus(coalitionOf, 3000, allGroups)
+        let allGroups = McuTrim.trimMcus(coalitionOf, settings.MaxBlocks, allGroups)
         let numMcus1 = allGroups |> Seq.sumBy (deepContentOf >> List.length)
         allGroups
         |> Seq.collect deepContentOf

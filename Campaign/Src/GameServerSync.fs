@@ -868,6 +868,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             MaxAttackPlanesCpuCost = settings.MaxAttackPlanesCpuCost
                             OutFilename = settings.MissionFilePath
                             Planes = state.World.PlaneSet.Values |> List.ofSeq
+                            MaxBlocks = settings.MaxBlocks
                         }
                     let mission = MissionFilePreparation.mkMultiplayerMissionContent (Random(seed)) missionPrepSettings stepData.Briefing state selection
                     mission.BuildMission(

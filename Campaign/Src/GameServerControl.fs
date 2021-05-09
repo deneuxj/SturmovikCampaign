@@ -72,6 +72,7 @@ type Settings =
         MaxTotalNumFires : int
         MaxFiresRadius : int
         MaxNumFiresInRadius : int
+        MaxBlocks : int
         AdMessages : string[]
         AdPeriod : int
     }
@@ -147,6 +148,7 @@ module IO =
             max_total_num_fires : int option
             max_fires_radius : int option
             max_num_fires_in_radius : int option
+            max_blocks : int option
             ad_messages : string[] option
             ad_period : int option
         }
@@ -185,6 +187,7 @@ module IO =
                 MaxTotalNumFires = defaultArg this.max_total_num_fires 100
                 MaxFiresRadius = defaultArg this.max_fires_radius 3500
                 MaxNumFiresInRadius = defaultArg this.max_num_fires_in_radius 2
+                MaxBlocks = defaultArg this.max_blocks 7500
                 AdMessages = defaultArg this.ad_messages [||]
                 AdPeriod = defaultArg this.ad_period -1
             }
@@ -228,6 +231,7 @@ module IO =
                 max_total_num_fires = None
                 max_num_fires_in_radius = None
                 max_fires_radius = None
+                max_blocks = None
                 ad_messages = None
                 ad_period = None
             }
