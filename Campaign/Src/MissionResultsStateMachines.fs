@@ -461,13 +461,13 @@ with
 
                 | ObjectEvent(timeStamp, ObjectLands landing) when landing.Id = state.VehicleId ->
                     match state.FlightState with
-                    | InFlight ->
+                    | BackOnGround ->
+                        logger.Debug(sprintf "Spurious landing event for %s: %s" state.PilotData.FullName event)
+                        state, []
+                    | _ ->
                         logger.Debug(sprintf "End flight of %s after landing %s" state.PilotData.FullName event)
                         let state, cmds = updateFlightRecordEnd(timeStamp, landing.Position, false)
                         state, cmds
-                    | _ ->
-                        logger.Debug(sprintf "Spurious landing event for %s: %s" state.PilotData.FullName event)
-                        state, []
 
                 | ObjectEvent(timeStamp, ObjectDamaged damaged)
                         when Seq.allPairs [damaged.AttackerId; damaged.TargetId] [state.PilotId; state.VehicleId] |> Seq.exists (fun (x, y) -> x = y) ->
