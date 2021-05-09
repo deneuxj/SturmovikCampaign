@@ -28,12 +28,22 @@ open SturmovikMission.Blocks.Spotter
 
 type Camp =
     {
+        Position : Vector2
+        Coalition : Mcu.CoalitionValue
         AntiAirLocations : Vector2 list
         VehicleLocations : Vector2 list
         Start : Mcu.McuTrigger
+        Enable : Mcu.McuTrigger
+        Disable : Mcu.McuTrigger
         All : McuUtil.IMcuGroup
     }
 with
+    interface ITriggeredByEnemy with
+        member this.Coalition = this.Coalition
+        member this.Pos = this.Position
+        member this.Sleep = this.Disable
+        member this.WakeUp = this.Enable
+
     static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, rotation : float32, coalition : Mcu.CoalitionValue, location : string, vehicles : McuUtil.IMcuGroup seq) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
@@ -78,9 +88,9 @@ with
                         subst mcu
                         lcSubst mcu
                         match mcu with
-                        | :? Mcu.HasEntity as vehicle when vehicle.NumberInFormation.IsSome ->
-                            Mcu.addTargetLink nodeEnable vehicle.Index
-                            Mcu.addTargetLink nodeDisable vehicle.Index
+                        | :? Mcu.McuEntity as entity when not entity.Enabled ->
+                            Mcu.addObjectLink nodeEnable entity.Index
+                            Mcu.addObjectLink nodeDisable entity.Index
                         | _ -> ()
                         pos.AssignTo(mcu.Pos)
                     yield vehMcus
@@ -89,17 +99,6 @@ with
         // Create a spotter
         let spotter = Spotter.Create(store, lcStore, pos, coalition, location)
         Mcu.addTargetLink nodeStart spotter.Start.Index
-
-        // Check zones to control trigger the enable and disable nodes, if needed
-        let wec =
-            match nodeEnable.Targets with
-            | [] -> McuUtil.groupFromList []
-            | _ ->
-                let wec = WhileEnemyClose.Create(true, true, store, pos, coalition, 10000)
-                Mcu.addTargetLink wec.WakeUp nodeEnable.Index
-                Mcu.addTargetLink wec.Sleep nodeDisable.Index
-                Mcu.addTargetLink nodeStart wec.StartMonitoring.Index
-                wec.All
 
         // AA positions
         let antiAirPositions =
@@ -111,8 +110,12 @@ with
             ]
 
         {
+            Position = pos
+            Coalition = coalition
             AntiAirLocations = antiAirPositions
             VehicleLocations = List.ofArray vehPositions
+            Enable = nodeEnable
+            Disable = nodeDisable
             Start = nodeStart
             All =
                 { new McuUtil.IMcuGroup with
@@ -121,7 +124,6 @@ with
                     member this.SubGroups = [
                         yield spotter.All
                         yield! allVehMcus
-                        yield wec
                     ]
                 }
         }

@@ -753,16 +753,6 @@ with
             this.AntiAirNests
             |> Campaign.MissionGen.StaticDefenseOptimization.select random (settings.MaxAntiAirCannons, groupBudget)
             |> Campaign.MissionGen.StaticDefenseOptimization.instantiateAll store lcStore random missionBegin
-        logger.Info("Start planning WECs")
-        let wecsAA =
-            SturmovikMission.Blocks.WhileEnemyClose.Planning.planWECs (true, true, store, 10000) (retainedAA |> Seq.map (fun x -> upcast x))
-        logger.Info(sprintf "Planned %d wecs" wecsAA.Length)
-        let wecsAA =
-            [
-                for wec in wecsAA do
-                    Mcu.addTargetLink missionBegin wec.StartMonitoring.Index
-                    yield wec.All
-            ]
         let retainedAA =
             retainedAA
             |> List.map (fun grp -> grp :> IMcuGroup)
@@ -905,7 +895,7 @@ with
                             .CreateMcu()
                     let entity = newEntity 2
                     entity.MisObjID <- 1
-                    entity.Enabled <- true
+                    entity.Enabled <- false
                     let subst = Mcu.substId <| store.GetIdMapper()
                     subst vehicle
                     subst entity
@@ -926,7 +916,7 @@ with
                 let label = sprintf "camp at %s" (getKeyPadCoordinates (data.GetMapName()) camp.Pos.Pos)
                 let camp = Camp.Camp.Create(store, lcStore, camp.Pos.Pos, camp.Pos.Rotation, camp.Coalition.ToCoalition, label, vehicles)
                 Mcu.addTargetLink missionBegin camp.Start.Index
-                camp.All
+                camp
             )
 
         // Parked vehicles recon
@@ -980,6 +970,23 @@ with
             this.BuildingFires
             |> List.map (fun x -> x.CreateMCUs(store).All)
 
+        logger.Info("Start planning WECs")
+        let wecsAA =
+            seq {
+                for aa in retainedAA do
+                    yield aa :?> WhileEnemyClose.ITriggeredByEnemy
+                for camp in camps do
+                    yield upcast camp
+            }
+            |> WhileEnemyClose.Planning.planWECs (true, true, store, 10000)
+        logger.Info(sprintf "Planned %d wecs" wecsAA.Length)
+        let wecsAA =
+            [
+                for wec in wecsAA do
+                    Mcu.addTargetLink missionBegin wec.StartMonitoring.Index
+                    yield wec.All
+            ]
+
         // Result
         let allGroups =
             [
@@ -995,7 +1002,7 @@ with
                 yield! allAttacks
                 yield! convoys
                 yield! parkedPlanes
-                yield! camps
+                yield! camps |> List.map (fun camp -> camp.All)
                 yield! campRecons
                 yield serverInputMissionEnd.All
                 yield upcast borders
