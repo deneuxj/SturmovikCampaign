@@ -309,7 +309,7 @@ module FreeAreas =
 
         // Check if the node and the polygon overlap
         let overlap =
-            Functions.intersectWithBoundingBox (fun () -> poly) () (node.Min, node.Max)
+            Functions.intersectWithBoundingBox id poly (node.Min, node.Max)
         // If not, return the node as it is
         if not overlap then
             // Return
