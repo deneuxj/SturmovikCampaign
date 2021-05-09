@@ -1257,8 +1257,8 @@ Group
         OnReport
         {
           Type = 3;
-          CmdId = 100;
-          TarId = 101;
+          CmdId = 101;
+          TarId = 100;
         }
       }
     }
@@ -1266,7 +1266,7 @@ Group
 
     MCU_Counter
     {
-      Index = 101;
+      Index = 100;
       Name = "TookOff";
       Desc = "";
       Targets = [];
@@ -1346,7 +1346,7 @@ Group
     Desc = "";
     MCU_CMD_TakeOff
     {
-      Index = 100;
+      Index = 101;
       Name = "TakeOff";
       Desc = "";
       Targets = [];
@@ -1366,7 +1366,7 @@ Group
       Index = 45;
       Name = "5s";
       Desc = "";
-      Targets = [100];
+      Targets = [101];
       Objects = [];
       XPos = 128727.452;
       YPos = 121.322;
@@ -4252,94 +4252,6 @@ Group
     ZOri = 0.00;
     Model = "graphics\blocks\bf_barbed_1.mgm";
     Script = "LuaScripts\WorldObjects\Blocks\bf_barbed_1.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 1500;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 339;
-    LinkTrId = 0;
-    XPos = 117420.934;
-    YPos = 124.040;
-    ZPos = 238816.630;
-    XOri = 0.00;
-    YOri = 102.49;
-    ZOri = 0.00;
-    Model = "graphics\blocks\port_up_unit_bags.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\port_up_unit_bags.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 1500;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 340;
-    LinkTrId = 0;
-    XPos = 117397.019;
-    YPos = 124.040;
-    ZPos = 238817.105;
-    XOri = 0.00;
-    YOri = 89.20;
-    ZOri = 0.00;
-    Model = "graphics\blocks\port_up_unit_bags.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\port_up_unit_bags.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 1500;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 341;
-    LinkTrId = 0;
-    XPos = 117375.715;
-    YPos = 124.040;
-    ZPos = 238816.554;
-    XOri = 0.00;
-    YOri = 91.70;
-    ZOri = 0.00;
-    Model = "graphics\blocks\port_up_unit_bags.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\port_up_unit_bags.txt";
-    Country = 0;
-    Desc = "";
-    Durability = 1500;
-    DamageReport = 50;
-    DamageThreshold = 1;
-    DeleteAfterDeath = 1;
-  }
-  
-
-  Block
-  {
-    Name = "Block";
-    Index = 342;
-    LinkTrId = 0;
-    XPos = 117353.494;
-    YPos = 124.040;
-    ZPos = 238815.819;
-    XOri = 0.00;
-    YOri = 95.18;
-    ZOri = 0.00;
-    Model = "graphics\blocks\port_up_unit_bags.mgm";
-    Script = "LuaScripts\WorldObjects\Blocks\port_up_unit_bags.txt";
     Country = 0;
     Desc = "";
     Durability = 1500;
