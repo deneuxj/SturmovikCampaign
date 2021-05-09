@@ -263,7 +263,7 @@ module QuadTreeItemFinder =
             let boundary2 =
                 getExternalItemBoundary uitem
             fun item ->
-                let boundary1 =  
+                let boundary1 =
                     getTreeItemBoundary item
                 Functions.tryGetSeparatingAxis boundary1 boundary2
                 |> Option.isNone
