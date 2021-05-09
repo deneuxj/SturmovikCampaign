@@ -356,6 +356,7 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
     /// Get candidates for location of objects that cannot be specifically targetted by AI missions, e.g. AA nests.
     member this.GetGroundLocationCandidates(area, shape) = getGroundLocationCandidates(area, shape)
 
+    /// Mark area as occupied
     member this.MarkArea(area : Vector2 list) =
         match freeAreas with
         | None -> ()
