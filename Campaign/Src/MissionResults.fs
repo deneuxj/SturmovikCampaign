@@ -137,7 +137,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                     System.TimeSpan(System.Int64.MaxValue),
                     UpdatePilot x.PilotData)
             let flight =
-                match x.FlightState with
+                match x.MissionStatus with
                 | InFlight -> x.FlightRecord
                 | _ -> { x.FlightRecord with TargetsDamaged = [] }
             yield
