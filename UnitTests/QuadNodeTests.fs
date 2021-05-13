@@ -146,7 +146,7 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
         let random = System.Random(seed)
         let qt =
             polys
-            |> QuadTree.fromBoundaryOjects id 5 5 false
+            |> QuadTree.fromBoundaryOjects id 5 1 false
         let region =
             List.concat polys
             |> function
