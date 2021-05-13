@@ -130,7 +130,19 @@ let ``Testing for presence inside a set of polygons is correct``() =
 [<Property>]
 let ``Candidates from free areas do not intersect with the occupied areas``() =
     let genPolys = Gen.listOf genConvexPoly
-    let arbAll = Arb.fromGen (Gen.zip3 genPolys (Gen.choose(0, 1 <<< 31)) genConvexPoly)
+    //let arbAll = Arb.fromGen (Gen.zip3 genPolys (Gen.choose(0, 1 <<< 31)) genConvexPoly)
+    let arbAll =
+        Arb.fromGenShrink(
+            Gen.zip3 genPolys (Gen.choose(0, 1 <<< 31)) genConvexPoly,
+            fun (polys, seed, shape) ->
+                polys
+                |> List.mapi (fun i _ ->
+                    polys
+                    |> List.indexed
+                    |> List.choose (fun (j, poly) -> if i = j then None else Some poly)
+                )
+                |> Seq.map (fun polys -> (polys, seed, shape))
+            )
     Prop.forAll arbAll (fun (polys, seed, shape) ->
         let random = System.Random(seed)
         let qt =
