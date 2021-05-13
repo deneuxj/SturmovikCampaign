@@ -129,8 +129,7 @@ let ``Testing for presence inside a set of polygons is correct``() =
 
 [<Property>]
 let ``Candidates from free areas do not intersect with the occupied areas``() =
-    let genPolys = Gen.listOf genConvexPoly
-    //let arbAll = Arb.fromGen (Gen.zip3 genPolys (Gen.choose(0, 1 <<< 31)) genConvexPoly)
+    let genPolys = Gen.sized (fun s -> Gen.listOfLength (5 + s) genConvexPoly)
     let arbAll =
         Arb.fromGenShrink(
             Gen.zip3 genPolys (Gen.choose(0, 1 <<< 31)) genConvexPoly,
