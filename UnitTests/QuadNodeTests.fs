@@ -167,7 +167,7 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
             |> Seq.forall (fun offset ->
                 let shape = shape |> List.map ((+) offset)
                 polys
-                |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis poly shape |> Option.isNone)
+                |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis poly shape |> Option.isSome)
             )
         noneIntersect
     )
