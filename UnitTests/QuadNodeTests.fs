@@ -127,19 +127,24 @@ let ``Testing for presence inside a set of polygons is correct``() =
         |> Prop.classify (not bruteForce.IsEmpty) "Inside a polygon"
     )
 
+let shrinkSkip (polys : _ list) =
+    polys
+    |> List.mapi (fun i _ ->
+        polys
+        |> List.indexed
+        |> List.choose (fun (j, poly) -> if i = j then None else Some poly)
+    )
+
 [<Property>]
 let ``Candidates from free areas do not intersect with the occupied areas``() =
     let genPolys = Gen.sized (fun s -> Gen.listOfLength (5 + s) genConvexPoly)
+    let genSeed = Gen.choose(0, 1 <<< 31)
     let arbAll =
         Arb.fromGenShrink(
-            Gen.zip3 genPolys (Gen.choose(0, 1 <<< 31)) genConvexPoly,
+            Gen.zip3 genPolys genSeed genConvexPoly,
             fun (polys, seed, shape) ->
                 polys
-                |> List.mapi (fun i _ ->
-                    polys
-                    |> List.indexed
-                    |> List.choose (fun (j, poly) -> if i = j then None else Some poly)
-                )
+                |> shrinkSkip
                 |> Seq.map (fun polys -> (polys, seed, shape))
             )
     Prop.forAll arbAll (fun (polys, seed, shape) ->
@@ -171,6 +176,65 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
             )
         ((polys.IsEmpty || fa.IsSome) && noneIntersect)
         |> Prop.trivial polys.IsEmpty
+        |> Prop.classify candidates.IsEmpty "No candidates"
+        |> Prop.classify fa.IsNone "No free areas"
+    )
+
+[<Property>]
+let ``Subtracting from free areas eliminates candidates from the subtracted areas``() =
+    let genPolys = Gen.sized (fun s -> Gen.listOfLength (5 + s) genConvexPoly)
+    let genSeed = Gen.choose(0, 1 <<< 31)
+    let genAll = Gen.zip3 genPolys genSeed genConvexPoly
+    let arbAll =
+        Arb.fromGenShrink(
+            genAll,
+            fun (polys, seed, subShape) ->
+                shrinkSkip polys
+                |> Seq.map (fun polys -> (polys, seed, subShape))
+            )
+    Prop.forAll arbAll (fun (polys, seed, subShape) ->
+        let random = System.Random(seed)
+        let qt =
+            polys
+            |> QuadTree.fromBoundaryOjects id 5 1 false
+        let region =
+            List.concat polys
+            |> function
+                | [] -> []
+                | vs -> VectorExtension.convexHull vs
+        let subShapeIntersects =
+            polys
+            |> Seq.exists (fun poly ->
+                Functions.tryGetSeparatingAxis poly subShape
+                |> Option.isNone)
+        let fa = FreeAreas.translate qt.Root
+        let fa =
+            fa
+            |> Option.bind (fun fa -> FreeAreas.subtract(10.0f, fa, subShape))
+        let shape = [
+            for deg in 0.0f .. 45.0f .. 360.0f do
+                let rad = deg / 180.0f * float32 System.Math.PI
+                yield 5.0f * Vector2(cos rad, sin rad)
+        ]
+        let candidates =
+            match region with
+            | [] ->
+                []
+            | _ ->
+                fa
+                |> Option.map(fun fa -> FreeAreas.findPositionCandidates random fa shape region)
+                |> Option.defaultValue Seq.empty
+                |> Seq.truncate 1000
+                |> List.ofSeq
+        let noneIntersect =
+            candidates
+            |> Seq.forall (fun offset ->
+                let shape = shape |> List.map ((+) offset)
+                subShape :: polys
+                |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis poly shape |> Option.isSome)
+            )
+        ((polys.IsEmpty || fa.IsSome) && noneIntersect)
+        |> Prop.trivial (polys.IsEmpty || not subShapeIntersects)
         |> Prop.classify candidates.IsEmpty "No candidates"
         |> Prop.classify fa.IsNone "No free areas"
     )
