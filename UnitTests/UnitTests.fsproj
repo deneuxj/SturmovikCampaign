@@ -8,10 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="Scratch.fsx" />
     <Compile Include="ClusterTests.fs" />
     <Compile Include="QuadNodeTests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="FsCheck" Version="2.15.2" />
