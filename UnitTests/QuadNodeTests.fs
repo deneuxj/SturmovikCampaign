@@ -169,5 +169,8 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
                 polys
                 |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis poly shape |> Option.isSome)
             )
-        noneIntersect
+        ((polys.IsEmpty || fa.IsSome) && noneIntersect)
+        |> Prop.trivial polys.IsEmpty
+        |> Prop.classify candidates.IsEmpty "No candidates"
+        |> Prop.classify fa.IsNone "No free areas"
     )
