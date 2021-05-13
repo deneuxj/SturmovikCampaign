@@ -126,3 +126,37 @@ let ``Testing for presence inside a set of polygons is correct``() =
         |> Prop.classify bruteForce.IsEmpty "Outside all polygons"
         |> Prop.classify (not bruteForce.IsEmpty) "Inside a polygon"
     )
+
+[<Property>]
+let ``Candidates from free areas do not intersect with the occupied areas``() =
+    let genPolys = Gen.listOf genConvexPoly
+    let arbAll = Arb.fromGen (Gen.zip3 genPolys (Gen.choose(0, 1 <<< 31)) genConvexPoly)
+    Prop.forAll arbAll (fun (polys, seed, shape) ->
+        let random = System.Random(seed)
+        let qt =
+            polys
+            |> QuadTree.fromBoundaryOjects id 5 5 false
+        let region =
+            List.concat polys
+            |> function
+                | [] -> []
+                | vs -> VectorExtension.convexHull vs
+        let fa = FreeAreas.translate qt.Root
+        let candidates =
+            match shape, region with
+            | [], _ | _, [] ->
+                []
+            | _ ->
+                fa
+                |> Option.map(fun fa -> FreeAreas.findPositionCandidates random fa shape region |> Seq.truncate 10)
+                |> Option.defaultValue Seq.empty
+                |> List.ofSeq
+        let noneIntersect =
+            candidates
+            |> Seq.forall (fun offset ->
+                let shape = shape |> List.map ((+) offset)
+                polys
+                |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis poly shape |> Option.isNone)
+            )
+        noneIntersect
+    )
