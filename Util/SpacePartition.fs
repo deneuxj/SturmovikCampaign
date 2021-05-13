@@ -231,14 +231,14 @@ module Functions =
 [<RequireQualifiedAccess>]
 module QuadTree =
     /// Create a quad tree from items that have convex polygons as boundaries
-    let fromBoundaryOjects (getBoundary : 'T -> Vector2 list) maxDepth maxItems contentInInnerNodes (items : 'T seq) =
+    let fromBoundaryOjects (getBoundary : 'T -> Vector2 list) maxDepth minItems contentInInnerNodes (items : 'T seq) =
         let getBoundingBox = Functions.getBoundingBox getBoundary
         let intersectWithBox = Functions.intersectWithBoundingBox getBoundary
-        let root = QuadNode.create getBoundingBox intersectWithBox maxDepth maxItems contentInInnerNodes items
+        let root = QuadNode.create getBoundingBox intersectWithBox maxDepth minItems contentInInnerNodes items
         {
             Intersects = intersectWithBox
             MaxDepth = maxDepth
-            MinItems = maxItems
+            MinItems = minItems
             ContentInInnerNodes = contentInInnerNodes
             Root = root
         }
