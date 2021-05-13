@@ -167,7 +167,7 @@ with
             }
 
 /// Helper functions to check for intersections based on convex hulls
-module private Functions =
+module Functions =
     let getSeparatingAxes (poly1 : Vector2 list) (poly2 : Vector2 list) =
         match poly1 with
         | v0 :: _ ->
@@ -283,7 +283,7 @@ module FreeAreas =
         }
 
     /// Translate a quad tree node to a free areas node
-    let rec translate (quad : QuadNode<Vector2>) =
+    let rec translate (quad : QuadNode<_>) =
         if Array.isEmpty quad.Children then
             if Array.isEmpty quad.Content then
                 Some {
