@@ -97,7 +97,7 @@ let genConvexPoly =
         let! numVertices = Gen.choose(5, 8)
         let! vertices =
             Gen.two genFloat100
-            |> Gen.map (fun (dx, dy) -> v + Vector2(0.1f * dx, 0.1f * dy))
+            |> Gen.map (fun (dx, dy) -> v + Vector2(0.3f * dx, 0.3f * dy))
             |> Gen.listOfLength numVertices
         return VectorExtension.convexHull vertices
     }
