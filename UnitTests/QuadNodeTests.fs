@@ -138,7 +138,7 @@ let shrinkSkip (polys : _ list) =
 [<Property>]
 let ``Candidates from free areas do not intersect with the occupied areas``() =
     let genPolys = Gen.sized (fun s -> Gen.listOfLength (5 + s) genConvexPoly)
-    let genSeed = Gen.choose(0, 1 <<< 31)
+    let genSeed = Gen.choose(0, 1 <<< 30)
     let arbAll =
         Arb.fromGenShrink(
             Gen.zip3 genPolys genSeed genConvexPoly,
@@ -183,8 +183,15 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
 [<Property>]
 let ``Subtracting from free areas eliminates candidates from the subtracted areas``() =
     let genPolys = Gen.sized (fun s -> Gen.listOfLength (5 + s) genConvexPoly)
-    let genSeed = Gen.choose(0, 1 <<< 31)
-    let genAll = Gen.zip3 genPolys genSeed genConvexPoly
+    let genSeed = Gen.choose(0, 1 <<< 30)
+    let genAll =
+        gen {
+            let! polys = genPolys
+            let! seed = genSeed
+            let! subShape = genConvexPoly
+
+            return (polys, seed, subShape)
+        }
     let arbAll =
         Arb.fromGenShrink(
             genAll,
