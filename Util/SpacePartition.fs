@@ -460,5 +460,4 @@ module FreeAreas =
             not(hasIntersectionWithNonFree root)
 
         candidates
-        |> Seq.truncate 1000
         |> Seq.filter validate
