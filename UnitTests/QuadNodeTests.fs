@@ -182,8 +182,9 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
                 []
             | _ ->
                 fa
-                |> Option.map(fun fa -> FreeAreas.findPositionCandidates random fa shape region |> Seq.truncate 10)
+                |> Option.map(fun fa -> FreeAreas.findPositionCandidates random fa shape region)
                 |> Option.defaultValue Seq.empty
+                |> Seq.truncate 100
                 |> List.ofSeq
         let noneIntersect =
             candidates
