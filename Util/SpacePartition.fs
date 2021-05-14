@@ -174,10 +174,12 @@ module Functions =
             seq {
                 for (v1, v2) in poly1 @ [v0] |> Seq.pairwise do
                     let allOnOuterSide =
+                        v1 <> v2 &&
                         seq {
+                            let dv = v2 - v1
                             for w in poly2 do
-                                let s = Vector2.Cross(v2 - v1, w - v1)
-                                if s >= 0.0f then
+                                let s = Vector2.Cross(dv, w - v1)
+                                if s > 0.0f then
                                     yield ()
                         }
                         |> Seq.isEmpty
