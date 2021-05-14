@@ -34,11 +34,11 @@ module QuadNode =
     open FSharp.Collections.ParallelSeq
 
     /// Get the lower corner of the bounding box containing two points
-    let min (v1 : Vector2) (v2 : Vector2) =
+    let vmin (v1 : Vector2) (v2 : Vector2) =
         Vector2(min v1.X v2.X, min v1.Y v2.Y)
 
     /// Get the upper corner of the bounding box containing two points
-    let max (v1 : Vector2) (v2 : Vector2) =
+    let vmax (v1 : Vector2) (v2 : Vector2) =
         Vector2(max v1.X v2.X, max v1.Y v2.Y)
 
     /// Create the root of a quad tree
@@ -49,7 +49,7 @@ module QuadNode =
             items
             |> Seq.fold (fun (lower, upper) item ->
                 let l, u = getBounds item
-                (min l lower, max u upper)) (Vector2(pinf, pinf), Vector2(ninf, ninf))
+                (vmin l lower, vmax u upper)) (Vector2(pinf, pinf), Vector2(ninf, ninf))
         let content = Array.ofSeq items
         {
             Min = lower
