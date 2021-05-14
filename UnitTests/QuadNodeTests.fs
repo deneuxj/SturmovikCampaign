@@ -102,6 +102,24 @@ let genConvexPoly =
         return VectorExtension.convexHull vertices
     }
 
+[<Property(MaxTest=1000)>]
+let ``Existence of separating axes is consistent with vertices checks between polygons``() =
+    let genAll = Gen.zip genConvexPoly genConvexPoly
+    let arbAll = Arb.fromGen genAll
+    Prop.forAll arbAll (fun (poly1, poly2) ->
+        let vertex1In2 =
+            poly1
+            |> Seq.exists (fun v -> v.IsInConvexPolygon poly2)
+        let vertex2In1 =
+            poly2
+            |> Seq.exists (fun v -> v.IsInConvexPolygon poly1)
+        let sat = Functions.tryGetSeparatingAxis poly1 poly2 |> Option.isSome
+        ("Vertex 1 not in 2" @| not vertex1In2 .&.
+         "Vectex 2 not in 1" @| not vertex2In1) .|.
+        "no SAT exists" @| not sat
+        |> Prop.classify sat "SAT"
+    )
+
 [<Property>]
 let ``Testing for presence inside a set of polygons is correct``() =
     let genPolys = Gen.listOf genConvexPoly
