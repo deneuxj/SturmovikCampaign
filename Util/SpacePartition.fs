@@ -33,6 +33,24 @@ type QuadNode<'T> =
 module QuadNode =
     open FSharp.Collections.ParallelSeq
 
+    let rec allItems (node : QuadNode<'T>) =
+        seq {
+            if node.Children.Length = 0 then
+                yield! node.Content
+            else
+                for child in node.Children do
+                    yield! allItems child
+        }
+
+    let rec allLeaves (node : QuadNode<'T>) =
+        seq {
+            if node.Children.Length = 0 then
+                yield node
+            else
+                for child in node.Children do
+                    yield! allLeaves child
+        }
+
     /// Get the lower corner of the bounding box containing two points
     let vmin (v1 : Vector2) (v2 : Vector2) =
         Vector2(min v1.X v2.X, min v1.Y v2.Y)
@@ -76,7 +94,17 @@ module QuadNode =
             if node.Children.Length = 0 then
                 node
             else
-                { node with Children = [||] }
+                let content =
+                    if contentInInnerNodes then
+                        node.Content
+                    else
+                        allItems node
+                        |> Seq.distinct
+                        |> Array.ofSeq
+                { node with
+                    Children = [||]
+                    Content = content
+                }
         elif node.Children.Length = 0 then
             let subs =
                 [|
@@ -134,17 +162,8 @@ module QuadNode =
                         |> Seq.concat
         }
 
-    let rec allItems (node : QuadNode<'T>) =
-        seq {
-            if node.Children.Length = 0 then
-                yield! node.Content
-            else
-                for child in node.Children do
-                    yield! allItems child
-        }
-
 /// A quad tree, composed of a root, constraints on the content and depth of the tree, and a function to grow or curtail the tree.
-type QuadTree<'T> =
+type QuadTree<'T when 'T : equality> =
     {
         Intersects : 'T -> Vector2 * Vector2 -> bool
         MaxDepth : int
@@ -246,7 +265,7 @@ module QuadTree =
         }
 
 /// An object to find items in a quad tree that intersect a provided type of external objects
-type QuadTreeItemFinder<'T, 'U> =
+type QuadTreeItemFinder<'T, 'U when 'T : equality> =
     {
         Tree : QuadTree<'T>
         MayMatch : 'U -> Vector2 * Vector2 -> bool
@@ -284,6 +303,15 @@ module FreeAreas =
             Children : FreeAreasNode[]
         }
 
+    let rec allLeaves (fa : FreeAreasNode) =
+        if fa.Children.Length = 0 then
+            seq {
+                yield fa
+            }
+        else
+            fa.Children
+            |> Seq.collect allLeaves
+    
     /// Translate a quad tree node to a free areas node
     let rec translate (quad : QuadNode<_>) =
         if Array.isEmpty quad.Children then
