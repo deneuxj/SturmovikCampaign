@@ -199,8 +199,41 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
         |> Prop.classify fa.IsNone "No free areas"
     )
 
-[<Property>]
-let ``Subtracting from free areas eliminates candidates from the subtracted areas``() =
+let getCandidatesAfterSubtraction(polys, seed, subShape) =
+    let random = System.Random(seed)
+    let qt =
+        polys
+        |> QuadTree.fromBoundaryOjects id 5 1 false
+    let region =
+        List.concat polys
+        |> function
+            | [] -> []
+            | vs -> VectorExtension.convexHull vs
+    let fa = FreeAreas.translate qt.Root
+    let fa2 =
+        fa
+        |> Option.bind (fun fa -> FreeAreas.subtract(10.0f, fa, subShape))
+    let shape = [
+        for deg in 0.0f .. 45.0f .. 360.0f do
+            let rad = deg / 180.0f * float32 System.Math.PI
+            yield 5.0f * Vector2(cos rad, sin rad)
+    ]
+    let candidates =
+        match region with
+        | [] ->
+            []
+        | _ ->
+            fa2
+            |> Option.map(fun fa -> FreeAreas.findPositionCandidates random fa shape region)
+            |> Option.defaultValue Seq.empty
+            |> Seq.truncate 10
+            |> List.ofSeq
+    let candidates =
+        candidates
+        |> List.map (fun offset -> shape |> List.map ((+) offset))
+    qt, fa, fa2, candidates
+
+let arbSubtraction =
     let genPolys = Gen.sized (fun s -> Gen.listOfLength (5 + s) genConvexPoly)
     let genSeed = Gen.choose(0, 1 <<< 30)
     let genAll =
@@ -215,52 +248,50 @@ let ``Subtracting from free areas eliminates candidates from the subtracted area
         Arb.fromGenShrink(
             genAll,
             fun (polys, seed, subShape) ->
-                shrinkSkip polys
-                |> Seq.map (fun polys -> (polys, seed, subShape))
+                let shrunkPolys = shrinkSkip polys
+                seq {
+                    for polys in shrunkPolys do
+                        yield (polys, seed, subShape)
+                }
             )
+    arbAll
+
+//[<Property(MaxTest=10,StartSize=1,EndSize=10,Replay="1405381807, 296889796")>]
+[<Property(MaxTest=100,StartSize=1,EndSize=10)>]
+let ``Subtracting from free areas eliminates candidates from the subtracted areas``() =
+    let bb (v1 : Vector2, v2 : Vector2) =
+        [v1; Vector2(v2.X, v1.Y); v2; Vector2(v1.X, v2.Y)]
+    let bboffa =
+        Option.map(FreeAreas.allLeaves >> Seq.map (fun n -> n.Min, n.Max) >> Seq.map bb)
+        >> Option.defaultValue Seq.empty
+        >> List.ofSeq
+        >> List.map (List.map string >> String.concat ";" >> sprintf "[%s]")
+        >> String.concat ";"
+        >> sprintf "[%s]"
+    let bbofqt =
+        QuadNode.allLeaves
+        >> Seq.map (fun n -> n.Min, n.Max)
+        >> Seq.map bb
+        >> List.ofSeq
+        >> List.map (List.map string >> String.concat ";" >> sprintf "[%s]")
+        >> String.concat ";"
+        >> sprintf "[%s]"
+
+    let arbAll = arbSubtraction
     Prop.forAll arbAll (fun (polys, seed, subShape) ->
-        let random = System.Random(seed)
-        let qt =
-            polys
-            |> QuadTree.fromBoundaryOjects id 5 1 false
-        let region =
-            List.concat polys
-            |> function
-                | [] -> []
-                | vs -> VectorExtension.convexHull vs
         let subShapeIntersects =
             polys
             |> Seq.exists (fun poly ->
                 Functions.tryGetSeparatingAxis poly subShape
                 |> Option.isNone)
-        let fa = FreeAreas.translate qt.Root
-        let fa =
-            fa
-            |> Option.bind (fun fa -> FreeAreas.subtract(10.0f, fa, subShape))
-        let shape = [
-            for deg in 0.0f .. 45.0f .. 360.0f do
-                let rad = deg / 180.0f * float32 System.Math.PI
-                yield 5.0f * Vector2(cos rad, sin rad)
-        ]
-        let candidates =
-            match region with
-            | [] ->
-                []
-            | _ ->
-                fa
-                |> Option.map(fun fa -> FreeAreas.findPositionCandidates random fa shape region)
-                |> Option.defaultValue Seq.empty
-                |> Seq.truncate 1000
-                |> List.ofSeq
+        let qt, fa1, fa2, candidates = getCandidatesAfterSubtraction(polys, seed, subShape)
         let noneIntersect =
             candidates
-            |> Seq.forall (fun offset ->
-                let shape = shape |> List.map ((+) offset)
+            |> Seq.forall (fun shape ->
                 subShape :: polys
                 |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis poly shape |> Option.isSome)
             )
-        ((polys.IsEmpty || fa.IsSome) && noneIntersect)
+        noneIntersect |@ sprintf "%A" (candidates, bbofqt qt.Root, bboffa fa1, bboffa fa2)
         |> Prop.trivial (polys.IsEmpty || not subShapeIntersects)
         |> Prop.classify candidates.IsEmpty "No candidates"
-        |> Prop.classify fa.IsNone "No free areas"
     )
