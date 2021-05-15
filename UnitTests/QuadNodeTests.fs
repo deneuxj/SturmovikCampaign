@@ -253,8 +253,8 @@ let arbSubtraction =
     let arbAll = Arb.fromGen genAll
     arbAll
 
-[<Property(MaxTest=50,StartSize=1,EndSize=10,Replay="861517953, 296890303")>]
-//[<Property(MaxTest=100,StartSize=1,EndSize=10)>]
+//[<Property(MaxTest=50,StartSize=1,EndSize=10,Replay="861517953, 296890303")>]
+[<Property(MaxTest=100,StartSize=1,EndSize=10)>]
 let ``Subtracting from free areas eliminates candidates from the subtracted areas``() =
     let bb (v1 : Vector2, v2 : Vector2) =
         [v1; Vector2(v2.X, v1.Y); v2; Vector2(v1.X, v2.Y)]
