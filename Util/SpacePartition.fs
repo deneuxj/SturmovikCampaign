@@ -310,7 +310,7 @@ module FreeAreas =
         else
             fa.Children
             |> Seq.collect allLeaves
-    
+
     /// Translate a quad tree node to a free areas node
     let rec translate (quad : QuadNode<_>) =
         if Array.isEmpty quad.Children then
@@ -444,10 +444,10 @@ module FreeAreas =
                         QuadNode.divideBounds(node.Min, node.Max)
                         |> Seq.filter (fun bounds -> node.Children |> Array.exists (fun child -> (child.Min, child.Max) = bounds) |> not)
                         |> List.ofSeq
-                    // Check if bound box intersects with shape
+                    // Check if bounding box intersects with shape
                     let canIntersect = Functions.intersectWithBoundingBox id shape (node.Min, node.Max)
                     // Check if the fully occupied areas intersect with the shape
-                    let intersectsHere() = 
+                    let intersectsHere() =
                         occupied()
                         |> List.exists (fun bounds -> Functions.intersectWithBoundingBox id shape bounds)
                     // Recursive check
