@@ -256,26 +256,26 @@ let arbSubtraction =
             )
     arbAll
 
-//[<Property(MaxTest=10,StartSize=1,EndSize=10,Replay="1405381807, 296889796")>]
-[<Property(MaxTest=100,StartSize=1,EndSize=10)>]
+[<Property(MaxTest=50,StartSize=1,EndSize=10,Replay="632122702, 296890147")>]
 let ``Subtracting from free areas eliminates candidates from the subtracted areas``() =
     let bb (v1 : Vector2, v2 : Vector2) =
         [v1; Vector2(v2.X, v1.Y); v2; Vector2(v1.X, v2.Y)]
+    let ss =
+        List.ofSeq
+        >> List.map (List.map string >> String.concat ";" >> sprintf "[%s]")
+        >> List.chunkBySize 10
+        >> List.map (String.concat ";")
+        >> String.concat ";\n"
+        >> sprintf "[%s]"
     let bboffa =
         Option.map(FreeAreas.allLeaves >> Seq.map (fun n -> n.Min, n.Max) >> Seq.map bb)
         >> Option.defaultValue Seq.empty
-        >> List.ofSeq
-        >> List.map (List.map string >> String.concat ";" >> sprintf "[%s]")
-        >> String.concat ";"
-        >> sprintf "[%s]"
+        >> ss
     let bbofqt =
         QuadNode.allLeaves
         >> Seq.map (fun n -> n.Min, n.Max)
         >> Seq.map bb
-        >> List.ofSeq
-        >> List.map (List.map string >> String.concat ";" >> sprintf "[%s]")
-        >> String.concat ";"
-        >> sprintf "[%s]"
+        >> ss
 
     let arbAll = arbSubtraction
     Prop.forAll arbAll (fun (polys, seed, subShape) ->
