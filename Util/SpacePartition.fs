@@ -142,8 +142,30 @@ module QuadNode =
                 }
 
     /// Create the root of a quad tree and split it
-    let create (getBounds : 'T -> (Vector2 * Vector2)) (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (maxItems : int) (contentInInnerNodes : bool) =
-        newRoot getBounds >> split intersects maxDepth maxItems contentInInnerNodes
+    let create (getBounds : 'T -> (Vector2 * Vector2)) (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (minItems : int) (contentInInnerNodes : bool) =
+        newRoot getBounds >> split intersects maxDepth minItems contentInInnerNodes
+
+    /// Insert an item in the node and its children, if it intersects with the bounds
+    let insert (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (minItems : int) (contentInInnerNodes : bool) (item : 'T) (node : QuadNode<'T>) =
+        let rec pushDown (item : 'T) (node : QuadNode<'T>) =
+            if not(intersects item (node.Min, node.Max)) then
+                node
+            else
+            let node =
+                { node with
+                    ContentLen = node.ContentLen + 1
+                    Content = if contentInInnerNodes || node.Children.Length = 0 then Array.append node.Content [| item |] else node.Content
+                }
+            if node.Children.Length = 0 && maxDepth > 0 && node.ContentLen > minItems then
+                split intersects maxDepth minItems contentInInnerNodes node
+            else
+                let children =
+                    node.Children
+                    |> Array.map (pushDown item)
+                { node with
+                    Children = children
+                }
+        pushDown item node
 
     /// Find items in a quad tree that intersect an external item
     /// Note that the sequence of found items may contain duplicates
@@ -295,131 +317,8 @@ module QuadTreeItemFinder =
 
 /// Extract free areas from a QuadTree
 module FreeAreas =
-    type FreeAreasNode =
-        {
-            Min : Vector2
-            Max : Vector2
-            Children : FreeAreasNode[]
-        }
-
-    let rec allLeaves (fa : FreeAreasNode) =
-        if fa.Children.Length = 0 then
-            seq {
-                yield fa
-            }
-        else
-            fa.Children
-            |> Seq.collect allLeaves
-
-    /// Translate a quad tree node to a free areas node
-    let rec translate (quad : QuadNode<_>) =
-        if Array.isEmpty quad.Children then
-            if Array.isEmpty quad.Content then
-                Some {
-                    Min = quad.Min
-                    Max = quad.Max
-                    Children = [||]
-                }
-            else
-                None
-        else
-            let subs = quad.Children |> Array.choose translate
-            match subs with
-            | [||] -> None
-            | _ ->
-                Some {
-                    Min = quad.Min
-                    Max = quad.Max
-                    Children = subs
-                }
-
-    /// Remove a convex polygon from the free areas
-    let rec subtract (minArea : float32, node : FreeAreasNode, poly : Vector2 list) =
-        let nodeShape = [node.Max; Vector2(node.Min.X, node.Max.Y); node.Min; Vector2(node.Max.X, node.Min.Y)]
-        // Reject entire node if it's entirely inside the polygon
-        let nodeIsInside =
-            nodeShape
-            |> List.forall (fun v -> v.IsInConvexPolygon(poly))
-        if nodeIsInside then
-            // Return
-            None
-        else
-
-        // Check if the node and the polygon overlap
-        let overlap =
-            Functions.intersectWithBoundingBox id poly (node.Min, node.Max)
-        // If not, return the node as it is
-        if not overlap then
-            // Return
-            Some node
-        else
-
-        // Check size of area of node. If too small, drop it
-        let sx = node.Max.X - node.Min.X
-        let sy = node.Max.Y - node.Min.Y
-        let size = sx * sy
-        if size < minArea then
-            // Return
-            None
-        else
-
-        // Recursively deal with children
-        match node.Children with
-        | [| |] ->
-            // Break up node if it had no children
-            let children = 
-                [|
-                    for lower, upper in QuadNode.divideBounds(node.Min, node.Max) do
-                        let sub = {
-                            Min = lower
-                            Max = upper
-                            Children = [||]
-                        }
-                        match subtract (minArea, sub, poly) with
-                        | Some sub -> yield sub
-                        | None -> ()
-                |]
-            Some { node with Children = children }
-        | children ->
-            // Process existing children
-            let children2 =
-                children
-                |> Array.choose (fun child -> subtract(minArea, child, poly))
-            // If all children were dropped, drop this as well. Too much of the current node is covered.
-            if children.Length = 0 then
-                None
-            else
-                Some { node with Children = children2 }
-
-    /// Retrieve the leaves that are accepted by a predicate. Can be used to e.g. find all leaves inside an area.
-    /// The predicate must be so that if it accepts a child, it must also accept its parent, or conversely,
-    /// if it rejects a node it must also reject all its children.
-    let rec filterLeaves predicate (node : FreeAreasNode) =
-        seq {
-            if predicate node then
-                if Array.isEmpty node.Children then
-                    yield node
-                else
-                    for child in node.Children do
-                        yield! filterLeaves predicate child
-        }
-
-    /// Check if the bounding box of a node intersects with a region
-    let intersectsWithRegion (region : Vector2 list) (node : FreeAreasNode) =
-        Functions.intersectWithBoundingBox id region (node.Min, node.Max)
-
-    /// Compute area statistics, returning total area and number of leaf nodes
-    let rec sumArea (free : FreeAreasNode) =
-        if Array.isEmpty free.Children then
-            let area = (free.Max.X - free.Min.X) * (free.Max.Y - free.Min.Y)
-            (area, 1)
-        else
-            free.Children
-            |> Seq.map sumArea
-            |> Seq.fold (fun (area, num) (acc0, acc1) -> (area + acc0, num + acc1)) (0.0f, 0)
-
     /// Find candidates for the reference point of a shape (0, 0) that must fit within free areas and within the boundaries of a convex region
-    let findPositionCandidates (random : System.Random) (root : FreeAreasNode) (shape : Vector2 list) (region : Vector2 list) =
+    let findPositionCandidates (random : System.Random) (finder : QuadTreeItemFinder<_, _>) (shape : Vector2 list) (region : Vector2 list) =
         let candidates =
             let xs = region |> List.map (fun v -> v.X)
             let ys = region |> List.map (fun v -> v.Y)
@@ -434,29 +333,8 @@ module FreeAreas =
 
         let validate (candidate : Vector2) =
             let shape = shape |> List.map ((+) candidate)
-            let rec hasIntersectionWithNonFree (node : FreeAreasNode) =
-                if Array.isEmpty node.Children then
-                    // Area covered by node is free
-                    false
-                else
-                    // Children that are fully filled with obstacles (e.g. squares in forests, lakes, cities...)
-                    let occupied() =
-                        QuadNode.divideBounds(node.Min, node.Max)
-                        |> Seq.filter (fun bounds -> node.Children |> Array.exists (fun child -> (child.Min, child.Max) = bounds) |> not)
-                        |> List.ofSeq
-                    // Check if bounding box intersects with shape
-                    let canIntersect = Functions.intersectWithBoundingBox id shape (node.Min, node.Max)
-                    // Check if the fully occupied areas intersect with the shape
-                    let intersectsHere() =
-                        occupied()
-                        |> List.exists (fun bounds -> Functions.intersectWithBoundingBox id shape bounds)
-                    // Recursive check
-                    let intersectsDown() =
-                        node.Children
-                        |> Array.exists hasIntersectionWithNonFree
-                    // Result
-                    canIntersect && (intersectsHere() || intersectsDown())
-            not(hasIntersectionWithNonFree root)
+            let obstacles = finder.FindIntersectingItems shape
+            Seq.isEmpty obstacles
 
         candidates
         |> Seq.filter validate

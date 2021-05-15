@@ -163,7 +163,7 @@ let computeHealthyBuildingClusters(radius, state : IWarStateQuery, buildings : B
 let campRadius = 700.0f
 
 type TargetLocator(random : System.Random, state : IWarStateQuery) =
-    let mutable freeAreas : FreeAreas.FreeAreasNode option =
+    let mutable busyAreas =
         let path =
             match state.World.Map.ToLowerInvariant() with
             | "moscow-winter" | "moscow-autumn" -> "moscow.bin"
@@ -181,23 +181,19 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
             serializer.Deserialize(freeAreasFile)
         with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
         // Remove airfields from free areas, to avoid putting AA protecting e.g. industry on runways
-        |> (fun topNode ->
-            (topNode, state.World.Airfields.Values)
-            ||> Seq.fold (fun node af ->
-                node
-                |> Option.bind (fun node -> FreeAreas.subtract(100.0f * 100.0f, node, af.Boundary))
+        |> (fun tree ->
+            (tree, state.World.Airfields.Values)
+            ||> Seq.fold (fun tree af -> 
+                { tree with
+                    Root = QuadNode.insert tree.Intersects tree.MaxDepth tree.MinItems tree.ContentInInnerNodes af.Boundary tree.Root
+                }
             )
         )
+        |> QuadTreeItemFinder.create id id
 
     let getGroundLocationCandidates(region, shape) =
-        match freeAreas with
-        | Some root ->
-            let candidates =
-                FreeAreas.findPositionCandidates random root shape region
-                |> Seq.cache
-            candidates
-        | None ->
-            Seq.empty
+        FreeAreas.findPositionCandidates random busyAreas shape region
+        |> Seq.cache
 
     let tryGetBattleLocation(regId : RegionId) =
         let region = state.World.Regions.[regId]
@@ -358,12 +354,10 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
 
     /// Mark area as occupied
     member this.MarkArea(area : Vector2 list) =
-        match freeAreas with
-        | None -> ()
-        | Some root ->
-            let freeAreas2 =
-                FreeAreas.subtract(10000.0f, root, area)
-            freeAreas <- freeAreas2
+        let tree = busyAreas.Tree
+        let newRoot =
+            QuadNode.insert tree.Intersects tree.MaxDepth tree.MinItems tree.ContentInInnerNodes area tree.Root
+        busyAreas <- QuadTreeItemFinder.create id id { tree with Root = newRoot }
 
 
 type Campaign.MissionGen.MissionFileGeneration.GroundBattle

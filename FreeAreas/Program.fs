@@ -36,7 +36,19 @@ let getPoints scaleCoords (path : string) =
     }
 
 let mkQuadTree (points : Vector2 seq) =
-    QuadTree.fromBoundaryOjects (fun v -> [v]) 10 0 false points
+    let squares =
+        points
+        |> Seq.map (fun v ->
+            let s = 50.0f
+            let x0, x1 = v.X - s, v.X + s
+            let y0, y1 = v.Y - s, v.Y + s
+            [ Vector2(x0, y0)
+              Vector2(x1, y0)
+              Vector2(x1, y1)
+              Vector2(x0, y1)
+            ]
+        )
+    QuadTree.fromBoundaryOjects id 10 0 false squares
 
 [<EntryPoint>]
 let main argv =
@@ -51,17 +63,12 @@ let main argv =
         printfn "Top node bounds: %A %A" tree.Root.Min tree.Root.Max
         let time = watch.ElapsedMilliseconds
         printfn "Computation took %f s" ((float time) / 1000.0)
+
         let watch = Stopwatch.StartNew()
-        let free = FreeAreas.translate tree.Root
-        let area, numNodes = free |> Option.map FreeAreas.sumArea |> Option.defaultValue (0.0f, 0)
-        printfn "%3.0f km^2 free area in %d nodes" (area / 1.0e6f) numNodes
-        printfn "Collecting..."
-        GC.Collect()
-        printfn "Done"
         let serializer = FsPickler.CreateBinarySerializer()
-        serializer.Serialize(resultFile, free)
+        serializer.Serialize(resultFile, (tree.Root, tree.MaxDepth, tree.MinItems, tree.ContentInInnerNodes))
         let time = watch.ElapsedMilliseconds
-        printfn "Translation and serialization took %f s" ((float time) / 1000.0)
+        printfn "Serialization took %f s" ((float time) / 1000.0)
         0
     | _ ->
         printfn "Missing map name and/or point lists"

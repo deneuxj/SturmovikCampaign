@@ -131,27 +131,32 @@ let main argv =
                     IO.File.OpenRead(path)
                 with _ -> failwithf "Could not open free areas data file '%s'" path
             let serializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
-            let freeAreas : FreeAreas.FreeAreasNode option =
+            let root, maxDepth, minItems, contentInInnerNodes : (QuadNode<Vector2 list> * int * int * bool) =
                 try
                     serializer.Deserialize(freeAreasFile)
                 with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
-            match freeAreas with
-            | Some root ->
-                let candidates =
-                    FreeAreas.findPositionCandidates random root shape region
-                    |> Seq.truncate numCandidates
-                    |> Seq.cache
-                match rest with
-                | WithDebugGroup(path, _) ->
-                    Debug.mkDebugGroup(path, region, shape, root, candidates)
-                    printfn "wrote debug group to %s" path
-                | _ -> ()
-                if Seq.isEmpty candidates then
-                    failwith "Failed to find a fit"
-                candidates
-                |> Seq.iter (fun candidate -> printfn "%s" (string candidate))
-            | None ->
-                failwith "No free space"
+            let intersectWithBox = Functions.intersectWithBoundingBox id
+            let tree : QuadTree<Vector2 list> =
+                { Root = root
+                  MaxDepth = maxDepth
+                  MinItems = minItems
+                  ContentInInnerNodes = contentInInnerNodes
+                  Intersects = intersectWithBox
+                }
+            let finder = QuadTreeItemFinder.create id id tree
+            let candidates =
+                FreeAreas.findPositionCandidates random finder shape region
+                |> Seq.truncate numCandidates
+                |> Seq.cache
+            match rest with
+            | WithDebugGroup(path, _) ->
+                Debug.mkDebugGroup(path, region, shape, root, candidates)
+                printfn "wrote debug group to %s" path
+            | _ -> ()
+            if Seq.isEmpty candidates then
+                failwith "Failed to find a fit"
+            candidates
+            |> Seq.iter (fun candidate -> printfn "%s" (string candidate))
             0
         with e ->
             eprintfn "Error: %s" e.Message
