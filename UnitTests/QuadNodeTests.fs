@@ -212,7 +212,7 @@ let getCandidatesAfterSubtraction(polys, seed, subShape) =
         }
     let finder = QuadTreeItemFinder.create id id qt2
     let shape = [
-        for deg in 0.0f .. 45.0f .. 360.0f do
+        for deg in 0.0f .. 45.0f .. 359.0f do
             let rad = deg / 180.0f * float32 System.Math.PI
             yield 5.0f * Vector2(cos rad, sin rad)
     ]
