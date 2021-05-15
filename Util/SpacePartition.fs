@@ -123,11 +123,17 @@ module QuadNode =
                         let child = split intersects (maxDepth - 1) minItems contentInInnerNodes child
                         yield child
                 |]
-            { node with
-                Children = subs
-                Content = if contentInInnerNodes then node.Content else [||]
-                ContentLen = if contentInInnerNodes then node.Content.Length else subs |> Array.sumBy (fun sub -> sub.ContentLen)
-            }
+            let collapseSubs =
+                subs |> Array.forall (fun child -> child.Children.Length = 0) &&
+                subs |> Seq.pairwise |> Seq.forall (fun (c1, c2) -> c1.Content = c2.Content)
+            if collapseSubs then
+                node
+            else
+                { node with
+                    Children = subs
+                    Content = if contentInInnerNodes then node.Content else [||]
+                    ContentLen = if contentInInnerNodes then node.Content.Length else subs |> Array.sumBy (fun sub -> sub.ContentLen)
+                }
         else
             let newChildren =
                 node.Children
