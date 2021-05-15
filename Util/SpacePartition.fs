@@ -201,7 +201,7 @@ module Functions =
                                     yield s < 0.0f
                         }
                         |> Seq.forall id
-                    if allOnOuterSide then
+                    if allOnOuterSide && v1 <> v2 then
                         yield (v1, v2)
             }
         | [] ->
