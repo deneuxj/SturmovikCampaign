@@ -153,7 +153,7 @@ module QuadNode =
 
     /// Insert an item in the node and its children, if it intersects with the bounds
     let insert (intersects : 'T -> Vector2 * Vector2 -> bool) (maxDepth : int) (minItems : int) (contentInInnerNodes : bool) (item : 'T) (node : QuadNode<'T>) =
-        let rec pushDown (item : 'T) (node : QuadNode<'T>) =
+        let rec pushDown (item : 'T) (maxDepth : int) (node : QuadNode<'T>) =
             if not(intersects item (node.Min, node.Max)) then
                 node
             else
@@ -165,13 +165,14 @@ module QuadNode =
             if node.Children.Length = 0 && maxDepth > 0 && node.ContentLen > minItems then
                 split intersects maxDepth minItems contentInInnerNodes node
             else
+                let maxDepth = maxDepth - 1
                 let children =
                     node.Children
-                    |> Array.map (pushDown item)
+                    |> Array.map (pushDown item maxDepth)
                 { node with
                     Children = children
                 }
-        pushDown item node
+        pushDown item maxDepth node
 
     /// Find items in a quad tree that intersect an external item
     /// Note that the sequence of found items may contain duplicates
