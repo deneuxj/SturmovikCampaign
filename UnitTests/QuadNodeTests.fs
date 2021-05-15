@@ -153,7 +153,7 @@ let shrinkSkip (polys : _ list) =
         |> List.choose (fun (j, poly) -> if i = j then None else Some poly)
     )
 
-[<Property>]
+[<Property(MaxTest=100,StartSize=1,EndSize=10)>]
 let ``Candidates from free areas do not intersect with the occupied areas``() =
     let genPolys = Gen.sized (fun s -> Gen.listOfLength (5 + s) genConvexPoly)
     let genSeed = Gen.choose(0, 1 <<< 30)
@@ -250,9 +250,11 @@ let arbSubtraction =
                         yield (polys, seed, subShape)
                 }
             )
+    let arbAll = Arb.fromGen genAll
     arbAll
 
-[<Property(MaxTest=50,StartSize=1,EndSize=10,Replay="632122702, 296890147")>]
+[<Property(MaxTest=50,StartSize=1,EndSize=10,Replay="861517953, 296890303")>]
+//[<Property(MaxTest=100,StartSize=1,EndSize=10)>]
 let ``Subtracting from free areas eliminates candidates from the subtracted areas``() =
     let bb (v1 : Vector2, v2 : Vector2) =
         [v1; Vector2(v2.X, v1.Y); v2; Vector2(v1.X, v2.Y)]
