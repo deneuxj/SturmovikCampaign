@@ -113,7 +113,7 @@ let ``Existence of separating axes is consistent with vertices checks between po
         let vertex2In1 =
             poly2
             |> Seq.exists (fun v -> v.IsInConvexPolygon poly1)
-        let sat = Functions.tryGetSeparatingAxis poly1 poly2 |> Option.isSome
+        let sat = Functions.tryGetSeparatingAxis(poly1, poly2) |> Option.isSome
         ("Vertex 1 not in 2" @| not vertex1In2 .&.
          "Vectex 2 not in 1" @| not vertex2In1) .|.
         "no SAT exists" @| not sat
@@ -189,7 +189,7 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
             |> Seq.forall (fun offset ->
                 let shape = shape |> List.map ((+) offset)
                 polys
-                |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis poly shape |> Option.isSome)
+                |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis(poly, shape) |> Option.isSome)
             )
         noneIntersect
         |> Prop.trivial polys.IsEmpty
@@ -276,14 +276,14 @@ let ``Subtracting from free areas eliminates candidates from the subtracted area
         let subShapeIntersects =
             polys
             |> Seq.exists (fun poly ->
-                Functions.tryGetSeparatingAxis poly subShape
+                Functions.tryGetSeparatingAxis(poly, subShape)
                 |> Option.isNone)
         let qt, qt2, candidates = getCandidatesAfterSubtraction(polys, seed, subShape)
         let noneIntersect =
             candidates
             |> Seq.forall (fun shape ->
                 subShape :: polys
-                |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis poly shape |> Option.isSome)
+                |> Seq.forall (fun poly -> Functions.tryGetSeparatingAxis(poly, shape) |> Option.isSome)
             )
         noneIntersect |@ sprintf "%A" (candidates, bbofqt qt.Root, bbofqt qt2.Root)
         |> Prop.trivial (polys.IsEmpty || not subShapeIntersects)

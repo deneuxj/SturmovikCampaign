@@ -237,7 +237,7 @@ module Functions =
         | [] ->
             Seq.empty
 
-    let tryGetSeparatingAxis poly1 poly2 =
+    let tryGetSeparatingAxis(poly1, poly2) =
         [
             getSeparatingAxes poly1 poly2
             getSeparatingAxes poly2 poly1
@@ -265,18 +265,19 @@ module Functions =
             |> Seq.max
         Vector2(minx, miny), Vector2(maxx, maxy)
 
-    let intersectWithBoundingBox (getBoundary : 'T -> Vector2 list) item (lower : Vector2, upper : Vector2) =
+    let intersectWithBoundingBox (getBoundary : 'T -> Vector2 list) item =
         let poly1 =
             getBoundary item
-        let poly2 =
-            [
-                lower
-                Vector2(upper.X, lower.Y)
-                upper
-                Vector2(lower.X, upper.Y)
-            ]
-        tryGetSeparatingAxis poly1 poly2
-        |> Option.isNone
+        fun (lower : Vector2, upper : Vector2) ->
+            let poly2 =
+                [
+                    lower
+                    Vector2(upper.X, lower.Y)
+                    upper
+                    Vector2(lower.X, upper.Y)
+                ]
+            tryGetSeparatingAxis(poly1, poly2)
+            |> Option.isNone
 
 [<RequireQualifiedAccess>]
 module QuadTree =
@@ -315,7 +316,7 @@ module QuadTreeItemFinder =
             fun item ->
                 let boundary1 =
                     getTreeItemBoundary item
-                Functions.tryGetSeparatingAxis boundary1 boundary2
+                Functions.tryGetSeparatingAxis(boundary1, boundary2)
                 |> Option.isNone
         {
             Tree = tree
