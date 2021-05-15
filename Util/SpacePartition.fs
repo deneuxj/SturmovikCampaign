@@ -187,8 +187,7 @@ module QuadNode =
                 | _ ->
                     yield!
                         node.Children
-                        |> Seq.map (find mayIntersect intersect)
-                        |> Seq.concat
+                        |> Seq.collect (find mayIntersect intersect)
         }
 
 /// A quad tree, composed of a root, constraints on the content and depth of the tree, and a function to grow or curtail the tree.
@@ -221,17 +220,17 @@ module Functions =
         | v0 :: _ ->
             seq {
                 for (v1, v2) in poly1 @ [v0] |> Seq.pairwise do
-                    let allOnOuterSide =
-                        seq {
-                            if v1 <> v2 then
+                    if v1 <> v2 then
+                        let allOnOuterSide =
+                            seq {
                                 let dv = v2 - v1
                                 for w in poly2 do
                                     let s = Vector2.Cross(dv, w - v1)
                                     yield s < 0.0f
-                        }
-                        |> Seq.forall id
-                    if allOnOuterSide && v1 <> v2 then
-                        yield (v1, v2)
+                            }
+                            |> Seq.forall id
+                        if allOnOuterSide then
+                            yield (v1, v2)
             }
         | [] ->
             Seq.empty
@@ -341,7 +340,8 @@ module FreeAreas =
         let validate (candidate : Vector2) =
             let shape = shape |> List.map ((+) candidate)
             let obstacles = finder.FindIntersectingItems shape
-            Seq.isEmpty obstacles
+            let ok = Seq.isEmpty obstacles
+            ok
 
         candidates
         |> Seq.filter validate
