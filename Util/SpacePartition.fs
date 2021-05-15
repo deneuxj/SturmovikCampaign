@@ -181,10 +181,12 @@ module QuadNode =
             if mayIntersect(node.Min, node.Max) then
                 match node.Children with
                 | [||] ->
+                    assert(node.Content.Length = node.ContentLen)
                     yield!
                         node.Content
                         |> Seq.filter intersect
                 | _ ->
+                    assert(node.Children.Length = 4)
                     yield!
                         node.Children
                         |> Seq.collect (find mayIntersect intersect)
