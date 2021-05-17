@@ -59,7 +59,7 @@ let mkQuadTree (points : Vector2 seq) =
 let main argv =
     match argv |> List.ofArray with
     | mapName :: paths ->
-        use resultFile = File.Create("free-areas.bin")
+        use resultFile = File.Create(mapName + ".bin")
         let watch = Stopwatch.StartNew()
         let tree =
             paths
