@@ -63,11 +63,16 @@ module QuadNode =
     let newRoot (getBounds : 'T -> (Vector2 * Vector2)) (items : 'T seq) =
         let ninf = System.Single.NegativeInfinity
         let pinf = System.Single.PositiveInfinity
-        let lower, upper =
+        let items = Seq.cache items
+        let bounded =
             items
-            |> Seq.fold (fun (lower, upper) item ->
-                let l, u = getBounds item
-                (vmin l lower, vmax u upper)) (Vector2(pinf, pinf), Vector2(ninf, ninf))
+            |> PSeq.map getBounds
+            |> PSeq.toArray
+        let getMinMax vchoose acc items =
+            (acc, items)
+            ||> PSeq.fold (fun acc item -> vchoose item acc)
+        let lower = getMinMax vmin (Vector2(pinf, pinf)) (bounded |> Seq.map fst)
+        let upper = getMinMax vmax (Vector2(ninf, ninf)) (bounded |> Seq.map snd)
         let content = Array.ofSeq items
         {
             Min = lower
