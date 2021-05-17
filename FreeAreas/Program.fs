@@ -27,6 +27,7 @@ let mkScaleCoords mapName =
 let getTreeDepth =
     function
     | "stalingrad" -> 10
+    | "moscow" -> 10
     | _ -> 9
 
 let getPoints scaleCoords (path : string) =
