@@ -6,6 +6,7 @@ open System.IO
 open Campaign.SpacePartition
 open System.Diagnostics
 open MBrace.FsPickler
+open System.IO.Compression
 
 let parseNum x = Single.Parse(x, System.Globalization.CultureInfo.InvariantCulture)
 
@@ -88,7 +89,6 @@ let wipeContent (tree : QuadTree<Vector2>) =
 let main argv =
     match argv |> List.ofArray with
     | mapName :: paths ->
-        use resultFile = File.Create(mapName + ".bin")
         let watch = Stopwatch.StartNew()
         let tree =
             paths
@@ -100,7 +100,9 @@ let main argv =
         printfn "Computation took %f s" ((float time) / 1000.0)
         let watch = Stopwatch.StartNew()
         let serializer = FsPickler.CreateBinarySerializer()
-        serializer.Serialize(resultFile, (tree.Root, tree.MaxDepth, tree.MinItems, tree.ContentInInnerNodes))
+        use resultFile = File.Create(mapName + ".qtree.gz")
+        use zStream = new GZipStream(resultFile, CompressionLevel.Optimal)
+        serializer.Serialize(zStream, (tree.Root, tree.MaxDepth, tree.MinItems, tree.ContentInInnerNodes))
         let time = watch.ElapsedMilliseconds
         printfn "Serialization took %f s" ((float time) / 1000.0)
         0
