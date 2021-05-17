@@ -22,6 +22,12 @@ let mkScaleCoords mapName =
     fun (x, y) ->
         ll + Vector2(y * ext.X, x * ext.Y)
 
+// The max depth of the tree. Tweaked to produce files of reasonable size
+let getTreeDepth =
+    function
+    | "stalingrad" -> 10
+    | _ -> 9
+
 let getPoints scaleCoords (path : string) =
     seq {
         let files =
@@ -40,20 +46,43 @@ let getPoints scaleCoords (path : string) =
                 | _ -> failwithf "Ill-formed line '%s'" line
     }
 
-let mkQuadTree (points : Vector2 seq) =
-    let squares =
-        points
-        |> Seq.map (fun v ->
-            let s = 50.0f
-            let x0, x1 = v.X - s, v.X + s
-            let y0, y1 = v.Y - s, v.Y + s
-            [ Vector2(x0, y0)
-              Vector2(x1, y0)
-              Vector2(x1, y1)
-              Vector2(x0, y1)
-            ]
-        )
-    QuadTree.fromBoundaryOjects id 10 0 false squares
+let mkQuadTree maxDepth (points : Vector2 seq) =
+    let getBoundary (v : Vector2) =
+        let s = 50.0f
+        let x0, x1 = v.X - s, v.X + s
+        let y0, y1 = v.Y - s, v.Y + s
+        [ Vector2(x0, y0)
+          Vector2(x1, y0)
+          Vector2(x1, y1)
+          Vector2(x0, y1)
+        ]
+    QuadTree.fromBoundaryOjects getBoundary maxDepth 0 false points
+
+// Go into the leaves and wipe out the indvidual points. Replace them by the bounding box of the leaf.
+let wipeContent (tree : QuadTree<Vector2>) =
+    let rec work (node : QuadNode<Vector2>) =
+        if node.Children.Length = 0 then
+            {
+                Min = node.Min
+                Max = node.Max
+                Children = [||]
+                Content = [| [ node.Min; Vector2(node.Max.X, node.Min.Y); node.Max; Vector2(node.Min.X, node.Max.Y) ] |]
+                ContentLen = 1
+            }
+        else
+            {
+                Min = node.Min
+                Max = node.Max
+                Children = node.Children |> Array.map work
+                Content = [||]
+                ContentLen = node.ContentLen
+            }
+    {   MaxDepth = tree.MaxDepth
+        MinItems = tree.MinItems
+        Root = work tree.Root
+        ContentInInnerNodes = false
+        Intersects = Functions.intersectWithBoundingBox id
+    }
 
 [<EntryPoint>]
 let main argv =
@@ -64,11 +93,11 @@ let main argv =
         let tree =
             paths
             |> Seq.collect (getPoints (mkScaleCoords mapName))
-            |> mkQuadTree
+            |> mkQuadTree (getTreeDepth mapName)
+            |> wipeContent
         printfn "Top node bounds: %A %A" tree.Root.Min tree.Root.Max
         let time = watch.ElapsedMilliseconds
         printfn "Computation took %f s" ((float time) / 1000.0)
-
         let watch = Stopwatch.StartNew()
         let serializer = FsPickler.CreateBinarySerializer()
         serializer.Serialize(resultFile, (tree.Root, tree.MaxDepth, tree.MinItems, tree.ContentInInnerNodes))
