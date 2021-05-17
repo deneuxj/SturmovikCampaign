@@ -24,14 +24,20 @@ let mkScaleCoords mapName =
 
 let getPoints scaleCoords (path : string) =
     seq {
-        use file = File.OpenText(path)
-        while not file.EndOfStream do
-            let line = file.ReadLine()
-            let components = line.Split ','
-            match components with
-            | [| cx; cy |] -> yield scaleCoords(parseNum cx, parseNum cy)
-            | [||] -> ()
-            | _ -> failwithf "Ill-formed line '%s'" line
+        let files =
+            if Directory.Exists(path) then
+                Directory.EnumerateFiles(path, "*.csv")
+            else
+                Seq.singleton path
+        for path in files do
+            use file = File.OpenText(path)
+            while not file.EndOfStream do
+                let line = file.ReadLine()
+                let components = line.Split ','
+                match components with
+                | [| cx; cy |] -> yield scaleCoords(parseNum cx, parseNum cy)
+                | [||] -> ()
+                | _ -> failwithf "Ill-formed line '%s'" line
     }
 
 let mkQuadTree (points : Vector2 seq) =
