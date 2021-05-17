@@ -12,7 +12,6 @@ let parseNum x = Single.Parse(x, System.Globalization.CultureInfo.InvariantCultu
 let mkScaleCoords mapName =
     // lower corner and size, using the game's coordinates (X -> north, Y -> east).
     // Actually, in the game it's Z that goes east, but we skip elevation Y.
-    // Uses the sizes from https://github.com/dpm314/il2_map_analysis/blob/master/workspace.py#L30 rather than the game's.
     let ll, ext =
         match mapName with
         | "kuban" -> let o = Vector2(35000.0f, 35000.0f) in o, Vector2(323148.0f, 450925.0f) - o
