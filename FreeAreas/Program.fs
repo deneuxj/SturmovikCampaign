@@ -31,22 +31,27 @@ let getTreeDepth =
     | _ -> 9
 
 let getPoints scaleCoords (path : string) =
+    let files =
+        if Directory.Exists(path) then
+            Directory.EnumerateFiles(path, "*.csv")
+        else
+            Seq.singleton path
     seq {
-        let files =
-            if Directory.Exists(path) then
-                Directory.EnumerateFiles(path, "*.csv")
-            else
-                Seq.singleton path
         for path in files do
-            use file = File.OpenText(path)
-            while not file.EndOfStream do
-                let line = file.ReadLine()
-                let components = line.Split ','
-                match components with
-                | [| cx; cy |] -> yield scaleCoords(parseNum cx, parseNum cy)
-                | [||] -> ()
-                | _ -> failwithf "Ill-formed line '%s'" line
+            yield
+                File.ReadAllLines(path)
+                |> Array.choose (fun line ->
+                    let components = line.Split ','
+                    match components with
+                    | [| cx; cy |] ->
+                        Some(scaleCoords(parseNum cx, parseNum cy))
+                    | [||] ->
+                        None
+                    | _ ->
+                        printfn "Ill-formed line '%s'" line
+                        None)
     }
+    |> Seq.cache
 
 let mkQuadTree maxDepth (points : Vector2 seq) =
     let getBoundary (v : Vector2) =
@@ -58,7 +63,8 @@ let mkQuadTree maxDepth (points : Vector2 seq) =
           Vector2(x1, y1)
           Vector2(x0, y1)
         ]
-    QuadTree.fromBoundaryOjects getBoundary maxDepth 0 false points
+    points
+    |> QuadTree.fromBoundaryOjects getBoundary maxDepth 0 false
 
 // Go into the leaves and wipe out the indvidual points. Replace them by the bounding box of the leaf.
 let wipeContent (tree : QuadTree<Vector2>) =
@@ -94,6 +100,7 @@ let main argv =
         let tree =
             paths
             |> Seq.collect (getPoints (mkScaleCoords mapName))
+            |> Seq.concat
             |> mkQuadTree (getTreeDepth mapName)
             |> wipeContent
         printfn "Top node bounds: %A %A" tree.Root.Min tree.Root.Max
