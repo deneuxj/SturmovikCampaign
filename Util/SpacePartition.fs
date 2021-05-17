@@ -63,7 +63,6 @@ module QuadNode =
     let newRoot (getBounds : 'T -> (Vector2 * Vector2)) (items : 'T seq) =
         let ninf = System.Single.NegativeInfinity
         let pinf = System.Single.PositiveInfinity
-        let items = Seq.cache items
         let bounded =
             items
             |> PSeq.map getBounds
