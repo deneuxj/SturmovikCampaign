@@ -18,6 +18,7 @@
 module Campaign.MissionFilePreparation
 
 open System.Numerics
+open System.IO.Compression
 
 open VectorExtension
 open Util
@@ -166,19 +167,20 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
     let mutable busyAreas =
         let path =
             match state.World.Map.ToLowerInvariant() with
-            | "moscow-winter" | "moscow-autumn" -> "moscow.bin"
-            | "kuban-spring" | "kuban-summer" | "kuban-autumn" -> "kuban.bin"
-            | "stalingrad-1942" | "stalingrad-summer-1942" | "stalingrad-autumn-1942" -> "stalingrad.bin"
-            | "rheinland-summer" | "rheinland-winter" | "rheinland-spring" | "rheinland-autumn" -> "rheinland.bin"
+            | "moscow-winter" | "moscow-autumn" -> "moscow.qtree.gz"
+            | "kuban-spring" | "kuban-summer" | "kuban-autumn" -> "kuban.qtree.gz"
+            | "stalingrad-1942" | "stalingrad-summer-1942" | "stalingrad-autumn-1942" -> "stalingrad.qtree.gz"
+            | "rheinland-summer" | "rheinland-winter" | "rheinland-spring" | "rheinland-autumn" -> "rheinland.qtree.gz"
             | unsupported ->
                 failwithf "Unsupported map '%s'" unsupported
         use freeAreasFile =
             try
                 System.IO.File.OpenRead(path)
             with _ -> failwithf "Could not open free areas data file '%s'" path
+        use compressed = new GZipStream(freeAreasFile, CompressionMode.Decompress)
         let serializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
         try
-            serializer.Deserialize(freeAreasFile)
+            serializer.Deserialize(compressed)
         with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
         // Remove airfields from free areas, to avoid putting AA protecting e.g. industry on runways
         |> (fun tree ->

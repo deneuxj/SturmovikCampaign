@@ -4,6 +4,7 @@ open Campaign.SpacePartition
 
 open System
 open System.Numerics
+open System.IO.Compression
 open VectorExtension
 
 let (|BinFilePath|_|) =
@@ -130,10 +131,11 @@ let main argv =
                 try
                     IO.File.OpenRead(path)
                 with _ -> failwithf "Could not open free areas data file '%s'" path
+            use compressed = new GZipStream(freeAreasFile, CompressionMode.Decompress)
             let serializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
             let root, maxDepth, minItems, contentInInnerNodes : (QuadNode<Vector2 list> * int * int * bool) =
                 try
-                    serializer.Deserialize(freeAreasFile)
+                    serializer.Deserialize(compressed)
                 with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
             let intersectWithBox = Functions.intersectWithBoundingBox id
             let tree : QuadTree<Vector2 list> =
@@ -163,9 +165,9 @@ let main argv =
             1
     | _ ->
         eprintfn "Invalid commandline."
-        eprintfn "Usage: FitArea [-n <num candidates] <free area bin file> -o <shape outline> -r <constraint region outline> [-s <seed>] [-d <editor group file>]"
-        eprintfn "Example: FitArea -n 10 rheinland.bin -o 100.0 50.0 150.0 50.0 100.0 75.0 -r 0.0 0.0 1.0e4 -s 1234"
-        eprintfn " Tries to fit a triangle with vertices (100, 50), (150, 50), (100, 75) into the square that is 10000m wide and its south-west corner in (0, 0), using the map data from rheinland.bin."
+        eprintfn "Usage: FitArea [-n <num candidates] <free areas file> -o <shape outline> -r <constraint region outline> [-s <seed>] [-d <editor group file>]"
+        eprintfn "Example: FitArea -n 10 rheinland.qtree.gz -o 100.0 50.0 150.0 50.0 100.0 75.0 -r 0.0 0.0 1.0e4 -s 1234"
+        eprintfn " Tries to fit a triangle with vertices (100, 50), (150, 50), (100, 75) into the square that is 10000m wide and its south-west corner in (0, 0), using the map data from rheinland.qtree.gz."
         eprintfn " The coordinates are specified using the x and z components, using the mission editor's system (x goes north, z goes east)."
         eprintfn " Outputs 10 candidates, printing the position of the centers of the shape."
         1

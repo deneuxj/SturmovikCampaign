@@ -200,16 +200,16 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <Content Include="Sample.Mission" />
-    <Content Include="..\FitArea\kuban.bin" Link="kuban.bin">
+    <Content Include="..\FitArea\kuban.qtree.gz" Link="kuban.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\FitArea\moscow.bin" Link="moscow.bin">
+    <Content Include="..\FitArea\moscow.qtree.gz" Link="moscow.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\FitArea\rheinland.bin" Link="rheinland.bin">
+    <Content Include="..\FitArea\rheinland.qtree.gz" Link="rheinland.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\FitArea\stalingrad.bin" Link="stalingrad.bin">
+    <Content Include="..\FitArea\stalingrad.qtree.gz" Link="stalingrad.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Include="data\OperationBodenPlatte.Mission">
@@ -244,6 +244,7 @@
     <PackageReference Include="NLog" Version="4.6.8" />
     <PackageReference Include="NLog.Config" Version="4.6.8" />
     <PackageReference Include="NLog.Schema" Version="4.6.8" />
+    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="System.Runtime" Version="4.3.1" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />

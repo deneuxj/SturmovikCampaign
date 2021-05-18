@@ -6,16 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="kuban.bin">
+    <None Include="kuban.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="moscow.bin">
+    <None Include="moscow.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="rheinland.bin">
+    <None Include="rheinland.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="stalingrad.bin">
+    <None Include="stalingrad.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="Program.fs" />
@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="FsPickler" Version="5.3.2" />
+    <PackageReference Include="System.IO.Compression" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
