@@ -179,11 +179,24 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
             with _ -> failwithf "Could not open free areas data file '%s'" path
         use compressed = new GZipStream(freeAreasFile, CompressionMode.Decompress)
         let serializer = MBrace.FsPickler.FsPickler.CreateBinarySerializer()
-        try
-            serializer.Deserialize(compressed)
-        with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
+        let root, maxDepth, minItems, contentInInnerNodes : (QuadNode<Vector2 list> * int * int * bool) =
+            try
+                logger.Info(sprintf "Loading busy areas quad tree '%s'" path)
+                serializer.Deserialize(compressed)
+            with e -> failwithf "Failed to read free areas data file, error was: %s" e.Message
+        logger.Info("Loading complete")
+        let intersectWithBox = Functions.intersectWithBoundingBox id
+        let tree : QuadTree<Vector2 list> =
+            { Root = root
+              MaxDepth = maxDepth
+              MinItems = minItems
+              ContentInInnerNodes = contentInInnerNodes
+              Intersects = intersectWithBox
+            }
+        tree
         // Remove airfields from free areas, to avoid putting AA protecting e.g. industry on runways
         |> (fun tree ->
+            logger.Info("Marking airfield boundaries as busy")
             (tree, state.World.Airfields.Values)
             ||> Seq.fold (fun tree af -> 
                 { tree with
@@ -192,6 +205,8 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
             )
         )
         |> QuadTreeItemFinder.create id id
+
+    do logger.Info("Busy areas data ready")
 
     let getGroundLocationCandidates(region, shape) =
         FreeAreas.findPositionCandidates random busyAreas shape region
