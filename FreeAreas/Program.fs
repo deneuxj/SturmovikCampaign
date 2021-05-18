@@ -74,16 +74,17 @@ let wipeContent (tree : QuadTree<Vector2>) =
                 Min = node.Min
                 Max = node.Max
                 Children = [||]
-                Content = [| [ node.Min; Vector2(node.Max.X, node.Min.Y); node.Max; Vector2(node.Min.X, node.Max.Y) ] |]
-                ContentLen = 1
+                Content = if node.Content.Length > 0 then [| [ node.Min; Vector2(node.Max.X, node.Min.Y); node.Max; Vector2(node.Min.X, node.Max.Y) ] |] else [||]
+                ContentLen = if node.Content.Length > 0 then 1 else 0
             }
         else
+            let children = node.Children |> Array.map work
             {
                 Min = node.Min
                 Max = node.Max
-                Children = node.Children |> Array.map work
+                Children = children
                 Content = [||]
-                ContentLen = node.ContentLen
+                ContentLen = children |> Array.sumBy (fun child -> child.ContentLen)
             }
     {   MaxDepth = tree.MaxDepth
         MinItems = tree.MinItems
