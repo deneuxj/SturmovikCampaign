@@ -211,6 +211,7 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
     let getGroundLocationCandidates(region, shape) =
         FreeAreas.findPositionCandidates random busyAreas shape region
         |> Seq.cache
+        |> Seq.truncate 1000
 
     let tryGetBattleLocation(regId : RegionId) =
         let region = state.World.Regions.[regId]
@@ -435,6 +436,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> Option.map (fun m -> m.GroundMissions)
         |> Option.defaultValue Seq.empty
 
+    logger.Info("Preparing spawns")
     // Player spawns
     let spawns =
         [
@@ -516,7 +518,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 locator.MarkArea(mkCircle(spawn.Pos.Pos, 2500.0f))
                 yield spawn
         ]
+    logger.Info(sprintf "Done (%d)" spawns.Length)
 
+    logger.Info("Preparing camps")
     // Vehicle parks
     let camps =
         [
@@ -643,7 +647,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         | None ->
                             ()
         ]
+    logger.Info(sprintf "Done (%d)" camps.Length)
 
+    logger.Info("Preparing AA nests")
     // AA nests
     let aaNests =
         [
@@ -879,7 +885,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         Cost = nestCost
                     }
         ]
+    logger.Info(sprintf "Done (%d)" aaNests.Length)
 
+    logger.Info("Preparing ground battles")
     // Ground battles
     let battles =
         [
@@ -904,7 +912,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     | None -> ()
                 | _ -> ()
         ]
+    logger.Info(sprintf "Done (%d)" battles.Length)
 
+    logger.Info("Preparing patrols")
     // patrols
     let patrols =
         [
@@ -966,7 +976,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | _ -> ()
         ]
         |> List.choose id
+    logger.Info(sprintf "Done (%d)" patrols.Length)
 
+    logger.Info("Preparing air attacks")
     // Air attackers
     let attacks =
         [
@@ -983,7 +995,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 ()
         ]
         |> List.choose id
+    logger.Info(sprintf "Done (%d)" attacks.Length)
 
+    logger.Info("Preparing parked planes")
     // Parked planes
     let parkedPlanes =
         /// Match planes with parking positions. Assumes that the list of planes and the list of positions
@@ -1080,6 +1094,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | None ->
                     ()
         ]
+    logger.Info(sprintf "Done (%d)" parkedPlanes.Length)
 
     // Common to convoys and trains
     let mkTerminalsInRegion (network : Network) =
