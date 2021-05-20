@@ -331,7 +331,7 @@ module QuadTreeItemFinder =
 /// Extract free areas from a QuadTree
 module FreeAreas =
     /// Find candidates for the reference point of a shape (0, 0) that must fit within free areas and within the boundaries of a convex region
-    let findPositionCandidates (random : System.Random) (finder : QuadTreeItemFinder<_, _>) (shape : Vector2 list) (region : Vector2 list) =
+    let findPositionCandidates maxn (random : System.Random) (finder : QuadTreeItemFinder<_, _>) (shape : Vector2 list) (region : Vector2 list) =
         let candidates =
             let xs = region |> List.map (fun v -> v.X)
             let ys = region |> List.map (fun v -> v.Y)
@@ -342,6 +342,7 @@ module FreeAreas =
                 let r1 = random.NextDouble() |> float32
                 Vector2(r0 * b0.X + (1.0f - r0) * b1.X, r1 * b0.Y + (1.0f - r1) * b1.Y))
             |> Seq.cache
+            |> Seq.truncate maxn
             |> Seq.filter (fun v -> v.IsInConvexPolygon region)
 
         let validate (candidate : Vector2) =

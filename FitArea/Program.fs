@@ -147,7 +147,7 @@ let main argv =
                 }
             let finder = QuadTreeItemFinder.create id id tree
             let candidates =
-                FreeAreas.findPositionCandidates random finder shape region
+                FreeAreas.findPositionCandidates 1000 random finder shape region
                 |> Seq.truncate numCandidates
                 |> Seq.cache
             match rest with

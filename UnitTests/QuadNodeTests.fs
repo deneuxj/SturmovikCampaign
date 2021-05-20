@@ -181,7 +181,7 @@ let ``Candidates from free areas do not intersect with the occupied areas``() =
             | [], _ | _, [] ->
                 []
             | _ ->
-                FreeAreas.findPositionCandidates random finder shape region
+                FreeAreas.findPositionCandidates 1000 random finder shape region
                 |> Seq.truncate 100
                 |> List.ofSeq
         let noneIntersect =
@@ -221,7 +221,7 @@ let getCandidatesAfterSubtraction(polys, seed, subShape) =
         | [] ->
             []
         | _ ->
-            FreeAreas.findPositionCandidates random finder shape region
+            FreeAreas.findPositionCandidates 1000 random finder shape region
             |> Seq.truncate 10
             |> List.ofSeq
     let candidates =

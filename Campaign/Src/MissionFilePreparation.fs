@@ -209,7 +209,7 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
     do logger.Info("Busy areas data ready")
 
     let getGroundLocationCandidates(region, shape) =
-        FreeAreas.findPositionCandidates random busyAreas shape region
+        FreeAreas.findPositionCandidates 1000 random busyAreas shape region
         |> Seq.cache
         |> Seq.truncate 1000
 
