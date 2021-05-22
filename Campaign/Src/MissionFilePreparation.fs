@@ -290,14 +290,23 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
               Altitude = 0.0f },
             shape)
 
-    let battleLocationCache = Seq.mutableDict []
-
-    let tryGetBattleLocationCached = SturmovikMission.Cached.cached battleLocationCache tryGetBattleLocation
+    let battleLocationCache = Seq.mutableDict (Seq.empty :> (RegionId * (OrientedPosition * Vector2 list)) seq)
+    let groundTargetLocationCache = Seq.mutableDict []
 
     let tryGetGroundTargetLocation (regId : RegionId, targetType : GroundTargetType) =
         match targetType with
         | GroundForces targettedCoalition ->
-            match tryGetBattleLocationCached regId with
+            // Check for recorded battle and camp positions
+            let positionAndRadius =
+                battleLocationCache.TryGetValue(regId)
+                |> Option.ofPair
+                |> Option.map (fun (pos, _) -> pos.Pos, 5000.0f)
+                |> Option.orElseWith (fun () ->
+                    groundTargetLocationCache.TryGetValue((regId, targetType))
+                    |> Option.ofPair
+                )
+
+            match positionAndRadius with
             | None ->
                 // No battle going on, find a free location for a camp
                 let campShape = mkCircle(Vector2.Zero, campRadius)
@@ -333,12 +342,12 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
                         [fun _ -> true]
                 filters
                 |> Seq.tryPick (fun filter -> candidates |> Seq.tryFind filter)
-            | Some (p, _) ->
-                // There's a battle going on, use its location
-                Some p.Pos
+                |> Option.map (fun pos -> pos, campRadius)
+            | existing ->
+                existing
 
         | AirfieldTarget afid ->
-            Some (state.World.Airfields.[afid].Position)
+            Some (state.World.Airfields.[afid].Position, 2500.0f)
 
         | BridgeTarget | BuildingTarget ->
             // Find the largest cluster of healthy buildings, and use that
@@ -349,22 +358,44 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
                     computeHealthyBuildingClusters(1000.0f, state, state.World.Buildings.Values, regId)
             clusters
             |> Seq.tryHead
-            |> Option.map(fun (building, _) -> building.Pos.Pos)
+            |> Option.map(fun (building, _) -> building.Pos.Pos, 2500.0f)
 
     let getAirfieldAALocations (afId : AirfieldId) =
         let airfield = state.World.Airfields.[afId]
         airfield.Boundary
         |> Seq.map (fun v -> v, VectorExtension.mkCircle(v, 100.0f))
 
-    let groundTargetLocationCache = Seq.mutableDict []
+    /// Try to find a suitable location for a ground battle. Returns the oriented position of the center, and the shape of the battle relative to the center.
+    member this.TryFindBattleLocation regId = tryGetBattleLocation regId
 
-    let tryGetGroundTargetLocationCached = SturmovikMission.Cached.cached groundTargetLocationCache tryGetGroundTargetLocation
+    /// Store the location of a battle
+    member this.StoreBattleLocation(regId, ((pos : OrientedPosition, shape : Vector2 list) as location)) =
+        let area =
+            shape
+            |> List.map ((+) pos.Pos)
+        this.MarkArea(area)
+        battleLocationCache.[regId] <- location
 
-    member this.TryGetBattleLocation regId = tryGetBattleLocationCached regId
+    /// Try to get the location of a battle previously recorded with StoreBattleLocation, if any
+    member this.TryRecallBattleLocation regId =
+        battleLocationCache.TryGetValue(regId)
+        |> Option.ofPair
 
     /// Try to get a location for objects that can be targetted by AI missions, e.g. tank parks.
-    member this.TryGetGroundTargetLocation(regId, targetType) = tryGetGroundTargetLocationCached(regId, targetType)
+    member this.TryFindGroundTargetLocation(regId, targetType) = tryGetGroundTargetLocation(regId, targetType)
 
+    /// Store the location of a ground target
+    member this.StoreGroundTargetLocation(regId, targetType, position, radius) =
+        let area = mkCircle(position, radius)
+        this.MarkArea(area)
+        groundTargetLocationCache.[(regId, targetType)] <- (position, radius)
+
+    /// Get some location of a ground target prreviously recorded with StoreGroundTargetLocation, if any.
+    member this.TryRecallGroundTargetLocation(regId, targetType) =
+        groundTargetLocationCache.TryGetValue((regId, targetType))
+        |> Option.ofPair
+
+    /// Get the locations of anti-air nests around an airfield
     member this.GetAirfieldAA(afId) = getAirfieldAALocations afId
 
     /// Get candidates for location of objects that cannot be specifically targetted by AI missions, e.g. AA nests.
@@ -520,6 +551,33 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         ]
     logger.Info(sprintf "Done (%d)" spawns.Length)
 
+    logger.Info("Preparing ground battles")
+    // Ground battles
+    let battles =
+        [
+            for mission in groundMissions do
+                match mission.MissionType with
+                | GroundBattle initiator ->
+                    match locator.TryFindBattleLocation(mission.Objective) with
+                    | Some(p, shape) ->
+                        let owner = state.GetOwner(mission.Objective)
+                        let aimedTowardsCapital = Vector2.Dot(state.World.Regions.[mission.Objective].Position - p.Pos, Vector2.FromYOri(float p.Rotation)) > 0.0f
+                        let p =
+                            // Make sure direction is so that initiators move along the battle direction, and region owners stand closer to the region capital
+                            if aimedTowardsCapital && Some initiator = owner then
+                                p
+                            else
+                                { p with Rotation = (p.Rotation + 180.0f) % 360.0f }
+                        match GroundBattle.TryFromGroundMission(state, mission, p, shape, settings.GroundBattleLimits) with
+                        | Some battle ->
+                            locator.StoreBattleLocation(mission.Objective, (battle.Pos, shape))
+                            yield battle
+                        | None -> ()
+                    | None -> ()
+                | _ -> ()
+        ]
+    logger.Info(sprintf "Done (%d)" battles.Length)
+
     logger.Info("Preparing camps")
     // Vehicle parks
     let camps =
@@ -541,16 +599,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 |> List.tryFind (fun (v, w) -> (idx + 1) <= w)
                 |> Option.defaultValue vehicles.[0]
                 |> fst
-            let regionsWithBattles =
-                missions
-                |> Option.map (fun missions ->
-                    missions.GroundMissions
-                    |> Seq.choose (
-                        function
-                        | { MissionType = GroundBattle _ } as battle -> Some battle.Objective
-                        | _ -> None)
-                    |> Set.ofSeq)
-                |> Option.defaultValue Set.empty
+            let regionsWithBattles = battles |> List.map (fun b -> b.Region) |> Set
             let regionsWithoutBattles =
                 state.World.Regions.Values
                 |> Seq.filter (fun region -> not(regionsWithBattles.Contains region.RegionId))
@@ -615,10 +664,10 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         |> min (50.0f * TargetType.Tank.GroundForceValue)
                     if forces > 5.0f * TargetType.Tank.GroundForceValue then
                         // Find an area
-                        let location = locator.TryGetGroundTargetLocation(region.RegionId, GroundTargetType.GroundForces coalition)
+                        let location = locator.TryFindGroundTargetLocation(region.RegionId, GroundTargetType.GroundForces coalition)
                         let yori = float32(random.NextDouble() * 350.0)
                         match location with
-                        | Some location ->
+                        | Some(location, radius) ->
                             let vehicles =
                                 Seq.initInfinite (fun _ ->
                                     let convoyMember = getRandomVehicle()
@@ -641,6 +690,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                 |> Seq.choose snd
                                 
                             if not(Seq.isEmpty vehicles) then
+                                locator.StoreGroundTargetLocation(region.RegionId, GroundTargetType.GroundForces coalition, location, radius)
                                 let shape = mkCircle(location, campRadius)
                                 locator.MarkArea(shape)
                                 yield { Coalition = coalition; Pos = { Pos = location; Rotation = yori; Altitude = 0.0f }; Vehicles = vehicles }
@@ -811,46 +861,42 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 yield! work Set.empty clusters
 
             // Ground troops
-            for m in groundMissions do
-                let region = state.World.Regions.[m.Objective]
-                match m.MissionType with
-                | GroundBattle _ ->
-                    // AA guns at ground battles
-                    match state.GetOwner(m.Objective) with
-                    | Some owner ->
-                        match locator.TryGetBattleLocation(m.Objective) with
-                        | Some(oriPos, _) ->
-                            let posNeg = oriPos.Pos - Vector2.FromYOri(float oriPos.Rotation) * 3000.0f
-                            let posPos = oriPos.Pos + Vector2.FromYOri(float oriPos.Rotation) * 3000.0f
-                            // Position of region's owners is the one closest to the region's capital
-                            let posOwner, posInvader =
-                                if (posNeg - region.Position).Length() < (posPos - region.Position).Length() then
-                                    posNeg, posPos
-                                else
-                                    posPos, posNeg
-                            let countryOwner = state.World.GetAnyCountryInCoalition(owner)
-                            let countryInvader = state.World.GetAnyCountryInCoalition(owner.Other)
-                            let shape = VectorExtension.mkCircle(Vector2.Zero, 500.0f)
-                            let mkNest(p, country : CountryId) =
-                                {
-                                    Priority = 2.0f
-                                    Number = gunsPerNest
-                                    Boundary = shape |> List.map ((+) p)
-                                    Rotation = 0.0f
-                                    Settings = CanonGenerationSettings.Default
-                                    Specialty = DefenseSpecialty.AntiAirMg
-                                    IncludeSearchLights = hasLowLight
-                                    IncludeFlak = true
-                                    Country = country.ToMcuValue
-                                    Coalition = state.World.Countries.[country]
-                                    Group = region.RegionId :> System.IComparable
-                                    Cost = nestCost
-                                }
-                            yield mkNest(posOwner, countryOwner)
-                            yield mkNest(posInvader, countryInvader)
-                        | None -> ()
-                    | None -> ()
-                | _ -> ()
+            for battle in battles do
+                let region = state.World.Regions.[battle.Region]
+                // AA guns at ground battles
+                match state.GetOwner(battle.Region) with
+                | Some owner ->
+                    let oriPos = battle.Pos
+                    let posNeg = oriPos.Pos - Vector2.FromYOri(float oriPos.Rotation) * 3000.0f
+                    let posPos = oriPos.Pos + Vector2.FromYOri(float oriPos.Rotation) * 3000.0f
+                    // Position of region's owners is the one closest to the region's capital
+                    let posOwner, posInvader =
+                        if (posNeg - region.Position).Length() < (posPos - region.Position).Length() then
+                            posNeg, posPos
+                        else
+                            posPos, posNeg
+                    let countryOwner = state.World.GetAnyCountryInCoalition(owner)
+                    let countryInvader = state.World.GetAnyCountryInCoalition(owner.Other)
+                    let shape = VectorExtension.mkCircle(Vector2.Zero, 500.0f)
+                    let mkNest(p, country : CountryId) =
+                        {
+                            Priority = 2.0f
+                            Number = gunsPerNest
+                            Boundary = shape |> List.map ((+) p)
+                            Rotation = 0.0f
+                            Settings = CanonGenerationSettings.Default
+                            Specialty = DefenseSpecialty.AntiAirMg
+                            IncludeSearchLights = hasLowLight
+                            IncludeFlak = true
+                            Country = country.ToMcuValue
+                            Coalition = state.World.Countries.[country]
+                            Group = region.RegionId :> System.IComparable
+                            Cost = nestCost
+                        }
+                    yield mkNest(posOwner, countryOwner)
+                    yield mkNest(posInvader, countryInvader)
+                | None ->
+                    logger.Error(sprintf "Battle in neutral region '%s'" (string battle.Region))
 
             // Camps
             for camp in camps do
@@ -887,33 +933,6 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         ]
     logger.Info(sprintf "Done (%d)" aaNests.Length)
 
-    logger.Info("Preparing ground battles")
-    // Ground battles
-    let battles =
-        [
-            for mission in groundMissions do
-                match mission.MissionType with
-                | GroundBattle initiator ->
-                    match locator.TryGetBattleLocation(mission.Objective) with
-                    | Some(p, area) ->
-                        let owner = state.GetOwner(mission.Objective)
-                        let aimedTowardsCapital = Vector2.Dot(state.World.Regions.[mission.Objective].Position - p.Pos, Vector2.FromYOri(float p.Rotation)) > 0.0f
-                        let p =
-                            // Make sure direction is so that initiators move along the battle direction, and region owners stand closer to the region capital
-                            if aimedTowardsCapital && Some initiator = owner then
-                                p
-                            else
-                                { p with Rotation = (p.Rotation + 180.0f) % 360.0f }
-                        match GroundBattle.TryFromGroundMission(state, mission, p, area, settings.GroundBattleLimits) with
-                        | Some battle ->
-                            locator.MarkArea(area |> List.map ((+) p.Pos))
-                            yield battle
-                        | None -> ()
-                    | None -> ()
-                | _ -> ()
-        ]
-    logger.Info(sprintf "Done (%d)" battles.Length)
-
     logger.Info("Preparing patrols")
     // patrols
     let patrols =
@@ -938,9 +957,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         match missions.MainMission.MissionType with
                         | Strafing t | Bombing t -> t
                         | _ -> GroundTargetType.BuildingTarget
-                    let targetPos = locator.TryGetGroundTargetLocation(missions.MainMission.Objective, targetType)
+                    let targetPos = locator.TryRecallGroundTargetLocation(missions.MainMission.Objective, targetType)
                     targetPos
-                    |> Option.bind (fun targetPos ->
+                    |> Option.bind (fun (targetPos, _) ->
                         missions.HomeCover
                         |> Option.bind (fun cover -> AiPatrol.TryFromAirMission(state, cover, targetPos))))
             // Interception is 15km away from the target
@@ -989,8 +1008,8 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     | Bombing t | Strafing t -> t
                     | _ -> GroundTargetType.BuildingTarget
                 yield
-                    locator.TryGetGroundTargetLocation(missions.MainMission.Objective, mainTargetType)
-                    |> Option.bind (fun targetPos -> AiAttack.TryFromAirMission(state, missions.MainMission, targetPos))
+                    locator.TryRecallGroundTargetLocation(missions.MainMission.Objective, mainTargetType)
+                    |> Option.bind (fun (targetPos, _) -> AiAttack.TryFromAirMission(state, missions.MainMission, targetPos))
             | None ->
                 ()
         ]
