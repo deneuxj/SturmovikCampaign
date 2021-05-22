@@ -214,7 +214,7 @@
     </Content>
     <None Include="data\OperationBodenPlatte.Mission">
       <Link>OperationBodenplatte.Mission</Link>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
     <None Include="data\RheinLandWinter.Mission">
       <Link>RheinlandWinter.Mission</Link>
