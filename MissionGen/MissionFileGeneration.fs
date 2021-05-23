@@ -753,7 +753,7 @@ with
         let retainedAA =
             this.AntiAirNests
             |> Campaign.MissionGen.StaticDefenseOptimization.select random (settings.MaxAntiAirCannons, groupBudget)
-            |> Campaign.MissionGen.StaticDefenseOptimization.instantiateAll store lcStore random missionBegin
+            |> Campaign.MissionGen.StaticDefenseOptimization.instantiateAll store lcStore random
         let retainedAA =
             retainedAA
             |> List.map (fun grp -> grp :> IMcuGroup)

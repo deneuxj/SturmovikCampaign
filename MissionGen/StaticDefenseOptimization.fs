@@ -88,12 +88,11 @@ let select random (limit : int, groupBudget : Map<System.IComparable * Coalition
                 yield nest
     ]
 
-let instantiateAll store lcStore random (missionBegin : Mcu.McuTrigger) (nests : Nest list) =
+let instantiateAll store lcStore random (nests : Nest list) =
     let groups =
         nests
         |> List.map (fun nest -> nest.Generate(store, lcStore, random))
     for group in groups do
         let links = group.CreateLinks()
         links.Apply(McuUtil.deepContentOf group)
-        Mcu.addTargetLink missionBegin group.Api.Start.Index
     groups
