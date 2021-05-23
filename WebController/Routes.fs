@@ -58,6 +58,7 @@ type IRoutingResponse =
     abstract GetRegionSupplies : int * string -> Async<Result<float, string>>
     abstract GetRegionCapacity : int * string -> Async<Result<float, string>>
     abstract GetAirfieldCapacity : int * string -> Async<Result<float, string>>
+    abstract GetLandTransportCapacity : int * string * string -> Async<Result<float, string>>
 
 type IControllerInteraction =
     abstract ResetCampaign : scenario:string -> Async<Result<string, string>>
@@ -84,6 +85,9 @@ GET /query/state/<n>/summary
 GET /query/state/<n>/regions/<region>/supplies
 GET /query/state/<n>/regions/<region>/capacity
 GET /query/state/<n>/airfields/<airfield>/capacity
+GET /query/state/<n>/transport/<region>/<region>/land
+GET /query/state/<n>/transport/<region>/<region>/air (TODO)
+GET /query/state/<n>/transport/<region>/<region>/sea (TODO)
 GET /query/simulation/<n>
 GET /query/dates
 GET /query/pilots?country=<country>&coalition=<coalition>&health=<Healthy or NoDead>&name=<substring>
@@ -205,6 +209,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             pathScan "/query/state/%d/regions/%s/capacity" (fun (idx, region) -> rr.GetRegionCapacity(idx, region) |> serializeAsync)
             pathScan "/query/state/%d/regions/%s/supplies" (fun (idx, region) -> rr.GetRegionSupplies(idx, region) |> serializeAsync)
             pathScan "/query/state/%d/airfields/%s/capacity" (fun (idx, airfield) -> rr.GetAirfieldCapacity(idx, airfield) |> serializeAsync)
+            pathScan "/query/state/%d/transport/%s/%s/land" (fun (idx, regionA, regionB) -> rr.GetLandTransportCapacity(idx, regionA, regionB) |> serializeAsync)
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
             pathScan "/query/pilot/%s" (fun n -> rr.GetPilot(n) |> serializeAsync)
             pathScan "/query/players/%s/pilots" (rr.GetPlayerPilots >> serializeAsync)

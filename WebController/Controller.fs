@@ -25,6 +25,8 @@ type private ControllerState =
         World : NewWorldDescription.World option
         War : IWarStateQuery option
         WarStateCache : Map<int, IWarStateQuery>
+        RoadTransportCache : Map<int, BasicTypes.RegionId * BasicTypes.RegionId -> float>
+        RailTransportCache : Map<int, BasicTypes.RegionId * BasicTypes.RegionId -> float>
         DtoDates : Dto.DateTime[] option
         DtoWorld : Dto.World option
         DtoStateCache : Map<int, Dto.WarState>
@@ -37,6 +39,8 @@ with
             World = None
             War = None
             WarStateCache = Map.empty
+            RoadTransportCache = Map.empty
+            RailTransportCache = Map.empty
             DtoDates = None
             DtoWorld = None
             DtoStateCache = Map.empty
@@ -155,6 +159,40 @@ type Controller(settings : GameServerControl.Settings) =
         async {
             let idx = getCurrentIndex settings.WorkDir
             return! this.GetState(idx)
+        }
+
+    member this.GetRoadTransport(idx : int) =
+        mb.PostAndAsyncReply <| fun channel s -> async {
+            match s.RoadTransportCache.TryFind idx with
+            | Some func ->
+                channel.Reply(Ok func)
+                return s
+            | None ->
+                match s.WarStateCache.TryFind(idx) with
+                | Some state ->
+                    let func = state.ComputeRoadCapacity() >> float
+                    channel.Reply(Ok func)
+                    return { s with RoadTransportCache = s.RoadTransportCache.Add(idx, func) }
+                | None ->
+                    channel.Reply(Error "Failed to retrieve road transport capacity")
+                    return s
+        }
+
+    member this.GetRailTransport(idx : int) =
+        mb.PostAndAsyncReply <| fun channel s -> async {
+            match s.RailTransportCache.TryFind idx with
+            | Some func ->
+                channel.Reply(Ok func)
+                return s
+            | None ->
+                match s.WarStateCache.TryFind(idx) with
+                | Some state ->
+                    let func = state.ComputeRailCapacity() >> float
+                    channel.Reply(Ok func)
+                    return { s with RailTransportCache = s.RailTransportCache.Add(idx, func) }
+                | None ->
+                    channel.Reply(Error "Failed to retrieve rail transport capacity")
+                    return s
         }
 
     member this.GetStateDto() =
@@ -775,6 +813,27 @@ type Controller(settings : GameServerControl.Settings) =
             with _ ->
                 Error "Failed to locate scenario mission files"
 
+        member this.GetLandTransportCapacity(idx : int, regionA : string, regionB : string) =
+            async {
+                let! state = this.GetState(idx)
+                match state with
+                | Error e ->
+                    return Error e
+                | Ok state ->
+
+                let regionA, regionB = BasicTypes.RegionId (min regionA regionB), BasicTypes.RegionId (max regionA regionB)
+                if [regionA; regionB] |> List.forall state.World.Regions.ContainsKey then
+                    let! computeRailCapacity = this.GetRailTransport(idx)
+                    let! computeRoadCapacity = this.GetRoadTransport(idx)
+                    match computeRailCapacity, computeRoadCapacity with
+                    | Ok f1, Ok f2 ->
+                        return Ok(f1(regionA, regionB) + f2(regionA, regionB))
+                    | Error e, _ | _, Error e ->
+                        return Error e
+                else
+                    return Error "No such region"
+            }
+
         interface IRoutingResponse with
             member this.GetScenarioNames() = async.Return(this.GetScenarioNames())
             member this.AllPlayers() = this.FindPlayers("")
@@ -802,6 +861,7 @@ type Controller(settings : GameServerControl.Settings) =
             member this.GetAirfieldCapacity(stateIdx, airfield) = this.GetAirfieldCapacity(stateIdx, airfield)
             member this.GetRegionCapacity(stateIdx, region) = this.GetRegionCapacity(stateIdx, region)
             member this.GetRegionSupplies(stateIdx, region) = this.GetRegionSupplies(stateIdx, region)
+            member this.GetLandTransportCapacity(stateIdx, regionA, regionB) = this.GetLandTransportCapacity(stateIdx, regionA, regionB)
 
         interface IControllerInteraction with
             member this.Advance(n) = this.Run(n)
