@@ -1342,6 +1342,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         AiPatrols = patrols
         AiAttacks = attacks
         Convoys = trains @ columns
+        ShipConvoys = []
         ParkedPlanes = parkedPlanes
         Camps = camps
         BuildingFires = fires

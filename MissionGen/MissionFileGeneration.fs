@@ -36,6 +36,7 @@ open Campaign.Common.PlaneModel
 open Campaign.Common.AiPlanes
 open Campaign.Common.Targets
 open Campaign.Common.GroundUnit
+open Campaign.Common.Ship
 
 open Campaign.MissionGen.StaticDefenseOptimization
 open Campaign.MissionGen.MapGraphics
@@ -534,6 +535,32 @@ with
             Mcu.addTargetLink startTrigger column.Api.Start.Index
             column :> IMcuGroup
 
+type ShipConvoy =
+    {
+        ConvoyName : string
+        Country : CountryId
+        Coalition : CoalitionId
+        Path : OrientedPosition list
+        CargoShips : ShipProperties list
+        Escort : ShipProperties list
+    }
+with
+    member this.CreateMCUs(store, lcStore) =
+        let pathVertices : Factory.PathVertex list=
+            this.Path
+            |> List.map (fun p ->
+                {
+                    Factory.Pos = p.Pos
+                    Ori = p.Rotation
+                    Radius = 250
+                    Speed = 20
+                    Priority = 1
+                    SpawnSide = Types.SpawnSide.Center
+                    Role = Factory.PathVertexRole.Intermediate
+                }
+            )
+        SturmovikMission.Blocks.ShipConvoy.ShipConvoy.Create(store, lcStore, this.CargoShips.Length, ShipConvoy.WaterType.Sea, pathVertices, this.Country.ToMcuValue, this.ConvoyName)
+
 type BuildingFire =
     {
         Pos : OrientedPosition
@@ -683,6 +710,8 @@ type MultiplayerMissionContent =
         AiAttacks : AiAttack list
         /// List of chains of convoys, convoys in each chain start after the previous one reaches completion.
         Convoys : Convoy list list
+        /// List of ship convoys. They all run simultaneously.
+        ShipConvoys : ShipConvoy list
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
         Camps : Camp list
         BuildingFires : BuildingFire list
@@ -848,6 +877,13 @@ with
                 |> List.choose (fun (_, _, x) -> x))
             |> List.concat
 
+        // Ship convoys
+        let ships =
+            this.ShipConvoys
+            |> List.map(fun convoy -> convoy.CreateMCUs(store, lcStore))
+        for ship in ships do
+            Mcu.addTargetLink missionBegin ship.Start.Index
+
         // Parked planes
         let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
             let modelScript = model.StaticScriptModel
@@ -1002,6 +1038,7 @@ with
                 yield! allPatrols
                 yield! allAttacks
                 yield! convoys
+                yield! ships |> List.map(fun ships -> ships.All)
                 yield! parkedPlanes
                 yield! camps |> List.map (fun camp -> camp.All)
                 yield! campRecons
