@@ -426,6 +426,8 @@ type World = {
     Roads : Network
     /// The rail network
     Rails : Network
+    /// Seaways
+    Seaways : Network
     /// Descriptions of all airfields
     AirfieldsList : Airfield list
     /// Building properties, including bridges
@@ -1032,6 +1034,48 @@ module Init =
                 | None ->
                     ()
         ]
+
+    let extractSeaways(waypoints : T.MCU_Waypoint seq) =
+        let nodes =
+            waypoints
+            |> Seq.map (fun wp ->
+                {
+                    Id = wp.GetIndex().Value
+                    Pos = Vector2.FromPos wp
+                    Region = None
+                    HasTerminal = wp.GetTargets().Value.Length = 0
+                }
+            )
+            |> List.ofSeq
+        let links =
+            waypoints
+            |> Seq.collect (fun wp ->
+                wp.GetTargets().Value
+                |> Seq.map (fun tgt ->
+                    {
+                        NodeA = wp.GetIndex().Value
+                        NodeB = tgt
+                        Bridges = []
+                        FlowCapacity = 1e9f<M^3/H>
+                    }
+                )
+            )
+            |> List.ofSeq
+        let targetted =
+            waypoints
+            |> Seq.collect (fun wp -> wp.GetTargets().Value)
+            |> Set
+        let nodes =
+            nodes
+            |> List.map (fun node ->
+                { node with
+                    HasTerminal = node.HasTerminal || not(targetted.Contains(node.Id))
+                })
+        {
+            Nodes = nodes
+            Links = links
+        }
+
     /// Load a scenario mission file and create a world description.
     let mkWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
@@ -1129,6 +1173,8 @@ module Init =
         // Railroads
         let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapName)) railsCapacity
         let bridges = roadBridges @ railBridges
+        // Seaways
+        let seaways = extractSeaways(missionData.GetGroup("Seaways").ListOfMCU_Waypoint)
         // Ground units
         let groundUnits =
             loadGroundUnitsDb (Path.Combine(exeDir, "Config", "GroundUnitDb.json"))
@@ -1186,6 +1232,7 @@ module Init =
             GroundUnitsList = groundUnits
             GroundUnitsOfCountryList = []
             ShipsList = ships
+            Seaways = seaways
         }
 
 module IO =
