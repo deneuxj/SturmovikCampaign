@@ -143752,4 +143752,293 @@ Group
 }
 
 
+
+Group
+{
+  Name = "Seaways";
+  Index = 7290;
+  Desc = "";
+  MCU_Waypoint
+  {
+    Index = 7289;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 198379.120;
+    YPos = 0.000;
+    ZPos = 222372.856;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7288;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7289];
+    Objects = [];
+    XPos = 194315.927;
+    YPos = 0.000;
+    ZPos = 224718.621;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7287;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7288];
+    Objects = [];
+    XPos = 190155.787;
+    YPos = 0.000;
+    ZPos = 226303.436;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7286;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7287];
+    Objects = [];
+    XPos = 185896.597;
+    YPos = 0.000;
+    ZPos = 229208.930;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7285;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7286];
+    Objects = [];
+    XPos = 180944.050;
+    YPos = 0.000;
+    ZPos = 234623.714;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7284;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7285];
+    Objects = [];
+    XPos = 179590.354;
+    YPos = 0.000;
+    ZPos = 239345.142;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7283;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7284];
+    Objects = [];
+    XPos = 181743.581;
+    YPos = 0.000;
+    ZPos = 242248.743;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "ShipSet-Allies";
+  Index = 7297;
+  Desc = "";
+  Ship
+  {
+    Name = "Cargo";
+    Index = 7291;
+    LinkTrId = 7294;
+    XPos = 184476.686;
+    YPos = 0.000;
+    ZPos = 222058.537;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\Ships\largecargoshiptype1.txt";
+    Model = "graphics\ships\largecargoshiptype1\largecargoshiptype1.mgm";
+    Desc = "";
+    Country = 101;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7294;
+    Name = "Cargo entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 184476.686;
+    YPos = 0.200;
+    ZPos = 222058.537;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7291;
+  }
+  
+
+  Ship
+  {
+    Name = "Cargo";
+    Index = 7292;
+    LinkTrId = 7295;
+    XPos = 184476.706;
+    YPos = 0.000;
+    ZPos = 222301.276;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\Ships\largetankershiptype1.txt";
+    Model = "graphics\ships\largetankershiptype1\largetankershiptype1.mgm";
+    Desc = "";
+    Country = 101;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7295;
+    Name = "Cargo entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 184476.706;
+    YPos = 0.200;
+    ZPos = 222301.276;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7292;
+  }
+  
+
+  Ship
+  {
+    Name = "Destroyer";
+    Index = 7293;
+    LinkTrId = 7296;
+    XPos = 184479.251;
+    YPos = 0.000;
+    ZPos = 221843.192;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\Ships\destroyertype7.txt";
+    Model = "graphics\ships\destroyertype7\destroyertype7.mgm";
+    Desc = "";
+    Country = 101;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7296;
+    Name = "Destroyer entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 184479.251;
+    YPos = 0.200;
+    ZPos = 221843.192;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7293;
+  }
+  
+
+}
+
+
 # end of file
