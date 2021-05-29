@@ -143897,7 +143897,7 @@ Group
 
 Group
 {
-  Name = "ShipSet-Allies";
+  Name = "Ships";
   Index = 7297;
   Desc = "";
   Ship
@@ -143913,7 +143913,7 @@ Group
     ZOri = 0.00;
     Script = "LuaScripts\WorldObjects\Ships\largecargoshiptype1.txt";
     Model = "graphics\ships\largecargoshiptype1\largecargoshiptype1.mgm";
-    Desc = "";
+    Desc = "Roles:Cargo";
     Country = 101;
     Vulnerable = 1;
     Engageable = 1;
@@ -143959,7 +143959,7 @@ Group
     ZOri = 0.00;
     Script = "LuaScripts\WorldObjects\Ships\largetankershiptype1.txt";
     Model = "graphics\ships\largetankershiptype1\largetankershiptype1.mgm";
-    Desc = "";
+    Desc = "Roles:Cargo";
     Country = 101;
     Vulnerable = 1;
     Engageable = 1;
@@ -144005,7 +144005,7 @@ Group
     ZOri = 0.00;
     Script = "LuaScripts\WorldObjects\Ships\destroyertype7.txt";
     Model = "graphics\ships\destroyertype7\destroyertype7.mgm";
-    Desc = "";
+    Desc = "Roles:Defensive";
     Country = 101;
     Vulnerable = 1;
     Engageable = 1;
