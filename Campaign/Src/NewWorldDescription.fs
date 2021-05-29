@@ -30,6 +30,7 @@ open Campaign.Common.Buildings
 open Campaign.Common.GroundUnit
 
 open PilotRanks
+open Campaign.Common.Ship
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -439,6 +440,8 @@ type World = {
     GroundUnitsList : GroundUnit list
     /// Ground units of each participating country
     GroundUnitsOfCountryList : (CountryId * GroundUnitId list) list
+    /// Ships of each partipating country
+    ShipsList : (CountryId * ShipProperties list) list
 }
 with
     /// Portion of ground forces dedicated to anti-air
@@ -981,6 +984,38 @@ module Init =
                     ()
         ]
 
+    let extractShips(ships : T.Ship seq) =
+        [
+            for ship in ships do
+                let country =
+                    ship.GetCountry().Value
+                    |> enum
+                    |> CountryId.FromMcuValue
+                match country with
+                | Some country ->
+                    let name = ship.GetName().Value
+                    let desc = ship.GetDesc().Value
+                    let roles = extractShipRoles desc
+                    if roles.Length > 0 then
+                        let model = ship.GetModel().Value
+                        let script = ship.GetModel().Value
+                        match knownShipLogNames |> List.tryFind (fun (_, scriptName) -> scriptName = script) with
+                        | Some (logName, _) ->
+                            yield
+                                country, {
+                                    Name = name
+                                    LogName = logName
+                                    Roles = roles |> List.ofArray
+                                    ScriptModel = {
+                                        Script = script
+                                        Model = model
+                                    }
+                                }
+                        | None ->
+                            ()
+                | None ->
+                    ()
+        ]
     /// Load a scenario mission file and create a world description.
     let mkWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
@@ -1096,6 +1131,12 @@ module Init =
                     | None ->
                         ()
             ]
+        // Ships
+        let ships =
+            extractShips (missionData.GetGroup("Ships").ListOfShip)
+            |> List.groupBy fst
+            |> List.map (fun (k, vs) -> k, vs |> List.map snd)
+
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
@@ -1127,6 +1168,7 @@ module Init =
             Awards = AwardDatabase.Default
             GroundUnitsList = groundUnits
             GroundUnitsOfCountryList = []
+            ShipsList = ships
         }
 
 module IO =
