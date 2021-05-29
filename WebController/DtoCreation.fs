@@ -50,12 +50,12 @@ module DtoCreation =
 
     let mkIdMaps(buildings : Buildings.BuildingInstance seq, bridges : _ seq) =
         let allBuildingProperties =
-            System.Collections.Generic.Dictionary<Buildings.BuildingProperties, int * bool>()
+            System.Collections.Generic.Dictionary<string, int * bool>()
 
         let assignId isBridge (instance : Buildings.BuildingInstance) =
-            if not(allBuildingProperties.ContainsKey(instance.Properties)) then
+            if not(allBuildingProperties.ContainsKey(instance.Script)) then
                 let nextId = allBuildingProperties.Count
-                allBuildingProperties.[instance.Properties] <- (nextId, not isBridge)
+                allBuildingProperties.[instance.Script] <- (nextId, not isBridge)
 
         buildings
         |> Seq.iter (assignId false)
@@ -66,7 +66,7 @@ module DtoCreation =
         let propIdOfInstance =
             seq {
                 for building in Seq.append buildings bridges do
-                    let nid, _ = allBuildingProperties.[building.Properties]
+                    let nid, _ = allBuildingProperties.[building.Script]
                     yield building.Pos, nid
             }
             |> dict
@@ -84,7 +84,7 @@ module DtoCreation =
         let dtos =
             properties
             |> Seq.mapi (fun i props ->
-                match tryGetDtoParams props with
+                match tryGetDtoParams props.Script with
                 | Some(idx, useCapacity) ->
                     props.ToDto(idx, useCapacity)
                 | None ->
@@ -141,10 +141,7 @@ module DtoCreation =
         member this.ToDto() =
             let fn, getPropertiesId = mkIdMaps(this.Buildings.Values, this.Bridges.Values)
             let buildingProps = 
-                let props =
-                    Seq.append this.Buildings.Values this.Bridges.Values
-                    |> Seq.map (fun building -> building.Properties)
-                    |> Seq.distinct
+                let props = this.BuildingPropertiesList
                 mkBuildingPropertiesDtos(props, fn)
             let bridges =
                 this.Bridges.Values
@@ -401,13 +398,13 @@ module DtoCreation =
             | Targets.Bridge(bid, _) ->
                 world.Bridges.TryGetValue(bid)
                 |> Option.ofPair
-                |> Option.map (fun building -> building.Properties.Script)
+                |> Option.map (fun building -> building.Script)
                 |> Option.defaultValue ""
                 |> Dto.Bridge
             | Targets.Building(bid, _) ->
                 world.Buildings.TryGetValue(bid)
                 |> Option.ofPair
-                |> Option.map (fun building -> building.Properties.Script)
+                |> Option.map (fun building -> building.Script)
                 |> Option.defaultValue ""
                 |> Dto.Building
             | Targets.ParkedPlane(_, plane) ->

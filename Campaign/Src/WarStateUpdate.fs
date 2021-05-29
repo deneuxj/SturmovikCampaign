@@ -91,11 +91,11 @@ module Results =
             let buildingDescr =
                 match war.World.Buildings.TryGetValue bid with
                 | true, building ->
-                    sprintf "Building %s" building.Properties.Model
+                    sprintf "Building %s" building.Script
                 | false, _ ->
                     match war.World.Bridges.TryGetValue bid with
                     | true, bridge ->
-                        sprintf "Bridge %s" bridge.Properties.Model
+                        sprintf "Bridge %s" bridge.Script
                     | false, _ ->
                         "Unknown bridge or building"
             sprintf "%s at %4.0f, %4.0f now has capacity %1.0f" buildingDescr orPos.Pos.X orPos.Pos.Y amount

@@ -48,13 +48,8 @@ with
 
 type BuildingInstance = {
     Pos : OrientedPosition
-    Properties : BuildingProperties
+    Script : string
 }
 with
     member this.Id = BuildingInstanceId this.Pos
-
-    member this.Boundary =
-        this.Properties.Boundary
-        |> List.map (fun v -> v.Rotate(this.Pos.Rotation) + this.Pos.Pos)
-
 

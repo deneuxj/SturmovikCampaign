@@ -96,9 +96,13 @@ type IWarStateQuery with
         let pos = Vector2(x, z)
         Seq.append this.World.Buildings.Values this.World.Bridges.Values
         |> Seq.filter (fun building ->
-            normalizeScript(building.Properties.Script) = logName &&
-            List.contains part building.Properties.SubParts &&
-            pos.IsInConvexPolygon building.Boundary)
+            match this.World.BuildingProperties.TryGetValue(building.Script) with
+            | true, properties ->
+                normalizeScript(properties.Script) = logName &&
+                List.contains part properties.SubParts &&
+                pos.IsInConvexPolygon properties.Boundary
+            | false, _ ->
+                false)
 
     /// Try to get the static plane at the given position, and the airfield it is assigned to.
     member this.TryGetStaticPlaneAt(logName : string, ((x, _, z) as pos)) =

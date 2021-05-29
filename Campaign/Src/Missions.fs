@@ -446,15 +446,15 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                         let subject =
                             match target.Kind with
                             | TargetType.Bridge(bid, _) ->
-                                match war.World.Bridges.TryGetValue(bid) |> Option.ofPair with
-                                | Some building ->
-                                    sprintf "Bridge %s" building.Properties.Model
+                                match war.World.TryGetBuildingInstance(bid) |> Option.bind snd with
+                                | Some bridge ->
+                                    sprintf "Bridge %s" bridge.Model
                                 | None ->
                                     "A bridge"
                             | TargetType.Building(bid, _) ->
-                                match war.World.Buildings.TryGetValue(bid) |> Option.ofPair with
+                                match war.World.TryGetBuildingInstance(bid) |> Option.bind snd with
                                 | Some building ->
-                                    sprintf "Building %s" building.Properties.Model
+                                    sprintf "Building %s" building.Model
                                 | None ->
                                     "A building"
                             | TargetType.ParkedPlane(afId, parked) ->
@@ -480,7 +480,11 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                     let targets =
                         // Pick parts of a building at random, biased towards undamaged parts
                         let getParts owner (building : BuildingInstance) =
-                            building.Properties.SubParts
+                            building.Script
+                            |> war.World.BuildingProperties.TryGetValue
+                            |> Option.ofPair
+                            |> Option.map (fun props -> props.SubParts)
+                            |> Option.defaultValue []
                             |> List.sortByDescending (fun part -> war.GetBuildingPartHealthLevel(building.Id, part))
                             |> Seq.filter (fun part -> war.GetBuildingPartHealthLevel(building.Id, part) > 0.0f)
                             |> Seq.map (fun part ->
@@ -492,7 +496,12 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
 
                         let getBuildingParts owner building =
                             let parts = getParts owner building
-                            let partVolume = building.Properties.PartCapacity
+                            let partVolume =
+                                building.Script
+                                |> war.World.BuildingProperties.TryGetValue
+                                |> Option.ofPair
+                                |> Option.map (fun p -> p.PartCapacity)
+                                |> Option.defaultValue 0.0f<M^3>
                             let numParts = volumeBuildingDamaged / partVolume |> int |> max 1
                             assert(numParts >= 0)
                             Seq.truncate numParts parts

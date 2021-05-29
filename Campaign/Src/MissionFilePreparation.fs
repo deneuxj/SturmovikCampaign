@@ -1064,7 +1064,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         |> List.collect (fun ((BuildingInstanceId pos) as bid) ->
                             if state.GetBuildingFunctionalityLevel(bid) > 0.5f then
                                 state.World.TryGetBuildingInstance(bid)
-                                |> Option.map (fun b -> b.Properties.ParkingSpots)
+                                |> Option.bind (function (b, Some p) -> Some p.ParkingSpots | _ -> None)
                                 |> Option.defaultValue []
                                 |> List.map (fun spot ->
                                     { spot with
@@ -1262,20 +1262,20 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> Seq.map (fun (region, bId) -> region, state.World.TryGetBuildingInstance bId)
         |> Seq.choose (fun (region, b) ->
             match b with
-            | Some b ->
-                if b.Properties.Capacity > 0.0f<M^3> then
+            | Some(b, Some properties) ->
+                if properties.Capacity > 0.0f<M^3> then
                     let health = state.GetBuildingHealth(b.Id)
                     if health < 0.5f then
-                        Some(region, b, health)
+                        Some(region, b, properties, health)
                     else
                         None
                 else
                     None
-            | None ->
+            | None | Some(_, None) ->
                 None)
         // Prioritize front regions and then amount of capacity loss
-        |> Seq.sortByDescending (fun (region, b, health) ->
-            let loss = (1.0f - health) * float32 b.Properties.Capacity
+        |> Seq.sortByDescending (fun (region, b, properties, health) ->
+            let loss = (1.0f - health) * float32 properties.Capacity
             let region =
                 match region with
                 | Choice1Of2 x -> x.RegionId
@@ -1289,7 +1289,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     let largeFireThr = 0.05f
     let spacedOutBuildings =
         ([], damagedBuildings)
-        ||> Seq.fold (fun xs (area, b, health) ->
+        ||> Seq.fold (fun xs (area, b, properties, health) ->
             let nearby =
                 xs
                 |> Seq.filter (fun (_, b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < (float32 settings.MaxFiresRadius))

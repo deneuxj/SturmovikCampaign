@@ -145,11 +145,16 @@ with
                         let buildings = war.GetBuildingsAt(binding.Typ, part, position) |> Seq.cache
                         if not(Seq.isEmpty buildings) then
                             buildings
-                            |> Seq.map (fun building ->
-                                AnnotatedCommand.Create(
-                                    sprintf "Building %s damaged with %2.1f%%" building.Properties.Model (100.0f * amount),
-                                    timestamp,
-                                    DamageBuildingPart(building.Id, part, amount)))
+                            |> Seq.choose (fun building ->
+                                match war.World.BuildingProperties.TryGetValue building.Script with
+                                | true, properties ->
+                                    AnnotatedCommand.Create(
+                                        sprintf "Building %s damaged with %2.1f%%" properties.Model (100.0f * amount),
+                                        timestamp,
+                                        DamageBuildingPart(building.Id, part, amount))
+                                    |> Some
+                                | false, _ ->
+                                    None)
                             |> List.ofSeq
                         else
 

@@ -342,16 +342,24 @@ type WarState
     member this.GetBuildingFullCapacity(bid) =
         match this.World.Buildings.TryGetValue(bid) with
         | true, building ->
-            (float32 building.Properties.SubParts.Length) * building.Properties.PartCapacity
+            match this.World.BuildingProperties.TryGetValue(building.Script) with
+            | true, properties ->
+                (float32 properties.SubParts.Length) * properties.PartCapacity
+            | false, _ ->
+                0.0f<M^3>
         | false, _ ->
             0.0f<M^3>
 
     member this.GetBuildingCapacity(bid) =
         match this.World.Buildings.TryGetValue(bid) with
         | true, building ->
-            building.Properties.SubParts
-            |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
-            |> (*) building.Properties.PartCapacity
+            match this.World.BuildingProperties.TryGetValue(building.Script) with
+            | true, properties ->
+                properties.SubParts
+                |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
+                |> (*) properties.PartCapacity
+            | false, _ ->
+                0.0f<M^3>
         | false, _ ->
             0.0f<M^3>
 
@@ -365,9 +373,14 @@ type WarState
     member this.GetBuildingFunctionalityLevel(bid) =
         match this.World.Buildings.TryGetValue(bid) with
         | true, building ->
-            match building.Properties.SubParts.Length with
+            let subParts =
+                this.World.BuildingProperties.TryGetValue(building.Script)
+                |> Option.ofPair
+                |> Option.map (fun props -> props.SubParts)
+                |> Option.defaultValue []
+            match subParts.Length with
             | n when n > 0 ->
-                building.Properties.SubParts
+                subParts
                 |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
                 |> (*) (1.0f / (float32 n))
             | _ ->
@@ -393,7 +406,12 @@ type WarState
     member this.GetBridgeFunctionalityLevel(bid) =
         match this.World.Bridges.TryGetValue(bid) |> Option.ofPair with
         | Some building ->
-            building.Properties.SubParts
+            let subParts =
+                this.World.BuildingProperties.TryGetValue(building.Script)
+                |> Option.ofPair
+                |> Option.map (fun props -> props.SubParts)
+                |> Option.defaultValue []
+            subParts
             |> List.fold (fun level part ->
                 this.GetBuildingPartFunctionalityLevel(bid, part)
                 |> min level

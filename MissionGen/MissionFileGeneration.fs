@@ -556,7 +556,7 @@ type MissionGenSettings =
 
 type IBuildingQuery =
     abstract BuildingDamages : (BuildingInstanceId * int * float32) list
-    abstract TryGetBuildingInstance : BuildingInstanceId -> BuildingInstance option
+    abstract TryGetBuildingInstance : BuildingInstanceId -> (BuildingInstance * BuildingProperties) option
     abstract GetOwnerAt : Vector2 -> CountryId option
     abstract GetBuildingDurability : ScriptName: string -> int option
 
@@ -582,7 +582,7 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
     for (bId, part, damage) in buildings.BuildingDamages |> Seq.filter filterDamages do
         match buildings.TryGetBuildingInstance(bId) with
         | None -> ()
-        | Some building ->
+        | Some(building, props) ->
 
         let roundedPos = roundPos2 building.Pos
         match blockAt.TryGetValue(roundedPos) with
@@ -590,7 +590,7 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
             let damages = CommonMethods.getDamaged block
             let damages = CommonMethods.setItem part (T.Float.N(float damage)) damages
             let block = CommonMethods.setDamaged damages block
-            let block = CommonMethods.setDurability (T.Integer.N(building.Properties.Durability)) block
+            let block = CommonMethods.setDurability (T.Integer.N(props.Durability)) block
             blockAt.[roundedPos] <- block
         | false, _ ->
             // No block at position. Maybe the mission file was edited after the campaign started. Bad, but not worth dying with an exception.

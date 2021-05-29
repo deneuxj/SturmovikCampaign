@@ -187,16 +187,16 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
                                 let newAmount = prevAmount + amount
                                 groundForcesDestroyed <- groundForcesDestroyed.Add(coalition, newAmount)
                             | Some(WarStateUpdate.Commands.DamageBuildingPart(bid, part, damage)) ->
-                                match war.World.TryGetBuildingInstance(bid) with
+                                match war.World.TryGetBuildingInstance(bid) |> Option.bind snd with
                                 | Some building ->
                                     let coalition =
                                         war.World.RegionsList
                                         |> Seq.tryFind (fun region -> bid.Pos.Pos.IsInConvexPolygon region.Boundary)
                                         |> Option.bind (fun region -> war.GetOwner(region.RegionId))
-                                    if building.Properties.SubParts |> List.exists ((=) part) then
+                                    if building.SubParts |> List.exists ((=) part) then
                                         match coalition with
                                         | Some coalition ->
-                                            let storage = building.Properties.PartCapacity * damage
+                                            let storage = building.PartCapacity * damage
                                             let prevAmount = Map.tryFind coalition storageDestroyed |> Option.defaultValue 0.0f<M^3>
                                             let newAmount = prevAmount + storage
                                             storageDestroyed <- storageDestroyed.Add(coalition, newAmount)
@@ -314,8 +314,9 @@ module WarStateExt =
                   war.BuildingDamages |> List.ofSeq
               member this.GetAirfield(afId: AirfieldId): IAirfield = 
                   war.World.Airfields.[afId] :> IAirfield
-              member this.TryGetBuildingInstance(bid: Common.Buildings.BuildingInstanceId): Common.Buildings.BuildingInstance option = 
+              member this.TryGetBuildingInstance(bid: Common.Buildings.BuildingInstanceId) =
                   war.World.TryGetBuildingInstance(bid)
+                  |> Option.bind (function (building, Some props) -> Some(building, props) | _ -> None)
               member this.GetCountryCoalition(country: CountryId): CoalitionId = 
                   war.World.Countries.[country]
               member this.GetCoalitionMainCountry(coalition: CoalitionId): CountryId =

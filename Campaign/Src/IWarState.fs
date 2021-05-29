@@ -106,16 +106,16 @@ module IWarStateExtensions =
 
         member this.GetBuildingHealth(bid) =
             match this.World.TryGetBuildingInstance(bid) with
-            | Some building ->
-                match building.Properties.SubParts.Length with
+            | Some(building, Some properties) ->
+                match properties.SubParts.Length with
                 | n when n > 0 ->
                     let sum =
-                        building.Properties.SubParts
+                        properties.SubParts
                         |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part))
                     sum / (float32 n)
                 | _ ->
                     1.0f
-            | None ->
+            | None | Some(_, None) ->
                 1.0f
 
         /// Get the amount of resources available for anti-air defenses.

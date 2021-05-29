@@ -140,16 +140,25 @@ with
         { this with Nodes = nodes }
 
     /// Set the bridges located on each link
-    member this.SetBridges(bridges : BuildingInstance list) =
+    member this.SetBridges(bridges : BuildingInstance list, buildingDb : BuildingProperties list) =
         // Find bridges by their exact position
         let byPos =
             bridges
-            |> Seq.map (fun instance -> instance.Pos, instance)
+            |> Seq.map (fun instance -> instance.Pos, instance.Script)
+            |> dict
+        let byScript =
+            buildingDb
+            |> Seq.map (fun building -> building.Script, building)
             |> dict
         // Get the boundary of each bridge, and cache values
         let getBoundary pos =
-            byPos.[pos].Properties.Boundary
-            |> List.map (fun v -> v.Rotate(pos.Rotation) + pos.Pos)
+            pos
+            |> (byPos.TryGetValue >> Option.ofPair)
+            |> Option.bind (byScript.TryGetValue >> Option.ofPair)
+            |> Option.map (fun props ->
+                props.Boundary
+                |> List.map (fun v -> v.Rotate(pos.Rotation) + pos.Pos))
+            |> Option.defaultValue []
         let cache = System.Collections.Generic.Dictionary()
         let cachedGetBoundary = SturmovikMission.Cached.cached cache getBoundary
         // Quick intersection tests for bridges
@@ -419,6 +428,8 @@ type World = {
     Rails : Network
     /// Descriptions of all airfields
     AirfieldsList : Airfield list
+    /// Building properties, including bridges
+    BuildingPropertiesList : BuildingProperties list
     /// Building instances, excluding bridges
     BuildingsList : BuildingInstance list
     /// Bridge instances
@@ -471,10 +482,7 @@ module private DynProps =
 
     let countries = cacheByKvp (fun world -> world.CountriesList)
 
-    let buildingProps = cacheByKvp (fun world ->
-        world.BuildingsList @ world.BridgesList
-        |> List.map (fun building -> building.Properties.Script, building.Properties)
-        |> List.distinctBy fst)
+    let buildingProps = cacheBy(fun world -> world.BuildingPropertiesList) (fun building -> building.Script)
 
     let groundUnits = cacheBy (fun world -> world.GroundUnitsList) (fun groundUnit -> groundUnit.Id)
 
@@ -539,6 +547,7 @@ type World with
     member this.TryGetBuildingInstance(bid : BuildingInstanceId) =
         [this.Buildings; this.Bridges]
         |> Seq.tryPick (fun d -> d.TryGetValue(bid) |> Option.ofPair)
+        |> Option.map (fun building -> building, this.BuildingProperties.TryGetValue(building.Script) |> Option.ofPair)
 
     member this.GetAnyCountryInCoalition(coalition) =
         this.CountriesList
@@ -562,6 +571,13 @@ type World with
         this.AirfieldsList
         |> Seq.exists (fun af -> af.Region = region)
 
+    member this.BoundaryOf(bId : BuildingInstanceId) =
+        match this.TryGetBuildingInstance bId with
+        | Some(building, Some props) ->
+            props.Boundary
+            |> List.map (fun v -> v.Rotate(building.Pos.Rotation) + building.Pos.Pos)
+        | None | Some(_, None) ->
+            []
 
 module Init =
     open System.IO
@@ -697,7 +713,7 @@ module Init =
                                 { Pos = Vector2.FromPos block
                                   Rotation = block |> getYOri |> valueOf |> float32
                                   Altitude = block |> getAlt |> valueOf |> float32 }
-                            Properties = props }
+                            Script = props.Script }
                 | false, _ ->
                     ()
         ]
@@ -1105,7 +1121,7 @@ module Init =
             let graph =
                 loadRoadGraph(graph, capacity)
             let roads0 = graph.SetRegions regions
-            let roads1 = roads0.SetBridges bridges
+            let roads1 = roads0.SetBridges(bridges, buildingDb)
             let roads2 = roads1.SetTerminals terminals
             roads2, bridges
         // Roads
@@ -1158,6 +1174,7 @@ module Init =
             Roads = roads
             Rails = rails
             AirfieldsList = airfields
+            BuildingPropertiesList = buildingDb
             BuildingsList = buildings
             BridgesList = bridges
             PlaneModelsList = planeModels
