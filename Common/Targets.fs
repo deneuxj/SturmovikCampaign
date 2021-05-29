@@ -25,7 +25,7 @@ open Campaign.Common.Buildings
 open Util.StringPatterns
 
 type TargetType =
-    | Truck | Train | Ship | Battleship | GunBoat | Artillery | Tank | ArmoredCar
+    | Truck | Train | CargoShip | Battleship | TroopLandingShip | Artillery | Tank | ArmoredCar
     | Bridge of BuildingInstanceId * int
     | Building of BuildingInstanceId * int
     | ParkedPlane of AirfieldId * PlaneModelId
@@ -34,7 +34,7 @@ with
     member this.GroundForceValue =
         match this with
         | Battleship -> 100.0f<MGF>
-        | GunBoat -> 15.0f<MGF>
+        | TroopLandingShip -> 15.0f<MGF>
         | Artillery -> 10.0f<MGF>
         | Tank -> 25.0f<MGF>
         | ArmoredCar -> 5.0f<MGF>
@@ -45,9 +45,9 @@ with
         match this with
         | Truck -> "truck"
         | Train -> "train"
-        | Ship -> "ship"
+        | CargoShip -> "ship"
         | Battleship -> "battleship"
-        | GunBoat -> "gunboat"
+        | TroopLandingShip -> "troop landing"
         | Artillery -> "artillery"
         | Tank -> "tank"
         | ArmoredCar -> "car"
@@ -70,8 +70,15 @@ with
             vehicle.IsMobile && vehicle.Durability >= 1500 &&
             let expected = Set [GroundUnit.GroundRole.MachineGun; GroundUnit.GroundRole.AntiAirMachineGun]
             vehicle.Roles |> List.exists expected.Contains
-        | Train | Ship | Battleship | GunBoat | Bridge _ | Building _ | ParkedPlane _ | Air _ ->
+        | Train | Battleship | CargoShip | TroopLandingShip | Bridge _ | Building _ | ParkedPlane _ | Air _ ->
             false
+
+    member this.IsCompatibleWith(ship : Ship.ShipProperties) =
+        match this with
+        | CargoShip -> ship.Roles |> List.exists ((=) Ship.ShipRole.Cargo)
+        | Battleship -> ship.Roles |> List.exists ((=) Ship.ShipRole.Defensive)
+        | TroopLandingShip -> ship.Roles |> List.exists ((=) Ship.ShipRole.TroopLanding)
+        | _ -> false
 
 module ActivePatterns =
     let (|GroundForceTarget|_|) (kind : TargetType) =
@@ -87,9 +94,9 @@ module ActivePatterns =
         | Contains "cannon" -> Some Artillery
         | Contains "truck" -> Some Truck
         | Contains "train" -> Some Train
-        | Contains "ship" -> Some Ship
+        | Contains "ship" -> Some CargoShip
         | Contains "battleship" -> Some Battleship
-        | Contains "gunboat" -> Some GunBoat
+        | Contains "troop landing" -> Some TroopLandingShip
         | Contains "tank" -> Some Tank
         | Contains "car" -> Some ArmoredCar
         | _ -> None

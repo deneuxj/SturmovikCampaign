@@ -461,9 +461,9 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                 sprintf "Parked plane %s at %s" (string parked) afId.AirfieldName
                             | Truck -> "Truck"
                             | Train -> "Train"
-                            | Ship -> "Ship"
+                            | CargoShip -> "Ship"
                             | Battleship -> "Battleship"
-                            | GunBoat -> "Gun boat"
+                            | TroopLandingShip -> "Troop landing"
                             | Artillery -> "Piece of artillery"
                             | Tank -> "Tank"
                             | ArmoredCar -> "Armored car"

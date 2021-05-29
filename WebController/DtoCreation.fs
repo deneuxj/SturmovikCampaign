@@ -392,9 +392,9 @@ module DtoCreation =
             match this with
             | Targets.Truck -> Dto.Vehicle "truck"
             | Targets.Train -> Dto.Vehicle "train" 
-            | Targets.Ship -> Dto.Ship "cargo"
+            | Targets.CargoShip -> Dto.Ship "cargo"
             | Targets.Battleship -> Dto.Ship "battleship"
-            | Targets.GunBoat -> Dto.Ship "gunboat"
+            | Targets.TroopLandingShip -> Dto.Ship "troop landing ship"
             | Targets.Artillery -> Dto.Artillery "artillery"
             | Targets.Tank -> Dto.Artillery "tank"
             | Targets.ArmoredCar -> Dto.Artillery "armored car"
