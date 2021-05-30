@@ -1175,6 +1175,7 @@ module Init =
         let bridges = roadBridges @ railBridges
         // Seaways
         let seaways = extractSeaways(missionData.GetGroup("Seaways").ListOfMCU_Waypoint)
+        let seaways = seaways.SetRegions regions
         // Ground units
         let groundUnits =
             loadGroundUnitsDb (Path.Combine(exeDir, "Config", "GroundUnitDb.json"))
