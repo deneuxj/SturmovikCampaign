@@ -42,6 +42,7 @@ open Campaign.SpacePartition
 open Campaign.NewWorldDescription
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
+open Campaign.Common.Ship
 
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
@@ -1175,9 +1176,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | _ -> ()
         ]
 
-    let organizeConvoys limit (convoys : Convoy list) =
+    let organizeConvoys getCoalition limit (convoys : 'T list) =
         convoys
-        |> List.groupBy (fun convoy -> state.World.Countries.[convoy.Country])
+        |> List.groupBy getCoalition
         |> List.map (fun (coalition, convoys) ->
             convoys
             |> Array.ofList
@@ -1186,6 +1187,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             |> List.truncate limit)
 
     // Trains
+    let getConvoyCoalition (convoy : Convoy) = state.World.Countries.[convoy.Country]
     let maxRoadTransfer =
         state.World.Roads.Links
         |> List.tryHead
@@ -1209,7 +1211,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | _ ->
                     ()
         ]
-        |> organizeConvoys settings.MaxTrainsPerSide
+        |> organizeConvoys getConvoyCoalition settings.MaxTrainsPerSide
     logger.Debug(sprintf "Generated a total of %d trains" (trains |> List.sumBy List.length))
 
     // Tank columns
@@ -1235,8 +1237,53 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | _ ->
                     ()
         ]
-        |> organizeConvoys settings.MaxTruckColumnsPerSide
+        |> organizeConvoys getConvoyCoalition settings.MaxTruckColumnsPerSide
     logger.Debug(sprintf "Generated a total of %d tank columns" (columns |> List.sumBy List.length))
+
+    // Ship convoys
+    let shipConvoys =
+        if not state.World.ShipsList.IsEmpty then
+            logger.Debug("Starting to prepare ship convoys")
+            [
+                let selector = System.Random(state.Seed)
+                for regA in state.World.Regions.Values do
+                    for regBid in regA.Neighbours do
+                        match state.GetOwner(regA.RegionId), state.GetOwner(regBid) with
+                        | Some coalition, Some coalition2 when coalition = coalition2 ->
+                            for x in getPaths state.World.Seaways [regA.RegionId, regBid] do
+                                let ships =
+                                    state.World.ShipsList
+                                    |> List.collect (fun (country, ships) -> if country = x.Country then ships else [])
+                                let cargoShips =
+                                    ships
+                                    |> List.filter (fun ship -> ship.Roles |> List.exists ((=) ShipRole.Cargo))
+                                    |> Array.ofList
+                                let escortShips =
+                                    ships
+                                    |> List.filter (fun ship -> ship.Roles |> List.exists ((=) ShipRole.Defensive))
+                                    |> Array.ofList
+                                if cargoShips.Length > 0 && escortShips.Length > 0 then
+                                    let cargoShips =
+                                        List.init 4 (fun _ -> cargoShips.[selector.Next(cargoShips.Length)])
+                                    let escortShips =
+                                        List.init 1 (fun _ -> escortShips.[selector.Next(escortShips.Length)])
+                                    yield {
+                                        ConvoyName = sprintf "CARGO-%s-%s" (string regA.RegionId) (string regBid)
+                                        Country = x.Country
+                                        Coalition = coalition
+                                        Path = x.Path
+                                        CargoShips = cargoShips
+                                        Escort = escortShips
+                                    }
+                        | _ ->
+                            ()
+            ]
+            |> organizeConvoys (fun shipConvoy -> shipConvoy.Coalition) 1
+            |> List.concat
+        else
+            logger.Debug("No ships in this campaign")
+            []
+    logger.Debug(sprintf "Generated a total of %d ship convoys" (shipConvoys |> List.length))
 
     // Fires
     let damagedBuildings =
@@ -1342,7 +1389,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         AiPatrols = patrols
         AiAttacks = attacks
         Convoys = trains @ columns
-        ShipConvoys = []
+        ShipConvoys = shipConvoys
         ParkedPlanes = parkedPlanes
         Camps = camps
         BuildingFires = fires
