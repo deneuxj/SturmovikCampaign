@@ -34,7 +34,8 @@ with
     member this.GroundForceValue =
         match this with
         | Battleship -> 100.0f<MGF>
-        | TroopLandingShip -> 15.0f<MGF>
+        | CargoShip -> 20.0f<MGF>
+        | TroopLandingShip -> 50.0f<MGF>
         | Artillery -> 10.0f<MGF>
         | Tank -> 25.0f<MGF>
         | ArmoredCar -> 5.0f<MGF>
@@ -45,7 +46,7 @@ with
         match this with
         | Truck -> "truck"
         | Train -> "train"
-        | CargoShip -> "ship"
+        | CargoShip -> "cargo ship"
         | Battleship -> "battleship"
         | TroopLandingShip -> "troop landing"
         | Artillery -> "artillery"
@@ -94,7 +95,7 @@ module ActivePatterns =
         | Contains "cannon" -> Some Artillery
         | Contains "truck" -> Some Truck
         | Contains "train" -> Some Train
-        | Contains "ship" -> Some CargoShip
+        | Contains "cargo ship" -> Some CargoShip
         | Contains "battleship" -> Some Battleship
         | Contains "troop landing" -> Some TroopLandingShip
         | Contains "tank" -> Some Tank

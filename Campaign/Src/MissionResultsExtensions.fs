@@ -183,6 +183,9 @@ type Binding with
                 match war.World.CountryOfGroundUnit.TryGetValue(vehicle.Id) with
                 | false, _ -> false
                 | true, c -> Some c = country)
+        let countryShips =
+            war.World.ShipsList
+            |> List.collect (fun (country2, ships) -> if country = Some country2 then ships else [])
 
         let dynVehicle =
             lazy
@@ -219,6 +222,16 @@ type Binding with
                     | AntiAirTruck -> TargetType.Artillery
                     | StaffCar -> TargetType.ArmoredCar
                 )
+
+        let ship =
+            lazy
+                countryShips
+                |> Seq.filter(fun vehicle -> logName = vehicle.ScriptModel.Script)
+                |> Seq.tryPick(fun vehicle ->
+                    [ TargetType.Battleship; TargetType.CargoShip; TargetType.TroopLandingShip ]
+                    |> List.tryFind (fun tt -> tt.IsCompatibleWith(vehicle))
+                )
+
         match convoyVehicle.Value with
         | Some x -> Some x
         | None ->
@@ -226,6 +239,9 @@ type Binding with
         | Some x -> Some x
         | None ->
         match staVehicle.Value with
+        | Some x -> Some x
+        | None ->
+        match ship.Value with
         | Some x -> Some x
         | None ->
             None
