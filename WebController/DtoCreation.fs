@@ -483,6 +483,14 @@ module DtoCreation =
                 }
             )
 
+    type CombatBonuses.TargetDifficulty with
+        member this.ToDto() =
+            {|
+                Size = string this.Size
+                Mobility = this.Mobility.Rank
+                Space = string this.Space
+            |}
+
     type Pilots.Pilot with
         member this.ToDto(state : WarState.IWarStateQuery) : Dto.Pilot =
             let playerName =
@@ -504,6 +512,31 @@ module DtoCreation =
                 Flights = flights
                 AirKills = airKills
             }
+
+        member this.ComputeBonuses(war : WarState.IWarStateQuery) =
+            let bonuses = CombatBonuses.ExperienceBonus.ContributedByPilot(war, this.Id)
+            bonuses
+            |> Seq.map (fun bonus ->
+                {|
+                    Start = string bonus.Start
+                    Bonus = bonus.Bonus
+                    Domain =
+                        match bonus.Domain with
+                        | CombatBonuses.AirSupremacy(plane, target) ->
+                            {|
+                                UsingPlane = string plane
+                                Target = target.ToDto()
+                                Ammo = None
+                            |}
+                        | CombatBonuses.GroundAttack(plane, target, ammo) ->
+                            {|
+                                UsingPlane = string plane
+                                Target = target.ToDto()
+                                Ammo = Some(string ammo)
+                            |}
+                |}
+            )
+            |> Array.ofSeq
 
     /// Hash a player's unique GUID, and encode it to base64
     // The userIDs from the logs should probably not be exposed to the public

@@ -50,6 +50,7 @@ type IRoutingResponse =
     abstract GetSyncState : unit -> Async<Result<string, string>>
     abstract GetPilots : PilotSearchFilter -> Async<Result<Pilot list, string>>
     abstract GetPilot : string -> Async<Result<{| Pilot: Pilot; Missions: MissionRecord list |}, string>>
+    abstract GetCombatBonusesOfPilot : string -> Async<Result<obj[], string>>
     abstract GetPlayerPilots : string -> Async<Result<Pilot list, string>>
     abstract FindPlayersByName : string -> Async<Result<Player list, string>>
     abstract AllPlayers : unit -> Async<Result<Player list, string>>
@@ -92,6 +93,7 @@ GET /query/simulation/<n>
 GET /query/dates
 GET /query/pilots?country=<country>&coalition=<coalition>&health=<Healthy or NoDead>&name=<substring>
 GET /query/pilot/<guid>
+GET /query/pilot/<guid>/combat
 GET /query/players?name=<name>
 GET /query/players/<guid>
 GET /query/players/<guid>/pilots
@@ -211,6 +213,7 @@ let mkRoutes (passwords : PasswordsManager, rr : IRoutingResponse, ctrl : IContr
             pathScan "/query/state/%d/airfields/%s/capacity" (fun (idx, airfield) -> rr.GetAirfieldCapacity(idx, airfield) |> serializeAsync)
             pathScan "/query/state/%d/transport/%s/%s/land" (fun (idx, regionA, regionB) -> rr.GetLandTransportCapacity(idx, regionA, regionB) |> serializeAsync)
             pathScan "/query/simulation/%d" (fun n -> rr.GetSimulation(n) |> serializeAsync)
+            pathScan "/query/pilot/%s/combat" (fun id -> rr.GetCombatBonusesOfPilot(id) |> serializeAsync)
             pathScan "/query/pilot/%s" (fun n -> rr.GetPilot(n) |> serializeAsync)
             pathScan "/query/players/%s/pilots" (rr.GetPlayerPilots >> serializeAsync)
             pathScan "/query/players/%s" (rr.GetPlayer >> serializeAsync)
