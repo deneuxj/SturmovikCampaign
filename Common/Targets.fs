@@ -22,14 +22,15 @@ open System.Numerics
 open Campaign.Common.PlaneModel
 open Campaign.Common.BasicTypes
 open Campaign.Common.Buildings
+
 open Util.StringPatterns
 
 type TargetType =
     | Truck | Train | CargoShip | Battleship | TroopLandingShip | Artillery | Tank | ArmoredCar
     | Bridge of BuildingInstanceId * int
     | Building of BuildingInstanceId * int
-    | ParkedPlane of AirfieldId * PlaneModelId
-    | Air of PlaneModelId
+    | ParkedPlane of AirfieldId * PlaneModelId * PlaneType
+    | Air of PlaneModelId * PlaneType
 with
     member this.GroundForceValue =
         match this with
@@ -41,6 +42,21 @@ with
         | ArmoredCar -> 5.0f<MGF>
         | Truck -> 2.0f<MGF>
         | _ -> 0.0f<MGF>
+
+    /// Penalty on the ground transport capacity when a target is destroyed
+    member this.GroundTransportCapacityPenalty =
+        match this with
+        | Truck -> 0.5f
+        | Train -> 5.0f
+        | _ -> 0.0f
+        |> ( * ) 0.01f
+
+    /// Penalty on the sea transport capacity when a target is destroyed
+    member this.SeaTransportCapacityPenalty =
+        match this with
+        | CargoShip -> 5.0f
+        | _ -> 0.0f
+        |> ( * ) 0.01f
 
     member this.Description =
         match this with
@@ -54,8 +70,8 @@ with
         | ArmoredCar -> "car"
         | Bridge _ -> "bridge"
         | Building _ -> "building"
-        | ParkedPlane (_, plane) -> sprintf "parked %s" (string plane)
-        | Air plane -> string plane
+        | ParkedPlane (_, plane, _) -> sprintf "parked %s" (string plane)
+        | Air(plane, _) -> string plane
 
     member this.IsCompatibleWith(vehicle : GroundUnit.GroundUnit) =
         match this with

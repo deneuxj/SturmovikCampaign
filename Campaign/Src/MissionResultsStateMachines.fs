@@ -276,14 +276,14 @@ with
                             // Parked planes
                             match war.TryGetStaticPlaneAt(binding.Typ, position) with
                             | Some(afId, plane) ->
-                                yield (TargetType.ParkedPlane(afId, plane.Id), ammo, amount)
+                                yield (TargetType.ParkedPlane(afId, plane.Id, plane.Kind), ammo, amount)
                             | None ->
                                 ()
 
                             // Flying planes
                             match war.TryGetPlane(binding.Typ) with
                             | Some plane ->
-                                yield (TargetType.Air(plane.Id), ammo, amount)
+                                yield (TargetType.Air(plane.Id, plane.Kind), ammo, amount)
                             | None ->
                                 ()
 

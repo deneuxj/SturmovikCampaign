@@ -407,13 +407,13 @@ module DtoCreation =
                 |> Option.map (fun building -> building.Script)
                 |> Option.defaultValue ""
                 |> Dto.Building
-            | Targets.ParkedPlane(_, plane) ->
+            | Targets.ParkedPlane(_, plane, _) ->
                 world.PlaneSet.TryGetValue(plane)
                 |> Option.ofPair
                 |> Option.map (fun plane -> plane.Name)
                 |> Option.defaultValue (string plane)
                 |> Dto.ParkedPlane
-            | Targets.Air(plane) ->
+            | Targets.Air(plane, _) ->
                 world.PlaneSet.TryGetValue(plane)
                 |> Option.ofPair
                 |> Option.map (fun plane -> plane.Name)

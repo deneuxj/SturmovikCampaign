@@ -296,6 +296,14 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
 
     let tryGetGroundTargetLocation (regId : RegionId, targetType : GroundTargetType) =
         match targetType with
+        | TransportShips _ | WarShips _ ->
+            state.World.Seaways.Nodes
+            |> Seq.filter (fun node -> node.Region = Some regId)
+            |> Array.ofSeq
+            |> Array.shuffle random
+            |> Array.tryHead
+            |> Option.map (fun node -> node.Pos, 5000.0f)
+
         | GroundForces targettedCoalition ->
             // Check for recorded battle and camp positions
             let positionAndRadius =

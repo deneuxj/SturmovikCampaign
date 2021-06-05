@@ -133,6 +133,8 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
         random.NextDouble() * 0.2 + 0.25
         |> float32
 
+    let expBonus x = 1.0f - 1.0f / exp(x)
+
     member this.DoTakeOffs() =
         seq {
             for mId, mission in airMissions do
@@ -342,24 +344,27 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             (string interception.Objective)
 
                     // Kill rates, affected by experience bonuses
-                    let interceptorExperience, defenderKillRate =
-                        match war.World.PlaneSet.[mission.Plane].Kind with
+                    let interceptorExperience, defenderKillRate, difficulty =
+                        let plane = war.World.PlaneSet.[mission.Plane]
+                        match plane.Kind with
                         | PlaneType.Fighter ->
                             let loadoutKillRateModifier =
                                 match mission.MissionType with
                                 | AreaProtection _ -> 1.0f
                                 | _ -> 0.75f
-                            AirSupremacy, loadoutKillRateModifier * getFighterAttackRate()
+                            AirSupremacy, loadoutKillRateModifier * getFighterAttackRate(), TargetDifficulty.OfTarget(TargetType.Air(plane.Id, Fighter))
                         | _ ->
-                            Interception, getBomberDefenseRate()
+                            AirSupremacy, getBomberDefenseRate(), TargetDifficulty.OfTarget(TargetType.Air(plane.Id, plane.Kind))
                     let defendersBonus =
                         if defenderKillRate >= 1.0f then
-                            bonuses.GetBonus(war.World.Airfields.[mission.StartAirfield].Region, AirSupremacy mission.Plane)
+                            bonuses.GetBonus(mission.StartAirfield, AirSupremacy(mission.Plane, difficulty))
+                            |> expBonus
                         else
                             0.0f
                     let defenderKillRate = defenderKillRate + defendersBonus
                     let interceptorsBonus =
-                        bonuses.GetBonus(war.World.Airfields.[interception.StartAirfield].Region, interceptorExperience interception.Plane)
+                        bonuses.GetBonus(interception.StartAirfield, interceptorExperience(interception.Plane, difficulty))
+                        |> expBonus
                     let interceptorKillRate =
                         getFighterAttackRate() * (1.0f + interceptorsBonus)
                     // Notify kill rate bonuses
@@ -430,12 +435,6 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                     // Effect of area protection already handled during interception phase
                     ()
                 | Bombing(targetType) | Strafing(targetType) ->
-                    let bonus =
-                        let domain =
-                            match mission.MissionType with
-                            | Bombing _ -> ExperienceDomain.Bombing
-                            | _ -> ExperienceDomain.Strafing
-                        bonuses.GetBonus(war.World.Airfields.[mission.StartAirfield].Region, domain mission.Plane)
                     let region = war.World.Regions.[mission.Objective]
                     let plane = war.World.PlaneSet.[mission.Plane].Name
                     let numBridgePartsDamaged, volumeBuildingDamaged =
@@ -461,8 +460,8 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                     sprintf "Building %s" building.Model
                                 | None ->
                                     "A building"
-                            | TargetType.ParkedPlane(afId, parked) ->
-                                sprintf "Parked plane %s at %s" (string parked) afId.AirfieldName
+                            | TargetType.ParkedPlane(afId, parked, _) ->
+                                sprintf "Parked %s at %s" (string parked) afId.AirfieldName
                             | Truck -> "Truck"
                             | Train -> "Train"
                             | CargoShip -> "Ship"
@@ -471,8 +470,8 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             | Artillery -> "Piece of artillery"
                             | Tank -> "Tank"
                             | ArmoredCar -> "Armored car"
-                            | Air plane ->
-                                sprintf "In-flight plane %s" (string plane)
+                            | TargetType.Air(plane, _) ->
+                                sprintf "In-flight %s" (string plane)
                         sprintf "%s hit by %s from %s in %s at %0.0f, %0.0f"
                             subject
                             plane
@@ -619,8 +618,13 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                     assert(qty >= 0.0f)
                                     Seq.init (int qty) (fun _ -> planeId))
                                 |> Seq.map (fun planeId ->
+                                    let kind =
+                                        war.World.PlaneSet.TryGetValue(planeId)
+                                        |> Option.ofPair
+                                        |> Option.map (fun plane -> plane.Kind)
+                                        |> Option.defaultValue Fighter
                                     {
-                                        Kind = TargetType.ParkedPlane(af, planeId)
+                                        Kind = TargetType.ParkedPlane(af, planeId, kind)
                                         Owner = owner
                                         Pos = { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
                                     })
@@ -629,18 +633,28 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             |> Seq.cache
                             |> Seq.map (function Choice1Of2 x | Choice2Of2 x -> x)
 
-                    yield
-                        None,
-                        sprintf "Bonus for ground attack at %s by %s: %5.2f" (string mission.Objective) plane (100.0f * bonus)
-                    for target in targets |> Seq.truncate (int(ceil(float32 numPlanes * (1.0f + bonus)))) do
+                    for target in targets |> Seq.truncate (int(ceil(float32 numPlanes))) do
+                        let bonus =
+                            let ammo =
+                                match mission.MissionType with
+                                | Strafing _ -> Guns
+                                | _ -> Bombs
+                            let domain = GroundAttack(mission.Plane, TargetDifficulty.OfTarget target.Kind, ammo)
+                            bonuses.GetBonus(mission.StartAirfield, domain)
+                            |> expBonus
+                        yield
+                            None,
+                            sprintf "Bonus for ground attack at %s by %s: %5.2f" (string mission.Objective) plane (100.0f * bonus)
+
+                        let destructionFactor = 0.5f + 0.5f * bonus
                         let command =
                             match target with
                             | { Kind = TargetType.Building(bid, part) } ->
-                                Some(DamageBuildingPart(bid, part, 1.0f))
-                            | { Kind = TargetType.ParkedPlane(afId, planeId) } ->
-                                Some(RemovePlane(afId, planeId, 1.0f))
+                                Some(DamageBuildingPart(bid, part, destructionFactor))
+                            | { Kind = TargetType.ParkedPlane(afId, planeId, _) } ->
+                                Some(RemovePlane(afId, planeId, destructionFactor))
                             | { Kind = ActivePatterns.GroundForceTarget value; Owner = Some owner } ->
-                                Some(DestroyGroundForces(mission.Objective, owner, value))
+                                Some(DestroyGroundForces(mission.Objective, owner, destructionFactor * value))
                             | _ ->
                                 None
                         yield
