@@ -157,7 +157,7 @@ type WarStateSerialization =
 with
     static member Default =
         {
-            FormatVersionMajor = 1
+            FormatVersionMajor = 2
             FormatVersionMinor = 0
             Date = DateTime(0L)
             Weather = WeatherState.Default
