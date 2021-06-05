@@ -36,6 +36,8 @@ open Campaign.CombatBonuses
 /// Kind of targets on the ground
 type GroundTargetType =
     | GroundForces of CoalitionId
+    | TransportShips of CoalitionId
+    | WarShips of CoalitionId
     | BridgeTarget
     | BuildingTarget // Factories and other buildings inside regions but outside airfields
     | AirfieldTarget of AirfieldId // Hangars, fuel tanks, parked planes... on an airfield
@@ -43,6 +45,8 @@ with
     member this.Description =
         match this with
         | GroundForces coalition -> sprintf "ground forces of %s" (string coalition)
+        | TransportShips coalition -> sprintf "ships of %s" (string coalition)
+        | WarShips coalition -> sprintf "war ships of %s" (string coalition)
         | BridgeTarget -> "bridges"
         | BuildingTarget -> "buildings"
         | AirfieldTarget afId -> sprintf "%s airbase" afId.AirfieldName
@@ -511,6 +515,12 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             getParts owner bridge
                             |> Seq.truncate numBridgePartsDamaged
 
+                        let posInWater region =
+                            war.World.Seaways.Nodes
+                            |> Seq.tryFind (fun node -> node.Region = Some region)
+                            |> Option.map (fun node -> { Pos = node.Pos; Altitude = 0.0f; Rotation = 0.0f })
+                            |> Option.defaultValue { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
+
                         match targetType with
                         | GroundForces owner ->
                             let kinds =
@@ -529,6 +539,37 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                         Kind = kind
                                         Owner = Some owner
                                         Pos = { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
+                                    }
+                                )
+                            targets
+
+                        | TransportShips owner ->
+                            Seq.init 10 (fun _ ->
+                                {
+                                    Kind = CargoShip
+                                    Owner = Some owner
+                                    Pos = posInWater mission.Objective
+                                }
+                            )
+                            |> Seq.cache
+
+                        | WarShips owner ->
+                            let kinds =
+                                [| TargetType.Battleship; TargetType.TroopLandingShip; TargetType.CargoShip |]
+                            let forces = war.GetGroundForces(owner, mission.Objective)
+                            let targets =
+                                Seq.unfold (fun forces ->
+                                    if forces < 0.0f<MGF> then
+                                        None
+                                    else
+                                        let kind = kinds.[random.Next(kinds.Length)]
+                                        Some(kind, forces - kind.GroundForceValue)) forces
+                                |> Seq.cache
+                                |> Seq.map (fun kind ->
+                                    {
+                                        Kind = kind
+                                        Owner = Some owner
+                                        Pos = posInWater mission.Objective
                                     }
                                 )
                             targets
