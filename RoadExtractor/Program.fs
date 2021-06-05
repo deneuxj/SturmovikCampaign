@@ -132,7 +132,7 @@ let main argv =
         printfn """
 Usage: RoadExtractor <road or railroad description path>
 
-Extract road network from provided file, and write result as in file with same name and extension .json
+Extract road network from provided file, and write result to new file with same name and extension .json
 """
 
     printfn "Done."

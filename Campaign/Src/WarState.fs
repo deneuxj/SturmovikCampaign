@@ -490,7 +490,7 @@ type WarState
                     if world.Regions.[rId].IsEntry then
                         world.CoalitionEntryResources owner * this.GetRegionProcessingLevel(rId)
                     else
-                    // Regions through which a the owner coalition can travel: neutral, and the ones under one's control.
+                    // Regions through which the owner coalition can travel: neutral, and the ones under one's control.
                     let regions =
                         world.Regions.Keys
                         |> Seq.filter (fun regId -> match this.GetOwner(regId) with Some coalition -> coalition = owner | None -> true)
