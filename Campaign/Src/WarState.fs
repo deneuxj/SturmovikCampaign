@@ -194,11 +194,15 @@ type WarState
         |> Seq.mutableDict
     let roads = world.Roads.GetQuickAccess()
     let rails = world.Rails.GetQuickAccess()
+    let seaways = world.Seaways.GetQuickAccess()
+
     // Must be cleared whenever owners change
     let regionDistancesToEnemy = Seq.mutableDict []
     // Must be cleared whenever bridges are damaged or repaired
     let roadsCapacities = Seq.mutableDict []
     let railsCapacities = Seq.mutableDict []
+    // No need to clear
+    let seaCapacities = Seq.mutableDict []
     // Must be cleared whenever bridges are damaged or repaired, or owners change
     let supplyAvailability = Seq.mutableDict []
     // Distances (in number of regions) of regions to regions with airfields, need never be cleared
@@ -471,6 +475,11 @@ type WarState
             railsCapacities
             (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity rails)
 
+    member this.ComputeSeaCapacity() =
+        Cached.cached
+            seaCapacities
+            (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity seaways)
+
     member this.ComputeSupplyAvailability() =
         Cached.cached
             supplyAvailability
@@ -639,6 +648,7 @@ type WarState
         member this.ComputeDistancesToCoalition(arg1) = upcast(this.ComputeDistancesToCoalition(arg1))
         member this.ComputeRailCapacity() = this.ComputeRailCapacity()
         member this.ComputeRoadCapacity() = this.ComputeRoadCapacity()
+        member this.ComputeSeaCapacity() = this.ComputeSeaCapacity()
         member this.ComputeSupplyAvailability() = this.ComputeSupplyAvailability()
         member this.Date = this.Date
         member this.GetBridgeFunctionalityLevel(arg1) = this.GetBridgeFunctionalityLevel(arg1)
