@@ -1128,6 +1128,13 @@ module Init =
         // Map name
         let options = Seq.head missionData.ListOfOptions
         let mapName = options.GetGuiMap().Value
+        let mapLocationName =
+            match mapName with
+            | Contains "rheinland" -> "rheinland"
+            | Contains "moscow" -> "moscow"
+            | Contains "kuban" -> "kuban"
+            | Contains "stalingrad" -> "stalingrad"
+            | _ -> mapName
         // Mapping from countries to coalitions
         let countries =
             options.GetCountries().Value
@@ -1169,9 +1176,9 @@ module Init =
             let roads2 = roads1.SetTerminals terminals
             roads2, bridges
         // Roads
-        let roads, roadBridges = loadRoads "BridgesHW" (Path.Combine(exeDir, "Config", sprintf "Roads-%s.json" mapName)) roadsCapacity
+        let roads, roadBridges = loadRoads "BridgesHW" (Path.Combine(exeDir, "Config", sprintf "Roads-%s.json" mapLocationName)) roadsCapacity
         // Railroads
-        let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapName)) railsCapacity
+        let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapLocationName)) railsCapacity
         let bridges = roadBridges @ railBridges
         // Seaways
         let seaways = extractSeaways(missionData.GetGroup("Seaways").ListOfMCU_Waypoint)
