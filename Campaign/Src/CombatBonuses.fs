@@ -132,7 +132,16 @@ with
                             Domain = domain
                         }
             }
+            |> List.ofSeq
         bonuses
+        |> List.groupBy (fun bonus -> bonus.Start, bonus.Domain)
+        |> List.map (fun ((start, domain), bonuses) ->
+            {
+                Start = start
+                Domain = domain
+                Bonus = bonuses |> List.sumBy (fun bonus -> bonus.Bonus)
+            }
+        )
 
 /// Mapping from start airfields, objective regions and experience domains to bonus values
 type ExperienceBonuses =
