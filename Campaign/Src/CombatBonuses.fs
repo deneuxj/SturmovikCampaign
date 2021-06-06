@@ -158,18 +158,6 @@ with
             war.Pilots
             |> List.groupBy (fun pilot -> war.TryGetPilotHome(pilot.Id))
             |> List.choose (function (Some af, pilots) -> Some(af, pilots) | _ -> None)
-            |> List.map (fun (af, pilots) ->
-                // Retain the most experienced healthy pilot, for each player
-                let pilots =
-                    pilots
-                    |> List.filter (fun pilot ->
-                        // Remove injured/dead pilots
-                        pilot.Health = Healthy)
-                    |> List.groupBy(fun pilot -> pilot.PlayerGuid) // At most one pilot per player per airfield
-                    |> List.map (fun (_, pilots) -> pilots |> List.maxBy (fun pilot -> countCompletedFlights pilot.Flights)) // Retain the pilot with the most completed flights
-                // Result
-                af, pilots
-            )
             |> dict
         (bonuses, war.World.Airfields.Values)
         ||> Seq.fold (fun bonuses airfield ->
@@ -177,7 +165,8 @@ with
                 pilots.TryGetValue(airfield.AirfieldId)
                 |> Option.ofPair
                 |> Option.defaultValue []
-                |> Seq.collect (fun pilot -> if pilot.Health = Healthy then ExperienceBonus.ContributedByPilot(war, pilot.Id) else Seq.empty)
+                |> Seq.collect (fun pilot -> if pilot.Health = Healthy then ExperienceBonus.ContributedByPilot(war, pilot.Id) else [])
+                |> Seq.filter (fun bonus -> bonus.Start = airfield.AirfieldId)
             contributions
             |> Seq.fold (fun bonuses contrib -> bonuses.Update contrib) bonuses
         )
