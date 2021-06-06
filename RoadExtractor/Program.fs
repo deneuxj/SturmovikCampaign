@@ -65,22 +65,25 @@ with
         let truncateAndScale x =
             floor(x / parseStep) * parseStep * float32 scaleFactor
         // Extract coordinates from roads.ini
-        let coords =
+        let lanes =
             [
                 for line in System.IO.File.ReadAllLines(roads) do
-                    let mutable s = line
-                    while not(System.String.IsNullOrWhiteSpace(s)) do
-                        let m = matchf(s, @"(\d+(\.\d*)?),(\d+(\.\d*)?)(.*)")
-                        if m.Success then
-                            yield parseFloat(m.Groups.[1].Value), parseFloat(m.Groups.[3].Value)
-                            s <- m.Groups.[5].Value
-                        else
-                            s <- ""
+                    yield [
+                        let mutable s = line
+                        while not(System.String.IsNullOrWhiteSpace(s)) do
+                            let m = matchf(s, @"(\d+(\.\d*)?),(\d+(\.\d*)?)(.*)")
+                            if m.Success then
+                                yield parseFloat(m.Groups.[1].Value), parseFloat(m.Groups.[3].Value)
+                                s <- m.Groups.[5].Value
+                            else
+                                s <- ""
+                    ]
             ]
-            |> List.map (fun (x, y) -> truncateAndScale (mapHeight - y), truncateAndScale x)
+            |> List.map(List.map (fun (x, y) -> truncateAndScale (mapHeight - y), truncateAndScale x))
         // Create all nodes
         let nodes =
-            coords
+            lanes
+            |> List.concat
             |> List.fold (fun nodes (x, y) ->
                 let node =
                     Map.tryFind (x, y) nodes
@@ -93,15 +96,16 @@ with
             ) Map.empty
         // Set neighbours
         let nodes =
-            coords
-            |> Seq.pairwise
-            |> Seq.fold (fun (nodes : Map<_, NetworkNode>) (v1, v2) ->
-                let node1 = nodes.[v1]
-                let node2 = nodes.[v2]
-                nodes
-                |> Map.add v1 { node1 with Neighbours = node2.Id :: node1.Neighbours }
-                |> Map.add v2 { node2 with Neighbours = node1.Id :: node2.Neighbours }
-            ) nodes
+            (nodes, lanes)
+            ||> List.fold (fun nodes lane ->
+                (nodes, List.pairwise lane)
+                ||> List.fold (fun (nodes : Map<_, NetworkNode>) (v1, v2) ->
+                    let node1 = nodes.[v1]
+                    let node2 = nodes.[v2]
+                    nodes
+                    |> Map.add v1 { node1 with Neighbours = node2.Id :: node1.Neighbours }
+                    |> Map.add v2 { node2 with Neighbours = node1.Id :: node2.Neighbours }
+                ))
         // Retain nodes from the mapping, remove self-references in neighbours
         let nodes =
             nodes
@@ -128,7 +132,7 @@ let main argv =
         printfn """
 Usage: RoadExtractor <road or railroad description path>
 
-Extract road network from provided file, and write result as in file with same name and extension .json
+Extract road network from provided file, and write result to new file with same name and extension .json
 """
 
     printfn "Done."

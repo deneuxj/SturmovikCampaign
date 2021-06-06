@@ -42,6 +42,7 @@ open Campaign.SpacePartition
 open Campaign.NewWorldDescription
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
+open Campaign.Common.Ship
 
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
@@ -295,6 +296,14 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
 
     let tryGetGroundTargetLocation (regId : RegionId, targetType : GroundTargetType) =
         match targetType with
+        | TransportShips _ | WarShips _ ->
+            state.World.Seaways.Nodes
+            |> Seq.filter (fun node -> node.Region = Some regId)
+            |> Array.ofSeq
+            |> Array.shuffle random
+            |> Array.tryHead
+            |> Option.map (fun node -> node.Pos, 5000.0f)
+
         | GroundForces targettedCoalition ->
             // Check for recorded battle and camp positions
             let positionAndRadius =
@@ -1064,7 +1073,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         |> List.collect (fun ((BuildingInstanceId pos) as bid) ->
                             if state.GetBuildingFunctionalityLevel(bid) > 0.5f then
                                 state.World.TryGetBuildingInstance(bid)
-                                |> Option.map (fun b -> b.Properties.ParkingSpots)
+                                |> Option.bind (function (b, Some p) -> Some p.ParkingSpots | _ -> None)
                                 |> Option.defaultValue []
                                 |> List.map (fun spot ->
                                     { spot with
@@ -1175,9 +1184,9 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | _ -> ()
         ]
 
-    let organizeConvoys limit (convoys : Convoy list) =
+    let organizeConvoys getCoalition limit (convoys : 'T list) =
         convoys
-        |> List.groupBy (fun convoy -> state.World.Countries.[convoy.Country])
+        |> List.groupBy getCoalition
         |> List.map (fun (coalition, convoys) ->
             convoys
             |> Array.ofList
@@ -1186,6 +1195,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             |> List.truncate limit)
 
     // Trains
+    let getConvoyCoalition (convoy : Convoy) = state.World.Countries.[convoy.Country]
     let maxRoadTransfer =
         state.World.Roads.Links
         |> List.tryHead
@@ -1209,7 +1219,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | _ ->
                     ()
         ]
-        |> organizeConvoys settings.MaxTrainsPerSide
+        |> organizeConvoys getConvoyCoalition settings.MaxTrainsPerSide
     logger.Debug(sprintf "Generated a total of %d trains" (trains |> List.sumBy List.length))
 
     // Tank columns
@@ -1235,8 +1245,53 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                 | _ ->
                     ()
         ]
-        |> organizeConvoys settings.MaxTruckColumnsPerSide
+        |> organizeConvoys getConvoyCoalition settings.MaxTruckColumnsPerSide
     logger.Debug(sprintf "Generated a total of %d tank columns" (columns |> List.sumBy List.length))
+
+    // Ship convoys
+    let shipConvoys =
+        if not state.World.ShipsList.IsEmpty then
+            logger.Debug("Starting to prepare ship convoys")
+            [
+                let selector = System.Random(state.Seed)
+                for regA in state.World.Regions.Values do
+                    for regBid in regA.Neighbours do
+                        match state.GetOwner(regA.RegionId), state.GetOwner(regBid) with
+                        | Some coalition, Some coalition2 when coalition = coalition2 ->
+                            for x in getPaths state.World.Seaways [regA.RegionId, regBid] do
+                                let ships =
+                                    state.World.ShipsList
+                                    |> List.collect (fun (country, ships) -> if country = x.Country then ships else [])
+                                let cargoShips =
+                                    ships
+                                    |> List.filter (fun ship -> ship.Roles |> List.exists ((=) ShipRole.Cargo))
+                                    |> Array.ofList
+                                let escortShips =
+                                    ships
+                                    |> List.filter (fun ship -> ship.Roles |> List.exists ((=) ShipRole.Defensive))
+                                    |> Array.ofList
+                                if cargoShips.Length > 0 && escortShips.Length > 0 then
+                                    let cargoShips =
+                                        List.init 4 (fun _ -> cargoShips.[selector.Next(cargoShips.Length)])
+                                    let escortShips =
+                                        List.init 1 (fun _ -> escortShips.[selector.Next(escortShips.Length)])
+                                    yield {
+                                        ConvoyName = sprintf "CARGO-%s-%s" (string regA.RegionId) (string regBid)
+                                        Country = x.Country
+                                        Coalition = coalition
+                                        Path = x.Path
+                                        CargoShips = cargoShips
+                                        Escort = escortShips
+                                    }
+                        | _ ->
+                            ()
+            ]
+            |> organizeConvoys (fun shipConvoy -> shipConvoy.Coalition) 1
+            |> List.concat
+        else
+            logger.Debug("No ships in this campaign")
+            []
+    logger.Debug(sprintf "Generated a total of %d ship convoys" (shipConvoys |> List.length))
 
     // Fires
     let damagedBuildings =
@@ -1262,20 +1317,20 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> Seq.map (fun (region, bId) -> region, state.World.TryGetBuildingInstance bId)
         |> Seq.choose (fun (region, b) ->
             match b with
-            | Some b ->
-                if b.Properties.Capacity > 0.0f<M^3> then
+            | Some(b, Some properties) ->
+                if properties.Capacity > 0.0f<M^3> then
                     let health = state.GetBuildingHealth(b.Id)
                     if health < 0.5f then
-                        Some(region, b, health)
+                        Some(region, b, properties, health)
                     else
                         None
                 else
                     None
-            | None ->
+            | None | Some(_, None) ->
                 None)
         // Prioritize front regions and then amount of capacity loss
-        |> Seq.sortByDescending (fun (region, b, health) ->
-            let loss = (1.0f - health) * float32 b.Properties.Capacity
+        |> Seq.sortByDescending (fun (region, b, properties, health) ->
+            let loss = (1.0f - health) * float32 properties.Capacity
             let region =
                 match region with
                 | Choice1Of2 x -> x.RegionId
@@ -1289,7 +1344,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     let largeFireThr = 0.05f
     let spacedOutBuildings =
         ([], damagedBuildings)
-        ||> Seq.fold (fun xs (area, b, health) ->
+        ||> Seq.fold (fun xs (area, b, properties, health) ->
             let nearby =
                 xs
                 |> Seq.filter (fun (_, b2 : BuildingInstance, _) -> (b.Pos.Pos - b2.Pos.Pos).Length() < (float32 settings.MaxFiresRadius))
@@ -1342,6 +1397,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         AiPatrols = patrols
         AiAttacks = attacks
         Convoys = trains @ columns
+        ShipConvoys = shipConvoys
         ParkedPlanes = parkedPlanes
         Camps = camps
         BuildingFires = fires

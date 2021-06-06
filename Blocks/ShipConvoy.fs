@@ -51,6 +51,7 @@ with
     /// <param name="store">Provides unique ids for MCUs</param>
     /// <param name="lcStore">Provides unique ids for text</param>
     /// <param name="numShips">Number of cargo ships, including leader</param>
+    /// <param name="waterType">Sea or river</param>
     /// <param name="path">Waypoints the convoy will sail along</param>
     /// <param name="country">Country owning the ships</param>
     /// <param name="eventName">Base event name for convoy start, arrival and destruction.</param>

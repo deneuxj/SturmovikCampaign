@@ -97,11 +97,10 @@ Group
     Country = 201;
     Boundary
     {
-      295871, 306989;
-      302721, 307508;
+      302301, 303646;
       303551, 316306;
       296629, 328619;
-      282275, 325350;
+      281849, 328666;
       283943, 312614;
     }
   }
@@ -124,8 +123,8 @@ Group
     Country = 201;
     Boundary
     {
-      282739, 266324;
-      286918, 281962;
+      296524, 264050;
+      299594, 275683;
       276126, 294748;
       271910, 284468;
       268574, 268276;
@@ -150,9 +149,9 @@ Group
     Country = 201;
     Boundary
     {
-      268141, 247198;
-      284255, 247310;
-      282789, 266199;
+      266571, 239655;
+      281650, 248163;
+      296519, 263955;
       268615, 268099;
     }
   }
@@ -175,11 +174,10 @@ Group
     Country = 201;
     Boundary
     {
-      252508, 237250;
-      266691, 238605;
-      267962, 247250;
+      253455, 231186;
+      266502, 239647;
       268520, 268146;
-      249116, 263807;
+      248800, 263622;
     }
   }
   
@@ -203,8 +201,8 @@ Group
     {
       229320, 303666;
       257395, 307108;
-      254114, 325343;
-      228656, 328688;
+      253830, 326812;
+      230503, 322861;
       212003, 309053;
     }
   }
@@ -229,8 +227,8 @@ Group
     {
       189604, 220092;
       195110, 201622;
-      214812, 209574;
-      223955, 226107;
+      214575, 207300;
+      229183, 216461;
       211323, 237136;
     }
   }
@@ -253,8 +251,8 @@ Group
     Country = 101;
     Boundary
     {
-      223997, 226294;
-      237593, 229046;
+      229208, 216488;
+      241430, 224261;
       241116, 260282;
       233610, 258455;
       211301, 237294;
@@ -306,7 +304,7 @@ Group
     Country = 201;
     Boundary
     {
-      254204, 325439;
+      253920, 326860;
       257453, 307157;
       268757, 313743;
       265431, 328244;
@@ -381,7 +379,7 @@ Group
     Boundary
     {
       242436, 283156;
-      248994, 263975;
+      248795, 263671;
       268469, 268334;
       271780, 284581;
       259679, 284683;
@@ -407,7 +405,7 @@ Group
     Boundary
     {
       241195, 260389;
-      248917, 264012;
+      248753, 263653;
       242397, 283082;
       226641, 275112;
     }
@@ -431,9 +429,9 @@ Group
     Country = 101;
     Boundary
     {
-      237612, 229022;
-      252307, 237507;
-      249028, 263945;
+      241496, 224285;
+      253397, 231112;
+      248758, 263595;
       241234, 260289;
     }
   }
@@ -534,8 +532,8 @@ Group
     Boundary
     {
       276252, 294789;
-      286921, 282004;
-      295778, 306887;
+      299613, 275775;
+      302315, 303571;
       283922, 312581;
     }
   }
@@ -585,7 +583,7 @@ Group
       265567, 328255;
       268898, 313701;
       283899, 312644;
-      282242, 325281;
+      281768, 328597;
     }
   }
   
@@ -143748,6 +143746,295 @@ Group
     }
     
 
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "Seaways";
+  Index = 7290;
+  Desc = "";
+  MCU_Waypoint
+  {
+    Index = 7289;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 198379.120;
+    YPos = 0.000;
+    ZPos = 222372.856;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7288;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7289];
+    Objects = [];
+    XPos = 194315.927;
+    YPos = 0.000;
+    ZPos = 224718.621;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7287;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7288];
+    Objects = [];
+    XPos = 190155.787;
+    YPos = 0.000;
+    ZPos = 226303.436;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7286;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7287];
+    Objects = [];
+    XPos = 185896.597;
+    YPos = 0.000;
+    ZPos = 229208.930;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7285;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7286];
+    Objects = [];
+    XPos = 180944.050;
+    YPos = 0.000;
+    ZPos = 234623.714;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7284;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7285];
+    Objects = [];
+    XPos = 179590.354;
+    YPos = 0.000;
+    ZPos = 239345.142;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+  MCU_Waypoint
+  {
+    Index = 7283;
+    Name = "Trigger Waypoint";
+    Desc = "";
+    Targets = [7284];
+    Objects = [];
+    XPos = 181743.581;
+    YPos = 0.000;
+    ZPos = 242248.743;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Area = 20;
+    Speed = 20;
+    Priority = 1;
+  }
+  
+
+}
+
+
+
+Group
+{
+  Name = "Ships";
+  Index = 7297;
+  Desc = "";
+  Ship
+  {
+    Name = "Cargo";
+    Index = 7291;
+    LinkTrId = 7294;
+    XPos = 184476.686;
+    YPos = 0.000;
+    ZPos = 222058.537;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\Ships\largecargoshiptype1.txt";
+    Model = "graphics\ships\largecargoshiptype1\largecargoshiptype1.mgm";
+    Desc = "Roles:Cargo";
+    Country = 101;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7294;
+    Name = "Cargo entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 184476.686;
+    YPos = 0.200;
+    ZPos = 222058.537;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7291;
+  }
+  
+
+  Ship
+  {
+    Name = "Cargo";
+    Index = 7292;
+    LinkTrId = 7295;
+    XPos = 184476.706;
+    YPos = 0.000;
+    ZPos = 222301.276;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\Ships\largetankershiptype1.txt";
+    Model = "graphics\ships\largetankershiptype1\largetankershiptype1.mgm";
+    Desc = "Roles:Cargo";
+    Country = 101;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7295;
+    Name = "Cargo entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 184476.706;
+    YPos = 0.200;
+    ZPos = 222301.276;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7292;
+  }
+  
+
+  Ship
+  {
+    Name = "Destroyer";
+    Index = 7293;
+    LinkTrId = 7296;
+    XPos = 184479.251;
+    YPos = 0.000;
+    ZPos = 221843.192;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\Ships\destroyertype7.txt";
+    Model = "graphics\ships\destroyertype7\destroyertype7.mgm";
+    Desc = "Roles:Defensive";
+    Country = 101;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 7296;
+    Name = "Destroyer entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 184479.251;
+    YPos = 0.200;
+    ZPos = 221843.192;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 7293;
   }
   
 

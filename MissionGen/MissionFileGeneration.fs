@@ -36,6 +36,7 @@ open Campaign.Common.PlaneModel
 open Campaign.Common.AiPlanes
 open Campaign.Common.Targets
 open Campaign.Common.GroundUnit
+open Campaign.Common.Ship
 
 open Campaign.MissionGen.StaticDefenseOptimization
 open Campaign.MissionGen.MapGraphics
@@ -534,6 +535,32 @@ with
             Mcu.addTargetLink startTrigger column.Api.Start.Index
             column :> IMcuGroup
 
+type ShipConvoy =
+    {
+        ConvoyName : string
+        Country : CountryId
+        Coalition : CoalitionId
+        Path : OrientedPosition list
+        CargoShips : ShipProperties list
+        Escort : ShipProperties list
+    }
+with
+    member this.CreateMCUs(store, lcStore) =
+        let pathVertices : Factory.PathVertex list=
+            this.Path
+            |> List.map (fun p ->
+                {
+                    Factory.Pos = p.Pos
+                    Ori = p.Rotation
+                    Radius = 250
+                    Speed = 20
+                    Priority = 1
+                    SpawnSide = Types.SpawnSide.Center
+                    Role = Factory.PathVertexRole.Intermediate
+                }
+            )
+        SturmovikMission.Blocks.ShipConvoy.ShipConvoy.Create(store, lcStore, this.CargoShips.Length, ShipConvoy.WaterType.Sea, pathVertices, this.Country.ToMcuValue, this.ConvoyName)
+
 type BuildingFire =
     {
         Pos : OrientedPosition
@@ -556,7 +583,7 @@ type MissionGenSettings =
 
 type IBuildingQuery =
     abstract BuildingDamages : (BuildingInstanceId * int * float32) list
-    abstract TryGetBuildingInstance : BuildingInstanceId -> BuildingInstance option
+    abstract TryGetBuildingInstance : BuildingInstanceId -> (BuildingInstance * BuildingProperties) option
     abstract GetOwnerAt : Vector2 -> CountryId option
     abstract GetBuildingDurability : ScriptName: string -> int option
 
@@ -582,7 +609,7 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
     for (bId, part, damage) in buildings.BuildingDamages |> Seq.filter filterDamages do
         match buildings.TryGetBuildingInstance(bId) with
         | None -> ()
-        | Some building ->
+        | Some(building, props) ->
 
         let roundedPos = roundPos2 building.Pos
         match blockAt.TryGetValue(roundedPos) with
@@ -590,7 +617,7 @@ let inline private mkStaticMCUs (store : NumericalIdentifiers.IdStore, buildings
             let damages = CommonMethods.getDamaged block
             let damages = CommonMethods.setItem part (T.Float.N(float damage)) damages
             let block = CommonMethods.setDamaged damages block
-            let block = CommonMethods.setDurability (T.Integer.N(building.Properties.Durability)) block
+            let block = CommonMethods.setDurability (T.Integer.N(props.Durability)) block
             blockAt.[roundedPos] <- block
         | false, _ ->
             // No block at position. Maybe the mission file was edited after the campaign started. Bad, but not worth dying with an exception.
@@ -683,6 +710,8 @@ type MultiplayerMissionContent =
         AiAttacks : AiAttack list
         /// List of chains of convoys, convoys in each chain start after the previous one reaches completion.
         Convoys : Convoy list list
+        /// List of ship convoys. They all run simultaneously.
+        ShipConvoys : ShipConvoy list
         ParkedPlanes : (PlaneModelId * OrientedPosition * CountryId) list
         Camps : Camp list
         BuildingFires : BuildingFire list
@@ -848,6 +877,13 @@ with
                 |> List.choose (fun (_, _, x) -> x))
             |> List.concat
 
+        // Ship convoys
+        let ships =
+            this.ShipConvoys
+            |> List.map(fun convoy -> convoy.CreateMCUs(store, lcStore))
+        for ship in ships do
+            Mcu.addTargetLink missionBegin ship.Start.Index
+
         // Parked planes
         let mkParkedPlane(model : PlaneModel, pos : OrientedPosition, country) =
             let modelScript = model.StaticScriptModel
@@ -1002,6 +1038,7 @@ with
                 yield! allPatrols
                 yield! allAttacks
                 yield! convoys
+                yield! ships |> List.map(fun ships -> ships.All)
                 yield! parkedPlanes
                 yield! camps |> List.map (fun camp -> camp.All)
                 yield! campRecons

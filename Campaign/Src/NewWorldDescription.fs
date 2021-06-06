@@ -30,6 +30,7 @@ open Campaign.Common.Buildings
 open Campaign.Common.GroundUnit
 
 open PilotRanks
+open Campaign.Common.Ship
 
 let private logger = NLog.LogManager.GetCurrentClassLogger()
 
@@ -139,16 +140,25 @@ with
         { this with Nodes = nodes }
 
     /// Set the bridges located on each link
-    member this.SetBridges(bridges : BuildingInstance list) =
+    member this.SetBridges(bridges : BuildingInstance list, buildingDb : BuildingProperties list) =
         // Find bridges by their exact position
         let byPos =
             bridges
-            |> Seq.map (fun instance -> instance.Pos, instance)
+            |> Seq.map (fun instance -> instance.Pos, instance.Script)
+            |> dict
+        let byScript =
+            buildingDb
+            |> Seq.map (fun building -> building.Script, building)
             |> dict
         // Get the boundary of each bridge, and cache values
         let getBoundary pos =
-            byPos.[pos].Properties.Boundary
-            |> List.map (fun v -> v.Rotate(pos.Rotation) + pos.Pos)
+            pos
+            |> (byPos.TryGetValue >> Option.ofPair)
+            |> Option.bind (byScript.TryGetValue >> Option.ofPair)
+            |> Option.map (fun props ->
+                props.Boundary
+                |> List.map (fun v -> v.Rotate(pos.Rotation) + pos.Pos))
+            |> Option.defaultValue []
         let cache = System.Collections.Generic.Dictionary()
         let cachedGetBoundary = SturmovikMission.Cached.cached cache getBoundary
         // Quick intersection tests for bridges
@@ -416,8 +426,12 @@ type World = {
     Roads : Network
     /// The rail network
     Rails : Network
+    /// Seaways
+    Seaways : Network
     /// Descriptions of all airfields
     AirfieldsList : Airfield list
+    /// Building properties, including bridges
+    BuildingPropertiesList : BuildingProperties list
     /// Building instances, excluding bridges
     BuildingsList : BuildingInstance list
     /// Bridge instances
@@ -439,6 +453,8 @@ type World = {
     GroundUnitsList : GroundUnit list
     /// Ground units of each participating country
     GroundUnitsOfCountryList : (CountryId * GroundUnitId list) list
+    /// Ships of each partipating country
+    ShipsList : (CountryId * ShipProperties list) list
 }
 with
     /// Portion of ground forces dedicated to anti-air
@@ -468,10 +484,7 @@ module private DynProps =
 
     let countries = cacheByKvp (fun world -> world.CountriesList)
 
-    let buildingProps = cacheByKvp (fun world ->
-        world.BuildingsList @ world.BridgesList
-        |> List.map (fun building -> building.Properties.Script, building.Properties)
-        |> List.distinctBy fst)
+    let buildingProps = cacheBy(fun world -> world.BuildingPropertiesList) (fun building -> building.Script)
 
     let groundUnits = cacheBy (fun world -> world.GroundUnitsList) (fun groundUnit -> groundUnit.Id)
 
@@ -536,6 +549,7 @@ type World with
     member this.TryGetBuildingInstance(bid : BuildingInstanceId) =
         [this.Buildings; this.Bridges]
         |> Seq.tryPick (fun d -> d.TryGetValue(bid) |> Option.ofPair)
+        |> Option.map (fun building -> building, this.BuildingProperties.TryGetValue(building.Script) |> Option.ofPair)
 
     member this.GetAnyCountryInCoalition(coalition) =
         this.CountriesList
@@ -559,6 +573,13 @@ type World with
         this.AirfieldsList
         |> Seq.exists (fun af -> af.Region = region)
 
+    member this.BoundaryOf(bId : BuildingInstanceId) =
+        match this.TryGetBuildingInstance bId with
+        | Some(building, Some props) ->
+            props.Boundary
+            |> List.map (fun v -> v.Rotate(building.Pos.Rotation) + building.Pos.Pos)
+        | None | Some(_, None) ->
+            []
 
 module Init =
     open System.IO
@@ -694,7 +715,7 @@ module Init =
                                 { Pos = Vector2.FromPos block
                                   Rotation = block |> getYOri |> valueOf |> float32
                                   Altitude = block |> getAlt |> valueOf |> float32 }
-                            Properties = props }
+                            Script = props.Script }
                 | false, _ ->
                     ()
         ]
@@ -981,6 +1002,80 @@ module Init =
                     ()
         ]
 
+    let extractShips(ships : T.Ship seq) =
+        [
+            for ship in ships do
+                let country =
+                    ship.GetCountry().Value
+                    |> enum
+                    |> CountryId.FromMcuValue
+                match country with
+                | Some country ->
+                    let name = ship.GetName().Value
+                    let desc = ship.GetDesc().Value
+                    let roles = extractShipRoles desc
+                    if roles.Length > 0 then
+                        let model = ship.GetModel().Value
+                        let script = ship.GetModel().Value
+                        match knownShipLogNames |> List.tryFind (fun (_, scriptName) -> scriptName = script) with
+                        | Some (logName, _) ->
+                            yield
+                                country, {
+                                    Name = name
+                                    LogName = logName
+                                    Roles = roles |> List.ofArray
+                                    ScriptModel = {
+                                        Script = script
+                                        Model = model
+                                    }
+                                }
+                        | None ->
+                            ()
+                | None ->
+                    ()
+        ]
+
+    let extractSeaways(waypoints : T.MCU_Waypoint seq) =
+        let nodes =
+            waypoints
+            |> Seq.map (fun wp ->
+                {
+                    Id = wp.GetIndex().Value
+                    Pos = Vector2.FromPos wp
+                    Region = None
+                    HasTerminal = wp.GetTargets().Value.Length = 0
+                }
+            )
+            |> List.ofSeq
+        let links =
+            waypoints
+            |> Seq.collect (fun wp ->
+                wp.GetTargets().Value
+                |> Seq.map (fun tgt ->
+                    {
+                        NodeA = wp.GetIndex().Value
+                        NodeB = tgt
+                        Bridges = []
+                        FlowCapacity = 1e9f<M^3/H>
+                    }
+                )
+            )
+            |> List.ofSeq
+        let targetted =
+            waypoints
+            |> Seq.collect (fun wp -> wp.GetTargets().Value)
+            |> Set
+        let nodes =
+            nodes
+            |> List.map (fun node ->
+                { node with
+                    HasTerminal = node.HasTerminal || not(targetted.Contains(node.Id))
+                })
+        {
+            Nodes = nodes
+            Links = links
+        }
+
     /// Load a scenario mission file and create a world description.
     let mkWorld(scenario : string, roadsCapacity : float32<M^3/H>, railsCapacity : float32<M^3/H>) =
         let exeDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
@@ -1033,6 +1128,13 @@ module Init =
         // Map name
         let options = Seq.head missionData.ListOfOptions
         let mapName = options.GetGuiMap().Value
+        let mapLocationName =
+            match mapName with
+            | Contains "rheinland" -> "rheinland"
+            | Contains "moscow" -> "moscow"
+            | Contains "kuban" -> "kuban"
+            | Contains "stalingrad" -> "stalingrad"
+            | _ -> mapName
         // Mapping from countries to coalitions
         let countries =
             options.GetCountries().Value
@@ -1070,14 +1172,17 @@ module Init =
             let graph =
                 loadRoadGraph(graph, capacity)
             let roads0 = graph.SetRegions regions
-            let roads1 = roads0.SetBridges bridges
+            let roads1 = roads0.SetBridges(bridges, buildingDb)
             let roads2 = roads1.SetTerminals terminals
             roads2, bridges
         // Roads
-        let roads, roadBridges = loadRoads "BridgesHW" (Path.Combine(exeDir, "Config", sprintf "Roads-%s.json" mapName)) roadsCapacity
+        let roads, roadBridges = loadRoads "BridgesHW" (Path.Combine(exeDir, "Config", sprintf "Roads-%s.json" mapLocationName)) roadsCapacity
         // Railroads
-        let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapName)) railsCapacity
+        let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapLocationName)) railsCapacity
         let bridges = roadBridges @ railBridges
+        // Seaways
+        let seaways = extractSeaways(missionData.GetGroup("Seaways").ListOfMCU_Waypoint)
+        let seaways = seaways.SetRegions regions
         // Ground units
         let groundUnits =
             loadGroundUnitsDb (Path.Combine(exeDir, "Config", "GroundUnitDb.json"))
@@ -1096,6 +1201,12 @@ module Init =
                     | None ->
                         ()
             ]
+        // Ships
+        let ships =
+            extractShips (missionData.GetGroup("Ships").ListOfShip)
+            |> List.groupBy fst
+            |> List.map (fun (k, vs) -> k, vs |> List.map snd)
+
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
@@ -1117,6 +1228,7 @@ module Init =
             Roads = roads
             Rails = rails
             AirfieldsList = airfields
+            BuildingPropertiesList = buildingDb
             BuildingsList = buildings
             BridgesList = bridges
             PlaneModelsList = planeModels
@@ -1127,6 +1239,8 @@ module Init =
             Awards = AwardDatabase.Default
             GroundUnitsList = groundUnits
             GroundUnitsOfCountryList = []
+            ShipsList = ships
+            Seaways = seaways
         }
 
 module IO =

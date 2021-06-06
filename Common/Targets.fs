@@ -22,39 +22,56 @@ open System.Numerics
 open Campaign.Common.PlaneModel
 open Campaign.Common.BasicTypes
 open Campaign.Common.Buildings
+
 open Util.StringPatterns
 
 type TargetType =
-    | Truck | Train | Ship | Battleship | GunBoat | Artillery | Tank | ArmoredCar
+    | Truck | Train | CargoShip | Battleship | TroopLandingShip | Artillery | Tank | ArmoredCar
     | Bridge of BuildingInstanceId * int
     | Building of BuildingInstanceId * int
-    | ParkedPlane of AirfieldId * PlaneModelId
-    | Air of PlaneModelId
+    | ParkedPlane of AirfieldId * PlaneModelId * PlaneType
+    | Air of PlaneModelId * PlaneType
 with
     member this.GroundForceValue =
         match this with
         | Battleship -> 100.0f<MGF>
-        | GunBoat -> 15.0f<MGF>
+        | CargoShip -> 20.0f<MGF>
+        | TroopLandingShip -> 50.0f<MGF>
         | Artillery -> 10.0f<MGF>
         | Tank -> 25.0f<MGF>
         | ArmoredCar -> 5.0f<MGF>
         | Truck -> 2.0f<MGF>
         | _ -> 0.0f<MGF>
 
+    /// Penalty on the ground transport capacity when a target is destroyed
+    member this.GroundTransportCapacityPenalty =
+        match this with
+        | Truck -> 0.5f
+        | Train -> 5.0f
+        | _ -> 0.0f
+        |> ( * ) 0.01f
+
+    /// Penalty on the sea transport capacity when a target is destroyed
+    member this.SeaTransportCapacityPenalty =
+        match this with
+        | CargoShip -> 5.0f
+        | _ -> 0.0f
+        |> ( * ) 0.01f
+
     member this.Description =
         match this with
         | Truck -> "truck"
         | Train -> "train"
-        | Ship -> "ship"
+        | CargoShip -> "cargo ship"
         | Battleship -> "battleship"
-        | GunBoat -> "gunboat"
+        | TroopLandingShip -> "troop landing"
         | Artillery -> "artillery"
         | Tank -> "tank"
         | ArmoredCar -> "car"
         | Bridge _ -> "bridge"
         | Building _ -> "building"
-        | ParkedPlane (_, plane) -> sprintf "parked %s" (string plane)
-        | Air plane -> string plane
+        | ParkedPlane (_, plane, _) -> sprintf "parked %s" (string plane)
+        | Air(plane, _) -> string plane
 
     member this.IsCompatibleWith(vehicle : GroundUnit.GroundUnit) =
         match this with
@@ -70,8 +87,15 @@ with
             vehicle.IsMobile && vehicle.Durability >= 1500 &&
             let expected = Set [GroundUnit.GroundRole.MachineGun; GroundUnit.GroundRole.AntiAirMachineGun]
             vehicle.Roles |> List.exists expected.Contains
-        | Train | Ship | Battleship | GunBoat | Bridge _ | Building _ | ParkedPlane _ | Air _ ->
+        | Train | Battleship | CargoShip | TroopLandingShip | Bridge _ | Building _ | ParkedPlane _ | Air _ ->
             false
+
+    member this.IsCompatibleWith(ship : Ship.ShipProperties) =
+        match this with
+        | CargoShip -> ship.Roles |> List.exists ((=) Ship.ShipRole.Cargo)
+        | Battleship -> ship.Roles |> List.exists ((=) Ship.ShipRole.Defensive)
+        | TroopLandingShip -> ship.Roles |> List.exists ((=) Ship.ShipRole.TroopLanding)
+        | _ -> false
 
 module ActivePatterns =
     let (|GroundForceTarget|_|) (kind : TargetType) =
@@ -87,9 +111,9 @@ module ActivePatterns =
         | Contains "cannon" -> Some Artillery
         | Contains "truck" -> Some Truck
         | Contains "train" -> Some Train
-        | Contains "ship" -> Some Ship
+        | Contains "cargo ship" -> Some CargoShip
         | Contains "battleship" -> Some Battleship
-        | Contains "gunboat" -> Some GunBoat
+        | Contains "troop landing" -> Some TroopLandingShip
         | Contains "tank" -> Some Tank
         | Contains "car" -> Some ArmoredCar
         | _ -> None

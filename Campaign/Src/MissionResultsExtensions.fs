@@ -96,9 +96,13 @@ type IWarStateQuery with
         let pos = Vector2(x, z)
         Seq.append this.World.Buildings.Values this.World.Bridges.Values
         |> Seq.filter (fun building ->
-            normalizeScript(building.Properties.Script) = logName &&
-            List.contains part building.Properties.SubParts &&
-            pos.IsInConvexPolygon building.Boundary)
+            match this.World.BuildingProperties.TryGetValue(building.Script) with
+            | true, properties ->
+                normalizeScript(properties.Script) = logName &&
+                List.contains part properties.SubParts &&
+                pos.IsInConvexPolygon properties.Boundary
+            | false, _ ->
+                false)
 
     /// Try to get the static plane at the given position, and the airfield it is assigned to.
     member this.TryGetStaticPlaneAt(logName : string, ((x, _, z) as pos)) =
@@ -179,6 +183,9 @@ type Binding with
                 match war.World.CountryOfGroundUnit.TryGetValue(vehicle.Id) with
                 | false, _ -> false
                 | true, c -> Some c = country)
+        let countryShips =
+            war.World.ShipsList
+            |> List.collect (fun (country2, ships) -> if country = Some country2 then ships else [])
 
         let dynVehicle =
             lazy
@@ -215,6 +222,16 @@ type Binding with
                     | AntiAirTruck -> TargetType.Artillery
                     | StaffCar -> TargetType.ArmoredCar
                 )
+
+        let ship =
+            lazy
+                countryShips
+                |> Seq.filter(fun vehicle -> logName = vehicle.ScriptModel.Script)
+                |> Seq.tryPick(fun vehicle ->
+                    [ TargetType.Battleship; TargetType.CargoShip; TargetType.TroopLandingShip ]
+                    |> List.tryFind (fun tt -> tt.IsCompatibleWith(vehicle))
+                )
+
         match convoyVehicle.Value with
         | Some x -> Some x
         | None ->
@@ -222,6 +239,9 @@ type Binding with
         | Some x -> Some x
         | None ->
         match staVehicle.Value with
+        | Some x -> Some x
+        | None ->
+        match ship.Value with
         | Some x -> Some x
         | None ->
             None

@@ -834,6 +834,22 @@ type Controller(settings : GameServerControl.Settings) =
                     return Error "No such region"
             }
 
+        member this.GetCombatBonusesOfPilot(pilotId : string) =
+            async {
+                let! war = this.WarState
+                match war with
+                | Error e ->
+                    return Error e
+                | Ok war ->
+                let id = Pilots.PilotId(System.Guid(pilotId))
+                try
+                    let pilot = war.GetPilot(id)
+                    let bonuses = pilot.ComputeBonuses(war)
+                    return Ok bonuses
+                with
+                _ -> return Error "Could not get pilot bonuses"
+            }
+
         interface IRoutingResponse with
             member this.GetScenarioNames() = async.Return(this.GetScenarioNames())
             member this.AllPlayers() = this.FindPlayers("")
@@ -850,6 +866,11 @@ type Controller(settings : GameServerControl.Settings) =
             member this.GetSyncState() = this.GetSyncState()
             member this.GetPilots(filter) = this.GetPilots(filter)
             member this.GetPilot(id) = this.GetPilot(id)
+            member this.GetCombatBonusesOfPilot(id) =
+                async {
+                    let! bonuses = this.GetCombatBonusesOfPilot(id)
+                    return bonuses |> Result.map (Array.map box)
+                }
             member this.GetPlayerPilots(hashedGuid) = this.GetPlayerPilots(HashedGuid.Create hashedGuid)
             member this.GetOnlinePlayers() =
                 async {

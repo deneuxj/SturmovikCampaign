@@ -36,6 +36,8 @@ open Campaign.CombatBonuses
 /// Kind of targets on the ground
 type GroundTargetType =
     | GroundForces of CoalitionId
+    | TransportShips of CoalitionId
+    | WarShips of CoalitionId
     | BridgeTarget
     | BuildingTarget // Factories and other buildings inside regions but outside airfields
     | AirfieldTarget of AirfieldId // Hangars, fuel tanks, parked planes... on an airfield
@@ -43,6 +45,8 @@ with
     member this.Description =
         match this with
         | GroundForces coalition -> sprintf "ground forces of %s" (string coalition)
+        | TransportShips coalition -> sprintf "ships of %s" (string coalition)
+        | WarShips coalition -> sprintf "war ships of %s" (string coalition)
         | BridgeTarget -> "bridges"
         | BuildingTarget -> "buildings"
         | AirfieldTarget afId -> sprintf "%s airbase" afId.AirfieldName
@@ -128,6 +132,8 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
     let getGroundForcesHitRate() =
         random.NextDouble() * 0.2 + 0.25
         |> float32
+
+    let expBonus x = 1.0f - 1.0f / exp(x)
 
     member this.DoTakeOffs() =
         seq {
@@ -338,24 +344,27 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             (string interception.Objective)
 
                     // Kill rates, affected by experience bonuses
-                    let interceptorExperience, defenderKillRate =
-                        match war.World.PlaneSet.[mission.Plane].Kind with
+                    let interceptorExperience, defenderKillRate, difficulty =
+                        let plane = war.World.PlaneSet.[mission.Plane]
+                        match plane.Kind with
                         | PlaneType.Fighter ->
                             let loadoutKillRateModifier =
                                 match mission.MissionType with
                                 | AreaProtection _ -> 1.0f
                                 | _ -> 0.75f
-                            AirSupremacy, loadoutKillRateModifier * getFighterAttackRate()
+                            AirSupremacy, loadoutKillRateModifier * getFighterAttackRate(), TargetDifficulty.OfTarget(TargetType.Air(plane.Id, Fighter))
                         | _ ->
-                            Interception, getBomberDefenseRate()
+                            AirSupremacy, getBomberDefenseRate(), TargetDifficulty.OfTarget(TargetType.Air(plane.Id, plane.Kind))
                     let defendersBonus =
                         if defenderKillRate >= 1.0f then
-                            bonuses.GetBonus(war.World.Airfields.[mission.StartAirfield].Region, AirSupremacy mission.Plane)
+                            bonuses.GetBonus(mission.StartAirfield, AirSupremacy(mission.Plane, difficulty))
+                            |> expBonus
                         else
                             0.0f
                     let defenderKillRate = defenderKillRate + defendersBonus
                     let interceptorsBonus =
-                        bonuses.GetBonus(war.World.Airfields.[interception.StartAirfield].Region, interceptorExperience interception.Plane)
+                        bonuses.GetBonus(interception.StartAirfield, interceptorExperience(interception.Plane, difficulty))
+                        |> expBonus
                     let interceptorKillRate =
                         getFighterAttackRate() * (1.0f + interceptorsBonus)
                     // Notify kill rate bonuses
@@ -426,12 +435,6 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                     // Effect of area protection already handled during interception phase
                     ()
                 | Bombing(targetType) | Strafing(targetType) ->
-                    let bonus =
-                        let domain =
-                            match mission.MissionType with
-                            | Bombing _ -> ExperienceDomain.Bombing
-                            | _ -> ExperienceDomain.Strafing
-                        bonuses.GetBonus(war.World.Airfields.[mission.StartAirfield].Region, domain mission.Plane)
                     let region = war.World.Regions.[mission.Objective]
                     let plane = war.World.PlaneSet.[mission.Plane].Name
                     let numBridgePartsDamaged, volumeBuildingDamaged =
@@ -446,29 +449,29 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                         let subject =
                             match target.Kind with
                             | TargetType.Bridge(bid, _) ->
-                                match war.World.Bridges.TryGetValue(bid) |> Option.ofPair with
-                                | Some building ->
-                                    sprintf "Bridge %s" building.Properties.Model
+                                match war.World.TryGetBuildingInstance(bid) |> Option.bind snd with
+                                | Some bridge ->
+                                    sprintf "Bridge %s" bridge.Model
                                 | None ->
                                     "A bridge"
                             | TargetType.Building(bid, _) ->
-                                match war.World.Buildings.TryGetValue(bid) |> Option.ofPair with
+                                match war.World.TryGetBuildingInstance(bid) |> Option.bind snd with
                                 | Some building ->
-                                    sprintf "Building %s" building.Properties.Model
+                                    sprintf "Building %s" building.Model
                                 | None ->
                                     "A building"
-                            | TargetType.ParkedPlane(afId, parked) ->
-                                sprintf "Parked plane %s at %s" (string parked) afId.AirfieldName
+                            | TargetType.ParkedPlane(afId, parked, _) ->
+                                sprintf "Parked %s at %s" (string parked) afId.AirfieldName
                             | Truck -> "Truck"
                             | Train -> "Train"
-                            | Ship -> "Ship"
+                            | CargoShip -> "Ship"
                             | Battleship -> "Battleship"
-                            | GunBoat -> "Gun boat"
+                            | TroopLandingShip -> "Troop landing"
                             | Artillery -> "Piece of artillery"
                             | Tank -> "Tank"
                             | ArmoredCar -> "Armored car"
-                            | Air plane ->
-                                sprintf "In-flight plane %s" (string plane)
+                            | TargetType.Air(plane, _) ->
+                                sprintf "In-flight %s" (string plane)
                         sprintf "%s hit by %s from %s in %s at %0.0f, %0.0f"
                             subject
                             plane
@@ -480,7 +483,11 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                     let targets =
                         // Pick parts of a building at random, biased towards undamaged parts
                         let getParts owner (building : BuildingInstance) =
-                            building.Properties.SubParts
+                            building.Script
+                            |> war.World.BuildingProperties.TryGetValue
+                            |> Option.ofPair
+                            |> Option.map (fun props -> props.SubParts)
+                            |> Option.defaultValue []
                             |> List.sortByDescending (fun part -> war.GetBuildingPartHealthLevel(building.Id, part))
                             |> Seq.filter (fun part -> war.GetBuildingPartHealthLevel(building.Id, part) > 0.0f)
                             |> Seq.map (fun part ->
@@ -492,7 +499,12 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
 
                         let getBuildingParts owner building =
                             let parts = getParts owner building
-                            let partVolume = building.Properties.PartCapacity
+                            let partVolume =
+                                building.Script
+                                |> war.World.BuildingProperties.TryGetValue
+                                |> Option.ofPair
+                                |> Option.map (fun p -> p.PartCapacity)
+                                |> Option.defaultValue 0.0f<M^3>
                             let numParts = volumeBuildingDamaged / partVolume |> int |> max 1
                             assert(numParts >= 0)
                             Seq.truncate numParts parts
@@ -501,6 +513,12 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             assert(numBridgePartsDamaged >= 0)
                             getParts owner bridge
                             |> Seq.truncate numBridgePartsDamaged
+
+                        let posInWater region =
+                            war.World.Seaways.Nodes
+                            |> Seq.tryFind (fun node -> node.Region = Some region)
+                            |> Option.map (fun node -> { Pos = node.Pos; Altitude = 0.0f; Rotation = 0.0f })
+                            |> Option.defaultValue { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
 
                         match targetType with
                         | GroundForces owner ->
@@ -520,6 +538,37 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                         Kind = kind
                                         Owner = Some owner
                                         Pos = { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
+                                    }
+                                )
+                            targets
+
+                        | TransportShips owner ->
+                            Seq.init 10 (fun _ ->
+                                {
+                                    Kind = CargoShip
+                                    Owner = Some owner
+                                    Pos = posInWater mission.Objective
+                                }
+                            )
+                            |> Seq.cache
+
+                        | WarShips owner ->
+                            let kinds =
+                                [| TargetType.Battleship; TargetType.TroopLandingShip; TargetType.CargoShip |]
+                            let forces = war.GetGroundForces(owner, mission.Objective)
+                            let targets =
+                                Seq.unfold (fun forces ->
+                                    if forces < 0.0f<MGF> then
+                                        None
+                                    else
+                                        let kind = kinds.[random.Next(kinds.Length)]
+                                        Some(kind, forces - kind.GroundForceValue)) forces
+                                |> Seq.cache
+                                |> Seq.map (fun kind ->
+                                    {
+                                        Kind = kind
+                                        Owner = Some owner
+                                        Pos = posInWater mission.Objective
                                     }
                                 )
                             targets
@@ -569,8 +618,13 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                     assert(qty >= 0.0f)
                                     Seq.init (int qty) (fun _ -> planeId))
                                 |> Seq.map (fun planeId ->
+                                    let kind =
+                                        war.World.PlaneSet.TryGetValue(planeId)
+                                        |> Option.ofPair
+                                        |> Option.map (fun plane -> plane.Kind)
+                                        |> Option.defaultValue Fighter
                                     {
-                                        Kind = TargetType.ParkedPlane(af, planeId)
+                                        Kind = TargetType.ParkedPlane(af, planeId, kind)
                                         Owner = owner
                                         Pos = { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }
                                     })
@@ -579,18 +633,28 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             |> Seq.cache
                             |> Seq.map (function Choice1Of2 x | Choice2Of2 x -> x)
 
-                    yield
-                        None,
-                        sprintf "Bonus for ground attack at %s by %s: %5.2f" (string mission.Objective) plane (100.0f * bonus)
-                    for target in targets |> Seq.truncate (int(ceil(float32 numPlanes * (1.0f + bonus)))) do
+                    for target in targets |> Seq.truncate (int(ceil(float32 numPlanes))) do
+                        let bonus =
+                            let ammo =
+                                match mission.MissionType with
+                                | Strafing _ -> Guns
+                                | _ -> Bombs
+                            let domain = GroundAttack(mission.Plane, TargetDifficulty.OfTarget target.Kind, ammo)
+                            bonuses.GetBonus(mission.StartAirfield, domain)
+                            |> expBonus
+                        yield
+                            None,
+                            sprintf "Bonus for ground attack at %s by %s: %5.2f" (string mission.Objective) plane (100.0f * bonus)
+
+                        let destructionFactor = 0.5f + 0.5f * bonus
                         let command =
                             match target with
                             | { Kind = TargetType.Building(bid, part) } ->
-                                Some(DamageBuildingPart(bid, part, 1.0f))
-                            | { Kind = TargetType.ParkedPlane(afId, planeId) } ->
-                                Some(RemovePlane(afId, planeId, 1.0f))
+                                Some(DamageBuildingPart(bid, part, destructionFactor))
+                            | { Kind = TargetType.ParkedPlane(afId, planeId, _) } ->
+                                Some(RemovePlane(afId, planeId, destructionFactor))
                             | { Kind = ActivePatterns.GroundForceTarget value; Owner = Some owner } ->
-                                Some(DestroyGroundForces(mission.Objective, owner, value))
+                                Some(DestroyGroundForces(mission.Objective, owner, destructionFactor * value))
                             | _ ->
                                 None
                         yield

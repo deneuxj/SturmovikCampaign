@@ -157,7 +157,7 @@ type WarStateSerialization =
 with
     static member Default =
         {
-            FormatVersionMajor = 1
+            FormatVersionMajor = 2
             FormatVersionMinor = 0
             Date = DateTime(0L)
             Weather = WeatherState.Default
@@ -194,11 +194,15 @@ type WarState
         |> Seq.mutableDict
     let roads = world.Roads.GetQuickAccess()
     let rails = world.Rails.GetQuickAccess()
+    let seaways = world.Seaways.GetQuickAccess()
+
     // Must be cleared whenever owners change
     let regionDistancesToEnemy = Seq.mutableDict []
     // Must be cleared whenever bridges are damaged or repaired
     let roadsCapacities = Seq.mutableDict []
     let railsCapacities = Seq.mutableDict []
+    // No need to clear
+    let seaCapacities = Seq.mutableDict []
     // Must be cleared whenever bridges are damaged or repaired, or owners change
     let supplyAvailability = Seq.mutableDict []
     // Distances (in number of regions) of regions to regions with airfields, need never be cleared
@@ -342,16 +346,24 @@ type WarState
     member this.GetBuildingFullCapacity(bid) =
         match this.World.Buildings.TryGetValue(bid) with
         | true, building ->
-            (float32 building.Properties.SubParts.Length) * building.Properties.PartCapacity
+            match this.World.BuildingProperties.TryGetValue(building.Script) with
+            | true, properties ->
+                (float32 properties.SubParts.Length) * properties.PartCapacity
+            | false, _ ->
+                0.0f<M^3>
         | false, _ ->
             0.0f<M^3>
 
     member this.GetBuildingCapacity(bid) =
         match this.World.Buildings.TryGetValue(bid) with
         | true, building ->
-            building.Properties.SubParts
-            |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
-            |> (*) building.Properties.PartCapacity
+            match this.World.BuildingProperties.TryGetValue(building.Script) with
+            | true, properties ->
+                properties.SubParts
+                |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
+                |> (*) properties.PartCapacity
+            | false, _ ->
+                0.0f<M^3>
         | false, _ ->
             0.0f<M^3>
 
@@ -365,9 +377,14 @@ type WarState
     member this.GetBuildingFunctionalityLevel(bid) =
         match this.World.Buildings.TryGetValue(bid) with
         | true, building ->
-            match building.Properties.SubParts.Length with
+            let subParts =
+                this.World.BuildingProperties.TryGetValue(building.Script)
+                |> Option.ofPair
+                |> Option.map (fun props -> props.SubParts)
+                |> Option.defaultValue []
+            match subParts.Length with
             | n when n > 0 ->
-                building.Properties.SubParts
+                subParts
                 |> List.sumBy (fun part -> this.GetBuildingPartFunctionalityLevel(bid, part))
                 |> (*) (1.0f / (float32 n))
             | _ ->
@@ -393,7 +410,12 @@ type WarState
     member this.GetBridgeFunctionalityLevel(bid) =
         match this.World.Bridges.TryGetValue(bid) |> Option.ofPair with
         | Some building ->
-            building.Properties.SubParts
+            let subParts =
+                this.World.BuildingProperties.TryGetValue(building.Script)
+                |> Option.ofPair
+                |> Option.map (fun props -> props.SubParts)
+                |> Option.defaultValue []
+            subParts
             |> List.fold (fun level part ->
                 this.GetBuildingPartFunctionalityLevel(bid, part)
                 |> min level
@@ -453,6 +475,11 @@ type WarState
             railsCapacities
             (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity rails)
 
+    member this.ComputeSeaCapacity() =
+        Cached.cached
+            seaCapacities
+            (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity seaways)
+
     member this.ComputeSupplyAvailability() =
         Cached.cached
             supplyAvailability
@@ -463,7 +490,7 @@ type WarState
                     if world.Regions.[rId].IsEntry then
                         world.CoalitionEntryResources owner * this.GetRegionProcessingLevel(rId)
                     else
-                    // Regions through which a the owner coalition can travel: neutral, and the ones under one's control.
+                    // Regions through which the owner coalition can travel: neutral, and the ones under one's control.
                     let regions =
                         world.Regions.Keys
                         |> Seq.filter (fun regId -> match this.GetOwner(regId) with Some coalition -> coalition = owner | None -> true)
@@ -621,6 +648,7 @@ type WarState
         member this.ComputeDistancesToCoalition(arg1) = upcast(this.ComputeDistancesToCoalition(arg1))
         member this.ComputeRailCapacity() = this.ComputeRailCapacity()
         member this.ComputeRoadCapacity() = this.ComputeRoadCapacity()
+        member this.ComputeSeaCapacity() = this.ComputeSeaCapacity()
         member this.ComputeSupplyAvailability() = this.ComputeSupplyAvailability()
         member this.Date = this.Date
         member this.GetBridgeFunctionalityLevel(arg1) = this.GetBridgeFunctionalityLevel(arg1)

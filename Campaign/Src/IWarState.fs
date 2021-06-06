@@ -71,6 +71,8 @@ type IWarStateQuery =
     abstract member ComputeRoadCapacity : unit -> (RegionId * RegionId -> float32<M^3/H>)
     /// Compute a mapping from pairs of regions to rail transport capacity between these two regions
     abstract member ComputeRailCapacity : unit -> (RegionId * RegionId -> float32<M^3/H>)
+    /// Compute a mapping from pairs of regions to sea transport capacity between these two regions
+    abstract member ComputeSeaCapacity : unit -> (RegionId * RegionId -> float32<M^3/H>)
     /// Compute a mapping from regions to amount of supplies that can reach it from the rear regions every hour
     abstract member ComputeSupplyAvailability : unit -> (RegionId -> float32<E/H>)
     /// Get a mapping denoting the number of each plane model at an airfield
@@ -106,16 +108,16 @@ module IWarStateExtensions =
 
         member this.GetBuildingHealth(bid) =
             match this.World.TryGetBuildingInstance(bid) with
-            | Some building ->
-                match building.Properties.SubParts.Length with
+            | Some(building, Some properties) ->
+                match properties.SubParts.Length with
                 | n when n > 0 ->
                     let sum =
-                        building.Properties.SubParts
+                        properties.SubParts
                         |> List.sumBy (fun part -> this.GetBuildingPartHealthLevel(bid, part))
                     sum / (float32 n)
                 | _ ->
                     1.0f
-            | None ->
+            | None | Some(_, None) ->
                 1.0f
 
         /// Get the amount of resources available for anti-air defenses.

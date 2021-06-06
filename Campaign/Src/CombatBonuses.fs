@@ -28,24 +28,89 @@ open Campaign.NewWorldDescription
 open Campaign.WarState
 open Campaign.Pilots
 
+type TargetSize = SmallTarget | LargeTarget
+with
+    member this.Rank =
+        match this with 
+        | SmallTarget -> 1
+        | LargeTarget -> 0
+
+type TargetMobility = Nimble | Moving | Static
+with
+    member this.Rank =
+        match this with
+        | Nimble -> 2
+        | Moving -> 1
+        | Static -> 0
+
+type TargetSpace = Ground | Water | Air
+with
+    member this.Rank =
+        match this with
+        | Air -> 0
+        | Ground -> 1
+        | Water -> 2
+
+type TargetDifficulty =
+    {
+        Size : TargetSize
+        Mobility : TargetMobility
+        Space : TargetSpace
+    }
+with
+    member this.Rank = (this.Space, this.Mobility, this.Size.Rank)
+
+    static member OfTarget(target : TargetType) =
+        match target with
+        | Truck | ArmoredCar -> { Size = SmallTarget; Mobility = Nimble; Space = Ground }
+        | Tank -> { Size = SmallTarget; Mobility = Moving; Space = Ground }
+        | Train -> { Size = LargeTarget; Mobility = Moving; Space = Ground }
+        | Artillery -> { Size = SmallTarget; Mobility = Static; Space = Ground }
+        | TroopLandingShip -> { Size = SmallTarget; Mobility = Moving; Space = Water }
+        | CargoShip | Battleship -> { Size = LargeTarget; Mobility = Moving; Space = Water }
+        | Bridge _ -> { Size = LargeTarget; Mobility = Static; Space = Water }
+        | Building _ -> { Size = LargeTarget; Mobility = Static; Space = Ground }
+        | TargetType.Air(_, Fighter) -> { Size = SmallTarget; Mobility = Nimble; Space = Air }
+        | TargetType.Air(_, Attacker) -> { Size = SmallTarget; Mobility = Moving; Space = Air }
+        | TargetType.Air(_, (Bomber | Transport)) -> { Size = LargeTarget; Mobility = Moving; Space = Air }
+        | ParkedPlane _ -> { Size = SmallTarget; Mobility = Static; Space = Ground }
+
+// Note: current method of data extraction from logs doesn't distinguish very well between ammo type.
+// Ideally we would want: small caliber guns, cannon rounds, rockets, bombs (large, medium, small, cluster)
+type GroundAttackAmmo = Bombs | Guns
+
+module AmmoPatterns =
+    /// Identify "explosion" from the logs as damage by bombs, everything else as guns
+    let (|AsGroundAttackAmmo|) =
+        function
+        | AmmoName "explosion" -> AsGroundAttackAmmo Bombs
+        | _ -> AsGroundAttackAmmo Guns
+
 /// Domains of combat affected by experience bonuses
 type ExperienceDomain =
-    | AirSupremacy of PlaneModelId // Attacks by a specific plane model on fighters
-    | Interception of PlaneModelId // Attacks by a specific plane model on bombers and ground attackers
-    | Bombing of PlaneModelId // Attacks by a specific plane model using bombs
-    | Strafing of PlaneModelId // Attacks by a specific plane model using other means
+    /// Attacks by a specific plane model on other planes in the air
+    | AirSupremacy of PlaneModelId * TargetDifficulty
+    /// Attacks on ground targets by a specific plane model
+    | GroundAttack of PlaneModelId * TargetDifficulty * GroundAttackAmmo
+with
+    /// Check if the bonus of this domain can be counted as bonus for another domain
+    member this.Covers other =
+        match this, other with
+        | AirSupremacy(plane1, diff1), AirSupremacy(plane2, diff2) ->
+            plane1 = plane2 && diff1.Rank >= diff2.Rank
+        | GroundAttack(plane1, diff1, ammo1), GroundAttack(plane2, diff2, ammo2) ->
+            plane1 = plane2 && ammo1 = ammo2 && diff1.Rank >= diff2.Rank
+        | _ ->
+            false
 
 /// Experience bonuses granted by successful flight records
 type ExperienceBonus =
     {
-        Start : RegionId
+        Start : AirfieldId
         Domain : ExperienceDomain
         Bonus : float32
     }
 with
-    member this.Key =
-        this.Start, this.Domain
-
     /// Compute the contributions from a player
     static member ContributedByPilot(war : IWarStateQuery, pilot : PilotId) =
         let pilot = war.GetPilot(pilot)
@@ -55,41 +120,24 @@ with
                     let plane = war.World.PlaneSet.[flight.Plane]
                     let airfield = war.World.Airfields.[flight.Start]
                     for target, ammo, amount in flight.TargetsDamaged do
-                        match target, ammo with
-                        | Air plane2, _ ->
-                            let plane2 = war.World.PlaneSet.[plane2]
-                            match plane2.Kind with
-                            | PlaneType.Fighter ->
-                                {
-                                    Start = airfield.Region
-                                    Bonus = 0.01f * amount
-                                    Domain = AirSupremacy plane.Id
-                                }
-                            | PlaneType.Attacker | PlaneType.Bomber | PlaneType.Transport ->
-                                {
-                                    Start = airfield.Region
-                                    Bonus = 0.01f * amount
-                                    Domain = Interception plane.Id
-                                }
-                        | _, AmmoName "explosion" ->
-                            {
-                                Start = airfield.Region
-                                Bonus = 0.01f * amount
-                                Domain = Bombing plane.Id
-                            }
-                        | _, _ ->
-                            {
-                                Start = airfield.Region
-                                Bonus = 0.01f * amount
-                                Domain = Strafing plane.Id
-                            }
+                        let domain =
+                            match target, ammo with
+                            | TargetType.Air _, _ ->
+                                AirSupremacy(plane.Id, TargetDifficulty.OfTarget target)
+                            | _, AmmoPatterns.AsGroundAttackAmmo ammo ->
+                                GroundAttack(plane.Id, TargetDifficulty.OfTarget target, ammo)
+                        yield {
+                            Start = airfield.AirfieldId
+                            Bonus = 0.01f * amount
+                            Domain = domain
+                        }
             }
         bonuses
 
 /// Mapping from start airfields, objective regions and experience domains to bonus values
 type ExperienceBonuses =
     {
-        Bonuses : Map<RegionId * ExperienceDomain, float32>
+        Bonuses : Map<AirfieldId, (ExperienceDomain * float32) list>
     }
 with
     static member Create(war : IWarStateQuery) =
@@ -125,15 +173,29 @@ with
             |> Seq.fold (fun bonuses contrib -> bonuses.Update contrib) bonuses
         )
 
-    member this.GetBonus(key) =
+    member this.GetBonus(afId, domain) =
         let x =
-            this.Bonuses.TryFind(key)
+            this.Bonuses.TryFind(afId)
+            |> Option.defaultValue []
+            |> List.filter (fun (bonus, _) -> bonus.Covers domain)
+            |> List.sortByDescending snd
+            |> List.tryHead
+            |> Option.map snd
             |> Option.defaultValue 0.0f
-        1.0f - 1.0f / exp(x)
+        x
 
     member this.Update(bonus : ExperienceBonus) =
+        let oldList =
+            this.Bonuses.TryFind(bonus.Start)
+            |> Option.defaultValue []
         let oldValue =
-            this.GetBonus(bonus.Key)
+            oldList
+            |> List.tryFind (fun (entry, _) -> entry = bonus.Domain)
+            |> Option.map snd
+            |> Option.defaultValue 0.0f
+        let newList =
+            (bonus.Domain, oldValue + bonus.Bonus) ::
+            List.filter (fun (domain, _) -> domain <> bonus.Domain) oldList
         { this with
-            Bonuses = this.Bonuses.Add(bonus.Key, oldValue + bonus.Bonus) }
+            Bonuses = this.Bonuses.Add(bonus.Start, newList) }
 

@@ -1180,9 +1180,9 @@ type WorldWar2(world : World, C : Constants) =
                     [|
                         for af in war.World.Airfields.Values do
                             for bid in af.Facilities do
-                                match world.TryGetBuildingInstance(bid) with
+                                match world.TryGetBuildingInstance(bid) |> Option.bind snd with
                                 | Some building ->
-                                    for part in building.Properties.SubParts do
+                                    for part in building.SubParts do
                                         let health = war.GetBuildingPartHealthLevel(bid, part)
                                         if health < 1.0f then
                                             yield Choice1Of2(building, bid, part, health, af)
@@ -1191,17 +1191,24 @@ type WorldWar2(world : World, C : Constants) =
                         for bridge in world.Bridges.Values do
                             let bid = bridge.Id
                             let region = war.World.FindRegionAt(bridge.Pos.Pos)
-                            for part in bridge.Properties.SubParts do
+                            let props =
+                                world.BuildingProperties.TryGetValue bridge.Script
+                                |> Option.ofPair
+                            let subParts =
+                                props
+                                |> Option.map (fun props -> props.SubParts)
+                                |> Option.defaultValue []
+                            for part in subParts do
                                 let health = war.GetBuildingPartHealthLevel(bid, part)
                                 if health < 1.0f then
-                                    yield Choice2Of2(bridge, bid, part, health, region)
+                                    yield Choice2Of2(props.Value, bid, part, health, region)
                     |]
                 let repairObjects = Array.shuffle random repairObjects
                 for repairObj in repairObjects do
                     match repairObj with
                     | Choice1Of2(building, bid, part, health, af) ->
                         let healing = 1.0f - health
-                        let cost = healing * war.World.RepairCostRatio * building.Properties.PartCapacity * (float32 building.Properties.Durability / 50000.0f)
+                        let cost = healing * war.World.RepairCostRatio * building.PartCapacity * (float32 building.Durability / 50000.0f)
                         let avail = availableForBuildings.[af.Region]
                         let spent = min cost avail |> max 0.0f<E>
                         availableForBuildings.[af.Region] <- avail - cost
@@ -1210,7 +1217,7 @@ type WorldWar2(world : World, C : Constants) =
                             yield Some(RepairBuildingPart(bid, part, healing)), sprintf "Repairs to building part to %0.0f%% at %s airfield" (100.0f * (health + healing)) af.AirfieldId.AirfieldName
                     | Choice2Of2(bridge, bid, part, health, region) ->
                         let healing = 1.0f - health
-                        let cost = healing * war.World.TransportRepairCostRatio * war.World.BridgeCapacity * (float32 bridge.Properties.Durability / 50000.0f)
+                        let cost = healing * war.World.TransportRepairCostRatio * war.World.BridgeCapacity * (float32 bridge.Durability / 50000.0f)
                         let avail = availableForBridges.[region.RegionId]
                         let spent = min cost avail |> max 0.0f<E>
                         availableForBridges.[region.RegionId] <- avail - cost
