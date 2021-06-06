@@ -47,7 +47,12 @@ Les pilotes peuvent être blessés, auquel cas ils deviennent indisponibles pend
 
 Les pilotes acquièrent de l'expérience en effectuant des missions au cours desquelles "des choses intéressantes se produisent", généralement ils infligent des dommages à l'ennemi, ou en reçoivent. Les vols de longue durée comptent également comme un moyen d'acquérir de l'expérience.
 
-Le nombre de pilotes et leur expérience dans une région ont un effet positif sur la simulation de toutes les missions qui proviennent de cette région.
+Le nombre de pilotes et leur expérience à chaque aérodrome ont un effet positif sur la simulation de toutes les missions qui proviennent de cet aérodrome.
+
+L'expérience est divisée en domaines, et à chaque domaine correspond la taille approximative de la cible (grande ou petite), sa mobilité, son milieu (aid, sol, mer ou eau douce) et le type d'arme (bombes ou bien "aute arme").
+
+Les domaines d'expérience ont une hiérarchie selon la difficulté, et l'expérience dans un domaine difficile est applicable dans les domaines plus faciles.
+Il faut cependant noter que l'expérience contre les cibles aériennes et terrestres sont distinctes et l'experience dans l'un de ces deux domaines ne s'applique pas à l'autre.
 
 == Que faire ?
 

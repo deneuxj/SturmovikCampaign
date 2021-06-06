@@ -35,7 +35,12 @@ Pilots can be injured, in which case they become unavailable for a period of tim
 
 Pilots gain experience by flying missions in which "interesting things happen", typically they inflict damage to the enemy, or receive damage from the enemy. Alternatively, long flights count also as granting experience.
 
-The number of pilots and their experience in a region affect positively the simulation of all missions that originate from that region.
+The number of pilots and their experience at each airfield affect positively the simulation of all missions that originate from that airfield.
+
+Experience is divided in domains, where each domain is identified by the rough size of the target (large or small), its mobility, its environment (air, ground, sea/water) and the type of weapon used (currently limited to bombs and "the rest").
+
+There is a hierarchy of domains according to difficulty, and the experience in a more difficult domain is applicable in an easier domain.
+Note however that experience against airborne target and ground targets are distinct, and experience in one of these two domains cannot be applied to the other domain.
 
 == What to do
 
