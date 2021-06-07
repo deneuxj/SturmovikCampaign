@@ -156,8 +156,24 @@ with
             }
         let pilots =
             war.Pilots
-            |> List.groupBy (fun pilot -> war.TryGetPilotHome(pilot.Id))
-            |> List.choose (function (Some af, pilots) -> Some(af, pilots) | _ -> None)
+            // Group pilots by their home airfield, after removing captured pilots
+            |> List.choose (fun pilot ->
+                match war.TryGetPilotHome(pilot.Id) with
+                | None -> None
+                | Some afId ->
+                    match war.GetOwner(war.World.Airfields.[afId].Region) with
+                    | None -> None
+                    | Some coalition ->
+                        match war.World.Countries.TryGetValue(pilot.Country) with
+                        | true, coalition2 ->
+                            if coalition = coalition2 then
+                                Some(afId, pilot)
+                            else
+                                None
+                        | false, _ ->
+                            None)
+            |> List.groupBy fst
+            |> List.map (fun (afId, xs) -> afId, xs |> List.map snd)
             |> dict
         (bonuses, war.World.Airfields.Values)
         ||> Seq.fold (fun bonuses airfield ->
