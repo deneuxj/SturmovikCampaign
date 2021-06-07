@@ -98,9 +98,10 @@ type IWarStateQuery with
         |> Seq.filter (fun building ->
             match this.World.BuildingProperties.TryGetValue(building.Script) with
             | true, properties ->
+                let boundary = this.World.BoundaryOf building.Id
                 normalizeScript(properties.Script) = logName &&
                 List.contains part properties.SubParts &&
-                pos.IsInConvexPolygon properties.Boundary
+                pos.IsInConvexPolygon boundary
             | false, _ ->
                 false)
 
