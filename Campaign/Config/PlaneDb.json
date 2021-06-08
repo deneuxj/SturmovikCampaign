@@ -1979,6 +1979,44 @@
         "LastPayload": 9,
         "LastWeaponMod": 8
       }
+    },
+    {
+      "Plane": {
+        "Kind": "Fighter",
+        "Name": "typhoon",
+        "LogName": "Typhoon Mk.Ib",
+        "Roles": [
+          "Interceptor",
+          "GroundAttacker"
+        ],
+        "Coalition": "Allies",
+        "Script": "LuaScripts\\WorldObjects\\Planes\\typhoonmkib.txt",
+        "Model": "graphics\\planes\\TyphoonMkIb\\TyphoonMkIb.mgm",
+        "Static": "typhoon",
+        "Cost": 2000,
+        "BombCapacity": 1000,
+        "CargoCapacity": 1000,
+        "Payloads": [
+          {
+            "Payload": {
+              "Role": "Interceptor",
+              "ModMask": 1,
+              "Id": 0
+            }
+          },
+          {
+            "Payload": {
+              "Role": "GroundAttacker",
+              "ModMask": 1,
+              "Id": 2
+            }
+          }
+        ],
+        "EmptyPayload": 8,
+        "WeaponModsCosts": [],
+        "LastPayload": 20,
+        "LastWeaponMod": 8
+      }
     }
   ]
 }
