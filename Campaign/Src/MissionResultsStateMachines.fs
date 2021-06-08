@@ -161,7 +161,7 @@ with
                         // Report damages to ground forces
                         match binding.TryGetVehicleTargetType(war), war.TryGetRegionAt(position) with
                         | Some vehicle, Some region ->
-                            let value = vehicle.GroundForceValue
+                            let value = vehicle.GroundForceValue * amount
                             let coalition =
                                 CountryId.FromMcuValue(enum binding.Country)
                                 |> Option.bind (war.World.Countries.TryGetValue >> Option.ofPair)
