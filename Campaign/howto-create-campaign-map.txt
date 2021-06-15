@@ -30,6 +30,7 @@ If you intend for a bridge to play an important role in the tactics, avoid spann
 
 4. Define seaways
 In a group called "Seaways", create paths of waypoints between regions that can transfer troops and supplies by ship.
+Each region with sea ways must have an anchorage position, identified by one or more terminal waypoints with a single in/out going link.
 
 5. Define airfield areas
 Use influence areas. The point of reference of each area must be inside a region.
@@ -75,7 +76,9 @@ Create two fakefields named PlaneSet-Axis and PlaneSet-Allies. Set their planes 
 13. Ships
 In group named "Ships", create ships with instances. Each ship must have a country.
 Its description field must be of the form "Roles:Defensive,Offensive,Cargo,TroopLanding" which defines which role(s) the ship can take.
-For instance, a cargo ship would use "Roles:Cargo", a submarine would use "Roles:Offsensive", a destroyer would be "Roles:Defensive,Offensive".
+For instance, a cargo ship would use "Roles:Cargo", a submarine would use "Roles:Offensive", a destroyer would be "Roles:Defensive,Offensive".
+It is OK for a coalition (or both) to lack ships, or to leave the TroopLanding role uncovered. In that case, no troop movements will
+be planned for that coalition.
 
 14. Countries
 The participating countries and their coalition are edited in the dialog that open when clicking on "Countries..." in the mission's properties.
