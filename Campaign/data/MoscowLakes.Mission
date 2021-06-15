@@ -1008,7 +1008,7 @@ Group
 
 Group
 {
-  Name = "Seaways";
+  Name = "Waterways";
   Index = 40;
   Desc = "";
   MCU_Waypoint

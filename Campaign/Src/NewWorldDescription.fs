@@ -1181,7 +1181,10 @@ module Init =
         let rails, railBridges = loadRoads "BridgesRW" (Path.Combine(exeDir, "Config", sprintf "Rails-%s.json" mapLocationName)) railsCapacity
         let bridges = roadBridges @ railBridges
         // Seaways
-        let seaways = extractSeaways(missionData.GetGroup("Seaways").ListOfMCU_Waypoint)
+        let seaways =
+            [ "Seaways"; "Waterways" ]
+            |> Seq.collect (fun name -> missionData.GetGroup(name).ListOfMCU_Waypoint)
+            |> extractSeaways
         let seaways = seaways.SetRegions regions
         // Ground units
         let groundUnits =
