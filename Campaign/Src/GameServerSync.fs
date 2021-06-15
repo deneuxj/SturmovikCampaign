@@ -43,6 +43,7 @@ open Campaign.GameServerControl
 open Campaign.CampaignScenario
 open Campaign.CampaignScenario.IO
 open Campaign.WarStateUpdate.CommandExecution
+open Campaign.MissionResultsStateMachines
 
 type SyncState =
     | PreparingMission of IncludeBattles : bool
@@ -101,7 +102,7 @@ module IO =
 
 
 /// Inform players of interesting events while a game is going on
-type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>, war : WarState, notifier : IPlayerNotifier, missionDuration : int, advertisements : {| Period : int; Messages : string[] |} option) =
+type LiveNotifier(war : WarState, notifier : IPlayerNotifier, missionDuration : int, advertisements : {| Period : int; Messages : string[] |} option) =
     let mutable isMuted = true
 
     let mutable groundForcesDestroyed = Map.empty
@@ -127,128 +128,102 @@ type LiveNotifier(commands : AsyncSeq<TimeSpan * WarStateUpdate.Commands option>
             timeSinceLastUpdate.Start()
             timeSinceLastAdvertisement.Start()
 
-    member this.Run() =
+    member this.LiveHandler(command : AnnotatedCommand) =
         async {
-            logger.Info("LiveNotifier is now running")
-            return!
-                commands
-                |> AsyncSeq.iterAsync(fun (ts, command) -> async {
-                    if isMuted then
-                        timeLeft <- timeLeft |> List.filter (fun t -> (float missionDuration) - ts.TotalMinutes >= (float t))
-                    if not isMuted then
-                        try
-                            match timeLeft with
-                            | tl :: rest when (float missionDuration - ts.TotalMinutes) < (float tl) ->
-                                let msg = sprintf "%2.0f minutes left in mission" (float missionDuration - ts.TotalMinutes)
-                                let! s = notifier.MessageAll(msg)
-                                timeLeft <- rest
-                            | _ ->
-                                ()
-                            match command with
-                            | Some(WarStateUpdate.Commands.RegisterPilotFlight(pid, flight, health)) ->
-                                let pilot = war.GetPilot(pid)
-                                let rank =
-                                    Pilots.tryComputeRank war.World.Ranks pilot
-                                    |> Option.map (fun rank -> rank.RankAbbrev)
-                                    |> Option.defaultValue ""
-                                let eventDescription =
-                                    match flight.Return with
-                                    | CrashedInEnemyTerritory _ -> "crashed in enemy territory"
-                                    | CrashedInFriendlyTerritory _ -> "crash-landed"
-                                    | AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
-                                    | KilledInAction -> "was killed in action"
-                                let msg = sprintf "%s %s has %s" rank pilot.FullName eventDescription
-                                let coalition = war.World.Countries.[pilot.Country]
-                                let! s = notifier.MessageCoalition(coalition, msg)
-                                match health with
-                                | Pilots.Healthy -> ()
-                                | Pilots.Dead ->
-                                    let msg = sprintf "The career of %s %s has ended" rank pilot.PilotLastName
-                                    let! s = notifier.MessageCoalition(coalition, msg)
-                                    ()
-                                | Pilots.Injured until ->
-                                    let msg = sprintf "%s %s is injured until at least %s" rank pilot.PilotLastName (until.ToString(pilot.Country.CultureInfo))
-                                    let! s = notifier.MessageCoalition(coalition, msg)
-                                    ()
-                            | Some(WarStateUpdate.Commands.UpdatePilot(pilot)) when pilot.Health = Pilots.PilotHealth.Healthy ->
-                                let player =
-                                    match war.TryGetPlayer(pilot.PlayerGuid) with
-                                    | Some player -> player.Name
-                                    | None -> "<incognito>"
-                                let rank =
-                                    Pilots.tryComputeRank war.World.Ranks pilot
-                                    |> Option.map (fun rank -> rank.RankAbbrev)
-                                    |> Option.defaultValue ""
-                                let msg = sprintf "%s controls %s %s" player rank pilot.FullName
-                                let! s = notifier.MessageAll(msg)
-                                ()
-                            | Some(WarStateUpdate.Commands.DestroyGroundForces(_, coalition, amount)) ->
-                                let prevAmount = Map.tryFind coalition groundForcesDestroyed |> Option.defaultValue 0.0f<MGF>
-                                let newAmount = prevAmount + amount
-                                groundForcesDestroyed <- groundForcesDestroyed.Add(coalition, newAmount)
-                            | Some(WarStateUpdate.Commands.DamageBuildingPart(bid, part, damage)) ->
-                                match war.World.TryGetBuildingInstance(bid) |> Option.bind snd with
-                                | Some building ->
-                                    let coalition =
-                                        war.World.RegionsList
-                                        |> Seq.tryFind (fun region -> bid.Pos.Pos.IsInConvexPolygon region.Boundary)
-                                        |> Option.bind (fun region -> war.GetOwner(region.RegionId))
-                                    if building.SubParts |> List.exists ((=) part) then
-                                        match coalition with
-                                        | Some coalition ->
-                                            let storage = building.PartCapacity * damage
-                                            let prevAmount = Map.tryFind coalition storageDestroyed |> Option.defaultValue 0.0f<M^3>
-                                            let newAmount = prevAmount + storage
-                                            storageDestroyed <- storageDestroyed.Add(coalition, newAmount)
-                                        | None ->
-                                            ()
+            let ts = command.TimeStamp
+            if isMuted then
+                timeLeft <- timeLeft |> List.filter (fun t -> (float missionDuration) - ts.TotalMinutes >= (float t))
+            if not isMuted then
+                try
+                    match timeLeft with
+                    | tl :: rest when (float missionDuration - ts.TotalMinutes) < (float tl) ->
+                        let msg = sprintf "%2.0f minutes left in mission" (float missionDuration - ts.TotalMinutes)
+                        let! s = notifier.MessageAll(msg)
+                        timeLeft <- rest
+                    | _ ->
+                        ()
+                    match command.Command with
+                    | Some(WarStateUpdate.Commands.DestroyGroundForces(_, coalition, amount)) ->
+                        let prevAmount = Map.tryFind coalition groundForcesDestroyed |> Option.defaultValue 0.0f<MGF>
+                        let newAmount = prevAmount + amount
+                        groundForcesDestroyed <- groundForcesDestroyed.Add(coalition, newAmount)
+                    | Some(WarStateUpdate.Commands.DamageBuildingPart(bid, part, damage)) ->
+                        match war.World.TryGetBuildingInstance(bid) |> Option.bind snd with
+                        | Some building ->
+                            let coalition =
+                                war.World.RegionsList
+                                |> Seq.tryFind (fun region -> bid.Pos.Pos.IsInConvexPolygon region.Boundary)
+                                |> Option.bind (fun region -> war.GetOwner(region.RegionId))
+                            if building.SubParts |> List.exists ((=) part) then
+                                match coalition with
+                                | Some coalition ->
+                                    let storage = building.PartCapacity * damage
+                                    let prevAmount = Map.tryFind coalition storageDestroyed |> Option.defaultValue 0.0f<M^3>
+                                    let newAmount = prevAmount + storage
+                                    storageDestroyed <- storageDestroyed.Add(coalition, newAmount)
                                 | None ->
                                     ()
-                            | _ ->
-                                ()
-                            if timeSinceLastUpdate.ElapsedMilliseconds > 5000L then
-                                for coalition in war.World.Countries.Values do
-                                    match groundForcesDestroyed.TryFind coalition with
-                                    | Some amount ->
-                                        let msg = sprintf "%2.1f worth of ground forces of %s destroyed" amount (string coalition)
-                                        let! s = notifier.MessageAll(msg)
-                                        do! Async.Sleep(1000)
-                                    | None ->
-                                        ()
-                                    match storageDestroyed.TryFind coalition with
-                                    | Some amount ->
-                                        let msg = sprintf "%2.1f m3 worth of storage of %s destroyed" amount (string coalition)
-                                        let! s = notifier.MessageAll(msg)
-                                        do! Async.Sleep(1000)
-                                    | None ->
-                                        ()
-                                groundForcesDestroyed <- Map.empty
-                                storageDestroyed <- Map.empty
-                                timeSinceLastUpdate.Restart()
-
-                            match advertisements with
-                            | Some ad ->
-                                if timeSinceLastAdvertisement.Elapsed.Minutes > ad.Period && ad.Messages.Length > 0 then
-                                    let! s = notifier.MessageAll(ad.Messages.[nextAdMessageIdx])
-                                    nextAdMessageIdx <- nextAdMessageIdx % ad.Messages.Length
-                                    timeSinceLastAdvertisement.Restart()
-                            | None ->
-                                ()
-
-                        with exc ->
-                            logger.Warn("Live notifier command-handling failed")
-                            logger.Debug(exc)
-                    try
-                        match command with
-                        | Some command ->
-                            logger.Debug("Execute command")
-                            command.Execute(war) |> ignore
                         | None ->
                             ()
-                    with exc ->
-                        logger.Warn("Command execution in live notifier failed")
-                        logger.Debug(exc)
-                })
+                    | _ ->
+                        ()
+                    if timeSinceLastUpdate.ElapsedMilliseconds > 5000L then
+                        for coalition in war.World.Countries.Values do
+                            match groundForcesDestroyed.TryFind coalition with
+                            | Some amount ->
+                                let msg = sprintf "%2.1f worth of ground forces of %s destroyed" amount (string coalition)
+                                let! s = notifier.MessageAll(msg)
+                                do! Async.Sleep(1000)
+                            | None ->
+                                ()
+                            match storageDestroyed.TryFind coalition with
+                            | Some amount ->
+                                let msg = sprintf "%2.1f m3 worth of storage of %s destroyed" amount (string coalition)
+                                let! s = notifier.MessageAll(msg)
+                                do! Async.Sleep(1000)
+                            | None ->
+                                ()
+                        groundForcesDestroyed <- Map.empty
+                        storageDestroyed <- Map.empty
+                        timeSinceLastUpdate.Restart()
+
+                    match advertisements with
+                    | Some ad ->
+                        if timeSinceLastAdvertisement.Elapsed.Minutes > ad.Period && ad.Messages.Length > 0 then
+                            let! s = notifier.MessageAll(ad.Messages.[nextAdMessageIdx])
+                            nextAdMessageIdx <- nextAdMessageIdx % ad.Messages.Length
+                            timeSinceLastAdvertisement.Restart()
+                    | None ->
+                        ()
+
+                    match command.LiveAudience with
+                    | None ->
+                        ()
+                    | Some(LiveMessageAudience.All) ->
+                        let! s = notifier.MessageAll(command.Description)
+                        ()
+                    | Some(LiveMessageAudience.Coalition coalition) ->
+                        let! s = notifier.MessageCoalition(coalition, command.Description)
+                        ()
+                    | Some(LiveMessageAudience.Player guid) ->
+                        let! s = notifier.MessagePlayer(guid, command.Description)
+                        ()
+
+                with exc ->
+                    logger.Warn("Live notifier command-handling failed")
+                    logger.Debug(exc)
+
+            // Update war state
+            try
+                match command.Command with
+                | Some command ->
+                    logger.Debug("Execute command")
+                    command.Execute(war) |> ignore
+                | None ->
+                    ()
+            with exc ->
+                logger.Warn("Command execution in live notifier failed")
+                logger.Debug(exc)
         }
 
 
@@ -955,6 +930,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     // Start live reporting
                     match war, gameServer with
                     | Some war, (:? IPlayerNotifier as messaging) ->
+                        let liveReporter = LiveNotifier(war, messaging, settings.MissionDuration, settings.AdSettings)
                         let commands =
                             let basename = latestStartingMissionReport
                             asyncSeq {
@@ -967,11 +943,10 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                         stalled.Trigger()
                                         stalledTriggered <- true
                             }
-                            |> MissionResults.processLogs war
+                            |> MissionResults.processLogs liveReporter.LiveHandler war
                             |> AsyncSeq.map (fun { TimeStamp = ts; Command = cmd } -> (ts, cmd))
-                        let liveReporter = LiveNotifier(commands, war, messaging, settings.MissionDuration, settings.AdSettings)
                         let cancellation = new Threading.CancellationTokenSource()
-                        Async.Start(liveReporter.Run(), cancellation.Token)
+                        Async.Start(AsyncSeq.iter ignore commands, cancellation.Token)
                         // Give time to execute old commands
                         do! Async.Sleep(15000)
                         liveReporter.UnMute()
@@ -1069,7 +1044,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                                     yield line
                         }
                 let! commands =
-                    MissionResults.processLogs war lines
+                    MissionResults.processLogs (fun _ -> async.Zero()) war lines
                     |> AsyncSeq.toListAsync
                 let effects =
                     [

@@ -34,11 +34,18 @@ open Campaign.WarStateUpdate
 open Campaign.Pilots
 open Campaign.MissionResultsExtensions
 
+[<RequireQualifiedAccess>]
+type LiveMessageAudience =
+    | Coalition of CoalitionId
+    | All
+    | Player of string
+
 type AnnotatedCommand =
     {
         Description : string
         TimeStamp : System.TimeSpan
         Command : Commands option
+        LiveAudience : LiveMessageAudience option
     }
 with
     static member Create(description, time, ?command) =
@@ -46,6 +53,17 @@ with
             Description = description
             TimeStamp = time
             Command = command
+            LiveAudience = None
+        }
+
+    member this.SetAudience(audience) =
+        { this with
+            LiveAudience = Some audience
+        }
+
+    member this.SetAudienceOpt(audience) =
+        { this with
+            LiveAudience = audience
         }
 
 type StateMachineController<'S, 'E, 'Context> =
@@ -252,6 +270,11 @@ with
         let logger = NLog.LogManager.GetCurrentClassLogger()
         { new StateMachineController<PlayerFlightTracker, PlayerFlightTracker * AnnotatedCommand list, Mappings * HealthTracker * IWarStateQuery> with
             member this.HandlePreEvent(state, event, (mappings, healths, war)) =
+                let coalition =
+                    state.PilotData.Country
+                    |> war.World.Countries.TryGetValue
+                    |> Option.ofPair
+
                 let planeName =
                     war.World.PlaneSet.TryGetValue(state.FlightRecord.Plane)
                     |> Option.ofPair
@@ -424,13 +447,39 @@ with
                             FlightRecord = flight
                             MissionStatus = if ejected then Ejected else if landed then BackOnGround else state.MissionStatus
                         }
+                    let liveMessages =
+                        match coalition with
+                        | None -> []
+                        | Some coalition ->
+                        let rank =
+                            Pilots.tryComputeRank war.World.Ranks (war.GetPilot state.PilotData.Id)
+                            |> Option.map (fun rank -> rank.RankAbbrev)
+                            |> Option.defaultValue ""
+                        let eventDescription =
+                            match flight.Return with
+                            | CrashedInEnemyTerritory _ -> "crashed in enemy territory"
+                            | CrashedInFriendlyTerritory _ -> "crash-landed"
+                            | AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
+                            | KilledInAction -> "was killed in action"
+                        let msg = sprintf "%s %s has %s" rank state.PilotData.FullName eventDescription
+                        [
+                            yield AnnotatedCommand.Create(msg, timeStamp).SetAudience(LiveMessageAudience.Coalition coalition)
+                            match state.PilotData.Health with
+                            | Pilots.Healthy -> ()
+                            | Pilots.Dead ->
+                                let msg = sprintf "The career of %s %s has ended" rank state.PilotData.PilotLastName
+                                yield AnnotatedCommand.Create(msg, timeStamp).SetAudience(LiveMessageAudience.Coalition coalition)
+                            | Pilots.Injured until ->
+                                let msg = sprintf "%s %s is injured until at least %s" rank state.PilotData.PilotLastName (until.ToString(state.PilotData.Country.CultureInfo))
+                                yield AnnotatedCommand.Create(msg, timeStamp).SetAudience(LiveMessageAudience.Coalition coalition)
+                        ]
                     state,
-                    [
+                    (
                         AnnotatedCommand.Create(
                             sprintf "%s %s" state.PilotData.FullName (if ejected then "jumps" else "is back on the ground"),
                             timeStamp,
                             UpdatePilot state.PilotData)
-                    ]
+                    ) :: liveMessages
 
                 match event with
                 | PlayerEvent(timeStamp, PlayerTakesObject taken) when taken.PilotId = state.PilotId ->
@@ -450,7 +499,10 @@ with
                                 }
                             MissionStatus = InFlight
                         },
-                        [AnnotatedCommand.Create(sprintf "%s takes off in %s from %s" state.PilotData.FullName planeName airfield.AirfieldId.AirfieldName, timeStamp, UpdatePilot(state.PilotData))]
+                        let cmd =
+                            AnnotatedCommand.Create(sprintf "%s takes off in %s from %s" state.PilotData.FullName planeName airfield.AirfieldId.AirfieldName, timeStamp, UpdatePilot(state.PilotData))
+                                .SetAudienceOpt(coalition |> Option.map LiveMessageAudience.Coalition)
+                        [cmd]
                     | None ->
                         { state with
                             FlightRecord =
@@ -507,6 +559,7 @@ with
                                         sprintf "%s returns a %s at %s" state.PilotData.FullName planeName afId.AirfieldName,
                                         timeStamp,
                                         AddPlane(afId, state.FlightRecord.Plane, state.FlightRecord.PlaneHealth))
+                                        .SetAudienceOpt(coalition |> Option.map LiveMessageAudience.Coalition)
                                 ]
                             | Spawned afId, _ ->
                                 [
@@ -526,7 +579,10 @@ with
                             | Spawned _ ->
                                 []
                             | _ ->
-                                [AnnotatedCommand.Create(sprintf "End of mission for %s" state.PilotData.FullName, timeStamp, RegisterPilotFlight(state.PilotData.Id, state.FlightRecord, state.PilotData.Health))]
+                                let cmd =
+                                    AnnotatedCommand.Create(sprintf "End of mission for %s" state.PilotData.FullName, timeStamp, RegisterPilotFlight(state.PilotData.Id, state.FlightRecord, state.PilotData.Health))
+                                        .SetAudience(LiveMessageAudience.All)
+                                [cmd]
                         state, addPlane @ recordFlight
 
                 | _ ->
@@ -576,11 +632,21 @@ with
                         match war.TryGetNearestAirfield(taken.Position, None), CountryId.FromMcuValue(enum taken.Country), war.TryGetPlane(taken.Typ) with
                         | Some(airfield, _), Some country, Some plane ->
                             let pilot = war.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country, taken.HasFemaleCrew)
+                            let player =
+                                match war.TryGetPlayer(taken.UserId) with
+                                | Some player -> player.Name
+                                | None -> "<incognito>"
+                            let rank =
+                                Pilots.tryComputeRank war.World.Ranks pilot
+                                |> Option.map (fun rank -> rank.RankAbbrev)
+                                |> Option.defaultValue ""
+                            let msg = sprintf "%s controls %s %s" player rank pilot.FullName
+                            let msg = AnnotatedCommand.Create(msg, timeStamp).SetAudience(LiveMessageAudience.All)
                             let flight = PlayerFlightTracker.Create(taken.PilotId, taken.VehicleId, airfield.AirfieldId, war.Date + timeStamp, pilot, plane.Id)
                             let flight, flightCmds = pftCtrl.HandlePreEvent(flight, event, (mappings, healths, war))
                             { state with
                                 FlightOfPilot = state.FlightOfPilot.Add(taken.PilotId, flight)
-                            }, cmds @ flightCmds
+                            }, msg :: cmds @ flightCmds
                         | _ ->
                             state, cmds
 

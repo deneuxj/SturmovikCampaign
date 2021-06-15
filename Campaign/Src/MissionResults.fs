@@ -67,8 +67,10 @@ type ImpAsyncSeq(warState : IWarState, logger : NLog.Logger) =
 
     member this.Delay(f) = asyncSeq.Delay(f)
 
+    member this.Bind(source, body) = asyncSeq.Bind(source, body)
+
 /// Extract war state updade commands from the game logs and update the war state.
-let processLogs (state : WarState) (logs : AsyncSeq<string>) =
+let processLogs (liveHandler : AnnotatedCommand -> Async<unit>) (state : WarState) (logs : AsyncSeq<string>) =
     let logger = NLog.LogManager.GetCurrentClassLogger()
 
     // We'll be mutating a clone of the state to avoid potential read/write race conditions with consumers (i.e. the live notifier) of the commands.
@@ -97,7 +99,9 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                 // Emit timestamp, needed to inform players of time left in mission
                 match line with
                 | ObjectEvent(timeStamp, _) | MissionEvent(timeStamp, _) | PlayerEvent(timeStamp, _) | BotEvent(timeStamp, _) ->
-                    yield AnnotatedCommand.Create("Timestamp", timeStamp)
+                    let tsCmd = AnnotatedCommand.Create("Timestamp", timeStamp)
+                    do! liveHandler(tsCmd)
+                    yield tsCmd
 
                 | _ ->
                     ()
@@ -108,6 +112,7 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
                 let newPilots, cmds3 = handlePost(pilotsController, pilots, newPilots, (mappings, healths, upcast state))
 
                 for cmd in Seq.concat [ cmds; cmds2; cmds3 ] do
+                    do! liveHandler(cmd)
                     yield cmd
 
                 mappings <- newMappings
@@ -131,18 +136,22 @@ let processLogs (state : WarState) (logs : AsyncSeq<string>) =
         // Update status of players still in the air after the log ends.
         // Wipe out record of damages inflicted to enemies as a punishment for not landing in time.
         for x in pilots.FlightOfPilot.Values do
-            yield
+            let cmd =
                 AnnotatedCommand.Create(
                     sprintf "%s is still in the air" x.PilotData.FullName,
                     System.TimeSpan(System.Int64.MaxValue),
                     UpdatePilot x.PilotData)
+            do! liveHandler(cmd)
+            yield cmd
             let flight =
                 match x.MissionStatus with
                 | InFlight -> x.FlightRecord
                 | _ -> { x.FlightRecord with TargetsDamaged = [] }
-            yield
+            let cmd =
                 AnnotatedCommand.Create(
                     sprintf "In-air flight of %s" x.PilotData.FullName,
                     System.TimeSpan(System.Int64.MaxValue),
                     RegisterPilotFlight(x.PilotData.Id, flight, x.PilotData.Health))
+            do! liveHandler(cmd)
+            yield cmd
     }
