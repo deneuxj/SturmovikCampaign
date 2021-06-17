@@ -196,6 +196,10 @@
       <Link>KubanAutumn2.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\MoscowLakes.Mission">
+      <Link>MoscowLakes.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
