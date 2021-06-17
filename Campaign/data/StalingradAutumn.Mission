@@ -47526,9 +47526,9 @@ Group
     XPos = 135387.667;
     YPos = 21.989;
     ZPos = 307291.780;
-    XOri = 359.99;
+    XOri = 0.00;
     YOri = 0.00;
-    ZOri = 0.01;
+    ZOri = 0.00;
     Script = "LuaScripts\WorldObjects\vehicles\ndb.txt";
     Model = "graphics\vehicles\ndb\ndb.mgm";
     Desc = "";

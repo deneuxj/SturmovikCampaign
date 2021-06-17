@@ -162041,7 +162041,7 @@ Airfield
       AvPayloads = "";
       Callsign = 0;
       Callnum = 0;
-      TCode = "   ";
+      TCode = "";
       TCodeColors = "000";
     }
   }
