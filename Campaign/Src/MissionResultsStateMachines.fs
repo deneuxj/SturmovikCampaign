@@ -632,10 +632,7 @@ with
                         match war.TryGetNearestAirfield(taken.Position, None), CountryId.FromMcuValue(enum taken.Country), war.TryGetPlane(taken.Typ) with
                         | Some(airfield, _), Some country, Some plane ->
                             let pilot = war.GetPlayerPilotFrom(taken.UserId, airfield.AirfieldId, country, taken.HasFemaleCrew)
-                            let player =
-                                match war.TryGetPlayer(taken.UserId) with
-                                | Some player -> player.Name
-                                | None -> "<incognito>"
+                            let player = taken.Name
                             let rank =
                                 Pilots.tryComputeRank war.World.Ranks pilot
                                 |> Option.map (fun rank -> rank.RankAbbrev)
