@@ -66,7 +66,7 @@ let newWaypoint idx (pos : Vector2) (yori : float32) (radius : int) (speed : int
         .SetSpeed(T.Integer.N speed)
         .SetXPos(T.Float.N (float pos.X))
         .SetYOri(T.Float.N (float yori))
-        .SetYPos(T.Float.N(float pos.Y))
+        .SetZPos(T.Float.N(float pos.Y))
         .CreateMcu() :?> Mcu.McuWaypoint
 
 let newEntity idx =

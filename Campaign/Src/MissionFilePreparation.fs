@@ -1133,7 +1133,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> Seq.map (fun (region, nodes) -> region, nodes |> Seq.map snd |> List.ofSeq)
         |> dict
 
-    let getPaths (network : Network) (travels : (RegionId * RegionId) seq) =
+    let getPaths simplifyPath (network : Network) (travels : (RegionId * RegionId) seq) =
         let terminalsInRegion = mkTerminalsInRegion network
         let qa = network.GetQuickAccess()
         [
@@ -1150,7 +1150,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                 |> Seq.map (fun link ->
                                     let pos = qa.GetNode(link.NodeA).Pos
                                     let dir = qa.GetNode(link.NodeB).Pos - pos
-                                    let optional = 2 = (qa.GetLink(link.NodeA) |> fst |> Seq.length)
+                                    let optional = simplifyPath && 2 = (qa.GetLink(link.NodeA) |> fst |> Seq.length)
                                     {
                                         Pos = pos
                                         Rotation = dir.YOri
@@ -1208,7 +1208,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             for m in groundMissions do
                 match m.MissionType with
                 | GroundForcesTransfer(coalition, startRegionId, forces) when forces > maxRoadTransfer ->
-                    for x in getPaths state.World.Rails [startRegionId, m.Objective] do
+                    for x in getPaths true state.World.Rails [startRegionId, m.Objective] do
                         yield {
                             Country = x.Country
                             Coalition = coalition
@@ -1229,7 +1229,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             for m in groundMissions do
                 match m.MissionType with
                 | GroundForcesTransfer(coalition, startRegionId, forces) when forces <= maxRoadTransfer ->
-                    for x in getPaths state.World.Roads [startRegionId, m.Objective] do
+                    for x in getPaths true state.World.Roads [startRegionId, m.Objective] do
                         let convoy =
                             AntiAirTruck :: StaffCar :: Tank :: ArmoredCar :: ArmoredCar :: Truck :: Truck :: Truck :: []
                             |> Array.ofList
@@ -1258,7 +1258,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     for regBid in regA.Neighbours do
                         match state.GetOwner(regA.RegionId), state.GetOwner(regBid) with
                         | Some coalition, Some coalition2 when coalition = coalition2 ->
-                            for x in getPaths state.World.Seaways [regA.RegionId, regBid] do
+                            for x in getPaths false state.World.Seaways [regA.RegionId, regBid] do
                                 let ships =
                                     state.World.ShipsList
                                     |> List.collect (fun (country, ships) -> if country = x.Country then ships else [])

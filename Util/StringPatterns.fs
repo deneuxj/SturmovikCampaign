@@ -13,3 +13,9 @@ let (|Contains|_|) (substring : string) (s : string) =
         Some()
     else
         None
+
+let (|StartsWith|_|) (prefix : string) (s : string) =
+    if s.StartsWith prefix then
+        Some()
+    else
+        None

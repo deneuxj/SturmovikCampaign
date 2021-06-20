@@ -137,7 +137,7 @@ with
             | v1 :: _ -> v1
             | [] -> invalidArg "path" "Must not be empty"
         let refPoint = Vector2(float32 wp1.Pos.X, float32 wp1.Pos.Z)
-        let dv, rot =v1 .Pos - refPoint, v1.Ori
+        let dv, rot = v1.Pos - refPoint, v1.Ori
         for mcu in group do
             ((Vector2.FromMcu(mcu.Pos) - refPoint).Rotate(rot) + dv + refPoint).AssignTo(mcu.Pos)
             mcu.Ori.Y <- mcu.Ori.Y + float rot

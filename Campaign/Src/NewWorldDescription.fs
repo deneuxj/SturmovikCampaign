@@ -1016,8 +1016,9 @@ module Init =
                     let roles = extractShipRoles desc
                     if roles.Length > 0 then
                         let model = ship.GetModel().Value
-                        let script = ship.GetModel().Value
-                        match knownShipLogNames |> List.tryFind (fun (_, scriptName) -> scriptName = script) with
+                        let script = ship.GetScript().Value
+                        let scriptFilename = System.IO.Path.GetFileName(script)
+                        match knownShipLogNames |> List.tryFind (fun (_, scriptName) -> scriptName = scriptFilename) with
                         | Some (logName, _) ->
                             yield
                                 country, {

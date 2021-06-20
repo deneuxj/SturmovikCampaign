@@ -20,6 +20,7 @@ module Campaign.MissionGen.MissionFileGeneration
 open System.Numerics
 open VectorExtension
 open Util
+open Util.StringPatterns
 
 open SturmovikMission.Blocks.BlocksMissionData
 open SturmovikMission.DataProvider
@@ -1073,4 +1074,10 @@ with
 
         // Write file
         McuOutput.writeMissionFiles "eng" settings.OutFilename options allGroups
+
+        // Remove TCode and TCodeColor to work around bug in mission resaver utility
+        let allLines =
+            System.IO.File.ReadAllLines settings.OutFilename
+            |> Array.filter (function StartsWith "TCode" | StartsWith "TColor" -> false | _ -> true)
+        System.IO.File.WriteAllLines(settings.OutFilename, allLines)
 
