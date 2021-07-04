@@ -212,6 +212,7 @@
     <PackageReference Include="NLog" Version="4.6.8" />
     <PackageReference Include="NLog.Config" Version="4.6.8" />
     <PackageReference Include="NLog.Schema" Version="4.6.8" />
+    <PackageReference Include="SturmovikMission.McuLibrary" Version="3.1.0" />
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="System.Runtime" Version="4.3.1" />
@@ -223,6 +224,10 @@
     <ProjectReference Include="..\Common\Common.fsproj" />
     <ProjectReference Include="..\MissionGen\MissionGen.fsproj" />
     <ProjectReference Include="..\Util\Util.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.2" />
   </ItemGroup>
 
 </Project>

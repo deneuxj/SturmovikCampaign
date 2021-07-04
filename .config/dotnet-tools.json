@@ -7,6 +7,12 @@
       "commands": [
         "paket"
       ]
+    },
+    "sturmovikmission.codegen": {
+      "version": "1.0.0.1",
+      "commands": [
+        "codegen-il2"
+      ]
     }
   }
 }

@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="SturmovikMission.T.fs" />
     <Compile Include="Util.fs" />
     <Compile Include="Vector.fs" />
     <Compile Include="Links.fs" />
@@ -67,13 +68,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FsPickler" Version="5.3.2" />
     <PackageReference Include="NLog" Version="4.5.11" />
-    <PackageReference Include="SturmovikMission.DataProvider" Version="8.0.2" />
+    <PackageReference Include="SturmovikMission.McuLibrary" Version="3.1.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Util\Util.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.2" />
   </ItemGroup>
 
 </Project>

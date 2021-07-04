@@ -5,11 +5,6 @@ open System.Numerics
 open System.IO
 open VectorExtension
 
-[<Literal>]
-let private sampleFile = __SOURCE_DIRECTORY__ + "/Sample.Mission"
-
-type T = SturmovikMissionTypes.Provider<sampleFile>
-
 let blocksData =
     let blockMission =
         let path = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location)
