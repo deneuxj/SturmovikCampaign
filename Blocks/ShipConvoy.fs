@@ -28,22 +28,6 @@ type ShipConvoy = {
     All : McuUtil.IMcuGroup
 }
 with
-    static member CargoModel(wt) =
-        match wt with
-        | Sea -> vehicles.CargoShip
-        | River -> vehicles.RiverCargoShip
-
-    static member StrongEscort(wt) =
-        match wt with
-        | Sea -> vehicles.Destroyer
-        | River -> vehicles.RussianGunBoat
-
-    static member LightEscort(wt, country) =
-        match wt, country with
-        | Sea, Mcu.CountryValue.Germany -> vehicles.GermanTorpedoBoat
-        | Sea, Mcu.CountryValue.Russia -> vehicles.RussianTorpedoBoat
-        | Sea, _ -> failwith "Unsupported country"
-        | River, _ -> vehicles.RussianGunBoat
 
     /// <summary>
     /// Create a ship convoy with escort
@@ -51,11 +35,13 @@ with
     /// <param name="store">Provides unique ids for MCUs</param>
     /// <param name="lcStore">Provides unique ids for text</param>
     /// <param name="numShips">Number of cargo ships, including leader</param>
+    /// <param name="escortModel">Model and script of escort ships</param>
+    /// <param name="cargoModel">Model and script of cargo ships</param>
     /// <param name="waterType">Sea or river</param>
     /// <param name="path">Waypoints the convoy will sail along</param>
     /// <param name="country">Country owning the ships</param>
     /// <param name="eventName">Base event name for convoy start, arrival and destruction.</param>
-    static member Create(store : NumericalIdentifiers.IdStore, lcStore, numShips : int, waterType : WaterType, path : PathVertex list, country : Mcu.CountryValue, eventName) =
+    static member Create(store : NumericalIdentifiers.IdStore, lcStore, numShips : int, escortModel, cargoModel, waterType : WaterType, path : PathVertex list, country : Mcu.CountryValue, eventName) =
         if numShips < 1 then
             invalidArg "numShips" "Ship convoys must have at least one ship"
         // Instantiate leader, escort and group logic
@@ -118,16 +104,14 @@ with
         let group = group @ List.concat shipGroups
         // Override model escort
         do
-            let model =
-                ShipConvoy.LightEscort(waterType, country)
+            let model = escortModel
             for escort in [ escort1; escort2 ] do
                 escort.Script <- model.Script
                 escort.Model <- model.Model
                 escort.Country <- Some country
         // Override model of cargo ships
         for ship in ship1 :: ships do
-            let model =
-                ShipConvoy.CargoModel(waterType)
+            let model = cargoModel
             ship.Model <- model.Model
             ship.Script <- model.Script
             ship.Country <- Some country
@@ -229,12 +213,3 @@ with
                       member x.SubGroups = [ iconCover.All; iconAttack.All; startEvent.All; arrivedEvent.All ] @ (destroyedEvents |> List.map (fun ev -> ev.All))
           }
         }
-
-    /// Replace cargo ships by landing ships, replace torpedo boats by destroyers
-    member this.MakeAsLandShips(waterType) =
-        let landing = vehicles.LandShip
-        let escort = ShipConvoy.StrongEscort(waterType)
-        for ship in this.Ships do
-            landing.AssignTo(ship)
-        for ship in this.Escort do
-            escort.AssignTo(ship)
