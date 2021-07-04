@@ -13,13 +13,7 @@ type IconDisplay = {
     All : McuUtil.IMcuGroup
 }
 with
-    /// <summary>
     /// Create an icon that can be shown or hidden
-    /// </summary>
-    /// <param name="pos">Location of the icon</param>
-    /// <param name="label">Label of the icon</param>
-    /// <param name="coalition">Coalition which can see the icon</param>
-    /// <param name="iconType">The type of the icon</param>
     static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, label : string, coalition : Mcu.CoalitionValue, iconType : Mcu.IconIdValue) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()
@@ -55,6 +49,10 @@ with
     /// <summary>
     /// Create a pair of colocated icons, visible to each coalition as attack/cover
     /// </summary>
+    /// <param name="store">ID store</param>
+    /// <param name="lcStore">String ID store</param>
+    /// <param name="pos">Position</param>
+    /// <param name="label">Icon label</param>
     /// <param name="coalition">The coalition for which the icon should appear as friendly</param>
     /// <param name="iconType">The icon type, should be of one of the CoverXXX types</param>
     static member CreatePair(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, pos : Vector2, label : string, coalition : Mcu.CoalitionValue, iconType : Mcu.IconIdValue) =

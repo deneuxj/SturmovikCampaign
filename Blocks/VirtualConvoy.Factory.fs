@@ -112,9 +112,15 @@ with
     /// Create the instances and relations of a virtual convoy.
     /// </summary>
     /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
+    /// <param name="lcStore">String numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
     /// <param name="path">Path followed by the convoy.</param>
-    /// <param name="bridges">Map bridges to 
+    /// <param name="bridges">Map bridges to path vertices.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
+    /// <param name="withAA">If true, include AA tracks</param>
+    /// <param name="country">Convoy country</param>
+    /// <param name="coalition">Coalition of the convoy</param>
+    /// <param name="convoyName">Name of the convoy, can be used to retrieve information about the convoy from the game logs</param>
+    /// <param name="rankOffset">Starting index of the convoy, to be used when a convoy is broken into multiple sub-convoys</param>
     static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, convoySize : int, withAA : bool, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
         if convoySize > VirtualConvoy.MaxConvoySize then
             invalidArg "convoySize" "Maximum convoy size exceeded"
