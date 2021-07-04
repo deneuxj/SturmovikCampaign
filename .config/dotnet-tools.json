@@ -9,7 +9,7 @@
       ]
     },
     "sturmovikmission.codegen": {
-      "version": "1.0.0.1",
+      "version": "1.0.1.2",
       "commands": [
         "codegen-il2"
       ]
