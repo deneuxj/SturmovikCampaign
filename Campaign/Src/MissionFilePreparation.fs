@@ -1282,6 +1282,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                         Path = x.Path
                                         CargoShips = cargoShips
                                         Escort = escortShips
+                                        WaterType = failwith "FUFU"
                                     }
                         | _ ->
                             ()

@@ -544,6 +544,7 @@ type ShipConvoy =
         Path : OrientedPosition list
         CargoShips : ShipProperties list
         Escort : ShipProperties list
+        WaterType : ShipConvoy.WaterType
     }
 with
     member this.CreateMCUs(store, lcStore) =
@@ -560,7 +561,7 @@ with
                     Role = Factory.PathVertexRole.Intermediate
                 }
             )
-        SturmovikMission.Blocks.ShipConvoy.ShipConvoy.Create(store, lcStore, this.CargoShips.Length, ShipConvoy.WaterType.Sea, pathVertices, this.Country.ToMcuValue, this.ConvoyName)
+        SturmovikMission.Blocks.ShipConvoy.ShipConvoy.Create(store, lcStore, this.CargoShips.Length, failwith "FU", failwith "FU", this.WaterType, pathVertices, this.Country.ToMcuValue, this.ConvoyName)
 
 type BuildingFire =
     {
