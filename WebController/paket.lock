@@ -1,8 +1,8 @@
 RESTRICTION: == net50
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    FSharp.Core (5.0)
+    FSharp.Core (5.0.2)
     FSharp.Json (0.4)
       FSharp.Core (>= 4.6.2)
-    Suave (2.6)
+    Suave (2.6.1)
       FSharp.Core
