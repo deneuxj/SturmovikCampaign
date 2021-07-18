@@ -13,11 +13,8 @@ type EventReporting = {
     All : McuUtil.IMcuGroup
 }
 with
-    /// <summary>
     /// Create a group that reports a given event, e.g. arrival of a convoy at destination.
     /// This event can later be retrieved from the mission log. The mechanism that is used is destruction of a fake block, which can be identified by its name
-    /// </summary>
-    /// <param name="pos">Position of the logic nodes.</param>
     static member Create(store : NumericalIdentifiers.IdStore, country: Mcu.CountryValue, pos : Vector2, eventName : string) =
         // Instantiate
         let subst = Mcu.substId <| store.GetIdMapper()

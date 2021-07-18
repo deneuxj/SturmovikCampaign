@@ -544,6 +544,7 @@ type ShipConvoy =
         Path : OrientedPosition list
         CargoShips : ShipProperties list
         Escort : ShipProperties list
+        WaterType : ShipConvoy.WaterType
     }
 with
     member this.CreateMCUs(store, lcStore) =
@@ -560,7 +561,13 @@ with
                     Role = Factory.PathVertexRole.Intermediate
                 }
             )
-        SturmovikMission.Blocks.ShipConvoy.ShipConvoy.Create(store, lcStore, this.CargoShips.Length, ShipConvoy.WaterType.Sea, pathVertices, this.Country.ToMcuValue, this.ConvoyName)
+        let escort =
+            this.Escort
+            |> List.map (fun x -> x.ScriptModel)
+        let cargo =
+            this.CargoShips
+            |> List.map (fun x -> x.ScriptModel)
+        SturmovikMission.Blocks.ShipConvoy.ShipConvoy.Create(store, lcStore, escort, cargo, this.WaterType, pathVertices, this.Country.ToMcuValue, this.ConvoyName)
 
 type BuildingFire =
     {

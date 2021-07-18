@@ -13,4 +13,8 @@
     <PackageReference Include="FSharp.Json" Version="0.3.7" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.2" />
+  </ItemGroup>
+
 </Project>

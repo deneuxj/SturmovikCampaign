@@ -195,6 +195,7 @@ type WarState
     let roads = world.Roads.GetQuickAccess()
     let rails = world.Rails.GetQuickAccess()
     let seaways = world.Seaways.GetQuickAccess()
+    let rivers = world.Rivers.GetQuickAccess()
 
     // Must be cleared whenever owners change
     let regionDistancesToEnemy = Seq.mutableDict []
@@ -480,6 +481,11 @@ type WarState
             seaCapacities
             (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity seaways)
 
+    member this.ComputeRiverCapacity() =
+        Cached.cached
+            seaCapacities
+            (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity rivers)
+
     member this.ComputeSupplyAvailability() =
         Cached.cached
             supplyAvailability
@@ -649,6 +655,7 @@ type WarState
         member this.ComputeRailCapacity() = this.ComputeRailCapacity()
         member this.ComputeRoadCapacity() = this.ComputeRoadCapacity()
         member this.ComputeSeaCapacity() = this.ComputeSeaCapacity()
+        member this.ComputeRiverCapacity() = this.ComputeRiverCapacity()
         member this.ComputeSupplyAvailability() = this.ComputeSupplyAvailability()
         member this.Date = this.Date
         member this.GetBridgeFunctionalityLevel(arg1) = this.GetBridgeFunctionalityLevel(arg1)

@@ -52,6 +52,30 @@ type PathVertex =
       Role : PathVertexRole
     }
 
+[<RequireQualifiedAccess>]
+module PathVertex =
+    /// Try to find a location on a path that is separated from the start of the path by a given
+    /// distance offset. Return the prefix of the path that was skipped, and the position if any.
+    let tryPlaceOnPath (offset : float32) (path : PathVertex list, initialOffset : float32) : (PathVertex list * float32) * (Vector2 * float32) option =
+        let rec skipOffset(v, offset, path : PathVertex list) =
+            match offset, path with
+            | _, [] -> v, offset, []
+            | offset, v2 :: path2 ->
+                let d = (v2.Pos - v.Pos).Length()
+                if offset - d <= 0.0f then
+                    v, offset, path
+                else
+                    skipOffset(v2, offset - d, path2)
+        match initialOffset + offset, path with
+        | 0.0f, v0 :: _ -> (path, 0.0f), Some (v0.Pos, v0.Ori)
+        | totalInitialOffset, v0 :: path ->
+            let v, offset, path = skipOffset(v0, totalInitialOffset, path)
+            match path with
+            | [] -> ([v], offset), None
+            | _ -> (v :: path, offset), Some(v.Pos + offset * Vector2.UnitX.Rotate(v.Ori), v.Ori)
+        | _, [] ->
+            ([], initialOffset), None
+
 /// <summary>
 /// A virtual convoy, i.e. a convoy that does not actually exist until an enemy approaches its
 /// expected position. The intent is to provide the illusion of a mission filled with large numbers
@@ -112,9 +136,15 @@ with
     /// Create the instances and relations of a virtual convoy.
     /// </summary>
     /// <param name="store">Numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
+    /// <param name="lcStore">String numerical ID store. All MCUs in a mission must be created using the same store to avoid duplicate identifiers.</param>
     /// <param name="path">Path followed by the convoy.</param>
-    /// <param name="bridges">Map bridges to 
+    /// <param name="bridges">Map bridges to path vertices.</param>
     /// <param name="convoySize">Number of vehicle/planes in the column or wing.</param>
+    /// <param name="withAA">If true, include AA tracks</param>
+    /// <param name="country">Convoy country</param>
+    /// <param name="coalition">Coalition of the convoy</param>
+    /// <param name="convoyName">Name of the convoy, can be used to retrieve information about the convoy from the game logs</param>
+    /// <param name="rankOffset">Starting index of the convoy, to be used when a convoy is broken into multiple sub-convoys</param>
     static member Create(store : NumericalIdentifiers.IdStore, lcStore : NumericalIdentifiers.IdStore, path : PathVertex list, bridges : (PathVertex * Mcu.McuEntity) list, convoySize : int, withAA : bool, country : Mcu.CountryValue, coalition : Mcu.CoalitionValue, convoyName, rankOffset) =
         if convoySize > VirtualConvoy.MaxConvoySize then
             invalidArg "convoySize" "Maximum convoy size exceeded"
