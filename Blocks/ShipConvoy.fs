@@ -67,9 +67,21 @@ with
         let proximity = getTriggerByName group "Proximity" :?> Mcu.McuProximity
         let activate = getTriggerByName group "Activate"
 
+        // Position of all nodes
+        let v1 =
+            match path with
+            | v1 :: _ -> v1
+            | [] -> invalidArg "path" "Must not be empty"
+        let refPoint = Vector2(float32 wp1.Pos.X, float32 wp1.Pos.Z)
+        let dv, rot = v1.Pos - refPoint, v1.Ori
+        for mcu in group do
+            ((Vector2.FromMcu(mcu.Pos) - refPoint).Rotate(rot) + dv + refPoint).AssignTo(mcu.Pos)
+            mcu.Ori.Y <- mcu.Ori.Y + float rot
+
         // Adjust killed count
         killed.Count <- numEscortShips + numCargoShips
 
+        let cargoSeparation = match waterType with Sea -> 2500.0f | River -> 500.0f
         let escortSeparation = match waterType with Sea -> 1000.0f | River -> 300.0f
 
         // Positions of cargo and escort ships along path
@@ -81,7 +93,7 @@ with
                 | None -> (path, positions))
         let pathCargo, positionsCargo =
             let path0 = (path, 0.0f)
-            ((path0, []), 0.0f :: List.init (numCargoShips - 1) (fun _ -> match waterType with Sea -> 2500.0f | River -> 500.0f))
+            ((path0, []), 0.0f :: List.init (numCargoShips - 1) (fun _ -> cargoSeparation))
             ||> foldPath
         let pathEscort, positionsEscort =
             if numEscortShips <= 0 then
@@ -91,7 +103,7 @@ with
                 ||> foldPath
 
         // Instantiate convoy members
-        let processShipGroup(groupName, shipName, killedName, i, pos, ori) =
+        let processShipGroup(groupName, shipName, killedName, leaderIdx, i, pos, ori) =
             // Instantiate
             let subst = Mcu.substId <| store.GetIdMapper()
             let group = blocksData.GetGroup(groupName).CreateMcuList()
@@ -105,7 +117,7 @@ with
             Mcu.addTargetLink shipKilled killed.Index
             // Link ship to leader
             ship.NumberInFormation |> Option.iter (fun data -> data.Number <- (i + 2))
-            Mcu.addTargetLink entity ship1Entity.Index
+            Mcu.addTargetLink entity leaderIdx
             // Position
             let dv = Vector2.UnitX.Rotate(ori)
             let side = dv.Rotate(90.0f)
@@ -121,7 +133,7 @@ with
             newPos.AssignTo(ship.Pos)
             newPos.AssignTo(entity.Pos)
             ship.Ori.Y <- float ori
-            ship1Entity.Ori.Y <- float ori
+            entity.Ori.Y <- float ori
             let newPos = pos + 200.0f * side
             newPos.AssignTo(shipKilled.Pos)
             // Result
@@ -130,7 +142,7 @@ with
         let shipGroups =
             positionsCargo
             |> List.skip 1
-            |> List.mapi (fun i (pos, ori) -> processShipGroup("ShipConvoyMember", "Cargo2", "Cargo2Killed", i, pos, ori))
+            |> List.mapi (fun i (pos, ori) -> processShipGroup("ShipConvoyMember", "Cargo2", "Cargo2Killed", ship1Entity.Index, i, pos, ori))
         let cargoShips =
             shipGroups
             |> List.map (fun group -> getVehicleByName group "Cargo2")
@@ -141,7 +153,8 @@ with
                 []
             else
             positionsEscort
-            |> List.mapi (fun i (pos, ori) -> processShipGroup("ShipConvoyEscortMember", "Escort2", "EscortKilled", i, pos, ori))
+            |> List.skip 1
+            |> List.mapi (fun i (pos, ori) -> processShipGroup("ShipConvoyEscortMember", "Escort2", "EscortKilled", escort1Entity.Index, i, pos, ori))
         let escortShips =
             escortGroups
             |> List.map (fun group -> getVehicleByName group "Escort2")
@@ -176,25 +189,16 @@ with
 
         // Override model escort
         if numEscortShips > 0 then
-            for model, escort in Seq.zip escortModels (escort1 :: escortShips) do
+            for model, escort in List.zip escortModels (escort1 :: escortShips) do
                 escort.Script <- model.Script
                 escort.Model <- model.Model
                 escort.Country <- Some country
+
         // Override model of cargo ships
-        for model, ship in Seq.zip cargoModels (ship1 :: cargoShips) do
+        for model, ship in List.zip cargoModels (ship1 :: cargoShips) do
             ship.Model <- model.Model
             ship.Script <- model.Script
             ship.Country <- Some country
-        // Position of all nodes
-        let v1 =
-            match path with
-            | v1 :: _ -> v1
-            | [] -> invalidArg "path" "Must not be empty"
-        let refPoint = Vector2(float32 wp1.Pos.X, float32 wp1.Pos.Z)
-        let dv, rot = v1.Pos - refPoint, v1.Ori
-        for mcu in group do
-            ((Vector2.FromMcu(mcu.Pos) - refPoint).Rotate(rot) + dv + refPoint).AssignTo(mcu.Pos)
-            mcu.Ori.Y <- mcu.Ori.Y + float rot
 
         // Disctinct waypoints for escort and cargo ships, first wp ahead of leader of each respective group
         let mkWp(v : PathVertex, idxObj) =
