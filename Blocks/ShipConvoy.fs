@@ -207,7 +207,7 @@ with
             subst wp
             Mcu.addObjectLink wp idxObj
             wp
-        let rec work idxObj xs =
+        let rec work idxObj (destWp : Mcu.McuWaypoint) xs =
             match xs with
             | [v : PathVertex] ->
                 v.Pos.AssignTo destWp.Pos
@@ -219,13 +219,13 @@ with
             | [] ->
                 invalidArg "path" "Must have at least two items"
             | v :: rest ->
-                let tail = work idxObj rest
+                let tail = work idxObj destWp rest
                 let wp = mkWp(v, idxObj)
                 match tail with
                 | (x : Mcu.McuWaypoint) :: _ -> Mcu.addTargetLink wp x.Index
                 | [] -> Mcu.addTargetLink wp destWp.Index
                 wp :: tail
-        let midWps(path, idxObj) =
+        let midWps(path, idxObj, wp1 : Mcu.McuWaypoint, destWp) =
             match path with
             | v :: rest ->
                 v.Pos.AssignTo wp1.Pos
@@ -233,13 +233,13 @@ with
                 wp1.Speed <- v.Speed
                 wp1.Priority <- v.Priority
                 wp1.Radius <- v.Radius
-                work idxObj rest
+                work idxObj destWp rest
             | [] ->
                 invalidArg "path" "Must have at least two items"
-        let setMidWps(wp1 : Mcu.McuTrigger, destWp : Mcu.McuTrigger, path, idxObj) =
+        let setMidWps(wp1 : Mcu.McuWaypoint, destWp : Mcu.McuWaypoint, path, idxObj) =
             // Set target link from first waypoint
             wp1.Targets <- []
-            let midWps = midWps(path, idxObj)
+            let midWps = midWps(path, idxObj, wp1, destWp)
             match midWps with
             | x :: _ -> Mcu.addTargetLink wp1 x.Index
             | [] -> Mcu.addTargetLink wp1 destWp.Index
