@@ -246,10 +246,23 @@ with
             midWps
         let midWpsEscort =
             if numEscortShips > 0 then
-                setMidWps(wp1e, destWpE, fst pathEscort, escort1.LinkTrId)
+                let path =
+                    try
+                        pathEscort
+                        |> fst
+                        |> List.tail
+                    with _ -> []
+                setMidWps(wp1e, destWpE, path, escort1.LinkTrId)
             else
                 []
-        let midWpsCargo = setMidWps(wp1, destWp, fst pathCargo, ship1.LinkTrId)
+        let midWpsCargo =
+            let path =
+                try
+                    pathCargo
+                    |> fst
+                    |> List.tail
+                with _ -> []
+            setMidWps(wp1, destWp, path, ship1.LinkTrId)
         let midWps = midWpsEscort @ midWpsCargo
 
         // Icons
