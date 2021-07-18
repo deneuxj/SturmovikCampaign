@@ -428,6 +428,8 @@ type World = {
     Rails : Network
     /// Seaways
     Seaways : Network
+    /// Rivers
+    Rivers : Network
     /// Descriptions of all airfields
     AirfieldsList : Airfield list
     /// Building properties, including bridges
@@ -1183,10 +1185,14 @@ module Init =
         let bridges = roadBridges @ railBridges
         // Seaways
         let seaways =
-            [ "Seaways"; "Waterways" ]
-            |> Seq.collect (fun name -> missionData.GetGroup(name).ListOfMCU_Waypoint)
+            missionData.GetGroup("Seaways").ListOfMCU_Waypoint
             |> extractSeaways
         let seaways = seaways.SetRegions regions
+        // Rivers
+        let rivers =
+            missionData.GetGroup("Waterways").ListOfMCU_Waypoint
+            |> extractSeaways
+        let rivers = rivers.SetRegions regions
         // Ground units
         let groundUnits =
             loadGroundUnitsDb (Path.Combine(exeDir, "Config", "GroundUnitDb.json"))
@@ -1245,6 +1251,7 @@ module Init =
             GroundUnitsOfCountryList = []
             ShipsList = ships
             Seaways = seaways
+            Rivers = rivers
         }
 
 module IO =

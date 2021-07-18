@@ -515,7 +515,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                             |> Seq.truncate numBridgePartsDamaged
 
                         let posInWater region =
-                            war.World.Seaways.Nodes
+                            war.World.Seaways.Nodes @ war.World.Rivers.Nodes
                             |> Seq.tryFind (fun node -> node.Region = Some region)
                             |> Option.map (fun node -> { Pos = node.Pos; Altitude = 0.0f; Rotation = 0.0f })
                             |> Option.defaultValue { Pos = Vector2.Zero; Altitude = 0.0f; Rotation = 0.0f }

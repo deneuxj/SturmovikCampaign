@@ -52,6 +52,30 @@ type PathVertex =
       Role : PathVertexRole
     }
 
+[<RequireQualifiedAccess>]
+module PathVertex =
+    /// Try to find a location on a path that is separated from the start of the path by a given
+    /// distance offset. Return the prefix of the path that was skipped, and the position if any.
+    let tryPlaceOnPath (offset : float32) (path : PathVertex list, initialOffset : float32) : (PathVertex list * float32) * (Vector2 * float32) option =
+        let rec skipOffset(v, offset, path : PathVertex list) =
+            match offset, path with
+            | _, [] -> v, offset, []
+            | offset, v2 :: path2 ->
+                let d = (v2.Pos - v.Pos).Length()
+                if offset - d <= 0.0f then
+                    v, offset, path
+                else
+                    skipOffset(v2, offset - d, path2)
+        match initialOffset + offset, path with
+        | 0.0f, v0 :: _ -> (path, 0.0f), Some (v0.Pos, v0.Ori)
+        | totalInitialOffset, v0 :: path ->
+            let v, offset, path = skipOffset(v0, totalInitialOffset, path)
+            match path with
+            | [] -> ([v], offset), None
+            | _ -> (v :: path, offset), Some(v.Pos + offset * Vector2.UnitX.Rotate(v.Ori), v.Ori)
+        | _, [] ->
+            ([], initialOffset), None
+
 /// <summary>
 /// A virtual convoy, i.e. a convoy that does not actually exist until an enemy approaches its
 /// expected position. The intent is to provide the illusion of a mission filled with large numbers

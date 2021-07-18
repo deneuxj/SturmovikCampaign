@@ -297,7 +297,7 @@ type TargetLocator(random : System.Random, state : IWarStateQuery) =
     let tryGetGroundTargetLocation (regId : RegionId, targetType : GroundTargetType) =
         match targetType with
         | TransportShips _ | WarShips _ ->
-            state.World.Seaways.Nodes
+            state.World.Seaways.Nodes @ state.World.Rivers.Nodes
             |> Seq.filter (fun node -> node.Region = Some regId)
             |> Array.ofSeq
             |> Array.shuffle random
@@ -1258,7 +1258,11 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     for regBid in regA.Neighbours do
                         match state.GetOwner(regA.RegionId), state.GetOwner(regBid) with
                         | Some coalition, Some coalition2 when coalition = coalition2 ->
-                            for x in getPaths false state.World.Seaways [regA.RegionId, regBid] do
+                            let seaPaths =
+                                List.allPairs [SturmovikMission.Blocks.ShipConvoy.WaterType.Sea] (getPaths false state.World.Seaways [regA.RegionId, regBid])
+                            let riverPaths =
+                                List.allPairs [SturmovikMission.Blocks.ShipConvoy.WaterType.River] (getPaths false state.World.Rivers [regA.RegionId, regBid])
+                            for (waterType, x) in seaPaths @ riverPaths do
                                 let ships =
                                     state.World.ShipsList
                                     |> List.collect (fun (country, ships) -> if country = x.Country then ships else [])
@@ -1270,11 +1274,14 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                     ships
                                     |> List.filter (fun ship -> ship.Roles |> List.exists ((=) ShipRole.Defensive))
                                     |> Array.ofList
-                                if cargoShips.Length > 0 && escortShips.Length > 0 then
+                                if cargoShips.Length > 0 then
                                     let cargoShips =
                                         List.init 4 (fun _ -> cargoShips.[selector.Next(cargoShips.Length)])
                                     let escortShips =
-                                        List.init 1 (fun _ -> escortShips.[selector.Next(escortShips.Length)])
+                                        if escortShips.Length > 0 then
+                                            List.init 2 (fun _ -> escortShips.[selector.Next(escortShips.Length)])
+                                        else
+                                            []
                                     yield {
                                         ConvoyName = sprintf "CARGO-%s-%s" (string regA.RegionId) (string regBid)
                                         Country = x.Country
@@ -1282,7 +1289,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                         Path = x.Path
                                         CargoShips = cargoShips
                                         Escort = escortShips
-                                        WaterType = failwith "FUFU"
+                                        WaterType = waterType
                                     }
                         | _ ->
                             ()

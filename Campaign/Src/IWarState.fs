@@ -73,6 +73,8 @@ type IWarStateQuery =
     abstract member ComputeRailCapacity : unit -> (RegionId * RegionId -> float32<M^3/H>)
     /// Compute a mapping from pairs of regions to sea transport capacity between these two regions
     abstract member ComputeSeaCapacity : unit -> (RegionId * RegionId -> float32<M^3/H>)
+    /// Compute a mapping from pairs of regions to river transport capacity between these two regions
+    abstract member ComputeRiverCapacity : unit -> (RegionId * RegionId -> float32<M^3/H>)
     /// Compute a mapping from regions to amount of supplies that can reach it from the rear regions every hour
     abstract member ComputeSupplyAvailability : unit -> (RegionId -> float32<E/H>)
     /// Get a mapping denoting the number of each plane model at an airfield
