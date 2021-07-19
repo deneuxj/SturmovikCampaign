@@ -6481,7 +6481,7 @@ Group
     Index = 506;
     Name = "1s";
     Desc = "";
-    Targets = [498,509,510];
+    Targets = [498,509,510,534];
     Objects = [];
     XPos = 40716.566;
     YPos = 21.039;
