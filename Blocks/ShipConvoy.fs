@@ -81,8 +81,8 @@ with
         // Adjust killed count
         killed.Count <- numEscortShips + numCargoShips
 
-        let cargoSeparation = match waterType with Sea -> 2500.0f | River -> 500.0f
-        let escortSeparation = match waterType with Sea -> 1000.0f | River -> 300.0f
+        let cargoSeparation = match waterType with Sea -> 500.0f | River -> 300.0f
+        let escortSeparation = match waterType with Sea -> 300.0f | River -> 100.0f
 
         // Positions of cargo and escort ships along path
         let foldPath =
