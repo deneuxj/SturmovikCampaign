@@ -1040,9 +1040,8 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                             for file in files do
                                 yield! File.ReadAllLines(file)
                         |]
-                        }
                 let! commands =
-                    MissionResults.processLogs (fun _ -> async.Zero()) war lines
+                    MissionResults.processLogs (fun _ -> async.Zero()) war (AsyncSeq.ofSeq lines)
                     |> AsyncSeq.toListAsync
                 let effects =
                     [
