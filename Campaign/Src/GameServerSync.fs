@@ -1029,19 +1029,17 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     if IO.File.Exists(logsFile) then
                         // If logs file already exists, we are redoing the interpretation of the logs.
                         // Typically done for debugging and testing purposes
-                        AsyncSeq.ofSeq (IO.File.ReadAllLines(logsFile))
+                        IO.File.ReadAllLines(logsFile)
                     else
                         // Normal case: get the logs from the game's directory
-                        asyncSeq {
+                        [|
                             let files =
                                 System.IO.Directory.EnumerateFiles(settings.MissionLogs, pattern)
                                 |> Seq.sortBy (fun file -> System.IO.File.GetCreationTimeUtc(file))
                                 |> List.ofSeq
                             for file in files do
-                                use f = File.OpenText(file)
-                                while not f.EndOfStream do
-                                    let! line = Async.AwaitTask(f.ReadLineAsync())
-                                    yield line
+                                yield! File.ReadAllLines(file)
+                        |]
                         }
                 let! commands =
                     MissionResults.processLogs (fun _ -> async.Zero()) war lines
@@ -1071,7 +1069,6 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 let json = Json.serializeEx JsonConfig.IL2Default effects
                 writer.Write(json)
                 // Write log lines to file
-                let! lines = AsyncSeq.toArrayAsync lines
                 IO.File.WriteAllLines(logsFile, lines)
                 return Ok()
             | None ->
