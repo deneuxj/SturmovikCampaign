@@ -799,7 +799,18 @@ type WorldWar2(world : World, C : Constants) =
     let tryPlanInvasions (timeSpan : float32<H>) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let distanceToAirfields =
             war.ComputeDistancesToAirfields()
+        let hasShips = war.World.CoalitionHasShips(friendly)
         let roads = war.ComputeRoadCapacity()
+        let rivers =
+            if hasShips then
+                war.ComputeRiverCapacity()
+            else
+                fun _ -> 0.0f<M^3/H>
+        let sea =
+            if hasShips then
+                war.ComputeSeaCapacity()
+            else
+                fun _ -> 0.0f<M^3/H>
         let targets =
             war.World.Regions.Values
             |> Seq.filter (fun region ->
@@ -822,7 +833,7 @@ type WorldWar2(world : World, C : Constants) =
                 let transportableFrom = Seq.mutableDict []
                 let targetOwner = war.GetOwner(target.RegionId)
                 for ngh in target.Neighbours do
-                    let capacity = roads(ngh, target.RegionId)
+                    let capacity = roads(ngh, target.RegionId) + rivers(ngh, target.RegionId) + sea(ngh, target.RegionId)
                     let available = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
                     let transportable =
                         // Prevent moves within enemy territory
@@ -930,6 +941,17 @@ type WorldWar2(world : World, C : Constants) =
             [
                 let railCapacity = war.ComputeRailCapacity()
                 let roadCapacity = war.ComputeRoadCapacity()
+                let hasShips = war.World.CoalitionHasShips(friendly)
+                let riverCapacity =
+                    if hasShips then
+                        war.ComputeRiverCapacity()
+                    else
+                        fun _ -> 0.0f<M^3/H>
+                let seaCapacity =
+                    if hasShips then
+                        war.ComputeSeaCapacity()
+                    else
+                        fun _ -> 0.0f<M^3/H>
                 let distanceToEnemy = war.ComputeDistancesToCoalition enemy
                 let mutable budget = budget
                 for source in suitableSources do
@@ -973,7 +995,7 @@ type WorldWar2(world : World, C : Constants) =
                         ||> List.fold (fun (missions, budget, availableToMove) ngh ->
                             logger.Debug(sprintf "Picked %s" (string ngh))
                             let maxTransport =
-                                let capacity = railCapacity(source.RegionId, ngh) + roadCapacity(source.RegionId, ngh)
+                                let capacity = railCapacity(source.RegionId, ngh) + roadCapacity(source.RegionId, ngh) + riverCapacity(source.RegionId, ngh) + seaCapacity(source.RegionId, ngh)
                                 war.World.GroundForcesTransport(capacity, availableToMove, timeSpan)
                             let actualToMove = min availableToMove maxTransport
                             if actualToMove > 0.0f<MGF> then
