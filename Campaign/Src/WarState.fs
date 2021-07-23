@@ -204,6 +204,7 @@ type WarState
     let railsCapacities = Seq.mutableDict []
     // No need to clear
     let seaCapacities = Seq.mutableDict []
+    let riverCapacities = Seq.mutableDict []
     // Must be cleared whenever bridges are damaged or repaired, or owners change
     let supplyAvailability = Seq.mutableDict []
     // Distances (in number of regions) of regions to regions with airfields, need never be cleared
@@ -483,7 +484,7 @@ type WarState
 
     member this.ComputeRiverCapacity() =
         Cached.cached
-            seaCapacities
+            riverCapacities
             (Algo.computeTransportCapacityBetweenRegions this.GetFlowCapacity rivers)
 
     member this.ComputeSupplyAvailability() =
