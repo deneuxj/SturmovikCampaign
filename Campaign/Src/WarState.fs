@@ -543,7 +543,7 @@ type WarState
                         |> (*) (world.CoalitionEntryResources owner)
                     // This is not strictly correct: A production region that is cut from the network should not be able to contribute.
                     // To do things properly, the production should be added as sources in the graph
-                    let limit = computeFlow rails + computeFlow roads
+                    let limit = computeFlow rails + computeFlow roads + computeFlow rivers + computeFlow seaways
                     min limit production)
 
     member this.GetNumPlanes(afid) =
