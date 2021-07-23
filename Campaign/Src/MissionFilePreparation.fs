@@ -448,6 +448,8 @@ type PreparationSettings = {
     GroundBattleLimits : GroundBattleNumbers
     MaxTrainsPerSide : int
     MaxTruckColumnsPerSide : int
+    MaxShipConvoysPerSide : int
+    MaxCargoShipsPerConvoy : int
     MissionLength : System.TimeSpan
     MaxFiresRadius : int
     MaxNumFiresInRadius : int
@@ -1194,6 +1196,16 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             |> List.ofArray
             |> List.truncate limit)
 
+    let groundForcesTransfers =
+        groundMissions
+        |> Seq.choose (
+            function
+            | { Objective = destination; MissionType = GroundForcesTransfer(coalition, start, forces) } ->
+                Some((start, destination, coalition), forces)
+            | _ ->
+                None
+            )
+        |> Seq.mutableDict
     // Trains
     let getConvoyCoalition (convoy : Convoy) = state.World.Countries.[convoy.Country]
     let maxRoadTransfer =
@@ -1205,10 +1217,11 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     logger.Debug("Starting to prepare train convoys")
     let trains =
         [
-            for m in groundMissions do
-                match m.MissionType with
-                | GroundForcesTransfer(coalition, startRegionId, forces) when forces > maxRoadTransfer ->
-                    for x in getPaths true state.World.Rails [startRegionId, m.Objective] do
+            for kvp in groundForcesTransfers do
+                let start, destination, coalition = kvp.Key
+                let mutable amount = kvp.Value
+                for x in getPaths true state.World.Rails [start, destination] do
+                    if amount > maxRoadTransfer then
                         yield {
                             Country = x.Country
                             Coalition = coalition
@@ -1216,20 +1229,85 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             Path = x.Path
                             StartPositions = [ x.Path.Head ]
                         }
-                | _ ->
-                    ()
+                        amount <- amount - maxRoadTransfer
+                        groundForcesTransfers.[kvp.Key] <- amount
         ]
         |> organizeConvoys getConvoyCoalition settings.MaxTrainsPerSide
     logger.Debug(sprintf "Generated a total of %d trains" (trains |> List.sumBy List.length))
+
+    // Ship convoys
+    let shipConvoys =
+        if not state.World.ShipsList.IsEmpty then
+            logger.Debug("Starting to prepare ship convoys")
+            [
+                let selector = System.Random(state.Seed)
+                for kvp in groundForcesTransfers do
+                    let start, destination, coalition = kvp.Key
+                    let mutable amount = kvp.Value
+                    if amount > maxRoadTransfer then
+                        let seaPaths =
+                            List.allPairs [SturmovikMission.Blocks.ShipConvoy.WaterType.Sea] (getPaths false state.World.Seaways [start, destination])
+                        let riverPaths =
+                            List.allPairs [SturmovikMission.Blocks.ShipConvoy.WaterType.River] (getPaths false state.World.Rivers [start, destination])
+                        for (waterType, x) in seaPaths @ riverPaths do
+                            let ships =
+                                state.World.ShipsList
+                                |> List.collect (fun (country, ships) -> if country = x.Country then ships else [])
+                            let isOffensive = state.GetOwner(destination) <> Some coalition
+                            let transportShipMGF, transportRole =
+                                if isOffensive then
+                                    TroopLandingShip.GroundForceValue, ShipRole.TroopLanding
+                                else
+                                    CargoShip.GroundForceValue, ShipRole.Cargo
+                            let cargoShips =
+                                ships
+                                |> List.filter (fun ship -> ship.Roles |> List.exists ((=) transportRole))
+                                |> Array.ofList
+                            let escortShips =
+                                ships
+                                |> List.filter (fun ship -> ship.Roles |> List.exists ((=) transportRole))
+                                |> Array.ofList
+                            if cargoShips.Length > 0 then
+                                let numCargoShips =
+                                    amount / transportShipMGF
+                                    |> int
+                                    |> min settings.MaxCargoShipsPerConvoy
+                                if numCargoShips > 0 then
+                                    let cargoShips =
+                                        List.init numCargoShips (fun _ -> cargoShips.[selector.Next(cargoShips.Length)])
+                                    let escortShips =
+                                        if escortShips.Length > 0 then
+                                            List.init 2 (fun _ -> escortShips.[selector.Next(escortShips.Length)])
+                                        else
+                                            []
+                                    yield {
+                                        ConvoyName = sprintf "CARGO-%s-%s" (string start) (string destination)
+                                        Country = x.Country
+                                        Coalition = coalition
+                                        Path = x.Path
+                                        CargoShips = cargoShips
+                                        Escort = escortShips
+                                        WaterType = waterType
+                                    }
+                                    amount <- amount - transportShipMGF * float32 numCargoShips
+                                    groundForcesTransfers.[kvp.Key] <- amount
+            ]
+            |> organizeConvoys (fun shipConvoy -> shipConvoy.Coalition) settings.MaxShipConvoysPerSide
+            |> List.concat
+        else
+            logger.Debug("No ships in this campaign")
+            []
+    logger.Debug(sprintf "Generated a total of %d ship convoys" (shipConvoys |> List.length))
 
     // Tank columns
     logger.Debug("Starting to prepare tank columns")
     let columns =
         [
-            for m in groundMissions do
-                match m.MissionType with
-                | GroundForcesTransfer(coalition, startRegionId, forces) when forces <= maxRoadTransfer ->
-                    for x in getPaths true state.World.Roads [startRegionId, m.Objective] do
+            for kvp in groundForcesTransfers do
+                let start, destination, coalition = kvp.Key
+                let mutable amount = kvp.Value
+                for x in getPaths true state.World.Roads [start, destination] do
+                    if amount > 0.0f<MGF> then
                         let convoy =
                             AntiAirTruck :: StaffCar :: Tank :: ArmoredCar :: ArmoredCar :: Truck :: Truck :: Truck :: []
                             |> Array.ofList
@@ -1242,64 +1320,11 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                             Path = x.Path
                             StartPositions = x.Path |> List.truncate (convoy.Length + 1) |> List.rev
                         }
-                | _ ->
-                    ()
+                        amount <- max 0.0f<MGF> (amount - maxRoadTransfer)
+                        groundForcesTransfers.[kvp.Key] <- amount
         ]
         |> organizeConvoys getConvoyCoalition settings.MaxTruckColumnsPerSide
     logger.Debug(sprintf "Generated a total of %d tank columns" (columns |> List.sumBy List.length))
-
-    // Ship convoys
-    let shipConvoys =
-        if not state.World.ShipsList.IsEmpty then
-            logger.Debug("Starting to prepare ship convoys")
-            [
-                let selector = System.Random(state.Seed)
-                for regA in state.World.Regions.Values do
-                    for regBid in regA.Neighbours do
-                        match state.GetOwner(regA.RegionId), state.GetOwner(regBid) with
-                        | Some coalition, Some coalition2 when coalition = coalition2 ->
-                            let seaPaths =
-                                List.allPairs [SturmovikMission.Blocks.ShipConvoy.WaterType.Sea] (getPaths false state.World.Seaways [regA.RegionId, regBid])
-                            let riverPaths =
-                                List.allPairs [SturmovikMission.Blocks.ShipConvoy.WaterType.River] (getPaths false state.World.Rivers [regA.RegionId, regBid])
-                            for (waterType, x) in seaPaths @ riverPaths do
-                                let ships =
-                                    state.World.ShipsList
-                                    |> List.collect (fun (country, ships) -> if country = x.Country then ships else [])
-                                let cargoShips =
-                                    ships
-                                    |> List.filter (fun ship -> ship.Roles |> List.exists ((=) ShipRole.Cargo))
-                                    |> Array.ofList
-                                let escortShips =
-                                    ships
-                                    |> List.filter (fun ship -> ship.Roles |> List.exists ((=) ShipRole.Defensive))
-                                    |> Array.ofList
-                                if cargoShips.Length > 0 then
-                                    let cargoShips =
-                                        List.init 4 (fun _ -> cargoShips.[selector.Next(cargoShips.Length)])
-                                    let escortShips =
-                                        if escortShips.Length > 0 then
-                                            List.init 2 (fun _ -> escortShips.[selector.Next(escortShips.Length)])
-                                        else
-                                            []
-                                    yield {
-                                        ConvoyName = sprintf "CARGO-%s-%s" (string regA.RegionId) (string regBid)
-                                        Country = x.Country
-                                        Coalition = coalition
-                                        Path = x.Path
-                                        CargoShips = cargoShips
-                                        Escort = escortShips
-                                        WaterType = waterType
-                                    }
-                        | _ ->
-                            ()
-            ]
-            |> organizeConvoys (fun shipConvoy -> shipConvoy.Coalition) 1
-            |> List.concat
-        else
-            logger.Debug("No ships in this campaign")
-            []
-    logger.Debug(sprintf "Generated a total of %d ship convoys" (shipConvoys |> List.length))
 
     // Fires
     let damagedBuildings =

@@ -61,6 +61,8 @@ type Settings =
         SimulatedDuration : float32
         MaxTrainsPerCoalition : int
         MaxTruckConvoysPerCoalition : int
+        MaxShipConvoysPerCoalition : int
+        MaxCargoShipsPerConvoy : int
         MaxActivePatrolsPerCoalition : int
         MaxAttackPlanesCpuCost : float32
         MaxAAGuns : int
@@ -137,6 +139,8 @@ module IO =
             simulated_duration : float option
             max_trains : int option
             max_truck_convoys : int option
+            max_ship_convoys : int option
+            max_cargo_ships : int option
             max_active_patrols : int option
             max_attack_planes_cpu : int option
             max_aa : int option
@@ -176,6 +180,8 @@ module IO =
                 SimulatedDuration = defaultArg this.simulated_duration 180.0 |> float32
                 MaxTrainsPerCoalition = defaultArg this.max_trains 4
                 MaxTruckConvoysPerCoalition = defaultArg this.max_truck_convoys 5
+                MaxShipConvoysPerCoalition = defaultArg this.max_ship_convoys 2
+                MaxCargoShipsPerConvoy = defaultArg this.max_cargo_ships 4
                 MaxActivePatrolsPerCoalition = defaultArg this.max_active_patrols 4
                 MaxAttackPlanesCpuCost = 100.0f * float32(defaultArg this.max_attack_planes_cpu 16)
                 MaxAAGuns = defaultArg this.max_aa 1000
@@ -221,6 +227,8 @@ module IO =
                 max_active_patrols = None
                 max_trains = None
                 max_truck_convoys = None
+                max_ship_convoys = None
+                max_cargo_ships = None
                 max_attack_planes_cpu = None
                 max_aa = None
                 max_battle_tanks = None
