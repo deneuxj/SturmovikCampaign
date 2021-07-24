@@ -180,20 +180,40 @@
       <Link>RheinlandWinter.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\RheinLandWinter.eng">
+      <Link>RheinlandWinter.eng</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\Eindhoven.Mission">
       <Link>Eindhoven.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="data\Eindhoven.eng">
+      <Link>Eindhoven.eng</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="data\StalingradSummer.Mission">
       <Link>StalingradSummer.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\StalingradSummer.eng">
+      <Link>StalingradSummer.eng</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\KubanAutumn2.Mission">
       <Link>KubanAutumn2.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\KubanAutumn2.eng">
+      <Link>KubanAutumn2.eng</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\MoscowLakes.Mission">
       <Link>MoscowLakes.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="data\MoscowLakes.eng">
+      <Link>MoscowLakes.eng</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

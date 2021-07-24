@@ -64,6 +64,11 @@ with
         | Strafing target -> sprintf "strafing of %s" target.Description
         | PlaneTransfer(afId) -> sprintf "plane transfer to %s" afId.AirfieldName
 
+    member this.IsCombat =
+        match this with
+        | PlaneTransfer _ -> false
+        | AreaProtection | Bombing _ | Strafing _ -> true
+
 type AirMission =
     {
         StartAirfield : AirfieldId

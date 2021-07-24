@@ -674,7 +674,7 @@ type WorldWar2(world : World, C : Constants) =
                 ]
                 |> List.map (fun m ->
                     { Kind = AirMission m
-                      Description = "Combat air patrol" })
+                      Description = $"Combat air patrol: {m.NumPlanes} {m.Plane} from {m.StartAirfield.AirfieldName} over {m.Objective}" })
             Plan("Air defense", missions, budget)
 
     /// Try to send planes closer to the frontline.
@@ -1110,7 +1110,32 @@ type WorldWar2(world : World, C : Constants) =
                     "keeping the pressure on"
                 else
                     "striking against"
-            let briefing = sprintf "%s. %s %s %s %s assets with %s. %s wheather%s the storm with %s" comment (string side) g1.VerbIs momentum (string side.Other) description (string side.Other) g2.Suffix3 otherSideDefends.Description
+            let prioritized missions =
+                missions
+                |> List.filter (fun m ->
+                    match m.Kind with
+                    | AirMission am when am.MissionType.IsCombat ->
+                        true
+                    | _ ->
+                        false
+                )
+            let briefing =
+                [
+                    yield $"{comment}. {side} {g1.VerbIs} {momentum} {side.Other} assets with {description}. {side.Other} wheather{g2.Suffix3} the storm with {otherSideDefends.Description}"
+                    let sidePriotized = prioritized missions
+                    if not sidePriotized.IsEmpty then
+                        yield ""
+                        yield $"Prioritized missions by {side}:"
+                        for m in sidePriotized do
+                            yield $"{m.Description}"
+                    let otherPrioritized = prioritized missions
+                    if not otherPrioritized.IsEmpty then
+                        yield ""
+                        yield $"Prioritized missions by {side.Other}:"
+                        for m in otherPrioritized do
+                            yield $"{m.Description}"
+                ]
+                |> String.concat "<br>"
             logger.Info(briefing)
             Ongoing {
                 Briefing = briefing
@@ -1133,7 +1158,7 @@ type WorldWar2(world : World, C : Constants) =
             let data = stepData.Data :?> ImplData
             // Switch the initiative to the other side.
             let side = data.OffensiveCoalition.Other
-            let comment = sprintf "%s has the initiative" (string side)
+            let comment = $"{side} {side.Grammar.VerbHave} the initiative"
             oneSideStrikes side comment 1
 
         member this.NewDay(war) =

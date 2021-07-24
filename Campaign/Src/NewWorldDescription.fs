@@ -402,6 +402,8 @@ type World = {
     Map : string
     /// Date of the first mission.
     StartDate : System.DateTime
+    /// Briefing from the scenario file
+    Briefing : string option
     /// Weather offset: affects how late or early the weather pattern is.
     WeatherDaysOffset : float
     /// Resources that can be spent per region or airfield on repairing buildings
@@ -1117,7 +1119,30 @@ module Init =
                 failwithf "Failed to parse scenario '%s'" scenario
             | exc ->
                 failwithf "Failed to parse scenario '%s': %s" scenario exc.Message
-
+        let missionStrings =
+            let allContent =
+                let stringsFile = System.IO.Path.GetFileNameWithoutExtension(scenario) + ".eng"
+                let stringsPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(scenario), stringsFile)
+                try
+                    use stringsFile = System.IO.File.OpenRead(stringsPath)
+                    let encoding = System.Text.UnicodeEncoding(false, true)
+                    use reader = new StreamReader(stringsFile, encoding)
+                    [
+                        while not reader.EndOfStream do
+                            yield reader.ReadLine()
+                    ]
+                with
+                | exc ->
+                    failwithf "Failed to read scenario strings '%s': %s" stringsPath exc.Message
+            allContent
+            |> List.choose (fun line ->
+                match line.Split(':', 2) with
+                | [| AsInt num; text |] ->
+                    Some(num, text)
+                | _ ->
+                    None
+            )
+            |> dict
         // Region boundaries
         let regionAreas =
             missionData.GetGroup("Regions").ListOfMCU_TR_InfluenceArea
@@ -1234,11 +1259,16 @@ module Init =
         // Misc data
         let scenario = System.IO.Path.GetFileNameWithoutExtension(scenario)
         let startDate = options.GetDate()
+        let briefing =
+            match missionStrings.TryGetValue(1 (* options.GetLCDesc().Value *)) with
+            | true, text -> Some text
+            | _ -> None
         let hour, minute, second = options.GetTime().Value
         {
             Scenario = scenario
             Map = mapName
             StartDate = System.DateTime(startDate.Year, startDate.Month, startDate.Day, hour.Value, minute.Value, second.Value)
+            Briefing = briefing
             WeatherDaysOffset = 0.0
             RepairSpeed = 1.0f<E/H>
             RepairCostRatio = 2.0f<E/M^3>

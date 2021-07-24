@@ -1419,10 +1419,14 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             }
         )
 
+    let scenarioBriefingPrefix =
+        match state.World.Briefing with
+        | Some s -> s + "<br><br>"
+        | None -> ""
     // Result
     {
         Date = state.Date
-        Briefing = state.Date.ToString("d MMM yyyy HH:mm") + "<br>" + state.Weather.Description + "<br>" + briefing + "<br><br>" + settings.SupportText
+        Briefing = scenarioBriefingPrefix + state.Date.ToString("d MMM yyyy HH:mm") + "<br>" + state.Weather.Description + "<br>" + briefing + "<br><br>" + settings.SupportText
         Boundary = boundary
         PlayerSpawns = spawns
         AntiAirNests = aaNests
