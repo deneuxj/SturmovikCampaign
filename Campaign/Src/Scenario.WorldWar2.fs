@@ -197,6 +197,7 @@ module WorldWar2Internal =
 open WorldWar2Internal
 open FSharp.Json
 open Util.Json
+open Campaign.Common.Ship
 
 /// A campaign scenario implementation for WWII in the European and East front theaters: Bomb industry, airfields, harass and protect ground troops
 type WorldWar2(world : World, C : Constants) =
@@ -799,7 +800,7 @@ type WorldWar2(world : World, C : Constants) =
     let tryPlanInvasions (timeSpan : float32<H>) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let distanceToAirfields =
             war.ComputeDistancesToAirfields()
-        let hasShips = war.World.CoalitionHasShips(friendly)
+        let hasShips = war.World.CoalitionHasShips(friendly, [ShipRole.TroopLanding])
         let roads = war.ComputeRoadCapacity()
         let rivers =
             if hasShips then
@@ -941,7 +942,7 @@ type WorldWar2(world : World, C : Constants) =
             [
                 let railCapacity = war.ComputeRailCapacity()
                 let roadCapacity = war.ComputeRoadCapacity()
-                let hasShips = war.World.CoalitionHasShips(friendly)
+                let hasShips = war.World.CoalitionHasShips(friendly, [ShipRole.Cargo])
                 let riverCapacity =
                     if hasShips then
                         war.ComputeRiverCapacity()

@@ -583,10 +583,19 @@ type World with
         | None | Some(_, None) ->
             []
 
-    member this.CoalitionHasShips(coalition : CoalitionId) =
-        this.ShipsList
-        |> List.exists (fun (country, ships) -> this.Countries.TryGetValue(country) = (true, coalition) && not ships.IsEmpty)
-
+    member this.CoalitionHasShips(coalition : CoalitionId, roles : ShipRole list) =
+        let ships =
+            this.ShipsList
+            |> List.collect (fun (country, ships) ->
+                if this.Countries.TryGetValue(country) = (true, coalition) then
+                    ships
+                else
+                    [])
+        roles
+        |> List.forall (fun role ->
+            ships
+            |> List.exists (fun ship -> ship.Roles |> List.exists ((=) role))
+        )
 
 module Init =
     open System.IO
