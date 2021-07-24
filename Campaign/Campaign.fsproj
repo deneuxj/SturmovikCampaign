@@ -176,10 +176,6 @@
     <Content Include="..\FitArea\stalingrad.qtree.gz" Link="stalingrad.qtree.gz">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="data\OperationBodenPlatte.Mission">
-      <Link>OperationBodenplatte.Mission</Link>
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
     <None Include="data\RheinLandWinter.Mission">
       <Link>RheinlandWinter.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
