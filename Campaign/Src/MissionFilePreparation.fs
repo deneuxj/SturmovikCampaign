@@ -1265,7 +1265,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                                 |> Array.ofList
                             let escortShips =
                                 ships
-                                |> List.filter (fun ship -> ship.Roles |> List.exists ((=) transportRole))
+                                |> List.filter (fun ship -> ship.Roles |> List.exists ((=) ShipRole.Defensive))
                                 |> Array.ofList
                             if cargoShips.Length > 0 then
                                 let numCargoShips =
