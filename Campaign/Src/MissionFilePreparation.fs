@@ -1205,6 +1205,8 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
             | _ ->
                 None
             )
+        |> Seq.groupBy fst
+        |> Seq.map (fun (key, vs) -> key, vs |> Seq.map snd |> Seq.sum)
         |> Seq.mutableDict
     // Trains
     let getConvoyCoalition (convoy : Convoy) = state.World.Countries.[convoy.Country]
