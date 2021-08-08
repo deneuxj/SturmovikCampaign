@@ -28,7 +28,7 @@ Any segment of road or rails inside these areas are locations where supplies can
 In order for a path over roads or rails to connect two regions that share an edge in their boundaries, the entire path must be covered by the two regions.
 If you intend for a bridge to play an important role in the tactics, avoid spanning both sides of the bridge with terminal zones.
 
-4. Define water and/or seaways
+4. Define water and/or seaways (optional)
 In a group called "Waterways" or "Seaways", create paths of waypoints between regions that can transfer troops and supplies by ship.
 Each region with water or seaways must have an anchorage position, identified by one or more terminal waypoints with a single in/out going link.
 
