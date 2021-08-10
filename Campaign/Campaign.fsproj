@@ -200,6 +200,14 @@
       <Link>StalingradSummer.eng</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\StalingradWinter.Mission">
+      <Link>StalingradWinter.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="data\StalingradWinter.eng">
+      <Link>StalingradWinter.eng</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\KubanAutumn2.Mission">
       <Link>KubanAutumn2.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -214,6 +222,14 @@
     </None>
     <None Include="data\MoscowLakes.eng">
       <Link>MoscowLakes.eng</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="data\MoscowWinter.Mission">
+      <Link>MoscowWinter.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="data\MoscowWinter.eng">
+      <Link>MoscowWinter.eng</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
