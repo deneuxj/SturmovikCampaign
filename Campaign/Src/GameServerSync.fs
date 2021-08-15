@@ -820,12 +820,14 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 try
                     let seed = this.Seed
                     let selection =
-                        ctrl.TrySelectMissions(stepData, state, seed, 25)
-                        |> Option.map (fun selection ->
+                        ctrl.SelectMissions(stepData, state, seed, 25)
+                        |> List.filter (fun mission ->
                             if withBattles then
-                                selection
+                                true
                             else
-                                selection.WithoutGroundBattles)
+                                match mission.Kind with
+                                | Missions.GroundMission { MissionType = Missions.GroundBattle _ } -> false
+                                | _ -> true)
                     let missionPrepSettings : MissionFilePreparation.PreparationSettings =
                         {
                             MissionFilePreparation.SupportText = settings.SupportText

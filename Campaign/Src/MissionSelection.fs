@@ -58,6 +58,37 @@ with
             List.length this.OtherMissions
         ]
 
+    member this.AllMissions =
+        [
+            yield { Kind = AirMission this.MainMission; Description = "Main mission" }
+            match this.HomeCover with
+            | Some m ->
+                yield { Kind = AirMission m; Description = "Home cover" }
+            | None ->
+                ()
+            match this.TargetCover with
+            | Some m ->
+                yield { Kind = AirMission m; Description = "Target cover" }
+            | None ->
+                ()
+            match this.Interception with
+            | Some m ->
+                yield { Kind = AirMission m; Description = "Interception" }
+            | None ->
+                ()
+            match this.HomeAttack with
+            | Some m ->
+                yield { Kind = AirMission m; Description = "Home attack" }
+            | None ->
+                ()
+            match this.GroundBattleAtTarget with
+            | Some m ->
+                yield { Kind = GroundMission m; Description = "Ground battle at target" }
+            | None ->
+                ()
+            yield! this.OtherMissions
+        ]
+
     member this.AreMissionsDistinct =
         let optDiff opt1 opt2 =
             match opt1, opt2 with

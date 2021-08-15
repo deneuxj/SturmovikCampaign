@@ -457,7 +457,7 @@ type PreparationSettings = {
 }
 
 /// Create the descriptions of the groups to include in a mission file depending on a selected subset of missions.
-let mkMultiplayerMissionContent (random : System.Random) (settings : PreparationSettings) briefing (state : IWarStateQuery) (missions : MissionSelection option) =
+let mkMultiplayerMissionContent (random : System.Random) (settings : PreparationSettings) briefing (state : IWarStateQuery) (missions : Mission list) =
     let strategyMissionData = T.GroupData.Parse(Parsing.Stream.FromFile (state.World.Scenario + ".Mission"))
     let locator = TargetLocator(random, state)
     let warmedUp = true
@@ -475,8 +475,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
 
     let groundMissions =
         missions
-        |> Option.map (fun m -> m.GroundMissions)
-        |> Option.defaultValue Seq.empty
+        |> List.choose (function { Kind = GroundMission m } -> Some m | _ -> None )
 
     logger.Info("Preparing spawns")
     // Player spawns
@@ -948,57 +947,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     // patrols
     let patrols =
         [
-            // Home cover is 15km from the attacker's home airfield
-            yield
-                missions
-                |> Option.bind (fun missions ->
-                    let afPos = state.World.Airfields.[missions.MainMission.StartAirfield].Position
-                    let objPos = state.World.Regions.[missions.MainMission.Objective].Position
-                    let dir = objPos - afPos
-                    let dir = dir / dir.Length()
-                    let offset = dir * 15000.0f
-                    let targetPos = afPos + offset
-                    missions.HomeCover
-                    |> Option.bind (fun mission -> AiPatrol.TryFromAirMission(state, mission, targetPos)))
-            // Target cover is over the target
-            yield
-                missions
-                |> Option.bind (fun missions ->
-                    let targetType =
-                        match missions.MainMission.MissionType with
-                        | Strafing t | Bombing t -> t
-                        | _ -> GroundTargetType.BuildingTarget
-                    let targetPos = locator.TryRecallGroundTargetLocation(missions.MainMission.Objective, targetType)
-                    targetPos
-                    |> Option.bind (fun (targetPos, _) ->
-                        missions.HomeCover
-                        |> Option.bind (fun cover -> AiPatrol.TryFromAirMission(state, cover, targetPos))))
-            // Interception is 15km away from the target
-            yield
-                missions
-                |> Option.bind (fun missions ->
-                    let afPos = state.World.Airfields.[missions.MainMission.StartAirfield].Position
-                    let objPos = state.World.Regions.[missions.MainMission.Objective].Position
-                    let dir = objPos - afPos
-                    let dir = dir / dir.Length()
-                    let offset = dir * 15000.0f
-                    let targetPos = objPos - offset
-                    missions.Interception
-                    |> Option.bind (fun interception -> AiPatrol.TryFromAirMission(state, interception, targetPos)))
-            // Home attack is 30km from attacker's home airfield
-            yield
-                missions
-                |> Option.bind (fun missions ->
-                    let afPos = state.World.Airfields.[missions.MainMission.StartAirfield].Position
-                    let objPos = state.World.Regions.[missions.MainMission.Objective].Position
-                    let dir = objPos - afPos
-                    let dir = dir / dir.Length()
-                    let offset = dir * 30000.0f
-                    let targetPos = afPos + offset
-                    missions.HomeAttack
-                    |> Option.bind (fun mission -> AiPatrol.TryFromAirMission(state, mission, targetPos)))
-            // Other patrols are over the objective's capital
-            for mission in missions |> Option.map (fun m -> m.OtherMissions) |> Option.defaultValue [] do
+            for mission in missions do
                 match mission.Kind with
                 | AirMission ({ MissionType = AreaProtection; Objective = objective } as airMission) ->
                     let objPos = state.World.Regions.[objective].Position
@@ -1012,17 +961,15 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
     // Air attackers
     let attacks =
         [
-            match missions with
-            | Some missions ->
-                let mainTargetType =
-                    match missions.MainMission.MissionType with
-                    | Bombing t | Strafing t -> t
-                    | _ -> GroundTargetType.BuildingTarget
-                yield
-                    locator.TryRecallGroundTargetLocation(missions.MainMission.Objective, mainTargetType)
-                    |> Option.bind (fun (targetPos, _) -> AiAttack.TryFromAirMission(state, missions.MainMission, targetPos))
-            | None ->
-                ()
+            for mission in missions do
+                match mission.Kind with
+                | AirMission ({ MissionType = Bombing target; Objective = objective } as airMission)
+                | AirMission ({ MissionType = Strafing target; Objective = objective } as airMission) ->
+                    yield
+                        locator.TryRecallGroundTargetLocation(objective, target)
+                        |> Option.bind (fun (targetPos, _) -> AiAttack.TryFromAirMission(state, airMission, targetPos))
+                | _ ->
+                    ()
         ]
         |> List.choose id
     logger.Info(sprintf "Done (%d)" attacks.Length)
