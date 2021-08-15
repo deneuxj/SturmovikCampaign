@@ -1128,7 +1128,7 @@ type WorldWar2(world : World, C : Constants) =
                         yield $"Prioritized missions by {side}:"
                         for m in sidePriotized do
                             yield $"{m.Description}"
-                    let otherPrioritized = prioritized missions
+                    let otherPrioritized = prioritized defenseMissions
                     if not otherPrioritized.IsEmpty then
                         yield ""
                         yield $"Prioritized missions by {side.Other}:"
