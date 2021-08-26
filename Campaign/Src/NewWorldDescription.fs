@@ -414,8 +414,6 @@ type World = {
     TransportRepairCostRatio : float32<E/(M^3/H)>
     /// Volume of resources
     ResourceVolume : float32<M^3/E>
-    /// Resources that can be produced per hour, per storage volume
-    ResourceProductionRate : float32<E/H/M^3>
     /// Amount of resources for a unit of ground force to work optimally, per hour
     GroundForcesCost : float32<E/MGF/H>
     /// Transport capacity required per unit of ground force
@@ -459,13 +457,11 @@ type World = {
     GroundUnitsOfCountryList : (CountryId * GroundUnitId list) list
     /// Ships of each partipating country
     ShipsList : (CountryId * ShipProperties list) list
-}
-with
     /// Portion of ground forces dedicated to anti-air
-    member this.AntiAirGroundForcesRatio = 0.15f
-
+    AntiAirGroundForcesRatio : float32
     /// Resources available in entry regions for a coalition
-    member this.CoalitionEntryResources(_ : CoalitionId) = 50000.0f<E/H>
+    CoalitionEntryResources : (CoalitionId * float32<E/H>) list
+}
 
 module private DynProps =
     let cacheBy getXs getKey =
@@ -497,6 +493,8 @@ module private DynProps =
             (fun world ->
                 world.GroundUnitsOfCountryList
                 |> List.collect (fun (country, units) -> List.allPairs units [country]))
+
+    let entryResources = cacheByKvp (fun world -> world.CoalitionEntryResources)
 
 type World with
     /// Mapping from RegionId to Region
@@ -535,6 +533,8 @@ type World with
     /// Mapping from ground unit ID to country
     member this.CountryOfGroundUnit =
         DynProps.groundUnitsCountry this
+
+    member this.ResupplyingOfCoalition = DynProps.entryResources this
 
     /// Find the region that covers a coordinate, or failing that the one with the closest boundary vertex.
     member this.FindRegionAt(pos : Vector2) =
@@ -598,6 +598,7 @@ type World with
             ships
             |> List.exists (fun ship -> ship.Roles |> List.exists ((=) role))
         )
+
 
 module Init =
     open System.IO
@@ -1302,6 +1303,8 @@ module Init =
             ShipsList = ships
             Seaways = seaways
             Rivers = rivers
+            AntiAirGroundForcesRatio = 0.15f
+            CoalitionEntryResources = [(CoalitionId.Allies, 50000.0f<E/H>); (CoalitionId.Allies, 50000.0f<E/H>)]
         }
 
 module IO =

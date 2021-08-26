@@ -495,7 +495,7 @@ type WarState
                 | false, _ -> 0.0f<E/H>
                 | true, owner ->
                     if world.Regions.[rId].IsEntry then
-                        world.CoalitionEntryResources owner * this.GetRegionProcessingLevel(rId)
+                        world.ResupplyingOfCoalition.[owner] * this.GetRegionProcessingLevel(rId)
                     else
                     // Regions through which the owner coalition can travel: neutral, and the ones under one's control.
                     let regions =
@@ -540,7 +540,7 @@ type WarState
                         owners
                         |> Seq.filter (fun kvp -> kvp.Value = owner && world.Regions.[kvp.Key].IsEntry)
                         |> Seq.sumBy (fun kvp -> this.GetRegionProcessingLevel(kvp.Key))
-                        |> (*) (world.CoalitionEntryResources owner)
+                        |> (*) (world.ResupplyingOfCoalition.[owner])
                     // This is not strictly correct: A production region that is cut from the network should not be able to contribute.
                     // To do things properly, the production should be added as sources in the graph
                     let limit = computeFlow rails + computeFlow roads + computeFlow rivers + computeFlow seaways
