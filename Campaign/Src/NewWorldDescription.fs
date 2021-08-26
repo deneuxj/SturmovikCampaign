@@ -1283,7 +1283,6 @@ module Init =
             GroundForcesCost = 10.0f<E/MGF/H>
             GroundForcesTransportCost = 5.0f<M^3/H/MGF>
             ResourceVolume = 1.0f<M^3/E>
-            ResourceProductionRate = 1.0f<E/H/M^3>
             RegionsList = regions
             BridgeCapacity = railsCapacity
             Roads = roads
