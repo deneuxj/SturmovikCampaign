@@ -1263,6 +1263,13 @@ module Init =
             match missionStrings.TryGetValue(1 (* options.GetLCDesc().Value *)) with
             | true, text -> Some text
             | _ -> None
+        // Bridge and transport misc factors
+        let repairSpeed = 1.0f<E/H>
+        let bridgeCapacity =
+            railsCapacity
+        // Time to fully repair one large bridge
+        let bridgeRepairTime = 10.0f<H>
+        let transportRepairCostRatio =  repairSpeed * bridgeRepairTime / bridgeCapacity
         let hour, minute, second = options.GetTime().Value
         {
             Scenario = scenario
@@ -1270,9 +1277,9 @@ module Init =
             StartDate = System.DateTime(startDate.Year, startDate.Month, startDate.Day, hour.Value, minute.Value, second.Value)
             Briefing = briefing
             WeatherDaysOffset = 0.0
-            RepairSpeed = 1.0f<E/H>
+            RepairSpeed = repairSpeed
             RepairCostRatio = 2.0f<E/M^3>
-            TransportRepairCostRatio = 1.0f<E/(M^3/H)>
+            TransportRepairCostRatio = transportRepairCostRatio
             GroundForcesCost = 10.0f<E/MGF/H>
             GroundForcesTransportCost = 5.0f<M^3/H/MGF>
             ResourceVolume = 1.0f<M^3/E>
