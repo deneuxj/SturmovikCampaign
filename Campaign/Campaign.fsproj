@@ -208,6 +208,14 @@
       <Link>StalingradWinter.eng</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="data\KubanAutumn.Mission">
+      <Link>KubanAutumn.Mission</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="data\KubanAutumn.eng">
+      <Link>KubanAutumn.eng</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="data\KubanAutumn2.Mission">
       <Link>KubanAutumn2.Mission</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
