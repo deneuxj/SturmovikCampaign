@@ -520,6 +520,44 @@
     {
       "Plane": {
         "Kind": "Fighter",
+        "Name": "fw190a6",
+        "LogName": "fw 190 a-6",
+        "Roles": [
+          "Interceptor",
+          "GroundAttacker"
+        ],
+        "Coalition": "Axis",
+        "Script": "LuaScripts\\WorldObjects\\Planes\\fw190a6.txt",
+        "Model": "graphics\\planes\\fw190a6\\fw190a6.mgm",
+        "Static": "fw190a8",
+        "Cost": 800,
+        "BombCapacity": 700,
+        "CargoCapacity": 700,
+        "Payloads": [
+          {
+            "Payload": {
+              "Role": "Interceptor",
+              "ModMask": 1,
+              "Id": 0
+            }
+          },
+          {
+            "Payload": {
+              "Role": "GroundAttacker",
+              "ModMask": 19,
+              "Id": 17
+            }
+          }
+        ],
+        "EmptyPayload": 71,
+        "WeaponModsCosts": [],
+        "LastPayload": 90,
+        "LastWeaponMod": 7
+      }
+    },
+    {
+      "Plane": {
+        "Kind": "Fighter",
         "Name": "fw190a8",
         "LogName": "fw 190 a-8",
         "Roles": [
@@ -1355,6 +1393,82 @@
         "WeaponModsCosts": [],
         "LastPayload": 3,
         "LastWeaponMod": 4
+      }
+    },
+    {
+      "Plane": {
+        "Kind": "Fighter",
+        "Name": "yak9s1",
+        "LogName": "yak-9 ser.1",
+        "Roles": [
+          "Interceptor",
+          "Patroller"
+        ],
+        "Coalition": "Allies",
+        "Script": "LuaScripts\\WorldObjects\\Planes\\yak9s1.txt",
+        "Model": "graphics\\planes\\yak9s1\\yak9s1.mgm",
+        "Static": "yak1",
+        "Cost": 833.3333129882812,
+        "BombCapacity": 0,
+        "CargoCapacity": 0,
+        "Payloads": [
+          {
+            "Payload": {
+              "Role": "Interceptor",
+              "ModMask": 1,
+              "Id": 0
+            }
+          },
+          {
+            "Payload": {
+              "Role": "Patroller",
+              "ModMask": 1,
+              "Id": 0
+            }
+          }
+        ],
+        "EmptyPayload": 1,
+        "WeaponModsCosts": [],
+        "LastPayload": 13,
+        "LastWeaponMod": 4
+      }
+    },
+    {
+      "Plane": {
+        "Kind": "Fighter",
+        "Name": "yak9ts1",
+        "LogName": "yak-9t ser.1",
+        "Roles": [
+          "Interceptor",
+          "Patroller"
+        ],
+        "Coalition": "Allies",
+        "Script": "LuaScripts\\WorldObjects\\Planes\\yak9ts1.txt",
+        "Model": "graphics\\planes\\yak9ts1\\yak9ts1.mgm",
+        "Static": "yak1",
+        "Cost": 833.3333129882812,
+        "BombCapacity": 0,
+        "CargoCapacity": 0,
+        "Payloads": [
+          {
+            "Payload": {
+              "Role": "Interceptor",
+              "ModMask": 1,
+              "Id": 0
+            }
+          },
+          {
+            "Payload": {
+              "Role": "Patroller",
+              "ModMask": 1,
+              "Id": 0
+            }
+          }
+        ],
+        "EmptyPayload": 3,
+        "WeaponModsCosts": [],
+        "LastPayload": 13,
+        "LastWeaponMod": 5
       }
     },
     {
