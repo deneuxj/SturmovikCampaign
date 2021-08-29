@@ -1313,11 +1313,12 @@ type WorldWar2(world : World, C : Constants) =
                 Some(candidates.[random.Next(candidates.Length)])
 
         member this.SelectMissions(stepData, war, seed, numSelected) =
-            match (this :> IScenarioController).TrySelectMissions(stepData, war, seed, numSelected) with
-            | Some selection ->
-                selection.AllMissions
-            | None ->
-                []
+            let rand = System.Random(seed)
+            stepData.Missions
+            |> Array.ofList
+            |> Array.shuffle rand
+            |> Seq.truncate numSelected
+            |> List.ofSeq
 
         member this.DeserializeStepData(json : string) =
             let implData : ImplData = Json.deserializeEx JsonConfig.IL2Default json
