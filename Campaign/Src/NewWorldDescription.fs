@@ -1304,7 +1304,7 @@ module Init =
             Seaways = seaways
             Rivers = rivers
             AntiAirGroundForcesRatio = 0.15f
-            CoalitionEntryResources = [(CoalitionId.Allies, 50000.0f<E/H>); (CoalitionId.Allies, 50000.0f<E/H>)]
+            CoalitionEntryResources = [(CoalitionId.Axis, 50000.0f<E/H>); (CoalitionId.Allies, 50000.0f<E/H>)]
         }
 
 module IO =
