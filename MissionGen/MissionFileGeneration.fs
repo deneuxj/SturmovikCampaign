@@ -536,6 +536,23 @@ with
             Mcu.addTargetLink startTrigger column.Api.Start.Index
             column :> IMcuGroup
 
+
+type PlaneTransfer =
+    {
+        Country : CountryId
+        Plane : PlaneModel
+        NumPlanes : int
+        StartPos : OrientedPosition
+        LandingPos : OrientedPosition
+    }
+with
+    member this.CreateMCUs(store) =
+        let group = FerryFlight.FerryFlight.Create(store, this.StartPos.Pos, this.LandingPos.Pos, this.StartPos.Rotation, this.LandingPos.Rotation, this.NumPlanes, this.Country.ToMcuValue)
+        group.Plane.Script <- this.Plane.ScriptModel.Script
+        group.Plane.Model <- this.Plane.ScriptModel.Model
+        group
+
+
 type ShipConvoy =
     {
         ConvoyName : string
@@ -716,6 +733,7 @@ type MultiplayerMissionContent =
         GroundBattles : GroundBattle list
         AiPatrols : AiPatrol list
         AiAttacks : AiAttack list
+        PlaneTransfers : PlaneTransfer list
         /// List of chains of convoys, convoys in each chain start after the previous one reaches completion.
         Convoys : Convoy list list
         /// List of ship convoys. They all run simultaneously.
@@ -864,6 +882,25 @@ with
             mkAttackStarts attacksByCoalition
             attacksByCoalition
             |> List.map fst
+
+        // Plane transfers
+        let planeTransfers =
+            this.PlaneTransfers
+            |> List.groupBy (fun xfer -> data.GetCountryCoalition(xfer.Country))
+            |> List.collect (fun (coalition, xfers) ->
+                let groups =
+                    xfers
+                    |> List.map (fun xfer -> xfer.CreateMCUs(store))
+                groups
+                |> List.tryHead
+                |> Option.iter (fun g0 ->
+                    Mcu.addTargetLink missionBegin g0.TryStart.Index
+                )
+                for (prev, next) in List.pairwise groups do
+                    Mcu.addTargetLink prev.Next next.TryStart.Index
+                groups
+                |> List.map (fun g -> g.All)
+            )
 
         // Convoys
         let convoys : IMcuGroup list =
@@ -1045,6 +1082,7 @@ with
                 yield! battles
                 yield! allPatrols
                 yield! allAttacks
+                yield! planeTransfers
                 yield! convoys
                 yield! ships |> List.map(fun ships -> ships.All)
                 yield! parkedPlanes

@@ -143,6 +143,59 @@ type AiPatrol with
         | _ ->
             None
 
+type PlaneTransfer with
+    static member TryFromAirMission(state : IWarStateQuery, mission : AirMission) =
+        match mission.MissionType with
+        | PlaneTransfer destination ->
+            let startAf =
+                state.World.Airfields.TryGetValue(mission.StartAirfield)
+                |> Option.ofPair
+            match startAf with
+            | None -> None
+            | Some startAf ->
+
+            let landingAf =
+                state.World.Airfields.TryGetValue(destination)
+                |> Option.ofPair
+            match landingAf with
+            | None -> None
+            | Some landingAf ->
+
+            let country = state.GetOwner(startAf.Region) |> Option.map (fun owner -> state.World.GetAnyCountryInCoalition(owner))
+            match country with
+            | None -> None
+            | Some country ->
+
+            let plane = state.World.PlaneSet.TryGetValue(mission.Plane) |> Option.ofPair
+            match plane with
+            | None -> None
+            | Some plane ->
+
+            let startPos =
+                { Pos = startAf.Position
+                  Altitude = 200.0f
+                  Rotation = 0.0f
+                }
+
+            let landingRunway =
+                try
+                    landingAf.PickAgainstWind(Vector2.FromYOri(state.Weather.Wind.Direction), plane.MinRunwayLength / 1.0f<M>)
+                    |> Some
+                with _ -> None
+
+            match landingRunway with
+            | None -> None
+            | Some rw ->
+                Some {
+                    Country = country
+                    Plane = plane
+                    NumPlanes = mission.NumPlanes
+                    StartPos = startPos
+                    LandingPos = { Pos = rw.Start; Altitude = 0.0f ; Rotation = (rw.End - rw.Start).YOri }
+                }
+        | _ ->
+            None
+
 /// Compute groups of buildings or bridges in a region that are still 50% functional or more.
 /// The result is not a partitition, i.e. each building may appear in more than one groups.
 let computeHealthyBuildingClusters(radius, state : IWarStateQuery, buildings : BuildingInstance seq, regId : RegionId) =
@@ -974,6 +1027,20 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         |> List.choose id
     logger.Info(sprintf "Done (%d)" attacks.Length)
 
+    logger.Info("Preparing plane transfers")
+    // Plane transfers
+    let planeTransfers =
+        [
+            for mission in missions do
+                match mission.Kind with
+                | AirMission ({ MissionType = PlaneTransfer _ } as airMission) ->
+                    yield PlaneTransfer.TryFromAirMission(state, airMission)
+                | _ ->
+                    ()
+        ]
+        |> List.choose id
+    logger.Info(sprintf "Done (%d)" planeTransfers.Length)
+
     logger.Info("Preparing parked planes")
     // Parked planes
     let parkedPlanes =
@@ -1382,6 +1449,7 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
         GroundBattles = battles
         AiPatrols = patrols
         AiAttacks = attacks
+        PlaneTransfers = planeTransfers
         Convoys = trains @ columns
         ShipConvoys = shipConvoys
         ParkedPlanes = parkedPlanes
