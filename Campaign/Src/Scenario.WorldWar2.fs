@@ -508,6 +508,10 @@ type WorldWar2(world : World, C : Constants) =
                             ()
                 ]
                 |> List.map (fun (m, description) ->
+                    let airfieldName =
+                        match m with
+                        | { MissionType = (Bombing (AirfieldTarget afId) | Strafing (AirfieldTarget afId)) } -> afId.AirfieldName
+                        | _ -> string m.Objective
                     { 
                         Kind = AirMission m
                         Description =
@@ -516,7 +520,7 @@ type WorldWar2(world : World, C : Constants) =
                                 m.NumPlanes
                                 (string m.Plane)
                                 m.StartAirfield.AirfieldName
-                                (string m.Objective)
+                                airfieldName
                     })
             match raids with
             | [] ->
