@@ -1316,13 +1316,29 @@ type WorldWar2(world : World, C : Constants) =
                 let random = System.Random(seed)
                 Some(candidates.[random.Next(candidates.Length)])
 
-        member this.SelectMissions(stepData, war, seed, numSelected) =
+        member this.SelectMissions(stepData, war, seed) =
+            let battles, troops, transfers, other =
+                (([], [], [], []), stepData.Missions)
+                ||> List.fold (fun (battles, troops, transfers, other) mission ->
+                    match mission.Kind with
+                    | GroundMission { MissionType = GroundBattle _ } -> mission :: battles, troops, transfers, other
+                    | GroundMission { MissionType = GroundForcesTransfer _ } -> battles, mission :: troops, transfers, other
+                    | AirMission { MissionType = PlaneTransfer _ } -> battles, troops, mission :: transfers, other
+                    | _ -> battles, troops, transfers, mission :: other
+                )
             let rand = System.Random(seed)
-            stepData.Missions
-            |> Array.ofList
-            |> Array.shuffle rand
-            |> Seq.truncate numSelected
-            |> List.ofSeq
+            let truncate n xs =
+                xs
+                |> Array.ofList
+                |> Array.shuffle rand
+                |> Array.truncate n
+            let battles = truncate 5 battles
+            let troops = truncate 10 troops
+            let transfers = truncate 10 transfers
+            let other = truncate 25 other
+            [ battles; troops; transfers; other ]
+            |> Array.concat
+            |> List.ofArray
 
         member this.DeserializeStepData(json : string) =
             let implData : ImplData = Json.deserializeEx JsonConfig.IL2Default json

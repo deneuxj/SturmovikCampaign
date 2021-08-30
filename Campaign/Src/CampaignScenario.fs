@@ -59,7 +59,7 @@ type IScenarioController =
     abstract member NewDay : IWarStateQuery -> (Commands option * string) seq
     abstract member NextStep : StepData -> (IWarStateQuery * float32<H> -> ScenarioStep)
     abstract member TrySelectMissions : StepData * IWarStateQuery * seed:int * numSelected:int -> MissionSelection option
-    abstract member SelectMissions : StepData * IWarStateQuery * seed:int * numSelected:int -> Mission list
+    abstract member SelectMissions : StepData * IWarStateQuery * seed:int -> Mission list
     abstract member DeserializeStepData : string -> obj
 
 /// Resources available at an airfield.

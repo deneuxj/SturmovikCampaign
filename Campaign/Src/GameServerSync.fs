@@ -820,7 +820,7 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                 try
                     let seed = this.Seed
                     let selection =
-                        ctrl.SelectMissions(stepData, state, seed, 25)
+                        ctrl.SelectMissions(stepData, state, seed)
                         |> List.filter (fun mission ->
                             if withBattles then
                                 true
