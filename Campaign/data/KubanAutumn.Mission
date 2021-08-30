@@ -163710,9 +163710,9 @@ Group
     Name = "Ship";
     Index = 8572;
     LinkTrId = 8573;
-    XPos = 196467.180;
+    XPos = 195468.325;
     YPos = 0.000;
-    ZPos = 170344.225;
+    ZPos = 170347.046;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -163742,9 +163742,9 @@ Group
     Desc = "";
     Targets = [];
     Objects = [];
-    XPos = 196467.180;
+    XPos = 195468.325;
     YPos = 0.200;
-    ZPos = 170344.225;
+    ZPos = 170347.046;
     XOri = 0.00;
     YOri = 0.00;
     ZOri = 0.00;
@@ -163990,6 +163990,54 @@ Group
     ZOri = 0.00;
     Enabled = 1;
     MisObjID = 8587;
+  }
+  
+
+  Ship
+  {
+    Name = "Ship";
+    Index = 8590;
+    LinkTrId = 8591;
+    XPos = 196465.538;
+    YPos = 0.000;
+    ZPos = 170359.720;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Script = "LuaScripts\WorldObjects\Ships\landboata.txt";
+    Model = "graphics\ships\landboata\landboata.mgm";
+    Desc = "Roles:TroopLanding";
+    Country = 101;
+    Vulnerable = 1;
+    Engageable = 1;
+    LimitAmmo = 1;
+    AILevel = 2;
+    DamageReport = 50;
+    DamageThreshold = 1;
+    DeleteAfterDeath = 1;
+    Spotter = -1;
+    BeaconChannel = 0;
+    Callsign = 0;
+    TCode = "%20%20%20%20";
+    TCodeColor = "0000";
+  }
+  
+
+  MCU_TR_Entity
+  {
+    Index = 8591;
+    Name = "Ship entity";
+    Desc = "";
+    Targets = [];
+    Objects = [];
+    XPos = 196465.538;
+    YPos = 0.200;
+    ZPos = 170359.720;
+    XOri = 0.00;
+    YOri = 0.00;
+    ZOri = 0.00;
+    Enabled = 1;
+    MisObjID = 8590;
   }
   
 
