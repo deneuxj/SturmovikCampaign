@@ -826,6 +826,7 @@ with
                 |> List.fold (fun (groups, allPatrols) (coalition, patrols) ->
                     let group, patrols2 =
                         patrols
+                        |> List.filter (fun patrol -> patrol.NumPlanes > 0)
                         |> Campaign.Common.AiPlanes.AiPatrol.ToConstrainedPatrolBlocks (settings.MaxAiPatrolPlanes, store, lcStore, Vector2(1000.0f, 0.0f))
                     (group :: groups, patrols2 @ allPatrols)
                 ) ([], [])
@@ -859,6 +860,7 @@ with
                 )
                 |> List.collect (fun (coalition, attacks) ->
                     attacks
+                    |> List.filter (fun attack -> attack.NumPlanes > 0)
                     |> List.map (fun attack -> attack.ToPatrolBlock(store, lcStore)))
             let mkAttackStarts (attacks : (_ * GroundAttack.Attacker list) list) =
                 // Spawn "wing" immediately after "leader"
@@ -886,6 +888,7 @@ with
         // Plane transfers
         let planeTransfers =
             this.PlaneTransfers
+            |> List.filter (fun xfer -> xfer.NumPlanes > 0)
             |> List.groupBy (fun xfer -> data.GetCountryCoalition(xfer.Country))
             |> List.collect (fun (coalition, xfers) ->
                 let groups =
