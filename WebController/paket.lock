@@ -4,5 +4,9 @@ NUGET
     FSharp.Core (5.0.2)
     FSharp.Json (0.4)
       FSharp.Core (>= 4.6.2)
+    FsPickler (5.3.2)
+      FSharp.Core (>= 4.3.2)
+      System.Reflection.Emit.Lightweight (>= 4.3)
     Suave (2.6.1)
       FSharp.Core
+    System.Reflection.Emit.Lightweight (4.7)
