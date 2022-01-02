@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/// Types to maintain the state of a campaign and plan missions
+/// Planning of missions that emulates World War II (as opposed to e.g. WWI)
 namespace Campaign.CampaignScenario
 
 open System.Numerics
@@ -36,8 +36,12 @@ module WorldWar2Internal =
 
     type ImplData =
         {
-            // The side that is launching attacks against ground assets (airfields, troops...)
+            /// The side that is launching attacks against ground assets (airfields, troops...)
             OffensiveCoalition : CoalitionId
+            /// Coefficient that affects the decision to send troops over the frontline.
+            // Starts at 1.0 and increases every new step. The intent is to counter excessively
+            // passive AIs when both sides accumulate large amounts of troops.
+            GroundInvasionAggression : (CoalitionId * float32) list
         }
 
     type Constants =
@@ -801,7 +805,7 @@ type WorldWar2(world : World, C : Constants) =
         Plan ("Airfield evacuation", missions, budget)
 
     /// Try to plan troop movements in enemy territory
-    let tryPlanInvasions (timeSpan : float32<H>) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
+    let tryPlanInvasions (timeSpan : float32<H>) (aggression : float32) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
         let distanceToAirfields =
             war.ComputeDistancesToAirfields()
         let hasShips = war.World.CoalitionHasShips(friendly, [ShipRole.TroopLanding])
@@ -853,7 +857,7 @@ type WorldWar2(world : World, C : Constants) =
                     transportableFrom.Keys
                     |> Seq.sortByDescending (fun ngh -> transportableFrom.[ngh])
                 let totalTransportable = transportableFrom.Values |> Seq.sum
-                if friendlyForces + totalTransportable >= 0.5f * ennemyForces then
+                if friendlyForces + totalTransportable >= 0.5f * ennemyForces / aggression then
                     let mutable desiredForceAddition = 2.0f * ennemyForces - friendlyForces
                     let missions =
                         [
@@ -1060,14 +1064,19 @@ type WorldWar2(world : World, C : Constants) =
             | [] -> Plan("No battle to start", [], budget)
             | ms -> Plan(sprintf "Battles started by %s" (string friendly), ms, budget)
 
-    let rec oneSideStrikes (side : CoalitionId) comment depth (war : IWarStateQuery, timeSpan : float32<H>) =
+    let rec oneSideStrikes (data : ImplData) (side : CoalitionId) comment depth (war : IWarStateQuery, timeSpan : float32<H>) =
+        let aggression =
+            data.GroundInvasionAggression
+            |> List.tryFind(fun (coalition, _) -> coalition = side)
+            |> Option.map snd
+            |> Option.defaultValue 1.0f
         let tryMakeAirfieldRaids = tryMakeAirfieldRaids war side
         let tryMakeIndustryRaids = tryMakeIndustryRaids war side
         let tryMakeGroundForcesHarassment = tryMakeOffensiveGroundForcesRaids war false side
         let tryMakeGroundForcesSupport = tryMakeOffensiveGroundForcesRaids war true side
         let tryMakeGroundForcesDefense = tryMakeDefensiveGroundForcesRaids war side
         let tryTransferPlanesForward side = tryTransferPlanesForward war side
-        let tryPlanTroops = Planning.chain [ tryPlanInvasions timeSpan war side; tryPlanBattles war side ]
+        let tryPlanTroops = Planning.chain [ tryPlanInvasions timeSpan aggression war side; tryPlanBattles war side ]
 
         let sideAttacks =
             Planning.chain [
@@ -1092,7 +1101,7 @@ type WorldWar2(world : World, C : Constants) =
         | Plan(comment, [], _) ->
             let comment2 = sprintf "%s lose%s initiative because of %s" (string side) g1.Suffix3 comment
             if depth > 0 then
-                oneSideStrikes side.Other comment2 (depth - 1) (war, timeSpan)
+                oneSideStrikes data side.Other comment2 (depth - 1) (war, timeSpan)
             else
                 Stalemate (sprintf "%s and %s" comment comment2)
         | Plan(description, missions, budget) ->
@@ -1144,9 +1153,10 @@ type WorldWar2(world : World, C : Constants) =
             Ongoing {
                 Briefing = briefing
                 Missions = missions @ defenseMissions
-                Data = {
-                    OffensiveCoalition = side
-                }
+                Data =
+                    { data with
+                        OffensiveCoalition = side
+                    }
             }
 
     interface IScenarioController with
@@ -1160,10 +1170,14 @@ type WorldWar2(world : World, C : Constants) =
 
         member this.NextStep(stepData) =
             let data = stepData.Data :?> ImplData
+            let aggression =
+                data.GroundInvasionAggression
+                |> List.map (fun (coalition, k) -> coalition, k * 1.1f)
+            let data = { data with GroundInvasionAggression = aggression }
             // Switch the initiative to the other side.
             let side = data.OffensiveCoalition.Other
             let comment = $"{side} {side.Grammar.VerbHave} the initiative"
-            oneSideStrikes side comment 1
+            oneSideStrikes data side comment 1
 
         member this.NewDay(war) =
             seq {
@@ -1282,7 +1296,11 @@ type WorldWar2(world : World, C : Constants) =
             }
 
         member this.Start(war, timeSpan) =
-            oneSideStrikes Axis "Axis opens the hostilities" 1 (war, timeSpan)
+            let data =
+                { OffensiveCoalition = Axis
+                  GroundInvasionAggression = [ (Axis, 1.0f); (Allies, 1.0f) ]
+                }
+            oneSideStrikes data Axis "Axis opens the hostilities" 1 (war, timeSpan)
 
         member this.TrySelectMissions(stepData, war, seed, numSelected) =
             let data = stepData.Data :?> ImplData
