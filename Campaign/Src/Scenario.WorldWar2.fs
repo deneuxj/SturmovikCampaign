@@ -1045,24 +1045,39 @@ type WorldWar2(world : World, C : Constants) =
                         budget)
             Plan("Reinforcement of regions close to the front", missions, budget)
 
-    let tryPlanBattles (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
-        [
-            for region in war.World.Regions.Values do
-                let friendlyForce =
-                    budget.Regions.TryFind(region.RegionId, friendly)
-                    |> Option.defaultValue 0.0f<MGF>
-                let enemyForce =
-                    war.GetGroundForces(friendly.Other, region.RegionId)
-                if enemyForce > 0.0f<MGF> && friendlyForce >= 1.5f * enemyForce then
-                    yield {
-                        Objective = region.RegionId
-                        MissionType = GroundBattle friendly
-                    }
-        ]
-        |> List.map (fun m -> { Kind = GroundMission m; Description = sprintf "Battle in %s" (string m.Objective) })
-        |> function
-            | [] -> Plan("No battle to start", [], budget)
-            | ms -> Plan(sprintf "Battles started by %s" (string friendly), ms, budget)
+    let tryPlanBattles (aggression : float32) (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
+        let missions =
+            [
+                for region in war.World.Regions.Values do
+                    let friendlyForce =
+                        budget.Regions.TryFind(region.RegionId, friendly)
+                        |> Option.defaultValue 0.0f<MGF>
+                    let enemyForce =
+                        war.GetGroundForces(friendly.Other, region.RegionId)
+                    if enemyForce > 0.0f<MGF> && friendlyForce >= 1.5f * enemyForce / aggression then
+                        yield
+                            {|
+                                Region = region.RegionId
+                                Initiator = friendly
+                                Force = friendlyForce
+                            |}
+            ]
+        let budgettedMissions =
+            (([], budget), missions)
+            ||> List.fold (fun (res, budget) m ->
+                match budget.TryCheckoutGroundForce(m.Initiator, m.Region, m.Force) with
+                | Some budget ->
+                    let m =
+                        {
+                            Objective = m.Region
+                            MissionType = GroundBattle m.Initiator
+                        }
+                    { Kind = GroundMission m; Description = sprintf "Battle in %s" (string m.Objective) } :: res, budget
+                | None ->
+                    res, budget)
+        match budgettedMissions with
+        | [], _ -> Plan("No battle to start", [], budget)
+        | ms, budget -> Plan(sprintf "Battles started by %s" (string friendly), ms, budget)
 
     let rec oneSideStrikes (data : ImplData) (side : CoalitionId) comment depth (war : IWarStateQuery, timeSpan : float32<H>) =
         let aggression =
@@ -1076,16 +1091,18 @@ type WorldWar2(world : World, C : Constants) =
         let tryMakeGroundForcesSupport = tryMakeOffensiveGroundForcesRaids war true side
         let tryMakeGroundForcesDefense = tryMakeDefensiveGroundForcesRaids war side
         let tryTransferPlanesForward side = tryTransferPlanesForward war side
-        let tryPlanTroops = Planning.chain [ tryPlanInvasions timeSpan aggression war side; tryPlanBattles war side ]
+        let tryPlanInvasions = tryPlanInvasions timeSpan aggression war side
+        let tryPlanBattles = tryPlanBattles aggression war side
 
         let sideAttacks =
             Planning.chain [
+                tryPlanBattles
                 lockDefenses war side
                 Planning.pickFirst [
-                    tryMakeAirfieldRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryMakeIndustryRaids; tryPlanTroops ])
-                    tryMakeGroundForcesHarassment |> Planning.andThen (Planning.chain [ tryMakeGroundForcesSupport; tryMakeIndustryRaids; tryPlanTroops ])
-                    tryMakeIndustryRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryPlanTroops ])
-                    tryPlanTroops
+                    tryMakeAirfieldRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryMakeIndustryRaids; tryPlanInvasions ])
+                    tryMakeGroundForcesHarassment |> Planning.andThen (Planning.chain [ tryMakeGroundForcesSupport; tryMakeIndustryRaids; tryPlanInvasions ])
+                    tryMakeIndustryRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryPlanInvasions ])
+                    tryPlanInvasions
                 ]
                 Planning.chain [ tryTransferPlanesForward side; tryPlanReinforcements timeSpan war side; tryEvacuatePlanes war side ]
             ]
@@ -1172,7 +1189,7 @@ type WorldWar2(world : World, C : Constants) =
             let data = stepData.Data :?> ImplData
             let aggression =
                 data.GroundInvasionAggression
-                |> List.map (fun (coalition, k) -> coalition, k * 1.1f)
+                |> List.map (fun (coalition, k) -> coalition, k * 1.02f)
             let data = { data with GroundInvasionAggression = aggression }
             // Switch the initiative to the other side.
             let side = data.OffensiveCoalition.Other
