@@ -90,5 +90,7 @@ let main argv =
     Async.StartImmediate(server, cts.Token)
     printfn "Press a key to exit"
     Console.ReadKey(true) |> ignore
+    printfn "Writing state cache, please wait..."
+    Async.RunSynchronously(controller.SaveCaches())
     cts.Cancel()
     0 // return an integer exit code

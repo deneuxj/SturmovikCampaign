@@ -93,8 +93,6 @@ type Controller(settings : GameServerControl.Settings) =
             async {
                 let! req = mb.Receive()
                 let! state2, cache2  = req(state, cache)
-                if not(obj.ReferenceEquals(cache2, cache)) then
-                    writeCaches(cache2)
                 return! work(state2, cache2)
             }
         let state0 = ControllerState.Default
@@ -146,6 +144,13 @@ type Controller(settings : GameServerControl.Settings) =
             with
             | e -> failwithf "Directory '%s' not found, and could not be created because: %s" settings.WorkDir e.Message
 
+
+    member this.SaveCaches() =
+        mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
+            writeCaches(cache)
+            channel.Reply()
+            return (s, cache)
+        }
 
     member this.GetWorldDto() =
         mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
