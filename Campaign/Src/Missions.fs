@@ -156,8 +156,6 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
         }
 
     member this.DoGroundForcesMovements() =
-        let roads = war.ComputeRoadCapacity()
-        let rails = war.ComputeRailCapacity()
         seq {
             for mId, mission in groundMissions do
                 match mission.MissionType with
@@ -180,30 +178,9 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                                     "retreat back to"
                                 else
                                     "roam into"
-                        // Max transport capacity by roads and rails.
-                        let maxFlow =
-                            if Some coalitionStart <> coalitionDestination then
-                                roads(startRegion, mission.Objective)
-                            else
-                                roads(startRegion, mission.Objective) +
-                                rails(startRegion, mission.Objective)
-                        let actual = war.World.GroundForcesTransport(maxFlow, forces, duration)
-                        // Transport capacity usage info
-                        if actual < forces then
-                            yield None,
-                                sprintf "Transport from %s to %s is limited by transport capacity to %2.0f%%"
-                                    (string startRegion)
-                                    (string mission.Objective)
-                                    (100.0f * actual / forces)
-                        else
-                            yield None,
-                                sprintf "Transport from %s to %s uses %2.0f%% of the transport capacity"
-                                    (string startRegion)
-                                    (string mission.Objective)
-                                    (100.0f * forces / maxFlow)
                         // Displacement of forces
                         yield
-                            Some(MoveGroundForces(startRegion, mission.Objective, coalition, actual)),
+                            Some(MoveGroundForces(startRegion, mission.Objective, coalition, forces)),
                             sprintf "%0.0f worth of ground forces %s %s from %s"
                                 forces
                                 verb
