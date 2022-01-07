@@ -38,11 +38,27 @@ module WorldWar2Internal =
         {
             /// The side that is launching attacks against ground assets (airfields, troops...)
             OffensiveCoalition : CoalitionId
-            /// Coefficient that affects the decision to send troops over the frontline.
-            // Starts at 1.0 and increases every new step. The intent is to counter excessively
-            // passive AIs when both sides accumulate large amounts of troops.
             GroundInvasionAggression : (CoalitionId * float32) list
         }
+    with
+        member this.IncreaseGroundInvasionAggression() =
+            let agg =
+                this.GroundInvasionAggression
+                |> List.map (fun (coalition, k) -> coalition, k + 0.0625f)
+            { this with GroundInvasionAggression = agg }
+
+        /// Get the coefficient that affects the decision to send troops over the frontline.
+        ///
+        /// Starts at 1.0 and increases towards 1.5 every new step. The intent is to counter excessively
+        /// passive AIs when both sides accumulate large amounts of troops.
+        member this.GetGroundInvasionAggression(side) =
+            let raw =
+                this.GroundInvasionAggression
+                |> List.tryFind(fun (coalition, _) -> coalition = side)
+                |> Option.map snd
+                |> Option.defaultValue 0.0f
+            (1.0f - exp(-raw)) * 0.5f + 1.0f
+
 
     type Constants =
         {
@@ -1080,11 +1096,7 @@ type WorldWar2(world : World, C : Constants) =
         | ms, budget -> Plan(sprintf "Battles started by %s" (string friendly), ms, budget)
 
     let rec oneSideStrikes (data : ImplData) (side : CoalitionId) comment depth (war : IWarStateQuery, timeSpan : float32<H>) =
-        let aggression =
-            data.GroundInvasionAggression
-            |> List.tryFind(fun (coalition, _) -> coalition = side)
-            |> Option.map snd
-            |> Option.defaultValue 1.0f
+        let aggression = data.GetGroundInvasionAggression(side)
         let tryMakeAirfieldRaids = tryMakeAirfieldRaids war side
         let tryMakeIndustryRaids = tryMakeIndustryRaids war side
         let tryMakeGroundForcesHarassment = tryMakeOffensiveGroundForcesRaids war false side
@@ -1187,10 +1199,7 @@ type WorldWar2(world : World, C : Constants) =
 
         member this.NextStep(stepData) =
             let data = stepData.Data :?> ImplData
-            let aggression =
-                data.GroundInvasionAggression
-                |> List.map (fun (coalition, k) -> coalition, k * 1.02f)
-            let data = { data with GroundInvasionAggression = aggression }
+            let data = data.IncreaseGroundInvasionAggression()
             // Switch the initiative to the other side.
             let side = data.OffensiveCoalition.Other
             let comment = $"{side} {side.Grammar.VerbHave} the initiative"
@@ -1315,7 +1324,7 @@ type WorldWar2(world : World, C : Constants) =
         member this.Start(war, timeSpan) =
             let data =
                 { OffensiveCoalition = Axis
-                  GroundInvasionAggression = [ (Axis, 1.0f); (Allies, 1.0f) ]
+                  GroundInvasionAggression = [ (Axis, 0.0f); (Allies, 0.0f) ]
                 }
             oneSideStrikes data Axis "Axis opens the hostilities" 1 (war, timeSpan)
 
