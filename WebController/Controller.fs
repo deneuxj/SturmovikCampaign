@@ -4,6 +4,8 @@ open System.IO
 open FSharp.Control
 open FSharp.Json
 
+open MBrace.FsPickler
+
 open Util
 open Util.Json
 
@@ -19,11 +21,9 @@ open Campaign.WebController.Dto
 open Campaign.WebController.DtoCreation
 open Campaign.WebController.Routes
 
-/// Internal state of a controller
-type private ControllerState =
+/// Cached query results and intermediate data
+type private ControllerStateCaches =
     {
-        World : NewWorldDescription.World option
-        War : IWarStateQuery option
         WarStateCache : Map<int, IWarStateQuery>
         RoadTransportCache : Map<int, BasicTypes.RegionId * BasicTypes.RegionId -> float>
         RailTransportCache : Map<int, BasicTypes.RegionId * BasicTypes.RegionId -> float>
@@ -31,13 +31,10 @@ type private ControllerState =
         DtoWorld : Dto.World option
         DtoStateCache : Map<int, Dto.WarState>
         DtoSimulationCache : Map<int, Dto.SimulationStep[]>
-        Sync : (GameServerSync.Sync * System.IDisposable) option
     }
 with
     static member Default =
         {
-            World = None
-            War = None
             WarStateCache = Map.empty
             RoadTransportCache = Map.empty
             RailTransportCache = Map.empty
@@ -45,8 +42,32 @@ with
             DtoWorld = None
             DtoStateCache = Map.empty
             DtoSimulationCache = Map.empty
+        }
+
+    member this.PickleCaches(stream) =
+        let serializer = FsPickler.CreateBinarySerializer()
+        serializer.Serialize(stream, this)
+
+    static member RestoreCaches(stream) =
+        let serializer = FsPickler.CreateBinarySerializer()
+        let data : ControllerStateCaches = serializer.Deserialize(stream)
+        data
+
+/// Internal state of a controller
+type private ControllerState =
+    {
+        World : NewWorldDescription.World option
+        War : IWarStateQuery option
+        Sync : (GameServerSync.Sync * System.IDisposable) option
+    }
+with
+    static member Default =
+        {
+            World = None
+            War = None
             Sync = None
         }
+
 
 /// Interface between the web service and the campaign
 type Controller(settings : GameServerControl.Settings) =
@@ -56,15 +77,37 @@ type Controller(settings : GameServerControl.Settings) =
     let cache = Seq.mutableDict []
     let hashGuid = SturmovikMission.Cached.cached cache hashGuid
 
+    // Try to restore controller state from pickled data
+    let stateCachePath = System.IO.Path.Combine(settings.WorkDir, "cache.bin")
+
+    let writeCaches(cache : ControllerStateCaches) =
+        try
+            use stream = System.IO.File.Create(stateCachePath)
+            cache.PickleCaches(stream)
+        with e ->
+            logger.Warn("Failed to pickle controller state caches to {CachePath}", stateCachePath)
+
     // A mailbox processor to serialize access to the ControllerState
     let mb = new MailboxProcessor<_>(fun mb ->
-        let rec work (state : ControllerState) =
+        let rec work (state : ControllerState, cache : ControllerStateCaches) =
             async {
                 let! req = mb.Receive()
-                let! state  = req state
-                return! work state
+                let! state2, cache2  = req(state, cache)
+                return! work(state2, cache2)
             }
-        work ControllerState.Default
+        let state0 = ControllerState.Default
+        let cache0 =
+            if File.Exists stateCachePath then
+                try
+                    use stream = System.IO.File.OpenRead(stateCachePath)
+                    ControllerStateCaches.RestoreCaches(stream)
+                with e ->
+                    logger.Warn("Failed to restore controller state caches from {CachePath}", stateCachePath)
+                    logger.Debug(e)
+                    ControllerStateCaches.Default
+            else
+                ControllerStateCaches.Default
+        work(state0, cache0)
     )
 
     let doOnState fn = mb.Post fn
@@ -73,9 +116,9 @@ type Controller(settings : GameServerControl.Settings) =
 
     let registerOnStateChanged(sync : GameServerSync.Sync) =
         sync.StateChanged.Subscribe(fun war ->
-            doOnState (fun s -> async {
+            doOnState (fun (s, cache) -> async {
                 let dates =
-                    match s.DtoDates with
+                    match cache.DtoDates with
                     | Some [| |] ->
                         Some [| war.Date.ToDto() |]
                     | Some dates ->
@@ -87,7 +130,7 @@ type Controller(settings : GameServerControl.Settings) =
                         |> Some
                     | None ->
                         None
-                return { s with War = Some war; DtoDates = dates }
+                return { s with War = Some war}, { cache with DtoDates = dates }
             })
         )
 
@@ -102,18 +145,25 @@ type Controller(settings : GameServerControl.Settings) =
             | e -> failwithf "Directory '%s' not found, and could not be created because: %s" settings.WorkDir e.Message
 
 
+    member this.SaveCaches() =
+        mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
+            writeCaches(cache)
+            channel.Reply()
+            return (s, cache)
+        }
+
     member this.GetWorldDto() =
-        mb.PostAndAsyncReply <| fun channel s -> async {
+        mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
             return
-                match s.DtoWorld with
+                match cache.DtoWorld with
                 | Some world ->
                     channel.Reply(Ok(world))
-                    s
+                    s, cache
                 | None ->
                     let path = wkPath worldFilename
                     if not(File.Exists(path)) then
                         channel.Reply(Error "Campaign not initialized")
-                        s
+                        s, cache
                     else
                         try
                             let world =
@@ -121,20 +171,20 @@ type Controller(settings : GameServerControl.Settings) =
                                 |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
                             let dto = world.ToDto()
                             channel.Reply(Ok(dto))
-                            { s with World = Some world; DtoWorld = Some dto }
+                            { s with World = Some world }, { cache with DtoWorld = Some dto }
                         with e ->
                             logger.Warn(sprintf "Failed to load world: %s" e.Message)
                             logger.Warn(e)
                             channel.Reply(Error "Failed to load world")
-                            s
+                            s, cache
         }
 
     member this.GetState(idx : int) =
-        mb.PostAndAsyncReply <| fun channel s -> async {
-            match s.WarStateCache.TryFind idx with
+        mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
+            match cache.WarStateCache.TryFind idx with
             | Some state ->
                 channel.Reply(Ok state)
-                return s
+                return s, cache
             | None ->
                 let path = wkPath(getStateFilename idx)
                 if File.Exists path then
@@ -144,15 +194,15 @@ type Controller(settings : GameServerControl.Settings) =
                             |> Option.defaultWith (fun () -> World.LoadFromFile(wkPath worldFilename))
                         let state = WarState.LoadFromFile(path, world)
                         channel.Reply(Ok(upcast state))
-                        return { s with World = Some world; WarStateCache = s.WarStateCache.Add(idx, state) }
+                        return { s with World = Some world }, { cache with WarStateCache = cache.WarStateCache.Add(idx, state) }
                     with
                     | e ->
                         channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
                         logger.Warn e
-                        return s
+                        return s, cache
                 else
                     channel.Reply(Error <| sprintf "Failed to load state n.%d" idx)
-                    return s
+                    return s, cache
         }
 
     member this.GetState() =
@@ -162,37 +212,37 @@ type Controller(settings : GameServerControl.Settings) =
         }
 
     member this.GetRoadTransport(idx : int) =
-        mb.PostAndAsyncReply <| fun channel s -> async {
-            match s.RoadTransportCache.TryFind idx with
+        mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
+            match cache.RoadTransportCache.TryFind idx with
             | Some func ->
                 channel.Reply(Ok func)
-                return s
+                return s, cache
             | None ->
-                match s.WarStateCache.TryFind(idx) with
+                match cache.WarStateCache.TryFind(idx) with
                 | Some state ->
                     let func = state.ComputeRoadCapacity() >> float
                     channel.Reply(Ok func)
-                    return { s with RoadTransportCache = s.RoadTransportCache.Add(idx, func) }
+                    return s, { cache with RoadTransportCache = cache.RoadTransportCache.Add(idx, func) }
                 | None ->
                     channel.Reply(Error "Failed to retrieve road transport capacity")
-                    return s
+                    return s, cache
         }
 
     member this.GetRailTransport(idx : int) =
-        mb.PostAndAsyncReply <| fun channel s -> async {
-            match s.RailTransportCache.TryFind idx with
+        mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
+            match cache.RailTransportCache.TryFind idx with
             | Some func ->
                 channel.Reply(Ok func)
-                return s
+                return s, cache
             | None ->
-                match s.WarStateCache.TryFind(idx) with
+                match cache.WarStateCache.TryFind(idx) with
                 | Some state ->
                     let func = state.ComputeRailCapacity() >> float
                     channel.Reply(Ok func)
-                    return { s with RailTransportCache = s.RailTransportCache.Add(idx, func) }
+                    return s, { cache with RailTransportCache = cache.RailTransportCache.Add(idx, func) }
                 | None ->
                     channel.Reply(Error "Failed to retrieve rail transport capacity")
-                    return s
+                    return s, cache
         }
 
     member this.GetStateDto() =
@@ -208,16 +258,16 @@ type Controller(settings : GameServerControl.Settings) =
             match state with
             | Ok state ->
                 return!
-                    mb.PostAndAsyncReply <| fun channel s -> async {
+                    mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                         return
-                            match s.DtoStateCache.TryGetValue idx with
+                            match cache.DtoStateCache.TryGetValue idx with
                             | true, x ->
                                 channel.Reply(Ok x)
-                                s
+                                s, cache
                             | false, _ ->
                                 let dto = state.ToDto()
                                 channel.Reply(Ok dto)
-                                { s with DtoStateCache = s.DtoStateCache.Add(idx, dto) }
+                                s, { cache with DtoStateCache = cache.DtoStateCache.Add(idx, dto) }
                     }
             | Error e ->
                 return(Error e)
@@ -230,12 +280,12 @@ type Controller(settings : GameServerControl.Settings) =
             steps
             |> Array.filter (fun dto -> dto.Description <> "Timestamp" || dto.Command.Length > 0 )
 
-        mb.PostAndAsyncReply <| fun channel s -> async {
+        mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
             return
-                match s.DtoSimulationCache.TryGetValue idx with
+                match cache.DtoSimulationCache.TryGetValue idx with
                 | true, x ->
                     channel.Reply(Ok (noTsSteps x))
-                    s
+                    s, cache
                 | false, _ ->
                     // Optional effects file
                     let path1 = wkPath(getEffectsFilename idx)
@@ -268,15 +318,15 @@ type Controller(settings : GameServerControl.Settings) =
                                 )
                                 |> Array.ofList
                             channel.Reply(Ok (noTsSteps steps))
-                            { s with World = Some world; DtoSimulationCache = s.DtoSimulationCache.Add(idx, steps) }
+                            { s with World = Some world }, { cache with DtoSimulationCache = cache.DtoSimulationCache.Add(idx, steps) }
                         with
                         | e ->
                             channel.Reply(Error <| sprintf "Failed to load simulation n.%d" idx)
                             logger.Warn e
-                            s
+                            s, cache
                     else
                         channel.Reply(Error <| sprintf "No simulation n.%d" idx)
-                        s
+                        s, cache
         }
 
     member this.GetDates() =
@@ -285,17 +335,17 @@ type Controller(settings : GameServerControl.Settings) =
                 let N = getCurrentIndex settings.WorkDir
 
                 let! dates =
-                    mb.PostAndAsyncReply <| fun channel s -> async {
-                        match s.DtoDates with
+                    mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
+                        match cache.DtoDates with
                         | Some dates ->
                             channel.Reply(dates)
-                            return s
+                            return s, cache
                         | None ->
                             let! dates =
                                 AsyncSeq.initAsync (int64 N + 1L) (fun idx ->
                                     async {
                                         let idx = int idx
-                                        match s.DtoStateCache.TryGetValue idx with
+                                        match cache.DtoStateCache.TryGetValue idx with
                                         | true, x ->
                                             return (Some x.Date)
                                         | false, _ ->
@@ -318,7 +368,7 @@ type Controller(settings : GameServerControl.Settings) =
                                 |> AsyncSeq.choose id
                                 |> AsyncSeq.toArrayAsync
                             channel.Reply(dates)
-                            return { s with DtoDates = Some dates }
+                            return s, { cache with DtoDates = Some dates }
                     }
                 return Ok dates
             with e ->
@@ -327,7 +377,7 @@ type Controller(settings : GameServerControl.Settings) =
         }
 
         member this.Run(maxSteps) =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 let! sync =
                     match s.Sync with
                     | Some sync -> async.Return (Ok sync)
@@ -356,14 +406,14 @@ type Controller(settings : GameServerControl.Settings) =
                     sync.Die("Scenario was forcibly advanced")
                     sync.Dispose()
                     onStateChanged.Dispose()
-                    return { s with Sync = None }
+                    return { s with Sync = None }, cache
                 | Error e ->
                     channel.Reply(Error e)
-                    return { s with Sync = None }
+                    return { s with Sync = None }, cache
             }
 
         member this.BackTo(idx) =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 let! sync =
                     match s.Sync with
                     | Some sync -> async.Return (Ok sync)
@@ -383,22 +433,26 @@ type Controller(settings : GameServerControl.Settings) =
                     sync.Die("Scenario was forcibly backed")
                     sync.Dispose()
                     onStateChanged.Dispose()
+                    // Clear cache entries that now refer to the future
+                    let cache =
+                        { cache with
+                            WarStateCache = cache.WarStateCache |> Map.filter (fun idx2 _ -> idx2 <= idx)
+                            DtoDates = cache.DtoDates |> Option.map (Array.truncate idx)
+                            DtoStateCache = cache.DtoStateCache |> Map.filter (fun idx2 _ -> idx2 <= idx)
+                            DtoSimulationCache = cache.DtoSimulationCache |> Map.filter (fun idx2 _ -> idx2 < idx)
+                        }
                     return
                         { s with
                             War = None
-                            WarStateCache = s.WarStateCache |> Map.filter (fun idx2 _ -> idx2 <= idx)
-                            DtoDates = s.DtoDates |> Option.map (Array.truncate idx)
-                            DtoStateCache = s.DtoStateCache |> Map.filter (fun idx2 _ -> idx2 <= idx)
-                            DtoSimulationCache = s.DtoSimulationCache |> Map.filter (fun idx2 _ -> idx2 < idx)
                             Sync = None
-                        }
+                        }, cache
                 | Error e ->
                     channel.Reply(Error e)
-                    return { s with Sync = None }
+                    return { s with Sync = None }, cache
             }
 
         member this.Forward() =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 let! sync =
                     match s.Sync with
                     | Some sync -> async.Return (Ok sync)
@@ -418,14 +472,14 @@ type Controller(settings : GameServerControl.Settings) =
                     sync.Die("Scenario was forwarded using backed up game logs")
                     sync.Dispose()
                     onStateChanged.Dispose()
-                    return { s with Sync = None }
+                    return { s with Sync = None }, cache
                 | Error e ->
                     channel.Reply(Error e)
-                    return { s with Sync = None }
+                    return { s with Sync = None }, cache
             }
 
         member this.GetSyncState() =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 channel.Reply(
                     s.Sync
                     |> Option.map (fun (sync, _) ->
@@ -441,15 +495,15 @@ type Controller(settings : GameServerControl.Settings) =
                     |> Option.defaultValue "Not running"
                     |> Ok
                     )
-                return s
+                return s, cache
             }
 
         member this.WarState =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 match s.War with
                 | Some war ->
                     channel.Reply(Ok war)
-                    return s
+                    return s, cache
                 | None ->
                     let idx = getCurrentIndex settings.WorkDir
                     let path = wkPath(getStateFilename idx)
@@ -457,10 +511,10 @@ type Controller(settings : GameServerControl.Settings) =
                         let world = World.LoadFromFile(wkPath worldFilename)
                         let war = WarState.LoadFromFile(path, world)
                         channel.Reply(Ok (upcast war))
-                        return { s with World = Some war.World; War = Some(upcast war) }
+                        return { s with World = Some war.World; War = Some(upcast war) }, cache
                     with exc ->
                         channel.Reply(Error "Failed to load current war state")
-                        return s
+                        return s, cache
             }
 
         member this.GetPilots(filter : PilotSearchFilter) =
@@ -560,7 +614,7 @@ type Controller(settings : GameServerControl.Settings) =
             }
 
         member this.StartSync(doLoop : bool) =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 let! sync =
                     match s.Sync with
                     | None ->
@@ -581,28 +635,28 @@ type Controller(settings : GameServerControl.Settings) =
                 | Ok(sync, disp) ->
                     sync.Resume()
                     channel.Reply(Ok "Synchronization started")
-                    return { s with Sync = Some(sync, disp) }
+                    return { s with Sync = Some(sync, disp) }, cache
                 | Error e ->
                     channel.Reply(Error e)
-                    return { s with Sync = None }
+                    return { s with Sync = None }, cache
             }
 
         member private this.RegisterSyncCleanUp(sync : GameServerSync.Sync, unregisterHandlers : System.IDisposable) =
             // Run clean-up after sync is terminated
             async {
                 let! condemned = Async.AwaitEvent(sync.Terminated)
-                doOnState <| fun s -> async {
+                doOnState <| fun (s, cache) -> async {
                     try
                         unregisterHandlers.Dispose()
                         condemned.Dispose()
                     with _ -> ()
-                    return { s with Sync = None }
+                    return { s with Sync = None }, cache
                 }
             }
             |> Async.Start
 
         member this.StopSyncAfterMission() =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 match s.Sync with
                 | Some(sync, disp) ->
                     this.RegisterSyncCleanUp(sync, disp)
@@ -610,11 +664,11 @@ type Controller(settings : GameServerControl.Settings) =
                     channel.Reply(Ok "Synchronization will stop after mission ends")
                 | None ->
                     channel.Reply(Error "Synchronization is not active")
-                return s
+                return s, cache
             }
 
         member this.InterruptSync() =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 match s.Sync with
                 | Some(sync, disp) ->
                     this.RegisterSyncCleanUp(sync, disp)
@@ -622,11 +676,11 @@ type Controller(settings : GameServerControl.Settings) =
                     channel.Reply(Ok "Synchronization interrupted")
                 | None ->
                     channel.Reply(Error "Synchronization is not active")
-                return s
+                return s, cache
             }
 
         member this.ResetCampaign(scenario) =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 let sync =
                     match s.Sync with
                     | Some(sync, _) -> sync
@@ -649,13 +703,12 @@ type Controller(settings : GameServerControl.Settings) =
                 | Error msg ->
                     channel.Reply(Error msg)
                 return
-                    { ControllerState.Default with
-                        Sync = s.Sync
-                    }
+                    { ControllerState.Default with Sync = s.Sync },
+                    ControllerStateCaches.Default
             }
 
         member this.RebuildWorld() =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 let sync =
                     match s.Sync with
                     | Some(sync, _) -> sync
@@ -673,11 +726,13 @@ type Controller(settings : GameServerControl.Settings) =
                 | Some _ -> ()
                 // Result
                 channel.Reply(status)
-                return s
+                return
+                    { ControllerState.Default with Sync = s.Sync },
+                    ControllerStateCaches.Default
             }
 
         member this.ResolveError() =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 let! sync =
                     match s.Sync with
                     | Some sync -> async.Return(Ok sync)
@@ -698,7 +753,7 @@ type Controller(settings : GameServerControl.Settings) =
                     sync.Die("Stop sync after resolving error state")
                     onStateChanged.Dispose()
                     sync.Dispose()
-                return { s with Sync = None }
+                return { s with Sync = None }, cache
             }
 
         member this.FindPlayers(name : string) =
@@ -737,15 +792,15 @@ type Controller(settings : GameServerControl.Settings) =
             }
 
         member this.GetOnlinePlayers() =
-            mb.PostAndAsyncReply <| fun channel s -> async {
+            mb.PostAndAsyncReply <| fun channel (s, cache) -> async {
                 match s.Sync with
                 | Some(sync, _) ->
                     let! players = sync.GetOnlinePlayers()
                     channel.Reply(players)
-                    return s
+                    return s, cache
                 | None ->
                     channel.Reply(Error "Synchronization is not active")
-                    return s
+                    return s, cache
             }
 
         member this.GetRegionCapacity(idx : int, region : string) =

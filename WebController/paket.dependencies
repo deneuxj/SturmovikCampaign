@@ -4,3 +4,4 @@ framework: auto-detect
 nuget FSharp.Core
 nuget FSharp.Json
 nuget Suave
+nuget FsPickler

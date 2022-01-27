@@ -685,8 +685,9 @@ type Sync(settings : Settings, gameServer : IGameServerControl, ?logger) =
                     step <- Some step0
                     stateChanged.Trigger(state0.Clone())
                     Ok()
-                with
-                | _ ->
+                with e ->
+                    logger.Error("Failure while writing campaign data files")
+                    logger.Debug(e)
                     Error "Internal error: world, state or controller data not set"
 
             let res =
