@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29806.167
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Campaign", "Campaign\Campaign.fsproj", "{CDAFF307-1FCE-40E7-AE1E-FD4A813D1BCA}"
 EndProject
@@ -25,7 +25,9 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Common", "Common\Common.fsp
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "BanEnforcer", "BanEnforcer\BanEnforcer.fsproj", "{110F01D7-1FC9-4B44-9125-8D1769C33A1F}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "UnitTests", "UnitTests\UnitTests.fsproj", "{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "UnitTests", "UnitTests\UnitTests.fsproj", "{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LoadWatcher", "LoadWatcher\LoadWatcher.fsproj", "{11DC80CA-57A6-481B-A668-AED1EA93092D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -81,6 +83,10 @@ Global
 		{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9AED0B2C-1052-4FFA-8644-FE9F236A3DF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11DC80CA-57A6-481B-A668-AED1EA93092D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11DC80CA-57A6-481B-A668-AED1EA93092D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11DC80CA-57A6-481B-A668-AED1EA93092D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11DC80CA-57A6-481B-A668-AED1EA93092D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
