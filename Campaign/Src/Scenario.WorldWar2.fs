@@ -356,25 +356,37 @@ type WorldWar2(world : World, C : Constants) =
 
 
     /// Compute forces needed to defend a region under one's control
-    let neededForDefenses (war : IWarStateQuery, friendly : CoalitionId, rId : RegionId) =
-        if war.GetOwner(rId) = Some friendly then
-            let numAirfields =
-                war.World.Airfields.Values
-                |> Seq.filter (fun af -> af.Region = rId)
-                |> Seq.length
-            let threatsFactor =
-                if numAirfields > 0 then
-                    1.0f
-                else
-                    0.25f
-            let neededForAA =
-                let numNests = 3.0f
-                let numGuns = 5.0f
-                (float32 numAirfields) * numNests * numGuns * Campaign.Common.Targets.TargetType.Artillery.GroundForceValue / war.World.AntiAirGroundForcesRatio
-            let needed = max neededForAA (war.GetGroundForces(friendly.Other, rId) + threatsFactor * war.GroundThreatsToRegion(rId, friendly))
-            needed
-        else
-            0.0f<MGF>
+    let neededForDefenses (war : IWarStateQuery) =
+        let supplies = war.ComputeSupplyAvailability()
+        let supplies rId = supplies rId * war.World.ResourceVolume
+        let road = war.ComputeRoadCapacity()
+        let rail = war.ComputeRailCapacity()
+        let transport(r1, r2) =
+            if war.GetOwner(r1) = war.GetOwner(r2) then
+                road(r1, r2) + rail(r1, r2)
+            else
+                road(r1, r2)
+        fun (friendly : CoalitionId, rId : RegionId) ->
+            if war.GetOwner(rId) = Some friendly then
+                let numAirfields =
+                    war.World.Airfields.Values
+                    |> Seq.filter (fun af -> af.Region = rId)
+                    |> Seq.length
+                let threatsFactor =
+                    if numAirfields > 0 then
+                        1.0f
+                    else
+                        0.25f
+                let neededForAA =
+                    let numNests = 3.0f
+                    let numGuns = 5.0f
+                    (float32 numAirfields) * numNests * numGuns * Campaign.Common.Targets.TargetType.Artillery.GroundForceValue / war.World.AntiAirGroundForcesRatio
+                let fromLogistics = war.ComputeRegionAntiAirLogistics(transport, supplies, rId, friendly) / world.GroundForcesCost / world.ResourceVolume
+                let neededForAA = max 0.0f<MGF> (neededForAA - fromLogistics)
+                let needed = max neededForAA (war.GetGroundForces(friendly.Other, rId) + threatsFactor * war.GroundThreatsToRegion(rId, friendly, transport))
+                needed
+            else
+                0.0f<MGF>
 
     /// Set ground forces of a coalition in each region
     let initGroundForces (factor : float32, coalition : CoalitionId, war : IWarState) =
@@ -927,11 +939,12 @@ type WorldWar2(world : World, C : Constants) =
 
     /// Remove ground forces required for defense purposes from the available budget
     let lockDefenses (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
+        let neededForDefenses = neededForDefenses war
         let budget =
             (budget, war.World.Regions.Values)
             ||> Seq.fold (fun budget region ->
                 if war.GetOwner(region.RegionId) = Some friendly then
-                    let needed = neededForDefenses(war, friendly, region.RegionId)
+                    let needed = neededForDefenses(friendly, region.RegionId)
                     let available =
                         budget.Regions.TryFind(region.RegionId, friendly)
                         |> Option.defaultValue 0.0f<MGF>
@@ -957,6 +970,7 @@ type WorldWar2(world : World, C : Constants) =
                     |> Option.defaultValue 0.0f<MGF>
                 available > 0.0f<MGF>)
             |> List.ofSeq
+        let neededForDefenses = neededForDefenses war
         match suitableSources with
         | [] ->
             logger.Debug("No region with excess forces available to send reinforcements")
@@ -988,7 +1002,7 @@ type WorldWar2(world : World, C : Constants) =
                         |> List.filter (fun ngh -> war.GetOwner(ngh) = Some friendly)
                         |> List.map (fun ngh ->
                             let friendlyForces2 = budget.Regions.TryFind(ngh, friendly) |> Option.defaultValue 0.0f<MGF>
-                            let needed = neededForDefenses(war, friendly, ngh)
+                            let needed = neededForDefenses(friendly, ngh)
                             let excess = friendlyForces2 - needed
                             let dist = distanceToEnemy.[ngh]
                             logger.Debug(sprintf "Potential destination: %s with excess friendly forces %0.0f and hops %d" (string ngh) excess dist)

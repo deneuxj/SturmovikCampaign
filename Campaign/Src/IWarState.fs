@@ -122,8 +122,8 @@ module IWarStateExtensions =
             | None | Some(_, None) ->
                 1.0f
 
-        /// Get the amount of resources available for anti-air defenses.
-        member this.ComputeRegionAntiAirBudget(transport : RegionId * RegionId -> float32<M^3/H>, supplies : RegionId -> float32<M^3/H>, rId : RegionId, coalition : CoalitionId) =
+        /// Get the amount of resources available for anti-air defenses from airfield storage and logistics.
+        member this.ComputeRegionAntiAirLogistics(transport : RegionId * RegionId -> float32<M^3/H>, supplies : RegionId -> float32<M^3/H>, rId : RegionId, coalition : CoalitionId) =
             let owner = this.GetOwner(rId)
             let resupplyPeriod = 24.0f<H>
             let region = this.World.Regions.[rId]
@@ -142,11 +142,14 @@ module IWarStateExtensions =
                 else
                     0.0f<M^3>
             let viaAir = viaAir / resupplyPeriod
+            viaGround + viaAir
 
+        /// Get the amount of resources available for anti-air defenses.
+        member this.ComputeRegionAntiAirBudget(transport : RegionId * RegionId -> float32<M^3/H>, supplies : RegionId -> float32<M^3/H>, rId : RegionId, coalition : CoalitionId) =
+            let logistics = this.ComputeRegionAntiAirLogistics(transport, supplies, rId, coalition)
             let troops =
                 this.GetGroundForces(coalition, rId) * this.World.GroundForcesCost * this.World.AntiAirGroundForcesRatio * this.World.ResourceVolume
-
-            min troops (viaGround + viaAir)
+            troops + logistics
 
         member this.IsPilotHealthy(pilotId : PilotId) =
             match this.GetPilot(pilotId).Health with
@@ -245,10 +248,13 @@ module IWarStateExtensions =
             |> List.exists (fun t -> t <= sunrise || t >= sunset)
 
         /// Compute the enemy forces in neighbouring regions
-        member this.GroundThreatsToRegion(region : RegionId, friendly : CoalitionId) =
+        member this.GroundThreatsToRegion(region : RegionId, friendly : CoalitionId, transport : RegionId * RegionId -> float32<M ^ 3 / H>) =
             let neighbours = this.World.Regions.[region].Neighbours
             neighbours
-            |> Seq.map (fun ngh -> this.GetGroundForces(friendly.Other, ngh))
+            |> Seq.map (fun ngh ->
+                let limitedByTransport = transport(region, ngh) / this.World.GroundForcesCost / this.World.ResourceVolume
+                let groundForces = this.GetGroundForces(friendly.Other, ngh)
+                min limitedByTransport groundForces)
             |> Seq.sum
 
         /// Total capacity of industry buildings in a region, taking health into account
