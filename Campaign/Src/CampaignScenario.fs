@@ -159,37 +159,41 @@ type GroundForcesTargetAdapter(side) =
 
 /// Result of mission planning attempt
 type MissionPlanningResult =
-    | TooFewTargets of string
+    | InsufficientResources of string
+    | Unnecessary of string
     | Plan of string * Mission list * ForcesAvailability
 with
     member this.LacksResources =
         match this with
-        | TooFewTargets _ | Plan(_, _ :: _, _) -> false
-        | Plan(_, [], _) -> true
+        | InsufficientResources _ -> true
+        | Unnecessary _ | Plan _  -> false
 
     member this.Description =
         match this with
-        | TooFewTargets s
+        | InsufficientResources s
+        | Unnecessary s
         | Plan(s, _, _) -> s
 
 /// Utility functions for mission planning results
 module MissionPlanningResult =
     let getMissions originalBudget =
         function
-        | TooFewTargets _ -> [], originalBudget
+        | InsufficientResources _
+        | Unnecessary _ -> [], originalBudget
         | Plan(_, missions, budget) -> missions, budget
 
     let hasMissions =
         function
-        | TooFewTargets _ | Plan(_, [],_) -> false
+        | Unnecessary _ | Plan(_, [],_) | InsufficientResources _ -> false
         | Plan(_, _ :: _, _) -> true
 
     let firstWithNonEmptyPlan (xs : MissionPlanningResult seq) =
         let proj =
             function
             | Plan(_, [], _) -> 0
-            | TooFewTargets _ -> 1
-            | Plan(_, _ :: _, _) -> 2
+            | InsufficientResources _ -> 1
+            | Unnecessary _ -> 2
+            | Plan(_, _ :: _, _) -> 3
         let pred =
             function
             | Plan(_, _ :: _, _) -> true

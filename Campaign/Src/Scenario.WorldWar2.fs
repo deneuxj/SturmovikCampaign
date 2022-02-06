@@ -445,9 +445,8 @@ type WorldWar2(world : World, C : Constants) =
                 totalPlanes(war.GetNumPlanes(af.AirfieldId)) >= 5.0f)
 
         match readyAirfields, raidTargets with
-        | [], _ -> Plan("No planes for " + description, [], budget)
-        | _, [] ->
-            TooFewTargets description
+        | [], _ -> InsufficientResources("No planes for " + description)
+        | _, [] -> Unnecessary description
         | _ :: _, _ :: _ ->
             let raids =
                 let isInPlaneRange (plane : PlaneModelId) (start : Airfield) (target : Vector2) =
@@ -556,7 +555,7 @@ type WorldWar2(world : World, C : Constants) =
                     })
             match raids with
             | [] ->
-                Plan ("No planes in range for " + description, [], budget)
+                InsufficientResources ("No planes in range for " + description)
             | _::_ ->
                 // Compute again resource consumption by missions on each start airfield
                 let budget =
@@ -639,9 +638,9 @@ type WorldWar2(world : World, C : Constants) =
 
         match onlySupport, weakRegions with
         | true, [] ->
-            Plan("No invasion to cover", [], budget)
+            Unnecessary "No invasion to cover"
         | false, [] ->
-            TooFewTargets "Enemy ground troops destroyed"
+            Unnecessary "Enemy ground troops destroyed"
         | _, _::_ ->
             tryMakeAirRaids war (GroundForcesTargetAdapter(friendly.Other)) "Close air support" weakRegions friendly budget
 
@@ -1139,9 +1138,9 @@ type WorldWar2(world : World, C : Constants) =
         let g2 = side.Other.Grammar
 
         match sideAttacks budget with
-        | TooFewTargets comment ->
+        | Unnecessary comment ->
             Victory(side, comment)
-        | Plan(comment, [], _) ->
+        | InsufficientResources comment ->
             let comment2 = sprintf "%s lose%s initiative because of %s" (string side) g1.Suffix3 comment
             if depth > 0 then
                 oneSideStrikes data side.Other comment2 (depth - 1) (war, timeSpan)
