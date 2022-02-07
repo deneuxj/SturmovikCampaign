@@ -264,12 +264,13 @@ type WorldWar2(world : World, C : Constants) =
         |> List.filter (fun plane -> plane.Coalition = coalition)
         |> List.distinctBy (fun plane -> plane.Id)
 
-    /// Get the total number of planes of give types at an airfield
+    /// Get the total number of planes of given types at an airfield
     let sumPlanes (atAirfield : Map<PlaneModelId, float32>) (planes : PlaneModelId seq) =
         planes
         |> Seq.fold (fun s plane ->
             atAirfield.TryFind(plane)
             |> Option.defaultValue 0.0f
+            |> floor
             |> (+) s) 0.0f
 
     /// Set the number of planes at each airfield controlled by a coalition.
@@ -714,6 +715,7 @@ type WorldWar2(world : World, C : Constants) =
 
     /// Try to send planes closer to the frontline.
     let tryTransferPlanesForward (war : IWarStateQuery) (friendly : CoalitionId) (budget : ForcesAvailability) =
+        let shuffleRnd = System.Random(war.Seed)
         let airfields =
             war.World.Airfields.Values
             |> Seq.filter (fun af -> af.IsActive && war.GetOwner(af.Region) = Some friendly)
@@ -721,63 +723,79 @@ type WorldWar2(world : World, C : Constants) =
 
         let enemy = friendly.Other
         let distanceToEnemy = war.ComputeDistancesToCoalition enemy
-        let planeRunCost = typicalRange * planeRunCost + 500.0f<K> * bombCost
+
         let mutable budget = budget
         let missions =
             [
                 let forward =
                     Seq.allPairs airfields airfields
                     |> Seq.where (fun (af1, af2) -> distanceToEnemy.[af1.Region] > distanceToEnemy.[af2.Region])
-                for af1, af2 in forward do
-                    let mutable excessPlanes =
-                        let minAmount =
-                            if distanceToEnemy.[af1.Region] > 4 then
-                                5.0f
+                    |> Array.ofSeq
+                    |> Array.shuffle shuffleRnd
+                    |> Array.sortBy (fun (af1, af2) -> distanceToEnemy.[af2.Region], -distanceToEnemy.[af1.Region])
+                let allButTransport =
+                    allPlanesOf friendly
+                    |> List.filter (fun plane -> plane.Kind <> PlaneType.Transport)
+                    |> Array.ofList
+                    |> Array.shuffle shuffleRnd
+                let mutable sustainable =
+                    airfields
+                    |> Seq.map (fun af ->
+                        let resources = war.GetAirfieldCapacity(af.AirfieldId)
+                        // Avoid putting too many planes right at the frontline
+                        let resources =
+                            if distanceToEnemy.[af.Region] <= 1 then
+                                min resources (20.0f * typicalRange * planeRunCost)
                             else
-                                15.0f
-                        let afid = af1.AirfieldId
-                        let af = budget.Airfields.[afid]
-                        totalPlanes af.Planes - minAmount
-                    let mutable sustainable =
-                        let afid = af2.AirfieldId
-                        let af = budget.Airfields.[afid]
-                        (af.Resources - totalPlanes af.Planes * planeRunCost) / planeRunCost
-                    let allButTransport =
-                        allPlanesOf friendly
-                        |> List.filter (fun plane -> plane.Kind <> PlaneType.Transport)
-                    for plane in allButTransport do
-                        if excessPlanes > 0.0f && sustainable > 0.0f then
-                            let numPlanes =
-                                sumPlanes budget.Airfields.[af1.AirfieldId].Planes [plane.Id]
-                                |> min excessPlanes
-                                |> int
-                                |> min 25
-                            let planeModel = war.World.PlaneSet.[plane.Id]
-                            let runwayLength =
-                                try
-                                    af2.Runways
-                                    |> List.map (fun rw -> 1.0f<M> * (rw.End - rw.Start).Length())
-                                    |> List.max
-                                with _ -> 0.0f<M>
-                            if numPlanes > 0 && planeModel.MinRunwayLength <= runwayLength then
-                                let mission =
-                                    {
-                                        StartAirfield = af1.AirfieldId
-                                        Objective = af2.Region
-                                        MissionType = PlaneTransfer af2.AirfieldId
-                                        NumPlanes = numPlanes
-                                        Plane = plane.Id
-                                    }
-                                let budget2 = budget.TryCheckoutPlane(af1.AirfieldId, checkoutDataAir mission)
-                                match budget2 with
-                                | Some b ->
-                                    budget <- b
-                                    let numPlanesF = (float32 numPlanes)
-                                    excessPlanes <- excessPlanes - numPlanesF
-                                    sustainable <- sustainable - numPlanesF
-                                    yield mission, sprintf "Transfer %d %s from %s to %s" numPlanes plane.Name af1.AirfieldId.AirfieldName af2.AirfieldId.AirfieldName
-                                | None ->
-                                    ()
+                                resources
+                        let extraResources =
+                            (resources, allPlanesOf friendly)
+                            ||> Seq.fold (fun rsc plane ->
+                                let planeRunCost = plane.MaxRange * planeRunCost + plane.BombCapacity * bombCost
+                                rsc - planeRunCost
+                            )
+                        af.AirfieldId, extraResources
+                    )
+                    |> Map.ofSeq
+                for numPlanes in [2; 5; 10] do
+                for plane in allButTransport do
+                    let planeRunCost = plane.MaxRange * planeRunCost + plane.BombCapacity * bombCost
+                    for af1, af2 in forward do
+                        let extraResourcesAtDestination = sustainable.[af2.AirfieldId]
+                        if planeRunCost <= extraResourcesAtDestination then
+                            let excessPlanes =
+                                let minAmount =
+                                    if distanceToEnemy.[af1.Region] > 4 then
+                                        2.0f
+                                    else
+                                        5.0f
+                                let afid = af1.AirfieldId
+                                let af = budget.Airfields.[afid]
+                                sumPlanes af.Planes [plane.Id] - minAmount
+                            if float32 numPlanes >= excessPlanes then
+                                let runwayLength =
+                                    try
+                                        af2.Runways
+                                        |> List.map (fun rw -> 1.0f<M> * (rw.End - rw.Start).Length())
+                                        |> List.max
+                                    with _ -> 0.0f<M>
+                                if numPlanes > 0 && plane.MinRunwayLength <= runwayLength then
+                                    let mission =
+                                        {
+                                            StartAirfield = af1.AirfieldId
+                                            Objective = af2.Region
+                                            MissionType = PlaneTransfer af2.AirfieldId
+                                            NumPlanes = numPlanes
+                                            Plane = plane.Id
+                                        }
+                                    let budget2 = budget.TryCheckoutPlane(af1.AirfieldId, checkoutDataAir mission)
+                                    match budget2 with
+                                    | Some b ->
+                                        budget <- b
+                                        sustainable <- sustainable.Add(af2.AirfieldId, extraResourcesAtDestination - planeRunCost)
+                                        yield mission, sprintf "Transfer %d %s from %s to %s" numPlanes plane.Name af1.AirfieldId.AirfieldName af2.AirfieldId.AirfieldName
+                                    | None ->
+                                        ()
             ]
             |> List.map (fun (m, description) ->
                 { Kind = AirMission m
