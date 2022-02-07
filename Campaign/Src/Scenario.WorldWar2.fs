@@ -1125,9 +1125,9 @@ type WorldWar2(world : World, C : Constants) =
                 lockDefenses war side
                 Planning.pickFirst [
                     tryMakeAirfieldRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryMakeIndustryRaids; tryPlanInvasions ])
-                    tryMakeGroundForcesHarassment |> Planning.andThen (Planning.chain [ tryMakeGroundForcesSupport; tryMakeIndustryRaids; tryPlanInvasions ])
+                    tryMakeGroundForcesHarassment |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeIndustryRaids; tryPlanInvasions ])
                     tryMakeIndustryRaids |> Planning.andThen (Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryMakeGroundForcesHarassment; tryPlanInvasions ])
-                    tryPlanInvasions
+                    Planning.chain [ tryMakeGroundForcesDefense; tryMakeGroundForcesSupport; tryPlanInvasions ]
                 ]
                 Planning.chain [ tryTransferPlanesForward side; tryPlanReinforcements timeSpan war side; tryEvacuatePlanes war side ]
             ]
