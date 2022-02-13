@@ -626,11 +626,12 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                         let owner = state.GetOwner(mission.Objective)
                         let aimedTowardsCapital = Vector2.Dot(state.World.Regions.[mission.Objective].Position - p.Pos, Vector2.FromYOri(float p.Rotation)) > 0.0f
                         let p =
-                            // Make sure direction is so that initiators move along the battle direction, and region owners stand closer to the region capital
-                            if aimedTowardsCapital && Some initiator = owner then
-                                p
-                            else
+                            // Make sure direction is so that the region's owners are closest to the region's capital
+                            if aimedTowardsCapital = (Some initiator = owner) then
+                                // counter-attack and battle direction aimed at capital, or invasion and battle direction away from capital -> turn direction around
                                 { p with Rotation = (p.Rotation + 180.0f) % 360.0f }
+                            else
+                                p
                         match GroundBattle.TryFromGroundMission(state, mission, p, shape, settings.GroundBattleLimits) with
                         | Some battle ->
                             locator.StoreBattleLocation(mission.Objective, (battle.Pos, shape))
@@ -932,12 +933,12 @@ let mkMultiplayerMissionContent (random : System.Random) (settings : Preparation
                     let oriPos = battle.Pos
                     let posNeg = oriPos.Pos - Vector2.FromYOri(float oriPos.Rotation) * 3000.0f
                     let posPos = oriPos.Pos + Vector2.FromYOri(float oriPos.Rotation) * 3000.0f
-                    // Position of region's owners is the one closest to the region's capital
+                    // Position of region's owners is posPos if the invaders are attacking, posNeg if the owners are counter-attacking
                     let posOwner, posInvader =
-                        if (posNeg - region.Position).Length() < (posPos - region.Position).Length() then
-                            posNeg, posPos
-                        else
+                        if battle.DefendingCoalition = owner then
                             posPos, posNeg
+                        else
+                            posNeg, posPos
                     let countryOwner = state.World.GetAnyCountryInCoalition(owner)
                     let countryInvader = state.World.GetAnyCountryInCoalition(owner.Other)
                     let shape = VectorExtension.mkCircle(Vector2.Zero, 500.0f)
