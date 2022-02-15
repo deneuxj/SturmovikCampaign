@@ -312,12 +312,18 @@ let intersectConvexPolygons(poly1 : Vector2 list, poly2 : Vector2 list) =
             let p1 = looping |> Seq.head
             // The first occurrence of the repeating loop.
             seq {
-                yield p1
-                let len1 = p1.Length()
-                yield!
-                    looping
-                    |> Seq.skip 1
-                    |> Seq.takeWhile (fun p -> (p1 - p).Length() / len1 > 0.00001f)
+                let seen = System.Collections.Generic.HashSet<_>()
+                let it = looping.GetEnumerator()
+                while it.MoveNext() && not(seen.Contains(it.Current)) do
+                    seen.Add(it.Current) |> ignore
+                let p1 = try Some it.Current with _ -> None
+                match p1 with
+                | Some p1 ->
+                    yield p1
+                    while it.MoveNext() && it.Current <> p1 do
+                        yield it.Current
+                | None ->
+                    ()
             }
             |> List.ofSeq
             |> List.distinct
