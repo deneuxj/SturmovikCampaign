@@ -249,8 +249,7 @@
     <PackageReference Include="FSharp.Json" Version="0.4.1" />
     <PackageReference Include="FSPickler" Version="5.3.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NLog" Version="4.7.15" />
-    <PackageReference Include="NLog.Schema" Version="4.6.8" />
+    <PackageReference Include="NLog" Version="5.3.2" />
     <PackageReference Include="SturmovikMission.McuLibrary" Version="3.1.0" />
     <PackageReference Include="System.IO.Compression" Version="4.3.0" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
