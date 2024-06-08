@@ -110,7 +110,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
             | i, { Kind = AirMission mission } -> Some (i, mission)
             | _, { Kind = GroundMission _ } -> None)
         // CAP missions first, so that CAP vs CAP are run before CAP vs ground attack
-        |> List.sortBy (function (_, { MissionType = AreaProtection _ }) -> 0 | _ -> 1)
+        |> List.sortBy (function (_, { MissionType = AreaProtection }) -> 0 | _ -> 1)
 
     let groundMissions =
         missions
@@ -311,7 +311,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                     // Same objective
                     |> Seq.filter (fun (_, mission2) -> mission2.Objective = mission.Objective)
                     // Is area protection
-                    |> Seq.filter (function _, { MissionType = AreaProtection _ } -> true | _ -> false)
+                    |> Seq.filter (function _, { MissionType = AreaProtection } -> true | _ -> false)
 
                 for interId, interception in interceptors |> Seq.filter (fst >> earlyRTB.Contains >> not) do
                     let interceptorsName = war.World.PlaneSet.[interception.Plane].Name
@@ -331,7 +331,7 @@ type MissionSimulator(random : System.Random, war : IWarStateQuery, missions : M
                         | PlaneType.Fighter ->
                             let loadoutKillRateModifier =
                                 match mission.MissionType with
-                                | AreaProtection _ -> 1.0f
+                                | AreaProtection -> 1.0f
                                 | _ -> 0.75f
                             AirSupremacy, loadoutKillRateModifier * getFighterAttackRate(), TargetDifficulty.OfTarget(TargetType.Air(plane.Id, Fighter))
                         | _ ->

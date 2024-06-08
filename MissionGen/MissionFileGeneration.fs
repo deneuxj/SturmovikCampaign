@@ -42,7 +42,7 @@ open Campaign.Common.Ship
 open Campaign.MissionGen.StaticDefenseOptimization
 open Campaign.MissionGen.MapGraphics
 
-let private logger = NLog.LogManager.GetCurrentClassLogger()
+let logger = NLog.LogManager.GetCurrentClassLogger()
 
 type GameType =
     | Coop
