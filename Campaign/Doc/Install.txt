@@ -15,7 +15,7 @@ Usage of the commandline in your operating system.
 
 == Prerequisites
 
-.net 5, which you can get from https://dotnet.microsoft.com/download/dotnet/5.0
+.net 6, which you can get from https://dotnet.microsoft.com/download/dotnet/6.0
 
 The software has only been tested on MS Windows 10. It's possible it might work on other systems, but no guarantees.
 
@@ -33,7 +33,7 @@ Create a directory anywhere, preferably outside of C:\Program Files. Let's say y
 
 Put the web site files under a directory named Web. You get C:\CocoCampaign\Web with two subdirectories, html and js.
 
-Put the web service under a directory named Soft. You get C:\CocoCampaign\Soft\net5.0\WebController.exe.
+Put the web service under a directory named Soft. You get C:\CocoCampaign\Soft\net6.0\WebController.exe.
 
 Create a new subdirectory for the data tracking the state of campaigns, named Campaign. You get C:\CocoCampaign\Campaign.
 
