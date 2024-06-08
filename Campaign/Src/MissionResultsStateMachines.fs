@@ -457,7 +457,7 @@ with
                             |> Option.defaultValue ""
                         let eventDescription =
                             match flight.Return with
-                            | CrashedInEnemyTerritory _ -> "crashed in enemy territory"
+                            | CrashedInEnemyTerritory -> "crashed in enemy territory"
                             | CrashedInFriendlyTerritory _ -> "crash-landed"
                             | AtAirfield afId -> sprintf "landed at %s" afId.AirfieldName
                             | KilledInAction -> "was killed in action"
