@@ -1,7 +1,7 @@
 RESTRICTION: == net6.0
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    FSharp.Core (6.0.1)
+    FSharp.Core (8.0.300)
     FSharp.Json (0.4.1)
       FSharp.Core (>= 4.6.2)
     FsPickler (5.3.2)
